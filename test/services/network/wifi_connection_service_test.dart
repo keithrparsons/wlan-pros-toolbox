@@ -1,25 +1,51 @@
 // Unit tests for [WifiConnectionService] — the honest "is this device on Wi-Fi?"
-// probe (2026-06-25, hardened 2026-07-13).
+// probe (2026-06-25; hardened 2026-07-13; corrected 2026-07-13 round 3).
 //
 // Exercises all THREE honest verdicts (onWifi / notOnWifi / unknown) without a
 // live network, by injecting a fake [NetworkInfo] and a platform override.
+//
+// READ THIS BEFORE CHANGING AN EXPECTATION HERE. Round 2 of this file asserted
+// TWO things that were false, and the suite then DEFENDED them
+// ([[feedback_tests_that_enshrine_the_bug]]):
+//
+//   1. It fed a GLOBAL IPv6 (`2606:4700:4700::1111`) through the fake and asserted
+//      `onWifi`. THE REAL PLUGIN NEVER RETURNS A GLOBAL. `getWifiIPv6` keeps the
+//      FIRST AF_INET6 address on an `en*` interface (`if (addr) return;`,
+//      FPPNetworkInfoPlusPlugin.m:78-86) and the kernel lists the LINK-LOCAL
+//      first. The test passed against a shape the system does not produce — the
+//      exact failure mode of [[feedback_tests_that_cannot_fail]].
+//
+//   2. It asserted "no IPv4 + link-local IPv6 -> notOnWifi" AS CORRECT. That is
+//      the IPv6-only-Wi-Fi device being told it has no Wi-Fi. The bug, written
+//      down as the spec.
+//
+// THE MEASUREMENT that settles it (2026-07-13, reproducing
+// `enumerateWifiAddresses:AF_INET6` in C against the live BSD stack): on an
+// ASSOCIATED en0, `getWifiIPv6()` returns `fe80::10b4:5ba5:5d42:a691%en0`. And
+// every `en*` interface with `status: inactive` carries NO address of either
+// family — which is what makes the negative verdict sound.
+//
+// So the fakes below feed the shape the REAL plugin produces (a link-local, or
+// nothing at all), and the contract under test is:
+//
+//   | Device state              | IPv4    | IPv6 on en*    | Verdict     |
+//   |---------------------------|---------|----------------|-------------|
+//   | Normal Wi-Fi              | present | any            | onWifi      |
+//   | Cellular only / Wi-Fi off | null    | NONE           | notOnWifi   |
+//   | IPv6-only Wi-Fi, joined    | null    | any (fe80/GUA) | unknown     |
 //
 // TWO invariants are under test, and they pull in OPPOSITE directions — which is
 // the whole difficulty of this probe:
 //
 //   1. NEVER A FALSE NEGATIVE (GL-005). A null / ambiguous read must never resolve
-//      to `notOnWifi`. A wired Mac, a denied read, an absent method channel: all
-//      `unknown`.
+//      to `notOnWifi`. A wired Mac, a denied read, an absent method channel, an
+//      un-attributable IPv6: all `unknown`.
 //
-//   2. NEVER A FALSE `notOnWifi` FOR A DEVICE THAT IS ACTUALLY ON WI-FI. This is
-//      the one the first round got wrong. `getWifiIP()` enumerates AF_INET ONLY
-//      (network_info_plus-6.1.4, FPPNetworkInfoPlusPlugin.m:68), so an iPhone on an
-//      IPv6-ONLY Wi-Fi network — NAT64/DNS64, common on carrier and CONFERENCE
-//      SSIDs, and Keith runs conference Wi-Fi — returns a CLEAN NULL while fully
-//      associated. Asserting `notOnWifi` from that null declared the device NOT ON
-//      WI-FI WHILE ON WI-FI: it nulled the details, tore down the live stream,
-//      cleared the App Group loop flag, and rewrote the verdict. The IPv6 group
-//      below is the guard on that.
+//   2. `notOnWifi` MUST STILL BE REACHABLE. If every shape resolved to `unknown`
+//      the probe would be inert and Keith's original bug (a stale 29 Mbps Wi-Fi
+//      rate on a cellular-only iPhone) would be back. The cellular-only group is
+//      the guard on that, and it is why "no address at all" is kept distinct from
+//      "some address we cannot attribute".
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,8 +56,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart'
 /// (or throws to simulate a denied/unsupported read).
 ///
 /// It models BOTH address families because the real plugin exposes both, and the
-/// probe is only honest when it consults both. A fake that answered IPv4 alone is
-/// what let the IPv6 hole through the first time.
+/// probe is only honest when it consults both.
 class _FakeNetworkInfo implements NetworkInfo {
   _FakeNetworkInfo({
     this.wifiIp,
@@ -60,6 +85,11 @@ class _FakeNetworkInfo implements NetworkInfo {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+/// The address the REAL plugin hands back on an associated interface. Measured,
+/// not assumed: see the file header. Every "device is on an IPv6-only SSID" case
+/// below uses this, because this is the only IPv6 the app can ever actually see.
+const String kMeasuredLinkLocal = 'fe80::10b4:5ba5:5d42:a691%en0';
 
 WifiConnectionService _service({
   String? wifiIp,
@@ -91,6 +121,14 @@ void main() {
       expect(await s.status(), WifiConnectionStatus.onWifi);
     });
 
+    test('a Wi-Fi IPv4 wins even with only a link-local IPv6 alongside it',
+        () async {
+      // The ordinary dual-stack phone on a normal SSID: a DHCP v4 plus the
+      // interface's link-local. The v4 settles it; the v6 is never consulted.
+      final s = _service(wifiIp: '192.168.1.42', wifiIpv6: kMeasuredLinkLocal);
+      expect(await s.status(), WifiConnectionStatus.onWifi);
+    });
+
     test('a resolved native SSID -> onWifi even with no Wi-Fi IP', () async {
       // A native NEHotspotNetwork SSID can only come from an active Wi-Fi join,
       // so it is a definitive positive even when getWifiIP returns null.
@@ -103,53 +141,69 @@ void main() {
 
     test('a blank native SSID is ignored (falls through to the IP probe)',
         () async {
-      // A whitespace-only SSID is not a real join; it must not assert onWifi.
-      final s = _service(wifiIp: null, platform: TargetPlatform.iOS);
+      // A whitespace-only SSID is not a real join; it must not assert onWifi. No
+      // addresses of either family behind it, so the probe lands on notOnWifi.
+      final s = _service(wifiIp: null, wifiIpv6: null);
       expect(await s.status(nativeSsid: '   '), WifiConnectionStatus.notOnWifi);
     });
   });
 
   // ==========================================================================
-  // THE IPv6-ONLY WI-FI NETWORK (cold-eyes F3). The dangerous one: this is
-  // OVER-suppression — the probe claiming "not on Wi-Fi" about a device that is
-  // on Wi-Fi. Pre-fix these were all `notOnWifi`.
+  // THE IPv6-ONLY WI-FI NETWORK (cold-eyes F3, corrected in round 3).
+  //
+  // THE DANGEROUS DIRECTION: over-suppression — the probe claiming "not on Wi-Fi"
+  // about a device that IS on Wi-Fi. Keith runs CONFERENCE Wi-Fi, and NAT64/DNS64
+  // IPv6-only SSIDs are common there.
+  //
+  // We cannot prove the association (the only IPv6 the plugin will hand us is the
+  // link-local, which an idle interface could also carry), so we do not claim it
+  // in EITHER direction. `unknown` = "leave prior behavior alone, assert nothing".
+  // The residual cost is documented in the service's KNOWN LIMITS: a stale reading
+  // may persist on such a network. A stale reading is a smaller lie than telling a
+  // connected user they have no Wi-Fi, and it is the one we choose knowingly.
   // ==========================================================================
-  group('WifiConnectionService.status — IPv6-only Wi-Fi is still Wi-Fi', () {
-    test('iOS, no IPv4 but a GLOBAL IPv6 on the Wi-Fi interface -> onWifi',
-        () async {
-      // The conference / carrier NAT64 case. getWifiIP() is AF_INET-only, so it
-      // returns null here while the phone is fully associated and working.
-      final s = _service(
-        wifiIp: null,
-        wifiIpv6: '2606:4700:4700::1111',
+  group('WifiConnectionService.status — an IPv6-only Wi-Fi device is never '
+      'declared off Wi-Fi', () {
+    test('iOS, no IPv4, LINK-LOCAL IPv6 (what the plugin really returns) -> '
+        'unknown, NOT notOnWifi', () async {
+      // THE CENTRAL CASE. An iPhone joined to an IPv6-only SSID: getWifiIP() is
+      // AF_INET-only so it is null, and getWifiIPv6() hands back the interface's
+      // link-local. Round 2 discarded that as "not routable" and returned
+      // notOnWifi — declaring a fully-associated phone disconnected, tearing down
+      // its live stream and blanking its link.
+      final s = _service(wifiIp: null, wifiIpv6: kMeasuredLinkLocal);
+      expect(
+        await s.status(),
+        WifiConnectionStatus.unknown,
+        reason: 'an fe80:: on en0 does not PROVE association, but it absolutely '
+            'does not prove its absence either. The only honest answer is '
+            'unknown. notOnWifi here is the bug.',
       );
       expect(
         await s.status(),
-        WifiConnectionStatus.onWifi,
-        reason: 'an iPhone on an IPv6-only SSID is ON WI-FI; declaring it '
-            'notOnWifi blanks a live link and tears down a live stream',
+        isNot(WifiConnectionStatus.notOnWifi),
+        reason: 'stated separately because THIS is the regression: a device on '
+            'Wi-Fi must never be told it is not on Wi-Fi',
       );
     });
 
-    test('iOS, no IPv4 but a ULA IPv6 -> onWifi', () async {
-      // fc00::/7 — a real, provisioned address handed out by the network.
-      final s = _service(wifiIp: null, wifiIpv6: 'fd12:3456:789a::1');
-      expect(await s.status(), WifiConnectionStatus.onWifi);
-    });
-
-    test('iOS, no IPv4 and only a LINK-LOCAL IPv6 -> notOnWifi', () async {
-      // fe80::/10 is self-assigned and does not prove an association with a
-      // network. Counting it as a positive would make `notOnWifi` unreachable and
-      // re-open the stale-reading bug. Documented in the KNOWN LIMITS of the
-      // service: a Wi-Fi network handing out neither IPv4 nor a routable IPv6 is
-      // read as no-Wi-Fi (and offers no working path anyway).
+    test('iOS, no IPv4, a bare link-local with no %zone -> unknown', () async {
       final s = _service(wifiIp: null, wifiIpv6: 'fe80::1c9a:b2ff:fe4d:1');
-      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+      expect(await s.status(), WifiConnectionStatus.unknown);
     });
 
-    test('a link-local IPv6 with a %zone suffix is still link-local', () async {
-      final s = _service(wifiIp: null, wifiIpv6: 'fe80::1c9a:b2ff:fe4d:1%en0');
-      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+    test('iOS, no IPv4, a GLOBAL IPv6 -> unknown (not notOnWifi)', () async {
+      // The plugin does not in practice return a global (it keeps the FIRST
+      // AF_INET6 on en*, which is the link-local), so this shape is not expected
+      // in the field. It is pinned anyway: whatever address turns up, the ONE
+      // thing the probe may never do is call this device off-Wi-Fi.
+      final s = _service(wifiIp: null, wifiIpv6: '2606:4700:4700::1111');
+      expect(await s.status(), WifiConnectionStatus.unknown);
+    });
+
+    test('iOS, no IPv4, a ULA IPv6 -> unknown (not notOnWifi)', () async {
+      final s = _service(wifiIp: null, wifiIpv6: 'fd12:3456:789a::1');
+      expect(await s.status(), WifiConnectionStatus.unknown);
     });
 
     test('a failed IPv6 read -> unknown, never notOnWifi', () async {
@@ -171,38 +225,46 @@ void main() {
       );
       expect(await s.status(), WifiConnectionStatus.unknown);
     });
-
-    test('the routable-IPv6 classifier', () {
-      // Positives: a real, provisioned address on the Wi-Fi interface.
-      expect(WifiConnectionService.isRoutableIpv6('2001:db8::1'), isTrue);
-      expect(WifiConnectionService.isRoutableIpv6('fd00::1'), isTrue);
-      expect(WifiConnectionService.isRoutableIpv6('FE00::1'), isTrue);
-      // Negatives: link-local (fe80..febf), loopback, unspecified, empty.
-      expect(WifiConnectionService.isRoutableIpv6('fe80::1'), isFalse);
-      expect(WifiConnectionService.isRoutableIpv6('FEBF::1'), isFalse);
-      expect(WifiConnectionService.isRoutableIpv6('fe90::1'), isFalse);
-      expect(WifiConnectionService.isRoutableIpv6('::1'), isFalse);
-      expect(WifiConnectionService.isRoutableIpv6('::'), isFalse);
-      expect(WifiConnectionService.isRoutableIpv6('   '), isFalse);
-    });
   });
 
-  group('WifiConnectionService.status — notOnWifi (positive signal only)', () {
-    test('no IPv4 AND no IPv6 on iOS -> notOnWifi (the cellular-only case)',
+  // ==========================================================================
+  // THE CELLULAR-ONLY iPHONE — Keith's actual bug, and the reason the probe
+  // exists. If this group ever goes soft, the stale 29 Mbps Wi-Fi rate comes back.
+  //
+  // The verdict rests on a MEASURED property: an interface with no active link
+  // carries no addresses at all. On macOS every `en*` reporting `status: inactive`
+  // has neither an `inet` nor an `inet6` line, while the active en0 has both. So
+  // "no IPv4 and no IPv6 anywhere on en*" is a real signal, not an inference.
+  // ==========================================================================
+  group('WifiConnectionService.status — notOnWifi (no address of EITHER family)',
+      () {
+    test('iOS, no IPv4 and NO IPv6 at all -> notOnWifi (the cellular-only case)',
         () async {
-      // BOTH families read clean and empty. This — and only this — is the honest
-      // cellular-only signal.
+      // THE BUG KEITH REPORTED. Wi-Fi off / cellular only: en0 has no active link,
+      // so it carries nothing in either family. This is the ONLY shape that may
+      // assert notOnWifi, and it MUST still assert it — an `unknown` here would
+      // hand the user back the stale Wi-Fi reading under a live badge.
       final s = _service(wifiIp: null, wifiIpv6: null);
-      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+      expect(
+        await s.status(),
+        WifiConnectionStatus.notOnWifi,
+        reason: 'a cellular-only iPhone must be positively identified as off '
+            'Wi-Fi, or every live Wi-Fi surface goes back to showing a '
+            'remembered reading as if it were current',
+      );
     });
 
-    test('empty Wi-Fi IP on iOS (no IPv6 either) -> notOnWifi', () async {
+    test('empty-string reads on both families -> notOnWifi', () async {
       final s = _service(wifiIp: '', wifiIpv6: '');
       expect(await s.status(), WifiConnectionStatus.notOnWifi);
     });
 
-    test('all-zeros placeholder IP on iOS (no IPv6 either) -> notOnWifi',
-        () async {
+    test('whitespace-only IPv6 counts as absent -> notOnWifi', () async {
+      final s = _service(wifiIp: null, wifiIpv6: '   ');
+      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+    });
+
+    test('all-zeros placeholder IPv4, no IPv6 -> notOnWifi', () async {
       // Some platforms return 0.0.0.0 for "no address"; treat as no Wi-Fi IP.
       final s = _service(wifiIp: '0.0.0.0', wifiIpv6: null);
       expect(await s.status(), WifiConnectionStatus.notOnWifi);
@@ -223,7 +285,7 @@ void main() {
       expect(await s.status(), WifiConnectionStatus.unknown);
     });
 
-    test('a thrown read resolves to unknown, not notOnWifi (even on iOS)',
+    test('a thrown IPv4 read resolves to unknown, not notOnWifi (even on iOS)',
         () async {
       // A denied/unsupported read is ambiguous — never a false negative.
       final s = _service(throws: true, platform: TargetPlatform.iOS);

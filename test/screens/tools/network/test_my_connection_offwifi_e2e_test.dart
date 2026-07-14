@@ -362,5 +362,169 @@ void main() {
       expect(bridge.runShortcutCalls, 0,
           reason: 'nor may it start the continuous monitoring loop');
     });
+
+    // ======================================================================
+    // KEITH'S DEVICE RUN, 2026-07-13. Wi-Fi off, cellular on, internet working
+    // (CNN.com loaded fine). The round-1 build jumped to the Shortcuts app,
+    // bounced him to the home screen, and then reported "the speed test did not
+    // complete, so its speed could not be measured." The result header read:
+    //
+    //     Wi-Fi: Couldn't check      Internet: Couldn't check
+    //
+    // BOTH CHIPS WERE FALSE. The app knew there was no Wi-Fi (it said so
+    // correctly on the Wi-Fi Information screen seconds earlier), and the
+    // internet was plainly reachable ("You are online" sat directly above).
+    // The three tests below are the guards on all of it.
+    // ======================================================================
+
+    testWidgets(
+        'the Wi-Fi axis reads "Not connected", NOT "Couldn\'t check"',
+        (WidgetTester tester) async {
+      await _runOffWifiCheck(tester);
+      final String screen = _visibleText(tester);
+
+      // The lie Keith saw. "Couldn't check" claims a read that FAILED. Nothing
+      // failed: there is no Wi-Fi, and the app knows it. Reserve "Couldn't check"
+      // for a genuine failure to read (AxisStatus.unknown).
+      expect(screen, contains('Not connected'),
+          reason: 'the Wi-Fi axis must name the KNOWN state — there is no Wi-Fi '
+              'link — using AxisStatus.notApplicable');
+      expect(screen, isNot(contains("Couldn't check")),
+          reason: "the app did not fail to check the Wi-Fi; there was no Wi-Fi "
+              'to check. Claiming a failed read sends the user hunting for a '
+              'problem that does not exist (two kinds of null, GL-005)');
+    });
+
+    testWidgets(
+        'the internet IS measured and reported over cellular',
+        (WidgetTester tester) async {
+      // KEITH'S POINT, AND HE IS RIGHT. The tool answers "is it my Wi-Fi or my
+      // internet?" With no Wi-Fi, half the question is gone — but the other half
+      // is still worth answering, and it is the half that still works. He had a
+      // good 5G connection and the app refused to give him a number for it.
+      //
+      // The measurement was never SUPPRESSED on notOnWifi (`_quality.measure()`
+      // is called unconditionally at the top of the run). It died because the
+      // app's own Shortcut app-switch stole the foreground from it. With the F5
+      // gate above holding the Shortcut, the run completes and must REPORT.
+      await _runOffWifiCheck(tester);
+      final String screen = _visibleText(tester);
+
+      // 60 Mbps down / 20 up, measured over cellular by the scripted client.
+      expect(screen, contains('60'),
+          reason: 'the measured cellular download must be reported — a missing '
+              'Wi-Fi link is no reason to withhold the internet number the app '
+              'successfully measured');
+
+      // And the Internet axis must carry a real tier, not the "Couldn't check"
+      // neutral. 60 Mbps < 100 → Weak.
+      expect(screen, contains('Weak'),
+          reason: 'the Internet axis must show its measured tier; "Couldn\'t '
+              'check" beside a completed 60 Mbps measurement is false');
+    });
+
+    testWidgets(
+        'the Wi-Fi/internet comparison says Not connected, not Unavailable',
+        (WidgetTester tester) async {
+      await _runOffWifiCheck(tester);
+      final String screen = _visibleText(tester);
+
+      // The comparison card. "Unavailable" is the word for a figure we FAILED to
+      // obtain; there is no Wi-Fi link to obtain one FROM, so the Wi-Fi side of
+      // the comparison is not applicable. Asserted as an ADJACENT PAIR, not as a
+      // global "no Unavailable anywhere" — other cards legitimately carry that
+      // word for genuinely unreadable fields, and the loose version of this
+      // assertion passed for the wrong reason.
+      expect(screen, contains('Wi-Fi usable capacity\nNot connected'),
+          reason: 'the Wi-Fi side of the comparison is not "unavailable", it is '
+              'absent — there is no link to compare the internet against');
+      expect(screen, contains('Internet throughput\n60 Mbps'),
+          reason: 'and the internet side, which WAS measured, must show its '
+              'number right beside it');
+    });
+
+    testWidgets(
+        'the "Your Wi-Fi link" card reports no link, not seven Unavailable rows',
+        (WidgetTester tester) async {
+      await _runOffWifiCheck(tester);
+      final String screen = _visibleText(tester);
+
+      // Before the fix this card rendered Tx rate / Rx rate / Usable capacity /
+      // SNR / RSSI / Channel / Standard — ALL "Unavailable", seven claims of a
+      // failed read about a link that does not exist — plus this caption, which
+      // is not a sentence any user should ever be shown:
+      expect(screen, isNot(contains('55% of no rate reported')),
+          reason: 'a usable-capacity caption computed from a rate that does not '
+              'exist is gibberish, and it shipped');
+
+      expect(screen, contains('there is no Wi-Fi link to report'),
+          reason: 'the card must name the real state once and render no rows — a '
+              'row that cannot have a value is not an honest row');
+    });
+
+    testWidgets(
+        'the ANALYZE report never fires R-31 ("tap Capture Wi-Fi details") off '
+        'Wi-Fi', (WidgetTester tester) async {
+      // THE FOURTH SURFACE, AND THE ONE WITH NO GUARD (cold-eyes HIGH-2). The R-31
+      // suppression RULE was tested in the engine, but the SCREEN-TO-ENGINE WIRING
+      // was not: setting `notOnWifi: false` in `_buildAnalysisReport`'s AnalyzeInput
+      // left the whole 4,133-test suite green while R-31 fired again on a
+      // cellular-only phone. A tested rule reached through an untested wire is an
+      // untested rule.
+      //
+      // R-31 tells the user to "tap Capture Wi-Fi details, which uses the companion
+      // Shortcut". No Shortcut can read a link that does not exist. It is F2 all
+      // over again, one screen deeper — which is exactly where nobody looked.
+      await _runOffWifiCheck(tester);
+
+      final Finder analyze = find.text('Analyze my results');
+      await tester.ensureVisible(analyze);
+      await tester.pumpAndSettle();
+      await tester.tap(analyze);
+      await tester.pumpAndSettle();
+
+      final String report = _visibleText(tester);
+
+      // Sanity: we are actually ON the Analyze screen, or the assertions below are
+      // vacuous. (A test that navigates nowhere trivially "finds no R-31".)
+      // Sanity: we are actually ON the Analyze screen, or every assertion below is
+      // vacuous. (A test that navigates nowhere trivially "finds no R-31".)
+      expect(report, contains('YOUR RESULT'),
+          reason: 'sanity: the Analyze Results screen must have opened');
+
+      // R-31 — "Your Wi-Fi signal details were not captured... tap Capture Wi-Fi
+      // details, which uses the companion Shortcut."
+      expect(
+        report,
+        isNot(contains('Your Wi-Fi signal details were not captured')),
+        reason: 'R-31 must stay silent: the signal was not "not captured", there '
+            'was no signal to capture',
+      );
+      expect(report, isNot(contains('Capture Wi-Fi details')));
+
+      // AND R-05, which carried the SAME advice through a different rule and is
+      // what Keith actually saw. Suppressing R-31 alone left this wide open —
+      // which is why the guard below is written against the ADVICE, not the rule.
+      expect(report.toLowerCase(), isNot(contains('companion shortcut')),
+          reason: 'no rule may tell a user with no Wi-Fi link to install a '
+              'Shortcut to read it');
+      expect(report, isNot(contains('One side could not be measured')),
+          reason: 'nothing failed to measure: there was no Wi-Fi link. R-05N '
+              'must fire in place of R-05.');
+
+      // And the honest finding must actually be there — "say less" is only half
+      // the fix; "say the true thing" is the other half.
+      expect(report, contains('there was no Wi-Fi link to check'),
+          reason: 'R-05N must name the real state');
+
+      expect(report, isNot(contains('Your Wi-Fi signal details were not '
+          'captured')),
+          reason: 'R-31 must stay silent: the signal was not "not captured", '
+              'there was no signal to capture');
+      expect(report, isNot(contains('Capture Wi-Fi details')),
+          reason: 'the analysis must not send a cellular-only user to a Shortcut '
+              'that cannot read a link that does not exist');
+      expect(report.toLowerCase(), isNot(contains('companion shortcut')));
+    });
   });
 }

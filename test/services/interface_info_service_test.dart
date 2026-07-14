@@ -8,10 +8,15 @@
 // real instance (its calls return null off-platform, which the service swallows)
 // — these tests assert the IDENTITY merge, not the addressing fields.
 
+import 'dart:io' show NetworkInterface;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
 
 void main() {
   // Each service gets its OWN empty cache so the warm-path (Batch 8 item 1)
@@ -273,4 +278,109 @@ void main() {
           'localhostnamed');
     });
   });
+
+  // ==========================================================================
+  // THE CONNECTIVITY GATE (cold-eyes MEDIUM-3, 2026-07-13).
+  //
+  // The Wi-Fi identity was gated on a 5-MINUTE FRESHNESS TIMER and nothing else.
+  // A timer bounds how OLD a remembered reading is; it cannot tell you the link is
+  // GONE. So inside that window a cellular-only iPhone rendered the PREVIOUS
+  // network's SSID/BSSID as its CURRENT Wi-Fi link — and on the iOS cold path with
+  // `cachedAt: null`, which by this file's own rule means it got NO "as of HH:MM"
+  // disclosure at all. A remembered reading, presented as a fresh one.
+  // ==========================================================================
+  group('a cellular-only device is never served a remembered Wi-Fi identity', () {
+    test('a WARM cache is suppressed when the probe says not-on-Wi-Fi', () async {
+      // The cache is FRESH by the timer (written just now) and would have been
+      // served. The probe says there is no Wi-Fi. The probe wins.
+      final ConnectedApCache cache = ConnectedApCache();
+      cache.update(const ConnectedAp(
+        ssid: 'KeithHome',
+        bssid: '94:2a:6f:a0:a5:5d',
+        rssiDbm: -61,
+      ));
+
+      final InterfaceInfoService svc = InterfaceInfoService(
+        interfaceLister: () async => const <NetworkInterface>[],
+        connectedApCache: cache,
+        connectedApReader: () async => (ap: null, authorized: true),
+        connectionService: WifiConnectionService(
+          networkInfo: _CellularOnlyNetworkInfo(),
+          platformOverride: TargetPlatform.iOS,
+        ),
+      );
+
+      final InterfaceInfoSnapshot snap = await svc.read();
+      expect(snap.wifi.notOnWifi, isTrue,
+          reason: 'the honest state must be NAMED, not left as a pile of nulls');
+      expect(snap.wifi.ssid, isNull,
+          reason: 'the previous network\'s SSID must not render as the current '
+              'Wi-Fi link');
+      expect(snap.wifi.bssid, isNull);
+    });
+
+    test('the iOS COLD path is suppressed too (the one with no as-of stamp)',
+        () async {
+      // The path the reviewer flagged: an EMPTY cache, so the service falls
+      // through to the per-platform read — which on iOS is `bridge.readLatest()`,
+      // the App Group's last stored payload. It was returned as the CURRENT link
+      // with `authorized: true` and `cachedAt: null`: no time bound, no disclosure.
+      final InterfaceInfoService svc = InterfaceInfoService(
+        interfaceLister: () async => const <NetworkInterface>[],
+        connectedApCache: ConnectedApCache(), // cold
+        // Stands in for `WiFiDetailsBridge.readLatest()`: it hands back the stale
+        // payload forever, and nothing in it knows the link is gone.
+        connectedApReader: () async => (
+          ap: const ConnectedAp(ssid: 'KeithHome', rssiDbm: -61),
+          authorized: true,
+        ),
+        connectionService: WifiConnectionService(
+          networkInfo: _CellularOnlyNetworkInfo(),
+          platformOverride: TargetPlatform.iOS,
+        ),
+      );
+
+      final InterfaceInfoSnapshot snap = await svc.read();
+      expect(snap.wifi.ssid, isNull,
+          reason: 'the stale App Group payload must not be presented as the '
+              'current Wi-Fi link');
+      expect(snap.wifi.notOnWifi, isTrue);
+    });
+
+    test('an AMBIGUOUS probe changes nothing (no false suppression)', () async {
+      // GL-005, and the guard against over-correcting. A wired Mac, a denied read,
+      // an un-attributable IPv6: all resolve to `unknown`, and `unknown` must leave
+      // the prior behavior EXACTLY as it was. A gate that suppresses on missing
+      // data is just the original bug pointing the other way.
+      final ConnectedApCache cache = ConnectedApCache();
+      cache.update(const ConnectedAp(ssid: 'KeithHome', rssiDbm: -61));
+
+      final InterfaceInfoService svc = InterfaceInfoService(
+        interfaceLister: () async => const <NetworkInterface>[],
+        connectedApCache: cache,
+        connectedApReader: () async => (ap: null, authorized: true),
+        connectionService: WifiConnectionService(
+          networkInfo: _CellularOnlyNetworkInfo(),
+          // macOS: a null Wi-Fi IP is ambiguous, so the probe returns `unknown`.
+          platformOverride: TargetPlatform.macOS,
+        ),
+      );
+
+      final InterfaceInfoSnapshot snap = await svc.read();
+      expect(snap.wifi.notOnWifi, isFalse);
+      expect(snap.wifi.ssid, 'KeithHome',
+          reason: 'an ambiguous probe must NOT blank a real cached reading');
+    });
+  });
+}
+
+/// A cellular-only iPhone: the Wi-Fi interface carries no address of either
+/// family. See [WifiConnectionService] and its measured KNOWN LIMITS.
+class _CellularOnlyNetworkInfo implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => null;
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

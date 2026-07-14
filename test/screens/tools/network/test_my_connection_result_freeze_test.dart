@@ -108,10 +108,61 @@ class _HomeBridge implements WiFiDetailsBridge {
   Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
 
+/// ON Wi-Fi, but the link RATES were never read.
+///
+/// This is a REAL and common iOS shape, not a contrivance: the Shortcut payload
+/// carries SSID / BSSID / RSSI / channel, and the negotiated Tx/Rx rates can be
+/// absent. It matters here because it is the ONLY shape in which the engine's
+/// `notOnWifi` flag actually CHANGES the verdict: with no rate there is no
+/// `WifiRateBasis`, so the engine takes its `wifiUnknown` branch — and that branch
+/// is the one that reads `notOnWifi` to choose between
+///
+///   "the Wi-Fi link rate could not be read"   (true: we were on Wi-Fi)
+///   "this device is not on Wi-Fi"             (FALSE: we were on Wi-Fi)
+///
+/// With rates present the engine reports `wifiLimiter` and never consults the
+/// flag — which is exactly why my first attempt at this test passed against the
+/// mutated line and proved nothing. Recorded because it is the same trap as
+/// [[feedback_tests_that_cannot_fail]]: a test that cannot fail is not a test.
+class _HomeBridgeNoRates extends _HomeBridge {
+  @override
+  Future<WiFiDetails?> readLatest() async => const WiFiDetails(
+        ssid: 'KeithHome',
+        bssid: '94:2a:6f:a0:a5:5d',
+        channel: 44,
+        rssi: -61,
+        noise: -95,
+        standard: '802.11ax - Wi-Fi 6',
+        // No rxRate / txRate: the link is real, its rates were not read.
+      );
+}
+
 class _FakeDns extends DnsProbeService {
   @override
   Future<DnsProbeResult> measure() async =>
       DnsProbeResult.success(host: 'cloudflare.com', millis: 12);
+}
+
+/// A DNS probe that does not answer until the test says so.
+///
+/// This is the seam for the SECOND half of F4. The three "you're online" evidence
+/// signals (DNS, public IP, cloud reachability) land ASYNC and each one calls
+/// `_recomputeVerdict()` as it arrives — which re-derives the verdict from a
+/// notOnWifi flag. If that recompute reads the LIVE probe instead of the flag
+/// STAMPED on the run, a signal that lands after the user has walked off Wi-Fi
+/// silently rewrites a completed, honest on-Wi-Fi result into "there is no Wi-Fi
+/// link" — while the frozen `_resultAp` keeps rendering the Wi-Fi rows right
+/// beside it. Holding the DNS answer open lets the test land that evidence at the
+/// exact moment the phone is off Wi-Fi.
+class _LateDns extends DnsProbeService {
+  final Completer<DnsProbeResult> _gate = Completer<DnsProbeResult>();
+
+  /// Deliver the DNS evidence NOW (fires `_recomputeVerdict`).
+  void land() =>
+      _gate.complete(DnsProbeResult.success(host: 'cloudflare.com', millis: 12));
+
+  @override
+  Future<DnsProbeResult> measure() => _gate.future;
 }
 
 class _FakeNetDetails extends NetworkDetailsService {
@@ -301,6 +352,134 @@ void main() {
               'not');
 
       await tester.pump(const Duration(seconds: 2));
+    });
+
+    testWidgets(
+        'late DNS evidence landing AFTER the phone leaves Wi-Fi does not rewrite '
+        'the completed verdict', (WidgetTester tester) async {
+      // THE HOLE ROUND 2 LEFT (cold-eyes HIGH-2, 2026-07-13). The test above walks
+      // the phone off Wi-Fi but never lands any late evidence, so it never calls
+      // `_recomputeVerdict()` — and the `notOnWifi:` argument inside it went
+      // UNCOVERED. Flipping that one line from the run's stamped `_resultNotOnWifi`
+      // to the live `_notOnWifi` left the entire 4,133-test suite green.
+      //
+      // What that mutation does to a user: check your connection at home on Wi-Fi,
+      // walk out to the car, and a DNS/ISP/cloud signal that was still in flight
+      // lands on cellular. The verdict card rewrites itself to "there is no Wi-Fi
+      // link" — while the frozen Wi-Fi rows (SSID, 29 Mbps, -61 dBm) are still
+      // rendered directly beneath it. The screen contradicts itself, and the
+      // half that changed is the half that is now WRONG: the check DID run on
+      // Wi-Fi.
+      //
+      // This test lands that evidence at exactly that moment.
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        LiveOnboardingService.prefsKey: true,
+      });
+      final _MovableNetworkInfo net = _MovableNetworkInfo();
+      // Rate-less ON-Wi-Fi payload: the shape in which `notOnWifi` actually steers
+      // the verdict. See [_HomeBridgeNoRates].
+      final _HomeBridge bridge = _HomeBridgeNoRates();
+      final _LateDns dns = _LateDns();
+      final WifiSignalSampler sampler = WifiSignalSampler(
+        source: WifiInfoSource.iosShortcuts,
+        iosBridge: bridge,
+        connectionService: WifiConnectionService(
+          networkInfo: net,
+          platformOverride: TargetPlatform.iOS,
+        ),
+      );
+      addTearDown(sampler.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: TestMyConnectionScreen(
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: bridge,
+            sampler: sampler,
+            securityService: _FakeSecurity(),
+            dnsProbeService: dns,
+            networkDetailsService: _FakeNetDetails(),
+            ipGeoService: _FakeIpGeo(),
+            enableCloudApps: false,
+            onboardingService:
+                LiveOnboardingService(getStore: SharedPreferences.getInstance),
+            qualityClient: MockQualityClient(scriptedResult: _internet60()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // ---- AT HOME, ON WI-FI: run the check. DNS is still in flight. ----
+      await tester.tap(find.text('Check My Connection'));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      // SANITY, and it is load-bearing. The completed run must be on the engine's
+      // `wifiUnknown` branch (no rate → no basis) with `notOnWifi: FALSE`, because
+      // that is the only branch where the line under test can change anything. If
+      // this assertion ever stops holding, the test below silently stops testing.
+      final String onWifi = _visibleText(tester);
+      expect(onWifi, contains('Wi-Fi link not measured'),
+          reason: 'sanity: a rate-less ON-Wi-Fi run must read "could not be '
+              'read", which is TRUE — we were on Wi-Fi');
+      expect(onWifi, isNot(contains('Not connected to Wi-Fi')),
+          reason: 'sanity: the run was ON Wi-Fi');
+
+      // ---- WALK TO THE CAR. Cellular now. ----
+      net.leaveWifi();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(sampler.notOnWifi, isTrue,
+          reason: 'sanity: the resume must have flipped the LIVE probe, or this '
+              'test is not exercising the race at all');
+
+      // ---- THE IN-FLIGHT DNS LOOKUP NOW LANDS, ON CELLULAR. ----
+      // This is the line that calls `_recomputeVerdict()`.
+      dns.land();
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      final String after = _visibleText(tester);
+
+      // 1. THE LINE UNDER TEST. The verdict is the one the CHECK earned, derived
+      //    from the probe state of ITS OWN RUN. The Wi-Fi rate could not be read —
+      //    that is true, and it stays true. Rewriting it to "this device is not on
+      //    Wi-Fi" would be a FALSE statement about a check that ran on Wi-Fi.
+      expect(after, contains('Wi-Fi link not measured'),
+          reason: 'a late evidence signal must re-derive the verdict for the '
+              'check that was TAKEN — it must never rewrite a completed '
+              'on-Wi-Fi result into "there is no Wi-Fi link" because the phone '
+              'has since moved');
+      expect(after, contains('We checked your internet, but not your Wi-Fi.'),
+          reason: 'and the consumer headline must not flip to the not-on-Wi-Fi '
+              'wording either: the check DID have Wi-Fi');
+
+      // 2. The screen does not contradict itself: the link the verdict is ABOUT
+      //    is still rendered alongside it, not blanked into "there is no Wi-Fi
+      //    link to report".
+      expect(after, contains('KeithHome'),
+          reason: 'the verdict and the reading it was derived from must survive '
+              'together or not at all');
+      expect(after, isNot(contains('there is no Wi-Fi link to report')),
+          reason: 'there WAS a Wi-Fi link. Saying otherwise discards a real '
+              'reading and contradicts the SSID still on screen.');
+
+      // 3. The result must never claim the check ran off Wi-Fi. It did not.
+      expect(
+        after.toLowerCase(),
+        isNot(contains('was not connected to wi-fi when the check ran')),
+      );
+
+      // 4. The LIVE card still tells the truth about RIGHT NOW — both truths
+      //    coexist, one dated and one live, which is the whole point of F4.
+      expect(after, contains("You're not connected to Wi-Fi"));
     });
   });
 }

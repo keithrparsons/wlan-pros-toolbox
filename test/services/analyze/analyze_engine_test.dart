@@ -32,8 +32,9 @@ void main() {
       // text, so R-50 has no analogue and is intentionally omitted (see the note
       // in analyze_rules.dart). Every other table rule is ported → 32 rules,
       // plus R-06 (the honest "you are online" verdict added 2026-06-17 for the
-      // stalled-speed-test-but-reachable case) → 33.
-      expect(kAnalyzeRules.length, 33);
+      // stalled-speed-test-but-reachable case) → 33, plus R-05N (the not-on-Wi-Fi
+      // half of the `wifiUnknown` verdict, split out 2026-07-13 — see below) → 34.
+      expect(kAnalyzeRules.length, 34);
       final Set<FindingCategory> cats =
           kAnalyzeRules.map((r) => r.category).toSet();
       expect(cats.length, FindingCategory.values.length); // all 9
@@ -46,6 +47,36 @@ void main() {
     test('every rule id is unique', () {
       final List<String> ids = kAnalyzeRules.map((r) => r.id).toList();
       expect(ids.toSet().length, ids.length);
+    });
+
+    test('no rule tells a user with NO Wi-Fi link to install the Wi-Fi Shortcut',
+        () {
+      // THE MECHANICAL GUARD (2026-07-13). Suppressing R-31 was not enough: R-05
+      // carried the SAME advice ("install the companion Shortcut") through a
+      // different rule, and Keith hit it on a cellular-only iPhone. Rather than
+      // patch rules one at a time as they are discovered, assert the property
+      // over the WHOLE library: fire every rule that a not-on-Wi-Fi device can
+      // fire, and let no Shortcut/capture advice through.
+      const AnalyzeInput cellularOnly = AnalyzeInput(
+        verdict: WifiVsInternetVerdict.wifiUnknown,
+        platformIsIos: true,
+        wifiSignalCaptured: false,
+        notOnWifi: true,
+        internetMeasured: true,
+        downloadMbps: 60,
+        uploadMbps: 20,
+      );
+      final AnalysisReport report = AnalyzeEngine.analyze(cellularOnly);
+
+      for (final AnalysisFinding f in report.findings) {
+        final String text = f.explanation.toLowerCase();
+        expect(text, isNot(contains('shortcut')),
+            reason: '${f.ruleId} tells a device with no Wi-Fi link to use the '
+                'companion Shortcut. No Shortcut can read a link that does not '
+                'exist (GL-005, two kinds of null).');
+        expect(text, isNot(contains('capture wi-fi details')),
+            reason: '${f.ruleId} offers a capture for a link that is not there');
+      }
     });
 
     test('all rules are ratified, no rule is flagged pendingRatification', () {
@@ -94,6 +125,30 @@ void main() {
             verdict: WifiVsInternetVerdict.onlineUnmeasured)),
         contains('R-06'),
       );
+    });
+
+    test('wifiUnknown splits on WHY: R-05 when the read failed, R-05N when there '
+        'is no Wi-Fi link', () {
+      // The SAME verdict, two different truths (GL-005). R-05's copy ("one side
+      // could not be measured", "install the companion Shortcut") is correct for a
+      // link we failed to READ, and false for a link that does not EXIST. Exactly
+      // one of the two must fire — never both, never neither.
+      final Set<String> readFailed = _firedIds(const AnalyzeInput(
+        verdict: WifiVsInternetVerdict.wifiUnknown,
+      )).toSet();
+      expect(readFailed, contains('R-05'));
+      expect(readFailed, isNot(contains('R-05N')));
+
+      final Set<String> noLink = _firedIds(const AnalyzeInput(
+        verdict: WifiVsInternetVerdict.wifiUnknown,
+        notOnWifi: true,
+      )).toSet();
+      expect(noLink, contains('R-05N'),
+          reason: 'a cellular-only phone must get the honest "you are not on '
+              'Wi-Fi, that is not a failed reading" finding');
+      expect(noLink, isNot(contains('R-05')),
+          reason: 'and must NOT be told one side "could not be measured" or to '
+              'install a Shortcut to read a link that does not exist');
     });
 
     test(

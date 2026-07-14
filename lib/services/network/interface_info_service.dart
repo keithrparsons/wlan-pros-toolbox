@@ -38,6 +38,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 
 import 'connected_ap.dart';
 import 'connected_ap_cache.dart';
+import 'wifi_connection_service.dart';
 import 'wifi_details_bridge.dart';
 import 'wifi_info_adapter.dart';
 
@@ -97,6 +98,7 @@ class WifiLinkInfo {
     this.hardwareAddress,
     this.locationNeeded = false,
     this.cachedAt,
+    this.notOnWifi = false,
   });
 
   final String? ssid;
@@ -133,6 +135,21 @@ class WifiLinkInfo {
   /// as effectively cold (the cache is bypassed) so stale identity is never
   /// shown as current, so a non-null [cachedAt] is always within that window.
   final DateTime? cachedAt;
+
+  /// True when the connection probe POSITIVELY reports the device is not on Wi-Fi
+  /// (cellular-only iPhone, Wi-Fi radio off). Every other field on this object is
+  /// then null, and the UI must say "not connected to Wi-Fi" rather than
+  /// "not available on this platform" — the two are different truths (GL-005).
+  ///
+  /// WHY (cold-eyes MEDIUM-3, 2026-07-13). The identity read was gated ONLY on a
+  /// 5-minute freshness timer, never on connectivity. Inside that window, a
+  /// cellular-only iPhone rendered the PREVIOUS network's SSID and BSSID as its
+  /// CURRENT Wi-Fi link — and the iOS cold-cache path did it with `cachedAt: null`,
+  /// which by this file's own rule means it got NO "as of HH:MM" treatment at all.
+  /// A remembered reading was presented as a fresh one, with no disclosure and no
+  /// time bound. A timer cannot tell you whether the link still exists; only the
+  /// probe can.
+  final bool notOnWifi;
 
   /// True when the Wi-Fi identity on this snapshot came from the shared cache
   /// (a remembered reading) rather than a fresh native/live read.
@@ -188,16 +205,27 @@ class InterfaceInfoService {
     ConnectedApRead? connectedApReader,
     ConnectedApCache? connectedApCache,
     DateTime Function()? now,
+    WifiConnectionService? connectionService,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
         _interfaceLister = interfaceLister ?? _defaultLister,
         _cache = connectedApCache ?? ConnectedApCache.instance,
         _readConnectedAp = connectedApReader ?? _defaultConnectedApRead,
-        _now = now ?? DateTime.now;
+        _now = now ?? DateTime.now,
+        _connection = connectionService ??
+            WifiConnectionService(networkInfo: networkInfo ?? NetworkInfo());
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
   final ConnectedApCache _cache;
   final ConnectedApRead _readConnectedAp;
+
+  /// The honest not-on-Wi-Fi probe. Consulted BEFORE the identity cache, so a
+  /// remembered SSID/BSSID is never served as the current link on a device that
+  /// is demonstrably off Wi-Fi. Returns [WifiConnectionStatus.unknown] on every
+  /// ambiguous read (and on every non-iOS platform), which leaves the prior
+  /// behavior exactly as it was — this gate only ever SUPPRESSES on a positive
+  /// signal, never on missing data (GL-005).
+  final WifiConnectionService _connection;
 
   /// Wall-clock source, injectable in tests so cache-staleness can be exercised
   /// deterministically without sleeping.
@@ -293,6 +321,16 @@ class InterfaceInfoService {
     );
   }
 
+  /// True ONLY on a positive not-on-Wi-Fi verdict. A throwing probe is treated as
+  /// ambiguous (false → carry on as before), never as proof of no Wi-Fi.
+  Future<bool> _isNotOnWifi() async {
+    try {
+      return await _connection.status() == WifiConnectionStatus.notOnWifi;
+    } on Object {
+      return false;
+    }
+  }
+
   Future<List<NetworkInterfaceInfo>> _readInterfaces() async {
     final List<NetworkInterface> raw;
     try {
@@ -319,6 +357,28 @@ class InterfaceInfoService {
   }
 
   Future<WifiLinkInfo> _readWifi() async {
+    // THE CONNECTIVITY GATE, BEFORE ANYTHING ELSE (cold-eyes MEDIUM-3, 2026-07-13).
+    //
+    // Everything below — the warm cache, and the iOS `readLatest()` cold path —
+    // answers "what was the last Wi-Fi network we saw?", and then this service
+    // presents that answer as "the Wi-Fi link you are on NOW". Those are the same
+    // sentence only while the device is actually on Wi-Fi. The staleness ceiling
+    // below bounds how OLD a remembered reading may be; it says nothing about
+    // whether the link still EXISTS. On a cellular-only iPhone, inside the
+    // 5-minute window, this screen rendered the previous network's SSID and BSSID
+    // as the current link — and on the iOS path with `cachedAt: null`, so it did
+    // not even get the "as of HH:MM" disclosure. A timer is not a connectivity
+    // check.
+    //
+    // POSITIVE SIGNAL ONLY. `status()` returns `unknown` for every ambiguous read
+    // and on every platform except iOS, and `unknown` falls straight through to
+    // the unchanged behavior below. So this can suppress a real reading only when
+    // the device is DEMONSTRABLY off Wi-Fi — never merely because a read failed
+    // (GL-005). A wired Mac is untouched.
+    if (await _isNotOnWifi()) {
+      return const WifiLinkInfo(notOnWifi: true);
+    }
+
     // ADDRESSING from network_info_plus (the native AP subsystem is identity/RF
     // only). Each call is wrapped: a denied permission or unsupported platform
     // throws a PlatformException; we swallow it to null rather than fail.

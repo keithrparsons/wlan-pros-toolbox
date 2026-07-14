@@ -82,8 +82,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/cellular_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_glance_card.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
@@ -299,6 +301,16 @@ List<_Case> _glanceCases() {
           NetworkGlanceCard(
             platformOverride: p.target,
             apCache: cache,
+            // ON WI-FI. This invariant is about PLATFORM CAPABILITY ("can this
+            // platform obtain an SSID?"), not about connectivity. The card now
+            // also consults the not-on-Wi-Fi probe, so the precondition has to be
+            // stated — otherwise the two get conflated, and "the platform cannot
+            // read it" and "there is no network to read" are exactly the two
+            // kinds of null this whole effort exists to keep apart (GL-005).
+            connectionService: WifiConnectionService(
+              networkInfo: _OnWifiNetworkInfo(),
+              platformOverride: p.target,
+            ),
             // On iOS these MUST NOT be consulted (the reading is cached); on the
             // native sources the fetcher IS the read.
             wifiFetcher: p.wifi == WifiInfoSource.iosShortcuts
@@ -626,4 +638,16 @@ void main() {
       );
     }
   });
+}
+
+/// A device that IS on Wi-Fi (the Wi-Fi interface has an IPv4). Keeps the
+/// platform-capability invariant about the PLATFORM, not about whether this
+/// particular test device happens to have a link.
+class _OnWifiNetworkInfo implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.50';
+  @override
+  Future<String?> getWifiIPv6() async => 'fe80::10b4:5ba5:5d42:a691%en0';
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

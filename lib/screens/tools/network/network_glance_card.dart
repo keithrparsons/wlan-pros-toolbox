@@ -56,6 +56,7 @@ import '../../../services/network/connected_ap_cache.dart';
 import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/lan_discovery/subnet_seed.dart';
 import '../../../services/network/public_ip_service.dart';
+import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/wifi_info_adapter.dart';
 import '../../../services/network/wifi_info_service.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -171,7 +172,20 @@ class NetworkGlanceCard extends StatefulWidget {
     this.platformOverride,
     this.apCache,
     this.liveReadingRequester,
+    this.connectionService,
   });
+
+  /// The honest not-on-Wi-Fi probe, consulted before the iOS cache lane serves a
+  /// remembered SSID/RSSI as the CURRENT network. Null in production → a real
+  /// [WifiConnectionService]. A test injects one over a fake [NetworkInfo] to
+  /// drive the cellular-only branch deterministically.
+  ///
+  /// WHY (cold-eyes MEDIUM-3, 2026-07-13): the iOS lane gated the cached reading
+  /// on a 5-MINUTE TIMER and nothing else, so for five minutes after leaving
+  /// Wi-Fi the home card presented the previous network's SSID and `-61 dBm` as
+  /// the current network and signal. A freshness timer bounds how OLD a reading
+  /// is; it cannot tell you the link is GONE. Only the probe can.
+  final WifiConnectionService? connectionService;
 
   /// Reads the connected AP (SSID + RSSI). Null in production → the per-platform
   /// [WifiInfoAdapter] is used. A test injects a fake that returns a scripted
@@ -300,6 +314,32 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
   Future<void> _loadWifi() async {
     switch (_wifiSource) {
       case WifiInfoSource.iosShortcuts:
+        // NOT ON WI-FI → SERVE NOTHING FROM THE CACHE (cold-eyes MEDIUM-3).
+        //
+        // The cache lane below is gated ONLY on a 5-minute freshness timer, and a
+        // timer cannot know the link is gone. Within that window a cellular-only
+        // iPhone rendered the PREVIOUS network's SSID and `-61 dBm` on the home
+        // screen as its CURRENT network and signal. Ask the probe first.
+        //
+        // POSITIVE SIGNAL ONLY: `unknown` (an ambiguous read, or any non-iOS
+        // platform) falls through to the unchanged cache lane, so this can only
+        // suppress a reading when the device is DEMONSTRABLY off Wi-Fi (GL-005).
+        if (await _isNotOnWifi()) {
+          if (!mounted) return;
+          setState(() {
+            _iosNeedsLiveReading = false;
+            _iosLiveReadInFlight = false;
+            _snapshot = _snapshot.copyWith(
+              // The honest state, and NOT `awaitingLiveRead` ("Not read yet" +
+              // a "Get a live reading" button): offering a live read for a link
+              // that does not exist is the same false affordance the Shortcut
+              // gates removed from Test My Connection (F2).
+              ssid: const GlanceField.unavailable('Not connected to Wi-Fi'),
+              signal: const GlanceField.unavailable('Not connected to Wi-Fi'),
+            );
+          });
+          return;
+        }
         // iOS: the app cannot AUTO-read the link (the reading comes from a
         // user-installed Shortcut that must not auto-fire). But the Wi-Fi
         // Information tool writes every reading into the shared
@@ -413,10 +453,30 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
     return adapter.nameAuthorizationStatus();
   }
 
+  /// True ONLY on a positive not-on-Wi-Fi verdict. A throwing probe is ambiguous
+  /// (false → carry on as before), never proof of no Wi-Fi (GL-005).
+  Future<bool> _isNotOnWifi() async {
+    try {
+      // The probe MUST run on the same platform the card resolved its Wi-Fi
+      // source from. Letting it fall back to the ambient `defaultTargetPlatform`
+      // made the card think "iOS" while the probe thought "host", which is how a
+      // platform-conditional verdict silently disagrees with the UI it drives.
+      final WifiConnectionService probe = widget.connectionService ??
+          WifiConnectionService(platformOverride: widget.platformOverride);
+      return await probe.status() == WifiConnectionStatus.notOnWifi;
+    } on Object {
+      return false;
+    }
+  }
+
   /// iOS Lane 1 — SSID + Signal from the shared [ConnectedApCache] (READ-ONLY;
   /// never fires the Shortcut). A recent reading renders the real SSID + Signal,
   /// matching the Wi-Fi Information tool. A cold/stale cache drops to the idle
   /// "Not read yet" state and flags the "Get a live reading" affordance.
+  ///
+  /// ONLY REACHED WHEN THE PROBE HAS NOT POSITIVELY SAID "off Wi-Fi" — see the
+  /// gate in [_loadWifi]. The freshness check below bounds how OLD a reading may
+  /// be; it is not, and never was, a connectivity check.
   void _loadIosWifiFromCache() {
     if (!mounted) return;
     final ConnectedAp? cached = _freshCachedReading();

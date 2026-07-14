@@ -96,7 +96,36 @@ enum AxisStatus {
   /// "Couldn't check" — this side could not be measured/read on this device
   /// (neutral/muted token, NOT a fault color; GL-005 — never force a tier onto
   /// missing data).
+  ///
+  /// THIS MEANS "WE TRIED AND FAILED", NOT "THERE IS NOTHING HERE". For an axis
+  /// that does not exist at all, use [notApplicable] — see the note there.
   unknown,
+
+  /// "Not connected" — there is NOTHING on this axis to measure. Not a failed
+  /// read: a KNOWN, POSITIVE answer that the link is absent (the Wi-Fi axis on a
+  /// cellular-only phone, where [WifiVsInternetResult.notOnWifi] is true).
+  /// Neutral/muted token, like [unknown] — it is not a fault.
+  ///
+  /// WHY THIS EXISTS (Keith, 2026-07-13, on a cellular-only iPhone). The result
+  /// header read `Wi-Fi: Couldn't check` — which is FALSE. The app KNEW there was
+  /// no Wi-Fi; it had said so correctly on the Wi-Fi Information screen seconds
+  /// earlier. "Couldn't check" told him the app had failed to read something that
+  /// was there, and sent him looking for a problem that did not exist.
+  ///
+  /// This is the THIRD occurrence of the same missing state in this codebase —
+  /// [[feedback_unsourced_is_not_invalid]], the "two kinds of null":
+  ///   1. the stale Wi-Fi rate shown under a live badge,
+  ///   2. the "install the companion Shortcut" prompt for a link that cannot exist,
+  ///   3. this chip.
+  /// Each time, the model could say "measured" or "couldn't read", and had no way
+  /// to say "there is nothing here to measure". The state belongs in the MODEL, so
+  /// that every surface that renders an axis is forced to answer for it — a string
+  /// swap at the widget layer would just regress the next time someone adds a
+  /// surface.
+  ///
+  /// [unknown] stays reserved for a GENUINE failure to read or measure (a Wi-Fi
+  /// link the platform will not expose; a speed test that stalled).
+  notApplicable,
 }
 
 /// The absolute data-rate thresholds (Mbps) that bucket a measured rate into an
@@ -231,8 +260,18 @@ class ConsumerVerdictMapper {
     // The two chips are absolute, rate-driven, and verdict-independent. Compute
     // both tiers once from the engine's measured rates; null rates (unmeasured
     // Wi-Fi link or unmeasured internet) honestly bucket to `unknown` (GL-005).
-    final AxisStatus wifiTier =
-        AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
+    //
+    // EXCEPT when the probe POSITIVELY says there is no Wi-Fi link. Then the Wi-Fi
+    // axis is not "unmeasured", it is NOT APPLICABLE — there is nothing there to
+    // measure, and the app knows it. Bucketing that to `unknown` rendered
+    // `Wi-Fi: Couldn't check` on Keith's cellular-only iPhone: a false claim of a
+    // failed read about a link the app had already correctly reported as absent.
+    // The rate is null in both cases, so the rate ALONE cannot tell them apart —
+    // which is exactly why the not-on-Wi-Fi probe has to reach this decision.
+    // See [AxisStatus.notApplicable].
+    final AxisStatus wifiTier = engineResult.notOnWifi
+        ? AxisStatus.notApplicable
+        : AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
     final AxisStatus internetTier =
         AxisStatusThresholds.tierFor(engineResult.internetMbps);
 

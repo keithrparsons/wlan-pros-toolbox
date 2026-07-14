@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_glance_card.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
@@ -19,6 +20,7 @@ import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
 import 'package:wlan_pros_toolbox/services/network/json_http_client.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
 import 'package:wlan_pros_toolbox/services/network/public_ip_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -99,6 +101,14 @@ void main() {
     await tester.pumpWidget(_host(NetworkGlanceCard(
       platformOverride: TargetPlatform.iOS,
       apCache: cache,
+      // ON WI-FI. This precondition used to be implicit, and the test was weaker
+      // for it: "a cached reading renders" is only correct WHILE THE LINK EXISTS.
+      // Now that the card consults the connectivity probe, the test has to say
+      // which world it is in — so it does (cold-eyes MEDIUM-3, 2026-07-13).
+      connectionService: WifiConnectionService(
+        networkInfo: _OnWifiNetworkInfo(),
+        platformOverride: TargetPlatform.iOS,
+      ),
       // wifiFetcher must NOT be consulted on iOS (the reading comes from the
       // cache); a call here would throw and fail the test.
       wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
@@ -122,6 +132,50 @@ void main() {
   });
 
   testWidgets(
+      'iOS, CELLULAR-ONLY: a fresh cached reading is NOT served as the current '
+      'network', (WidgetTester tester) async {
+    // COLD-EYES MEDIUM-3 (2026-07-13). The iOS lane was gated on a 5-MINUTE
+    // FRESHNESS TIMER and nothing else. A timer bounds how OLD a reading is; it
+    // cannot know the LINK IS GONE. So for five minutes after leaving Wi-Fi, the
+    // home screen's glance card showed the previous network's SSID and -61 dBm as
+    // the CURRENT network and signal — the same stale-reading lie as the original
+    // bug, on the app's front door.
+    //
+    // The cache here is FRESH by the timer (written this instant) and would have
+    // been served. The probe says there is no Wi-Fi. The probe wins.
+    final ConnectedApCache cache = ConnectedApCache()
+      ..update(const ConnectedAp(ssid: 'KeithHome', rssiDbm: -61));
+
+    await tester.pumpWidget(_host(NetworkGlanceCard(
+      platformOverride: TargetPlatform.iOS,
+      apCache: cache,
+      connectionService: WifiConnectionService(
+        networkInfo: _CellularOnlyNetworkInfo(),
+        platformOverride: TargetPlatform.iOS,
+      ),
+      wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
+      liveReadingRequester: () async =>
+          throw StateError('must not fire on mount'),
+      seedDeriver: _seed(),
+      publicIpService: _publicIp('203.0.113.7'),
+      ipGeoService: _geo('Comcast'),
+    )));
+    await tester.pumpAndSettle();
+
+    expect(find.text('KeithHome'), findsNothing,
+        reason: 'the previous network must not render as the current one');
+    expect(find.text('-61 dBm'), findsNothing,
+        reason: 'a remembered signal must not render as the current signal');
+
+    // And it must say the TRUE thing, not merely go quiet.
+    expect(find.text('Not connected to Wi-Fi'), findsWidgets);
+
+    // No "Get a live reading" affordance: there is no link to read, and offering
+    // one is the same false affordance the Shortcut gates removed from TMC (F2).
+    expect(find.text('Get a live reading'), findsNothing);
+  });
+
+  testWidgets(
       'iOS + cold cache: shows "Get a live reading" (NOT "Not reported"); '
       'firing it populates SSID + Signal from the returned reading',
       (WidgetTester tester) async {
@@ -129,6 +183,14 @@ void main() {
     await tester.pumpWidget(_host(NetworkGlanceCard(
       platformOverride: TargetPlatform.iOS,
       apCache: cache,
+      // ON WI-FI, cold cache. The "Get a live reading" affordance is honest ONLY
+      // because there is a link to read — off Wi-Fi it is a false offer, which is
+      // asserted in the cellular-only test above. Stating the precondition that
+      // this test always silently depended on (cold-eyes MEDIUM-3, 2026-07-13).
+      connectionService: WifiConnectionService(
+        networkInfo: _OnWifiNetworkInfo(),
+        platformOverride: TargetPlatform.iOS,
+      ),
       wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
       // A fake live requester standing in for the Wi-Fi Information tool's
       // Shortcut flow: returns a real reading when the user taps.
@@ -163,6 +225,13 @@ void main() {
     await tester.pumpWidget(_host(NetworkGlanceCard(
       platformOverride: TargetPlatform.iOS,
       apCache: cache,
+      // ON WI-FI (the precondition this test always relied on implicitly): the
+      // affordance is honest because a link exists and the Shortcut is the thing
+      // that is missing. Off Wi-Fi, NOTHING is missing but the network itself.
+      connectionService: WifiConnectionService(
+        networkInfo: _OnWifiNetworkInfo(),
+        platformOverride: TargetPlatform.iOS,
+      ),
       // Requester returns null: no reading (the tool's install fall-through ran).
       liveReadingRequester: () async => null,
       seedDeriver: _seed(),
@@ -278,4 +347,28 @@ void main() {
 
     expect(find.text('No local IPv4'), findsOneWidget);
   });
+}
+
+/// A cellular-only iPhone: the Wi-Fi interface carries no address of either
+/// family. The only shape that may assert `notOnWifi` — see the measured KNOWN
+/// LIMITS in [WifiConnectionService].
+class _CellularOnlyNetworkInfo implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => null;
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+/// A device that IS on Wi-Fi: the Wi-Fi interface has an IPv4 address, which is a
+/// definitive on-Wi-Fi signal. Used by the tests whose subject is the CACHE, so
+/// the connectivity probe is not what they are (accidentally) testing.
+class _OnWifiNetworkInfo implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.50';
+  @override
+  Future<String?> getWifiIPv6() async => 'fe80::10b4:5ba5:5d42:a691%en0';
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

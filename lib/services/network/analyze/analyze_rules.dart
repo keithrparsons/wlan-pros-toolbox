@@ -175,13 +175,37 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     id: 'R-05',
     category: FindingCategory.verdict,
     severity: FindingSeverity.important,
-    condition: _isVerdictUnknown,
+    condition: _isVerdictUnknownReadFailed,
     responseDraft:
         "This is a partial read. One side could not be measured, so the check "
         "cannot yet tell you whether your Wi-Fi or your internet is the limit. "
         "Run it again while you are connected over Wi-Fi with the internet "
         "live. On iPhone, install the companion Shortcut first so the app can "
         "read your Wi-Fi details.",
+  ),
+  // R-05N — the SAME verdict (`wifiUnknown`), the OTHER kind of null.
+  //
+  // R-05 above says "one side could not be measured" and "install the companion
+  // Shortcut". On a cellular-only phone BOTH halves of that are false: nothing
+  // failed to measure, and no Shortcut can read a link that does not exist. Keith
+  // hit this on 2026-07-13 — the Analyze screen sent him to install a Shortcut to
+  // fix a Wi-Fi problem he did not have. It is the SAME wrong-kind-of-null as
+  // R-31 (see [_wifiNotCaptured]), reached through a different rule, which is
+  // exactly why suppressing R-31 alone was not enough.
+  //
+  // GL-005, two kinds of null: "we could not read it" and "it is not there" are
+  // different findings and get different copy.
+  AnalyzeRule(
+    id: 'R-05N',
+    category: FindingCategory.verdict,
+    severity: FindingSeverity.important,
+    condition: _isVerdictUnknownNotOnWifi,
+    responseDraft:
+        "You are not connected to Wi-Fi, so there was no Wi-Fi link to check. "
+        "That is not a failed reading, it is simply the state of the device: "
+        "the internet figures in this report came over your cellular or wired "
+        "connection. To compare your Wi-Fi against your internet, join a Wi-Fi "
+        "network and run the check again.",
   ),
   // Honest "you're online" verdict (Keith 2026-06-17). Fires when the speed
   // test stalled (throughput unmeasurable even after the retry) but the device
@@ -595,6 +619,19 @@ bool _isVerdictBothHealthy(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.bothHealthy;
 bool _isVerdictUnknown(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.wifiUnknown;
+
+/// R-05 — the `wifiUnknown` verdict when the Wi-Fi side could not be READ (a
+/// platform that will not expose it, an uncaptured RF block). "One side could not
+/// be measured" is true here, and the Shortcut advice is actionable.
+bool _isVerdictUnknownReadFailed(AnalyzeInput i) =>
+    _isVerdictUnknown(i) && !i.notOnWifi;
+
+/// R-05N — the SAME verdict when there IS no Wi-Fi link. Nothing failed; there is
+/// nothing there. Mutually exclusive with [_isVerdictUnknownReadFailed], so
+/// exactly one of R-05 / R-05N fires on a `wifiUnknown` verdict, never both and
+/// never neither.
+bool _isVerdictUnknownNotOnWifi(AnalyzeInput i) =>
+    _isVerdictUnknown(i) && i.notOnWifi;
 bool _isVerdictOnlineUnmeasured(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.onlineUnmeasured;
 

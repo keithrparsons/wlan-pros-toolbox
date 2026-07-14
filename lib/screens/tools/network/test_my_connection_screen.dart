@@ -1918,7 +1918,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// so the hero never asserts a margin from a figure it does not have (GL-005).
   String? _sameTierHero(ConsumerVerdict verdict) {
     final AxisStatus tier = verdict.wifiStatus;
-    if (tier != verdict.internetStatus || tier == AxisStatus.unknown) {
+    // Only a REAL measured tier (Strong/Moderate/Weak) may produce the "both
+    // sides are X" hero. `unknown` (failed read) and `notApplicable` (no Wi-Fi
+    // link at all) are not tiers, and comparing a side that does not exist is
+    // meaningless — a cellular-only phone must never read "Both sides are …".
+    if (tier != verdict.internetStatus ||
+        tier == AxisStatus.unknown ||
+        tier == AxisStatus.notApplicable) {
       return null;
     }
 
@@ -1937,8 +1943,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   }
 
   /// The lowercase tier word for the same-tier hero sentence ("strong" /
-  /// "moderate" / "weak"). [AxisStatus.unknown] never reaches here — the
-  /// same-tier branch excludes it — so it defers to the chip word defensively.
+  /// "moderate" / "weak"). Neither [AxisStatus.unknown] nor
+  /// [AxisStatus.notApplicable] reaches here — [_sameTierHero] excludes both —
+  /// so they defer to the chip word defensively.
   static String _lowerTierWord(AxisStatus tier) {
     switch (tier) {
       case AxisStatus.strong:
@@ -1948,6 +1955,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       case AxisStatus.weak:
         return 'weak';
       case AxisStatus.unknown:
+      case AxisStatus.notApplicable:
         return _TwoAxisChips.word(tier);
     }
   }
@@ -2855,6 +2863,13 @@ class _TwoAxisChips extends StatelessWidget {
         return 'Weak';
       case AxisStatus.unknown:
         return "Couldn't check";
+      case AxisStatus.notApplicable:
+        // NOT "Couldn't check" (Keith, 2026-07-13, cellular-only iPhone). The app
+        // KNOWS there is no Wi-Fi — it is not a read that failed, it is a link
+        // that is not there. Saying "Couldn't check" here claims a failure that
+        // did not happen and sends the user hunting for it. See
+        // [AxisStatus.notApplicable].
+        return 'Not connected';
     }
   }
 
@@ -2928,9 +2943,16 @@ class _StatusChip extends StatelessWidget {
       case AxisStatus.weak:
         return colors.statusDanger;
       case AxisStatus.unknown:
+      case AxisStatus.notApplicable:
         // Light: neutral textSecondary #4A4A4A fill, matching the _GradeChip
         // no-hue fills across TMC / wifi_info / net_quality. Dark stays on
         // textTertiary so the dark render is byte-identical.
+        //
+        // `notApplicable` shares the NEUTRAL treatment on purpose: "there is no
+        // Wi-Fi here" is not a fault and must not wear a danger hue (§8.13 rule
+        // 2 — never force a fault color onto an absent value, GL-005). The WORD
+        // ("Not connected") carries the meaning, so the two neutral states stay
+        // distinguishable without color (WCAG 2.2 SC 1.4.1).
         return colors.isLight ? colors.textSecondary : colors.textTertiary;
     }
   }
@@ -2957,6 +2979,14 @@ class _StatusChip extends StatelessWidget {
         // not determined", which is the truth. Same outlined glyph the footer
         // uses, so it reads familiar and non-threatening.
         return Icons.help_outline;
+      case AxisStatus.notApplicable:
+        // A DIFFERENT glyph from `unknown` on purpose: these are two different
+        // truths and the chip must not blur them. `help_outline` ("we don't
+        // know") would be as wrong as the "Couldn't check" word it replaces — we
+        // DO know. `link_off` reads "not connected" without the fault load that
+        // §1.1 rules out for error / cancel / block / remove. Axis-agnostic, so it
+        // stays correct if a future axis is ever legitimately absent.
+        return light ? Icons.link_off : Icons.link_off_outlined;
     }
   }
 
@@ -3170,8 +3200,15 @@ class _ComparisonCard extends StatelessWidget {
     ].reduce((a, b) => a > b ? a : b);
     final double safeMax = scaleMax <= 0 ? 1 : scaleMax;
 
-    final String wifiValue =
-        usable != null ? '${usable.round()} Mbps' : 'Unavailable';
+    // "Unavailable" is the right word for a figure we FAILED to obtain. It is the
+    // wrong word for a link that does not exist — that is the same two-kinds-of-null
+    // error as the `Wi-Fi: Couldn't check` chip (Keith, 2026-07-13). When the probe
+    // positively says there is no Wi-Fi, the Wi-Fi side of this comparison is NOT
+    // APPLICABLE, and there is nothing to compare against. Read it off the model's
+    // own flag, not off a null rate — the null cannot tell the two apart.
+    final String wifiValue = result.notOnWifi
+        ? 'Not connected'
+        : (usable != null ? '${usable.round()} Mbps' : 'Unavailable');
     final String internetValue =
         internet != null ? '${internet.round()} Mbps' : 'Unavailable';
 
@@ -4332,6 +4369,31 @@ class _WifiLinkSection extends StatelessWidget {
     final ConnectedAp? a = ap;
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
+
+    // NO WI-FI LINK AT ALL (Keith, 2026-07-13, cellular-only iPhone). Before this,
+    // a card headed "Your Wi-Fi link" rendered SEVEN "Unavailable" rows — Tx rate,
+    // Rx rate, Usable capacity, SNR, RSSI, Channel, Standard — plus the caption
+    // "55% of no rate reported", which is not a sentence a person should ever be
+    // shown. Every one of those rows says "we tried to read this and could not".
+    // None of them is true: there was nothing to read.
+    //
+    // This is the SAME two-kinds-of-null error as the `Wi-Fi: Couldn't check` chip
+    // and the stale-rate bug before it (GL-005). Name the real state once, and
+    // render no rows — a row with no possible value is not an honest row.
+    if (result.notOnWifi) {
+      return _SectionCard(
+        title: 'Your Wi-Fi link',
+        children: <Widget>[
+          Text(
+            'This device is not connected to Wi-Fi, so there is no Wi-Fi link '
+            'to report. The internet figures below were measured over your '
+            'cellular or wired connection.',
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+        ],
+      );
+    }
+
     // iOS, no RF captured: lead the section with the honest capture affordance
     // instead of a grid of "Unavailable". The native identity rows (SSID/BSSID/
     // Security, read via NEHotspotNetwork) still render below when available, so
