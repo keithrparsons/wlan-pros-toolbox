@@ -417,15 +417,46 @@ class WifiSignalSampler extends ChangeNotifier {
         final WifiMonitorController? c = _controller;
         if (c == null) return;
         await c.load(nativeSsid: nativeSsid);
-        // If load() resumed the controller to `streaming` purely from a stale
-        // persisted monitoring flag (no deliberate in-session start, so no live
-        // producer), tear that phantom stream down and clear the flag. This is
-        // the iOS first-run fix: without it the card would read `isStreaming` and
-        // render a dead "LIVE" header with no data behind it. We do NOT auto-fire
-        // the Shortcut here — we drop back to the honest idle state so the card
-        // shows the actionable Start control, which the user taps to begin.
-        if (!_startedThisSession && c.isStreaming) {
-          await c.stopMonitoring();
+        // ====================================================================
+        // ADOPT A LIVE LOOP INHERITED ACROSS A SCENE REBUILD.
+        // (2026-07-14, Keith device — the ~5-second death.)
+        //
+        // THIS BLOCK USED TO BE THE KILLER:
+        //
+        //     if (!_startedThisSession && c.isStreaming) {
+        //       await c.stopMonitoring();   // <- destroyed a HEALTHY loop
+        //     }
+        //
+        // Starting the feed BACKGROUNDS THE APP INTO SHORTCUTS BY DESIGN — that is
+        // how the recursion is kicked off. Returning can REBUILD THE SCENE, which
+        // constructs a FRESH sampler whose `_startedThisSession` is false, over a
+        // monitoring flag that is still true BECAUSE THE LOOP IS GENUINELY RUNNING.
+        // This guard read that as "a stale leftover from a previous session" and
+        // cleared the flag — killing the recursion the user had just started. It
+        // survived exactly as long as it took Keith to walk back from the Shortcuts
+        // app: about five seconds, twice, on his phone.
+        //
+        // `_startedThisSession` is a fact about THE WIDGET. Whether a loop is
+        // running is a fact about THE LOOP. Using the first to decide the second is
+        // the entire bug, and no amount of tuning this flag can fix a category
+        // error.
+        //
+        // THE DECISION HAS MOVED TO [WifiMonitorController.load], where it belongs:
+        // it adopts the stream only when the APP GROUP'S PAYLOAD STAMP proves a
+        // recent delivery, and tears the flag down otherwise. That witness lives
+        // BELOW the app's lifecycle, so it survives the very rebuild that broke
+        // this — and Wi-Fi Information, which drives the controller DIRECTLY and
+        // never had this guard at all, now inherits the same protection from the
+        // same place.
+        //
+        // So by the time we get here the controller has already settled it. If it
+        // is streaming, there is a REAL PRODUCER behind the flag, and this session
+        // has a live feed — whether this widget started it or inherited it. Record
+        // that, so [isStreaming] reports the truth and the card renders LIVE
+        // instead of an actionable Start control over a running stream.
+        // ====================================================================
+        if (c.isStreaming) {
+          _startedThisSession = true;
           _safeNotify();
         }
       case WifiInfoSource.macosCoreWlan:

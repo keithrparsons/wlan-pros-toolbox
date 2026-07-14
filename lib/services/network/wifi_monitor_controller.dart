@@ -296,12 +296,106 @@ class WifiMonitorController extends ChangeNotifier {
     } else if (!_hasEverReceived) {
       _phase = WifiMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
-      // App relaunched while a loop was active -> resume listening.
-      _startListening();
+      // ======================================================================
+      // ADOPT A LIVE LOOP, TEAR DOWN A DEAD ONE. (2026-07-14, Keith device.)
+      //
+      // This branch used to be a bare `_startListening()` — resume streaming from
+      // the persisted flag ALONE, with NO check that anything is still producing.
+      // The flag says "a loop was started". It does NOT say "a loop is running".
+      // Those are different facts, and every bug in this area is a confusion of
+      // the two:
+      //
+      //   * Believe the flag too readily and you paint a "LIVE" header over a
+      //     dead session with no producer behind it — the dead-LIVE-card hazard
+      //     Keith hit on a first run.
+      //   * Distrust it and you TEAR DOWN THE LOOP THE USER JUST STARTED. That is
+      //     the regression Keith's phone found twice: start the feed, get bounced
+      //     into Shortcuts (BY DESIGN — that is how the recursion is kicked off),
+      //     come back, and the app kills the healthy recursion it was waiting for.
+      //     It survived exactly as long as it took him to walk back: ~5 seconds.
+      //
+      // The old defense against the first hazard lived in `WifiSignalSampler`
+      // (`if (!_startedThisSession && c.isStreaming) stopMonitoring()`), and it was
+      // wrong in two ways at once. It asked a question about THE WIDGET
+      // (`_startedThisSession`) to answer a question about THE LOOP. And it lived in
+      // the sampler — which Wi-Fi Information DOES NOT USE (it drives this
+      // controller directly), so that screen had no protection from hazard one at
+      // all, while Test My Connection got killed by hazard two.
+      //
+      // THE ONLY HONEST WITNESS TO A RUNNING LOOP IS A RECENT PAYLOAD. Ask the
+      // App Group stamp, not a session flag. It lives BELOW the app's lifecycle, so
+      // it survives the scene rebuild that started this whole mess, and a loop that
+      // is genuinely delivering leaves it fresh every cycle. Both screens now
+      // inherit one rule from one place.
+      // ======================================================================
+      if (await _loopIsAlive()) {
+        if (_disposed) return;
+        // A payload landed inside the liveness window: there is a real producer on
+        // the other end of that flag. ADOPT the stream. Do NOT re-fire the
+        // Shortcut — the recursion is already running, and a second fire would
+        // stack a competing loop.
+        _startListening();
+      } else {
+        if (_disposed) return;
+        // The flag is up but NOTHING is delivering: a crashed or abandoned session
+        // left it behind. Clear it so the (non-existent) recursion cannot be
+        // resurrected, and rest in the honest idle state with the actionable Start
+        // control — never a "LIVE" badge with no data behind it.
+        await stopMonitoring();
+        _safeNotify();
+        return;
+      }
     } else {
       _phase = WifiMonitorPhase.idleWithData;
     }
     _safeNotify();
+  }
+
+  /// How long after the last delivered payload a monitoring loop is still presumed
+  /// ALIVE.
+  ///
+  /// PICKED FROM THE ACTUAL DELIVERY CADENCE IN THIS CODEBASE, not by feel:
+  ///   * The companion Shortcut's live cadence is ~1 SECOND. `WifiSignalSampler`
+  ///     sizes its 30-second sparkline window to "~30 samples" at "the ~1s
+  ///     companion-Shortcut cadence", so a healthy loop stamps the App Group about
+  ///     once a second.
+  ///   * [_missingShortcutSettle] is 4 SECONDS — this code already treats 4 seconds
+  ///     of silence on a FRESH start as grounds for suspicion.
+  ///
+  /// 10 seconds is therefore ~10 missed delivery cycles: far outside any plausible
+  /// iOS scheduling jitter or Shortcuts-app hand-off delay (the window that must
+  /// NOT be misread as death — it is exactly the window the user spends walking
+  /// back from the Shortcuts app), and far inside a genuinely abandoned session
+  /// (a flag left by a previous app run is minutes or hours stale, not seconds).
+  ///
+  /// ERRING DIRECTION, STATED: this window errs toward ADOPTING. A loop that died
+  /// less than 10 seconds ago is briefly presumed alive, and the screen shows LIVE
+  /// for up to 10 seconds with no new samples arriving. That is a transient
+  /// cosmetic wrong. The opposite error — presuming a LIVE loop dead — CLEARS THE
+  /// FLAG and destroys a working session the user explicitly started, which is the
+  /// bug this exists to remove. Between a stale badge for a few seconds and killing
+  /// the user's feed, the badge is not close.
+  static const Duration _loopLivenessWindow = Duration(seconds: 10);
+
+  /// Is the monitoring loop behind the persisted flag GENUINELY RUNNING?
+  ///
+  /// Evidence, in order of strength:
+  ///   1. A payload arrived on the live stream THIS session ([_sampleSinceStart]) —
+  ///      we watched it happen; nothing beats that.
+  ///   2. The App Group's payload stamp is inside [_loopLivenessWindow]. This is the
+  ///      witness that SURVIVES A SCENE REBUILD, because it lives below the app.
+  ///
+  /// FAIL-SAFE DIRECTION. When the platform cannot answer — [payloadReceivedAt]
+  /// returns null off-iOS, or on an App Group written by a build that predates the
+  /// stamp — this returns FALSE, i.e. "tear down". That is deliberate: a null stamp
+  /// is "I cannot prove this loop is alive", and adopting an unprovable loop is what
+  /// paints a dead LIVE card. It degrades to the pre-existing conservative behavior
+  /// rather than inventing a liveness it cannot demonstrate (GL-005).
+  Future<bool> _loopIsAlive() async {
+    if (_sampleSinceStart) return true;
+    final DateTime? deliveredAt = await _bridge.payloadReceivedAt();
+    if (deliveredAt == null) return false;
+    return DateTime.now().difference(deliveredAt) <= _loopLivenessWindow;
   }
 
   /// The phase to rest in when no live stream is running.
