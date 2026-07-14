@@ -291,7 +291,7 @@ class DscpQosScreen extends StatelessWidget {
       'most significant bits of the DSCP value (UP = DSCP >> 3). That silently '
       'misclassifies the most important traffic:\n\n'
       '- Voice lands in the wrong queue. EF is 46 = 101110; the top three bits '
-      'are 101 = 5, so EF maps to UP 5 — which is AC_VI (Video), not AC_VO '
+      'are 101 = 5, so EF maps to UP 5, which is AC_VI (Video), not AC_VO '
       '(Voice). Voice loses its dedicated access category.\n'
       '- Video / streaming demote to best-effort. AF31 (26) and CS3 (24) map to '
       'UP 3, landing in AC_BE instead of the intended video treatment.\n'

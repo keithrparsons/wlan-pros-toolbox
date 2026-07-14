@@ -780,13 +780,13 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   static String _stdLabel(McsStd std) {
     switch (std) {
       case McsStd.n:
-        return '802.11n — Wi-Fi 4 (HT)';
+        return '802.11n: Wi-Fi 4 (HT)';
       case McsStd.ac:
-        return '802.11ac — Wi-Fi 5 (VHT)';
+        return '802.11ac: Wi-Fi 5 (VHT)';
       case McsStd.ax:
-        return '802.11ax — Wi-Fi 6 (HE)';
+        return '802.11ax: Wi-Fi 6 (HE)';
       case McsStd.be:
-        return '802.11be — Wi-Fi 7 (EHT)';
+        return '802.11be: Wi-Fi 7 (EHT)';
     }
   }
 
@@ -807,12 +807,12 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
   String _buildCopyText() {
     const String tab = '\t';
     if (_unsourced) {
-      return 'MCS Index — ${_stdLabel(_std)} · $_ss SS\n'
+      return 'MCS Index: ${_stdLabel(_std)} · $_ss SS\n'
           '${McsIndexScreen.unsourcedStreamsNotice}';
     }
     final McsStdData data = McsIndexScreen.dataFor(_std);
     final StringBuffer buf = StringBuffer()
-      ..writeln('MCS Index — ${_stdLabel(_std)} · $_ss SS (Mbps)')
+      ..writeln('MCS Index: ${_stdLabel(_std)} · $_ss SS (Mbps)')
       ..writeln(
         <String>['MCS', 'Modulation', 'Code', ...data.columns].join(tab),
       );

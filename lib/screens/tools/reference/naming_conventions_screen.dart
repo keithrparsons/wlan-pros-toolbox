@@ -128,7 +128,7 @@ class NamingConventionsScreen extends StatelessWidget {
     ConventionRule(
       name: 'Last character',
       spec:
-          'Must be a letter or digit — a label may NOT end with a hyphen.',
+          'Must be a letter or digit. A label may NOT end with a hyphen.',
       source: 'RFC 952',
     ),
     ConventionRule(
@@ -157,8 +157,8 @@ class NamingConventionsScreen extends StatelessWidget {
     ConventionRule(
       name: 'Not all-numeric',
       spec:
-          'A valid host name can never have the dotted-decimal form #.#.#.# — '
-          'at least the top-level component must be alphabetic, so a hostname '
+          'A valid host name can never have the dotted-decimal form #.#.#.#. '
+          'At least the top-level component must be alphabetic, so a hostname '
           'is never ambiguous with an IPv4 literal.',
       source: 'RFC 1123 §2.1',
     ),
@@ -232,7 +232,7 @@ class NamingConventionsScreen extends StatelessWidget {
     ConventionRule(
       name: 'OUI',
       spec:
-          'Organizationally Unique Identifier — a 24-bit (3-octet) value '
+          'Organizationally Unique Identifier, a 24-bit (3-octet) value '
           'assigned by the IEEE Registration Authority. Forms the high-order '
           'bits of universally administered EUI-48/EUI-64 addresses; the U/L '
           'bit is 0 (universal).',
@@ -249,7 +249,7 @@ class NamingConventionsScreen extends StatelessWidget {
     ConventionRule(
       name: 'CID',
       spec:
-          'Company ID — a 24-bit identifier for organizations needing a unique '
+          'Company ID, a 24-bit identifier for organizations needing a unique '
           'company identifier but NOT globally unique addresses. A CID always '
           'has the U/L bit set to 1 (locally administered) and the I/G bit 0, '
           'so CID-based addresses can never collide with OUI-based addresses.',

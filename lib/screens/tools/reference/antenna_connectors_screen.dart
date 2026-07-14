@@ -149,7 +149,7 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
         ..writeln(g.group);
       for (final AntennaConnector c in g.connectors) {
         buf
-          ..writeln('${c.connector} — ${c.fullName}')
+          ..writeln('${c.connector}: ${c.fullName}')
           ..writeln('  Typical use: ${c.typicalWifiUse}')
           ..writeln('  Indoor/outdoor: ${c.indoorOutdoor}')
           ..writeln('  Coupling: ${c.coupling}')
@@ -187,7 +187,7 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
           buf.writeln(svc.troubleshootingTop6.intro);
         }
         for (final TopConnector t in svc.troubleshootingTop6.connectors) {
-          buf.writeln('${t.connector} — ${t.context}');
+          buf.writeln('${t.connector}: ${t.context}');
         }
         if (svc.troubleshootingTop6.coverageNote.isNotEmpty) {
           buf.writeln(svc.troubleshootingTop6.coverageNote);

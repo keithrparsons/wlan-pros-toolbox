@@ -181,7 +181,7 @@ class _EmergencyPhrasesScreenState extends State<EmergencyPhrasesScreen> {
     final List<String> codes = _visibleCodes(svc);
     final StringBuffer buf = StringBuffer()..writeln(svc.title);
     if (svc.isDraft) {
-      buf.writeln('[DRAFT machine translations — not yet reviewed]');
+      buf.writeln('[DRAFT machine translations, not yet reviewed]');
     }
     if (_query.trim().isNotEmpty) {
       buf.writeln('Filtered by "${_query.trim()}"');

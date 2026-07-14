@@ -255,7 +255,7 @@ class _ThreeLayerCallout extends StatelessWidget {
       <({String label, String gloss})>[
     (
       label: 'Standards body',
-      gloss: 'Defines HOW the radio works — the PHY, MAC, framing. (IEEE 802.11)'
+      gloss: 'Defines HOW the radio works: the PHY, MAC, framing. (IEEE 802.11)'
     ),
     (
       label: 'Certification body',
@@ -264,7 +264,7 @@ class _ThreeLayerCallout extends StatelessWidget {
     ),
     (
       label: 'Regulator',
-      gloss: 'Sets what is LEGAL here — transmit power, channels, indoor / '
+      gloss: 'Sets what is LEGAL here: transmit power, channels, indoor / '
           'outdoor, per country. (FCC, Ofcom, the ETSI-aligned EU bloc)'
     ),
   ];
@@ -390,7 +390,7 @@ class _TrademarkCallout extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              '"Wi-Fi" is a Wi-Fi Alliance trademark — not an acronym, and not '
+              '"Wi-Fi" is a Wi-Fi Alliance trademark. It is not an acronym, and not '
               'short for "Wireless Fidelity."',
               style: (text.bodyMedium ?? const TextStyle())
                   .copyWith(color: colors.textSecondary),

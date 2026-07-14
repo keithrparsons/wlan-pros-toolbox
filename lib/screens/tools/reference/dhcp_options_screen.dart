@@ -92,7 +92,7 @@ class DhcpOptionsScreen extends StatelessWidget {
       name: 'CAPWAP Access Controller (OPTION_CAPWAP_AC_V4)',
       purpose:
           'Hands a CAPWAP-capable AP (WTP) one or more IPv4 addresses of its '
-          'wireless LAN controller(s) — DHCP-based controller discovery.',
+          'wireless LAN controller(s). This is DHCP-based controller discovery.',
       rfc: 'RFC 5417',
     ),
     DhcpOption(
@@ -251,7 +251,7 @@ class DhcpOptionsScreen extends StatelessWidget {
     DhcpMessageType(
       value: 6,
       message: 'DHCPNAK',
-      role: 'Server refuses — lease invalid or expired.',
+      role: 'Server refuses: lease invalid or expired.',
     ),
     DhcpMessageType(
       value: 7,
@@ -305,7 +305,7 @@ class DhcpOptionsScreen extends StatelessWidget {
     }
     buf
       ..writeln()
-      ..writeln('Option 53 — DHCP message types')
+      ..writeln('Option 53: DHCP message types')
       ..writeln(<String>['Value', 'Message', 'Role'].join(tab));
     for (final DhcpMessageType m in messageTypes) {
       buf.writeln(
@@ -441,7 +441,7 @@ class DhcpOptionsScreen extends StatelessWidget {
     AppMonoText mono,
   ) {
     return _TableCard(
-      title: 'Option 53 — DHCP message types',
+      title: 'Option 53: DHCP message types',
       header: const Row(
         children: <Widget>[
           _HeaderCell('Value', width: 56),

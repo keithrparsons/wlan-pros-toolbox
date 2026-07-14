@@ -387,7 +387,7 @@ class _LabCaution extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'LAB / LEARNING SETUP — NOT PRODUCTION',
+                    'LAB / LEARNING SETUP, NOT PRODUCTION',
                     style: (text.labelMedium ?? const TextStyle()).copyWith(
                       color: warn,
                       fontWeight: FontWeight.w700,
@@ -400,7 +400,7 @@ class _LabCaution extends StatelessWidget {
                     'anything real. This installs student test logins '
                     '(student01–student10) with cleartext passwords and a '
                     'shared secret named secretwlanpros. Great for learning '
-                    'and testing 802.1X — change the secret and use real '
+                    'and testing 802.1X. Change the secret and use real '
                     'credentials before using it for anything real.',
                     style: (text.bodyMedium ?? const TextStyle()).copyWith(
                       color: colors.textSecondary,
@@ -848,7 +848,7 @@ class _Customize extends StatelessWidget {
           lead: 'Change the shared secret and add your own networks.',
           rest: ' Edit both in ',
           path: '/etc/freeradius/3.0/clients.conf',
-          tail: ' — change the shared secret, then add a client block for '
+          tail: '. Change the shared secret, then add a client block for '
               'each network (your APs or controllers) that will send '
               'authentication requests.',
         ),
@@ -857,7 +857,7 @@ class _Customize extends StatelessWidget {
           lead: 'Add or modify users.',
           rest: ' Edit ',
           path: '/etc/freeradius/3.0/users',
-          tail: ' — usernames and passwords are case-sensitive.',
+          tail: '. Usernames and passwords are case-sensitive.',
         ),
       ],
     );

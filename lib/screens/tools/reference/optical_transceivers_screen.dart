@@ -262,7 +262,7 @@ class _Legend extends StatelessWidget {
           _legendRow(
             context,
             const _ReachChip(),
-            'IEEE maximum on the listed fiber — the number to trust first.',
+            'IEEE maximum on the listed fiber. This is the number to trust first.',
           ),
           const SizedBox(height: AppSpacing.xs),
           _legendRow(

@@ -354,7 +354,7 @@ class CableBendRadiusScreen extends StatelessWidget {
       ..writeln()
       ..writeln(leadNote)
       ..writeln()
-      ..writeln('Minimum bend radius — copper UTP')
+      ..writeln('Minimum bend radius: copper UTP')
       ..writeln(
         <String>['Condition', 'Limit', 'Basis'].join(tab),
       );
@@ -365,7 +365,7 @@ class CableBendRadiusScreen extends StatelessWidget {
       ..writeln()
       ..writeln(kinkNote)
       ..writeln()
-      ..writeln('Minimum bend radius — fiber')
+      ..writeln('Minimum bend radius: fiber')
       ..writeln(
         <String>['Condition', 'Limit', 'Basis'].join(tab),
       );

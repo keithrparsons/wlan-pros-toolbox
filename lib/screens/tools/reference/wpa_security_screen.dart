@@ -167,14 +167,14 @@ class WpaSecurityScreen extends StatelessWidget {
           'to offline dictionary attacks even if the passphrase is short.',
     ),
     WpaFeature(
-      feature: 'PMF — Protected Management Frames',
+      feature: 'PMF: Protected Management Frames',
       appliesTo: 'Optional: WPA2 · Required: WPA3',
       description:
           'Encrypts deauth and disassociation frames (802.11w). '
           'Prevents deauth flood attacks.',
     ),
     WpaFeature(
-      feature: 'OWE — Opportunistic Wireless Encryption',
+      feature: 'OWE: Opportunistic Wireless Encryption',
       appliesTo: 'Enhanced Open only',
       description:
           'Encrypts open-network sessions without a password. No '
