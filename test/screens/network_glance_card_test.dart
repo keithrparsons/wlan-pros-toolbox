@@ -21,6 +21,7 @@ import 'package:wlan_pros_toolbox/services/network/json_http_client.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
 import 'package:wlan_pros_toolbox/services/network/public_ip_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -62,6 +63,28 @@ IpGeoService _geo(String? org) => IpGeoService(
         },
       ),
     );
+
+/// The native NWPathMonitor answer (round 4). On iOS the path monitor is now the
+/// PRIMARY "am I on Wi-Fi?" signal, so a test that simulates an iPhone must SAY
+/// what iOS reports rather than leave it to an unregistered method channel.
+class _NoWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      );
+}
+
+/// iOS reports a Wi-Fi path: the device is associated.
+class _OnWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
+}
 
 void main() {
   testWidgets('macOS: a real Wi-Fi reading + subnet + public IP/ISP render '
@@ -108,6 +131,7 @@ void main() {
       connectionService: WifiConnectionService(
         networkInfo: _OnWifiNetworkInfo(),
         platformOverride: TargetPlatform.iOS,
+        pathProbe: _OnWifiPath(),
       ),
       // wifiFetcher must NOT be consulted on iOS (the reading comes from the
       // cache); a call here would throw and fail the test.
@@ -152,6 +176,7 @@ void main() {
       connectionService: WifiConnectionService(
         networkInfo: _CellularOnlyNetworkInfo(),
         platformOverride: TargetPlatform.iOS,
+        pathProbe: _NoWifiPath(),
       ),
       wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
       liveReadingRequester: () async =>
@@ -190,6 +215,7 @@ void main() {
       connectionService: WifiConnectionService(
         networkInfo: _OnWifiNetworkInfo(),
         platformOverride: TargetPlatform.iOS,
+        pathProbe: _OnWifiPath(),
       ),
       wifiFetcher: () async => throw StateError('iOS must not auto-fetch Wi-Fi'),
       // A fake live requester standing in for the Wi-Fi Information tool's
@@ -231,6 +257,7 @@ void main() {
       connectionService: WifiConnectionService(
         networkInfo: _OnWifiNetworkInfo(),
         platformOverride: TargetPlatform.iOS,
+        pathProbe: _OnWifiPath(),
       ),
       // Requester returns null: no reading (the tool's install fall-through ran).
       liveReadingRequester: () async => null,

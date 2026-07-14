@@ -242,6 +242,47 @@ class ConsumerVerdict {
 
   /// Which vetted self-help list the screen surfaces for this outcome.
   final SelfHelpTopic selfHelp;
+
+  /// The ONE real tier both axes share, or null when they do not share one.
+  ///
+  /// THE SINGLE SOURCE OF THE "both sides are X" GUARD. Test My Connection has two
+  /// same-tier sentences (the hero and the verdict line) that must agree, and
+  /// before this existed each carried its own hand-rolled copy of the guard — and
+  /// they had already drifted: the hero excluded [AxisStatus.notApplicable] and the
+  /// verdict line did not. Neither could actually misfire (see below), so the
+  /// asymmetry was harmless AND invisible, which is exactly the shape that invites
+  /// a later "fix" to the wrong one. One function, two callers, no drift.
+  ///
+  /// A WHITELIST, NOT A BLACKLIST. Only [AxisStatus.strong] / [AxisStatus.moderate]
+  /// / [AxisStatus.weak] — the tiers that come from a REAL measured rate — can be
+  /// returned. Every other member is excluded by construction rather than by being
+  /// listed, so a future [AxisStatus] cannot silently start producing a
+  /// `Both sides are (new state)` sentence. The blacklist form had to be extended
+  /// for each new member and, in fact, was not: nothing excluded
+  /// [AxisStatus.notMeasured].
+  ///
+  /// REACHABILITY, STATED HONESTLY. As the mapper stands today the non-tier cases
+  /// are UNREACHABLE in production: [ConsumerVerdictMapper] can only ever set
+  /// `wifiStatus` to [AxisStatus.notApplicable] (never `notMeasured`) and
+  /// `internetStatus` to [AxisStatus.notMeasured] (never `notApplicable`), so the
+  /// two axes can never be EQUAL on a non-tier value. This guard is therefore
+  /// defensive, not load-bearing, and this comment does not claim otherwise. What
+  /// it buys is that the defense is now written once and TESTED directly (see
+  /// consumer_verdict_test.dart, which drives every AxisStatus pair through it)
+  /// instead of sitting unreachable and unexercised in two screen methods.
+  AxisStatus? sameRealTier() {
+    if (wifiStatus != internetStatus) return null;
+    switch (wifiStatus) {
+      case AxisStatus.strong:
+      case AxisStatus.moderate:
+      case AxisStatus.weak:
+        return wifiStatus;
+      case AxisStatus.unknown:
+      case AxisStatus.notApplicable:
+      case AxisStatus.notMeasured:
+        return null;
+    }
+  }
 }
 
 /// The pure consumer translator. Stateless: [map] is a total function of the

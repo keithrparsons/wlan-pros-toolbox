@@ -86,6 +86,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/cellular_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_glance_card.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
@@ -310,6 +311,11 @@ List<_Case> _glanceCases() {
             connectionService: WifiConnectionService(
               networkInfo: _OnWifiNetworkInfo(),
               platformOverride: p.target,
+              // ...and on iOS the PRIMARY signal is now the native path monitor,
+              // so the "on Wi-Fi" precondition has to be stated THERE too. Leaving
+              // it to an unregistered method channel would make this invariant
+              // depend on a test-harness accident rather than on the stated setup.
+              pathProbe: _OnWifiPath(),
             ),
             // On iOS these MUST NOT be consulted (the reading is cached); on the
             // native sources the fetcher IS the read.
@@ -515,6 +521,16 @@ Future<void> _render(WidgetTester tester, _Built built) async {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+/// iOS reports a Wi-Fi path: the device is associated.
+class _OnWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
 }
 
 void main() {

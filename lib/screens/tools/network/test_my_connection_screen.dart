@@ -2029,16 +2029,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// or the internet rate is ~0 — the same honest guard the comparison line uses,
   /// so the hero never asserts a margin from a figure it does not have (GL-005).
   String? _sameTierHero(ConsumerVerdict verdict) {
-    final AxisStatus tier = verdict.wifiStatus;
     // Only a REAL measured tier (Strong/Moderate/Weak) may produce the "both
-    // sides are X" hero. `unknown` (failed read) and `notApplicable` (no Wi-Fi
-    // link at all) are not tiers, and comparing a side that does not exist is
-    // meaningless — a cellular-only phone must never read "Both sides are …".
-    if (tier != verdict.internetStatus ||
-        tier == AxisStatus.unknown ||
-        tier == AxisStatus.notApplicable) {
-      return null;
-    }
+    // sides are X" hero: comparing a side that does not exist is meaningless, and
+    // a cellular-only phone must never read "Both sides are …". The guard is
+    // shared with [_sameTierVerdictLine] via [ConsumerVerdict.sameRealTier] so the
+    // two sentences cannot drift apart (they already had).
+    final AxisStatus? tier = verdict.sameRealTier();
+    if (tier == null) return null;
 
     final double? usable = _engine?.usableWifiMbps;
     final double? internet = _engine?.internetMbps;
@@ -2054,10 +2051,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return 'Both sides are $tierWord. Your $ahead is slightly ahead.';
   }
 
-  /// The lowercase tier word for the same-tier hero sentence ("strong" /
-  /// "moderate" / "weak"). Neither [AxisStatus.unknown] nor
-  /// [AxisStatus.notApplicable] reaches here — [_sameTierHero] excludes both —
-  /// so they defer to the chip word defensively.
+  /// The lowercase tier word for the same-tier sentences ("strong" / "moderate" /
+  /// "weak"). Both callers gate on [ConsumerVerdict.sameRealTier], which returns
+  /// ONLY those three, so no other member reaches here. The remaining cases defer
+  /// to the chip word defensively rather than inventing one.
   static String _lowerTierWord(AxisStatus tier) {
     switch (tier) {
       case AxisStatus.strong:
@@ -2138,10 +2135,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// or ~0 internet figure so the line never asserts a margin it cannot back
   /// (GL-005).
   String? _sameTierVerdictLine(ConsumerVerdict verdict) {
-    final AxisStatus tier = verdict.wifiStatus;
-    if (tier != verdict.internetStatus || tier == AxisStatus.unknown) {
-      return null;
-    }
+    // The SAME guard as [_sameTierHero], and now literally the same code — this
+    // method used to carry its own copy, which had already drifted (it omitted the
+    // `notApplicable` exclusion the hero had). See [ConsumerVerdict.sameRealTier].
+    final AxisStatus? tier = verdict.sameRealTier();
+    if (tier == null) return null;
 
     final double? usable = _engine?.usableWifiMbps;
     final double? internet = _engine?.internetMbps;

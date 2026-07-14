@@ -40,19 +40,37 @@ import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart'
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// A phone that starts ON Wi-Fi and can be walked off it mid-test.
-class _MovableNetworkInfo implements NetworkInfo {
+///
+/// It models the device from BOTH views the probe now consults — the addresses
+/// (`NetworkInfo`) and iOS's own network path (`WifiPathProbe`, round 4) — because
+/// a real phone that leaves Wi-Fi loses both at once. Wiring only one of them would
+/// let the test walk off Wi-Fi in one view while still holding a Wi-Fi link in the
+/// other, which is not a state any device can be in.
+class _MovableNetworkInfo implements NetworkInfo, WifiPathProbe {
   String? wifiIp = '192.168.1.42';
   String? wifiIpv6;
+
+  /// What iOS's NWPathMonitor sees. Starts associated; `leaveWifi` drops it.
+  bool _onWifi = true;
 
   void leaveWifi() {
     wifiIp = null;
     wifiIpv6 = null;
+    _onWifi = false;
   }
+
+  @override
+  Future<WifiPathFacts?> read() async => WifiPathFacts(
+        usesWifi: _onWifi,
+        wifiSatisfied: _onWifi,
+        wifiInterfacePresent: _onWifi,
+      );
 
   @override
   Future<String?> getWifiIP() async => wifiIp;
@@ -262,6 +280,7 @@ void main() {
         connectionService: WifiConnectionService(
           networkInfo: net,
           platformOverride: TargetPlatform.iOS,
+          pathProbe: net,
         ),
       );
       addTearDown(sampler.dispose);
@@ -386,6 +405,7 @@ void main() {
         connectionService: WifiConnectionService(
           networkInfo: net,
           platformOverride: TargetPlatform.iOS,
+          pathProbe: net,
         ),
       );
       addTearDown(sampler.dispose);

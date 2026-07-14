@@ -40,6 +40,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart'
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -49,6 +50,8 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 /// NOT (an IPv6-only SSID reads null there while associated). See the KNOWN LIMITS
 /// note in [WifiConnectionService] and
 /// `test/services/network/wifi_connection_service_test.dart`.
+///
+/// Round 4: this is now the FALLBACK signal only. The PRIMARY is [_NoWifiPath].
 class _CellularOnlyNetworkInfo implements NetworkInfo {
   @override
   Future<String?> getWifiIP() async => null;
@@ -56,6 +59,19 @@ class _CellularOnlyNetworkInfo implements NetworkInfo {
   Future<String?> getWifiIPv6() async => null;
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+/// The cellular-only iPhone as iOS ITSELF reports it (round 4): NWPathMonitor
+/// sees no Wi-Fi interface on the path at all, and no satisfiable Wi-Fi route.
+/// This is the primary signal `WifiConnectionService` now reads, and the only
+/// native shape permitted to assert `notOnWifi`.
+class _NoWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      );
 }
 
 /// The App Group's LAST STORED payload — Keith's real stale reading, captured the
@@ -186,9 +202,25 @@ QualityResult _cellularInternet() => QualityResult(
       ],
     );
 
+/// A cloud-apps probe whose sites all answer. Mounting the panel with a probe
+/// that RETURNS results is what fires `CloudAppsPanel.onResults` →
+/// `_recomputeVerdict()` — the late writer that round 3 left completely uncovered.
+ReachabilityProbe _reachableCloudApps() => ReachabilityProbe(
+      sites: kCloudApps,
+      prober: (String host, int port, Duration timeout) async =>
+          const Duration(milliseconds: 24),
+    );
+
 /// Mounts the real screen with a real iOS sampler + controller over the fakes,
 /// runs one check, and settles.
-Future<_StaleBridge> _runOffWifiCheck(WidgetTester tester) async {
+///
+/// [cloudAppsProbe] is null by default (the panel is not mounted). Pass
+/// [_reachableCloudApps] to mount it and drive the post-result `_recomputeVerdict`
+/// path — see the CLOUD-APPS RECOMPUTE group at the bottom of this file.
+Future<_StaleBridge> _runOffWifiCheck(
+  WidgetTester tester, {
+  ReachabilityProbe? cloudAppsProbe,
+}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     LiveOnboardingService.prefsKey: true,
   });
@@ -199,6 +231,7 @@ Future<_StaleBridge> _runOffWifiCheck(WidgetTester tester) async {
     connectionService: WifiConnectionService(
       networkInfo: _CellularOnlyNetworkInfo(),
       platformOverride: TargetPlatform.iOS,
+      pathProbe: _NoWifiPath(),
     ),
   );
   addTearDown(sampler.dispose);
@@ -214,7 +247,8 @@ Future<_StaleBridge> _runOffWifiCheck(WidgetTester tester) async {
         dnsProbeService: _FakeDns(),
         networkDetailsService: _FakeNetDetails(),
         ipGeoService: _FakeIpGeo(),
-        enableCloudApps: false,
+        enableCloudApps: cloudAppsProbe != null,
+        cloudAppsProbe: cloudAppsProbe,
         onboardingService:
             LiveOnboardingService(getStore: SharedPreferences.getInstance),
         qualityClient: MockQualityClient(scriptedResult: _cellularInternet()),
@@ -531,6 +565,105 @@ void main() {
           reason: 'the analysis must not send a cellular-only user to a Shortcut '
               'that cannot read a link that does not exist');
       expect(report.toLowerCase(), isNot(contains('companion shortcut')));
+    });
+
+    // ======================================================================
+    // THE CLOUD-APPS RECOMPUTE (round-4 cold-eyes HIGH, the round-3 BLOCKER).
+    //
+    // `_recomputeVerdict()` is the LAST WRITER of `_engine` and `_verdict` on a
+    // cellular run, and it is reachable in production through
+    // `CloudAppsPanel.onResults`, which mounts INSIDE the result body after
+    // `onDone` and calls it unconditionally. Cloud apps are reachable over
+    // cellular, so this fires on exactly the device Keith hit the bug on.
+    //
+    // If `_recomputeVerdict` passed `notOnWifi: false` instead of the run's
+    // stamped `_resultNotOnWifi`, THE ENTIRE FIX WOULD SILENTLY REVERT the moment
+    // the cloud panel answered — after the result had already rendered correctly.
+    // Chip back to "Couldn't check", headline back to "Wi-Fi link not measured",
+    // Wi-Fi card back to seven "Unavailable" rows. Keith's exact bug, restored,
+    // with a green suite.
+    //
+    // Round 3 had ZERO coverage of that line. Every existing test above misses it:
+    //   * `_FakeIpGeo` returns `IpGeoResult.failure`, so `_fetchIspInfo`'s
+    //     `if (!result.isError) _recomputeVerdict()` never fires;
+    //   * the DNS probe lands BEFORE `_internet` is seeded, so `_recomputeVerdict`
+    //     hits its `_internet == null` early-return and no-ops;
+    //   * and no test mounted `CloudAppsPanel` with results at all
+    //     (`enableCloudApps: false` in the harness above).
+    //
+    // Mutating `notOnWifi: _resultNotOnWifi` → `false` left all 4,153 tests green.
+    // These two tests are the guard. They mount the panel WITH a probe that
+    // answers, so `onResults` fires the recompute for real.
+    // ======================================================================
+    group('after the cloud-apps panel reports (the late _recomputeVerdict)', () {
+      testWidgets(
+          'the verdict does NOT revert to "Couldn\'t check" once cloud apps answer',
+          (WidgetTester tester) async {
+        await _runOffWifiCheck(tester, cloudAppsProbe: _reachableCloudApps());
+        // Let the panel's probe resolve and fire onResults → _recomputeVerdict.
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        final String screen = _visibleText(tester);
+
+        // Sanity: the panel actually ran and reported, or this test is vacuous —
+        // a recompute that never fired trivially "does not revert".
+        expect(screen, contains('reachable'),
+            reason: 'sanity: the cloud-apps panel must have produced results, or '
+                'onResults never fired and this test proves nothing');
+        expect(screen, contains('Cloudflare'),
+            reason: 'sanity: the probed cloud services must have rendered rows');
+
+        // THE ASSERTION. The run was stamped notOnWifi; the late recompute must
+        // re-derive the verdict for THE CHECK THAT WAS TAKEN.
+        expect(screen, contains('Not connected'),
+            reason: 'the Wi-Fi axis must still name the KNOWN state after the '
+                'late recompute');
+        expect(screen, isNot(contains("Couldn't check")),
+            reason: 'the cloud-apps recompute must not rewrite a known "no Wi-Fi '
+                'link" into a false "we failed to read your Wi-Fi"');
+
+        // And the stale reading must not come back with it.
+        expect(screen, isNot(contains('KeithHome')));
+        expect(screen, isNot(contains('29')));
+        expect(screen.toLowerCase(), isNot(contains('companion shortcut')),
+            reason: 'nor may the recompute resurrect the Shortcut offer');
+        expect(screen, contains('there is no Wi-Fi link to report'),
+            reason: 'the Wi-Fi card must still report no link, not seven '
+                '"Unavailable" rows');
+      });
+
+      testWidgets(
+          'the copy report still names the real state after cloud apps answer',
+          (WidgetTester tester) async {
+        await _runOffWifiCheck(tester, cloudAppsProbe: _reachableCloudApps());
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        expect(clipboardWrites, isNotEmpty);
+        final String report = clipboardWrites.last;
+
+        // The same contract as the pre-recompute copy test above, re-asserted
+        // AFTER the late writer has run.
+        expect(
+          report,
+          contains('was not connected to Wi-Fi when the check ran'),
+          reason: 'the WI-FI section must still say WHY its rows are empty after '
+              'the cloud-apps recompute',
+        );
+        expect(report.toLowerCase(), isNot(contains('shortcut')),
+            reason: 'the recompute must not restore the "install the companion '
+                'Shortcut" advice to the help-desk report');
+        expect(report, isNot(contains('KeithHome')));
+
+        await tester.pump(const Duration(seconds: 2));
+      });
     });
   });
 }

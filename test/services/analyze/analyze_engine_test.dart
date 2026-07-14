@@ -53,32 +53,81 @@ void main() {
 
     test('no rule tells a user with NO Wi-Fi link to install the Wi-Fi Shortcut',
         () {
-      // THE MECHANICAL GUARD (2026-07-13). Suppressing R-31 was not enough: R-05
-      // carried the SAME advice ("install the companion Shortcut") through a
-      // different rule, and Keith hit it on a cellular-only iPhone. Rather than
-      // patch rules one at a time as they are discovered, assert the property
-      // over the WHOLE library: fire every rule that a not-on-Wi-Fi device can
-      // fire, and let no Shortcut/capture advice through.
-      const AnalyzeInput cellularOnly = AnalyzeInput(
-        verdict: WifiVsInternetVerdict.wifiUnknown,
-        platformIsIos: true,
-        wifiSignalCaptured: false,
-        notOnWifi: true,
-        internetMeasured: true,
-        downloadMbps: 60,
-        uploadMbps: 20,
-      );
-      final AnalysisReport report = AnalyzeEngine.analyze(cellularOnly);
+      // THE MECHANICAL GUARD (2026-07-13, widened round 4). Suppressing R-31 was
+      // not enough: R-05 carried the SAME advice ("install the companion
+      // Shortcut") through a different rule, and Keith hit it on a cellular-only
+      // iPhone. Rather than patch rules one at a time as they are discovered,
+      // assert the property over the WHOLE library.
+      //
+      // ROUND 4 — IT WAS NOT ACTUALLY LIBRARY-WIDE. The guard advertised itself as
+      // firing "every rule that a not-on-Wi-Fi device can fire" and then fired
+      // exactly ONE input shape (`verdict: wifiUnknown`). A cellular-only phone can
+      // land on OTHER verdicts too — most obviously `onlineUnmeasured` (the speed
+      // test stalls while DNS + public IP + cloud all succeed → R-06), and
+      // `bothHealthy`/`upstream` when the internet measures fine over cellular. A
+      // new Shortcut-offering rule under any of those verdicts would have sailed
+      // straight through the guard that exists to stop exactly that. No live defect
+      // today; the hole was in the NET, not the catch.
+      //
+      // So enumerate. Every verdict (including the null/no-verdict input), crossed
+      // with measured/unmeasured internet and skipped/run speed test, all with
+      // `notOnWifi: true` — because THAT is the property under test: whatever else
+      // is true, a device with no Wi-Fi link is never sent to a Shortcut to read it.
+      const List<WifiVsInternetVerdict?> verdicts = <WifiVsInternetVerdict?>[
+        null,
+        ...WifiVsInternetVerdict.values,
+      ];
+      // Sanity: if a verdict is ever added to the enum, this matrix picks it up
+      // automatically — but assert the count so a SHRINKING enum is also caught.
+      expect(WifiVsInternetVerdict.values.length, 6);
 
-      for (final AnalysisFinding f in report.findings) {
-        final String text = f.explanation.toLowerCase();
-        expect(text, isNot(contains('shortcut')),
-            reason: '${f.ruleId} tells a device with no Wi-Fi link to use the '
-                'companion Shortcut. No Shortcut can read a link that does not '
-                'exist (GL-005, two kinds of null).');
-        expect(text, isNot(contains('capture wi-fi details')),
-            reason: '${f.ruleId} offers a capture for a link that is not there');
+      int shapesChecked = 0;
+      for (final WifiVsInternetVerdict? verdict in verdicts) {
+        for (final bool internetMeasured in <bool>[true, false]) {
+          for (final bool speedTestSkipped in <bool>[true, false]) {
+            final AnalyzeInput input = AnalyzeInput(
+              verdict: verdict,
+              platformIsIos: true,
+              wifiSignalCaptured: false,
+              notOnWifi: true,
+              internetMeasured: internetMeasured,
+              speedTestSkipped: speedTestSkipped,
+              downloadMbps: internetMeasured ? 60 : null,
+              uploadMbps: internetMeasured ? 20 : null,
+              // The out-of-band "you are online" evidence, so the shapes that
+              // produce `onlineUnmeasured` in production are genuinely reachable
+              // here rather than silently degenerate.
+              dnsResolutionMs: 12,
+              cloudReachableCount: 4,
+              cloudTotalCount: 4,
+            );
+            final AnalysisReport report = AnalyzeEngine.analyze(input);
+            shapesChecked++;
+
+            final String shape = 'verdict=$verdict '
+                'internetMeasured=$internetMeasured '
+                'speedTestSkipped=$speedTestSkipped';
+
+            for (final AnalysisFinding f in report.findings) {
+              final String text = f.explanation.toLowerCase();
+              expect(text, isNot(contains('shortcut')),
+                  reason: '[$shape] ${f.ruleId} tells a device with no Wi-Fi '
+                      'link to use the companion Shortcut. No Shortcut can read '
+                      'a link that does not exist (GL-005, two kinds of null).');
+              expect(text, isNot(contains('capture wi-fi details')),
+                  reason: '[$shape] ${f.ruleId} offers a capture for a link '
+                      'that is not there');
+            }
+          }
+        }
       }
+
+      // The guard is only worth its name if it actually swept the matrix: 7
+      // verdicts (6 + null) x 2 x 2. A refactor that collapses the loops must not
+      // silently reduce this to the single shape it used to be.
+      expect(shapesChecked, 28,
+          reason: 'the library-wide guard must sweep every verdict shape, not '
+              'one — that was the round-3 finding');
     });
 
     test('all rules are ratified, no rule is flagged pendingRatification', () {

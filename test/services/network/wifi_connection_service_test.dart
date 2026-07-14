@@ -51,6 +51,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 /// In-memory fake of [NetworkInfo]: returns canned Wi-Fi IPv4 / IPv6 addresses
 /// (or throws to simulate a denied/unsupported read).
@@ -91,12 +92,32 @@ class _FakeNetworkInfo implements NetworkInfo {
 /// below uses this, because this is the only IPv6 the app can ever actually see.
 const String kMeasuredLinkLocal = 'fe80::10b4:5ba5:5d42:a691%en0';
 
+/// A [WifiPathProbe] with a scripted answer. `null` facts model "the platform did
+/// not answer" (the channel is absent off iOS, or the native monitor timed out),
+/// which is what sends [WifiConnectionService] to the address-probe FALLBACK.
+class _FakePathProbe implements WifiPathProbe {
+  const _FakePathProbe(this.facts);
+  final WifiPathFacts? facts;
+  @override
+  Future<WifiPathFacts?> read() async => facts;
+}
+
+/// "iOS did not answer." EVERY address-probe test below passes this EXPLICITLY.
+///
+/// It would work implicitly too — the real `MethodChannelWifiPathProbe` has no
+/// channel under `flutter_test` and returns null — but relying on that would make
+/// the entire fallback suite depend on an accident of the test harness, and a
+/// stray mock handler registered by some other test could silently flip these
+/// tests onto the native path without a single assertion changing. State it.
+const WifiPathProbe kNativeSilent = _FakePathProbe(null);
+
 WifiConnectionService _service({
   String? wifiIp,
   String? wifiIpv6,
   bool throws = false,
   bool ipv6Throws = false,
   TargetPlatform platform = TargetPlatform.iOS,
+  WifiPathProbe pathProbe = kNativeSilent,
 }) {
   return WifiConnectionService(
     networkInfo: _FakeNetworkInfo(
@@ -106,8 +127,19 @@ WifiConnectionService _service({
       ipv6Throws: ipv6Throws,
     ),
     platformOverride: platform,
+    pathProbe: pathProbe,
   );
 }
+
+/// A service whose ADDRESS probe would say "cellular-only" (no address of either
+/// family) — so that when the NATIVE path says something different, we can prove
+/// which one actually decided the verdict. Without this, a native `notOnWifi` test
+/// would pass even if the native path were ignored entirely.
+WifiConnectionService _nativeService(WifiPathFacts? facts) => WifiConnectionService(
+      networkInfo: _FakeNetworkInfo(wifiIp: null, wifiIpv6: null),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: _FakePathProbe(facts),
+    );
 
 void main() {
   group('WifiConnectionService.status — onWifi', () {
@@ -289,6 +321,250 @@ void main() {
         () async {
       // A denied/unsupported read is ambiguous — never a false negative.
       final s = _service(throws: true, platform: TargetPlatform.iOS);
+      expect(await s.status(), WifiConnectionStatus.unknown);
+    });
+  });
+
+  // ==========================================================================
+  // THE NATIVE PATH (round 4) — the PRIMARY signal.
+  //
+  // Rounds 1-3 asked `network_info_plus` for an IP ADDRESS and inferred the link
+  // from whether one came back. That is the wrong question. The plugin's filter is
+  // `strncmp(name, "en", 2)` — not Wi-Fi-specific, matches a USB tether — and it
+  // returns the FIRST address, which is the link-local. Every round-2/3 bug fell
+  // out of that.
+  //
+  // iOS answers the real question: `NWPathMonitor` reports the interface TYPES the
+  // path runs over, and `.wifi` is a distinct type from `.cellular` and
+  // `.wiredEthernet` (SDK: Network.framework/Headers/interface.h:47-52).
+  //
+  // EVERY test below pairs the native facts with an address probe that would say
+  // "cellular-only". So if the service ever stopped consulting the native path,
+  // the onWifi/unknown cases would collapse to notOnWifi and these tests go red.
+  // That is deliberate: it proves the native path is the thing deciding.
+  // ==========================================================================
+  group('WifiConnectionService.status — the native NWPathMonitor path is PRIMARY',
+      () {
+    test('the default route runs over Wi-Fi -> onWifi', () async {
+      // MEASURED SHAPE (2026-07-13, live NWPathMonitor): on an associated Wi-Fi
+      // link the default path reports usesInterfaceType(.wifi) = true. A device
+      // cannot route over a Wi-Fi interface it is not joined to.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.onWifi,
+        reason: 'the address probe here says cellular-only; the NATIVE path must '
+            'override it. If this reads notOnWifi, the native signal is being '
+            'ignored and we are back to inferring Wi-Fi from addresses.',
+      );
+    });
+
+    test('usesWifi ALONE is enough -> onWifi (the first disjunct, isolated)',
+        () async {
+      // EACH POSITIVE IS INDEPENDENTLY SUFFICIENT, and each must be proven so on
+      // its own. Every other test here sets `usesWifi` and `wifiSatisfied`
+      // TOGETHER, which means either one could be silently ignored and the suite
+      // would never notice — mutating `usesWifi` out of the disjunct left this
+      // group green until this test existed. A disjunct whose branches are never
+      // isolated is a disjunct with only one tested branch.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: false,
+        wifiInterfacePresent: true,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.onWifi,
+        reason: 'the default route running over Wi-Fi is by itself definitive — a '
+            'device cannot route over a Wi-Fi interface it is not joined to',
+      );
+    });
+
+    test('wifiSatisfied ALONE is enough -> onWifi (the second disjunct, '
+        'isolated)', () async {
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      ));
+      expect(await s.status(), WifiConnectionStatus.onWifi);
+    });
+
+    test('a satisfied Wi-Fi path -> onWifi even when the default route is not '
+        'Wi-Fi', () async {
+      // The phone is on Wi-Fi AND cellular, and iOS prefers cellular for the
+      // default route (a captive portal, or Wi-Fi Assist). There IS a Wi-Fi link;
+      // its data is real and must not be blanked.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      ));
+      expect(await s.status(), WifiConnectionStatus.onWifi);
+    });
+
+    test('THE IPv6-ONLY SSID: a Wi-Fi path with no IPv4 anywhere -> onWifi',
+        () async {
+      // THE CASE THAT BROKE ROUND 2, AND THE ONE KEITH IS LIVE ON RIGHT NOW
+      // (a conference NAT64/DNS64 SSID). The address probe is blind here:
+      // getWifiIP() is AF_INET-only so it returns null, and getWifiIPv6() hands
+      // back a link-local that proves nothing — which is why the FALLBACK can only
+      // reach `unknown` on this device (see the IPv6-only group above).
+      //
+      // The native path is not blind: an IPv6-only Wi-Fi network is still a Wi-Fi
+      // PATH, so it reports .wifi and the device is correctly `onWifi`. This is the
+      // first time in four rounds this device gets the right answer rather than the
+      // least-wrong one.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.onWifi,
+        reason: 'an IPv6-only SSID is a Wi-Fi path. The address probe cannot see '
+            'it; NWPathMonitor can.',
+      );
+    });
+
+    test('THE USB TETHER: a wired path with no Wi-Fi interface -> notOnWifi',
+        () async {
+      // The Xcode debugging configuration, and the shape that makes the address
+      // probe lie: `network_info_plus` matches ANY `en*`, so a USB-tethered
+      // interface hands back an IPv4 and the old probe concluded "on Wi-Fi".
+      //
+      // NWPathMonitor types the interface as .wiredEthernet, NOT .wifi, so no Wi-Fi
+      // interface appears on the path at all. Note the address probe behind this
+      // fake says cellular-only, so this test does not prove the tether's IPv4 is
+      // ignored — what it proves is that the NATIVE verdict is taken and that a
+      // path with no .wifi interface is correctly notOnWifi.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      ));
+      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+    });
+
+    test('THE CELLULAR-ONLY iPHONE: no Wi-Fi interface on the path -> notOnWifi',
+        () async {
+      // KEITH'S BUG. MEASURED SHAPE: an interface that cannot carry a path reports
+      // status=unsatisfied, usesInterfaceType=false, availableInterfaces=[]. This
+      // is the ONLY native shape permitted to assert notOnWifi.
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.notOnWifi,
+        reason: 'notOnWifi MUST stay reachable. If every native shape resolved to '
+            'unknown the probe would be inert and the stale 29 Mbps reading comes '
+            'straight back.',
+      );
+    });
+
+    test('a Wi-Fi interface present but carrying NO usable route -> unknown',
+        () async {
+      // AMBIGUOUS, AND DELIBERATELY UNRESOLVED. A radio powered but unassociated, a
+      // captive portal mid-join, or a phone HOSTING a Personal Hotspot could all
+      // present this shape — none was measured on a real device, so the service
+      // refuses to guess. `unknown` = the caller keeps its prior behavior.
+      //
+      // This is the fail-safe that makes the unmeasured shapes tolerable: being
+      // wrong here costs a stale reading, never a false "you have no Wi-Fi".
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: true,
+      ));
+      expect(await s.status(), WifiConnectionStatus.unknown);
+      expect(
+        await s.status(),
+        isNot(WifiConnectionStatus.notOnWifi),
+        reason: 'stated separately: an ambiguous native shape must NEVER become a '
+            'false "not on Wi-Fi"',
+      );
+    });
+
+    test('a native SSID still wins over the native path (strongest positive)',
+        () async {
+      final s = _nativeService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      ));
+      expect(
+        await s.status(nativeSsid: 'KeithNet'),
+        WifiConnectionStatus.onWifi,
+        reason: 'a resolved SSID can only come from an active association',
+      );
+    });
+
+    test('when the native path does not answer, the ADDRESS FALLBACK decides',
+        () async {
+      // The seam that keeps every non-iOS platform working exactly as before.
+      final s = WifiConnectionService(
+        networkInfo: _FakeNetworkInfo(wifiIp: '192.168.1.42'),
+        platformOverride: TargetPlatform.iOS,
+        pathProbe: kNativeSilent,
+      );
+      expect(await s.status(), WifiConnectionStatus.onWifi);
+    });
+  });
+
+  // ==========================================================================
+  // THE ALL-ZEROS IPv6 PLACEHOLDER (round-4 cold-eyes LOW).
+  //
+  // `_readWifiIp` normalized the IPv4 placeholder `0.0.0.0` to "absent" but
+  // `_readWifiIpv6` did NOT normalize its IPv6 twin, `::`. An unspecified address
+  // is not an address. Reading `::` as "an address is present" would resolve a
+  // cellular-only iPhone to `unknown` instead of `notOnWifi` — suppressing the
+  // honest state and handing the user back the stale reading. It failed SAFE, which
+  // is exactly why it could sit there untested.
+  // ==========================================================================
+  group('WifiConnectionService — the all-zeros IPv6 placeholder is not an address',
+      () {
+    test('iOS, no IPv4, IPv6 reads `::` -> notOnWifi', () async {
+      final s = _service(wifiIp: null, wifiIpv6: '::');
+      expect(
+        await s.status(),
+        WifiConnectionStatus.notOnWifi,
+        reason: '`::` is the IPv6 unspecified address — the exact twin of the '
+            '`0.0.0.0` the IPv4 read already normalizes. It is not an address, and '
+            'treating it as one suppresses the honest cellular-only verdict.',
+      );
+    });
+
+    test('the fully expanded `0:0:0:0:0:0:0:0` is also not an address', () async {
+      final s = _service(wifiIp: null, wifiIpv6: '0:0:0:0:0:0:0:0');
+      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+    });
+
+    test('a zoned `::%en0` is also not an address', () async {
+      final s = _service(wifiIp: null, wifiIpv6: '::%en0');
+      expect(await s.status(), WifiConnectionStatus.notOnWifi);
+    });
+
+    test('the LOOPBACK `::1` IS a real address -> unknown, never notOnWifi',
+        () async {
+      // The guard must normalize only the UNSPECIFIED address, not every address
+      // that happens to contain `::`. `::1` has a non-zero group. Over-matching here
+      // would be the dangerous direction: it would let a real address be read as
+      // "no address" and produce a false notOnWifi.
+      final s = _service(wifiIp: null, wifiIpv6: '::1');
+      expect(await s.status(), WifiConnectionStatus.unknown);
+    });
+
+    test('a link-local is still a real address -> unknown, never notOnWifi',
+        () async {
+      final s = _service(wifiIp: null, wifiIpv6: kMeasuredLinkLocal);
       expect(await s.status(), WifiConnectionStatus.unknown);
     });
   });

@@ -40,12 +40,28 @@ import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart'
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// Cellular-only: the Wi-Fi interface carries no address of either family. The
 /// only shape that may assert `notOnWifi` (see WifiConnectionService KNOWN LIMITS).
+/// "iOS did not answer." These tests are about the CELLULAR-DATA CONSENT GATE, not
+/// about the Wi-Fi-detection mechanism, and they drive it through the ADDRESS probe
+/// (the `NetworkInfo` fakes below). Round 4 made the native NWPathMonitor the
+/// PRIMARY signal on iOS, so the address probe is now only reached when the native
+/// path is silent — and that precondition has to be STATED here, not left to an
+/// unregistered method channel in the test harness.
+///
+/// The native path has its own dedicated coverage in
+/// `test/services/network/wifi_connection_service_test.dart` and the off-Wi-Fi E2E.
+class _NativeSilent implements WifiPathProbe {
+  const _NativeSilent();
+  @override
+  Future<WifiPathFacts?> read() async => null;
+}
+
 class _CellularOnly implements NetworkInfo {
   @override
   Future<String?> getWifiIP() async => null;
@@ -198,6 +214,7 @@ Future<MockQualityClient> _pumpPreRun(
     connectionService: WifiConnectionService(
       networkInfo: net,
       platformOverride: platform,
+      pathProbe: const _NativeSilent(),
     ),
   );
   addTearDown(sampler.dispose);

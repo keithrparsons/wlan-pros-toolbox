@@ -8,49 +8,73 @@
 // wall. This service surfaces a clear, honest "you're not connected to Wi-Fi"
 // state so the live tools stop looking broken when the device is off Wi-Fi.
 //
-// THE SIGNALS, AND WHAT EACH ONE ACTUALLY PROVES:
+// ============================================================================
+// ROUND 4 (2026-07-13): ASK iOS THE QUESTION. STOP INFERRING IT FROM ADDRESSES.
+// ============================================================================
 //
-//   1. A resolved native SSID (NEHotspotNetwork / CoreWLAN, caller-supplied).
-//      A resolved SSID can only come from an active association → DEFINITIVE
-//      `onWifi`. Its ABSENCE proves nothing (it is null whenever Location is
-//      ungranted), so it is never used to assert `notOnWifi`.
+// For three rounds this service answered "is the device on Wi-Fi?" by asking
+// `network_info_plus` for an IP ADDRESS and inferring the link from whether one
+// came back. That was the wrong question, and EVERY bug in rounds 2 and 3 was a
+// consequence of asking it:
 //
-//   2. `network_info_plus.getWifiIP()` — a NATIVE method-channel call, not a
-//      subprocess, so it is safe in the sandboxed macOS/iOS builds (GL-008).
-//      A non-empty address means the Wi-Fi interface is up and addressed →
-//      `onWifi`, and it needs no Location grant.
+//   * The plugin's interface filter is `strncmp(name, "en", 2)`. It is not
+//     Wi-Fi-specific — it matches ANY `en*` interface, including the `en*` a
+//     USB-tethered iPhone brings up — and it returns the FIRST match.
+//   * `getWifiIPv6()` therefore hands back the interface's LINK-LOCAL `fe80::`,
+//     so round 2's "routable IPv6" check was dead code and declared a phone on an
+//     IPv6-only SSID to be off Wi-Fi WHILE ON WI-FI.
+//   * Round 3 fixed that by widening the ambiguity, which left three known holes
+//     open: IPv6-only SSID, USB tether, and Personal Hotspot.
 //
-//      IT ENUMERATES IPv4 ONLY. Verified in the plugin source at
-//      network_info_plus-6.1.4/ios/network_info_plus/Sources/network_info_plus/
-//      FPPNetworkInfoPlusPlugin.m:68 — `getWifiIP` calls
-//      `enumerateWifiAddresses:AF_INET`. An iPhone joined to an IPv6-ONLY Wi-Fi
-//      network (NAT64/DNS64 — common on carrier and CONFERENCE SSIDs) therefore
-//      gets a CLEAN NULL here while fully associated. A null IPv4 alone is NOT
-//      proof of "no Wi-Fi", and treating it as proof declared a device
-//      NOT-ON-WI-FI WHILE ON WI-FI (cold-eyes review, 2026-07-13, F3).
+// iOS answers the actual question directly, and has since iOS 12. `NWPathMonitor`
+// reports the interface TYPES a network path runs over, and `nw_interface_type_wifi`
+// is a DISTINCT type from `nw_interface_type_cellular` and `nw_interface_type_wired`
+// (pinned in the SDK: Network.framework/Headers/interface.h:47-52 — "A Wi-Fi
+// link"). It requires no entitlement and no Location grant. A USB `en*` is
+// `.wiredEthernet`, not `.wifi`, so it cannot be mistaken for a Wi-Fi link. An
+// IPv6-only SSID is still a Wi-Fi path, so it reads as Wi-Fi.
 //
-//   3. `network_info_plus.getWifiIPv6()` — the same native call over AF_INET6
-//      (same file, :78, same `en*`-interface filter). It answers ONE question
-//      honestly: does the Wi-Fi interface carry ANY IPv6 address at all?
+// So the NATIVE PATH IS NOW THE PRIMARY SIGNAL. The address probe is kept ONLY as
+// the FALLBACK for where the native answer is unavailable (every non-iOS platform,
+// and an iOS read that times out or fails). The fail-safe `unknown` architecture
+// is UNCHANGED and still governs both paths.
 //
-//      IT CANNOT BE USED TO PROVE ASSOCIATION, AND THE PREVIOUS ROUND'S ATTEMPT
-//      TO DO SO WAS DEAD CODE. `getWifiIPv6` keeps the FIRST AF_INET6 address it
-//      finds on an `en*` interface (`if (addr) return;`, :82) and `getifaddrs()`
-//      walks the kernel's address list in order — which carries the interface's
-//      LINK-LOCAL `fe80::` first. MEASURED, not inferred: reproducing
-//      `enumerateWifiAddresses:AF_INET6` in C against the live BSD stack on an
-//      associated en0 returned `fe80::10b4:5ba5:5d42:a691%en0` (2026-07-13).
-//      So this accessor hands back a link-local on an associated interface, and a
-//      round-2 fix that only accepted a ROUTABLE address here discarded it and
-//      returned `notOnWifi` for an associated IPv6-only device — the exact
-//      failure the check was added to prevent.
+// WHAT WAS MEASURED, AND WHAT WAS NOT (the last three rounds each shipped a
+// comment asserting a property nobody had demonstrated, and each one became the
+// finding — so this block is explicit about the line between the two):
 //
-//      The honest response is NOT to reinterpret `fe80::` as proof of
-//      association (it is not: it is self-assigned, and treating it as positive
-//      would make `notOnWifi` unreachable and resurrect the stale-reading bug).
-//      It is to admit the read is AMBIGUOUS and return [unknown]. See the table.
+//   MEASURED (2026-07-13, a live NWPathMonitor run against the real Network
+//   framework on macOS 15; the same framework and the same C API iOS uses):
+//     * On an ASSOCIATED Wi-Fi link — default path `status = satisfied`,
+//       `usesInterfaceType(.wifi) = true`, `availableInterfaces = [en0:wifi]`.
+//       This held while `networksetup` simultaneously reported "You are not
+//       associated with an AirPort network" (the Location-gated SSID read coming
+//       back empty). The path monitor is definitive exactly where the SSID read is
+//       blind — which is the whole point.
+//     * For an interface that CANNOT CARRY A PATH (`requiredInterfaceType:
+//       .wiredEthernet` on a machine with no wired NIC) — `status = unsatisfied`,
+//       `usesInterfaceType = false`, `availableInterfaces = []`. That is the shape
+//       an iPhone's Wi-Fi path takes with the radio off, and the ONLY shape this
+//       service reads as `notOnWifi`.
 //
-// THE DECISION TABLE (iOS; every other platform is [unknown] on a null IPv4):
+//   NOT MEASURED — no iPhone was in this loop. The behavior on a real device, on a
+//   powered-but-unassociated Wi-Fi radio, and while hosting a Personal Hotspot is
+//   REASONED, not demonstrated. That is why every ambiguous shape below resolves
+//   to `unknown`: an unmeasured shape degrades to the caller's PRIOR behavior (a
+//   possible stale reading), never to a false "you have no Wi-Fi". See KNOWN
+//   LIMITS.
+//
+// THE DECISION TABLE (primary — the native path, every platform that answers):
+//
+//   | Native facts                                          | Verdict     |
+//   |-------------------------------------------------------|-------------|
+//   | default route runs over Wi-Fi (`usesWifi`)             | `onWifi`    |
+//   | a Wi-Fi-required path is satisfied (`wifiSatisfied`)   | `onWifi`    |
+//   | a Wi-Fi interface is present but carries no route      | `unknown`   |
+//   | no Wi-Fi interface, no Wi-Fi route                     | `notOnWifi` |
+//   | the platform did not answer (null)                     | ↓ fallback  |
+//
+// THE DECISION TABLE (fallback — the address probe; iOS-only for the negative):
 //
 //   | Device state              | IPv4    | IPv6 on en*   | Verdict      |
 //   |---------------------------|---------|---------------|--------------|
@@ -59,63 +83,55 @@
 //   | IPv6-only Wi-Fi, joined   | null    | any (fe80/GUA)| `unknown`    |
 //
 //   THREE HONEST STATES — never fake a value:
-//     * onWifi    — a positive association signal: a caller-supplied native SSID
-//                   or a Wi-Fi IPv4 address.
-//     * notOnWifi — iOS ONLY, and ONLY when the Wi-Fi interface carries NO
-//                   ADDRESS OF EITHER FAMILY. An interface with no active link
-//                   has no addresses at all (measured: on macOS every `en*` with
-//                   `status: inactive` carries neither an inet nor an inet6
-//                   line, while the active en0 carries both), so "no IPv4 and no
-//                   IPv6 anywhere on en*" is the honest cellular-only signal.
+//     * onWifi    — a positive association signal: the native path runs over Wi-Fi,
+//                   a caller-supplied native SSID, or a Wi-Fi IPv4 address.
+//     * notOnWifi — the native path reports NO Wi-Fi interface at all; or (fallback,
+//                   iOS only) the Wi-Fi interface carries NO ADDRESS OF EITHER
+//                   FAMILY.
 //     * unknown   — the state could not be determined: a read threw, the platform
-//                   cannot answer (a wired-only Mac legitimately has no Wi-Fi IP),
-//                   or the address evidence is AMBIGUOUS (an IPv6 exists but does
-//                   not prove association). The caller treats `unknown` as "carry
-//                   on as before", NEVER as "not on Wi-Fi".
+//                   cannot answer, or the evidence is AMBIGUOUS. The caller treats
+//                   `unknown` as "carry on as before", NEVER as "not on Wi-Fi".
 //
 //   GL-005: a null/ambiguous read resolves to [unknown], never to [notOnWifi].
 //
-// KNOWN LIMITS (stated, not hidden — the previous two rounds each shipped a
-// comment asserting a property that had not been proven, and each one was the
-// finding):
+// KNOWN LIMITS (stated, not hidden):
 //
-//   * ON AN IPv6-ONLY WI-FI NETWORK THIS PROBE RETURNS `unknown`, NOT `onWifi`.
-//     It cannot distinguish "joined an IPv6-only SSID" from "Wi-Fi radio idle but
-//     still holding a link-local", because the only IPv6 the plugin will hand back
-//     is the link-local in both cases. `unknown` means callers keep their PRIOR
-//     behavior, so on such a network a live surface may still show a STALE
-//     reading. That is the cost, and it is deliberate: it is strictly better than
-//     telling a connected user they have no Wi-Fi. Closing it properly needs an
-//     association signal the plugin does not expose (NEHotspotNetwork, or an
-//     `SCNetworkReachability` / `NWPathMonitor` interface-type check).
-//   * The `notOnWifi` verdict rests on an interface with no active link carrying
-//     no addresses. That was measured on macOS `en*` interfaces (above), and the
-//     mechanism is the same on iOS (the link-local is assigned at link-up), but it
-//     was NOT measured on an iOS en0 with Wi-Fi switched off. If that assumption
-//     is ever wrong the verdict degrades to `unknown` — a stale reading, not a
-//     false "you have no Wi-Fi". The design fails safe in that direction ON
-//     PURPOSE.
-//   * If a future plugin/OS revision stops answering `wifiIPv6Address`, the read
-//     throws and every iOS verdict degrades to `unknown` — the live tools revert
-//     to their pre-2026-07-13 behavior rather than making a false claim.
+//   * NO iPHONE WAS IN THIS LOOP. The native path logic is compiled and its API
+//     semantics were measured on the same framework on macOS, but it has NOT been
+//     executed on an iOS device. The three shapes it is expected to fix — IPv6-only
+//     SSID, USB tether, Personal Hotspot — are REASONED from the SDK's interface-type
+//     contract, not observed on a phone. Treat them as fixed only after a device run.
+//   * A POWERED-BUT-UNASSOCIATED Wi-Fi radio is expected to present no usable Wi-Fi
+//     path and therefore read `notOnWifi`. If instead iOS lists the interface as
+//     available, this service returns `unknown` and the caller keeps its prior
+//     behavior — a possible stale reading, not a false negative. Fails safe either
+//     way, by construction, which is why the unmeasured case is tolerable.
+//   * HOSTING A PERSONAL HOTSPOT may present a satisfied Wi-Fi path (the phone's own
+//     AP interface). If it does, this reads `onWifi`. That is the SAME answer the old
+//     address probe gave (the hotspot interface carries 172.20.10.1), so it is not a
+//     regression — but it is not a proven fix either, and it is not claimed as one.
+//   * WHERE THE NATIVE PATH IS UNAVAILABLE the fallback's older limits still apply in
+//     full: on an IPv6-only SSID the address probe returns `unknown`, not `onWifi`,
+//     so a live surface may still show a STALE reading there. This is the cost of the
+//     fallback, and it is strictly better than telling a connected user they have no
+//     Wi-Fi.
 //
-// Web safety: no `dart:io`. `network_info_plus` is a method-channel plugin whose
-// channel is absent off the supported native platforms; the calls are guarded and
-// resolve to [unknown] there. The screens only construct this behind their
-// existing platform gates regardless.
+// Web safety: no `dart:io`. Both probes are method-channel calls whose channels are
+// absent off the supported native platforms; the calls are guarded and resolve to
+// [unknown] there.
 
 import 'package:flutter/foundation.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
+import 'wifi_path_probe.dart';
+
 /// The honest three-way Wi-Fi connection verdict. See [WifiConnectionService].
 enum WifiConnectionStatus {
-  /// The device is connected to a Wi-Fi network (an active Wi-Fi IPv4 address or
-  /// a caller-supplied native SSID). The live read should proceed.
+  /// The device is connected to a Wi-Fi network. The live read should proceed.
   onWifi,
 
-  /// The device is demonstrably NOT on Wi-Fi (e.g. cellular-only on iOS): the
-  /// Wi-Fi interface carries NO address of EITHER family. Drives the "Connect to
-  /// a Wi-Fi network to see live Wi-Fi data" state.
+  /// The device is demonstrably NOT on Wi-Fi (e.g. cellular-only on iOS). Drives
+  /// the "Connect to a Wi-Fi network to see live Wi-Fi data" state.
   notOnWifi,
 
   /// The probe could not determine the state. Treated by callers as "carry on as
@@ -126,18 +142,20 @@ enum WifiConnectionStatus {
 
 /// Probes whether the device is connected to a Wi-Fi network, honestly.
 ///
-/// Pure I/O, no UI. The [networkInfo] seam keeps it unit-testable without a live
-/// network. Construct it behind the same platform gate the live Wi-Fi surfaces
-/// already sit behind.
+/// Pure I/O, no UI. The [networkInfo] and [pathProbe] seams keep it unit-testable
+/// without a live network.
 class WifiConnectionService {
   WifiConnectionService({
     NetworkInfo? networkInfo,
     TargetPlatform? platformOverride,
+    WifiPathProbe? pathProbe,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
-        _platform = platformOverride ?? defaultTargetPlatform;
+        _platform = platformOverride ?? defaultTargetPlatform,
+        _pathProbe = pathProbe ?? const MethodChannelWifiPathProbe();
 
   final NetworkInfo _networkInfo;
   final TargetPlatform _platform;
+  final WifiPathProbe _pathProbe;
 
   /// Reads the current Wi-Fi connection status.
   ///
@@ -146,19 +164,53 @@ class WifiConnectionService {
   /// DEFINITIVE [WifiConnectionStatus.onWifi] — a resolved SSID can only come
   /// from an active Wi-Fi association. Its ABSENCE is NOT used to assert
   /// `notOnWifi` (it can be null because Location is ungranted, not because Wi-Fi
-  /// is off), so the negative verdict rests solely on the permission-free
-  /// Wi-Fi-address signals below.
+  /// is off).
   Future<WifiConnectionStatus> status({String? nativeSsid}) async {
     // A resolved native SSID proves an active Wi-Fi join — strongest positive.
     if (nativeSsid != null && nativeSsid.trim().isNotEmpty) {
       return WifiConnectionStatus.onWifi;
     }
 
+    // ========================================================================
+    // PRIMARY: ask iOS what interface the path actually runs over.
+    //
+    // iOS ONLY, because the channel is iOS-only: `WifiSecurityChannel` is
+    // registered in ios/Runner/AppDelegate.swift and NOWHERE else. On every other
+    // platform the call is a guaranteed MissingPluginException, so skipping it is
+    // not an optimization, it is the removal of a round-trip that cannot succeed.
+    // (When macOS gains a path channel, widen this gate — and delete this note.)
+    // ========================================================================
+    final WifiPathFacts? path =
+        _platform == TargetPlatform.iOS ? await _pathProbe.read() : null;
+    if (path != null) {
+      // The default route runs over Wi-Fi, or a Wi-Fi-required path has a usable
+      // route. Either is a definitive association — a device cannot route over a
+      // Wi-Fi interface it is not joined to.
+      if (path.usesWifi || path.wifiSatisfied) {
+        return WifiConnectionStatus.onWifi;
+      }
+      // A Wi-Fi interface exists on the path but carries no usable route. Could be
+      // a captive portal mid-join, a radio powered but unassociated, or a hotspot
+      // the phone is hosting rather than joined to. AMBIGUOUS — refuse to guess.
+      if (path.wifiInterfacePresent) {
+        return WifiConnectionStatus.unknown;
+      }
+      // No Wi-Fi interface on the path at all, and no satisfiable Wi-Fi route.
+      // This is the cellular-only / radio-off device the probe exists for, and
+      // it is the one Keith hit. Note this needs NO platform gate: the native
+      // channel only answers where it is registered.
+      return WifiConnectionStatus.notOnWifi;
+    }
+
+    // ========================================================================
+    // FALLBACK: the address probe. Reached only where the native path did not
+    // answer — every non-iOS platform, and an iOS read that timed out or failed.
+    // Its limits are real and are documented in KNOWN LIMITS above.
+    // ========================================================================
     final ({String? ip, bool threw}) v4 = await _readWifiIp();
     if (v4.threw) {
-      // The read FAILED (denied permission / unsupported platform). That is
-      // ambiguous, never a positive not-on-Wi-Fi signal — resolve to `unknown`
-      // so a denied read is NEVER surfaced as a false "not on Wi-Fi" (GL-005).
+      // The read FAILED (denied permission / unsupported platform). Ambiguous,
+      // never a positive not-on-Wi-Fi signal (GL-005).
       return WifiConnectionStatus.unknown;
     }
     if (v4.ip != null) {
@@ -179,42 +231,25 @@ class WifiConnectionService {
       return WifiConnectionStatus.unknown;
     }
 
-    // iOS, no Wi-Fi IPv4. THE SECOND ADDRESS FAMILY DECIDES IT (cold-eyes F3).
-    // `getWifiIP()` enumerates AF_INET only, so an iPhone on an IPv6-only Wi-Fi
-    // network (NAT64/DNS64 — carrier and CONFERENCE SSIDs) reaches this line
-    // while fully associated. Asserting `notOnWifi` here would blank a live
-    // Wi-Fi link, tear down its stream, and tell a connected user they are not
-    // connected.
+    // iOS, no Wi-Fi IPv4, and the native path did not answer. The IPv6 read
+    // answers exactly one question, and only its NEGATIVE answer is trustworthy:
+    // "does the Wi-Fi interface carry ANY address at all?"
     //
-    // But the IPv6 read CANNOT rescue that case into `onWifi` either: the plugin
-    // hands back the interface's LINK-LOCAL (measured — see the header), which
-    // proves nothing about association. So this read answers exactly one
-    // question, and only the NEGATIVE answer is trustworthy:
-    //
-    //   "Does the Wi-Fi interface carry ANY address at all?"
-    //
-    //   * NO  → the interface has no active link. Nothing is addressed on it, in
-    //           either family. That is the cellular-only / radio-off device, and
-    //           it is the ONLY shape that may assert `notOnWifi`.
-    //   * YES → SOMETHING is on the interface, but we cannot tell an IPv6-only
-    //           association from an idle interface holding a link-local. Refuse
-    //           to guess: `unknown` keeps the caller's prior behavior and, above
-    //           all, never tells a connected user they have no Wi-Fi.
+    //   * NO  → the interface has no active link. That is the cellular-only /
+    //           radio-off device, and the ONLY shape that may assert `notOnWifi`.
+    //   * YES → SOMETHING is on the interface, but an IPv6-only association cannot
+    //           be told from an idle interface holding a link-local. Refuse to
+    //           guess: `unknown` keeps the caller's prior behavior.
     final ({bool present, bool threw}) v6 = await _readWifiIpv6();
     if (v6.threw) {
-      // The IPv6 read failed, so "no Wi-Fi address at all" is unproven. Honest
-      // answer: unknown. Callers keep their prior behavior; nothing is blanked.
+      // The IPv6 read failed, so "no Wi-Fi address at all" is unproven.
       return WifiConnectionStatus.unknown;
     }
     if (v6.present) {
-      // AMBIGUOUS, and deliberately unresolved. See KNOWN LIMITS in the header:
-      // the cost is a possible stale reading on an IPv6-only SSID; the thing we
-      // refuse to do is claim a connected device is not connected.
       return WifiConnectionStatus.unknown;
     }
 
     // No IPv4 and NO IPv6 anywhere on the Wi-Fi interface: it has no active link.
-    // This is the cellular-only case the probe exists for, and the one Keith hit.
     return WifiConnectionStatus.notOnWifi;
   }
 
@@ -235,8 +270,6 @@ class WifiConnectionService {
       if (t.isEmpty || t == '0.0.0.0') return (ip: null, threw: false);
       return (ip: t, threw: false);
     } on Object catch (e) {
-      // A denied permission / unsupported platform throws; report the failure so
-      // the caller resolves to `unknown`, never a false `notOnWifi`.
       debugPrint('WifiConnectionService.getWifiIP failed: $e');
       return (ip: null, threw: true);
     }
@@ -244,28 +277,50 @@ class WifiConnectionService {
 
   /// Whether the Wi-Fi interface carries ANY IPv6 address.
   ///
-  /// DELIBERATELY UNCLASSIFIED. An earlier revision kept only a "routable" IPv6
-  /// here (discarding `fe80::/10`) in order to read a global address as proof of
-  /// an IPv6-only association. That was dead code in the positive direction: the
-  /// plugin returns the FIRST AF_INET6 address on `en*`, which is the LINK-LOCAL
-  /// (measured — see the header), so the routable branch was never taken on a real
-  /// device and every associated IPv6-only phone fell through to `notOnWifi`.
+  /// DELIBERATELY UNCLASSIFIED. The plugin returns the FIRST AF_INET6 address on
+  /// `en*`, which is the LINK-LOCAL, so classifying it cannot prove association.
+  /// This reports PRESENCE only, and the caller uses only the negative: no address
+  /// of either family ⇒ no active link ⇒ `notOnWifi`. Any address ⇒ `unknown`.
   ///
-  /// So this reports PRESENCE only, and the caller uses only the negative:
-  /// no address of either family ⇒ no active link ⇒ `notOnWifi`. Any address at
-  /// all ⇒ `unknown`. Classifying the address cannot make the ambiguity go away,
-  /// so we do not pretend it can.
+  /// The all-zeros IPv6 placeholder (`::`, and its `0:0:0:0:0:0:0:0` long form) is
+  /// normalized to "absent", exactly as [_readWifiIp] normalizes `0.0.0.0` — an
+  /// unspecified address is not an address, and reading it as one would suppress a
+  /// legitimate `notOnWifi` on a cellular-only phone.
   ///
-  /// [present] is false only for a null/blank read. [threw] == true means the read
-  /// itself failed, which the caller must resolve to `unknown` — never `notOnWifi`.
+  /// [present] is false for a null/blank/all-zeros read. [threw] == true means the
+  /// read itself failed, which the caller must resolve to `unknown` — never
+  /// `notOnWifi`.
   Future<({bool present, bool threw})> _readWifiIpv6() async {
     try {
       final String? v = await _networkInfo.getWifiIPv6();
       if (v == null) return (present: false, threw: false);
-      return (present: v.trim().isNotEmpty, threw: false);
+      final String t = v.trim();
+      if (t.isEmpty || _isUnspecifiedIpv6(t)) {
+        return (present: false, threw: false);
+      }
+      return (present: true, threw: false);
     } on Object catch (e) {
       debugPrint('WifiConnectionService.getWifiIPv6 failed: $e');
       return (present: false, threw: true);
     }
+  }
+
+  /// True for the IPv6 unspecified address in any spelling: `::`, the fully
+  /// expanded `0:0:0:0:0:0:0:0`, and zero-padded forms. Case-insensitive, and any
+  /// zone suffix (`%en0`) is stripped first.
+  static bool _isUnspecifiedIpv6(String raw) {
+    final String addr = raw.split('%').first.trim();
+    if (addr.isEmpty) return false;
+    if (addr == '::') return true;
+    // Every group must be present and zero. `::` shorthand anywhere else (e.g.
+    // `::1`, the loopback) has a non-zero group and is correctly NOT unspecified.
+    final List<String> groups = addr.split(':');
+    bool sawDigit = false;
+    for (final String g in groups) {
+      if (g.isEmpty) continue; // the `::` elision
+      sawDigit = true;
+      if (int.tryParse(g, radix: 16) != 0) return false;
+    }
+    return sawDigit;
   }
 }
