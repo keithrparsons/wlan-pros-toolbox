@@ -34,6 +34,7 @@ import 'package:flutter/semantics.dart';
 import 'package:net_quality/net_quality.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/cellular_data_cost.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_connection_service.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -219,7 +220,17 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           }),
     );
 
-    _sub = _client.measure(includeThroughput: spendData).listen(
+    // On cellular the RPM stage does not run: its load generator is a second
+    // full-rate download, and a SHORTENED one would report a FLATTERING number
+    // (a link that never saturates understates loaded latency, so
+    // rpm = 60000/loadedAvg comes out too high). Not measuring an adjunct beats
+    // measuring it optimistically. `spendData` remains the only consent gate.
+    _sub = _client
+        .measure(
+      includeThroughput: spendData,
+      includeResponsiveness: !_notOnWifi,
+    )
+        .listen(
       (QualityProgress p) {
         if (!mounted) return;
         setState(() {
@@ -456,17 +467,20 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           ],
           // THE CELLULAR-DATA COST, STATED BEFORE THE USER SPENDS IT (F-1).
           // Only on a POSITIVE not-on-Wi-Fi probe — an ambiguous read never nags.
-          // The cost is a RANGE and a MECHANISM, not an invented figure: it
-          // genuinely depends on link speed and cannot be known before the run
-          // (GL-005). Identical wording to Test My Connection, deliberately —
-          // the same cost, told the same way, wherever the bytes are spent.
+          //
+          // ONE SENTENCE, ONE HOME (2026-07-14). This used to be a second, inline
+          // copy of Test My Connection's warning, kept in sync by hand and by
+          // hope. It is now the SAME constant both screens read
+          // ([kCellularDataWarning]), whose figures are derived from the probe
+          // constants and guarded by a re-derivation test. The old wording was
+          // stale ("about 30 seconds" was two 15 s download windows; the RPM one
+          // no longer runs on cellular) and hedged ("roughly ... or more"), which
+          // on a consent dialog is the real fault — an unsourceable number the
+          // user cannot check.
           if (_notOnWifi && !_running) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             Text(
-              "You're on cellular. The speed test is not capped by size: it "
-              'downloads at full speed for about 30 seconds, so it uses roughly '
-              '50 MB on a slow link and 500 MB or more on fast 5G. Everything '
-              'else on this screen is cheap.',
+              kCellularDataWarning + kCellularDataWarningCheapTail,
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ],

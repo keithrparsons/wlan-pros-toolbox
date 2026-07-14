@@ -20,9 +20,12 @@ Future<void> main() async {
 
   // ignore: avoid_print
   print('Measuring (latency -> throughput -> responsiveness)...');
-  await for (final p in client.measure(includeThroughput: true)) {
+  // A dev harness on a real machine — treat it as the Wi-Fi path (full RPM).
+  await for (final p
+      in client.measure(includeThroughput: true, includeResponsiveness: true)) {
     // ignore: avoid_print
-    print('  ${p.phase.name.padRight(14)} ${(p.fraction * 100).toStringAsFixed(0)}%');
+    print('  ${p.phase.name.padRight(14)} '
+        '${p.indeterminate ? 'working...' : '${(p.fraction * 100).toStringAsFixed(0)}%'}');
   }
 
   final result = client.lastResult!;

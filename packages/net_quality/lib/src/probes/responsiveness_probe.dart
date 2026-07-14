@@ -66,11 +66,35 @@ class ResponsivenessProbe {
   });
 
   /// Runs the probe: idle baseline, then load with concurrent sampling.
-  Future<ResponsivenessStats> measure() async {
+  ///
+  /// [onLoadStart] fires the instant the load generator is started, after the
+  /// idle baseline has finished. It is a PARAMETER, not a constructor field, for
+  /// the same reason [ThroughputProbe.measure]'s `onStage` is: the caller driving
+  /// the progress bar must get the callback no matter how the probe was
+  /// constructed. Hanging it off the constructor meant only the one factory that
+  /// wired it up got a working bar, and every other construction path — including
+  /// every test — silently got a broken one.
+  ///
+  /// The progress ticker needs this because the stage is TWO sub-phases with very
+  /// different durations: an idle baseline (a few sequential RTT samples, fast)
+  /// and the load window (a known, bounded download). Interpolating the whole
+  /// band against the load window alone puts the bar mid-band before the load has
+  /// even begun, and then runs it out of band while the load is still going.
+  Future<ResponsivenessStats> measure({void Function()? onLoadStart}) async {
     final idleAvg = await _averageSamples(idleSamples);
 
     // Start the load WITHOUT awaiting, so sampling overlaps with it.
+    onLoadStart?.call();
     final loadFuture = loadGenerator();
+
+    // The load can fail FAST — every endpoint refusing instantly is a real case
+    // (runResilientRpmLoad throws once its budget is spent or the pool is
+    // exhausted). Nothing awaits loadFuture until below, so without a handler
+    // attached NOW, Dart reports an unhandled async error in the gap. Attaching
+    // one marks it handled; the error is still delivered to `await loadFuture`,
+    // so the caller's catch still sees it and RPM still reports honestly.
+    unawaited(loadFuture.catchError((Object _) {}));
+
     final loadedAvg = await _averageSamples(loadedSamples);
     await loadFuture;
 

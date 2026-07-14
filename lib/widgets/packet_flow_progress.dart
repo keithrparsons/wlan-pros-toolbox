@@ -106,7 +106,20 @@ class PacketFlowProgress extends StatefulWidget {
     required this.fraction,
     required this.stage,
     this.semanticsLabelBuilder,
+    this.indeterminate = false,
   });
+
+  /// True when the engine no longer knows how far along it is, so no percentage
+  /// may be shown.
+  ///
+  /// A percentage that sits on one number for tens of seconds is not "progress
+  /// information", it is a HANG signal — and it is the thing that sent Keith
+  /// looking for a bug in his own app. When the engine says it does not know, the
+  /// honest render is to stop claiming a number: the path keeps animating (work
+  /// IS happening), and the figure is replaced by a plain "still working" word.
+  /// The dot must never advance on a timer while nothing is happening — that is
+  /// the same lie as a stale LIVE badge, just prettier.
+  final bool indeterminate;
 
   /// The human phase caption shown above the path (e.g. "Testing your internet
   /// speed…"). Owned by the host so the existing jargon-free copy is unchanged.
@@ -167,6 +180,11 @@ class _PacketFlowProgressState extends State<PacketFlowProgress>
     }
 
     final int pct = (widget.fraction.clamp(0.0, 1.0) * 100).round();
+    // The non-color, non-motion carrier of progress (SC 1.4.1). When the engine
+    // has stopped knowing, this says so in words rather than showing a frozen
+    // number. Reduced-motion users get the same honest text — they are the ones
+    // who most need it, because for them the animation is not there to reassure.
+    final String progressLabel = widget.indeterminate ? 'Still working' : '$pct%';
 
     // Lime is a sanctioned FILL in both themes (§8.20.2). The node fill, the dot
     // and the completed-segment all read as lime AREAS, not thin foreground
@@ -185,7 +203,9 @@ class _PacketFlowProgressState extends State<PacketFlowProgress>
         Semantics(
           liveRegion: true,
           label: widget.semanticsLabelBuilder?.call() ??
-              '${widget.caption}, $pct percent complete',
+              (widget.indeterminate
+                  ? '${widget.caption}, still working'
+                  : '${widget.caption}, $pct percent complete'),
           child: ExcludeSemantics(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -203,7 +223,7 @@ class _PacketFlowProgressState extends State<PacketFlowProgress>
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
-                  '$pct%',
+                  progressLabel,
                   style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],

@@ -36,6 +36,7 @@ import 'package:net_quality/net_quality.dart';
 
 import '../../../router/app_router.dart';
 import '../../guides/guide_reader_screen.dart';
+import '../../../services/network/cellular_data_cost.dart';
 import '../../../services/network/analyze/analyze_engine.dart';
 import '../../../services/network/analyze/analyze_input.dart';
 import '../../../services/network/analyze/analyze_report_text.dart';
@@ -284,6 +285,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   QualityPhase _phase = QualityPhase.idle;
   double _fraction = 0;
 
+  /// True when the engine has told us it no longer knows how long the current
+  /// stage will take. The bar must then stop showing a percentage — a number that
+  /// sits still for tens of seconds reads as a HANG, which is exactly how Keith
+  /// read the frozen 0.99 the old ticker emitted. See [QualityProgress
+  /// .indeterminate].
+  bool _indeterminate = false;
+
   // Results, populated when the run completes.
 
   /// The raw one-shot link read taken at test completion ([_readLink]). Off Wi-Fi
@@ -411,11 +419,25 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// report is dated to its own run, and no later recompute may re-derive it.
   bool _resultSpeedTestSkipped = false;
 
-  /// The estimated cellular data the speed test would consume, stated as a RANGE
-  /// because it genuinely is one.
+  /// The cellular data the speed test will consume.
   ///
-  /// DERIVED FROM THE CODE, NOT GUESSED (2026-07-13; CORRECTED round 4,
-  /// 2026-07-14). Neither data-hungry stage is byte-bounded:
+  /// THE SENTENCE AND ITS DERIVATION NOW LIVE IN ONE PLACE:
+  /// [kCellularDataWarning] (`services/network/cellular_data_cost.dart`), which
+  /// derives every figure from the named `ThroughputProbe` constants and is
+  /// re-derivation-guarded by a test. Network Quality shows the same sentence.
+  ///
+  /// The old hedged range ("roughly 50 MB ... 500 MB or more") is gone. It was
+  /// BOTH stale — its "about 30 seconds" was two 15 s download windows, and the
+  /// RPM window no longer runs on cellular — AND unsourceable, which on a consent
+  /// dialog is the real fault: a user is approving a spend and a fuzzy number
+  /// cannot be checked.
+  ///
+  /// THE CONSENT TAP IS UNCHANGED. Less cost is not no cost: download and upload
+  /// still spend real money, so the warning, the decline path and the awaited
+  /// `spendData` chokepoint all stay exactly as they were. Only the NUMBER moved.
+  ///
+  /// The historical derivation notes below are kept because they record WHY an
+  /// earlier revision's "300 Mbps -> ~1.1 GB" was unreachable:
   ///   * `ThroughputProbe.maxDuration` = 15 s. `downloadStreamCount` (default 5)
   ///     concurrent download streams LOOP sized requests back-to-back until that
   ///     window closes (`_downloadOnce`'s do/while), so this stage can transfer
@@ -441,28 +463,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   ///   10 Mbps  -> at least ~19 MB, and comfortably under 50 MB
   ///   300 Mbps -> at least ~560 MB
   ///
-  /// The shipped copy states the MECHANISM and a range and invents no single
-  /// figure, which is what keeps it true under this correction (GL-005). Do not
-  /// "tighten" it into a precise number: the exact byte count is not knowable
-  /// before the test runs.
-  ///
-  /// SCOPE, STATED HONESTLY (round-4 review): THIS GATE IS iOS-ONLY, AND NOT BY
-  /// DESIGN — BY STRUCTURE. It hangs off [_notOnWifi] → `WifiSignalSampler.notOnWifi`
-  /// → `WifiMonitorController`, and the controller is only constructed under
-  /// `case WifiInfoSource.iosShortcuts` (wifi_signal_sampler.dart). On Android,
-  /// macOS and Windows `notOnWifi` is therefore ALWAYS false, so a cellular Android
-  /// phone gets NO warning, NO decline path, and runs the full speed test.
-  ///
-  /// That is not a regression — it was never covered — but it must not be described
-  /// as "the app warns before spending cellular data". It warns on iOS. Closing it
-  /// means giving the other platforms a real not-on-Wi-Fi signal (Android has
-  /// `NetworkCapabilities.TRANSPORT_WIFI`, the direct analogue of the NWPathMonitor
-  /// check this round added on iOS), which is a separate piece of work and is not
-  /// claimed here.
-  static const String _kCellularDataWarning =
-      "You're on cellular. The speed test downloads at full speed for about 30 "
-      'seconds, so it uses roughly 50 MB on a slow connection and 500 MB or more '
-      'on fast 5G.';
+  /// SCOPE (updated 2026-07-14 — the previous note here is now OUT OF DATE and
+  /// said the opposite). It used to read "THIS GATE IS iOS-ONLY ... a cellular
+  /// Android phone gets NO warning". That hole was CLOSED in commit 4306b75:
+  /// `WifiConnectionStatus.notOnWifi` is now a real MEASURED verdict on Android
+  /// too (`ConnectivityManager` naming TRANSPORT_CELLULAR on the active network),
+  /// not an iOS-only inference. macOS and Windows remain deliberately unreachable
+  /// — there, an absent Wi-Fi address is genuinely ambiguous (a wired desktop),
+  /// so no honest negative exists to assert.
+  static const String _kCellularDataWarning = kCellularDataWarning;
 
   /// Whether offering the iOS companion-Shortcut capture path is HONEST for the
   /// result on screen.
@@ -1386,6 +1395,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _running = true;
       _phase = QualityPhase.idle;
       _fraction = 0;
+      _indeterminate = false;
       _ap = null;
       // A new run re-stamps the report from scratch: drop the previous run's RF
       // snapshot and its probe verdict so nothing from it can bleed into this one.
@@ -1475,12 +1485,29 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _fetchNetworkDetails();
     }
 
-    _sub = _quality.measure(includeThroughput: spendData).listen(
+    // THE RPM DECISION (Keith, 2026-07-14). On cellular the responsiveness stage
+    // does not run AT ALL. Its load generator is a second full-rate download, and
+    // shortening it would not have been "less accurate" — it would have been
+    // BIASED TOWARD FLATTERY (a link that never saturates understates loaded
+    // latency, and rpm = 60000/loadedAvg then comes out too HIGH). RPM is an
+    // adjunct here; declining to measure an adjunct is the honest answer, and it
+    // is the fast one.
+    //
+    // This is NOT a consent decision and it does not touch one: `spendData` above
+    // remains the sole chokepoint for whether ANY bytes move. This only decides
+    // how many of the already-consented bytes are worth spending.
+    _sub = _quality
+        .measure(
+      includeThroughput: spendData,
+      includeResponsiveness: !_notOnWifi,
+    )
+        .listen(
       (QualityProgress p) {
         if (!mounted) return;
         setState(() {
           _phase = p.phase;
           _fraction = p.fraction;
+          _indeterminate = p.indeterminate;
         });
       },
       onDone: () async {
@@ -2377,7 +2404,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             caption: caption,
             fraction: _fraction,
             stage: _packetFlowStage(_phase),
-            semanticsLabelBuilder: () => '$caption, $pct percent complete',
+            indeterminate: _indeterminate,
+            semanticsLabelBuilder: () => _indeterminate
+                ? '$caption, still working'
+                : '$caption, $pct percent complete',
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -2385,16 +2415,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             style: text.bodyMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xxs),
-          // Duration hint (Keith #9). HONEST figure (GL-005): the test is NOT a
-          // fixed 10–15 s window. It runs three back-to-back ~10 s measurement
-          // windows — download, then upload, then a loaded-responsiveness probe
-          // — preceded by a sub-second latency burst. A typical healthy run is
-          // ~25–35 s; a fast link finishes near the low end, a slow/stalled
-          // endpoint near the high end. "About half a minute" is the truthful,
-          // plain-language version of that range. See the timing constants in
-          // own_engine_quality_client.dart + throughput_probe.maxDuration (10 s).
+          // Duration hint (Keith #9). HONEST figure (GL-005), and it now depends
+          // on the link, because the run itself does.
+          //
+          // ON WI-FI: a download window (ThroughputProbe.maxDuration = 15 s), an
+          // upload (byte-capped at uploadBytes = 10 MB, so seconds on a decent
+          // link and at most one 15 s window on a slow one), then the loaded-
+          // responsiveness probe (another ~15 s load window). Roughly half a
+          // minute on a healthy link.
+          //
+          // ON CELLULAR: the responsiveness stage does not run at all, so a whole
+          // ~15 s load window comes off the total — download plus a small upload,
+          // about 20 seconds.
+          //
+          // (The previous comment here pinned `throughput_probe.maxDuration` at
+          // 10 s. It is 15 s — throughput_probe.dart:490. Fixed 2026-07-14.)
           Text(
-            'This usually takes about half a minute.',
+            _notOnWifi
+                ? 'This usually takes about 20 seconds. The responsiveness '
+                    'test is skipped on cellular.'
+                : 'This usually takes about half a minute.',
             style: text.bodyMedium?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -2742,6 +2782,36 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   static String _mbps(double? v) =>
       v == null ? 'Not measured' : '${v.round()} Mbps';
 
+  /// The Responsiveness copy row — the ONLY place TMC shows RPM to a user.
+  ///
+  /// THE THREE NULLS, TOLD APART (Keith, 2026-07-14). This row used to read
+  /// `rpm != null ? '$rpm RPM' : 'Not measured'`, built from
+  /// `ConnectionCheck.metricValue`, which returns a bare `double?` and THROWS THE
+  /// NOTE AWAY. So three completely different outcomes printed the same six
+  /// characters:
+  ///   * the probe ran and FAILED               ("Measurement failed")
+  ///   * the user DECLINED the speed test        (kSkippedNote)
+  ///   * we CHOSE not to measure it on cellular  (kResponsivenessCellularNote)
+  /// A user reading "Not measured" could not tell which, and neither could a
+  /// help-desk engineer reading their pasted results. The engine knew — it stamps
+  /// the reason on the metric — and the UI discarded it. So read the METRIC, not
+  /// the value, and print what the engine actually said.
+  ///
+  /// It also carries the RFC 9097 caveat onto the MEASURED value. The probe's own
+  /// docstring says this is "a directional indicator, not a standards-conformant
+  /// RPM value. Do not present it as one." — and this row was presenting a bare
+  /// "1234 RPM", which is exactly presenting it as one.
+  static String _responsivenessCopy(QualityResult? net) {
+    final QualityMetric? m = net?.metric(MetricIds.responsiveness);
+    if (m == null) return 'Not measured';
+    if (m.isAvailable) {
+      return '${m.value!.round()} RPM (simplified single-flow estimate, '
+          'not a standards RPM)';
+    }
+    // The engine's own words for WHY there is no number. Never a bare null.
+    return m.note ?? 'Not measured';
+  }
+
   /// "Jun 1, 2:14 PM" — month-day + 12-hour clock, no intl dependency.
   static String _formatTimestamp(DateTime? at) {
     if (at == null) return 'Not measured';
@@ -2799,8 +2869,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         ConnectionCheck.metricValue(net, MetricIds.latency);
     final double? jitter = ConnectionCheck.metricValue(net, MetricIds.jitter);
     final double? loss = ConnectionCheck.metricValue(net, MetricIds.loss);
-    final double? rpm =
-        ConnectionCheck.metricValue(net, MetricIds.responsiveness);
+    // NOTE: Responsiveness deliberately does NOT go through metricValue(). That
+    // helper returns a bare double and discards the metric's note — which is the
+    // whole reason three different nulls used to print as one "Not measured".
+    // See [_responsivenessCopy].
 
     final ConsumerVerdict? v = _verdict;
     // The UNIFIED RF source: the one-shot link read folded with the live
@@ -2878,10 +2950,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         jitter != null ? '${jitter.round()} ms' : 'Not measured',
       ),
       _CopyRow('Loss', loss != null ? '${loss.round()}%' : 'Not measured'),
-      _CopyRow(
-        'Responsiveness',
-        rpm != null ? '${rpm.round()} RPM' : 'Not measured',
-      ),
+      _CopyRow('Responsiveness', _responsivenessCopy(net)),
     ]);
 
     // ── DNS ─────────────────────────────────────────────────────────────────

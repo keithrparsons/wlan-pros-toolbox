@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/cellular_data_cost.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/live_quality_monitor.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
@@ -92,16 +93,16 @@ class _NoSites extends ReachabilityProbe {
 /// A monitor with a fake sampler, so the screen's live-trend timer never touches
 /// the network (and never outlives the test).
 LiveQualityMonitor _fakeMonitor() => LiveQualityMonitor(
-      sampler: () async => const LatencyStats(
-        avgMs: 20,
-        minMs: 18,
-        maxMs: 24,
-        jitterMs: 2,
-        lossPct: 0,
-        sent: 5,
-        received: 5,
-      ),
-    );
+  sampler: () async => const LatencyStats(
+    avgMs: 20,
+    minMs: 18,
+    maxMs: 24,
+    jitterMs: 2,
+    lossPct: 0,
+    sent: 5,
+    received: 5,
+  ),
+);
 
 Future<MockQualityClient> _pump(
   WidgetTester tester,
@@ -139,54 +140,73 @@ String _visibleText(WidgetTester tester) {
 
 void main() {
   group('cellular: Network Quality must warn before it spends the data', () {
-    testWidgets('the pre-run screen states the cost and offers a way out',
-        (WidgetTester tester) async {
+    testWidgets('the pre-run screen states the cost and offers a way out', (
+      WidgetTester tester,
+    ) async {
       await _pump(tester, _CellularOnly());
       final String screen = _visibleText(tester);
 
       expect(screen, contains("You're on cellular."));
-      expect(screen, contains('downloads at full speed for about 30 seconds'));
-      expect(screen, contains('roughly 50 MB'));
-      expect(screen, contains('500 MB or more on fast 5G'));
+      // Assert against the SSOT constant, not a hand-copied literal. The literal
+      // is how this drifted in the first place: the copy said "about 30 seconds"
+      // (two 15 s download windows) long after the RPM window stopped running on
+      // cellular, and the test happily confirmed the stale sentence.
+      expect(screen, contains(kCellularDataWarning));
+      expect(screen, contains('15 seconds'));
+      expect(screen, contains('30 MB at 10 Mbps'));
+      // The hedged range is GONE — a consent dialog states a sourced number.
+      expect(screen, isNot(contains('roughly')));
+      expect(screen, isNot(contains('or more')));
 
       expect(find.text('Run test (uses data)'), findsOneWidget);
       expect(find.text('Run without the speed test'), findsOneWidget);
     });
 
-    testWidgets('NO throughput byte moves until the user consents',
-        (WidgetTester tester) async {
+    testWidgets('NO throughput byte moves until the user consents', (
+      WidgetTester tester,
+    ) async {
       final MockQualityClient quality = await _pump(tester, _CellularOnly());
 
       await tester.tap(find.text('Run without the speed test'));
       await tester.pumpAndSettle();
 
-      expect(quality.measureCalls, 1,
-          reason: 'the cheap probes still run — declining is not a dead end');
+      expect(
+        quality.measureCalls,
+        1,
+        reason: 'the cheap probes still run — declining is not a dead end',
+      );
       expect(
         quality.lastIncludeThroughput,
         isFalse,
-        reason: 'THE BYPASS: this tool called measure() bare and rode the '
+        reason:
+            'THE BYPASS: this tool called measure() bare and rode the '
             'interface default, spending up to 500 MB of cellular data with no '
             'warning and no way to say no.',
       );
     });
 
-    testWidgets('the cost-labelled tap IS the consent, and it spends the data',
-        (WidgetTester tester) async {
-      final MockQualityClient quality = await _pump(tester, _CellularOnly());
+    testWidgets(
+      'the cost-labelled tap IS the consent, and it spends the data',
+      (WidgetTester tester) async {
+        final MockQualityClient quality = await _pump(tester, _CellularOnly());
 
-      await tester.tap(find.text('Run test (uses data)'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Run test (uses data)'));
+        await tester.pumpAndSettle();
 
-      expect(quality.measureCalls, 1);
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'an explicit, cost-labelled tap is consent and must work');
-    });
+        expect(quality.measureCalls, 1);
+        expect(
+          quality.lastIncludeThroughput,
+          isTrue,
+          reason: 'an explicit, cost-labelled tap is consent and must work',
+        );
+      },
+    );
   });
 
   group('on Wi-Fi and on an ambiguous probe: nothing changes', () {
-    testWidgets('ON WI-FI there is no warning and no extra tap',
-        (WidgetTester tester) async {
+    testWidgets('ON WI-FI there is no warning and no extra tap', (
+      WidgetTester tester,
+    ) async {
       final MockQualityClient quality = await _pump(tester, _OnWifi());
       final String screen = _visibleText(tester);
 
@@ -197,8 +217,11 @@ void main() {
       await tester.tap(find.text('Run test'));
       await tester.pumpAndSettle();
 
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'on Wi-Fi the full test runs exactly as before, one tap');
+      expect(
+        quality.lastIncludeThroughput,
+        isTrue,
+        reason: 'on Wi-Fi the full test runs exactly as before, one tap',
+      );
     });
 
     // ========================================================================
@@ -236,29 +259,37 @@ void main() {
     // every platform it never ran on.
     // ========================================================================
     testWidgets(
-        'ON iOS an AMBIGUOUS (failed) probe must NOT nag — it is not proof of '
-        'cellular, and Android is NOT covered by this rule',
-        (WidgetTester tester) async {
-      final MockQualityClient quality = await _pump(
-        tester,
-        _Ambiguous(),
-        // Stated, not defaulted. This invariant is iOS-scoped and the platform is
-        // now part of the test's claim rather than an invisible default.
-        platform: TargetPlatform.iOS,
-      );
-      final String screen = _visibleText(tester);
+      'ON iOS an AMBIGUOUS (failed) probe must NOT nag — it is not proof of '
+      'cellular, and Android is NOT covered by this rule',
+      (WidgetTester tester) async {
+        final MockQualityClient quality = await _pump(
+          tester,
+          _Ambiguous(),
+          // Stated, not defaulted. This invariant is iOS-scoped and the platform is
+          // now part of the test's claim rather than an invisible default.
+          platform: TargetPlatform.iOS,
+        );
+        final String screen = _visibleText(tester);
 
-      expect(screen, isNot(contains("You're on cellular.")),
-          reason: 'a failed read is not a positive cellular signal (GL-005)');
-      expect(find.text('Run test'), findsOneWidget);
+        expect(
+          screen,
+          isNot(contains("You're on cellular.")),
+          reason: 'a failed read is not a positive cellular signal (GL-005)',
+        );
+        expect(find.text('Run test'), findsOneWidget);
 
-      await tester.tap(find.text('Run test'));
-      await tester.pumpAndSettle();
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'on iOS a FAILED read must not withhold the feature. This is '
+        await tester.tap(find.text('Run test'));
+        await tester.pumpAndSettle();
+        expect(
+          quality.lastIncludeThroughput,
+          isTrue,
+          reason:
+              'on iOS a FAILED read must not withhold the feature. This is '
               'NOT a licence to spend on Android, where the transport is '
-              'MEASURED — see android_cellular_consent_test.dart');
-    });
+              'MEASURED — see android_cellular_consent_test.dart',
+        );
+      },
+    );
   });
 
   testWidgets(
@@ -298,7 +329,8 @@ void main() {
       expect(
         quality.lastIncludeThroughput,
         isFalse,
-        reason: 'the run must settle the probe BEFORE the consent decision '
+        reason:
+            'the run must settle the probe BEFORE the consent decision '
             'reads it — otherwise it spends up to 500 MB on a link the user '
             'never agreed to pay for',
       );

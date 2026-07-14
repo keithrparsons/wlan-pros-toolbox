@@ -48,6 +48,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wlan_pros_toolbox/services/network/cellular_data_cost.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/live_quality_monitor.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
@@ -107,11 +108,11 @@ class _Transport implements NetworkTransportProbe {
 
   @override
   Future<NetworkTransportFacts?> read() async => NetworkTransportFacts(
-        cellular: cellular,
-        wifi: wifi,
-        ethernet: ethernet,
-        vpn: vpn,
-      );
+    cellular: cellular,
+    wifi: wifi,
+    ethernet: ethernet,
+    vpn: vpn,
+  );
 }
 
 /// The channel did not answer at all (absent, threw, timed out). NOT a verdict in
@@ -161,22 +162,24 @@ class _NoSites extends ReachabilityProbe {
 }
 
 LiveQualityMonitor _fakeMonitor() => LiveQualityMonitor(
-      sampler: () async => const LatencyStats(
-        avgMs: 20,
-        minMs: 18,
-        maxMs: 24,
-        jitterMs: 2,
-        lossPct: 0,
-        sent: 5,
-        received: 5,
-      ),
-    );
+  sampler: () async => const LatencyStats(
+    avgMs: 20,
+    minMs: 18,
+    maxMs: 24,
+    jitterMs: 2,
+    lossPct: 0,
+    sent: 5,
+    received: 5,
+  ),
+);
 
 /// Android, cellular: the Wi-Fi snapshot read fails because there is no Wi-Fi link.
 class _NoWifiAdapter implements WifiInfoAdapter {
   @override
   Future<ConnectedAp> fetch() async => throw const WifiInfoUnavailable(
-      WifiInfoUnavailableReason.channelError, 'no Wi-Fi link');
+    WifiInfoUnavailableReason.channelError,
+    'no Wi-Fi link',
+  );
   @override
   String get platformLabel => 'Android WifiManager';
   @override
@@ -210,13 +213,12 @@ String _visibleText(WidgetTester tester) {
 WifiConnectionService _android(
   NetworkTransportProbe transport, {
   NetworkInfo? net,
-}) =>
-    WifiConnectionService(
-      networkInfo: net ?? _NoWifiAddress(),
-      platformOverride: TargetPlatform.android,
-      pathProbe: const _NativeSilent(),
-      transportProbe: transport,
-    );
+}) => WifiConnectionService(
+  networkInfo: net ?? _NoWifiAddress(),
+  platformOverride: TargetPlatform.android,
+  pathProbe: const _NativeSilent(),
+  transportProbe: transport,
+);
 
 /// Mounts Network Quality on an Android device with the given transport.
 Future<MockQualityClient> _pumpNetQuality(
@@ -269,8 +271,9 @@ Future<({MockQualityClient quality, WifiSignalSampler sampler})> _pumpTmc(
         networkDetailsService: _FakeNetDetails(),
         ipGeoService: _FakeIpGeo(),
         enableCloudApps: false,
-        onboardingService:
-            LiveOnboardingService(getStore: SharedPreferences.getInstance),
+        onboardingService: LiveOnboardingService(
+          getStore: SharedPreferences.getInstance,
+        ),
         qualityClient: quality,
       ),
     ),
@@ -299,7 +302,8 @@ void main() {
       expect(
         await _android(_Transport.cellularOnly).status(),
         WifiConnectionStatus.notOnWifi,
-        reason: 'TRANSPORT_CELLULAR on the active network is a MEASUREMENT, not '
+        reason:
+            'TRANSPORT_CELLULAR on the active network is a MEASUREMENT, not '
             'an inference. This is the ONE negative Android may assert.',
       );
     });
@@ -311,16 +315,18 @@ void main() {
       );
     });
 
-    test('ETHERNET is NOT cellular and is NOT nagged — it returns unknown',
-        () async {
-      // A wired Android TV. `unknown` means "carry on as before": no warning, and
-      // no false claim of a Wi-Fi link either. OVER-SUPPRESSION PROOF.
-      expect(
-        await _android(_Transport.ethernetOnly).status(),
-        WifiConnectionStatus.unknown,
-        reason: 'a wired Android TV must never see a cellular warning',
-      );
-    });
+    test(
+      'ETHERNET is NOT cellular and is NOT nagged — it returns unknown',
+      () async {
+        // A wired Android TV. `unknown` means "carry on as before": no warning, and
+        // no false claim of a Wi-Fi link either. OVER-SUPPRESSION PROOF.
+        expect(
+          await _android(_Transport.ethernetOnly).status(),
+          WifiConnectionStatus.unknown,
+          reason: 'a wired Android TV must never see a cellular warning',
+        );
+      },
+    );
 
     test('a VPN that hides its underlying transport stays AMBIGUOUS', () async {
       // Android usually merges the underlying transports into a VPN network's
@@ -350,26 +356,30 @@ void main() {
       );
     });
 
-    test('an UNREADABLE transport falls back and stays unknown — never a verdict',
-        () async {
-      // The channel is absent / threw / timed out. The address probe below refuses
-      // to assert a negative off iOS, so this resolves to `unknown`. THE F-4
-      // INVARIANT HOLDS ON ANDROID: no definitive negative from an unverified
-      // signal.
-      expect(
-        await _android(const _TransportSilent()).status(),
-        WifiConnectionStatus.unknown,
-      );
-    });
-
     test(
-        'a Wi-Fi ADDRESS cannot override a MEASURED cellular transport, and a '
+      'an UNREADABLE transport falls back and stays unknown — never a verdict',
+      () async {
+        // The channel is absent / threw / timed out. The address probe below refuses
+        // to assert a negative off iOS, so this resolves to `unknown`. THE F-4
+        // INVARIANT HOLDS ON ANDROID: no definitive negative from an unverified
+        // signal.
+        expect(
+          await _android(const _TransportSilent()).status(),
+          WifiConnectionStatus.unknown,
+        );
+      },
+    );
+
+    test('a Wi-Fi ADDRESS cannot override a MEASURED cellular transport, and a '
         'missing address cannot manufacture one', () async {
       // The transport probe is the PRIMARY signal on Android and sits ABOVE the
       // address probe. A stale/rogue Wi-Fi address on a cellular phone must not
       // suppress the gate...
       expect(
-        await _android(_Transport.cellularOnly, net: _HasWifiAddress()).status(),
+        await _android(
+          _Transport.cellularOnly,
+          net: _HasWifiAddress(),
+        ).status(),
         WifiConnectionStatus.notOnWifi,
       );
       // ...and an absent Wi-Fi address on a WIRED box must not create a cellular
@@ -417,60 +427,100 @@ void main() {
   // C. NETWORK QUALITY on a cellular Android phone.
   // =========================================================================
   group('Network Quality on ANDROID', () {
-    testWidgets('CELLULAR: warns, states the cost, and offers a way out',
-        (WidgetTester tester) async {
+    testWidgets('CELLULAR: warns, states the cost, and offers a way out', (
+      WidgetTester tester,
+    ) async {
       // WAS: `expect(screen, isNot(contains("You're on cellular.")))` — PASSED.
       // WAS: `expect(find.text('Run without the speed test'), findsNothing)` —
       // PASSED. WAS: `expect(find.text('Run test'), findsOneWidget)` — PASSED,
       // the ON-WI-FI label on a cellular phone.
-      final MockQualityClient quality =
-          await _pumpNetQuality(tester, _Transport.cellularOnly);
+      final MockQualityClient quality = await _pumpNetQuality(
+        tester,
+        _Transport.cellularOnly,
+      );
       final String screen = _visibleText(tester);
 
-      expect(screen, contains("You're on cellular."),
-          reason: 'the cellular user MUST be warned');
-      expect(screen, contains('500 MB'),
-          reason: 'the cost must be stated before it is spent');
-      expect(find.text('Run without the speed test'), findsOneWidget,
-          reason: 'there MUST be a decline path');
-      expect(find.text('Run test (uses data)'), findsOneWidget,
-          reason: "the button's own label must carry the cost");
-      expect(find.text('Run test'), findsNothing,
-          reason: 'the on-Wi-Fi label must NOT appear on a cellular phone');
+      expect(
+        screen,
+        contains("You're on cellular."),
+        reason: 'the cellular user MUST be warned',
+      );
+      expect(
+        screen,
+        contains(kCellularDataWarning),
+        reason: 'the cost must be stated before it is spent',
+      );
+      expect(
+        screen,
+        contains('570 MB at 300 Mbps'),
+        reason: 'the top-end figure must still be stated plainly',
+      );
+      expect(
+        find.text('Run without the speed test'),
+        findsOneWidget,
+        reason: 'there MUST be a decline path',
+      );
+      expect(
+        find.text('Run test (uses data)'),
+        findsOneWidget,
+        reason: "the button's own label must carry the cost",
+      );
+      expect(
+        find.text('Run test'),
+        findsNothing,
+        reason: 'the on-Wi-Fi label must NOT appear on a cellular phone',
+      );
 
       expect(quality.measureCalls, 0, reason: 'nothing has run yet');
     });
 
-    testWidgets('CELLULAR: DECLINING spends no throughput bytes',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpNetQuality(tester, _Transport.cellularOnly);
+    testWidgets('CELLULAR: DECLINING spends no throughput bytes', (
+      WidgetTester tester,
+    ) async {
+      final MockQualityClient quality = await _pumpNetQuality(
+        tester,
+        _Transport.cellularOnly,
+      );
 
       await tester.tap(find.text('Run without the speed test'));
       await tester.pumpAndSettle();
 
       expect(quality.measureCalls, 1);
-      expect(quality.lastIncludeThroughput, isFalse,
-          reason: 'the decline path must withhold the data-hungry stages');
+      expect(
+        quality.lastIncludeThroughput,
+        isFalse,
+        reason: 'the decline path must withhold the data-hungry stages',
+      );
     });
 
-    testWidgets('CELLULAR: the cost-labelled tap IS the consent, and it works',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpNetQuality(tester, _Transport.cellularOnly);
+    testWidgets(
+      'CELLULAR: the cost-labelled tap IS the consent, and it works',
+      (WidgetTester tester) async {
+        final MockQualityClient quality = await _pumpNetQuality(
+          tester,
+          _Transport.cellularOnly,
+        );
 
-      await tester.tap(find.text('Run test (uses data)'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Run test (uses data)'));
+        await tester.pumpAndSettle();
 
-      expect(quality.measureCalls, 1);
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'an explicit, cost-labelled tap is consent and must be honored');
-    });
+        expect(quality.measureCalls, 1);
+        expect(
+          quality.lastIncludeThroughput,
+          isTrue,
+          reason:
+              'an explicit, cost-labelled tap is consent and must be honored',
+        );
+      },
+    );
 
-    testWidgets('WI-FI Android: no warning, no extra tap, nothing changes',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpNetQuality(tester, _Transport.wifiOnly);
+    testWidgets('WI-FI Android: no warning, no extra tap, nothing changes', (
+      WidgetTester tester,
+    ) async {
+      final MockQualityClient quality = await _pumpNetQuality(
+        tester,
+        _Transport.wifiOnly,
+      );
       final String screen = _visibleText(tester);
 
       expect(screen, isNot(contains("You're on cellular.")));
@@ -479,19 +529,28 @@ void main() {
 
       await tester.tap(find.text('Run test'));
       await tester.pumpAndSettle();
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'a tablet on Wi-Fi must not be nagged or downgraded');
+      expect(
+        quality.lastIncludeThroughput,
+        isTrue,
+        reason: 'a tablet on Wi-Fi must not be nagged or downgraded',
+      );
     });
 
-    testWidgets('ETHERNET Android (a wired TV): NOT nagged',
-        (WidgetTester tester) async {
+    testWidgets('ETHERNET Android (a wired TV): NOT nagged', (
+      WidgetTester tester,
+    ) async {
       // OVER-SUPPRESSION PROOF, at the screen.
-      final MockQualityClient quality =
-          await _pumpNetQuality(tester, _Transport.ethernetOnly);
+      final MockQualityClient quality = await _pumpNetQuality(
+        tester,
+        _Transport.ethernetOnly,
+      );
       final String screen = _visibleText(tester);
 
-      expect(screen, isNot(contains("You're on cellular.")),
-          reason: 'a wired Android TV is not on cellular');
+      expect(
+        screen,
+        isNot(contains("You're on cellular.")),
+        reason: 'a wired Android TV is not on cellular',
+      );
       expect(find.text('Run test'), findsOneWidget);
 
       await tester.tap(find.text('Run test'));
@@ -499,20 +558,27 @@ void main() {
       expect(quality.lastIncludeThroughput, isTrue);
     });
 
-    testWidgets('AN UNREADABLE transport must NOT nag — ambiguity is preserved',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpNetQuality(tester, const _TransportSilent());
-      final String screen = _visibleText(tester);
+    testWidgets(
+      'AN UNREADABLE transport must NOT nag — ambiguity is preserved',
+      (WidgetTester tester) async {
+        final MockQualityClient quality = await _pumpNetQuality(
+          tester,
+          const _TransportSilent(),
+        );
+        final String screen = _visibleText(tester);
 
-      expect(screen, isNot(contains("You're on cellular.")),
-          reason: 'a read we could not make is not proof of cellular (GL-005)');
-      expect(find.text('Run test'), findsOneWidget);
+        expect(
+          screen,
+          isNot(contains("You're on cellular.")),
+          reason: 'a read we could not make is not proof of cellular (GL-005)',
+        );
+        expect(find.text('Run test'), findsOneWidget);
 
-      await tester.tap(find.text('Run test'));
-      await tester.pumpAndSettle();
-      expect(quality.lastIncludeThroughput, isTrue);
-    });
+        await tester.tap(find.text('Run test'));
+        await tester.pumpAndSettle();
+        expect(quality.lastIncludeThroughput, isTrue);
+      },
+    );
   });
 
   // =========================================================================
@@ -520,31 +586,38 @@ void main() {
   // =========================================================================
   group('Test My Connection on ANDROID', () {
     testWidgets(
-        'THE ZERO-TAP EXPLOIT IS CLOSED: the home hero auto-start must NOT run '
-        'the speed test on a cellular Android phone', (WidgetTester tester) async {
-      // WAS: `expect(quality.measureCalls, 1)` — PASSED, "the hero auto-run fired
-      // with no user tap". WAS: `expect(quality.lastIncludeThroughput, isTrue)` —
-      // PASSED: "full throughput + RPM on a cellular Android phone, zero taps, no
-      // warning, no consent, no decline path".
-      final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
-          await _pumpTmc(tester, _Transport.cellularOnly);
+      'THE ZERO-TAP EXPLOIT IS CLOSED: the home hero auto-start must NOT run '
+      'the speed test on a cellular Android phone',
+      (WidgetTester tester) async {
+        // WAS: `expect(quality.measureCalls, 1)` — PASSED, "the hero auto-run fired
+        // with no user tap". WAS: `expect(quality.lastIncludeThroughput, isTrue)` —
+        // PASSED: "full throughput + RPM on a cellular Android phone, zero taps, no
+        // warning, no consent, no decline path".
+        final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
+            await _pumpTmc(tester, _Transport.cellularOnly);
 
-      expect(r.quality.measureCalls, 0,
-          reason: 'ZERO BYTES. The auto-start must stop dead on cellular and let '
-              'the user decide. Not one measurement may fire without a tap.');
+        expect(
+          r.quality.measureCalls,
+          0,
+          reason:
+              'ZERO BYTES. The auto-start must stop dead on cellular and let '
+              'the user decide. Not one measurement may fire without a tap.',
+        );
 
-      // And it must not silently do nothing: the user is SHOWN the cost and BOTH
-      // choices, so the feature is offered, not withheld.
-      final String screen = _visibleText(tester);
-      expect(screen, contains("You're on cellular."));
-      expect(find.text('Check My Connection (uses data)'), findsOneWidget);
-      expect(find.text('Check without the speed test'), findsOneWidget);
+        // And it must not silently do nothing: the user is SHOWN the cost and BOTH
+        // choices, so the feature is offered, not withheld.
+        final String screen = _visibleText(tester);
+        expect(screen, contains("You're on cellular."));
+        expect(find.text('Check My Connection (uses data)'), findsOneWidget);
+        expect(find.text('Check without the speed test'), findsOneWidget);
 
-      await _teardown(tester, r.sampler);
-    });
+        await _teardown(tester, r.sampler);
+      },
+    );
 
-    testWidgets('CELLULAR: the cost-labelled tap consents and spends',
-        (WidgetTester tester) async {
+    testWidgets('CELLULAR: the cost-labelled tap consents and spends', (
+      WidgetTester tester,
+    ) async {
       final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
           await _pumpTmc(tester, _Transport.cellularOnly);
 
@@ -557,8 +630,9 @@ void main() {
       await _teardown(tester, r.sampler);
     });
 
-    testWidgets('CELLULAR: declining spends no throughput bytes',
-        (WidgetTester tester) async {
+    testWidgets('CELLULAR: declining spends no throughput bytes', (
+      WidgetTester tester,
+    ) async {
       final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
           await _pumpTmc(tester, _Transport.cellularOnly);
 
@@ -571,52 +645,61 @@ void main() {
       await _teardown(tester, r.sampler);
     });
 
-    testWidgets('WI-FI Android: the hero auto-start still runs, in full',
-        (WidgetTester tester) async {
+    testWidgets('WI-FI Android: the hero auto-start still runs, in full', (
+      WidgetTester tester,
+    ) async {
       // NO OVER-SUPPRESSION. The most-travelled path in the app must be exactly as
       // fast as it always was for the overwhelming majority of users.
       final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
           await _pumpTmc(tester, _Transport.wifiOnly);
 
-      expect(r.quality.measureCalls, 1,
-          reason: 'on Wi-Fi the hero auto-run fires immediately, as always');
+      expect(
+        r.quality.measureCalls,
+        1,
+        reason: 'on Wi-Fi the hero auto-run fires immediately, as always',
+      );
       expect(r.quality.lastIncludeThroughput, isTrue);
 
       await _teardown(tester, r.sampler);
     });
 
-    testWidgets('ETHERNET Android: the hero auto-start still runs, in full',
-        (WidgetTester tester) async {
+    testWidgets('ETHERNET Android: the hero auto-start still runs, in full', (
+      WidgetTester tester,
+    ) async {
       final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
           await _pumpTmc(tester, _Transport.ethernetOnly);
 
-      expect(r.quality.measureCalls, 1,
-          reason: 'a wired Android box is not cellular and must not be stopped');
+      expect(
+        r.quality.measureCalls,
+        1,
+        reason: 'a wired Android box is not cellular and must not be stopped',
+      );
       expect(r.quality.lastIncludeThroughput, isTrue);
 
       await _teardown(tester, r.sampler);
     });
 
-    testWidgets('AN UNREADABLE transport: the auto-start still runs (ambiguity)',
-        (WidgetTester tester) async {
-      // Only a POSITIVE not-on-Wi-Fi verdict stops the run. Stopping on `unknown`
-      // would interrogate every user whose channel hiccuped.
-      final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
-          await _pumpTmc(tester, const _TransportSilent());
+    testWidgets(
+      'AN UNREADABLE transport: the auto-start still runs (ambiguity)',
+      (WidgetTester tester) async {
+        // Only a POSITIVE not-on-Wi-Fi verdict stops the run. Stopping on `unknown`
+        // would interrogate every user whose channel hiccuped.
+        final ({MockQualityClient quality, WifiSignalSampler sampler}) r =
+            await _pumpTmc(tester, const _TransportSilent());
 
-      expect(r.quality.measureCalls, 1);
-      expect(r.quality.lastIncludeThroughput, isTrue);
+        expect(r.quality.measureCalls, 1);
+        expect(r.quality.lastIncludeThroughput, isTrue);
 
-      await _teardown(tester, r.sampler);
-    });
+        await _teardown(tester, r.sampler);
+      },
+    );
   });
 
   // =========================================================================
   // E. THE SAMPLER — the SECOND, INDEPENDENT copy of the hole.
   // =========================================================================
   group('WifiSignalSampler.notOnWifi on ANDROID', () {
-    test('load() is no longer a no-op: it settles the transport verdict',
-        () async {
+    test('load() is no longer a no-op: it settles the transport verdict', () async {
       // WAS: `notOnWifi => _controller?.notOnWifi ?? false`, and `_controller` is
       // built ONLY for iosShortcuts — so this was hard-wired `false` on Android and
       // `load()` returned without doing anything. TMC's gate reads EXACTLY this.
@@ -629,9 +712,13 @@ void main() {
 
       expect(sampler.notOnWifi, isFalse, reason: 'false until load() settles');
       await sampler.load();
-      expect(sampler.notOnWifi, isTrue,
-          reason: 'THE AWAIT MUST SETTLE THE PROBE — _autoStart awaits exactly '
-              'this before it decides whether to spend the data');
+      expect(
+        sampler.notOnWifi,
+        isTrue,
+        reason:
+            'THE AWAIT MUST SETTLE THE PROBE — _autoStart awaits exactly '
+            'this before it decides whether to spend the data',
+      );
     });
 
     test('Wi-Fi and Ethernet leave notOnWifi false', () async {
@@ -688,8 +775,11 @@ void main() {
         );
         addTearDown(sampler.dispose);
         await sampler.load();
-        expect(sampler.notOnWifi, isFalse,
-            reason: '$s must remain a no-op — never nag a wired desktop');
+        expect(
+          sampler.notOnWifi,
+          isFalse,
+          reason: '$s must remain a no-op — never nag a wired desktop',
+        );
       }
     });
   });

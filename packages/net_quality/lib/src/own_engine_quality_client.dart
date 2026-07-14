@@ -45,6 +45,30 @@ class OwnEngineQualityClient implements QualityClient {
           (2 * (1 + throughputProbe.throughputRetries)) +
       const Duration(seconds: 20);
 
+  /// The TOTAL wall-clock ceiling on the RPM load, shared across every endpoint
+  /// the load generator walks. See [runResilientRpmLoad] for why one shared
+  /// budget (rather than a fresh window per endpoint) is what stops a single slow
+  /// carrier from turning a 15 s stage into a 36 s one.
+  ///
+  /// It is exactly ONE load window: the RPM load is a single-flow download whose
+  /// purpose is to saturate the link for [ThroughputProbe.maxDuration]. Giving it
+  /// more than one window's worth of time cannot make it a better load.
+  Duration get rpmLoadBudget => throughputProbe.maxDuration;
+
+  /// Worst-case duration of the RPM stage's IDLE BASELINE: [ResponsivenessProbe
+  /// .idleSamples] sequential RTT samples, each bounded by the 2 s connect
+  /// timeout that [OwnEngineQualityClient.forHost] gives its sampler.
+  ///
+  /// This is the ticker's denominator for the baseline sub-phase. It is a
+  /// CEILING, not an estimate — on a healthy link the baseline finishes in
+  /// milliseconds and the bar simply moves on to the load sub-phase early.
+  Duration get _idleBaselineBudget =>
+      _latencySampleCeiling * responsivenessProbe.idleSamples;
+
+  /// The connect timeout [forHost] gives its RTT sampler. Kept beside the budget
+  /// that depends on it so the two cannot drift apart silently.
+  static const Duration _latencySampleCeiling = Duration(seconds: 2);
+
   QualityResult? _lastResult;
 
   /// Highest fraction emitted so far this run, so [_emit] can guarantee the bar
@@ -72,23 +96,55 @@ class OwnEngineQualityClient implements QualityClient {
   // and crammed the multi-second responsiveness stage into the last 10 %), the
   // bands below ease the bar to ~6 % quickly, then climb steadily and
   // continuously through the three slow ~10 s stages. Each slow band is filled
-  // by real elapsed/maxDuration interpolation, and every emit is monotonic via
+  // by real elapsed/window interpolation, and every emit is monotonic via
   // [_emit] and clamped to its band end (never overshoots).
+  //
+  // THE BANDS DEPEND ON WHETHER RPM RUNS (Keith, 2026-07-14). On cellular the
+  // responsiveness stage does not run at all, so its 0.72→1.0 band — 28 % of the
+  // bar — would be DEAD SPACE: the upload stage would finish at 0.72 and the bar
+  // would leap the last 28 % in a single frame. That is not honest progress, it
+  // is a jump-cut. When RPM is skipped the two surviving slow stages (download,
+  // upload) SPLIT THE WHOLE REMAINING BAR instead, so the bar keeps meaning "how
+  // much of the work that is actually being done is done".
+  //
+  // The split stays TIME-WEIGHTED, the same principle as above: download and
+  // upload are each one `maxDuration` window, so they take equal halves of the
+  // 0.06→1.0 remainder — 0.06 + (0.94 / 2) = 0.53.
   static const ({double start, double end}) _latencyBand =
       (start: 0.0, end: 0.06);
-  static const ({double start, double end}) _downloadBand =
-      (start: 0.06, end: 0.40);
-  static const ({double start, double end}) _uploadBand =
-      (start: 0.40, end: 0.72);
+
+  /// Whether the responsiveness stage will run this measurement. Set once at the
+  /// top of [measure] and read by the band getters below.
+  bool _rpmEnabled = true;
+
+  ({double start, double end}) get _downloadBand => _rpmEnabled
+      ? (start: 0.06, end: 0.40)
+      : (start: 0.06, end: 0.53);
+
+  ({double start, double end}) get _uploadBand => _rpmEnabled
+      ? (start: 0.40, end: 0.72)
+      : (start: 0.53, end: 1.0);
+
   static const ({double start, double end}) _responsivenessBand =
       (start: 0.72, end: 1.0);
 
+  /// Within [_responsivenessBand], the thin slice given to the IDLE BASELINE
+  /// (a few sequential RTT samples, typically well under a second) before the
+  /// load window opens. The load — the part with a KNOWN duration — owns the
+  /// rest. Same shape as [_latencyBand]: a fast sub-stage gets a thin slice, not
+  /// an equal one.
+  static const double _idleBaselineBandEnd = 0.76;
+
   /// Builds a monotonic [QualityProgress]: clamps [fraction] to never drop below
   /// the highest already emitted, then records the new high-water mark.
-  QualityProgress _emit(QualityPhase phase, double fraction) {
+  QualityProgress _emit(
+    QualityPhase phase,
+    double fraction, {
+    bool indeterminate = false,
+  }) {
     final clamped = fraction < _maxFraction ? _maxFraction : fraction;
     _maxFraction = clamped;
-    return QualityProgress(phase, clamped);
+    return QualityProgress(phase, clamped, indeterminate: indeterminate);
   }
 
   /// Creates a client from explicit probes.
@@ -116,7 +172,9 @@ class OwnEngineQualityClient implements QualityClient {
       final socket = await Socket.connect(
         host,
         port,
-        timeout: const Duration(seconds: 2),
+        // The SAME ceiling [_idleBaselineBudget] multiplies to size the idle
+        // sub-phase's progress window. One constant, so they cannot drift.
+        timeout: _latencySampleCeiling,
       );
       sw.stop();
       socket.destroy();
@@ -125,7 +183,12 @@ class OwnEngineQualityClient implements QualityClient {
 
     final responsivenessProbe = ResponsivenessProbe(
       latencySampler: sampleRtt,
-      loadGenerator: () => runResilientRpmLoad(throughputProbe),
+      // ONE shared budget for the whole endpoint walk — not a fresh window each.
+      // `maxDuration` is the probe's own default, which is exactly [rpmLoadBudget].
+      loadGenerator: () => runResilientRpmLoad(
+        throughputProbe,
+        budget: throughputProbe.maxDuration,
+      ),
     );
 
     return OwnEngineQualityClient(
@@ -137,7 +200,7 @@ class OwnEngineQualityClient implements QualityClient {
   }
 
   /// Runs the SINGLE-FLOW load for the responsiveness (RPM) stage, resilient to
-  /// a flaky provider.
+  /// a flaky provider but BOUNDED IN TOTAL.
   ///
   /// RPM is single-flow BY DESIGN — it must never fan out into the parallel
   /// download pool. But it also must not fail just because one provider (e.g.
@@ -147,15 +210,46 @@ class OwnEngineQualityClient implements QualityClient {
   /// diverse pool in order and stops at the FIRST endpoint whose single download
   /// flow runs. Only when EVERY endpoint fails does it throw (honest: no load
   /// could be generated, so RPM is genuinely unmeasurable) — never a fake value.
-  static Future<void> runResilientRpmLoad(ThroughputProbe probe) async {
+  ///
+  /// THE BUDGET, AND WHY IT IS THE FIX FOR KEITH'S 36 SECONDS (2026-07-14).
+  /// The walk used to hand EVERY endpoint a FULL FRESH `probe.maxDuration`
+  /// window. On a throttling carrier, endpoint #0 burned its entire 15 s window
+  /// and then threw — and the loop's answer was to give endpoint #1 another full
+  /// 15 s. Two attempts ≈ 36 s of a stage the user was told nothing about.
+  /// (Reproduced: a slow-then-throwing first endpoint hit `[slow, second]`, i.e.
+  /// TWO windows.)
+  ///
+  /// Falling back is right when the first endpoint fails FAST — a refused
+  /// connection costs nothing and rescues RPM, which is what the resilience fix
+  /// (544cc3e) was for, and that behavior is PRESERVED. Falling back is wrong
+  /// when the first endpoint was merely SLOW: the load window is already spent,
+  /// so walking on buys no better measurement and costs another full window of
+  /// the user's time and data.
+  ///
+  /// So the whole load shares ONE budget. Each attempt gets whatever is LEFT of
+  /// it, and once it is gone the walk stops. A fast failure leaves the budget
+  /// nearly intact (fallback still works); a slow failure leaves nothing (no
+  /// cascade). The stage therefore has a KNOWN CEILING — which is also what lets
+  /// the progress bar tick across it honestly instead of guessing.
+  static Future<void> runResilientRpmLoad(
+    ThroughputProbe probe, {
+    Duration? budget,
+  }) async {
+    final Duration total = budget ?? probe.maxDuration;
+    final Stopwatch spent = Stopwatch()..start();
     Object? lastError;
+
     for (final endpoint in probe.downloadEndpoints) {
+      final Duration remaining = total - spent.elapsed;
+      // Budget exhausted: a further attempt cannot produce a better load, it can
+      // only make the user wait again. Stop and report honestly.
+      if (remaining <= Duration.zero) break;
       try {
-        // One healthy single-flow load for the whole RPM window is enough.
-        await probe.downloader(endpoint, probe.maxDuration);
+        // One healthy single-flow load for the REST of the RPM window is enough.
+        await probe.downloader(endpoint, remaining);
         return;
       } catch (e) {
-        lastError = e; // try the next provider
+        lastError = e; // try the next provider, on the remaining budget
       }
     }
     throw lastError ??
@@ -176,10 +270,42 @@ class OwnEngineQualityClient implements QualityClient {
   static const String kSkippedNote = 'Not measured: the speed test was skipped '
       'to save cellular data';
 
+  /// The note stamped on Responsiveness when the run is on CELLULAR.
+  ///
+  /// THE THIRD KIND OF NULL (Keith, 2026-07-14). [kSkippedNote] documents two —
+  /// "we failed" versus "we did not try" — and this is a distinct third: WE
+  /// DELIBERATELY CHOSE NOT TO, AND WE WOULD MAKE THE SAME CHOICE AGAIN. It is
+  /// not a degraded outcome to apologise for; it is the right answer.
+  ///
+  /// So this string must NEVER read as a failure. Not "Unavailable", not
+  /// "Couldn't check", not "—", not 0. Shipping a deliberate choice dressed as an
+  /// error is precisely the bug this codebase spent two days killing ("Couldn't
+  /// check" when the app HAD checked), and it must not be recreated in a new
+  /// metric. It names the CHOICE, the REASON, and where the user CAN get the
+  /// number.
+  ///
+  /// The alternative — a shortened cellular load window — was rejected because it
+  /// is not merely less accurate, it is BIASED TOWARD FLATTERY: a short load
+  /// never saturates the link, so loaded latency is understated and
+  /// `rpm = 60000 / loadedAvg` comes out too HIGH. A number that is silently
+  /// optimistic is worse than no number.
+  static const String kResponsivenessCellularNote =
+      'Not measured on cellular, on purpose: it needs another full-speed '
+      'download, and responsiveness is a side metric here. Run this on Wi-Fi '
+      'to see it.';
+
   @override
-  Stream<QualityProgress> measure({required bool includeThroughput}) async* {
+  Stream<QualityProgress> measure({
+    required bool includeThroughput,
+    required bool includeResponsiveness,
+  }) async* {
     final metrics = <QualityMetric>[];
     _maxFraction = 0;
+    // Read ONCE, at the top, so every band getter and every stage below agrees on
+    // the same shape of run. RPM only ever runs inside a consented throughput
+    // run — the consent chokepoint is unchanged and remains the ONLY thing that
+    // decides whether bytes move.
+    _rpmEnabled = includeThroughput && includeResponsiveness;
 
     // --- Latency / jitter / loss ---
     // The instant metrics finish in well under a second, so they only get a thin
@@ -271,13 +397,30 @@ class OwnEngineQualityClient implements QualityClient {
       yield _emit(QualityPhase.download, _downloadBand.start);
       yield* _runThroughputStage(metrics);
 
-      // --- Responsiveness ---
-      // The loaded-responsiveness stage runs a full ~10 s load window, so it gets
-      // its own ~1/3 band and the SAME elapsed-time ticker as the throughput
-      // stages — it climbs smoothly across the back third rather than jumping to
-      // 0.90 and sitting frozen while the load runs (the old behavior).
-      yield _emit(QualityPhase.responsiveness, _responsivenessBand.start);
-      yield* _runResponsivenessStage(metrics);
+      if (includeResponsiveness) {
+        // --- Responsiveness ---
+        // The loaded-responsiveness stage runs a full ~15 s load window, so it
+        // gets its own ~1/3 band and the SAME elapsed-time ticker as the
+        // throughput stages — it climbs smoothly across the back third rather
+        // than jumping to 0.90 and sitting frozen while the load runs.
+        yield _emit(QualityPhase.responsiveness, _responsivenessBand.start);
+        yield* _runResponsivenessStage(metrics);
+      } else {
+        // CELLULAR: THE RPM STAGE DOES NOT RUN. No load is generated, so no
+        // additional full-rate download is paid for — that IS the data saving,
+        // and a shortened window would not have delivered it.
+        //
+        // The metric is UNAVAILABLE, but with the note that says it was a CHOICE.
+        // The bands above already absorbed this stage's 28 % (see [_downloadBand]
+        // / [_uploadBand]), so the bar reached 1.0 on real work and there is
+        // nothing to skip forward over here.
+        metrics.add(const QualityMetric.unavailable(
+          id: MetricIds.responsiveness,
+          label: 'Responsiveness',
+          unit: 'RPM',
+          note: kResponsivenessCellularNote,
+        ));
+      }
     } else {
       // HONESTLY UNAVAILABLE, WITH THE REASON. Not zero, not omitted: a metric
       // we chose not to take is a different null from one we tried and failed to
@@ -324,8 +467,8 @@ class OwnEngineQualityClient implements QualityClient {
   Stream<QualityProgress> _runThroughputStage(
     List<QualityMetric> metrics,
   ) {
-    const downloadBand = _downloadBand;
-    const uploadBand = _uploadBand;
+    final downloadBand = _downloadBand;
+    final uploadBand = _uploadBand;
 
     final controller = StreamController<QualityProgress>();
     final maxDuration = throughputProbe.maxDuration;
@@ -365,11 +508,20 @@ class OwnEngineQualityClient implements QualityClient {
       final ratio = maxDuration.inMicroseconds <= 0
           ? 1.0
           : elapsed.inMicroseconds / maxDuration.inMicroseconds;
-      final clampedRatio = ratio < 0
-          ? 0.0
-          : ratio > 1
-              ? 1.0
-              : ratio;
+
+      // THE STAGE HAS OUTRUN ITS WINDOW. A throughput window can legitimately
+      // exceed `maxDuration` (the probe retries a stalled window — see
+      // `throughputRetries`), and once it does, `elapsed / maxDuration` clamps to
+      // 1.0 and every further tick would emit the SAME fraction. That is a frozen
+      // bar. We do not know how much longer this will take, so we say exactly
+      // that: indeterminate. Never a number that keeps advancing on a timer while
+      // nothing is happening.
+      if (ratio > 1) {
+        controller.add(_emit(phase, bandEnd, indeterminate: true));
+        return;
+      }
+
+      final clampedRatio = ratio < 0 ? 0.0 : ratio;
       // Stop a hair short of the band end while the stage is still running, so
       // the natural "stage complete" snap (above / below) is what reaches the
       // band boundary — the ticker never claims a stage finished early.
@@ -445,27 +597,71 @@ class OwnEngineQualityClient implements QualityClient {
   ) {
     const band = _responsivenessBand;
     final controller = StreamController<QualityProgress>();
-    final maxDuration = throughputProbe.maxDuration;
     final stageStartedAt = clock();
+
+    // THE STAGE IS TWO SUB-PHASES, AND THE OLD TICKER KNEW ABOUT NEITHER.
+    //
+    // It interpolated the whole 0.72→1.0 band against `throughputProbe
+    // .maxDuration`. But the stage is (a) an idle RTT baseline, then (b) the load
+    // window. Measuring the WHOLE stage against the LOAD's duration means the bar
+    // is already climbing before the load exists, and — the real defect — it runs
+    // out of band while the load is still going. Reproduced on the real engine: a
+    // load 6x its window emitted 10 progress events, only 3 distinct, then SEVEN
+    // consecutive identical emits at 0.99. The bar sat on one number for the rest
+    // of the stage. Keith read that as a hang, and he wrote the app.
+    //
+    // Now each sub-phase ticks against ITS OWN known window:
+    //   * idle baseline → the thin [_idleBaselineBandEnd] slice, against the
+    //     sampler's worst case (idleSamples x the 2 s connect timeout that
+    //     [forHost] gives its sampler).
+    //   * load window   → the rest of the band, against the load's BOUNDED budget
+    //     ([runResilientRpmLoad]'s total). That duration is genuinely KNOWN, which
+    //     is exactly what makes ticking across it honest rather than invented.
+    // If either sub-phase outruns its window, the bar goes INDETERMINATE. It does
+    // not keep advancing on a timer, and it does not sit on a number pretending.
+    final Duration loadBudget = rpmLoadBudget;
+    final Duration idleBudget = _idleBaselineBudget;
+
+    // Null until the probe tells us the idle baseline is done and the load has
+    // opened. The ticker pivots sub-phase on it. The hook is handed to
+    // `measure()` below, so it works for EVERY client, however it was built —
+    // not just the one the factory wired.
+    DateTime? loadStartedAt;
+    void onLoadStart() => loadStartedAt ??= clock();
 
     Timer? ticker;
     void tick(_) {
       if (controller.isClosed) return;
-      final elapsed = clock().difference(stageStartedAt);
-      final span = band.end - band.start;
-      final ratio = maxDuration.inMicroseconds <= 0
+
+      final DateTime? loadFrom = loadStartedAt;
+      final bool loading = loadFrom != null;
+      final DateTime from = loadFrom ?? stageStartedAt;
+      final Duration window = loading ? loadBudget : idleBudget;
+      final double bandStart = loading ? _idleBaselineBandEnd : band.start;
+      final double bandEnd = loading ? band.end : _idleBaselineBandEnd;
+
+      final Duration elapsed = clock().difference(from);
+      final double ratio = window.inMicroseconds <= 0
           ? 1.0
-          : elapsed.inMicroseconds / maxDuration.inMicroseconds;
-      final clampedRatio = ratio < 0
-          ? 0.0
-          : ratio > 1
-              ? 1.0
-              : ratio;
+          : elapsed.inMicroseconds / window.inMicroseconds;
+
+      // Outran the sub-phase's known window: we no longer know how long is left.
+      // Say so, rather than freeze on a number.
+      if (ratio > 1) {
+        controller.add(_emit(
+          QualityPhase.responsiveness,
+          bandEnd - 0.01,
+          indeterminate: true,
+        ));
+        return;
+      }
+
+      final double clampedRatio = ratio < 0 ? 0.0 : ratio;
       // Stop a hair short of the band end while the stage runs, so the natural
       // completion emit (1.0, from [measure]) is what reaches 100 %.
-      final target = band.start + span * clampedRatio;
-      final ceiling = band.end - 0.01;
-      final capped = target > ceiling ? ceiling : target;
+      final double target = bandStart + (bandEnd - bandStart) * clampedRatio;
+      final double ceiling = band.end - 0.01;
+      final double capped = target > ceiling ? ceiling : target;
       controller.add(_emit(QualityPhase.responsiveness, capped));
     }
 
@@ -473,7 +669,7 @@ class OwnEngineQualityClient implements QualityClient {
       ticker = Timer.periodic(_tickInterval, tick);
       try {
         final r = await responsivenessProbe
-            .measure()
+            .measure(onLoadStart: onLoadStart)
             .timeout(_throughputStageBudget);
         metrics.add(QualityMetric(
           id: MetricIds.responsiveness,

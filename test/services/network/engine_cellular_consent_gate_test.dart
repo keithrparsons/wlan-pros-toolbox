@@ -82,8 +82,17 @@ OwnEngineQualityClient _engine(_Spy spy) {
 Future<QualityResult?> _run(
   OwnEngineQualityClient engine, {
   required bool includeThroughput,
+  // These cases certify the CONSENT gate (do bytes move at all?), which is a
+  // separate question from the cellular RPM decision. Default to the Wi-Fi path
+  // so this file keeps testing exactly what it always tested.
+  bool includeResponsiveness = true,
 }) async {
-  await engine.measure(includeThroughput: includeThroughput).drain<void>();
+  await engine
+      .measure(
+        includeThroughput: includeThroughput,
+        includeResponsiveness: includeResponsiveness,
+      )
+      .drain<void>();
   return engine.lastResult;
 }
 

@@ -9,7 +9,7 @@ void main() {
 
     test('emits phases in order ending complete=1.0', () async {
       final client = MockQualityClient();
-      final events = await client.measure(includeThroughput: true).toList();
+      final events = await client.measure(includeThroughput: true, includeResponsiveness: true).toList();
 
       expect(
         events.map((e) => e.phase).toList(),
@@ -31,14 +31,14 @@ void main() {
     test('sets lastResult after measure', () async {
       final client = MockQualityClient();
       expect(client.lastResult, isNull);
-      await client.measure(includeThroughput: true).drain<void>();
+      await client.measure(includeThroughput: true, includeResponsiveness: true).drain<void>();
       expect(client.lastResult, isNotNull);
       expect(client.lastResult!.source, QualitySource.mock);
     });
 
     test('default result has the six graded transport metrics', () async {
       final client = MockQualityClient();
-      await client.measure(includeThroughput: true).drain<void>();
+      await client.measure(includeThroughput: true, includeResponsiveness: true).drain<void>();
       final result = client.lastResult!;
 
       final ids = result.metrics.map((m) => m.id).toList();
@@ -76,7 +76,7 @@ void main() {
         ],
       );
       final client = MockQualityClient(scriptedResult: scripted);
-      await client.measure(includeThroughput: true).drain<void>();
+      await client.measure(includeThroughput: true, includeResponsiveness: true).drain<void>();
 
       expect(client.lastResult, same(scripted));
       expect(client.lastResult!.metrics.single.grade, QualityGrade.poor);

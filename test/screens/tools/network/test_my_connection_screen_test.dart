@@ -349,10 +349,21 @@ class _CountingQualityClient implements QualityClient {
   @override
   QualityResult? get lastResult => _lastResult;
 
+  /// What the screen last asked for on the RPM stage (cellular skips it).
+  bool lastIncludeResponsiveness = true;
+
   @override
-  Stream<QualityProgress> measure({bool includeThroughput = true}) async* {
+  Stream<QualityProgress> measure({
+    // NO DEFAULTS. This double used to declare `includeThroughput = true`,
+    // quietly re-opening the very default the QualityClient interface removed on
+    // purpose — a test double that cannot express "the caller forgot to decide"
+    // cannot catch a caller that forgot to decide.
+    required bool includeThroughput,
+    required bool includeResponsiveness,
+  }) async* {
     measureCount++;
     lastIncludeThroughput = includeThroughput;
+    lastIncludeResponsiveness = includeResponsiveness;
     await Future<void>.delayed(const Duration(milliseconds: 100));
     yield const QualityProgress(QualityPhase.latency, 0.25);
     yield const QualityProgress(QualityPhase.download, 0.5);

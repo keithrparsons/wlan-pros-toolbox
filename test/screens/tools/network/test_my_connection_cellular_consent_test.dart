@@ -31,6 +31,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wlan_pros_toolbox/services/network/cellular_data_cost.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/dns_probe_service.dart';
 import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
@@ -163,39 +164,39 @@ class _FakeIpGeo extends IpGeoService {
 /// 60 Mbps down / 20 up, plus latency + loss — the cheap samples that survive a
 /// declined speed test.
 QualityResult _internet() => QualityResult(
-      source: QualitySource.mock,
-      measuredAt: DateTime.utc(2026, 1, 1),
-      metrics: const <QualityMetric>[
-        QualityMetric(
-          id: MetricIds.latency,
-          label: 'Latency',
-          value: 42,
-          unit: 'ms',
-          grade: QualityGrade.fair,
-        ),
-        QualityMetric(
-          id: MetricIds.loss,
-          label: 'Loss',
-          value: 1,
-          unit: '%',
-          grade: QualityGrade.fair,
-        ),
-        QualityMetric(
-          id: MetricIds.download,
-          label: 'Download',
-          value: 60,
-          unit: 'Mbps',
-          grade: QualityGrade.fair,
-        ),
-        QualityMetric(
-          id: MetricIds.upload,
-          label: 'Upload',
-          value: 20,
-          unit: 'Mbps',
-          grade: QualityGrade.fair,
-        ),
-      ],
-    );
+  source: QualitySource.mock,
+  measuredAt: DateTime.utc(2026, 1, 1),
+  metrics: const <QualityMetric>[
+    QualityMetric(
+      id: MetricIds.latency,
+      label: 'Latency',
+      value: 42,
+      unit: 'ms',
+      grade: QualityGrade.fair,
+    ),
+    QualityMetric(
+      id: MetricIds.loss,
+      label: 'Loss',
+      value: 1,
+      unit: '%',
+      grade: QualityGrade.fair,
+    ),
+    QualityMetric(
+      id: MetricIds.download,
+      label: 'Download',
+      value: 60,
+      unit: 'Mbps',
+      grade: QualityGrade.fair,
+    ),
+    QualityMetric(
+      id: MetricIds.upload,
+      label: 'Upload',
+      value: 20,
+      unit: 'Mbps',
+      grade: QualityGrade.fair,
+    ),
+  ],
+);
 
 String _visibleText(WidgetTester tester) {
   final StringBuffer buf = StringBuffer();
@@ -218,8 +219,9 @@ Future<MockQualityClient> _pumpPreRun(
     LiveOnboardingService.prefsKey: true,
   });
   final _Bridge bridge = _Bridge();
-  final MockQualityClient quality =
-      MockQualityClient(scriptedResult: _internet());
+  final MockQualityClient quality = MockQualityClient(
+    scriptedResult: _internet(),
+  );
   final WifiSignalSampler sampler = WifiSignalSampler(
     source: WifiInfoSource.iosShortcuts,
     iosBridge: bridge,
@@ -243,8 +245,9 @@ Future<MockQualityClient> _pumpPreRun(
         networkDetailsService: _FakeNetDetails(),
         ipGeoService: _FakeIpGeo(),
         enableCloudApps: false,
-        onboardingService:
-            LiveOnboardingService(getStore: SharedPreferences.getInstance),
+        onboardingService: LiveOnboardingService(
+          getStore: SharedPreferences.getInstance,
+        ),
         qualityClient: quality,
       ),
     ),
@@ -255,8 +258,9 @@ Future<MockQualityClient> _pumpPreRun(
 
 void main() {
   group('cellular: warn before spending the data', () {
-    testWidgets('the PRE-RUN screen states the data cost and offers a way out',
-        (WidgetTester tester) async {
+    testWidgets('the PRE-RUN screen states the data cost and offers a way out', (
+      WidgetTester tester,
+    ) async {
       await _pumpPreRun(tester, _CellularOnly());
       final String screen = _visibleText(tester);
 
@@ -264,49 +268,68 @@ void main() {
       // depends on link speed and we cannot know it before the test runs (GL-005 —
       // no invented figure).
       expect(screen, contains("You're on cellular."));
-      expect(screen, contains('downloads at full speed for about 30 seconds'));
-      expect(screen, contains('roughly 50 MB'));
-      expect(screen, contains('500 MB or more on fast 5G'));
+      // The SSOT constant, not a hand-copied literal — see the note in
+      // net_quality_cellular_consent_test.dart.
+      expect(screen, contains(kCellularDataWarning));
+      expect(screen, contains('15 seconds'));
+      expect(screen, contains('30 MB at 10 Mbps'));
+      expect(screen, isNot(contains('roughly')));
+      expect(screen, isNot(contains('or more')));
 
       // The consent tap is labeled with its cost, and the decline path exists.
       expect(find.text('Check My Connection (uses data)'), findsOneWidget);
       expect(find.text('Check without the speed test'), findsOneWidget);
     });
 
-    testWidgets('NO throughput byte moves until the user consents',
-        (WidgetTester tester) async {
+    testWidgets('NO throughput byte moves until the user consents', (
+      WidgetTester tester,
+    ) async {
       // The gate is only real if the data-hungry stages are never even REQUESTED.
-      final MockQualityClient quality =
-          await _pumpPreRun(tester, _CellularOnly());
+      final MockQualityClient quality = await _pumpPreRun(
+        tester,
+        _CellularOnly(),
+      );
 
       await tester.tap(find.text('Check without the speed test'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
 
-      expect(quality.lastIncludeThroughput, isFalse,
-          reason: 'declining must not run the speed test at all — not a smaller '
-              'one, not a shorter one. No bytes.');
+      expect(
+        quality.lastIncludeThroughput,
+        isFalse,
+        reason:
+            'declining must not run the speed test at all — not a smaller '
+            'one, not a shorter one. No bytes.',
+      );
     });
 
-    testWidgets('consenting DOES run the speed test',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpPreRun(tester, _CellularOnly());
+    testWidgets('consenting DOES run the speed test', (
+      WidgetTester tester,
+    ) async {
+      final MockQualityClient quality = await _pumpPreRun(
+        tester,
+        _CellularOnly(),
+      );
 
       await tester.tap(find.text('Check My Connection (uses data)'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
 
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'an explicit tap on the labeled button IS the consent');
-      expect(_visibleText(tester), contains('60'),
-          reason: 'and the measured speed is reported');
+      expect(
+        quality.lastIncludeThroughput,
+        isTrue,
+        reason: 'an explicit tap on the labeled button IS the consent',
+      );
+      expect(
+        _visibleText(tester),
+        contains('60'),
+        reason: 'and the measured speed is reported',
+      );
     });
 
-    testWidgets(
-        'declining still produces a USEFUL result, and says "Not measured" — '
+    testWidgets('declining still produces a USEFUL result, and says "Not measured" — '
         'never "Couldn\'t check"', (WidgetTester tester) async {
       await _pumpPreRun(tester, _CellularOnly());
 
@@ -318,9 +341,16 @@ void main() {
 
       // The cheap probes still ran, and their real values are reported. "It must
       // not say Couldn't check for things we did check."
-      expect(screen, contains('42'), reason: 'latency was measured and reported');
-      expect(screen, contains('12 ms (cloudflare.com)'),
-          reason: 'the DNS probe still ran');
+      expect(
+        screen,
+        contains('42'),
+        reason: 'latency was measured and reported',
+      );
+      expect(
+        screen,
+        contains('12 ms (cloudflare.com)'),
+        reason: 'the DNS probe still ran',
+      );
 
       // The honest not-on-Wi-Fi state still works.
       expect(screen.toLowerCase(), contains('not connected to wi-fi'));
@@ -328,27 +358,38 @@ void main() {
       // THE WORD. Nothing failed: the user chose not to measure. "Couldn't check"
       // would be a false claim of incapacity — the same lie as the Wi-Fi chip,
       // arrived at from the opposite direction.
-      expect(screen, contains('Not measured'),
-          reason: 'a measurement we chose not to take is not one we failed to '
-              'take (AxisStatus.notMeasured)');
-      expect(screen, isNot(contains("Couldn't check")),
-          reason: 'the speed test did not fail. It was never run.');
+      expect(
+        screen,
+        contains('Not measured'),
+        reason:
+            'a measurement we chose not to take is not one we failed to '
+            'take (AxisStatus.notMeasured)',
+      );
+      expect(
+        screen,
+        isNot(contains("Couldn't check")),
+        reason: 'the speed test did not fail. It was never run.',
+      );
 
       // And the copy must not invite them to spend the data they just declined.
-      expect(screen, isNot(contains('did not complete')),
-          reason: 'a test that never ran did not "fail to complete"');
+      expect(
+        screen,
+        isNot(contains('did not complete')),
+        reason: 'a test that never ran did not "fail to complete"',
+      );
       expect(screen, isNot(contains('Try again in a moment')));
     });
   });
 
   group('on Wi-Fi and on an AMBIGUOUS probe: nothing changes', () {
-    testWidgets('ON WI-FI there is no warning and no extra tap',
-        (WidgetTester tester) async {
+    testWidgets('ON WI-FI there is no warning and no extra tap', (
+      WidgetTester tester,
+    ) async {
       final MockQualityClient quality = await _pumpPreRun(tester, _OnWifi());
       final String screen = _visibleText(tester);
 
       expect(screen, isNot(contains("You're on cellular.")));
-      expect(screen, isNot(contains('roughly 50 MB')));
+      expect(screen, isNot(contains(kCellularDataWarning)));
       expect(find.text('Check without the speed test'), findsNothing);
       // The original, unchanged affordance.
       expect(find.text('Check My Connection'), findsOneWidget);
@@ -358,35 +399,45 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
 
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'on Wi-Fi the speed test runs exactly as before, one tap');
+      expect(
+        quality.lastIncludeThroughput,
+        isTrue,
+        reason: 'on Wi-Fi the speed test runs exactly as before, one tap',
+      );
     });
 
     testWidgets(
-        'an AMBIGUOUS probe (unknown) must NOT nag — it is not proof of cellular',
-        (WidgetTester tester) async {
-      // The read THROWS -> WifiConnectionStatus.unknown. The user may well be on
-      // Wi-Fi. Warning them about cellular data on an ambiguous read would be a
-      // false claim, and would nag every wired desktop forever. `unknown` means
-      // "assert nothing" — including this.
-      final MockQualityClient quality =
-          await _pumpPreRun(tester, _AmbiguousNetworkInfo());
-      final String screen = _visibleText(tester);
+      'an AMBIGUOUS probe (unknown) must NOT nag — it is not proof of cellular',
+      (WidgetTester tester) async {
+        // The read THROWS -> WifiConnectionStatus.unknown. The user may well be on
+        // Wi-Fi. Warning them about cellular data on an ambiguous read would be a
+        // false claim, and would nag every wired desktop forever. `unknown` means
+        // "assert nothing" — including this.
+        final MockQualityClient quality = await _pumpPreRun(
+          tester,
+          _AmbiguousNetworkInfo(),
+        );
+        final String screen = _visibleText(tester);
 
-      expect(screen, isNot(contains("You're on cellular.")),
-          reason: 'an ambiguous probe is not a positive cellular signal');
-      expect(find.text('Check without the speed test'), findsNothing);
-      expect(find.text('Check My Connection'), findsOneWidget);
+        expect(
+          screen,
+          isNot(contains("You're on cellular.")),
+          reason: 'an ambiguous probe is not a positive cellular signal',
+        );
+        expect(find.text('Check without the speed test'), findsNothing);
+        expect(find.text('Check My Connection'), findsOneWidget);
 
-      await tester.tap(find.text('Check My Connection'));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
-      expect(quality.lastIncludeThroughput, isTrue);
-    });
+        await tester.tap(find.text('Check My Connection'));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        expect(quality.lastIncludeThroughput, isTrue);
+      },
+    );
 
-    testWidgets('a wired MAC (non-iOS -> unknown) is untouched',
-        (WidgetTester tester) async {
+    testWidgets('a wired MAC (non-iOS -> unknown) is untouched', (
+      WidgetTester tester,
+    ) async {
       await _pumpPreRun(
         tester,
         _CellularOnly(), // no Wi-Fi IP, but macOS -> ambiguous, never notOnWifi

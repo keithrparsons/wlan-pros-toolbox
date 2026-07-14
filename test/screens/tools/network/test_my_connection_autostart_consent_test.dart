@@ -35,6 +35,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wlan_pros_toolbox/services/network/cellular_data_cost.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/dns_probe_service.dart';
 import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
@@ -53,20 +54,20 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 class _NoWifiPath implements WifiPathProbe {
   @override
   Future<WifiPathFacts?> read() async => const WifiPathFacts(
-        usesWifi: false,
-        wifiSatisfied: false,
-        wifiInterfacePresent: false,
-      );
+    usesWifi: false,
+    wifiSatisfied: false,
+    wifiInterfacePresent: false,
+  );
 }
 
 /// iOS reports a Wi-Fi path: the device is associated. The CONTROL.
 class _OnWifiPath implements WifiPathProbe {
   @override
   Future<WifiPathFacts?> read() async => const WifiPathFacts(
-        usesWifi: true,
-        wifiSatisfied: true,
-        wifiInterfacePresent: true,
-      );
+    usesWifi: true,
+    wifiSatisfied: true,
+    wifiInterfacePresent: true,
+  );
 }
 
 class _NoAddresses implements NetworkInfo {
@@ -147,25 +148,25 @@ class _FakeIpGeo extends IpGeoService {
 }
 
 QualityResult _internet() => QualityResult(
-      source: QualitySource.mock,
-      measuredAt: DateTime.utc(2026, 1, 1),
-      metrics: const <QualityMetric>[
-        QualityMetric(
-          id: MetricIds.latency,
-          label: 'Latency',
-          value: 60,
-          unit: 'ms',
-          grade: QualityGrade.fair,
-        ),
-        QualityMetric(
-          id: MetricIds.download,
-          label: 'Download',
-          value: 60,
-          unit: 'Mbps',
-          grade: QualityGrade.fair,
-        ),
-      ],
-    );
+  source: QualitySource.mock,
+  measuredAt: DateTime.utc(2026, 1, 1),
+  metrics: const <QualityMetric>[
+    QualityMetric(
+      id: MetricIds.latency,
+      label: 'Latency',
+      value: 60,
+      unit: 'ms',
+      grade: QualityGrade.fair,
+    ),
+    QualityMetric(
+      id: MetricIds.download,
+      label: 'Download',
+      value: 60,
+      unit: 'Mbps',
+      grade: QualityGrade.fair,
+    ),
+  ],
+);
 
 /// Mounts the screen exactly as the HOME SCREEN HERO does — `autoStart: true` —
 /// over a scripted Wi-Fi path.
@@ -177,8 +178,9 @@ Future<MockQualityClient> _pumpAutoStart(
     LiveOnboardingService.prefsKey: true,
   });
   final _Bridge bridge = _Bridge();
-  final MockQualityClient quality =
-      MockQualityClient(scriptedResult: _internet());
+  final MockQualityClient quality = MockQualityClient(
+    scriptedResult: _internet(),
+  );
   final WifiSignalSampler sampler = WifiSignalSampler(
     source: WifiInfoSource.iosShortcuts,
     iosBridge: bridge,
@@ -204,8 +206,9 @@ Future<MockQualityClient> _pumpAutoStart(
         networkDetailsService: _FakeNetDetails(),
         ipGeoService: _FakeIpGeo(),
         enableCloudApps: false,
-        onboardingService:
-            LiveOnboardingService(getStore: SharedPreferences.getInstance),
+        onboardingService: LiveOnboardingService(
+          getStore: SharedPreferences.getInstance,
+        ),
         qualityClient: quality,
       ),
     ),
@@ -218,11 +221,13 @@ Future<MockQualityClient> _pumpAutoStart(
 
 void main() {
   group('AUTO-START on a cellular-only iPhone (the home screen hero)', () {
-    testWidgets(
-        'THE P0: auto-start must NOT spend cellular data without consent',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _NoWifiPath());
+    testWidgets('THE P0: auto-start must NOT spend cellular data without consent', (
+      WidgetTester tester,
+    ) async {
+      final MockQualityClient quality = await _pumpAutoStart(
+        tester,
+        _NoWifiPath(),
+      );
 
       // THE PROPERTY: no throughput bytes were requested. Either the run never
       // started, or it started without the data-hungry stages. Both are honest;
@@ -238,7 +243,8 @@ void main() {
       expect(
         spentCellularData,
         isFalse,
-        reason: 'the auto-start path spent the user\'s cellular data on the '
+        reason:
+            'the auto-start path spent the user\'s cellular data on the '
             'speed test without ever asking: ~30 seconds of full-rate download, '
             'hundreds of MB to ~1 GB, from one tap on the home screen with no '
             'warning and no way out. Consent must live where the bytes are '
@@ -246,59 +252,83 @@ void main() {
       );
     });
 
-    testWidgets('auto-start renders the data-cost warning and BOTH choices',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _NoWifiPath());
+    testWidgets('auto-start renders the data-cost warning and BOTH choices', (
+      WidgetTester tester,
+    ) async {
+      final MockQualityClient quality = await _pumpAutoStart(
+        tester,
+        _NoWifiPath(),
+      );
 
       // Zero bytes move until the user decides. The run does not start at all.
-      expect(quality.measureCalls, 0,
-          reason: 'nothing may run before the user has seen the cost and chosen');
+      expect(
+        quality.measureCalls,
+        0,
+        reason: 'nothing may run before the user has seen the cost and chosen',
+      );
 
-      // The warning states the mechanism and the cost.
+      // The warning states the mechanism and the cost. The figure is now derived
+      // from the probe constants (kCellularDataWarning), not a hedged range.
       expect(find.textContaining("You're on cellular"), findsOneWidget);
-      expect(find.textContaining('50 MB'), findsOneWidget);
+      expect(find.textContaining(kCellularDataWarning), findsOneWidget);
+      expect(find.textContaining('30 MB at 10 Mbps'), findsOneWidget);
 
       // And BOTH paths are offered — consent is a choice, not a dead end.
       expect(find.text('Check My Connection (uses data)'), findsOneWidget);
       expect(find.text('Check without the speed test'), findsOneWidget);
     });
 
-    testWidgets('consenting from the auto-start screen DOES run the speed test',
-        (WidgetTester tester) async {
-      // The gate must not be a wall: a user who reads the cost and accepts it
-      // gets the full check. Otherwise "safe" would just mean "broken".
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _NoWifiPath());
+    testWidgets(
+      'consenting from the auto-start screen DOES run the speed test',
+      (WidgetTester tester) async {
+        // The gate must not be a wall: a user who reads the cost and accepts it
+        // gets the full check. Otherwise "safe" would just mean "broken".
+        final MockQualityClient quality = await _pumpAutoStart(
+          tester,
+          _NoWifiPath(),
+        );
 
-      await tester.tap(find.text('Check My Connection (uses data)'));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Check My Connection (uses data)'));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
 
-      expect(quality.measureCalls, 1);
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'the tap IS the consent — the label above it carries the cost');
-    });
+        expect(quality.measureCalls, 1);
+        expect(
+          quality.lastIncludeThroughput,
+          isTrue,
+          reason:
+              'the tap IS the consent — the label above it carries the cost',
+        );
+      },
+    );
 
-    testWidgets('declining from the auto-start screen still produces a result',
-        (WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _NoWifiPath());
+    testWidgets(
+      'declining from the auto-start screen still produces a result',
+      (WidgetTester tester) async {
+        final MockQualityClient quality = await _pumpAutoStart(
+          tester,
+          _NoWifiPath(),
+        );
 
-      await tester.tap(find.text('Check without the speed test'));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Check without the speed test'));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
 
-      expect(quality.measureCalls, 1);
-      expect(quality.lastIncludeThroughput, isFalse);
+        expect(quality.measureCalls, 1);
+        expect(quality.lastIncludeThroughput, isFalse);
 
-      // The withheld metric reads "Not measured" — nothing FAILED.
-      expect(find.textContaining("Couldn't check"), findsNothing,
-          reason: 'a metric we chose not to take is not a metric we failed to '
-              'take (GL-005, the two kinds of null)');
-    });
+        // The withheld metric reads "Not measured" — nothing FAILED.
+        expect(
+          find.textContaining("Couldn't check"),
+          findsNothing,
+          reason:
+              'a metric we chose not to take is not a metric we failed to '
+              'take (GL-005, the two kinds of null)',
+        );
+      },
+    );
   });
 
   // ========================================================================
@@ -319,8 +349,10 @@ void main() {
     /// Declines the speed test from the auto-start consent screen, lands on a
     /// result, then taps the result screen's "Run again".
     Future<MockQualityClient> declineThenRunAgain(WidgetTester tester) async {
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _NoWifiPath());
+      final MockQualityClient quality = await _pumpAutoStart(
+        tester,
+        _NoWifiPath(),
+      );
 
       await tester.tap(find.text('Check without the speed test'));
       await tester.pumpAndSettle();
@@ -328,9 +360,13 @@ void main() {
       await tester.pumpAndSettle();
 
       final Finder runAgain = find.text('Run again');
-      expect(runAgain, findsOneWidget,
-          reason: 'sanity: the result screen must offer "Run again", or this '
-              'test proves nothing about it');
+      expect(
+        runAgain,
+        findsOneWidget,
+        reason:
+            'sanity: the result screen must offer "Run again", or this '
+            'test proves nothing about it',
+      );
       await tester.ensureVisible(runAgain);
       await tester.pumpAndSettle();
       await tester.tap(runAgain);
@@ -340,29 +376,37 @@ void main() {
       return quality;
     }
 
-    testWidgets('"Run again" after DECLINING does not spend cellular data',
-        (WidgetTester tester) async {
+    testWidgets('"Run again" after DECLINING does not spend cellular data', (
+      WidgetTester tester,
+    ) async {
       final MockQualityClient quality = await declineThenRunAgain(tester);
 
-      expect(quality.measureCalls, 2,
-          reason: 'sanity: "Run again" must actually re-run the check');
+      expect(
+        quality.measureCalls,
+        2,
+        reason: 'sanity: "Run again" must actually re-run the check',
+      );
       expect(
         quality.lastIncludeThroughput,
         isFalse,
-        reason: 'the user declined the data cost and never took it back. '
+        reason:
+            'the user declined the data cost and never took it back. '
             '"Run again" must honor that decision, not quietly re-spend their '
             'data because a different caller reached _run().',
       );
     });
 
-    testWidgets('"Run again" after CONSENTING still runs the full check',
-        (WidgetTester tester) async {
+    testWidgets('"Run again" after CONSENTING still runs the full check', (
+      WidgetTester tester,
+    ) async {
       // The other half: consent is remembered for the screen, so a user who DID
       // accept the cost is not re-interrogated on every re-run. Without this, the
       // test above would pass against a chokepoint that simply never allows
       // throughput on cellular — a "gate" that is really a wall.
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _NoWifiPath());
+      final MockQualityClient quality = await _pumpAutoStart(
+        tester,
+        _NoWifiPath(),
+      );
 
       await tester.tap(find.text('Check My Connection (uses data)'));
       await tester.pumpAndSettle();
@@ -385,11 +429,18 @@ void main() {
       // correctly: with no consent on file the chokepoint downgrades that run and
       // it spends nothing, so it must not claim a cost it will not incur.
       final Finder runAgain = find.text('Run again (uses data)');
-      expect(runAgain, findsOneWidget,
-          reason: 'after consenting, the re-run button SPENDS cellular data and '
-              'must say so');
-      expect(find.text('Run again'), findsNothing,
-          reason: 'the bare, cost-silent label must not survive a consent');
+      expect(
+        runAgain,
+        findsOneWidget,
+        reason:
+            'after consenting, the re-run button SPENDS cellular data and '
+            'must say so',
+      );
+      expect(
+        find.text('Run again'),
+        findsNothing,
+        reason: 'the bare, cost-silent label must not survive a consent',
+      );
       await tester.ensureVisible(runAgain);
       await tester.pumpAndSettle();
       await tester.tap(runAgain);
@@ -398,25 +449,37 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(quality.measureCalls, 2);
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'the user consented on this screen; re-running honors it');
+      expect(
+        quality.lastIncludeThroughput,
+        isTrue,
+        reason: 'the user consented on this screen; re-running honors it',
+      );
     });
   });
 
   group('AUTO-START on Wi-Fi (the control)', () {
-    testWidgets('on Wi-Fi, auto-start runs the FULL check immediately',
-        (WidgetTester tester) async {
+    testWidgets('on Wi-Fi, auto-start runs the FULL check immediately', (
+      WidgetTester tester,
+    ) async {
       // The other half of the gate. Without this, the P0 test above would also
       // pass against a screen that simply never auto-runs anything — a fix that
       // "works" by breaking the feature. On an unmetered link nothing changes:
       // one tap on the home hero still gives a full result with no extra prompt.
-      final MockQualityClient quality =
-          await _pumpAutoStart(tester, _OnWifiPath());
+      final MockQualityClient quality = await _pumpAutoStart(
+        tester,
+        _OnWifiPath(),
+      );
 
-      expect(quality.measureCalls, 1,
-          reason: 'auto-start must still auto-start on Wi-Fi');
-      expect(quality.lastIncludeThroughput, isTrue,
-          reason: 'Wi-Fi is unmetered: the speed test runs, as it always has');
+      expect(
+        quality.measureCalls,
+        1,
+        reason: 'auto-start must still auto-start on Wi-Fi',
+      );
+      expect(
+        quality.lastIncludeThroughput,
+        isTrue,
+        reason: 'Wi-Fi is unmetered: the speed test runs, as it always has',
+      );
       expect(find.textContaining("You're on cellular"), findsNothing);
     });
   });
