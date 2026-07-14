@@ -140,7 +140,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       'In routing table',
       r.isAnnounced == null
           ? null
-          : (r.isAnnounced! ? 'Yes — announced' : 'No — not announced'),
+          : (r.isAnnounced! ? 'Yes, announced' : 'No, not announced'),
     );
     if (r.kind == BgpQueryKind.asn) {
       line('Upstreams', r.upstreamCount?.toString());
@@ -328,7 +328,7 @@ class _ResultCard extends StatelessWidget {
             label: 'In routing table',
             value: r.isAnnounced == null
                 ? null
-                : (r.isAnnounced! ? 'Yes — announced' : 'No — not announced'),
+                : (r.isAnnounced! ? 'Yes, announced' : 'No, not announced'),
           ),
           if (r.kind == BgpQueryKind.asn) ...[
             ValueRow(

@@ -530,7 +530,7 @@ class _ApproxNote extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final String msg = approximate
         ? 'Approximate, from your public IP (city-level, not a GPS reading).'
-        : 'Coarse fix — likely Wi-Fi-derived rather than GPS (large accuracy '
+        : 'Coarse fix, likely Wi-Fi-derived rather than GPS (large accuracy '
             'radius).';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

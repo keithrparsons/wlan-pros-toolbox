@@ -282,7 +282,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             'MAC address. No subprocess, no elevated privilege.',
       ),
       ArpCapability.sweepNoMac => (
-        'Discovery only — MAC not exposed',
+        'Discovery only, MAC not exposed',
         'This platform sandboxes the ARP table away from apps, and shelling '
             'out to the system arp command is blocked. The toolbox sweeps the '
             'local subnet and lists every host that answers; MAC addresses are '

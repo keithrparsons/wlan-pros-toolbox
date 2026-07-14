@@ -98,7 +98,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
       });
       if (manual && mounted) {
         final String msg = snap.scanThrottled
-            ? 'Scan throttled by Android — showing the last scan'
+            ? 'Scan throttled by Android, showing the last scan'
             : 'Scan updated';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
@@ -497,7 +497,7 @@ class _ThrottledNote extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Android throttled the fresh scan. Showing the last scan — tap '
+              'Android throttled the fresh scan. Showing the last scan. Tap '
               'Scan again in a moment for newer results.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
@@ -526,7 +526,7 @@ class _LocationCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final String message = attempted
         ? 'If you allowed Location, the nearby networks appear on the next '
-            'scan. If the list is still empty, the permission was denied — open '
+            'scan. If the list is still empty, the permission was denied. Open '
             'Settings to enable Location for this app.'
         : 'Android requires the Location permission to read Wi-Fi scan '
             'results. Grant it to list the nearby access points.';

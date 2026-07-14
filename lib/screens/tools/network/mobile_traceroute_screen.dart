@@ -189,7 +189,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln(
-        'Traceroute (mobile) — ICMP TTL-walk to '
+        'Traceroute (mobile): ICMP TTL-walk to '
         '${host.isEmpty ? '(unknown)' : host}',
       )
       ..writeln('Status: $status')
@@ -380,7 +380,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
               'Walks the IP TTL from 1 upward, naming each router that returns '
-              'an ICMP Time-Exceeded — an ICMP TTL-walk, not the system '
+              'an ICMP Time-Exceeded. This is an ICMP TTL-walk, not the system '
               'traceroute.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),

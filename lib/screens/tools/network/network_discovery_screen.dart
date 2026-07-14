@@ -360,8 +360,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         children: <Widget>[
           Text(
             'Scan the local subnet for live hosts, then enrich each with its '
-            'hostname, advertised services, a device-type guess, and — on '
-            'desktop — its MAC address and vendor.',
+            'hostname, advertised services, a device-type guess, and, on '
+            'desktop, its MAC address and vendor.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -452,7 +452,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             const SizedBox(height: AppSpacing.xs),
             ExcludeSemantics(
               child: Text(
-                'Listening for Bonjour / mDNS responders (~4 seconds) — slow '
+                'Listening for Bonjour / mDNS responders (~4 seconds). Slow '
                 'devices answer late, so the scan waits.',
                 style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
@@ -582,13 +582,13 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     if (arp != null && arp.available) {
       final int withMac = r.hosts.where((LanHost h) => h.mac != null).length;
       message =
-          'MAC + vendor read from the ARP cache — '
+          'MAC + vendor read from the ARP cache: '
           '$withMac of ${r.hosts.length} host${r.hosts.length == 1 ? '' : 's'} '
           'matched.';
     } else {
       message =
           'MAC address and vendor need a desktop ARP read, which this platform '
-          'cannot do — those fields are omitted here, not blank.';
+          'cannot do. Those fields are omitted here, not blank.';
     }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

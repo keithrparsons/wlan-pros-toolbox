@@ -276,9 +276,9 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
     }
 
     final String verdict = switch (LinkBudgetScreen.marginHealth(margin)) {
-      MarginHealth.healthy => 'Healthy — link has fade headroom',
-      MarginHealth.marginal => 'Marginal — vulnerable to fade',
-      MarginHealth.negative => 'Negative — link does not close',
+      MarginHealth.healthy => 'Healthy: link has fade headroom',
+      MarginHealth.marginal => 'Marginal: vulnerable to fade',
+      MarginHealth.negative => 'Negative: link does not close',
     };
 
     return (StringBuffer()

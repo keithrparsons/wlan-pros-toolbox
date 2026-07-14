@@ -176,7 +176,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Ping — ICMP echo')
+      ..writeln('Ping: ICMP echo')
       ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
       ..writeln(
         'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% loss · '
@@ -320,7 +320,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '${_desktopUnavailableReason()} '
-            'Use the TCP Ping tool here — it measures reachability and '
+            'Use the TCP Ping tool here. It measures reachability and '
             'round-trip latency over a TCP round trip, counting a reply when '
             'the host answers, whether it completes the connection or actively '
             'refuses it (not ICMP). Run ICMP Ping from the iOS or Android '
@@ -397,7 +397,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
               'Sends ICMP echo requests and measures the echo-reply round-trip '
-              'time — true ICMP, not a TCP probe.',
+              'time. True ICMP, not a TCP probe.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
@@ -613,7 +613,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
-                'No replies. The host did not answer the ICMP echo — it may be '
+                'No replies. The host did not answer the ICMP echo. It may be '
                 'down, or ICMP may be filtered on the path.',
                 style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),

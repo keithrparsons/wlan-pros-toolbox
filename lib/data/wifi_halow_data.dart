@@ -293,8 +293,8 @@ const List<HalowFact> kHalowPhy = <HalowFact>[
 /// The "10x down-clock" mental model note.
 const String kHalowPhyNote =
     'The clean mental model: the 802.11ac PHY clocked at one tenth. Same OFDM '
-    'machinery, ten times slower clock, so symbols are 10x longer (more robust '
-    'over distance and multipath) and rates are about a tenth of 802.11ac.';
+    'machinery, ten times slower clock, so symbols are 10x longer (more '
+    'resilient over distance and multipath) and rates are about a tenth of 802.11ac.';
 
 /// Use cases.
 const List<String> kHalowUseCases = <String>[

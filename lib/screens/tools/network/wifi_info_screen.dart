@@ -1251,7 +1251,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       return _LocationCard(
         message: isAndroid
             ? 'If you allowed Location, the network name appears on the next '
-                'refresh. If it is still blank, the permission was denied — open '
+                'refresh. If it is still blank, the permission was denied. Open '
                 'Settings to enable Location for this app. Signal, rate, and '
                 'channel details work without it.'
             : 'Permission granted. macOS may need an app relaunch before the '

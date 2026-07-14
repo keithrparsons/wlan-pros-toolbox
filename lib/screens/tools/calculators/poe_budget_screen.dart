@@ -237,9 +237,9 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   static String _verdictText(PoeVerdict v) {
     switch (v) {
       case PoeVerdict.over:
-        return 'Over budget — reduce devices or upgrade switch';
+        return 'Over budget: reduce devices or upgrade switch';
       case PoeVerdict.caution:
-        return 'Caution — within 20% of budget limit';
+        return 'Caution: within 20% of budget limit';
       case PoeVerdict.ok:
         return 'Budget OK';
     }

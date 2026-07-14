@@ -544,7 +544,7 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Scale factor ${ArchitecturalScaleScreen.trimRatio(s.ratio)}× — '
+            'Scale factor ${ArchitecturalScaleScreen.trimRatio(s.ratio)}×: '
             '1 unit on the drawing = ${ArchitecturalScaleScreen.trimRatio(s.ratio)} '
             'of the same unit in the field.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
@@ -740,9 +740,9 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'The ratio is dimensionless, so a distance measured on the page maps '
-            'to the same value in the field once you scale it — the same '
-            'calibration step Ekahau, Hamina, and iBwave ask for when you import '
-            'a plan. If a PDF has no embedded scale, measure a known dimension (a '
+            'to the same value in the field once you scale it. This is the same '
+            'calibration step Ekahau, Hamina, and iBwave ask for when you '
+            'import a plan. If a PDF has no embedded scale, measure a known dimension (a '
             '3\'-0" door, a 2×4 ft ceiling tile) to confirm which scale it is.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),

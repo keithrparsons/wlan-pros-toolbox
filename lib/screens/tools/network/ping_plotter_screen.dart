@@ -668,7 +668,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       // by someone who never saw the screen. A refusal produces a timing sample
       // here, and a RST is not a handshake.
       ..writeln(
-        'Method: a reply is counted when the host ANSWERS — either the TCP '
+        'Method: a reply is counted when the host ANSWERS. Either the TCP '
         'handshake completes, or the host actively refuses (a refusal is a '
         'real round trip, the same way tcping counts it). No answer at all '
         '(timeout / unreachable) counts as loss, with no time recorded.',

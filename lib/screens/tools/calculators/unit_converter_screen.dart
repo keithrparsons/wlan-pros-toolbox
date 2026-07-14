@@ -112,7 +112,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
     final double? r = _result;
     if (r == null || !r.isFinite) return null;
     return (StringBuffer()
-          ..writeln('Unit Converter — ${categoryLabel(_category)}')
+          ..writeln('Unit Converter: ${categoryLabel(_category)}')
           ..writeln('From: ${_valueCtrl.text.trim()} ${_fromUnit.symbol}')
           ..writeln('To: ${_resultText()} ${_toUnit.symbol}'))
         .toString()

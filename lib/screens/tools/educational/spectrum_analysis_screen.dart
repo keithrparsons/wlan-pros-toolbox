@@ -920,7 +920,7 @@ class _ThreeViewsScreen extends StatelessWidget {
           'in density.',
         ),
         _gapMd,
-        _H('Live FFT — power versus frequency'),
+        _H('Live FFT: power versus frequency'),
         _gapSm,
         _P(
           'X is frequency, Y is amplitude in dBm, one live trace. Tall peaks are '
@@ -930,7 +930,7 @@ class _ThreeViewsScreen extends StatelessWidget {
           'right now.',
         ),
         _gapMd,
-        _H('Waterfall / spectrogram — frequency, time, color'),
+        _H('Waterfall / spectrogram: frequency, time, color'),
         _gapSm,
         _P(
           'One axis is frequency, the other is time (usually scrolling), and '
@@ -943,7 +943,7 @@ class _ThreeViewsScreen extends StatelessWidget {
           'fingerprint an interferer.',
         ),
         _gapMd,
-        _H('Density / duty cycle — how often a frequency is occupied'),
+        _H('Density / duty cycle: how often a frequency is occupied'),
         _gapSm,
         _P(
           'X is frequency, Y is amplitude, and color or brightness encodes how '

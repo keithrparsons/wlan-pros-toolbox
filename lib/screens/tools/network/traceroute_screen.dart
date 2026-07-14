@@ -234,7 +234,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln(
-        'Traceroute (system) — path to '
+        'Traceroute (system): path to '
         '${host.isEmpty ? '(unknown)' : host}',
       )
       ..writeln('Status: $status')
@@ -578,7 +578,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     final String body = switch (u.reason) {
       TracerouteUnavailableReason.unsupportedPlatform =>
-        'Traceroute runs on desktop only — use Ping on this device.',
+        'Traceroute runs on desktop only. Use Ping on this device.',
       TracerouteUnavailableReason.binaryUnavailable =>
         'The system traceroute could not be launched here. On a sandboxed '
             'build the OS may block it.${u.detail == null ? '' : '\n\n${u.detail}'}',

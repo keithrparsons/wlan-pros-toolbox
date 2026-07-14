@@ -382,7 +382,7 @@ class _SentCard extends StatelessWidget {
           // Honesty: WoL is fire-and-forget. State exactly what is and isn't
           // verifiable.
           Text(
-            'Wake-on-LAN is fire-and-forget — there is no acknowledgement, so '
+            'Wake-on-LAN is fire-and-forget. There is no acknowledgement, so '
             'this confirms the packet left this device, not that the target '
             'woke. If it does not wake, check that WoL is enabled in the '
             "target's BIOS/OS and that the broadcast reaches its segment.",

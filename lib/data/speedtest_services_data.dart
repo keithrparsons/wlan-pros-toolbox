@@ -322,8 +322,8 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     dataPerTest: 'No metered cost when self-hosted (your own client to your own '
         'server); scales with link over WAN',
     dataConfidence: DataConfidence.high,
-    openSource: 'Yes, LGPLv3 (PHP, Go, Rust, Node backends; Docker images) — '
-        'the standout self-hostable option',
+    openSource: 'Yes, LGPLv3 (PHP, Go, Rust, Node backends; Docker images). '
+        'The standout self-hostable option.',
   ),
   SpeedtestService(
     slug: 'speedof-me',
@@ -419,8 +419,8 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
 
 /// Hero line for the page (the brief\'s suggested hero, GL-004 voice).
 const String kSpeedtestHeroLine =
-    'A speed test measures the path to one server, right now — not your '
-    'Wi-Fi. A bad result can be the server, the time of day, the wired uplink, '
+    'A speed test measures the path to one server, right now. It does not '
+    'measure your Wi-Fi. A bad result can be the server, the time of day, the wired uplink, '
     'or the test\'s own server choice.';
 
 /// The persistent honesty caveat for the data-per-test column and the teaching
@@ -430,7 +430,7 @@ const String kSpeedtestDataCaveat =
     'Data-per-test figures are community-measured estimates, not vendor-'
     'published numbers. Almost no vendor publishes a hard MB figure, so read '
     'every value here as approximate, and note that saturating tests scale with '
-    'your link — a gigabit Ookla run can burn close to 1 GB. On metered '
+    'your link. A gigabit Ookla run can burn close to 1 GB. On metered '
     'cellular, prefer adaptive or bounded tests, or a self-hosted test on your '
     'own LAN.';
 
@@ -441,8 +441,8 @@ const String kSpeedtestOrbNote =
     'Orb measurements (there is no third-party way to trigger an Orb test). Our '
     'own net_quality engine and Network Quality tool are the in-app analog: '
     'per-dimension grades for latency, jitter, loss, download, upload, and '
-    'responsiveness, with deliberately no composite score — our own '
-    'measurements, not a third-party score.';
+    'responsiveness, with deliberately no composite score. These are our '
+    'own measurements, not a third-party score.';
 
 /// The independence caveat (load-bearing): several "different" tests share a
 /// backend, so they are not independent measurements.

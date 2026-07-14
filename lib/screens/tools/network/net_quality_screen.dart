@@ -244,7 +244,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       final String note = (!available && m?.note != null)
           ? ' (${m!.note})'
           : '';
-      buf.writeln('  $label: $value — $grade$note');
+      buf.writeln('  $label: $value ($grade)$note');
     }
 
     buf

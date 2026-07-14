@@ -297,7 +297,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
         return _signalingBody(
           text,
           tones: SignalingTones.blueBox,
-          title: 'Blue Box — Multi-Frequency signaling',
+          title: 'Blue Box: Multi-Frequency signaling',
           intro:
               'The R1 MF tones a long-distance switch once used to route a call, '
               'plus the 2600 Hz tone that meant the trunk was idle. Tap a signal '
@@ -308,7 +308,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
         return _signalingBody(
           text,
           tones: SignalingTones.redBox,
-          title: 'Red Box — US coin tones',
+          title: 'Red Box: US coin tones',
           intro:
               'The dual-tone bursts an ACTS payphone sent up the line to report a '
               'coin drop. All three are 1700 + 2200 Hz; only the burst count and '

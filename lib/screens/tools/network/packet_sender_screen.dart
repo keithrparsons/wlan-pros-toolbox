@@ -96,7 +96,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
     if (payload == null) {
       setState(
         () => _inputError =
-            r'Bad hex escape in the payload — \x must be followed by two hex '
+            r'Bad hex escape in the payload. \x must be followed by two hex '
             r'digits, e.g. \x00\xff.',
       );
       return;
@@ -172,7 +172,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
 
     if (r.isError) {
       buf
-        ..writeln('Status: Failed — ${_titleForError(r.errorKind!)}')
+        ..writeln('Status: Failed (${_titleForError(r.errorKind!)})')
         ..writeln('  ${r.errorMessage}')
         ..writeln('  Transport: $transport')
         ..writeln('  Target: ${r.host}:${r.port}');
@@ -181,7 +181,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
 
     final bool noReply = r.received.isEmpty;
     buf
-      ..writeln('Status: ${noReply ? 'Sent — no reply' : 'Reply received'}')
+      ..writeln('Status: ${noReply ? 'Sent, no reply' : 'Reply received'}')
       ..writeln('  Transport: $transport')
       ..writeln('  Target: ${r.host}:${r.port}')
       ..writeln('  Sent: ${r.bytesSent} bytes')
@@ -497,7 +497,7 @@ class _ReplyCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  noReply ? 'Sent — no reply' : 'Reply received',
+                  noReply ? 'Sent, no reply' : 'Reply received',
                   style: text.bodyLarge?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w600,

@@ -758,7 +758,7 @@ class _FieldManualRowState extends State<_FieldManualRow> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'The in-depth technical manual for professionals — '
+                        'The in-depth technical manual for professionals: '
                         'every tool, what it measures, and how to read it.',
                         style: text.labelMedium?.copyWith(
                           color: colors.textTertiary,
