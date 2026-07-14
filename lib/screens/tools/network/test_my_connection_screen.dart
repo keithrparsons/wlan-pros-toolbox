@@ -392,7 +392,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// new one cannot be added without passing the gate. Off Wi-Fi there is nothing
   /// to capture, and the honest "You're not connected to Wi-Fi" verdict already
   /// tells the user what to do instead: join a network.
-  bool get _canOfferWifiCapture => _isIos;
+  bool get _canOfferWifiCapture => _isIos && !_resultNotOnWifi;
 
   /// Whether to run the REAL DNS-probe + local-addressing reads on a check.
   /// Production always does (live sampling on). Tests that disable live sampling
