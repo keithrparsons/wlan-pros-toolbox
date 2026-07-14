@@ -395,6 +395,29 @@ void main() {
       );
     });
 
+    test('iOS with NO WI-FI AT ALL does NOT fire R-31 (cold-eyes F2)', () {
+      // THE TWO KINDS OF NULL (GL-005). `wifiSignalCaptured: false` arrives here
+      // for two completely different devices:
+      //   * on Wi-Fi, RF not harvested yet  → R-31's "tap Capture Wi-Fi details,
+      //     which uses the companion Shortcut" is exactly right;
+      //   * NOT on Wi-Fi at all             → there is no link to capture, so that
+      //     same advice sends the user chasing a read that cannot exist. It is the
+      //     same wrong-kind-of-null failure as the stale-reading bug, wearing the
+      //     Analyze report as a costume.
+      // The Analyze screen is the FOURTH surface that inverted the meaning of the
+      // suppressed RF (after the Wi-Fi link card, the copy report, and the Shortcut
+      // offer card) and the only one the cold-eyes review did not list.
+      expect(
+        _firedIds(const AnalyzeInput(
+          platformIsIos: true,
+          wifiSignalCaptured: false,
+          notOnWifi: true,
+        )),
+        isNot(contains('R-31')),
+        reason: 'no Shortcut can capture a Wi-Fi link that does not exist',
+      );
+    });
+
     test('width-not-captured (R-30) is context-only, suppressed alone', () {
       // band present, width not available → R-30 condition true, but it is
       // context-only and nothing substantive fired, so it is suppressed.

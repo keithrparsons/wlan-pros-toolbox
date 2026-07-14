@@ -15,15 +15,27 @@ import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_monitor_controller.dart';
 
-/// A [NetworkInfo] fake feeding [WifiConnectionService]: a canned Wi-Fi IP drives
-/// the on/not-on-Wi-Fi verdict deterministically in the controller tests.
+/// A [NetworkInfo] fake feeding [WifiConnectionService]: canned Wi-Fi addresses
+/// drive the on/not-on-Wi-Fi verdict deterministically in the controller tests.
+///
+/// BOTH ADDRESS FAMILIES (2026-07-13). The probe now requires IPv4 AND routable
+/// IPv6 to be absent before it asserts `notOnWifi`, because `getWifiIP()` is
+/// IPv4-only and an iPhone on an IPv6-only SSID reads null there while fully
+/// associated (cold-eyes F3). A fake that answers only IPv4 no longer models the
+/// plugin: its IPv6 read would throw, the probe would honestly resolve to
+/// `unknown`, and these tests would be asserting against a device state that
+/// cannot occur. Default: no IPv6 either → the cellular-only case.
 class _FakeNetworkInfo implements NetworkInfo {
-  _FakeNetworkInfo({this.wifiIp});
+  _FakeNetworkInfo({this.wifiIp, this.wifiIpv6});
 
   String? wifiIp;
+  String? wifiIpv6;
 
   @override
   Future<String?> getWifiIP() async => wifiIp;
+
+  @override
+  Future<String?> getWifiIPv6() async => wifiIpv6;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -37,15 +49,18 @@ class _ThrowingNetworkInfo implements NetworkInfo {
   Future<String?> getWifiIP() async => throw Exception('permission denied');
 
   @override
+  Future<String?> getWifiIPv6() async => throw Exception('permission denied');
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// Builds a [WifiConnectionService] pinned to iOS with a canned Wi-Fi IP — a
 /// non-null IP => onWifi, a null IP => notOnWifi (the controller's not-on-Wi-Fi
 /// branch under test).
-WifiConnectionService _conn({String? wifiIp}) {
+WifiConnectionService _conn({String? wifiIp, String? wifiIpv6}) {
   return WifiConnectionService(
-    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp),
+    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp, wifiIpv6: wifiIpv6),
     platformOverride: TargetPlatform.iOS,
   );
 }
@@ -916,6 +931,62 @@ void main() {
 
       expect(c.phase, WifiMonitorPhase.notOnWifi);
       expect(c.notOnWifi, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+
+    // ======================================================================
+    // OVER-SUPPRESSION — the dangerous direction (cold-eyes F3, 2026-07-13).
+    //
+    // The not-on-Wi-Fi suppression is LOAD-BEARING here: it nulls [details], tears
+    // down a LIVE stream, and clears the App Group loop flag. So a FALSE positive
+    // from the probe does real damage to a working device — and `getWifiIP()` is
+    // IPv4-only, so an iPhone on an IPv6-only SSID (NAT64/DNS64: carrier and
+    // CONFERENCE networks) hit exactly that. Keith runs conference Wi-Fi.
+    // ======================================================================
+    test('IPv6-ONLY Wi-Fi is NOT blanked: a live reading survives, no notOnWifi',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(
+        bridge: bridge,
+        // No Wi-Fi IPv4 (the plugin cannot see one) but a routable IPv6: the phone
+        // is ASSOCIATED and working.
+        connectionService: _conn(wifiIp: null, wifiIpv6: '2606:4700:4700::1111'),
+      );
+
+      await c.load();
+
+      expect(c.notOnWifi, isFalse,
+          reason: 'an IPv6-only Wi-Fi network is still Wi-Fi');
+      expect(c.phase, isNot(WifiMonitorPhase.notOnWifi));
+      expect(c.details, isNotNull,
+          reason: 'the live reading of a CONNECTED device must not be blanked');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('IPv6-ONLY Wi-Fi does not tear down a live stream mid-flight', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null, wifiIpv6: 'fd12:3456:789a::1'),
+      );
+      await c.load();
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(c.isStreaming, isTrue, reason: 'sanity: the stream started');
+
+      // A resume-driven reload on the same IPv6-only network must leave the live
+      // stream alone. Pre-fix this called stopMonitoring() and cleared the App
+      // Group flag, killing a working feed on a working network.
+      await c.load();
+
+      expect(c.isStreaming, isTrue,
+          reason: 'a working stream on a working network must not be torn down');
+      expect(c.notOnWifi, isFalse);
       c.dispose();
       await bridge.close();
     });

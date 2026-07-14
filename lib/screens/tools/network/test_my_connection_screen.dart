@@ -1038,16 +1038,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // REFRESH THE HONEST NOT-ON-WI-FI PROBE (2026-07-13). Fire-and-forget, exactly
     // like the initState / resume loads: a user can drop off Wi-Fi while sitting on
     // this screen, and the verdict must not be computed from a link that vanished.
-    // Never awaited HERE — it is a platform-channel round trip, and awaiting it
-    // inside the timeout-bounded link read stalls the run. It resolves in
-    // milliseconds, far inside the ~25-35s internet measurement, so [_notOnWifi] is
-    // settled long before `onDone` reads it.
-    //
-    // The FUTURE is handed to [_autoCaptureIosRf] so its not-on-Wi-Fi gate decides
-    // on THIS run's probe rather than the last one's (a phone that dropped Wi-Fi
-    // while sitting on the screen would otherwise still bounce to Shortcuts once).
-    final Future<void> probe =
-        _sampler?.load(nativeSsid: _nativeSsid) ?? Future<void>.value();
+    // Never awaited — it is a platform-channel round trip, and awaiting it inside
+    // the timeout-bounded link read stalls the run. It resolves in milliseconds,
+    // far inside the ~25-35s internet measurement, so [_notOnWifi] is settled long
+    // before `onDone` reads it — and `onDone` is where the result is gated.
+    _sampler?.load(nativeSsid: _nativeSsid);
 
     final Future<ConnectedAp?> linkFuture = _readLink();
 
@@ -1065,7 +1060,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // or blocks the verdict, and a failure falls back to the manual capture tap
     // (the Start button + "Capture Wi-Fi details" affordance stay as the
     // fallback). See [_autoCaptureIosRf] for the auto-fire-bounce handling.
-    if (_isIos) _autoCaptureIosRf(probe);
+    if (_isIos) _autoCaptureIosRf();
 
     // ISP / public-IP lookup for the copy payload (Keith ISP-ask + #6). Runs in
     // parallel with the measurement and is purely additive — it never gates the
@@ -1310,16 +1305,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// The internet measurement (~25–35 s) overlaps the settle, so in the normal
   /// case the stream is delivering well before the run completes and the RF is
   /// already on screen and in the copy with zero taps.
-  Future<void> _autoCaptureIosRf(Future<void> probe) async {
+  Future<void> _autoCaptureIosRf() async {
     final WifiSignalSampler? sampler = _sampler;
     if (sampler == null || !sampler.isIos) return;
-
-    // Let THIS run's connection probe land before deciding whether to fire. It is
-    // a few-ms platform-channel round trip and this whole method is off the
-    // critical path (the internet measurement is already running), so the wait
-    // costs the run nothing and makes the gate below read a current answer.
-    await probe;
-    if (!mounted) return;
 
     // NOT ON WI-FI → DO NOT FIRE THE SHORTCUT (cold-eyes F5, 2026-07-13).
     //
@@ -1331,6 +1319,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // app-switch starves the concurrent throughput measurement — the same
     // regression documented in the install gate below (118/94 vs a real 712/462
     // Mbps). Two bounces, zero data, and a slower internet number for the trouble.
+    //
+    // This reads the LAST SETTLED probe, not this run's in-flight one: the run
+    // fires a refresh but never awaits it (a platform-channel await here would
+    // couple the RF capture to a channel that can stall). initState and every
+    // resume refresh it, so a cellular-only phone is already flagged by the time
+    // any check is tapped. RESIDUAL, stated rather than hidden: a phone that drops
+    // Wi-Fi while sitting on this screen, with no resume in between, can still fire
+    // ONE Shortcut on the next check (never the retry — `onDone` re-reads the probe
+    // and the result is gated). That is one bounce in a narrow window, versus a
+    // capture path that silently dies whenever the probe hangs.
     if (_notOnWifi) return;
 
     // Already live this session → the stream is feeding both the sparklines and

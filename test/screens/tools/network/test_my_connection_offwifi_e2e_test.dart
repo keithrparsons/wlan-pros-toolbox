@@ -25,7 +25,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,8 +45,10 @@ import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// A cellular-only iPhone: BOTH Wi-Fi address families read clean and empty.
-/// This is the only shape that may assert `notOnWifi` — see the IPv6 note in
-/// [WifiConnectionService] and `wifi_connection_service_ipv6_test.dart`.
+/// This is the only shape that may assert `notOnWifi` — an IPv4-null alone does
+/// NOT (an IPv6-only SSID reads null there while associated). See the KNOWN LIMITS
+/// note in [WifiConnectionService] and
+/// `test/services/network/wifi_connection_service_test.dart`.
 class _CellularOnlyNetworkInfo implements NetworkInfo {
   @override
   Future<String?> getWifiIP() async => null;
