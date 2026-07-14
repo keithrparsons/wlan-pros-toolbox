@@ -53,6 +53,41 @@ class WiFiDetailsBridge {
     return WiFiDetails.fromJsonString(json);
   }
 
+  /// Wall-clock time the native receiver intent STORED the most recent payload,
+  /// or null when none has ever been stored (or off-iOS, where the channel has no
+  /// handler).
+  ///
+  /// WHY THIS EXISTS (2026-07-14, Keith device — the live-feed regression).
+  /// [WiFiDetails] carries no timestamp, so a payload read back from the App Group
+  /// is indistinguishable from the STALE one stored months ago. That is why the
+  /// Start-aware missing-Shortcut settle refused to poll the App Group at all: any
+  /// stored reading would have "proved" the Shortcut ran and masked a real miss.
+  ///
+  /// But refusing to look made the check unsatisfiable. Firing the streaming
+  /// trigger BACKGROUNDS the app into the Shortcuts app, and a backgrounded
+  /// Flutter engine cannot receive the Darwin push — so the only evidence the
+  /// settle would accept (a payload on the live [updates] stream) is evidence that
+  /// by construction cannot arrive during the settle window. The settle therefore
+  /// concluded "the Shortcut is missing" on a perfectly healthy Shortcut, and tore
+  /// down the very loop it was checking on.
+  ///
+  /// A timestamp resolves the dilemma honestly: the settle can now ask the RIGHT
+  /// question — "did a payload land AFTER this Start?" — which a stale reading can
+  /// never answer yes to, and which a working Shortcut answers yes to even when it
+  /// delivered while we were backgrounded. Neither blind nor credulous.
+  Future<DateTime?> payloadReceivedAt() async {
+    try {
+      final int? ms = await _method.invokeMethod<int>('payloadReceivedAt');
+      if (ms == null || ms <= 0) return null;
+      return DateTime.fromMillisecondsSinceEpoch(ms);
+    } on MissingPluginException {
+      return null;
+    } on PlatformException catch (e) {
+      debugPrint('WiFiDetailsBridge.payloadReceivedAt failed: $e');
+      return null;
+    }
+  }
+
   /// Whether the app has *ever* received a payload from the companion Shortcut
   /// (TICKET-03 A1). iOS cannot query whether a Shortcut is installed, so
   /// install-state is inferred honestly from this persisted App Group flag:

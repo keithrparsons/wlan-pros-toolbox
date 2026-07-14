@@ -66,6 +66,12 @@ import UIKit
       case "hasEverReceivedPayload":
         // Honest install-state (TICKET-03 A1): has any payload ever arrived?
         result(ShortcutsBridge.hasEverReceivedPayload())
+      case "payloadReceivedAt":
+        // WHEN the last payload landed (epoch ms), or nil. Lets the Start-aware
+        // missing-Shortcut settle ask "did a payload arrive AFTER this Start?"
+        // rather than demanding a live-stream push the backgrounded app cannot
+        // receive — the 2026-07-14 live-feed regression. See ShortcutsBridge.store.
+        result(ShortcutsBridge.payloadReceivedAt())
       case "consumeShortcutMissing":
         // One-shot consume of the transient missing-Shortcut marker (set when the
         // one-shot x-error callback fired because "WLAN Pros Live" was gone).

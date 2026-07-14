@@ -31,6 +31,13 @@ enum ShortcutsBridge {
   /// UserDefaults key holding the most recent JSON payload from the Shortcut.
   static let latestPayloadKey = "shortcuts_bridge.latest_wifi_json"
 
+  /// Epoch-MILLISECOND stamp of when [store] last wrote a payload. The honest
+  /// answer to "did the companion Shortcut deliver AFTER the Start that is
+  /// waiting on it?" — the question the app cannot answer from the live stream,
+  /// because firing the trigger backgrounds the app and a suspended engine
+  /// receives nothing. See [store] and `WifiMonitorController._deliveredSinceStart`.
+  static let latestPayloadAtKey = "shortcuts_bridge.latest_wifi_at_ms"
+
   /// UserDefaults key holding the most recent CELLULAR JSON payload from the
   /// companion Shortcut (TICKET-02 cellular). Separate from the Wi-Fi key so the
   /// two tools never clobber each other's last reading.
@@ -209,6 +216,23 @@ enum ShortcutsBridge {
   /// flag the first time real data arrives (TICKET-03 A1).
   static func store(json: String) {
     sharedDefaults?.set(json, forKey: latestPayloadKey)
+    // WHEN the payload landed, in epoch MILLISECONDS. Written on every delivery.
+    //
+    // WHY (2026-07-14, Keith device — the live-feed regression). The streaming
+    // trigger BACKGROUNDS the app into the Shortcuts app, so the Shortcut's
+    // delivery reaches a suspended Flutter engine as an App Group write and a
+    // Darwin notification NOBODY IS LISTENING TO. The app therefore could not tell
+    // "the Shortcut ran while I was away" from "the Shortcut is missing" — and,
+    // having no timestamp, could not tell a payload THIS Start produced from the
+    // stale one stored the last time the phone was on Wi-Fi. So it assumed the
+    // worst, told the user to reinstall a working Shortcut, and cleared the loop
+    // flag — killing the healthy recursion it was waiting on.
+    //
+    // This stamp is what lets Dart ask the honest question instead:
+    // "did a payload land AFTER this Start?" A stale reading answers no; a
+    // Shortcut that delivered while we were backgrounded answers yes.
+    sharedDefaults?.set(
+      Int(Date().timeIntervalSince1970 * 1000), forKey: latestPayloadAtKey)
     sharedDefaults?.set(true, forKey: hasReceivedPayloadKey)
     // A real delivery disproves any pending missing-Shortcut marker so a
     // recovered Shortcut never re-surfaces the "not found" recovery, and it
@@ -227,6 +251,15 @@ enum ShortcutsBridge {
   /// Honest install-state: has the app ever received a payload? (TICKET-03 A1.)
   static func hasEverReceivedPayload() -> Bool {
     sharedDefaults?.bool(forKey: hasReceivedPayloadKey) ?? false
+  }
+
+  /// Epoch-millisecond stamp of the most recent [store], or nil when no payload
+  /// has ever been stored (or the App Group is unavailable). Honest null — the
+  /// Dart caller reads nil as "cannot prove a delivery", never as "it delivered".
+  static func payloadReceivedAt() -> Int? {
+    guard let defaults = sharedDefaults else { return nil }
+    let ms = defaults.integer(forKey: latestPayloadAtKey)
+    return ms > 0 ? ms : nil
   }
 
   /// Records that the companion Shortcut was NOT FOUND on the last one-shot fire

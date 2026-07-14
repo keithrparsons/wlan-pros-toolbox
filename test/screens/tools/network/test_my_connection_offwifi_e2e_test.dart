@@ -147,6 +147,8 @@ class _StaleBridge implements WiFiDetailsBridge {
   /// state from.
   @override
   Future<bool> hasEverReceivedPayload() async => true;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
 
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(

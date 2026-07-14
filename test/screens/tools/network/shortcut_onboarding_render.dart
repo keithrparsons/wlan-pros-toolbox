@@ -51,6 +51,8 @@ class _FakeBridge implements WiFiDetailsBridge {
   Future<String?> consumeLiveErrorNav() async => null;
   @override
   Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
 
   @override
   Future<WiFiDetails?> readLatest() async => null;

@@ -80,6 +80,8 @@ class _NoPayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> hasEverReceivedPayload() async => false;
   @override
+  Future<DateTime?> payloadReceivedAt() async => null;
+  @override
   Future<WiFiDetails?> readLatest() async => null;
   @override
   Future<bool> isMonitoringActive() async => false;

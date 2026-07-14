@@ -305,6 +305,8 @@ class _FakeBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
 
   @override
   Future<WiFiDetails?> readLatest() async => latest;

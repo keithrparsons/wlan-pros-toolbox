@@ -289,6 +289,8 @@ class _PayloadBridge implements WiFiDetailsBridge {
   @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
+  Future<DateTime?> payloadReceivedAt() async => null;
+  @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
     ssid: 'KeithNet',
     bssid: 'a4:83:e7:00:11:22',
@@ -597,6 +599,8 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
+  Future<DateTime?> payloadReceivedAt() async => null;
+  @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
     ssid: 'KeithNet',
     bssid: 'a4:83:e7:00:11:22',
@@ -662,6 +666,8 @@ class _FreshBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
   @override
   Future<WiFiDetails?> readLatest() async => null;
   @override
@@ -3094,6 +3100,8 @@ class _StreamingBridge implements WiFiDetailsBridge {
   // works (hasEverReceivedPayload == true); a streaming bridge is exactly that.
   @override
   Future<bool> hasEverReceivedPayload() async => true;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
   @override
   Future<WiFiDetails?> readLatest() async => null;
   @override

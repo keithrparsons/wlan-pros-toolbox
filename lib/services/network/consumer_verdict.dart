@@ -131,6 +131,26 @@ enum AxisStatus {
   /// not. The user declined the cellular-data cost of the speed test (Keith,
   /// 2026-07-13). Neutral/muted token; not a fault, and not a failure.
   ///
+  /// "Speed unknown" — the internet is DEMONSTRABLY REACHABLE, and only its SPEED
+  /// could not be measured. Neutral/muted token; not a fault.
+  ///
+  /// WHY THIS EXISTS (Keith, 2026-07-14, cellular-only iPhone — the FOURTH
+  /// occurrence of the same missing state). The result header read
+  /// `Internet: Couldn't check` directly above the sentence "You are online. Your
+  /// internet is reachable, but the speed test did not complete." Both were
+  /// rendered from the same result. One of them was false.
+  ///
+  /// We DID check the internet. [WifiVsInternetVerdict.onlineUnmeasured] is only
+  /// produced when THREE independent signals agree the device is online (DNS
+  /// resolved, a public IP was obtained, and cloud apps were reachable — see
+  /// [OnlineEvidence]). Saying "Couldn't check" there claims a failure that did not
+  /// happen, about a check that succeeded. The rate is null, so the RATE alone
+  /// cannot tell "we never reached it" from "we reached it and could not time it"
+  /// — which is exactly why the verdict, not the rate, has to reach this decision.
+  ///
+  /// [unknown] stays reserved for an axis we genuinely could not read at all.
+  reachableUnmeasured,
+
   /// The third distinct answer behind a null rate, and it exists for exactly the
   /// same reason [notApplicable] does. Once the speed test became skippable, an
   /// unmeasured internet axis could mean three different things:
@@ -302,6 +322,7 @@ extension AxisStatusTier on AxisStatus {
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
+      case AxisStatus.reachableUnmeasured:
         return false;
     }
   }
@@ -352,11 +373,27 @@ class ConsumerVerdictMapper {
     final AxisStatus wifiTier = engineResult.notOnWifi
         ? AxisStatus.notApplicable
         : AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
-    // Same reasoning on the internet axis: a rate we never took is not a rate we
-    // failed to take. See [AxisStatus.notMeasured].
+    // Same reasoning on the internet axis, and it now has to separate THREE nulls,
+    // not two:
+    //   * skipped        — no test ran (the user declined the cellular-data cost).
+    //                      Nothing failed. → [AxisStatus.notMeasured].
+    //   * onlineUnmeasured — the test RAN and failed, but the internet is
+    //                      DEMONSTRABLY REACHABLE: the engine only emits this
+    //                      verdict when DNS resolved AND a public IP was obtained
+    //                      AND cloud apps answered ([OnlineEvidence]). We checked
+    //                      the internet and it is there; only its SPEED is unknown.
+    //                      Reporting that as "Couldn't check" claims a failed read
+    //                      about a read that SUCCEEDED — the exact false statement
+    //                      Keith photographed sitting above "Your internet is
+    //                      reachable". → [AxisStatus.reachableUnmeasured].
+    //   * anything else  — a rate we genuinely could not obtain → the rate tiers,
+    //                      with null honestly bucketing to `unknown`.
+    // The rate is null in all three, so the rate ALONE cannot tell them apart.
     final AxisStatus internetTier = engineResult.speedTestSkipped
         ? AxisStatus.notMeasured
-        : AxisStatusThresholds.tierFor(engineResult.internetMbps);
+        : engineResult.verdict == WifiVsInternetVerdict.onlineUnmeasured
+            ? AxisStatus.reachableUnmeasured
+            : AxisStatusThresholds.tierFor(engineResult.internetMbps);
 
     switch (engineResult.verdict) {
       // A — Wi-Fi link is the limiter.

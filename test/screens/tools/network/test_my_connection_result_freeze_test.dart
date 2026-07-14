@@ -100,6 +100,8 @@ class _HomeBridge implements WiFiDetailsBridge {
   @override
   Future<bool> hasEverReceivedPayload() async => true;
   @override
+  Future<DateTime?> payloadReceivedAt() async => null;
+  @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
         ssid: 'KeithHome',
         bssid: '94:2a:6f:a0:a5:5d',

@@ -313,8 +313,14 @@ void main() {
         expect(v.headline, 'You are online');
         expect(v.body, contains('reachable'));
         expect(v.body, contains('Try again in a moment'));
-        // No measured internet rate → honest Unknown internet chip (GL-005).
-        expect(v.internetStatus, AxisStatus.unknown);
+        // No measured internet rate — but the internet is DEMONSTRABLY REACHABLE
+        // (this verdict is only emitted when DNS, the public IP and the cloud-app
+        // probe all succeeded). "Couldn't check" would claim a failed read about a
+        // read that SUCCEEDED, and it sat one line above "Your internet is
+        // reachable" on Keith's phone (2026-07-14). Name the thing we actually do
+        // not know: the speed. See [AxisStatus.reachableUnmeasured].
+        expect(v.internetStatus, AxisStatus.reachableUnmeasured);
+        expect(v.internetStatus, isNot(AxisStatus.unknown));
         // The body must NOT scold the user to get on Wi-Fi.
         expect(v.body, isNot(contains('Make sure')));
       },
@@ -471,6 +477,10 @@ void main() {
       AxisStatus.unknown,
       AxisStatus.notApplicable,
       AxisStatus.notMeasured,
+      // Reachable, but the speed test failed: there is no measured RATE behind
+      // it, so it is not a real tier — the internet is up, we just cannot say
+      // how fast. (2026-07-14.)
+      AxisStatus.reachableUnmeasured,
     ];
 
     test('equal REAL tiers return that tier', () {

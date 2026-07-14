@@ -2182,6 +2182,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
+      case AxisStatus.reachableUnmeasured:
         return _TwoAxisChips.word(tier);
     }
   }
@@ -3104,6 +3105,13 @@ class _TwoAxisChips extends StatelessWidget {
         // Also NOT "Couldn't check": the user declined the cellular-data cost, so
         // the speed test never ran. Nothing failed. See [AxisStatus.notMeasured].
         return 'Not measured';
+      case AxisStatus.reachableUnmeasured:
+        // Also NOT "Couldn't check" (Keith, 2026-07-14, cellular). We reached the
+        // internet — DNS, public IP and cloud apps all answered — and only the
+        // SPEED test failed. The old word claimed a failed check about a check
+        // that succeeded, one line above the body text saying "Your internet is
+        // reachable". Name what we actually do not know: the speed.
+        return 'Speed unknown';
     }
   }
 
@@ -3179,6 +3187,7 @@ class _StatusChip extends StatelessWidget {
       case AxisStatus.unknown:
       case AxisStatus.notApplicable:
       case AxisStatus.notMeasured:
+      case AxisStatus.reachableUnmeasured:
         // Light: neutral textSecondary #4A4A4A fill, matching the _GradeChip
         // no-hue fills across TMC / wifi_info / net_quality. Dark stays on
         // textTertiary so the dark render is byte-identical.
@@ -3229,6 +3238,16 @@ class _StatusChip extends StatelessWidget {
         // (§1.1 rules out error / cancel / block / remove), and keeps the three
         // neutral states separable without color (WCAG 2.2 SC 1.4.1).
         return light ? Icons.pending : Icons.pending_outlined;
+      case AxisStatus.reachableUnmeasured:
+        // A FOURTH distinct glyph, for the same reason the other three are
+        // distinct: these are four different truths and the chip must not blur
+        // them. `help_outline` ("we don't know") is wrong — we DO know the
+        // internet is reachable. `link_off` ("nothing there") is wrong — it is
+        // there. `pending` ("not done") is wrong — the test ran, it failed.
+        // `speed` names the one thing we could not obtain, carries no fault glyph
+        // (§1.1 rules out error / cancel / block / remove), and keeps all four
+        // neutral states separable WITHOUT color (WCAG 2.2 SC 1.4.1).
+        return light ? Icons.speed : Icons.speed_outlined;
     }
   }
 
