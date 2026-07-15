@@ -33,11 +33,11 @@
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
     <line x1="48" y1="140" x2="128" y2="140"/>
     <path d="M54 137 L48 140 L54 143 M122 137 L128 140 L122 143"/>
-    <line x1="128" y1="152" x2="268" y2="152"/>
-    <path d="M134 149 L128 152 L134 155 M262 149 L268 152 L262 155"/>
+    <line x1="48" y1="152" x2="268" y2="152"/>
+    <path d="M54 149 L48 152 L54 155 M262 149 L268 152 L262 155"/>
   </g>
   <text x="88" y="138" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">near</text>
-  <text x="198" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">far</text>
+  <text x="158" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">far</text>
 
   <!-- coverage label on the span -->
   <text x="198" y="116" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="middle">coverage</text>
