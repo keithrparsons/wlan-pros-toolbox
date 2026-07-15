@@ -70,6 +70,49 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Ping'), findsNothing);
     });
 
+    // Honesty regression: the Windows/Linux reason must NOT claim a false
+    // technical impossibility. Windows ICMP echo (IcmpSendEcho) and Linux user
+    // `ping` need no raw socket — the feature is just not wired into these desktop
+    // builds. The card must say that plainly and point at TCP Ping.
+    testWidgets('Windows: honest "not wired yet", never a false raw-socket claim',
+        (tester) async {
+      await tester.pumpWidget(_wrap(IcmpPingScreen(
+        service: IcmpService(
+          platformOverride: 'windows',
+          isWebOverride: false,
+          backend: const _SilentBackend(),
+        ),
+      )));
+      expect(
+        find.textContaining('ICMP ping is not wired into this Windows build yet'),
+        findsOneWidget,
+      );
+      expect(find.text('Open TCP Ping'), findsOneWidget);
+      // Must NOT assert a false impossibility or blame another platform.
+      expect(find.textContaining('raw'), findsNothing);
+      expect(find.textContaining('socket'), findsNothing);
+      expect(find.textContaining('Sandbox'), findsNothing);
+      expect(find.textContaining('macOS'), findsNothing);
+    });
+
+    testWidgets('Linux: honest "not wired yet", never a false raw-socket claim',
+        (tester) async {
+      await tester.pumpWidget(_wrap(IcmpPingScreen(
+        service: IcmpService(
+          platformOverride: 'linux',
+          isWebOverride: false,
+          backend: const _SilentBackend(),
+        ),
+      )));
+      expect(
+        find.textContaining('ICMP ping is not wired into this Linux build yet'),
+        findsOneWidget,
+      );
+      expect(find.text('Open TCP Ping'), findsOneWidget);
+      expect(find.textContaining('raw'), findsNothing);
+      expect(find.textContaining('elevated privileges'), findsNothing);
+    });
+
     testWidgets('blank host shows inline validation, no crash', (tester) async {
       await tester.pumpWidget(_wrap(IcmpPingScreen(
         service: IcmpService(
