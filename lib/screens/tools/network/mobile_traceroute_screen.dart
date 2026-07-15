@@ -189,7 +189,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln(
-        'Traceroute (mobile) — ICMP TTL-walk to '
+        'Traceroute (mobile) via ICMP TTL-walk to '
         '${host.isEmpty ? '(unknown)' : host}',
       )
       ..writeln('Status: $status')
@@ -380,7 +380,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
               'Walks the IP TTL from 1 upward, naming each router that returns '
-              'an ICMP Time-Exceeded — an ICMP TTL-walk, not the system '
+              'an ICMP Time-Exceeded. An ICMP TTL-walk, not the system '
               'traceroute.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
@@ -419,8 +419,8 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'Uses the device\'s real ICMP TTL-walk. The native path is wired '
-              'but still pending on-device verification; if it cannot run, a run '
+              'Uses the device\'s real ICMP TTL-walk on Android, built on the '
+              'ICMP echo now verified on-device. If a run cannot complete, it '
               'reports that plainly rather than showing made-up hops.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),

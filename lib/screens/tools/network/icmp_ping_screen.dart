@@ -128,9 +128,17 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             if (!mounted) return;
             setState(() {
               _running = false;
-              // The device-pending backend throws an explanatory StateError; show
-              // it verbatim rather than a generic failure (honesty bar).
-              _error = e is StateError ? e.message : 'ICMP ping error: $e';
+              // Two honest failure shapes, each shown verbatim (honesty bar):
+              //  - a name that could not be resolved → the honest "couldn't
+              //    resolve" message, NOT a 100%-loss summary (no probe was
+              //    sent, so _stats.sent stays 0 and no summary/replies card
+              //    renders);
+              //  - the device-pending backend's explanatory StateError.
+              _error = switch (e) {
+                final IcmpUnresolvedHostException ex => ex.message,
+                final StateError se => se.message,
+                _ => 'ICMP ping error: $e',
+              };
             });
           },
         );
@@ -176,7 +184,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Ping — ICMP echo')
+      ..writeln('Ping (ICMP echo)')
       ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
       ..writeln(
         'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% loss · '
@@ -330,7 +338,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '${_desktopUnavailableReason()} '
-            'Use the TCP Ping tool here — it measures reachability and '
+            'Use the TCP Ping tool here. It measures reachability and '
             'round-trip latency over a TCP round trip, counting a reply when '
             'the host answers, whether it completes the connection or actively '
             'refuses it (not ICMP). Run ICMP Ping from the iOS or Android '
@@ -407,7 +415,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
               'Sends ICMP echo requests and measures the echo-reply round-trip '
-              'time — true ICMP, not a TCP probe.',
+              'time: true ICMP, not a TCP probe.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
@@ -429,8 +437,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     );
   }
 
-  /// Honest disclosure that the native ICMP layer is not yet device-verified.
-  /// Never claims it works; tells the user exactly what state the build is in.
+  /// Honest note on the native ICMP path: it runs real ICMP echo on iOS and
+  /// Android (verified on-device), and if a run cannot complete it says so
+  /// plainly rather than fabricating a result. Never over-claims desktop.
   Widget _devicePendingNote(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
@@ -447,9 +456,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'Uses the device\'s real ICMP echo. The native path is wired but '
-              'still pending on-device verification; if it cannot run, a run '
-              'reports that plainly rather than showing made-up results.',
+              'Uses the device\'s real ICMP echo on iOS and Android. If a run '
+              'cannot complete, it reports that plainly rather than showing '
+              'made-up results.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
           ),
@@ -623,7 +632,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
-                'No replies. The host did not answer the ICMP echo — it may be '
+                'No replies. The host did not answer the ICMP echo. It may be '
                 'down, or ICMP may be filtered on the path.',
                 style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),

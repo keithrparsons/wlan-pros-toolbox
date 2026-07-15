@@ -428,6 +428,96 @@ void main() {
       expect(events.last.reachedTarget, isTrue);
     });
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // FIX A — an UNRESOLVABLE name is "couldn't resolve", not "100% loss".
+  //
+  // The 2026-07-15 device report: Keith typed `192.168.1.b` into ICMP Ping. It
+  // is a syntactically valid HOSTNAME (last label is alphabetic), so it is
+  // accepted, tried, and — on real DNS — fails to resolve. The old flow handed
+  // the name straight to the backend, which produced a lost probe, and the
+  // stream summarized that as "0/1 · 100% loss". That is the wrong kind of null:
+  // 100% loss implies a real host that did not answer, when in fact the NAME was
+  // never resolved and NO probe was ever sent.
+  //
+  // The fix resolves BEFORE probing: on resolution failure the stream carries an
+  // [IcmpUnresolvedHostException] and emits ZERO progress ticks (so the screen
+  // renders no packet-loss summary). All exercised with an injected resolver —
+  // zero real DNS.
+  // ───────────────────────────────────────────────────────────────────────────
+  group('ping() with an UNRESOLVABLE hostname (Fix A)', () {
+    test('reports a resolution failure, NOT a 100%-loss summary', () async {
+      final IcmpService svc = IcmpService(
+        platformOverride: 'ios',
+        isWebOverride: false,
+        resolver: (String h) async => null, // cannot resolve any name
+        // If the OLD (pre-fix) path ran, this backend would emit a lost probe
+        // and the stream would summarize it as one sent / zero received =
+        // 100% loss. The fix must never reach the backend for an unresolvable
+        // name.
+        backend: _FakeBackend.replies(<IcmpReply>[
+          const IcmpReply(
+              sequence: 1, success: false, errorLabel: 'unknownHost'),
+        ]),
+      );
+
+      final List<IcmpProgress> ticks = <IcmpProgress>[];
+      Object? caught;
+      final Completer<void> done = Completer<void>();
+      svc.ping(host: '192.168.1.b', count: 1).listen(
+            ticks.add,
+            onError: (Object e) => caught = e,
+            onDone: () => done.complete(),
+            cancelOnError: false,
+          );
+      await done.future;
+
+      expect(
+        ticks,
+        isEmpty,
+        reason: 'A resolution failure must not produce a packet-loss summary '
+            '(no probe was sent). On the bug this held one 100%-loss tick.',
+      );
+      expect(caught, isA<IcmpUnresolvedHostException>());
+      expect((caught! as IcmpUnresolvedHostException).host, '192.168.1.b');
+      expect(
+        (caught! as IcmpUnresolvedHostException).message,
+        contains("Couldn't resolve"),
+      );
+    });
+
+    test('a resolvable hostname still pings normally', () async {
+      final IcmpService svc = IcmpService(
+        platformOverride: 'ios',
+        isWebOverride: false,
+        resolver: (String h) async => '93.184.216.34',
+        backend: _FakeBackend.replies(<IcmpReply>[
+          const IcmpReply(sequence: 1, success: true, rttMs: 14),
+        ]),
+      );
+      final List<IcmpProgress> ticks =
+          await svc.ping(host: 'example.com', count: 1).toList();
+      expect(ticks.length, 1);
+      expect(ticks.single.stats.received, 1);
+      expect(ticks.single.stats.lossFraction, 0);
+    });
+
+    test('an IP literal skips DNS and pings even when the resolver is dead',
+        () async {
+      final IcmpService svc = IcmpService(
+        platformOverride: 'ios',
+        isWebOverride: false,
+        resolver: (String h) async => null, // would fail every NAME
+        backend: _FakeBackend.replies(<IcmpReply>[
+          const IcmpReply(sequence: 1, success: true, rttMs: 3),
+        ]),
+      );
+      final List<IcmpProgress> ticks =
+          await svc.ping(host: '1.1.1.1', count: 1).toList();
+      expect(ticks.length, 1, reason: 'An IP literal is its own resolution.');
+      expect(ticks.single.stats.received, 1);
+    });
+  });
 }
 
 // ── Test helpers ────────────────────────────────────────────────────────────

@@ -271,6 +271,31 @@ abstract class IcmpBackend {
 /// DNS — the seam whose absence let the hostname bug ship.
 typedef IcmpHostResolver = Future<String?> Function(String host);
 
+/// Thrown into the ICMP ping stream when the target hostname cannot be resolved
+/// to any IP address.
+///
+/// This is deliberately DISTINCT from packet loss. Loss means a real host was
+/// contacted and did not answer. A resolution failure means NO host was ever
+/// contacted, because the name could not be turned into an address. Collapsing
+/// the two into one "100% loss" summary is the misleading report this fixes:
+/// the two-kinds-of-null distinction (GL-005). The screen surfaces [message]
+/// and shows no packet-loss summary, because no probe was ever sent.
+class IcmpUnresolvedHostException implements Exception {
+  const IcmpUnresolvedHostException(this.host);
+
+  /// The user-entered host string that failed to resolve.
+  final String host;
+
+  /// GL-004-clean, user-facing explanation. Verdict first (what happened), then
+  /// what to do. No em dash.
+  String get message =>
+      'Couldn\'t resolve "$host". Check the name for a typo, or enter an IP '
+      'address.';
+
+  @override
+  String toString() => message;
+}
+
 /// The shared ICMP foundation. Both Real-ICMP-Ping and Mobile-Traceroute call
 /// into this one service.
 class IcmpService {
@@ -382,8 +407,28 @@ class IcmpService {
         StreamController<IcmpProgress>();
     StreamSubscription<IcmpReply>? sub;
     IcmpStats stats = IcmpStats.empty;
+    bool cancelled = false;
+    cancel?.then((_) => cancelled = true);
 
-    controller.onListen = () {
+    // Resolve the target BEFORE sending any probe. A name that cannot be
+    // resolved is reported honestly as a resolution failure (an
+    // [IcmpUnresolvedHostException] on the stream) and NEVER summarized as 100%
+    // packet loss. An IP literal is its own resolution and skips DNS entirely,
+    // so its behavior is unchanged. On success we ping the ORIGINAL host string
+    // (the backend resolves again as before) so the actual probe target is
+    // untouched — the resolve here is purely the honest is-it-resolvable gate.
+    Future<void> start() async {
+      final String h = host.trim();
+      if (!_isIpLiteral(h)) {
+        final String? resolved = await _resolver(h);
+        if (cancelled || controller.isClosed) return;
+        if (resolved == null) {
+          controller.addError(IcmpUnresolvedHostException(h));
+          await controller.close();
+          return;
+        }
+      }
+      if (cancelled || controller.isClosed) return;
       sub = backend
           .echo(
         host: host,
@@ -406,7 +451,9 @@ class IcmpService {
           if (!controller.isClosed) controller.close();
         },
       );
-    };
+    }
+
+    controller.onListen = start;
     controller.onCancel = () async {
       await sub?.cancel();
     };
