@@ -34,10 +34,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/test_my_connection_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/dns_probe_service.dart';
+import 'package:wlan_pros_toolbox/services/network/network_details_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
-import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
@@ -106,9 +107,16 @@ class _StaleHomeBridge implements WiFiDetailsBridge {
 /// An iOS bridge with NO stored Shortcut payload (readLatest → null). Used by the
 /// sampler-path test: the one-shot read is empty, so the identity comes from the
 /// native read alone and any stale RF/name can ONLY arrive via the live sampler.
+///
+/// [hasEverReceivedPayload] is false so the screen's auto-capture bails early
+/// (it never fires the companion Shortcut, so no 2s settle Timer is armed). The
+/// sampler's own `latest` still feeds the merge independently, so the guard under
+/// test is exercised without a pending-timer teardown failure.
 class _EmptyBridge extends _StaleHomeBridge {
   @override
   Future<WiFiDetails?> readLatest() async => null;
+  @override
+  Future<bool> hasEverReceivedPayload() async => false;
 }
 
 /// A fake NEHotspotNetwork security reader. Returns an AVAILABLE read for the
@@ -200,6 +208,24 @@ QualityResult _marginalInternet() => QualityResult(
         ),
       ],
     );
+
+/// Deterministic DNS + addressing fakes so the live-sampling path runs its
+/// report probes synchronously — no real resolver/interface call leaks a timeout
+/// Timer into the test clock.
+class _FakeDnsProbe extends DnsProbeService {
+  @override
+  Future<DnsProbeResult> measure() async =>
+      DnsProbeResult.success(host: 'cloudflare.com', millis: 12);
+}
+
+class _FakeNetworkDetails extends NetworkDetailsService {
+  @override
+  Future<NetworkDetails> read() async => const NetworkDetails(
+        localIp: '10.0.0.42',
+        subnetMask: '255.255.255.0',
+        gateway: '10.0.0.1',
+      );
+}
 
 class _SilentPath implements WifiPathProbe {
   const _SilentPath();
@@ -319,10 +345,16 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: true,
+            // The live sampler is what we are testing; the bottom Cloud Apps
+            // panel (which otherwise follows enableLiveSampling and opens a real
+            // reachability socket/timer) is not, so keep it off.
+            enableCloudApps: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _EmptyBridge(),
             securityService: _ClientNativeSecurity(),
             sampler: sampler,
+            dnsProbeService: _FakeDnsProbe(),
+            networkDetailsService: _FakeNetworkDetails(),
             qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
           ),
         ),

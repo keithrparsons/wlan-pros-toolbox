@@ -1291,22 +1291,73 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return (ssid == null || ssid.isEmpty) ? null : ssid;
   }
 
-  /// Folds the native iOS security read (security token + BSSID) onto a
-  /// Shortcut-derived [ConnectedAp]. Mirrors the pro Wi-Fi Information tool's
-  /// `_enrichIos`: the Shortcut path does not carry the security type, and the
-  /// BSSID may be absent there too, so both are enriched from NEHotspotNetwork
-  /// when available. When [rf] is null (no RF captured) but native security IS
-  /// available, returns a minimal link carrying just the native identity so the
-  /// Security/BSSID rows populate without a Shortcut bounce. Returns [rf]
-  /// unchanged off iOS or when no native read landed.
+  /// Whether a Shortcut-derived reading [rf] belongs to the network the phone is
+  /// on RIGHT NOW — i.e. its SSID matches the live native NEHotspotNetwork read
+  /// ([_nativeSsid]).
+  ///
+  /// This is the authority check the whole iOS stale-SSID fix turns on. The
+  /// Shortcut path (both `bridge.readLatest()` and the live sampler) reads the
+  /// App Group's LAST-STORED payload, which SURVIVES the phone moving between
+  /// networks — so a payload captured at home still carries the HOME SSID and its
+  /// RF at a client site (Keith user report, 2026-07-14). NEHotspotNetwork, by
+  /// contrast, reflects the CURRENTLY-joined network. So a Shortcut reading is
+  /// trustworthy for the current network only when its SSID equals the native
+  /// SSID; on any disagreement it is a stale reading for a network we have left.
+  ///
+  /// Returns false when the native identity is unavailable (we cannot confirm the
+  /// Shortcut reading is current, so it must not be trusted) or when either side
+  /// carries no name to compare. SSIDs are case-sensitive, so the compare is
+  /// exact after trimming surrounding whitespace.
+  bool _shortcutMatchesNative(ConnectedAp? rf) {
+    final String? native = _nativeSsid;
+    if (native == null) return false;
+    final String? shortcut = rf?.ssid?.trim();
+    if (shortcut == null || shortcut.isEmpty) return false;
+    return shortcut == native;
+  }
+
+  /// Folds the native iOS security read (SSID + security token + BSSID) onto a
+  /// Shortcut-derived [ConnectedAp], with the LIVE NATIVE identity as the
+  /// authority for the network NAME.
+  ///
+  /// THE STALE-SSID FIX (Keith user report, 2026-07-14). The Shortcut RF arrives
+  /// from the App Group's last-stored payload, which survives the phone moving
+  /// networks — so [rf] can carry a HOME SSID (and home RF) while the phone is at
+  /// a client site. NEHotspotNetwork ([_iosSecurity]) reflects the network we are
+  /// actually on. This method therefore:
+  ///
+  ///  * takes the network NAME (and BSSID + security) ONLY from the native read,
+  ///    never from [rf], so the "What to tell support" name is always the current
+  ///    network — the one lie the Dean of Wi-Fi's app must never tell;
+  ///  * keeps the Shortcut RF (RSSI / rate / SNR / channel / band / PHY) ONLY when
+  ///    [rf]'s SSID matches the native SSID ([_shortcutMatchesNative]) — proof it
+  ///    was captured on the SAME network. On a mismatch the RF belongs to a
+  ///    network we have LEFT, so its entire block is stale for the current
+  ///    network and is dropped to the honest "not captured" state ([_iosRfCaptured]
+  ///    then surfaces the "Tap to capture Wi-Fi details" affordance) rather than
+  ///    being shown under a fresh "Tested" timestamp.
+  ///
+  /// When the native identity is UNAVAILABLE (off iOS, Location ungranted, or the
+  /// read failed) there is no authority to check the Shortcut reading against, so
+  /// [rf] is returned unchanged: the Shortcut SSID is then the only identity on
+  /// hand and, absent a disagreeing native read, is the honest best-effort name
+  /// (the companion Shortcut's own Location grant is independent of the app's
+  /// NEHotspotNetwork grant, so a fresh, correct Shortcut SSID legitimately
+  /// coexists with an unavailable native read). The stale-name lie this fixes is
+  /// only DETECTABLE as a disagreement with a PRESENT native read; without one we
+  /// do not invent a false "no Wi-Fi" or blank a real reading (GL-005). The
+  /// reliable stale case — native present, SSID disagrees — is handled above.
   ConnectedAp? _enrichIosSecurity(ConnectedAp? rf) {
     final WifiSecurityInfo? sec = _iosSecurity;
-    if (sec == null || !sec.available) return rf;
+    if (sec == null || !sec.available) {
+      return rf;
+    }
     final WifiSecurity? security =
         WifiSecurityClassifier.classify(sec.securityToken);
-    if (rf == null) {
-      // No RF captured yet — surface a minimal link from the native read alone
-      // so security + BSSID + SSID are not falsely "Unavailable".
+    if (rf == null || !_shortcutMatchesNative(rf)) {
+      // No RF captured, OR the Shortcut reading is for a DIFFERENT network than
+      // the one we are on now (SSID disagrees with the live native read). Surface
+      // the authoritative native identity only; the RF drops to "not captured".
       return ConnectedAp(
         ssid: sec.ssid,
         bssid: sec.bssid,
@@ -1316,34 +1367,33 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         channelWidthAvailable: false,
       );
     }
+    // Shortcut RF confirmed for the CURRENT network — fold the native identity
+    // onto it. The NAME is taken from the native read (the authority); the BSSID
+    // prefers the Shortcut's when present and falls back to the native one.
     final ConnectedAp withSec = rf.withSecurity(security);
-    // Prefer a BSSID the Shortcut already supplied; fall back to the native one.
-    if (withSec.bssid == null && sec.bssid != null) {
-      return ConnectedAp(
-        ssid: withSec.ssid ?? sec.ssid,
-        bssid: sec.bssid,
-        rssiDbm: withSec.rssiDbm,
-        noiseDbm: withSec.noiseDbm,
-        snrDb: withSec.snrDb,
-        txRateMbps: withSec.txRateMbps,
-        rxRateMbps: withSec.rxRateMbps,
-        channel: withSec.channel,
-        channelWidthMhz: withSec.channelWidthMhz,
-        band: withSec.band,
-        standard: withSec.standard,
-        countryCode: withSec.countryCode,
-        interfaceName: withSec.interfaceName,
-        hardwareAddress: withSec.hardwareAddress,
-        securityType: withSec.securityType,
-        poweredOn: withSec.poweredOn,
-        rxRateAvailable: withSec.rxRateAvailable,
-        channelWidthAvailable: withSec.channelWidthAvailable,
-        bandDerived: withSec.bandDerived,
-        snrDerived: withSec.snrDerived,
-        securityAvailable: withSec.securityAvailable,
-      );
-    }
-    return withSec;
+    return ConnectedAp(
+      ssid: sec.ssid,
+      bssid: withSec.bssid ?? sec.bssid,
+      rssiDbm: withSec.rssiDbm,
+      noiseDbm: withSec.noiseDbm,
+      snrDb: withSec.snrDb,
+      txRateMbps: withSec.txRateMbps,
+      rxRateMbps: withSec.rxRateMbps,
+      channel: withSec.channel,
+      channelWidthMhz: withSec.channelWidthMhz,
+      band: withSec.band,
+      standard: withSec.standard,
+      countryCode: withSec.countryCode,
+      interfaceName: withSec.interfaceName,
+      hardwareAddress: withSec.hardwareAddress,
+      securityType: withSec.securityType,
+      poweredOn: withSec.poweredOn,
+      rxRateAvailable: withSec.rxRateAvailable,
+      channelWidthAvailable: withSec.channelWidthAvailable,
+      bandDerived: withSec.bandDerived,
+      snrDerived: withSec.snrDerived,
+      securityAvailable: true,
+    );
   }
 
   /// The SINGLE RF source the result body, the technical section, the help-desk
@@ -1399,8 +1449,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// it is preserved and the live sampler only FILLS RF gaps the one-shot read
   /// lacked. When [oneShot] is null but the sampler has a reading, the live
   /// reading stands on its own.
+  ///
+  /// STALE-SSID GUARD ON THE SAMPLER PATH (Keith user report, 2026-07-14). On iOS
+  /// the live sampler's [WifiSignalSampler.latest] is ALSO a companion-Shortcut
+  /// payload (`ConnectedAp.fromWifiDetails(controller.details)`), so it carries
+  /// the SAME stale-SSID hazard as the one-shot read: it survives the phone moving
+  /// networks. Left unchecked it would leak the stale name/RF two ways — as the
+  /// standalone reading when [oneShot] is null, and by back-filling a mismatched
+  /// one-shot read's dropped RF via [ConnectedAp.mergedWith]. So when a live native
+  /// identity IS present and the live sampler's SSID DISAGREES with it, the sampler
+  /// reading is for a network we have left → it is dropped, mirroring
+  /// [_enrichIosSecurity]. When there is no native read to check against (native
+  /// unavailable), the live reading is kept — it is the best evidence on hand and
+  /// blanking it would invent a false "no Wi-Fi" (GL-005). Off iOS the sampler
+  /// polls a native snapshot (CoreWLAN / WifiManager / wlanapi.dll), no guard.
   ConnectedAp? _mergeWithLive(ConnectedAp? oneShot) {
-    final ConnectedAp? live = _sampler?.latest;
+    ConnectedAp? live = _sampler?.latest;
+    if (_isIos && live != null && _nativeSsid != null &&
+        !_shortcutMatchesNative(live)) {
+      live = null;
+    }
     if (oneShot == null) return live;
     return oneShot.mergedWith(live);
   }
