@@ -56,6 +56,8 @@ import 'dart:io' show InternetAddress, Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
+import 'network_target.dart';
+
 /// How a given platform can run *ICMP echo* (the ping primitive).
 enum IcmpEchoCapability {
   /// Real ICMP echo is available (iOS via SimplePing, Android via system ping).
@@ -343,19 +345,18 @@ class IcmpService {
   // ── Input validation (pure, unit-tested) ─────────────────────────────────
 
   /// Returns an error string for an invalid host, or null when acceptable.
-  /// Intentionally permissive (the backend does the real resolve) but rejects
-  /// the obvious malformed cases so we never hand junk to the native layer.
+  ///
+  /// Delegates to the shared [NetworkTarget.validateHostOrIp] so the ICMP Ping
+  /// and Mobile Traceroute screens reject exactly the same malformed input
+  /// (out-of-range octets, empty octets, pasted URL schemes, bare numbers) that
+  /// every other host/IP tool rejects — one source of truth, no per-screen
+  /// drift. Was previously "intentionally permissive" and silently accepted
+  /// typos, which is the 2026-07-14 "thought the tool was broke" report.
   static String? validateHost(String raw) {
-    final String host = raw.trim();
-    if (host.isEmpty) return 'Enter a host or IP.';
-    if (host.contains(' ')) return 'Host cannot contain spaces.';
-    if (host.length > 253) return 'Host is too long.';
-    // Reject control characters / shell-ish metacharacters defensively even
-    // though no shell is ever spawned from here.
-    if (RegExp(r'[\x00-\x1f;|&`$<>]').hasMatch(host)) {
-      return 'Host contains invalid characters.';
-    }
-    return null;
+    final NetworkTargetResult result = NetworkTarget.validateHostOrIp(raw);
+    return result is ValidNetworkTarget
+        ? null
+        : (result as InvalidNetworkTarget).message;
   }
 
   // ── Real ICMP Ping ───────────────────────────────────────────────────────

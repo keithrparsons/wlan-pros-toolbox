@@ -80,7 +80,9 @@ void main() {
       )));
       await tester.tap(find.widgetWithText(FilledButton, 'Ping'));
       await tester.pump();
-      expect(find.text('Enter a host or IP.'), findsOneWidget);
+      // validateHost now delegates to the shared NetworkTarget validator, whose
+      // empty message is consistent with every other host/IP tool.
+      expect(find.text('Enter a host or IP address.'), findsOneWidget);
     });
   });
 

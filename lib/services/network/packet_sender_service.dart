@@ -25,6 +25,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'network_target.dart';
 import 'tcp_probe_classifier.dart';
 
 /// Transport for a send attempt.
@@ -259,6 +260,20 @@ class PacketSenderService {
           port: port,
           kind: PacketErrorKind.invalidInput,
           message: 'Enter a host or IP address.',
+        ),
+      );
+    }
+    // Reject a malformed host BEFORE any I/O, so a typo is an honest
+    // invalid-input message rather than a confusing connection failure.
+    final NetworkTargetResult target = NetworkTarget.validateHostOrIp(h);
+    if (target is! ValidNetworkTarget) {
+      return Future<PacketResult>.value(
+        PacketResult.failure(
+          transport: transport,
+          host: h,
+          port: port,
+          kind: PacketErrorKind.invalidInput,
+          message: (target as InvalidNetworkTarget).message,
         ),
       );
     }

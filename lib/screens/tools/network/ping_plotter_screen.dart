@@ -39,6 +39,7 @@ import 'package:flutter/semantics.dart';
 import '../../../data/tool_assets.dart';
 import '../../../services/network/current_network.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
 import '../../../services/network/ping_plot_controller.dart';
 import '../../../services/network/ping_service.dart';
 import '../../../theme/app_theme.dart';
@@ -155,6 +156,11 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     final String host = _hostCtrl.text.trim();
     if (host.isEmpty) {
       setState(() => _error = 'Enter a host or IP to plot.');
+      return;
+    }
+    final NetworkTargetResult target = NetworkTarget.validateHostOrIp(host);
+    if (target is! ValidNetworkTarget) {
+      setState(() => _error = (target as InvalidNetworkTarget).message);
       return;
     }
     _hostFocus.unfocus();

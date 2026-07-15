@@ -40,6 +40,7 @@ import 'dart:io';
 
 import 'package:basic_utils/basic_utils.dart';
 
+import 'network_target.dart';
 import 'tcp_probe_classifier.dart';
 
 /// Computed validity verdict for a certificate, derived from notBefore /
@@ -282,6 +283,16 @@ class SslInspectService {
         host: host,
         port: port,
         message: 'Enter a hostname or IP to inspect.',
+      );
+    }
+    // Reject a malformed host BEFORE the socket, so a typo is an honest
+    // "not a valid host or IP" message rather than a confusing connect failure.
+    final NetworkTargetResult target = NetworkTarget.validateHostOrIp(host);
+    if (target is! ValidNetworkTarget) {
+      return SslInspectResult.failure(
+        host: host,
+        port: port,
+        message: (target as InvalidNetworkTarget).message,
       );
     }
     if (port < 1 || port > 65535) {
