@@ -41,6 +41,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'network_target.dart';
+
 /// Seconds between the NTP epoch (1900-01-01) and the Unix epoch (1970-01-01).
 const int _ntpToUnixSeconds = 2208988800;
 
@@ -195,6 +197,15 @@ class NtpService {
       return NtpResult.failure(
         server: host,
         message: 'Enter an NTP server hostname, e.g. $kDefaultNtpServer.',
+      );
+    }
+    // Reject a malformed server BEFORE the SNTP exchange, so a typo is an
+    // honest "not a valid host or IP" message, not a silent timeout.
+    final NetworkTargetResult target = NetworkTarget.validateHostOrIp(host);
+    if (target is! ValidNetworkTarget) {
+      return NtpResult.failure(
+        server: host,
+        message: (target as InvalidNetworkTarget).message,
       );
     }
 
