@@ -1799,6 +1799,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'CLI & Capture',
       ),
       ToolEntry(
+        id: 'lldp-cdp-reference',
+        title: 'Find the Switch and Port (LLDP/CDP)',
+        description: 'Read LLDP/CDP to find a device\'s switch port',
+        routeName: '/tools/lldp-cdp-reference',
+        isLive: true,
+        subgroup: 'CLI & Capture',
+      ),
+      ToolEntry(
         id: 'wireshark-80211-filters',
         title: 'Wireshark 802.11 Filters',
         description: 'Display + capture filters for 802.11',

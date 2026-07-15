@@ -4110,6 +4110,28 @@
         "Reference only. A decode is a heuristic; confirm against the exact model's datasheet or ordering guide before you spec, order, or troubleshoot on it."
       ],
       "source": "Per-vendor field reference compiled by Keith Parsons / WLAN Pros. Sources per vendor: the Cisco Catalyst 9130AX datasheet and Getting Started Guide, the Aruba 310 Series datasheet, UniFi Tech Specs, the Ruckus product guide, and Extreme Networks product pages."
+    },
+    "lldp-cdp-reference": {
+      "name": "Find the Switch and Port (LLDP/CDP)",
+      "category": "CLI & Capture",
+      "purpose": "A how-to reference for reading LLDP (IEEE 802.1AB) and CDP, the Layer-2 protocols a switch uses to announce its own name, the exact port you are plugged into, its management IP, and often the VLAN. Shows how to read it on every OS and how to find which switch port an access point is on.",
+      "whyHere": "When an access point is dark and you need its switch port, or a device is wired somewhere and you need to trace it without walking the patch panel, LLDP or CDP puts that answer in a single frame. This reference tells you how to read it on whatever machine is in front of you, and where each OS hides the answer.",
+      "howToUse": [
+        "Have switch CLI access? Start there. 'show lldp neighbors' or 'show cdp neighbors' names the device and its port directly, the fastest answer of all.",
+        "No switch access? Pick your OS: Linux prints a parsed table with 'lldpcli show neighbors'; macOS and Windows capture with a built-in tool ('tcpdump' and 'pktmon'), no driver install needed.",
+        "To find an AP's port, read the switch or the AP itself. Your own laptop's LLDP reports the laptop's port, not the AP's."
+      ],
+      "inputs": [],
+      "algorithm": "Reference only; the app runs no capture and no shell. LLDP is IEEE 802.1AB, EtherType 0x88CC, multicast MAC 01:80:C2:00:00:0E, and carries the switch name, port, management address, and VLAN in its TLVs. CDP is Cisco proprietary with no EtherType; it uses multicast MAC 01:00:0C:CC:CC:CC (filter captures by that MAC or SNAP protocol ID 0x2000). Both are Layer 2 and single hop, so you only see the device on the other end of your own cable, and both are wired only, so a Wi-Fi laptop sees nothing.",
+      "example": "An AP will not boot. On the switch: 'show lldp neighbors' lists the AP against its port; 'show interface status' shows link and speed; 'show power inline' shows PoE delivery. No switch access? Read LLDP from the AP's own console. On macOS: sudo tcpdump -nn -v -i en5 'ether proto 0x88cc'.",
+      "fieldNotes": [
+        "The app does not capture the frames. It is reference text; you run these commands on the switch, the WLAN Pi, or the laptop yourself.",
+        "Windows correction: 'Get-NetLldpAgent' does NOT show the neighbor. It reads local agent config only (interface alias, index, scope, MAC) and needs the Data Center Bridging feature. Use 'pktmon', then 'pktmon etl2txt', to read which switch and port.",
+        "Whose port are you reading? Your laptop's LLDP shows the laptop's port. To get the AP's port without switch access, read the AP or the switch, never the laptop.",
+        "Nothing showing up? Cisco ships LLDP off by default (CDP on), and many non-Cisco switches ship LLDP off too. Check that the switch is sending before you blame the tool. Enable on Cisco with 'lldp run'; for any other vendor, check your vendor's documentation, the enable command is not universal.",
+        "Client-Windows (Windows 10/11, not Server) availability of the NetLldpAgent module and the Data Center Bridging feature varies by build and NIC driver and is unconfirmed; on Windows Server the feature install is documented."
+      ],
+      "source": "Fact-checked LLDP/CDP how-to brief (2026-07-15), cross-checked against the Wireshark LLDP wiki, Microsoft Learn (Get-NetLldpAgent, pktmon), lldpd.github.io, Baeldung (tcpdump), and Study-CCNA/Cisco docs."
     }
   }
 }

@@ -662,6 +662,11 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'iw', 'iwconfig', 'monitor mode', 'airmon', 'terminal', 'cheat sheet',
     'wireless',
   ],
+  'lldp-cdp-reference': <String>[
+    'lldp', 'cdp', 'switch port', '802.1ab', 'link layer discovery',
+    'cisco discovery protocol', 'neighbor', 'lldpcli', 'pktmon', 'tcpdump',
+    'which switch', 'ap port', 'find the switch', 'get-netlldpagent',
+  ],
   'wireshark-80211-filters': <String>[
     'display filter', 'capture filter', 'pcap', 'packet capture', 'tshark',
     'sniffer', 'wlan filter',

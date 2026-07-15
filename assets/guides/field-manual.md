@@ -23,7 +23,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Protocols (19)
   - Encoding (5)
   - Power & Cooling (6)
-  - CLI & Capture (3)
+  - CLI & Capture (4)
   - Checklists (2)
   - Guides (2)
   - Ham Radio (6)
@@ -2699,7 +2699,41 @@ Regular-expression syntax (anchors, character classes, quantifiers, groups and r
 - Honesty note: there is no single normative regex authority: POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.
 - Data source / standard: the common PCRE2 subset per the PCRE2 syntax reference. Offline, read-only.
 
-## CLI & Capture (3)
+## CLI & Capture (4)
+
+
+### Find the Switch and Port (LLDP/CDP)
+
+A how-to reference for reading LLDP (IEEE 802.1AB) or CDP so a switch tells you its own name, the exact port you are on, its management IP, and often the VLAN. Covers the fastest path (switch CLI), the built-in-vs-capture split per OS, the Windows `Get-NetLldpAgent` correction, and the "which port is the AP on" workflow. The app does not capture; it points you at the tools already on your machine.
+
+**Why it's here.** An AP is dark and you need to know which switch port it lives on, or a device is plugged in somewhere and you need to trace it without walking the patch panel. LLDP and CDP put that answer in a single frame. This tells you how to read it on whatever OS is in front of you.
+
+**How to use**
+1. If you have switch CLI access, start there. It is the fastest and it names the AP directly.
+2. Otherwise pick your OS row below and run its built-in path. Linux prints a parsed table; macOS and Windows need a capture with a tool that already ships with the OS.
+3. Remember the two hard limits: LLDP and CDP are wired only (a Wi-Fi laptop sees nothing) and single hop (you only see the device on the other end of your cable).
+
+**Fastest path: switch CLI.** `show lldp neighbors [detail]` or `show cdp neighbors [detail]` lists every neighbor, local and remote port, platform, and management IP. This is where you see the AP and its port, with no host tooling at all. Alongside it: `show interface status` (link up/down and speed) and `show power inline` (whether the port is delivering PoE and how much) separate "no link" from "link but no power" from "powered but not booting."
+
+**Per-OS one-liners.**
+- **Linux (built in, cleanest):** `lldpcli show neighbors` from the `lldpd` daemon. Add `details` for the full record. Install first if needed: `sudo apt install lldpd` (or `dnf install lldpd`), then `sudo systemctl enable --now lldpd`.
+- **macOS (built-in tcpdump, needs sudo):** `sudo tcpdump -nn -v -i en5 'ether proto 0x88cc'` for LLDP on the wired interface (usually a USB/Thunderbolt adapter like `en5`/`en7`). For CDP, capture the same way but match the CDP MAC `01:00:0C:CC:CC:CC` (CDP has no EtherType).
+- **Windows (built-in pktmon, no driver):** `pktmon` filters on `0x88CC` and the CDP MAC, captures, then `pktmon etl2txt` converts the log to readable text. Built into Windows 10 1809 and later, Windows 11, and Server 2019 and later.
+
+**The Windows correction.** `Get-NetLldpAgent` does NOT show the neighbor. It reads the local agent config only (interface alias, index, scope, MAC), and its module needs the Data Center Bridging feature. "LLDP is enabled" on Windows means the local agent is on, not that you have a neighbor viewer. To read which switch and port, use `pktmon`, not the cmdlet.
+
+**The AP-port workflow.**
+1. Switch CLI access? `show lldp neighbors` / `show cdp neighbors` names the AP against its switch port. Done.
+2. No switch access? Read LLDP from the AP itself, via its console or management UI. The AP's own table names the switch and port.
+3. Your laptop's LLDP reports the port the LAPTOP is on, NOT the AP's port. Do not confuse the two.
+4. Confirm by plugging a laptop into the exact port and cable the AP used, then read LLDP there before you re-patch.
+
+**Field notes**
+- The app runs no capture and no shell. It is reference text; you run these commands on the switch, the WLAN Pi, or the laptop yourself.
+- Nothing shows up? Cisco ships LLDP off by default (CDP on), and many non-Cisco switches ship LLDP off too. Check that the switch is sending before you blame the tool.
+- Enable on a Cisco switch with `lldp run` (global), `lldp transmit` / `lldp receive` (per interface). For any other vendor (Aruba, Juniper, UniFi), the enable command is not universal: check your vendor.
+- Client-Windows (Windows 10/11, not Server) availability of the `NetLldpAgent` module and the Data Center Bridging feature varies by build and NIC driver and is unconfirmed here; on Windows Server the feature install is documented (`Install-WindowsFeature Data-Center-Bridging`).
+- Source / basis: fact-checked LLDP/CDP how-to brief (2026-07-15), cross-checked against the Wireshark LLDP wiki, Microsoft Learn (Get-NetLldpAgent, pktmon), lldpd.github.io, Baeldung/tcpdump, and Study-CCNA/Cisco docs.
 
 
 ### Linux / WLAN Commands

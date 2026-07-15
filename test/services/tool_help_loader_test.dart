@@ -283,7 +283,13 @@ void main() {
       // tapping help opened a silently-empty sheet. The re-added entry is a
       // minimal HONEST disclaimer (not a calculator), matching the screen.
       // 173 + 1 = 174.
-      expect(store.count, 174);
+      // 175 = + Find the Switch and Port (LLDP/CDP) (lldp-cdp-reference)
+      // 2026-07-15: a REFERENCE-ONLY how-to for reading LLDP (IEEE 802.1AB) and
+      // CDP to find a device's switch port, in the CLI & Capture subgroup of
+      // Quick Reference. The app runs no capture and no shell; it points the user
+      // at the built-in tools (switch CLI, lldpcli, tcpdump, pktmon) with the
+      // source-verified command strings. 174 + 1 = 175.
+      expect(store.count, 175);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
