@@ -262,22 +262,32 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
   /// Why real ICMP echo is unavailable on THIS desktop, in the terms of the
   /// platform the user is actually running.
   ///
-  /// THE BUG THIS FIXES: this card hard-coded the macOS App Sandbox explanation
-  /// and showed it to everyone — so a WINDOWS user was told that "the macOS App
-  /// Sandbox" was blocking them. There is no macOS App Sandbox on Windows. The
-  /// verdict (use TCP Ping on desktop) was right; the reason given was false.
+  /// THE BUG THIS FIXES (round 1): this card hard-coded the macOS App Sandbox
+  /// explanation and showed it to everyone — so a WINDOWS user was told that
+  /// "the macOS App Sandbox" was blocking them. There is no macOS App Sandbox on
+  /// Windows. The verdict (use TCP Ping on desktop) was right; the reason was
+  /// false.
+  ///
+  /// THE BUG THIS FIXES (round 2): the Windows and Linux branches then asserted a
+  /// false technical impossibility — that ICMP echo "needs a raw ICMP socket"
+  /// that this build cannot open. That is not why ICMP ping is unavailable here.
+  /// The app's ICMP path is the system `ping` subprocess (dart_ping), never a raw
+  /// socket, and `defaultIcmpBackend()` returns null on ALL desktop (see
+  /// dart_ping_icmp_backend.dart) — the feature is simply not wired into the
+  /// desktop builds. Windows echo (IcmpSendEcho) and Linux user `ping` need no
+  /// raw socket at all, so "needs a raw socket" was a false networking claim. The
+  /// honest reason is the real one: the feature is not wired for these builds yet
+  /// (matching the "not wired ... yet" copy the AP Scan tool already uses). macOS
+  /// stays as-is: its mechanism genuinely IS the ping binary the sandbox blocks.
   String _desktopUnavailableReason() {
     switch (_service.osName) {
       case 'macos':
         return 'A real ICMP echo on this desktop build needs the system ping '
             'binary, which the macOS App Sandbox blocks for distributed apps.';
       case 'windows':
-        return 'This desktop build does not open the raw ICMP socket a real '
-            'echo request needs, so ICMP ping is not available here.';
+        return 'ICMP ping is not wired into this Windows build yet.';
       case 'linux':
-        return 'A real ICMP echo needs a raw socket, which requires elevated '
-            'privileges this desktop build does not hold, so ICMP ping is not '
-            'available here.';
+        return 'ICMP ping is not wired into this Linux build yet.';
       default:
         return 'A real ICMP echo is not available in this desktop build.';
     }
