@@ -366,6 +366,27 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   late final IpGeoService _ipGeo;
   IpGeoResult? _ispInfo;
 
+  /// Whether the public-IP / ISP lookup OBTAINED a public IP this run — the ONLINE
+  /// EVIDENCE the offline / captive-portal verdicts turn on. TRI-STATE, and that is
+  /// the whole fix (round 5 CRITICAL, 2026-07-14):
+  ///
+  ///   * null  — the lookup has NOT ANSWERED yet (pending, or never fired). Assert
+  ///             nothing: a healthy run mid-flight must not read as offline.
+  ///   * true  — the lookup answered and returned a public IP.
+  ///   * false — the lookup answered and NO public IP came back (a reported failure
+  ///             OR a thrown timeout/transport error). This is the value the whole
+  ///             engine was missing: a dead internet fails the lookup, and until now
+  ///             that failure was DISCARDED and this stayed null forever, so
+  ///             [OnlineEvidence.isOffline] (which needs `publicIpObtained == false`)
+  ///             could never fire from the screen.
+  ///
+  /// [_ispInfo] is UNCHANGED — it is still populated ONLY on success, so the copy
+  /// report's ISP section behaves exactly as before. This flag carries the NEGATIVE
+  /// that [_ispInfo]'s null could not: "we asked and got no public IP" (`false`) vs
+  /// "we have not asked yet" (`null`). The two-kinds-of-null distinction, one layer
+  /// down. See [feedback_unsourced_is_not_invalid].
+  bool? _publicIpObtained;
+
   /// The DNS resolution-time probe and its latest result (Keith #3). Fetched
   /// async during a run; null until it lands or if it failed (unavailable).
   late final DnsProbeService _dnsProbe;
@@ -1604,6 +1625,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _engine = null;
       _testedAt = null;
       _ispInfo = null;
+      // Back to UNANSWERED for the fresh run — never carry a prior run's answered-no
+      // into the next, or the first recompute could fire an offline verdict off
+      // stale evidence before this run's own probes have reported.
+      _publicIpObtained = null;
       _dnsResult = null;
       _networkDetails = null;
     });
@@ -1834,11 +1859,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // null until the DNS probe reports. `isAvailable` is its settled answer.
         // (`?.` is doing the tri-state work here: null result → null evidence.)
         dnsResolved: _dnsResult?.isAvailable,
-        // null until the ISP lookup reports. `isError` is a REPORTED failure (the
-        // service never throws), which is a definitive "no public IP", not a pending
-        // one — so it maps to `false`, not `null`.
-        publicIpObtained:
-            _ispInfo == null ? null : (!_ispInfo!.isError && _ispInfo!.ip != null),
+        // The tri-state answered/answered-no/unanswered flag, set by [_fetchIspInfo]
+        // on BOTH a reported failure and a thrown error. Derived from [_publicIpObtained]
+        // rather than from [_ispInfo], because [_ispInfo] is stored ONLY on success —
+        // so a null there could not tell "the lookup failed" (answered-no → false)
+        // from "the lookup has not landed" (unanswered → null). That collapse was the
+        // whole bug: on a dead internet the lookup fails, `_ispInfo` stayed null, and
+        // `publicIpObtained` could never resolve to `false`, so `isOffline` never
+        // fired from the screen. See [_publicIpObtained].
+        publicIpObtained: _publicIpObtained,
         // null until the cloud panel returns ANY row. An empty list is "the probe has
         // not answered"; a full list where nothing is reachable is a definitive NO.
         // The screen's own AnalyzeInput already drew exactly this line
@@ -1884,26 +1913,46 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     });
   }
 
-  /// Fetches the public IP + ISP/org + ASN for the copy payload. Never throws
-  /// (IpGeoService returns an honest failure result, and we catch defensively),
-  /// never blocks the run, and stores only a real, located/successful result —
-  /// a failure or offline lookup leaves [_ispInfo] null so the ISP copy section
-  /// is omitted cleanly (Keith ISP-ask + #6; GL-005 / GL-008).
+  /// Fetches the public IP + ISP/org + ASN for the copy payload, AND records the
+  /// public-IP-obtained ONLINE EVIDENCE (round 5 CRITICAL, 2026-07-14).
+  ///
+  /// TWO OUTPUTS, KEPT DISTINCT:
+  ///   * [_ispInfo] — the COPY payload. Stored ONLY on a successful, located result,
+  ///     exactly as before, so the report's ISP section is omitted cleanly on failure
+  ///     (never a placeholder, never a fabricated address — GL-005 / GL-008).
+  ///   * [_publicIpObtained] — the EVIDENCE. Set on EVERY answer, success or failure,
+  ///     so [OnlineEvidence.publicIpObtained] can resolve to `false` (answered-no) on
+  ///     a dead internet instead of sitting at `null` (unanswered) forever. That null
+  ///     is what defeated both the offline and captive-portal verdicts before now.
+  ///
+  /// Never blocks the run. IpGeoService returns an honest failure result rather than
+  /// throwing; the `catch` is the defensive backstop for a timeout / transport error,
+  /// and it too is an ANSWER for the evidence axis (we asked, no public IP came back).
   Future<void> _fetchIspInfo() async {
     try {
       final IpGeoResult result = await _ipGeo
           .lookup(rawQuery: '')
           .timeout(const Duration(seconds: 8));
       if (!mounted) return;
-      // Only keep a non-error result; a failure stays null (omitted from copy).
-      if (!result.isError) {
-        setState(() => _ispInfo = result);
-        // A public IP is one of the three "you're online" signals; re-derive
-        // the verdict in case the speed test stalled (Keith 2026-06-17).
-        _recomputeVerdict();
-      }
+      final bool gotPublicIp = !result.isError && result.ip != null;
+      setState(() {
+        // ANSWERED. Record the evidence in BOTH directions.
+        _publicIpObtained = gotPublicIp;
+        // Keep the COPY payload only on success — unchanged behavior.
+        if (gotPublicIp) _ispInfo = result;
+      });
+      // A public IP is one of the three online-evidence signals; a definitive NO is
+      // just as load-bearing (it feeds the offline / captive-portal verdicts). Either
+      // way, re-derive the verdict in case the speed test stalled (Keith 2026-06-17).
+      _recomputeVerdict();
     } catch (_) {
-      // Fail open — offline / timeout / transport error → no ISP section.
+      // Fail open for the COPY (no _ispInfo, no ISP section), but the EVIDENCE still
+      // answers: a thrown timeout / transport error is "we asked and got no public
+      // IP" — the ONLY path a truly dead internet takes — so it must resolve to
+      // `false`, not leave the evidence unanswered.
+      if (!mounted) return;
+      setState(() => _publicIpObtained = false);
+      _recomputeVerdict();
     }
   }
 

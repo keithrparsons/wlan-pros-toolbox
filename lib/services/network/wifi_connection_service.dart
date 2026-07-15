@@ -433,6 +433,25 @@ class WifiConnectionService {
     MeteredRisk risk =
         isMeteredCapable ? MeteredRisk.unknown : MeteredRisk.none;
 
+    // ========================================================================
+    // iOS WI-FI ASSIST — THE OS's OWN ROUTING ANSWER, HELD FOR THE MONEY AXIS.
+    // (Keith's ruling, 2026-07-14.)
+    //
+    // Wi-Fi Assist keeps the Wi-Fi interface UP (en0 holds a valid IPv4) while iOS
+    // routes traffic over CELLULAR when the Wi-Fi signal is weak. `NWPathMonitor`
+    // reports this precisely: the default path does NOT use Wi-Fi and the
+    // Wi-Fi-required path is UNSATISFIED. The address probe below, left to itself,
+    // reads the raw en0 IPv4 and returns `MeteredRisk.none` — spending cellular data
+    // silently. That is the address probe OVERRIDING the OS's routing answer on the
+    // money axis.
+    //
+    // So when the iOS path monitor ANSWERS "the active route is not Wi-Fi", remember
+    // it. A raw en0 IPv4 must NOT downgrade the spend risk to `none` after that: the
+    // SPEND axis stays ambiguous and ASKS. This does NOT touch the FACT axis — Wi-Fi
+    // Assist genuinely has a Wi-Fi association, so `status` still reads `onWifi` on
+    // that path (the raw IPv4 proves the join). Two axes, kept separate (round 5).
+    bool iosRouteNotWifi = false;
+
     // A resolved native SSID proves an active Wi-Fi join — strongest positive.
     if (nativeSsid != null && nativeSsid.trim().isNotEmpty) {
       return const LinkVerdict(
@@ -463,6 +482,11 @@ class WifiConnectionService {
           meteredRisk: MeteredRisk.none,
         );
       }
+      // THE PATH ANSWERED AND THE ACTIVE ROUTE IS NOT WI-FI. Hold that for the money
+      // axis: a raw en0 IPv4 from the address probe below must not be read as "safe
+      // to spend" when iOS has already said the bytes are not going over Wi-Fi
+      // (Wi-Fi Assist). See the note at the declaration of [iosRouteNotWifi].
+      iosRouteNotWifi = true;
       // AND EVERYTHING ELSE THE PATH REPORTS LEAVES `risk` AT ITS FAIL-CLOSED
       // DEFAULT. A Wi-Fi interface that is present but carries no usable route —
       // the ordinary state of an iPhone sitting on cellular with Wi-Fi left
@@ -684,18 +708,33 @@ class WifiConnectionService {
       );
     }
     if (v4.ip != null) {
-      // An active Wi-Fi interface has an IPv4 address: on Wi-Fi.
+      // An active Wi-Fi interface has an IPv4 address: on Wi-Fi (the FACT axis).
       //
-      // STATED RESIDUAL, NOT A CLAIMED FIX. On iOS this is reached only when the
-      // native path probe did not answer, and an ASSOCIATED Wi-Fi interface can
-      // hold an IPv4 while iOS routes over cellular anyway (Wi-Fi Assist). That
-      // shape reads `onWifi` and spends. It did before this change too, it is not
-      // one of the five Vera broke, and closing it would mean refusing to trust a
-      // Wi-Fi address at all — which would nag every phone with both radios up.
-      // Named here rather than left to be re-discovered.
-      return const LinkVerdict(
+      // THE MONEY AXIS SPLITS ON WHETHER THE iOS PATH MONITOR ALREADY ANSWERED
+      // "NOT WI-FI" (Keith's Wi-Fi Assist ruling, 2026-07-14):
+      //
+      //   * [iosRouteNotWifi] == true — the path probe ANSWERED and the active
+      //     route is NOT Wi-Fi, yet en0 still holds this IPv4. That is exactly
+      //     Wi-Fi Assist: iOS moved the bytes to CELLULAR while leaving the Wi-Fi
+      //     interface up. The raw address must NOT override the OS's routing answer
+      //     on the spend axis, so the money risk stays AMBIGUOUS and ASKS
+      //     (`unknown`). This was the "STATED RESIDUAL" the prior comment named and
+      //     shipped: `onWifi`/`none` — a silent cellular spend. Keith ruled it shut.
+      //     The tap stays; ambiguity asks. Less cost is not no cost.
+      //
+      //   * [iosRouteNotWifi] == false — the native path probe did NOT answer (or
+      //     this is a non-iOS platform), so the address alone decides. An iOS
+      //     ASSOCIATED interface can still hold an IPv4 while routing over cellular,
+      //     but with no OS routing answer to honor we keep the pre-existing,
+      //     DOCUMENTED behavior (`none`): closing it here, blind to the path, would
+      //     mean refusing to trust a Wi-Fi address at all and nagging every phone
+      //     with both radios up. That residual is unchanged.
+      //
+      // The FACT axis is `onWifi` in BOTH: a real IPv4 proves a real association,
+      // and the money axis asking never licenses claiming the device is off Wi-Fi.
+      return LinkVerdict(
         status: WifiConnectionStatus.onWifi,
-        meteredRisk: MeteredRisk.none,
+        meteredRisk: iosRouteNotWifi ? MeteredRisk.unknown : MeteredRisk.none,
       );
     }
 
