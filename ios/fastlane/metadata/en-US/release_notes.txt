@@ -1,14 +1,26 @@
-We audited our own reference data and found real errors. This release corrects them. It also fixes a signal-grading inconsistency and makes the network tools start from the network you are actually on.
+This release fixes a bug that made the app report a Wi-Fi signal on a phone that had no Wi-Fi at all. It also brings iOS the 1.7.2 corrections, which never shipped here.
+
+FIXED: WI-FI READINGS WITH NO WI-FI
+
+With Wi-Fi off and the phone on cellular, Test My Connection could still show a Wi-Fi signal card with a green LIVE badge, a Wi-Fi data rate of 29 Mbps, and the advice "Boost the Wi-Fi signal to raise the ceiling." There was no Wi-Fi link to boost. The 29 Mbps was a stale cached reading, left from the last Wi-Fi network that phone had joined, and the app kept showing it and labeling it Live.
+
+The honest "You are not connected to Wi-Fi" state was only ever shown to people who had never captured a Wi-Fi reading. Once you had captured one, dropping to cellular did not clear it. That stale value also fed the Wi-Fi versus internet comparison, which is where the false advice came from.
+
+This bug was present in earlier releases. It is fixed now.
+
+When the app can positively determine you are not on Wi-Fi, it says so plainly and shows nothing else: no signal reading, no data rate, no Wi-Fi advice. It also now separates "we could not read this" from "this does not exist." Being off Wi-Fi is the second one, and the app no longer tells you to install a companion Shortcut to read a link that is not there.
+
+The rest of this release is the 1.7.2 work.
 
 NEW
 
-The network tools now suggest the network you are actually on. Ping Sweep, Port Scan, and the ping tools start with your current subnet or gateway instead of a generic default. When the app can read your subnet mask, it fills in your true network. When it can only see your address, it assumes a /24 and says so, so you know to widen it if your network is larger. It never presents a guess as a measurement.
+The network tools now start from the network you are actually on. Ping Sweep, Port Scan, and the ping tools prefill your current subnet or gateway instead of a generic default. When the app can read your subnet mask, it fills in your true network. When it can only see your address, it assumes a /24 and says so, so you know to widen it if your network is larger.
 
 FIXED: SIGNAL GRADING
 
-Signal quality grading is now consistent across the app. The analyzer and the Signal Thresholds reference screen were grading on different dBm thresholds, so the same reading could be called "poor" on one screen and "fair" on another. Both now read from a single source, and a built-in check keeps them from ever drifting apart again. The thresholds are Excellent above -60 dBm, Good -60 to -67, Fair -67 to -72, Poor -73 and weaker.
+Signal quality grading is now consistent across the app. The analyzer and the Signal Thresholds reference screen were grading on different dBm thresholds, so the same reading could be called "poor" on one screen and "fair" on another. Both now read from a single source. The thresholds are Excellent above -60 dBm, Good -60 to -67, Fair -67 to -72, Poor -73 and weaker.
 
-The signal verdicts are also worded more honestly. A weak reading is guidance, not a verdict. Plenty of connections run fine at -75 dBm, and the app now says so instead of implying the number alone decides.
+The signal verdicts are also worded more honestly. A weak reading is guidance. Plenty of connections run fine at -75 dBm, and the app now says so instead of implying the number alone decides.
 
 FIXED: REFERENCE DATA
 

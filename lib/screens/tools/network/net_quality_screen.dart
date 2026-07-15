@@ -34,7 +34,9 @@ import 'package:flutter/semantics.dart';
 import 'package:net_quality/net_quality.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/cellular_data_cost.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/wifi_connection_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -55,6 +57,7 @@ class NetQualityScreen extends StatefulWidget {
     this.client,
     this.reachabilityProbe,
     this.monitor,
+    this.connectionService,
   });
 
   /// Measurement backend. Injected in tests (a [MockQualityClient] with no
@@ -74,6 +77,11 @@ class NetQualityScreen extends StatefulWidget {
   /// it in `dispose()`, which is the "clears on leave" behavior (spec §2).
   final LiveQualityMonitor? monitor;
 
+  /// The honest "is this device on Wi-Fi?" probe, injected in tests. Null in
+  /// production, where the screen builds the real one. Drives the cellular-data
+  /// consent gate (F-1).
+  final WifiConnectionService? connectionService;
+
   @override
   State<NetQualityScreen> createState() => _NetQualityScreenState();
 }
@@ -85,6 +93,45 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
 
   bool _running = false;
   String? _error;
+
+  /// The honest "is this device on Wi-Fi?" probe (F-1). A POSITIVE not-on-Wi-Fi
+  /// verdict is the ONLY thing that raises the cellular-data gate; an ambiguous
+  /// read resolves to `unknown` and changes nothing, so a wired desktop is never
+  /// nagged about cellular data it is not spending.
+  late final WifiConnectionService _connection;
+
+  // NOTE (round 5): this screen no longer holds a `_notOnWifi` field at all, and
+  // the analyzer proved it — once the gate stopped reading the Wi-Fi flag, NOTHING
+  // on this screen read it. Network Quality never actually needed to know whether
+  // you are on Wi-Fi; it only ever needed to know whether running would cost you
+  // money. The old field was answering a question this screen does not ask, and the
+  // whole CRITICAL-1 bug is what happens when those two are the same variable.
+
+  /// The money answer, or NULL until the probe reports (round 5).
+  ///
+  /// THE GATE AND THE RENDER READ THIS DIFFERENTLY, AND THEY MUST.
+  ///   * [_meteredRisk] collapses null to `unknown` — FAIL CLOSED. Nothing spends.
+  ///   * [_showCostUi] collapses null to "say nothing" — because before the first
+  ///     probe returns EVERY device reads `unknown`, and a card driven off that would
+  ///     flash a cellular-data warning at every user on their home Wi-Fi.
+  ///
+  /// A tap during that window is still safe: [_run] AWAITS [_refreshConnection] and
+  /// the `spendData` chokepoint downgrades it.
+  MeteredRisk? _resolvedRisk;
+
+  /// THE GATE'S view: an unprobed link is [MeteredRisk.unknown], which ASKS.
+  MeteredRisk get _meteredRisk => _resolvedRisk ?? MeteredRisk.unknown;
+
+  /// Whether the app must ASK before it spends a byte. FAIL CLOSED: true unless the
+  /// link is PROVEN free. Read only by [_run], which awaits the probe first.
+  bool get _needsConsent => _meteredRisk.requiresConsent;
+
+  /// THE RENDER'S view: show the cost UI only once we actually KNOW.
+  bool get _showCostUi => (_resolvedRisk ?? MeteredRisk.none).requiresConsent;
+
+  /// Set when the user taps the cost-labelled Run button. The tap IS the consent:
+  /// the button states the data cost, directly under the warning that explains it.
+  bool _throughputConsented = false;
 
   // Transport progress.
   QualityPhase _phase = QualityPhase.idle;
@@ -109,9 +156,25 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // one-shot client); injected with a fake sampler in tests. Only started on
     // a platform that can actually run the sockets — never on web.
     _monitor = widget.monitor ?? LiveQualityMonitor(host: 'one.one.one.one');
+    _connection = widget.connectionService ?? WifiConnectionService();
     if (NetworkSupport.activeNetworkSupported) {
       _monitor.start();
     }
+    // Resolve the connection state on open so the pre-run screen can state the
+    // data cost BEFORE the user reaches for Run. Never fires a measurement.
+    unawaited(_refreshConnection());
+  }
+
+  /// Re-reads the MONEY answer (round 5). The Wi-Fi fact is deliberately not stored:
+  /// nothing on this screen asks it, and the one thing that used to — the consent
+  /// gate — was asking the wrong question. [MeteredRisk] fails to `unknown`, which
+  /// ASKS, so an ambiguous read can no longer spend.
+  Future<void> _refreshConnection() async {
+    final LinkVerdict link = await _connection.read();
+    if (!mounted) return;
+    setState(() {
+      _resolvedRisk = link.meteredRisk;
+    });
   }
 
   @override
@@ -127,7 +190,53 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// Kicks off both the transport measurement and the reachability pass from a
   /// single Run action. The reachability future resolves independently and
   /// updates its own section when done.
-  void _run() {
+  ///
+  /// [includeThroughput] CARRIES THE USER'S CELLULAR-DATA CONSENT (round-4 cold
+  /// review, F-1, 2026-07-14).
+  ///
+  /// THIS TOOL HAD NO GATE AT ALL. It called `_client.measure()` bare, riding a
+  /// `includeThroughput = true` default on the QualityClient interface. Network
+  /// Quality is shipped, routed and iOS-live, so on a cellular iPhone: open it,
+  /// tap Run, and it began a full-rate ~30 s download plus the RPM load
+  /// generator — 50 to 500 MB of the user's data — with no warning, no decline
+  /// path, and nothing to consent to. Test My Connection's gate was never the
+  /// whole gate; it was one caller being careful while the door stood open.
+  ///
+  /// The default is now GONE from the interface, so the compiler forces every
+  /// caller to state a decision. This method is where that decision is honored.
+  Future<void> _run({required bool includeThroughput}) async {
+    // SETTLE THE PROBE BEFORE THE CONSENT DECISION READS IT. Same rule as Test My
+    // Connection (F-2): a user can walk out of Wi-Fi range with this screen open,
+    // and a decision made from a stale flag spends data they never agreed to.
+    await _refreshConnection();
+    if (!mounted) return;
+
+    // ========================================================================
+    // THE CHOKEPOINT. IT NOW FAILS CLOSED (round 5, 2026-07-14).
+    //
+    // IT USED TO READ:
+    //     spendData = includeThroughput && (!_notOnWifi || _throughputConsented)
+    //
+    // — which closed ONLY on a definitive `notOnWifi`. Every ambiguous, errored,
+    // timed-out or unsupported read resolves to `WifiConnectionStatus.unknown`, and
+    // `unknown` SPENT. Worse, the consent card only rendered on `notOnWifi`, so
+    // `_throughputConsented` was still false: THE USER WAS NEVER ASKED AND COULD NOT
+    // HAVE BEEN. Vera got five separate exploits through that line.
+    //
+    // The old comment defended it with GL-005 — "an ambiguous read is never proof of
+    // cellular". True, and beside the point. ASSERTING A FACT and AUTHORIZING A SPEND
+    // are different acts with opposite safe defaults. We never had to claim the user
+    // was on cellular in order to ASK them. A spurious prompt costs one tap; a silent
+    // 573 MB download costs money.
+    //
+    // So the gate now requires PROOF OF SAFETY, not proof of danger. `requiresConsent`
+    // is false only for a confirmed Wi-Fi link, a confirmed WIRED link, or a platform
+    // with no cellular radio to bill — so a wired desktop is still never nagged, which
+    // was the one legitimate concern the old design was protecting.
+    // ========================================================================
+    final bool spendData =
+        includeThroughput && (!_needsConsent || _throughputConsented);
+
     setState(() {
       _error = null;
       _running = true;
@@ -154,7 +263,29 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           }),
     );
 
-    _sub = _client.measure().listen(
+    // THE RPM STAGE FAILS CLOSED TOO, ON THE SAME RULE (round 5).
+    //
+    // It used to ride `!_notOnWifi` — the SAME flag the old chokepoint rode — so on
+    // every shape Vera exploited it ALSO evaluated true, and the user got the
+    // download PLUS a second full-rate download (the RPM load generator) PLUS the
+    // upload: roughly DOUBLE the cost the consent sentence describes, having never
+    // seen the sentence. Fixing `spendData` while leaving this on the old flag would
+    // have closed the front door and left the side door open.
+    //
+    // Its load generator is a second full-rate download, and a SHORTENED one would
+    // report a FLATTERING number (a link that never saturates understates loaded
+    // latency, so rpm = 60000/loadedAvg comes out too high). Not measuring an adjunct
+    // beats measuring it optimistically. So RPM runs ONLY when the link is PROVEN
+    // free — never on a confirmed metered link (Keith's ratified decision, unchanged)
+    // and never on a link we could not identify (new: the consent sentence quotes the
+    // download+upload cost, and running RPM on top of it would make that sentence a
+    // lie even for a user who tapped).
+    _sub = _client
+        .measure(
+      includeThroughput: spendData,
+      includeResponsiveness: !_needsConsent,
+    )
+        .listen(
       (QualityProgress p) {
         if (!mounted) return;
         setState(() {
@@ -237,14 +368,24 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       final QualityMetric? m = r.metric(id);
       final double? v = m?.value;
       final bool available = m != null && m.isAvailable && v != null;
+      // WHAT'S ON SCREEN IS WHAT'S COPIED ([[feedback_screenshot_text_match]]).
+      //
+      // MEDIUM-1 (round 5): this used to write `Unavailable — <grade> (<note>)`,
+      // leading with the FORBIDDEN WORD and demoting the actual reason to a
+      // parenthetical — while the screen itself renders `note ?? 'Unavailable'` and
+      // says the true thing. Two surfaces, one result, and the pasted one was the
+      // one that lied: "Responsiveness: Unavailable" about a stage we DELIBERATELY
+      // did not run is a false claim of incapacity, and it is the same two-kinds-of-
+      // null error the chips were fixed for. The note IS the value.
+      //
+      // Now the copy takes the SAME expression the screen takes (`_metricRow`), so
+      // they cannot drift: a deliberate skip pastes as "Not measured: the speed test
+      // was skipped…", and only a genuine failure to measure pastes as "Unavailable".
       final String value = available
           ? _formatValueRaw(id, v, unit)
-          : 'Unavailable';
+          : (m?.note ?? 'Unavailable');
       final String grade = (m?.grade ?? QualityGrade.unavailable).label;
-      final String note = (!available && m?.note != null)
-          ? ' (${m!.note})'
-          : '';
-      buf.writeln('  $label: $value — $grade$note');
+      buf.writeln('  $label: $value — $grade');
     }
 
     buf
@@ -389,6 +530,34 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               style: text.labelMedium?.copyWith(color: colors.statusDanger),
             ),
           ],
+          // THE CELLULAR-DATA COST, STATED BEFORE THE USER SPENDS IT (F-1).
+          // Only on a POSITIVE not-on-Wi-Fi probe — an ambiguous read never nags.
+          //
+          // ONE SENTENCE, ONE HOME (2026-07-14). This used to be a second, inline
+          // copy of Test My Connection's warning, kept in sync by hand and by
+          // hope. It is now the SAME constant both screens read
+          // ([kCellularDataWarning]), whose figures are derived from the probe
+          // constants and guarded by a re-derivation test. The old wording was
+          // stale ("about 30 seconds" was two 15 s download windows; the RPM one
+          // no longer runs on cellular) and hedged ("roughly ... or more"), which
+          // on a consent dialog is the real fault — an unsourceable number the
+          // user cannot check.
+          // THE WARNING NOW RENDERS ON AMBIGUITY TOO, AND IT TELLS THE TRUTH ABOUT
+          // WHICH IT IS (round 5). It used to render only on `_notOnWifi`, so on
+          // every shape Vera exploited the user saw NOTHING and the app spent
+          // anyway. [dataCostWarningFor] picks the honest sentence: the confirmed
+          // "You're on cellular" only for a MEASURED cellular link, and the "we
+          // can't tell what link you're on" for an ambiguous one. Asserting cellular
+          // to a user whose link we could not read would be the same lie told from
+          // the other side.
+          if (_showCostUi && !_running) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              dataCostWarningFor(_resolvedRisk ?? MeteredRisk.none)! +
+                  kCellularDataWarningCheapTail,
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           // Full-width primary action, matching the other network screens.
           Semantics(
@@ -396,15 +565,66 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
             enabled: !_running,
             // MINOR 6 (WCAG): the SR button label tracks state — it announces
             // "Running network quality test" while the test runs, and flips
-            // back to the actionable label when idle.
+            // back to the actionable label when idle. Off Wi-Fi the label states
+            // the data cost, so the tap is an INFORMED one for a screen-reader
+            // user exactly as it is for a sighted one.
             label: _running
                 ? 'Running network quality test'
-                : 'Run the network quality test',
+                : switch (_resolvedRisk ?? MeteredRisk.none) {
+                    MeteredRisk.metered =>
+                      'Run the full test including the speed test, which uses '
+                          'cellular data',
+                    MeteredRisk.unknown =>
+                      'Run the full test including the speed test, which may use '
+                          'cellular data',
+                    MeteredRisk.none => 'Run the network quality test',
+                  },
             child: FilledButton(
-              onPressed: _running ? null : _run,
-              child: Text(_running ? 'Running…' : 'Run test'),
+              onPressed: _running
+                  ? null
+                  : () {
+                      // THE TAP IS THE CONSENT. When the link is not proven free,
+                      // this button's own label states the cost, directly under the
+                      // warning that explains it, so tapping it IS the informed
+                      // decision. Record it before the run so the chokepoint in
+                      // [_run] honors it.
+                      // Consent is only recorded if the cost was actually SHOWN.
+                      // "Consent" to a warning the user never saw is not consent; the
+                      // chokepoint protects the unresolved window instead.
+                      if (_showCostUi) _throughputConsented = true;
+                      unawaited(_run(includeThroughput: true));
+                    },
+              child: Text(
+                _running
+                    ? 'Running…'
+                    : switch (_resolvedRisk ?? MeteredRisk.none) {
+                        // "uses" is an ASSERTION and is earned only by a MEASURED
+                        // cellular link. On an ambiguous link the honest word is
+                        // "may" — the uncertainty is real, and hedging a fact we
+                        // genuinely do not have is the opposite of hedging a number
+                        // we could have derived (see [kCellularDataWarning]).
+                        MeteredRisk.metered => 'Run test (uses data)',
+                        MeteredRisk.unknown => 'Run test (may use data)',
+                        MeteredRisk.none => 'Run test',
+                      },
+              ),
             ),
           ),
+          // THE DECLINE PATH. Not a dead end: latency, jitter, loss and the
+          // reachability table all still run and are all cheap. Only the two
+          // data-hungry stages are withheld, and they report their honest
+          // unavailable note — never a fabricated zero.
+          if (_showCostUi && !_running) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Semantics(
+              button: true,
+              label: 'Run without the speed test, using no cellular data',
+              child: TextButton(
+                onPressed: () => unawaited(_run(includeThroughput: false)),
+                child: const Text('Run without the speed test'),
+              ),
+            ),
+          ],
         ],
       ),
     );

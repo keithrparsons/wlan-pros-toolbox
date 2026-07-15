@@ -32,8 +32,11 @@ void main() {
       // text, so R-50 has no analogue and is intentionally omitted (see the note
       // in analyze_rules.dart). Every other table rule is ported → 32 rules,
       // plus R-06 (the honest "you are online" verdict added 2026-06-17 for the
-      // stalled-speed-test-but-reachable case) → 33.
-      expect(kAnalyzeRules.length, 33);
+      // stalled-speed-test-but-reachable case) → 33, plus R-05N (the not-on-Wi-Fi
+      // half of the `wifiUnknown` verdict, split out 2026-07-13) → 34, plus R-06S
+      // (the speed-test-SKIPPED half of `onlineUnmeasured`, split out the same day
+      // when the cellular-data consent gate landed — see below) → 35.
+      expect(kAnalyzeRules.length, 35);
       final Set<FindingCategory> cats =
           kAnalyzeRules.map((r) => r.category).toSet();
       expect(cats.length, FindingCategory.values.length); // all 9
@@ -46,6 +49,95 @@ void main() {
     test('every rule id is unique', () {
       final List<String> ids = kAnalyzeRules.map((r) => r.id).toList();
       expect(ids.toSet().length, ids.length);
+    });
+
+    test('no rule tells a user with NO Wi-Fi link to install the Wi-Fi Shortcut',
+        () {
+      // THE MECHANICAL GUARD (2026-07-13, widened round 4). Suppressing R-31 was
+      // not enough: R-05 carried the SAME advice ("install the companion
+      // Shortcut") through a different rule, and Keith hit it on a cellular-only
+      // iPhone. Rather than patch rules one at a time as they are discovered,
+      // assert the property over the WHOLE library.
+      //
+      // ROUND 4 — IT WAS NOT ACTUALLY LIBRARY-WIDE. The guard advertised itself as
+      // firing "every rule that a not-on-Wi-Fi device can fire" and then fired
+      // exactly ONE input shape (`verdict: wifiUnknown`). A cellular-only phone can
+      // land on OTHER verdicts too — most obviously `onlineUnmeasured` (the speed
+      // test stalls while DNS + public IP + cloud all succeed → R-06), and
+      // `bothHealthy`/`upstream` when the internet measures fine over cellular. A
+      // new Shortcut-offering rule under any of those verdicts would have sailed
+      // straight through the guard that exists to stop exactly that. No live defect
+      // today; the hole was in the NET, not the catch.
+      //
+      // So enumerate. Every verdict (including the null/no-verdict input), crossed
+      // with measured/unmeasured internet and skipped/run speed test, all with
+      // `notOnWifi: true` — because THAT is the property under test: whatever else
+      // is true, a device with no Wi-Fi link is never sent to a Shortcut to read it.
+      const List<WifiVsInternetVerdict?> verdicts = <WifiVsInternetVerdict?>[
+        null,
+        ...WifiVsInternetVerdict.values,
+      ];
+      // Sanity: if a verdict is ever added to the enum, this matrix picks it up
+      // automatically — but assert the count so a SHRINKING enum is also caught.
+      // ROUND 5: 6 -> 8. `internetUnreachable` and `captivePortal` were added so the
+      // app could finally say "your Wi-Fi is up and the internet is not". The matrix
+      // below picks them up automatically (it spreads `.values`), and the guard's
+      // real assertions PASSED for both on the first run — no analyze rule sends a
+      // dead-internet or captive-portal user to install a Wi-Fi Shortcut. This line
+      // is the tripwire that made me check rather than assume.
+      expect(WifiVsInternetVerdict.values.length, 8);
+
+      int shapesChecked = 0;
+      for (final WifiVsInternetVerdict? verdict in verdicts) {
+        for (final bool internetMeasured in <bool>[true, false]) {
+          for (final bool speedTestSkipped in <bool>[true, false]) {
+            final AnalyzeInput input = AnalyzeInput(
+              verdict: verdict,
+              platformIsIos: true,
+              wifiSignalCaptured: false,
+              notOnWifi: true,
+              internetMeasured: internetMeasured,
+              speedTestSkipped: speedTestSkipped,
+              downloadMbps: internetMeasured ? 60 : null,
+              uploadMbps: internetMeasured ? 20 : null,
+              // The out-of-band "you are online" evidence, so the shapes that
+              // produce `onlineUnmeasured` in production are genuinely reachable
+              // here rather than silently degenerate.
+              dnsResolutionMs: 12,
+              cloudReachableCount: 4,
+              cloudTotalCount: 4,
+            );
+            final AnalysisReport report = AnalyzeEngine.analyze(input);
+            shapesChecked++;
+
+            final String shape = 'verdict=$verdict '
+                'internetMeasured=$internetMeasured '
+                'speedTestSkipped=$speedTestSkipped';
+
+            for (final AnalysisFinding f in report.findings) {
+              final String text = f.explanation.toLowerCase();
+              expect(text, isNot(contains('shortcut')),
+                  reason: '[$shape] ${f.ruleId} tells a device with no Wi-Fi '
+                      'link to use the companion Shortcut. No Shortcut can read '
+                      'a link that does not exist (GL-005, two kinds of null).');
+              expect(text, isNot(contains('capture wi-fi details')),
+                  reason: '[$shape] ${f.ruleId} offers a capture for a link '
+                      'that is not there');
+            }
+          }
+        }
+      }
+
+      // The guard is only worth its name if it actually swept the matrix: 7
+      // verdicts (6 + null) x 2 x 2. A refactor that collapses the loops must not
+      // silently reduce this to the single shape it used to be.
+      // ROUND 5: 28 -> 36. Two new verdicts (`internetUnreachable`, `captivePortal`)
+      // × the 2×2 measured/skipped grid = 8 more shapes. The guard's real assertions
+      // passed for all of them; this count is the tripwire that made me confirm the
+      // matrix actually grew rather than a shape silently dropping out.
+      expect(shapesChecked, 36,
+          reason: 'the library-wide guard must sweep every verdict shape, not '
+              'one — that was the round-3 finding');
     });
 
     test('all rules are ratified, no rule is flagged pendingRatification', () {
@@ -94,6 +186,30 @@ void main() {
             verdict: WifiVsInternetVerdict.onlineUnmeasured)),
         contains('R-06'),
       );
+    });
+
+    test('wifiUnknown splits on WHY: R-05 when the read failed, R-05N when there '
+        'is no Wi-Fi link', () {
+      // The SAME verdict, two different truths (GL-005). R-05's copy ("one side
+      // could not be measured", "install the companion Shortcut") is correct for a
+      // link we failed to READ, and false for a link that does not EXIST. Exactly
+      // one of the two must fire — never both, never neither.
+      final Set<String> readFailed = _firedIds(const AnalyzeInput(
+        verdict: WifiVsInternetVerdict.wifiUnknown,
+      )).toSet();
+      expect(readFailed, contains('R-05'));
+      expect(readFailed, isNot(contains('R-05N')));
+
+      final Set<String> noLink = _firedIds(const AnalyzeInput(
+        verdict: WifiVsInternetVerdict.wifiUnknown,
+        notOnWifi: true,
+      )).toSet();
+      expect(noLink, contains('R-05N'),
+          reason: 'a cellular-only phone must get the honest "you are not on '
+              'Wi-Fi, that is not a failed reading" finding');
+      expect(noLink, isNot(contains('R-05')),
+          reason: 'and must NOT be told one side "could not be measured" or to '
+              'install a Shortcut to read a link that does not exist');
     });
 
     test(
@@ -392,6 +508,29 @@ void main() {
         _firedIds(const AnalyzeInput(
             platformIsIos: true, wifiSignalCaptured: false)),
         contains('R-31'),
+      );
+    });
+
+    test('iOS with NO WI-FI AT ALL does NOT fire R-31 (cold-eyes F2)', () {
+      // THE TWO KINDS OF NULL (GL-005). `wifiSignalCaptured: false` arrives here
+      // for two completely different devices:
+      //   * on Wi-Fi, RF not harvested yet  → R-31's "tap Capture Wi-Fi details,
+      //     which uses the companion Shortcut" is exactly right;
+      //   * NOT on Wi-Fi at all             → there is no link to capture, so that
+      //     same advice sends the user chasing a read that cannot exist. It is the
+      //     same wrong-kind-of-null failure as the stale-reading bug, wearing the
+      //     Analyze report as a costume.
+      // The Analyze screen is the FOURTH surface that inverted the meaning of the
+      // suppressed RF (after the Wi-Fi link card, the copy report, and the Shortcut
+      // offer card) and the only one the cold-eyes review did not list.
+      expect(
+        _firedIds(const AnalyzeInput(
+          platformIsIos: true,
+          wifiSignalCaptured: false,
+          notOnWifi: true,
+        )),
+        isNot(contains('R-31')),
+        reason: 'no Shortcut can capture a Wi-Fi link that does not exist',
       );
     });
 

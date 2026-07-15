@@ -60,6 +60,19 @@ enum ConsumerOutcome {
   /// and cloud apps were reachable (engine `onlineUnmeasured`). Leads with the
   /// reachable truth, not "make sure you're on Wi-Fi". (Keith 2026-06-17.)
   online,
+
+  /// F — THE WI-FI IS UP AND THE INTERNET IS DOWN (engine `internetUnreachable`).
+  /// The one thing the app could not say, and therefore the one thing it never said.
+  ///
+  /// Its self-help topic is [SelfHelpTopic.internet], NOT `wifi` and NOT `reconnect`.
+  /// That single line is the difference between sending a man to "boost his Wi-Fi
+  /// signal" on a 97/77 Mbps link and telling him his provider is down.
+  internetDown,
+
+  /// G — the network wants a sign-in (engine `captivePortal`). The Wi-Fi works, the
+  /// internet is one browser tap away, and the app used to tell these users to
+  /// "make sure you're connected to Wi-Fi" — which they demonstrably were.
+  signInRequired,
 }
 
 /// The status of ONE axis — Wi-Fi or Internet — on the two-chip result header
@@ -96,7 +109,95 @@ enum AxisStatus {
   /// "Couldn't check" — this side could not be measured/read on this device
   /// (neutral/muted token, NOT a fault color; GL-005 — never force a tier onto
   /// missing data).
+  ///
+  /// THIS MEANS "WE TRIED AND FAILED", NOT "THERE IS NOTHING HERE". For an axis
+  /// that does not exist at all, use [notApplicable] — see the note there.
   unknown,
+
+  /// "Not connected" — there is NOTHING on this axis to measure. Not a failed
+  /// read: a KNOWN, POSITIVE answer that the link is absent (the Wi-Fi axis on a
+  /// cellular-only phone, where [WifiVsInternetResult.notOnWifi] is true).
+  /// Neutral/muted token, like [unknown] — it is not a fault.
+  ///
+  /// WHY THIS EXISTS (Keith, 2026-07-13, on a cellular-only iPhone). The result
+  /// header read `Wi-Fi: Couldn't check` — which is FALSE. The app KNEW there was
+  /// no Wi-Fi; it had said so correctly on the Wi-Fi Information screen seconds
+  /// earlier. "Couldn't check" told him the app had failed to read something that
+  /// was there, and sent him looking for a problem that did not exist.
+  ///
+  /// This is the THIRD occurrence of the same missing state in this codebase —
+  /// [[feedback_unsourced_is_not_invalid]], the "two kinds of null":
+  ///   1. the stale Wi-Fi rate shown under a live badge,
+  ///   2. the "install the companion Shortcut" prompt for a link that cannot exist,
+  ///   3. this chip.
+  /// Each time, the model could say "measured" or "couldn't read", and had no way
+  /// to say "there is nothing here to measure". The state belongs in the MODEL, so
+  /// that every surface that renders an axis is forced to answer for it — a string
+  /// swap at the widget layer would just regress the next time someone adds a
+  /// surface.
+  ///
+  /// [unknown] stays reserved for a GENUINE failure to read or measure (a Wi-Fi
+  /// link the platform will not expose; a speed test that stalled).
+  notApplicable,
+
+  /// "Not measured" — this side COULD have been measured, and we deliberately did
+  /// not. The user declined the cellular-data cost of the speed test (Keith,
+  /// 2026-07-13). Neutral/muted token; not a fault, and not a failure.
+  ///
+  /// "Speed unknown" — the internet is DEMONSTRABLY REACHABLE, and only its SPEED
+  /// could not be measured. Neutral/muted token; not a fault.
+  ///
+  /// WHY THIS EXISTS (Keith, 2026-07-14, cellular-only iPhone — the FOURTH
+  /// occurrence of the same missing state). The result header read
+  /// `Internet: Couldn't check` directly above the sentence "You are online. Your
+  /// internet is reachable, but the speed test did not complete." Both were
+  /// rendered from the same result. One of them was false.
+  ///
+  /// We DID check the internet. [WifiVsInternetVerdict.onlineUnmeasured] is only
+  /// produced when THREE independent signals agree the device is online (DNS
+  /// resolved, a public IP was obtained, and cloud apps were reachable — see
+  /// [OnlineEvidence]). Saying "Couldn't check" there claims a failure that did not
+  /// happen, about a check that succeeded. The rate is null, so the RATE alone
+  /// cannot tell "we never reached it" from "we reached it and could not time it"
+  /// — which is exactly why the verdict, not the rate, has to reach this decision.
+  ///
+  /// [unknown] stays reserved for an axis we genuinely could not read at all.
+  reachableUnmeasured,
+
+  /// The third distinct answer behind a null rate, and it exists for exactly the
+  /// same reason [notApplicable] does. Once the speed test became skippable, an
+  /// unmeasured internet axis could mean three different things:
+  ///
+  ///   * [weak]/[moderate]/[strong] — measured.
+  ///   * [unknown]      — we ran the speed test and it FAILED. "Couldn't check".
+  ///   * [notMeasured]  — we never ran it. Nothing failed.
+  ///
+  /// Rendering a skipped measurement as "Couldn't check" would be a false claim of
+  /// incapacity about a test the app chose not to run on the user's instruction —
+  /// the same lie as the Wi-Fi chip, arrived at from the opposite direction.
+  notMeasured,
+
+  /// "Not reachable" — WE MEASURED THE INTERNET AND THERE IS NOTHING THERE.
+  ///
+  /// THE FIFTH OCCURRENCE OF THE SAME MISSING STATE, AND THE ONE THIS FILE'S OWN
+  /// COMMENTS PREDICTED (round 5, 2026-07-14). The four notes above document four
+  /// prior instances of "the model could say 'measured' or 'couldn't read', and had
+  /// no way to say what was actually true" — and then this enum committed the fifth
+  /// one line later. A definitively-offline internet had no member, so it rendered
+  /// as [unknown] / "Couldn't check": a claim of a FAILED READ about a read that
+  /// SUCCEEDED and returned NO.
+  ///
+  /// THIS IS THE ONE NEUTRAL-ADJACENT STATE THAT IS GENUINELY A FAULT, AND IT WEARS
+  /// THE DANGER HUE ON PURPOSE. [unknown], [notApplicable], [notMeasured] and
+  /// [reachableUnmeasured] are all "no number here, and that is not a problem" —
+  /// they must never wear red (§8.13 rule 2). This one is different: the user's
+  /// internet is DOWN. That is the fault, it is the thing they need to act on, and
+  /// colouring it neutral to match its neighbours would be its own small lie. The
+  /// WORD still carries it (WCAG 2.2 SC 1.4.1).
+  ///
+  /// It is NOT a real tier ([AxisStatusTier.isRealTier] is false): there is no rate
+  /// behind it, so it can never produce a "both sides are X" sentence.
+  unreachable,
 }
 
 /// The absolute data-rate thresholds (Mbps) that bucket a measured rate into an
@@ -149,6 +250,11 @@ enum SelfHelpTopic {
 
   /// "Make sure you're on Wi-Fi and try again." Outcomes D1 and D2.
   reconnect,
+
+  /// "Open your browser and sign in." Outcome G ([ConsumerOutcome.signInRequired]).
+  /// A captive portal is not fixed by reconnecting, and telling a user who IS on
+  /// Wi-Fi to get on Wi-Fi is the advice that made this bug famous.
+  signIn,
 }
 
 /// The immutable plain-English translation of one engine verdict: the outcome
@@ -196,6 +302,76 @@ class ConsumerVerdict {
 
   /// Which vetted self-help list the screen surfaces for this outcome.
   final SelfHelpTopic selfHelp;
+
+  /// The ONE real tier both axes share, or null when they do not share one.
+  ///
+  /// THE SINGLE SOURCE OF THE "both sides are X" GUARD. Test My Connection has two
+  /// same-tier sentences (the hero and the verdict line) that must agree, and
+  /// before this existed each carried its own hand-rolled copy of the guard — and
+  /// they had already drifted: the hero excluded [AxisStatus.notApplicable] and the
+  /// verdict line did not. Neither could actually misfire (see below), so the
+  /// asymmetry was harmless AND invisible, which is exactly the shape that invites
+  /// a later "fix" to the wrong one. One function, two callers, no drift.
+  ///
+  /// A WHITELIST, NOT A BLACKLIST. Only [AxisStatus.strong] / [AxisStatus.moderate]
+  /// / [AxisStatus.weak] — the tiers that come from a REAL measured rate — can be
+  /// returned. Every other member is excluded by construction rather than by being
+  /// listed, so a future [AxisStatus] cannot silently start producing a
+  /// `Both sides are (new state)` sentence. The blacklist form had to be extended
+  /// for each new member and, in fact, was not: nothing excluded
+  /// [AxisStatus.notMeasured].
+  ///
+  /// REACHABILITY, STATED HONESTLY. As the mapper stands today the non-tier cases
+  /// are UNREACHABLE in production: [ConsumerVerdictMapper] can only ever set
+  /// `wifiStatus` to [AxisStatus.notApplicable] (never `notMeasured`) and
+  /// `internetStatus` to [AxisStatus.notMeasured] (never `notApplicable`), so the
+  /// two axes can never be EQUAL on a non-tier value. This guard is therefore
+  /// defensive, not load-bearing, and this comment does not claim otherwise. What
+  /// it buys is that the defense is now written once and TESTED directly (see
+  /// consumer_verdict_test.dart, which drives every AxisStatus pair through it)
+  /// instead of sitting unreachable and unexercised in two screen methods.
+  AxisStatus? sameRealTier() {
+    if (wifiStatus != internetStatus) return null;
+    return wifiStatus.isRealTier ? wifiStatus : null;
+  }
+}
+
+/// The WHITELIST at the bottom of every "both sides are X" sentence.
+///
+/// THERE ARE THREE SUCH GUARDS, NOT TWO. Round 4 replaced two hand-rolled copies
+/// with [ConsumerVerdict.sameRealTier] and claimed "one guard replaces two". That
+/// was wrong: `_sameTierReadingLine` in test_my_connection_screen.dart is a THIRD,
+/// and it could not use `sameRealTier` because it derives its tiers from the RATES
+/// (via [AxisStatusThresholds.tierFor]) rather than from a [ConsumerVerdict]'s axis
+/// statuses. So it kept the blacklist form and kept drifting.
+///
+/// This predicate is what all three can share. A WHITELIST, not a blacklist: only
+/// the three tiers that come from a REAL measured rate pass. A future [AxisStatus]
+/// member is excluded BY CONSTRUCTION rather than by remembering to add it to an
+/// exclusion list — which is exactly what nobody did for [AxisStatus.notMeasured].
+extension AxisStatusTier on AxisStatus {
+  /// True only for [AxisStatus.strong] / [AxisStatus.moderate] / [AxisStatus.weak]
+  /// — the tiers backed by a real measured rate. False for every "there is no
+  /// number here" state, whatever the reason for the absence.
+  bool get isRealTier {
+    switch (this) {
+      case AxisStatus.strong:
+      case AxisStatus.moderate:
+      case AxisStatus.weak:
+        return true;
+      case AxisStatus.unknown:
+      case AxisStatus.notApplicable:
+      case AxisStatus.notMeasured:
+      case AxisStatus.reachableUnmeasured:
+      // `unreachable` is a FAULT, not a tier. There is no rate behind it, so it can
+      // never produce a "both sides are X" sentence — and the WHITELIST is what
+      // guarantees that without anyone having to remember: a new member is excluded
+      // BY CONSTRUCTION. This is the member that would have been forgotten by the
+      // blacklist form, exactly as `notMeasured` was.
+      case AxisStatus.unreachable:
+        return false;
+    }
+  }
 }
 
 /// The pure consumer translator. Stateless: [map] is a total function of the
@@ -231,10 +407,56 @@ class ConsumerVerdictMapper {
     // The two chips are absolute, rate-driven, and verdict-independent. Compute
     // both tiers once from the engine's measured rates; null rates (unmeasured
     // Wi-Fi link or unmeasured internet) honestly bucket to `unknown` (GL-005).
-    final AxisStatus wifiTier =
-        AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
-    final AxisStatus internetTier =
-        AxisStatusThresholds.tierFor(engineResult.internetMbps);
+    //
+    // EXCEPT when the probe POSITIVELY says there is no Wi-Fi link. Then the Wi-Fi
+    // axis is not "unmeasured", it is NOT APPLICABLE — there is nothing there to
+    // measure, and the app knows it. Bucketing that to `unknown` rendered
+    // `Wi-Fi: Couldn't check` on Keith's cellular-only iPhone: a false claim of a
+    // failed read about a link the app had already correctly reported as absent.
+    // The rate is null in both cases, so the rate ALONE cannot tell them apart —
+    // which is exactly why the not-on-Wi-Fi probe has to reach this decision.
+    // See [AxisStatus.notApplicable].
+    final AxisStatus wifiTier = engineResult.notOnWifi
+        ? AxisStatus.notApplicable
+        : AxisStatusThresholds.tierFor(engineResult.usableWifiMbps);
+    // Same reasoning on the internet axis, and it now has to separate THREE nulls,
+    // not two:
+    //   * skipped        — no test ran (the user declined the cellular-data cost).
+    //                      Nothing failed. → [AxisStatus.notMeasured].
+    //   * onlineUnmeasured — the test RAN and failed, but the internet is
+    //                      DEMONSTRABLY REACHABLE: the engine only emits this
+    //                      verdict when DNS resolved AND a public IP was obtained
+    //                      AND cloud apps answered ([OnlineEvidence]). We checked
+    //                      the internet and it is there; only its SPEED is unknown.
+    //                      Reporting that as "Couldn't check" claims a failed read
+    //                      about a read that SUCCEEDED — the exact false statement
+    //                      Keith photographed sitting above "Your internet is
+    //                      reachable". → [AxisStatus.reachableUnmeasured].
+    //   * anything else  — a rate we genuinely could not obtain → the rate tiers,
+    //                      with null honestly bucketing to `unknown`.
+    // The rate is null in all three, so the rate ALONE cannot tell them apart.
+    //   * unreachable    — WE MEASURED IT AND THERE IS NOTHING THERE (round 5).
+    //                      The FIFTH null, and the one the comment block above
+    //                      predicted and then failed to add. DNS did not resolve, no
+    //                      public IP came back, and no cloud endpoint answered. The
+    //                      rate is null here exactly as it is for "we tried and
+    //                      failed" — which is why the rate ALONE cannot tell them
+    //                      apart, and why the VERDICT has to reach this decision.
+    //                      Printing "Couldn't check" here is a claim of a failed read
+    //                      about a read that SUCCEEDED and returned NO.
+    final AxisStatus internetTier = engineResult.speedTestSkipped
+        ? AxisStatus.notMeasured
+        : switch (engineResult.verdict) {
+            WifiVsInternetVerdict.onlineUnmeasured =>
+              AxisStatus.reachableUnmeasured,
+            // A captive portal is a REACHABILITY failure, not a speed failure: we
+            // are not on the internet. Same chip as a dead internet; the HEADLINE is
+            // what tells them the fix is a browser tap rather than a call to the ISP.
+            WifiVsInternetVerdict.internetUnreachable ||
+            WifiVsInternetVerdict.captivePortal =>
+              AxisStatus.unreachable,
+            _ => AxisStatusThresholds.tierFor(engineResult.internetMbps),
+          };
 
     switch (engineResult.verdict) {
       // A — Wi-Fi link is the limiter.
@@ -350,6 +572,41 @@ class ConsumerVerdictMapper {
               'complete, so its speed could not be measured. Try again in a '
               'moment.',
           selfHelp: SelfHelpTopic.reconnect,
+        );
+
+      // F — WI-FI UP, INTERNET DOWN (round 5, 2026-07-14). The sentence the app
+      // existed to say and could not.
+      //
+      // `wifiTier` is UNTOUCHED here: whatever the Wi-Fi actually measured is what
+      // the Wi-Fi chip reports. A dead internet is not a reason to downgrade a
+      // reading we took. And `selfHelp` is `internet` — the whole bug was that every
+      // unmeasurable thing routed to the Wi-Fi advice.
+      case WifiVsInternetVerdict.internetUnreachable:
+        return ConsumerVerdict(
+          outcome: ConsumerOutcome.internetDown,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
+          headline: 'No internet',
+          body:
+              "You're connected to Wi-Fi and your Wi-Fi is working. The "
+              'internet is not reachable: nothing past your Wi-Fi is '
+              'answering. The problem is your router’s internet '
+              'connection or your provider.',
+          selfHelp: SelfHelpTopic.internet,
+        );
+
+      // G — the network is asking you to sign in.
+      case WifiVsInternetVerdict.captivePortal:
+        return ConsumerVerdict(
+          outcome: ConsumerOutcome.signInRequired,
+          wifiStatus: wifiTier,
+          internetStatus: internetTier,
+          headline: 'Sign in to this network',
+          body:
+              'Your Wi-Fi is working, but this network has not let you onto '
+              'the internet yet. Open your browser and a sign-in page should '
+              'appear.',
+          selfHelp: SelfHelpTopic.signIn,
         );
     }
   }

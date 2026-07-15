@@ -51,6 +51,9 @@ import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 /// macOS sample: Tx 866 present, Rx NOT exposed by public CoreWLAN, SNR 45.
 ConnectedAp _macSample() => ConnectedAp.fromWifiInfo(
@@ -286,8 +289,20 @@ class _PayloadBridge implements WiFiDetailsBridge {
   Future<void> setLiveOriginRoute(String route) async {}
   @override
   Future<String?> consumeLiveErrorNav() async => null;
+
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
   @override
   Future<bool> hasEverReceivedPayload() async => true;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
     ssid: 'KeithNet',
@@ -324,15 +339,31 @@ class _CountingQualityClient implements QualityClient {
 
   int measureCount = 0;
 
+  /// What the screen asked for on the last run. The cellular-data consent gate is
+  /// only real if the data-hungry stages are never even REQUESTED without consent.
+  bool lastIncludeThroughput = true;
+
   @override
   bool get isAvailable => true;
 
   @override
   QualityResult? get lastResult => _lastResult;
 
+  /// What the screen last asked for on the RPM stage (cellular skips it).
+  bool lastIncludeResponsiveness = true;
+
   @override
-  Stream<QualityProgress> measure() async* {
+  Stream<QualityProgress> measure({
+    // NO DEFAULTS. This double used to declare `includeThroughput = true`,
+    // quietly re-opening the very default the QualityClient interface removed on
+    // purpose — a test double that cannot express "the caller forgot to decide"
+    // cannot catch a caller that forgot to decide.
+    required bool includeThroughput,
+    required bool includeResponsiveness,
+  }) async* {
     measureCount++;
+    lastIncludeThroughput = includeThroughput;
+    lastIncludeResponsiveness = includeResponsiveness;
     await Future<void>.delayed(const Duration(milliseconds: 100));
     yield const QualityProgress(QualityPhase.latency, 0.25);
     yield const QualityProgress(QualityPhase.download, 0.5);
@@ -585,12 +616,24 @@ class _StaleFlagBridge implements WiFiDetailsBridge {
   @override
   Future<String?> consumeLiveErrorNav() async => null;
 
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
+
   bool monitoringFlag = true;
   int runShortcutCalls = 0;
   String? lastRunShortcutName;
 
   @override
   Future<bool> hasEverReceivedPayload() async => true;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
   @override
   Future<WiFiDetails?> readLatest() async => const WiFiDetails(
     ssid: 'KeithNet',
@@ -652,11 +695,23 @@ class _FreshBridge implements WiFiDetailsBridge {
   @override
   Future<String?> consumeLiveErrorNav() async => null;
 
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
+
   int openUrlCalls = 0;
   String? lastOpenedUrl;
 
   @override
   Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
   @override
   Future<WiFiDetails?> readLatest() async => null;
   @override
@@ -688,8 +743,16 @@ class _FreshBridge implements WiFiDetailsBridge {
 /// auto-fire tests use — and only intercepts the trigger surface to count it
 /// without touching a real method channel.
 class _CountingSampler extends WifiSignalSampler {
+  /// The connection probe is DECLARED, not left to an unmocked platform channel
+  /// (2026-07-14, F-2). These fixtures model a phone ON WI-FI running a check;
+  /// an un-injected service resolves to `notOnWifi` in the test VM, and now that
+  /// `_run` AWAITS the probe before deciding, that would gate the auto-capture
+  /// off and the test would be asserting about a device it never meant to model.
   _CountingSampler({required super.iosBridge})
-      : super(source: WifiInfoSource.iosShortcuts);
+      : super(
+          source: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiConnection(),
+        );
 
   int getReadingOnceCalls = 0;
   int pollLatestCalls = 0;
@@ -775,6 +838,40 @@ LiveOnboardingService _seenOnboarding() {
   return LiveOnboardingService(getStore: SharedPreferences.getInstance);
 }
 
+/// THE PROBE THESE TESTS ALWAYS DEPENDED ON, NOW STATED (2026-07-14, F-2).
+///
+/// These fixtures model a phone ON WI-FI running a check. They never said so: the
+/// sampler built a REAL WifiConnectionService over an unmocked platform channel,
+/// which resolves to `notOnWifi` in the test VM. That did not matter while `_run`
+/// read the connection flag STALE — the in-run refresh was fire-and-forget, so
+/// `_autoCaptureIosRf` saw the initState value (false) and fired the Shortcut.
+///
+/// F-2 made the run AWAIT that probe, because a consent decision may not be made
+/// from a stale flag. The settled value is now what the auto-capture reads — so a
+/// fixture that means "on Wi-Fi" has to SAY "on Wi-Fi" instead of relying on the
+/// answer arriving too late to be used. The world the test asserts about is now
+/// the world it declares.
+class _SilentPathTmc implements WifiPathProbe {
+  const _SilentPathTmc();
+  @override
+  Future<WifiPathFacts?> read() async => null;
+}
+
+class _OnWifiNetTmc implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.20';
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _onWifiConnection() => WifiConnectionService(
+      networkInfo: _OnWifiNetTmc(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _SilentPathTmc(),
+    );
+
 void main() {
   Widget hostTheme(Widget child, ThemeData theme, {Size? size}) => MaterialApp(
     theme: theme,
@@ -827,6 +924,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -858,6 +956,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -898,6 +997,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -925,6 +1025,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
             // usable Wi-Fi = 16.5 (< 100 → Weak); internet download 200
@@ -955,6 +1056,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             // Tx 360 → usable 198 (Moderate). internet download 150
             // (Moderate). Same tier; usable is +32% → Wi-Fi has more headroom.
@@ -1013,6 +1115,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             // Tx 360 → usable 198 (Moderate). internet download 200
             // (Moderate). |delta| = 1% → within the +/-10% band.
@@ -1062,6 +1165,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1094,6 +1198,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1122,6 +1227,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1154,6 +1260,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(scriptedResult: _emptyInternet()),
@@ -1187,6 +1294,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1217,6 +1325,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1243,6 +1352,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1275,6 +1385,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1307,6 +1418,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: MockQualityClient(
@@ -1351,6 +1463,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _FakeMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1392,6 +1505,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1421,6 +1535,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1451,6 +1566,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1484,6 +1600,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.androidWifiManager,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1515,6 +1632,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.androidWifiManager,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1542,6 +1660,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1587,6 +1706,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: adapter,
             qualityClient: MockQualityClient(
@@ -1626,6 +1746,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
             qualityClient: quality,
@@ -1675,6 +1796,7 @@ void main() {
           size: const Size(375, 812),
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             enableCloudApps: false,
             sourceOverride: WifiInfoSource.iosShortcuts,
             iosBridge: _PayloadBridge(),
@@ -1711,6 +1833,7 @@ void main() {
         host(
           TestMyConnectionScreen(
             enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _HangingMacAdapter(),
             qualityClient: MockQualityClient(
@@ -1757,6 +1880,7 @@ void main() {
             hostTheme(
               TestMyConnectionScreen(
                 enableLiveSampling: false,
+                connectionService: _onWifiConnection(),
                 sourceOverride: WifiInfoSource.iosShortcuts,
                 iosBridge: _PayloadBridge(),
                 qualityClient: MockQualityClient(
@@ -1802,6 +1926,7 @@ void main() {
           hostTheme(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
               qualityClient: MockQualityClient(
@@ -1858,6 +1983,7 @@ void main() {
         final sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
         await tester.pumpWidget(
@@ -1896,6 +2022,7 @@ void main() {
         final sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
         await tester.pumpWidget(
@@ -2112,6 +2239,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: bridge,
               onboardingService: onboardingSvc(),
@@ -2139,6 +2267,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(), // hasEverReceivedPayload == true
               onboardingService: onboardingSvc(),
@@ -2164,6 +2293,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _FreshBridge(),
               onboardingService: onboardingSvc(seen: true),
@@ -2189,6 +2319,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               macAdapter: _FakeMacAdapter(),
               onboardingService: onboardingSvc(),
@@ -2220,6 +2351,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 720 → usable Wi-Fi 396 (Strong). Internet download 400
               // (Strong). margin = round(100*(396-400)/400) = -1% → about same.
@@ -2252,6 +2384,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 360 → usable Wi-Fi 198 (Moderate). Internet download 150
               // (Moderate). margin = round(100*(198-150)/150) = 32% → Wi-Fi ahead.
@@ -2280,6 +2413,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 240 → usable Wi-Fi 132 (Moderate). Internet download 220
               // (Moderate). margin = round(100*(132-220)/220) = -40% → internet
@@ -2310,6 +2444,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 360 → usable Wi-Fi 198 (Moderate). Internet download 200
               // (Moderate). margin = round(100*(198-200)/200) = -1% → about same.
@@ -2338,6 +2473,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 120 → usable Wi-Fi 66 (Weak). Internet download 63 (Weak).
               // margin = round(100*(66-63)/63) = 5% → within band → about same.
@@ -2368,6 +2504,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 120 → usable Wi-Fi 66 (Weak). Internet download 40 (Weak).
               // margin = round(100*(66-40)/40) = 65% → Wi-Fi ahead.
@@ -2396,6 +2533,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // Tx 720 → usable Wi-Fi 396 (Strong). Internet download 60
               // (Weak). Different tiers → existing "slow part" wording stands.
@@ -2445,6 +2583,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2536,6 +2675,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2577,6 +2717,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.macosCoreWlan,
               macAdapter: _FakeMacAdapter(),
@@ -2624,6 +2765,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2659,6 +2801,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               iosBridge: _PayloadBridge(),
@@ -2716,6 +2859,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               macAdapter: _StaticMacAdapter(macSampleChannelZero()),
               qualityClient: MockQualityClient(
@@ -2749,6 +2893,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
               // _NoNameMacAdapter: snapshot has SSID/BSSID null and
               // currentNameAuthorization() == false (Location not granted).
@@ -2796,6 +2941,7 @@ void main() {
           host(
             TestMyConnectionScreen(
               enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
               enableCloudApps: false,
               sourceOverride: WifiInfoSource.iosShortcuts,
               // _FreshBridge.readLatest() == null → no RF captured.
@@ -2895,6 +3041,7 @@ void main() {
         final WifiSignalSampler sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
 
@@ -2993,6 +3140,7 @@ void main() {
         final WifiSignalSampler sampler = WifiSignalSampler(
           source: WifiInfoSource.iosShortcuts,
           iosBridge: bridge,
+          connectionService: _onWifiConnection(),
         );
         addTearDown(sampler.dispose);
 
@@ -3072,6 +3220,16 @@ class _StreamingBridge implements WiFiDetailsBridge {
   @override
   Future<String?> consumeLiveErrorNav() async => null;
 
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
+
   final StreamController<WiFiDetails> _events =
       StreamController<WiFiDetails>.broadcast();
   bool _monitoring = false;
@@ -3089,6 +3247,8 @@ class _StreamingBridge implements WiFiDetailsBridge {
   // works (hasEverReceivedPayload == true); a streaming bridge is exactly that.
   @override
   Future<bool> hasEverReceivedPayload() async => true;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
   @override
   Future<WiFiDetails?> readLatest() async => null;
   @override

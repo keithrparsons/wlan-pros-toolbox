@@ -31,6 +31,13 @@ enum ShortcutsBridge {
   /// UserDefaults key holding the most recent JSON payload from the Shortcut.
   static let latestPayloadKey = "shortcuts_bridge.latest_wifi_json"
 
+  /// Epoch-MILLISECOND stamp of when [store] last wrote a payload. The honest
+  /// answer to "did the companion Shortcut deliver AFTER the Start that is
+  /// waiting on it?" — the question the app cannot answer from the live stream,
+  /// because firing the trigger backgrounds the app and a suspended engine
+  /// receives nothing. See [store] and `WifiMonitorController._deliveredSinceStart`.
+  static let latestPayloadAtKey = "shortcuts_bridge.latest_wifi_at_ms"
+
   /// UserDefaults key holding the most recent CELLULAR JSON payload from the
   /// companion Shortcut (TICKET-02 cellular). Separate from the Wi-Fi key so the
   /// two tools never clobber each other's last reading.
@@ -86,6 +93,40 @@ enum ShortcutsBridge {
   /// the Dart navigation gate ([consumeLiveErrorNav]) on the next foreground, so
   /// the gate only re-routes after an actual x-error, never on a normal resume.
   static let liveErrorNavPendingKey = "shortcuts_bridge.live_error_nav_pending"
+
+  /// ==========================================================================
+  /// THE IN-FLIGHT LIVE RUN. (2026-07-14, Keith device — "it opens the Shortcut
+  /// for a second, then returns to the HOME screen. Doesn't finish Test My
+  /// Connection at all.")
+  /// ==========================================================================
+  /// The route of a live tool that fired a one-shot trigger AS PART OF A RUN IT
+  /// INTENDS TO FINISH, plus WHEN it fired.
+  ///
+  /// WHY THIS IS NOT [liveOriginRouteKey]. That key is written when a live screen
+  /// OPENS, and it is never cleared. It answers "which tool was last looked at?" —
+  /// which cannot distinguish the two cases that matter here:
+  ///
+  ///   * iOS DESTROYED OUR SCENE mid-run (route back, resume the run), from
+  ///   * the user DELIBERATELY WENT HOME (leave them alone).
+  ///
+  /// Both leave an origin route behind, so keying a restore on it would yank a user
+  /// who simply tapped Back into a tool they had just left.
+  ///
+  /// This key answers the RIGHT question — "was a run IN FLIGHT when we lost the
+  /// scene?" — because it is ARMED at the moment the trigger fires and CLEARED on
+  /// every clean ending: the run completes, the run errors, or the user leaves the
+  /// screen on purpose. So a marker that is STILL SET means, and can only mean, "we
+  /// did not exit cleanly." Nothing else in the App Group carries that fact.
+  static let pendingLiveRunRouteKey = "shortcuts_bridge.pending_live_run_route"
+
+  /// Epoch-MILLISECOND stamp of when the pending live run ARMED. Two jobs:
+  ///   1. BOUNDS the restore, so an app iOS killed and the user reopened next
+  ///      morning is never dragged into a tool it has forgotten about.
+  ///   2. DATES the evidence. Paired with [latestPayloadAtKey] it answers "did the
+  ///      Shortcut's reading land AFTER this run started?" — so a resumed run adopts
+  ///      the RF the run actually produced, never a stale reading from the last time
+  ///      the phone was on Wi-Fi.
+  static let pendingLiveRunAtKey = "shortcuts_bridge.pending_live_run_at_ms"
 
   /// Monitoring-active flag (TICKET-03 A2/A3). The app sets this true on Start
   /// and false on Stop. The looping companion Shortcut reads it through
@@ -209,6 +250,7 @@ enum ShortcutsBridge {
   /// flag the first time real data arrives (TICKET-03 A1).
   static func store(json: String) {
     sharedDefaults?.set(json, forKey: latestPayloadKey)
+    stampPayloadDelivery()
     sharedDefaults?.set(true, forKey: hasReceivedPayloadKey)
     // A real delivery disproves any pending missing-Shortcut marker so a
     // recovered Shortcut never re-surfaces the "not found" recovery, and it
@@ -219,6 +261,36 @@ enum ShortcutsBridge {
     postDarwinNotification()
   }
 
+  /// STAMPS THE INSTANT A WI-FI PAYLOAD LANDED, in epoch MILLISECONDS.
+  ///
+  /// EVERY path that writes latestPayloadKey MUST call this. It is a separate
+  /// function precisely so the two delivery paths cannot drift apart again — which
+  /// is exactly what had happened.
+  ///
+  /// THE BUG THIS EXTRACTION KILLS (2026-07-14). store() stamped the delivery.
+  /// storeLive() — the path the COMBINED "WLAN Pros Live" Shortcut actually uses
+  /// (ReceiveLiveDetailsIntent.perform), i.e. the path EVERY LIVE SAMPLE takes —
+  /// DID NOT. So the live loop refreshed the payload but never refreshed the stamp
+  /// that proves the payload is fresh.
+  ///
+  /// That silently gutted the liveness check built to fix the previous round's bug.
+  /// WifiMonitorController._loopIsAlive() asks payloadReceivedAt() whether a loop is
+  /// genuinely delivering. On a SCENE REBUILD the controller is fresh, so its
+  /// in-memory _sampleSinceStart short-circuit is false and the stamp is the ONLY
+  /// evidence left — and the stamp was stale or absent, so a perfectly healthy
+  /// running loop was judged dead and TORN DOWN. The check failed exactly where it
+  /// was the only thing standing.
+  ///
+  /// WHY THE SUITE MISSED IT: the Dart fakes set payloadAt on delivery. They
+  /// modelled what the native side SHOULD do, not what it did. A Dart test cannot
+  /// execute Swift, so the divergence was invisible to all 4,282 of them.
+  /// test/consistency/app_group_payload_stamp_invariant_test.dart now reads THIS
+  /// FILE as source text, strips comments, and fails if any writer does not stamp.
+  private static func stampPayloadDelivery() {
+    sharedDefaults?.set(
+      Int(Date().timeIntervalSince1970 * 1000), forKey: latestPayloadAtKey)
+  }
+
   /// Read the most recent payload, or nil if none stored.
   static func readLatest() -> String? {
     sharedDefaults?.string(forKey: latestPayloadKey)
@@ -227,6 +299,15 @@ enum ShortcutsBridge {
   /// Honest install-state: has the app ever received a payload? (TICKET-03 A1.)
   static func hasEverReceivedPayload() -> Bool {
     sharedDefaults?.bool(forKey: hasReceivedPayloadKey) ?? false
+  }
+
+  /// Epoch-millisecond stamp of the most recent [store], or nil when no payload
+  /// has ever been stored (or the App Group is unavailable). Honest null — the
+  /// Dart caller reads nil as "cannot prove a delivery", never as "it delivered".
+  static func payloadReceivedAt() -> Int? {
+    guard let defaults = sharedDefaults else { return nil }
+    let ms = defaults.integer(forKey: latestPayloadAtKey)
+    return ms > 0 ? ms : nil
   }
 
   /// Records that the companion Shortcut was NOT FOUND on the last one-shot fire
@@ -268,6 +349,14 @@ enum ShortcutsBridge {
     // originating tool (where the recovery card shows) instead of leaving them on
     // whatever route iOS rebuilt the scene at (the home page strand).
     defaults?.set(true, forKey: liveErrorNavPendingKey)
+    // DISARM the in-flight run. The x-error path OWNS this recovery: the Shortcut is
+    // gone, so no reading is coming and there is nothing to resume. The nav flag above
+    // already routes the user back to the tool, where the honest "Shortcut not found —
+    // re-run setup" card is the correct destination. Leaving the run armed too would
+    // have BOTH mechanisms fire at the same tool, and the resume would sit waiting on a
+    // payload that provably cannot arrive. One signal, one recovery.
+    defaults?.removeObject(forKey: pendingLiveRunRouteKey)
+    defaults?.removeObject(forKey: pendingLiveRunAtKey)
     defaults?.synchronize()
     postDarwinNotification()
   }
@@ -277,6 +366,53 @@ enum ShortcutsBridge {
   static func setLiveOriginRoute(_ route: String) {
     sharedDefaults?.set(route, forKey: liveOriginRouteKey)
     sharedDefaults?.synchronize()
+  }
+
+  // MARK: - The in-flight live run (scene-teardown survival)
+
+  /// ARM: "a run is in flight on [route], and it fired the Shortcut just now."
+  ///
+  /// Called at the exact moment a live tool fires a trigger as part of a run it means
+  /// to finish. From here until clearLiveRun, a scene teardown is RECOVERABLE — and,
+  /// crucially, DISTINGUISHABLE from the user simply walking away.
+  static func armLiveRun(_ route: String) {
+    let defaults = sharedDefaults
+    defaults?.set(route, forKey: pendingLiveRunRouteKey)
+    defaults?.set(
+      Int(Date().timeIntervalSince1970 * 1000), forKey: pendingLiveRunAtKey)
+    defaults?.synchronize()
+  }
+
+  /// PEEK (non-destructive): the in-flight live run, or nil when none is armed.
+  ///
+  /// NON-DESTRUCTIVE ON PURPOSE. Two parties need this fact, in order: the navigation
+  /// gate (to route the user BACK to the tool) and then the tool itself (to RESUME the
+  /// run). A consume-once read would let the gate swallow the very evidence the tool
+  /// needs a frame later, and the user would land on a freshly reset screen with the
+  /// run gone — which is the bug, wearing the fix's clothes. The TOOL owns the clear.
+  ///
+  /// Returns ["route": String, "atMs": Int].
+  static func pendingLiveRun() -> [String: Any]? {
+    let defaults = sharedDefaults
+    guard let route = defaults?.string(forKey: pendingLiveRunRouteKey),
+          !route.isEmpty
+    else { return nil }
+    let atMs = defaults?.integer(forKey: pendingLiveRunAtKey) ?? 0
+    // An arm we cannot DATE is an arm we cannot BOUND, and an unbounded restore could
+    // yank the user into a tool from a run of unknown age. Fail safe: report nothing.
+    guard atMs > 0 else { return nil }
+    return ["route": route, "atMs": atMs]
+  }
+
+  /// DISARM. Called on every CLEAN ending of a live run — it completed, it errored, or
+  /// the user deliberately left the screen. After this a scene rebuild lands the user
+  /// wherever iOS puts them and nothing drags them back, which is correct: there is no
+  /// run to return to.
+  static func clearLiveRun() {
+    let defaults = sharedDefaults
+    defaults?.removeObject(forKey: pendingLiveRunRouteKey)
+    defaults?.removeObject(forKey: pendingLiveRunAtKey)
+    defaults?.synchronize()
   }
 
   /// If an x-error navigation is pending, CLEARS it and returns the origin tool
@@ -343,6 +479,12 @@ enum ShortcutsBridge {
     let defaults = sharedDefaults
     if let wifi = wifiJson, !wifi.isEmpty {
       defaults?.set(wifi, forKey: latestPayloadKey)
+      // THE LIVE LOOP RUNS THROUGH HERE, not through the other writer. This is the
+      // ONLY delivery stamp the recursive "WLAN Pros Live" Shortcut ever writes, on
+      // every cycle, and it is the sole surviving witness that the loop is alive once
+      // the scene (and the Dart heap with it) has been destroyed. Its absence is what
+      // made a healthy loop look dead on a scene rebuild.
+      stampPayloadDelivery()
       defaults?.set(true, forKey: hasReceivedPayloadKey)
     }
     if let cellular = cellularJson, !cellular.isEmpty {
@@ -413,6 +555,14 @@ enum ShortcutsBridge {
   /// phantom flag instead of firing the trigger). Clearing the flag + stamp on
   /// launch guarantees a clean slate: the next real Start is a genuine
   /// false→true transition that fires the Shortcut.
+  /// DO NOT CLEAR THE PENDING LIVE RUN HERE. It is tempting — this is the "wipe stale
+  /// state on launch" function, and the pending run looks like stale state. It is the
+  /// opposite. A UIScene teardown REBUILDS THE APP, so this function runs on exactly
+  /// the relaunch the restore exists to catch; wiping the marker here would erase the
+  /// evidence one frame before the gate reads it, and Keith would land on Home with his
+  /// run gone — the precise bug, reintroduced by the cleanup meant to prevent bugs. The
+  /// marker is bounded by its own arm-time stamp (pendingLiveRun ignores an arm it
+  /// cannot date), so a genuinely stale one expires on its own and needs no help here.
   static func resetMonitoringOnColdStart() {
     let defaults = sharedDefaults
     defaults?.set(false, forKey: monitoringActiveKey)

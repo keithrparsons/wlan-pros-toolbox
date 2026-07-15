@@ -81,9 +81,13 @@
 // ----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/cellular_info_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_glance_card.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_unavailable_view.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/wifi_info_screen.dart';
@@ -299,6 +303,21 @@ List<_Case> _glanceCases() {
           NetworkGlanceCard(
             platformOverride: p.target,
             apCache: cache,
+            // ON WI-FI. This invariant is about PLATFORM CAPABILITY ("can this
+            // platform obtain an SSID?"), not about connectivity. The card now
+            // also consults the not-on-Wi-Fi probe, so the precondition has to be
+            // stated — otherwise the two get conflated, and "the platform cannot
+            // read it" and "there is no network to read" are exactly the two
+            // kinds of null this whole effort exists to keep apart (GL-005).
+            connectionService: WifiConnectionService(
+              networkInfo: _OnWifiNetworkInfo(),
+              platformOverride: p.target,
+              // ...and on iOS the PRIMARY signal is now the native path monitor,
+              // so the "on Wi-Fi" precondition has to be stated THERE too. Leaving
+              // it to an unregistered method channel would make this invariant
+              // depend on a test-harness accident rather than on the stated setup.
+              pathProbe: _OnWifiPath(),
+            ),
             // On iOS these MUST NOT be consulted (the reading is cached); on the
             // native sources the fetcher IS the read.
             wifiFetcher: p.wifi == WifiInfoSource.iosShortcuts
@@ -505,10 +524,52 @@ Future<void> _render(WidgetTester tester, _Built built) async {
   }
 }
 
+/// iOS reports a Wi-Fi path: the device is associated.
+class _OnWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
+}
+
+/// The ANDROID TRANSPORT channel (round-4b, 2026-07-14).
+///
+/// WHY A CONSISTENCY TEST HAS TO STUB THIS. `RoamingLogScreen.initState` builds a
+/// `WifiSignalSampler` and calls `load()`, which — for the `androidWifiManager`
+/// source — now settles the honest Wi-Fi verdict through `WifiConnectionService`,
+/// whose Android branch invokes this channel. A Flutter widget test runs as
+/// `TargetPlatform.android` by DEFAULT, so this fires here even though these cases
+/// are about capability honesty, not cellular consent.
+///
+/// Unstubbed, the probe's 3-second `.timeout()` deadline is left as a PENDING TIMER
+/// when the test tears down, and the pending-timer invariant fails the case. (The
+/// sibling iOS `WifiPathProbe` has the identical deadline and never tripped this —
+/// only because it is gated on `_platform == iOS`, which a widget test never is.)
+///
+/// `available: false` is the honest "could not read the transport" payload → the
+/// verdict resolves to `unknown`, which is exactly what these screens saw on Android
+/// before the probe existed. Behavior is preserved; the device model is now stated.
+const MethodChannel _networkTransportChannel =
+    MethodChannel('com.wlanpros.toolbox/network_transport');
+
 void main() {
   setUpAll(() async {
     // Roaming Log / Cellular screens mount a ToolHelpFooter.
     await ToolHelpLoader.ensureLoaded();
+  });
+
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      _networkTransportChannel,
+      (MethodCall call) async => <String, Object?>{'available': false},
+    );
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_networkTransportChannel, null);
   });
 
   // =======================================================================
@@ -626,4 +687,16 @@ void main() {
       );
     }
   });
+}
+
+/// A device that IS on Wi-Fi (the Wi-Fi interface has an IPv4). Keeps the
+/// platform-capability invariant about the PLATFORM, not about whether this
+/// particular test device happens to have a link.
+class _OnWifiNetworkInfo implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.50';
+  @override
+  Future<String?> getWifiIPv6() async => 'fe80::10b4:5ba5:5d42:a691%en0';
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

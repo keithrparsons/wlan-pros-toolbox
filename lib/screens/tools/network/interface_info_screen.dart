@@ -300,25 +300,35 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     final WifiLinkInfo w = data.wifi;
     buf.writeln();
     buf.writeln('Wi-Fi link');
-    if (w.ssid == null && w.locationNeeded) {
+    if (w.notOnWifi) {
+      // The copy report must say what the screen says (the two must never
+      // disagree — [[feedback_screenshot_text_match]]). A help desk reading eight
+      // "Unavailable" rows would start debugging a Wi-Fi link that is not there.
+      line('Status', 'Not connected to Wi-Fi (no Wi-Fi link on this device)');
+    } else if (w.ssid == null && w.locationNeeded) {
       line('SSID', 'Needs Location Services (macOS)');
     } else {
       line('SSID', w.ssid);
       line('BSSID', w.bssid);
     }
-    line('IPv4', w.wifiIPv4);
-    line('IPv6', w.wifiIPv6);
-    line('Subnet mask', w.subnetMask);
-    line('Gateway', w.gatewayIP);
-    line('Interface', w.interfaceName);
-    line('Hardware Address', w.hardwareAddress);
-    line(
-      'MAC type',
-      MacRandomizationClassifier.label(
-        w.hardwareAddress,
-        platform: _macPlatform,
-      ),
-    );
+    // Off Wi-Fi every field below is null and `line` would skip it anyway — except
+    // "MAC type", which synthesizes a label from a null address and would print a
+    // Wi-Fi hardware note for a device with no Wi-Fi link. Skip the whole block.
+    if (!w.notOnWifi) {
+      line('IPv4', w.wifiIPv4);
+      line('IPv6', w.wifiIPv6);
+      line('Subnet mask', w.subnetMask);
+      line('Gateway', w.gatewayIP);
+      line('Interface', w.interfaceName);
+      line('Hardware Address', w.hardwareAddress);
+      line(
+        'MAC type',
+        MacRandomizationClassifier.label(
+          w.hardwareAddress,
+          platform: _macPlatform,
+        ),
+      );
+    }
 
     // Per-interface, only those with an assigned address (matching _Success).
     final List<NetworkInterfaceInfo> active = data.interfaces
@@ -498,6 +508,24 @@ class _Success extends StatelessWidget {
 
   Widget _wifiCard(BuildContext context) {
     final WifiLinkInfo w = data.wifi;
+
+    // NOT ON WI-FI (cold-eyes MEDIUM-3). Every row below would render "Not
+    // available on this platform" — which is a claim about the PLATFORM, and it is
+    // false: the platform is fine, there is simply no Wi-Fi link. Name the real
+    // state instead of eight misleading nulls (GL-005, the two kinds of null).
+    if (w.notOnWifi) {
+      final AppColorScheme colors = context.colors;
+      final TextTheme text = Theme.of(context).textTheme;
+      return _Card(
+        title: 'Wi-Fi link',
+        child: Text(
+          'This device is not connected to Wi-Fi, so there is no Wi-Fi link to '
+          'report. Connect to a Wi-Fi network to see its details here.',
+          style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+        ),
+      );
+    }
+
     final bool showLocationHint = w.ssid == null && w.locationNeeded;
     // iOS Refresh Wi-Fi affordance: shown when the iOS path is active AND the
     // network name has not been read this session (cold cache). Once any tool

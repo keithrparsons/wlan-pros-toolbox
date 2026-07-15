@@ -45,9 +45,11 @@ class WifiMonitorController extends ChangeNotifier {
     required WiFiDetailsBridge bridge,
     WifiConnectionService? connectionService,
     Duration missingShortcutSettle = const Duration(seconds: 4),
+    Duration notOnWifiConfirmSettle = const Duration(milliseconds: 1200),
   })  : _bridge = bridge,
         _connection = connectionService ?? WifiConnectionService(),
-        _missingShortcutSettle = missingShortcutSettle;
+        _missingShortcutSettle = missingShortcutSettle,
+        _notOnWifiConfirmSettle = notOnWifiConfirmSettle;
 
   final WiFiDetailsBridge _bridge;
 
@@ -65,6 +67,10 @@ class WifiMonitorController extends ChangeNotifier {
   /// delivers a payload within ~1s; this window gives the round-trip headroom
   /// before the missing-Shortcut verdict fires. Injectable so tests run fast.
   final Duration _missingShortcutSettle;
+
+  /// How long to wait before RE-PROBING a not-on-Wi-Fi verdict that would tear
+  /// down a LIVE session. See [_confirmedNotOnWifi]. Injectable so tests run fast.
+  final Duration _notOnWifiConfirmSettle;
 
   StreamSubscription<WiFiDetails>? _sub;
 
@@ -85,6 +91,36 @@ class WifiMonitorController extends ChangeNotifier {
   bool _disposed = false;
   bool _shortcutMissing = false;
   bool _notOnWifi = false;
+
+  /// The settled MONEY answer for this link (round 5, 2026-07-14). Orthogonal to
+  /// [_notOnWifi], and it FAILS CLOSED: an ambiguous link is [MeteredRisk.unknown],
+  /// which makes the consent gate ASK rather than spend.
+  ///
+  /// It starts at `unknown` and NOT at `none`, deliberately — before the first
+  /// [load] resolves we have measured nothing, and "we have not asked yet" must
+  /// never read as "proven safe to spend". Test My Connection AWAITS this settling
+  /// before it decides.
+  ///
+  /// It is NOT cleared by the missing-Shortcut branch below, unlike [_notOnWifi].
+  /// Whether a Shortcut is installed has nothing whatsoever to do with whether the
+  /// link costs money, and conflating them would reopen the leak through a door
+  /// marked "recovery".
+  MeteredRisk _meteredRisk = MeteredRisk.unknown;
+
+  /// Whether [_meteredRisk] has actually been PROBED yet, as opposed to sitting on
+  /// its fail-closed default.
+  ///
+  /// THE DIFFERENCE BETWEEN A GATE AND A RENDER. `unknown` must FAIL CLOSED for the
+  /// SPEND — that is the whole round-5 fix. But it must NOT drive the pre-run CARD,
+  /// because before the first probe returns EVERY device reads `unknown`, and the
+  /// card would flash a cellular-data warning at every user on their home Wi-Fi for
+  /// the few hundred ms it takes the probe to settle.
+  ///
+  /// A warning that cries wolf on every launch is not a safety feature; it is
+  /// training people to dismiss the one that matters. So the UI waits until we KNOW,
+  /// and the CHOKEPOINT protects anyone who taps during the window (the tap is
+  /// re-settled and downgraded — see the `spendData` chokepoint).
+  bool _meteredRiskResolved = false;
   bool _setupInitiated = false;
   int _deliveryCount = 0;
 
@@ -95,6 +131,13 @@ class WifiMonitorController extends ChangeNotifier {
   /// even for an already-set-up user (Keith device round 5: streaming is now the
   /// only live action, so its missing case must self-recover).
   bool _sampleSinceStart = false;
+
+  /// Wall-clock instant of the most recent [startMonitoring]. Null before the
+  /// first Start. Paired with [WiFiDetailsBridge.payloadReceivedAt] so the
+  /// missing-Shortcut settle can tell a payload THIS Start produced from the
+  /// stale one sitting in the App Group since the last time the phone was on
+  /// Wi-Fi.
+  DateTime? _startedAt;
 
   WifiMonitorPhase get phase => _phase;
 
@@ -122,6 +165,19 @@ class WifiMonitorController extends ChangeNotifier {
   /// nowhere — it is surfaced via the [WifiMonitorPhase.notOnWifi] phase.
   bool get notOnWifi => _notOnWifi;
 
+  /// The settled MONEY answer: could a throughput run cost this user real data?
+  ///
+  /// Read by Test My Connection's consent gate (via [WifiSignalSampler]). Separate
+  /// from [notOnWifi] on purpose and fails the OTHER WAY: [notOnWifi] refuses to
+  /// claim a link it cannot prove, and this refuses to SPEND on a link it cannot
+  /// prove. See the round-5 note in [WifiConnectionService].
+  MeteredRisk get meteredRisk => _meteredRisk;
+
+  /// Whether [meteredRisk] has been PROBED, or is still the fail-closed default.
+  /// The consent GATE reads `meteredRisk` (and fails closed); the pre-run CARD reads
+  /// this first, so it never flashes a cellular warning at a user on Wi-Fi.
+  bool get meteredRiskResolved => _meteredRiskResolved;
+
   /// Most recent parsed details, or null when none has arrived yet — AND null
   /// whenever the probe positively reports the device is NOT on Wi-Fi.
   ///
@@ -138,10 +194,16 @@ class WifiMonitorController extends ChangeNotifier {
   /// [_notOnWifi] rather than clearing [_details], so a rejoin restores the last
   /// known reading without a re-fetch.
   ///
-  /// This can never over-suppress: [_notOnWifi] is set ONLY from a POSITIVE
-  /// not-on-Wi-Fi probe. An ambiguous read (a wired desktop, a Location-gated
-  /// SSID, a failed/denied read) resolves to [WifiConnectionStatus.unknown] and
-  /// leaves it false — see [WifiConnectionService].
+  /// SUPPRESSION IS LOAD-BEARING, SO ITS INPUT MUST BE RIGHT. [_notOnWifi] is set
+  /// only when [WifiConnectionService] returns a POSITIVE not-on-Wi-Fi verdict;
+  /// an ambiguous read (a wired desktop, a Location-gated SSID, a failed/denied
+  /// read) resolves to [WifiConnectionStatus.unknown] and leaves it false. That
+  /// structure is necessary but NOT sufficient: an earlier round called it
+  /// "can never over-suppress" and shipped a probe that asserted not-on-Wi-Fi for
+  /// an iPhone on an IPv6-only SSID (`getWifiIP()` is IPv4-only), which blanked a
+  /// LIVE link. The exact conditions under which the probe may assert the
+  /// negative — and the limits of that assertion — are documented in
+  /// [WifiConnectionService]; read them before widening what this gate hides.
   WiFiDetails? get details => _notOnWifi ? null : _details;
 
   /// Whether any payload has ever arrived (honest install-state signal).
@@ -184,11 +246,28 @@ class WifiMonitorController extends ChangeNotifier {
       _safeNotify();
     }
 
+    // ========================================================================
+    // THE MONEY QUESTION IS ANSWERED FIRST, AND IT DOES NOT DEPEND ON THE BRIDGE.
+    //
+    // This read used to sit BELOW the three App Group calls. If any of them threw —
+    // and the App Group is a platform channel, so it can — `load()` unwound before
+    // the link was ever probed, `_meteredRiskResolved` stayed false FOREVER, and the
+    // consent gate's fail-closed default became PERMANENT: the user's speed test was
+    // silently withheld on every run, while the pre-run card (which waits for
+    // resolution) stayed hidden, so they were never offered a way to opt in. A dead
+    // end, produced by a failure in a subsystem that has nothing to do with money.
+    //
+    // Whether a Shortcut has ever delivered a payload has NO bearing on whether the
+    // link costs money. Answer the money question first, unconditionally.
+    // ========================================================================
+    final LinkVerdict link = await _connection.read(nativeSsid: nativeSsid);
+    final WifiConnectionStatus connStatus = link.status;
+    _meteredRisk = link.meteredRisk;
+    _meteredRiskResolved = true;
+
     final bool received = await _bridge.hasEverReceivedPayload();
     final WiFiDetails? latest = await _bridge.readLatest();
     final bool wasMonitoring = await _bridge.isMonitoringActive();
-    final WifiConnectionStatus connStatus =
-        await _connection.status(nativeSsid: nativeSsid);
     // x-error recovery (2026-06-25, Keith — build 41 strand). The one-shot
     // trigger now carries an `x-error` return URL, so a renamed/deleted "WLAN
     // Pros Live" Shortcut bounces the app back via `wlanprostoolbox://live-error`
@@ -213,7 +292,16 @@ class WifiMonitorController extends ChangeNotifier {
     // Honest connection flag: true ONLY on a positive not-on-Wi-Fi signal; an
     // `unknown` (ambiguous / wired desktop / read failed) leaves it false so the
     // prior behaviour is untouched (GL-005 — no false "not on Wi-Fi").
-    _notOnWifi = connStatus == WifiConnectionStatus.notOnWifi;
+    bool notOnWifi = connStatus == WifiConnectionStatus.notOnWifi;
+    // A verdict that would tear down a LIVE session must be SETTLED, not a single
+    // read taken across the Shortcuts app-switch this very screen just made. Only
+    // the streaming path pays the confirmation cost; an idle screen acts on the
+    // positive probe immediately. See [_confirmedNotOnWifi].
+    if (notOnWifi && _phase == WifiMonitorPhase.streaming) {
+      notOnWifi = await _confirmedNotOnWifi(nativeSsid: nativeSsid);
+      if (_disposed) return;
+    }
+    _notOnWifi = notOnWifi;
 
     if (shortcutMissing) {
       // The Shortcut is gone: present the setup recovery deterministically and
@@ -268,12 +356,106 @@ class WifiMonitorController extends ChangeNotifier {
     } else if (!_hasEverReceived) {
       _phase = WifiMonitorPhase.needsInstall;
     } else if (wasMonitoring) {
-      // App relaunched while a loop was active -> resume listening.
-      _startListening();
+      // ======================================================================
+      // ADOPT A LIVE LOOP, TEAR DOWN A DEAD ONE. (2026-07-14, Keith device.)
+      //
+      // This branch used to be a bare `_startListening()` — resume streaming from
+      // the persisted flag ALONE, with NO check that anything is still producing.
+      // The flag says "a loop was started". It does NOT say "a loop is running".
+      // Those are different facts, and every bug in this area is a confusion of
+      // the two:
+      //
+      //   * Believe the flag too readily and you paint a "LIVE" header over a
+      //     dead session with no producer behind it — the dead-LIVE-card hazard
+      //     Keith hit on a first run.
+      //   * Distrust it and you TEAR DOWN THE LOOP THE USER JUST STARTED. That is
+      //     the regression Keith's phone found twice: start the feed, get bounced
+      //     into Shortcuts (BY DESIGN — that is how the recursion is kicked off),
+      //     come back, and the app kills the healthy recursion it was waiting for.
+      //     It survived exactly as long as it took him to walk back: ~5 seconds.
+      //
+      // The old defense against the first hazard lived in `WifiSignalSampler`
+      // (`if (!_startedThisSession && c.isStreaming) stopMonitoring()`), and it was
+      // wrong in two ways at once. It asked a question about THE WIDGET
+      // (`_startedThisSession`) to answer a question about THE LOOP. And it lived in
+      // the sampler — which Wi-Fi Information DOES NOT USE (it drives this
+      // controller directly), so that screen had no protection from hazard one at
+      // all, while Test My Connection got killed by hazard two.
+      //
+      // THE ONLY HONEST WITNESS TO A RUNNING LOOP IS A RECENT PAYLOAD. Ask the
+      // App Group stamp, not a session flag. It lives BELOW the app's lifecycle, so
+      // it survives the scene rebuild that started this whole mess, and a loop that
+      // is genuinely delivering leaves it fresh every cycle. Both screens now
+      // inherit one rule from one place.
+      // ======================================================================
+      if (await _loopIsAlive()) {
+        if (_disposed) return;
+        // A payload landed inside the liveness window: there is a real producer on
+        // the other end of that flag. ADOPT the stream. Do NOT re-fire the
+        // Shortcut — the recursion is already running, and a second fire would
+        // stack a competing loop.
+        _startListening();
+      } else {
+        if (_disposed) return;
+        // The flag is up but NOTHING is delivering: a crashed or abandoned session
+        // left it behind. Clear it so the (non-existent) recursion cannot be
+        // resurrected, and rest in the honest idle state with the actionable Start
+        // control — never a "LIVE" badge with no data behind it.
+        await stopMonitoring();
+        _safeNotify();
+        return;
+      }
     } else {
       _phase = WifiMonitorPhase.idleWithData;
     }
     _safeNotify();
+  }
+
+  /// How long after the last delivered payload a monitoring loop is still presumed
+  /// ALIVE.
+  ///
+  /// PICKED FROM THE ACTUAL DELIVERY CADENCE IN THIS CODEBASE, not by feel:
+  ///   * The companion Shortcut's live cadence is ~1 SECOND. `WifiSignalSampler`
+  ///     sizes its 30-second sparkline window to "~30 samples" at "the ~1s
+  ///     companion-Shortcut cadence", so a healthy loop stamps the App Group about
+  ///     once a second.
+  ///   * [_missingShortcutSettle] is 4 SECONDS — this code already treats 4 seconds
+  ///     of silence on a FRESH start as grounds for suspicion.
+  ///
+  /// 10 seconds is therefore ~10 missed delivery cycles: far outside any plausible
+  /// iOS scheduling jitter or Shortcuts-app hand-off delay (the window that must
+  /// NOT be misread as death — it is exactly the window the user spends walking
+  /// back from the Shortcuts app), and far inside a genuinely abandoned session
+  /// (a flag left by a previous app run is minutes or hours stale, not seconds).
+  ///
+  /// ERRING DIRECTION, STATED: this window errs toward ADOPTING. A loop that died
+  /// less than 10 seconds ago is briefly presumed alive, and the screen shows LIVE
+  /// for up to 10 seconds with no new samples arriving. That is a transient
+  /// cosmetic wrong. The opposite error — presuming a LIVE loop dead — CLEARS THE
+  /// FLAG and destroys a working session the user explicitly started, which is the
+  /// bug this exists to remove. Between a stale badge for a few seconds and killing
+  /// the user's feed, the badge is not close.
+  static const Duration _loopLivenessWindow = Duration(seconds: 10);
+
+  /// Is the monitoring loop behind the persisted flag GENUINELY RUNNING?
+  ///
+  /// Evidence, in order of strength:
+  ///   1. A payload arrived on the live stream THIS session ([_sampleSinceStart]) —
+  ///      we watched it happen; nothing beats that.
+  ///   2. The App Group's payload stamp is inside [_loopLivenessWindow]. This is the
+  ///      witness that SURVIVES A SCENE REBUILD, because it lives below the app.
+  ///
+  /// FAIL-SAFE DIRECTION. When the platform cannot answer — [payloadReceivedAt]
+  /// returns null off-iOS, or on an App Group written by a build that predates the
+  /// stamp — this returns FALSE, i.e. "tear down". That is deliberate: a null stamp
+  /// is "I cannot prove this loop is alive", and adopting an unprovable loop is what
+  /// paints a dead LIVE card. It degrades to the pre-existing conservative behavior
+  /// rather than inventing a liveness it cannot demonstrate (GL-005).
+  Future<bool> _loopIsAlive() async {
+    if (_sampleSinceStart) return true;
+    final DateTime? deliveredAt = await _bridge.payloadReceivedAt();
+    if (deliveredAt == null) return false;
+    return DateTime.now().difference(deliveredAt) <= _loopLivenessWindow;
   }
 
   /// The phase to rest in when no live stream is running.
@@ -321,6 +503,11 @@ class WifiMonitorController extends ChangeNotifier {
   Future<bool> startMonitoring({String? triggerShortcutName}) async {
     // Fresh Start: a working stream delivers a first sample within the settle.
     _sampleSinceStart = false;
+    // The instant this Start fired. The missing-Shortcut settle compares the App
+    // Group's payload stamp against it to ask the only honest question available
+    // once the app has been backgrounded into Shortcuts: "did a payload land
+    // AFTER this Start?" See [_verifyShortcutDelivered].
+    _startedAt = DateTime.now();
     // A fresh Start clears any lingering missing verdict from a prior attempt.
     if (_shortcutMissing) _shortcutMissing = false;
 
@@ -442,10 +629,38 @@ class WifiMonitorController extends ChangeNotifier {
   ///
   /// For a STREAM START ([forStart]) we settle whenever this Start delivered no
   /// first sample, even for an already-set-up user: a fresh kickoff that produces
-  /// nothing means the recursion never started (missing Shortcut). The stream
-  /// Start does NOT poll the App Group (that would return a STALE stored reading
-  /// and mask the miss); the only honest "the stream started" signal is a sample
-  /// delivered THIS Start ([_sampleSinceStart]).
+  /// nothing means the recursion never started (missing Shortcut).
+  ///
+  /// ============================================================================
+  /// THE REGRESSION THIS BLOCK CAUSED, AND WHY (2026-07-14, Keith device).
+  /// ============================================================================
+  /// The Start path FIRES A SHORTCUT, which means iOS foregrounds the Shortcuts
+  /// app and BACKGROUNDS the Toolbox. The companion Shortcut then delivers its
+  /// sample by writing the APP GROUP and posting a Darwin notification — and a
+  /// backgrounded (soon suspended) Flutter engine CANNOT RECEIVE THAT PUSH.
+  ///
+  /// So [_sampleSinceStart], which is set only from a payload arriving on the live
+  /// [WiFiDetailsBridge.updates] stream, is evidence that BY CONSTRUCTION cannot
+  /// arrive during the settle window — because the app spends that entire window
+  /// backgrounded in the app this very method just sent it to. The settle asked
+  /// for the one proof the Start path makes impossible, and then, on not getting
+  /// it, declared the user's Shortcut missing and CLEARED THE APP GROUP LOOP FLAG
+  /// — halting the healthy recursion it was waiting on. Keith reinstalled the
+  /// Shortcut several times; of course it never helped. The Shortcut was fine.
+  /// We killed it, and then blamed it.
+  ///
+  /// The old code refused to poll the App Group for a good reason — "that would
+  /// return a STALE stored reading and mask the miss" — and that reason was real:
+  /// [WiFiDetails] carries no timestamp, so a stored payload could not be told
+  /// from one stored a month ago. The answer is not to go blind; it is to get the
+  /// timestamp. [WiFiDetailsBridge.payloadReceivedAt] now returns the instant the
+  /// native receiver STORED the payload, so this settle can ask the honest
+  /// question — "did a payload land AFTER this Start?" — which:
+  ///   * a STALE reading can never answer yes to (its stamp predates the Start),
+  ///     so a real miss is still caught; and
+  ///   * a WORKING Shortcut answers yes to even when it delivered while we were
+  ///     backgrounded, so a healthy session is never torn down.
+  /// Neither blind nor credulous.
   void _verifyShortcutDelivered({bool forStart = false}) {
     if (!forStart && _hasEverReceived) return;
     // A cancellable timer (not a bare Future.delayed) so dispose / a fresh
@@ -456,8 +671,24 @@ class WifiMonitorController extends ChangeNotifier {
       _missingTimer = null;
       if (_disposed) return;
       if (forStart) {
-        // Stream Start: a missing Shortcut delivers no first sample this Start.
+        // A sample already reached us on the live stream (the user came back to
+        // the foreground fast enough): the recursion is demonstrably running.
         if (_sampleSinceStart) return;
+        // Nothing on the stream — which proves nothing, because we were
+        // backgrounded in the Shortcuts app. Ask the App Group whether the
+        // Shortcut delivered while we could not listen.
+        if (await _deliveredSinceStart()) {
+          if (_disposed) return;
+          // It ran. Land the payload it delivered so the reading and the
+          // sparkline reflect it, and leave the live session ALONE.
+          final WiFiDetails? latest = await _bridge.readLatest();
+          if (_disposed) return;
+          if (latest != null && latest.hasAnyData) {
+            _onPayload(latest); // clears _shortcutMissing, sets _sampleSinceStart
+            return;
+          }
+        }
+        if (_disposed) return;
         _shortcutMissing = true;
         // Tear down the phantom stream (no producer) so the screen does not show
         // a dead "LIVE" header alongside the recovery card.
@@ -481,6 +712,58 @@ class WifiMonitorController extends ChangeNotifier {
       _shortcutMissing = true;
       _safeNotify();
     });
+  }
+
+  /// Did the companion Shortcut store a payload AFTER the current [startMonitoring]?
+  ///
+  /// The honest "the Shortcut ran" signal for a Start that has backgrounded the
+  /// app. A payload whose stored-at stamp is at or after [_startedAt] can only
+  /// have been produced by THIS Start's trigger; a stale reading from the last
+  /// time the phone was on Wi-Fi is stamped earlier and is correctly rejected, so
+  /// this cannot mask a genuinely missing Shortcut.
+  ///
+  /// False when the platform cannot answer (off-iOS, or no stamp stored — an App
+  /// Group written by a build that predates the stamp). That is the FAIL-SAFE
+  /// direction for a NEW check: it degrades to the old stream-only behavior rather
+  /// than inventing a delivery that may not have happened.
+  Future<bool> _deliveredSinceStart() async {
+    final DateTime? started = _startedAt;
+    if (started == null) return false;
+    final DateTime? deliveredAt = await _bridge.payloadReceivedAt();
+    if (deliveredAt == null) return false;
+    return !deliveredAt.isBefore(started);
+  }
+
+  /// Re-probes the Wi-Fi connection and returns whether it STILL reports
+  /// not-on-Wi-Fi.
+  ///
+  /// NOT-ON-WIFI MUST BE A SETTLED STATE, NEVER A TRANSIENT. The verdict is
+  /// load-bearing — it blanks the reading and tears down a live session — and
+  /// [load] runs on every app RESUME, which on the live tools means it runs
+  /// immediately after the app has been bounced through the Shortcuts app. A path
+  /// probe taken across that app-switch is exactly the read least entitled to be
+  /// trusted: a backgrounded/just-resumed app can see an unsatisfied path or an
+  /// empty interface list for a Wi-Fi link that is perfectly healthy, and a single
+  /// such read would kill the session the user just started.
+  ///
+  /// So a not-on-Wi-Fi verdict that would tear down a LIVE session must be
+  /// CONFIRMED by a second, settled read. A device that genuinely dropped to
+  /// cellular still confirms (it is not on Wi-Fi a moment later either) and still
+  /// gets the honest state — the suppression is not weakened, only made to prove
+  /// itself. The IDLE path does not pay this cost: with no live session at risk, a
+  /// positive probe is acted on immediately, so a cellular-only user still gets
+  /// "You're not connected to Wi-Fi" the instant the screen opens.
+  Future<bool> _confirmedNotOnWifi({String? nativeSsid}) async {
+    await Future<void>.delayed(_notOnWifiConfirmSettle);
+    if (_disposed) return false;
+    // The CONFIRMING read is the settled one, so it owns BOTH answers. Taking the
+    // Wi-Fi verdict from the second read while leaving the money risk on the first
+    // would let the two disagree about the same instant — the precise class of
+    // split-brain that produced "it spent the data AND THEN TOLD YOU IT KNEW".
+    final LinkVerdict again = await _connection.read(nativeSsid: nativeSsid);
+    _meteredRisk = again.meteredRisk;
+    _meteredRiskResolved = true;
+    return again.status == WifiConnectionStatus.notOnWifi;
   }
 
   /// Polls the persisted App Group payload after a one-shot fire settles, in case

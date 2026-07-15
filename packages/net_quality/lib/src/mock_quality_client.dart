@@ -1,3 +1,4 @@
+import 'own_engine_quality_client.dart';
 import 'quality_client.dart';
 import 'quality_grade.dart';
 import 'quality_metric.dart';
@@ -24,13 +25,94 @@ class MockQualityClient implements QualityClient {
   @override
   QualityResult? get lastResult => _lastResult;
 
+  /// Whether the last [measure] call was asked to include the throughput stages.
+  /// Exposed so a test can assert that the data-hungry stages were NOT requested
+  /// without consent — the consent gate is only real if the bytes never move.
+  bool lastIncludeThroughput = true;
+
+  /// How many times [measure] has been called.
+  ///
+  /// [lastIncludeThroughput] alone CANNOT express "the run never started": it
+  /// initializes to `true`, so a test asserting `isFalse` on it would also fail
+  /// when measure was never called at all, and a test asserting `isTrue` would
+  /// PASS against a screen that never ran. A consent test has to distinguish
+  /// "did not spend the data" from "did not run", and that needs a counter.
+  int measureCalls = 0;
+
+  /// What the last [measure] call asked for on the RPM stage. The cellular
+  /// decision (Keith, 2026-07-14) is only real if the LOAD never runs, so a
+  /// screen test has to be able to assert the engine was told to skip it.
+  bool lastIncludeResponsiveness = true;
+
   @override
-  Stream<QualityProgress> measure() async* {
+  Stream<QualityProgress> measure({
+    required bool includeThroughput,
+    required bool includeResponsiveness,
+  }) async* {
+    measureCalls++;
+    lastIncludeThroughput = includeThroughput;
+    lastIncludeResponsiveness = includeResponsiveness;
     yield const QualityProgress(QualityPhase.latency, 0.25);
-    yield const QualityProgress(QualityPhase.download, 0.5);
-    yield const QualityProgress(QualityPhase.upload, 0.75);
-    _lastResult = scriptedResult;
+    if (includeThroughput) {
+      yield const QualityProgress(QualityPhase.download, 0.5);
+      yield const QualityProgress(QualityPhase.upload, 0.75);
+    }
+    // Mirror the real engine: the gated metrics come back honestly unavailable
+    // with the "not measured" reason, never as a fabricated zero and never
+    // silently dropped.
+    QualityResult result = includeThroughput
+        ? scriptedResult
+        : _withoutThroughput(scriptedResult);
+    // Mirror the real engine's CELLULAR decision too: throughput ran, but the
+    // RPM stage deliberately did not, and it says so in its own words.
+    if (includeThroughput && !includeResponsiveness) {
+      result = _withoutResponsiveness(result);
+    }
+    _lastResult = result;
     yield const QualityProgress(QualityPhase.complete, 1.0);
+  }
+
+  /// Replaces ONLY Responsiveness with its honest "we chose not to" form — the
+  /// cellular case, where the throughput numbers are real and RPM was declined.
+  static QualityResult _withoutResponsiveness(QualityResult r) => QualityResult(
+        source: r.source,
+        measuredAt: r.measuredAt,
+        metrics: r.metrics
+            .map((QualityMetric m) => m.id == MetricIds.responsiveness
+                ? const QualityMetric.unavailable(
+                    id: MetricIds.responsiveness,
+                    label: 'Responsiveness',
+                    unit: 'RPM',
+                    note: OwnEngineQualityClient.kResponsivenessCellularNote,
+                  )
+                : m)
+            .toList(),
+      );
+
+  /// Replaces the three data-hungry metrics with their honest unavailable form,
+  /// preserving the cheap latency / jitter / loss samples that DID run.
+  static QualityResult _withoutThroughput(QualityResult r) {
+    const Set<String> gated = <String>{
+      MetricIds.download,
+      MetricIds.upload,
+      MetricIds.responsiveness,
+    };
+    return QualityResult(
+      source: r.source,
+      measuredAt: r.measuredAt,
+      metrics: <QualityMetric>[
+        for (final QualityMetric m in r.metrics)
+          if (!gated.contains(m.id))
+            m
+          else
+            QualityMetric.unavailable(
+              id: m.id,
+              label: m.label,
+              unit: m.unit,
+              note: OwnEngineQualityClient.kSkippedNote,
+            ),
+      ],
+    );
   }
 
   /// The default healthy-connection script: six graded transport metrics.

@@ -28,6 +28,22 @@ class _FakeBridge implements WiFiDetailsBridge {
     return v;
   }
 
+  /// NO RUN WAS EVER ARMED, in every test in this file.
+  ///
+  /// That is what scopes this file to the x-ERROR half of the gate and keeps its
+  /// famous last case ("no pending nav (null) leaves the user on home") HONEST.
+  /// That assertion was never wrong — a user who deliberately walks home must be
+  /// left alone. It was just the only case anyone had driven, so it read like a
+  /// complete spec when it was half of one. The SUCCESS half — iOS destroying the
+  /// scene while a run is in flight — lives in `live_run_restore_test.dart`, and
+  /// the two together are the spec.
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<void> clearLiveRun() async {}
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

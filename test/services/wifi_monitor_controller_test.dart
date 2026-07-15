@@ -15,15 +15,27 @@ import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_monitor_controller.dart';
 
-/// A [NetworkInfo] fake feeding [WifiConnectionService]: a canned Wi-Fi IP drives
-/// the on/not-on-Wi-Fi verdict deterministically in the controller tests.
+/// A [NetworkInfo] fake feeding [WifiConnectionService]: canned Wi-Fi addresses
+/// drive the on/not-on-Wi-Fi verdict deterministically in the controller tests.
+///
+/// BOTH ADDRESS FAMILIES (2026-07-13). The probe now requires IPv4 AND routable
+/// IPv6 to be absent before it asserts `notOnWifi`, because `getWifiIP()` is
+/// IPv4-only and an iPhone on an IPv6-only SSID reads null there while fully
+/// associated (cold-eyes F3). A fake that answers only IPv4 no longer models the
+/// plugin: its IPv6 read would throw, the probe would honestly resolve to
+/// `unknown`, and these tests would be asserting against a device state that
+/// cannot occur. Default: no IPv6 either → the cellular-only case.
 class _FakeNetworkInfo implements NetworkInfo {
-  _FakeNetworkInfo({this.wifiIp});
+  _FakeNetworkInfo({this.wifiIp, this.wifiIpv6});
 
   String? wifiIp;
+  String? wifiIpv6;
 
   @override
   Future<String?> getWifiIP() async => wifiIp;
+
+  @override
+  Future<String?> getWifiIPv6() async => wifiIpv6;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -37,15 +49,18 @@ class _ThrowingNetworkInfo implements NetworkInfo {
   Future<String?> getWifiIP() async => throw Exception('permission denied');
 
   @override
+  Future<String?> getWifiIPv6() async => throw Exception('permission denied');
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// Builds a [WifiConnectionService] pinned to iOS with a canned Wi-Fi IP — a
 /// non-null IP => onWifi, a null IP => notOnWifi (the controller's not-on-Wi-Fi
 /// branch under test).
-WifiConnectionService _conn({String? wifiIp}) {
+WifiConnectionService _conn({String? wifiIp, String? wifiIpv6}) {
   return WifiConnectionService(
-    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp),
+    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp, wifiIpv6: wifiIpv6),
     platformOverride: TargetPlatform.iOS,
   );
 }
@@ -61,6 +76,25 @@ class _FakeBridge extends WiFiDetailsBridge {
   bool monitoringFlag = false;
   WiFiDetails? latest;
   bool runShortcutResult = true;
+
+  /// The App Group's payload stamp — the instant the native receiver STORED the
+  /// most recent payload (2026-07-14, Keith device).
+  ///
+  /// THIS IS THE ONLY HONEST WITNESS TO A RUNNING LOOP, and it is why the fake now
+  /// has to carry it. [monitoringFlag] says "a loop was STARTED". It does NOT say
+  /// "a loop is RUNNING" — and the controller used to conflate them, resuming a
+  /// stream from the flag alone. That conflation cut both ways: it painted a dead
+  /// "LIVE" card over an abandoned flag, and (via the sampler's compensating guard)
+  /// it TORE DOWN the healthy loop Keith had just started, ~5 seconds after the
+  /// Shortcuts app handed him back.
+  ///
+  /// Null = "the platform cannot prove a delivery" (the inherited real bridge hits
+  /// an absent method channel and returns null). The controller treats that as NOT
+  /// ALIVE — the fail-safe direction.
+  DateTime? payloadAt;
+
+  @override
+  Future<DateTime?> payloadReceivedAt() async => payloadAt;
 
   /// Mirrors the native App Group missing-Shortcut marker (set by
   /// markShortcutMissing on an x-error, consumed-once by the controller load).
@@ -215,17 +249,78 @@ void main() {
       await bridge.close();
     });
 
-    test('relaunch with monitoring flag set -> resumes streaming', () async {
+    // ======================================================================
+    // THE FLAG IS NOT THE LOOP. (2026-07-14, Keith device.)
+    //
+    // This test used to be ONE case: "monitoring flag set -> resumes streaming",
+    // with no payload stamp at all. It passed, and it was HALF A TEST — it pinned
+    // that a set flag resumes the stream, and said NOTHING about whether anything
+    // was still on the other end of that flag. That silence is the whole bug: the
+    // controller trusted the flag alone, so it would happily paint a "LIVE" header
+    // over a loop that had been dead since the last force-quit.
+    //
+    // A relaunch with the flag set has TWO possible truths, and only the PAYLOAD
+    // STAMP can tell them apart. Both are now pinned.
+    // ======================================================================
+    test('relaunch, flag set, loop ALIVE (recent payload) -> resumes streaming',
+        () async {
       final bridge = _FakeBridge()
         ..everReceived = true
         ..latest = _details()
-        ..monitoringFlag = true;
+        ..monitoringFlag = true
+        // The recursion is genuinely running and delivering. This is the state the
+        // App Group is in the moment the user walks back from the Shortcuts app.
+        ..payloadAt = DateTime.now();
       final c = WifiMonitorController(bridge: bridge);
 
       await c.load();
 
       expect(c.phase, WifiMonitorPhase.streaming);
       expect(c.isStreaming, isTrue);
+      expect(bridge.monitoringFlag, isTrue,
+          reason: 'ADOPT a live loop — never clear the flag out from under a '
+              'running recursion (this is what killed Keith\'s feed)');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('relaunch, flag set, loop DEAD (no recent payload) -> idle, flag cleared',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..monitoringFlag = true
+        // A flag left behind by a force-quit / crashed session. Nothing has
+        // delivered in five minutes: there is no producer.
+        ..payloadAt = DateTime.now().subtract(const Duration(minutes: 5));
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.phase, WifiMonitorPhase.idleWithData,
+          reason: 'NO DEAD "LIVE" CARD: rest on the actionable Start control');
+      expect(c.isStreaming, isFalse);
+      expect(bridge.monitoringFlag, isFalse,
+          reason: 'clear the phantom flag so a later Start is not silently '
+              'ADOPTED into a loop that does not exist');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('relaunch, flag set, NO stamp at all -> torn down (fail-safe)', () async {
+      // The platform cannot answer (an App Group written by a build predating the
+      // stamp). "I cannot prove it is alive" is not "it is alive" (GL-005).
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..monitoringFlag = true
+        ..payloadAt = null;
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.isStreaming, isFalse);
+      expect(bridge.monitoringFlag, isFalse);
       c.dispose();
       await bridge.close();
     });
@@ -814,9 +909,15 @@ void main() {
       final bridge = _FakeBridge()
         ..everReceived = true
         ..latest = _details()
-        ..monitoringFlag = true; // another scene already started the loop
+        ..monitoringFlag = true // another scene already started the loop
+        // ...and that loop is GENUINELY RUNNING (2026-07-14). The stamp is now
+        // required to express that: `load()` no longer resumes a stream from the
+        // flag alone, so a live loop must LOOK live. Without this the flag would be
+        // cleared as a phantom and this test would be asserting single-flight
+        // against a loop that does not exist — i.e. testing nothing.
+        ..payloadAt = DateTime.now();
       final c = WifiMonitorController(bridge: bridge);
-      await c.load(); // resumes streaming from the active flag
+      await c.load(); // ADOPTS the live loop (recent payload proves a producer)
 
       final bool ok =
           await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
@@ -850,22 +951,49 @@ void main() {
 
   group('cold-start reset (Option B)', () {
     test(
-        'WITHOUT reset: a stale force-quit flag makes single-flight ADOPT and NOT '
-        'fire — the bug the reset guards', () async {
-      // A prior force-quit left the flag stale-true but the external loop is dead.
-      // Single-flight adopts the phantom flag and fires nothing → the user\'s Start
-      // silently no-ops. This test documents WHY the cold-start reset is required.
+        'a stale force-quit flag is now CLEARED BY load(), so the next Start '
+        'genuinely FIRES — "pretended to start" is fixed', () async {
+      // ====================================================================
+      // THIS TEST USED TO DOCUMENT A BUG. IT NOW DOCUMENTS ITS FIX.
+      //
+      // It was called "WITHOUT reset: a stale force-quit flag makes single-flight
+      // ADOPT and NOT fire — the bug the reset guards", and it asserted
+      // `runShortcutCalls == 0`. That is: THE USER TAPS START AND NOTHING HAPPENS.
+      // The flag was stale-true, the external loop was long dead, single-flight saw
+      // "already active" and adopted a phantom — firing no Shortcut, producing no
+      // samples. The screen flips to LIVE and just... sits there.
+      //
+      // That is very plausibly what Keith saw on the device (2026-07-14): the Wi-Fi
+      // Information Start pill "pretended to start, but returned immediately."
+      //
+      // The cold-start reset only guards this at PROCESS LAUNCH. A stale flag that
+      // appears mid-session — precisely what the old sampler guard's stopMonitoring,
+      // a crashed loop, or a suspended recursion leaves behind — was never covered.
+      //
+      // Now `load()` asks the payload stamp whether anything is actually delivering.
+      // A dead loop's flag is CLEARED before the user ever reaches for Start, so the
+      // single-flight check sees a clean slate and the Start FIRES for real. The
+      // liveness check fixes this class wherever it arises, not just at cold start.
+      // ====================================================================
       final bridge = _FakeBridge()
         ..everReceived = true
         ..latest = _details()
-        ..monitoringFlag = true; // stale from a force-quit
+        ..monitoringFlag = true // stale from a force-quit
+        ..payloadAt =
+            DateTime.now().subtract(const Duration(minutes: 5)); // nothing alive
       final c = WifiMonitorController(bridge: bridge);
+
       await c.load();
+      expect(bridge.monitoringFlag, isFalse,
+          reason: 'load() proved the loop dead and cleared the phantom flag');
 
       await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
 
-      expect(bridge.runShortcutCalls, 0,
-          reason: 'a stale flag is adopted, so a legit Start fires nothing');
+      expect(bridge.runShortcutCalls, 1,
+          reason: 'THE FIX: the Start the user tapped actually fires the Shortcut, '
+              'instead of being silently swallowed by a flag with nothing behind '
+              'it. This is the "pretended to start" symptom.');
+      expect(c.isStreaming, isTrue);
       c.dispose();
       await bridge.close();
     });
@@ -916,6 +1044,62 @@ void main() {
 
       expect(c.phase, WifiMonitorPhase.notOnWifi);
       expect(c.notOnWifi, isTrue);
+      c.dispose();
+      await bridge.close();
+    });
+
+    // ======================================================================
+    // OVER-SUPPRESSION — the dangerous direction (cold-eyes F3, 2026-07-13).
+    //
+    // The not-on-Wi-Fi suppression is LOAD-BEARING here: it nulls [details], tears
+    // down a LIVE stream, and clears the App Group loop flag. So a FALSE positive
+    // from the probe does real damage to a working device — and `getWifiIP()` is
+    // IPv4-only, so an iPhone on an IPv6-only SSID (NAT64/DNS64: carrier and
+    // CONFERENCE networks) hit exactly that. Keith runs conference Wi-Fi.
+    // ======================================================================
+    test('IPv6-ONLY Wi-Fi is NOT blanked: a live reading survives, no notOnWifi',
+        () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(
+        bridge: bridge,
+        // No Wi-Fi IPv4 (the plugin cannot see one) but a routable IPv6: the phone
+        // is ASSOCIATED and working.
+        connectionService: _conn(wifiIp: null, wifiIpv6: '2606:4700:4700::1111'),
+      );
+
+      await c.load();
+
+      expect(c.notOnWifi, isFalse,
+          reason: 'an IPv6-only Wi-Fi network is still Wi-Fi');
+      expect(c.phase, isNot(WifiMonitorPhase.notOnWifi));
+      expect(c.details, isNotNull,
+          reason: 'the live reading of a CONNECTED device must not be blanked');
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('IPv6-ONLY Wi-Fi does not tear down a live stream mid-flight', () async {
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details();
+      final c = WifiMonitorController(
+        bridge: bridge,
+        connectionService: _conn(wifiIp: null, wifiIpv6: 'fd12:3456:789a::1'),
+      );
+      await c.load();
+      await c.startMonitoring(triggerShortcutName: 'WLAN Pros Live');
+      expect(c.isStreaming, isTrue, reason: 'sanity: the stream started');
+
+      // A resume-driven reload on the same IPv6-only network must leave the live
+      // stream alone. Pre-fix this called stopMonitoring() and cleared the App
+      // Group flag, killing a working feed on a working network.
+      await c.load();
+
+      expect(c.isStreaming, isTrue,
+          reason: 'a working stream on a working network must not be torn down');
+      expect(c.notOnWifi, isFalse);
       c.dispose();
       await bridge.close();
     });

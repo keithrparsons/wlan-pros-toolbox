@@ -36,6 +36,7 @@ import 'package:wlan_pros_toolbox/services/network/wifi_live_shortcuts_config.da
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/sparkline.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 ConnectedAp _macSample({
   String? ssid = 'KeithNet',
@@ -282,6 +283,16 @@ class _FakeBridge implements WiFiDetailsBridge {
   @override
   Future<String?> consumeLiveErrorNav() async => null;
 
+  // Scene-teardown restore seam. Default = NO pending run, so every pre-existing
+  // test keeps asserting the app does NOT drag the user into a tool. They are the
+  // counterweight net for the restore.
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
+
   bool everReceived;
   WiFiDetails? latest;
   bool monitoringActive = false;
@@ -304,6 +315,8 @@ class _FakeBridge implements WiFiDetailsBridge {
 
   @override
   Future<bool> hasEverReceivedPayload() async => everReceived;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
 
   @override
   Future<WiFiDetails?> readLatest() async => latest;
@@ -378,9 +391,31 @@ class _FakeNetworkInfo implements NetworkInfo {
 /// probe must resolve to [WifiConnectionStatus.onWifi] for those assertions to
 /// hold. Without it the controller's load() would stall on the real
 /// platform-channel read and the screen would never leave its pre-load gate.
+/// iOS's own network path, which round 4 made the PRIMARY signal. These helpers
+/// exist to STATE the device's Wi-Fi state, so they must state it in the signal the
+/// service actually reads first — not leave it to an unregistered method channel.
+class _OnWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
+}
+
+class _NoWifiPath implements WifiPathProbe {
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      );
+}
+
 WifiConnectionService _onWifiProbe() => WifiConnectionService(
       networkInfo: _FakeNetworkInfo(wifiIp: '192.168.1.20'),
       platformOverride: TargetPlatform.iOS,
+      pathProbe: _OnWifiPath(),
     );
 
 /// An iOS connection probe that reports the device is demonstrably NOT on Wi-Fi
@@ -389,6 +424,7 @@ WifiConnectionService _onWifiProbe() => WifiConnectionService(
 WifiConnectionService _offWifiProbe() => WifiConnectionService(
       networkInfo: _FakeNetworkInfo(),
       platformOverride: TargetPlatform.iOS,
+      pathProbe: _NoWifiPath(),
     );
 
 /// Builds a [WifiSecurityService] whose native channel returns an AVAILABLE

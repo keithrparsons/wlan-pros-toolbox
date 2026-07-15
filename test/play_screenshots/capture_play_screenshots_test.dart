@@ -62,6 +62,9 @@ import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 // ── Capture constants ───────────────────────────────────────────────────────
 
@@ -337,6 +340,38 @@ void _expectText(String exact) {
       reason: 'expected on-screen value "$exact" not found');
 }
 
+/// The connection-probe seam (F-1). Network Quality now gates its data-hungry
+/// stages on an honest not-on-Wi-Fi read; screenshot fixtures must supply it
+/// rather than reach an unmocked platform channel. `unknown` changes nothing.
+class _SilentPathNQ implements WifiPathProbe {
+  const _SilentPathNQ();
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
+}
+
+class _UnknownNetNQ implements NetworkInfo {
+  // ROUND 5: a render/screenshot test models a normal device ON WI-FI (a link the
+  // app can PROVE is free), so the fail-closed gate stays silent and the run behaves
+  // as it always has. An `unknown` service now raises the cost UI and withholds
+  // throughput, which is exactly what a screenshot must not capture.
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.10';
+  @override
+  Future<String?> getWifiIPv6() async => throw Exception('no plugin in test');
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _unknownConnectionNQ() => WifiConnectionService(
+      networkInfo: _UnknownNetNQ(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _SilentPathNQ(),
+    );
+
 void main() {
   // ── 1. Home / "Check My Connection" consumer front door (the hero) ──────────
   testWidgets('play-1 Home — Check My Connection front door', (tester) async {
@@ -496,6 +531,7 @@ void main() {
       tester,
       id: 'play-phone-4-network-quality',
       build: () => NetQualityScreen(
+        connectionService: _unknownConnectionNQ(),
         client: MockQualityClient(
           scriptedResult: _internetResult(
             down: 480,

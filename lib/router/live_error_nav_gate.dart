@@ -1,22 +1,42 @@
-// LiveErrorNavGate — routes the user back to the originating live tool after a
-// missing-Shortcut x-error, so the recovery card shows instead of the home strand.
+// LiveErrorNavGate — puts the user back on the live tool that iOS took away from
+// them, whether the trip through Shortcuts FAILED or SUCCEEDED.
 //
-// WHY THIS EXISTS (2026-06-26, Keith device round 3): after setup succeeded, a
-// user who later RENAMED/deleted "WLAN Pros Live" and tapped a live action saw the
-// app briefly open Shortcuts, then bounce back (the x-error return fires, no
-// strand on the Shortcuts page) — BUT it landed on the HOME page with no recovery
-// message. The cause: firing the one-shot backgrounds the app into the Shortcuts
-// app, and on a missing Shortcut iOS can tear down and rebuild our UIScene, so
-// Flutter restarts at its initial (home) route. The originating tool screen is
-// gone, so nothing consumes the shortcut-missing marker and the recovery never
-// shows.
+// THE ROOT CAUSE, WHICH IS THE SAME FOR BOTH (2026-06-26 and 2026-07-14):
+// firing a Shortcut backgrounds the app into the Shortcuts app, and iOS can TEAR
+// DOWN AND REBUILD OUR UISCENE while we are away. Flutter then restarts at its
+// initial (home) route, and the ENTIRE DART HEAP goes with it — the tool screen,
+// its state, and any measurement in flight. The user tapped a button and landed on
+// Home with nothing.
 //
-// The fix: each live tool records its route in the App Group when it opens; the
-// x-error native handler raises a pending-nav flag; and this gate, on foreground
-// (and at startup), routes the user back to that tool — where its load() consumes
-// the marker and renders "Live Wi-Fi Shortcut not found — re-run setup". It only
-// re-routes when the user is NOT already on the origin tool, so it never races the
-// tool's own resume-load (which already shows the recovery on a warm return).
+// THIS FILE ORIGINALLY FIXED ONLY THE ERROR HALF, AND SAID SO IN THIS HEADER.
+//
+//   ROUND 3 (2026-06-26) — the FAILURE case. A user who renamed/deleted "WLAN Pros
+//   Live" tapped a live action, bounced through Shortcuts, and landed on HOME with
+//   no recovery message. Fix: the x-error native handler raises a pending-nav flag,
+//   and this gate routes back to the tool, where its load() renders "Shortcut not
+//   found — re-run setup".
+//
+//   ROUND 6 (2026-07-14, Keith device) — the SUCCESS case, which had been sitting
+//   right next to it the whole time. "Click on Check My Connection, and it opens
+//   the Shortcut for a second, then RETURNS TO THE HOME SCREEN. Doesn't finish Test
+//   My Connection at all." His Shortcut was PERFECT. It ran. There was no error —
+//   and therefore no error flag, so `consumeLiveErrorNav()` returned null, this gate
+//   no-opped, and he was stranded exactly as before. The gate was keyed on the
+//   FAILURE rather than on the LOSS, and the loss happens either way.
+//
+// A crash is not the only thing that can destroy a screen. Success destroys it too.
+//
+// TWO SIGNALS, TWO RECOVERIES:
+//   * `consumeLiveErrorNav()` — the Shortcut is MISSING → route back, show the
+//     honest "re-run setup" card. (There is no run to resume; there never was one.)
+//   * `pendingLiveRun()`      — a run was IN FLIGHT and never disarmed → route back,
+//     and the TOOL resumes the run from the reading the Shortcut left in the App
+//     Group. Routing back alone would hand the user a RESET SCREEN, which is not a
+//     fix; see `test_my_connection_screen.dart`'s resume path.
+//
+// The arm/disarm discipline is what keeps this from hijacking navigation: a run is
+// armed only at the moment it fires a trigger, and disarmed on every clean ending.
+// A user who deliberately walks home has no arm, so nothing drags them back.
 
 import 'package:flutter/material.dart';
 
@@ -106,18 +126,81 @@ class _LiveErrorNavGateState extends State<LiveErrorNavGate>
   }
 
   Future<void> _check() async {
+    // ---- PATH 1: THE x-ERROR (the Shortcut is MISSING). Unchanged. ----
     final String? origin = await _bridge.consumeLiveErrorNav();
-    // Null = no x-error nav pending (the normal case) → do nothing.
-    if (origin == null || !mounted) return;
-    final String target =
-        _liveRoutes.contains(origin) ? origin : AppRouter.testMyConnection;
-    // Already on the origin tool (warm return): its own resume-load shows the
-    // recovery, so don't re-push (which would rebuild it and race the marker).
+    if (origin != null) {
+      if (!mounted) return;
+      final String target =
+          _liveRoutes.contains(origin) ? origin : AppRouter.testMyConnection;
+      // The tool's own load() consumes the missing-Shortcut marker and renders
+      // "Shortcut not found — re-run setup".
+      _routeTo(target);
+      return;
+    }
+    if (!mounted) return;
+
+    // ---- PATH 2: THE SUCCESS PATH. iOS DESTROYED OUR SCENE MID-RUN. ----
+    //
+    // THIS IS THE HALF THAT WAS MISSING, AND IT IS THE HALF KEITH KEPT HITTING.
+    //
+    // Everything above only fires when something ERRORED. But Keith's Shortcut was
+    // fine — it ran perfectly. The app fired the one-shot, iOS foregrounded
+    // Shortcuts, tore down our UIScene, and rebuilt Flutter at its initial (home)
+    // route. No error, so no pending-nav flag, so `origin == null`, so this method
+    // used to simply RETURN — and he was left on Home with his run gone. The
+    // originating route was recorded the entire time (every live tool calls
+    // `setLiveOriginRoute` on open); the gate just refused to use it unless
+    // something had failed.
+    //
+    // A crash is not the only way to lose a screen. Success can lose it too.
+    await _restoreInterruptedRun();
+  }
+
+  /// Puts the user back on the tool that had a run IN FLIGHT when the scene died.
+  ///
+  /// THE DISCRIMINATOR. The hard part here is not navigating — it is knowing WHEN
+  /// to. "The user is on Home and a live tool was open" describes both the destroyed
+  /// scene AND a user who simply tapped Back, and dragging that second user into a
+  /// tool they deliberately left would be its own bug.
+  ///
+  /// So the signal is not "a tool was open" — it is "a RUN WAS ARMED AND NEVER
+  /// DISARMED". The tool arms at the instant it fires the trigger and disarms on
+  /// every clean ending (the run completes, the run errors, the user leaves on
+  /// purpose). An arm that is still standing therefore MEANS, and can only mean, "we
+  /// did not exit cleanly" — which is precisely the fact we need and nothing else in
+  /// the App Group carries.
+  Future<void> _restoreInterruptedRun() async {
+    final PendingLiveRun? pending = await _bridge.pendingLiveRun();
+    if (pending == null || !mounted) return;
+
+    // A run armed longer ago than the restore window is not a run any more — iOS
+    // killed the app and the user came back later. REAP it (do not merely skip it),
+    // or it sits in the App Group waiting to ambush some future launch.
+    if (!pending.isFresh()) {
+      await _bridge.clearLiveRun();
+      return;
+    }
+
+    // FAIL SAFE ON AN UNKNOWN ROUTE. The x-error path may fall back to the front
+    // door because it has a recovery card to show there. A RESTORE has nothing to
+    // restore on a screen that never armed a run, so it navigates NOWHERE rather
+    // than guessing.
+    if (!_liveRoutes.contains(pending.route)) return;
+
+    _routeTo(pending.route);
+    // NOTE: THE GATE DOES NOT CONSUME THE ARM. The tool does, once it has actually
+    // taken the run over. A consume here would swallow the evidence one frame before
+    // the screen reads it, and the user would land on a freshly reset tool with the
+    // run gone — which is the bug, wearing the fix's clothes.
+  }
+
+  /// Lands on `[home, tool]` so Back still returns home, and never re-pushes a tool
+  /// the user is already on (which would rebuild it and destroy the very run we are
+  /// trying to restore).
+  void _routeTo(String target) {
     if (CurrentRouteObserver.currentRouteName == target) return;
     final NavigatorState? nav = AppRouter.navigatorKey.currentState;
     if (nav == null) return;
-    // Land on [home, tool] so Back returns home; the tool's load() then consumes
-    // the missing-Shortcut marker and renders the recovery card.
     nav.pushNamedAndRemoveUntil(target, (Route<dynamic> r) => r.isFirst);
   }
 

@@ -53,6 +53,9 @@ import 'package:wlan_pros_toolbox/services/network/network_details_service.dart'
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 
 // ── Capture constants ───────────────────────────────────────────────────────
 
@@ -353,6 +356,38 @@ void _expectText(String exact) {
   expect(find.text(exact), findsWidgets,
       reason: 'expected on-screen value "$exact" not found');
 }
+
+/// The connection-probe seam (F-1). Network Quality now gates its data-hungry
+/// stages on an honest not-on-Wi-Fi read; screenshot fixtures must supply it
+/// rather than reach an unmocked platform channel. `unknown` changes nothing.
+class _SilentPathNQ implements WifiPathProbe {
+  const _SilentPathNQ();
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
+}
+
+class _UnknownNetNQ implements NetworkInfo {
+  // ROUND 5: a render/screenshot test models a normal device ON WI-FI (a link the
+  // app can PROVE is free), so the fail-closed gate stays silent and the run behaves
+  // as it always has. An `unknown` service now raises the cost UI and withholds
+  // throughput, which is exactly what a screenshot must not capture.
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.10';
+  @override
+  Future<String?> getWifiIPv6() async => throw Exception('no plugin in test');
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _unknownConnectionNQ() => WifiConnectionService(
+      networkInfo: _UnknownNetNQ(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _SilentPathNQ(),
+    );
 
 void main() {
   // A reusable internet "Strong/healthy" result for the chip-only shots.
@@ -763,6 +798,7 @@ void main() {
       figId: 'S09-network-quality-six-rows',
       height: 2000,
       build: () => NetQualityScreen(
+        connectionService: _unknownConnectionNQ(),
         client: MockQualityClient(
           scriptedResult: _internetResult(
             down: 180, up: 12, latencyMs: 24, jitterMs: 6, lossPct: 0,
@@ -808,6 +844,7 @@ void main() {
       figId: 'S10-network-quality-call-killer',
       height: 2000,
       build: () => NetQualityScreen(
+        connectionService: _unknownConnectionNQ(),
         client: MockQualityClient(
           scriptedResult: _internetResult(
             down: 480, up: 240, latencyMs: 60, jitterMs: 45, lossPct: 2,

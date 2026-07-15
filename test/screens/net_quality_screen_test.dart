@@ -8,12 +8,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:net_quality/net_quality.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_path_probe.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/live_quality_monitor.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/metric_sparkline.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_tokens.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_help_footer.dart';
+
+/// The connection probe seam. These are RENDER tests — the consent gate has its
+/// own file, net_quality_cellular_consent_test.dart — so they model a normal device
+/// ON WI-FI, where the gate is silent and the run behaves exactly as it always has.
+///
+/// ROUND 5: this used to inject an `unknown` service and a comment claimed "unknown
+/// is the neutral answer — it changes nothing about this screen's behaviour". That
+/// stopped being true the moment the gate began failing CLOSED: `unknown` now raises
+/// the cost UI and withholds throughput, which is precisely what a render test must
+/// NOT have happen to it. An on-Wi-Fi service is the honest neutral for a render
+/// test — a link the app can PROVE is free, so nothing is gated.
+class _OnWifiPath implements WifiPathProbe {
+  const _OnWifiPath();
+  @override
+  Future<WifiPathFacts?> read() async => const WifiPathFacts(
+        usesWifi: true,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+      );
+}
+
+class _OnWifiNet implements NetworkInfo {
+  @override
+  Future<String?> getWifiIP() async => '192.168.1.10';
+  @override
+  Future<String?> getWifiIPv6() async => null;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+WifiConnectionService _unknownConnection() => WifiConnectionService(
+      networkInfo: _OnWifiNet(),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: const _OnWifiPath(),
+    );
 
 void main() {
   // A fake reachability prober: 'one.one.one.one' and 'www.google.com' answer
@@ -54,6 +92,7 @@ void main() {
             sites: sites,
           ),
           monitor: monitor ?? fakeMonitor(),
+          connectionService: _unknownConnection(),
         ),
       );
 
@@ -349,6 +388,7 @@ void main() {
           theme: AppTheme.dark(),
           home: NetQualityScreen(
             client: MockQualityClient(scriptedResult: scriptedResult()),
+            connectionService: _unknownConnection(),
             reachabilityProbe: ReachabilityProbe(
               prober: fakeProber,
               sites: sites,

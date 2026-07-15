@@ -45,14 +45,21 @@ import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_signal_sampler.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 
-/// Canned Wi-Fi IP → the honest probe verdict. Null on iOS => notOnWifi.
+/// Canned Wi-Fi addresses → the honest probe verdict. On iOS, `notOnWifi` needs
+/// BOTH families empty: `getWifiIP()` is IPv4-only, so an IPv6-only SSID reads
+/// null there while fully associated (cold-eyes F3). Defaults model a
+/// cellular-only phone: no IPv4, no IPv6.
 class _FakeNetworkInfo implements NetworkInfo {
-  _FakeNetworkInfo({this.wifiIp});
+  _FakeNetworkInfo({this.wifiIp, this.wifiIpv6});
 
   String? wifiIp;
+  String? wifiIpv6;
 
   @override
   Future<String?> getWifiIP() async => wifiIp;
+
+  @override
+  Future<String?> getWifiIPv6() async => wifiIpv6;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -60,10 +67,11 @@ class _FakeNetworkInfo implements NetworkInfo {
 
 WifiConnectionService _conn({
   String? wifiIp,
+  String? wifiIpv6,
   TargetPlatform platform = TargetPlatform.iOS,
 }) {
   return WifiConnectionService(
-    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp),
+    networkInfo: _FakeNetworkInfo(wifiIp: wifiIp, wifiIpv6: wifiIpv6),
     platformOverride: platform,
   );
 }
@@ -183,6 +191,34 @@ void main() {
           reason: 'and nothing stale gets charted as a live sample');
       expect(sampler.isStreaming, isFalse,
           reason: 'no LIVE badge over a link that does not exist');
+
+      sampler.dispose();
+      await bridge.close();
+    });
+
+    test(
+        'BUT an IPv6-only Wi-Fi network keeps its reading (the suppression must '
+        'not over-reach — cold-eyes F3)', () async {
+      // The mirror image of the test above, and the reason that one is not enough.
+      // `getWifiIP()` is IPv4-only, so this phone — fully associated to a NAT64 /
+      // IPv6-only SSID, the kind conference and carrier networks run — also reads
+      // a null Wi-Fi IPv4. Suppressing on that null alone blanks a LIVE link.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _stale;
+      final sampler = WifiSignalSampler(
+        source: WifiInfoSource.iosShortcuts,
+        iosBridge: bridge,
+        connectionService:
+            _conn(wifiIp: null, wifiIpv6: '2606:4700:4700::1111'),
+      );
+
+      await sampler.load();
+
+      expect(sampler.notOnWifi, isFalse,
+          reason: 'an IPv6-only Wi-Fi network is Wi-Fi');
+      expect(sampler.latest, isNotNull,
+          reason: 'the reading of a CONNECTED device must not be blanked');
 
       sampler.dispose();
       await bridge.close();

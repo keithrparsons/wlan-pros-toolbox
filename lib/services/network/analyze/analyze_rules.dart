@@ -175,13 +175,37 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     id: 'R-05',
     category: FindingCategory.verdict,
     severity: FindingSeverity.important,
-    condition: _isVerdictUnknown,
+    condition: _isVerdictUnknownReadFailed,
     responseDraft:
         "This is a partial read. One side could not be measured, so the check "
         "cannot yet tell you whether your Wi-Fi or your internet is the limit. "
         "Run it again while you are connected over Wi-Fi with the internet "
         "live. On iPhone, install the companion Shortcut first so the app can "
         "read your Wi-Fi details.",
+  ),
+  // R-05N — the SAME verdict (`wifiUnknown`), the OTHER kind of null.
+  //
+  // R-05 above says "one side could not be measured" and "install the companion
+  // Shortcut". On a cellular-only phone BOTH halves of that are false: nothing
+  // failed to measure, and no Shortcut can read a link that does not exist. Keith
+  // hit this on 2026-07-13 — the Analyze screen sent him to install a Shortcut to
+  // fix a Wi-Fi problem he did not have. It is the SAME wrong-kind-of-null as
+  // R-31 (see [_wifiNotCaptured]), reached through a different rule, which is
+  // exactly why suppressing R-31 alone was not enough.
+  //
+  // GL-005, two kinds of null: "we could not read it" and "it is not there" are
+  // different findings and get different copy.
+  AnalyzeRule(
+    id: 'R-05N',
+    category: FindingCategory.verdict,
+    severity: FindingSeverity.important,
+    condition: _isVerdictUnknownNotOnWifi,
+    responseDraft:
+        "You are not connected to Wi-Fi, so there was no Wi-Fi link to check. "
+        "That is not a failed reading, it is simply the state of the device: "
+        "the internet figures in this report came over your cellular or wired "
+        "connection. To compare your Wi-Fi against your internet, join a Wi-Fi "
+        "network and run the check again.",
   ),
   // Honest "you're online" verdict (Keith 2026-06-17). Fires when the speed
   // test stalled (throughput unmeasurable even after the retry) but the device
@@ -195,12 +219,29 @@ const List<AnalyzeRule> kAnalyzeRules = <AnalyzeRule>[
     id: 'R-06',
     category: FindingCategory.verdict,
     severity: FindingSeverity.important,
-    condition: _isVerdictOnlineUnmeasured,
+    condition: _isVerdictOnlineUnmeasuredMeasureFailed,
     responseDraft:
         "You are online. Your internet is reachable, but the speed test did "
         "not complete, so its speed could not be measured. Names are "
         "resolving, you have a public IP, and the test services answered, so "
         "the connection itself is up. Try the check again in a moment.",
+  ),
+  // R-06S — the SAME verdict, the OTHER reason there is no speed figure.
+  //
+  // R-06 says the speed test "did not complete" and invites the user to "try again
+  // in a moment". Both are false when the user DECLINED the test to save cellular
+  // data: nothing failed, and "try again" is an invitation to spend the data they
+  // just chose not to spend. Same split, same reason, as R-05 / R-05N.
+  AnalyzeRule(
+    id: 'R-06S',
+    category: FindingCategory.verdict,
+    severity: FindingSeverity.important,
+    condition: _isVerdictOnlineUnmeasuredSkipped,
+    responseDraft:
+        "Your internet is reachable and working. The speed test was skipped to "
+        "save cellular data, so its speed was not measured. Nothing failed here. "
+        "Connect to Wi-Fi and run the check again, or run it on cellular and "
+        "accept the data cost, to measure the speed.",
   ),
 
   // B. Signal, RSSI (coverage / distance).
@@ -595,8 +636,30 @@ bool _isVerdictBothHealthy(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.bothHealthy;
 bool _isVerdictUnknown(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.wifiUnknown;
+
+/// R-05 — the `wifiUnknown` verdict when the Wi-Fi side could not be READ (a
+/// platform that will not expose it, an uncaptured RF block). "One side could not
+/// be measured" is true here, and the Shortcut advice is actionable.
+bool _isVerdictUnknownReadFailed(AnalyzeInput i) =>
+    _isVerdictUnknown(i) && !i.notOnWifi;
+
+/// R-05N — the SAME verdict when there IS no Wi-Fi link. Nothing failed; there is
+/// nothing there. Mutually exclusive with [_isVerdictUnknownReadFailed], so
+/// exactly one of R-05 / R-05N fires on a `wifiUnknown` verdict, never both and
+/// never neither.
+bool _isVerdictUnknownNotOnWifi(AnalyzeInput i) =>
+    _isVerdictUnknown(i) && i.notOnWifi;
 bool _isVerdictOnlineUnmeasured(AnalyzeInput i) =>
     i.verdict == WifiVsInternetVerdict.onlineUnmeasured;
+
+/// R-06 — online, and the speed test RAN and failed. "Did not complete" is true.
+bool _isVerdictOnlineUnmeasuredMeasureFailed(AnalyzeInput i) =>
+    _isVerdictOnlineUnmeasured(i) && !i.speedTestSkipped;
+
+/// R-06S — online, and the speed test was never run (the user declined the
+/// cellular-data cost). Mutually exclusive with the above, so exactly one fires.
+bool _isVerdictOnlineUnmeasuredSkipped(AnalyzeInput i) =>
+    _isVerdictOnlineUnmeasured(i) && i.speedTestSkipped;
 
 // B. RSSI, graded with WifiGradingBands (the ratified app bands).
 bool _rssiPoor(AnalyzeInput i) => _rssiIs(i, QualityGrade.poor);
@@ -692,8 +755,13 @@ bool _cloudMixed(AnalyzeInput i) =>
 bool _widthNotCaptured(AnalyzeInput i) =>
     !i.channelWidthAvailable &&
     (i.band != null || i.standard != null);
+/// R-31 fires ONLY when a capture is actually possible: on iOS, with no RF block,
+/// AND with a Wi-Fi link that exists to be captured. A cellular-only phone has no
+/// link, so "tap Capture Wi-Fi details" is advice the user cannot act on and would
+/// not benefit from if they could — the same wrong-kind-of-null (GL-005) as the
+/// stale-reading bug (cold-eyes F2, 2026-07-13).
 bool _wifiNotCaptured(AnalyzeInput i) =>
-    i.platformIsIos && !i.wifiSignalCaptured;
+    i.platformIsIos && !i.wifiSignalCaptured && !i.notOnWifi;
 
 /// R-42 fires off per-service cloud latency, which the in-app engine does not
 /// currently surface as a tally; held false until that datum is threaded

@@ -32,8 +32,162 @@
 import CoreLocation
 import Flutter
 import Foundation
+import Network
 import NetworkExtension
 import UIKit
+
+/// Reports the RAW facts of the device's current network path, via NWPathMonitor.
+///
+/// WHY THIS EXISTS (round 4, 2026-07-13). For three rounds the app answered "is
+/// this device on Wi-Fi?" by asking `network_info_plus` for an IP ADDRESS and
+/// inferring the link from whether one came back. That is the wrong question, and
+/// every bug in rounds 2 and 3 was a consequence of it: the plugin's interface
+/// filter is `strncmp(name, "en", 2)`, which is not Wi-Fi-specific (it matches a
+/// USB-tether `en*` just as happily), and it returns the FIRST address it finds,
+/// which on an associated interface is the link-local `fe80::`.
+///
+/// iOS will answer the real question directly. `NWPathMonitor` reports the
+/// interface TYPES a path runs over, and `nw_interface_type_wifi` is a distinct
+/// type from `_cellular` and `_wired` (pinned in the SDK: Network.framework
+/// Headers/interface.h:47-52, "A Wi-Fi link"). It needs no entitlement and no
+/// Location grant.
+///
+/// THIS CLASS DOES NOT DECIDE ANYTHING. It reports three booleans and lets the
+/// Dart `WifiConnectionService` own the decision table, where every branch is
+/// unit-tested and mutation-proven. A decision made here would be a decision made
+/// in the one place in this codebase that the test suite cannot reach.
+///
+/// WHAT WAS MEASURED (2026-07-13, live NWPathMonitor on macOS 15, same framework):
+///   * On an associated Wi-Fi link: default path `status = satisfied`,
+///     `usesInterfaceType(.wifi) = true`, `availableInterfaces = [en0:wifi]`.
+///     Notably this was true while `networksetup` reported "not associated with an
+///     AirPort network" (the Location-gated SSID read) — the path monitor is
+///     definitive exactly where the SSID read is blind.
+///   * For an interface that cannot carry a path (`requiredInterfaceType:
+///     .wiredEthernet` on a machine with no wired NIC): `status = unsatisfied`,
+///     `usesInterfaceType = false`, `availableInterfaces = []`. That is the shape
+///     an iPhone's Wi-Fi path takes with the radio off, and it is the ONLY shape
+///     the Dart side is permitted to read as `notOnWifi`.
+///
+/// WHAT WAS NOT MEASURED: the behavior on a real iPhone (no device in this loop),
+/// on an unassociated-but-powered Wi-Fi radio, or while hosting a Personal
+/// Hotspot. The Dart decision table treats every ambiguous shape as `unknown`, so
+/// an unmeasured shape degrades to the caller's prior behavior — never to a false
+/// "you have no Wi-Fi". See KNOWN LIMITS in `wifi_connection_service.dart`.
+final class WifiPathMonitor {
+  /// A pending `read` that arrived before the monitors delivered their first path.
+  private final class Waiter {
+    let completion: ([String: Any]) -> Void
+    init(_ completion: @escaping ([String: Any]) -> Void) {
+      self.completion = completion
+    }
+  }
+
+  /// Serial. NWPathMonitor delivers `pathUpdateHandler` on this queue, and every
+  /// mutation of the snapshot/waiter state happens on it, so the state needs no
+  /// further locking.
+  private let queue = DispatchQueue(label: "com.wlanpros.toolbox.wifipath")
+
+  /// The DEFAULT path: what the device is actually routing over right now.
+  private let defaultMonitor = NWPathMonitor()
+
+  /// A path that REQUIRES the Wi-Fi interface. `satisfied` here means a Wi-Fi link
+  /// with a usable route exists, even when the default route runs elsewhere.
+  private let wifiMonitor = NWPathMonitor(requiredInterfaceType: .wifi)
+
+  // NOTE: `NWPath` MUST be module-qualified. NetworkExtension declares its own
+  // legacy `NWPath` class, and this file imports BOTH frameworks (the
+  // NEHotspotNetwork read needs NetworkExtension), so the bare name is
+  // ambiguous and does not compile. Caught by the iOS build, not by review.
+  private var defaultPath: Network.NWPath?
+  private var wifiPath: Network.NWPath?
+  private var waiters: [Waiter] = []
+
+  init() {
+    defaultMonitor.pathUpdateHandler = { [weak self] path in
+      guard let self = self else { return }
+      self.defaultPath = path
+      self.flushIfReady()
+    }
+    wifiMonitor.pathUpdateHandler = { [weak self] path in
+      guard let self = self else { return }
+      self.wifiPath = path
+      self.flushIfReady()
+    }
+    defaultMonitor.start(queue: queue)
+    wifiMonitor.start(queue: queue)
+  }
+
+  deinit {
+    defaultMonitor.cancel()
+    wifiMonitor.cancel()
+  }
+
+  /// Reads the latest path facts. The monitors fire their first update almost
+  /// immediately on `start`, but a `read` racing app launch can still arrive
+  /// first — so an unready read WAITS up to `timeoutMillis` and then answers
+  /// honest-unavailable (`available: false`) rather than guessing. Dart maps
+  /// `available: false` to null and falls back to the address probe.
+  func read(timeoutMillis: Int, completion: @escaping ([String: Any]) -> Void) {
+    queue.async {
+      if let payload = self.readyPayload() {
+        completion(payload)
+        return
+      }
+      let waiter = Waiter(completion)
+      self.waiters.append(waiter)
+      self.queue.asyncAfter(deadline: .now() + .milliseconds(timeoutMillis)) {
+        guard let index = self.waiters.firstIndex(where: { $0 === waiter })
+        else { return }  // already delivered by flushIfReady
+        self.waiters.remove(at: index)
+        waiter.completion(self.readyPayload() ?? WifiPathMonitor.unavailable())
+      }
+    }
+  }
+
+  /// Both monitors have reported at least once → we can answer.
+  private func readyPayload() -> [String: Any]? {
+    guard let d = defaultPath, let w = wifiPath else { return nil }
+    return WifiPathMonitor.facts(defaultPath: d, wifiPath: w)
+  }
+
+  private func flushIfReady() {
+    guard !waiters.isEmpty, let payload = readyPayload() else { return }
+    let pending = waiters
+    waiters = []
+    for waiter in pending { waiter.completion(payload) }
+  }
+
+  /// The RAW facts. Three booleans, no interpretation (see the class note).
+  ///
+  ///   * usesWifi             the DEFAULT route runs over a Wi-Fi interface.
+  ///   * wifiSatisfied        a Wi-Fi-required path has a usable route.
+  ///   * wifiInterfacePresent a Wi-Fi interface appears on either path at all.
+  static func facts(
+    defaultPath d: Network.NWPath,
+    wifiPath w: Network.NWPath
+  ) -> [String: Any] {
+    let wifiOnDefault = d.availableInterfaces.contains { $0.type == .wifi }
+    let wifiOnWifiPath = w.availableInterfaces.contains { $0.type == .wifi }
+    return [
+      "available": true,
+      "usesWifi": d.usesInterfaceType(.wifi),
+      "wifiSatisfied": w.status == .satisfied,
+      "wifiInterfacePresent": wifiOnDefault || wifiOnWifiPath,
+    ]
+  }
+
+  /// The honest "iOS did not answer in time" payload. NOT a negative verdict:
+  /// Dart reads this as null and falls back, never as `notOnWifi`.
+  static func unavailable() -> [String: Any] {
+    return [
+      "available": false,
+      "usesWifi": false,
+      "wifiSatisfied": false,
+      "wifiInterfacePresent": false,
+    ]
+  }
+}
 
 /// Method channel that reads the connected network's security type and BSSID via
 /// NEHotspotNetwork. Self-contained: owns a CLLocationManager so it can request
@@ -52,6 +206,11 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
   /// Pending result for an in-flight `requestLocationPermission` call, held
   /// strongly so it survives until the delegate reports a new status.
   private var pendingPermissionResult: FlutterResult?
+
+  /// The permission-free NWPathMonitor probe (round 4). Long-lived: it is started
+  /// once at channel registration so its first path has almost always landed by
+  /// the time any screen asks, and a `getWifiPath` call is then a snapshot read.
+  private let pathMonitor = WifiPathMonitor()
 
   /// Registers the channel on the given binary messenger.
   init(messenger: FlutterBinaryMessenger) {
@@ -72,6 +231,13 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
     switch call.method {
     case "getSecurityInfo":
       getSecurityInfo(result: result)
+    case "getWifiPath":
+      // The PRIMARY "is this device on Wi-Fi?" signal (round 4). Permission-free:
+      // no entitlement, no Location grant, unlike `getSecurityInfo` above. Raw
+      // facts only — the Dart side owns the verdict.
+      pathMonitor.read(timeoutMillis: 1500) { payload in
+        DispatchQueue.main.async { result(payload) }
+      }
     case "isLocationAuthorized":
       result(isLocationAuthorized())
     case "requestLocationPermission":

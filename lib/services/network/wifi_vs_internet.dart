@@ -80,37 +80,153 @@ enum WifiVsInternetVerdict {
   /// The honest read is "you are online, the speed just could not be measured",
   /// NOT "could not read your Wi-Fi or your internet". See [OnlineEvidence].
   onlineUnmeasured,
+
+  /// THE SENTENCE THIS ENGINE EXISTED TO SAY AND COULD NOT (round 5, 2026-07-14).
+  ///
+  /// The Wi-Fi link is fine. The INTERNET IS NOT REACHABLE — measured, not guessed:
+  /// DNS did not resolve, no public IP was obtained, and not one cloud endpoint
+  /// answered ([OnlineEvidence.isOffline]). "You're on Wi-Fi. Your Wi-Fi works. The
+  /// internet is not reachable."
+  ///
+  /// FOR SIX VERDICTS THERE WAS NO WAY TO SAY THIS. `wifiLimiter`, `upstream`,
+  /// `bothContributing`, `bothHealthy`, `wifiUnknown`, `onlineUnmeasured` — not one
+  /// of them means "the Wi-Fi is up and the internet is not there". So a working
+  /// Wi-Fi link with a dead internet fell into `wifiUnknown` ("Internet not
+  /// measured") and the consumer layer rendered it as "We could not finish the
+  /// check" + "Make sure you are on Wi-Fi" + a RED "Weak" Wi-Fi chip — to a man
+  /// associated to a named AP at 97/77 Mbps. The app's default explanation for
+  /// anything it could not measure was "your Wi-Fi is bad", because that was the
+  /// only explanation it owned.
+  ///
+  /// THE WI-FI AXIS KEEPS ITS MEASURED TIER on this verdict. If we measured 48 Mbps
+  /// usable, we say 48 Mbps. A dead internet is never a reason to downgrade a
+  /// reading we actually took.
+  internetUnreachable,
+
+  /// The network is up, names resolve, endpoints answer — and it has not let us
+  /// onto the internet. A CAPTIVE PORTAL: the sign-in page you meet at every
+  /// conference, hotel and airport. See [OnlineEvidence.isCaptivePortal].
+  ///
+  /// It used to land in the SAME wrong bucket as everything else the app could not
+  /// measure ("Couldn't check" / "make sure you're on Wi-Fi"), which is both false
+  /// and useless: the user IS on Wi-Fi, and the fix is one tap in a browser. A
+  /// conference is exactly where you meet this and the dead-internet case together,
+  /// which is exactly where Keith met them.
+  captivePortal,
 }
 
-/// Independent evidence that the device is genuinely on the internet, used to
-/// distinguish a transient speed-test stall from a real "you are offline" read.
+/// Independent evidence about whether the device can reach the internet at all.
 ///
 /// These three signals are gathered by the screen OUTSIDE the throughput
 /// measurement (the DNS probe, the public-IP lookup, and the cloud-app
 /// reachability panel), so they stay valid even when the speed test itself
-/// stalls. When all three are present the engine produces
-/// [WifiVsInternetVerdict.onlineUnmeasured] in place of the bleak "could not
-/// read" verdict, in Keith's calm, conclusion-first voice. A pure value object.
+/// stalls. A pure value object.
+///
+/// ─────────────────────────────────────────────────────────────────────────────
+/// ROUND 5 (2026-07-14): ITS NEGATIVE WAS GATHERED AND THROWN AWAY.
+///
+/// This class was READ ONLY AS A POSITIVE. All three true → `onlineUnmeasured`;
+/// anything else → nothing. So when all three came back FALSE — DNS did not
+/// resolve, no public IP, not one cloud endpoint answered, which is a DEFINITIVE
+/// "the internet is not reachable" — the engine had no verdict to express it with
+/// and fell through to `wifiUnknown` / "Internet not measured". The app printed
+/// **"Couldn't check"** about an internet it had checked three ways and got a
+/// definitive NO from, told a man plainly associated to a named AP to *"make sure
+/// you are on Wi-Fi"*, and graded his 97/77 Mbps link **"Weak" in red** — while
+/// printing its rate two inches below. It reached for "your Wi-Fi is bad" because
+/// that was the only thing it could say.
+///
+/// THE FIX IS NOT NEW MEASUREMENT. Every byte of evidence was already here. It was
+/// being discarded because nothing in the type could carry a NO.
+///
+/// ─────────────────────────────────────────────────────────────────────────────
+/// WHY THE FIELDS ARE NULLABLE, AND WHY THAT IS THE WHOLE FIX
+///
+/// They used to default to `false`, which collapsed TWO DIFFERENT STATES into one:
+///
+///   * "the probe answered, and the answer was NO"   → definitively offline
+///   * "the probe has not come back yet"             → we know nothing
+///
+/// The screen builds this in `onDone`, and the DNS / ISP / cloud probes land
+/// ASYNCHRONOUSLY, often AFTER the measurement completes (which is exactly why
+/// `_recomputeVerdict` exists). So at the moment the verdict is first computed, a
+/// pending probe and a failed probe were INDISTINGUISHABLE — both `false`. A naive
+/// "all three false means offline" would have fired on every single run, mid-probe,
+/// and told healthy users their internet was down.
+///
+/// That is the two-kinds-of-null error ([[feedback_unsourced_is_not_invalid]]) one
+/// level deeper than the four this codebase has already fixed. `null` now means
+/// UNANSWERED. The screen's own `AnalyzeInput` already made exactly this
+/// distinction for cloud reachability (`cloud.isEmpty ? null : …`) — the
+/// information was there; this class simply refused to accept it.
+///
+/// (No `@immutable` annotation: this file is PURE DART by design — no Flutter
+/// imports, no `package:meta` — so the whole verdict matrix stays unit-testable
+/// with plain values and no radio. See the header.)
 class OnlineEvidence {
-  /// Creates an evidence snapshot.
+  /// Creates an evidence snapshot. Every signal defaults to `null` — UNANSWERED,
+  /// not "no". A caller that has gathered nothing asserts nothing.
   const OnlineEvidence({
-    this.dnsResolved = false,
-    this.publicIpObtained = false,
-    this.cloudReachable = false,
+    this.dnsResolved,
+    this.publicIpObtained,
+    this.cloudReachable,
   });
 
-  /// True when a DNS lookup resolved a host this run.
-  final bool dnsResolved;
+  /// True when a DNS lookup resolved a host this run; false when it definitively
+  /// failed; NULL when the probe has not answered yet.
+  final bool? dnsResolved;
 
-  /// True when the public-IP / ISP lookup returned an address.
-  final bool publicIpObtained;
+  /// True when the public-IP / ISP lookup returned an address; false when it
+  /// definitively failed; NULL when it has not answered yet.
+  ///
+  /// This is the signal a CAPTIVE PORTAL kills. The lookup is an HTTPS GET whose
+  /// JSON must parse; a portal intercepting the connection cannot forge the TLS,
+  /// so it fails — while DNS (hijacked, so it "resolves") and the cloud TCP probes
+  /// (accepted by the portal, so they "connect") both still say yes.
+  final bool? publicIpObtained;
 
-  /// True when at least one cloud-app reachability probe succeeded.
-  final bool cloudReachable;
+  /// True when at least one cloud-app reachability probe succeeded; false when
+  /// every one of them definitively failed; NULL when none has answered yet.
+  final bool? cloudReachable;
 
-  /// All three signals present: the device is clearly online, so a missing
-  /// throughput number is a stalled speed test, not an offline link.
-  bool get isOnline => dnsResolved && publicIpObtained && cloudReachable;
+  /// All three ANSWERED and all three said YES: the device is clearly online, so a
+  /// missing throughput number is a stalled speed test, not an offline link.
+  bool get isOnline =>
+      dnsResolved == true &&
+      publicIpObtained == true &&
+      cloudReachable == true;
+
+  /// All three ANSWERED and all three said NO: the internet is DEFINITIVELY NOT
+  /// REACHABLE. This is a MEASUREMENT, not a failure to measure.
+  ///
+  /// THE THIRD KIND OF NULL BEHIND A MISSING SPEED. "We failed to measure it" is not
+  /// "we chose not to" is not "WE MEASURED IT AND THERE IS NOTHING THERE." A
+  /// definitively-offline internet is the third, and until round 5 it was printed as
+  /// the first ("Couldn't check").
+  ///
+  /// Note the `== false` on every term: a pending probe is `null` and CANNOT satisfy
+  /// this. Nothing here fires until all three have actually reported.
+  bool get isOffline =>
+      dnsResolved == false &&
+      publicIpObtained == false &&
+      cloudReachable == false;
+
+  /// The CAPTIVE-PORTAL signature: names resolve and endpoints answer, but we
+  /// cannot obtain a public IP. Something is terminating the connection short of
+  /// the internet, and on a conference or hotel SSID that something is a sign-in
+  /// page. (Keith met both shapes on the same conference network.)
+  ///
+  /// STATED HONESTLY: this is an INFERENCE from a signature, not a measurement of a
+  /// portal. That is why the copy it drives says the network "has not let you onto
+  /// the internet" (certain — we hold no public IP) and that a sign-in page "should"
+  /// appear (inferred). GL-005 requires the hedge HERE precisely because the claim
+  /// is genuinely uncertain — which is the opposite of hedging a figure we could
+  /// have derived exactly (see [kCellularDataWarning]). Two different acts; only one
+  /// of them is dishonest.
+  bool get isCaptivePortal =>
+      dnsResolved == true &&
+      cloudReachable == true &&
+      publicIpObtained == false;
 }
 
 /// Which negotiated rates fed the link-rate figure. Drives the honest "averaged
@@ -160,7 +276,22 @@ class WifiVsInternetResult {
     required this.linkRateMbps,
     required this.ratio,
     this.notOnWifi = false,
+    this.speedTestSkipped = false,
   });
+
+  /// True when the internet throughput was NOT MEASURED BY CHOICE — the user
+  /// declined the cellular-data cost of the speed test (Keith, 2026-07-13).
+  ///
+  /// This is a THIRD kind of null behind a missing internet rate, and it needs its
+  /// own word for the same reason `notOnWifi` did:
+  ///
+  ///   * failed   — we ran the speed test and it could not complete.
+  ///   * SKIPPED  — we never ran it. Nothing failed. "The speed test did not
+  ///                complete" is a false statement about a test that was never
+  ///                started, and "Couldn't check" is a false claim of incapacity.
+  ///
+  /// Defaults to false, so every existing caller keeps its exact prior behavior.
+  final bool speedTestSkipped;
 
   /// True when the caller's connection probe POSITIVELY reported the device is
   /// not on Wi-Fi (cellular-only). Distinguishes the TWO KINDS OF NULL behind a
@@ -240,6 +371,7 @@ class WifiVsInternetEngine {
     required InternetHealth internetHealth,
     OnlineEvidence onlineEvidence = const OnlineEvidence(),
     bool notOnWifi = false,
+    bool speedTestSkipped = false,
   }) {
     // --- Link rate: avg(Tx, Rx) with single-rate fallback. ---
     final bool hasTx = txRateMbps != null && txRateMbps > 0;
@@ -295,9 +427,22 @@ class WifiVsInternetEngine {
       return WifiVsInternetResult(
         verdict: WifiVsInternetVerdict.onlineUnmeasured,
         headline: 'You are online',
-        explanation:
-            'Your internet is reachable, but the speed test did not complete, '
-            'so its speed could not be measured. Try again in a moment.',
+        // THREE KINDS OF NULL BEHIND A MISSING SPEED (GL-005). "The speed test
+        // did not complete" is a statement about a test that RAN and FAILED. When
+        // the user declined the cellular-data cost, no test ran, nothing failed,
+        // and telling them to "try again in a moment" invites them to burn the
+        // data they just chose not to spend.
+        // ROUND 5: "Connect to Wi-Fi" ASSERTED that the user was not on Wi-Fi. Since
+        // the consent gate began failing closed, a skipped test also happens on a
+        // link we could not IDENTIFY — which may well be Wi-Fi. Naming the PURPOSE
+        // ("to avoid spending cellular data") is true in both cases; naming the LINK
+        // is a fact we do not always have.
+        explanation: speedTestSkipped
+            ? 'Your internet is reachable. The speed test was skipped to avoid '
+                  'spending cellular data, so its speed was not measured. Run the '
+                  'speed test to measure it.'
+            : 'Your internet is reachable, but the speed test did not complete, '
+                  'so its speed could not be measured. Try again in a moment.',
         snrContext: basis == WifiRateBasis.none ? '' : snrContext,
         rateBasis: basis,
         usableWifiMbps: usableWifi,
@@ -305,6 +450,80 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: null,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
+      );
+    }
+
+    // ========================================================================
+    // --- THE INTERNET IS DEFINITIVELY NOT THERE (round 5, 2026-07-14). ---
+    //
+    // These two branches read [OnlineEvidence]'s NEGATIVE, which was gathered and
+    // discarded for the entire life of this engine. They sit ABOVE the
+    // `basis == none` and `ratio == null` fall-throughs deliberately: those are the
+    // "we could not measure it" paths, and the whole point is that we DID measure
+    // it. A definitive NO is a result, not a gap.
+    //
+    // GUARDED ON `!notOnWifi`. A cellular-only phone has no Wi-Fi story to tell, and
+    // its honest "Not connected to Wi-Fi" copy is the one Keith verified on his own
+    // phone today. These verdicts are about a WORKING WI-FI LINK with a dead
+    // internet behind it, so they never fire for a device that is not on Wi-Fi.
+    // ========================================================================
+
+    // CAPTIVE PORTAL first: it is a strict sub-case of "no internet" (we hold no
+    // public IP) but it has a completely different fix — one tap in a browser, not a
+    // call to the ISP — so it must be tested before the general offline verdict. The
+    // two are mutually exclusive by construction anyway (this needs `dnsResolved ==
+    // true`, `isOffline` needs `dnsResolved == false`), so the order is belt and
+    // braces rather than load-bearing. Both stay true.
+    if (internet == null && !notOnWifi && onlineEvidence.isCaptivePortal) {
+      final bool haveRate = basis != WifiRateBasis.none;
+      return WifiVsInternetResult(
+        verdict: WifiVsInternetVerdict.captivePortal,
+        headline: 'Sign in to this network',
+        explanation: haveRate
+            ? 'Your Wi-Fi link is working (${_mbps(usableWifi)} usable). This '
+                  'network has not let you onto the internet yet, which is what a '
+                  'sign-in page does. Open your browser and it should appear.'
+            : 'This network has not let you onto the internet yet, which is what '
+                  'a sign-in page does. Open your browser and it should appear.',
+        snrContext: haveRate ? snrContext : '',
+        rateBasis: basis,
+        usableWifiMbps: usableWifi,
+        internetMbps: null,
+        linkRateMbps: linkRate,
+        ratio: null,
+        notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
+      );
+    }
+
+    // THE INTERNET IS NOT REACHABLE. All three probes answered, all three said no.
+    if (internet == null && !notOnWifi && onlineEvidence.isOffline) {
+      final bool haveRate = basis != WifiRateBasis.none;
+      return WifiVsInternetResult(
+        verdict: WifiVsInternetVerdict.internetUnreachable,
+        headline: 'No internet',
+        // NAME THE WI-FI AS WORKING WHEN WE MEASURED IT WORKING. This is the exact
+        // sentence the app could not say, and the reason it kept blaming the Wi-Fi.
+        // "Working" and the chip's "Weak" do not contradict: a link can be up,
+        // carrying traffic, AND slow. It cannot be the cause of an internet that is
+        // not answering at all, and that is the claim being made here.
+        explanation: haveRate
+            ? "You're connected to Wi-Fi and your Wi-Fi link is working "
+                  '(${_mbps(usableWifi)} usable). Nothing beyond it is answering: '
+                  'no DNS, no internet address, and no site we tried. The problem '
+                  'is past your Wi-Fi, not in it.'
+            : 'Nothing on the internet is answering: no DNS, no internet address, '
+                  'and no site we tried. The problem is upstream, at your router '
+                  'or your provider.',
+        snrContext: haveRate ? snrContext : '',
+        rateBasis: basis,
+        usableWifiMbps: usableWifi,
+        internetMbps: null,
+        linkRateMbps: linkRate,
+        ratio: null,
+        notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -347,6 +566,7 @@ class WifiVsInternetEngine {
         linkRateMbps: null,
         ratio: null,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -370,6 +590,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: ratio,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -391,6 +612,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: null,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -415,6 +637,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: ratio,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 
@@ -433,6 +656,7 @@ class WifiVsInternetEngine {
         linkRateMbps: linkRate,
         ratio: ratio,
         notOnWifi: notOnWifi,
+        speedTestSkipped: speedTestSkipped,
       );
     }
 

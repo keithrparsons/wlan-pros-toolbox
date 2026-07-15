@@ -36,6 +36,25 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 const MethodChannel _networkInfoChannel =
     MethodChannel('dev.fluttercommunity.plus/network_info');
 
+/// The ANDROID TRANSPORT channel (round-4b, 2026-07-14) — stubbed for the SAME
+/// reason as the one above, and it must be stubbed for these tests to settle.
+///
+/// WHY IT LANDS HERE, IN A TEST ABOUT WI-FI IDENTITY CACHING. `InterfaceInfoService`
+/// resolves its `notOnWifi` flag through `WifiConnectionService.status()`
+/// (interface_info_service.dart:328), which builds its own service with NO
+/// `platformOverride` — so it runs as `defaultTargetPlatform`, and IN A FLUTTER
+/// WIDGET TEST THAT IS `TargetPlatform.android`. The new Android transport probe
+/// therefore fires here, hits an unstubbed channel, and the resulting async round
+/// trip does NOT settle inside the fixed `pump()` count these tests use — so the
+/// snapshot future never completes and the cached identity never renders.
+///
+/// `available: false` is the HONEST "we could not read the transport" payload. It
+/// resolves to `WifiConnectionStatus.unknown`, which is EXACTLY what this service
+/// got on Android before round 4b — so these tests assert the same behavior they
+/// always did, and the stub is a fidelity fix, not a workaround.
+const MethodChannel _networkTransportChannel =
+    MethodChannel('com.wlanpros.toolbox/network_transport');
+
 /// A bridge whose `runShortcut` is scripted: it never touches a method channel.
 /// `opened` controls whether the one-shot bounce "succeeds" (true) or fails to
 /// open (false → the screen drops the pending state).
@@ -63,10 +82,20 @@ void main() {
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_networkInfoChannel, (call) async => null);
+    // Honest "the transport could not be read" → `unknown`, which is what this
+    // service resolved to on Android before the transport probe existed. Same
+    // behavior, now stated instead of inherited.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      _networkTransportChannel,
+      (MethodCall call) async => <String, Object?>{'available': false},
+    );
   });
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_networkInfoChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_networkTransportChannel, null);
   });
 
   Widget host(Widget child) =>

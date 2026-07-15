@@ -313,8 +313,14 @@ void main() {
         expect(v.headline, 'You are online');
         expect(v.body, contains('reachable'));
         expect(v.body, contains('Try again in a moment'));
-        // No measured internet rate → honest Unknown internet chip (GL-005).
-        expect(v.internetStatus, AxisStatus.unknown);
+        // No measured internet rate — but the internet is DEMONSTRABLY REACHABLE
+        // (this verdict is only emitted when DNS, the public IP and the cloud-app
+        // probe all succeeded). "Couldn't check" would claim a failed read about a
+        // read that SUCCEEDED, and it sat one line above "Your internet is
+        // reachable" on Keith's phone (2026-07-14). Name the thing we actually do
+        // not know: the speed. See [AxisStatus.reachableUnmeasured].
+        expect(v.internetStatus, AxisStatus.reachableUnmeasured);
+        expect(v.internetStatus, isNot(AxisStatus.unknown));
         // The body must NOT scold the user to get on Wi-Fi.
         expect(v.body, isNot(contains('Make sure')));
       },
@@ -429,6 +435,111 @@ void main() {
       expect(v.outcome, ConsumerOutcome.couldntComplete);
       expect(v.wifiStatus, AxisStatus.unknown);
       expect(v.internetStatus, AxisStatus.unknown);
+    });
+  });
+
+  // ==========================================================================
+  // ConsumerVerdict.sameRealTier — the ONE "both sides are X" guard (round 4).
+  //
+  // Test My Connection has TWO same-tier sentences (the hero and the verdict
+  // line). Each used to carry its own hand-rolled copy of this guard, and they had
+  // ALREADY DRIFTED: the hero excluded AxisStatus.notApplicable, the verdict line
+  // did not, and NEITHER excluded notMeasured.
+  //
+  // Nothing could actually misfire — ConsumerVerdictMapper can only ever set
+  // wifiStatus to notApplicable (never notMeasured) and internetStatus to
+  // notMeasured (never notApplicable), so the two axes can never be EQUAL on a
+  // non-tier value. That made the drift harmless AND invisible: a mutation of the
+  // dead clause survived, because the clause is unreachable from the screen.
+  //
+  // The resolution is not to delete the defense, it is to make it REACHABLE — one
+  // shared function, called directly, with every AxisStatus pair driven through it.
+  // A guard that cannot be exercised is a guard nobody can trust, and it is exactly
+  // the shape that invites a later "cleanup" to remove the wrong half.
+  // ==========================================================================
+  group('ConsumerVerdict.sameRealTier', () {
+    ConsumerVerdict verdictWith(AxisStatus wifi, AxisStatus internet) =>
+        ConsumerVerdict(
+          outcome: ConsumerOutcome.bothFine,
+          wifiStatus: wifi,
+          internetStatus: internet,
+          headline: 'h',
+          body: 'b',
+          selfHelp: SelfHelpTopic.wifi,
+        );
+
+    const List<AxisStatus> realTiers = <AxisStatus>[
+      AxisStatus.strong,
+      AxisStatus.moderate,
+      AxisStatus.weak,
+    ];
+    const List<AxisStatus> nonTiers = <AxisStatus>[
+      AxisStatus.unknown,
+      AxisStatus.notApplicable,
+      AxisStatus.notMeasured,
+      // Reachable, but the speed test failed: there is no measured RATE behind
+      // it, so it is not a real tier — the internet is up, we just cannot say
+      // how fast. (2026-07-14.)
+      AxisStatus.reachableUnmeasured,
+      // NOT REACHABLE AT ALL. A definitive negative, and the only "no number"
+      // state that is a genuine FAULT (it is the one wearing the danger hue). It
+      // is still NOT a real tier: there is no rate behind it, so it must never be
+      // able to produce a "both sides are X" sentence. (Round 5, 2026-07-14.)
+      //
+      // THIS GUARD IS WHY THAT DECISION GOT MADE DELIBERATELY INSTEAD OF BY
+      // ACCIDENT. Adding the member broke this test, which forced the question.
+      AxisStatus.unreachable,
+    ];
+
+    test('equal REAL tiers return that tier', () {
+      for (final AxisStatus t in realTiers) {
+        expect(verdictWith(t, t).sameRealTier(), t,
+            reason: '$t on both axes is a genuine same-tier result');
+      }
+    });
+
+    test('EVERY equal NON-tier pair returns null (the whitelist)', () {
+      // THE MUTATION TARGET. Flip any of these three to `return wifiStatus` and a
+      // cellular-only phone can read "Both sides are Not connected."
+      for (final AxisStatus t in nonTiers) {
+        expect(verdictWith(t, t).sameRealTier(), isNull,
+            reason: '$t is not a measured tier. Two axes agreeing that they have '
+                'NOTHING is not "both sides are the same" — it is two absences, '
+                'and "Both sides are $t" is gibberish.');
+      }
+    });
+
+    test('the cellular-only shape never produces a same-tier sentence', () {
+      // Keith's device, stated as the pair it actually produces: the Wi-Fi axis is
+      // notApplicable (no link) while the internet axis carries a real measured
+      // tier. Unequal, so null — but pin it explicitly, because THIS is the pair
+      // the guard exists to stop.
+      for (final AxisStatus t in realTiers) {
+        expect(verdictWith(AxisStatus.notApplicable, t).sameRealTier(), isNull);
+        expect(verdictWith(t, AxisStatus.notMeasured).sameRealTier(), isNull);
+      }
+    });
+
+    test('UNEQUAL axes always return null, across the whole matrix', () {
+      for (final AxisStatus w in AxisStatus.values) {
+        for (final AxisStatus i in AxisStatus.values) {
+          if (w == i) continue;
+          expect(verdictWith(w, i).sameRealTier(), isNull,
+              reason: 'wifi=$w internet=$i are not the same tier');
+        }
+      }
+    });
+
+    test('the matrix is exhaustive — every AxisStatus member is covered', () {
+      // If a member is added to AxisStatus, it lands in neither list and this
+      // fails, forcing a deliberate decision about which side it belongs on
+      // rather than silently defaulting into the "both sides are X" sentence.
+      expect(
+        <AxisStatus>{...realTiers, ...nonTiers},
+        AxisStatus.values.toSet(),
+        reason: 'a new AxisStatus must be explicitly classified as a real tier '
+            'or a non-tier — never left to fall through',
+      );
     });
   });
 }

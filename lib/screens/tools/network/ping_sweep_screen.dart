@@ -589,10 +589,14 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
+                // No em dash (GL-004 P0, [[feedback_no_em_dashes]]): this string is
+                // published in Keith's voice and is reproduced verbatim on a
+                // LinkedIn graphic. The point of the sentence is that SILENCE IS
+                // NOT PROOF OF ABSENCE, and it must survive the rewrite intact.
                 'No hosts answered on TCP $_port across $_total '
                 'address${_total == 1 ? '' : 'es'}. That does not mean the '
-                'subnet is empty — hosts that are ICMP-only or that firewall '
-                'TCP $_port will not appear. Try another common port.',
+                'subnet is empty. Hosts that are ICMP-only, or that firewall '
+                'TCP $_port, will not appear. Try another common port.',
                 style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),
             )
