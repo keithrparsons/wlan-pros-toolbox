@@ -114,6 +114,10 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           onDone: () {
             if (!mounted) return;
             setState(() => _running = false);
+            // A run that ended in an error (e.g. an unresolvable host) already
+            // set _error; do not also announce a "0 of 0 replies" completion
+            // that would contradict the honest resolve-failure line.
+            if (_error != null) return;
             final String avg = _stats.avgMs == null
                 ? 'no replies'
                 : 'average ${_stats.avgMs!.toStringAsFixed(1)} milliseconds';

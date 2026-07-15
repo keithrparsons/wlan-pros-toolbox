@@ -146,6 +146,10 @@ class _PingScreenState extends State<PingScreen> {
           onDone: () {
             if (!mounted) return;
             setState(() => _running = false);
+            // A run that ended in an error (e.g. an unresolvable host) already
+            // set _error; do not also announce a "0 of 0 replies" completion
+            // that would contradict the honest resolve-failure line.
+            if (_error != null) return;
             // WCAG 4.1.3 — announce the final summary to assistive tech.
             final String avg = _stats.avgMs == null
                 ? 'no replies'
@@ -160,7 +164,11 @@ class _PingScreenState extends State<PingScreen> {
             if (!mounted) return;
             setState(() {
               _running = false;
-              _error = 'Ping error: $e';
+              // A name that could not be resolved gets the honest "couldn't
+              // resolve" line, NOT a 100%-loss summary. No probe was sent, so
+              // _stats.sent stays 0 and no summary/replies card renders.
+              _error =
+                  e is PingUnresolvedHostException ? e.message : 'Ping error: $e';
             });
           },
         );

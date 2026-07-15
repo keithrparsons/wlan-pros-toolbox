@@ -68,7 +68,7 @@ void main() {
       );
       final List<PingProgress> ticks = await svc
           .ping(
-            host: 'h',
+            host: '1.1.1.1',
             count: 1,
             interval: Duration.zero,
           )
@@ -90,7 +90,7 @@ void main() {
         },
       );
       final List<PingProgress> ticks = await svc
-          .ping(host: 'h', count: 1, interval: Duration.zero)
+          .ping(host: '1.1.1.1', count: 1, interval: Duration.zero)
           .toList();
       expect(ticks.single.reply.success, isTrue,
           reason: 'a RST proves reachability — tcping semantics');
@@ -115,7 +115,7 @@ void main() {
       );
       final List<PingProgress> ticks = await svc
           .ping(
-            host: 'h',
+            host: '1.1.1.1',
             count: 1,
             interval: Duration.zero,
             timeout: const Duration(milliseconds: 60),
@@ -132,7 +132,7 @@ void main() {
         connector: (host, port, {required timeout}) async => _FakeSocket(),
       );
       final List<PingProgress> ticks = await svc
-          .ping(host: 'h', count: 3, interval: Duration.zero)
+          .ping(host: '1.1.1.1', count: 3, interval: Duration.zero)
           .toList();
       expect(ticks.length, 3);
       expect(ticks.first.stats.sent, 1);
@@ -152,7 +152,7 @@ void main() {
       final Completer<void> done = Completer<void>();
       svc
           .ping(
-            host: 'h',
+            host: '1.1.1.1',
             count: 0, // continuous
             interval: const Duration(milliseconds: 5),
           )
@@ -164,6 +164,90 @@ void main() {
       // Continuous run keeps going until the stream is cancelled by the
       // subscription; assert we got several but not unbounded in this window.
       expect(got.isNotEmpty, isTrue);
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // An UNRESOLVABLE name is "couldn't resolve", not "100% loss" (parity with
+  // the ICMP Ping fix). TCP Ping had the same shape: a DNS failure was
+  // classified `lookup failed` and counted as loss, so an unresolvable name
+  // reported a misleading 100%-loss summary. The fix resolves BEFORE probing
+  // and surfaces a typed [PingUnresolvedHostException] with zero probes sent.
+  // Exercised with an injected resolver — zero real DNS.
+  // ───────────────────────────────────────────────────────────────────────────
+  group('ping() with an UNRESOLVABLE hostname (parity)', () {
+    test('reports a resolution failure, NOT a 100%-loss summary', () async {
+      bool connectorCalled = false;
+      final PingService svc = PingService(
+        resolver: (String h) async => null, // cannot resolve any name
+        connector: (host, port, {required timeout}) async {
+          connectorCalled = true;
+          // If the OLD (pre-fix) path ran, this lookup failure would classify
+          // as `lookup failed`, count as loss, and the stream would summarize
+          // it as one sent / zero received = 100% loss. The fix must never
+          // reach the connector for an unresolvable name.
+          throw const SocketException(
+            "Failed host lookup: '192.168.1.b'",
+            osError: OSError('nodename nor servname provided, or not known', 8),
+          );
+        },
+      );
+
+      final List<PingProgress> ticks = <PingProgress>[];
+      Object? caught;
+      final Completer<void> done = Completer<void>();
+      svc.ping(host: '192.168.1.b', count: 1, interval: Duration.zero).listen(
+            ticks.add,
+            onError: (Object e) => caught = e,
+            onDone: done.complete,
+            cancelOnError: false,
+          );
+      await done.future;
+
+      expect(
+        ticks,
+        isEmpty,
+        reason: 'A resolution failure must not produce a packet-loss summary '
+            '(no probe was sent). On the bug this held one 100%-loss tick.',
+      );
+      expect(caught, isA<PingUnresolvedHostException>());
+      expect((caught! as PingUnresolvedHostException).host, '192.168.1.b');
+      expect(
+        (caught! as PingUnresolvedHostException).message,
+        contains("Couldn't resolve"),
+      );
+      expect(
+        connectorCalled,
+        isFalse,
+        reason: 'no probe is sent for a name that cannot be resolved',
+      );
+    });
+
+    test('a resolvable hostname still pings normally', () async {
+      final PingService svc = PingService(
+        resolver: (String h) async => '93.184.216.34',
+        connector: (host, port, {required timeout}) async => _FakeSocket(),
+      );
+      final List<PingProgress> ticks = await svc
+          .ping(host: 'example.com', count: 1, interval: Duration.zero)
+          .toList();
+      expect(ticks.length, 1);
+      expect(ticks.single.reply.success, isTrue);
+      expect(ticks.single.stats.received, 1);
+      expect(ticks.single.stats.lossFraction, 0);
+    });
+
+    test('an IP literal skips DNS and pings even when the resolver is dead',
+        () async {
+      final PingService svc = PingService(
+        resolver: (String h) async => null, // would fail every NAME
+        connector: (host, port, {required timeout}) async => _FakeSocket(),
+      );
+      final List<PingProgress> ticks = await svc
+          .ping(host: '1.1.1.1', count: 1, interval: Duration.zero)
+          .toList();
+      expect(ticks.length, 1, reason: 'An IP literal is its own resolution.');
+      expect(ticks.single.reply.success, isTrue);
     });
   });
 }

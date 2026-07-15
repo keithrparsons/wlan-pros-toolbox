@@ -31,7 +31,35 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'network_target.dart';
 import 'tcp_probe_classifier.dart';
+
+/// Thrown into the TCP ping stream when the target hostname cannot be resolved
+/// to any IP address.
+///
+/// Parallel to `IcmpUnresolvedHostException` (same wording) so BOTH ping tools
+/// report an unresolvable name identically. It is deliberately DISTINCT from
+/// packet loss: loss means a real host was contacted and did not answer, while
+/// a resolution failure means no host was ever contacted, because the name
+/// could not be turned into an address. Collapsing the two into one "100% loss"
+/// summary is the misleading report this fixes (the two-kinds-of-null
+/// distinction, GL-005). The screen surfaces [message] and renders no
+/// packet-loss summary, because no probe was ever sent.
+class PingUnresolvedHostException implements Exception {
+  const PingUnresolvedHostException(this.host);
+
+  /// The user-entered host string that failed to resolve.
+  final String host;
+
+  /// GL-004-clean, user-facing explanation. Verdict first (what happened), then
+  /// what to do. No em dash.
+  String get message =>
+      'Couldn\'t resolve "$host". Check the name for a typo, or enter an IP '
+      'address.';
+
+  @override
+  String toString() => message;
+}
 
 /// One probe attempt (one "ping").
 class PingReply {
@@ -147,10 +175,17 @@ class PingService {
   PingService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
         connector,
-  }) : _connect = connector ?? _defaultConnect;
+    Future<String?> Function(String host)? resolver,
+  })  : _connect = connector ?? _defaultConnect,
+        _resolve = resolver ?? _defaultResolve;
 
   final Future<Socket> Function(String host, int port,
       {required Duration timeout}) _connect;
+
+  /// How a hostname becomes an IP for the pre-probe resolvability gate.
+  /// Injected in tests so the resolve-failure path is exercised with zero DNS
+  /// (mirrors the IcmpService resolver seam).
+  final Future<String?> Function(String host) _resolve;
 
   static Future<Socket> _defaultConnect(
     String host,
@@ -158,6 +193,18 @@ class PingService {
     required Duration timeout,
   }) {
     return Socket.connect(host, port, timeout: timeout);
+  }
+
+  /// Real DNS resolution. Returns the first address, or null on any failure —
+  /// an unresolvable host is a normal outcome here, not an exception.
+  static Future<String?> _defaultResolve(String host) async {
+    try {
+      final List<InternetAddress> addrs = await InternetAddress.lookup(host);
+      if (addrs.isEmpty) return null;
+      return addrs.first.address;
+    } on Object {
+      return null;
+    }
   }
 
   /// Default probe port. 443 answers on the vast majority of reachable hosts
@@ -187,6 +234,29 @@ class PingService {
     cancel?.then((_) => cancelled = true);
 
     Future<void> run() async {
+      // Resolve the target BEFORE probing so a name that cannot be resolved is
+      // reported honestly as a resolution failure (a [PingUnresolvedHostException]
+      // on the stream) and NEVER summarized as 100% packet loss. Parity with
+      // IcmpService.ping. An IP literal is its own resolution and skips DNS
+      // entirely, so its behavior is unchanged; on success we probe the ORIGINAL
+      // host string (Socket.connect resolves again as before) so the actual
+      // target is untouched — this resolve is purely the is-it-resolvable gate.
+      final String h = host.trim();
+      if (!(NetworkTarget.isIpv4(h) || NetworkTarget.isIpv6(h))) {
+        final String? resolved = await _resolve(h);
+        if (cancelled) {
+          if (!controller.isClosed) await controller.close();
+          return;
+        }
+        if (resolved == null) {
+          if (!controller.isClosed) {
+            controller.addError(PingUnresolvedHostException(h));
+            await controller.close();
+          }
+          return;
+        }
+      }
+
       PingStats stats = PingStats.empty;
       int seq = 0;
       final bool continuous = count <= 0;
