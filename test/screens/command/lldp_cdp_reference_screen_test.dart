@@ -1,6 +1,6 @@
 // Tests for the Find the Switch and Port (LLDP/CDP) reference screen.
 //
-// Dataset assertions guard the command strings against drift from Pax's
+// Dataset assertions guard the command strings against drift from the fact-check's
 // commands-verified.md (the ONLY safe source): the numeric pktmon EtherType form
 // (never the UNVERIFIED `-d LLDP` keyword), the exact lldpcli spellings
 // (`summary` / `details`, not `detail`), and the CDP MAC (CDP has no EtherType).
@@ -43,7 +43,7 @@ void main() {
       .commandGroups
       .firstWhere((LldpCommandGroup g) => g.label.contains(needle));
 
-  group('LLDP/CDP reference — verified commands (Pax commands-verified.md)', () {
+  group('LLDP/CDP reference — verified commands (verified command reference)', () {
     test('macOS LLDP one-liner is the exact verified tcpdump filter', () {
       final LldpCommandGroup mac = groupByLabel('macOS');
       expect(

@@ -7,8 +7,8 @@
 // sniffs nothing (GL-008). It points the user at the tools already on the machine
 // in front of them and shows the exact commands to run there.
 //
-// Content of record: Penn's reference-content.md (six sections). Command strings:
-// Pax's commands-verified.md - used verbatim, never any others. Two Pax rules are
+// Content of record: the fact-checked reference content (six sections). Command strings:
+// the verified command reference - used verbatim, never any others. Two verification rules are
 // honored here:
 //  1. Windows pktmon filters use the NUMERIC form `--ethertype 0x88CC`, never the
 //     build-specific `-d LLDP` keyword (UNVERIFIED / not in Microsoft's documented
@@ -49,7 +49,7 @@ import '../concept_graphic_band.dart';
 class LldpCommand {
   const LldpCommand(this.command, this.note);
 
-  /// The exact command syntax, verbatim from Pax's commands-verified.md.
+  /// The exact command syntax, verbatim from the verified command reference.
   final String command;
 
   /// What it does / when to reach for it.
@@ -134,7 +134,7 @@ class LldpCdpReferenceScreen extends StatelessWidget {
   ];
 
   /// The command groups, one per place you can read the frame. Every string is
-  /// verbatim from Pax's commands-verified.md. Public + static so tests assert
+  /// verbatim from the verified command reference. Public + static so tests assert
   /// the exact verified syntax and _copyText() is built from the same source.
   static const List<LldpCommandGroup> commandGroups = <LldpCommandGroup>[
     LldpCommandGroup(
