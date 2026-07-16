@@ -234,7 +234,7 @@ String _helpPlainText(ToolHelp help) {
         if (i.unit.isNotEmpty) 'unit: ${i.unit}',
         if (i.range.isNotEmpty) 'range: ${i.range}',
       ];
-      b.writeln('- ${parts.join(' — ')}');
+      b.writeln('- ${parts.join(', ')}');
     }
     b.writeln();
   }

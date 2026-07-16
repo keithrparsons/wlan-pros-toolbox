@@ -13,22 +13,26 @@
 // runs, on every runner, and can always fail.
 //
 // WHAT IT SCANS (the reader, not the grep hit, per GL-005):
-//   1. lib/**/*.dart  -> STRING LITERALS only. A char-state tokenizer strips
-//      line/block/doc comments and raw/triple/single/double strings, so the
-//      ~4,000 em dashes that legitimately live in code COMMENTS are never
-//      flagged; only dashes that compile into a rendered string are.
+//   1. lib/**/*.dart  -> STRING LITERALS only, INCLUDING nested string literals
+//      inside ${...} interpolation. A stack-based tokenizer strips line/block/
+//      doc comments and recurses through interpolation, so the ~4,000 em dashes
+//      that legitimately live in code COMMENTS are never flagged, while a dash
+//      hiding in `'a ${cond ? 'x — y' : 'z'}'` IS caught.
 //   2. assets/guides/*.md            -> all prose.
-//   3. assets/help/*.json, assets/data/*.json -> every JSON string VALUE.
-//   4. assets/**/*.svg               -> rendered markup (XML comments stripped).
+//   3. assets/**/*.json              -> every JSON string VALUE (all bundled
+//      data, not a hardcoded subset).
+//   4. assets/**/*.svg               -> rendered markup (XML comments stripped;
+//      UTF-16 files are decoded, and an undecodable asset FAILS the gate rather
+//      than being silently skipped).
 //
 // EXEMPT (data, not prose):
-//   - The null-value glyph literal: a string that is just '—' (or '–')
-//     after trimming. It means "not applicable" and changing it changes MEANING.
+//   - The null-value glyph literal: a string whose ENTIRE content is '—' (or
+//     '–'), exactly. It means "not applicable"; changing it changes MEANING.
+//     The match is exact, so a ' — ' separator ('space em space') is NOT exempt.
 //   - The DOCUMENTED glyph: a dash wrapped in quotes or parens, e.g. ("—"),
-//     used by help copy to describe the blank marker on its own screen. Stripping
-//     it would make the help factually wrong.
-//   - En-dash RANGES (0–128, A–Z, 128–255): a tight en dash between
-//     two non-spaces. Only a SPACE-flanked en dash (prose punctuation) is flagged.
+//     used by help copy to describe the blank marker on its own screen.
+//   - En-dash RANGES (0–128, A–Z, 128–255): a tight en dash between two
+//     non-spaces. Only a SPACE-flanked en dash (prose punctuation) is flagged.
 //
 // The glyphs are built from code points so THIS file stays em-dash-free and can
 // never false-positive against its own text.
@@ -61,15 +65,12 @@ String _short(String s) {
 
 /// Allowlist: a dash wrapped in a quote or paren on both sides (the documented
 /// null-value glyph, e.g. ("—"), '—', "–").
-final RegExp _quotedGlyph =
-    RegExp('["\'(]\\s*[$_em$_en]\\s*["\')]');
+final RegExp _quotedGlyph = RegExp('["\'(]\\s*[$_em$_en]\\s*["\')]');
 
-/// Return the prose dashes in [text]: every em dash, plus every SPACE-flanked
-/// en dash, after removing documented-glyph wrappers. Range en dashes and the
-/// bare glyph are not returned.
+/// Return the prose-dash offsets in [text]: every em dash, plus every
+/// SPACE-flanked en dash, after removing documented-glyph wrappers. Range en
+/// dashes and the bare glyph are not returned.
 List<int> _proseDashOffsets(String text) {
-  // Blank out documented-glyph wrappers so they are not flagged, preserving
-  // length/offsets by replacing with same-length spaces.
   final String scrubbed = text.replaceAllMapped(
     _quotedGlyph,
     (Match m) => ' ' * m.group(0)!.length,
@@ -93,107 +94,175 @@ int _lineAt(String text, int offset) =>
     '\n'.allMatches(text.substring(0, offset)).length + 1;
 
 // ---------------------------------------------------------------------------
-// Dart string-literal tokenizer. Em/en dashes are not valid Dart identifier or
-// operator characters, so after comments and delimiters are accounted for, any
-// dash the tokenizer sees inside a string is user-facing copy.
+// Dart tokenizer (stack-based). Em/en dashes are not valid Dart identifier or
+// operator characters, so any dash the tokenizer sees inside a STRING literal is
+// user-facing copy. Interpolation `${...}` is entered as CODE, so nested string
+// literals inside it are scanned exactly like top-level ones.
 // ---------------------------------------------------------------------------
-const int _code = 0, _lineC = 1, _blockC = 2, _str = 3;
+class _Frame {
+  _Frame.code({required this.interp}) : isString = false;
+  _Frame.string({required this.delim, required this.raw, required this.startLine})
+      : isString = true,
+        interp = false;
+
+  final bool isString;
+  // string:
+  String delim = '';
+  bool raw = false;
+  int startLine = 0;
+  final StringBuffer buf = StringBuffer();
+  // interpolation code frame:
+  final bool interp;
+  int braceDepth = 1; // the '{' of the enclosing '${'
+}
+
+void _emit(String path, String content, int line, List<_Hit> hits) {
+  if (content == _em || content == _en) return; // exact bare null glyph
+  if (_proseDashOffsets(content).isNotEmpty) hits.add(_Hit(path, 'L$line', content));
+}
 
 List<_Hit> _scanDart(String path, String src) {
   final List<_Hit> hits = <_Hit>[];
+  final List<_Frame> stack = <_Frame>[_Frame.code(interp: false)];
   int i = 0;
   final int n = src.length;
   int line = 1;
-  int mode = _code;
-  String delim = '';
-  bool raw = false;
-  int strLine = 1;
-  final StringBuffer buf = StringBuffer();
 
-  bool at(String t) => src.startsWith(t, i);
-
-  while (i < n) {
-    final String c = src[i];
-    final String nx = i + 1 < n ? src[i + 1] : '';
-    if (c == '\n') line++;
-    switch (mode) {
-      case _code:
-        if (c == '/' && nx == '/') {
-          mode = _lineC;
-          i += 2;
-          continue;
-        }
-        if (c == '/' && nx == '*') {
-          mode = _blockC;
-          i += 2;
-          continue;
-        }
-        String? q;
-        bool isRaw = false;
-        for (final String pfx in const <String>['r', '']) {
-          for (final String d in const <String>["'''", '"""', "'", '"']) {
-            if (at(pfx + d)) {
-              isRaw = pfx == 'r';
-              q = d;
-              break;
-            }
-          }
-          if (q != null) break;
-        }
-        if (q != null) {
-          raw = isRaw;
-          delim = q;
-          mode = _str;
-          strLine = line;
-          buf.clear();
-          i += (isRaw ? 1 : 0) + q.length;
-          continue;
-        }
-        i++;
-        break;
-      case _lineC:
-        if (c == '\n') mode = _code;
-        i++;
-        break;
-      case _blockC:
-        if (c == '*' && nx == '/') {
-          mode = _code;
-          i += 2;
-          continue;
-        }
-        i++;
-        break;
-      case _str:
-        if (!raw && c == r'\') {
-          buf.write(c);
-          if (nx.isNotEmpty) {
-            buf.write(nx);
-            if (nx == '\n') line++;
-          }
-          i += 2;
-          continue;
-        }
-        if (at(delim)) {
-          final String content = buf.toString();
-          final String trimmed = content.trim();
-          if (trimmed != _em && trimmed != _en) {
-            for (final int off in _proseDashOffsets(content)) {
-              hits.add(_Hit(path, 'L$strLine', content));
-              break; // one hit per literal is enough to fail + point
-            }
-            // still surface count via all offsets? one is sufficient
-          }
-          mode = _code;
-          buf.clear();
-          i += delim.length;
-          continue;
-        }
-        buf.write(c);
-        i++;
-        break;
+  void countNewlines(int from, int to) {
+    for (int k = from; k < to && k < n; k++) {
+      if (src.codeUnitAt(k) == 0x0A) line++;
     }
   }
+
+  while (i < n) {
+    final _Frame f = stack.last;
+    final String c = src[i];
+    final String nx = i + 1 < n ? src[i + 1] : '';
+
+    if (f.isString) {
+      if (c == '\n') {
+        line++;
+        f.buf.write(c);
+        i++;
+        continue;
+      }
+      if (!f.raw && c == r'\') {
+        f.buf.write(c);
+        if (nx.isNotEmpty) {
+          f.buf.write(nx);
+          if (nx == '\n') line++;
+        }
+        i += 2;
+        continue;
+      }
+      if (!f.raw && c == r'$' && nx == '{') {
+        stack.add(_Frame.code(interp: true)); // braceDepth starts at 1
+        i += 2;
+        continue;
+      }
+      if (src.startsWith(f.delim, i)) {
+        _emit(path, f.buf.toString(), f.startLine, hits);
+        stack.removeLast();
+        i += f.delim.length;
+        continue;
+      }
+      f.buf.write(c);
+      i++;
+      continue;
+    }
+
+    // CODE frame (top-level or interpolation body).
+    if (c == '\n') {
+      line++;
+      i++;
+      continue;
+    }
+    if (c == '/' && nx == '/') {
+      int j = src.indexOf('\n', i);
+      if (j < 0) j = n;
+      i = j;
+      continue;
+    }
+    if (c == '/' && nx == '*') {
+      int j = src.indexOf('*/', i + 2);
+      j = j < 0 ? n : j + 2;
+      countNewlines(i, j);
+      i = j;
+      continue;
+    }
+    String? delim;
+    bool raw = false;
+    for (final String pfx in const <String>['r', '']) {
+      for (final String d in const <String>["'''", '"""', "'", '"']) {
+        if (src.startsWith(pfx + d, i)) {
+          raw = pfx == 'r';
+          delim = d;
+          break;
+        }
+      }
+      if (delim != null) break;
+    }
+    if (delim != null) {
+      stack.add(_Frame.string(delim: delim, raw: raw, startLine: line));
+      i += (raw ? 1 : 0) + delim.length;
+      continue;
+    }
+    if (f.interp) {
+      if (c == '{') {
+        f.braceDepth++;
+        i++;
+        continue;
+      }
+      if (c == '}') {
+        f.braceDepth--;
+        if (f.braceDepth == 0) stack.removeLast(); // back to enclosing string
+        i++;
+        continue;
+      }
+    }
+    i++;
+  }
   return hits;
+}
+
+// ---------------------------------------------------------------------------
+// Bundled-text readers: UTF-8, or UTF-16 by BOM. Null = undecodable.
+// ---------------------------------------------------------------------------
+String _decodeUtf16(List<int> bytes) {
+  int start = 0;
+  bool little = true;
+  if (bytes.length >= 2) {
+    if (bytes[0] == 0xFF && bytes[1] == 0xFE) {
+      little = true;
+      start = 2;
+    } else if (bytes[0] == 0xFE && bytes[1] == 0xFF) {
+      little = false;
+      start = 2;
+    }
+  }
+  final List<int> units = <int>[];
+  for (int k = start; k + 1 < bytes.length; k += 2) {
+    units.add(little ? bytes[k] | (bytes[k + 1] << 8) : (bytes[k] << 8) | bytes[k + 1]);
+  }
+  return String.fromCharCodes(units); // BMP glyphs (em/en) decode 1:1
+}
+
+String? _readText(File f) {
+  final List<int> bytes = f.readAsBytesSync();
+  if (bytes.length >= 2 &&
+      ((bytes[0] == 0xFF && bytes[1] == 0xFE) ||
+          (bytes[0] == 0xFE && bytes[1] == 0xFF))) {
+    return _decodeUtf16(bytes);
+  }
+  try {
+    return utf8.decode(bytes);
+  } on FormatException {
+    try {
+      return _decodeUtf16(bytes);
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -248,21 +317,26 @@ void main() {
   // ---- The scanner must be able to FAIL (guard against a green no-op). ----
   group('voice guard self-test (proves the guard has teeth)', () {
     test('detects an em dash in a Dart string literal', () {
-      final String planted = "final s = 'Term ${_em} gloss';";
+      expect(_scanDart('x.dart', "final s = 'Term ${_em} gloss';"), isNotEmpty);
+    });
+    test('detects an em dash in a NESTED string inside interpolation', () {
+      // Builds: final s = 'status: ${x ? 'on — off' : 'idle'}';
+      final String planted =
+          "final s = 'status: " + r"${x ? 'on " + _em + r" off' : 'idle'}" + "';";
       expect(_scanDart('x.dart', planted), isNotEmpty);
     });
     test('ignores an em dash in a Dart comment', () {
-      final String comment = '// a comment ${_em} with a dash\nfinal s = 1;';
-      expect(_scanDart('x.dart', comment), isEmpty);
+      expect(_scanDart('x.dart', '// a comment ${_em} dash\nfinal s = 1;'), isEmpty);
     });
-    test('allows the bare null-value glyph literal', () {
-      final String glyph = "String ms() => '${_em}';";
-      expect(_scanDart('x.dart', glyph), isEmpty);
+    test('allows the bare null glyph, but flags a spaced separator', () {
+      expect(_scanDart('x.dart', "String ms() => '${_em}';"), isEmpty);
+      // ' — ' (space em space) is a separator, NOT the null glyph.
+      expect(_scanDart('x.dart', "final s = parts.join(' ${_em} ');"), isNotEmpty);
     });
     test('allows a documented quoted glyph', () {
       expect(_proseDashOffsets('stays blank ("${_em}") until set'), isEmpty);
     });
-    test('allows an en-dash numeric range but flags prose en dash', () {
+    test('allows an en-dash numeric range but flags a prose en dash', () {
       expect(_proseDashOffsets('bytes 0${_en}255'), isEmpty);
       expect(_proseDashOffsets('one thing ${_en} another'), isNotEmpty);
     });
@@ -283,17 +357,16 @@ void main() {
           .map((int o) => _Hit(_rel(root, f.path), 'L${_lineAt(text, o)}', text))
           .take(1));
     }
-    for (final String sub in const <String>['assets/help', 'assets/data']) {
-      for (final File f in _files('$root/$sub', (String p) => p.endsWith('.json'))) {
-        hits.addAll(_scanJson(_rel(root, f.path), f.readAsStringSync()));
-      }
+    for (final File f in _files('$root/assets', (String p) => p.endsWith('.json'))) {
+      hits.addAll(_scanJson(_rel(root, f.path), f.readAsStringSync()));
     }
     for (final File f in _files('$root/assets', (String p) => p.endsWith('.svg'))) {
-      String src;
-      try {
-        src = f.readAsStringSync();
-      } on FileSystemException {
-        continue; // a few icon SVGs are UTF-16/binary; skip undecodable
+      final String? src = _readText(f);
+      if (src == null) {
+        // Fail loud: a P0 gate must never silently skip an asset it cannot read.
+        hits.add(_Hit(_rel(root, f.path), 'file',
+            'UNDECODABLE asset (not UTF-8 or UTF-16) - the guard cannot verify it'));
+        continue;
       }
       hits.addAll(_scanSvg(_rel(root, f.path), src));
     }

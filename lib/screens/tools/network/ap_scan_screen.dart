@@ -300,7 +300,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
     final StringBuffer buf = StringBuffer()
       ..writeln('Nearby AP Scan')
       ..writeln('${aps.length} access points'
-          '${snap.scanThrottled ? ' (last scan — fresh scan throttled)' : ''}')
+          '${snap.scanThrottled ? ' (last scan, fresh scan throttled)' : ''}')
       ..writeln();
     for (final ScannedAp ap in aps) {
       buf.writeln(
