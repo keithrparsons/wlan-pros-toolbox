@@ -325,6 +325,14 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// [_effectiveAp] / [_resultAp], which is gated on the run's own probe verdict.
   ConnectedAp? _ap;
 
+  /// iOS: the App Group store-time of the Shortcut payload backing [_ap], read at
+  /// each [_readLink]. Used as the staleness signal ONLY when the native
+  /// NEHotspotNetwork identity is UNAVAILABLE — when native IS present, an SSID
+  /// disagreement is the signal instead ([_shortcutMatchesNative]). Null when the
+  /// payload cannot be dated (older format, off-iOS, or never stored), which is
+  /// NOT treated as stale (see [_iosShortcutPayloadStale]).
+  DateTime? _iosPayloadReceivedAt;
+
   /// The RF snapshot THIS RESULT was computed from: [_ap] folded with the live
   /// sampler's reading, stamped in the run's `onDone` and enriched (never blanked)
   /// by late-arriving live RF. The SINGLE source the verdict, the technical
@@ -1227,13 +1235,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // affordance rather than a silent grid of "Unavailable" (see
           // [_iosRfCaptured] + the capture card in build()).
           final details = await bridge.readLatest();
+          // The payload's store-time — the ONLY staleness signal when the native
+          // identity is unavailable (see [_enrichIosSecurity] / [_mergeWithLive]).
+          // Snapshotted here so both the one-shot enrichment and the sampler merge
+          // read the same value the backing payload was stored with.
+          _iosPayloadReceivedAt = await bridge.payloadReceivedAt();
           final ConnectedAp? rf =
               details == null ? null : ConnectedAp.fromWifiDetails(details);
           // Fold the native NEHotspotNetwork security + BSSID onto whatever the
           // Shortcut gave us. When no RF was captured, this still yields a
           // minimal link carrying just the native identity (security/BSSID), so
           // those rows populate without a Shortcut bounce.
-          return _enrichIosSecurity(rf);
+          return _enrichIosSecurity(rf, payloadAt: _iosPayloadReceivedAt);
         case WifiInfoSource.unsupported:
         case WifiInfoSource.web:
           return null;
@@ -1316,6 +1329,50 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     return shortcut == native;
   }
 
+  /// Freshness window for a Shortcut payload when the native NEHotspotNetwork
+  /// identity is UNAVAILABLE — the payload's own store-time is then the ONLY
+  /// staleness signal we have (with native present, an SSID match is the signal
+  /// instead, and this window is not consulted).
+  ///
+  /// FIVE MINUTES. A payload captured for THIS network this session is
+  /// seconds-to-low-minutes old: the auto-capture Shortcut delivers within the
+  /// ~2 s settle, and continuous monitoring refreshes every few seconds. A payload
+  /// from the LAST network the phone was on is tens of minutes to hours old by the
+  /// time the user reopens the app on a different network. Five minutes sits
+  /// comfortably above one check cycle (so a legitimately current reading is never
+  /// dropped) and far below "hours" (so an old-network carryover is always caught).
+  /// It is deliberately LONGER than [PendingLiveRun.restoreWindow] (2 min), which
+  /// is sized to a single Shortcut round-trip — a different question from "same
+  /// session on the same network".
+  ///
+  /// TUNABLE (Keith / Vera): the load-bearing correctness is "stale → unknown,
+  /// never a stale value and never a false no-Wi-Fi", which holds for any window.
+  /// Adjust here if on-device testing shows a current reading being dropped or a
+  /// stale one surviving.
+  static const Duration _iosNativeAbsentFreshWindow = Duration(minutes: 5);
+
+  /// iOS, native identity UNAVAILABLE only: whether the stored Shortcut payload is
+  /// too OLD to be trusted as the current network's reading. [stampedAt] is the
+  /// payload's App Group store-time ([WiFiDetailsBridge.payloadReceivedAt]).
+  ///
+  /// A NULL stamp returns false (NOT stale). On a real device the App Group always
+  /// stamps a stored payload, so a null means "cannot date this one" (older payload
+  /// format, off-iOS, or a test fake) — and the established best-effort behavior,
+  /// showing the Shortcut name when native is absent, stands. Unknown age is not
+  /// proof of staleness (GL-005, the two-kinds-of-null rule); only a stamp we can
+  /// read AND that is demonstrably older than [_iosNativeAbsentFreshWindow] drops
+  /// the reading.
+  ///
+  /// A NEGATIVE age (future stamp / backwards clock) also returns false: it is not
+  /// evidence of staleness, and blanking a live reading on clock skew would invent
+  /// a false "no Wi-Fi" — the mirror bug we must never trip.
+  bool _iosShortcutPayloadStale(DateTime? stampedAt, {DateTime? now}) {
+    if (stampedAt == null) return false;
+    final DateTime t = now ?? (widget.nowOverride ?? DateTime.now)();
+    final Duration age = t.difference(stampedAt);
+    return age > _iosNativeAbsentFreshWindow;
+  }
+
   /// Folds the native iOS security read (SSID + security token + BSSID) onto a
   /// Shortcut-derived [ConnectedAp], with the LIVE NATIVE identity as the
   /// authority for the network NAME.
@@ -1338,18 +1395,31 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   ///    being shown under a fresh "Tested" timestamp.
   ///
   /// When the native identity is UNAVAILABLE (off iOS, Location ungranted, or the
-  /// read failed) there is no authority to check the Shortcut reading against, so
-  /// [rf] is returned unchanged: the Shortcut SSID is then the only identity on
-  /// hand and, absent a disagreeing native read, is the honest best-effort name
-  /// (the companion Shortcut's own Location grant is independent of the app's
-  /// NEHotspotNetwork grant, so a fresh, correct Shortcut SSID legitimately
-  /// coexists with an unavailable native read). The stale-name lie this fixes is
-  /// only DETECTABLE as a disagreement with a PRESENT native read; without one we
-  /// do not invent a false "no Wi-Fi" or blank a real reading (GL-005). The
-  /// reliable stale case — native present, SSID disagrees — is handled above.
-  ConnectedAp? _enrichIosSecurity(ConnectedAp? rf) {
+  /// read failed) there is no authority to check the Shortcut reading's NAME
+  /// against, so the payload's OWN store-time ([payloadAt]) becomes the staleness
+  /// signal (MEDIUM-1, the residual of the 2026-07-14 fix — which only fired when
+  /// native was PRESENT):
+  ///
+  ///  * a FRESH (or undatable) payload is returned unchanged — the Shortcut SSID
+  ///    is then the only identity on hand and is the honest best-effort name (the
+  ///    companion Shortcut's own Location grant is independent of the app's
+  ///    NEHotspotNetwork grant, so a fresh, correct Shortcut SSID legitimately
+  ///    coexists with an unavailable native read);
+  ///  * a DEMONSTRABLY-OLD payload ([_iosShortcutPayloadStale]) is dropped to the
+  ///    honest "not captured"/unknown state (`null` → [_iosRfCaptured] false → the
+  ///    "Capture Wi-Fi details" affordance) — name AND RF, never shown under a
+  ///    fresh "Tested" stamp. It NEVER blanks into a false "no Wi-Fi": that state
+  ///    is driven by the connection probe ([_resultNotOnWifi]), not by a null link
+  ///    read — the two kinds of null (GL-005).
+  ConnectedAp? _enrichIosSecurity(ConnectedAp? rf, {DateTime? payloadAt}) {
     final WifiSecurityInfo? sec = _iosSecurity;
     if (sec == null || !sec.available) {
+      // Native identity unavailable: gate the Shortcut payload on its own age. A
+      // stale payload belongs to a network we have LEFT — drop it to "not
+      // captured" rather than lie under a current timestamp.
+      if (rf != null && _iosShortcutPayloadStale(payloadAt)) {
+        return null;
+      }
       return rf;
     }
     final WifiSecurity? security =
@@ -1460,14 +1530,22 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// identity IS present and the live sampler's SSID DISAGREES with it, the sampler
   /// reading is for a network we have left → it is dropped, mirroring
   /// [_enrichIosSecurity]. When there is no native read to check against (native
-  /// unavailable), the live reading is kept — it is the best evidence on hand and
-  /// blanking it would invent a false "no Wi-Fi" (GL-005). Off iOS the sampler
-  /// polls a native snapshot (CoreWLAN / WifiManager / wlanapi.dll), no guard.
+  /// unavailable) the payload's OWN store-time is the staleness signal instead
+  /// (MEDIUM-1, mirroring the native-absent one-shot gate): a demonstrably-old
+  /// sampler reading is dropped, while a fresh (or undatable) one is kept —
+  /// blanking a current reading would invent a false "no Wi-Fi" (GL-005). Off iOS
+  /// the sampler polls a native snapshot (CoreWLAN / WifiManager / wlanapi.dll),
+  /// no guard.
   ConnectedAp? _mergeWithLive(ConnectedAp? oneShot) {
     ConnectedAp? live = _sampler?.latest;
-    if (_isIos && live != null && _nativeSsid != null &&
-        !_shortcutMatchesNative(live)) {
-      live = null;
+    if (_isIos && live != null) {
+      if (_nativeSsid != null) {
+        // Native present: SSID disagreement is the staleness signal.
+        if (!_shortcutMatchesNative(live)) live = null;
+      } else if (_iosShortcutPayloadStale(_iosPayloadReceivedAt)) {
+        // Native absent: the backing payload's store-time is the only signal.
+        live = null;
+      }
     }
     if (oneShot == null) return live;
     return oneShot.mergedWith(live);

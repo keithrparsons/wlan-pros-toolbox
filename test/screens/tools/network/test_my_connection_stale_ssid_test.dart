@@ -119,6 +119,55 @@ class _EmptyBridge extends _StaleHomeBridge {
   Future<bool> hasEverReceivedPayload() async => false;
 }
 
+// ---------------------------------------------------------------------------
+// MEDIUM-1 (native-absent residual). The native NEHotspotNetwork read is
+// UNAVAILABLE (Location granted to the companion Shortcut but NOT to the app
+// itself). The pre-fix _enrichIosSecurity returned the stale Shortcut payload
+// verbatim in that case, so the exact original bug — a stale name + RF under a
+// fresh "Tested" stamp — survived for this narrower user set. The fix gates the
+// payload on its own store-time when native is absent: STALE → drop to "not
+// captured"/unknown (never a false "no Wi-Fi"); FRESH → keep.
+// ---------------------------------------------------------------------------
+
+/// The companion Shortcut has Location; the APP does not — so NEHotspotNetwork is
+/// unavailable. There is no native name to check the Shortcut SSID against.
+class _NativeAbsentSecurity extends WifiSecurityService {
+  @override
+  Future<WifiSecurityInfo> fetch() async =>
+      const WifiSecurityInfo.unavailable('Location granted to Shortcut, not app');
+}
+
+/// Native absent + a STALE stored payload: the HomeNet capture was stored more
+/// than the freshness window ago (last time the phone was on Wi-Fi at home). One
+/// hour is comfortably outside the 5-minute window.
+class _OldStampBridge extends _StaleHomeBridge {
+  @override
+  Future<DateTime?> payloadReceivedAt() async =>
+      DateTime.now().subtract(const Duration(hours: 1));
+}
+
+/// Native absent + a FRESH stored payload: the Shortcut just delivered it this
+/// session (its own Location grant is independent of the app's), so it is the
+/// honest best-effort reading and must be kept.
+class _FreshStampBridge extends _StaleHomeBridge {
+  @override
+  Future<DateTime?> payloadReceivedAt() async => DateTime.now();
+}
+
+/// Sampler-path variants: the one-shot readLatest is empty, so the ONLY RF-bearing
+/// reading is the live sampler's stale HomeNet latest. The stamp on the bridge is
+/// what _readLink snapshots into the native-absent staleness gate.
+class _EmptyOldStampBridge extends _EmptyBridge {
+  @override
+  Future<DateTime?> payloadReceivedAt() async =>
+      DateTime.now().subtract(const Duration(hours: 1));
+}
+
+class _EmptyFreshStampBridge extends _EmptyBridge {
+  @override
+  Future<DateTime?> payloadReceivedAt() async => DateTime.now();
+}
+
 /// A fake NEHotspotNetwork security reader. Returns an AVAILABLE read for the
 /// CURRENT network ("ClientNet") — the live, authoritative identity at the
 /// client site. This is what the phone is actually joined to right now.
@@ -370,6 +419,163 @@ void main() {
       expect(find.textContaining('-58'), findsNothing);
       expect(find.textContaining('780'), findsNothing);
       expect(find.textContaining('866'), findsNothing);
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // MEDIUM-1: native identity UNAVAILABLE (the 1.7.4 fix's residual).
+  // -------------------------------------------------------------------------
+
+  testWidgets(
+    'NATIVE ABSENT + STALE payload (one-shot): the stale HomeNet name and RF are '
+    'NOT shown — they drop to the honest "not captured" state, and it is NEVER a '
+    'false "no Wi-Fi"',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _OldStampBridge(),
+            securityService: _NativeAbsentSecurity(),
+            qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      // The result body renders (this is NOT a short-circuit / not-on-Wi-Fi state).
+      expect(find.text('What to tell support'), findsOneWidget);
+
+      // The stale home carryover is gone — name AND its RF.
+      expect(find.text('HomeNet'), findsNothing);
+      expect(find.textContaining('-58'), findsNothing);
+      expect(find.textContaining('780'), findsNothing);
+      expect(find.textContaining('866'), findsNothing);
+
+      // It resolves to UNKNOWN / not-captured, NEVER a false "no Wi-Fi": the
+      // connection probe says we ARE on Wi-Fi, so the "not on Wi-Fi" and "boost
+      // the Wi-Fi signal" copy must be absent (the mirror bug).
+      expect(find.text('You are not on Wi-Fi right now.'), findsNothing);
+      expect(
+        find.textContaining('Boost the Wi-Fi signal to raise the ceiling.'),
+        findsNothing,
+      );
+
+      // The copy report reflects the honest not-captured state, never the stale
+      // values, and never a stale name.
+      final Finder copyBtn = find.text('Copy these details');
+      await tester.ensureVisible(copyBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(copyBtn);
+      await tester.pumpAndSettle();
+
+      expect(clipboardWrites, isNotEmpty);
+      final String copied = clipboardWrites.last;
+      expect(copied, contains('not captured'));
+      expect(copied, isNot(contains('HomeNet')));
+      expect(copied, isNot(contains('-58 dBm')));
+      expect(copied, isNot(contains('780')));
+      expect(copied, isNot(contains('866')));
+
+      // Drain the one-shot auto-capture settle timer before teardown, exactly as
+      // the native-present one-shot test above does.
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'NATIVE ABSENT + FRESH payload (one-shot): a fresh Shortcut SSID (HomeNet) IS '
+    'kept — a fresh native-absent reading is legitimate and must not regress',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _FreshStampBridge(),
+            securityService: _NativeAbsentSecurity(),
+            qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(find.text('What to tell support'), findsOneWidget);
+      // Fresh + native absent: the Shortcut name is the honest best-effort identity.
+      expect(find.text('HomeNet'), findsWidgets);
+
+      final Finder copyBtn = find.text('Copy these details');
+      await tester.ensureVisible(copyBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(copyBtn);
+      await tester.pumpAndSettle();
+      expect(clipboardWrites, isNotEmpty);
+      expect(clipboardWrites.last, contains('HomeNet'));
+
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
+
+  testWidgets(
+    'NATIVE ABSENT + STALE payload (sampler path): a stale HomeNet arriving only '
+    'via the live sampler is dropped, not shown under a fresh timestamp',
+    (tester) async {
+      final _StaleLatestSampler sampler =
+          _StaleLatestSampler(iosBridge: _EmptyOldStampBridge());
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: true,
+            enableCloudApps: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _EmptyOldStampBridge(),
+            securityService: _NativeAbsentSecurity(),
+            sampler: sampler,
+            dnsProbeService: _FakeDnsProbe(),
+            networkDetailsService: _FakeNetworkDetails(),
+            qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(find.text('What to tell support'), findsOneWidget);
+      expect(find.text('HomeNet'), findsNothing);
+      expect(find.textContaining('-58'), findsNothing);
+      expect(find.textContaining('780'), findsNothing);
+      expect(find.textContaining('866'), findsNothing);
+      expect(find.text('You are not on Wi-Fi right now.'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'NATIVE ABSENT + FRESH payload (sampler path): a fresh HomeNet reading from '
+    'the live sampler IS kept',
+    (tester) async {
+      final _StaleLatestSampler sampler =
+          _StaleLatestSampler(iosBridge: _EmptyFreshStampBridge());
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: true,
+            enableCloudApps: false,
+            sourceOverride: WifiInfoSource.iosShortcuts,
+            iosBridge: _EmptyFreshStampBridge(),
+            securityService: _NativeAbsentSecurity(),
+            sampler: sampler,
+            dnsProbeService: _FakeDnsProbe(),
+            networkDetailsService: _FakeNetworkDetails(),
+            qualityClient: MockQualityClient(scriptedResult: _marginalInternet()),
+          ),
+        ),
+      );
+      await runCheck(tester);
+
+      expect(find.text('What to tell support'), findsOneWidget);
+      expect(find.text('HomeNet'), findsWidgets);
     },
   );
 }
