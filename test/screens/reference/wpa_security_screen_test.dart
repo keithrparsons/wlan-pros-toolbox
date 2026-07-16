@@ -122,7 +122,7 @@ void main() {
         find.text('SAE (Simultaneous Authentication of Equals)'),
         findsOneWidget,
       );
-      expect(find.text('OWE — Opportunistic Wireless Encryption'), findsOneWidget);
+      expect(find.text('OWE: Opportunistic Wireless Encryption'), findsOneWidget);
     });
   });
 

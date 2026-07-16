@@ -46,7 +46,7 @@ void main() {
 
     test('handshake-failure group holds exactly 15, 16, 23', () {
       final CodeGroup g = ReasonCodesScreen.reasonGroups.firstWhere(
-        (CodeGroup g) => g.label == 'Security — handshake failures',
+        (CodeGroup g) => g.label == 'Security: handshake failures',
       );
       expect(g.entries.map((CodeEntry e) => e.code).toList(), <int>[15, 16, 23]);
     });
@@ -57,8 +57,8 @@ void main() {
         <String>[
           'Common (seen in most captures)',
           'Capability / Channel mismatch',
-          'Security — frame / element errors',
-          'Security — handshake failures',
+          'Security: frame / element errors',
+          'Security: handshake failures',
           'QoS / load management',
           'Fast Roaming (802.11r)',
         ],

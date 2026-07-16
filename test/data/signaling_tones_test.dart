@@ -73,7 +73,7 @@ void main() {
     });
   });
 
-  group('Red Box — US coin tones (1700 + 2200 Hz)', () {
+  group('Red Box: US coin tones (1700 + 2200 Hz)', () {
     SignalingTone coin(String label) =>
         SignalingTones.redBox.firstWhere((SignalingTone t) => t.label == label);
 

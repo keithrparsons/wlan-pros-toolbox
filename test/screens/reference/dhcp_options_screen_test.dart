@@ -85,7 +85,7 @@ void main() {
         );
         expect(find.text('DHCP Options'), findsWidgets);
         expect(find.text('DHCPv4 options'), findsOneWidget);
-        expect(find.text('Option 53 — DHCP message types'), findsOneWidget);
+        expect(find.text('Option 53: DHCP message types'), findsOneWidget);
         expect(find.text('DHCPDISCOVER'), findsOneWidget);
         expect(find.byType(TextField), findsNothing);
       });

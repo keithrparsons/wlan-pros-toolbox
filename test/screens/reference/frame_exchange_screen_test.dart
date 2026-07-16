@@ -128,7 +128,7 @@ void main() {
         <String>[
           '802.11 Probe & Auth',
           'Association',
-          '4-Way Handshake (WPA2-PSK only — skip for Open networks)',
+          '4-Way Handshake (WPA2-PSK only: skip for Open networks)',
           'DHCP (via AP Relay)',
         ],
       );
