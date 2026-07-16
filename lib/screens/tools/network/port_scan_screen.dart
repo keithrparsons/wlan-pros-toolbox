@@ -251,7 +251,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Port Scan — TCP connect')
+      ..writeln('Port Scan: TCP connect')
       ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
       ..writeln(
         'Summary: $openCount open, $closedCount closed, $filteredCount '
@@ -558,7 +558,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
-                'No open ports. The host responded on no scanned port — '
+                'No open ports. The host responded on no scanned port. '
                 'every port was closed or filtered.',
                 style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),

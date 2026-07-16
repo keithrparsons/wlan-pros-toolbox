@@ -126,7 +126,7 @@ class EapTypesScreen extends StatelessWidget {
       use: 'Most common Microsoft-ecosystem deployment. Server cert builds the '
           'tunnel; MSCHAPv2 carries the password inside it. Clients that do '
           'not validate the server cert are exposed to evil-twin credential '
-          'theft — enforce server-cert validation.',
+          'theft. Enforce server-cert validation.',
     ),
     EapMethod(
       method: 'EAP-TTLS',
@@ -188,7 +188,7 @@ class EapTypesScreen extends StatelessWidget {
   /// Footnote — reading guidance for the certificate columns.
   static const String footnote =
       'Every tunneled method (PEAP, TTLS, FAST) authenticates the server by '
-      'certificate and the client by an inner credential — that asymmetry is '
+      'certificate and the client by an inner credential. That asymmetry is '
       'why client-side server-cert validation is the single most important '
       'deployment setting. EAP-TLS is the only common method requiring a '
       'client certificate; SIM/AKA derive mutual trust from the SIM shared key, '

@@ -156,7 +156,7 @@ class SignalingTones {
       lowHz: 1100,
       highHz: 1700,
       burstMs: 100,
-      description: 'Key Pulse — marked the start of the routing digits.',
+      description: 'Key Pulse: marked the start of the routing digits.',
     ),
     const SignalingTone(
       label: 'ST',
@@ -164,7 +164,7 @@ class SignalingTones {
       lowHz: 1500,
       highHz: 1700,
       burstMs: 100,
-      description: 'Start — marked the end of the routing digits.',
+      description: 'Start: marked the end of the routing digits.',
     ),
     const SignalingTone(
       label: '2600',
@@ -172,7 +172,7 @@ class SignalingTones {
       lowHz: 2600,
       burstMs: 600,
       description:
-          'Supervisory tone — signaled an idle trunk, the sound a long-'
+          'Supervisory tone: signaled an idle trunk, the sound a long-'
           'distance switch once read as "this line is free."',
     ),
   ];
@@ -188,7 +188,7 @@ class SignalingTones {
       burstMs: 66,
       bursts: 1,
       gapMs: 0,
-      description: '5 cents — one 66 ms burst.',
+      description: '5 cents: one 66 ms burst.',
     ),
     SignalingTone(
       label: 'Dime',
@@ -198,7 +198,7 @@ class SignalingTones {
       burstMs: 66,
       bursts: 2,
       gapMs: 66,
-      description: '10 cents — two 66 ms bursts, 66 ms apart.',
+      description: '10 cents: two 66 ms bursts, 66 ms apart.',
     ),
     SignalingTone(
       label: 'Quarter',
@@ -208,7 +208,7 @@ class SignalingTones {
       burstMs: 33,
       bursts: 5,
       gapMs: 33,
-      description: '25 cents — five 33 ms bursts, 33 ms apart.',
+      description: '25 cents: five 33 ms bursts, 33 ms apart.',
     ),
   ];
 

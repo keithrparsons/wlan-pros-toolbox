@@ -83,7 +83,7 @@ abstract final class MacRandomizationClassifier {
       case MacRandomization.universal:
         return 'Universal (burned-in)';
       case MacRandomization.unreadable:
-        return 'Not available — ${unreadableReason(platform)}';
+        return 'Not available: ${unreadableReason(platform)}';
     }
   }
 

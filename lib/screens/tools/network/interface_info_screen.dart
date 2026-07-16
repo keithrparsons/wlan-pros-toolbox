@@ -831,7 +831,7 @@ class _RefreshWifiPrompt extends StatelessWidget {
         children: [
           Text(
             'The network name has not been read yet this session. Read it from '
-            'the connected network — this opens the WLAN Pros Wi-Fi Shortcut, '
+            'the connected network. This opens the WLAN Pros Wi-Fi Shortcut, '
             'then returns here.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),

@@ -147,7 +147,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
       setState(() {
         _error = switch (spec.error) {
           SweepSpecError.tooLarge =>
-            'That range is ${spec.requestedCount} hosts — the sweep cap is '
+            'That range is ${spec.requestedCount} hosts. The sweep cap is '
                 '${PingSweepService.maxHosts} (a /24). Narrow the range, e.g. '
                 'a /24 or a base-and-range like 192.168.1.1-50.',
           SweepSpecError.malformed || null =>
@@ -259,7 +259,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Ping Sweep — TCP-probe (reachability on a port, not ICMP)')
+      ..writeln('Ping Sweep: TCP-probe (reachability on a port, not ICMP)')
       ..writeln(
         _rangeLabel.isEmpty ? 'Range: (unknown)' : 'Range: $_rangeLabel',
       )
@@ -271,7 +271,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
       )
       ..writeln(
         'Method: a host is listed when it ANSWERS. Both a completed handshake '
-        'and an active refusal (RST) count — a refusal proves the host is '
+        'and an active refusal (RST) count. A refusal proves the host is '
         'there, it just is not listening on TCP $_port. Silence is not an '
         'answer: hosts that never replied are not listed, though a host silent '
         'on TCP $_port may still be up. This is reachability on one port, not '
@@ -395,7 +395,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Expanded(
                   child: Text(
-                    'Assumed /24 — edit if your network is wider.',
+                    'Assumed /24. Edit if your network is wider.',
                     style: text.labelSmall?.copyWith(
                       color: colors.textTertiary,
                     ),
@@ -608,7 +608,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             // Honesty footer — always present alongside results so a populated
             // list is never read as authoritative liveness.
             Text(
-              'Responded on TCP $_port — reachability on that port, not ICMP '
+              'Responded on TCP $_port. Reachability on that port, not ICMP '
               'liveness. Silent hosts may still be up.',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),

@@ -114,7 +114,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
   /// Returns null (→ disabled affordance) while loading, before any lookup, on
   /// an error, or when no ASN/prefix resolved — none of those is a result to
   /// keep. Absent fields are omitted (GL-005 honest blanks). The "In routing
-  /// table" line carries its VERDICT WORD ("Yes — announced" / "No — not
+  /// table" line carries its VERDICT WORD ("Yes: announced" / "No — not
   /// announced"), per the §8.16 content contract.
   String? _buildCopyText() {
     final BgpAsnResult? r = _result;
@@ -140,7 +140,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       'In routing table',
       r.isAnnounced == null
           ? null
-          : (r.isAnnounced! ? 'Yes — announced' : 'No — not announced'),
+          : (r.isAnnounced! ? 'Yes: announced' : 'No: not announced'),
     );
     if (r.kind == BgpQueryKind.asn) {
       line('Upstreams', r.upstreamCount?.toString());
@@ -328,7 +328,7 @@ class _ResultCard extends StatelessWidget {
             label: 'In routing table',
             value: r.isAnnounced == null
                 ? null
-                : (r.isAnnounced! ? 'Yes — announced' : 'No — not announced'),
+                : (r.isAnnounced! ? 'Yes: announced' : 'No: not announced'),
           ),
           if (r.kind == BgpQueryKind.asn) ...[
             ValueRow(

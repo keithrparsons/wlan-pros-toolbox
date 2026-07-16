@@ -87,7 +87,7 @@ class ThroughputCalcScreen extends StatefulWidget {
   ];
 
   /// Long MCS label (index — modulation) for the MCS select (PWA mcsLabels).
-  static String mcsLabel(int mcs) => 'MCS $mcs — ${mcsMod[mcs]}';
+  static String mcsLabel(int mcs) => 'MCS $mcs: ${mcsMod[mcs]}';
 
   /// Data subcarriers per standard per channel width MHz (PWA TPUT_NSD).
   static const Map<WifiStd, Map<int, int>> nsd = {
@@ -256,13 +256,13 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
   static String _stdLabel(WifiStd std) {
     switch (std) {
       case WifiStd.ht:
-        return 'Wi-Fi 4 — 802.11n (HT)';
+        return 'Wi-Fi 4: 802.11n (HT)';
       case WifiStd.vht:
-        return 'Wi-Fi 5 — 802.11ac (VHT)';
+        return 'Wi-Fi 5: 802.11ac (VHT)';
       case WifiStd.he:
-        return 'Wi-Fi 6 / 6E — 802.11ax (HE)';
+        return 'Wi-Fi 6 / 6E: 802.11ax (HE)';
       case WifiStd.eht:
-        return 'Wi-Fi 7 — 802.11be (EHT)';
+        return 'Wi-Fi 7: 802.11be (EHT)';
     }
   }
 

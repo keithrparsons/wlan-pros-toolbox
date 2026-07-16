@@ -324,7 +324,7 @@ class _AboutScreenState extends State<AboutScreen> {
 String _aboutPlainText(AppVersionInfo? info) {
   final AppVersionInfo v = info ?? AppVersion.fallback;
   final StringBuffer b = StringBuffer()
-    ..writeln('WLAN Pros Toolbox — About')
+    ..writeln('WLAN Pros Toolbox: About')
     ..writeln()
     ..writeln('Why this toolbox')
     ..writeln(
@@ -342,7 +342,7 @@ String _aboutPlainText(AppVersionInfo? info) {
     ..writeln()
     ..writeln('Who is WLAN Pros')
     ..writeln(
-      'Wireless LAN Professionals, Inc. — design and consulting, training, and '
+      'Wireless LAN Professionals, Inc.: design and consulting, training, and '
       'community. Founder and Managing Director: Keith Parsons, CWNE #3. '
       '$_kWlanProsUrl',
     )

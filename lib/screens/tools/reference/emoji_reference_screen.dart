@@ -364,7 +364,7 @@ class EmojiReferenceScreen extends StatelessWidget {
       child: Text(
         'The 30 most-used emoji, ranked by private-messaging frequency (the '
         'Unicode canon). "Common use" is how people usually read each one '
-        'today, not an official Unicode definition — meanings drift by '
+        'today, not an official Unicode definition. Meanings drift by '
         'audience, region, and generation.',
         style: text.labelMedium?.copyWith(color: colors.textTertiary),
       ),

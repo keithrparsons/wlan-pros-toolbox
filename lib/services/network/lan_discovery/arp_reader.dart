@@ -212,12 +212,12 @@ ArpReader platformArpReader() {
   if (Platform.isMacOS) return const MethodChannelArpReader();
   if (Platform.isIOS) {
     return const UnavailableArpReader(
-      'iOS sandbox cannot read the ARP table — MAC/vendor is desktop-only.',
+      'iOS sandbox cannot read the ARP table. MAC/vendor is desktop-only.',
     );
   }
   if (Platform.isAndroid) {
     return const UnavailableArpReader(
-      'Android sandbox cannot read the ARP table — MAC/vendor is desktop-only.',
+      'Android sandbox cannot read the ARP table. MAC/vendor is desktop-only.',
     );
   }
   // Windows: read the neighbor table via the Win32 IP Helper API GetIpNetTable

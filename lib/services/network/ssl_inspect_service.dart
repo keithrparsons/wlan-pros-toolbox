@@ -634,12 +634,12 @@ class SslInspectService {
         'Connection timed out after ${timeout.inSeconds}s. The host may be '
             'unreachable or not listening on this port.',
       TcpFailureReason.refused =>
-        'Connection refused — the host answered, but nothing is listening on '
+        'Connection refused. The host answered, but nothing is listening on '
             'this port.',
       TcpFailureReason.unreachable =>
-        'Host unreachable — no route to this host.',
+        'Host unreachable. No route to this host.',
       TcpFailureReason.lookupFailure =>
-        'Could not resolve that host name — check the spelling.',
+        'Could not resolve that host name. Check the spelling.',
       TcpFailureReason.unknown =>
         'Could not connect: ${_short(failure.message)}.',
     };

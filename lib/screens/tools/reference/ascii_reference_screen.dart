@@ -1777,7 +1777,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                       _AsciiTableCard(
                         heading: 'Control codes (0–31, plus 127)',
                         subheading:
-                            '${control.length} of 33 — commands, not glyphs. '
+                            '${control.length} of 33: commands, not glyphs. '
                             'TAB, LF, CR, ESC, NUL and the XON/XOFF pair still '
                             'matter daily.',
                         rows: control,
@@ -1790,7 +1790,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
                       _AsciiTableCard(
                         heading: 'Printable characters (32–126)',
                         subheading:
-                            '${printable.length} of 95 — space, punctuation, '
+                            '${printable.length} of 95: space, punctuation, '
                             'the ten digits, and the 52 letters.',
                         rows: printable,
                         text: text,
@@ -2254,7 +2254,7 @@ class _AsciiReferenceScreenState extends State<AsciiReferenceScreen> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'The eight bits of a byte carry place values 128, 64, 32, 16, 8, 4, '
-            '2, 1. They sum to 255 — the largest value one byte holds.',
+            '2, 1. They sum to 255. The largest value one byte holds.',
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
         ],

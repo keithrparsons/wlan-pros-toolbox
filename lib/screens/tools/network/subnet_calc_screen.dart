@@ -203,8 +203,8 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
     String val(String? s) =>
         (s == null || s.trim().isEmpty) ? 'Unavailable' : s;
     final String? hostNote = switch (r.prefix) {
-      31 => 'RFC 3021 point-to-point — both addresses are usable hosts.',
-      32 => 'Single-host route — one address, no network/broadcast.',
+      31 => 'RFC 3021 point-to-point: both addresses are usable hosts.',
+      32 => 'Single-host route: one address, no network/broadcast.',
       _ => null,
     };
 
@@ -343,8 +343,8 @@ class _SubnetCalcScreenState extends State<SubnetCalcScreen> {
     final TextTheme text = Theme.of(context).textTheme;
     // RFC 3021 / single-host annotations so the host counts aren't surprising.
     final String? hostNote = switch (r.prefix) {
-      31 => 'RFC 3021 point-to-point — both addresses are usable hosts.',
-      32 => 'Single-host route — one address, no network/broadcast.',
+      31 => 'RFC 3021 point-to-point: both addresses are usable hosts.',
+      32 => 'Single-host route: one address, no network/broadcast.',
       _ => null,
     };
 

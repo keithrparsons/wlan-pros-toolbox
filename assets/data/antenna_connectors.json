@@ -306,7 +306,7 @@
       "full_name": "F connector (75 ohm CATV / TV)",
       "group": "Test & cellular (Wi-Fi-adjacent)",
       "reverse_polarity": "No",
-      "typical_wifi_use": "None — this is a 75 ohm TV/CATV connector, not a Wi-Fi connector",
+      "typical_wifi_use": "None. This is a 75 ohm TV/CATV connector, not a Wi-Fi connector",
       "indoor_outdoor": "Indoor",
       "coupling": "Threaded (screw)",
       "size": "~9 mm thread",
@@ -314,7 +314,7 @@
       "impedance": "75 ohm (NOT 50 ohm)",
       "frequency": "DC to ~3 GHz",
       "mating": "Mates only with F-Type.",
-      "notes": "75 ohm CATV/TV standard. The 75 ohm vs 50 ohm impedance mismatch causes significant loss on Wi-Fi gear. Do not use for WLAN — folded in here from the former RF Connectors reference so the merge loses nothing."
+      "notes": "75 ohm CATV/TV standard. The 75 ohm vs 50 ohm impedance mismatch causes significant loss on Wi-Fi gear. Do not use for WLAN. Folded in here from the former RF Connectors reference so the merge loses nothing."
     }
   ],
   "vendor_trends": [

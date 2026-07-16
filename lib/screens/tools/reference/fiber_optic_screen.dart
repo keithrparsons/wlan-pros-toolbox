@@ -251,7 +251,7 @@ class FiberOpticScreen extends StatelessWidget {
       dist10G: '10+ km',
       dist40G: '10+ km',
       dist100G: '40+ km',
-      notes: 'Singlemode tight-buffer. Indoor — IDF-to-MDF, campus backbone.',
+      notes: 'Singlemode tight-buffer. Indoor. IDF-to-MDF, campus backbone.',
       legacy: false,
     ),
     FiberType(

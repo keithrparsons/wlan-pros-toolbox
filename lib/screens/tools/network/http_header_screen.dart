@@ -148,7 +148,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
     if (r.redirectLimitHit) {
       buf.writeln(
         'Note: stopped after ${HttpHeaderService.defaultMaxRedirects} '
-        'redirects — the chain may be a loop.',
+        'redirects. The chain may be a loop.',
       );
     }
 
@@ -160,7 +160,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
         final HttpHop h = r.hops[i];
         buf.writeln(
           '  ${i + 1}. ${h.method.label} · ${h.statusLine} · '
-          '${h.elapsedMs} ms — ${h.url}',
+          '${h.elapsedMs} ms: ${h.url}',
         );
         if (h.location != null) buf.writeln('     → ${h.location}');
       }
@@ -424,7 +424,7 @@ class _SummaryCard extends StatelessWidget {
               icon: Icons.warning_amber_outlined,
               text:
                   'Stopped after '
-                  '${HttpHeaderService.defaultMaxRedirects} redirects — the '
+                  '${HttpHeaderService.defaultMaxRedirects} redirects: the '
                   'chain may be a loop.',
             ),
           ],

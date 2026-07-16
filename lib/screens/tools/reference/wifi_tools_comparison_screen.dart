@@ -199,7 +199,7 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
       for (final WifiToolConfig c in a.configs) {
         final String up = c.upFront == null ? '' : ' · Up front ${_money(c.upFront!, m.currency)}';
         final String tco = c.tco3yr == null ? '' : ' · ${m.tcoLabel} ${_money(c.tco3yr!, m.currency)}';
-        b.writeln('${c.vendor} — ${c.product} (${c.costModel.label})$up$tco');
+        b.writeln('${c.vendor}: ${c.product} (${c.costModel.label})$up$tco');
         if (c.notes.isNotEmpty) b.writeln('  ${c.notes}');
       }
     }
@@ -210,7 +210,7 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
       for (final WifiToolkit t in svc.toolkits) {
         final String tco =
             t.tco3yr == null ? '' : ' · ${_money(t.tco3yr!, m.currency)}';
-        b.writeln('${t.vendor} — ${t.product}$tco');
+        b.writeln('${t.vendor}: ${t.product}$tco');
         if (t.notes.isNotEmpty) b.writeln('  ${t.notes}');
       }
     }

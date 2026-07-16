@@ -96,7 +96,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
     if (payload == null) {
       setState(
         () => _inputError =
-            r'Bad hex escape in the payload — \x must be followed by two hex '
+            r'Bad hex escape in the payload. \X must be followed by two hex '
             r'digits, e.g. \x00\xff.',
       );
       return;
@@ -155,7 +155,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
 
   /// §8.16 copy payload — the send outcome as a labeled plain-text block,
   /// mirroring the on-screen `_ReplyCard` / error card. The outcome WORD leads
-  /// ("Reply received" / "Sent — no reply" / "Failed: …") so the verdict the
+  /// ("Reply received" / "Sent. No reply" / "Failed: …") so the verdict the
   /// border/icon reinforced survives to the clipboard (§8.16). Carries the sent
   /// payload (from the input, since the result stores only the byte count) and
   /// the response in the SAME view (Text or Hex) the screen currently shows, so
@@ -172,7 +172,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
 
     if (r.isError) {
       buf
-        ..writeln('Status: Failed — ${_titleForError(r.errorKind!)}')
+        ..writeln('Status: Failed. ${_titleForError(r.errorKind!)}')
         ..writeln('  ${r.errorMessage}')
         ..writeln('  Transport: $transport')
         ..writeln('  Target: ${r.host}:${r.port}');
@@ -181,7 +181,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
 
     final bool noReply = r.received.isEmpty;
     buf
-      ..writeln('Status: ${noReply ? 'Sent — no reply' : 'Reply received'}')
+      ..writeln('Status: ${noReply ? 'Sent. No reply' : 'Reply received'}')
       ..writeln('  Transport: $transport')
       ..writeln('  Target: ${r.host}:${r.port}')
       ..writeln('  Sent: ${r.bytesSent} bytes')
@@ -497,7 +497,7 @@ class _ReplyCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  noReply ? 'Sent — no reply' : 'Reply received',
+                  noReply ? 'Sent. No reply' : 'Reply received',
                   style: text.bodyLarge?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w600,

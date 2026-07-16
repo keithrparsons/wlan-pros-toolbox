@@ -204,7 +204,7 @@ class IpGeoService {
         query: query,
         message: 'That does not look like an IP address or hostname. '
             'Enter something like 8.8.8.8, 2001:4860:4860::8888, or '
-            'example.com — or leave it blank to locate your own IP.',
+            'example.com, or leave it blank to locate your own IP.',
         // null kind == client-side input rejection.
       );
     }

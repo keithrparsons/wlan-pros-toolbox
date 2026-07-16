@@ -137,12 +137,12 @@ class _NtpScreenState extends State<NtpScreen> {
       buf.writeln('Resolved IP: ${res.resolvedIp}');
     }
     buf
-      ..writeln('Stratum: ${r.stratum} — ${_stratumMeaning(r.stratum)}')
+      ..writeln('Stratum ${r.stratum}: ${_stratumMeaning(r.stratum)}')
       ..writeln('Server time (UTC): ${_fmtUtc(r.serverUtc)}')
       ..writeln('Server time (local): ${_fmtLocal(r.serverUtc.toLocal())}')
       ..writeln('Your device time: ${_fmtLocal(r.deviceTime.toLocal())}')
       ..writeln(
-          'Clock offset: ${_signedMs(r.offsetMs)} — ${_offsetVerdict(r.offsetMs).word}')
+          'Clock offset ${_signedMs(r.offsetMs)}: ${_offsetVerdict(r.offsetMs).word}')
       ..writeln('Round-trip delay: ${r.delayMs} ms');
     return buf.toString().trimRight();
   }
@@ -386,7 +386,7 @@ class _ReadingCard extends StatelessWidget {
           _PlainRow(
             label: 'Stratum',
             value:
-                '${r.stratum} — ${_NtpScreenState._stratumMeaning(r.stratum)}',
+                '${r.stratum}: ${_NtpScreenState._stratumMeaning(r.stratum)}',
           ),
           _NumericRow(
             label: 'Server time (UTC)',

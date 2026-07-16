@@ -492,7 +492,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
 
     return (StringBuffer()
           ..writeln('PtP Link Check')
-          ..writeln('Verdict: $word — $detail')
+          ..writeln('Verdict: $word. $detail')
           ..writeln('Link margin: ${_fmt(r.margin, 1)} dB')
           ..writeln('EIRP: ${_fmt(r.eirp, 1)} dBm')
           ..writeln('Free space loss: ${_fmt(r.fspl, 1)} dB')

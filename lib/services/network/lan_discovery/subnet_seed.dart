@@ -100,7 +100,7 @@ class SubnetSeedDeriver {
         label: '',
         selfIp: ip,
         gateway: gateway,
-        error: 'No usable Wi-Fi IPv4 address — is Wi-Fi connected and granted?',
+        error: 'No usable Wi-Fi IPv4 address. Is Wi-Fi connected and granted?',
       );
     }
 

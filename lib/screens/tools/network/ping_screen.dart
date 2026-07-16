@@ -215,7 +215,7 @@ class _PingScreenState extends State<PingScreen> {
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('Ping — TCP RTT (not ICMP echo)')
+      ..writeln('Ping: TCP RTT (not ICMP echo)')
       ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}  port $_port')
       ..writeln(
         'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% loss · '
@@ -227,7 +227,7 @@ class _PingScreenState extends State<PingScreen> {
       // define "reply" on its own, because a refusal produces a timing number
       // here and a RST is not a handshake.
       ..writeln(
-        'Method: a reply is counted when the host ANSWERS — either the TCP '
+        'Method: a reply is counted when the host ANSWERS. Either the TCP '
         'handshake completes, or the host actively refuses (a refusal is a '
         'real round trip, the same way tcping counts it). No answer at all '
         '(timeout / unreachable) counts as loss, with no time recorded.',
@@ -372,7 +372,7 @@ class _PingScreenState extends State<PingScreen> {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
-              'Measures TCP round-trip time to port $_port — a reachability + '
+              'Measures TCP round-trip time to port $_port. A reachability + '
               'latency probe, not ICMP echo. A reply counts when the host '
               'ANSWERS: either the handshake completes, or the host actively '
               'refuses (a refusal is a real round trip). No answer counts as '
@@ -593,7 +593,7 @@ class _PingScreenState extends State<PingScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
-                'No replies. The host did not answer on TCP $_port — it may be '
+                'No replies. The host did not answer on TCP $_port. It may be '
                 'down, the port may be filtered, or ICMP-only.',
                 style: text.bodyLarge?.copyWith(color: colors.textTertiary),
               ),

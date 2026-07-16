@@ -226,7 +226,7 @@ class OsiModelScreen extends StatelessWidget {
   static String _buildCopyText() {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
-      ..writeln('OSI Model — the 7 layers')
+      ..writeln('OSI Model: the 7 layers')
       ..writeln(
         <String>[
           '#',

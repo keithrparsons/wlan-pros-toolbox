@@ -485,7 +485,7 @@ class EthernetCableScreen extends StatefulWidget {
 
   /// Plug-orientation note, verbatim from the PWA pinout view.
   static const String orientationNote =
-      'Plug face view — clip facing down. Pin 1 is on the left.';
+      'Plug face view. Clip facing down. Pin 1 is on the left.';
 
   /// Pinout footnote, verbatim from the PWA buildPinoutTable. The PWA's em dash
   /// is replaced with a comma per the no-em-dash hard rule.
@@ -1161,7 +1161,7 @@ class _EthernetCableScreenState extends State<EthernetCableScreen> {
   Widget _pinoutCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     final List<PinoutPin> pins = EthernetCableScreen.pinout[_std]!;
     return _TableCard(
-      title: '${_label(_std)} — pin to pair',
+      title: '${_label(_std)}: pin to pair',
       footnote: EthernetCableScreen.pinoutFootnote,
       header: const Row(
         children: [

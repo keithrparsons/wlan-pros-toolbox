@@ -276,7 +276,7 @@ class ScrewDrivesScreen extends StatelessWidget {
     final StringBuffer buf = StringBuffer()
       ..writeln('Screw Drives & Driver Bits (installer field reference)')
       ..writeln()
-      ..writeln('Common drives — which bit / where on network gear')
+      ..writeln('Common drives: which bit / where on network gear')
       ..writeln(
         <String>[
           'Drive',
@@ -295,7 +295,7 @@ class ScrewDrivesScreen extends StatelessWidget {
       ..writeln()
       ..writeln(commonFootnote)
       ..writeln()
-      ..writeln('Phillips vs Pozidriv — not interchangeable')
+      ..writeln('Phillips vs Pozidriv: not interchangeable')
       ..writeln(distinguisher)
       ..writeln()
       ..writeln('Security / tamper drives (outdoor AP enclosures)')

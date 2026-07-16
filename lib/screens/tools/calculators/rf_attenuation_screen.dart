@@ -68,9 +68,9 @@ class RfAttenuationScreen extends StatefulWidget {
       'Standard interior door',
     ),
     RfMaterial('Cubicle / office panel', 2, 3, 4, 'Fabric or thin material'),
-    RfMaterial('Glass — clear single pane', 2, 3, 4, 'Standard window glass'),
+    RfMaterial('Glass: clear single pane', 2, 3, 4, 'Standard window glass'),
     RfMaterial(
-      'Glass — low-E / tinted coated',
+      'Glass: low-E / tinted coated',
       8,
       10,
       12,
@@ -79,7 +79,7 @@ class RfAttenuationScreen extends StatefulWidget {
     RfMaterial('Brick (4 in / 10 cm)', 8, 12, 15, 'Common exterior wall'),
     RfMaterial('Concrete block / CMU', 10, 13, 15, 'Hollow or solid block'),
     RfMaterial(
-      'Concrete — poured (4 in / 10 cm)',
+      'Concrete: poured (4 in / 10 cm)',
       13,
       16,
       19,

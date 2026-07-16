@@ -385,7 +385,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           ? _formatValueRaw(id, v, unit)
           : (m?.note ?? 'Unavailable');
       final String grade = (m?.grade ?? QualityGrade.unavailable).label;
-      buf.writeln('  $label: $value — $grade');
+      buf.writeln('  $label: $value ($grade)');
     }
 
     buf

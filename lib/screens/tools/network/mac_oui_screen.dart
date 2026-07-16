@@ -309,7 +309,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
       final String reason = r.isLocal
           ? 'This is a locally-administered (randomized) address. The U/L bit '
                 'is set, so it was assigned by software, not from an IEEE vendor '
-                'block — modern phones randomize their Wi-Fi MAC this way. There '
+                'block. Modern phones randomize their Wi-Fi MAC this way. There '
                 'is no real vendor to look up.'
           : 'This is a multicast / group address (the I/G bit is set), not a '
                 'single device NIC, so it has no vendor.';

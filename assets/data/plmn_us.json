@@ -1,9 +1,9 @@
 {
   "_meta": {
     "title": "US PLMN IDs",
-    "source": "US MCC/MNC (PLMN ID) allocations — live Wikipedia 'Mobile country code' ITU region 3xx (MCCs 310-316: US, PR, GU, VI, AS)",
+    "source": "US MCC/MNC (PLMN ID) allocations from live Wikipedia 'Mobile country code' ITU region 3xx (MCCs 310-316: US, PR, GU, VI, AS)",
     "verified": "Single-source (Wikipedia 'Mobile country code', 2026-06-05); canonical carrier codes cross-checked, long-tail statuses reproduced as-sourced. Some entries (e.g. defunct/rebranded MVNOs, pending acquisitions) drift over time.",
-    "note": "Curated US Public Land Mobile Network identifiers. Edit this file to add or correct entries; PlmnReferenceService loads and indexes it at startup. mnc and plmn_id are STRINGS with significant leading zeros — never store them as numbers.",
+    "note": "Curated US Public Land Mobile Network identifiers. Edit this file to add or correct entries; PlmnReferenceService loads and indexes it at startup. mnc and plmn_id are STRINGS with significant leading zeros. Never store them as numbers.",
     "description": "US Public Land Mobile Network identifiers (MCC/MNC) by carrier, for offline lookup.",
     "last_updated": "2026-06-05",
     "schema_version": 1,

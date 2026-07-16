@@ -177,7 +177,7 @@ class MacOuiService {
         isMulticast: false,
         matched: false,
         registry: null,
-        errorMessage: 'Enter a valid MAC address — 6 hex bytes, e.g. '
+        errorMessage: 'Enter a valid MAC address. 6 Hex bytes, e.g. '
             'B8:27:EB:01:23:45 (colons, hyphens, dots, or no separators all '
             'work).',
       );

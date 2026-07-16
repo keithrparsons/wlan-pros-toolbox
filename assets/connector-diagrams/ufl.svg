@@ -4,7 +4,7 @@
        Drawn to TRUE relative scale (3.5 px per 0.1 mm) so the size gap is the message.
        Lime marks the male outer diameter (the dimension that differs / the identifying feature). -->
 
-  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">U.FL / MHF I  vs  MHF 4 — drawn to scale</text>
+  <text x="200" y="22" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle">U.FL / MHF I  vs  MHF 4: drawn to scale</text>
 
   <!-- ground / board line both sit on -->
   <line x1="40" y1="150" x2="360" y2="150" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round"/>
@@ -44,7 +44,7 @@
   </g>
   <text x="278" y="91" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle">1.5 mm</text>
   <text x="278" y="190" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">MHF 4</text>
-  <text x="278" y="206" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">smaller — does NOT mate with U.FL</text>
+  <text x="278" y="206" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">smaller, does NOT mate with U.FL</text>
 
   <!-- divider -->
   <line x1="205" y1="86" x2="205" y2="150" stroke="#9C9C9C" stroke-width="1" stroke-dasharray="3 4"/>

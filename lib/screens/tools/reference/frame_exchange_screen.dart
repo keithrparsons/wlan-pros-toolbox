@@ -543,7 +543,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'Probe Request',
             type: FxType.mgmt,
             note:
-                'STA actively scans for specific SSID (optional — passive '
+                'STA actively scans for specific SSID (optional. Passive '
                 'scan skips this)',
           ),
           FxFrame(
@@ -559,7 +559,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'Auth Request (Open)',
             type: FxType.mgmt,
             note:
-                'Open System auth — always succeeds; just a formality before '
+                'Open System auth: always succeeds; just a formality before '
                 'Association',
           ),
           FxFrame(
@@ -593,7 +593,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
         ],
       ),
       FxPhase(
-        name: '4-Way Handshake (WPA2-PSK only — skip for Open networks)',
+        name: '4-Way Handshake (WPA2-PSK only: skip for Open networks)',
         frames: <FxFrame>[
           FxFrame(
             n: 8,
@@ -677,7 +677,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'Probe Request / Beacon',
             type: FxType.mgmt,
-            note: 'Same as WPA2 — STA discovers BSS',
+            note: 'Same as WPA2. STA discovers BSS',
           ),
           FxFrame(
             n: 2,
@@ -702,7 +702,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             type: FxType.mgmt,
             note:
                 'STA sends confirmation token. Both sides derive PMK from the '
-                'exchange — no password is transmitted',
+                'exchange. No password is transmitted',
           ),
           FxFrame(
             n: 5,
@@ -710,7 +710,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'SAE Confirm (Auth Seq 2)',
             type: FxType.mgmt,
             note:
-                'AP confirms. Auth complete. PMK is now shared — forward '
+                'AP confirms. Auth complete. PMK is now shared. Forward '
                 'secrecy guaranteed',
           ),
         ],
@@ -828,7 +828,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
         ],
       ),
       FxPhase(
-        name: 'Association — Diffie-Hellman key exchange (the OWE crux)',
+        name: 'Association: Diffie-Hellman key exchange (the OWE crux)',
         frames: <FxFrame>[
           FxFrame(
             n: 5,
@@ -915,7 +915,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
         ],
       ),
       FxPhase(
-        name: 'Pre-association query (GAS / ANQP — the distinct part)',
+        name: 'Pre-association query (GAS / ANQP: the distinct part)',
         frames: <FxFrame>[
           FxFrame(
             n: 2,
@@ -925,7 +925,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             note:
                 'Carries an ANQP query (NAI Realm List, Roaming Consortium / '
                 'RCOI, 3GPP Cellular, Domain Name). Sent unauthenticated and '
-                'unassociated — the STA has no IP yet, so GAS Public Action '
+                'unassociated. The STA has no IP yet, so GAS Public Action '
                 'frames are the transport.',
           ),
           FxFrame(
@@ -934,7 +934,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'GAS Initial Response (Public Action)',
             type: FxType.mgmt,
             note:
-                'Returns the ANQP data — or a delay token / comeback if the '
+                'Returns the ANQP data, or a delay token / comeback if the '
                 'response is large or not ready. The STA can now decide WHETHER '
                 'this network can authenticate it before committing.',
           ),
@@ -974,7 +974,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: '802.1X / EAP method exchange',
             type: FxType.eap,
             note:
-                'Full EAP runs — typically EAP-TLS, EAP-TTLS, or EAP-SIM/AKA '
+                'Full EAP runs, typically EAP-TLS, EAP-TTLS, or EAP-SIM/AKA '
                 'for carrier SIM auth. After association the air sequence is the '
                 'ordinary 802.1X/EAP flow (see the WPA2-Enterprise scenario).',
           ),
@@ -986,7 +986,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             note:
                 'Standard handshake using the EAP-derived PMK. '
                 'OpenRoaming note: OpenRoaming (WBA) is a federation built ON '
-                'this Passpoint exchange — an RCOI match in the ANQP query '
+                'this Passpoint exchange, an RCOI match in the ANQP query '
                 'triggers the EAP auth shown here. The roaming agreements and '
                 'identity federation are backend (WBA WRIX), not new '
                 'over-the-air frames. It can also be paired with OWE for its '
@@ -1016,7 +1016,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'STA → AP',
             label: 'Auth Request (Open)',
             type: FxType.mgmt,
-            note: 'Open System auth — same as WPA2-PSK preamble',
+            note: 'Open System auth: same as WPA2-PSK preamble',
           ),
           FxFrame(
             n: 3,
@@ -1133,7 +1133,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             type: FxType.eap,
             note:
                 'PTK/GTK installed. Data can now flow. '
-                'eduroam note: eduroam uses this EXACT air sequence — the '
+                'eduroam note: eduroam uses this EXACT air sequence. The '
                 "difference is backend RADIUS proxying that routes auth to the "
                 "user's home institution by the realm in the outer identity "
                 '(user@institution.edu). There is no eduroam-specific over-the-'
@@ -1215,7 +1215,7 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'FT Reassociation Request',
             type: FxType.mgmt,
             note:
-                'Contains MDIE + FTIE. No separate 4-Way Handshake needed — '
+                'Contains MDIE + FTIE. No separate 4-Way Handshake needed. '
                 'keys already negotiated',
           ),
           FxFrame(

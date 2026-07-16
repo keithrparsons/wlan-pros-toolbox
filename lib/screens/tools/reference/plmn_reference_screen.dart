@@ -117,7 +117,7 @@ class _PlmnReferenceScreenState extends State<PlmnReferenceScreen> {
         final String parent =
             e.operator.isEmpty || e.operator == e.carrier
                 ? ''
-                : ' — ${e.operator}';
+                : ': ${e.operator}';
         buf.writeln(
           '${e.plmnId}\t${e.mccMncLabel}\t${e.carrier}$parent\t${e.status.label}',
         );
@@ -257,7 +257,7 @@ class _IntroCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
-        'US mobile-network identifiers — $total PLMN IDs across $mccCount '
+        'US mobile-network identifiers: $total PLMN IDs across $mccCount '
         'country codes (MCC 310–316). Search by MCC, MNC, PLMN ID, or carrier '
         'name.',
         style: text.labelMedium?.copyWith(color: colors.textSecondary),

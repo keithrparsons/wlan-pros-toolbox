@@ -195,9 +195,9 @@ class NonWifiChannelsScreen extends StatelessWidget {
 
   static const String loraWanFootnote =
       'LoRaWAN frequency plan, channel count, and layout are entirely region-'
-      'defined — there is no global LoRaWAN channel map. Source: LoRa Alliance '
+      'defined. There is no global LoRaWAN channel map. Source: LoRa Alliance '
       'RP002 Regional Parameters. Plans marked "verify" are version-dependent '
-      'or sparsely sourced (CN470/CN779/RU864) — confirm against RP002 §2 and '
+      'or sparsely sourced (CN470/CN779/RU864). Confirm against RP002 §2 and '
       'the local regulator before use.';
 
   // ── IEEE 802.15.4 ──────────────────────────────────────────────────────────
@@ -256,7 +256,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
     ('Formula', 'f = 2402 + k MHz (k = 0-78)'),
     ('Range', '2402-2480 MHz (2.4 GHz ISM)'),
     ('Hopping', '~1600 hops/sec (adaptive)'),
-    ('Region', 'Global — same channels worldwide'),
+    ('Region', 'Global: same channels worldwide'),
   ];
 
   // ── Bluetooth LE ────────────────────────────────────────────────────────────
@@ -330,14 +330,14 @@ class NonWifiChannelsScreen extends StatelessWidget {
   static const String zigbeeUse =
       'Mesh networking for home automation and industrial sensors (lights, '
       'locks, thermostats). Zigbee is an application/network stack that runs on '
-      'the IEEE 802.15.4 PHY — it does not define its own channels.';
+      'the IEEE 802.15.4 PHY. It does not define its own channels.';
 
   static const List<(String, String)> zigbeeFacts = [
-    ('2.4 GHz band', '802.15.4 ch 11-26 (2405-2480 MHz, 5 MHz spacing) — '
+    ('2.4 GHz band', '802.15.4 ch 11-26 (2405-2480 MHz, 5 MHz spacing). '
         '16 channels, worldwide'),
-    ('Sub-GHz', '868 MHz (ch 0, Europe) and 902-928 MHz (ch 1-10, Americas) — '
+    ('Sub-GHz', '868 MHz (ch 0, Europe) and 902-928 MHz (ch 1-10, Americas). '
         'lower rate, region-restricted'),
-    ('Common 2.4 GHz picks', '11, 15, 20, 25, 26 (convention, not a mandate) — '
+    ('Common 2.4 GHz picks', '11, 15, 20, 25, 26 (convention, not a mandate). '
         'chosen to avoid the busiest Wi-Fi channels'),
   ];
 
@@ -558,7 +558,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
   Widget _loraWanRow(AppColorScheme colors, TextTheme text, AppMonoText mono, LoraWanPlan p) {
     return ReferenceRowSemantics(
       label: rowLabel(p.plan, <String?>[
-        p.verify ? 'verify — region-dependent or version-dependent' : null,
+        p.verify ? 'verify: region-dependent or version-dependent' : null,
         'range ${p.rangeMhz} megahertz',
         p.channels,
       ]),
