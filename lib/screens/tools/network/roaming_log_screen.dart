@@ -21,8 +21,12 @@
 // stopped (last list frozen). LAYOUT: SafeArea + centered ConstrainedBox(560) +
 // scroll; surface1 cards with the §8.1 hairline; help is the §8.16.1 footer.
 
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+
+import '../../../data/pdf_download.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/roam_detector.dart';
 import '../../../services/network/wifi_info_adapter.dart';
@@ -34,6 +38,17 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'network_unavailable_view.dart';
 
+/// The share/download seam this screen calls to export the formatted roam
+/// document. Matches the [shareBytes] signature so a test can inject a fake that
+/// never touches a platform channel.
+typedef RoamShareFn = Future<void> Function({
+  required List<int> bytes,
+  required String filename,
+  required String mimeType,
+  String? title,
+  ShareOrigin? shareOrigin,
+});
+
 /// The Roaming Log screen — a foreground roam recorder built on the shared live
 /// sampler.
 class RoamingLogScreen extends StatefulWidget {
@@ -42,6 +57,7 @@ class RoamingLogScreen extends StatefulWidget {
     this.sourceOverride,
     this.sampler,
     this.enableSampling = true,
+    this.shareFn = shareBytes,
   });
 
   /// Forces a specific Wi-Fi data source (tests). Defaults to the host platform
@@ -54,6 +70,11 @@ class RoamingLogScreen extends StatefulWidget {
 
   /// When false, no sampler is started (tests that drive the sampler manually).
   final bool enableSampling;
+
+  /// The share seam for the §8.16 Share document action. Defaults to the real
+  /// [shareBytes]; tests inject a fake so the platform share channel is never
+  /// touched.
+  final RoamShareFn shareFn;
 
   @override
   State<RoamingLogScreen> createState() => _RoamingLogScreenState();
@@ -127,17 +148,46 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       appBar: AppBar(
         title: const Text('Roaming Log'),
         toolbarHeight: 64,
-        // §8.16: copy is the sanctioned AppBar action on a results screen. The
-        // closure serializes the session log on demand and returns null until at
-        // least one roam exists, so the affordance is disabled (not focusable)
-        // on the honest empty state — never copies a fake/empty log.
+        // §8.16: copy leads, then the Share document export. Both serialize the
+        // session on demand and are disabled (not focusable) on the honest empty
+        // state, so neither ever exports a fake/empty log.
+        //
+        // The sampler is a ChangeNotifier: new roams fire notifyListeners(),
+        // which without this wrapper would only rebuild the roam-list card,
+        // NEVER these AppBar actions — so AppCopyAction, which resolves its
+        // enabled state from textBuilder() at BUILD time, would latch to the
+        // disabled state it had at screen-open (zero roams) for the whole
+        // session (the dead-Copy-button bug). Wrapping them in an AnimatedBuilder
+        // bound to the sampler re-resolves enabled as roams land. The null /
+        // unsupported branch keeps a static disabled copy action, matching the
+        // prior behavior.
         actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
+          if (_sampler != null)
+            AnimatedBuilder(
+              animation: _sampler!,
+              builder: (BuildContext context, _) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  AppCopyAction(textBuilder: _buildCopyText),
+                  _RoamShareAction(
+                    htmlBuilder: _buildShareHtml,
+                    shareFn: widget.shareFn,
+                  ),
+                ],
+              ),
+            )
+          else
+            AppCopyAction(textBuilder: _buildCopyText),
         ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
   }
+
+  /// The capture platform, resolved from the same [WifiInfoSource] the screen
+  /// already uses. Stamped into the Copy report and the Share document so three
+  /// side-by-side captures (iPhone + Android + macOS) are each self-identifying.
+  String get _capturePlatform => capturePlatformLabel(_source);
 
   /// §8.16 copy payload — delegates to the pure [buildRoamLogCopyText] so the
   /// serialization is unit-testable without a live sampler. Returns null
@@ -150,6 +200,22 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       events: events,
       network: _sessionNetwork(s, events),
       sessionStart: _sessionStart,
+      capturePlatform: _capturePlatform,
+    );
+  }
+
+  /// §8.16 Share document payload — delegates to the pure [buildRoamLogShareHtml]
+  /// so the HTML is unit-testable without a live sampler. Returns null (→ disabled
+  /// Share affordance) when no sampler is active or no roam is recorded.
+  String? _buildShareHtml() {
+    final WifiSignalSampler? s = _sampler;
+    if (s == null) return null;
+    final List<RoamEvent> events = s.roamEvents;
+    return buildRoamLogShareHtml(
+      events: events,
+      network: _sessionNetwork(s, events),
+      sessionStart: _sessionStart,
+      capturePlatform: _capturePlatform,
     );
   }
 
@@ -237,58 +303,214 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
   }
 }
 
-/// Builds the §8.16 copy payload: the recorded roam session as paste-ready plain
-/// text. A short header (network · session-open time · roam count) then one
-/// block per [RoamEvent] in chronological order, each carrying the timestamp,
-/// the from→to BSSID pair, the signal read at the roam, and the dwell on the
-/// prior AP (derived from consecutive roam timestamps).
+/// The last two octets (last 4 hex digits) of a BSSID, e.g. ":3a:10" — the part
+/// that identifies the AP on a same-brand deployment where the OUI (the first
+/// three octets) is shared across every radio. Falls back to the whole value for
+/// a short / malformed BSSID that has fewer than two colon-separated octets, so
+/// a non-standard identifier is shown in full rather than mangled (GL-005).
+@visibleForTesting
+String lastOctets(String bssid) {
+  final String trimmed = bssid.trim();
+  final List<String> parts = trimmed.split(':');
+  if (parts.length < 2) return trimmed.isEmpty ? bssid : trimmed;
+  return ':${parts.sublist(parts.length - 2).join(':')}';
+}
+
+/// The capture platform label for a [WifiInfoSource], stamped into the exported
+/// reports so three side-by-side captures (iPhone + Android + macOS laptop) are
+/// each self-identifying. macOS / Android / Windows report the band directly;
+/// iOS derives it from the channel (see [ConnectedAp.bandDerived]).
+@visibleForTesting
+String capturePlatformLabel(WifiInfoSource source) {
+  switch (source) {
+    case WifiInfoSource.macosCoreWlan:
+      return 'macOS';
+    case WifiInfoSource.iosShortcuts:
+      return 'iOS';
+    case WifiInfoSource.androidWifiManager:
+      return 'Android';
+    case WifiInfoSource.windowsNativeWifi:
+      return 'Windows';
+    case WifiInfoSource.unsupported:
+    case WifiInfoSource.web:
+      return 'this device';
+  }
+}
+
+/// The channel-first band/channel descriptor for one side of a roam, e.g.
+/// "ch 44 · 5 GHz". Channel LEADS because it is exact on every platform; band
+/// is the derived companion on iOS, where a bare channel number mislabels 6 GHz
+/// APs (channels 36 to 177 read as "5 GHz", channels 1 to 14 as "2.4 GHz"). A
+/// [derived] band carries the trailing "*" that the report's footnote explains.
+/// Omits any null part honestly; returns "" when neither is known.
+@visibleForTesting
+String bandChannelLabel(int? channel, String? band, {bool derived = false}) {
+  final List<String> parts = <String>[];
+  if (channel != null) parts.add('ch $channel');
+  if (band != null && band.trim().isNotEmpty) {
+    parts.add(derived ? '$band*' : band);
+  }
+  return parts.join(' · ');
+}
+
+/// True when any roam in the session carried a band that was derived app-side
+/// (iOS). Drives the "band derived" footnote so it appears only when relevant.
+bool _anyBandDerived(List<RoamEvent> events) => events.any(
+      (RoamEvent e) =>
+          (e.fromBandDerived && e.fromBand != null) ||
+          (e.toBandDerived && e.toBand != null),
+    );
+
+/// The one-line derived-band caveat. Kept identical between the Copy report and
+/// the Share document so both read the same honest way.
+const String _kDerivedBandNote =
+    '* Band derived from the channel number on iOS; it can disagree with a '
+    'device that reads the band directly, notably in 6 GHz. The channel is '
+    'exact on every platform.';
+
+/// The foreground caveat, matched to the capture platform so a macOS / Android
+/// report does not carry an iOS-specific note. iOS states the hard ceiling (no
+/// background Wi-Fi callbacks exist); the others state the plainer truth.
+String _foregroundNote(String capturePlatform) => capturePlatform == 'iOS'
+    ? 'iOS records roams only while this screen is open and running. There is no '
+        'background Wi-Fi monitoring on iOS.'
+    : 'Roams are recorded while this screen is open.';
+
+/// Builds the §8.16 copy payload: the recorded roam session as a clean,
+/// monospace-aligned, paste-anywhere plain-text report. A header (network,
+/// capture platform, session window, roam count, and a signal summary) then a
+/// fixed-column table, one row per [RoamEvent] in chronological order, each
+/// leading with the CHANNEL (exact everywhere) and carrying the last-octet AP
+/// identifiers, the band (marked derived on iOS), the signal + SNR, and the
+/// dwell on the prior AP.
 ///
-/// Honesty (GL-005): a field a sample omitted prints as "unavailable", matching
-/// the on-screen wording — never a fabricated value. Returns null (→ disabled
-/// affordance) when [events] is empty; the empty session is not a "log to keep".
+/// Honesty (GL-005): a field a sample omitted prints as "n/a" or is dropped from
+/// the summary — never a fabricated value. Returns null (→ disabled affordance)
+/// when [events] is empty; the empty session is not a "log to keep".
 ///
-/// Pure and deterministic (no clock, no I/O), so it is unit-tested directly with
-/// synthetic [RoamEvent]s — no live sampler required.
+/// Pure and deterministic (no clock, no I/O). ASCII-safe arrows ("->") and no em
+/// dashes, so the voice guard passes. Unit-tested directly with synthetic
+/// [RoamEvent]s, no live sampler required.
 @visibleForTesting
 String? buildRoamLogCopyText({
   required List<RoamEvent> events,
   required String network,
+  String capturePlatform = 'this device',
   DateTime? sessionStart,
 }) {
   if (events.isEmpty) return null;
 
   final StringBuffer buf = StringBuffer()
     ..writeln('Roaming Log')
-    ..writeln('Network: $network');
-  if (sessionStart != null) {
-    buf.writeln('Session started: ${_RoamRow._formatTime(sessionStart)}');
-  }
+    ..writeln('Network: $network')
+    ..writeln('Captured on: $capturePlatform');
+
+  // Session window: opened at sessionStart (or the first roam if none), through
+  // the last roam.
+  final DateTime windowStart = sessionStart ?? events.first.at;
+  final DateTime windowEnd = events.last.at;
+  buf.writeln(
+    'Session: ${_RoamRow._formatTime(windowStart)} to '
+    '${_RoamRow._formatTime(windowEnd)} '
+    '(${_formatDwell(windowEnd.difference(windowStart))})',
+  );
   buf.writeln(
     events.length == 1 ? '1 roam recorded' : '${events.length} roams recorded',
   );
+  buf.writeln(_signalSummary(events));
 
+  // Build the table cells, then size each column to its widest cell so the
+  // report aligns in any monospace context (a code block, Notes, a terminal).
+  const List<String> headers = <String>[
+    '#',
+    'Time',
+    'From',
+    'To',
+    'Signal',
+    'On prev AP',
+  ];
+  final List<List<String>> rows = <List<String>>[];
   for (int i = 0; i < events.length; i++) {
     final RoamEvent e = events[i];
-    final String evNetwork =
-        e.ssid != null && e.ssid!.trim().isNotEmpty ? e.ssid! : 'Wi-Fi';
-    final String signal = e.rssiDbm != null ? '${e.rssiDbm} dBm' : 'unavailable';
-    final String snr = e.snrDb != null ? ' · SNR ${e.snrDb} dB' : '';
-
-    buf
-      ..writeln()
-      ..writeln('${i + 1}. ${_RoamRow._formatTime(e.at)} · $evNetwork')
-      ..writeln('   ${e.fromBssid} -> ${e.toBssid}')
-      ..writeln('   Signal at roam: $signal$snr');
-    // Dwell on the AP just left = time between this roam and the prior one. The
-    // first roam has no prior roam to measure from, so it is omitted rather than
-    // guessed.
-    if (i > 0) {
-      final Duration dwell = e.at.difference(events[i - 1].at);
-      buf.writeln('   Time on previous AP: ${_formatDwell(dwell)}');
-    }
+    rows.add(<String>[
+      '${i + 1}',
+      _RoamRow._formatTime(e.at),
+      _apCell(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived),
+      _apCell(e.toBssid, e.toChannel, e.toBand, e.toBandDerived),
+      _signalCell(e),
+      // The first roam has no prior roam to measure dwell from, so it is honestly
+      // "n/a" rather than a guessed 0.
+      i == 0 ? 'n/a' : _formatDwell(e.at.difference(events[i - 1].at)),
+    ]);
   }
 
+  final List<int> widths = List<int>.generate(headers.length, (int c) {
+    int w = headers[c].length;
+    for (final List<String> r in rows) {
+      if (r[c].length > w) w = r[c].length;
+    }
+    return w;
+  });
+
+  String pad(String cell, int col) {
+    // Right-align the ordinal column, left-align the rest.
+    return col == 0
+        ? cell.padLeft(widths[col])
+        : cell.padRight(widths[col]);
+  }
+
+  String line(List<String> cells) {
+    final List<String> padded = <String>[
+      for (int c = 0; c < cells.length; c++) pad(cells[c], c),
+    ];
+    return padded.join('  ').trimRight();
+  }
+
+  buf
+    ..writeln()
+    ..writeln(line(headers));
+  for (final List<String> r in rows) {
+    buf.writeln(line(r));
+  }
+
+  // Honesty footnotes.
+  buf.writeln();
+  if (_anyBandDerived(events)) buf.writeln(_kDerivedBandNote);
+  buf.write(_foregroundNote(capturePlatform));
+
   return buf.toString().trimRight();
+}
+
+/// One from/to table cell: last-octet identifier, then the channel-first band
+/// descriptor (e.g. ":3a:10 ch 44 · 5 GHz").
+String _apCell(String bssid, int? channel, String? band, bool derived) {
+  final String tail = lastOctets(bssid);
+  final String bc = bandChannelLabel(channel, band, derived: derived);
+  return bc.isEmpty ? tail : '$tail $bc';
+}
+
+/// The signal cell for the table: "-67 dBm" plus " SNR 30 dB" when present, or
+/// the honest "signal n/a" when the platform omitted RSSI.
+String _signalCell(RoamEvent e) {
+  if (e.rssiDbm == null) return 'signal n/a';
+  final String snr = e.snrDb != null ? ' SNR ${e.snrDb} dB' : '';
+  return '${e.rssiDbm} dBm$snr';
+}
+
+/// The header signal-summary line: average, strongest, and weakest RSSI across
+/// the roams that carried one. "Signal: not reported" when none did (GL-005).
+String _signalSummary(List<RoamEvent> events) {
+  final List<int> rssi = <int>[
+    for (final RoamEvent e in events)
+      if (e.rssiDbm != null) e.rssiDbm!,
+  ];
+  if (rssi.isEmpty) return 'Signal: not reported';
+  final int sum = rssi.reduce((int a, int b) => a + b);
+  final int avg = (sum / rssi.length).round();
+  // RSSI is negative dBm: the strongest is the greatest (closest to zero).
+  final int strongest = rssi.reduce((int a, int b) => a > b ? a : b);
+  final int weakest = rssi.reduce((int a, int b) => a < b ? a : b);
+  return 'Signal: avg $avg dBm, strongest $strongest dBm, weakest $weakest dBm';
 }
 
 /// "45s" / "2m" / "2m 5s" — dwell between consecutive roams, no intl dependency.
@@ -300,6 +522,116 @@ String _formatDwell(Duration d) {
   final int minutes = total ~/ 60;
   final int seconds = total % 60;
   return seconds == 0 ? '${minutes}m' : '${minutes}m ${seconds}s';
+}
+
+/// Builds the §8.16 Share document: a self-contained HTML report that visually
+/// echoes the Copy report (title header, a summary block, the full roam table,
+/// and the honesty notes). Shared to the platform sheet as a file (Mail
+/// attachment / Files / AirDrop). Unlike the compact on-screen rows, the table
+/// carries the COMPLETE BSSIDs alongside the channel and band, because a
+/// document has room for them.
+///
+/// The layout is identical across iOS / macOS / Android (only the "Captured on"
+/// stamp and the derived-band footnote differ), so three captures read as one
+/// tool. Pure and deterministic; returns null when [events] is empty. No em
+/// dashes; every interpolated value is HTML-escaped.
+@visibleForTesting
+String? buildRoamLogShareHtml({
+  required List<RoamEvent> events,
+  required String network,
+  String capturePlatform = 'this device',
+  DateTime? sessionStart,
+}) {
+  if (events.isEmpty) return null;
+
+  final DateTime windowStart = sessionStart ?? events.first.at;
+  final DateTime windowEnd = events.last.at;
+  final String countLabel =
+      events.length == 1 ? '1 roam recorded' : '${events.length} roams recorded';
+
+  String esc(String s) => const HtmlEscape().convert(s);
+
+  final StringBuffer rowsHtml = StringBuffer();
+  for (int i = 0; i < events.length; i++) {
+    final RoamEvent e = events[i];
+    final String dwell =
+        i == 0 ? 'n/a' : _formatDwell(e.at.difference(events[i - 1].at));
+    rowsHtml.writeln(
+      '<tr>'
+      '<td class="num">${i + 1}</td>'
+      '<td>${esc(_RoamRow._formatTime(e.at))}</td>'
+      '<td>${_apCellHtml(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived, esc)}</td>'
+      '<td>${_apCellHtml(e.toBssid, e.toChannel, e.toBand, e.toBandDerived, esc)}</td>'
+      '<td>${esc(_signalCell(e))}</td>'
+      '<td>${esc(dwell)}</td>'
+      '</tr>',
+    );
+  }
+
+  final StringBuffer notes = StringBuffer();
+  if (_anyBandDerived(events)) {
+    notes.writeln('<p class="note">${esc(_kDerivedBandNote)}</p>');
+  }
+  notes.writeln(
+      '<p class="note">${esc(_foregroundNote(capturePlatform))}</p>');
+
+  return '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roaming Log</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+         color: #1a1a1a; margin: 24px; line-height: 1.4; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .summary { margin: 0 0 16px; color: #444; }
+  .summary div { margin: 2px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #d0d0d0; padding: 6px 8px; text-align: left;
+           vertical-align: top; }
+  th { background: #f2f2f2; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .note { font-size: 12px; color: #666; margin: 12px 0 0; }
+</style>
+</head>
+<body>
+<h1>Roaming Log</h1>
+<div class="summary">
+<div><strong>Network:</strong> ${esc(network)}</div>
+<div><strong>Captured on:</strong> ${esc(capturePlatform)}</div>
+<div><strong>Session:</strong> ${esc(_RoamRow._formatTime(windowStart))} to ${esc(_RoamRow._formatTime(windowEnd))} (${esc(_formatDwell(windowEnd.difference(windowStart)))})</div>
+<div><strong>${esc(countLabel)}</strong></div>
+<div>${esc(_signalSummary(events))}</div>
+</div>
+<table>
+<thead>
+<tr><th class="num">#</th><th>Time</th><th>From AP</th><th>To AP</th><th>Signal</th><th>On prev AP</th></tr>
+</thead>
+<tbody>
+${rowsHtml.toString().trimRight()}
+</tbody>
+</table>
+${notes.toString().trimRight()}
+</body>
+</html>
+''';
+}
+
+/// One from/to document cell: the FULL BSSID (there is room in a document) as
+/// mono code, then the channel-first band descriptor beneath.
+String _apCellHtml(
+  String bssid,
+  int? channel,
+  String? band,
+  bool derived,
+  String Function(String) esc,
+) {
+  final String bc = bandChannelLabel(channel, band, derived: derived);
+  final String code = '<code>${esc(bssid)}</code>';
+  return bc.isEmpty ? code : '$code<br>${esc(bc)}';
 }
 
 /// The roam-log card: a header with the live/Start control + roam count, then
@@ -515,8 +847,6 @@ class _RoamRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
-    final AppMonoText mono =
-        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     final String time = _formatTime(event.at);
     final String signal = event.rssiDbm != null
@@ -527,10 +857,17 @@ class _RoamRow extends StatelessWidget {
         ? event.ssid!
         : 'Wi-Fi';
 
+    // The a11y label keeps the FULL BSSID (the visible row shows only the
+    // identifying last octets) plus the channel-first band for each AP.
+    final String fromSpoken = _spokenAp(
+      event.fromBssid, event.fromChannel, event.fromBand, event.fromBandDerived);
+    final String toSpoken = _spokenAp(
+      event.toBssid, event.toChannel, event.toBand, event.toBandDerived);
+
     return Semantics(
       container: true,
       label: 'Roam $index on $network at $time, from access point '
-          '${event.fromBssid} to ${event.toBssid}, '
+          '$fromSpoken to access point $toSpoken, '
           '${event.rssiDbm != null ? 'signal ${event.rssiDbm} dBm' : 'signal unavailable'}'
           '${event.snrDb != null ? ', SNR ${event.snrDb} dB' : ''}.',
       child: ExcludeSemantics(
@@ -566,18 +903,21 @@ class _RoamRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xxs),
-              // From → To BSSID pair (mono, identifiers).
+              // From -> To APs. The identifier is the LAST TWO OCTETS (the OUI is
+              // shared across a same-brand deployment; the tail is what tells the
+              // radios apart), never truncated. Beneath each: the channel-first
+              // band descriptor (channel is exact on every platform; band is the
+              // derived companion on iOS).
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Flexible(
-                    child: Text(
-                      event.fromBssid,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: mono.robotoMono.copyWith(
-                        color: colors.textSecondary,
-                      ),
+                    child: _ApBlock(
+                      bssid: event.fromBssid,
+                      channel: event.fromChannel,
+                      band: event.fromBand,
+                      bandDerived: event.fromBandDerived,
+                      color: colors.textSecondary,
                     ),
                   ),
                   Padding(
@@ -591,13 +931,12 @@ class _RoamRow extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    child: Text(
-                      event.toBssid,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: mono.robotoMono.copyWith(
-                        color: colors.textPrimary,
-                      ),
+                    child: _ApBlock(
+                      bssid: event.toBssid,
+                      channel: event.toChannel,
+                      band: event.toBand,
+                      bandDerived: event.toBandDerived,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ],
@@ -623,6 +962,160 @@ class _RoamRow extends StatelessWidget {
     final String second = at.second.toString().padLeft(2, '0');
     final String meridiem = at.hour < 12 ? 'AM' : 'PM';
     return '$hour12:$minute:$second $meridiem';
+  }
+}
+
+/// The spoken form of an AP for the row's a11y label: the FULL BSSID (so screen
+/// readers announce the whole address, not just the visible tail) plus the
+/// channel and band, with the honest "derived" note when the band was computed
+/// app-side.
+String _spokenAp(String bssid, int? channel, String? band, bool bandDerived) {
+  final StringBuffer b = StringBuffer(bssid);
+  if (channel != null) b.write(' on channel $channel');
+  if (band != null && band.trim().isNotEmpty) {
+    b.write(', $band band${bandDerived ? ' derived' : ''}');
+  }
+  return b.toString();
+}
+
+/// The on-screen channel-first band descriptor beneath an AP identifier, e.g.
+/// "ch 44 · 5 GHz". Channel LEADS (exact on every platform); band is the derived
+/// companion on iOS and carries the app-standard "(derived)" caption then. Omits
+/// null parts honestly; returns "" when neither is known.
+String _rowBandChannel(int? channel, String? band, bool derived) {
+  final List<String> parts = <String>[];
+  if (channel != null) parts.add('ch $channel');
+  if (band != null && band.trim().isNotEmpty) {
+    parts.add(derived ? '$band (derived)' : band);
+  }
+  return parts.join(' · ');
+}
+
+/// One AP in a roam row: the identifying last two octets (mono, never
+/// truncated), and beneath it the channel-first band descriptor.
+class _ApBlock extends StatelessWidget {
+  const _ApBlock({
+    required this.bssid,
+    required this.channel,
+    required this.band,
+    required this.bandDerived,
+    required this.color,
+  });
+
+  final String bssid;
+  final int? channel;
+  final String? band;
+  final bool bandDerived;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final String meta = _rowBandChannel(channel, band, bandDerived);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          lastOctets(bssid),
+          softWrap: false,
+          style: mono.robotoMono.copyWith(color: color),
+        ),
+        if (meta.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xxs),
+            child: Text(
+              meta,
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The §8.16 "Share document" AppBar action: exports the session as a formatted
+/// HTML document to the platform share sheet (Mail attachment / Files / AirDrop).
+/// Mirrors [AppCopyAction]'s enabled/disabled contract — [htmlBuilder] returns
+/// null when there is no roam to export, and the affordance then renders disabled
+/// and drops from focus traversal. Placed AFTER copy per the §8.16 order rule.
+class _RoamShareAction extends StatelessWidget {
+  const _RoamShareAction({
+    required this.htmlBuilder,
+    required this.shareFn,
+  });
+
+  /// Returns the full HTML document to share, or null when there is nothing to
+  /// export yet (→ disabled). Evaluated at tap time to serialize on demand, and
+  /// its null-ness is read at build time to resolve the enabled state.
+  final String? Function() htmlBuilder;
+
+  /// The share seam. Defaults to the real [shareBytes]; tests inject a fake so
+  /// the platform share channel is never touched.
+  final RoamShareFn shareFn;
+
+  Future<void> _handleTap(BuildContext context) async {
+    final String? html = htmlBuilder();
+    if (html == null) return;
+
+    // Anchor the iPad/macOS share popover to this button's rect, or the platform
+    // throws (mirrors the PDF-card share path).
+    ShareOrigin? origin;
+    final RenderObject? box = context.findRenderObject();
+    if (box is RenderBox && box.hasSize) {
+      final Offset topLeft = box.localToGlobal(Offset.zero);
+      origin = ShareOrigin(
+        topLeft.dx,
+        topLeft.dy,
+        box.size.width,
+        box.size.height,
+      );
+    }
+
+    await shareFn(
+      bytes: utf8.encode(html),
+      filename: 'roaming-log.html',
+      mimeType: 'text/html',
+      title: 'Roaming Log',
+      shareOrigin: origin,
+    );
+
+    if (context.mounted) {
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Sharing roaming log',
+        TextDirection.ltr,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final bool enabled = htmlBuilder() != null;
+    const String label = 'Share roaming log';
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      child: ExcludeSemantics(
+        child: IconButton(
+          onPressed: enabled ? () => _handleTap(context) : null,
+          iconSize: 24,
+          tooltip: enabled ? label : null,
+          icon: Icon(
+            Icons.ios_share,
+            size: 24,
+            color: enabled ? colors.textSecondary : colors.textDisabled,
+          ),
+        ),
+      ),
+    );
   }
 }
 

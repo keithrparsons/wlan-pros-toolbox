@@ -10,8 +10,19 @@ ConnectedAp ap({
   String? bssid,
   int? rssi,
   int? snr,
+  int? channel,
+  String? band,
+  bool bandDerived = false,
 }) =>
-    ConnectedAp(ssid: ssid, bssid: bssid, rssiDbm: rssi, snrDb: snr);
+    ConnectedAp(
+      ssid: ssid,
+      bssid: bssid,
+      rssiDbm: rssi,
+      snrDb: snr,
+      channel: channel,
+      band: band,
+      bandDerived: bandDerived,
+    );
 
 void main() {
   group('RoamDetector', () {
@@ -119,6 +130,71 @@ void main() {
       expect(e, isNotNull);
       expect(e!.ssid, isNull);
       expect(d.count, 1);
+    });
+
+    test(
+        'roam carries the from/to CHANNEL and BAND from consecutive samples '
+        '(band+channel were being dropped)', () {
+      // The prior AP anchors from* (channel 44 / 5 GHz); the current sample
+      // supplies to* (channel 37 / 6 GHz). Channel is exact on every platform;
+      // band on iOS is derived from the channel and must carry its marker.
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(
+        bssid: 'aa:aa:aa:aa:aa:aa',
+        channel: 44,
+        band: '5 GHz',
+        bandDerived: true,
+      ));
+      final RoamEvent? e = d.observe(ap(
+        bssid: 'bb:bb:bb:bb:bb:bb',
+        channel: 37,
+        band: '6 GHz',
+        bandDerived: true,
+      ));
+      expect(e, isNotNull);
+      expect(e!.fromChannel, 44);
+      expect(e.toChannel, 37);
+      expect(e.fromBand, '5 GHz');
+      expect(e.toBand, '6 GHz');
+      expect(e.fromBandDerived, isTrue);
+      expect(e.toBandDerived, isTrue);
+    });
+
+    test('a directly-reported band (macOS/Android) is not marked derived', () {
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', channel: 44, band: '5 GHz'));
+      final RoamEvent? e =
+          d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', channel: 100, band: '5 GHz'));
+      expect(e, isNotNull);
+      expect(e!.fromBandDerived, isFalse);
+      expect(e.toBandDerived, isFalse);
+    });
+
+    test('a channel that resolves late on the same AP anchors the from channel',
+        () {
+      // First sample carries the BSSID but no channel yet; a later same-AP
+      // sample resolves it. The roam's from-channel must be the resolved value,
+      // not null.
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', channel: null, band: null));
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', channel: 44, band: '5 GHz'));
+      final RoamEvent? e =
+          d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', channel: 149, band: '5 GHz'));
+      expect(e, isNotNull);
+      expect(e!.fromChannel, 44);
+      expect(e.fromBand, '5 GHz');
+      expect(e.toChannel, 149);
+    });
+
+    test('honest-null when a sample omitted the channel/band', () {
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa'));
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb'));
+      expect(e, isNotNull);
+      expect(e!.fromChannel, isNull);
+      expect(e.toChannel, isNull);
+      expect(e.fromBand, isNull);
+      expect(e.toBand, isNull);
     });
 
     test('events view is unmodifiable', () {

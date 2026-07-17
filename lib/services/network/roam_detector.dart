@@ -23,7 +23,8 @@
 import 'connected_ap.dart';
 
 /// A single recorded roam: the device moved from [fromBssid] to [toBssid] on the
-/// same [ssid], at [at], with the signal read at the moment of the roam.
+/// same [ssid], at [at], with the signal, band, and channel read at the moment
+/// of the roam.
 class RoamEvent {
   const RoamEvent({
     required this.at,
@@ -32,6 +33,12 @@ class RoamEvent {
     required this.toBssid,
     required this.rssiDbm,
     required this.snrDb,
+    this.fromChannel,
+    this.toChannel,
+    this.fromBand,
+    this.toBand,
+    this.fromBandDerived = false,
+    this.toBandDerived = false,
   });
 
   /// Wall-clock time the roam was observed (the timestamp of the sample that
@@ -55,6 +62,34 @@ class RoamEvent {
   /// SNR (dB) read at the moment of the roam, or null when unavailable.
   final int? snrDb;
 
+  /// Primary channel of the AP the device left, or null when the sample that
+  /// anchored the prior AP carried no channel. Honest-null, never guessed.
+  final int? fromChannel;
+
+  /// Primary channel of the AP the device joined, or null when unavailable.
+  final int? toChannel;
+
+  /// Band label of the AP the device left ("2.4 GHz" / "5 GHz" / "6 GHz"), or
+  /// null when unknown. See [fromBandDerived] for the honesty caveat.
+  final String? fromBand;
+
+  /// Band label of the AP the device joined, or null when unknown. See
+  /// [toBandDerived] for the honesty caveat.
+  final String? toBand;
+
+  /// Whether [fromBand] was computed app-side from the channel number (true on
+  /// iOS) rather than read directly from the platform (macOS / Android / Windows
+  /// report it authoritatively). A derived band is best-effort and is ambiguous
+  /// in 6 GHz: channels 36 to 177 read as "5 GHz" without a center frequency, so
+  /// the same 6 GHz AP a laptop labels "6 GHz" can read "5 GHz" on iPhone. The
+  /// channel is exact on every platform; the band is not. Never present a derived
+  /// band as authoritative (GL-005).
+  final bool fromBandDerived;
+
+  /// Whether [toBand] was computed app-side from the channel number. Same caveat
+  /// as [fromBandDerived].
+  final bool toBandDerived;
+
   @override
   String toString() =>
       'RoamEvent($ssid: $fromBssid -> $toBssid @ ${at.toIso8601String()})';
@@ -77,6 +112,18 @@ class RoamDetector {
 
   /// The SSID that accompanied [_lastBssid], for the same-network guard.
   String? _lastSsid;
+
+  /// The channel that accompanied [_lastBssid] — the "from" channel a roam
+  /// anchors against. Null until a sample carries one.
+  int? _lastChannel;
+
+  /// The band label that accompanied [_lastBssid] — the "from" band a roam
+  /// anchors against. Null until a sample carries one.
+  String? _lastBand;
+
+  /// Whether [_lastBand] was derived app-side (true on iOS). Anchored so the
+  /// emitted roam can carry the honest "band derived" marker for the from AP.
+  bool _lastBandDerived = false;
 
   /// All roam events observed this session, oldest→newest. Unmodifiable view.
   List<RoamEvent> get events => List<RoamEvent>.unmodifiable(_events);
@@ -112,18 +159,30 @@ class RoamDetector {
     final String? ssid = ap.ssid;
     final String? prevBssid = _lastBssid;
     final String? prevSsid = _lastSsid;
+    final int? prevChannel = _lastChannel;
+    final String? prevBand = _lastBand;
+    final bool prevBandDerived = _lastBandDerived;
 
     // First known BSSID this session — seed the anchor, no roam.
     if (prevBssid == null) {
       _lastBssid = bssid;
       _lastSsid = ssid;
+      _lastChannel = ap.channel;
+      _lastBand = ap.band;
+      _lastBandDerived = ap.bandDerived;
       return null;
     }
 
-    // Unchanged BSSID — still on the same AP. Refresh the SSID anchor in case it
-    // resolved late, but record nothing.
+    // Unchanged BSSID — still on the same AP. Refresh the SSID / channel / band
+    // anchors in case they resolved late (a reading can carry the BSSID before
+    // the channel), but record nothing.
     if (bssid == prevBssid) {
       _lastSsid = ssid ?? prevSsid;
+      if (ap.channel != null) _lastChannel = ap.channel;
+      if (ap.band != null) {
+        _lastBand = ap.band;
+        _lastBandDerived = ap.bandDerived;
+      }
       return null;
     }
 
@@ -132,6 +191,9 @@ class RoamDetector {
     final bool sameNetwork = _sameSsid(prevSsid, ssid);
     _lastBssid = bssid;
     _lastSsid = ssid;
+    _lastChannel = ap.channel;
+    _lastBand = ap.band;
+    _lastBandDerived = ap.bandDerived;
     if (!sameNetwork) return null;
 
     final RoamEvent event = RoamEvent(
@@ -141,6 +203,15 @@ class RoamDetector {
       toBssid: bssid,
       rssiDbm: ap.rssiDbm,
       snrDb: ap.snrDb,
+      // from* = the anchor's values (the AP we left); to* = this sample's values
+      // (the AP we joined). All honest-null: a datum the platform omitted stays
+      // null rather than being guessed.
+      fromChannel: prevChannel,
+      toChannel: ap.channel,
+      fromBand: prevBand,
+      toBand: ap.band,
+      fromBandDerived: prevBandDerived,
+      toBandDerived: ap.bandDerived,
     );
     _events.add(event);
     return event;
@@ -153,6 +224,9 @@ class RoamDetector {
     _events.clear();
     _lastBssid = null;
     _lastSsid = null;
+    _lastChannel = null;
+    _lastBand = null;
+    _lastBandDerived = false;
   }
 
   /// A BSSID is usable only when non-null and non-blank. Returns the trimmed
