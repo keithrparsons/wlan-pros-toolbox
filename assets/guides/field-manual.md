@@ -1574,7 +1574,7 @@ Turn a frequency into a sounding tone so the logarithmic instinct behind RF (pit
 
 ---
 
-# Quick Reference (89 tools)
+# Quick Reference (90 tools)
 
 Offline lookup tables and the laminated field cards. Channel plans, standards, thresholds, connector and cabling pinouts, protocol references, CLI and capture cheat sheets, checklists, and guides, all available without a connection.
 
@@ -2699,7 +2699,7 @@ Regular-expression syntax (anchors, character classes, quantifiers, groups and r
 - Honesty note: there is no single normative regex authority: POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.
 - Data source / standard: the common PCRE2 subset per the PCRE2 syntax reference. Offline, read-only.
 
-## CLI & Capture (4)
+## CLI & Capture (5)
 
 
 ### Find the Switch and Port (LLDP/CDP)
@@ -2776,7 +2776,7 @@ A three-column Windows, macOS, and Linux command reference for the everyday netw
 
 ### Wireshark 802.11 Filters
 
-Copy-ready Wireshark display filters (typed into the filter bar after capture) and capture filters (BPF syntax, applied during capture) for 802.11 analysis: frame type/subtype, addressing, BSSID/SSID, RadioTap metadata, and RSN cipher/AKM selectors. Now also carries the 802.11 status-code and reason-code lookup tables next to the filters, so the moment a filter surfaces a deauth or a failed assoc, the code's meaning is right there.
+Copy-ready Wireshark display filters (typed into the filter bar after capture) and capture filters (BPF syntax, applied during capture) for 802.11 analysis: frame type/subtype, addressing, BSSID/SSID, RadioTap metadata, and RSN cipher/AKM selectors. Now also carries the 802.11 status-code and reason-code lookup tables next to the filters, so the moment a filter surfaces a deauth or a failed assoc, the code's meaning is right there. It now pairs the 802.11 filters with a general TCP/IP display-filter set (IP addressing, TCP/UDP, and the common higher-layer protocols), so a capture that drops below the radio layer stays in one screen.
 
 **Why it's here.** You have a capture open and need the exact display-filter field to isolate deauths, beacons, a specific BSSID, or a security cipher, without guessing field names from memory. Then, once the deauth is on screen, you need to know what reason code 15 actually means without leaving the tool.
 
@@ -2785,14 +2785,37 @@ Copy-ready Wireshark display filters (typed into the filter bar after capture) a
 2. The syntax is selectable for copy.
 3. Below the filters, the status-code and reason-code tables list the highest-frequency 802.11 codes: status codes appear in Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames.
 
-**Example.** Filters as shipped. Frame type/subtype (display): wlan.fc.type == 0 (all management), == 1 (all control), == 2 (all data); wlan.fc.type_subtype == 0 (Assoc req), 1 (Assoc resp), 2 (Reassoc req), 3 (Reassoc resp), 4 (Probe req), 5 (Probe resp), 8 (Beacon), 9 (ATIM), 10 (Disassoc), 11 (Auth), 12 (Deauth), 13 (Action), 24 (Block Ack Req), 25 (Block Ack), 26 (PS-Poll), 27 (RTS), 28 (CTS), 29 (Ack), 36 (Null data), 40 (QoS data), 44 (QoS Null). Address (display): wlan.addr == aa:bb:cc:dd:ee:ff (any field), wlan.ta, wlan.ra, wlan.sa, wlan.da. BSSID/SSID: wlan.bssid == ..., wlan.ssid == "MyNetwork", wlan.ssid contains "Guest". RadioTap: radiotap.channel.freq == 2412, radiotap.datarate >= 6, radiotap.dbm_antsignal > -70, radiotap.dbm_antnoise < -90, radiotap.channel.freq >= 2400 && < 2500 (2.4 GHz), >= 5000 && < 5900 (5 GHz), >= 5925 && <= 7125 (6 GHz). Capture filter (BPF): type mgt, type ctl, type data, type mgt subtype beacon, type mgt subtype probe-req, type mgt subtype deauth, type ctl subtype rts, type ctl subtype ack, wlan host aa:bb:cc:dd:ee:ff. RSN cipher (display): wlan.rsn.pcs.type == 4 (CCMP-128, 00-0F-AC:4), == 8 (GCMP-128, 00-0F-AC:8), == 9 (GCMP-256, 00-0F-AC:9), wlan.rsn.gcs.type == 2 (group cipher TKIP, 00-0F-AC:2). RSN AKM (display): wlan.rsn.akms.type == 1 (802.1X, 00-0F-AC:1), == 2 (PSK, 00-0F-AC:2), == 8 (SAE / WPA3-Personal, 00-0F-AC:8), == 18 (OWE, 00-0F-AC:18).
+**Example.** Filters as shipped. Frame type/subtype (display): wlan.fc.type == 0 (all management), == 1 (all control), == 2 (all data); wlan.fc.type_subtype == 0 (Assoc req), 1 (Assoc resp), 2 (Reassoc req), 3 (Reassoc resp), 4 (Probe req), 5 (Probe resp), 8 (Beacon), 9 (ATIM), 10 (Disassoc), 11 (Auth), 12 (Deauth), 13 (Action), 24 (Block Ack Req), 25 (Block Ack), 26 (PS-Poll), 27 (RTS), 28 (CTS), 29 (Ack), 36 (Null data), 40 (QoS data), 44 (QoS Null). Address (display): wlan.addr == aa:bb:cc:dd:ee:ff (any field), wlan.ta, wlan.ra, wlan.sa, wlan.da. BSSID/SSID: wlan.bssid == ..., wlan.ssid == "MyNetwork", wlan.ssid contains "Guest". RadioTap: radiotap.channel.freq == 2412, radiotap.datarate >= 6, radiotap.dbm_antsignal > -70, radiotap.dbm_antnoise < -90, radiotap.channel.freq >= 2400 && < 2500 (2.4 GHz), >= 5000 && < 5900 (5 GHz), >= 5925 && <= 7125 (6 GHz). Capture filter (BPF): type mgt, type ctl, type data, type mgt subtype beacon, type mgt subtype probe-req, type mgt subtype deauth, type ctl subtype rts, type ctl subtype ack, wlan host aa:bb:cc:dd:ee:ff. RSN cipher (display): wlan.rsn.pcs.type == 4 (CCMP-128, 00-0F-AC:4), == 8 (GCMP-128, 00-0F-AC:8), == 9 (GCMP-256, 00-0F-AC:9), wlan.rsn.gcs.type == 2 (group cipher TKIP, 00-0F-AC:2). RSN AKM (display): wlan.rsn.akms.type == 1 (802.1X, 00-0F-AC:1), == 2 (PSK, 00-0F-AC:2), == 8 (SAE / WPA3-Personal, 00-0F-AC:8), == 18 (OWE, 00-0F-AC:18). TCP/IP display filters. IP addressing: ip.addr == 10.0.0.5 (source or destination), ip.src == 10.0.0.5, ip.dst == 10.0.0.5, ip.addr == 192.168.1.0/24 (any address in a subnet, CIDR), !(ip.addr == 10.0.0.5) (exclude an address), ipv6.addr == 2001:db8::1, ipv6.src == 2001:db8::1, ipv6.dst == 2001:db8::1, ip.ttl < 5 (low TTL, near a routing loop or a traceroute). TCP / UDP: tcp.port == 443 (source or destination port), tcp.dstport == 22 (destination only), udp.port == 53, tcp.flags.syn == 1 && tcp.flags.ack == 0 (connection attempts), tcp.flags.reset == 1 (resets), tcp.flags.fin == 1 (graceful close), tcp.analysis.retransmission, tcp.analysis.zero_window (receiver told the sender to stop), tcp.analysis.flags (all of Wireshark's TCP expert findings), tcp.stream eq 0 (every packet of one conversation), tcp.len > 0 (segments carrying payload, excluding pure ACKs). Higher-layer protocols: icmp, icmpv6, arp, dns, dns.flags.response == 1 (responses only), http, http.request, http.response.code == 404, tls, tls.handshake.type == 1 (Client Hello), dhcp (was bootp in older Wireshark).
 
 **Field notes**
-- The groups above are a representative selection. The tool also ships a Retries / QoS / weak-signal group, an 802.11k / v / r roaming group, a Security / EAPOL (4-way-handshake) group, and an Operators reference group, alongside the frame-type, address, BSSID/SSID, RadioTap, capture-BPF, and RSN cipher/AKM groups shown here.
+- The groups above are a representative selection. The tool also ships a Retries / QoS / weak-signal group, an 802.11k / v / r roaming group, a Security / EAPOL (4-way-handshake) group, and an Operators reference group, alongside the frame-type, address, BSSID/SSID, RadioTap, capture-BPF, and RSN cipher/AKM groups shown here. It also ships three general TCP/IP display-filter groups: IP addressing, TCP / UDP, and higher-layer protocols.
+- The TCP/IP display filters use Wireshark dfref field names (ip, ipv6, tcp, udp, icmp, arp, dns, http, tls). For the Layer 3-4 header fields those filters match on (the byte offsets and flags behind ip.ttl, tcp.flags, an ICMP type/code), see the Packet Decode reference.
 - Caveat: display-filter field names match Wireshark's dfref; capture filters use libpcap/BPF "type/subtype" syntax and only work when capturing with a RadioTap/PPI header.
 - Footnote: type_subtype is the combined value (type in the high bits, subtype in the low bits) matching IEEE 802.11 frame type/subtype assignments; capture filters require capturing with a RadioTap header (monitor mode); for the full RSN cipher/AKM number-to-name map, see the RSN groups or the WPA Security reference tool. The bundled status-code and reason-code tables list the highest-frequency 802.11 codes only (the full tables live in the 802.11 Reason Codes reference tool).
 - Two deliberate corrections are baked in. (1) The RSN cipher-suite vs AKM tables were rebuilt from IEEE 802.11-2020 Tables 9-149 (cipher = wlan.rsn.pcs.type / wlan.rsn.gcs.type) and 9-151 (AKM = wlan.rsn.akms.type) because the original source card mislabeled cipher values as AKM. (2) The 5 GHz/2.4 GHz/6 GHz band filters ship a deliberate safe fallback using documented radiotap.channel.freq ranges instead of the unverified radiotap.channel.flags.5ghz child-token. Band-edge detail: the 5 GHz range stops at < 5900 and the 6 GHz range starts at >= 5925, so center frequencies in the 5900 to 5924 MHz gap fall into neither band filter. This is intentional.
 - Source / basis: targets Wireshark display-filter (dfref) and libpcap/BPF capture-filter conventions, sourced from the Wireshark dfref, the RadioTap dfref, pcap-filter(7), and IEEE 802.11-2020.
+
+
+### Packet Decode
+
+A byte-level Layer 3-4 reference for the headers a capture shows beneath 802.11: IPv4, IPv6, TCP, UDP, and ICMP, each as a field / bit-offset / bit-length / meaning table. Adds the TCP control bits, the TCP connection states with the three-way handshake and teardown, a common IP-protocol-numbers table, and the ICMP and ICMPv6 type and code tables.
+
+**Why it's here.** You have a packet open in Wireshark and need to confirm which field sits at which offset, what a TCP flag combination means, or what an ICMP type and code is telling you, without leaving the app or going online. This is the companion to the Wireshark filters above: those surface the frame, this decodes the bytes inside it.
+
+**How to use**
+1. Scroll to the header you are decoding. Each table lists the field, its bit offset (counted from bit 0, the first / most-significant bit), its bit length, and a plain-language meaning; variable-length fields (Options, padding, payload) read "variable".
+2. The IPv4 Type-of-Service octet is shown the modern way, DSCP (6 bits) plus ECN (2 bits); the legacy RFC 791 precedence reading is footnoted, not led with.
+3. The IPv4 Protocol and IPv6 Next Header fields point at the IP-protocol-numbers table sitting between the two IP headers. For TCP and UDP port numbers, use the Well-Known Ports reference instead.
+4. Copy any table from the toolbar as tab-separated text, one section per header.
+
+**Example.** Tables as shipped. IPv4 header (field, bit offset, bit length): Version (0, 4), IHL (4, 4), ToS / DiffServ (8, 8), Total Length (16, 16), Identification (32, 16), Flags (48, 3), Fragment Offset (51, 13), Time to Live (64, 8), Protocol (72, 8), Header Checksum (80, 16), Source Address (96, 32), Destination Address (128, 32), Options (160, variable), Padding (variable). IPv6 header: a fixed 320 bits (40 octets) with no header checksum and no in-header fragmentation. TCP control bits (bits 104-111, MSB to LSB): CWR, ECE, URG, ACK, PSH, RST, SYN, FIN. TCP connection states: CLOSED, LISTEN, SYN-SENT, SYN-RECEIVED, ESTABLISHED, FIN-WAIT-1, FIN-WAIT-2, CLOSE-WAIT, CLOSING, LAST-ACK, TIME-WAIT. Common IP protocol numbers: 1 = ICMP, 6 = TCP, 17 = UDP, 47 = GRE, 50 = ESP, 51 = AH, 58 = ICMPv6, 88 = EIGRP, 89 = OSPF, 132 = SCTP. ICMP types: 0 Echo Reply, 3 Destination Unreachable (16-code table, 0-15), 4 Source Quench (deprecated), 5 Redirect, 8 Echo Request, 11 Time Exceeded, 12 Parameter Problem, 13 Timestamp, 14 Timestamp Reply. ICMPv6: error types 1-4, Echo Request / Reply 128 / 129, and Neighbor Discovery 133-137 (Router and Neighbor Solicitation and Advertisement, plus Redirect).
+
+**Field notes**
+- Bit offsets count from bit 0 of each header (bit 0 = first / most-significant bit); bit lengths are exact, never approximate.
+- The TCP flags table uses RFC 9293's canonical layout: a 4-bit reserved field plus 8 control bits (CWR through FIN). The bit at position 103 that Wireshark still labels NS is Reserved in RFC 9293. It was NS (Nonce Sum, RFC 3540), which RFC 8311 made Historic, and RFC 9768 reassigns it as AE (Accurate ECN). It ships flagged historic in text, not as a current flag.
+- ICMP type 4 (Source Quench) is kept in the table but marked deprecated per RFC 6633.
+- Ports are not duplicated here; the app already ships a Well-Known Ports reference.
+- Source / basis: every field offset, width, flag, state, type, and code is transcribed from the primary RFC or IANA registry and cited per table: IPv4 (RFC 791, DSCP / ECN per RFC 2474 and RFC 3168), IPv6 (RFC 8200), TCP (RFC 9293), UDP (RFC 768), ICMP (RFC 792 plus the IANA ICMP Parameters registry), and ICMPv6 (RFC 4443, NDP per RFC 4861). Nothing is invented or approximated.
 
 ## Checklists (2)
 
