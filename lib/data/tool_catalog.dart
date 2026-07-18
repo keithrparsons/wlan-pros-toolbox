@@ -1338,6 +1338,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Protocols',
       ),
+      // Byte-level Layer 3-4 companion to the 802.11 references: IPv4/IPv6/TCP/
+      // UDP/ICMP header anatomy, TCP flags + states, and ICMP/ICMPv6 code tables.
+      // Data source-pinned to the RFCs (Pax, 2026-07-18).
+      ToolEntry(
+        id: 'packet-decode',
+        title: 'Packet Decode',
+        description:
+            'IPv4 / IPv6 / TCP / UDP / ICMP header fields, TCP flags and '
+            'states, and ICMP codes',
+        routeName: '/tools/packet-decode',
+        isLive: true,
+        subgroup: 'Protocols',
+      ),
       ToolEntry(
         id: 'http-status-codes',
         title: 'HTTP Status Codes',

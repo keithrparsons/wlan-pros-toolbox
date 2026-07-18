@@ -74,6 +74,7 @@ import '../screens/tools/reference/rf_bands_screen.dart';
 import '../screens/tools/reference/wifi_halow_screen.dart';
 import '../screens/tools/reference/reason_codes_screen.dart';
 import '../screens/tools/reference/frame_exchange_screen.dart';
+import '../screens/tools/reference/packet_decode_screen.dart';
 import '../screens/tools/reference/db_reference_screen.dart';
 import '../screens/tools/reference/channel_map_screen.dart';
 import '../screens/tools/reference/coax_cable_screen.dart';
@@ -272,6 +273,7 @@ class AppRouter {
   static const String reasonCodes = '/tools/reason-codes';
   static const String httpStatusCodes = '/tools/http-status-codes';
   static const String frameExchange = '/tools/frame-exchange';
+  static const String packetDecode = '/tools/packet-decode';
   static const String dbReference = '/tools/db-reference';
   static const String channelMap = '/tools/channel-map';
   static const String coaxCable = '/tools/coax-cable';
@@ -636,6 +638,7 @@ class AppRouter {
     reasonCodes: (_) => const ReasonCodesScreen(),
     httpStatusCodes: (_) => const HttpStatusCodesScreen(),
     frameExchange: (_) => const FrameExchangeScreen(),
+    packetDecode: (_) => const PacketDecodeScreen(),
     dbReference: (_) => const DbReferenceScreen(),
     channelMap: (_) => const ChannelMapScreen(),
     coaxCable: (_) => const CoaxCableScreen(),

@@ -53,6 +53,7 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/frame_exchange_screen.
 import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/non_wifi_channels_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/osi_model_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/packet_decode_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/poe_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/reason_codes_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
@@ -82,6 +83,7 @@ final List<_RefScreen> _screens = <_RefScreen>[
   (slug: 'mcs_index', build: () => const McsIndexScreen()),
   (slug: 'non_wifi_channels', build: () => const NonWifiChannelsScreen()),
   (slug: 'osi_model', build: () => const OsiModelScreen()),
+  (slug: 'packet_decode', build: () => const PacketDecodeScreen()),
   (slug: 'poe_reference', build: () => const PoeReferenceScreen()),
   (slug: 'reason_codes', build: () => const ReasonCodesScreen()),
   (slug: 'roaming', build: () => const RoamingScreen()),

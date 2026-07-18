@@ -289,7 +289,14 @@ void main() {
       // Quick Reference. The app runs no capture and no shell; it points the user
       // at the built-in tools (switch CLI, lldpcli, tcpdump, pktmon) with the
       // source-verified command strings. 174 + 1 = 175.
-      expect(store.count, 175);
+      // 176 = + Packet Decode (packet-decode) 2026-07-18: a byte-level Layer 3-4
+      // protocol reference in the Protocols subgroup of Quick Reference (IPv4 /
+      // IPv6 / TCP / UDP / ICMP header anatomy, TCP flags + connection states,
+      // ICMP / ICMPv6 type + code tables, and a common IP-protocol-numbers
+      // table). Data source-pinned to the RFCs and IANA registries (Pax,
+      // Deliverables/2026-07-18-packet-decode-reference/decode-data.md).
+      // 175 + 1 = 176.
+      expect(store.count, 176);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

@@ -74,6 +74,50 @@ void main() {
       );
     });
 
+    test('capture/scan/throughput tools are present with example invocations',
+        () {
+      CliCommand toolByMac(String mac) => CliCommandsScreen.commands
+          .firstWhere((CliCommand c) => c.macCmd == mac);
+
+      // nmap: cross-platform, with two example invocations.
+      final CliCommand nmap = toolByMac('nmap host');
+      expect(nmap.winCmd, 'nmap host');
+      expect(nmap.linCmd, 'nmap host');
+      expect(
+        nmap.options.any((o) => o.flag == 'nmap -sn 192.168.1.0/24'),
+        isTrue,
+      );
+      expect(
+        nmap.options.any((o) => o.flag == 'nmap -sV -p 1-1000 host'),
+        isTrue,
+      );
+
+      // iperf3: server + client example invocations.
+      final CliCommand iperf = toolByMac('iperf3 -c host');
+      expect(iperf.options.any((o) => o.flag == 'iperf3 -s'), isTrue);
+      expect(
+        iperf.options.any((o) => o.flag == 'iperf3 -c host -u -b 100M'),
+        isTrue,
+      );
+
+      // tcpdump: honest null on Windows (no native tcpdump).
+      final CliCommand tcpdump = toolByMac('sudo tcpdump -i en0');
+      expect(tcpdump.winCmd, isNull);
+      expect(tcpdump.linCmd, 'sudo tcpdump -i wlan0');
+      expect(
+        tcpdump.options.any((o) => o.flag == 'sudo tcpdump -i en0 -n port 53'),
+        isTrue,
+      );
+
+      // tshark: cross-platform CLI Wireshark.
+      final CliCommand tshark = toolByMac('tshark -i en0');
+      expect(tshark.winCmd, 'tshark -i 1');
+      expect(
+        tshark.options.any((o) => o.flag == 'tshark -r cap.pcap -Y "http.request"'),
+        isTrue,
+      );
+    });
+
     test('no em dash anywhere', () {
       for (final CliCommand c in CliCommandsScreen.commands) {
         expect(c.description.contains('—'), isFalse);

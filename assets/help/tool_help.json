@@ -1507,6 +1507,29 @@
       ],
       "source": "The sequences reproduce the standard 802.11 join and handshake behavior; nothing is invented."
     },
+    "packet-decode": {
+      "name": "Packet Decode",
+      "category": "Quick Reference",
+      "purpose": "Byte-level anatomy of the Layer 3 and 4 headers a capture shows beneath 802.11: the field, its bit offset and width, and what it means, for IPv4, IPv6, TCP, UDP, and ICMP. Plus the TCP control bits, the TCP connection states with the three-way handshake and teardown, a common IP-protocol-numbers table, and the ICMP and ICMPv6 type and code tables.",
+      "whyHere": "When you are reading a packet in Wireshark and need to confirm which field sits at which offset, what a TCP flag combination means, or what an ICMP type and code is telling you, without leaving the app or going online.",
+      "howToUse": [
+        "Scroll to the header you are decoding. Each header table lists the field, its bit offset (counted from bit 0), its bit length, and a plain-language meaning.",
+        "The IPv4 Type-of-Service octet is shown the modern way: DSCP (6 bits) plus ECN (2 bits). The legacy precedence reading is noted beneath.",
+        "For TCP, the flags table lists the eight control bits (CWR, ECE, URG, ACK, PSH, RST, SYN, FIN); the reserved bit that some tools still label NS is shown separately with its history.",
+        "The IPv4 Protocol and IPv6 Next Header fields point at the IP-protocol-numbers table. For TCP and UDP port numbers, use the Well-Known Ports reference instead.",
+        "Use the copy button in the toolbar to copy every table as tab-separated text, one section per header."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Bit offsets count from bit 0 of each header, where bit 0 is the first (most-significant) bit. Bit lengths are exact, never approximate. Variable-length fields (IPv4/TCP Options, padding, payload) are labeled variable.",
+        "TCP control bits use RFC 9293's canonical layout: a 4-bit reserved field plus 8 control bits. The bit at position 103 that Wireshark historically labels NS is Reserved in RFC 9293. It was NS (Nonce Sum, RFC 3540), which RFC 8311 made Historic, and RFC 9768 reassigns it as AE (Accurate ECN). It is shown for decoder completeness, flagged historic, not as a current flag.",
+        "ICMP type 4 (Source Quench) is kept in the table but marked deprecated per RFC 6633.",
+        "Every field offset, width, flag, state, type, and code is transcribed from the RFCs and the IANA registries and cited per table: IPv4 (RFC 791, with DSCP/ECN per RFC 2474 and RFC 3168), IPv6 (RFC 8200), TCP (RFC 9293), UDP (RFC 768), ICMP (RFC 792 plus the IANA ICMP Parameters registry), and ICMPv6 (RFC 4443, with NDP per RFC 4861)."
+      ],
+      "source": "Every value is transcribed from the primary RFC or IANA registry, cited per table; nothing is invented or approximated."
+    },
     "reason-codes": {
       "name": "802.11 Reason Codes",
       "category": "Quick Reference",

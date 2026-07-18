@@ -429,6 +429,66 @@ class CliCommandsScreen extends StatefulWidget {
           'Download a file. curl -O ships on all three; Linux also has wget. '
           'wget -c url resumes a stopped download',
     ),
+    // ── E. Capture, scan & throughput tools (installed, cross-platform) ──
+    // Not built into any OS; install via brew / apt / choco (or the Wireshark
+    // installer for tshark). The base command is the same on macOS and Linux;
+    // Windows availability is per-tool. Each carries 1-2 example invocations.
+    CliCommand(
+      winCmd: 'nmap host',
+      macCmd: 'nmap host',
+      linCmd: 'nmap host',
+      description:
+          'Scan hosts and ports: host discovery, open ports, and service / '
+          'version detection. Install: brew / apt / choco install nmap',
+      options: <CliOption>[
+        CliOption('nmap -sn 192.168.1.0/24',
+            'Ping-sweep a subnet to list live hosts (no port scan)'),
+        CliOption('nmap -sV -p 1-1000 host',
+            'Scan ports 1-1000 and probe each service and version'),
+      ],
+    ),
+    CliCommand(
+      winCmd: 'iperf3 -c host',
+      macCmd: 'iperf3 -c host',
+      linCmd: 'iperf3 -c host',
+      description:
+          'Measure TCP / UDP throughput between two endpoints: run a server on '
+          'one side, a client on the other. Install: brew / apt / choco install '
+          'iperf3',
+      options: <CliOption>[
+        CliOption('iperf3 -s', 'Run as a server, listening for throughput tests'),
+        CliOption('iperf3 -c host -u -b 100M',
+            'Client: UDP test to host at 100 Mbit/s'),
+      ],
+    ),
+    CliCommand(
+      winCmd: null,
+      macCmd: 'sudo tcpdump -i en0',
+      linCmd: 'sudo tcpdump -i wlan0',
+      description:
+          'Capture and print packets from an interface (CLI packet capture). '
+          'Windows has no native tcpdump; use tshark / dumpcap or WinDump',
+      options: <CliOption>[
+        CliOption('sudo tcpdump -i en0 -n port 53',
+            'Capture DNS traffic on en0 without name resolution'),
+        CliOption('sudo tcpdump -i wlan0 -w cap.pcap',
+            'Write a capture to a pcap file for later analysis'),
+      ],
+    ),
+    CliCommand(
+      winCmd: 'tshark -i 1',
+      macCmd: 'tshark -i en0',
+      linCmd: 'tshark -i wlan0',
+      description:
+          'Terminal Wireshark: capture with BPF filters or read a pcap and '
+          'apply display filters. Ships with the Wireshark install',
+      options: <CliOption>[
+        CliOption('tshark -i en0 -f "tcp port 443"',
+            'Capture live with a BPF capture filter'),
+        CliOption('tshark -r cap.pcap -Y "http.request"',
+            'Read a pcap and apply a Wireshark display filter'),
+      ],
+    ),
   ];
 
   /// Linux-only shell essentials (capture-rig / WLAN Pi context). Rendered as a

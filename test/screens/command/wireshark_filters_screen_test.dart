@@ -82,6 +82,35 @@ void main() {
       );
     });
 
+    test('general TCP/IP display groups are present with accurate syntax', () {
+      // The three new Layer 3-4 groups (2026-07-18).
+      final FilterGroup ip = groupFor('IP addressing (TCP/IP display)');
+      final FilterGroup tcpUdp = groupFor('TCP / UDP (TCP/IP display)');
+      final FilterGroup proto = groupFor('Higher-layer protocols (TCP/IP display)');
+
+      bool hasIn(FilterGroup g, String filter) =>
+          g.filters.any((f) => f.filter == filter);
+
+      // IP addressing.
+      expect(hasIn(ip, 'ip.addr == 10.0.0.5'), isTrue);
+      expect(hasIn(ip, 'ip.src == 10.0.0.5'), isTrue);
+      expect(hasIn(ip, 'ip.dst == 10.0.0.5'), isTrue);
+      // TCP/UDP incl. the SYN-without-ACK and analysis filters + stream index.
+      expect(hasIn(tcpUdp, 'tcp.port == 443'), isTrue);
+      expect(hasIn(tcpUdp, 'udp.port == 53'), isTrue);
+      expect(
+        hasIn(tcpUdp, 'tcp.flags.syn == 1 && tcp.flags.ack == 0'),
+        isTrue,
+      );
+      expect(hasIn(tcpUdp, 'tcp.analysis.retransmission'), isTrue);
+      expect(hasIn(tcpUdp, 'tcp.stream eq 0'), isTrue);
+      // Higher-layer protocols.
+      expect(hasIn(proto, 'icmp'), isTrue);
+      expect(hasIn(proto, 'dns'), isTrue);
+      expect(hasIn(proto, 'http'), isTrue);
+      expect(hasIn(proto, 'arp'), isTrue);
+    });
+
     test('frame type/subtype anchors (beacon=8, deauth=12)', () {
       expect(
         allFilters().any((f) =>

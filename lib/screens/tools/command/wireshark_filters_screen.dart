@@ -92,8 +92,9 @@ class WiresharkFiltersScreen extends StatefulWidget {
 
   static const String intro =
       'Display filters (applied after capture, in the filter bar) and capture '
-      'filters (BPF syntax, applied during capture) for 802.11 analysis. Filter '
-      'by syntax or task.';
+      'filters (BPF syntax, applied during capture) for 802.11 analysis, plus a '
+      'general TCP/IP display-filter set (IP, TCP, UDP, and the common '
+      'higher-layer protocols). Filter by syntax or task.';
 
   static const String caveat =
       'Display-filter field names match Wireshark\'s dfref. Capture filters use '
@@ -107,7 +108,10 @@ class WiresharkFiltersScreen extends StatefulWidget {
       'For the full RSN cipher and AKM number-to-name map, see the RSN tables '
       'above or the WPA Security reference tool. The status and reason code '
       'tables list the highest-frequency 802.11 codes: status codes appear in '
-      'Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames.';
+      'Auth/Assoc responses; reason codes appear in Deauth/Disassoc frames. '
+      'The TCP/IP display filters use Wireshark dfref field names (ip, ipv6, '
+      'tcp, udp, icmp, arp, dns, http, tls); for the Layer 3-4 header fields '
+      'those filters match on, see the Packet Decode reference.';
 
   /// The grouped filter set, verbatim from the Pax research deliverable, with
   /// the 5 GHz/2.4 GHz band filters using the SAFE freq-range fallback (see
@@ -243,6 +247,48 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('^^  /  xor', 'Xor'),
       WiresharkFilter('!  /  not', 'Not'),
       WiresharkFilter('contains', 'Substring / byte-sequence match'),
+    ]),
+    // ── General TCP/IP display filters (2026-07-18) ──
+    // Layer 3-4 display filters that pair with the Packet Decode reference. Field
+    // names match Wireshark's dfref (ip, ipv6, tcp, udp, icmp, arp, dns, http,
+    // tls). These decode the L3-4 headers that ride below 802.11 and are the
+    // filters an analyst reaches for once past the radio layer.
+    FilterGroup('IP addressing (TCP/IP display)', <WiresharkFilter>[
+      WiresharkFilter('ip.addr == 10.0.0.5', 'IPv4 source OR destination equals this address'),
+      WiresharkFilter('ip.src == 10.0.0.5', 'IPv4 source address'),
+      WiresharkFilter('ip.dst == 10.0.0.5', 'IPv4 destination address'),
+      WiresharkFilter('ip.addr == 192.168.1.0/24', 'Any IPv4 address in this subnet (CIDR)'),
+      WiresharkFilter('!(ip.addr == 10.0.0.5)', 'Exclude all traffic to/from an address'),
+      WiresharkFilter('ipv6.addr == 2001:db8::1', 'IPv6 source OR destination address'),
+      WiresharkFilter('ipv6.src == 2001:db8::1', 'IPv6 source address'),
+      WiresharkFilter('ipv6.dst == 2001:db8::1', 'IPv6 destination address'),
+      WiresharkFilter('ip.ttl < 5', 'Low IPv4 TTL (near a routing loop or a traceroute)'),
+    ]),
+    FilterGroup('TCP / UDP (TCP/IP display)', <WiresharkFilter>[
+      WiresharkFilter('tcp.port == 443', 'TCP source OR destination port'),
+      WiresharkFilter('tcp.dstport == 22', 'TCP destination port only'),
+      WiresharkFilter('udp.port == 53', 'UDP source OR destination port'),
+      WiresharkFilter('tcp.flags.syn == 1 && tcp.flags.ack == 0', 'SYN without ACK (connection attempts)'),
+      WiresharkFilter('tcp.flags.reset == 1', 'TCP resets (RST)'),
+      WiresharkFilter('tcp.flags.fin == 1', 'TCP FINs (graceful close)'),
+      WiresharkFilter('tcp.analysis.retransmission', 'Retransmitted TCP segments'),
+      WiresharkFilter('tcp.analysis.zero_window', 'Zero-window (receiver told the sender to stop)'),
+      WiresharkFilter('tcp.analysis.flags', 'All of Wireshark\'s TCP expert findings'),
+      WiresharkFilter('tcp.stream eq 0', 'Every packet of one TCP conversation (stream index)'),
+      WiresharkFilter('tcp.len > 0', 'TCP segments that carry payload (exclude pure ACKs)'),
+    ]),
+    FilterGroup('Higher-layer protocols (TCP/IP display)', <WiresharkFilter>[
+      WiresharkFilter('icmp', 'All ICMP (IPv4)'),
+      WiresharkFilter('icmpv6', 'All ICMPv6 (incl. Neighbor Discovery)'),
+      WiresharkFilter('arp', 'All ARP requests and replies'),
+      WiresharkFilter('dns', 'All DNS queries and responses'),
+      WiresharkFilter('dns.flags.response == 1', 'DNS responses only'),
+      WiresharkFilter('http', 'All HTTP'),
+      WiresharkFilter('http.request', 'HTTP requests only'),
+      WiresharkFilter('http.response.code == 404', 'HTTP responses with a given status code'),
+      WiresharkFilter('tls', 'All TLS records'),
+      WiresharkFilter('tls.handshake.type == 1', 'TLS Client Hello (handshake type 1)'),
+      WiresharkFilter('dhcp', 'All DHCP (was bootp in older Wireshark)'),
     ]),
   ];
 
