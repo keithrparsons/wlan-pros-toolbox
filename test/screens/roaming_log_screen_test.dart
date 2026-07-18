@@ -103,6 +103,8 @@ RoamEvent _roam({
   String? toBand,
   bool fromBandDerived = false,
   bool toBandDerived = false,
+  String? fromApName,
+  String? toApName,
 }) =>
     RoamEvent(
       at: at,
@@ -117,6 +119,8 @@ RoamEvent _roam({
       toBand: toBand,
       fromBandDerived: fromBandDerived,
       toBandDerived: toBandDerived,
+      fromApName: fromApName,
+      toApName: toApName,
     );
 
 void main() {
@@ -575,7 +579,7 @@ void main() {
 
     test(
         'TASK 5: HTML document carries network, platform, count, full BSSIDs, '
-        'channel+band, and the honesty notes', () {
+        'channel+band, AP name, and the honesty notes', () {
       final List<RoamEvent> events = <RoamEvent>[
         _roam(
           at: DateTime(2026, 6, 28, 14, 14, 7),
@@ -589,6 +593,8 @@ void main() {
           toBand: '6 GHz',
           fromBandDerived: true,
           toBandDerived: true,
+          fromApName: 'Lobby-AP-1',
+          toApName: 'Hall-AP-2',
         ),
       ];
 
@@ -603,7 +609,7 @@ void main() {
       final String doc = html!;
       expect(doc, contains('<h1>Roaming Log</h1>'));
       expect(doc, contains('KeithNet'));
-      expect(doc, contains('Captured on:'));
+      expect(doc, contains('Captured on'));
       expect(doc, contains('iOS'));
       expect(doc, contains('1 roam recorded'));
       // Full BSSIDs (there is room in a document), channel + band.
@@ -611,11 +617,104 @@ void main() {
       expect(doc, contains('aa:bb:cc:dd:ee:02'));
       expect(doc, contains('ch 44'));
       expect(doc, contains('6 GHz'));
-      // Honesty notes.
+      // AP names carried into the export (macOS advertises them).
+      expect(doc, contains('Lobby-AP-1'));
+      expect(doc, contains('Hall-AP-2'));
+      // Honesty callout (bordered box, same content as the old bare notes).
+      expect(doc, contains('class="callout"'));
+      expect(doc, contains('Honesty notes on this capture'));
       expect(doc, contains('Band derived from the channel number on iOS'));
       expect(doc, contains('background Wi-Fi monitoring on iOS'));
       // No em dash in the exported document.
       expect(doc.contains('—'), isFalse);
+    });
+
+    test(
+        'TASK: the upgraded document has stat tiles, computed facts, a ping-pong '
+        'line, and no fabricated verdicts', () {
+      // A 4-roam session with a precise A->B->A ping-pong (rows 2 and 3) inside
+      // the 30s window, plus varied RSSI/SNR/dwell to exercise the stat tiles.
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 6, 28, 14, 0, 0),
+          from: '94:2a:6f:5c:aa:01',
+          to: '94:2a:6f:5c:aa:02',
+          rssi: -59,
+          snr: 36,
+        ),
+        _roam(
+          at: DateTime(2026, 6, 28, 14, 0, 40),
+          from: '94:2a:6f:5c:aa:02',
+          to: '94:2a:6f:5c:aa:03',
+          rssi: -62,
+          snr: 33,
+        ),
+        // Ping-pong: back to :02 within 12s of the prior roam.
+        _roam(
+          at: DateTime(2026, 6, 28, 14, 0, 52),
+          from: '94:2a:6f:5c:aa:03',
+          to: '94:2a:6f:5c:aa:02',
+          rssi: -68,
+          snr: 28,
+        ),
+        _roam(
+          at: DateTime(2026, 6, 28, 14, 1, 25),
+          from: '94:2a:6f:5c:aa:02',
+          to: '94:2a:6f:5c:aa:04',
+          rssi: -64,
+          snr: 30,
+        ),
+      ];
+
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'Summit-WiFi',
+        capturePlatform: 'iOS',
+      )!;
+
+      // Stat tiles present with computed values.
+      expect(doc, contains('class="stat"'));
+      expect(doc, contains('dBm avg at roam'));
+      expect(doc, contains('dBm strongest / weakest'));
+      expect(doc, contains('dB SNR range'));
+      expect(doc, contains('avg dwell per AP'));
+      expect(doc, contains('28-36')); // SNR range lo-hi
+
+      // Session-at-a-glance computed facts.
+      expect(doc, contains('Session at a glance'));
+      expect(doc, contains('Roams fired between -59 dBm'));
+      expect(doc, contains('Dwell on the previous AP'));
+      // The ping-pong is precisely detected and named with its tails + window.
+      expect(doc, contains('Ping-pong at'));
+      expect(doc, contains(':aa:02'));
+      expect(doc, contains('class="flap"'));
+
+      // No interpretive health verdicts the app cannot prove.
+      expect(doc.toLowerCase().contains('healthy'), isFalse);
+      expect(doc.contains('—'), isFalse);
+    });
+
+    test('no ping-pong line and no flap rows when none is present', () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 6, 28, 14, 0, 0),
+          from: '94:2a:6f:5c:aa:01',
+          to: '94:2a:6f:5c:aa:02',
+          rssi: -60,
+          snr: 30,
+        ),
+        _roam(
+          at: DateTime(2026, 6, 28, 14, 0, 40),
+          from: '94:2a:6f:5c:aa:02',
+          to: '94:2a:6f:5c:aa:03',
+          rssi: -62,
+          snr: 31,
+        ),
+      ];
+      final String doc = buildRoamLogShareHtml(
+        events: events, network: 'Summit-WiFi')!;
+      expect(doc.contains('Ping-pong at'), isFalse);
+      expect(doc.contains('class="flap"'), isFalse);
     });
   });
 

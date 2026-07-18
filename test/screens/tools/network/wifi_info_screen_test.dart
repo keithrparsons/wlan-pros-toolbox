@@ -472,6 +472,36 @@ void main() {
   });
 
   group('WifiInfoScreen — macOS source', () {
+    testWidgets('shows the decoded AP name row when the beacon advertised one',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(
+            snapshot: _macSample().withApName('UAP-Lobby-1'),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('AP name'), findsOneWidget);
+      expect(find.text('UAP-Lobby-1'), findsOneWidget);
+    });
+
+    testWidgets('honest-null: NO AP name row when no name was advertised',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: _macSample()), // apName == null
+        ),
+      ));
+      await tester.pumpAndSettle();
+      // No empty label, no placeholder: the row is simply absent.
+      expect(find.text('AP name'), findsNothing);
+      // The card still renders as before (BSSID present).
+      expect(find.text('Network'), findsOneWidget);
+    });
+
     testWidgets('loading then success cards', (tester) async {
       await tester.pumpWidget(host(
         WifiInfoScreen(

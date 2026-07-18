@@ -375,6 +375,37 @@ class ConnectedAp {
     );
   }
 
+  /// Returns a copy with the vendor-advertised AP name filled in. Used by the
+  /// macOS path, where the beacon IE blob is a separate CoreWLAN scan read folded
+  /// onto the connected-interface snapshot. A null [name] leaves the field unset
+  /// (honest "no name advertised / not readable"). All other fields are preserved.
+  ConnectedAp withApName(String? name) {
+    return ConnectedAp(
+      ssid: ssid,
+      bssid: bssid,
+      apName: name ?? apName,
+      rssiDbm: rssiDbm,
+      noiseDbm: noiseDbm,
+      snrDb: snrDb,
+      txRateMbps: txRateMbps,
+      rxRateMbps: rxRateMbps,
+      channel: channel,
+      channelWidthMhz: channelWidthMhz,
+      band: band,
+      standard: standard,
+      countryCode: countryCode,
+      interfaceName: interfaceName,
+      hardwareAddress: hardwareAddress,
+      securityType: securityType,
+      poweredOn: poweredOn,
+      rxRateAvailable: rxRateAvailable,
+      channelWidthAvailable: channelWidthAvailable,
+      bandDerived: bandDerived,
+      snrDerived: snrDerived,
+      securityAvailable: securityAvailable,
+    );
+  }
+
   /// Overlays the richer RF of [other] onto this reading, field by field, taking
   /// a value from [other] only where this reading's own value is null (a
   /// non-destructive "fill the gaps" merge). Returns `this` unchanged when

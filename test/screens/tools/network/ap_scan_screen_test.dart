@@ -187,7 +187,7 @@ void main() {
   });
 
   group('ApScanScreen — off-Android (unsupported)', () {
-    testWidgets('iOS shows the honest OS-block copy, not a Windows-style note',
+    testWidgets('iOS shows the honest OS-block copy (iOS only, not macOS)',
         (tester) async {
       await tester.pumpWidget(
         host(ApScanScreen(service: _service(_payload(), platform: 'ios'))),
@@ -196,10 +196,29 @@ void main() {
 
       expect(find.text('Runs on Android'), findsOneWidget);
       expect(
-        find.textContaining('iOS and macOS block nearby-AP scanning'),
+        find.textContaining('iOS blocks nearby-AP scanning'),
         findsOneWidget,
       );
+      // The OS-block claim is now iOS-scoped; macOS must not be blamed.
+      expect(find.textContaining('macOS block'), findsNothing);
       // No list, no AP names off-Android.
+      expect(find.text('KeithNet'), findsNothing);
+    });
+
+    testWidgets('macOS says not-wired-yet, never an OS block (macOS CAN scan)',
+        (tester) async {
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(_payload(), platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Not wired for macOS yet'), findsOneWidget);
+      expect(
+        find.textContaining('macOS can list nearby access points'),
+        findsOneWidget,
+      );
+      // Must NOT claim macOS is OS-blocked ([[feedback_app_blames_the_wifi]]).
+      expect(find.textContaining('macOS block'), findsNothing);
       expect(find.text('KeithNet'), findsNothing);
     });
 
@@ -234,7 +253,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(touched, isFalse);
-      expect(find.text('Runs on Android'), findsOneWidget);
+      // macOS is the not-wired case now (it CAN scan, just unwired here).
+      expect(find.text('Not wired for macOS yet'), findsOneWidget);
     });
   });
 
@@ -267,9 +287,14 @@ void main() {
       expect(svc('android').platformStatus, ApScanPlatformStatus.supported);
     });
 
-    test('ios and macOS map to an OS-level Apple restriction', () {
+    test('iOS is a true OS-level Apple restriction (no scan API)', () {
       expect(svc('ios').platformStatus, ApScanPlatformStatus.appleRestricted);
-      expect(svc('macos').platformStatus, ApScanPlatformStatus.appleRestricted);
+    });
+
+    test('macOS maps to not-wired-yet, NOT an OS block (macOS CAN scan)', () {
+      // Honesty fix: macOS CoreWLAN can scan; the tool just is not wired here.
+      // Blaming the OS would be a [[feedback_app_blames_the_wifi]] defect.
+      expect(svc('macos').platformStatus, ApScanPlatformStatus.macosNotWired);
     });
 
     test('windows maps to not-wired-yet, NOT an OS block', () {

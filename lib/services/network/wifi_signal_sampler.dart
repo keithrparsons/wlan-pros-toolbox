@@ -71,7 +71,10 @@ class WifiSignalSampler extends ChangeNotifier {
             switch (source) {
               WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
-              _ => MacWifiInfoAdapter(),
+              // macOS enriches the connected-AP name (beacon IE decode) so the
+              // live cards and the Roaming Log can show it. Best-effort,
+              // Location-gated, honest-null (see MacWifiInfoAdapter.enrichApName).
+              _ => MacWifiInfoAdapter(enrichApName: true),
             };
         // ANDROID ONLY: the honest "is this device on Wi-Fi?" probe for a SNAPSHOT
         // source. (Round-4 cold review, THE ANDROID GATE, 2026-07-14.)

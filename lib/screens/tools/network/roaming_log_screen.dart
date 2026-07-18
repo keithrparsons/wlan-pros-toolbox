@@ -435,8 +435,10 @@ String? buildRoamLogCopyText({
     rows.add(<String>[
       '${i + 1}',
       _RoamRow._formatTime(e.at),
-      _apCell(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived),
-      _apCell(e.toBssid, e.toChannel, e.toBand, e.toBandDerived),
+      _apCell(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived,
+          apName: e.fromApName),
+      _apCell(e.toBssid, e.toChannel, e.toBand, e.toBandDerived,
+          apName: e.toApName),
       _signalCell(e),
       // The first roam has no prior roam to measure dwell from, so it is honestly
       // "n/a" rather than a guessed 0.
@@ -483,10 +485,17 @@ String? buildRoamLogCopyText({
 
 /// One from/to table cell: last-octet identifier, then the channel-first band
 /// descriptor (e.g. ":3a:10 ch 44 · 5 GHz").
-String _apCell(String bssid, int? channel, String? band, bool derived) {
+String _apCell(String bssid, int? channel, String? band, bool derived,
+    {String? apName}) {
   final String tail = lastOctets(bssid);
   final String bc = bandChannelLabel(channel, band, derived: derived);
-  return bc.isEmpty ? tail : '$tail $bc';
+  final String core = bc.isEmpty ? tail : '$tail $bc';
+  // The vendor-advertised name (when present) LEADS the cell, matching the
+  // on-screen row where the name sits above the BSSID tail.
+  if (apName != null && apName.trim().isNotEmpty) {
+    return '${apName.trim()} $core';
+  }
+  return core;
 }
 
 /// The signal cell for the table: "-67 dBm" plus " SNR 30 dB" when present, or
@@ -546,34 +555,100 @@ String? buildRoamLogShareHtml({
 
   final DateTime windowStart = sessionStart ?? events.first.at;
   final DateTime windowEnd = events.last.at;
+  final String sessionLen = _formatDwell(windowEnd.difference(windowStart));
   final String countLabel =
       events.length == 1 ? '1 roam recorded' : '${events.length} roams recorded';
 
-  String esc(String s) => const HtmlEscape().convert(s);
+  // Element-content escaping (escapes & < >). The values below are inserted as
+  // element text, never into attributes, so element mode is correct and keeps
+  // readable characters like "/" and "'" intact (the default `unknown` mode
+  // would render them as numeric entities).
+  String esc(String s) => const HtmlEscape(HtmlEscapeMode.element).convert(s);
 
+  // Computed aggregates (each honest: derived only from the events present).
+  final List<int> rssi = <int>[
+    for (final RoamEvent e in events)
+      if (e.rssiDbm != null) e.rssiDbm!,
+  ];
+  final List<int> snr = <int>[
+    for (final RoamEvent e in events)
+      if (e.snrDb != null) e.snrDb!,
+  ];
+  final List<Duration> dwells = <Duration>[
+    for (int i = 1; i < events.length; i++) events[i].at.difference(events[i - 1].at),
+  ];
+  final List<_PingPong> pingPongs = _detectPingPongs(events);
+  final Set<int> flapRows = <int>{
+    for (final _PingPong p in pingPongs) ...<int>[p.firstIndex, p.firstIndex + 1],
+  };
+
+  // ---- Stat tiles (omit a tile whose datum is absent) ----
+  final StringBuffer tiles = StringBuffer()
+    ..write(_statTile('${events.length}', 'roams in $sessionLen'));
+  if (rssi.isNotEmpty) {
+    final int avg = (rssi.reduce((int a, int b) => a + b) / rssi.length).round();
+    final int strongest = rssi.reduce((int a, int b) => a > b ? a : b);
+    final int weakest = rssi.reduce((int a, int b) => a < b ? a : b);
+    tiles
+      ..write(_statTile('$avg', 'dBm avg at roam'))
+      ..write(_statTile('$strongest / $weakest', 'dBm strongest / weakest'));
+  }
+  if (snr.isNotEmpty) {
+    final int lo = snr.reduce((int a, int b) => a < b ? a : b);
+    final int hi = snr.reduce((int a, int b) => a > b ? a : b);
+    tiles.write(_statTile(lo == hi ? '$lo' : '$lo-$hi', 'dB SNR range'));
+  }
+  if (dwells.isNotEmpty) {
+    final int avgDwell =
+        (dwells.map((Duration d) => d.inSeconds).reduce((int a, int b) => a + b) /
+                dwells.length)
+            .round();
+    tiles.write(_statTile(_formatDwell(Duration(seconds: avgDwell)), 'avg dwell per AP'));
+  }
+
+  // ---- Roam-event rows (Signal and SNR split into their own columns) ----
   final StringBuffer rowsHtml = StringBuffer();
   for (int i = 0; i < events.length; i++) {
     final RoamEvent e = events[i];
     final String dwell =
         i == 0 ? 'n/a' : _formatDwell(e.at.difference(events[i - 1].at));
+    final String signal = e.rssiDbm != null ? '${e.rssiDbm} dBm' : 'signal n/a';
+    final String snrCell = e.snrDb != null ? '${e.snrDb} dB' : 'not recorded';
+    final String cls = flapRows.contains(i) ? ' class="flap"' : '';
     rowsHtml.writeln(
-      '<tr>'
+      '<tr$cls>'
       '<td class="num">${i + 1}</td>'
       '<td>${esc(_RoamRow._formatTime(e.at))}</td>'
-      '<td>${_apCellHtml(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived, esc)}</td>'
-      '<td>${_apCellHtml(e.toBssid, e.toChannel, e.toBand, e.toBandDerived, esc)}</td>'
-      '<td>${esc(_signalCell(e))}</td>'
-      '<td>${esc(dwell)}</td>'
+      '<td>${_apCellHtml(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived, esc, apName: e.fromApName)}</td>'
+      '<td>${_apCellHtml(e.toBssid, e.toChannel, e.toBand, e.toBandDerived, esc, apName: e.toApName)}</td>'
+      '<td class="num">${esc(signal)}</td>'
+      '<td class="num">${esc(snrCell)}</td>'
+      '<td class="num">${esc(dwell)}</td>'
       '</tr>',
     );
   }
 
-  final StringBuffer notes = StringBuffer();
-  if (_anyBandDerived(events)) {
-    notes.writeln('<p class="note">${esc(_kDerivedBandNote)}</p>');
+  // ---- Session at a glance: COMPUTED facts only (GL-005) ----
+  final List<String> facts = _sessionFacts(events, rssi, dwells, pingPongs);
+  final StringBuffer glance = StringBuffer();
+  if (facts.isNotEmpty) {
+    glance.writeln('<h2>Session at a glance</h2>');
+    glance.writeln('<ul class="notes">');
+    for (final String f in facts) {
+      glance.writeln('  <li>${esc(f)}</li>');
+    }
+    glance.writeln('</ul>');
   }
-  notes.writeln(
-      '<p class="note">${esc(_foregroundNote(capturePlatform))}</p>');
+
+  // ---- Honesty callout (same content as the plain notes, in a proper box) ----
+  final StringBuffer callout = StringBuffer()
+    ..write('<div class="callout"><strong>Honesty notes on this capture.</strong> ');
+  if (_anyBandDerived(events)) {
+    callout.write('${esc(_kDerivedBandNote)} ');
+  }
+  callout
+    ..write(esc(_foregroundNote(capturePlatform)))
+    ..write('</div>');
 
   return '''
 <!DOCTYPE html>
@@ -583,41 +658,205 @@ String? buildRoamLogShareHtml({
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Roaming Log</title>
 <style>
-  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-         color: #1a1a1a; margin: 24px; line-height: 1.4; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .summary { margin: 0 0 16px; color: #444; }
-  .summary div { margin: 2px 0; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { border: 1px solid #d0d0d0; padding: 6px 8px; text-align: left;
-           vertical-align: top; }
-  th { background: #f2f2f2; }
-  td.num, th.num { text-align: right; white-space: nowrap; }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .note { font-size: 12px; color: #666; margin: 12px 0 0; }
+  :root{
+    --ink:#1a1a1a; --muted:#5f6368; --faint:#8a8f98;
+    --line:#e3e5e8; --surface:#f7f8f9; --accent:#5a7d2a;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:var(--sans);color:var(--ink);line-height:1.5;
+    background:#fff;padding:40px 32px 56px;max-width:920px;margin:0 auto;font-size:15px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:20px}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:16px;margin:28px 0 10px;letter-spacing:-.01em;
+    border-bottom:1px solid var(--line);padding-bottom:6px}
+  .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 32px;
+    margin:16px 0;font-size:14px}
+  .meta div{display:flex;justify-content:space-between;
+    border-bottom:1px dotted var(--line);padding:4px 0}
+  .meta .k{color:var(--muted)}
+  .meta .v{font-weight:600;text-align:right}
+  .stats{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0 4px}
+  .stat{flex:1 1 130px;background:var(--surface);border:1px solid var(--line);
+    border-radius:8px;padding:12px 14px}
+  .stat .n{font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+    vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    font-weight:600;border-bottom:1.5px solid var(--line)}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  code{font-family:var(--mono);font-size:12.5px}
+  tr.flap td{background:#fbf3e6}
+  ul.notes{padding-left:18px;margin:8px 0}
+  ul.notes li{margin:6px 0}
+  .callout{background:var(--surface);border-left:3px solid var(--accent);
+    border-radius:0 6px 6px 0;padding:12px 16px;margin:14px 0;font-size:13.5px;
+    color:var(--muted)}
+  .callout strong{color:var(--ink)}
+  footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);
+    color:var(--faint);font-size:12px}
+  @media print{body{padding:0;font-size:12px}.stat{break-inside:avoid}tr{break-inside:avoid}}
 </style>
 </head>
 <body>
-<h1>Roaming Log</h1>
-<div class="summary">
-<div><strong>Network:</strong> ${esc(network)}</div>
-<div><strong>Captured on:</strong> ${esc(capturePlatform)}</div>
-<div><strong>Session:</strong> ${esc(_RoamRow._formatTime(windowStart))} to ${esc(_RoamRow._formatTime(windowEnd))} (${esc(_formatDwell(windowEnd.difference(windowStart)))})</div>
-<div><strong>${esc(countLabel)}</strong></div>
-<div>${esc(_signalSummary(events))}</div>
+<header>
+  <h1>Roaming Log</h1>
+  <div class="sub">Network <strong>${esc(network)}</strong> &middot; ${esc(capturePlatform)} &middot; ${esc(countLabel)}</div>
+</header>
+
+<div class="meta">
+  <div><span class="k">Network (SSID)</span><span class="v">${esc(network)}</span></div>
+  <div><span class="k">Captured on</span><span class="v">${esc(capturePlatform)}</span></div>
+  <div><span class="k">Session window</span><span class="v">${esc(_RoamRow._formatTime(windowStart))} to ${esc(_RoamRow._formatTime(windowEnd))}</span></div>
+  <div><span class="k">Session length</span><span class="v">${esc(sessionLen)}</span></div>
+  <div><span class="k">Roams recorded</span><span class="v">${events.length}</span></div>
+  <div><span class="k">Tool</span><span class="v">WLAN Pros Toolbox &middot; Roaming Log</span></div>
 </div>
+
+<h2>Session summary</h2>
+<div class="stats">
+${tiles.toString()}
+</div>
+
+<h2>Roam events</h2>
 <table>
 <thead>
-<tr><th class="num">#</th><th>Time</th><th>From AP</th><th>To AP</th><th>Signal</th><th>On prev AP</th></tr>
+<tr><th class="num">#</th><th>Time</th><th class="mono">From AP</th><th class="mono">To AP</th><th class="num">Signal</th><th class="num">SNR</th><th class="num">Dwell on prev AP</th></tr>
 </thead>
 <tbody>
 ${rowsHtml.toString().trimRight()}
 </tbody>
 </table>
-${notes.toString().trimRight()}
+${glance.toString().trimRight()}
+${callout.toString()}
+<footer>Generated by the WLAN Pros Toolbox, Roaming Log. Field record, local use.</footer>
 </body>
 </html>
 ''';
+}
+
+/// One summary stat tile: a big number over a small caption. Values are
+/// pre-formatted; the caller omits a tile whose datum is absent (GL-005).
+String _statTile(String number, String label) {
+  const HtmlEscape esc = HtmlEscape(HtmlEscapeMode.element);
+  return '  <div class="stat"><div class="n">${esc.convert(number)}</div>'
+      '<div class="l">${esc.convert(label)}</div></div>\n';
+}
+
+/// An immediate roam-and-return: the device roamed A to B, then B back to A
+/// within [_kPingPongWindow]. [firstIndex] is the index of the A-to-B roam.
+class _PingPong {
+  const _PingPong({
+    required this.firstIndex,
+    required this.firstAt,
+    required this.secondAt,
+    required this.bssidA,
+    required this.bssidB,
+  });
+
+  final int firstIndex;
+  final DateTime firstAt;
+  final DateTime secondAt;
+  final String bssidA;
+  final String bssidB;
+}
+
+/// The window within which a roam-and-return counts as a ping-pong.
+const Duration _kPingPongWindow = Duration(seconds: 30);
+
+/// Detects immediate roam-and-return pairs: consecutive roams where the second
+/// returns to the BSSID the first left, within [_kPingPongWindow]. Precise and
+/// conservative — reports only genuine A to B to A flaps, never an inferred one.
+List<_PingPong> _detectPingPongs(List<RoamEvent> events) {
+  final List<_PingPong> out = <_PingPong>[];
+  for (int i = 1; i < events.length; i++) {
+    final RoamEvent a = events[i - 1];
+    final RoamEvent b = events[i];
+    final bool returned = _bssidEq(b.toBssid, a.fromBssid) &&
+        _bssidEq(b.fromBssid, a.toBssid);
+    if (returned && b.at.difference(a.at) <= _kPingPongWindow) {
+      out.add(_PingPong(
+        firstIndex: i - 1,
+        firstAt: a.at,
+        secondAt: b.at,
+        bssidA: a.fromBssid,
+        bssidB: a.toBssid,
+      ));
+    }
+  }
+  return out;
+}
+
+/// Case-insensitive, trimmed BSSID equality.
+bool _bssidEq(String a, String b) =>
+    a.trim().toLowerCase() == b.trim().toLowerCase();
+
+/// Builds the "Session at a glance" lines from COMPUTED facts only. Each line is
+/// defensible from the events; a pattern that is not present is omitted entirely
+/// (GL-005). No interpretation, no health verdict.
+List<String> _sessionFacts(
+  List<RoamEvent> events,
+  List<int> rssi,
+  List<Duration> dwells,
+  List<_PingPong> pingPongs,
+) {
+  final List<String> facts = <String>[];
+
+  // Signal range with the timestamps of the strongest and weakest roam.
+  if (rssi.isNotEmpty) {
+    RoamEvent? strongest;
+    RoamEvent? weakest;
+    for (final RoamEvent e in events) {
+      if (e.rssiDbm == null) continue;
+      if (strongest == null || e.rssiDbm! > strongest.rssiDbm!) strongest = e;
+      if (weakest == null || e.rssiDbm! < weakest.rssiDbm!) weakest = e;
+    }
+    if (strongest != null && weakest != null) {
+      if (strongest.rssiDbm == weakest.rssiDbm) {
+        facts.add('Every recorded roam fired at ${strongest.rssiDbm} dBm.');
+      } else {
+        facts.add(
+          'Roams fired between ${strongest.rssiDbm} dBm (strongest, at '
+          '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
+          '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+        );
+      }
+    }
+  }
+
+  // Dwell on the previous AP: min / max / average.
+  if (dwells.isNotEmpty) {
+    final List<int> secs = dwells.map((Duration d) => d.inSeconds).toList();
+    final int lo = secs.reduce((int a, int b) => a < b ? a : b);
+    final int hi = secs.reduce((int a, int b) => a > b ? a : b);
+    final int avg = (secs.reduce((int a, int b) => a + b) / secs.length).round();
+    if (lo == hi) {
+      facts.add('Dwell on the previous AP was ${_formatDwell(Duration(seconds: lo))}.');
+    } else {
+      facts.add(
+        'Dwell on the previous AP ranged ${_formatDwell(Duration(seconds: lo))} '
+        'to ${_formatDwell(Duration(seconds: hi))}, averaging '
+        '${_formatDwell(Duration(seconds: avg))}.',
+      );
+    }
+  }
+
+  // Ping-pong flaps: reported only when precisely detected.
+  for (final _PingPong p in pingPongs) {
+    facts.add(
+      'Ping-pong at ${_RoamRow._formatTime(p.firstAt)} to '
+      '${_RoamRow._formatTime(p.secondAt)}: roamed to ${lastOctets(p.bssidB)} '
+      'and back to ${lastOctets(p.bssidA)} within '
+      '${_formatDwell(p.secondAt.difference(p.firstAt))}.',
+    );
+  }
+
+  return facts;
 }
 
 /// One from/to document cell: the FULL BSSID (there is room in a document) as
@@ -627,11 +866,18 @@ String _apCellHtml(
   int? channel,
   String? band,
   bool derived,
-  String Function(String) esc,
-) {
+  String Function(String) esc, {
+  String? apName,
+}) {
   final String bc = bandChannelLabel(channel, band, derived: derived);
   final String code = '<code>${esc(bssid)}</code>';
-  return bc.isEmpty ? code : '$code<br>${esc(bc)}';
+  final String core = bc.isEmpty ? code : '$code<br>${esc(bc)}';
+  // The vendor-advertised name (when present) LEADS the cell in bold, above the
+  // full BSSID — matching the on-screen row's name-first layout.
+  if (apName != null && apName.trim().isNotEmpty) {
+    return '<strong>${esc(apName.trim())}</strong><br>$core';
+  }
+  return core;
 }
 
 /// The roam-log card: a header with the live/Start control + roam count, then
@@ -860,9 +1106,11 @@ class _RoamRow extends StatelessWidget {
     // The a11y label keeps the FULL BSSID (the visible row shows only the
     // identifying last octets) plus the channel-first band for each AP.
     final String fromSpoken = _spokenAp(
-      event.fromBssid, event.fromChannel, event.fromBand, event.fromBandDerived);
+      event.fromBssid, event.fromChannel, event.fromBand, event.fromBandDerived,
+      apName: event.fromApName);
     final String toSpoken = _spokenAp(
-      event.toBssid, event.toChannel, event.toBand, event.toBandDerived);
+      event.toBssid, event.toChannel, event.toBand, event.toBandDerived,
+      apName: event.toApName);
 
     return Semantics(
       container: true,
@@ -918,6 +1166,7 @@ class _RoamRow extends StatelessWidget {
                       band: event.fromBand,
                       bandDerived: event.fromBandDerived,
                       color: colors.textSecondary,
+                      apName: event.fromApName,
                     ),
                   ),
                   Padding(
@@ -937,6 +1186,7 @@ class _RoamRow extends StatelessWidget {
                       band: event.toBand,
                       bandDerived: event.toBandDerived,
                       color: colors.textPrimary,
+                      apName: event.toApName,
                     ),
                   ),
                 ],
@@ -969,8 +1219,13 @@ class _RoamRow extends StatelessWidget {
 /// readers announce the whole address, not just the visible tail) plus the
 /// channel and band, with the honest "derived" note when the band was computed
 /// app-side.
-String _spokenAp(String bssid, int? channel, String? band, bool bandDerived) {
-  final StringBuffer b = StringBuffer(bssid);
+String _spokenAp(String bssid, int? channel, String? band, bool bandDerived,
+    {String? apName}) {
+  final StringBuffer b = StringBuffer();
+  if (apName != null && apName.trim().isNotEmpty) {
+    b.write('${apName.trim()}, ');
+  }
+  b.write(bssid);
   if (channel != null) b.write(' on channel $channel');
   if (band != null && band.trim().isNotEmpty) {
     b.write(', $band band${bandDerived ? ' derived' : ''}');
@@ -1000,6 +1255,7 @@ class _ApBlock extends StatelessWidget {
     required this.band,
     required this.bandDerived,
     required this.color,
+    this.apName,
   });
 
   final String bssid;
@@ -1008,6 +1264,10 @@ class _ApBlock extends StatelessWidget {
   final bool bandDerived;
   final Color color;
 
+  /// The vendor-advertised AP name, when the beacon carried one (macOS today).
+  /// Null renders exactly as before — the BSSID tail alone, no placeholder.
+  final String? apName;
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -1015,15 +1275,31 @@ class _ApBlock extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final String meta = _rowBandChannel(channel, band, bandDerived);
+    final bool hasName = apName != null && apName!.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
+        // When a name is present it LEADS (prominent), and the BSSID tail drops
+        // to a secondary tint beneath it. Honest-null: no name → tail alone,
+        // rendered exactly as before.
+        if (hasName)
+          Text(
+            apName!.trim(),
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodyMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         Text(
           lastOctets(bssid),
           softWrap: false,
-          style: mono.robotoMono.copyWith(color: color),
+          style: mono.robotoMono.copyWith(
+            color: hasName ? colors.textTertiary : color,
+          ),
         ),
         if (meta.isNotEmpty)
           Padding(

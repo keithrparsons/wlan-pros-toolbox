@@ -320,9 +320,9 @@ class _ApScanScreenState extends State<ApScanScreen> {
 /// Honest per-platform unavailable state for the nearby-AP scan.
 ///
 /// The scan is wired for Android only today. This card explains WHY it isn't
-/// running here without overstating the reason: iOS and macOS block it at the
-/// OS level, whereas Windows can do it (Native Wifi) but the path isn't wired
-/// into this tool yet. Copy is chosen from [ApScanPlatformStatus].
+/// running here without overstating the reason: iOS blocks it at the OS level,
+/// whereas macOS (CoreWLAN) and Windows (Native Wifi) can do it but the path
+/// isn't wired into this tool yet. Copy is chosen from [ApScanPlatformStatus].
 class _ScanUnavailable extends StatelessWidget {
   const _ScanUnavailable({required this.status});
 
@@ -334,6 +334,8 @@ class _ScanUnavailable extends StatelessWidget {
 
   String get _heading {
     switch (status) {
+      case ApScanPlatformStatus.macosNotWired:
+        return 'Not wired for macOS yet';
       case ApScanPlatformStatus.windowsNotWired:
         return 'Not wired for Windows yet';
       case ApScanPlatformStatus.appleRestricted:
@@ -345,14 +347,19 @@ class _ScanUnavailable extends StatelessWidget {
 
   String get _detail {
     switch (status) {
+      case ApScanPlatformStatus.macosNotWired:
+        return '${_lead}macOS can list nearby access points through CoreWLAN, '
+            'but this tool does not wire up the macOS nearby-AP list yet. The '
+            'connected AP name is already shown in Wi-Fi Information and the '
+            'Roaming Log. The rest of the toolbox works normally here.';
       case ApScanPlatformStatus.windowsNotWired:
         return '${_lead}Windows can list nearby access points through its '
             'Native Wifi API, but this tool does not wire up the Windows scan '
             'yet. The rest of the toolbox works normally here.';
       case ApScanPlatformStatus.appleRestricted:
-        return '${_lead}iOS and macOS block nearby-AP scanning at the OS level, '
-            'so this tool cannot run it there. The rest of the toolbox works '
-            'normally here.';
+        return '${_lead}iOS blocks nearby-AP scanning at the OS level, so this '
+            'tool cannot run it there. The rest of the toolbox works normally '
+            'here.';
       case ApScanPlatformStatus.unavailable:
       case ApScanPlatformStatus.supported:
         return '${_lead}It is not available on this platform. The rest of the '

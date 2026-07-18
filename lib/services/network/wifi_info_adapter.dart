@@ -30,10 +30,12 @@
 // screen folds the iOS-only affordances behind the iOS source.
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
+import 'ap_name_decoder.dart';
 import 'connected_ap.dart';
 import 'wifi_info_service.dart';
 import 'windows_wifi_reader.dart';
@@ -174,17 +176,30 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     WifiInfoService? service,
     Duration permissionTimeout = const Duration(seconds: 30),
     Duration fetchTimeout = const Duration(seconds: 5),
+    bool enrichApName = false,
   })  : _service = service ?? WifiInfoService(),
         // Kept in the initializer list alongside `_service` (which needs the
         // `?? WifiInfoService()` fallback) rather than split into formals.
         // ignore: prefer_initializing_formals
         _permissionTimeout = permissionTimeout,
         // ignore: prefer_initializing_formals
-        _fetchTimeout = fetchTimeout;
+        _fetchTimeout = fetchTimeout,
+        // ignore: prefer_initializing_formals
+        _enrichApName = enrichApName;
 
   final WifiInfoService _service;
   final Duration _permissionTimeout;
   final Duration _fetchTimeout;
+
+  /// Whether [fetch] also reads the connected AP's beacon IE bytes (a separate
+  /// CoreWLAN scan) and decodes the vendor-advertised AP name onto the model.
+  /// Opt-in (default false) so the display surfaces that show the name (the live
+  /// sampler, the Wi-Fi Information screen) pay the extra scan while the consumer
+  /// connection checks that never render it do not. When true, enrichment is
+  /// still best-effort: it runs ONLY when Location is authorized (without it the
+  /// IE bytes are nil anyway), is bounded by [fetchTimeout], and any failure
+  /// leaves [ConnectedAp.apName] honest-null — the RF verdict never depends on it.
+  final bool _enrichApName;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -210,7 +225,44 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
         'Wi-Fi snapshot read timed out.',
       ),
     );
-    return ConnectedAp.fromWifiInfo(info);
+    final ConnectedAp ap = ConnectedAp.fromWifiInfo(info);
+    if (!_enrichApName || !info.locationAuthorized) {
+      // Enrichment off, or no Location grant (the IE bytes would be nil): return
+      // the RF snapshot with an honest-null AP name.
+      return ap;
+    }
+    final String? apName = await _readApName(ap.bssid);
+    return apName == null ? ap : ap.withApName(apName);
+  }
+
+  /// Best-effort read of the connected AP's beacon IE bytes → decoded name.
+  /// Bounded by [fetchTimeout] and total: any failure, timeout, empty blob, or
+  /// stale-scan BSSID mismatch yields null (honest "no name"), never a fabricated
+  /// value, and never throws into the RF path.
+  Future<String?> _readApName(String? connectedBssid) async {
+    try {
+      final ApIeBlob blob = await _service.connectedApIeBlob().timeout(
+            _fetchTimeout,
+            onTimeout: () => const ApIeBlob(
+              ieBytes: null,
+              bssid: null,
+              locationAuthorized: false,
+            ),
+          );
+      final Uint8List? bytes = blob.ieBytes;
+      if (bytes == null || bytes.isEmpty) return null;
+      // Guard a stale-scan mismatch: only trust the bytes when the scanned BSS
+      // matches the connected BSSID (both present, case-insensitive).
+      if (connectedBssid != null &&
+          blob.bssid != null &&
+          connectedBssid.trim().toLowerCase() !=
+              blob.bssid!.trim().toLowerCase()) {
+        return null;
+      }
+      return decodeApName(bytes);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Requests Location authorization (INTERACTIVE — surfaces the OS prompt and
