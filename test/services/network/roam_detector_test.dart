@@ -51,7 +51,11 @@ void main() {
       expect(e!.fromBssid, 'aa:aa:aa:aa:aa:aa');
       expect(e.toBssid, 'bb:bb:bb:bb:bb:bb');
       expect(e.ssid, 'HomeNet');
+      // rssiDbm/toRssiDbm = the NEW AP's reading; fromRssiDbm = the OLD AP's
+      // last reading (the anchor).
+      expect(e.fromRssiDbm, -55);
       expect(e.rssiDbm, -60);
+      expect(e.toRssiDbm, -60);
       expect(e.snrDb, 30);
       expect(e.at, DateTime(2026, 6, 13, 14, 0));
       expect(d.count, 1);
@@ -216,6 +220,79 @@ void main() {
       expect(e, isNotNull);
       expect(e!.fromApName, isNull);
       expect(e.toApName, isNull);
+    });
+
+    test('roam carries from/to RSSI from consecutive samples', () {
+      // The prior AP anchors fromRssiDbm (its last reading, -64); the current
+      // sample supplies the joined AP's RSSI (-56). Read together they show the
+      // client left a weakening AP for a stronger one.
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -64));
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', rssi: -56));
+      expect(e, isNotNull);
+      expect(e!.fromRssiDbm, -64); // old AP's last reading
+      expect(e.rssiDbm, -56); // new AP at the roam
+      expect(e.toRssiDbm, -56);
+    });
+
+    test('the OLD AP\'s FINAL reading anchors fromRssi across same-AP samples',
+        () {
+      // RSSI drifts while the client sits on the old AP; the "from" reading a
+      // roam anchors must be the LAST value on that AP (-71), not the first.
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -58));
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -65));
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -71));
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', rssi: -54));
+      expect(e, isNotNull);
+      expect(e!.fromRssiDbm, -71); // the old AP's FINAL reading, not -58
+      expect(e.rssiDbm, -54);
+    });
+
+    test('a same-AP sample that omits RSSI keeps the last known good fromRssi',
+        () {
+      // A momentary reading with no RSSI must not erase the anchor: the roam
+      // still reports the old AP's last real value (-60), never a fabricated one.
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -60));
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: null));
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', rssi: -52));
+      expect(e, isNotNull);
+      expect(e!.fromRssiDbm, -60);
+      expect(e.rssiDbm, -52);
+    });
+
+    test('honest-null fromRssi on the first roam when the seed omitted RSSI', () {
+      // The seed sample carried no RSSI, so the old AP's reading is genuinely
+      // unknown: fromRssiDbm is null, never guessed.
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: null));
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', rssi: -57));
+      expect(e, isNotNull);
+      expect(e!.fromRssiDbm, isNull);
+      expect(e.rssiDbm, -57);
+    });
+
+    test('honest-null toRssi when the roam sample omitted RSSI', () {
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -62));
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', rssi: null));
+      expect(e, isNotNull);
+      expect(e!.fromRssiDbm, -62);
+      expect(e.rssiDbm, isNull);
+      expect(e.toRssiDbm, isNull);
+    });
+
+    test('reset clears the RSSI anchor (no leak into a new session)', () {
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', rssi: -50));
+      d.reset();
+      // The fresh seed carries no RSSI; the first roam of the new session must
+      // NOT inherit -50 as its fromRssi.
+      d.observe(ap(bssid: 'cc:cc:cc:cc:cc:cc', rssi: null));
+      final RoamEvent? e = d.observe(ap(bssid: 'dd:dd:dd:dd:dd:dd', rssi: -48));
+      expect(e, isNotNull);
+      expect(e!.fromRssiDbm, isNull);
     });
 
     test('events view is unmodifiable', () {

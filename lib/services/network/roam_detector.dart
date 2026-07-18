@@ -33,6 +33,7 @@ class RoamEvent {
     required this.toBssid,
     required this.rssiDbm,
     required this.snrDb,
+    this.fromRssiDbm,
     this.fromChannel,
     this.toChannel,
     this.fromBand,
@@ -58,8 +59,22 @@ class RoamEvent {
   /// The BSSID the device joined.
   final String toBssid;
 
-  /// RSSI (dBm) read at the moment of the roam, or null when unavailable.
+  /// RSSI (dBm) on the NEW ("to") AP: the reading at the moment of the roam,
+  /// i.e. the first sample that carried the joined BSSID. Null when the platform
+  /// omitted RSSI for that sample. See [fromRssiDbm] for the old AP's last
+  /// reading, and [toRssiDbm] for a name that mirrors the from/to pair.
   final int? rssiDbm;
+
+  /// RSSI (dBm) on the OLD ("from") AP: the last signal recorded on the prior AP
+  /// before the BSSID changed (the anchor's final reading). Null when that AP's
+  /// samples carried no RSSI. Honest-null, never guessed: read side by side with
+  /// [rssiDbm] this shows whether the client left a weakening AP for a stronger
+  /// one, or roamed sideways.
+  final int? fromRssiDbm;
+
+  /// Alias for [rssiDbm] that reads symmetrically with [fromRssiDbm]: the RSSI on
+  /// the AP the device JOINED. Same value, clearer at a from/to call site.
+  int? get toRssiDbm => rssiDbm;
 
   /// SNR (dB) read at the moment of the roam, or null when unavailable.
   final int? snrDb;
@@ -124,6 +139,12 @@ class RoamDetector {
   /// The SSID that accompanied [_lastBssid], for the same-network guard.
   String? _lastSsid;
 
+  /// The last RSSI (dBm) recorded on [_lastBssid] — the "from" signal a roam
+  /// anchors against (the old AP's final reading). Null until a sample on the
+  /// current AP carries one; a later same-AP sample that omits RSSI keeps the
+  /// last known good value rather than dropping it.
+  int? _lastRssi;
+
   /// The channel that accompanied [_lastBssid] — the "from" channel a roam
   /// anchors against. Null until a sample carries one.
   int? _lastChannel;
@@ -174,6 +195,7 @@ class RoamDetector {
     final String? ssid = ap.ssid;
     final String? prevBssid = _lastBssid;
     final String? prevSsid = _lastSsid;
+    final int? prevRssi = _lastRssi;
     final int? prevChannel = _lastChannel;
     final String? prevBand = _lastBand;
     final bool prevBandDerived = _lastBandDerived;
@@ -183,6 +205,7 @@ class RoamDetector {
     if (prevBssid == null) {
       _lastBssid = bssid;
       _lastSsid = ssid;
+      _lastRssi = ap.rssiDbm;
       _lastChannel = ap.channel;
       _lastBand = ap.band;
       _lastBandDerived = ap.bandDerived;
@@ -195,6 +218,11 @@ class RoamDetector {
     // the channel), but record nothing.
     if (bssid == prevBssid) {
       _lastSsid = ssid ?? prevSsid;
+      // Track the latest RSSI on this AP so the "from" reading a future roam
+      // anchors is the old AP's FINAL signal. A sample that omitted RSSI keeps
+      // the last known good value rather than erasing it (honest-null: never
+      // fabricate, but do not discard a real prior reading).
+      if (ap.rssiDbm != null) _lastRssi = ap.rssiDbm;
       if (ap.channel != null) _lastChannel = ap.channel;
       if (ap.band != null) {
         _lastBand = ap.band;
@@ -209,6 +237,7 @@ class RoamDetector {
     final bool sameNetwork = _sameSsid(prevSsid, ssid);
     _lastBssid = bssid;
     _lastSsid = ssid;
+    _lastRssi = ap.rssiDbm;
     _lastChannel = ap.channel;
     _lastBand = ap.band;
     _lastBandDerived = ap.bandDerived;
@@ -220,7 +249,11 @@ class RoamDetector {
       ssid: ssid ?? prevSsid,
       fromBssid: prevBssid,
       toBssid: bssid,
+      // rssiDbm is the NEW ("to") AP's reading; fromRssiDbm is the old AP's last
+      // recorded signal (the anchor). Read together they show whether the client
+      // left a weakening AP for a stronger one, or roamed sideways.
       rssiDbm: ap.rssiDbm,
+      fromRssiDbm: prevRssi,
       snrDb: ap.snrDb,
       // from* = the anchor's values (the AP we left); to* = this sample's values
       // (the AP we joined). All honest-null: a datum the platform omitted stays
@@ -246,6 +279,7 @@ class RoamDetector {
     _events.clear();
     _lastBssid = null;
     _lastSsid = null;
+    _lastRssi = null;
     _lastChannel = null;
     _lastBand = null;
     _lastBandDerived = false;

@@ -96,6 +96,7 @@ RoamEvent _roam({
   required String from,
   required String to,
   int? rssi = -60,
+  int? fromRssi,
   int? snr,
   int? fromChannel,
   int? toChannel,
@@ -112,6 +113,7 @@ RoamEvent _roam({
       fromBssid: from,
       toBssid: to,
       rssiDbm: rssi,
+      fromRssiDbm: fromRssi,
       snrDb: snr,
       fromChannel: fromChannel,
       toChannel: toChannel,
@@ -405,6 +407,28 @@ void main() {
     sampler.dispose();
   });
 
+  // ===================================================================
+  // FROM/TO RSSI — the row shows the old AP's last reading and the new AP's.
+  // ===================================================================
+  testWidgets(
+      'a roam row shows BOTH the old AP RSSI and the new AP RSSI, labelled '
+      'old vs new', (t) async {
+    // The roaming adapter's first AP reads -58 dBm (anchored as the "from"
+    // reading), the joined AP reads -63 dBm at the roam.
+    final WifiSignalSampler sampler = roamingSampler();
+    await driveOneRoam(t, sampler);
+    await advanceToRoam(t);
+
+    // Both readings are on-screen, and the label makes old vs new explicit.
+    expect(
+      find.textContaining('Signal on prev AP -58 dBm → this AP -63 dBm'),
+      findsOneWidget,
+    );
+
+    await t.pumpWidget(const SizedBox());
+    sampler.dispose();
+  });
+
   testWidgets(
       'TASK 2/3: the roam row renders without overflow on a 360px phone',
       (t) async {
@@ -461,6 +485,7 @@ void main() {
             from: 'aa:bb:cc:dd:ee:01',
             to: 'aa:bb:cc:dd:ee:02',
             rssi: -67,
+            fromRssi: -60,
             snr: 30,
             fromChannel: 44,
             toChannel: 37,
@@ -474,6 +499,7 @@ void main() {
             from: 'aa:bb:cc:dd:ee:02',
             to: 'aa:bb:cc:dd:ee:03',
             rssi: -72,
+            fromRssi: -67,
             fromChannel: 37,
             toChannel: 44,
             fromBand: '6 GHz',
@@ -511,6 +537,13 @@ void main() {
       expect(out, contains('2 roams recorded'));
       expect(out,
           contains('Signal: avg -70 dBm, strongest -67 dBm, weakest -72 dBm'));
+
+      // From/to RSSI pair per roam: the OLD AP's last reading, an ASCII arrow,
+      // and the NEW AP's reading at the roam, so the delta reads left to right.
+      expect(out, contains('-60 dBm -> -67 dBm'), reason: 'roam 1 from/to RSSI');
+      expect(out, contains('-67 dBm -> -72 dBm'), reason: 'roam 2 from/to RSSI');
+      // SNR (the single reading at the roam) still trails the pair.
+      expect(out, contains('-60 dBm -> -67 dBm SNR 30 dB'));
 
       // Last-octets identifier, NOT the shared OUI leading each cell.
       expect(out, contains(':ee:01'));
@@ -567,6 +600,43 @@ void main() {
       // Band was reported directly (not derived) -> no derived footnote.
       expect(text, isNot(contains('Band derived from the channel')));
     });
+
+    test(
+        'from/to RSSI honest-null: a null from-reading prints "n/a", never a '
+        'fabricated value', () {
+      // The first roam has no prior-AP reading (fromRssi null) but a real joined
+      // reading; the second has both. The report must show the honest "n/a" for
+      // the missing side and never invent a number.
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 6, 28, 10, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          rssi: -56,
+          fromRssi: null,
+        ),
+        _roam(
+          at: DateTime(2026, 6, 28, 10, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          rssi: -61,
+          fromRssi: -56,
+        ),
+      ];
+
+      final String out = buildRoamLogCopyText(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+
+      // Missing from-reading is honest "n/a", real to-reading is shown.
+      expect(out, contains('n/a -> -56 dBm'));
+      // Both present on the second roam.
+      expect(out, contains('-56 dBm -> -61 dBm'));
+      // Never a fabricated stand-in for the unknown from-reading.
+      expect(out, isNot(contains('0 dBm -> -56 dBm')));
+    });
   });
 
   group('buildRoamLogShareHtml (§8.16 Share document)', () {
@@ -586,6 +656,7 @@ void main() {
           from: 'aa:bb:cc:dd:ee:01',
           to: 'aa:bb:cc:dd:ee:02',
           rssi: -67,
+          fromRssi: -70,
           snr: 30,
           fromChannel: 44,
           toChannel: 37,
@@ -617,6 +688,10 @@ void main() {
       expect(doc, contains('aa:bb:cc:dd:ee:02'));
       expect(doc, contains('ch 44'));
       expect(doc, contains('6 GHz'));
+      // From/to RSSI pair: the old AP's last reading, an arrow, the new AP's
+      // reading at the roam. The column header names the direction.
+      expect(doc, contains('Signal (from &rarr; to)'));
+      expect(doc, contains('-70 dBm → -67 dBm'));
       // AP names carried into the export (macOS advertises them).
       expect(doc, contains('Lobby-AP-1'));
       expect(doc, contains('Hall-AP-2'));

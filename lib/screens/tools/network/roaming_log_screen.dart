@@ -498,12 +498,20 @@ String _apCell(String bssid, int? channel, String? band, bool derived,
   return core;
 }
 
-/// The signal cell for the table: "-67 dBm" plus " SNR 30 dB" when present, or
-/// the honest "signal n/a" when the platform omitted RSSI.
+/// The signal cell for the table: the OLD ("from") AP's last RSSI, an arrow, and
+/// the NEW ("to") AP's RSSI at the roam, so the delta reads left to right in the
+/// same direction as the From/To AP columns, e.g. "-67 dBm -> -72 dBm". SNR (the
+/// single reading at the roam) trails when present. Honest-null: a reading the
+/// platform omitted prints "n/a"; both absent collapses to "signal n/a" (GL-005).
+/// ASCII "->" keeps the report paste-safe and past the voice guard.
 String _signalCell(RoamEvent e) {
-  if (e.rssiDbm == null) return 'signal n/a';
+  final int? from = e.fromRssiDbm;
+  final int? to = e.rssiDbm;
   final String snr = e.snrDb != null ? ' SNR ${e.snrDb} dB' : '';
-  return '${e.rssiDbm} dBm$snr';
+  if (from == null && to == null) return 'signal n/a$snr';
+  final String fromStr = from != null ? '$from dBm' : 'n/a';
+  final String toStr = to != null ? '$to dBm' : 'n/a';
+  return '$fromStr -> $toStr$snr';
 }
 
 /// The header signal-summary line: average, strongest, and weakest RSSI across
@@ -612,7 +620,7 @@ String? buildRoamLogShareHtml({
     final RoamEvent e = events[i];
     final String dwell =
         i == 0 ? 'n/a' : _formatDwell(e.at.difference(events[i - 1].at));
-    final String signal = e.rssiDbm != null ? '${e.rssiDbm} dBm' : 'signal n/a';
+    final String signal = _htmlSignalFromTo(e);
     final String snrCell = e.snrDb != null ? '${e.snrDb} dB' : 'not recorded';
     final String cls = flapRows.contains(i) ? ' class="flap"' : '';
     rowsHtml.writeln(
@@ -726,7 +734,7 @@ ${tiles.toString()}
 <h2>Roam events</h2>
 <table>
 <thead>
-<tr><th class="num">#</th><th>Time</th><th class="mono">From AP</th><th class="mono">To AP</th><th class="num">Signal</th><th class="num">SNR</th><th class="num">Dwell on prev AP</th></tr>
+<tr><th class="num">#</th><th>Time</th><th class="mono">From AP</th><th class="mono">To AP</th><th class="num">Signal (from &rarr; to)</th><th class="num">SNR</th><th class="num">Dwell on prev AP</th></tr>
 </thead>
 <tbody>
 ${rowsHtml.toString().trimRight()}
@@ -857,6 +865,21 @@ List<String> _sessionFacts(
   }
 
   return facts;
+}
+
+/// The from/to signal cell for the Share document: the OLD ("from") AP's last
+/// RSSI, an arrow, and the NEW ("to") AP's RSSI at the roam, e.g. "-64 dBm ->
+/// -56 dBm". The reader sees whether the client left a weakening AP for a
+/// stronger one, or roamed sideways. Honest-null: a reading the platform omitted
+/// renders "n/a"; both absent collapse to "signal n/a" (GL-005). The arrow is a
+/// literal U+2192 (rendered markup, HTML-escape-safe, past the voice guard).
+String _htmlSignalFromTo(RoamEvent e) {
+  final int? from = e.fromRssiDbm;
+  final int? to = e.rssiDbm;
+  if (from == null && to == null) return 'signal n/a';
+  final String fromStr = from != null ? '$from dBm' : 'n/a';
+  final String toStr = to != null ? '$to dBm' : 'n/a';
+  return '$fromStr → $toStr';
 }
 
 /// One from/to document cell: the FULL BSSID (there is room in a document) as
@@ -1095,10 +1118,8 @@ class _RoamRow extends StatelessWidget {
     final AppColorScheme colors = context.colors;
 
     final String time = _formatTime(event.at);
-    final String signal = event.rssiDbm != null
-        ? '${event.rssiDbm} dBm'
-        : 'Signal unavailable';
-    final String snr = event.snrDb != null ? ' · SNR ${event.snrDb} dB' : '';
+    final String signalLine = _rowSignalLine(event);
+    final String spokenSignal = _spokenSignal(event);
     final String network = event.ssid != null && event.ssid!.trim().isNotEmpty
         ? event.ssid!
         : 'Wi-Fi';
@@ -1115,9 +1136,7 @@ class _RoamRow extends StatelessWidget {
     return Semantics(
       container: true,
       label: 'Roam $index on $network at $time, from access point '
-          '$fromSpoken to access point $toSpoken, '
-          '${event.rssiDbm != null ? 'signal ${event.rssiDbm} dBm' : 'signal unavailable'}'
-          '${event.snrDb != null ? ', SNR ${event.snrDb} dB' : ''}.',
+          '$fromSpoken to access point $toSpoken, $spokenSignal.',
       child: ExcludeSemantics(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -1192,9 +1211,10 @@ class _RoamRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xxs),
-              // Signal at the roam.
+              // Signal on each AP: the old AP's last reading and the new AP's
+              // reading at the roam, so the delta is readable at a glance.
               Text(
-                'Signal at roam: $signal$snr',
+                signalLine,
                 style: text.bodySmall?.copyWith(color: colors.textTertiary),
               ),
             ],
@@ -1213,6 +1233,38 @@ class _RoamRow extends StatelessWidget {
     final String meridiem = at.hour < 12 ? 'AM' : 'PM';
     return '$hour12:$minute:$second $meridiem';
   }
+}
+
+/// The on-screen from/to signal line for a roam row: the OLD ("from") AP's last
+/// RSSI and the NEW ("to") AP's RSSI at the roam, labelled so it is clear which
+/// is the old AP and which is the new, e.g. "Signal on prev AP -64 dBm -> this AP
+/// -56 dBm". The reader sees whether the client left a weakening AP for a
+/// stronger one, or roamed sideways. SNR (the single reading at the roam) trails.
+/// Honest-null: a reading the platform omitted renders "not recorded"; both
+/// absent collapse to "Signal at roam: unavailable" (GL-005). The arrow is a
+/// literal U+2192, the app-standard transition glyph, past the voice guard.
+String _rowSignalLine(RoamEvent e) {
+  final int? from = e.fromRssiDbm;
+  final int? to = e.rssiDbm;
+  final String snr = e.snrDb != null ? ' · SNR ${e.snrDb} dB' : '';
+  if (from == null && to == null) return 'Signal at roam: unavailable$snr';
+  final String fromStr = from != null ? '$from dBm' : 'not recorded';
+  final String toStr = to != null ? '$to dBm' : 'not recorded';
+  return 'Signal on prev AP $fromStr → this AP $toStr$snr';
+}
+
+/// The spoken (screen-reader) form of the from/to signal: the old AP's last RSSI
+/// and the new AP's RSSI, in words so the direction is unambiguous. Honest-null
+/// mirrors [_rowSignalLine]. No trailing period (the caller adds one).
+String _spokenSignal(RoamEvent e) {
+  final int? from = e.fromRssiDbm;
+  final int? to = e.rssiDbm;
+  final String snr = e.snrDb != null ? ', SNR ${e.snrDb} dB' : '';
+  if (from == null && to == null) return 'signal unavailable$snr';
+  final String fromStr = from != null ? '$from dBm' : 'not recorded';
+  final String toStr = to != null ? '$to dBm' : 'not recorded';
+  return 'signal on the previous access point $fromStr, '
+      'on this access point $toStr$snr';
 }
 
 /// The spoken form of an AP for the row's a11y label: the FULL BSSID (so screen
