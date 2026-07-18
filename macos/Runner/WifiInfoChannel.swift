@@ -55,7 +55,7 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
     case "getWifiInfo":
       result(currentWifiInfo())
     case "connectedApIeBlob":
-      result(connectedApIeBlob())
+      connectedApIeBlob(result: result)
     case "isLocationAuthorized":
       result(isLocationAuthorized())
     case "locationAuthorizationStatus":
@@ -139,28 +139,44 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
   // MARK: - Connected-AP beacon IE bytes (for AP-name decode)
 
   /// Returns the raw beacon/probe IE bytes for the currently-connected BSS,
-  /// matched by BSSID against a CoreWLAN scan. Returns ieBytes=nil (never
+  /// matched by BSSID against a CoreWLAN scan. Delivers ieBytes=nil (never
   /// fabricated) when Location is unauthorized, Wi-Fi is off, no interface
   /// exists, the scan finds no BSS matching the connected BSSID, or that BSS
   /// carries no IE data. `bssid` echoes which BSS the bytes belong to (so Dart
   /// can guard a stale-scan mismatch); `locationAuthorized` lets the UI explain
   /// a null. Never throws across to Dart.
   ///
+  /// THREADING (load-bearing): `scanForNetworks` BLOCKS for seconds. The Roaming
+  /// Log polls this constantly, so running the scan on the platform/main thread
+  /// stalls the main thread and beachballs the UI (field-confirmed on a 30-minute
+  /// macOS roam). The scan therefore runs on a background queue and the
+  /// FlutterResult is delivered back on the main thread — the same off-thread
+  /// pattern `requestLocationPermission` uses. The method-channel handler returns
+  /// immediately; it never blocks on the scan.
+  ///
   /// On macOS 14+, `informationElementData`, `ssid()`, and `bssid()` all go nil
   /// together without a Location grant — the same gate the SSID/BSSID read
   /// already satisfies. The scan itself is an in-process CoreWLAN framework
   /// call, not a subprocess, so it runs in-sandbox given the existing location
   /// entitlement (unlike the traceroute Process.run path the sandbox blocks).
-  private func connectedApIeBlob() -> [String: Any?] {
+  private func connectedApIeBlob(result: @escaping FlutterResult) {
     let authorized = isLocationAuthorized()
     guard let iface = CWWiFiClient.shared().interface(), iface.powerOn() else {
-      return ["ieBytes": nil, "bssid": nil, "locationAuthorized": authorized]
+      result(["ieBytes": nil, "bssid": nil, "locationAuthorized": authorized])
+      return
     }
-    // The connected BSSID is itself Location-gated; nil without a grant.
-    let connectedBssid = iface.bssid()
-    var ieBytes: FlutterStandardTypedData?
-    var matchedBssid: String?
-    if let connectedBssid = connectedBssid {
+    // The connected BSSID is itself Location-gated; nil without a grant. Read it
+    // on the current (main) thread before dispatching the scan.
+    guard let connectedBssid = iface.bssid() else {
+      result(["ieBytes": nil, "bssid": nil, "locationAuthorized": authorized])
+      return
+    }
+    // Run the blocking CoreWLAN scan OFF the platform/main thread, then hop back
+    // to main to deliver the result (Flutter requires the reply on the platform
+    // thread). Never block the caller on the scan.
+    DispatchQueue.global(qos: .userInitiated).async {
+      var ieBytes: FlutterStandardTypedData?
+      var matchedBssid: String?
       do {
         let nets = try iface.scanForNetworks(withSSID: nil)
         // Match the connected BSSID exactly; never guess across a different BSS.
@@ -172,12 +188,14 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       } catch {
         // Scan failed: return nulls, never a guess.
       }
+      DispatchQueue.main.async {
+        result([
+          "ieBytes": ieBytes,               // Uint8List on the Dart side, or null
+          "bssid": matchedBssid,            // echo which BSS the bytes belong to
+          "locationAuthorized": authorized, // lets the UI explain a null
+        ])
+      }
     }
-    return [
-      "ieBytes": ieBytes,               // Uint8List on the Dart side, or null
-      "bssid": matchedBssid,            // echo which BSS the bytes belong to
-      "locationAuthorized": authorized, // lets the UI explain a null
-    ]
   }
 
   private func emptyPayload(locationAuthorized: Bool) -> [String: Any?] {

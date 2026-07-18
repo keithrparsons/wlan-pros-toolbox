@@ -37,114 +37,146 @@ Map<String, Object?> _wifiInfoMap({
       'locationAuthorized': locationAuthorized,
     };
 
-/// A fake WifiInfoService (platform macos) whose two methods return fixed maps.
-WifiInfoService fakeService({
-  required Map<dynamic, dynamic>? wifiInfo,
-  required Map<dynamic, dynamic>? ieBlob,
-}) =>
-    WifiInfoService(
-      platformOverride: 'macos',
-      invoke: (String method, [dynamic args]) async {
-        switch (method) {
-          case 'getWifiInfo':
-            return wifiInfo;
-          case 'connectedApIeBlob':
-            return ieBlob;
-          default:
-            return null;
-        }
-      },
-    );
+/// A counting fake WifiInfoService (platform macos). [ieBlobFor] returns the IE
+/// blob payload; [scanCount] records how many times the scan channel was hit, so
+/// the cache/throttle can be asserted.
+class _CountingService {
+  _CountingService({required this.wifiInfo, required this.ieBlob});
+
+  Map<dynamic, dynamic>? wifiInfo;
+  Map<dynamic, dynamic>? ieBlob;
+  int scanCount = 0;
+
+  WifiInfoService get service => WifiInfoService(
+        platformOverride: 'macos',
+        invoke: (String method, [dynamic args]) async {
+          switch (method) {
+            case 'getWifiInfo':
+              return wifiInfo;
+            case 'connectedApIeBlob':
+              scanCount++;
+              return ieBlob;
+            default:
+              return null;
+          }
+        },
+      );
+}
+
+Map<String, Object?> _blob(String? bssid, List<int>? ieBytes) => <String, Object?>{
+      'ieBytes': ieBytes == null ? null : Uint8List.fromList(ieBytes),
+      'bssid': bssid,
+      'locationAuthorized': true,
+    };
 
 void main() {
-  group('MacWifiInfoAdapter AP-name enrichment', () {
-    test('decodes and attaches a UniFi AP name when authorized and matched',
-        () async {
+  group('MacWifiInfoAdapter AP-name enrichment (fire-and-forget + cache)', () {
+    test('first fetch is honest-null (does not wait on the scan); the name '
+        'fills in and is then served FROM CACHE with no further scan', () async {
       const String bssid = 'aa:bb:cc:dd:ee:ff';
-      final WifiInfoService svc = fakeService(
+      final _CountingService fake = _CountingService(
         wifiInfo: _wifiInfoMap(bssid: bssid, locationAuthorized: true),
-        ieBlob: <String, Object?>{
-          'ieBytes': Uint8List.fromList(_unifiNameBlob('UAP-Lobby')),
-          'bssid': bssid,
-          'locationAuthorized': true,
-        },
+        ieBlob: _blob(bssid, _unifiNameBlob('UAP-Lobby')),
       );
       final MacWifiInfoAdapter adapter =
-          MacWifiInfoAdapter(service: svc, enrichApName: true);
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
 
-      final ConnectedAp ap = await adapter.fetch();
-      expect(ap.apName, 'UAP-Lobby');
+      // Fire-and-forget: fetch returns immediately with honest-null, having only
+      // SCHEDULED the scan.
+      final ConnectedAp first = await adapter.fetch();
+      expect(first.apName, isNull);
+      expect(first.bssid, bssid);
+
+      // Let the background scan resolve and cache the decoded name.
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 1);
+
+      // The next fetch serves the cached name with NO additional scan.
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.apName, 'UAP-Lobby');
+      await adapter.pendingApNameScan; // nothing scheduled
+      expect(fake.scanCount, 1);
+
+      // And a third fetch is still cache-only.
+      final ConnectedAp third = await adapter.fetch();
+      expect(third.apName, 'UAP-Lobby');
+      expect(fake.scanCount, 1);
     });
 
-    test('enrichment OFF by default leaves apName null (no extra scan needed)',
+    test('enrichment OFF by default never scans and leaves apName null',
         () async {
       const String bssid = 'aa:bb:cc:dd:ee:ff';
-      final WifiInfoService svc = fakeService(
+      final _CountingService fake = _CountingService(
         wifiInfo: _wifiInfoMap(bssid: bssid, locationAuthorized: true),
-        ieBlob: <String, Object?>{
-          'ieBytes': Uint8List.fromList(_unifiNameBlob('UAP-Lobby')),
-          'bssid': bssid,
-          'locationAuthorized': true,
-        },
+        ieBlob: _blob(bssid, _unifiNameBlob('UAP-Lobby')),
       );
-      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(service: svc);
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(service: fake.service);
 
       final ConnectedAp ap = await adapter.fetch();
+      await adapter.pendingApNameScan;
       expect(ap.apName, isNull);
+      expect(fake.scanCount, 0);
     });
 
-    test('unauthorized Location skips the scan and yields honest-null apName',
+    test('unauthorized Location never scans (IE bytes would be nil anyway)',
         () async {
-      final WifiInfoService svc = fakeService(
+      final _CountingService fake = _CountingService(
         wifiInfo: _wifiInfoMap(bssid: null, locationAuthorized: false),
-        ieBlob: <String, Object?>{
-          'ieBytes': Uint8List.fromList(_unifiNameBlob('UAP-Lobby')),
-          'bssid': 'aa:bb:cc:dd:ee:ff',
-          'locationAuthorized': false,
-        },
+        ieBlob: _blob('aa:bb:cc:dd:ee:ff', _unifiNameBlob('UAP-Lobby')),
       );
       final MacWifiInfoAdapter adapter =
-          MacWifiInfoAdapter(service: svc, enrichApName: true);
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
 
       final ConnectedAp ap = await adapter.fetch();
+      await adapter.pendingApNameScan;
       expect(ap.apName, isNull);
+      expect(fake.scanCount, 0);
     });
 
-    test('a stale-scan BSSID mismatch yields honest-null (never a wrong name)',
-        () async {
-      final WifiInfoService svc = fakeService(
-        wifiInfo: _wifiInfoMap(bssid: 'aa:bb:cc:dd:ee:ff', locationAuthorized: true),
-        ieBlob: <String, Object?>{
-          // Scan matched a DIFFERENT BSS than the connected one.
-          'ieBytes': Uint8List.fromList(_unifiNameBlob('SomeOtherAP')),
-          'bssid': '11:22:33:44:55:66',
-          'locationAuthorized': true,
-        },
-      );
-      final MacWifiInfoAdapter adapter =
-          MacWifiInfoAdapter(service: svc, enrichApName: true);
-
-      final ConnectedAp ap = await adapter.fetch();
-      expect(ap.apName, isNull);
-    });
-
-    test('an empty/absent IE blob yields honest-null and keeps the RF read',
+    test('a stale-scan BSSID mismatch caches nothing (never a wrong name)',
         () async {
       const String bssid = 'aa:bb:cc:dd:ee:ff';
-      final WifiInfoService svc = fakeService(
+      final _CountingService fake = _CountingService(
         wifiInfo: _wifiInfoMap(bssid: bssid, locationAuthorized: true),
-        ieBlob: <String, Object?>{
-          'ieBytes': null,
-          'bssid': null,
-          'locationAuthorized': true,
-        },
+        // The scan matched a DIFFERENT BSS than the connected one.
+        ieBlob: _blob('11:22:33:44:55:66', _unifiNameBlob('SomeOtherAP')),
       );
       final MacWifiInfoAdapter adapter =
-          MacWifiInfoAdapter(service: svc, enrichApName: true);
+          MacWifiInfoAdapter(service: fake.service, enrichApName: true);
 
-      final ConnectedAp ap = await adapter.fetch();
-      expect(ap.apName, isNull);
-      expect(ap.bssid, bssid); // the RF snapshot survives the null enrichment
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      final ConnectedAp second = await adapter.fetch();
+      expect(second.apName, isNull);
+    });
+
+    test('an unnamed BSSID is not re-scanned until the floor elapses (throttle)',
+        () async {
+      const String bssid = 'aa:bb:cc:dd:ee:ff';
+      DateTime clock = DateTime(2026, 7, 17, 12, 0, 0);
+      final _CountingService fake = _CountingService(
+        wifiInfo: _wifiInfoMap(bssid: bssid, locationAuthorized: true),
+        ieBlob: _blob(bssid, null), // scan returns no IE data → no name cached
+      );
+      final MacWifiInfoAdapter adapter = MacWifiInfoAdapter(
+        service: fake.service,
+        enrichApName: true,
+        apNameRescanFloor: const Duration(seconds: 30),
+        now: () => clock,
+      );
+
+      // First poll scans (finds no name), second poll (same second) is throttled.
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 1);
+
+      // Advance past the floor: a re-scan is allowed.
+      clock = clock.add(const Duration(seconds: 31));
+      await adapter.fetch();
+      await adapter.pendingApNameScan;
+      expect(fake.scanCount, 2);
     });
   });
 }
