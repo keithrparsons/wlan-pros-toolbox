@@ -193,7 +193,7 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
           "ieBytes": ieBytes,               // Uint8List on the Dart side, or null
           "bssid": matchedBssid,            // echo which BSS the bytes belong to
           "locationAuthorized": authorized, // lets the UI explain a null
-        ])
+        ] as [String: Any?])
       }
     }
   }
