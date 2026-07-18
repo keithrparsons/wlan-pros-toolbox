@@ -93,7 +93,7 @@ class NetworkUnavailableView extends StatelessWidget {
           'macOS requires Location access to read Wi-Fi details like the network '
               'name and the access point each connection uses, so $toolName has '
               'nothing to record without it. Turn it on for WLAN Pros Toolbox in '
-              'System Settings, under Privacy and Security, then Location '
+              'System Settings, under Privacy & Security, then Location '
               'Services. The button below opens that settings pane.',
         ),
     };
