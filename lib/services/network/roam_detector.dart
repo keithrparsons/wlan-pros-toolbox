@@ -37,6 +37,8 @@ class RoamEvent {
     this.toChannel,
     this.fromBand,
     this.toBand,
+    this.fromApName,
+    this.toApName,
     this.fromBandDerived = false,
     this.toBandDerived = false,
   });
@@ -76,6 +78,15 @@ class RoamEvent {
   /// Band label of the AP the device joined, or null when unknown. See
   /// [toBandDerived] for the honesty caveat.
   final String? toBand;
+
+  /// Vendor-advertised name of the AP the device LEFT (the prior sample's
+  /// [ConnectedAp.apName]), or null when that AP advertised none / the platform
+  /// exposed no IEs. Honest-null, never guessed.
+  final String? fromApName;
+
+  /// Vendor-advertised name of the AP the device JOINED (this sample's
+  /// [ConnectedAp.apName]), or null when unavailable. Honest-null, never guessed.
+  final String? toApName;
 
   /// Whether [fromBand] was computed app-side from the channel number (true on
   /// iOS) rather than read directly from the platform (macOS / Android / Windows
@@ -125,6 +136,10 @@ class RoamDetector {
   /// emitted roam can carry the honest "band derived" marker for the from AP.
   bool _lastBandDerived = false;
 
+  /// The vendor-advertised AP name that accompanied [_lastBssid] — the "from"
+  /// AP name a roam anchors against. Null until a sample carries one.
+  String? _lastApName;
+
   /// All roam events observed this session, oldest→newest. Unmodifiable view.
   List<RoamEvent> get events => List<RoamEvent>.unmodifiable(_events);
 
@@ -162,6 +177,7 @@ class RoamDetector {
     final int? prevChannel = _lastChannel;
     final String? prevBand = _lastBand;
     final bool prevBandDerived = _lastBandDerived;
+    final String? prevApName = _lastApName;
 
     // First known BSSID this session — seed the anchor, no roam.
     if (prevBssid == null) {
@@ -170,6 +186,7 @@ class RoamDetector {
       _lastChannel = ap.channel;
       _lastBand = ap.band;
       _lastBandDerived = ap.bandDerived;
+      _lastApName = ap.apName;
       return null;
     }
 
@@ -183,6 +200,7 @@ class RoamDetector {
         _lastBand = ap.band;
         _lastBandDerived = ap.bandDerived;
       }
+      if (ap.apName != null) _lastApName = ap.apName;
       return null;
     }
 
@@ -194,6 +212,7 @@ class RoamDetector {
     _lastChannel = ap.channel;
     _lastBand = ap.band;
     _lastBandDerived = ap.bandDerived;
+    _lastApName = ap.apName;
     if (!sameNetwork) return null;
 
     final RoamEvent event = RoamEvent(
@@ -210,6 +229,9 @@ class RoamDetector {
       toChannel: ap.channel,
       fromBand: prevBand,
       toBand: ap.band,
+      // from = the AP we left (anchor); to = the AP we joined (this sample).
+      fromApName: prevApName,
+      toApName: ap.apName,
       fromBandDerived: prevBandDerived,
       toBandDerived: ap.bandDerived,
     );
@@ -227,6 +249,7 @@ class RoamDetector {
     _lastChannel = null;
     _lastBand = null;
     _lastBandDerived = false;
+    _lastApName = null;
   }
 
   /// A BSSID is usable only when non-null and non-blank. Returns the trimmed

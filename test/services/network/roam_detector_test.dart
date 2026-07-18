@@ -12,6 +12,7 @@ ConnectedAp ap({
   int? snr,
   int? channel,
   String? band,
+  String? apName,
   bool bandDerived = false,
 }) =>
     ConnectedAp(
@@ -21,6 +22,7 @@ ConnectedAp ap({
       snrDb: snr,
       channel: channel,
       band: band,
+      apName: apName,
       bandDerived: bandDerived,
     );
 
@@ -195,6 +197,25 @@ void main() {
       expect(e.toChannel, isNull);
       expect(e.fromBand, isNull);
       expect(e.toBand, isNull);
+    });
+
+    test('a roam carries from/to apName from consecutive samples', () {
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa', apName: 'Lobby-AP-1'));
+      final RoamEvent? e =
+          d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb', apName: 'Hall-AP-2'));
+      expect(e, isNotNull);
+      expect(e!.fromApName, 'Lobby-AP-1'); // anchor = the AP we left
+      expect(e.toApName, 'Hall-AP-2'); // this sample = the AP we joined
+    });
+
+    test('honest-null apName when a sample omitted the AP name', () {
+      final RoamDetector d = RoamDetector();
+      d.observe(ap(bssid: 'aa:aa:aa:aa:aa:aa')); // no apName
+      final RoamEvent? e = d.observe(ap(bssid: 'bb:bb:bb:bb:bb:bb'));
+      expect(e, isNotNull);
+      expect(e!.fromApName, isNull);
+      expect(e.toApName, isNull);
     });
 
     test('events view is unmodifiable', () {

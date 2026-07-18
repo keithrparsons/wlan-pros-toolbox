@@ -59,14 +59,14 @@ class AppVersion {
   /// here is a wrong version shown to a user, not just a rare degrade. Pinned to
   /// pubspec by `app_version_fallback_matches_pubspec_test.dart` so it can't
   /// silently drift again (it had drifted to 1.1.0 while pubspec was 1.5.9).
-  static const String fallbackVersion = '1.7.4';
+  static const String fallbackVersion = '1.8.0';
 
   /// Pubspec-mirrored build number — the synchronous fallback only. MUST equal
   /// pubspec's `+<build>` part; pinned by the same drift test as
   /// [fallbackVersion]. (iOS ship builds inject a CFBundleVersion timestamp that
   /// PackageInfo reads at runtime; this constant is the pubspec-declared build
   /// used only when that runtime read is unavailable.)
-  static const String fallbackBuildNumber = '26071500';
+  static const String fallbackBuildNumber = '26071800';
 
   /// A const fallback snapshot, used before [load] resolves and in tests that
   /// do not bind the platform channel.

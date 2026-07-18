@@ -32,6 +32,7 @@ class ConnectedAp {
   const ConnectedAp({
     this.ssid,
     this.bssid,
+    this.apName,
     this.rssiDbm,
     this.noiseDbm,
     this.snrDb,
@@ -58,6 +59,15 @@ class ConnectedAp {
 
   /// Connected access point MAC (BSSID). Null when hidden or omitted.
   final String? bssid;
+
+  /// Vendor-advertised access-point NAME, decoded from the beacon /
+  /// probe-response IEs (Cisco Aironet Tag 133, or a vendor-specific Tag 221 —
+  /// see [decodeApName]). Null when the platform exposes no IEs (iOS always), the
+  /// AP does not advertise a name (most vendors are off by default), or the
+  /// vendor's IE is recognized but not yet decodable in this build. Never a name
+  /// guessed from the BSSID (GL-005). No source wires this yet — the field exists
+  /// so the pipeline is honest-null everywhere until per-platform sourcing lands.
+  final String? apName;
 
   /// Received signal strength in dBm (negative). Null when unavailable.
   final int? rssiDbm;
@@ -342,6 +352,7 @@ class ConnectedAp {
     return ConnectedAp(
       ssid: ssid,
       bssid: bssid,
+      apName: apName,
       rssiDbm: rssiDbm,
       noiseDbm: noiseDbm,
       snrDb: snrDb,
@@ -355,6 +366,37 @@ class ConnectedAp {
       interfaceName: interfaceName,
       hardwareAddress: hardwareAddress,
       securityType: security ?? securityType,
+      poweredOn: poweredOn,
+      rxRateAvailable: rxRateAvailable,
+      channelWidthAvailable: channelWidthAvailable,
+      bandDerived: bandDerived,
+      snrDerived: snrDerived,
+      securityAvailable: securityAvailable,
+    );
+  }
+
+  /// Returns a copy with the vendor-advertised AP name filled in. Used by the
+  /// macOS path, where the beacon IE blob is a separate CoreWLAN scan read folded
+  /// onto the connected-interface snapshot. A null [name] leaves the field unset
+  /// (honest "no name advertised / not readable"). All other fields are preserved.
+  ConnectedAp withApName(String? name) {
+    return ConnectedAp(
+      ssid: ssid,
+      bssid: bssid,
+      apName: name ?? apName,
+      rssiDbm: rssiDbm,
+      noiseDbm: noiseDbm,
+      snrDb: snrDb,
+      txRateMbps: txRateMbps,
+      rxRateMbps: rxRateMbps,
+      channel: channel,
+      channelWidthMhz: channelWidthMhz,
+      band: band,
+      standard: standard,
+      countryCode: countryCode,
+      interfaceName: interfaceName,
+      hardwareAddress: hardwareAddress,
+      securityType: securityType,
       poweredOn: poweredOn,
       rxRateAvailable: rxRateAvailable,
       channelWidthAvailable: channelWidthAvailable,
@@ -390,6 +432,8 @@ class ConnectedAp {
     return ConnectedAp(
       ssid: ssid ?? other.ssid,
       bssid: bssid ?? other.bssid,
+      // Non-destructive gap-fill: keep this read's name, else take the other's.
+      apName: apName ?? other.apName,
       rssiDbm: mergedRssi,
       noiseDbm: mergedNoise,
       // Prefer a directly-reported SNR from either side; only fall back to a

@@ -30,10 +30,12 @@
 // screen folds the iOS-only affordances behind the iOS source.
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform, visibleForTesting;
 
+import 'ap_name_decoder.dart';
 import 'connected_ap.dart';
 import 'wifi_info_service.dart';
 import 'windows_wifi_reader.dart';
@@ -174,17 +176,66 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     WifiInfoService? service,
     Duration permissionTimeout = const Duration(seconds: 30),
     Duration fetchTimeout = const Duration(seconds: 5),
+    bool enrichApName = false,
+    Duration apNameRescanFloor = const Duration(seconds: 30),
+    DateTime Function()? now,
   })  : _service = service ?? WifiInfoService(),
         // Kept in the initializer list alongside `_service` (which needs the
         // `?? WifiInfoService()` fallback) rather than split into formals.
         // ignore: prefer_initializing_formals
         _permissionTimeout = permissionTimeout,
         // ignore: prefer_initializing_formals
-        _fetchTimeout = fetchTimeout;
+        _fetchTimeout = fetchTimeout,
+        // ignore: prefer_initializing_formals
+        _enrichApName = enrichApName,
+        // ignore: prefer_initializing_formals
+        _apNameRescanFloor = apNameRescanFloor,
+        _now = now ?? DateTime.now;
 
   final WifiInfoService _service;
   final Duration _permissionTimeout;
   final Duration _fetchTimeout;
+
+  /// Whether [fetch] also reads the connected AP's beacon IE bytes (a separate
+  /// CoreWLAN scan) and decodes the vendor-advertised AP name onto the model.
+  /// Opt-in (default false) so the display surfaces that show the name (the live
+  /// sampler, the Wi-Fi Information screen) pay the scan while the consumer
+  /// connection checks that never render it do not.
+  ///
+  /// When true, enrichment is FIRE-AND-FORGET: [fetch] never awaits the scan, so
+  /// the RF snapshot and roam recording are never delayed by it. The scan runs
+  /// in the background; its decoded name is CACHED per BSSID (AP names do not
+  /// change), so a known AP returns its name with NO scan, and a scan fires only
+  /// for a newly-seen BSSID and no more often than [_apNameRescanFloor] (so a run
+  /// of unnamed samples cannot storm the radio — which also cuts the off-channel
+  /// observer effect a scan causes). Honest-null until the async scan resolves.
+  final bool _enrichApName;
+
+  /// Minimum interval between scans for the SAME BSSID whose name is not yet
+  /// cached. Throttles the radio; a cached BSSID is never re-scanned at all.
+  final Duration _apNameRescanFloor;
+
+  /// Injectable clock (for the throttle), so tests are deterministic.
+  final DateTime Function() _now;
+
+  /// Session cache of decoded AP names, keyed by normalized (lowercase) BSSID.
+  /// AP names are stable for a BSSID, so once decoded a name is reused with no
+  /// further scan.
+  final Map<String, String> _apNameByBssid = <String, String>{};
+
+  /// Last scan-attempt time per normalized BSSID, for the re-scan throttle. A
+  /// BSSID we scanned and found no name for is not re-scanned until the floor
+  /// elapses, so unnamed APs do not trigger a scan every poll.
+  final Map<String, DateTime> _lastScanAtByBssid = <String, DateTime>{};
+
+  /// The in-flight background scan, if any. At most one scan runs at a time (a
+  /// second poll while a scan is pending does not launch another).
+  Future<void>? _inFlightApNameScan;
+
+  /// The current in-flight AP-name scan (or null). Exposed so a test can await
+  /// the fire-and-forget scan deterministically.
+  @visibleForTesting
+  Future<void>? get pendingApNameScan => _inFlightApNameScan;
 
   @override
   String get platformLabel => 'macOS CoreWLAN';
@@ -210,7 +261,71 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
         'Wi-Fi snapshot read timed out.',
       ),
     );
-    return ConnectedAp.fromWifiInfo(info);
+    final ConnectedAp ap = ConnectedAp.fromWifiInfo(info);
+    if (!_enrichApName) return ap;
+    final String? bssid = _normBssid(ap.bssid);
+    if (bssid == null) return ap;
+
+    // Cached name → attach it with NO scan (the common steady-state path).
+    final String? cached = _apNameByBssid[bssid];
+    if (cached != null) return ap.withApName(cached);
+
+    // Not cached. Fire-and-forget a throttled background scan ONLY when Location
+    // is authorized (the IE bytes are nil without it). Crucially, do NOT await
+    // it: the RF snapshot and the roam recording never wait on a scan, so the
+    // main thread and the poll loop are never blocked (the beachball fix's Dart
+    // half). The name fills in on a later poll once the scan caches it.
+    if (info.locationAuthorized) _maybeScheduleApNameScan(bssid);
+    return ap; // honest-null until the async scan resolves
+  }
+
+  /// Normalizes a BSSID to a stable cache key (trimmed, lowercase), or null when
+  /// it carries no usable value.
+  static String? _normBssid(String? bssid) {
+    if (bssid == null) return null;
+    final String t = bssid.trim().toLowerCase();
+    return t.isEmpty ? null : t;
+  }
+
+  /// Schedules a single background AP-name scan for [bssid] when the throttle
+  /// allows and none is already running. Never awaited by [fetch].
+  void _maybeScheduleApNameScan(String bssid) {
+    if (_inFlightApNameScan != null) return; // one scan at a time
+    final DateTime? last = _lastScanAtByBssid[bssid];
+    if (last != null && _now().difference(last) < _apNameRescanFloor) {
+      return; // throttled: do not storm the radio for an unnamed BSSID
+    }
+    _lastScanAtByBssid[bssid] = _now();
+    _inFlightApNameScan = _scanAndCacheApName(bssid)
+        .whenComplete(() => _inFlightApNameScan = null);
+  }
+
+  /// Reads the connected AP's beacon IE bytes, decodes the name, and caches it.
+  /// Total and best-effort: any failure, timeout, empty blob, or stale-scan
+  /// BSSID mismatch leaves the cache untouched (honest-null), never a fabricated
+  /// value, and never throws.
+  Future<void> _scanAndCacheApName(String bssid) async {
+    try {
+      final ApIeBlob blob = await _service.connectedApIeBlob().timeout(
+            _fetchTimeout,
+            onTimeout: () => const ApIeBlob(
+              ieBytes: null,
+              bssid: null,
+              locationAuthorized: false,
+            ),
+          );
+      final Uint8List? bytes = blob.ieBytes;
+      if (bytes == null || bytes.isEmpty) return;
+      // Guard a stale-scan mismatch: only trust bytes whose scanned BSS matches
+      // the BSSID we asked about.
+      final String? scanned = _normBssid(blob.bssid);
+      if (scanned != null && scanned != bssid) return;
+      final String? name = decodeApName(bytes);
+      if (name != null) _apNameByBssid[bssid] = name;
+    } catch (_) {
+      // Honest-null; leave the cache empty. The throttle prevents a re-scan
+      // storm for this BSSID until the floor elapses.
+    }
   }
 
   /// Requests Location authorization (INTERACTIVE — surfaces the OS prompt and

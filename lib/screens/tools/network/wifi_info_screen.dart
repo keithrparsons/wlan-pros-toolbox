@@ -290,7 +290,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             switch (_source) {
               WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
-              _ => MacWifiInfoAdapter(),
+              // macOS decodes the connected AP's advertised name from its beacon
+              // IEs (best-effort, Location-gated, honest-null) so the Network card
+              // can show it next to the BSSID.
+              _ => MacWifiInfoAdapter(enrichApName: true),
             };
         _macSeries = WifiTimeSeries();
         WidgetsBinding.instance.addObserver(this);
@@ -1008,7 +1011,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     buf
       ..writeln()
       ..writeln('Network')
-      ..writeln('  SSID: ${_copyVal(info.ssid, null)}')
+      ..writeln('  SSID: ${_copyVal(info.ssid, null)}');
+    // AP name only when advertised — mirrors the on-screen row (what is on
+    // screen is what is copied; no empty line when there is no name).
+    if (info.apName != null && info.apName!.trim().isNotEmpty) {
+      buf.writeln('  AP name: ${info.apName}');
+    }
+    buf
       ..writeln('  BSSID: ${_copyVal(info.bssid, null)}')
       ..writeln('  AP vendor: ${_copyVal(_apVendorValue(info.bssid), null)}');
 
@@ -1422,6 +1431,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           value: info.ssid,
           note: _nameGateNote(info.ssid),
         ),
+        // AP name (vendor-advertised in the beacon, decoded from the IEs on
+        // macOS). Shown ABOVE the BSSID so the human-readable name leads and the
+        // MAC reads as secondary. Honest-null: when the AP advertises no name (or
+        // the platform cannot read the IEs), this row is omitted entirely — no
+        // empty label, no placeholder — and the card reads exactly as before.
+        if (info.apName != null && info.apName!.trim().isNotEmpty)
+          _MetricRow(label: 'AP name', value: info.apName),
         _MetricRow(
           label: 'BSSID',
           value: info.bssid,
@@ -1429,8 +1445,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           note: _nameGateNote(info.bssid),
         ),
         // AP vendor (manufacturer) resolved offline from the BSSID's IEEE OUI.
-        // This is the AP MANUFACTURER, not the configured AP name (which is not
-        // readable on iOS/macOS), the note says so.
+        // This is the AP MANUFACTURER, distinct from the configured AP name
+        // above: the name is what an admin typed and the AP advertises (macOS,
+        // when enabled); the vendor is who built the radio. The note says so.
         _MetricRow(
           label: 'AP vendor',
           value: _apVendorValue(info.bssid),

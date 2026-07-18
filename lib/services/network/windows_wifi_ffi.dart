@@ -22,8 +22,14 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:win32/win32.dart';
 
+import 'ie_parser.dart' show findInformationElement;
 import 'wifi_info_service.dart'
     show WifiInfo, WifiInfoUnavailable, WifiInfoUnavailableReason;
+
+// Re-exported so this module's existing callers and tests keep resolving
+// [findInformationElement] here after its extraction into the shared
+// platform-neutral IE walker (ie_parser.dart).
+export 'ie_parser.dart' show findInformationElement;
 
 // ── Win32 constants (declared locally from the documented Native Wifi values
 // rather than imported, so this module is robust to the win32 package's
@@ -863,35 +869,6 @@ String? formatMacBytes(List<int> bytes) {
   ];
   final String joined = parts.join(':');
   return joined == '00:00:00:00:00:00' ? null : joined;
-}
-
-/// Walks an IE TLV blob (`[id][len][data…]` repeated) and returns the `data`
-/// bytes of the FIRST element matching [elementId]. For an extended element
-/// ([elementId] == 255) the match also requires the first data byte to equal
-/// [extId], and the returned bytes EXCLUDE that extension-id byte. Returns null
-/// when absent; stops cleanly on a truncated/malformed blob.
-@visibleForTesting
-Uint8List? findInformationElement(Uint8List ies, int elementId, {int? extId}) {
-  int i = 0;
-  while (i + 2 <= ies.length) {
-    final int id = ies[i];
-    final int len = ies[i + 1];
-    final int dataStart = i + 2;
-    final int dataEnd = dataStart + len;
-    if (dataEnd > ies.length) break; // truncated element — stop
-    if (id == elementId) {
-      if (id == _kEidExtended) {
-        if (len >= 1 && extId != null && ies[dataStart] == extId) {
-          return Uint8List.sublistView(ies, dataStart + 1, dataEnd);
-        }
-        // A 255 element with a different extension id — skip and keep walking.
-      } else {
-        return Uint8List.sublistView(ies, dataStart, dataEnd);
-      }
-    }
-    i = dataEnd;
-  }
-  return null;
 }
 
 /// Resolves the operating channel width in MHz ({20,40,80,160,320}) from the

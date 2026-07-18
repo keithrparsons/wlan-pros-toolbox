@@ -141,6 +141,58 @@ class WifiInfo {
       'poweredOn: $poweredOn, locationAuthorized: $locationAuthorized)';
 }
 
+/// The raw beacon/probe information-element bytes for the connected AP, as
+/// returned by the macOS `connectedApIeBlob` channel method.
+///
+/// Every field is honest-null: [ieBytes] is null when Location is unauthorized,
+/// Wi-Fi is off, no interface exists, the scan found no BSS matching the
+/// connected BSSID, or that BSS carried no IE data. [bssid] echoes which BSS the
+/// bytes belong to (so the caller can guard against a stale-scan mismatch), and
+/// [locationAuthorized] distinguishes "OS gave us no IEs (Location off)" from
+/// "IEs present but no name IE (admin did not enable it)" — never a fabricated
+/// value.
+@immutable
+class ApIeBlob {
+  /// Creates a connected-AP IE blob result.
+  const ApIeBlob({
+    required this.ieBytes,
+    required this.bssid,
+    required this.locationAuthorized,
+  });
+
+  /// The raw IE TLV bytes of the connected AP's beacon/probe frame, or null when
+  /// none could be read (never fabricated).
+  final Uint8List? ieBytes;
+
+  /// The BSSID the [ieBytes] belong to, echoed from the matched scan result, or
+  /// null when no match was made.
+  final String? bssid;
+
+  /// Whether Location Services was authorized for this read (the gate that lets
+  /// `informationElementData` populate at all on macOS).
+  final bool locationAuthorized;
+
+  /// Builds a result from the native channel payload. A null map (no match /
+  /// channel error) yields an all-null, unauthorized-safe result.
+  factory ApIeBlob.fromMap(Map<dynamic, dynamic>? map) {
+    if (map == null) {
+      return const ApIeBlob(
+        ieBytes: null,
+        bssid: null,
+        locationAuthorized: false,
+      );
+    }
+    final Object? raw = map['ieBytes'];
+    return ApIeBlob(
+      ieBytes: raw is Uint8List
+          ? raw
+          : (raw is List<int> ? Uint8List.fromList(raw) : null),
+      bssid: map['bssid'] as String?,
+      locationAuthorized: (map['locationAuthorized'] as bool?) ?? false,
+    );
+  }
+}
+
 /// The tri-state Location (name-gating) authorization status.
 ///
 /// The bool [WifiInfoService.isLocationAuthorized] collapses the two
@@ -293,6 +345,37 @@ class WifiInfoService {
       throw WifiInfoUnavailable(
         WifiInfoUnavailableReason.channelError,
         e.message,
+      );
+    }
+  }
+
+  /// Reads the raw beacon/probe IE bytes for the currently-connected AP (macOS),
+  /// matched by BSSID against a CoreWLAN scan.
+  ///
+  /// Returns an [ApIeBlob] whose [ApIeBlob.ieBytes] is null (never fabricated)
+  /// on any miss: unsupported platform (no channel touch), Location
+  /// unauthorized, Wi-Fi off, no BSS matching the connected BSSID, or that BSS
+  /// carrying no IE data. The caller hands [ApIeBlob.ieBytes] to
+  /// `decodeApName` and attaches the result to the connected-AP model.
+  Future<ApIeBlob> connectedApIeBlob() async {
+    if (kIsWeb || _platform != 'macos') {
+      // Only macOS wires this today; return honest-null rather than touch a
+      // channel that has no handler on other platforms.
+      return const ApIeBlob(
+        ieBytes: null,
+        bssid: null,
+        locationAuthorized: false,
+      );
+    }
+    try {
+      final result = await _invoke('connectedApIeBlob');
+      return ApIeBlob.fromMap(result as Map<dynamic, dynamic>?);
+    } on PlatformException {
+      // A channel failure is an honest-null name, never a fabricated one.
+      return const ApIeBlob(
+        ieBytes: null,
+        bssid: null,
+        locationAuthorized: false,
       );
     }
   }
