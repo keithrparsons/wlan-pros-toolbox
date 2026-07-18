@@ -29,6 +29,8 @@ class NetworkUnavailableView extends StatelessWidget {
     this.headline,
     this.message,
     this.icon,
+    this.actionLabel,
+    this.onAction,
   });
 
   /// The tool the user tried to open, named in the message.
@@ -52,6 +54,19 @@ class NetworkUnavailableView extends StatelessWidget {
   /// from [reason] (the original behavior).
   final IconData? icon;
 
+  /// Optional action button label. When both [actionLabel] and [onAction] are
+  /// non-null, a single primary action renders beneath the body — used by a
+  /// RECOVERABLE state (for example [NetworkUnavailableReason.macosLocationDenied],
+  /// which deep-links the Location Services settings pane) to give the user a way
+  /// out. The permanent states ([web], [platformApiMissing]) pass neither and stay
+  /// action-free, exactly as before.
+  final String? actionLabel;
+
+  /// Optional callback for the action button. Rendered only when paired with
+  /// [actionLabel]. Kept a plain [VoidCallback] so the caller owns the async work
+  /// (open the settings pane) and this view stays a stateless presentation layer.
+  final VoidCallback? onAction;
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
@@ -71,6 +86,15 @@ class NetworkUnavailableView extends StatelessWidget {
           'Not available on this platform',
           '$toolName relies on a system API this platform does not expose to '
               'apps. The rest of the toolbox works normally here.',
+        ),
+      NetworkUnavailableReason.macosLocationDenied => (
+          Icons.location_off_outlined,
+          'Location access needed',
+          'macOS requires Location access to read Wi-Fi details like the network '
+              'name and the access point each connection uses, so $toolName has '
+              'nothing to record without it. Turn it on for WLAN Pros Toolbox in '
+              'System Settings, under Privacy and Security, then Location '
+              'Services. The button below opens that settings pane.',
         ),
     };
 
@@ -101,6 +125,13 @@ class NetworkUnavailableView extends StatelessWidget {
                 style: text.bodyLarge?.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
+              if (actionLabel != null && onAction != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.md),
+                OutlinedButton(
+                  onPressed: onAction,
+                  child: Text(actionLabel!),
+                ),
+              ],
             ],
           ),
         ),

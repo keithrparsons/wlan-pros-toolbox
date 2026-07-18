@@ -90,6 +90,52 @@ class _RoamingAdapter implements WifiInfoAdapter {
   String get platformLabel => 'Windows';
 }
 
+/// A macOS Location (name-gate) adapter whose status is scriptable, used to
+/// drive the Roaming Log's "Location access needed" flow hermetically (no
+/// CLLocationManager, no platform channel). Records the prompt + deep-link calls
+/// so a test can assert the screen requested the grant / opened Settings, and can
+/// flip its status once the prompt is answered to model a grant or a denial.
+class _FakeLocationAdapter implements WifiInfoAdapter {
+  _FakeLocationAdapter(this._status, {LocationAuthStatus? afterPrompt})
+      // ignore: prefer_initializing_formals
+      : _afterPrompt = afterPrompt;
+
+  LocationAuthStatus _status;
+  final LocationAuthStatus? _afterPrompt;
+  int requestCalls = 0;
+  int openSettingsCalls = 0;
+
+  @override
+  bool get gatesNameBehindPermission => true;
+
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async => _status;
+
+  @override
+  Future<bool> requestNamePermission() async {
+    requestCalls++;
+    if (_afterPrompt != null) _status = _afterPrompt;
+    return _status.isAuthorized;
+  }
+
+  @override
+  Future<bool> currentNameAuthorization() async => _status.isAuthorized;
+
+  @override
+  Future<bool> openNamePermissionSettings() async {
+    openSettingsCalls++;
+    return true;
+  }
+
+  // The screen never calls fetch() on the LOCATION adapter (the sampler owns the
+  // snapshot read via its own adapter); a benign reading keeps the contract total.
+  @override
+  Future<ConnectedAp> fetch() async => const ConnectedAp(poweredOn: true);
+
+  @override
+  String get platformLabel => 'macOS CoreWLAN';
+}
+
 RoamEvent _roam({
   required DateTime at,
   String? ssid = 'KeithNet',
@@ -239,6 +285,142 @@ void main() {
     // The §8.16.1 help footer is wired to roaming-log.
     expect(find.byType(ToolHelpFooter), findsOneWidget);
     expect(find.text('About this tool'), findsOneWidget);
+  });
+
+  // ===================================================================
+  // macOS Location-denied state (Keith on-device: Roaming Log went BLANK with
+  // no explanation when Location was not granted). CoreWLAN withholds the
+  // SSID/BSSID every roam is built from without a Location grant, so the screen
+  // must show an actionable "Location access needed" state, never a perpetual
+  // empty "watching for roams".
+  // ===================================================================
+  group('macOS Location gate', () {
+    testWidgets(
+        'DENIED on entry renders the honest "Location access needed" state with '
+        'a settings deep-link, and no live roam card', (t) async {
+      final _FakeLocationAdapter loc =
+          _FakeLocationAdapter(LocationAuthStatus.denied);
+      await pump(
+        t,
+        RoamingLogScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: loc,
+          enableSampling: false,
+        ),
+      );
+      // Let _initMacLocation resolve the (denied) status and flip the body.
+      await t.pump();
+
+      expect(find.text('Location access needed'), findsOneWidget);
+      // The perpetual empty state must NOT be what a denied user sees.
+      expect(find.text('Roams this session'), findsNothing);
+
+      // A denied status is NOT promptable, so the screen must not fire the
+      // system dialog into a wall; the only path forward is the deep link.
+      expect(loc.requestCalls, 0);
+
+      final Finder action = find.text('Open Location settings');
+      expect(action, findsOneWidget);
+      await t.tap(action);
+      await t.pump();
+      expect(loc.openSettingsCalls, 1,
+          reason: 'the action must deep-link the Location Services pane');
+    });
+
+    testWidgets(
+        'NOT-DETERMINED on entry fires the native prompt ONCE; a grant resolves '
+        'straight into the live log with no denied state', (t) async {
+      final _FakeLocationAdapter loc = _FakeLocationAdapter(
+        LocationAuthStatus.notDetermined,
+        afterPrompt: LocationAuthStatus.authorized,
+      );
+      final WifiSignalSampler sampler = WifiSignalSampler(
+        source: WifiInfoSource.macosCoreWlan,
+        macAdapter: const _FakeSnapshotAdapter(),
+        macPollInterval: const Duration(milliseconds: 50),
+      );
+      await pump(
+        t,
+        RoamingLogScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          sampler: sampler,
+          macAdapter: loc,
+        ),
+      );
+      await t.pump(); // resolve the prompt + re-read
+
+      expect(loc.requestCalls, 1,
+          reason: 'a promptable status fires the system prompt once on entry');
+      // Granted after the prompt: the denied state must never appear.
+      expect(find.text('Location access needed'), findsNothing);
+      // The live monitoring card is what a granted user sees.
+      expect(find.text('Roams this session'), findsOneWidget);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets(
+        'NOT-DETERMINED then DENIED after the prompt shows the deep-link state',
+        (t) async {
+      final _FakeLocationAdapter loc = _FakeLocationAdapter(
+        LocationAuthStatus.notDetermined,
+        afterPrompt: LocationAuthStatus.denied,
+      );
+      await pump(
+        t,
+        RoamingLogScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: loc,
+          enableSampling: false,
+        ),
+      );
+      await t.pump();
+
+      expect(loc.requestCalls, 1);
+      expect(find.text('Location access needed'), findsOneWidget);
+      expect(find.text('Open Location settings'), findsOneWidget);
+    });
+
+    testWidgets(
+        'AUTHORIZED renders the live roam log, never the Location state',
+        (t) async {
+      final WifiSignalSampler sampler = WifiSignalSampler(
+        source: WifiInfoSource.macosCoreWlan,
+        macAdapter: const _FakeSnapshotAdapter(),
+        macPollInterval: const Duration(milliseconds: 50),
+      );
+      await pump(
+        t,
+        RoamingLogScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          sampler: sampler,
+          macAdapter: _FakeLocationAdapter(LocationAuthStatus.authorized),
+        ),
+      );
+      await t.pump();
+
+      expect(find.text('Location access needed'), findsNothing);
+      expect(find.text('Roams this session'), findsOneWidget);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets('iOS is UNAFFECTED: no macOS Location state on the iOS source',
+        (t) async {
+      // iOS reads the name through its own Shortcut flow; the macOS Location
+      // adapter is never built off the macOS source, so this state never shows.
+      await pump(
+        t,
+        const RoamingLogScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          enableSampling: false,
+        ),
+      );
+      await t.pump();
+      expect(find.text('Location access needed'), findsNothing);
+    });
   });
 
   testWidgets(

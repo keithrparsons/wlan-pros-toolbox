@@ -30,6 +30,7 @@ import '../../../data/pdf_download.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/roam_detector.dart';
 import '../../../services/network/wifi_info_adapter.dart';
+import '../../../services/network/wifi_info_service.dart' show LocationAuthStatus;
 import '../../../services/network/wifi_signal_sampler.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -56,6 +57,7 @@ class RoamingLogScreen extends StatefulWidget {
     super.key,
     this.sourceOverride,
     this.sampler,
+    this.macAdapter,
     this.enableSampling = true,
     this.shareFn = shareBytes,
   });
@@ -67,6 +69,13 @@ class RoamingLogScreen extends StatefulWidget {
   /// Injectable live sampler (tests). Defaults to a real [WifiSignalSampler] on
   /// the resolved platform.
   final WifiSignalSampler? sampler;
+
+  /// Injectable macOS Location adapter (tests). Used only for the macOS Location
+  /// (name-gate) status + grant/deep-link flow — the same [WifiInfoAdapter] seam
+  /// Wi-Fi Information and Test My Connection use. Defaults to the real CoreWLAN
+  /// adapter on the macOS source and is null on every other source (they have no
+  /// macOS Location gate to resolve here).
+  final WifiInfoAdapter? macAdapter;
 
   /// When false, no sampler is started (tests that drive the sampler manually).
   final bool enableSampling;
@@ -85,6 +94,23 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
   late final WifiInfoSource _source;
   WifiSignalSampler? _sampler;
 
+  /// macOS Location (name-gate) adapter, used only for the Location status +
+  /// grant/deep-link flow. Non-null only on the macOS source.
+  WifiInfoAdapter? _macAdapter;
+
+  /// The RESOLVED macOS Location authorization, or null until the first
+  /// no-prompt status read completes. While null the screen keeps its normal
+  /// body, so a granted status resolves straight into the live roam log with no
+  /// flash of the denied state. A resolved not-authorized status is what flips
+  /// the body to the honest "Location access needed" surface.
+  LocationAuthStatus? _macNameAuth;
+
+  /// Guards the one proactive native Location prompt per screen mount. macOS
+  /// remembers the first answer, so re-prompting would be pointless and jarring;
+  /// after the first fire the only path forward for a denied user is the deep
+  /// link to System Settings.
+  bool _macLocationPromptFired = false;
+
   /// Wall-clock time this foreground recording session opened — stamped when the
   /// sampler is wired (macOS auto-polls from here; iOS begins on the Start tap,
   /// so this is the honest "log opened" time, never a fabricated reading). Feeds
@@ -96,6 +122,17 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
 
+    // macOS ONLY: the connected-AP identity every roam is built from (SSID/BSSID)
+    // is withheld by CoreWLAN without a Location Services grant, so a denied user
+    // sees roams that never record — a perpetual, unexplained "watching" that
+    // looks broken (Keith hit this on-device). Hold the Location adapter so the
+    // screen can resolve that status, request the grant when it is still
+    // promptable, and deep-link System Settings when it is denied. iOS reads the
+    // name through its own Shortcut flow and is deliberately untouched here.
+    if (_source == WifiInfoSource.macosCoreWlan) {
+      _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter(enrichApName: true);
+    }
+
     // Delegate the "can this platform monitor at all?" decision to the shared
     // SSOT [WifiSignalSampler.isSupportedSource] rather than repeating an inline
     // four-source list here (Vera LOW finding, 2026-06-30). The inline list is
@@ -104,7 +141,11 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     // learns to poll lights up here automatically with no edit, and can never
     // fall out of sync.
     if (widget.enableSampling && WifiSignalSampler.isSupportedSource(_source)) {
-      _sampler = widget.sampler ?? WifiSignalSampler(source: _source);
+      // Share the macOS Location adapter with the sampler so both read one
+      // CoreWLAN/CLLocationManager instance. `_macAdapter` is null off macOS, in
+      // which case the sampler builds its own default source, exactly as before.
+      _sampler = widget.sampler ??
+          WifiSignalSampler(source: _source, macAdapter: _macAdapter);
       _sessionStart = DateTime.now();
       WidgetsBinding.instance.addObserver(this);
       _sampler!.load();
@@ -118,6 +159,61 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
         _sampler!.start();
       }
     }
+
+    // Resolve (and, when still promptable, request) the macOS Location grant.
+    // Fire-and-forget with mounted guards; a denied result flips the body to the
+    // honest "Location access needed" state. No-op off macOS.
+    _initMacLocation();
+  }
+
+  /// Resolves the macOS Location (name-gate) status on entry and, when it is
+  /// still PROMPTABLE (`notDetermined`), fires the native system prompt ONCE so
+  /// the user gets the OS dialog rather than a silent wall. A `denied` /
+  /// `restricted` status cannot raise a dialog, so it skips straight to the
+  /// deep-link state the body renders. No-op off macOS / for an ungated adapter.
+  /// Never throws.
+  Future<void> _initMacLocation() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null || !adapter.gatesNameBehindPermission) return;
+    try {
+      LocationAuthStatus auth = await adapter.nameAuthorizationStatus();
+      if (auth.isPromptable && !_macLocationPromptFired) {
+        _macLocationPromptFired = true;
+        await adapter.requestNamePermission();
+        if (!mounted) return;
+        // Re-read the now-resolved status so the body reflects the user's choice
+        // without waiting for a resume.
+        auth = await adapter.nameAuthorizationStatus();
+      }
+      if (!mounted) return;
+      setState(() => _macNameAuth = auth);
+    } on Object {
+      // Honest fallback: leave the status unresolved (null) so the screen keeps
+      // its normal body rather than asserting a denial it could not confirm.
+    }
+  }
+
+  /// Re-reads the macOS Location status WITHOUT a prompt, so a grant the user
+  /// made in System Settings while the screen was backgrounded lands on return
+  /// with no relaunch. No-op off macOS. Never throws.
+  Future<void> _refreshMacLocation() async {
+    final WifiInfoAdapter? adapter = _macAdapter;
+    if (adapter == null || !adapter.gatesNameBehindPermission) return;
+    try {
+      final LocationAuthStatus auth = await adapter.nameAuthorizationStatus();
+      if (!mounted) return;
+      setState(() => _macNameAuth = auth);
+    } on Object {
+      // Keep the prior status; never fabricate a reason.
+    }
+  }
+
+  /// Deep-links System Settings -> Privacy and Security -> Location Services so
+  /// the user can enable this app manually. macOS cannot toggle its own Location
+  /// grant in code (TCC protection), so this opens the exact pane; the resume
+  /// re-read then flips the screen back to the live roam log once it is on.
+  Future<void> _openLocationSettings() async {
+    await _macAdapter?.openNamePermissionSettings();
   }
 
   @override
@@ -127,6 +223,8 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     if (state == AppLifecycleState.resumed) {
       sampler.load();
       sampler.resumeMac();
+      // Pick up a macOS Location grant made in System Settings while backgrounded.
+      _refreshMacLocation();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       sampler.pauseMac();
@@ -244,6 +342,29 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       return const NetworkUnavailableView(
         toolName: 'Roaming Log',
         reason: NetworkUnavailableReason.platformApiMissing,
+      );
+    }
+
+    // macOS with Location DENIED / RESTRICTED: CoreWLAN withholds the SSID/BSSID
+    // every roam is built from, so the log can never record. Show the actionable
+    // "Location access needed" state (with a deep link to the settings pane)
+    // rather than a perpetual empty "watching for roams" that looks broken.
+    //
+    // Only the DEEP-LINK-ONLY statuses render this. A `notDetermined` status is
+    // PROMPTABLE — `_initMacLocation` fires the native prompt for it — so the body
+    // stays normal while that prompt is in flight; it resolves into either the
+    // live log (granted) or this state (the user denied and the re-read returns
+    // `denied`). A null (unresolved) status also keeps the normal body, so a
+    // granted status never flashes this state on the way in.
+    if (_source == WifiInfoSource.macosCoreWlan &&
+        _macNameAuth != null &&
+        !_macNameAuth!.isAuthorized &&
+        !_macNameAuth!.isPromptable) {
+      return NetworkUnavailableView(
+        toolName: 'Roaming Log',
+        reason: NetworkUnavailableReason.macosLocationDenied,
+        actionLabel: 'Open Location settings',
+        onAction: _openLocationSettings,
       );
     }
 

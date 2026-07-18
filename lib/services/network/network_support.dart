@@ -28,6 +28,16 @@ enum NetworkUnavailableReason {
   /// The platform's public API does not surface this datum (e.g. iOS has no
   /// public Wi-Fi RSSI API). Distinct from [web] so copy can be specific.
   platformApiMissing,
+
+  /// macOS is withholding the Wi-Fi name/BSSID because this app does not hold
+  /// Location Services authorization. On macOS 14+ CoreWLAN returns null for the
+  /// SSID/BSSID (and the connected-AP IEs) without a Location grant, so a live
+  /// Wi-Fi surface that depends on the connected AP identity — the Roaming Log —
+  /// has nothing to show and would otherwise render an unexplained blank. This is
+  /// a RECOVERABLE, actionable state (grant the permission), distinct from [web]
+  /// (no native app) and [platformApiMissing] (a permanent platform ceiling). The
+  /// view pairs it with an action that deep-links the exact settings pane.
+  macosLocationDenied,
 }
 
 /// Centralized capability checks for the active-network services.

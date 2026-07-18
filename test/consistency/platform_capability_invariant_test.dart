@@ -386,7 +386,15 @@ List<_Case> _roamingCases() {
             : WifiSignalSampler(
                 source: p.wifi, macAdapter: const _FakeSnapshotAdapter());
         return _Built(
-          RoamingLogScreen(sourceOverride: p.wifi, sampler: sampler),
+          // The macOS Location-gate seam (name status + grant/deep-link) is read
+          // via this adapter on the macOS source; inject the hermetic fake (no
+          // name gate, no CLLocationManager timer) so the pump stays timer-clean,
+          // exactly as the Wi-Fi Information case below does. Ignored off macOS.
+          RoamingLogScreen(
+            sourceOverride: p.wifi,
+            sampler: sampler,
+            macAdapter: const _FakeSnapshotAdapter(),
+          ),
           dispose: sampler.dispose,
         );
       },
