@@ -17,6 +17,15 @@ import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_connection_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
+
+/// One non-extended IE element: [id][len][...data].
+List<int> _ie(int id, List<int> data) => <int>[id, data.length, ...data];
+
+/// A synthetic UniFi (Ubiquiti) Tag 221 AP-name IE: OUI 00:15:6D, type 0x01.
+List<int> _unifiNameBlob(String name) =>
+    _ie(221, <int>[0x00, 0x15, 0x6D, 0x01, ...name.codeUnits]);
 
 void main() {
   // Each service gets its OWN empty cache so the warm-path (Batch 8 item 1)
@@ -370,6 +379,115 @@ void main() {
       expect(snap.wifi.notOnWifi, isFalse);
       expect(snap.wifi.ssid, 'KeithHome',
           reason: 'an ambiguous probe must NOT blank a real cached reading');
+    });
+  });
+
+  // HIGH-1 (Vera): the AP name is fire-and-forget — it resolves AFTER the fetch
+  // that scheduled it, and only from the SAME adapter instance's per-BSSID cache.
+  // The service must HOLD one adapter across reads, or the name never surfaces
+  // (a fresh adapter each read only ever "first-fetches" → null forever). This
+  // drives the real MacWifiInfoAdapter (over a counting fake WifiInfoService, no
+  // platform channel) across two reads and proves the name appears on read 2.
+  group('AP-name enrichment survives across reads (persistent adapter)', () {
+    test('read 1 is honest-null; read 2 serves the cached name from the HELD '
+        'adapter (no re-scan) — a fresh-adapter-per-read would stay null forever',
+        () async {
+      const String bssid = 'a4:83:e7:00:11:22';
+      int scanCount = 0;
+      final WifiInfoService macService = WifiInfoService(
+        platformOverride: 'macos',
+        invoke: (String method, [dynamic args]) async {
+          switch (method) {
+            case 'getWifiInfo':
+              return <String, Object?>{
+                'ssid': 'KeithNet',
+                'bssid': bssid,
+                'poweredOn': true,
+                'locationAuthorized': true,
+              };
+            case 'connectedApIeBlob':
+              scanCount++;
+              return <String, Object?>{
+                'ieBytes': Uint8List.fromList(_unifiNameBlob('UAP-Lobby')),
+                'bssid': bssid,
+                'locationAuthorized': true,
+              };
+            case 'isLocationAuthorized':
+              return true;
+            default:
+              return null;
+          }
+        },
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: macService, enrichApName: true);
+      final InterfaceInfoService service = InterfaceInfoService(
+        interfaceLister: () async => const <NetworkInterface>[],
+        wifiInfoAdapter: adapter, // HELD across reads
+        connectedApCache: ConnectedApCache(), // cold, isolated
+      );
+
+      // READ 1: the scan is only SCHEDULED — the name has not resolved yet, so
+      // the row is honestly absent (never a fabricated/placeholder name).
+      final InterfaceInfoSnapshot snap1 = await service.read();
+      expect(snap1.wifi.bssid, bssid);
+      expect(snap1.wifi.apName, isNull);
+
+      // Let the background scan resolve and cache the decoded name.
+      await service.pendingApNameScan;
+      expect(scanCount, 1);
+
+      // READ 2: the SAME held adapter serves the cached name — present now, with
+      // NO additional scan (proves the per-BSSID cache survived between reads).
+      final InterfaceInfoSnapshot snap2 = await service.read();
+      expect(snap2.wifi.apName, 'UAP-Lobby');
+      expect(snap2.wifi.bssid, bssid);
+      expect(scanCount, 1);
+    });
+
+    test('an AP that advertises no name never fabricates one across reads',
+        () async {
+      const String bssid = 'a4:83:e7:00:11:22';
+      final WifiInfoService macService = WifiInfoService(
+        platformOverride: 'macos',
+        invoke: (String method, [dynamic args]) async {
+          switch (method) {
+            case 'getWifiInfo':
+              return <String, Object?>{
+                'ssid': 'KeithNet',
+                'bssid': bssid,
+                'poweredOn': true,
+                'locationAuthorized': true,
+              };
+            case 'connectedApIeBlob':
+              // Scan succeeds but the beacon carried NO name IE → honest null.
+              return <String, Object?>{
+                'ieBytes': null,
+                'bssid': bssid,
+                'locationAuthorized': true,
+              };
+            case 'isLocationAuthorized':
+              return true;
+            default:
+              return null;
+          }
+        },
+      );
+      final MacWifiInfoAdapter adapter =
+          MacWifiInfoAdapter(service: macService, enrichApName: true);
+      final InterfaceInfoService service = InterfaceInfoService(
+        interfaceLister: () async => const <NetworkInterface>[],
+        wifiInfoAdapter: adapter,
+        connectedApCache: ConnectedApCache(),
+      );
+
+      final InterfaceInfoSnapshot snap1 = await service.read();
+      expect(snap1.wifi.apName, isNull);
+      await service.pendingApNameScan;
+      final InterfaceInfoSnapshot snap2 = await service.read();
+      // Still null after the scan resolved — the honest state, never a guess.
+      expect(snap2.wifi.apName, isNull);
+      expect(snap2.wifi.bssid, bssid);
     });
   });
 }

@@ -178,7 +178,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     // When opened, the bounce is now in flight; the resume handler re-reads.
   }
 
-  void _load() {
+  void _load({bool isApNameReRead = false}) {
     final Future<InterfaceInfoSnapshot> future = _service!.read();
     setState(() {
       _future = future;
@@ -191,12 +191,48 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
         .then((InterfaceInfoSnapshot data) {
           if (!mounted || !identical(_future, future)) return;
           setState(() => _snapshot = data);
+          // HIGH-1: AP-name enrichment is fire-and-forget, so the FIRST read
+          // carries a null name (the beacon-IE scan resolves afterwards). This
+          // screen does not poll, so — once per load cycle — await that scan and
+          // re-read so the vendor name appears without a manual Refresh. A single
+          // re-read: if the name is still absent after it (the AP advertised
+          // none), the row stays honestly empty and we do not loop.
+          if (!isApNameReRead) _scheduleApNameReReadIfPending(data, future);
         })
         .catchError((Object _) {
           // Errors are surfaced by the FutureBuilder's error branch; copy stays
           // disabled (snapshot null). Swallow here so no unhandled-error fires.
         });
     _loadPublicIp();
+  }
+
+  /// After a read that produced a BSSID but no AP name, await the service's
+  /// in-flight AP-name scan (if any) and re-read exactly once, so the name
+  /// surfaces without the user manually refreshing. No-op when there is no BSSID,
+  /// the name already resolved, or the source does not enrich (Android / Windows /
+  /// iOS all return a null pending scan → no re-read).
+  void _scheduleApNameReReadIfPending(
+    InterfaceInfoSnapshot data,
+    Future<InterfaceInfoSnapshot> originatingRead,
+  ) {
+    final WifiLinkInfo w = data.wifi;
+    if (w.bssid == null || (w.apName != null && w.apName!.trim().isNotEmpty)) {
+      return;
+    }
+    // Only worthwhile when the held source can decode a name at all (macOS).
+    if (!_service!.canEnrichApName) return;
+    // The fire-and-forget scan may still be in flight OR may have already resolved
+    // and cached before this first snapshot returned; await the in-flight scan
+    // when there is one, else fall through immediately, then re-read exactly once.
+    final Future<void> pending =
+        _service!.pendingApNameScan ?? Future<void>.value();
+    pending.whenComplete(() {
+      // Skip when a newer read has superseded this one (manual Refresh, resume),
+      // so a resolved stale scan never clobbers the current reading.
+      if (mounted && identical(_future, originatingRead)) {
+        _load(isApNameReRead: true);
+      }
+    });
   }
 
   /// Fetches the device's public IP independently of the local snapshot. Never
