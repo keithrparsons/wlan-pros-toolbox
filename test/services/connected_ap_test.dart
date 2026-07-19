@@ -84,12 +84,40 @@ void main() {
       expect(ap.channelWidthAvailable, isFalse);
     });
 
-    test('band and SNR are app-derived on iOS', () {
+    test('SNR is always app-derived on iOS', () {
       final ap = ConnectedAp.fromWifiDetails(d);
-      expect(ap.band, '5 GHz');
-      expect(ap.bandDerived, isTrue);
       expect(ap.snrDb, 45);
       expect(ap.snrDerived, isTrue);
+    });
+
+    test('unambiguous channel: band computed but NOT flagged derived', () {
+      // ch 36 is valid only in 5 GHz — computed app-side but CERTAIN, so it must
+      // not wear the "(derived)" asterisk.
+      final ap = ConnectedAp.fromWifiDetails(d);
+      expect(ap.band, '5 GHz');
+      expect(ap.bandDerived, isFalse);
+    });
+
+    test('unambiguous 6 GHz channel resolves to 6 GHz, not derived', () {
+      // ch 69 is a real 6 GHz PSC — the old 36..177 hack mislabeled it "5 GHz
+      // (derived)". It is now "6 GHz" with certainty.
+      final WiFiDetails d6 = WiFiDetails.fromMap(const <String, dynamic>{
+        'Channel': 69,
+      });
+      final ap = ConnectedAp.fromWifiDetails(d6);
+      expect(ap.band, '6 GHz');
+      expect(ap.bandDerived, isFalse);
+    });
+
+    test('ambiguous channel keeps its default band AND the derived flag', () {
+      // ch 149 is valid in BOTH 5 and 6 GHz — genuinely uncertain, so it defaults
+      // to 5 GHz and DOES wear the "(derived)" asterisk.
+      final WiFiDetails dAmb = WiFiDetails.fromMap(const <String, dynamic>{
+        'Channel': 149,
+      });
+      final ap = ConnectedAp.fromWifiDetails(dAmb);
+      expect(ap.band, '5 GHz');
+      expect(ap.bandDerived, isTrue);
     });
 
     test('interface and country are absent on the iOS path', () {

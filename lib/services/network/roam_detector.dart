@@ -103,13 +103,16 @@ class RoamEvent {
   /// [ConnectedAp.apName]), or null when unavailable. Honest-null, never guessed.
   final String? toApName;
 
-  /// Whether [fromBand] was computed app-side from the channel number (true on
-  /// iOS) rather than read directly from the platform (macOS / Android / Windows
-  /// report it authoritatively). A derived band is best-effort and is ambiguous
-  /// in 6 GHz: channels 36 to 177 read as "5 GHz" without a center frequency, so
-  /// the same 6 GHz AP a laptop labels "6 GHz" can read "5 GHz" on iPhone. The
-  /// channel is exact on every platform; the band is not. Never present a derived
-  /// band as authoritative (GL-005).
+  /// Whether [fromBand] is a computed BEST GUESS rather than a platform-reported
+  /// certainty. On iOS the band is computed from the channel number, but it is
+  /// only UNCERTAIN when that channel number is valid in more than one band — the
+  /// genuinely ambiguous numbers 1/2/5/9/13 (2.4 vs 6 GHz) and 149..177 (5 vs
+  /// 6 GHz), per [WiFiBand.bandFromChannelIsAmbiguous]. There the same AP a
+  /// laptop labels "6 GHz" can read as the lower band on iPhone. An unambiguous
+  /// channel (e.g. 37, 69, 197) resolves to one certain band even on iOS, so this
+  /// stays false. macOS / Android / Windows report the band authoritatively. The
+  /// channel is exact on every platform; only an ambiguous band is a guess.
+  /// Never present a genuinely-derived band as authoritative (GL-005).
   final bool fromBandDerived;
 
   /// Whether [toBand] was computed app-side from the channel number. Same caveat

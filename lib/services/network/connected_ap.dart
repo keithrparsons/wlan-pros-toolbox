@@ -137,9 +137,14 @@ class ConnectedAp {
   /// precise "Not reported by `<platform>`" reason.
   final bool channelWidthAvailable;
 
-  /// Whether [band] was computed app-side (true on iOS, where band is derived
-  /// from the channel number) rather than read from the source (macOS reports
-  /// it directly). Drives the honest "derived" caption.
+  /// Whether [band] is a computed BEST GUESS rather than a certainty. On iOS the
+  /// band is always computed from the channel number, but it is only UNCERTAIN
+  /// when that channel number is valid in more than one band (e.g. 5, 149, 165 —
+  /// see [WiFiBand.bandFromChannelIsAmbiguous]); an unambiguous channel (e.g. 37,
+  /// 69, 197) yields a computed-but-certain band and this stays false. macOS /
+  /// Android / Windows report the band directly, so it is always false there.
+  /// Drives the honest "(derived)" caption, which now appears ONLY when the band
+  /// is a genuine guess.
   final bool bandDerived;
 
   /// Whether [snrDb] was computed app-side (rssi − noise). True on the iOS path;
@@ -334,8 +339,12 @@ class ConnectedAp {
       rxRateAvailable: true,
       // The iOS harvest action does not return channel width.
       channelWidthAvailable: false,
-      // On iOS both band and SNR are computed app-side.
-      bandDerived: d.band != null,
+      // On iOS both band and SNR are computed app-side. SNR is ALWAYS a
+      // best-effort derivation. The band, however, is only UNCERTAIN when the
+      // channel number is ambiguous across bands (e.g. 5, 149, 165). For an
+      // unambiguous channel (e.g. 37, 69, 197) the band is computed but CERTAIN,
+      // so it does not wear the "(derived)" asterisk.
+      bandDerived: WiFiBand.bandFromChannelIsAmbiguous(d.channel),
       snrDerived: d.snr != null,
       // iOS CAN expose the (coarse) security type via NEHotspotNetwork, gated by
       // the Access Wi-Fi Information entitlement + Location permission.
