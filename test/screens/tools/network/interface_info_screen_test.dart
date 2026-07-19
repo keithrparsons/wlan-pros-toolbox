@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/interface_info_screen.dart';
+import 'package:wlan_pros_toolbox/services/network/ap_name_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
@@ -128,6 +129,10 @@ void main() {
   // Stub the network_info_plus channel to null so addressing reads settle
   // in-process and the snapshot future completes within a pump.
   setUp(() {
+    // The AP-name cache is the app-wide singleton now; reset it so the
+    // auto-re-read test genuinely starts with the name UNdecoded (its first-read
+    // assertion depends on a cold cache).
+    ApNameCache.instance.clear();
     clipboardWrites = <String>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_networkInfoChannel, (call) async => null);

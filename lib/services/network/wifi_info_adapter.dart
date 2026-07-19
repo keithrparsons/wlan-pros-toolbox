@@ -35,6 +35,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
+import 'ap_name_cache.dart';
 import 'ap_name_decoder.dart';
 import 'connected_ap.dart';
 import 'wifi_info_service.dart';
@@ -179,6 +180,7 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     bool enrichApName = false,
     Duration apNameRescanFloor = const Duration(seconds: 30),
     DateTime Function()? now,
+    ApNameCache? apNameCache,
   })  : _service = service ?? WifiInfoService(),
         // Kept in the initializer list alongside `_service` (which needs the
         // `?? WifiInfoService()` fallback) rather than split into formals.
@@ -190,7 +192,10 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
         _enrichApName = enrichApName,
         // ignore: prefer_initializing_formals
         _apNameRescanFloor = apNameRescanFloor,
-        _now = now ?? DateTime.now;
+        _now = now ?? DateTime.now,
+        // Defaults to the app-wide shared cache so a name decoded on ANY screen
+        // shows instantly on all. Injectable so a test can isolate a cache.
+        _apNameCache = apNameCache ?? ApNameCache.instance;
 
   final WifiInfoService _service;
   final Duration _permissionTimeout;
@@ -204,10 +209,12 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   ///
   /// When true, enrichment is FIRE-AND-FORGET: [fetch] never awaits the scan, so
   /// the RF snapshot and roam recording are never delayed by it. The scan runs
-  /// in the background; its decoded name is CACHED per BSSID (AP names do not
-  /// change), so a known AP returns its name with NO scan, and a scan fires only
-  /// for a newly-seen BSSID and no more often than [_apNameRescanFloor] (so a run
-  /// of unnamed samples cannot storm the radio — which also cuts the off-channel
+  /// in the background; its decoded name is CACHED per BSSID in the app-wide
+  /// [ApNameCache] (AP names do not change), so a known AP returns its name with
+  /// NO scan — even the FIRST time THIS screen sees it, if another screen already
+  /// decoded it — and a scan fires only for a BSSID no screen has named yet, no
+  /// more often than [_apNameRescanFloor] app-wide (so a run of unnamed samples,
+  /// across any screens, cannot storm the radio — which also cuts the off-channel
   /// observer effect a scan causes). Honest-null until the async scan resolves.
   final bool _enrichApName;
 
@@ -218,18 +225,19 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// Injectable clock (for the throttle), so tests are deterministic.
   final DateTime Function() _now;
 
-  /// Session cache of decoded AP names, keyed by normalized (lowercase) BSSID.
-  /// AP names are stable for a BSSID, so once decoded a name is reused with no
-  /// further scan.
-  final Map<String, String> _apNameByBssid = <String, String>{};
+  /// The app-wide shared AP-name cache. Holds BOTH the decoded-name map AND the
+  /// per-BSSID last-scan timestamp, so a name decoded on ANY screen shows
+  /// instantly on all, and the scan throttle protects the radio app-wide (two
+  /// adapters can't each scan the same not-yet-known BSSID). Defaults to
+  /// [ApNameCache.instance]; injectable for test isolation.
+  final ApNameCache _apNameCache;
 
-  /// Last scan-attempt time per normalized BSSID, for the re-scan throttle. A
-  /// BSSID we scanned and found no name for is not re-scanned until the floor
-  /// elapses, so unnamed APs do not trigger a scan every poll.
-  final Map<String, DateTime> _lastScanAtByBssid = <String, DateTime>{};
-
-  /// The in-flight background scan, if any. At most one scan runs at a time (a
-  /// second poll while a scan is pending does not launch another).
+  /// The in-flight background scan this adapter is waiting on, if any. At most
+  /// one runs at a time (a second poll while a scan is pending does not launch
+  /// another). It may be a scan this adapter STARTED, or one ADOPTED from
+  /// another adapter that is already scanning the same BSSID — either way it is
+  /// a real handle on real work, never null while a scan for the current BSSID
+  /// is running somewhere in the app.
   Future<void>? _inFlightApNameScan;
 
   /// The current in-flight AP-name scan (or null). macOS is the only adapter that
@@ -269,8 +277,10 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     final String? bssid = _normBssid(ap.bssid);
     if (bssid == null) return ap;
 
-    // Cached name → attach it with NO scan (the common steady-state path).
-    final String? cached = _apNameByBssid[bssid];
+    // Shared-cache hit → attach it with NO scan. This is the cross-screen win:
+    // if ANY other adapter (another screen) already decoded this BSSID's name,
+    // it is served here instantly, cold-start scan skipped entirely.
+    final String? cached = _apNameCache.nameFor(bssid);
     if (cached != null) return ap.withApName(cached);
 
     // Not cached. Fire-and-forget a throttled background scan ONLY when Location
@@ -293,14 +303,43 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// Schedules a single background AP-name scan for [bssid] when the throttle
   /// allows and none is already running. Never awaited by [fetch].
   void _maybeScheduleApNameScan(String bssid) {
-    if (_inFlightApNameScan != null) return; // one scan at a time
-    final DateTime? last = _lastScanAtByBssid[bssid];
+    if (_inFlightApNameScan != null) return; // one scan at a time per adapter
+
+    // A scan for this BSSID may already be running on ANOTHER adapter (another
+    // screen). ADOPT it rather than reporting "nothing pending": the shared
+    // throttle below would otherwise defer this adapter with no handle on the
+    // winner's work, and a non-polling screen awaiting `pendingApNameScan` would
+    // get null, re-read against the still-empty cache, and never re-read again.
+    final Future<void>? running = _apNameCache.inFlightScanFor(bssid);
+    if (running != null) {
+      _holdApNameScan(running);
+      return; // adopted, not started — still exactly one scan app-wide
+    }
+
+    // Shared throttle: the last-scan timestamp lives in the app-wide cache, so a
+    // BSSID scanned recently by ANY adapter (any screen) is not re-scanned here.
+    // Two adapters can no longer each scan the same not-yet-known BSSID inside
+    // the floor — the second one to fetch sees the first's timestamp and defers.
+    final DateTime? last = _apNameCache.lastScanAt(bssid);
     if (last != null && _now().difference(last) < _apNameRescanFloor) {
       return; // throttled: do not storm the radio for an unnamed BSSID
     }
-    _lastScanAtByBssid[bssid] = _now();
-    _inFlightApNameScan = _scanAndCacheApName(bssid)
-        .whenComplete(() => _inFlightApNameScan = null);
+    _apNameCache.markScanAttempt(bssid, _now());
+    // The cache owns the dedupe and clears the in-flight entry when the scan
+    // settles (success OR failure), so a failed scan never wedges the BSSID.
+    _holdApNameScan(
+      _apNameCache.beginScan(bssid, () => _scanAndCacheApName(bssid)),
+    );
+  }
+
+  /// Holds [scan] as this adapter's pending scan and releases it when it
+  /// settles. Identity-guarded so a settling scan never clears a newer one this
+  /// adapter has since picked up (e.g. after a roam to a different BSSID).
+  void _holdApNameScan(Future<void> scan) {
+    _inFlightApNameScan = scan;
+    scan.whenComplete(() {
+      if (identical(_inFlightApNameScan, scan)) _inFlightApNameScan = null;
+    });
   }
 
   /// Reads the connected AP's beacon IE bytes, decodes the name, and caches it.
@@ -324,7 +363,10 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
       final String? scanned = _normBssid(blob.bssid);
       if (scanned != null && scanned != bssid) return;
       final String? name = decodeApName(bytes);
-      if (name != null) _apNameByBssid[bssid] = name;
+      // Write the decoded name to the SHARED cache so every other adapter (every
+      // other screen) serves it instantly. Only a real decoded name is stored;
+      // a null decode leaves the cache untouched (honest-null, GL-005).
+      if (name != null) _apNameCache.cacheName(bssid, name);
     } catch (_) {
       // Honest-null; leave the cache empty. The throttle prevents a re-scan
       // storm for this BSSID until the floor elapses.
