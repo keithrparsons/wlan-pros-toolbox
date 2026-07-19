@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/pdf_download.dart';
+import '../../../services/network/connected_ap.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/roam_detector.dart';
 import '../../../services/network/wifi_info_adapter.dart';
@@ -387,6 +388,14 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  // Current connection LEADS the body so the user sees their live
+                  // link state the instant the tool opens — before any roam fires.
+                  // It renders the SAME sampler reading the roam watch consumes
+                  // (no second fetcher) and refreshes at the same cadence.
+                  if (_sampler != null) ...<Widget>[
+                    _CurrentConnectionCard(sampler: _sampler!),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
                   _intro(context),
                   const SizedBox(height: AppSpacing.md),
                   if (_sampler != null)
@@ -1022,6 +1031,257 @@ String _apCellHtml(
     return '<strong>${esc(apName.trim())}</strong><br>$core';
   }
   return core;
+}
+
+/// The band + Wi-Fi-standard descriptor for the current-connection card, e.g.
+/// "6 GHz · Wi-Fi 7". A band computed app-side (iOS, [ConnectedAp.bandDerived])
+/// carries the app-standard "(derived)" caption so it is never presented as a
+/// measured value (GL-005). Omits a null part; returns null when neither the
+/// band nor the standard is known, so the row is dropped rather than blanked.
+@visibleForTesting
+String? currentBandStandard(ConnectedAp ap) {
+  final List<String> parts = <String>[];
+  final String? band = ap.band?.trim();
+  if (band != null && band.isNotEmpty) {
+    parts.add(ap.bandDerived ? '$band (derived)' : band);
+  }
+  final String? standard = ap.standard?.trim();
+  if (standard != null && standard.isNotEmpty) parts.add(standard);
+  return parts.isEmpty ? null : parts.join(' · ');
+}
+
+/// The channel + width descriptor, e.g. "ch 69 · 80 MHz". Channel LEADS because
+/// it is exact on every platform; the width follows only when the platform can
+/// expose it ([ConnectedAp.channelWidthAvailable]) AND this reading carried one,
+/// never guessed. The 80+80 MHz sentinel (8080) renders its own unit. Returns
+/// null when the channel is unknown, so the row is dropped honestly.
+@visibleForTesting
+String? currentChannelWidth(ConnectedAp ap) {
+  final int? channel = ap.channel;
+  if (channel == null) return null;
+  final StringBuffer b = StringBuffer('ch $channel');
+  if (ap.channelWidthAvailable && ap.channelWidthMhz != null) {
+    b.write(ap.channelWidthMhz == 8080 ? ' · 80+80 MHz' : ' · ${ap.channelWidthMhz} MHz');
+  }
+  return b.toString();
+}
+
+/// Formats a Tx rate in Mbps with the unit and no trailing ".0" (mirrors Wi-Fi
+/// Information's rate formatter). Returns null when the rate is absent, so the
+/// row is dropped rather than showing a fabricated value (GL-005).
+@visibleForTesting
+String? currentTxRate(double? mbps) {
+  if (mbps == null) return null;
+  final String n =
+      mbps == mbps.roundToDouble() ? mbps.toStringAsFixed(0) : mbps.toStringAsFixed(1);
+  return '$n Mbps';
+}
+
+/// The "Current connection" header card at the top of the Roaming Log: a compact,
+/// honest snapshot of the link the roam watch is reading THIS cycle.
+///
+/// REUSE, no new data path: it renders the SAME [WifiSignalSampler.latest]
+/// [ConnectedAp] that feeds the [RoamDetector] (macOS/Android/Windows CoreWLAN-
+/// style poll; iOS companion-Shortcut stream), and rebuilds on the sampler's own
+/// [ChangeNotifier] notifications, so it stays current at exactly the roam-watch
+/// cadence with no second fetcher. The BSSID tail and name-first layout reuse the
+/// SAME [lastOctets] helper and name-leads pattern as the roam rows' [_ApBlock].
+///
+/// HONESTY (GL-005 / GL-008 / "THE APP BLAMES THE WI-FI"): every field is
+/// honest-null — a value the platform omitted is dropped, a derived band/SNR is
+/// captioned "(derived)", and the states are kept distinct: "no reading yet"
+/// (waiting / iOS not started) is NOT reported as a disconnect; a powered-off
+/// radio reads "Wi-Fi is turned off"; only a powered-on reading that carries no
+/// link data is the honest "Not connected to Wi-Fi". No RF verdict is printed.
+class _CurrentConnectionCard extends StatelessWidget {
+  const _CurrentConnectionCard({required this.sampler});
+
+  final WifiSignalSampler sampler;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: sampler,
+      builder: (BuildContext context, _) {
+        final TextTheme text = Theme.of(context).textTheme;
+        final AppColorScheme colors = context.colors;
+        final ConnectedAp? ap = sampler.latest;
+
+        // Honest state split (GL-005): a present, powered-on reading with real
+        // link data is a live connection; everything else is a distinct, honest
+        // non-connected state — never a fabricated reading.
+        final bool hasReading = ap != null && ap.poweredOn && ap.hasAnyData;
+
+        return _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Semantics(
+                header: true,
+                child: Text(
+                  'Current connection',
+                  style: text.labelMedium?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (hasReading)
+                _ConnectionDetails(ap: ap)
+              else
+                _Note(message: _emptyMessage(ap)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// The honest non-connected copy, kept precise so the app never blames the
+  /// Wi-Fi for what is really a waiting or radio-off state (GL-005).
+  String _emptyMessage(ConnectedAp? ap) {
+    if (ap == null) {
+      // No reading has arrived. On iOS the feed waits for the deliberate Start
+      // tap, so say that rather than implying a disconnect.
+      return sampler.isIos && !sampler.isStreaming
+          ? 'Tap Start below to read your current connection.'
+          : 'Reading your connection…';
+    }
+    if (!ap.poweredOn) {
+      return 'Wi-Fi is turned off. Turn it on to see your current connection.';
+    }
+    return 'Not connected to Wi-Fi. Join a network and it appears here.';
+  }
+}
+
+/// The connected-state detail rows for [_CurrentConnectionCard]. Each RF row is
+/// dropped when its value is null, so the card only ever shows measured fields.
+class _ConnectionDetails extends StatelessWidget {
+  const _ConnectionDetails({required this.ap});
+
+  final ConnectedAp ap;
+
+  @override
+  Widget build(BuildContext context) {
+    final String? bandStd = currentBandStandard(ap);
+    final String? chWidth = currentChannelWidth(ap);
+    final String? signal = ap.rssiDbm != null ? '${ap.rssiDbm} dBm' : null;
+    final String? snr = ap.snrDb != null
+        ? '${ap.snrDb} dB${ap.snrDerived ? ' (derived)' : ''}'
+        : null;
+    final String? tx = currentTxRate(ap.txRateMbps);
+    final String? ssid =
+        (ap.ssid != null && ap.ssid!.trim().isNotEmpty) ? ap.ssid!.trim() : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _FactRow(label: 'Network', value: ssid ?? '—'),
+        _FactRow(label: 'Access point', child: _ApValue(apName: ap.apName, bssid: ap.bssid)),
+        if (bandStd != null) _FactRow(label: 'Band', value: bandStd),
+        if (chWidth != null) _FactRow(label: 'Channel', value: chWidth),
+        if (signal != null) _FactRow(label: 'Signal', value: signal),
+        if (snr != null) _FactRow(label: 'SNR', value: snr),
+        if (tx != null) _FactRow(label: 'Tx rate', value: tx),
+      ],
+    );
+  }
+}
+
+/// The access-point value: the vendor-advertised name (when present) LEADS, with
+/// the identifying BSSID tail beneath it in mono — the SAME name-first / tail
+/// layout the roam rows use ([_ApBlock]), via the SAME [lastOctets] helper. With
+/// no name the tail stands alone; with neither it is the neutral "—".
+class _ApValue extends StatelessWidget {
+  const _ApValue({required this.apName, required this.bssid});
+
+  final String? apName;
+  final String? bssid;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool hasName = apName != null && apName!.trim().isNotEmpty;
+    final bool hasBssid = bssid != null && bssid!.trim().isNotEmpty;
+
+    if (!hasName && !hasBssid) {
+      return Text(
+        '—',
+        style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        if (hasName)
+          Text(
+            apName!.trim(),
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodyMedium?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        if (hasBssid)
+          Text(
+            lastOctets(bssid!),
+            softWrap: false,
+            style: mono.robotoMono.copyWith(
+              color: hasName ? colors.textTertiary : colors.textPrimary,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One compact label/value row for the current-connection card: a fixed-width
+/// label column and the value (a plain string, or a [child] for richer content
+/// like the AP name/tail block). Left-aligned; the label sits in the tertiary
+/// tint, the value in the primary.
+class _FactRow extends StatelessWidget {
+  const _FactRow({required this.label, this.value, this.child})
+      : assert(value != null || child != null,
+            'a _FactRow needs either a value string or a child widget');
+
+  final String label;
+  final String? value;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            width: 96,
+            child: Text(
+              label,
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: child ??
+                Text(
+                  value!,
+                  style: text.bodyMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// The roam-log card: a header with the live/Start control + roam count, then

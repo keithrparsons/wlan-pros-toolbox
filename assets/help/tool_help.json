@@ -2013,6 +2013,7 @@
       "purpose": "Records each time your device roams from one access point to another on the same network during a monitoring session, capturing the time, the from-and-to access points, and the signal at the moment of the roam.",
       "whyHere": "A roam is when your device switches access points while staying on the same network. Watching the live Wi-Fi signal lets you see a roam happen, but nothing records it. Reach for this when you want a timestamped list of roams from a walk-around, for example to see where a device clings to a far access point or hops too often.",
       "howToUse": [
+        "A \"Current connection\" card sits at the top of the screen, so you see your live link (network, access point, band and standard, channel and width, signal, SNR, Tx rate) the instant you open the tool, before any roam happens. It reads the same live link the roam watch does and refreshes with it; a field the platform doesn't report is left out rather than guessed.",
         "macOS: recording starts automatically and keeps reading the Wi-Fi link while the screen is open. Walk your space; each roam is logged as it happens.",
         "iOS: install the \"WLAN Pros Live\" companion Shortcut (the same one Wi-Fi Information uses), tap Start, then walk with the screen open. Because firing the Shortcut switches to the Shortcuts app, it waits for your deliberate Start tap rather than starting on its own.",
         "Read the list newest-first: time, network, the from-and-to access points, and the signal (RSSI/SNR) read at the roam.",
