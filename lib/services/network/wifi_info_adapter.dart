@@ -232,8 +232,12 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// [ApNameCache.instance]; injectable for test isolation.
   final ApNameCache _apNameCache;
 
-  /// The in-flight background scan, if any. At most one scan runs at a time (a
-  /// second poll while a scan is pending does not launch another).
+  /// The in-flight background scan this adapter is waiting on, if any. At most
+  /// one runs at a time (a second poll while a scan is pending does not launch
+  /// another). It may be a scan this adapter STARTED, or one ADOPTED from
+  /// another adapter that is already scanning the same BSSID — either way it is
+  /// a real handle on real work, never null while a scan for the current BSSID
+  /// is running somewhere in the app.
   Future<void>? _inFlightApNameScan;
 
   /// The current in-flight AP-name scan (or null). macOS is the only adapter that
@@ -300,6 +304,18 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// allows and none is already running. Never awaited by [fetch].
   void _maybeScheduleApNameScan(String bssid) {
     if (_inFlightApNameScan != null) return; // one scan at a time per adapter
+
+    // A scan for this BSSID may already be running on ANOTHER adapter (another
+    // screen). ADOPT it rather than reporting "nothing pending": the shared
+    // throttle below would otherwise defer this adapter with no handle on the
+    // winner's work, and a non-polling screen awaiting `pendingApNameScan` would
+    // get null, re-read against the still-empty cache, and never re-read again.
+    final Future<void>? running = _apNameCache.inFlightScanFor(bssid);
+    if (running != null) {
+      _holdApNameScan(running);
+      return; // adopted, not started — still exactly one scan app-wide
+    }
+
     // Shared throttle: the last-scan timestamp lives in the app-wide cache, so a
     // BSSID scanned recently by ANY adapter (any screen) is not re-scanned here.
     // Two adapters can no longer each scan the same not-yet-known BSSID inside
@@ -309,8 +325,21 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
       return; // throttled: do not storm the radio for an unnamed BSSID
     }
     _apNameCache.markScanAttempt(bssid, _now());
-    _inFlightApNameScan = _scanAndCacheApName(bssid)
-        .whenComplete(() => _inFlightApNameScan = null);
+    // The cache owns the dedupe and clears the in-flight entry when the scan
+    // settles (success OR failure), so a failed scan never wedges the BSSID.
+    _holdApNameScan(
+      _apNameCache.beginScan(bssid, () => _scanAndCacheApName(bssid)),
+    );
+  }
+
+  /// Holds [scan] as this adapter's pending scan and releases it when it
+  /// settles. Identity-guarded so a settling scan never clears a newer one this
+  /// adapter has since picked up (e.g. after a roam to a different BSSID).
+  void _holdApNameScan(Future<void> scan) {
+    _inFlightApNameScan = scan;
+    scan.whenComplete(() {
+      if (identical(_inFlightApNameScan, scan)) _inFlightApNameScan = null;
+    });
   }
 
   /// Reads the connected AP's beacon IE bytes, decodes the name, and caches it.

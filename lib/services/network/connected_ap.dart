@@ -65,9 +65,9 @@ class ConnectedAp {
   /// see [decodeApName]). Null when the platform exposes no IEs (iOS always), the
   /// AP does not advertise a name (most vendors are off by default), or the
   /// vendor's IE is recognized but not yet decodable in this build. Never a name
-  /// guessed from the BSSID (GL-005). Wired on macOS by [MacWifiInfoAdapter]
+  /// guessed from the BSSID (GL-005). Wired on macOS by `MacWifiInfoAdapter`
   /// (opt-in `enrichApName`), which decodes the beacon IEs and serves the name
-  /// through the app-wide [ApNameCache]; other platforms stay honest-null until
+  /// through the app-wide `ApNameCache`; other platforms stay honest-null until
   /// their sourcing lands.
   final String? apName;
 
