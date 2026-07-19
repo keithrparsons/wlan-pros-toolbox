@@ -54,6 +54,38 @@ class _FakeSnapshotAdapter implements WifiInfoAdapter {
   String get platformLabel => 'Windows';
 }
 
+/// A snapshot adapter that always returns the SAME connected AP, so the live
+/// sampler seeds a stable current-connection reading without ever recording a
+/// roam. [ap] lets a test control exactly which fields are present, to exercise
+/// the current-connection card's connected / partial / disconnected states.
+class _StaticApAdapter implements WifiInfoAdapter {
+  const _StaticApAdapter(this.ap);
+
+  final ConnectedAp ap;
+
+  @override
+  Future<ConnectedAp> fetch() async => ap;
+
+  @override
+  bool get gatesNameBehindPermission => false;
+
+  @override
+  Future<bool> requestNamePermission() async => true;
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+
+  @override
+  Future<bool> openNamePermissionSettings() async => false;
+
+  @override
+  String get platformLabel => 'Windows';
+}
+
 /// A snapshot adapter that returns a FIRST AP on its first read and a SECOND AP
 /// on every read after — so a live sampler observes a real BSSID change and
 /// records a roam. Drives the Task-1 dead-Copy-button regression.
@@ -423,6 +455,181 @@ void main() {
     });
   });
 
+  // ===================================================================
+  // CURRENT-CONNECTION CARD (top of body) — the live link snapshot shown the
+  // instant the tool opens, from the SAME sampler reading the roam watch uses.
+  // Honest-null throughout: measured fields only, no fabricated verdict.
+  // ===================================================================
+  group('current-connection card', () {
+    Future<WifiSignalSampler> pumpWithStaticAp(WidgetTester t, ConnectedAp ap) async {
+      final WifiSignalSampler sampler = WifiSignalSampler(
+        source: WifiInfoSource.windowsNativeWifi,
+        macAdapter: _StaticApAdapter(ap),
+        macPollInterval: const Duration(milliseconds: 50),
+      );
+      await pump(
+        t,
+        RoamingLogScreen(
+          sourceOverride: WifiInfoSource.windowsNativeWifi,
+          sampler: sampler,
+        ),
+      );
+      await t.pump(); // resolve the seed fetch() -> sampler.latest populated
+      return sampler;
+    }
+
+    testWidgets(
+        'CONNECTED: renders SSID, BSSID tail, band+standard, channel+width, '
+        'signal, SNR and Tx rate from the live reading', (t) async {
+      final WifiSignalSampler sampler = await pumpWithStaticAp(
+        t,
+        const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: '94:2a:6f:5c:3a:10',
+          rssiDbm: -52,
+          snrDb: 34,
+          txRateMbps: 1201,
+          channel: 69,
+          channelWidthMhz: 80,
+          channelWidthAvailable: true,
+          band: '6 GHz',
+          standard: '802.11be (Wi-Fi 7)',
+        ),
+      );
+
+      expect(find.text('Current connection'), findsOneWidget);
+      expect(find.text('KeithNet'), findsOneWidget);
+      // BSSID tail (the identifying last octets), never the shared OUI.
+      expect(find.text(':3a:10'), findsOneWidget);
+      expect(find.textContaining('94:2a:6f'), findsNothing);
+      // Band + standard, channel + width, signal, SNR, Tx rate — measured values.
+      expect(find.text('6 GHz · 802.11be (Wi-Fi 7)'), findsOneWidget);
+      expect(find.text('ch 69 · 80 MHz'), findsOneWidget);
+      expect(find.text('-52 dBm'), findsOneWidget);
+      expect(find.text('34 dB'), findsOneWidget); // not derived -> no caption
+      expect(find.text('1201 Mbps'), findsOneWidget);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets(
+        'NOT CONNECTED: a powered-on reading with no link data shows the clean '
+        '"Not connected to Wi-Fi" state, never fake data', (t) async {
+      final WifiSignalSampler sampler =
+          await pumpWithStaticAp(t, const ConnectedAp(poweredOn: true));
+
+      expect(find.text('Current connection'), findsOneWidget);
+      expect(
+        find.textContaining('Not connected to Wi-Fi'),
+        findsOneWidget,
+      );
+      // No fabricated field rows on the disconnected state.
+      expect(find.text('Signal'), findsNothing);
+      expect(find.text('Band'), findsNothing);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets(
+        'PARTIAL: only the fields the reading carried render; a null field is '
+        'OMITTED (honest), and a missing AP name/BSSID shows the neutral dash',
+        (t) async {
+      final WifiSignalSampler sampler = await pumpWithStaticAp(
+        t,
+        const ConnectedAp(
+          ssid: 'PartialNet',
+          rssiDbm: -60,
+          // No BSSID, no band, no standard, no channel/width, no SNR, no Tx rate.
+        ),
+      );
+
+      expect(find.text('PartialNet'), findsOneWidget);
+      expect(find.text('-60 dBm'), findsOneWidget);
+      // The present rows carry their labels...
+      expect(find.text('Network'), findsOneWidget);
+      expect(find.text('Signal'), findsOneWidget);
+      // ...and the absent fields are dropped entirely (no blank, no fake value).
+      expect(find.text('Band'), findsNothing);
+      expect(find.text('Channel'), findsNothing);
+      expect(find.text('SNR'), findsNothing);
+      expect(find.text('Tx rate'), findsNothing);
+      // No name and no BSSID -> the neutral dash, not a guessed identifier.
+      expect(find.text('—'), findsOneWidget);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets(
+        'DERIVED: an app-derived band and SNR (iOS) carry the honest "(derived)" '
+        'caption, never presented as measured', (t) async {
+      final WifiSignalSampler sampler = await pumpWithStaticAp(
+        t,
+        const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: '94:2a:6f:5c:3a:10',
+          rssiDbm: -55,
+          band: '6 GHz',
+          bandDerived: true,
+          snrDb: 30,
+          snrDerived: true,
+          channel: 37,
+        ),
+      );
+
+      expect(find.text('6 GHz (derived)'), findsOneWidget);
+      expect(find.text('30 dB (derived)'), findsOneWidget);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+  });
+
+  group('current-connection pure formatters', () {
+    test('currentBandStandard joins band and standard, captions a derived band',
+        () {
+      expect(
+        currentBandStandard(const ConnectedAp(band: '6 GHz', standard: 'Wi-Fi 7')),
+        '6 GHz · Wi-Fi 7',
+      );
+      expect(
+        currentBandStandard(
+            const ConnectedAp(band: '6 GHz', bandDerived: true)),
+        '6 GHz (derived)',
+      );
+      expect(currentBandStandard(const ConnectedAp()), isNull);
+    });
+
+    test('currentChannelWidth leads with channel and adds width only when '
+        'the platform exposes it', () {
+      expect(
+        currentChannelWidth(const ConnectedAp(
+            channel: 69, channelWidthMhz: 80, channelWidthAvailable: true)),
+        'ch 69 · 80 MHz',
+      );
+      // Width present but platform cannot expose it -> channel only, no guess.
+      expect(
+        currentChannelWidth(const ConnectedAp(channel: 44, channelWidthMhz: 80)),
+        'ch 44',
+      );
+      // The 80+80 MHz sentinel renders its own unit.
+      expect(
+        currentChannelWidth(const ConnectedAp(
+            channel: 44, channelWidthMhz: 8080, channelWidthAvailable: true)),
+        'ch 44 · 80+80 MHz',
+      );
+      expect(currentChannelWidth(const ConnectedAp()), isNull);
+    });
+
+    test('currentTxRate formats Mbps without a trailing .0 and null-omits', () {
+      expect(currentTxRate(1201), '1201 Mbps');
+      expect(currentTxRate(866.7), '866.7 Mbps');
+      expect(currentTxRate(null), isNull);
+    });
+  });
+
   testWidgets(
       'copy action is DISABLED on the honest empty state (no roams recorded)',
       (t) async {
@@ -559,10 +766,14 @@ void main() {
     await advanceToRoam(t);
 
     // The identifying tails are visible.
-    expect(find.textContaining(':3a:10'), findsOneWidget); // left AP
-    expect(find.textContaining(':3e:20'), findsOneWidget); // joined AP
-    // The shared OUI is NOT rendered as visible text (it lives only in the
-    // full-BSSID a11y label, a separate semantics node).
+    expect(find.textContaining(':3a:10'), findsOneWidget); // left AP (roam row)
+    // The joined AP's tail now appears TWICE: once in the roam row's "to" block
+    // and once in the top "Current connection" card, which — after this roam —
+    // shows the joined AP as the live link. Both use the same lastOctets tail.
+    expect(find.textContaining(':3e:20'), findsNWidgets(2));
+    // The shared OUI is NOT rendered as visible text anywhere (it lives only in
+    // the full-BSSID a11y label, a separate semantics node) — the current-
+    // connection card also renders the tail, never the OUI.
     expect(find.textContaining('94:2a:6f'), findsNothing);
 
     await t.pumpWidget(const SizedBox());
@@ -618,8 +829,9 @@ void main() {
     await driveOneRoam(t, sampler, surface: const Size(360, 900));
     await advanceToRoam(t);
     // A RenderFlex overflow would throw and fail this test; reaching the
-    // assertions means the two-block row fits the narrow viewport.
-    expect(find.textContaining(':3e:20'), findsOneWidget);
+    // assertions means the two-block row fits the narrow viewport. The joined
+    // AP's tail shows in both the roam row and the top current-connection card.
+    expect(find.textContaining(':3e:20'), findsNWidgets(2));
     expect(t.takeException(), isNull);
 
     await t.pumpWidget(const SizedBox());
