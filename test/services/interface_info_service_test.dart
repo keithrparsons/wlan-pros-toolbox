@@ -13,6 +13,7 @@ import 'dart:io' show NetworkInterface;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:wlan_pros_toolbox/services/network/ap_name_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
@@ -28,6 +29,11 @@ List<int> _unifiNameBlob(String name) =>
     _ie(221, <int>[0x00, 0x15, 0x6D, 0x01, ...name.codeUnits]);
 
 void main() {
+  // The AP-name cache is now the app-wide singleton; reset it between cases so
+  // the enrichment tests below (which reuse one BSSID across a "decodes a name"
+  // and a "never fabricates a name" case) start cold.
+  setUp(() => ApNameCache.instance.clear());
+
   // Each service gets its OWN empty cache so the warm-path (Batch 8 item 1)
   // never leaks the process-wide singleton's state into these reader-seam tests.
   InterfaceInfoService serviceWith({

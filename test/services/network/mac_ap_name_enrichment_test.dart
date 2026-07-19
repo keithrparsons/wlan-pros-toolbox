@@ -13,6 +13,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/ap_name_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
@@ -70,6 +71,10 @@ Map<String, Object?> _blob(String? bssid, List<int>? ieBytes) => <String, Object
     };
 
 void main() {
+  // The name cache is now the app-wide singleton, so reset it between cases to
+  // keep each test's adapter cold (these tests reuse the same BSSID).
+  setUp(() => ApNameCache.instance.clear());
+
   group('MacWifiInfoAdapter AP-name enrichment (fire-and-forget + cache)', () {
     test('first fetch is honest-null (does not wait on the scan); the name '
         'fills in and is then served FROM CACHE with no further scan', () async {
