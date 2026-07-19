@@ -1,0 +1,7 @@
+New in 1.8.0
+
+Roaming Log: each roam now shows the band, channel, and signal for both the old and new access point, so you can tell whether a roam was an upgrade. BSSID shows the identifying tail; Copy and Share improved.
+
+New references: Packet Decode (IPv4/IPv6/TCP/UDP/ICMP header anatomy, TCP flags and states, ICMP codes) and Find the Switch and Port (LLDP/CDP), plus TCP/IP Wireshark filters and nmap, iperf3, tcpdump, and tshark.
+
+Fixes and polish.
