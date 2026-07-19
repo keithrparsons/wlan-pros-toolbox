@@ -28,6 +28,7 @@ import 'package:flutter/semantics.dart';
 
 import '../../../data/pdf_download.dart';
 import '../../../services/network/connected_ap.dart';
+import '../../../services/network/device_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/roam_detector.dart';
 import '../../../services/network/wifi_info_adapter.dart';
@@ -61,6 +62,7 @@ class RoamingLogScreen extends StatefulWidget {
     this.macAdapter,
     this.enableSampling = true,
     this.shareFn = shareBytes,
+    this.deviceInfoReader,
   });
 
   /// Forces a specific Wi-Fi data source (tests). Defaults to the host platform
@@ -85,6 +87,12 @@ class RoamingLogScreen extends StatefulWidget {
   /// [shareBytes]; tests inject a fake so the platform share channel is never
   /// touched.
   final RoamShareFn shareFn;
+
+  /// Injectable device-info reader (tests). Defaults to the real
+  /// [DeviceInfoService.read] on the resolved platform. Supplies the device
+  /// model + OS version that enrich the exported "Captured on" stamp; a test
+  /// injects a fake so no device_info_plus platform channel is touched.
+  final Future<DeviceInfoSnapshot> Function()? deviceInfoReader;
 
   @override
   State<RoamingLogScreen> createState() => _RoamingLogScreenState();
@@ -118,6 +126,13 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
   /// the §8.16 copy export header. Null when no sampler is active.
   DateTime? _sessionStart;
 
+  /// The device's own model + OS version, read once on entry so the exported
+  /// "Captured on" stamp can name the specific device (e.g. "MacBook Air, macOS
+  /// 26.1") and multi-device roaming captures are told apart. Null until the
+  /// async read resolves — and stays null on any platform that exposes nothing,
+  /// in which case the stamp degrades to the bare platform word.
+  DeviceInfoSnapshot? _deviceInfo;
+
   @override
   void initState() {
     super.initState();
@@ -148,6 +163,10 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       _sampler = widget.sampler ??
           WifiSignalSampler(source: _source, macAdapter: _macAdapter);
       _sessionStart = DateTime.now();
+      // Read the device model + OS version once, on a supported (native) source
+      // only, so the export stamp names the device. Gated inside this block so a
+      // web / unsupported source never reaches the dart:io device_info read.
+      _initDeviceInfo();
       WidgetsBinding.instance.addObserver(this);
       _sampler!.load();
       // Every supported NON-iOS source (macOS / Android / Windows, and any future
@@ -191,6 +210,24 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     } on Object {
       // Honest fallback: leave the status unresolved (null) so the screen keeps
       // its normal body rather than asserting a denial it could not confirm.
+    }
+  }
+
+  /// Reads the device's model + OS version once on entry (async, fire-and-forget
+  /// with a mounted guard, exactly like [_initMacLocation]) so the exported
+  /// "Captured on" stamp can name the specific device — e.g. "MacBook Air, macOS
+  /// 26.1" or "iPhone 17, iOS 26". A failed or empty read leaves [_deviceInfo]
+  /// null and the stamp degrades to the bare platform word (the graceful floor).
+  /// Never throws; never fabricates a model or version.
+  Future<void> _initDeviceInfo() async {
+    final Future<DeviceInfoSnapshot> Function() reader =
+        widget.deviceInfoReader ?? DeviceInfoService().read;
+    try {
+      final DeviceInfoSnapshot snap = await reader();
+      if (!mounted) return;
+      setState(() => _deviceInfo = snap);
+    } on Object {
+      // Honest floor: keep _deviceInfo null → the bare platform label stands.
     }
   }
 
@@ -288,6 +325,12 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
   /// side-by-side captures (iPhone + Android + macOS) are each self-identifying.
   String get _capturePlatform => capturePlatformLabel(_source);
 
+  /// The enriched "Captured on" stamp: the device model + platform + OS version
+  /// when known (e.g. "MacBook Air, macOS 26.1"), degrading to the bare platform
+  /// word when the device exposes nothing. Feeds the exports' display line; the
+  /// bare [_capturePlatform] still drives the platform-specific honesty note.
+  String get _capturedOnLabel => captureLabel(_capturePlatform, _deviceInfo);
+
   /// §8.16 copy payload — delegates to the pure [buildRoamLogCopyText] so the
   /// serialization is unit-testable without a live sampler. Returns null
   /// (→ disabled affordance) when no sampler is active or no roam is recorded.
@@ -300,6 +343,7 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       network: _sessionNetwork(s, events),
       sessionStart: _sessionStart,
       capturePlatform: _capturePlatform,
+      capturedOnLabel: _capturedOnLabel,
     );
   }
 
@@ -315,6 +359,7 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       network: _sessionNetwork(s, events),
       sessionStart: _sessionStart,
       capturePlatform: _capturePlatform,
+      capturedOnLabel: _capturedOnLabel,
     );
   }
 
@@ -467,6 +512,29 @@ String capturePlatformLabel(WifiInfoSource source) {
   }
 }
 
+/// Builds the enriched "Captured on" stamp from the bare [platform] word and an
+/// optional [DeviceInfoSnapshot], so several devices roaming the same path are
+/// each self-identifying in the exported report — e.g. "MacBook Air, macOS 26.1"
+/// or "iPhone 17, iOS 26".
+///
+/// Honest fallback chain (GL-005 — never fabricate a model or version):
+///   * model = `modelName`, else the raw `modelIdentifier`, else absent;
+///   * version appended after the platform word only when known;
+///   * with a model:   `model, platform version`
+///   * without a model: `platform version`
+/// so a snapshot exposing nothing (or a null snapshot) degrades to exactly the
+/// bare [platform] word — the same graceful floor the reports had before.
+@visibleForTesting
+String captureLabel(String platform, DeviceInfoSnapshot? info) {
+  String? clean(String? v) =>
+      (v != null && v.trim().isNotEmpty) ? v.trim() : null;
+
+  final String? model = clean(info?.modelName) ?? clean(info?.modelIdentifier);
+  final String? version = clean(info?.osVersion);
+  final String platformPart = version != null ? '$platform $version' : platform;
+  return model != null ? '$model, $platformPart' : platformPart;
+}
+
 /// The channel-first band/channel descriptor for one side of a roam, e.g.
 /// "ch 44 · 5 GHz". Channel LEADS because it is exact on every platform; band
 /// is the derived companion on iOS, where a bare channel number mislabels 6 GHz
@@ -526,14 +594,20 @@ String? buildRoamLogCopyText({
   required List<RoamEvent> events,
   required String network,
   String capturePlatform = 'this device',
+  String? capturedOnLabel,
   DateTime? sessionStart,
 }) {
   if (events.isEmpty) return null;
 
+  // The display stamp is the enriched device label when provided, else the bare
+  // platform word. [capturePlatform] itself stays the bare word so the honesty
+  // note ([_foregroundNote]) keeps matching on "iOS".
+  final String capturedOn = capturedOnLabel ?? capturePlatform;
+
   final StringBuffer buf = StringBuffer()
     ..writeln('Roaming Log')
     ..writeln('Network: $network')
-    ..writeln('Captured on: $capturePlatform');
+    ..writeln('Captured on: $capturedOn');
 
   // Session window: opened at sessionStart (or the first roam if none), through
   // the last roam.
@@ -687,9 +761,14 @@ String? buildRoamLogShareHtml({
   required List<RoamEvent> events,
   required String network,
   String capturePlatform = 'this device',
+  String? capturedOnLabel,
   DateTime? sessionStart,
 }) {
   if (events.isEmpty) return null;
+
+  // Enriched device stamp for display; the bare [capturePlatform] still drives
+  // the platform-specific honesty note ([_foregroundNote]).
+  final String capturedOn = capturedOnLabel ?? capturePlatform;
 
   final DateTime windowStart = sessionStart ?? events.first.at;
   final DateTime windowEnd = events.last.at;
@@ -844,12 +923,12 @@ String? buildRoamLogShareHtml({
 <body>
 <header>
   <h1>Roaming Log</h1>
-  <div class="sub">Network <strong>${esc(network)}</strong> &middot; ${esc(capturePlatform)} &middot; ${esc(countLabel)}</div>
+  <div class="sub">Network <strong>${esc(network)}</strong> &middot; ${esc(capturedOn)} &middot; ${esc(countLabel)}</div>
 </header>
 
 <div class="meta">
   <div><span class="k">Network (SSID)</span><span class="v">${esc(network)}</span></div>
-  <div><span class="k">Captured on</span><span class="v">${esc(capturePlatform)}</span></div>
+  <div><span class="k">Captured on</span><span class="v">${esc(capturedOn)}</span></div>
   <div><span class="k">Session window</span><span class="v">${esc(_RoamRow._formatTime(windowStart))} to ${esc(_RoamRow._formatTime(windowEnd))}</span></div>
   <div><span class="k">Session length</span><span class="v">${esc(sessionLen)}</span></div>
   <div><span class="k">Roams recorded</span><span class="v">${events.length}</span></div>

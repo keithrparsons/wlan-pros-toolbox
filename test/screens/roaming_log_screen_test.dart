@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/pdf_download.dart' show ShareOrigin;
 import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
+import 'package:wlan_pros_toolbox/services/network/device_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/roam_detector.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart'
@@ -1216,6 +1217,128 @@ void main() {
       expect(capturePlatformLabel(WifiInfoSource.iosShortcuts), 'iOS');
       expect(capturePlatformLabel(WifiInfoSource.macosCoreWlan), 'macOS');
       expect(capturePlatformLabel(WifiInfoSource.androidWifiManager), 'Android');
+    });
+  });
+
+  group('captureLabel (enriched device stamp, honest fallback chain)', () {
+    test('model + version present: "<model>, <platform> <version>"', () {
+      expect(
+        captureLabel(
+          'macOS',
+          const DeviceInfoSnapshot(modelName: 'MacBook Air', osVersion: '26.1'),
+        ),
+        'MacBook Air, macOS 26.1',
+      );
+      // The iOS example from the brief.
+      expect(
+        captureLabel(
+          'iOS',
+          const DeviceInfoSnapshot(modelName: 'iPhone 17', osVersion: '26'),
+        ),
+        'iPhone 17, iOS 26',
+      );
+    });
+
+    test('model present, version null: model + platform, no version', () {
+      expect(
+        captureLabel(
+          'macOS',
+          const DeviceInfoSnapshot(modelName: 'MacBook Air'),
+        ),
+        'MacBook Air, macOS',
+      );
+    });
+
+    test('both null: bare platform floor (null snapshot or empty snapshot)', () {
+      expect(captureLabel('macOS', null), 'macOS');
+      expect(captureLabel('macOS', const DeviceInfoSnapshot()), 'macOS');
+      expect(captureLabel('iOS', const DeviceInfoSnapshot()), 'iOS');
+    });
+
+    test('modelName null falls back to the raw modelIdentifier', () {
+      expect(
+        captureLabel(
+          'iOS',
+          const DeviceInfoSnapshot(modelIdentifier: 'iPhone17,3', osVersion: '26'),
+        ),
+        'iPhone17,3, iOS 26',
+      );
+    });
+
+    test('model null but version present: platform + version, never fabricated',
+        () {
+      expect(
+        captureLabel('macOS', const DeviceInfoSnapshot(osVersion: '26.1')),
+        'macOS 26.1',
+      );
+    });
+
+    test('blank model/version strings are treated as absent (honest floor)', () {
+      expect(
+        captureLabel(
+          'iOS',
+          const DeviceInfoSnapshot(modelName: '   ', osVersion: ''),
+        ),
+        'iOS',
+      );
+    });
+  });
+
+  group('enriched "Captured on" flows through the exports', () {
+    List<RoamEvent> oneRoam() => <RoamEvent>[
+          _roam(
+            at: DateTime(2026, 6, 28, 14, 14, 7),
+            from: 'aa:bb:cc:dd:ee:01',
+            to: 'aa:bb:cc:dd:ee:02',
+            rssi: -67,
+            fromChannel: 44,
+            toChannel: 37,
+            fromBand: '5 GHz',
+            toBand: '6 GHz',
+            fromBandDerived: true,
+            toBandDerived: true,
+          ),
+        ];
+
+    test(
+        'copy text shows the enriched device stamp AND still fires the iOS '
+        'honesty note (label enriches display, note keyed to bare platform)',
+        () {
+      final String out = buildRoamLogCopyText(
+        events: oneRoam(),
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+        capturedOnLabel: 'iPhone 17, iOS 26',
+      )!;
+      expect(out, contains('Captured on: iPhone 17, iOS 26'));
+      // The foreground note must still be the iOS-specific one — proving the
+      // enriched label did NOT break the `capturePlatform == 'iOS'` branch.
+      expect(out, contains('background Wi-Fi monitoring on iOS'));
+    });
+
+    test('copy text without a device label degrades to the bare platform floor',
+        () {
+      final String out = buildRoamLogCopyText(
+        events: oneRoam(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+      expect(out, contains('Captured on: macOS'));
+    });
+
+    test('HTML document carries the enriched stamp in both header spots', () {
+      final String doc = buildRoamLogShareHtml(
+        events: oneRoam(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+        capturedOnLabel: 'MacBook Air, macOS 26.1',
+      )!;
+      // The .sub header line and the .meta "Captured on" row both carry it.
+      expect(
+        'MacBook Air, macOS 26.1'.allMatches(doc).length,
+        greaterThanOrEqualTo(2),
+      );
+      expect(doc, contains('<span class="k">Captured on</span>'));
     });
   });
 }

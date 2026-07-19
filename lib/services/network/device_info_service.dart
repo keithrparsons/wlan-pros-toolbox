@@ -51,6 +51,7 @@ class DeviceInfoSnapshot {
   const DeviceInfoSnapshot({
     this.modelName,
     this.modelIdentifier,
+    this.osVersion,
     this.totalMemoryBytes,
     this.uptimeSeconds,
     this.cellularInterfaceName,
@@ -66,6 +67,14 @@ class DeviceInfoSnapshot {
   /// `model` e.g. "Mac15,3"). Shown beneath the marketing name as the precise
   /// identifier, else null.
   final String? modelIdentifier;
+
+  /// Human OS version where the platform exposes a clean one — iOS
+  /// `systemVersion` (e.g. "26.1"), macOS product major.minor[.patch] from
+  /// NSProcessInfo (e.g. "26.1"), Android `version.release` (e.g. "14"),
+  /// Windows `displayVersion` (e.g. "23H2") — else null. On macOS this is the
+  /// PRODUCT version, never the Darwin kernel string (`osRelease`), which would
+  /// misreport the OS.
+  final String? osVersion;
 
   /// Total physical RAM in bytes (iOS `physicalRamSize` / macOS `memorySize`),
   /// or null when the platform does not report it.
@@ -135,8 +144,8 @@ class DeviceInfoService {
   /// source (e.g. the uptime channel on an unbuilt runner) never blanks the
   /// whole screen — that field comes back null and the rest still render.
   Future<DeviceInfoSnapshot> read() async {
-    final ({String? name, String? id, int? memoryBytes}) model =
-        await _readModelAndMemory();
+    final ({String? name, String? id, int? memoryBytes, String? osVersion})
+        model = await _readModelAndMemory();
     final double? uptime = await _readUptime();
     final ({
       String? name,
@@ -147,6 +156,7 @@ class DeviceInfoService {
     return DeviceInfoSnapshot(
       modelName: model.name,
       modelIdentifier: model.id,
+      osVersion: model.osVersion,
       totalMemoryBytes: model.memoryBytes,
       uptimeSeconds: uptime,
       cellularInterfaceName: cellular.name,
@@ -155,9 +165,9 @@ class DeviceInfoService {
     );
   }
 
-  /// Reads model + total memory from device_info_plus, dispatched per platform.
-  /// Any failure yields all-null rather than throwing.
-  Future<({String? name, String? id, int? memoryBytes})>
+  /// Reads model + total memory + OS version from device_info_plus, dispatched
+  /// per platform. Any failure yields all-null rather than throwing.
+  Future<({String? name, String? id, int? memoryBytes, String? osVersion})>
       _readModelAndMemory() async {
     try {
       if (Platform.isIOS) {
@@ -167,6 +177,8 @@ class DeviceInfoService {
           id: _blankToNull(i.utsname.machine),
           // physicalRamSize is bytes; 0 is not a real reading → null.
           memoryBytes: i.physicalRamSize > 0 ? i.physicalRamSize : null,
+          // systemVersion is already the human iOS version (e.g. "26.1").
+          osVersion: _blankToNull(i.systemVersion),
         );
       }
       if (Platform.isMacOS) {
@@ -175,6 +187,10 @@ class DeviceInfoService {
           name: _blankToNull(m.modelName),
           id: _blankToNull(m.model),
           memoryBytes: m.memorySize > 0 ? m.memorySize : null,
+          // The NSProcessInfo product version (e.g. "26.1"), NOT the Darwin
+          // kernel string — see [formatMacOsVersion].
+          osVersion: formatMacOsVersion(
+              m.majorVersion, m.minorVersion, m.patchVersion),
         );
       }
       if (Platform.isAndroid) {
@@ -188,6 +204,8 @@ class DeviceInfoService {
           id: _blankToNull(a.device),
           // Android total RAM is not surfaced by device_info_plus; honest null.
           memoryBytes: null,
+          // version.release is the human Android version (e.g. "14").
+          osVersion: _blankToNull(a.version.release),
         );
       }
       if (Platform.isWindows) {
@@ -203,12 +221,29 @@ class DeviceInfoService {
           memoryBytes: w.systemMemoryInMegabytes > 0
               ? w.systemMemoryInMegabytes * 1024 * 1024
               : null,
+          // displayVersion is the feature-update label (e.g. "23H2").
+          osVersion: _blankToNull(w.displayVersion),
         );
       }
     } on Object {
       // Plugin missing / platform exception → all-null, honest unavailable.
     }
-    return (name: null, id: null, memoryBytes: null);
+    return (name: null, id: null, memoryBytes: null, osVersion: null);
+  }
+
+  /// Formats the macOS PRODUCT version from device_info_plus's NSProcessInfo
+  /// components (major.minor[.patch]) — the human OS version (e.g. "26.1"),
+  /// NOT the Darwin kernel string (`osRelease` / `kernelVersion`), which would
+  /// misreport the OS to a user comparing devices. A ".0" patch is dropped
+  /// ("26.1.0" → "26.1"). Returns null when the components are unavailable
+  /// (major <= 0, as on an unbuilt runner or non-macOS host) so the label
+  /// degrades to the bare platform word rather than fabricating "0.0". Pure and
+  /// static → unit-testable without the plugin, exactly like [parseCellular].
+  static String? formatMacOsVersion(int major, int minor, int patch) {
+    if (major <= 0) return null;
+    final StringBuffer b = StringBuffer('$major.$minor');
+    if (patch > 0) b.write('.$patch');
+    return b.toString();
   }
 
   Future<double?> _readUptime() async {

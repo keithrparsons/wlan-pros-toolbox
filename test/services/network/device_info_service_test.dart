@@ -98,6 +98,33 @@ void main() {
       expect(snap.totalMemoryLabel, isNull);
       expect(snap.uptimeLabel, isNull);
       expect(snap.cellularIPv4, isNull);
+      // The OS version is nullable and defaults to the honest null.
+      expect(snap.osVersion, isNull);
+    });
+
+    test('osVersion carries the human OS version when supplied', () {
+      const snap = DeviceInfoSnapshot(modelName: 'MacBook Air', osVersion: '26.1');
+      expect(snap.osVersion, '26.1');
+      expect(snap.modelName, 'MacBook Air');
+    });
+  });
+
+  group('formatMacOsVersion (pure macOS product-version formatter)', () {
+    test('major.minor when the patch is 0 (drops the trailing .0)', () {
+      expect(DeviceInfoService.formatMacOsVersion(26, 1, 0), '26.1');
+      expect(DeviceInfoService.formatMacOsVersion(14, 0, 0), '14.0');
+    });
+
+    test('appends the patch only when it is non-zero', () {
+      expect(DeviceInfoService.formatMacOsVersion(26, 1, 1), '26.1.1');
+      expect(DeviceInfoService.formatMacOsVersion(13, 6, 3), '13.6.3');
+    });
+
+    test(
+        'null (honest floor) when the components are absent (major <= 0), never '
+        'a fabricated "0.0"', () {
+      expect(DeviceInfoService.formatMacOsVersion(0, 0, 0), isNull);
+      expect(DeviceInfoService.formatMacOsVersion(-1, 2, 3), isNull);
     });
   });
 }
