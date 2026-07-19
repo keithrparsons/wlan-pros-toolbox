@@ -196,6 +196,46 @@ void main() {
     expect(find.textContaining('Remembered reading, as of'), findsNothing);
   });
 
+  group('AP name (vendor-advertised, beside the BSSID)', () {
+    testWidgets(
+        'present: the AP name row shows and the FULL BSSID still renders',
+        (tester) async {
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          apName: 'AP-Lobby-3',
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // The vendor-advertised name gets its own labelled row...
+      expect(find.text('AP name'), findsOneWidget);
+      expect(find.text('AP-Lobby-3'), findsOneWidget);
+      // ...and the full BSSID is preserved as the precise identifier (not a tail).
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+    });
+
+    testWidgets(
+        'absent: no AP-name row and no fabricated name — the BSSID stands alone',
+        (tester) async {
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          // No apName advertised (iOS platform ceiling, or the AP names none).
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // Honest-null: the row is omitted entirely, never a placeholder or guess.
+      expect(find.text('AP name'), findsNothing);
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+    });
+  });
+
   group('Refresh Wi-Fi button', () {
     testWidgets('exposes a single button semantics (no doubled announcement)',
         (tester) async {

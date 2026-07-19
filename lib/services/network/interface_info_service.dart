@@ -90,6 +90,7 @@ class WifiLinkInfo {
   const WifiLinkInfo({
     this.ssid,
     this.bssid,
+    this.apName,
     this.gatewayIP,
     this.subnetMask,
     this.wifiIPv4,
@@ -103,6 +104,14 @@ class WifiLinkInfo {
 
   final String? ssid;
   final String? bssid;
+
+  /// Vendor-advertised access-point NAME, decoded from the beacon IEs by the
+  /// shared `ConnectedAp` subsystem (macOS today; null on iOS by platform
+  /// ceiling and null for any AP that advertised no name). The screen shows it
+  /// ABOVE the BSSID when present and OMITS the row entirely when null — never a
+  /// placeholder, never a name guessed from the BSSID (GL-005).
+  final String? apName;
+
   final String? gatewayIP;
   final String? subnetMask;
   final String? wifiIPv4;
@@ -269,7 +278,12 @@ class InterfaceInfoService {
         final WifiInfoAdapter adapter = switch (source) {
           WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
           WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
-          _ => MacWifiInfoAdapter(),
+          // enrichApName turns on the existing (best-effort, throttled,
+          // honest-null) CoreWLAN IE scan so the vendor-advertised AP name can
+          // ride alongside the BSSID here too — the same enrichment the Wi-Fi
+          // Information tool and the live sampler already use. No new capture
+          // path, no new permission (macOS already needs Location for SSID/BSSID).
+          _ => MacWifiInfoAdapter(enrichApName: true),
         };
         try {
           final ConnectedAp ap = await adapter.fetch().timeout(
@@ -441,6 +455,9 @@ class InterfaceInfoService {
     return WifiLinkInfo(
       ssid: _cleanSsid(ap?.ssid),
       bssid: _blankToNull(ap?.bssid),
+      // Vendor-advertised AP name from the same native ConnectedAp read (macOS
+      // decodes it from the beacon IEs when enrichApName is on; null elsewhere).
+      apName: _blankToNull(ap?.apName),
       gatewayIP: gateway,
       subnetMask: submask,
       wifiIPv4: ipv4,

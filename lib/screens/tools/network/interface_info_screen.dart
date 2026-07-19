@@ -309,6 +309,9 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
       line('SSID', 'Needs Location Services (macOS)');
     } else {
       line('SSID', w.ssid);
+      // AP name leads the BSSID when the beacon advertised one (macOS); `line`
+      // omits it entirely when null, so the report reads exactly as before.
+      line('AP name', w.apName);
       line('BSSID', w.bssid);
     }
     // Off Wi-Fi every field below is null and `line` would skip it anyway — except
@@ -538,6 +541,12 @@ class _Success extends StatelessWidget {
         children: [
           ValueRow(label: 'SSID', value: w.ssid),
           if (showLocationHint) const _LocationHint(),
+          // Vendor-advertised AP name (macOS beacon IEs). Shown ABOVE the BSSID
+          // so the human-readable name leads and the MAC reads as secondary.
+          // Honest-null: when no name was advertised (or the platform cannot read
+          // the IEs) the row is OMITTED — no placeholder, no "Not available" line.
+          if (w.apName != null && w.apName!.trim().isNotEmpty)
+            ValueRow(label: 'AP name', value: w.apName),
           ValueRow(label: 'BSSID', value: w.bssid, identifier: true),
           ValueRow(label: 'IPv4', value: w.wifiIPv4, identifier: true),
           ValueRow(label: 'IPv6', value: w.wifiIPv6, identifier: true),
