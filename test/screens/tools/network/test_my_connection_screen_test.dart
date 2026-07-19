@@ -3276,6 +3276,102 @@ void main() {
       },
     );
   });
+
+  // ── "Your Wi-Fi link" card: Band / BSSID / AP name rows (macOS) ───────────
+  //
+  // The macOS branch of the card now renders three added rows sourced from the
+  // SAME ConnectedAp the card already reads: Band (radio-read, no "(derived)"
+  // marker), the full BSSID, and — only when the beacon carried one — the
+  // vendor AP name ABOVE the BSSID. The null-apName path is the honesty
+  // property: no placeholder, no "unavailable" (GL-005). The card binds to the
+  // held-adapter reading; on-screen enrichment of a late-decoded AP name rides
+  // the existing macOS sampler poll (no second fetcher was added).
+  group('Wi-Fi link card — Band / BSSID / AP name rows (macOS)', () {
+    ConnectedAp macLink({String? apName}) {
+      final ConnectedAp base = ConnectedAp.fromWifiInfo(
+        WifiInfo(
+          interfaceName: 'en0',
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          rssiDbm: -55,
+          noiseDbm: -92,
+          snrDb: 37,
+          txRateMbps: 866,
+          phyMode: '802.11ax',
+          channel: 37,
+          channelWidthMhz: 160,
+          band: '6 GHz',
+          countryCode: 'US',
+          hardwareAddress: 'a4:83:e7:aa:bb:cc',
+          poweredOn: true,
+          locationAuthorized: true,
+        ),
+      );
+      return apName == null ? base : base.withApName(apName);
+    }
+
+    Future<void> pumpResults(WidgetTester tester, {String? apName}) async {
+      await tester.pumpWidget(
+        host(
+          TestMyConnectionScreen(
+            enableLiveSampling: false,
+            connectionService: _onWifiConnection(),
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _StaticMacAdapter(macLink(apName: apName)),
+            qualityClient: MockQualityClient(
+              scriptedResult: _internetAt(down: 150, up: 100),
+            ),
+          ),
+        ),
+      );
+      await runCheck(tester);
+    }
+
+    testWidgets('BSSID row renders the full BSSID (not truncated to a tail)',
+        (tester) async {
+      await pumpResults(tester);
+      expect(find.text('BSSID'), findsOneWidget);
+      // The FULL identifier, exactly as read — this detail card does not shorten
+      // the BSSID to its OUI tail.
+      expect(find.text('a4:83:e7:00:11:22'), findsWidgets);
+    });
+
+    testWidgets(
+        'Band row renders the radio-read band with NO "(derived)" marker',
+        (tester) async {
+      await pumpResults(tester);
+      expect(find.text('Band'), findsOneWidget);
+      expect(find.text('6 GHz'), findsWidgets);
+      // macOS reads the band directly (bandDerived == false), so the honest
+      // guess-marker the iOS card uses must NOT appear here.
+      expect(find.text('derived'), findsNothing);
+    });
+
+    testWidgets(
+        'AP name row renders ABOVE the BSSID when the beacon carried a name',
+        (tester) async {
+      await pumpResults(tester, apName: 'AP-Lobby-2');
+      expect(find.text('AP name'), findsOneWidget);
+      expect(find.text('AP-Lobby-2'), findsWidgets);
+      // Name-above-BSSID ordering (matches Wi-Fi Information / Interface Info).
+      final double nameY = tester.getTopLeft(find.text('AP name')).dy;
+      final double bssidY = tester.getTopLeft(find.text('BSSID')).dy;
+      expect(nameY, lessThan(bssidY));
+    });
+
+    testWidgets(
+        'AP name row is ABSENT (no placeholder) when apName is null — the '
+        'honest-null property; BSSID and Band still render',
+        (tester) async {
+      await pumpResults(tester); // apName == null
+      // The critical honesty assertion: no row, no placeholder, no "unavailable"
+      // label invented for a name we do not have (GL-005).
+      expect(find.text('AP name'), findsNothing);
+      // The two always-present rows are unaffected.
+      expect(find.text('BSSID'), findsOneWidget);
+      expect(find.text('Band'), findsOneWidget);
+    });
+  });
 }
 
 /// An iOS bridge whose one-shot [readLatest] is EMPTY (null) but whose live

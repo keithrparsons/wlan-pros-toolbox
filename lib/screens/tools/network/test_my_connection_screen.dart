@@ -5772,6 +5772,19 @@ class _WifiLinkSection extends StatelessWidget {
           _LocationNameHint(hint: hint),
           const SizedBox(height: AppSpacing.xs),
         ],
+        // Identity block: the vendor-advertised AP name (when the beacon carried
+        // one) leads the BSSID, matching Wi-Fi Information / Interface Info and
+        // the copy report. The name arrives from a fire-and-forget beacon-IE scan
+        // that resolves AFTER the first read and caches on the HELD adapter; the
+        // macOS sampler polls that same adapter every 2s and folds the enriched
+        // reading into [_resultAp] (ConnectedAp.mergedWith: apName ?? other.apName),
+        // so this row fills in on screen without a manual re-run. Rendered ONLY
+        // when the name is genuinely present (non-null, non-blank) — never a
+        // placeholder guessed from the BSSID (GL-005). The full BSSID is kept
+        // here (this is the precise-identifier detail card, not a tail summary).
+        if (a?.apName != null && a!.apName!.trim().isNotEmpty)
+          _DataRow(label: 'AP name', value: a.apName!.trim()),
+        _DataRow(label: 'BSSID', value: a?.bssid, mono: true),
         _DataRow(
           label: 'Tx rate',
           value: _rate(a?.txRateMbps),
@@ -5813,6 +5826,16 @@ class _WifiLinkSection extends StatelessWidget {
           mono: true,
         ),
         _DataRow(label: 'Channel', value: _channelValue(a?.channel), mono: true),
+        // Band grouped with Channel/Standard (RF grouping). On every platform
+        // that reaches this branch (macOS / Android / Windows) the band is read
+        // directly from the radio, so [bandDerived] is false and NO "(derived)"
+        // marker shows — the honest guess-marker is reserved for the iOS card,
+        // which computes band from the channel and never renders here.
+        _DataRow(
+          label: 'Band',
+          value: a?.band,
+          derived: a?.bandDerived ?? false,
+        ),
         _DataRow(label: 'Standard', value: a?.standard),
       ],
     );
