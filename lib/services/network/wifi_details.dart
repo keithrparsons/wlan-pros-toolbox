@@ -18,13 +18,19 @@
 //
 // DERIVED VALUES (computed app-side, never harvested):
 //   * snr  = rssi − noise            (dB)
-//   * band = derived from channel    (2.4 / 5 / 6 GHz; see [WiFiBand.fromChannel])
+//   * band = derived from channel    (2.4 / 5 / 6 GHz; resolved against the
+//     app's verified channel plan — see [WiFiBand.fromChannel]. Marked
+//     "(derived)" only when the channel number is genuinely ambiguous across
+//     bands — see [WiFiBand.bandFromChannelIsAmbiguous].)
 //   * channel width is NOT in the harvested field set → it is honestly marked
 //     UNAVAILABLE. We never fabricate a width.
 
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+
+import '../../data/channel_frequency_data.dart'
+    show k24Channels, k5Channels, k6Channels;
 
 /// The frequency band a channel sits in. Derived from the channel number — the
 /// harvested field set carries no band, so this is the only source.
@@ -40,29 +46,55 @@ enum WiFiBand {
 
   /// Derive the band from a Wi-Fi channel number.
   ///
-  /// The 2.4 GHz and 6 GHz channel-number ranges OVERLAP (e.g. ch 1–13 exist in
-  /// both bands), so a channel number alone is ambiguous in that low range. The
-  /// harvested data does not include a center frequency to disambiguate, so we
-  /// use the documented, practical mapping:
-  ///   * 1–14    → 2.4 GHz   (the classic 2.4 GHz channel set; 14 is JP-only)
-  ///   * 36–177  → 5 GHz     (U-NII-1 through U-NII-4; 165/169/173/177 included)
-  ///   * 181–233 → 6 GHz     (the unambiguous upper 6 GHz channels, incl. 197)
-  /// 6 GHz channels 1–93 collide numerically with 2.4/5 GHz and CANNOT be told
-  /// apart from a bare channel number; in that ambiguous low range we return the
-  /// 2.4/5 GHz interpretation (the overwhelmingly common case for a value that
-  /// low) and never silently claim 6 GHz. The honest "derived" label on the
-  /// screen makes clear the band is computed, not reported.
+  /// A bare channel number is USUALLY unambiguous — most numbers are valid in
+  /// exactly one band. We resolve against the app's own verified channel plan
+  /// ([k24Channels], [k5Channels], [k6Channels] in channel_frequency_data.dart,
+  /// primary-source-verified by Pax against IEEE 802.11 + FCC), so a genuine
+  /// 6 GHz channel like 37/53/69/85/101/117/133 resolves to 6 GHz — NOT to
+  /// "5 GHz" as the old 36–177 range hack did (those numbers are not valid
+  /// 5 GHz channels at all).
   ///
-  /// Returns null for a channel number outside every known Wi-Fi range.
+  /// The only GENUINELY ambiguous numbers appear in two bands' valid sets:
+  ///   * 1, 2, 5, 9, 13   → 2.4 GHz vs 6 GHz  (default: 2.4 GHz)
+  ///   * 149,153,157,161,165,169,173,177 → 5 GHz vs 6 GHz (default: 5 GHz)
+  /// (Channel 2 is ambiguous because the app's 6 GHz plan includes the special
+  /// 5935 MHz guard channel 2; the brief listed 2 as 2.4-GHz-only — see the
+  /// logged discrepancy. We default it to 2.4 GHz and mark it derived.)
+  /// For an ambiguous number we return the lower-band interpretation — the
+  /// overwhelmingly common real case — and NEVER silently claim 6 GHz. The
+  /// [bandFromChannelIsAmbiguous] predicate flags exactly these so the screen
+  /// shows the honest "(derived)" asterisk ONLY when the band is a real guess.
+  ///
+  /// Returns null for a channel number in no band's valid set.
   static WiFiBand? fromChannel(int? channel) {
     if (channel == null) return null;
-    if (channel >= 1 && channel <= 14) return WiFiBand.band24;
-    if (channel >= 36 && channel <= 177) return WiFiBand.band5;
-    // 6 GHz uses channels 1..233; only the upper range is numerically
-    // unambiguous against 2.4/5 GHz. ch 197 (a real Wi-Fi 7 / 6 GHz channel,
-    // per the TICKET-02 sample payload) lands here.
-    if (channel >= 181 && channel <= 233) return WiFiBand.band6;
+    // Order matters: it also encodes the ambiguous-channel defaults. A number
+    // in 2.4 GHz's set wins over 6 GHz (1/2/5/9/13 → 2.4 GHz); a number in
+    // 5 GHz's set wins over 6 GHz (149..177 → 5 GHz). A number only in the
+    // 6 GHz set (e.g. 37, 69, 197) resolves to 6 GHz with certainty.
+    if (k24Channels.contains(channel)) return WiFiBand.band24;
+    if (k5Channels.contains(channel)) return WiFiBand.band5;
+    if (k6Channels.contains(channel)) return WiFiBand.band6;
     return null;
+  }
+
+  /// True when [channel]'s number alone cannot pin the band — it is a valid
+  /// channel in MORE THAN ONE band's plan, so the band [fromChannel] returns is
+  /// a best-effort default, not a certainty. This is the ONLY case where a
+  /// channel-derived band should wear the "(derived)" asterisk: an unambiguous
+  /// number (e.g. 36, 69, 197) yields a band that is computed but CERTAIN.
+  ///
+  /// Ambiguous numbers, per the app's verified channel plan:
+  ///   * 1, 2, 5, 9, 13 — in both 2.4 GHz and 6 GHz.
+  ///   * 149,153,157,161,165,169,173,177 — in both 5 GHz and 6 GHz.
+  /// Returns false for null or an off-plan number.
+  static bool bandFromChannelIsAmbiguous(int? channel) {
+    if (channel == null) return false;
+    int bandsContaining = 0;
+    if (k24Channels.contains(channel)) bandsContaining++;
+    if (k5Channels.contains(channel)) bandsContaining++;
+    if (k6Channels.contains(channel)) bandsContaining++;
+    return bandsContaining > 1;
   }
 }
 

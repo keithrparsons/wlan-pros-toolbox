@@ -165,35 +165,82 @@ void main() {
     });
   });
 
-  group('WiFiBand.fromChannel — derivation map', () {
-    test('2.4 GHz channels 1–14', () {
-      expect(WiFiBand.fromChannel(1), WiFiBand.band24);
-      expect(WiFiBand.fromChannel(6), WiFiBand.band24);
-      expect(WiFiBand.fromChannel(11), WiFiBand.band24);
-      expect(WiFiBand.fromChannel(14), WiFiBand.band24);
+  group('WiFiBand.fromChannel — precise per-channel derivation', () {
+    test('unambiguous 2.4 GHz channels resolve to 2.4 GHz', () {
+      // 2.4-GHz-only numbers (i.e. not also a valid 6 GHz PSC-grid channel).
+      for (final int ch in <int>[3, 4, 6, 7, 8, 10, 11, 12, 14]) {
+        expect(WiFiBand.fromChannel(ch), WiFiBand.band24, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isFalse,
+            reason: 'ch $ch');
+      }
     });
 
-    test('5 GHz channels 36–177', () {
-      expect(WiFiBand.fromChannel(36), WiFiBand.band5);
-      expect(WiFiBand.fromChannel(48), WiFiBand.band5);
-      expect(WiFiBand.fromChannel(149), WiFiBand.band5);
-      expect(WiFiBand.fromChannel(165), WiFiBand.band5);
-      expect(WiFiBand.fromChannel(177), WiFiBand.band5);
+    test('unambiguous 5 GHz channels resolve to 5 GHz', () {
+      // UNII-1/2A/2C below 149 — all multiples of 4, valid only in 5 GHz.
+      for (final int ch in <int>[
+        36, 40, 44, 48, 52, 56, 60, 64, //
+        100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144,
+      ]) {
+        expect(WiFiBand.fromChannel(ch), WiFiBand.band5, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isFalse,
+            reason: 'ch $ch');
+      }
     });
 
-    test('6 GHz upper channels 181–233 (incl. 197)', () {
-      expect(WiFiBand.fromChannel(181), WiFiBand.band6);
+    test('unambiguous 6 GHz channels resolve to 6 GHz (the core fix)', () {
+      // The real Summit channels: valid ONLY in 6 GHz. The old 36..177 hack
+      // mislabeled the lower ones "5 GHz (derived)"; they are 6 GHz, certain.
+      for (final int ch in <int>[
+        17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 69, 85, 93, 101, 117, 133, //
+        145, 181, 185, 197, 213, 229, 233,
+      ]) {
+        expect(WiFiBand.fromChannel(ch), WiFiBand.band6, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isFalse,
+            reason: 'ch $ch');
+      }
+    });
+
+    test('the Summit 6 GHz set is 6 GHz and NOT derived', () {
+      for (final int ch in <int>[
+        21, 37, 53, 69, 85, 93, 101, 117, 133, 197, 213,
+      ]) {
+        expect(WiFiBand.fromChannel(ch), WiFiBand.band6, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isFalse,
+            reason: 'ch $ch');
+      }
+    });
+
+    test('2.4/6 GHz ambiguous channels default to 2.4 GHz and are derived', () {
+      // 1/5/9/13 are valid in both 2.4 and 6 GHz; 2 is 2.4 GHz vs the special
+      // 6 GHz 5935 MHz guard channel (app-data discrepancy vs the brief).
+      for (final int ch in <int>[1, 2, 5, 9, 13]) {
+        expect(WiFiBand.fromChannel(ch), WiFiBand.band24, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isTrue,
+            reason: 'ch $ch');
+      }
+    });
+
+    test('5/6 GHz ambiguous channels default to 5 GHz and are derived', () {
+      for (final int ch in <int>[149, 153, 157, 161, 165, 169, 173, 177]) {
+        expect(WiFiBand.fromChannel(ch), WiFiBand.band5, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isTrue,
+            reason: 'ch $ch');
+      }
+    });
+
+    test('ch 197 (real Wi-Fi 7 / 6 GHz sample payload) is 6 GHz, not derived', () {
       expect(WiFiBand.fromChannel(197), WiFiBand.band6);
-      expect(WiFiBand.fromChannel(233), WiFiBand.band6);
+      expect(WiFiBand.bandFromChannelIsAmbiguous(197), isFalse);
     });
 
-    test('out-of-range channel numbers derive no band', () {
-      expect(WiFiBand.fromChannel(0), isNull);
-      expect(WiFiBand.fromChannel(15), isNull); // gap between 2.4 and 5 GHz
-      expect(WiFiBand.fromChannel(35), isNull);
-      expect(WiFiBand.fromChannel(178), isNull);
-      expect(WiFiBand.fromChannel(300), isNull);
+    test('off-plan channel numbers derive no band and are not ambiguous', () {
+      for (final int ch in <int>[0, 15, 35, 51, 178, 179, 300]) {
+        expect(WiFiBand.fromChannel(ch), isNull, reason: 'ch $ch');
+        expect(WiFiBand.bandFromChannelIsAmbiguous(ch), isFalse,
+            reason: 'ch $ch');
+      }
       expect(WiFiBand.fromChannel(null), isNull);
+      expect(WiFiBand.bandFromChannelIsAmbiguous(null), isFalse);
     });
 
     test('band labels', () {
