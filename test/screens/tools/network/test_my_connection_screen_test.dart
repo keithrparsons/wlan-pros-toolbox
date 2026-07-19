@@ -2885,6 +2885,83 @@ void main() {
       },
     );
 
+    // MEDIUM-1 (Vera): the WI-FI copy section's AP-name row. On this consumer
+    // tool the copy report is the ONLY surface where the vendor AP name meets the
+    // BSSID (the on-screen identity card is iOS-only, where the name is always
+    // null by platform ceiling), so both the present and the honest-null path are
+    // proven here.
+    testWidgets(
+      'copy report: the vendor AP name leads the BSSID when the beacon carried '
+      'one (macOS)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter:
+                  _StaticMacAdapter(_macSample().withApName('UAP-Lobby')),
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        expect(copied, contains('AP name: UAP-Lobby'));
+        expect(copied, contains('BSSID: a4:83:e7:00:11:22'));
+        // Name leads the BSSID in the report.
+        expect(copied.indexOf('AP name:'), lessThan(copied.indexOf('BSSID:')));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
+    testWidgets(
+      'copy report: no AP-name line when the beacon advertised none — the BSSID '
+      'stands alone (honest-null)',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            TestMyConnectionScreen(
+              enableLiveSampling: false,
+              connectionService: _onWifiConnection(),
+              sourceOverride: WifiInfoSource.macosCoreWlan,
+              macAdapter: _StaticMacAdapter(_macSample()), // no apName advertised
+              qualityClient: MockQualityClient(
+                scriptedResult: _marginalInternet(),
+              ),
+            ),
+          ),
+        );
+        await runCheck(tester);
+        await settleDetails(tester);
+
+        final Finder copyBtn = find.text('Copy these details');
+        await tester.ensureVisible(copyBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(copyBtn);
+        await tester.pumpAndSettle();
+
+        final String copied = clipboardWrites.last;
+        // Honest-null: no AP-name line at all, never a placeholder or guess.
+        expect(copied, isNot(contains('AP name:')));
+        expect(copied, contains('BSSID: a4:83:e7:00:11:22'));
+
+        await tester.pump(const Duration(milliseconds: 1600));
+      },
+    );
+
     testWidgets(
       'macOS without Location authorization labels SSID/BSSID with the grant '
       'hint in the copy report (not a bare Unavailable)',

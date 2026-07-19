@@ -16,6 +16,8 @@
 //     disabled+pending while the bounce is in flight, and the failure path
 //     (Shortcut could not open) dropping the pending state.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +28,52 @@ import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/public_ip_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
+
+/// One non-extended IE element: [id][len][...data].
+List<int> _ie(int id, List<int> data) => <int>[id, data.length, ...data];
+
+/// A synthetic UniFi (Ubiquiti) Tag 221 AP-name IE: OUI 00:15:6D, type 0x01.
+List<int> _unifiNameBlob(String name) =>
+    _ie(221, <int>[0x00, 0x15, 0x6D, 0x01, ...name.codeUnits]);
+
+/// A fake macOS WifiInfoService for the persistent-adapter tests: it serves the
+/// connected BSSID, a UniFi name IE blob, and a granted Location, and touches no
+/// platform channel. When [gate] is supplied, the beacon-IE scan blocks on it —
+/// so a test can hold the fire-and-forget scan open, assert the honest first-read
+/// null, then release it and assert the auto-re-read surfaces the name.
+WifiInfoService _macService({
+  required String bssid,
+  required String apName,
+  Future<void>? gate,
+}) =>
+    WifiInfoService(
+      platformOverride: 'macos',
+      invoke: (String method, [dynamic args]) async {
+        switch (method) {
+          case 'getWifiInfo':
+            return <String, Object?>{
+              'ssid': 'KeithNet',
+              'bssid': bssid,
+              'poweredOn': true,
+              'locationAuthorized': true,
+            };
+          case 'connectedApIeBlob':
+            if (gate != null) await gate; // hold the scan open until released
+            return <String, Object?>{
+              'ieBytes': Uint8List.fromList(_unifiNameBlob(apName)),
+              'bssid': bssid,
+              'locationAuthorized': true,
+            };
+          case 'isLocationAuthorized':
+            return true;
+          default:
+            return null;
+        }
+      },
+    );
 
 /// The network_info_plus method channel — stubbed to return null for every call
 /// so the snapshot's addressing reads (gateway/submask/IP/IPv6) resolve
@@ -77,9 +124,11 @@ PublicIpService _fakePublicIp() =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  late List<String> clipboardWrites;
   // Stub the network_info_plus channel to null so addressing reads settle
   // in-process and the snapshot future completes within a pump.
   setUp(() {
+    clipboardWrites = <String>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_networkInfoChannel, (call) async => null);
     // Honest "the transport could not be read" → `unknown`, which is what this
@@ -90,13 +139,39 @@ void main() {
       _networkTransportChannel,
       (MethodCall call) async => <String, Object?>{'available': false},
     );
+    // Capture the §8.16 copy report at the Clipboard channel boundary so the
+    // AP-name copy-row present/absent paths can be asserted (MEDIUM-2).
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        final Map<Object?, Object?> args =
+            call.arguments as Map<Object?, Object?>;
+        clipboardWrites.add(args['text'] as String);
+      }
+      return null;
+    });
   });
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_networkInfoChannel, null);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_networkTransportChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
   });
+
+  /// Taps the copy affordance and returns the copied §8.16 report text.
+  Future<String> copyReport(WidgetTester tester) async {
+    final Finder copyBtn = find.byType(AppCopyAction);
+    await tester.ensureVisible(copyBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(copyBtn);
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2)); // drain the "Copied" timer
+    expect(clipboardWrites, isNotEmpty,
+        reason: 'the copy report must have been produced');
+    return clipboardWrites.last;
+  }
 
   Widget host(Widget child) =>
       MaterialApp(theme: AppTheme.dark(), home: child);
@@ -194,6 +269,135 @@ void main() {
     expect(find.text('LiveNet'), findsOneWidget);
     // The live path is never labelled "as of".
     expect(find.textContaining('Remembered reading, as of'), findsNothing);
+  });
+
+  group('AP name (vendor-advertised, beside the BSSID)', () {
+    testWidgets(
+        'present: the AP name row shows and the FULL BSSID still renders',
+        (tester) async {
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          apName: 'AP-Lobby-3',
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // The vendor-advertised name gets its own labelled row...
+      expect(find.text('AP name'), findsOneWidget);
+      expect(find.text('AP-Lobby-3'), findsOneWidget);
+      // ...and the full BSSID is preserved as the precise identifier (not a tail).
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+    });
+
+    testWidgets(
+        'absent: no AP-name row and no fabricated name — the BSSID stands alone',
+        (tester) async {
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          // No apName advertised (iOS platform ceiling, or the AP names none).
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // Honest-null: the row is omitted entirely, never a placeholder or guess.
+      expect(find.text('AP name'), findsNothing);
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+    });
+
+    // MEDIUM-2: the copy report's `line('AP name', w.apName)` path.
+    testWidgets('copy report: present → an "AP name" line above the BSSID',
+        (tester) async {
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+          apName: 'AP-Lobby-3',
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      final String report = await copyReport(tester);
+      expect(report, contains('AP name: AP-Lobby-3'));
+      expect(report, contains('BSSID: a4:83:e7:00:11:22'));
+      // Name leads the BSSID in the report.
+      expect(report.indexOf('AP name:'), lessThan(report.indexOf('BSSID:')));
+    });
+
+    testWidgets('copy report: absent → no "AP name" line, BSSID still present',
+        (tester) async {
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      final String report = await copyReport(tester);
+      // Honest-null: no AP-name line at all, never a placeholder.
+      expect(report, isNot(contains('AP name:')));
+      expect(report, contains('BSSID: a4:83:e7:00:11:22'));
+    });
+
+    // HIGH-1: the fire-and-forget name is null on the first read and must appear
+    // WITHOUT a manual refresh — the screen holds the adapter (per-BSSID cache
+    // survives) and auto-re-reads when the pending scan resolves.
+    testWidgets(
+        'auto re-read: name is absent on the first read, then appears once the '
+        'background scan resolves (persistent adapter, no manual Refresh)',
+        (tester) async {
+      const String bssid = 'a4:83:e7:00:11:22';
+      // Hold the beacon-IE scan open so the first read genuinely resolves BEFORE
+      // the name does — the real production ordering, made deterministic.
+      final Completer<void> releaseScan = Completer<void>();
+      final InterfaceInfoService service = InterfaceInfoService(
+        interfaceLister: () async => const [],
+        // A HELD, enriching macOS adapter (real MacWifiInfoAdapter over a fake
+        // service) — NOT an injected model — so the fire-and-forget cache path
+        // is exercised end to end.
+        wifiInfoAdapter: MacWifiInfoAdapter(
+          service: _macService(
+            bssid: bssid,
+            apName: 'UAP-Lobby',
+            gate: releaseScan.future,
+          ),
+          enrichApName: true,
+        ),
+        connectedApCache: ConnectedApCache(),
+      );
+
+      await tester.pumpWidget(host(
+        InterfaceInfoScreen(
+          service: service,
+          publicIpService: _fakePublicIp(),
+          wifiSourceOverride: WifiInfoSource.macosCoreWlan,
+        ),
+      ));
+      await tester.pump(); // read 1 resolves
+      await tester.pump(const Duration(seconds: 1));
+
+      // First read: the BSSID is up but the scan is still blocked, so the name
+      // has honestly not resolved yet — no row, no placeholder.
+      expect(find.text(bssid), findsOneWidget);
+      expect(find.text('AP name'), findsNothing);
+
+      // Release the scan; the cached name resolves and the screen auto-re-reads.
+      releaseScan.complete();
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+
+      // The name now appears — no manual Refresh was tapped.
+      expect(find.text('AP name'), findsOneWidget);
+      expect(find.text('UAP-Lobby'), findsOneWidget);
+      expect(find.text(bssid), findsOneWidget);
+    });
   });
 
   group('Refresh Wi-Fi button', () {

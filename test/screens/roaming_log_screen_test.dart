@@ -204,6 +204,11 @@ RoamEvent _roam({
       toApName: toApName,
     );
 
+/// The native transport probe channel. Stubbed (honest "unavailable") so the
+/// Android-source sampler path settles without leaving a pending probe timer.
+const MethodChannel _networkTransportChannel =
+    MethodChannel('com.wlanpros.toolbox/network_transport');
+
 void main() {
   setUpAll(() async {
     await ToolHelpLoader.ensureLoaded();
@@ -223,11 +228,22 @@ void main() {
       }
       return null;
     });
+    // On an Android source the sampler's WifiConnectionService fires the native
+    // transport probe. Stub it to the HONEST "could not read" payload so the
+    // probe settles in-process (no dangling 3s timer) — the same fidelity stub
+    // interface_info_screen_test uses. Inert for the Windows/macOS/iOS sources.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      _networkTransportChannel,
+      (MethodCall call) async => <String, Object?>{'available': false},
+    );
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_networkTransportChannel, null);
   });
 
   Future<void> pump(WidgetTester tester, Widget screen) async {
@@ -462,16 +478,20 @@ void main() {
   // Honest-null throughout: measured fields only, no fabricated verdict.
   // ===================================================================
   group('current-connection card', () {
-    Future<WifiSignalSampler> pumpWithStaticAp(WidgetTester t, ConnectedAp ap) async {
+    Future<WifiSignalSampler> pumpWithStaticAp(
+      WidgetTester t,
+      ConnectedAp ap, {
+      WifiInfoSource source = WifiInfoSource.windowsNativeWifi,
+    }) async {
       final WifiSignalSampler sampler = WifiSignalSampler(
-        source: WifiInfoSource.windowsNativeWifi,
+        source: source,
         macAdapter: _StaticApAdapter(ap),
         macPollInterval: const Duration(milliseconds: 50),
       );
       await pump(
         t,
         RoamingLogScreen(
-          sourceOverride: WifiInfoSource.windowsNativeWifi,
+          sourceOverride: source,
           sampler: sampler,
         ),
       );
@@ -582,6 +602,65 @@ void main() {
 
       expect(find.text('6 GHz (derived)'), findsOneWidget);
       expect(find.text('30 dB (derived)'), findsOneWidget);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets(
+        'AP NAME present: the vendor name LEADS the access-point value and the '
+        'BSSID tail drops beneath it (name-first, honest identifier)', (t) async {
+      final WifiSignalSampler sampler = await pumpWithStaticAp(
+        t,
+        const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: '94:2a:6f:5c:3a:10',
+          apName: 'AP-Lobby-3',
+          rssiDbm: -52,
+        ),
+      );
+
+      // The name is prominent...
+      expect(find.text('AP-Lobby-3'), findsOneWidget);
+      // ...and the identifying BSSID tail is still shown beneath it (never the
+      // shared OUI head), so the AP stays precisely identifiable.
+      expect(find.text(':3a:10'), findsOneWidget);
+      expect(find.textContaining('94:2a:6f'), findsNothing);
+
+      await t.pumpWidget(const SizedBox());
+      sampler.dispose();
+    });
+
+    testWidgets(
+        'ANDROID source: the card renders the live connection cleanly (apName '
+        'is null on Android — no name row, the BSSID tail stands alone)',
+        (t) async {
+      final WifiSignalSampler sampler = await pumpWithStaticAp(
+        t,
+        const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: '94:2a:6f:5c:3a:10',
+          rssiDbm: -58,
+          band: '5 GHz',
+          standard: '802.11ax (Wi-Fi 6)',
+          channel: 44,
+          channelWidthMhz: 80,
+          channelWidthAvailable: true,
+          txRateMbps: 866,
+          // Android exposes no beacon IEs → apName stays null (honest).
+        ),
+        source: WifiInfoSource.androidWifiManager,
+      );
+
+      expect(find.text('Current connection'), findsOneWidget);
+      expect(find.text('KeithNet'), findsOneWidget);
+      // No fabricated AP name on Android; the BSSID tail identifies the AP.
+      expect(find.text(':3a:10'), findsOneWidget);
+      // The fields the Android adapter populates render; the layout is intact.
+      expect(find.text('5 GHz · 802.11ax (Wi-Fi 6)'), findsOneWidget);
+      expect(find.text('ch 44 · 80 MHz'), findsOneWidget);
+      expect(find.text('-58 dBm'), findsOneWidget);
+      expect(find.text('866 Mbps'), findsOneWidget);
 
       await t.pumpWidget(const SizedBox());
       sampler.dispose();

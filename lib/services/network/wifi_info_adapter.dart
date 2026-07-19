@@ -33,7 +33,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform, visibleForTesting;
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 import 'ap_name_decoder.dart';
 import 'connected_ap.dart';
@@ -232,9 +232,12 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// second poll while a scan is pending does not launch another).
   Future<void>? _inFlightApNameScan;
 
-  /// The current in-flight AP-name scan (or null). Exposed so a test can await
-  /// the fire-and-forget scan deterministically.
-  @visibleForTesting
+  /// The current in-flight AP-name scan (or null). macOS is the only adapter that
+  /// enriches AP names today, so this capability lives here rather than on the
+  /// [WifiInfoAdapter] interface. A non-polling caller (Interface Info, via
+  /// [InterfaceInfoService.pendingApNameScan]) awaits it to re-read once the
+  /// fire-and-forget scan resolves, and tests await it to drive the scan
+  /// deterministically.
   Future<void>? get pendingApNameScan => _inFlightApNameScan;
 
   @override

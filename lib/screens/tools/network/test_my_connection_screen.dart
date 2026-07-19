@@ -705,7 +705,11 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         widget.networkDetailsService ?? NetworkDetailsService();
     switch (_source) {
       case WifiInfoSource.macosCoreWlan:
-        _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter();
+        // enrichApName turns on the existing (best-effort, throttled, honest-null)
+        // CoreWLAN beacon-IE scan so the vendor-advertised AP name can ride
+        // alongside the BSSID in the identity rows — the same enrichment the
+        // Wi-Fi Information tool and live sampler use. No new capture path.
+        _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter(enrichApName: true);
       case WifiInfoSource.androidWifiManager:
         _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
       case WifiInfoSource.windowsNativeWifi:
@@ -3396,6 +3400,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final String? wifiName = _consumerWifiName(ap);
     _copySection(buf, 'WI-FI', <_CopyRow>[
       _CopyRow('Network (SSID)', _nameOrLocationHint(wifiName)),
+      // Vendor-advertised AP name leads the BSSID when the beacon carried one
+      // (macOS); omitted entirely when null — the report reads as before (GL-005).
+      if (ap != null && ap.apName != null && ap.apName!.trim().isNotEmpty)
+        _CopyRow('AP name', ap.apName!.trim()),
       _CopyRow('BSSID', _nameOrLocationHint(ap?.bssid)),
       _CopyRow('RSSI', _rssiOnly(ap)),
       _CopyRow('Noise', _noiseOnly(ap)),
@@ -5736,6 +5744,13 @@ class _WifiLinkSection extends StatelessWidget {
           if (a?.ssid != null || a?.bssid != null || a?.securityType != null)
             ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
+              // NOTE (AP name): this identity card is reached ONLY on iOS
+              // (needsWifiCapture ⇒ _canOfferWifiCapture ⇒ _isIos), and iOS never
+              // decodes a vendor AP name (platform ceiling). An on-screen AP-name
+              // row here would therefore be permanently dead. macOS — the one
+              // platform that CAN carry a name — shows no on-screen BSSID row in
+              // this consumer tool, so the AP name rides with the BSSID in the
+              // copy report instead (see _buildCopyText / the WI-FI section).
               if (a?.bssid != null)
                 _DataRow(label: 'BSSID', value: a?.bssid, mono: true),
               if (a?.securityType != null)

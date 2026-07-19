@@ -90,6 +90,7 @@ class WifiLinkInfo {
   const WifiLinkInfo({
     this.ssid,
     this.bssid,
+    this.apName,
     this.gatewayIP,
     this.subnetMask,
     this.wifiIPv4,
@@ -103,6 +104,14 @@ class WifiLinkInfo {
 
   final String? ssid;
   final String? bssid;
+
+  /// Vendor-advertised access-point NAME, decoded from the beacon IEs by the
+  /// shared `ConnectedAp` subsystem (macOS today; null on iOS by platform
+  /// ceiling and null for any AP that advertised no name). The screen shows it
+  /// ABOVE the BSSID when present and OMITS the row entirely when null — never a
+  /// placeholder, never a name guessed from the BSSID (GL-005).
+  final String? apName;
+
   final String? gatewayIP;
   final String? subnetMask;
   final String? wifiIPv4;
@@ -203,13 +212,15 @@ class InterfaceInfoService {
     NetworkInfo? networkInfo,
     Future<List<NetworkInterface>> Function()? interfaceLister,
     ConnectedApRead? connectedApReader,
+    WifiInfoAdapter? wifiInfoAdapter,
     ConnectedApCache? connectedApCache,
     DateTime Function()? now,
     WifiConnectionService? connectionService,
   })  : _networkInfo = networkInfo ?? NetworkInfo(),
         _interfaceLister = interfaceLister ?? _defaultLister,
         _cache = connectedApCache ?? ConnectedApCache.instance,
-        _readConnectedAp = connectedApReader ?? _defaultConnectedApRead,
+        _injectedReader = connectedApReader,
+        _injectedAdapter = wifiInfoAdapter,
         _now = now ?? DateTime.now,
         _connection = connectionService ??
             WifiConnectionService(networkInfo: networkInfo ?? NetworkInfo());
@@ -217,7 +228,41 @@ class InterfaceInfoService {
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
   final ConnectedApCache _cache;
-  final ConnectedApRead _readConnectedAp;
+
+  /// An explicitly-injected connected-AP reader (tests). When set it wins over
+  /// the default persistent-adapter read path.
+  final ConnectedApRead? _injectedReader;
+
+  /// An injected AP-name-enriching adapter (tests / integration). When null, the
+  /// default read path lazily builds and HOLDS the platform adapter instead.
+  final WifiInfoAdapter? _injectedAdapter;
+
+  /// The held adapter used by the default read path, created on first use and
+  /// reused for the life of this service so its per-BSSID AP-name cache is not
+  /// discarded between reads. HIGH-1 fix: a fresh adapter each read only ever
+  /// "first-fetches" (the fire-and-forget scan resolves after fetch returns), so
+  /// the vendor AP name would never surface for a non-polling caller.
+  WifiInfoAdapter? _persistentAdapter;
+
+  /// The in-flight AP-name enrichment scan of the held adapter (or null when none
+  /// is pending / the source does not enrich). macOS is the only source that
+  /// enriches names today, so this reads through to the held [MacWifiInfoAdapter]
+  /// and is null for every other source. A NON-polling caller (the Interface Info
+  /// screen) awaits this and re-reads once, so the AP name appears without a
+  /// manual refresh; a polling caller never needs it.
+  Future<void>? get pendingApNameScan {
+    final WifiInfoAdapter? adapter = _persistentAdapter;
+    return adapter is MacWifiInfoAdapter ? adapter.pendingApNameScan : null;
+  }
+
+  /// Whether the HELD source can decode a vendor AP name at all (macOS only
+  /// today). A non-polling caller uses this to decide whether a single re-read is
+  /// worthwhile after a first read that carried a BSSID but no name: the
+  /// fire-and-forget scan may still be in flight OR may have already resolved
+  /// (caching the name) before the first snapshot returned, and [pendingApNameScan]
+  /// alone cannot distinguish "done" from "never" — so the caller re-reads when
+  /// this is true and simply gets an honest still-null on an unnamed AP.
+  bool get canEnrichApName => _persistentAdapter is MacWifiInfoAdapter;
 
   /// The honest not-on-Wi-Fi probe. Consulted BEFORE the identity cache, so a
   /// remembered SSID/BSSID is never served as the current link on a device that
@@ -248,46 +293,45 @@ class InterfaceInfoService {
     );
   }
 
+  /// Dispatches the connected-AP read: an explicitly-injected reader (tests) wins;
+  /// otherwise the default persistent-adapter path.
+  Future<({ConnectedAp? ap, bool authorized})> _readConnectedAp() {
+    final ConnectedApRead? injected = _injectedReader;
+    if (injected != null) return injected();
+    return _defaultRead();
+  }
+
   /// Default connected-AP read — the no-prompt path that mirrors the consumer
-  /// connection check. macOS: read the CoreWLAN snapshot via [MacWifiInfoAdapter]
-  /// (its [WifiInfoAdapter.fetch] never pops a Location prompt; an ungranted
-  /// Location simply yields null SSID/BSSID) and report current authorization so
-  /// the gate can be shown. iOS: read the last Shortcut payload via
-  /// [WiFiDetailsBridge.readLatest]. Other platforms: no reading.
-  static Future<({ConnectedAp? ap, bool authorized})>
-      _defaultConnectedApRead() async {
+  /// connection check. macOS/Android/Windows read via a HELD [WifiInfoAdapter]
+  /// ([_resolvePersistentAdapter]) so the AP-name cache survives across reads; the
+  /// fetch never pops a Location prompt (an ungranted macOS/Android Location
+  /// simply yields null SSID/BSSID while currentNameAuthorization reports the gate
+  /// state). iOS reads the last Shortcut payload via [WiFiDetailsBridge.readLatest].
+  /// Unsupported / web: no reading.
+  Future<({ConnectedAp? ap, bool authorized})> _defaultRead() async {
+    final WifiInfoAdapter? adapter = _resolvePersistentAdapter();
+    if (adapter != null) {
+      try {
+        final ConnectedAp ap = await adapter.fetch().timeout(
+              const Duration(seconds: 5),
+              onTimeout: () =>
+                  throw TimeoutException('Wi-Fi link read timed out'),
+            );
+        final bool authorized = await adapter.currentNameAuthorization();
+        return (ap: ap, authorized: authorized);
+      } catch (_) {
+        // Read failed; still report whether Location is authorized so the gate
+        // hint stays accurate. Swallow any error from that probe too.
+        bool authorized = false;
+        try {
+          authorized = await adapter.currentNameAuthorization();
+        } catch (_) {/* leave false */}
+        return (ap: null, authorized: authorized);
+      }
+    }
+    // No adapter for this source: the iOS Shortcut path, or unsupported / web.
     final WifiInfoSource source = WifiInfoSourceResolver.resolve();
     switch (source) {
-      case WifiInfoSource.macosCoreWlan:
-      case WifiInfoSource.androidWifiManager:
-      case WifiInfoSource.windowsNativeWifi:
-        // All three snapshot sources use a [WifiInfoAdapter]; pick the
-        // platform's. None pops a prompt here — Windows needs no Location grant
-        // at all, and an ungranted macOS/Android Location simply yields null
-        // SSID/BSSID while currentNameAuthorization reports the gate state
-        // (always authorized on Windows).
-        final WifiInfoAdapter adapter = switch (source) {
-          WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
-          WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
-          _ => MacWifiInfoAdapter(),
-        };
-        try {
-          final ConnectedAp ap = await adapter.fetch().timeout(
-                const Duration(seconds: 5),
-                onTimeout: () =>
-                    throw TimeoutException('Wi-Fi link read timed out'),
-              );
-          final bool authorized = await adapter.currentNameAuthorization();
-          return (ap: ap, authorized: authorized);
-        } catch (_) {
-          // Read failed; still report whether Location is authorized so the gate
-          // hint stays accurate. Swallow any error from that probe too.
-          bool authorized = false;
-          try {
-            authorized = await adapter.currentNameAuthorization();
-          } catch (_) {/* leave false */}
-          return (ap: null, authorized: authorized);
-        }
       case WifiInfoSource.iosShortcuts:
         try {
           final WiFiDetailsBridge bridge = WiFiDetailsBridge();
@@ -300,10 +344,38 @@ class InterfaceInfoService {
         } catch (_) {
           return (ap: null, authorized: true);
         }
+      case WifiInfoSource.macosCoreWlan:
+      case WifiInfoSource.androidWifiManager:
+      case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
         return (ap: null, authorized: true);
     }
+  }
+
+  /// Lazily resolves and HOLDS the adapter for the snapshot sources so its
+  /// per-BSSID AP-name cache survives across reads (the vendor name resolves on a
+  /// LATER fetch of the SAME instance — see [MacWifiInfoAdapter]). An injected
+  /// adapter (tests) wins; otherwise the platform adapter is built ONCE, with
+  /// macOS enrichment turned on (the same best-effort, throttled, honest-null IE
+  /// scan the Wi-Fi Information tool and live sampler use — no new capture path,
+  /// no new permission). Returns null for the non-adapter sources (iOS Shortcut,
+  /// unsupported, web).
+  WifiInfoAdapter? _resolvePersistentAdapter() {
+    if (_persistentAdapter != null) return _persistentAdapter;
+    if (_injectedAdapter != null) {
+      return _persistentAdapter = _injectedAdapter;
+    }
+    final WifiInfoSource source = WifiInfoSourceResolver.resolve();
+    return _persistentAdapter = switch (source) {
+      WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
+      WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+      WifiInfoSource.macosCoreWlan => MacWifiInfoAdapter(enrichApName: true),
+      WifiInfoSource.iosShortcuts ||
+      WifiInfoSource.unsupported ||
+      WifiInfoSource.web =>
+        null,
+    };
   }
 
   /// Take a snapshot. Each sub-read is independently guarded so one failing
@@ -441,6 +513,9 @@ class InterfaceInfoService {
     return WifiLinkInfo(
       ssid: _cleanSsid(ap?.ssid),
       bssid: _blankToNull(ap?.bssid),
+      // Vendor-advertised AP name from the same native ConnectedAp read (macOS
+      // decodes it from the beacon IEs when enrichApName is on; null elsewhere).
+      apName: _blankToNull(ap?.apName),
       gatewayIP: gateway,
       subnetMask: submask,
       wifiIPv4: ipv4,
