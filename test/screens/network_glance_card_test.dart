@@ -87,6 +87,40 @@ class _OnWifiPath implements WifiPathProbe {
 }
 
 void main() {
+  testWidgets(
+    'the Refresh action exposes an accessible NAME, not just a tooltip '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpWidget(_host(NetworkGlanceCard(
+        platformOverride: TargetPlatform.macOS,
+        wifiFetcher: () async =>
+            const ConnectedAp(ssid: 'WLANPros', rssiDbm: -52),
+        seedDeriver: _seed(),
+        publicIpService: _publicIp('203.0.113.7'),
+        ipGeoService: _geo('Comcast'),
+      )));
+      await tester.pumpAndSettle();
+
+      // `tooltip: 'Refresh'` maps to AXHelp, not AXTitle; the explicit Semantics
+      // label is the accessible name. At rest (`_refreshing == false`) the node
+      // must read as ENABLED. Removing the label (the mutation) → red.
+      expect(find.bySemanticsLabel('Refresh network snapshot'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Refresh network snapshot')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Refresh network snapshot',
+        ),
+        reason: 'the Refresh action must read as a named, enabled button to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('macOS: a real Wi-Fi reading + subnet + public IP/ISP render '
       'their values', (WidgetTester tester) async {
     await tester.pumpWidget(_host(NetworkGlanceCard(

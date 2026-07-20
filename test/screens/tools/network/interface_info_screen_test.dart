@@ -214,6 +214,39 @@ void main() {
     );
   }
 
+  testWidgets(
+    'the Refresh action exposes an accessible NAME, not just a tooltip '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpWidget(buildScreen(
+        cachedAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+        ),
+        cacheAgeMinutes: 1,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // `tooltip: 'Refresh'` maps to AXHelp, not AXTitle; the explicit Semantics
+      // label is the accessible name. Removing it (the mutation) → red.
+      expect(find.bySemanticsLabel('Refresh interface info'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Refresh interface info')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Refresh interface info',
+        ),
+        reason: 'the Refresh action must read as a named, enabled button to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('warm cache renders cached Wi-Fi identity with an "as of" line',
       (tester) async {
     await tester.pumpWidget(buildScreen(

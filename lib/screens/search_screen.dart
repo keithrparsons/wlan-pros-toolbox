@@ -199,12 +199,24 @@ class _SearchField extends StatelessWidget {
         hintText: 'Search all tools…',
         suffixIcon: controller.text.isEmpty
             ? null
-            : IconButton(
-                onPressed: onClear,
-                tooltip: 'Clear search',
-                icon: Icon(
-                  Icons.cancel_outlined,
-                  color: colors.textTertiary,
+            // Explicit accessible name (WCAG 2.2 AA SC 4.1.2, GL-003 §8.16).
+            // `tooltip:` is NOT an accessible name: Flutter keeps it in a
+            // separate field that macOS maps to AXHelp, not AXTitle, so an
+            // icon-only button reads as `label="" button=true`. `enabled:` is
+            // set explicitly so the node reads as an ENABLED button rather than
+            // leaving isEnabled unset (which AT announces as disabled); the
+            // clear action is always available while this affordance renders.
+            : Semantics(
+                button: true,
+                enabled: true,
+                label: 'Clear search',
+                child: IconButton(
+                  onPressed: onClear,
+                  tooltip: 'Clear search',
+                  icon: Icon(
+                    Icons.cancel_outlined,
+                    color: colors.textTertiary,
+                  ),
                 ),
               ),
       ),

@@ -65,10 +65,20 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: <Widget>[
           // App-level "About" entry point. Icon-only IconButton inherits the
           // §8.3 lime focus ring globally from the app's iconButtonTheme.
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'About',
-            onPressed: () => Navigator.of(context).pushNamed(AppRouter.about),
+          // Explicit accessible name (WCAG 2.2 AA SC 4.1.2, GL-003 §8.16):
+          // `tooltip:` maps to AXHelp, not AXTitle, so without this the button
+          // reads as `label="" button=true`. `enabled:` is set so the node
+          // reads as an enabled button (an unset isEnabled announces disabled).
+          Semantics(
+            button: true,
+            enabled: true,
+            label: 'About this app',
+            child: IconButton(
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'About',
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRouter.about),
+            ),
           ),
         ],
       ),

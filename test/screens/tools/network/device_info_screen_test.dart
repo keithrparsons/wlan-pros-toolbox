@@ -51,6 +51,32 @@ void main() {
     cellularInterfacePresent: false,
   );
 
+  testWidgets(
+    'the Refresh action exposes an accessible NAME, not just a tooltip '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpWidget(_wrap(noCellularSnap));
+      await tester.pumpAndSettle();
+
+      // `tooltip: 'Refresh'` maps to AXHelp, not AXTitle; the explicit Semantics
+      // label is the accessible name. Removing it (the mutation) → red.
+      expect(find.bySemanticsLabel('Refresh device info'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Refresh device info')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Refresh device info',
+        ),
+        reason: 'the Refresh action must read as a named, enabled button to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('success renders model, memory, uptime, cellular IP',
       (tester) async {
     await tester.pumpWidget(_wrap(cellularSnap));

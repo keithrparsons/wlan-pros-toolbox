@@ -2165,7 +2165,7 @@
       "algorithm": "It sends a real ICMP echo request and waits for the echo reply, using the phone's own ping capability. The result is genuine ICMP timing, always labeled \"ICMP echo\" and never a TCP probe dressed up as one.",
       "example": null,
       "fieldNotes": [
-        "Where it works, honestly: iOS and Android both do real ICMP echo. On macOS, Windows, and Linux desktop the only way to run ICMP is the system ping program, which the Mac App Sandbox blocks, so it gives an honest \"not available in the sandboxed desktop build\" and points you at TCP Ping instead. The web version has no way to do this and offers the download instead.",
+        "Where it works, honestly: iOS and Android both do real ICMP echo. On macOS and Windows the only way to run ICMP is the system ping program, which the Mac App Sandbox blocks, so it gives an honest \"not available in the sandboxed desktop build\" and points you at TCP Ping instead. Coming soon to the WLAN Pi platform. The web version has no way to do this and offers the download instead.",
         "Where it's available, this is genuine ICMP timing and loss, the real thing, not a TCP stand-in.",
         "Device-pending note: the iOS ICMP path is verified with a stand-in during testing but can't be fully confirmed without a real device, so the live round-trip is the piece still pending device verification. On desktop, use TCP Ping."
       ],
@@ -2220,7 +2220,7 @@
       "algorithm": "It runs the computer's own traceroute program and reads each hop as it appears: the hop number, the responding router's name and IP, the round-trip times for each probe, and any timeouts shown as three asterisks. A real traceroute has to read a specific kind of reply from each router along the way, which needs privileged access the built-in program has, so this tool refuses to fake hops from ordinary TCP timing.",
       "example": null,
       "fieldNotes": [
-        "Where it works, honestly: on macOS, Windows, and Linux desktop it runs the built-in traceroute. Under the Mac App Sandbox (the App Store build) launching that program is blocked, so the tool quietly tests whether it can run and adapts: a Developer-ID Mac build and Windows and Linux run it fine, while the sandboxed build shows a clear \"traceroute unavailable\" message rather than hanging or pretending. On iOS and Android, running an external program isn't allowed, so it says \"Traceroute runs on desktop, use Ping here.\" The web version never reaches this tool.",
+        "Where it works, honestly: on macOS and Windows it runs the built-in traceroute. Under the Mac App Sandbox (the App Store build) launching that program is blocked, so the tool quietly tests whether it can run and adapts: a Developer-ID Mac build and Windows run it fine, while the sandboxed build shows a clear \"traceroute unavailable\" message rather than hanging or pretending. On iOS and Android, running an external program isn't allowed, so it says \"Traceroute runs on desktop, use Ping here.\" Coming soon to the WLAN Pi platform. The web version never reaches this tool.",
         "Each hop shows its number, the responding router (name and IP), and up to three round-trip times. Three asterisks mean a hop that didn't answer, which is common and not necessarily a problem. Reaching the target is reported as \"complete.\"",
         "On a sandboxed Mac App Store build this tool honestly reports itself unavailable. For a path check on mobile, see Traceroute (Mobile), and note its iOS limitation."
       ],

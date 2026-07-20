@@ -21,6 +21,35 @@ Future<void> _pump(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    'the password show/hide toggle exposes an accessible NAME, not just a '
+    'tooltip (WCAG 2.2 AA SC 4.1.2)',
+    (tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pump(tester);
+      // Switch to Wi-Fi mode so the (non-open) password field renders its toggle.
+      await tester.tap(find.text('Wi-Fi'));
+      await tester.pumpAndSettle();
+
+      // Obscured by default → the label reads 'Show password'. `tooltip:` maps to
+      // AXHelp, not AXTitle; the explicit Semantics label is the accessible name.
+      // Removing it (the mutation) → red.
+      expect(find.bySemanticsLabel('Show password'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Show password')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Show password',
+        ),
+        reason: 'the password toggle must read as a named, enabled button to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('defaults to URL / Text mode with its prompt', (tester) async {
     await _pump(tester);
     expect(find.text('Text or URL'), findsOneWidget);

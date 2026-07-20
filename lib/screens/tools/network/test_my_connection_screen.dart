@@ -339,19 +339,15 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// [_effectiveAp]. Null when the check ran with no Wi-Fi link.
   ConnectedAp? _resultAp;
 
-  /// macOS only: whether Location Services is authorized for this app. Since
-  /// macOS 14, CoreWLAN withholds the SSID and BSSID unless the app holds
-  /// Location authorization — every other RF field still resolves. So the
-  /// SSID/BSSID empty state (in the copy report and the on-screen hint) can
-  /// explain itself ("Location access needed") instead of a bare "Unavailable".
-  /// Null before the first read / off macOS.
-  bool? _macLocationAuthorized;
-
   /// macOS only: the TRI-STATE Location authorization, read WITHOUT a prompt at
-  /// the start of a run. Drives whether the on-screen hint's button PROMPTS
-  /// (notDetermined) or DEEP-LINKS to System Settings (denied / restricted), and
-  /// whether the auto-prompt fires this run. Null before the first read / off
-  /// macOS.
+  /// the start of a run. Since macOS 14, CoreWLAN withholds the SSID and BSSID
+  /// unless the app holds Location authorization — every other RF field still
+  /// resolves. This is the SINGLE source of truth for that gate: it drives
+  /// whether the on-screen hint's button PROMPTS (notDetermined) or DEEP-LINKS to
+  /// System Settings (denied / restricted), whether the auto-prompt fires this
+  /// run, AND whether the copy report's SSID/BSSID empty state names the fix
+  /// ("grant Location access …") instead of a bare "Unavailable" (see
+  /// [_nameOrLocationHint]). Null before the first read / off macOS.
   LocationAuthStatus? _macNameAuth;
 
   /// macOS only: set once the proactive native Location prompt has been fired
@@ -1200,7 +1196,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             auth = await adapter.nameAuthorizationStatus();
           }
           _macNameAuth = auth;
-          _macLocationAuthorized = auth.isAuthorized;
           return await adapter.fetch().timeout(
             const Duration(seconds: 5),
             onTimeout: () =>
@@ -1616,7 +1611,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (!mounted) return;
     setState(() {
       _macNameAuth = auth;
-      _macLocationAuthorized = auth.isAuthorized;
     });
     // If the grant just landed, re-read the snapshot so SSID/BSSID populate now
     // rather than only on the next run.
@@ -1764,7 +1758,6 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       _resultAp = null;
       _resultNotOnWifi = false;
       _resultSpeedTestSkipped = false;
-      _macLocationAuthorized = null;
       // NB: _macNameAuth resets with the result but _macLocationPromptFired does
       // NOT — the one-shot prompt guard must survive a re-run so the native
       // prompt fires at most once per screen-mount (Keith: "One request only").
@@ -3240,8 +3233,17 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// glitch. Every other platform / cause falls back to the plain sentinel.
   String _nameOrLocationHint(String? value) {
     if (value != null && value.trim().isNotEmpty) return value;
+    // SSOT: gate on the canonical tri-state authorization `_macNameAuth` — the
+    // SAME signal the on-screen `_macLocationHint` reads — rather than a parallel
+    // bool mirror. Any non-authorized status (notDetermined / denied /
+    // restricted) means the name is withheld specifically because Location is not
+    // granted, which is what earns the actionable empty state over a bare
+    // "Unavailable". `authorized` (name genuinely absent) and null (before the
+    // first read / off macOS) fall through to the plain sentinel.
+    final LocationAuthStatus? auth = _macNameAuth;
     if (_source == WifiInfoSource.macosCoreWlan &&
-        _macLocationAuthorized == false) {
+        auth != null &&
+        !auth.isAuthorized) {
       return 'Unavailable (grant Location access to show the network name)';
     }
     return 'Unavailable';
