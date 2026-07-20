@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -272,6 +273,82 @@ void main() {
     );
     expect(liveRegion, findsOneWidget);
     handle.dispose();
+  });
+
+  group('copied About text carries the update state', () {
+    /// Read the text the §8.16 copy action would place on the clipboard.
+    Future<String> copiedText(WidgetTester tester) async {
+      String? captured;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            captured = (call.arguments as Map<Object?, Object?>)['text']
+                as String?;
+          }
+          return null;
+        },
+      );
+      await tester.tap(find.byTooltip('Copy About text'));
+      await tester.pumpAndSettle();
+      // §8.16 shows a 1500ms "Copied" confirmation; let it lapse so no timer
+      // outlives the widget tree.
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pumpAndSettle();
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+      expect(captured, isNotNull, reason: 'copy action produced no text');
+      return captured!;
+    }
+
+    testWidgets('an available update lands in the copied text with its URL',
+        (WidgetTester tester) async {
+      await pumpAbout(
+        tester,
+        scripted((Duration _) async => <String, dynamic>{
+              'tag_name': 'v99.0.0',
+              'html_url': 'https://example.invalid/releases/tag/v99.0.0',
+            }),
+      );
+      final String text = await copiedText(tester);
+      expect(text, contains('Version 99.0.0 is available'));
+      expect(text, contains('https://example.invalid/releases/tag/v99.0.0'));
+    });
+
+    testWidgets('a failed check is copied honestly, not as reassurance',
+        (WidgetTester tester) async {
+      await pumpAbout(
+        tester,
+        scripted((Duration _) async => throw const JsonHttpException(
+              JsonHttpErrorKind.transport,
+              'offline',
+            )),
+      );
+      final String text = await copiedText(tester);
+      expect(text, contains(_kUnknown));
+      expect(text, isNot(contains('latest published version')));
+    });
+
+    testWidgets('a store-managed build copies no update claim at all',
+        (WidgetTester tester) async {
+      await pumpAbout(
+        tester,
+        AppUpdateService(
+          fetcher: (Duration _) async =>
+              <String, dynamic>{'tag_name': 'v99.0.0'},
+          resolveChannel: () => UpdateChannel.managedByStore,
+          getStore: SharedPreferences.getInstance,
+        ),
+      );
+      final String text = await copiedText(tester);
+      expect(text, isNot(contains('is available')));
+      expect(text, isNot(contains(_kUpToDate)));
+      expect(text, isNot(contains(_kUnknown)));
+      // The rest of the About text is still there.
+      expect(text, contains('Version and Feedback'));
+    });
   });
 
   testWidgets('a store-managed build shows no update line at all',
