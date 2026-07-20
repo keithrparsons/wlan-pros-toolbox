@@ -24,6 +24,12 @@ import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 class _FakeArpReader implements ArpReader {
   _FakeArpReader(this._result);
   final ArpReadResult _result;
+
+  /// Engine tests stand in for a desktop platform that HAS a reader; the
+  /// incapable case is driven through `ArpReadResult.unsupported` instead.
+  @override
+  bool get readsMac => true;
+
   @override
   Future<ArpReadResult> read() async => _result;
 }
@@ -1118,6 +1124,7 @@ void main() {
       // /30 over .1 → hosts .1 and .2.
       final ArpReadResult arp = ArpReadResult(
         available: true,
+        platformSupported: true,
         entries: const <ArpEntry>[
           ArpEntry(ip: '10.0.10.1', mac: 'fc:ec:da:01:23:45'), // Ubiquiti
           ArpEntry(ip: '10.0.10.2', mac: '00:11:22:33:44:55'), // unknown → raw
@@ -1141,7 +1148,7 @@ void main() {
     test('an unavailable ARP read leaves MAC/vendor null and surfaces the '
         'reason — the run still completes', () async {
       final LanDiscoveryEngine engine = engineWithArp(
-        _FakeArpReader(const ArpReadResult.unavailable(
+        _FakeArpReader(const ArpReadResult.unsupported(
           'iOS sandbox cannot read the ARP table.',
         )),
       );
@@ -1160,7 +1167,7 @@ void main() {
 
     test('the run emits an arp progress phase', () async {
       final LanDiscoveryEngine engine = engineWithArp(
-        _FakeArpReader(const ArpReadResult(available: true)),
+        _FakeArpReader(const ArpReadResult(available: true, platformSupported: true)),
       );
       final List<DiscoveryProgress> events = await engine.run().toList();
       expect(

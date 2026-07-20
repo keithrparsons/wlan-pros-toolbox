@@ -1,13 +1,86 @@
 // ArpNdpService unit tests — the regression-prone parts: subnet/host
-// derivation, /proc/net/arp parsing (incomplete-entry filtering, no fabricated
-// MACs), the honest per-platform capability matrix, and active discovery with
-// an injected connector + ARP-table reader (no network, no filesystem).
+// derivation, capability DERIVED from the platform ArpReader (never a
+// hand-maintained table), and active discovery with an injected connector +
+// ArpReader (no network, no filesystem, no platform channel).
 
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/arp_ndp_service.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/arp_reader.dart';
+
+/// A reader that declares a capability and returns a scripted result, so the
+/// tests drive the real cross-product: capable/incapable × read ok/failed.
+class _FakeArpReader implements ArpReader {
+  const _FakeArpReader({required this.readsMac, required this.result});
+
+  @override
+  final bool readsMac;
+
+  final ArpReadResult result;
+
+  @override
+  Future<ArpReadResult> read() async => result;
+}
+
+/// macOS/Windows shape: capable, read succeeds with these entries.
+_FakeArpReader _capableReader(Map<String, String> byIp) => _FakeArpReader(
+      readsMac: true,
+      result: ArpReadResult(
+        available: true,
+        platformSupported: true,
+        entries: <ArpEntry>[
+          for (final MapEntry<String, String> e in byIp.entries)
+            ArpEntry(ip: e.key, mac: e.value),
+        ],
+      ),
+    );
+
+/// The case nobody wrote: a platform that CAN read, whose read FAILED.
+const _FakeArpReader _capableButFailingReader = _FakeArpReader(
+  readsMac: true,
+  result: ArpReadResult.failed('GetIpNetTable returned ERROR_NOT_SUPPORTED'),
+);
+
+/// Counts reads so the lazy-load discipline is testable.
+class _CountingArpReader implements ArpReader {
+  _CountingArpReader(this._onRead);
+
+  final void Function() _onRead;
+
+  @override
+  bool get readsMac => true;
+
+  @override
+  Future<ArpReadResult> read() async {
+    _onRead();
+    return const ArpReadResult(available: true, platformSupported: true);
+  }
+}
+
+/// Declares no MAC capability AND counts reads, so "never consulted" is
+/// provable rather than inferred.
+class _CountingIncapableArpReader implements ArpReader {
+  _CountingIncapableArpReader(this._onRead);
+
+  final void Function() _onRead;
+
+  @override
+  bool get readsMac => false;
+
+  @override
+  Future<ArpReadResult> read() async {
+    _onRead();
+    return const ArpReadResult.unsupported('no reader on this platform');
+  }
+}
+
+/// iOS/Android shape: no reader for the neighbor table at all.
+const _FakeArpReader _incapableReader = _FakeArpReader(
+  readsMac: false,
+  result: ArpReadResult.unsupported('Sandbox cannot read the ARP table.'),
+);
 
 void main() {
   group('hostsForSubnet', () {
@@ -47,64 +120,123 @@ void main() {
     });
   });
 
-  group('parseProcNetArp', () {
-    const String sample = '''
-IP address       HW type     Flags       HW address            Mask     Device
-192.168.1.1      0x1         0x2         aa:bb:cc:dd:ee:ff     *        wlan0
-192.168.1.42     0x1         0x2         11:22:33:44:55:66     *        wlan0
-192.168.1.99     0x1         0x0         00:00:00:00:00:00     *        wlan0
-192.168.1.7      0x1         0x2         00:00:00:00:00:00     *        wlan0
-''';
-
-    test('parses complete entries into IP → MAC', () {
-      final Map<String, String> table = ArpNdpService.parseProcNetArp(sample);
-      expect(table['192.168.1.1'], 'aa:bb:cc:dd:ee:ff');
-      expect(table['192.168.1.42'], '11:22:33:44:55:66');
-    });
-
-    test('drops incomplete (flag 0x0) and all-zero MAC rows — no fakes', () {
-      final Map<String, String> table = ArpNdpService.parseProcNetArp(sample);
-      expect(table.containsKey('192.168.1.99'), isFalse); // flag 0x0
-      expect(table.containsKey('192.168.1.7'), isFalse); // zero MAC
-      expect(table.length, 2);
-    });
-
-    test('empty/garbage text → empty map', () {
-      expect(ArpNdpService.parseProcNetArp(''), isEmpty);
-      expect(ArpNdpService.parseProcNetArp('header only line'), isEmpty);
-    });
-  });
-
-  group('capabilityFor', () {
-    test('iOS → unavailable', () {
+  group('capabilityFor — derived from the reader, not a platform table', () {
+    test('iOS → unavailable (the sweep itself is not offered)', () {
       expect(
-        ArpNdpService.capabilityFor(isIOSOverride: true),
+        ArpNdpService.capabilityFor(
+          isIOSOverride: true,
+          readerOverride: _incapableReader,
+        ),
         ArpCapability.unavailable,
       );
     });
-    test('Android / Linux → sweepWithMac', () {
-      expect(
-        ArpNdpService.capabilityFor(
-            isIOSOverride: false, isAndroidOverride: true),
-        ArpCapability.sweepWithMac,
-      );
-      expect(
-        ArpNdpService.capabilityFor(
-            isIOSOverride: false,
-            isAndroidOverride: false,
-            isLinuxOverride: true),
-        ArpCapability.sweepWithMac,
-      );
-    });
-    test('macOS / Windows (none of the above) → sweepNoMac', () {
+
+    test('macOS (reader available) → sweepWithMac', () {
+      // The inverted matrix claimed sweepNoMac here while
+      // MethodChannelArpReader was shipping and working.
       expect(
         ArpNdpService.capabilityFor(
           isIOSOverride: false,
-          isAndroidOverride: false,
-          isLinuxOverride: false,
+          readerOverride: _capableReader(const <String, String>{}),
+        ),
+        ArpCapability.sweepWithMac,
+      );
+    });
+
+    test('Windows (reader available) → sweepWithMac', () {
+      expect(
+        ArpNdpService.capabilityFor(
+          isIOSOverride: false,
+          readerOverride: const _FakeArpReader(
+            readsMac: true,
+            result: ArpReadResult(available: true, platformSupported: true),
+          ),
+        ),
+        ArpCapability.sweepWithMac,
+      );
+    });
+
+    test(
+        'capable platform whose read FAILS is still sweepWithMac — capability '
+        'is not revoked by one failed read', () {
+      expect(
+        ArpNdpService.capabilityFor(
+          isIOSOverride: false,
+          readerOverride: _capableButFailingReader,
+        ),
+        ArpCapability.sweepWithMac,
+      );
+    });
+
+    test('Android (no reader) → sweepNoMac, NOT sweepWithMac', () {
+      // The old table claimed /proc/net/arp gave Android real MACs. It does
+      // not: platformArpReader() hands Android an UnavailableArpReader.
+      expect(
+        ArpNdpService.capabilityFor(
+          isIOSOverride: false,
+          readerOverride: _incapableReader,
         ),
         ArpCapability.sweepNoMac,
       );
+    });
+
+    test('unknown platform (no reader) → sweepNoMac', () {
+      expect(
+        ArpNdpService.capabilityFor(
+          isIOSOverride: false,
+          readerOverride: const _FakeArpReader(
+            readsMac: false,
+            result: ArpReadResult.unsupported('Out of scope on this platform.'),
+          ),
+        ),
+        ArpCapability.sweepNoMac,
+      );
+    });
+  });
+
+  group('the real platform readers agree with the capability they drive', () {
+    test('macOS + Windows readers declare readsMac; iOS/Android do not', () {
+      expect(const MethodChannelArpReader().readsMac, isTrue);
+      expect(const WindowsIpNetTableArpReader().readsMac, isTrue);
+      expect(const UnavailableArpReader('sandboxed').readsMac, isFalse);
+    });
+
+    test('an unsupported result is distinguishable from a failed one', () {
+      const ArpReadResult unsupported =
+          ArpReadResult.unsupported('iOS sandbox cannot read the ARP table.');
+      const ArpReadResult failed = ArpReadResult.failed('read blew up');
+      expect(unsupported.platformSupported, isFalse);
+      expect(failed.platformSupported, isTrue);
+      // Both are "not available" — that is exactly why available alone was
+      // never enough to pick the right sentence.
+      expect(unsupported.available, isFalse);
+      expect(failed.available, isFalse);
+    });
+  });
+
+  group('missingMacReason — only one outcome may blame the platform', () {
+    test('notAttempted → the platform claim (the only one that earns it)', () {
+      expect(missingMacReason(MacReadOutcome.notAttempted),
+          'Not exposed on this platform');
+    });
+
+    test('failed → could not, NOT cannot', () {
+      final String s = missingMacReason(MacReadOutcome.failed);
+      expect(s, 'MAC read failed');
+      expect(s, isNot(contains('platform')));
+    });
+
+    test('ok but host absent → a statement about the cache, not the platform',
+        () {
+      final String s = missingMacReason(MacReadOutcome.ok);
+      expect(s, 'Not in the ARP cache');
+      expect(s, isNot(contains('platform')));
+    });
+
+    test('no two outcomes render the same sentence', () {
+      final Set<String> all =
+          MacReadOutcome.values.map(missingMacReason).toSet();
+      expect(all.length, MacReadOutcome.values.length);
     });
   });
 
@@ -131,7 +263,7 @@ IP address       HW type     Flags       HW address            Mask     Device
     test('lists only responders; down hosts excluded', () async {
       final ArpNdpService svc = ArpNdpService(
         connector: connectorFor(<String>{'192.168.1.1', '192.168.1.5'}),
-        arpTableReader: () async => null, // sweepNoMac path
+        arpReader: _incapableReader, // sweepNoMac path
       );
       final List<Neighbor> found = <Neighbor>[];
       await for (final ArpScanProgress p in svc.discover(
@@ -149,10 +281,9 @@ IP address       HW type     Flags       HW address            Mask     Device
     test('sweepWithMac attaches real MAC from the injected ARP table', () async {
       final ArpNdpService svc = ArpNdpService(
         connector: connectorFor(<String>{'192.168.1.1'}),
-        arpTableReader: () async => '''
-IP address  HW type  Flags  HW address         Mask  Device
-192.168.1.1 0x1      0x2    de:ad:be:ef:00:01  *     eth0
-''',
+        arpReader: _capableReader(
+          const <String, String>{'192.168.1.1': 'de:ad:be:ef:00:01'},
+        ),
       );
       final List<Neighbor> found = <Neighbor>[];
       await for (final ArpScanProgress p in svc.discover(
@@ -166,10 +297,147 @@ IP address  HW type  Flags  HW address         Mask  Device
       expect(found.first.mac, 'de:ad:be:ef:00:01');
     });
 
+    test(
+        'THE CASE NOBODY WROTE — capable platform, read FAILED: no MAC, and '
+        'the outcome says failed, not notAttempted', () async {
+      final ArpNdpService svc = ArpNdpService(
+        connector: connectorFor(<String>{'192.168.1.1'}),
+        arpReader: _capableButFailingReader,
+      );
+      final List<Neighbor> found = <Neighbor>[];
+      MacReadOutcome outcome = MacReadOutcome.notAttempted;
+      await for (final ArpScanProgress p in svc.discover(
+        hosts: <String>['192.168.1.1'],
+        capabilityOverride: ArpCapability.sweepWithMac,
+      )) {
+        outcome = p.macRead;
+        if (p.lastFound != null) found.add(p.lastFound!);
+      }
+      // The host is still reported — a failed MAC read is not a failed sweep.
+      expect(found.length, 1);
+      expect(found.first.mac, isNull);
+      // The distinction the UI needs: this platform CAN read, this read did
+      // not. Reporting it as notAttempted is what produced the false
+      // "this platform cannot" copy.
+      expect(outcome, MacReadOutcome.failed);
+      expect(outcome, isNot(MacReadOutcome.notAttempted));
+    });
+
+    test(
+        'capable platform, read OK but host absent from the cache → ok, not '
+        'failed (a "did not", not a "cannot")', () async {
+      final ArpNdpService svc = ArpNdpService(
+        connector: connectorFor(<String>{'192.168.1.9'}),
+        // Read succeeds, but holds an entry for a DIFFERENT host.
+        arpReader: _capableReader(
+          const <String, String>{'192.168.1.1': 'de:ad:be:ef:00:01'},
+        ),
+      );
+      final List<Neighbor> found = <Neighbor>[];
+      MacReadOutcome outcome = MacReadOutcome.notAttempted;
+      await for (final ArpScanProgress p in svc.discover(
+        hosts: <String>['192.168.1.9'],
+        capabilityOverride: ArpCapability.sweepWithMac,
+      )) {
+        outcome = p.macRead;
+        if (p.lastFound != null) found.add(p.lastFound!);
+      }
+      expect(found.single.mac, isNull);
+      expect(found.single.fromArpTable, isFalse);
+      expect(outcome, MacReadOutcome.ok);
+    });
+
+    test(
+        'capable platform, successful but EMPTY read is still ok — and is not '
+        're-read on every responder', () async {
+      int reads = 0;
+      final ArpNdpService svc = ArpNdpService(
+        connector: connectorFor(<String>{'192.168.1.1', '192.168.1.2'}),
+        arpReader: _CountingArpReader(() => reads++),
+      );
+      MacReadOutcome outcome = MacReadOutcome.notAttempted;
+      await for (final ArpScanProgress p in svc.discover(
+        hosts: <String>['192.168.1.1', '192.168.1.2'],
+        capabilityOverride: ArpCapability.sweepWithMac,
+      )) {
+        outcome = p.macRead;
+      }
+      expect(outcome, MacReadOutcome.ok);
+      // Guarding on "cache is empty" instead of "already loaded" would read
+      // once per responder.
+      expect(reads, 1);
+    });
+
+    test('sweepNoMac never reads the neighbor table at all', () async {
+      int reads = 0;
+      final ArpNdpService svc = ArpNdpService(
+        connector: connectorFor(<String>{'192.168.1.1'}),
+        arpReader: _CountingArpReader(() => reads++),
+      );
+      MacReadOutcome outcome = MacReadOutcome.ok;
+      await for (final ArpScanProgress p in svc.discover(
+        hosts: <String>['192.168.1.1'],
+        capabilityOverride: ArpCapability.sweepNoMac,
+      )) {
+        outcome = p.macRead;
+      }
+      expect(reads, 0);
+      expect(outcome, MacReadOutcome.notAttempted);
+    });
+
+    test(
+        'MEDIUM-1 — capability derives from THIS service\'s reader, not from '
+        'platformArpReader(): an incapable injected reader is never read',
+        () async {
+      // Two derivations of one fact is the defect this branch exists to
+      // remove. Deriving `cap` from platformArpReader() while reading MACs
+      // from the injected `_arpReader` re-creates it one layer down: on a
+      // macOS test host, cap would be sweepWithMac while the injected reader
+      // cannot read at all.
+      int reads = 0;
+      final ArpNdpService svc = ArpNdpService(
+        connector: connectorFor(<String>{'192.168.1.1'}),
+        arpReader: _CountingIncapableArpReader(() => reads++),
+      );
+      MacReadOutcome outcome = MacReadOutcome.ok;
+      final List<Neighbor> found = <Neighbor>[];
+      // NOTE: no capabilityOverride — this is the derivation under test.
+      await for (final ArpScanProgress p in svc.discover(
+        hosts: <String>['192.168.1.1'],
+      )) {
+        outcome = p.macRead;
+        if (p.lastFound != null) found.add(p.lastFound!);
+      }
+      expect(reads, 0, reason: 'an incapable reader must never be read');
+      expect(outcome, MacReadOutcome.notAttempted);
+      expect(found.single.mac, isNull);
+    });
+
+    test(
+        'MEDIUM-1 — an UNSUPPORTED read maps to notAttempted, never failed '
+        '(the bit must not re-collapse inside its own fix)', () async {
+      // Forced via capabilityOverride: the platform says sweepWithMac while
+      // the reader reports it has no capability at all. `available == false`
+      // alone cannot tell this from a failed read.
+      final ArpNdpService svc = ArpNdpService(
+        connector: connectorFor(<String>{'192.168.1.1'}),
+        arpReader: _incapableReader,
+      );
+      MacReadOutcome outcome = MacReadOutcome.ok;
+      await for (final ArpScanProgress p in svc.discover(
+        hosts: <String>['192.168.1.1'],
+        capabilityOverride: ArpCapability.sweepWithMac,
+      )) {
+        outcome = p.macRead;
+      }
+      expect(outcome, MacReadOutcome.notAttempted);
+      expect(outcome, isNot(MacReadOutcome.failed));
+    });
+
     test('empty host list closes immediately with a 0/0 tick', () async {
       final ArpNdpService svc = ArpNdpService(
         connector: connectorFor(<String>{}),
-        arpTableReader: () async => null,
+        arpReader: _incapableReader,
       );
       final List<ArpScanProgress> ticks = await svc
           .discover(
@@ -191,7 +459,7 @@ IP address  HW type  Flags  HW address         Mask  Device
           throw const SocketException('Connection timed out',
               osError: OSError('Connection timed out', 110));
         },
-        arpTableReader: () async => null,
+        arpReader: _incapableReader,
       );
       final List<String> hosts =
           List<String>.generate(200, (int i) => '10.0.0.${i + 1}');

@@ -73,7 +73,7 @@ void main() {
       subnetLabel: '10.0.10.1–10.0.10.254',
       selfIp: '10.0.10.20',
       gateway: '10.0.10.1',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -98,7 +98,7 @@ void main() {
     final DiscoveryResult result = DiscoveryResult(
       hosts: const <LanHost>[],
       subnetLabel: '10.0.10.1–10.0.10.254',
-      arp: const ArpReadResult.unavailable('iOS cannot read the ARP table.'),
+      arp: const ArpReadResult.unsupported('iOS cannot read the ARP table.'),
     );
 
     await tester.pumpWidget(_host(
@@ -161,7 +161,7 @@ void main() {
       ],
       subnetLabel: '172.20.29.1–172.20.29.254',
       sweptIps: const <String>['172.20.29.10', '172.20.29.11'],
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -200,7 +200,7 @@ void main() {
       ],
       subnetLabel: '172.20.29.1–172.20.29.254',
       sweptIps: const <String>['172.20.29.10', '172.20.29.11'],
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -226,7 +226,7 @@ void main() {
     final DiscoveryResult result = DiscoveryResult(
       hosts: <LanHost>[LanHost(ip: '172.20.0.2', openPorts: <int>{80})],
       subnetLabel: '172.20.29.1–172.20.29.254',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -262,7 +262,7 @@ void main() {
       hosts: const <LanHost>[],
       subnetLabel: '10.0.10.1–10.0.10.254',
       sweptIps: const <String>['10.0.10.1'],
-      arp: const ArpReadResult.unavailable('iOS cannot read the ARP table.'),
+      arp: const ArpReadResult.unsupported('iOS cannot read the ARP table.'),
     );
 
     await tester.pumpWidget(_host(
@@ -282,13 +282,90 @@ void main() {
     expect(find.textContaining('need a desktop ARP read'), findsOneWidget);
   });
 
+  testWidgets(
+      'THE MISSING CELL — capable platform (Windows) whose ARP read FAILED: '
+      'says it could not read, never that the platform cannot',
+      (WidgetTester tester) async {
+    // Windows IS a desktop and per this codebase CAN read GetIpNetTable. A
+    // failed read rendering "which this platform cannot do" is a false
+    // capability claim, and the lie is in the message TEXT — branching on
+    // ArpReadResult.available alone does not prevent it, because a failed
+    // read and an incapable platform are both `available == false`.
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[LanHost(ip: '10.0.10.5', openPorts: <int>{80})],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.5'],
+      arp: const ArpReadResult.failed('GetIpNetTable failed: 0x00000032'),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('this platform cannot do'), findsNothing);
+    expect(find.textContaining('did not complete on this scan'), findsOneWidget);
+  });
+
+  testWidgets(
+      'incapable platform (iOS) still says the platform cannot — the true '
+      'capability claim is preserved, not blanket-softened',
+      (WidgetTester tester) async {
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[LanHost(ip: '10.0.10.5', openPorts: <int>{80})],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.5'],
+      arp: const ArpReadResult.unsupported('iOS cannot read the ARP table.'),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('this platform cannot do'), findsOneWidget);
+  });
+
+  testWidgets(
+      'no ARP result at all: asserts nothing about the platform, because it '
+      'was never asked', (WidgetTester tester) async {
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[LanHost(ip: '10.0.10.5', openPorts: <int>{80})],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.5'],
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('this platform cannot do'), findsNothing);
+    expect(find.textContaining('were not read for this scan'), findsOneWidget);
+  });
+
   testWidgets('empty x ARP available (macOS): the ARP clause is stated, '
       'because there the cache really was read', (WidgetTester tester) async {
     final DiscoveryResult result = DiscoveryResult(
       hosts: const <LanHost>[],
       subnetLabel: '10.0.10.1–10.0.10.254',
       sweptIps: const <String>['10.0.10.1'],
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -341,8 +418,8 @@ void main() {
     // a real outcome (the way ARP has ArpReadResult), this test should be
     // replaced by a conditional one -- not deleted.
     const List<(String, ArpReadResult?)> cells = <(String, ArpReadResult?)>[
-      ('available', ArpReadResult(available: true)),
-      ('unavailable', ArpReadResult.unavailable('no reader')),
+      ('available', ArpReadResult(available: true, platformSupported: true)),
+      ('unavailable', ArpReadResult.unsupported('no reader')),
       ('not attempted', null),
     ];
     for (final (String label, ArpReadResult? arp) in cells) {
@@ -396,7 +473,7 @@ void main() {
       hosts: <LanHost>[LanHost(ip: '10.0.10.5', openPorts: <int>{80})],
       subnetLabel: '10.0.10.1–10.0.10.254',
       sweptIps: const <String>['10.0.10.5'],
-      arp: const ArpReadResult.unavailable('iOS cannot read the ARP table.'),
+      arp: const ArpReadResult.unsupported('iOS cannot read the ARP table.'),
     );
 
     await tester.pumpWidget(_host(

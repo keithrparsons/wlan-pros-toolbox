@@ -122,7 +122,7 @@ DiscoveryResult _result() => DiscoveryResult(
       sweptIps: const <String>['10.0.10.5', '10.0.10.6'],
       selfIp: '10.0.10.20',
       gateway: '10.0.10.1',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
 void main() {

@@ -238,8 +238,8 @@ void main() {
       ],
       subnetLabel: '10.0.10.1-10.0.10.254',
       arp: arpAvailable
-          ? const ArpReadResult(available: true)
-          : const ArpReadResult.unavailable('No ARP read on this platform.'),
+          ? const ArpReadResult(available: true, platformSupported: true)
+          : const ArpReadResult.unsupported('No ARP read on this platform.'),
     );
 
     Future<void> pumpAt(
@@ -407,7 +407,7 @@ void main() {
               const DiscoveryResult(
                 hosts: <LanHost>[],
                 subnetLabel: '10.0.10.1-10.0.10.254',
-                arp: ArpReadResult(available: true),
+                arp: ArpReadResult(available: true, platformSupported: true),
               ),
             ),
             glanceCard: const SizedBox.shrink(),
@@ -476,8 +476,8 @@ void main() {
       ],
       subnetLabel: '10.0.10.1-10.0.10.254',
       arp: arpAvailable
-          ? const ArpReadResult(available: true)
-          : const ArpReadResult.unavailable('No ARP read on this platform.'),
+          ? const ArpReadResult(available: true, platformSupported: true)
+          : const ArpReadResult.unsupported('No ARP read on this platform.'),
     );
 
     testWidgets('sorting by MAC and then re-scanning WITHOUT an ARP read does '
@@ -622,7 +622,7 @@ void main() {
         _host('10.0.10.10', ports: <int>{80}, type: DeviceType.webServer),
       ],
       subnetLabel: '10.0.10.1-10.0.10.254',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     Future<void> pumpTable(WidgetTester tester) async {
@@ -815,7 +815,7 @@ void main() {
         ),
       ],
       subnetLabel: '10.0.10.1-10.0.10.254',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     const List<String> ips = <String>['10.0.10.9', '10.0.10.10'];

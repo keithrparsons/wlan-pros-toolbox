@@ -2325,15 +2325,15 @@
         "Open it and run it. It works out your local network range, checks each address, and attaches the known hardware address wherever the platform makes one available."
       ],
       "inputs": [],
-      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On Android and Linux it also reads the system's own address table to attach the real hardware (MAC) address it has already learned. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
+      "algorithm": "It figures out your local network range (usually a /24, or the real one if different) and quickly checks each address by trying to open a connection on a handful of common ports (80, 443, 22, 445, 139, 53, 8080). A device counts as present when it ANSWERS, whether it accepts the connection or actively refuses it. An address that stays silent, times out, or is unreachable is not listed. On macOS and Windows it also reads the system's own neighbour table to attach the real hardware (MAC) address the system has already learned: macOS through a native system call, Windows through the Windows IP Helper API. Neither shells out to a command line. As a safety limit, it refuses to scan anything larger than about 1,000 addresses.",
       "example": null,
       "fieldNotes": [
-        "What each platform can do: Android and Linux give you the device list plus the real hardware address. macOS and Windows give you the device list but no hardware address, because the system does not make that table readable here, so MAC shows \"Not exposed on this platform\". iOS cannot do this at all, because Apple does not let apps read the neighbor table. On web it offers a download fallback.",
-        "A blank MAC means the platform genuinely does not expose it, never a guessed value. Empty or all-zero entries are skipped.",
+        "What each platform can do: macOS and Windows give you the device list plus the real hardware address, read from the system's own neighbour table. iOS and Android give you the device list without hardware addresses, because those systems do not let apps read that table. On web it offers a download fallback.",
+        "A missing MAC always tells you WHICH kind of missing it is, and never a guessed value. \"Not exposed on this platform\" means this platform has no way to read the table at all. \"MAC read failed\" means the read was tried here and did not work. \"Not in the ARP cache\" means the read worked and simply had no entry for that device. Empty or all-zero entries are skipped.",
         "Only addresses that answer are listed. A silent address is left out rather than guessed at, so the list is what replied, not what might be there.",
-        "On macOS and Windows you get a device list without hardware addresses; that is the platform's limit. For richer detail, and hardware addresses on macOS, use Network Discovery."
+        "Hardware addresses come from the system's neighbour table on macOS and Windows. The Windows path is implemented but has not yet been confirmed on real hardware; if it does not work, the tool reports a failed read rather than a platform limit. For richer detail, including device-type and vendor, use Network Discovery."
       ],
-      "source": "It quietly checks each address on your local network and, on Android and Linux, reads the system's learned hardware-address table to fill in the MAC."
+      "source": "It quietly checks each address on your local network and, on macOS and Windows, reads the system's learned neighbour-address table to fill in the MAC."
     },
     "bgp-asn": {
       "name": "Lookup (BGP/ASN)",

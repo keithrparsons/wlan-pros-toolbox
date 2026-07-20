@@ -1,34 +1,39 @@
 // ArpNdpService — local-network neighbor discovery (IP ↔ MAC where exposed).
 //
-// THE HONEST CAPABILITY MATRIX (this is the part to scrutinize):
+// THERE IS NO CAPABILITY MATRIX IN THIS FILE, ON PURPOSE.
 //
-//   Platform   | Neighbor table read           | MAC populated? | How
-//   -----------|-------------------------------|----------------|----------------
-//   Android    | /proc/net/arp (world-readable)| YES            | read table + sweep
-//   Linux      | /proc/net/arp (world-readable)| YES            | read table + sweep
-//   macOS      | none (no readable arp file;    | NO             | active sweep only
-//              |  `arp -a` subprocess is App-   |                |
-//              |  Sandbox-blocked — the         |                |
-//              |  traceroute/whois trap)        |                |
-//   Windows    | none (GetIpNetTable is a       | NO             | active sweep only
-//              |  native FFI call out of scope; |                |
-//              |  `arp -a` subprocess unreliable|                |
-//              |  under packaging)              |                |
-//   iOS        | NOT accessible to third-party  | n/a            | UNAVAILABLE state
-//              |  apps                          |                |
-//   Web        | n/a                            | n/a            | NetworkUnavailableView
+// There used to be one, and it was INVERTED: it claimed a MAC read on Linux —
+// which no reader in this app performs (platformArpReader() hands Linux an
+// UnavailableArpReader, and this repo carries no linux/ build directory) —
+// and denied it on macOS and Windows, where it works. It was written before
+// macos/Runner/ArpTableChannel.swift existed and was never revisited, so this
+// tool told macOS users "Not exposed on this platform" while Network Discovery
+// read real MACs on the same machine. The app shipped the solution and told the
+// user there wasn't one.
+//
+// The defect was not the wrong comment. The defect was that ONE fact — "can
+// this platform expose MACs" — had TWO sources: this table, and the reader in
+// lan_discovery/arp_reader.dart that does the work. A second source cannot be
+// kept correct; it can only be caught late. See
+// [[feedback_ui_rendered_a_decision_it_lacked]], "one representation, one
+// derivation".
+//
+// So: capabilityFor() asks platformArpReader().readsMac, and discover() pulls
+// MACs from that same reader. One dispatch, in arp_reader.dart. To learn what a
+// platform can do, read platformArpReader() — not a comment here.
 //
 // WHY NO SUBPROCESS: shelling out to `arp -a` / `ip neigh` is blocked by the
 // macOS App Sandbox (com.apple.security.app-sandbox: true) and impossible in
 // the iOS/Android sandbox — exactly the trap Traceroute and WHOIS documented.
-// So the cross-platform path is ACTIVE DISCOVERY: derive the local /24 (or the
-// real prefix) from the interface, probe each host with a bounded-concurrency
-// TCP-connect reachability check (the same primitive PortScanService uses), and
-// list the responders. On Linux/Android we ALSO read /proc/net/arp to attach
-// the real MAC the kernel cached; on macOS/Windows we list reachable hosts with
-// MAC = null and the UI says plainly that MAC is not exposed on this platform.
+// ArpTableChannel.swift exists BECAUSE of that limit; it is the answer to it,
+// not evidence against it. Discovery itself is pure Dart: derive the local /24
+// from the interface, probe each host with a bounded-concurrency TCP-connect
+// reachability check (the same primitive PortScanService uses), list the
+// responders, then attach MACs from the platform reader where it has them.
 //
-// We NEVER invent a MAC. A null MAC renders "Not exposed on this platform".
+// We NEVER invent a MAC. A null MAC renders a reason that distinguishes a
+// platform that CANNOT read from a read that DID NOT return this host — see
+// [MacReadOutcome].
 //
 // Web safety: imports dart:io; gated behind NetworkSupport.arpNdpSupported at
 // the UI layer; never reached on web.
@@ -36,6 +41,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'lan_discovery/arp_reader.dart';
 import 'tcp_probe_classifier.dart';
 
 /// What this platform can actually do for neighbor discovery.
@@ -49,6 +55,38 @@ enum ArpCapability {
   /// The platform does not allow neighbor discovery from a third-party app.
   unavailable,
 }
+
+/// What happened to the MAC read during a sweep. The bit that separates a
+/// platform that CANNOT read the neighbor table from a read that ran and DID
+/// NOT return a given host. Rendering those two the same way is how a screen
+/// ends up asserting a false platform incapability.
+enum MacReadOutcome {
+  /// No read was attempted: this platform has no reader that exposes MACs.
+  /// The only outcome under which "not exposed on this platform" is true.
+  notAttempted,
+
+  /// The read ran and succeeded. A neighbor with a null MAC here was simply
+  /// absent from the cache — "not in the ARP cache", not "cannot".
+  ok,
+
+  /// The read was attempted on a platform that implements it, and it FAILED.
+  /// Honest phrasing is "could not read", never "this platform cannot".
+  failed,
+}
+
+/// Why a neighbor has no MAC, in user-facing words. ONE derivation, shared by
+/// every surface that renders it (the result row and the copied export), so
+/// the two can never drift into disagreeing about the same fact.
+///
+/// Only [MacReadOutcome.notAttempted] earns a claim about the PLATFORM. The
+/// other two describe this run: a read that failed, and a read that succeeded
+/// without covering this host. Rendering all three as "not exposed on this
+/// platform" is the false capability claim this enum exists to prevent.
+String missingMacReason(MacReadOutcome outcome) => switch (outcome) {
+      MacReadOutcome.notAttempted => 'Not exposed on this platform',
+      MacReadOutcome.failed => 'MAC read failed',
+      MacReadOutcome.ok => 'Not in the ARP cache',
+    };
 
 /// One discovered neighbor on the local subnet.
 class Neighbor {
@@ -81,6 +119,7 @@ class ArpScanProgress {
     required this.total,
     required this.found,
     this.lastFound,
+    this.macRead = MacReadOutcome.notAttempted,
   });
 
   /// Hosts probed so far.
@@ -93,6 +132,11 @@ class ArpScanProgress {
   /// The neighbor just discovered, or null on a tick that found nothing.
   final Neighbor? lastFound;
 
+  /// Fate of the neighbor-table read for this sweep. Stays [notAttempted]
+  /// until a responder triggers the lazy read, so the UI must not treat an
+  /// early tick as proof the platform cannot read MACs.
+  final MacReadOutcome macRead;
+
   double get fraction => total == 0 ? 0 : probed / total;
 }
 
@@ -100,16 +144,18 @@ class ArpNdpService {
   ArpNdpService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
         connector,
-    Future<String?> Function()? arpTableReader,
+    ArpReader? arpReader,
   })  : _connect = connector ?? _defaultConnect,
-        _readArpTable = arpTableReader ?? _defaultArpTableReader;
+        _arpReader = arpReader ?? platformArpReader();
 
   final Future<Socket> Function(String host, int port,
       {required Duration timeout}) _connect;
 
-  /// Reads the raw /proc/net/arp text (Linux/Android), or null where it does
-  /// not exist. Injectable for tests.
-  final Future<String?> Function() _readArpTable;
+  /// The platform neighbor-table reader — the SAME seam Network Discovery
+  /// uses, so both tools read one ARP cache through one dispatch. Injectable
+  /// for tests. This tool previously had no access to it at all, which is what
+  /// let its capability claims invert.
+  final ArpReader _arpReader;
 
   static Future<Socket> _defaultConnect(
     String host,
@@ -118,62 +164,39 @@ class ArpNdpService {
   }) =>
       Socket.connect(host, port, timeout: timeout);
 
-  static Future<String?> _defaultArpTableReader() async {
-    try {
-      final File f = File('/proc/net/arp');
-      if (!await f.exists()) return null;
-      return await f.readAsString();
-    } on Object {
-      return null;
-    }
-  }
-
   /// Ports a typical LAN host answers — used only as a reachability signal for
   /// discovery (a refused connection still proves the host is up). Curated to
   /// the services most consumer/IoT/infra devices expose.
   static const List<int> probePorts = <int>[80, 443, 22, 445, 139, 53, 8080];
 
-  /// The honest capability for the current platform.
+  /// The honest capability for the current platform, DERIVED from the reader
+  /// that does the work rather than from a hand-maintained platform list.
+  ///
+  /// Two independent axes, deliberately not collapsed:
+  ///  - Can this tool sweep at all? iOS says no. That is a product decision
+  ///    about the sweep, not something a neighbor-table reader can answer, so
+  ///    it stays an explicit platform check here.
+  ///  - Can MACs be exposed? Ask [ArpReader.readsMac]. Never restate it.
+  ///
+  /// [readerOverride] is a test seam only; production reads the platform.
   static ArpCapability capabilityFor({
-    bool? isAndroidOverride,
     bool? isIOSOverride,
-    bool? isLinuxOverride,
+    ArpReader? readerOverride,
   }) {
     final bool isIOS = isIOSOverride ?? Platform.isIOS;
     if (isIOS) return ArpCapability.unavailable;
-    final bool isAndroid = isAndroidOverride ?? Platform.isAndroid;
-    final bool isLinux = isLinuxOverride ?? Platform.isLinux;
-    if (isAndroid || isLinux) return ArpCapability.sweepWithMac;
-    // macOS / Windows: discovery works, MAC is not exposed without native FFI.
-    return ArpCapability.sweepNoMac;
+    final ArpReader reader = readerOverride ?? platformArpReader();
+    return reader.readsMac
+        ? ArpCapability.sweepWithMac
+        : ArpCapability.sweepNoMac;
   }
 
-  /// Parse the kernel /proc/net/arp text into an IP → MAC map. Skips the header
-  /// row and incomplete entries (flag 0x0 / all-zero MAC). Exposed for tests.
-  ///
-  /// Format (one header line then rows):
-  ///   IP address  HW type  Flags  HW address         Mask  Device
-  ///   192.168.1.1 0x1      0x2    aa:bb:cc:dd:ee:ff  *     wlan0
-  static Map<String, String> parseProcNetArp(String text) {
-    final Map<String, String> out = <String, String>{};
-    final List<String> lines = text.split('\n');
-    for (int i = 1; i < lines.length; i++) {
-      final String line = lines[i].trim();
-      if (line.isEmpty) continue;
-      final List<String> cols =
-          line.split(RegExp(r'\s+')).where((String s) => s.isNotEmpty).toList();
-      if (cols.length < 4) continue;
-      final String ip = cols[0];
-      final String flags = cols[2];
-      final String mac = cols[3].toLowerCase();
-      // Flag 0x0 = incomplete; an all-zero MAC is not a real neighbor.
-      if (flags == '0x0') continue;
-      if (mac == '00:00:00:00:00:00') continue;
-      if (!_validIp(ip) || !_validMac(mac)) continue;
-      out[ip] = mac;
-    }
-    return out;
-  }
+  // NOTE: a static parseProcNetArp() lived here and parsed /proc/net/arp. It
+  // was removed with the inverted matrix: no reader in this app reads that file
+  // (platformArpReader() hands Linux an UnavailableArpReader), and the MAC
+  // source is now the platform ArpReader on every platform. It was the
+  // second representation the stale table was written against — keeping it as
+  // dead code would just re-seed the drift.
 
   /// Derive the list of host IPs to probe from an interface IPv4 and a CIDR
   /// prefix length. Returns the usable host range (excludes network + broadcast)
@@ -220,7 +243,13 @@ class ArpNdpService {
     int concurrency = 48,
     Future<void>? cancel,
   }) {
-    final ArpCapability cap = capabilityOverride ?? capabilityFor();
+    // Derive from THIS service's reader, not from platformArpReader(). Reading
+    // the capability from one reader while reading MACs from another
+    // (`_arpReader`, which tests inject) is two derivations of the single fact
+    // this whole seam exists to unify — the defect one layer down, inside its
+    // own fix.
+    final ArpCapability cap =
+        capabilityOverride ?? capabilityFor(readerOverride: _arpReader);
     final StreamController<ArpScanProgress> controller =
         StreamController<ArpScanProgress>();
 
@@ -233,6 +262,8 @@ class ArpNdpService {
     bool cancelled = false;
     bool closed = false;
     Map<String, String> arpCache = <String, String>{};
+    bool arpCacheLoaded = false;
+    MacReadOutcome macRead = MacReadOutcome.notAttempted;
 
     cancel?.then((_) => cancelled = true);
 
@@ -249,26 +280,52 @@ class ArpNdpService {
         final String host = queue[index++];
         active++;
         _probe(host, timeout).then((double? rttMs) async {
-          active--;
-          probed++;
           Neighbor? n;
           if (rttMs != null) {
-            // Refresh the ARP cache lazily once we have any responder, so a
+            // Read the neighbor table lazily once we have any responder, so a
             // host that just answered has its freshly-learned MAC available.
-            if (cap == ArpCapability.sweepWithMac && arpCache.isEmpty) {
-              arpCache = await _loadArpCache();
+            // Guard on "loaded", not on "cache is empty": a successful read
+            // that returned NO entries is a valid result, and re-reading on
+            // every responder would hammer the channel.
+            //
+            // NOTE the await below happens while this probe still counts as
+            // ACTIVE. Decrementing `active`/incrementing `probed` before it
+            // let a sibling probe observe probed >= total && active == 0 and
+            // CLOSE the controller mid-read, so the tick carrying the read's
+            // outcome was dropped and the sweep reported notAttempted after a
+            // read that had in fact succeeded.
+            if (cap == ArpCapability.sweepWithMac && !arpCacheLoaded) {
+              arpCacheLoaded = true;
+              final ArpReadResult r = await _arpReader.read();
+              // THREE outcomes from two bits, never two. `available == false`
+              // alone does not say which kind of failure it is — mapping it
+              // straight to `failed` re-collapses `unsupported` into `failed`
+              // and re-creates the exact defect this enum exists to prevent.
+              macRead = !r.platformSupported
+                  ? MacReadOutcome.notAttempted
+                  : (r.available ? MacReadOutcome.ok : MacReadOutcome.failed);
+              arpCache = r.available ? r.byIp : <String, String>{};
             }
             final String? mac =
                 cap == ArpCapability.sweepWithMac ? arpCache[host] : null;
             found++;
-            n = Neighbor(ip: host, mac: mac, rttMs: rttMs);
+            n = Neighbor(
+              ip: host,
+              mac: mac,
+              rttMs: rttMs,
+              fromArpTable: mac != null,
+            );
           }
+          // Only now is this probe finished.
+          active--;
+          probed++;
           if (!closed) {
             controller.add(ArpScanProgress(
               probed: probed,
               total: total,
               found: found,
               lastFound: n,
+              macRead: macRead,
             ));
           }
           if (!cancelled) pump();
@@ -286,12 +343,6 @@ class ArpNdpService {
       pump();
     }
     return controller.stream;
-  }
-
-  Future<Map<String, String>> _loadArpCache() async {
-    final String? text = await _readArpTable();
-    if (text == null) return <String, String>{};
-    return parseProcNetArp(text);
   }
 
   /// Probe [host] for reachability: a completed connect (OPEN) OR an
@@ -337,9 +388,6 @@ class ArpNdpService {
     }
     return true;
   }
-
-  static bool _validMac(String mac) =>
-      RegExp(r'^[0-9a-f]{2}(:[0-9a-f]{2}){5}$').hasMatch(mac);
 
   static int? _ipToInt(String ip) {
     final List<String> p = ip.split('.');

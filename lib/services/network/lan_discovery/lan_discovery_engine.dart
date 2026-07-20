@@ -355,18 +355,20 @@ class LanDiscoveryEngine {
     // MUST run AFTER the connect-scan (and mDNS): the TCP probes to every host
     // populate the kernel ARP cache as a side effect, so by now the cache is
     // warm for exactly the hosts we found. The read is via Swift sysctl
-    // (NET_RT_FLAGS / RTF_LLINFO) — never a subprocess. On non-macOS the reader
-    // returns an honest "unavailable" result; nothing is faked. Like the other
-    // enrichment passes, a failure here is non-fatal: the host list still
-    // stands, MAC/vendor just stay null.
+    // (NET_RT_FLAGS / RTF_LLINFO) — never a subprocess. Windows reads
+    // GetIpNetTable via FFI. On iOS/Android the reader returns an honest
+    // `unsupported` result; nothing is faked. Like the other enrichment
+    // passes, a failure here is non-fatal: the host list still stands,
+    // MAC/vendor just stay null.
     yield const DiscoveryProgress(DiscoveryPhase.arp, 0.92);
     ArpReadResult arp;
     try {
       arp = await _arpReader.read();
     } catch (e) {
       // The reader contract is never-throw, but be defensive: a thrown reader
-      // becomes an honest unavailable result, not a failed run.
-      arp = ArpReadResult.unavailable('ARP read threw: $e');
+      // is a FAILED read, not an incapable platform — we only got here because
+      // a reader existed and ran.
+      arp = ArpReadResult.failed('ARP read threw: $e');
     }
     if (arp.available) {
       final Map<String, String> macByIp = arp.byIp;

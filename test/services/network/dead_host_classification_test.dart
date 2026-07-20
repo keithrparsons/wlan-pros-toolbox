@@ -27,6 +27,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/arp_ndp_service.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/arp_reader.dart';
 import 'package:wlan_pros_toolbox/services/network/ping_service.dart';
 import 'package:wlan_pros_toolbox/services/network/ping_sweep_service.dart';
 import 'package:wlan_pros_toolbox/services/network/port_scan_service.dart';
@@ -171,7 +172,7 @@ void main() {
     Future<ArpScanProgress> runDiscover(SocketException thrown) async {
       final ArpNdpService svc = ArpNdpService(
         connector: throwing(thrown),
-        arpTableReader: () async => null,
+        arpReader: const UnavailableArpReader('no reader in this test'),
       );
       final List<ArpScanProgress> ticks = await svc
           .discover(

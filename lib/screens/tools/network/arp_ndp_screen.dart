@@ -1,14 +1,22 @@
 // ARP / NDP Lookup tool — discover local-network neighbors (IP ↔ MAC where the
-// platform exposes it). See ArpNdpService for the full honest capability matrix.
+// platform exposes it).
 //
-// The capability is stated plainly in the UI, never faked:
-//   - Linux / Android: active subnet sweep + real MAC from /proc/net/arp.
-//   - macOS / Windows: active subnet sweep lists responders; MAC is NOT exposed
-//     to a sandboxed app, so each row shows "Not exposed on this platform" —
-//     never a fabricated MAC.
-//   - iOS: the ARP table is not accessible to third-party apps → a clear
-//     unavailable state (the traceroute-on-mobile pattern), no fake neighbors.
-//   - web: NetworkUnavailableView.
+// DO NOT RESTATE THE PLATFORM CAPABILITIES HERE. This header used to carry its
+// own copy of the matrix, and it was inverted the same way the one in
+// ArpNdpService was: it credited Linux/Android with a real /proc/net/arp read
+// that no reader in this app performs, and told macOS and Windows users their
+// MAC was "Not exposed on this platform" while both read it for real. A duplicated capability table is
+// wrong the moment the code moves, and nothing makes it fail loudly.
+//
+// The single source is ArpReader.readsMac (services/network/lan_discovery/
+// arp_reader.dart), which the reader that does the work declares about itself.
+// capabilityFor() derives from it. To learn what a platform can do, read
+// platformArpReader() — not this comment.
+//
+// The capability is stated plainly in the UI, never faked, and a MISSING MAC
+// always says WHICH kind of missing it is (see missingMacReason): a platform
+// with no reader, a read that failed, or a read that succeeded without
+// covering that host. "Cannot" is never used for "did not".
 //
 // States (SOP-007 §5):
 //  - idle      → form + capability banner (or the iOS unavailable card).
@@ -65,6 +73,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   String? _subnetLabel;
   final List<Neighbor> _neighbors = <Neighbor>[];
 
+  /// Fate of this sweep's neighbor-table read. Drives whether a missing MAC is
+  /// reported as a platform limit, a failed read, or simply a host the read
+  /// did not cover. Never assert a negative about a source we did not query.
+  MacReadOutcome _macRead = MacReadOutcome.notAttempted;
+
   StreamSubscription<ArpScanProgress>? _sub;
   Completer<void>? _cancel;
 
@@ -88,6 +101,10 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     super.dispose();
   }
 
+  /// Why this neighbor has no MAC. Delegates to the shared [missingMacReason]
+  /// so the row, the export, and any future surface read one derivation.
+  String get _missingMacReason => missingMacReason(_macRead);
+
   Future<void> _start() async {
     if (_running || _service == null || _interfaceService == null) return;
 
@@ -98,6 +115,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       _probed = 0;
       _total = 0;
       _subnetLabel = null;
+      _macRead = MacReadOutcome.notAttempted;
     });
 
     // Derive the local /24 from the device's primary IPv4.
@@ -136,6 +154,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             setState(() {
               _probed = p.probed;
               _total = p.total;
+              _macRead = p.macRead;
               if (p.lastFound != null) _neighbors.add(p.lastFound!);
             });
           },
@@ -183,9 +202,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   /// §8.16 copy payload — the neighbor table as TSV (header + one row per
   /// neighbor). Columns are IP, MAC, RTT (ms): this tool's [Neighbor] model
   /// carries no vendor or per-host interface field, so those columns are not
-  /// emitted (never a fabricated cell, GL-005). Where the platform sandboxes
-  /// the MAC away the cell carries the on-screen honesty WORD "Not exposed on
-  /// this platform" rather than a blank that reads as missing-data.
+  /// emitted (never a fabricated cell, GL-005). A missing MAC carries the same
+  /// honesty WORD the row shows rather than a blank that reads as missing-data
+  /// — and it names WHICH kind of missing it is (no reader on this platform, a
+  /// failed read, or a read that did not cover this host), via the shared
+  /// [missingMacReason]. The export and the screen cannot disagree.
   ///
   /// Returns null (→ disabled affordance) until the sweep has found at least
   /// one neighbor; an in-flight or empty sweep has nothing to keep. Copyable
@@ -201,7 +222,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
 
     for (final Neighbor n in _neighbors) {
       final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
-      final String mac = hasMac ? n.mac! : 'Not exposed on this platform';
+      final String mac = hasMac ? n.mac! : _missingMacReason;
       final String rtt = n.rttMs == null ? '' : n.rttMs!.toStringAsFixed(0);
       buf.writeln(<String>[n.ip, mac, rtt].join(tab));
     }
@@ -278,15 +299,19 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       ArpCapability.sweepWithMac => (
         'Discovery with MAC addresses',
         'On this platform the toolbox sweeps the local subnet and reads the '
-            'kernel ARP table (/proc/net/arp) to attach each responder\'s real '
-            'MAC address. No subprocess, no elevated privilege.',
+            'kernel neighbor table to attach each responder\'s real MAC '
+            'address. macOS reads it through a native sysctl call, Windows '
+            'through the IP Helper API. No subprocess, no elevated privilege. '
+            'If a read fails, the toolbox says so rather than reporting the '
+            'MAC as unavailable.',
       ),
       ArpCapability.sweepNoMac => (
         'Discovery only: MAC not exposed',
-        'This platform sandboxes the ARP table away from apps, and shelling '
-            'out to the system arp command is blocked. The toolbox sweeps the '
-            'local subnet and lists every host that answers; MAC addresses are '
-            'shown as "Not exposed on this platform" rather than guessed.',
+        'This platform sandboxes the neighbor table away from apps, and '
+            'shelling out to the system arp command is blocked. The toolbox '
+            'sweeps the local subnet and lists every host that answers; MAC '
+            'addresses are shown as "Not exposed on this platform" rather '
+            'than guessed.',
       ),
       ArpCapability.unavailable => ('', ''),
     };
@@ -491,7 +516,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                       ),
                     )
                   : Text(
-                      'MAC not exposed on this platform',
+                      _macRead == MacReadOutcome.notAttempted
+                          ? 'MAC not exposed on this platform'
+                          : _missingMacReason,
                       style: text.labelSmall?.copyWith(
                         color: colors.textTertiary,
                         fontStyle: FontStyle.italic,
