@@ -36,6 +36,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_version.dart';
 import '../router/app_router.dart';
+import '../services/app_update_service.dart';
 import '../services/network/wifi_details_bridge.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
@@ -69,7 +70,12 @@ const String _kContactUrl = 'https://wlanprofessionals.com/contact';
 const String _kFeedbackUrl = _kContactUrl;
 
 class AboutScreen extends StatefulWidget {
-  const AboutScreen({super.key});
+  const AboutScreen({super.key, this.updateService});
+
+  /// Injectable update checker. Null in production (the screen builds the real
+  /// [AppUpdateService]); tests pass a scripted one to render each verdict
+  /// without touching the network.
+  final AppUpdateService? updateService;
 
   @override
   State<AboutScreen> createState() => _AboutScreenState();
@@ -81,13 +87,32 @@ class _AboutScreenState extends State<AboutScreen> {
   // window (no crash, no flash of a wrong/hardcoded value).
   AppVersionInfo? _version;
 
+  // Update-check outcome. Null until the check resolves (and on a store-managed
+  // or web build it stays effectively invisible — see [_UpdateLine]). The check
+  // is fire-and-forget and NEVER awaited by build(): the About screen renders
+  // fully before any network I/O starts, so a slow or dead network changes
+  // nothing about how fast this screen appears.
+  AppUpdateResult? _update;
+
   @override
   void initState() {
     super.initState();
     AppVersion.load().then((AppVersionInfo info) {
       if (!mounted) return;
       setState(() => _version = info);
+      _checkForUpdate(info.version);
     });
+  }
+
+  /// Ask whether a newer build is published. [AppUpdateService.check] never
+  /// throws, so there is no error path to handle here and nothing to show the
+  /// user when it cannot answer beyond the honest "could not check" line.
+  Future<void> _checkForUpdate(String currentVersion) async {
+    final AppUpdateResult result = await (widget.updateService ??
+            AppUpdateService())
+        .check(currentVersion: currentVersion);
+    if (!mounted) return;
+    setState(() => _update = result);
   }
 
   @override
@@ -298,7 +323,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   // 8. Version and Feedback — version row is interactive
                   // (copyable) and the feedback link reuses the contact form.
                   // Reads the same runtime build identity as the top badge.
-                  _VersionSection(info: _version),
+                  _VersionSection(info: _version, update: _update),
 
                   // 8.5 About the founder — Keith Parsons headshot + approved
                   // short bio. Placed below the app/version info and above the
@@ -923,10 +948,13 @@ class _BuildBadge extends StatelessWidget {
 /// [AppVersionInfo] (null before it resolves) so the value matches the top
 /// build badge and the actual shipped build.
 class _VersionSection extends StatelessWidget {
-  const _VersionSection({required this.info});
+  const _VersionSection({required this.info, this.update});
 
   /// Runtime build identity; null until package_info_plus resolves.
   final AppVersionInfo? info;
+
+  /// Update-check outcome; null while the check is still in flight.
+  final AppUpdateResult? update;
 
   @override
   Widget build(BuildContext context) {
@@ -967,6 +995,11 @@ class _VersionSection extends StatelessWidget {
                 ),
               ),
             ),
+            // One quiet line about whether a newer build is published. Renders
+            // nothing at all while the check is in flight and on builds that do
+            // not check (store-managed installs, web), so the section looks
+            // exactly as it did before on those platforms.
+            _UpdateLine(update: update),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Running into something odd, or have an idea to make this '
@@ -983,6 +1016,80 @@ class _VersionSection extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// One line stating whether a newer build is published, plus a link when there
+/// is one.
+///
+/// The three visible states are deliberately distinct, because the dangerous
+/// failure here is rendering "we could not check" as if it were "you are up to
+/// date". [AppUpdateStatus.unknown] therefore gets its own recessed tertiary
+/// register and says plainly that the check did not complete; it never borrows
+/// the reassuring wording. That is the same rule the rest of the app follows:
+/// do not state a verdict the app could not measure.
+///
+/// [AppUpdateStatus.notApplicable] (a store-managed install, or web) and the
+/// in-flight null case render a zero-size box, so nothing flashes and no build
+/// is ever pointed at a download it should not use.
+///
+/// Tokens: §4 spacing, §8.5 type (body), theme-aware text colors. No hardcoded
+/// color or size.
+class _UpdateLine extends StatelessWidget {
+  const _UpdateLine({required this.update});
+
+  final AppUpdateResult? update;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppUpdateResult? r = update;
+    if (r == null || r.status == AppUpdateStatus.notApplicable) {
+      return const SizedBox.shrink();
+    }
+
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    switch (r.status) {
+      case AppUpdateStatus.upToDate:
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Text(
+            'This is the latest published version.',
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+          ),
+        );
+
+      case AppUpdateStatus.unknown:
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Text(
+            'Could not check for a newer version.',
+            style: text.bodyLarge?.copyWith(color: colors.textTertiary),
+          ),
+        );
+
+      case AppUpdateStatus.updateAvailable:
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Version ${r.latestVersion} is available.',
+                style: text.bodyLarge?.copyWith(color: colors.accent),
+              ),
+              _ExternalLinkButton(
+                label: 'Get the update',
+                url: r.releaseUrl ?? kReleasesPageUrl,
+              ),
+            ],
+          ),
+        );
+
+      case AppUpdateStatus.notApplicable:
+        return const SizedBox.shrink();
+    }
   }
 }
 
