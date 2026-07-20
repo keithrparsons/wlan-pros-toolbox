@@ -884,7 +884,7 @@ void main() {
   // FROM/TO RSSI — the row shows the old AP's last reading and the new AP's.
   // ===================================================================
   testWidgets(
-      'a roam row shows BOTH the old AP RSSI and the new AP RSSI, labelled '
+      'a roam row shows BOTH the old AP RSSI and the new AP RSSI, labeled '
       'old vs new', (t) async {
     // The roaming adapter's first AP reads -58 dBm (anchored as the "from"
     // reading), the joined AP reads -63 dBm at the roam.
@@ -1009,7 +1009,7 @@ void main() {
       expect(out, contains('Captured on: iOS'));
       expect(out, contains('Session: 2:14:00 PM to 2:15:02 PM'));
       expect(out, contains('2 roams recorded'));
-      // Two populations, each labelled for what it computes. The pre-roam set
+      // Two populations, each labeled for what it computes. The pre-roam set
       // is the trigger level (-60, -67); the post-roam set is what the client
       // landed on (-67, -72). Pooling them would describe neither.
       expect(
@@ -1501,7 +1501,7 @@ void main() {
       // weakest signal of the session, which the table contradicted.
       expect(afterLine, contains('weakest -60 dBm'));
       expect(out, isNot(contains('Signal: avg')),
-          reason: 'the unlabelled single-population header must be gone');
+          reason: 'the unlabeled single-population header must be gone');
 
       // Label/computation agreement: the pre-roam and post-roam populations are
       // reported as distinct, each named for what it actually measures.
@@ -1535,7 +1535,7 @@ void main() {
       expect(tiles, contains('dBm weakest before roam'));
       expect(tiles, contains('dBm avg before roam'));
       expect(tiles, contains('dBm avg after roam'));
-      // The mislabelled tiles are gone.
+      // The mislabeled tiles are gone.
       expect(doc, isNot(contains('dBm avg at roam')));
       expect(doc, isNot(contains('dBm strongest / weakest')));
     });
@@ -1705,13 +1705,143 @@ void main() {
       // A LEADING clause, not a third parenthetical: these sentences already
       // carry strongest/weakest timestamps, and the caveat belongs before the
       // number it qualifies.
-      expect(glance, contains('Of 4 roams, 1 reported the signal they left'),
-          reason: 'the trigger sentence must state its sample size');
+      //
+      // Asserted as the WHOLE sentence, not the prefix. The earlier version of
+      // this test matched only 'Of 4 roams, 1 reported ...' and never read the
+      // clause it produced after the semicolon — which is how it stayed green
+      // while emitting 'every roam landed on', a universal over 37 roams that
+      // were never measured. A prefix assertion on a generated sentence proves
+      // the prefix, not the sentence.
+      expect(
+          glance,
+          contains('Of 4 roams, 1 reported the signal it left; '
+              'the one that did fired at -79 dBm.'),
+          reason: 'the trigger sentence must state its sample size AND keep its '
+              'quantifier inside that sample');
 
       // The complete destination population reads clean, with no count.
       expect(glance, contains('Roams landed between'));
       expect(glance, isNot(contains('reported the signal they landed on')),
           reason: 'a complete population must not be scoped');
+    });
+
+    // ---- HIGH-1: a universal must never outrun its population ----
+    //
+    // n == 1 ALWAYS forces strongest == weakest, so the universal branch is the
+    // normal path on the sparse captures iOS produces, not a corner. The bug
+    // this guards emitted a coverage clause and then contradicted it inside the
+    // same sentence: "Of 40 roams, 3 reported the signal they landed on; every
+    // roam landed on -53 dBm." Each shape asserts the FULL sentence.
+
+    test('HIGH-1 n=1: the universal shrinks to the single roam that reported',
+        () {
+      final String doc = buildRoamLogShareHtml(
+        events: sparseBefore(),
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final int g = doc.indexOf('Session at a glance');
+      final String glance = doc.substring(g, doc.indexOf('</ul>', g));
+
+      expect(glance, contains('the one that did fired at -79 dBm.'));
+      // The universal that outran its population must be gone.
+      expect(glance, isNot(contains('every roam fired')));
+      expect(glance, isNot(contains('Every roam fired')));
+      expect(glance, isNot(contains('every recorded roam fired')));
+      // And the pronoun agrees with the count.
+      expect(glance, isNot(contains('1 reported the signal they left')));
+    });
+
+    test('HIGH-1 n=3 of 5: the universal is quantified "all 3", both populations',
+        () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          fromRssi: -81,
+          rssi: -53,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          rssi: null,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 2, 0),
+          from: 'aa:bb:cc:dd:ee:03',
+          to: 'aa:bb:cc:dd:ee:04',
+          fromRssi: -81,
+          rssi: -53,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 3, 0),
+          from: 'aa:bb:cc:dd:ee:04',
+          to: 'aa:bb:cc:dd:ee:05',
+          rssi: null,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 4, 0),
+          from: 'aa:bb:cc:dd:ee:05',
+          to: 'aa:bb:cc:dd:ee:06',
+          fromRssi: -81,
+          rssi: -53,
+        ),
+      ];
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final int g = doc.indexOf('Session at a glance');
+      final String glance = doc.substring(g, doc.indexOf('</ul>', g));
+
+      expect(
+          glance,
+          contains('Of 5 roams, 3 reported the signal they left; '
+              'all 3 fired at -81 dBm.'));
+      expect(
+          glance,
+          contains('Of 5 roams, 3 reported the signal they landed on; '
+              'all 3 landed on -53 dBm.'));
+      // The contradicting universal, in either population.
+      expect(glance, isNot(contains('every roam landed on')));
+      expect(glance, isNot(contains('Every roam landed on')));
+    });
+
+    test('HIGH-1 complete: the plain universal is exactly true, and unhedged',
+        () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          fromRssi: -81,
+          rssi: -53,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          fromRssi: -81,
+          rssi: -53,
+        ),
+      ];
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final int g = doc.indexOf('Session at a glance');
+      final String glance = doc.substring(g, doc.indexOf('</ul>', g));
+
+      expect(glance, contains('Every roam fired at -81 dBm.'));
+      expect(glance, contains('Every roam landed on -53 dBm.'));
+      // No coverage clause on a complete capture, and no hedge qualifying
+      // nothing: "every RECORDED roam" is meaningless when all were recorded.
+      expect(glance, isNot(contains('reported the signal')));
+      expect(glance, isNot(contains('recorded roam')));
     });
 
     test('a COMPLETE capture prints no counts anywhere — the note is the signal',

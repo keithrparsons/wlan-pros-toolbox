@@ -779,7 +779,28 @@ class _RssiStats {
 /// Suppressing at n == total also guarantees grammatical output — n < total
 /// implies total >= 2, so the plural "roams" is always correct, and the
 /// degenerate "1 of 1 roams" can never be emitted.
-String _coverageNote(int n, int total) => n == total ? '' : '$n of $total roams';
+///
+/// LOAD-BEARING PRECONDITION — do not remove the per-roam table.
+/// Silence on a complete capture is only honest because the export carries the
+/// full per-roam table below the summary, where every non-reporting roam
+/// renders `signal n/a`. That table is what makes completeness auditable FROM
+/// THE ARTIFACT ITSELF, so the absence of a count is checkable rather than
+/// merely trusted. If the table is ever dropped, or a summary-only export
+/// ships, suppression stops being safe and this function must emit the count
+/// unconditionally.
+///
+/// n == 0 also returns empty: an empty population has no statistic to qualify,
+/// so its callers take the honest "not reported" path instead (GL-005).
+///
+/// That guard is DEFENSIVE AND CURRENTLY UNREACHABLE, and is documented as such
+/// rather than covered by a test that would be theatre. Every call site today
+/// sits inside a null check, so n == 0 never arrives; removing the guard passes
+/// the whole suite. It is here so a FUTURE caller added outside a null check
+/// cannot render "0 of 40 roams" against an average that does not exist. If you
+/// add such a caller, this is the line that saves you — and the line to write a
+/// real test against, because it will then be reachable.
+String _coverageNote(int n, int total) =>
+    (n == 0 || n == total) ? '' : '$n of $total roams';
 
 /// The parenthetical for a population line: which AP the reading came from,
 /// plus the sample size when the population is incomplete.
@@ -1169,6 +1190,29 @@ List<String> _sessionFacts(
     return 'Of ${events.length} roams, $n reported $reported; $lower';
   }
 
+  /// A UNIVERSAL ("they were all the same value") sentence, quantified over the
+  /// population that was actually MEASURED.
+  ///
+  /// A universal cannot borrow the [scoped] wrapper. "Of 40 roams, 3 reported
+  /// the signal they landed on; every roam landed on -53 dBm" states a coverage
+  /// clause and then contradicts it inside the same sentence: "every roam" is a
+  /// claim about 37 measurements that were never taken, in the document a
+  /// customer quotes back. The quantifier has to shrink to the population, so
+  /// the subject becomes "all 3" — or "the one that did" at n == 1.
+  ///
+  /// This is NOT an edge case. n == 1 always forces strongest == weakest, so
+  /// this branch is the normal path for the sparse captures iOS produces.
+  ///
+  /// At n == total the plain universal is exactly true and needs no hedge —
+  /// note that "every RECORDED roam" is deliberately gone, since on a complete
+  /// population "recorded" is a hedge qualifying nothing.
+  String universal(int n, String reported, String verb, int dbm) {
+    if (n == events.length) return 'Every roam $verb $dbm dBm.';
+    final String subject = n == 1 ? 'the one that did' : 'all $n';
+    return 'Of ${events.length} roams, $n reported $reported; '
+        '$subject $verb $dbm dBm.';
+  }
+
   // The TRIGGER level, computed from the pre-roam readings. "Roams fired at" is
   // trigger language, so it must be computed from the signal on the AP the
   // client was LEAVING. It previously read the post-roam value, which put a
@@ -1177,13 +1221,11 @@ List<String> _sessionFacts(
   if (fired != null) {
     final (RoamEvent strongest, RoamEvent weakest) = fired;
     final int n = _preRoamRssi(events).length;
-    const String reported = 'the signal they left';
+    // "1 reported the signal they left" is a number/pronoun mismatch, and n == 1
+    // is the common iOS shape, not a corner.
+    final String reported = n == 1 ? 'the signal it left' : 'the signal they left';
     if (strongest.fromRssiDbm == weakest.fromRssiDbm) {
-      facts.add(scoped(
-        n,
-        'Every recorded roam fired at ${strongest.fromRssiDbm} dBm.',
-        reported,
-      ));
+      facts.add(universal(n, reported, 'fired at', strongest.fromRssiDbm!));
     } else {
       facts.add(scoped(
         n,
@@ -1201,13 +1243,10 @@ List<String> _sessionFacts(
   if (landed != null) {
     final (RoamEvent strongest, RoamEvent weakest) = landed;
     final int n = _postRoamRssi(events).length;
-    const String reported = 'the signal they landed on';
+    final String reported =
+        n == 1 ? 'the signal it landed on' : 'the signal they landed on';
     if (strongest.rssiDbm == weakest.rssiDbm) {
-      facts.add(scoped(
-        n,
-        'Every roam landed on ${strongest.rssiDbm} dBm.',
-        reported,
-      ));
+      facts.add(universal(n, reported, 'landed on', strongest.rssiDbm!));
     } else {
       facts.add(scoped(
         n,
@@ -1877,7 +1916,7 @@ class _RoamRow extends StatelessWidget {
 }
 
 /// The on-screen from/to signal line for a roam row: the OLD ("from") AP's last
-/// RSSI and the NEW ("to") AP's RSSI at the roam, labelled so it is clear which
+/// RSSI and the NEW ("to") AP's RSSI at the roam, labeled so it is clear which
 /// is the old AP and which is the new, e.g. "Signal on prev AP -64 dBm -> this AP
 /// -56 dBm". The reader sees whether the client left a weakening AP for a
 /// stronger one, or roamed sideways. SNR (the single reading at the roam) trails.
