@@ -27,13 +27,16 @@
 // MacBook trackpad the viewer pages fine, so the defect is invisible to anyone
 // testing on a laptop without plugging in a mouse.
 //
-// Four of the 13 bundled documents are multi-page and therefore affected:
-// fix-your-own-wifi (64), ham-radio-general-exam-study-notes (15),
-// general-license-frequency-chart (6), mcs-index-card (2).
+// THREE of the 13 bundled documents are multi-page and therefore affected:
+// fix-your-own-wifi (64), ham-radio-general-exam-study-notes (15) and
+// general-license-frequency-chart (6). Counts per `mdls -name
+// kMDItemNumberOfPages`; an earlier revision of this comment also listed
+// mcs-index-card as 2 pages, but it is `/Count 1`, one page.
 //
 // Each check drives a genuine `PointerDeviceKind.mouse` gesture or a real
 // `PointerScrollEvent`, so it fails red on the unfixed screen.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -128,8 +131,11 @@ void main() {
 
   testWidgets('a MOUSE drag turns the page', (WidgetTester tester) async {
     await pumpBook(tester);
-    expect(currentPage(tester), closeTo(0, 0.01),
-        reason: 'should start on page 1');
+    expect(
+      currentPage(tester),
+      closeTo(0, 0.01),
+      reason: 'should start on page 1',
+    );
 
     // A fling carries velocity, so it pages regardless of how wide the test
     // window happens to be. A fixed-distance drag is viewport-dependent: on an
@@ -146,7 +152,8 @@ void main() {
     expect(
       currentPage(tester),
       greaterThan(0.5),
-      reason: 'A mouse drag must turn the page. If this fails, either '
+      reason:
+          'A mouse drag must turn the page. If this fails, either '
           'ScrollBehavior.dragDevices is missing PointerDeviceKind.mouse, or '
           'PhotoView is claiming the drag (see _pageOwnsDragGesture).',
     );
@@ -165,8 +172,11 @@ void main() {
     );
     await letAnimationRun(tester);
 
-    expect(currentPage(tester), greaterThan(0.5),
-        reason: 'Touch paging must be unaffected by the desktop fix.');
+    expect(
+      currentPage(tester),
+      greaterThan(0.5),
+      reason: 'Touch paging must be unaffected by the desktop fix.',
+    );
   });
 
   testWidgets('the mouse WHEEL turns the page', (WidgetTester tester) async {
@@ -178,9 +188,7 @@ void main() {
     pointer.hover(centre);
     // A notched wheel tick scrolls in the vertical axis; the viewer maps that
     // onto its horizontal pager.
-    await tester.sendEventToBinding(
-      pointer.scroll(const Offset(0, 120)),
-    );
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
     await letAnimationRun(tester);
 
     expect(
@@ -206,6 +214,31 @@ void main() {
     expect(find.bySemanticsLabel('Page 1 of 64'), findsOneWidget);
     expect(find.bySemanticsLabel('Next page'), findsOneWidget);
     expect(find.bySemanticsLabel('Previous page'), findsOneWidget);
+    expect(find.bySemanticsLabel('Zoom in'), findsOneWidget);
+    expect(find.bySemanticsLabel('Zoom out'), findsOneWidget);
+    expect(find.bySemanticsLabel('Fit page to window'), findsOneWidget);
+    // Every icon-only control on this screen needs an accessible NAME, not just
+    // a tooltip (WCAG 2.2 AA SC 4.1.2). The share action shipped without one:
+    // Flutter's `tooltip:` is a separate field that macOS maps to AXHelp, so a
+    // semantics dump read `label="" button=true`. This is the guard for that.
+    expect(find.bySemanticsLabel('Share or download'), findsOneWidget);
+    // ...and it must be exposed as an ENABLED button. A Semantics node with
+    // `button: true` but no `enabled:` leaves isEnabled unset, which AT reads as
+    // a disabled control; a live dump caught exactly that when the label was
+    // first added. Share is always available (the asset is bundled).
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Share or download')),
+      // isSemantics (the non-deprecated successor to containsSemantics), not
+      // matchesSemantics: we assert the properties that matter rather than an
+      // exhaustive node shape that would break on any unrelated framework flag
+      // change.
+      isSemantics(
+        label: 'Share or download',
+        isButton: true,
+        isEnabled: true,
+        hasEnabledState: true,
+      ),
+    );
 
     // Tap by tooltip, the repo's existing convention for AppBar/icon actions.
     await tester.tap(find.byTooltip('Next page'));
@@ -229,11 +262,11 @@ void main() {
     // `find.byTooltip` matches the Tooltip widget; the IconButton is its
     // ancestor, and the IconButton is what carries the enabled/disabled state.
     IconButton button(String tooltip) => tester.widget<IconButton>(
-          find.ancestor(
-            of: find.byTooltip(tooltip),
-            matching: find.byType(IconButton),
-          ),
-        );
+      find.ancestor(
+        of: find.byTooltip(tooltip),
+        matching: find.byType(IconButton),
+      ),
+    );
 
     // §8.16 "disabled, not hidden": the control stays in the bar so the layout
     // does not reflow and AT still meets a labelled control.
@@ -277,18 +310,218 @@ void main() {
     await tester.tap(find.byTooltip('Zoom in'));
     await letAnimationRun(tester);
     final double? zoomedOnce = scale();
-    expect(zoomedOnce, isNotNull,
-        reason: 'Zoom in must set a scale, not silently no-op.');
+    expect(
+      zoomedOnce,
+      isNotNull,
+      reason: 'Zoom in must set a scale, not silently no-op.',
+    );
 
     await tester.tap(find.byTooltip('Zoom in'));
     await letAnimationRun(tester);
-    expect(scale(), greaterThan(zoomedOnce!),
-        reason: 'A second Zoom in must magnify further.');
+    expect(
+      scale(),
+      greaterThan(zoomedOnce!),
+      reason: 'A second Zoom in must magnify further.',
+    );
 
     await tester.tap(find.byTooltip('Fit page to window'));
     await letAnimationRun(tester);
-    expect(scale(), lessThan(zoomedOnce),
-        reason: 'Fit must return the page below the zoomed scale.');
+    expect(
+      scale(),
+      lessThan(zoomedOnce),
+      reason: 'Fit must return the page below the zoomed scale.',
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // TOUCH PLATFORMS (`_isPointerPlatform == false`)
+  //
+  // Everything above runs as macOS, which only exercises the desktop branch.
+  // These drive the branch iOS and Android users actually get. Touch is not
+  // merely "unaffected" by this change: a multi-page document now gains a page
+  // indicator on mobile too, so the mobile surface really did change and needs
+  // asserting rather than assuming.
+  // ---------------------------------------------------------------------------
+  for (final TargetPlatform platform in <TargetPlatform>[
+    TargetPlatform.iOS,
+    TargetPlatform.android,
+  ]) {
+    // The override is set and cleared INSIDE each test body, not via
+    // setUp/tearDown: flutter_test asserts that no foundation debug variable is
+    // still set at the end of the test BODY, and tearDown runs after that check.
+    // try/finally so a failing expect still restores the platform for the next
+    // test rather than poisoning the rest of the run.
+    Future<void> asPlatform(Future<void> Function() body) async {
+      debugDefaultTargetPlatformOverride = platform;
+      try {
+        await body();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    }
+
+    group('on $platform', () {
+      testWidgets('multi-page shows the indicator but NO desktop controls', (
+        WidgetTester tester,
+      ) async {
+        await asPlatform(() async {
+          await pumpBook(tester);
+
+          // The indicator is useful on every platform: knowing you are on 12 of 64
+          // does not require a mouse.
+          expect(find.text('1 / 64'), findsOneWidget);
+
+          // Pager buttons would duplicate swipe, and zoom buttons would duplicate
+          // pinch. Neither should appear where the gesture already exists.
+          expect(find.byTooltip('Next page'), findsNothing);
+          expect(find.byTooltip('Previous page'), findsNothing);
+          expect(find.byTooltip('Zoom in'), findsNothing);
+          expect(find.byTooltip('Zoom out'), findsNothing);
+          expect(find.byTooltip('Fit page to window'), findsNothing);
+        });
+      });
+
+      testWidgets('a touch swipe still turns the page', (
+        WidgetTester tester,
+      ) async {
+        await asPlatform(() async {
+          await pumpBook(tester);
+          await tester.fling(
+            find.byType(PageView),
+            const Offset(-500, 0),
+            3000,
+            deviceKind: PointerDeviceKind.touch,
+          );
+          await letAnimationRun(tester);
+          expect(
+            currentPage(tester),
+            greaterThan(0.5),
+            reason:
+                'swipe-to-page must survive the desktop fix; '
+                '_pageOwnsDragGesture must not disable PhotoView on touch',
+          );
+        });
+      });
+
+      testWidgets('the Semantics label names PINCH, not the desktop controls', (
+        WidgetTester tester,
+      ) async {
+        await asPlatform(() async {
+          final SemanticsHandle semantics = tester.ensureSemantics();
+          await pumpBook(tester);
+
+          // The original bug in this label: it said "Pinch to zoom" on every
+          // platform. The fix must not invert that mistake by naming keyboard and
+          // on-screen controls to a touch user who has neither.
+          expect(
+            find.bySemanticsLabel(RegExp('Pinch to zoom')),
+            findsOneWidget,
+          );
+          expect(find.bySemanticsLabel(RegExp('arrow keys')), findsNothing);
+          expect(
+            find.bySemanticsLabel(RegExp('Command|Control')),
+            findsNothing,
+          );
+          expect(
+            find.bySemanticsLabel(RegExp('Swipe to change page')),
+            findsOneWidget,
+          );
+
+          semantics.dispose();
+        });
+      });
+
+      testWidgets('a SINGLE-page card shows no control bar at all', (
+        WidgetTester tester,
+      ) async {
+        await asPlatform(() async {
+          // The degenerate case: nothing to page, and pinch already zooms, so the
+          // bar should take no vertical space from the viewer.
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.dark(),
+              home: const PdfReferenceScreen(
+                title: 'Top 20 Wi-Fi Checklist',
+                assetPath: 'assets/reference-cards/top-20-checklist.pdf',
+                toolId: 'top-20-checklist',
+              ),
+            ),
+          );
+          final Stopwatch sw = Stopwatch()..start();
+          while (sw.elapsed < const Duration(seconds: 30)) {
+            await tester.pump(const Duration(milliseconds: 250));
+            if (find.byType(PageView).evaluate().isNotEmpty) break;
+          }
+          for (int i = 0; i < 8; i++) {
+            await tester.pump(const Duration(milliseconds: 150));
+          }
+
+          expect(find.byTooltip('Zoom in'), findsNothing);
+          expect(find.byTooltip('Next page'), findsNothing);
+          expect(find.text('1 / 1'), findsNothing);
+        });
+      });
+    });
+  }
+
+  testWidgets('navigation input during LOADING never crashes', (
+    WidgetTester tester,
+  ) async {
+    // Guards `_turnPage`'s `!_pagerAttached` check (set from
+    // ScrollMetricsNotification). Without it, a navigation intent raised before
+    // the PageController has a position reaches PdfController.animateToPage and
+    // trips PageView's `positions.isNotEmpty` assertion — a crash, not a no-op.
+    //
+    // This deliberately does NOT use pumpBook: pumpBook settles 8 frames and so
+    // closes the exact race the guard exists for, which is why deleting the
+    // guard left the rest of this suite green.
+    //
+    // It also does not try to pin "the one pre-attach frame". On a warm process
+    // the document can open within two frames, so that window is not reliably
+    // observable. Instead we drive every navigation entry point on EVERY frame
+    // from the first one onwards, which necessarily covers whatever pre-attach
+    // frames exist on this run, and assert the framework swallowed nothing.
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: const PdfReferenceScreen(
+          title: _bookTitle,
+          assetPath: kFixYourOwnWifiBookAsset,
+          toolId: 'fix-your-own-wifi-book',
+        ),
+      ),
+    );
+
+    for (int frame = 0; frame < 40; frame++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+
+      final TestPointer pointer = TestPointer(1, PointerDeviceKind.mouse);
+      pointer.hover(tester.getCenter(find.byType(PdfReferenceScreen)));
+      await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
+
+      // takeException() returns anything the framework caught this frame. A
+      // clean null on every frame of the load is the whole assertion.
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'navigation input on frame $frame (during document load) must '
+            'be a no-op, not a PageController assertion failure',
+      );
+
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+
+    // The screen must still be alive and able to finish loading afterwards.
+    final Stopwatch sw = Stopwatch()..start();
+    while (sw.elapsed < const Duration(seconds: 30)) {
+      await tester.pump(const Duration(milliseconds: 250));
+      if (find.byType(PageView).evaluate().isNotEmpty) break;
+    }
+    expect(find.byType(PageView), findsOneWidget,
+        reason: 'the document should still load normally after early input');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('a SINGLE-page card shows zoom controls but no pager', (
@@ -331,22 +564,34 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await letAnimationRun(tester);
-    expect(currentPage(tester), greaterThan(0.5),
-        reason: 'Right arrow must advance a page.');
+    expect(
+      currentPage(tester),
+      greaterThan(0.5),
+      reason: 'Right arrow must advance a page.',
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await letAnimationRun(tester);
-    expect(currentPage(tester), closeTo(0, 0.01),
-        reason: 'Left arrow must go back a page.');
+    expect(
+      currentPage(tester),
+      closeTo(0, 0.01),
+      reason: 'Left arrow must go back a page.',
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
     await letAnimationRun(tester);
-    expect(currentPage(tester), greaterThan(0.5),
-        reason: 'PageDown must advance a page.');
+    expect(
+      currentPage(tester),
+      greaterThan(0.5),
+      reason: 'PageDown must advance a page.',
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.pageUp);
     await letAnimationRun(tester);
-    expect(currentPage(tester), closeTo(0, 0.01),
-        reason: 'PageUp must go back a page.');
+    expect(
+      currentPage(tester),
+      closeTo(0, 0.01),
+      reason: 'PageUp must go back a page.',
+    );
   });
 }

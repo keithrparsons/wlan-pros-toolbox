@@ -9,31 +9,40 @@
 // and success (the viewer paints). There is no empty state — a bundled card
 // always has at least one page.
 //
-// The squeeze (corrected root cause, verified 2026-06-01): `bubble-diagram.pdf`
-// is a SINGLE page with a portrait MediaBox (612×792) carrying a `/Rotate 90`
-// flag — it is the ONLY rotated card; the other "landscape" cards have native
-// landscape MediaBoxes (792×612, no rotate). The squeeze was never a multi-page
-// seeding problem. It was page-rotation handling: a 612×792 page that must be
-// presented as 792×612.
+// The squeeze (root cause as diagnosed 2026-06-01): the card that squeezed was
+// `bubble-diagram.pdf`, then a portrait MediaBox carrying a `/Rotate 90` flag — a
+// page whose stored box and presented box disagree. The squeeze was never a
+// multi-page seeding problem; it was page-rotation handling.
 //
-// Viewer choice (2026-06-01): we use pdfx's `PdfView` (PhotoView-backed), NOT
-// `PdfViewPinch`. The difference that fixes the rotated card is in how each
-// viewer sizes the page box:
+// EVIDENCE RE-MEASURED 2026-07-20 (Vera gate). The paragraph above describes the
+// asset as it was in June. It is no longer what ships: `bubble-diagram.pdf` now
+// has `/MediaBox [0 0 1440 810]` and **no `/Rotate` key at all** — it is a native
+// landscape page, and there is currently NO rotated card in the bundle. The
+// header previously cited "612×792 with /Rotate 90"; the asset was evidently
+// re-exported and this header was never updated. Corrected rather than deleted,
+// because the viewer choice below still rests on this reasoning.
+//
+// Viewer choice (2026-06-01, still correct): we use pdfx's `PdfView`
+// (PhotoView-backed), NOT `PdfViewPinch`. The difference that fixed the rotated
+// card is in how each viewer sizes the page box:
 //   - `PdfViewPinch` lays each page out from the REPORTED `PdfPageImage`
 //     dimensions. On the Apple path the plugin reports the *requested* render
-//     size in MediaBox order (1530×1980, portrait) even though the native
-//     renderer correctly produces a landscape raster — so the landscape image
-//     gets squeezed into a portrait box.
+//     size in MediaBox order even though the native renderer correctly produces
+//     a landscape raster — so a landscape image gets squeezed into a portrait
+//     box.
 //   - `PdfView` feeds the raw PNG bytes to `PdfPageImageProvider`, which DECODES
 //     them, and PhotoView fit-contains the DECODED image
 //     (`PhotoViewComputedScale.contained`). The decoded raster is the ground
-//     truth (1980×1530, landscape), so the rotated card paints undistorted.
+//     truth, so the page paints undistorted whatever its MediaBox says.
+// Keep `PdfView`: the reasoning is orientation-general, so it holds even though
+// the specific rotated asset that motivated it is gone. If a `/Rotate` card is
+// ever added back, the probe below already covers it.
 //
-// Objective evidence (integration_test/pdf_rotation_probe_test.dart, macOS):
-// decoded PNG bytes are bubble-diagram 1980×1530 (LANDSCAPE, aspect 1.294),
-// channel-allocations-5ghz 1980×1530 (native landscape, unchanged), and
-// top-20-checklist 1530×1980 (PORTRAIT, unchanged). Aspect is correct for all
-// three orientations.
+// Objective evidence (integration_test/pdf_rotation_probe_test.dart, macOS,
+// re-measured 2026-07-20): decoded PNG bytes are bubble-diagram 3600×2025
+// (LANDSCAPE, aspect 1.778), channel-allocations-5ghz 1980×1530 (LANDSCAPE,
+// 1.294), and top-20-checklist 1530×1980 (PORTRAIT, 0.773). That probe now
+// ASSERTS these aspects instead of only printing them.
 //
 // One screen class, parameterized by `title` + `assetPath`, wired once per card
 // in app_router.dart. The catalog id → asset file mapping lives in the router /
@@ -60,10 +69,14 @@
 // is exactly why this shipped: on a MacBook trackpad the viewer pages fine, so
 // the defect is invisible unless you actually plug in a mouse.
 //
-// Four of the 13 bundled documents are multi-page and were affected:
-// fix-your-own-wifi (64 pages), ham-radio-general-exam-study-notes (15),
-// general-license-frequency-chart (6), mcs-index-card (2). Peter reported the
-// book; the same bug was silently hiding pages of three reference cards.
+// THREE of the 13 bundled documents are multi-page and were affected:
+// fix-your-own-wifi (64 pages), ham-radio-general-exam-study-notes (15) and
+// general-license-frequency-chart (6). Peter reported the book; the same bug was
+// silently hiding pages of two reference cards. (Counts per `mdls -name
+// kMDItemNumberOfPages`. An earlier revision of this comment listed
+// mcs-index-card as 2 pages and the total as four documents; that came from a
+// naive `/Type /Page` regex which double-counts the page-tree node.
+// mcs-index-card is `/Count 1`, one page.)
 //
 // The fix is four independent affordances, so no single one is load-bearing:
 //   1. [PdfViewerScrollBehavior] adds `mouse` to `dragDevices` — drag-to-page.
@@ -113,6 +126,49 @@ import '../../../widgets/tool_help_footer.dart';
 /// the Vellum export — a stray "Untitled" page). Swap the file at this path to
 /// update; this constant stays stable so nothing downstream needs editing.
 const String kFixYourOwnWifiBookAsset = 'assets/books/fix-your-own-wifi.pdf';
+
+/// Zoom bounds this screen applies to every page, as multipliers of the
+/// fit-to-viewport ("contained") scale.
+///
+/// Public because [_PdfReferenceScreenState._pageBuilder] re-implements pdfx's
+/// private default page builder, and the only way to keep that copy honest is to
+/// assert it against pdfx's own defaults from a test. See
+/// `integration_test/pdf_rotation_probe_test.dart`.
+const double kPdfMinZoomFactor = 1;
+const double kPdfMaxZoomFactor = 3;
+
+/// Whether a page turn may proceed. Pure, so it can be tested directly.
+///
+/// EXTRACTED 2026-07-20 (Vera gate). This logic used to be three inline
+/// conditions inside `_turnPage`, and the most important of them — [pagerAttached]
+/// — was **uncoverable**. It guards a sub-frame race (pdfx cross-fades its viewer
+/// in via an `AnimatedSwitcher`, so "document loaded" briefly precedes "pager
+/// exists"), and on a warm test process the document can open inside two frames.
+/// Driving input at every frame of the load still could not reproduce it: with
+/// the guard deleted, the integration suite stayed green. A guard whose deletion
+/// no test can detect is a guard that will be deleted by someone tidying up.
+///
+/// Pulling the decision out of the widget makes the condition itself checkable
+/// without needing to win a race. This is production logic, not a test seam: the
+/// widget calls it on every keystroke, wheel tick and button press.
+///
+/// - [turning] — an animated turn is already in flight; further input is dropped
+///   so a wheel flick cannot queue a dozen turns.
+/// - [pagerAttached] — the `PageController` has a live position. Turning before
+///   this trips `PageView`'s `positions.isNotEmpty` assertion and CRASHES, which
+///   is why it is a hard gate rather than a nicety.
+/// - [currentPage] is 1-based, matching `PdfController.page`.
+bool canTurnPdfPage({
+  required bool turning,
+  required bool pagerAttached,
+  required int currentPage,
+  required int pageCount,
+  required bool forward,
+}) {
+  if (turning) return false;
+  if (!pagerAttached) return false;
+  return forward ? currentPage < pageCount : currentPage > 1;
+}
 
 /// The share/download seam this screen calls. Defaults to the real [sharePdf]
 /// (native share sheet / web anchor download); widget tests inject a fake so the
@@ -292,8 +348,10 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
 
   /// Zoom bounds, mirroring the `minScale`/`maxScale` this screen passes to
   /// [PhotoViewGalleryPageOptions] so the buttons and the pinch gesture agree.
-  static const double _minZoomFactor = 1;
-  static const double _maxZoomFactor = 3;
+  /// Library-level so `pdf_rotation_probe_test` can assert them against pdfx's
+  /// OWN defaults, which is what keeps [_pageBuilder] honest (see its doc).
+  static const double _minZoomFactor = kPdfMinZoomFactor;
+  static const double _maxZoomFactor = kPdfMaxZoomFactor;
 
   /// One press of + or one wheel notch. 1.4 gives roughly four steps across the
   /// 1x to 3x range, which reads as responsive without overshooting.
@@ -327,7 +385,14 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   }
 
   /// Page builder that matches pdfx's own defaults exactly, plus the injected
-  /// [PhotoViewController]. Kept in sync with `_PdfViewState._pageBuilder`.
+  /// [PhotoViewController] and the desktop [disableGestures] handoff.
+  ///
+  /// This is a hand-copy of pdfx's PRIVATE `_PdfViewState._pageBuilder`, so it
+  /// can silently drift if pdfx changes its defaults. That risk is ENCODED, not
+  /// merely narrated: `pdf_rotation_probe_test.dart` builds pdfx's own default
+  /// `PdfViewBuilders` and asserts its scale values equal [kPdfMinZoomFactor] /
+  /// [kPdfMaxZoomFactor] / contained*1. If pdfx changes them, that test goes red
+  /// and this copy gets updated.
   ///
   /// The min/max/initial scales stay expressed as [PhotoViewComputedScale] so
   /// the fit behavior this file's header documents (PhotoView fit-containing the
@@ -406,8 +471,15 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   /// Animates one page in [forward] reading order. No-ops at either end so a
   /// held arrow key or a wheel flick cannot scroll past the document.
   Future<void> _turnPage({required bool forward}) async {
-    if (_turning || !_pagerAttached) return;
-    if (forward ? !_canGoForward : !_canGoBack) return;
+    if (!canTurnPdfPage(
+      turning: _turning,
+      pagerAttached: _pagerAttached,
+      currentPage: _currentPage,
+      pageCount: _pageCount,
+      forward: forward,
+    )) {
+      return;
+    }
     _turning = true;
     try {
       await _controller.animateToPage(
@@ -582,15 +654,31 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
         // (special case, see the build session log). The global iconButtonTheme
         // paints the §8.3 lime focus ring on the bare share IconButton.
         actions: <Widget>[
-          IconButton(
-            key: _shareButtonKey,
-            onPressed: _handleShare,
-            iconSize: 24,
-            tooltip: 'Share or download',
-            icon: Icon(
-              Icons.ios_share,
-              size: 24,
-              color: colors.textSecondary,
+          // Explicit accessible name (GL-003 §8.16, WCAG 2.2 AA SC 4.1.2).
+          // `tooltip:` alone is NOT an accessible name: Flutter keeps it in a
+          // separate field, which macOS maps to AXHelp rather than AXTitle, so a
+          // live semantics dump of this button read `label="" button=true` — an
+          // unnamed button to a screen reader. Same treatment as [_ControlButton].
+          Semantics(
+            button: true,
+            // Must be set explicitly. A Semantics node with `button: true` and no
+            // `enabled` leaves the isEnabled flag UNSET, which AT reads as a
+            // DISABLED button — a live dump showed exactly that after the label
+            // was added. Share is always available here (the asset is bundled),
+            // so this is unconditionally true; [_ControlButton] passes its real
+            // enabled state instead, because its controls genuinely do disable.
+            enabled: true,
+            label: 'Share or download',
+            child: IconButton(
+              key: _shareButtonKey,
+              onPressed: _handleShare,
+              iconSize: 24,
+              tooltip: 'Share or download',
+              icon: Icon(
+                Icons.ios_share,
+                size: 24,
+                color: colors.textSecondary,
+              ),
             ),
           ),
         ],
@@ -636,9 +724,20 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
                       // surface is and how to use it. The interaction named here
                       // is the one that actually exists on THIS platform.
                       label: _semanticsLabel,
-                      // The viewer is a custom gesture surface, not a labelled
-                      // control — exclude its inner semantics so the one
-                      // screen-level label reads cleanly.
+                      // Child semantics are deliberately NOT excluded, and this
+                      // comment used to claim otherwise. `explicitChildNodes:
+                      // false` is Flutter's default and excludes nothing; the flag
+                      // that would exclude is `excludeSemantics: true` (used
+                      // correctly on the page indicator below).
+                      //
+                      // Corrected the COMMENT rather than the code, because
+                      // excluding here would be a real accessibility regression:
+                      // [_body] contains the `_LoadingState` and `_ErrorState`
+                      // liveRegion announcements, and silencing those would leave
+                      // a screen-reader user with no signal that the card is
+                      // loading or that it failed to open. The rasterized PDF
+                      // contributes no competing label, so there is nothing to
+                      // suppress in the success case anyway.
                       explicitChildNodes: false,
                       child: Listener(
                         onPointerSignal: _handlePointerSignal,
