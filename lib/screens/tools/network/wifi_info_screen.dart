@@ -28,6 +28,26 @@
 // cannot expose renders an explicit "Unavailable" row with a precise reason --
 // never a fabricated value, never a silent drop.
 //
+// THE LOCATION GATE IS TRI-STATE, NOT BOOLEAN (load-bearing). Neither gated
+// platform will re-prompt once the authorization has left `notDetermined`:
+// macOS TCC never asks twice, and Android stops asking after a permanent
+// denial. A Location card that offers an in-app "Grant Location" button in
+// every unauthorized state therefore renders a control that is GUARANTEED to do
+// nothing under `denied` / `restricted` -- no prompt, no error, no navigation.
+// Keith hit exactly that on the AP scan screen in a live deployment and clicked
+// it repeatedly. This screen has held the tri-state `_nameAuth` since the
+// permission read was added and simply never consulted it for this decision.
+// It does now, and [_LocationCard] takes `promptable` as a REQUIRED parameter
+// so a future call site cannot omit the state and quietly reintroduce the
+// button: `notDetermined` renders the grant, `denied` / `restricted` render the
+// System Settings deep-link as the SOLE and PRIMARY action. The copy moves with
+// the control, because telling a denied user to grant Location in-app is the
+// prose form of the same dead button. See
+// [[feedback_ui_rendered_a_decision_it_lacked]]: the defect is the missing
+// state, not the button. Tests: wifi_info_permission_flow_test.dart drives all
+// four states, `denied` and `restricted` included, which no test on this screen
+// had ever done.
+//
 // States (SOP-007 section 5):
 //   * web / unsupported native -> NetworkUnavailableView / coming-soon.
 //   * loading  -> macOS: labeled spinner (announced via liveRegion).
@@ -1251,21 +1271,48 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
 
     final bool isAndroid = _source == WifiInfoSource.androidWifiManager;
 
+    // THE TRI-STATE, consulted. This screen has held `_nameAuth` since the
+    // permission read was added, and the Location card never asked it whether a
+    // prompt was even possible: it offered "Grant Location" in every
+    // unauthorized state. Under `denied` / `restricted` macOS will not re-prompt
+    // and Android will not re-prompt after a permanent denial, so that button
+    // was guaranteed to do nothing at all. Keith hit exactly this on the AP scan
+    // screen in a live deployment and clicked it repeatedly with no prompt, no
+    // error and no navigation. The defect is the unconsulted state, not the
+    // button ([[feedback_ui_rendered_a_decision_it_lacked]]).
+    //
+    // A null `_nameAuth` means the status has not resolved yet, and resolves to
+    // `notDetermined` to match [LocationAuthStatus.fromToken]'s documented
+    // fallback: offer the harmless prompt rather than a dead deep-link when the
+    // truth is not yet known.
+    final LocationAuthStatus auth = _nameAuth ?? LocationAuthStatus.notDetermined;
+    final bool promptable = auth.isPromptable;
+    final String settingsName = isAndroid ? 'Settings' : 'System Settings';
+
     if (info.ssid == null && _locationGrantAttempted) {
       // Android: a granted runtime permission lands on the next poll (no
       // relaunch). macOS: the grant may need an app relaunch before the name
       // surfaces. A still-null name after granting on Android most often means
       // the user denied (or permanently denied) the dialog — the card keeps the
       // Open Settings affordance below for the permanently-denied case.
+      // Same guard, same reason: after a grant attempt on Android the status is
+      // no longer `notDetermined`, so a re-offered in-app grant here is the same
+      // dead button. When the answer was a denial, say so and point at the only
+      // switch that still works.
       return _LocationCard(
         message: isAndroid
-            ? 'If you allowed Location, the network name appears on the next '
-                'refresh. If it is still blank, the permission was denied. Open '
-                'Settings to enable Location for this app. Signal, rate, and '
-                'channel details work without it.'
+            ? (promptable
+                ? 'If you allowed Location, the network name appears on the '
+                    'next refresh. If it is still blank, tap Grant Location '
+                    'again. Signal, rate, and channel details work without it.'
+                : 'The Location permission was denied, and this app cannot ask '
+                    'again. Enable Location for this app in Settings, then tap '
+                    'Refresh. Signal, rate, and channel details work without '
+                    'it.')
             : 'Permission granted. macOS may need an app relaunch before the '
                 'network name appears. The signal and channel details below are '
                 'unaffected.',
+        promptable: promptable,
         onGrant: isAndroid ? (_macLoading ? null : _grantLocation) : null,
         onOpenSettings: isAndroid ? _openLocationSettings : null,
         platformIsAndroid: isAndroid,
@@ -1273,14 +1320,41 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     }
 
     if (nameMissing) {
+      // The copy changes with the control. Telling a denied user that the name
+      // "needs" Location, beside a Grant button the OS forbids from acting, is
+      // the prose form of the same dead button: it instructs them to do
+      // something that cannot be done from inside this app.
+      final String why = isAndroid
+          ? 'Android requires it to read the connected network name.'
+          : 'macOS requires it to read the name.';
+      final String needs = isAndroid
+          ? 'The network name (SSID and BSSID) needs the Location permission '
+              'on Android.'
+          : 'The network name (SSID and BSSID) needs Location Services for '
+              'this app.';
+      const String unaffected =
+          'Signal, rate, and channel details already work without it.';
+      final String message;
+      switch (auth) {
+        case LocationAuthStatus.denied:
+        case LocationAuthStatus.restricted:
+          // NOT promptable. No in-app grant is offered and none is described.
+          message = '$needs $why Location is turned off for this app, and this '
+              'app cannot ask again. That switch only exists in $settingsName. '
+              'Turn it on there, then tap Refresh. $unaffected';
+        case LocationAuthStatus.notDetermined:
+          message = '$needs $why $unaffected';
+        case LocationAuthStatus.authorized:
+          // Defensive: the authorized-and-not-yet-attempted case returns null
+          // above, so this is not normally reachable. If it ever is, the card
+          // must not claim a grant is missing when the app holds it.
+          message = 'Location is granted for this app, but the network name '
+              'still did not resolve in this reading. Tap Refresh to try '
+              'again. $unaffected';
+      }
       return _LocationCard(
-        message: isAndroid
-            ? 'The network name (SSID and BSSID) needs the Location permission '
-                'on Android. Android requires it to read the connected network '
-                'name. Signal, rate, and channel details already work without it.'
-            : 'The network name (SSID and BSSID) needs Location Services for '
-                'this app. macOS requires it to read the name. Signal, rate, and '
-                'channel details already work without it.',
+        message: message,
+        promptable: promptable,
         onGrant: _macLoading ? null : _grantLocation,
         onOpenSettings: _openLocationSettings,
         platformIsAndroid: isAndroid,
@@ -1975,6 +2049,7 @@ class _LoadingCard extends StatelessWidget {
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
     required this.message,
+    required this.promptable,
     required this.onGrant,
     required this.onOpenSettings,
     this.platformIsAndroid = false,
@@ -1982,8 +2057,20 @@ class _LocationCard extends StatelessWidget {
 
   final String message;
 
+  /// Whether the OS can still surface an in-app permission prompt.
+  ///
+  /// THE load-bearing input, and the one this card used to lack. It is
+  /// `required` on purpose: a call site cannot forget to consult the
+  /// authorization state, because the card will not compile without it. Both
+  /// gated platforms stop prompting once the status leaves `notDetermined`
+  /// (macOS TCC never re-prompts; Android will not re-prompt after a permanent
+  /// denial), so rendering an in-app grant outside that state produces a button
+  /// guaranteed to do nothing at all. See [[feedback_ui_rendered_a_decision_it_lacked]].
+  final bool promptable;
+
   /// When null, the card is informational (post-grant) and hides the Grant
-  /// button to avoid an endless re-tap loop.
+  /// button to avoid an endless re-tap loop. A non-null callback is still only
+  /// rendered when [promptable] is true.
   final VoidCallback? onGrant;
 
   /// Deep-links to the OS settings pane (macOS Location Services / Android app
@@ -1999,6 +2086,12 @@ class _LocationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    // THE FIX for the dead button. The in-app grant renders ONLY where the OS
+    // can actually surface a prompt. Under denied / restricted the deep-link is
+    // the only route that can work, so it takes the primary weight instead of
+    // sitting as an outlined afterthought beside a button that cannot act.
+    final bool showGrant = promptable && onGrant != null;
+    final bool settingsIsPrimary = !showGrant;
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -2028,17 +2121,18 @@ class _LocationCard extends StatelessWidget {
               ),
             ],
           ),
-          // The Grant button tries the system prompt (still helps first-time
-          // users). The Open Location Settings button deep-links to the exact
-          // pane for the reliable manual path. Both are shown side by side and
-          // wrap on a narrow card.
-          if (onGrant != null || onOpenSettings != null) ...[
+          // The Grant button tries the system prompt, and is therefore rendered
+          // only while a prompt can still appear (notDetermined). The Open
+          // Location Settings button deep-links to the exact pane for the
+          // reliable manual path, and becomes the primary action once it is the
+          // only one that can work. Both wrap on a narrow card.
+          if (showGrant || onOpenSettings != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Wrap(
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
               children: <Widget>[
-                if (onGrant != null)
+                if (showGrant)
                   Semantics(
                     button: true,
                     label: 'Grant Location permission',
@@ -2050,17 +2144,34 @@ class _LocationCard extends StatelessWidget {
                 if (onOpenSettings != null)
                   Semantics(
                     button: true,
-                    label: platformIsAndroid
-                        ? 'Open app Location settings'
-                        : 'Open macOS Location Services settings',
-                    child: OutlinedButton(
-                      onPressed: onOpenSettings,
-                      child: Text(
-                        platformIsAndroid
-                            ? 'Open App Settings'
-                            : 'Open Location Settings',
-                      ),
-                    ),
+                    label: settingsIsPrimary
+                        ? (platformIsAndroid
+                            ? 'Open app Location settings to enable Location '
+                                'for this app'
+                            : 'Open macOS Location Services settings to enable '
+                                'Location for this app')
+                        : (platformIsAndroid
+                            ? 'Open app Location settings'
+                            : 'Open macOS Location Services settings'),
+                    // Primary weight when it is the only action that can work,
+                    // so the one usable route is not the quiet one.
+                    child: settingsIsPrimary
+                        ? FilledButton(
+                            onPressed: onOpenSettings,
+                            child: Text(
+                              platformIsAndroid
+                                  ? 'Open App Settings'
+                                  : 'Open Location Settings',
+                            ),
+                          )
+                        : OutlinedButton(
+                            onPressed: onOpenSettings,
+                            child: Text(
+                              platformIsAndroid
+                                  ? 'Open App Settings'
+                                  : 'Open Location Settings',
+                            ),
+                          ),
                   ),
               ],
             ),
