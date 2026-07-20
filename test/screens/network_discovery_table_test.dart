@@ -239,7 +239,7 @@ void main() {
       subnetLabel: '10.0.10.1-10.0.10.254',
       arp: arpAvailable
           ? const ArpReadResult(available: true)
-          : const ArpReadResult.unavailable('No ARP read on this platform.'),
+          : const ArpReadResult.unsupported('No ARP read on this platform.'),
     );
 
     Future<void> pumpAt(
@@ -477,7 +477,7 @@ void main() {
       subnetLabel: '10.0.10.1-10.0.10.254',
       arp: arpAvailable
           ? const ArpReadResult(available: true)
-          : const ArpReadResult.unavailable('No ARP read on this platform.'),
+          : const ArpReadResult.unsupported('No ARP read on this platform.'),
     );
 
     testWidgets('sorting by MAC and then re-scanning WITHOUT an ARP read does '

@@ -11,10 +11,15 @@
 // PLATFORM HONESTY (GL-005 / GL-008):
 //  - macOS: invoke the channel; surface whatever the kernel returned, including
 //    a clear "sandbox blocked it" state when sysctl fails (EPERM/empty).
-//  - iOS / Android / Windows / web: a sandboxed app on those targets cannot
-//    read the ARP table, so the reader returns a clean `unavailable` result
-//    with a reason. Nothing is faked. (Windows would use a different native
-//    API — out of scope for this macOS-focused gate; TICKET-HSD-02.)
+//  - Windows: read GetIpNetTable via pure-Dart FFI. IMPLEMENTED, not verified
+//    on real hardware (TODO(windows-verify) below). A failure degrades to an
+//    honest `failed` result — "could not read", never "cannot read".
+//  - iOS / Android / web: a sandboxed app on those targets cannot read the ARP
+//    table, so the reader returns a clean `unsupported` result with a reason.
+//    Nothing is faked.
+//
+// [readsMac] on the reader is the ONE place a platform's MAC capability is
+// declared. Do not restate it as a table anywhere else; ask the reader.
 //
 // The reader is an injectable seam (mirrors MulticastLock / MdnsBrowser) so the
 // engine and the IP→MAC mapping logic stay unit-testable with no platform
@@ -54,14 +59,38 @@ class ArpReadResult {
     required this.available,
     this.entries = const <ArpEntry>[],
     this.error,
+    this.platformSupported = true,
   });
 
-  /// An unavailable result for a platform that cannot read the ARP table, with
-  /// an honest reason.
-  const ArpReadResult.unavailable(String reason)
+  /// The platform has no reader that can read the neighbor table at all
+  /// (iOS, Android, web). This is the ONLY result that licenses a "this
+  /// platform cannot" claim in the UI.
+  const ArpReadResult.unsupported(String reason)
       : available = false,
         entries = const <ArpEntry>[],
-        error = reason;
+        error = reason,
+        platformSupported = false;
+
+  /// The read was ATTEMPTED on a platform that implements it, and it failed.
+  /// The capability is real; this attempt did not work. UI must say "could
+  /// not read", never "this platform cannot".
+  const ArpReadResult.failed(String reason)
+      : available = false,
+        entries = const <ArpEntry>[],
+        error = reason,
+        platformSupported = true;
+
+  /// Whether this platform HAS a neighbor-table reader, independent of whether
+  /// this particular read succeeded.
+  ///
+  /// [available] and [platformSupported] are different questions and were once
+  /// collapsed into one: a single `unavailable` result meant both "iOS cannot"
+  /// and "the Windows FFI read failed", so the screen could only render one
+  /// sentence for both and picked the false one. There is deliberately no
+  /// default and no general `unavailable` constructor — every failure site
+  /// must state which kind it is, so forgetting is a compile error rather
+  /// than a lie on screen.
+  final bool platformSupported;
 
   /// True when the underlying read SUCCEEDED. Note: `available == true` with an
   /// empty [entries] list is a valid result (the cache was warm for no hosts),
@@ -88,6 +117,20 @@ abstract interface class ArpReader {
   /// Reads the cache. Never throws. MUST be called AFTER the connect-scan, so
   /// the cache is warm for the hosts just probed.
   Future<ArpReadResult> read();
+
+  /// Whether this reader performs a REAL neighbor-table read on its platform.
+  ///
+  /// This is the single source for "can this platform expose MACs at all".
+  /// Every capability decision in the app derives from the reader that does
+  /// the work, so no hand-maintained platform table can drift away from the
+  /// code that actually runs ([[feedback_ui_rendered_a_decision_it_lacked]],
+  /// "one representation, one derivation").
+  ///
+  /// It answers *cannot*, never *did not*: a reader with [readsMac] true can
+  /// still return an unavailable [ArpReadResult] when the read FAILS at
+  /// runtime. Callers must keep those two apart — "this platform cannot" is a
+  /// capability claim and is false whenever the platform simply failed.
+  bool get readsMac;
 }
 
 /// The reader for platforms that cannot read the ARP table from a sandboxed
@@ -99,7 +142,10 @@ class UnavailableArpReader implements ArpReader {
   final String _reason;
 
   @override
-  Future<ArpReadResult> read() async => ArpReadResult.unavailable(_reason);
+  bool get readsMac => false;
+
+  @override
+  Future<ArpReadResult> read() async => ArpReadResult.unsupported(_reason);
 }
 
 /// macOS reader over the `com.wlanpros.toolbox/arp_table` method channel
@@ -111,19 +157,23 @@ class MethodChannelArpReader implements ArpReader {
   static const MethodChannel _channel =
       MethodChannel('com.wlanpros.toolbox/arp_table');
 
+  /// macOS reads the neighbor table for real, via the Swift sysctl channel.
+  @override
+  bool get readsMac => true;
+
   @override
   Future<ArpReadResult> read() async {
     try {
       final Object? raw = await _channel.invokeMethod<Object?>('readArpTable');
       return parsePayload(raw);
     } on MissingPluginException {
-      return const ArpReadResult.unavailable(
+      return const ArpReadResult.failed(
         'ARP channel not registered (native side missing).',
       );
     } on PlatformException catch (e) {
-      return ArpReadResult.unavailable('ARP read error: ${e.message ?? e.code}');
+      return ArpReadResult.failed('ARP read error: ${e.message ?? e.code}');
     } catch (e) {
-      return ArpReadResult.unavailable('ARP read failed: $e');
+      return ArpReadResult.failed('ARP read failed: $e');
     }
   }
 
@@ -132,14 +182,14 @@ class MethodChannelArpReader implements ArpReader {
   /// map shaped like the platform-channel response.
   static ArpReadResult parsePayload(Object? raw) {
     if (raw is! Map) {
-      return const ArpReadResult.unavailable(
+      return const ArpReadResult.failed(
         'ARP read returned an unexpected payload.',
       );
     }
     final bool available = raw['available'] == true;
     if (!available) {
       final Object? err = raw['error'];
-      return ArpReadResult.unavailable(
+      return ArpReadResult.failed(
         err is String && err.isNotEmpty
             ? 'ARP read unavailable (sandbox-blocked): $err'
             : 'ARP read unavailable (sandbox-blocked).',
@@ -184,6 +234,14 @@ class WindowsIpNetTableArpReader implements ArpReader {
   /// read is used). When set, the FFI path is bypassed entirely.
   final List<MapEntry<String, String>> Function()? _rawRead;
 
+  /// Windows reads the neighbor table for real, via GetIpNetTable. The path is
+  /// IMPLEMENTED but still carries TODO(windows-verify) — it has never executed
+  /// on real hardware. That is a reason to distrust the RESULT, not a reason to
+  /// call the platform incapable: a failed read returns an unavailable
+  /// [ArpReadResult], which callers must report as "could not", not "cannot".
+  @override
+  bool get readsMac => true;
+
   @override
   Future<ArpReadResult> read() async {
     try {
@@ -196,9 +254,9 @@ class WindowsIpNetTableArpReader implements ArpReader {
       ];
       return ArpReadResult(available: true, entries: entries);
     } on WindowsArpReadException catch (e) {
-      return ArpReadResult.unavailable('Windows ARP read failed: ${e.message}');
+      return ArpReadResult.failed('Windows ARP read failed: ${e.message}');
     } catch (e) {
-      return ArpReadResult.unavailable('Windows ARP read error: $e');
+      return ArpReadResult.failed('Windows ARP read error: $e');
     }
   }
 }

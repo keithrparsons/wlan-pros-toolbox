@@ -30,8 +30,12 @@
 //                is correct either way, but "implemented and degrading
 //                honestly" is not "verified". iOS and Android cannot read it.
 //                The screen branches on the RESULT of the read, never on a
-//                hardcoded platform list — which is why an unverified backend
-//                cannot make this screen lie.
+//                hardcoded platform list. That is necessary but NOT sufficient:
+//                the result carries `platformSupported` as well as `available`,
+//                because a failed read and an incapable platform are different
+//                sentences. This copy once said "which this platform cannot do"
+//                on a FAILED Windows read — the lie was in the message text,
+//                which no amount of branching on the result would have caught.
 //  - web        → NetworkUnavailableView (the socket engine needs dart:io).
 //
 // NOT feature-complete: W3 (multi-VLAN grouping), W4 (IPv6), W5 (per-host
@@ -784,10 +788,26 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           'MAC + vendor read from the ARP cache. '
           '$withMac of ${r.hosts.length} host${r.hosts.length == 1 ? '' : 's'} '
           'matched.';
-    } else {
+    } else if (arp == null) {
+      // No read result at all: the pass did not run. Claim nothing about the
+      // platform — we did not ask it.
+      message =
+          'MAC address and vendor were not read for this scan. Those fields '
+          'are omitted here, not blank.';
+    } else if (!arp.platformSupported) {
+      // The only branch that has earned a capability claim: this platform has
+      // no neighbor-table reader at all.
       message =
           'MAC address and vendor need a desktop ARP read, which this platform '
           'cannot do. Those fields are omitted here, not blank.';
+    } else {
+      // A platform that CAN read, whose read did not work this time. "Could
+      // not", never "cannot" — reporting a failed read as a platform limit is
+      // a false capability claim, and it is the message text that tells it,
+      // so branching on the result alone would not have prevented it.
+      message =
+          'The ARP read did not complete on this scan, so MAC address and '
+          'vendor are omitted here, not blank.';
     }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -65,6 +65,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
   String? _subnetLabel;
   final List<Neighbor> _neighbors = <Neighbor>[];
 
+  /// Fate of this sweep's neighbor-table read. Drives whether a missing MAC is
+  /// reported as a platform limit, a failed read, or simply a host the read
+  /// did not cover. Never assert a negative about a source we did not query.
+  MacReadOutcome _macRead = MacReadOutcome.notAttempted;
+
   StreamSubscription<ArpScanProgress>? _sub;
   Completer<void>? _cancel;
 
@@ -88,6 +93,10 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     super.dispose();
   }
 
+  /// Why this neighbor has no MAC. Delegates to the shared [missingMacReason]
+  /// so the row, the export, and any future surface read one derivation.
+  String get _missingMacReason => missingMacReason(_macRead);
+
   Future<void> _start() async {
     if (_running || _service == null || _interfaceService == null) return;
 
@@ -98,6 +107,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       _probed = 0;
       _total = 0;
       _subnetLabel = null;
+      _macRead = MacReadOutcome.notAttempted;
     });
 
     // Derive the local /24 from the device's primary IPv4.
@@ -136,6 +146,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             setState(() {
               _probed = p.probed;
               _total = p.total;
+              _macRead = p.macRead;
               if (p.lastFound != null) _neighbors.add(p.lastFound!);
             });
           },
@@ -201,7 +212,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
 
     for (final Neighbor n in _neighbors) {
       final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
-      final String mac = hasMac ? n.mac! : 'Not exposed on this platform';
+      final String mac = hasMac ? n.mac! : _missingMacReason;
       final String rtt = n.rttMs == null ? '' : n.rttMs!.toStringAsFixed(0);
       buf.writeln(<String>[n.ip, mac, rtt].join(tab));
     }
@@ -278,15 +289,19 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       ArpCapability.sweepWithMac => (
         'Discovery with MAC addresses',
         'On this platform the toolbox sweeps the local subnet and reads the '
-            'kernel ARP table (/proc/net/arp) to attach each responder\'s real '
-            'MAC address. No subprocess, no elevated privilege.',
+            'kernel neighbor table to attach each responder\'s real MAC '
+            'address. macOS reads it through a native sysctl call, Windows '
+            'through the IP Helper API. No subprocess, no elevated privilege. '
+            'If a read fails, the toolbox says so rather than reporting the '
+            'MAC as unavailable.',
       ),
       ArpCapability.sweepNoMac => (
         'Discovery only: MAC not exposed',
-        'This platform sandboxes the ARP table away from apps, and shelling '
-            'out to the system arp command is blocked. The toolbox sweeps the '
-            'local subnet and lists every host that answers; MAC addresses are '
-            'shown as "Not exposed on this platform" rather than guessed.',
+        'This platform sandboxes the neighbor table away from apps, and '
+            'shelling out to the system arp command is blocked. The toolbox '
+            'sweeps the local subnet and lists every host that answers; MAC '
+            'addresses are shown as "Not exposed on this platform" rather '
+            'than guessed.',
       ),
       ArpCapability.unavailable => ('', ''),
     };
@@ -491,7 +506,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                       ),
                     )
                   : Text(
-                      'MAC not exposed on this platform',
+                      _macRead == MacReadOutcome.notAttempted
+                          ? 'MAC not exposed on this platform'
+                          : _missingMacReason,
                       style: text.labelSmall?.copyWith(
                         color: colors.textTertiary,
                         fontStyle: FontStyle.italic,

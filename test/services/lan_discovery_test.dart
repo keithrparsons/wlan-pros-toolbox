@@ -24,6 +24,12 @@ import 'package:wlan_pros_toolbox/services/network/mac_oui_service.dart';
 class _FakeArpReader implements ArpReader {
   _FakeArpReader(this._result);
   final ArpReadResult _result;
+
+  /// Engine tests stand in for a desktop platform that HAS a reader; the
+  /// incapable case is driven through `ArpReadResult.unsupported` instead.
+  @override
+  bool get readsMac => true;
+
   @override
   Future<ArpReadResult> read() async => _result;
 }
@@ -1141,7 +1147,7 @@ void main() {
     test('an unavailable ARP read leaves MAC/vendor null and surfaces the '
         'reason — the run still completes', () async {
       final LanDiscoveryEngine engine = engineWithArp(
-        _FakeArpReader(const ArpReadResult.unavailable(
+        _FakeArpReader(const ArpReadResult.unsupported(
           'iOS sandbox cannot read the ARP table.',
         )),
       );
