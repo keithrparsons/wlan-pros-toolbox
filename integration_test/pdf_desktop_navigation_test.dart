@@ -254,7 +254,19 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('previous is DISABLED on page 1, next on the last page', (
+  // RENAMED 2026-07-20 (second Vera gate). This test used to be called
+  // "previous is DISABLED on page 1, next on the last page". It never visited
+  // the last page — it asserts on page 1, taps Next once, and asserts on page
+  // 2 — so the second half of its own name was never executed, and mutating the
+  // forward bound to `true` left this and all 17 sibling tests GREEN. A name
+  // that promises coverage the body does not deliver is worse than no test,
+  // because it stops anyone from writing the real one.
+  //
+  // The name now describes what it actually does. The end-of-document bounds
+  // are asserted properly, on both ends and with the semantics flags, in
+  // `test/screens/reference/pdf_viewer_control_bar_test.dart` — which can build
+  // page 64 by typing the number instead of racing a native document open.
+  testWidgets('previous is DISABLED on page 1 and becomes live on page 2', (
     WidgetTester tester,
   ) async {
     await pumpBook(tester);
@@ -331,6 +343,68 @@ void main() {
       lessThan(zoomedOnce),
       reason: 'Fit must return the page below the zoomed scale.',
     );
+  });
+
+  // ── The enable-AFTER-load transitions ────────────────────────────────────
+  //
+  // ADDED 2026-07-20 (second Vera gate). These guard the two rebuild triggers
+  // the control-state fix depends on, and they can only live here: both fire on
+  // signals that require a real document opened by native PDFKit, so a mutation
+  // run against `flutter test` cannot see them at all.
+  //
+  // The failure mode they catch is specific and silent. The prev/next controls
+  // are now gated on `_pagerAttached`, and the zoom controls on the current
+  // page's measured raster. Neither signal calls setState on its own —
+  // `_pagerAttached` is set from a ScrollMetricsNotification (deliberately NOT a
+  // setState, because metrics fire mid-drag) and the raster size is recorded in
+  // an async render callback. Without the one-shot rebuild on each, the controls
+  // would sit DISABLED forever on a perfectly loaded document while the arrow
+  // keys and the wheel worked fine — a control lying in the other direction.
+
+  testWidgets('the page controls become ENABLED once the document loads', (
+    WidgetTester tester,
+  ) async {
+    await pumpBook(tester);
+
+    final IconButton next = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip('Next page'),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(
+      next.onPressed,
+      isNotNull,
+      reason: 'Next must be LIVE on page 1 of a loaded 64-page document. If '
+          'this is null, the one-shot rebuild on pager attach was lost and the '
+          'controls are stuck disabled on a working document.',
+    );
+  });
+
+  testWidgets('the zoom controls become ENABLED once the page is measured', (
+    WidgetTester tester,
+  ) async {
+    await pumpBook(tester);
+
+    for (final String label in <String>[
+      'Zoom in',
+      'Zoom out',
+      'Fit page to window',
+    ]) {
+      final IconButton control = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byTooltip(label),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(
+        control.onPressed,
+        isNotNull,
+        reason: '"$label" must be LIVE once the page raster is measured. If '
+            'this is null, the rebuild on raster-size capture was lost and the '
+            'zoom controls never re-enable after load.',
+      );
+    }
   });
 
   // ---------------------------------------------------------------------------

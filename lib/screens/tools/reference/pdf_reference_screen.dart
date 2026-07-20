@@ -95,9 +95,12 @@
 // The screen label is the honest, clear thing we can do (GL-005): name the card,
 // state the interaction that actually exists on THIS platform.
 //
-// Tokens (GL-003 §8): surface0 canvas + app-bar, surface1 viewer backdrop,
-// primary spinner, textPrimary/textSecondary/textTertiary for the error copy and
-// the control bar, AppSpacing for gaps. No hardcoded colors or sizes. The
+// Tokens (GL-003 §8): surface0 canvas + app-bar, primary spinner,
+// textPrimary/textSecondary/textTertiary for the error copy and the control
+// bar, AppSpacing for gaps. The viewer letterbox is theme-split — see
+// [pdfLetterboxColor]; it used to be listed here as plain "surface1 viewer
+// backdrop", which was true only in dark mode and produced an invisible page
+// edge (1.00:1) in light. No hardcoded colors or sizes. The
 // prev/next/zoom glyphs are bare `IconButton`s so they inherit the §8.3 lime
 // focus ring from the global `iconButtonTheme` rather than painting one locally,
 // and they follow §8.16's "disabled, not hidden" rule at the document ends.
@@ -157,17 +160,155 @@ const double kPdfMaxZoomFactor = 3;
 /// - [pagerAttached] — the `PageController` has a live position. Turning before
 ///   this trips `PageView`'s `positions.isNotEmpty` assertion and CRASHES, which
 ///   is why it is a hard gate rather than a nicety.
+/// - [documentReady] — the document is in the `ready` state, not `loading` or
+///   `error`. Added 2026-07-20 (second Vera gate). Without it a document that
+///   opened and THEN failed (`onDocumentError` after `onDocumentLoaded`, so
+///   `pageCount` is still > 1) left the pager live underneath the error overlay:
+///   the user reads "could not be opened" while the Next control reports itself
+///   as enabled and silently turns a page nobody can see.
 /// - [currentPage] is 1-based, matching `PdfController.page`.
+///
+/// THIS FUNCTION IS ALSO THE CONTROL-BAR'S ENABLED STATE, not just the input
+/// gate. That is the whole point of the 2026-07-20 change: the screen used to
+/// carry a SECOND, weaker copy of the bounds rule (`_canGoForward =>
+/// _currentPage < _pageCount`) for the buttons, which knew nothing about
+/// `pagerAttached` or the load state. Two rules for one question is how a button
+/// comes to announce itself enabled while the thing it calls refuses. There is
+/// now one rule, and the tests below interrogate it directly.
 bool canTurnPdfPage({
   required bool turning,
   required bool pagerAttached,
+  required bool documentReady,
   required int currentPage,
   required int pageCount,
   required bool forward,
 }) {
   if (turning) return false;
   if (!pagerAttached) return false;
+  if (!documentReady) return false;
   return forward ? currentPage < pageCount : currentPage > 1;
+}
+
+/// Whether the zoom controls can actually change anything. Pure, so it can be
+/// tested directly — same reasoning as [canTurnPdfPage].
+///
+/// ADDED 2026-07-20 (Vera gate). The three zoom controls took a NON-nullable
+/// callback, so [_ControlButton] computed `enabled = onPressed != null` as
+/// always-true and published `Semantics(enabled: true)` in every state. But
+/// [_PdfReferenceScreenState._zoomBy] and `_resetZoom` both bail immediately
+/// when `_baseScaleFor` returns null, which is exactly the loading and error
+/// states: no page raster has been measured, so there is no fit-to-viewport
+/// baseline to scale against. On a desktop platform the control bar renders
+/// during loading (`showZoomControls` is a platform test, not a state test), so
+/// a screen-reader user was told "Zoom in, button" during the spinner, pressed
+/// it, and got silence. Same defect family as the share-button `enabled:` bug
+/// fixed in 68d9b93 — a control that tells assistive tech it works, and does
+/// nothing.
+///
+/// - [documentReady] — loading and error states have nothing to zoom.
+/// - [baseScale] — the fit-to-viewport scale for the current page, null until
+///   BOTH the page raster and the viewport have been measured. This is the
+///   literal precondition `_zoomBy` checks, passed in rather than re-derived, so
+///   the button and the action cannot disagree.
+///
+/// Deliberately NOT gated on the zoom BOUNDS (already at min / max / fit).
+/// Those are reachable states where the control is genuinely inert, but the
+/// scale can also be changed by a trackpad pinch, which photo_view applies
+/// without notifying this screen. Gating on bounds without subscribing to the
+/// controller's output stream would let the bar go stale and announce a WORKING
+/// control as disabled — a worse lie than the one being fixed, because it hides
+/// function rather than overpromising it. Flagged in the handoff, not silently
+/// dropped.
+bool canZoomPdfPage({
+  required bool documentReady,
+  required double? baseScale,
+}) {
+  if (!documentReady) return false;
+  return baseScale != null && baseScale > 0;
+}
+
+/// Which of the viewer's controls are LIVE, derived in one pure step from the
+/// viewer's state.
+///
+/// EXTRACTED 2026-07-20 (Vera gate), and the reason is mutation coverage rather
+/// than tidiness. With the enabled state computed inline in `build`, two
+/// mutations survived the whole suite: making the prev/next callbacks
+/// unconditional, and hard-coding `documentReady: true`. Neither is detectable
+/// from a `flutter test`, because the only state the headless engine can reach
+/// is "loading with no pages and no raster" — where `pageCount == 0` already
+/// hides the pager and `baseScale == null` already blocks zoom, so a broken
+/// guard and a working one produce identical trees. The real states live behind
+/// native PDFKit, which is exactly the wall that let the original bug ship.
+///
+/// Moving the derivation into a pure factory takes the decision out of the
+/// widget entirely: every combination is constructible by writing the numbers
+/// down, including the last page of a 64-page book and a rendered-then-errored
+/// document. [PdfViewerControlBar] then holds no decision at all — it applies
+/// this state, so nothing is left in the widget layer to get wrong.
+@immutable
+class PdfViewerControlState {
+  const PdfViewerControlState({
+    required this.canPrevious,
+    required this.canNext,
+    required this.canZoom,
+  });
+
+  /// Derives the control states from the viewer's live state.
+  ///
+  /// - [baseScale] is the fit-to-viewport scale of the CURRENT page, null until
+  ///   both the page raster and the viewport are measured.
+  /// - `turning` is deliberately not a parameter: see [PdfViewerControlBar] and
+  ///   the note on the screen's page-turn wiring. An in-flight turn lasts 250ms
+  ///   and is dropped on the input path, not signalled by greying a control.
+  factory PdfViewerControlState.from({
+    required bool documentReady,
+    required bool pagerAttached,
+    required int currentPage,
+    required int pageCount,
+    required double? baseScale,
+  }) {
+    bool turn({required bool forward}) => canTurnPdfPage(
+          turning: false,
+          pagerAttached: pagerAttached,
+          documentReady: documentReady,
+          currentPage: currentPage,
+          pageCount: pageCount,
+          forward: forward,
+        );
+    return PdfViewerControlState(
+      canPrevious: turn(forward: false),
+      canNext: turn(forward: true),
+      canZoom: canZoomPdfPage(
+        documentReady: documentReady,
+        baseScale: baseScale,
+      ),
+    );
+  }
+
+  /// Nothing is live — the state the bar shows over a spinner or an error panel.
+  static const PdfViewerControlState inert = PdfViewerControlState(
+    canPrevious: false,
+    canNext: false,
+    canZoom: false,
+  );
+
+  final bool canPrevious;
+  final bool canNext;
+  final bool canZoom;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PdfViewerControlState &&
+      other.canPrevious == canPrevious &&
+      other.canNext == canNext &&
+      other.canZoom == canZoom;
+
+  @override
+  int get hashCode => Object.hash(canPrevious, canNext, canZoom);
+
+  @override
+  String toString() => 'PdfViewerControlState(canPrevious: $canPrevious, '
+      'canNext: $canNext, canZoom: $canZoom)';
 }
 
 /// The share/download seam this screen calls. Defaults to the real [sharePdf]
@@ -251,14 +392,78 @@ bool get _isPointerPlatform => switch (defaultTargetPlatform) {
 /// pixel bytes, not the reported dimensions), so every card paints undistorted.
 ///
 /// 2.5× for crispness on the detailed cards. White page background matches the
-/// white print stock; the surrounding letterbox stays the dark `surface1`
-/// backdrop set on the viewer.
+/// white print stock.
+///
+/// CORRECTED 2026-07-20 (second Vera gate). This sentence used to continue "the
+/// surrounding letterbox stays the dark `surface1` backdrop set on the viewer".
+/// That claim was FALSE in light mode and had been since the light theme landed:
+/// light `surface1` is #FFFFFF, so the "dark backdrop" was the same white as
+/// this page stock — a 1.00:1 page edge. The letterbox is now chosen by
+/// [pdfLetterboxColor], which is dark-`surface1` on dark and `borderStrong` on
+/// light; see that function for the measurements.
 Future<PdfPageImage?> renderReferencePage(PdfPage page) => page.render(
       width: page.width * 2.5,
       height: page.height * 2.5,
       format: PdfPageImageFormat.png,
       backgroundColor: '#ffffff',
     );
+
+/// The exact white the pages are rendered on ([renderReferencePage]'s
+/// `backgroundColor`). Public so the contrast test measures the SHIPPED page
+/// stock rather than re-typing a hex that could drift away from it.
+const Color kPdfPageStock = Color(0xFFFFFFFF);
+
+/// The matte around each page — the "letterbox" the fit-contained page sits in.
+///
+/// FIXED 2026-07-20 (second Vera gate). This was `surface1` in both themes.
+/// In dark that is #222222 against the page's white print stock: **15.91:1**,
+/// fine. In light `surface1` is **#FFFFFF** — the SAME white the page is
+/// rendered on (see [renderReferencePage]'s `backgroundColor: '#ffffff'`), so
+/// the measured page-edge contrast was **1.00:1**. A PDF page had no visible
+/// boundary at all in light mode: the user could not see where the page ended
+/// and the viewer began, which on a landscape card in a portrait window is most
+/// of the screen.
+///
+/// WHY A THEME BRANCH, and why this token. The page stock is a FIXED-COLOR
+/// artifact — white is the print stock, it is not themeable — so the only thing
+/// that can adapt is the containment around it. That is the same principle
+/// GL-003 §8.19 (the QR white tile) and §8.21 (the logo lockup) already ratify:
+/// "the artifact is fixed, the containment is theme-aware". §8.21 spells out
+/// this exact failure — "a borderless white plate is invisible on the light
+/// #F7F6F7 canvas (white-on-near-white, ~1.0:1 edge)" — and its ratified fix is
+/// a hairline border on the artifact. That fix is NOT available here: photo_view
+/// 0.15.0's `PhotoViewGalleryPageOptions` exposes no per-page decoration, and
+/// the only way to wrap the page in a border is `customChild`, which would
+/// replace the `imageProvider` path this file's header documents as the very
+/// thing that keeps a landscape page from being squeezed. So the containment has
+/// to carry the edge, and that means the matte color.
+///
+/// MEASURED, against the #FFFFFF page stock:
+///   - dark  `surface1`     #222222 → 15.91:1  (UNCHANGED — dark is untouched)
+///   - light `surface1`     #FFFFFF →  1.00:1  (the defect)
+///   - light `surface0`     #F7F6F7 →  1.08:1  (still invisible)
+///   - light `border`       #E2E1E2 →  1.30:1  (still invisible)
+///   - light `borderStrong` #666666 →  5.74:1  (clears SC 1.4.11's 3:1)
+///
+/// No light-mode SURFACE token clears 1.30:1, because the light surface stack
+/// is by design a near-white ramp. `borderStrong` is the light palette's
+/// existing answer to "this boundary must be perceivable" — GL-003 §8.20.1
+/// defines it as **required for UI component boundaries, any element a user can
+/// target**, at ≥3:1 per SC 1.4.11. The page is exactly such an element (it
+/// pans and zooms), and because no stroke can be drawn around it, this fill IS
+/// its boundary. Reading a boundary token to draw a boundary is coherent; it is
+/// still a role stretch (a border token doing large-area fill duty) and is
+/// flagged to Iris for a proper letterbox/matte token.
+///
+/// The branch goes through `colors.isLight`, which
+/// [AppColorScheme] documents as the sanctioned hook for a genuinely light-only
+/// treatment with no dark counterpart (the §8.20.3 "punch" overrides). Nothing
+/// is hardcoded: both arms are semantic tokens, and dark mode is byte-identical
+/// to what shipped.
+/// Public so `pdf_letterbox_contrast_test.dart` can measure the real shipped
+/// value in both themes instead of asserting against a copy.
+Color pdfLetterboxColor(AppColorScheme colors) =>
+    colors.isLight ? colors.borderStrong : colors.surface1;
 
 /// A single bundled PDF reference card, rendered pinch-zoomable.
 ///
@@ -413,7 +618,15 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
           final int? w = image.width;
           final int? h = image.height;
           if (w == null || h == null || w <= 0 || h <= 0) return;
-          _pageRasterSizes[index] = Size(w.toDouble(), h.toDouble());
+          final Size size = Size(w.toDouble(), h.toDouble());
+          // Rebuild only on a CHANGE. Recording the size is what flips the zoom
+          // controls from disabled to enabled (via [_canZoom]), so it has to
+          // trigger a rebuild — but this callback re-runs for every rebuilt
+          // page, and an unconditional rebuild here would feed itself forever.
+          // Equal-size early-return is what breaks the loop.
+          if (_pageRasterSizes[index] == size) return;
+          _pageRasterSizes[index] = size;
+          _scheduleRebuild();
         },
         onError: (Object _) {},
       ),
@@ -464,9 +677,38 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   bool _pageOwnsDragGesture(int index) =>
       !_isPointerPlatform || _isZoomedIn(index);
 
-  bool get _canGoBack => _currentPage > 1;
+  /// True once the document has actually opened. The zoom and page controls are
+  /// gated on this so neither announces itself enabled over a spinner or an
+  /// error panel.
+  bool get _documentReady => _state == _PdfLoadState.ready;
 
-  bool get _canGoForward => _currentPage < _pageCount;
+  /// Which controls are live right now. One pure derivation, handed to the bar
+  /// whole — see [PdfViewerControlState] for why the decision does not live in
+  /// `build`.
+  ///
+  /// `baseScale` is the CURRENT page's fit-to-viewport scale, which is the exact
+  /// precondition [_zoomBy] and [_resetZoom] check before doing anything.
+  PdfViewerControlState get _controlState => PdfViewerControlState.from(
+        documentReady: _documentReady,
+        pagerAttached: _pagerAttached,
+        currentPage: _currentPage,
+        pageCount: _pageCount,
+        baseScale: _baseScaleFor(_currentPage - 1),
+      );
+
+  /// Rebuilds after the current frame.
+  ///
+  /// Both callers are notified from inside a build/layout pass — a
+  /// [ScrollMetricsNotification] dispatched during layout, and a render future
+  /// that can complete in a microtask off a build — so calling `setState`
+  /// directly risks "setState() called during build". Post-frame is the safe
+  /// seam, and one frame of latency is invisible next to a PDF decode.
+  void _scheduleRebuild() {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   /// Animates one page in [forward] reading order. No-ops at either end so a
   /// held arrow key or a wheel flick cannot scroll past the document.
@@ -474,6 +716,7 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
     if (!canTurnPdfPage(
       turning: _turning,
       pagerAttached: _pagerAttached,
+      documentReady: _documentReady,
       currentPage: _currentPage,
       pageCount: _pageCount,
       forward: forward,
@@ -751,13 +994,17 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
             // Page + zoom controls. Self-omits entirely on touch platforms
             // showing a single-page card, where there is nothing to navigate
             // and pinch already handles zoom.
-            _ViewerControlBar(
+            PdfViewerControlBar(
               currentPage: _currentPage,
               pageCount: _pageCount,
               showPageControls: _isPointerPlatform,
               showZoomControls: _isPointerPlatform,
-              onPrevious: _canGoBack ? () => _turnPage(forward: false) : null,
-              onNext: _canGoForward ? () => _turnPage(forward: true) : null,
+              // The bar disables each control from this state; the screen hands
+              // over plain callbacks and makes no enabled/disabled decision of
+              // its own. That is deliberate — see [PdfViewerControlState].
+              state: _controlState,
+              onPrevious: () => _turnPage(forward: false),
+              onNext: () => _turnPage(forward: true),
               onZoomIn: () => _zoomBy(_zoomStep),
               onZoomOut: () => _zoomBy(1 / _zoomStep),
               onZoomReset: _resetZoom,
@@ -828,11 +1075,20 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
           // on an unattached controller.
           child: NotificationListener<ScrollMetricsNotification>(
             onNotification: (ScrollMetricsNotification _) {
-              // Deliberately NOT a setState: this flag only gates a callback and
-              // is never read during build, so rebuilding here would be pure
-              // cost. It would also be harmful — metrics fire mid-drag, and the
-              // rebuild interrupts the very gesture we are trying to support.
-              _pagerAttached = true;
+              // Metrics fire on EVERY scroll frame, including mid-drag, and a
+              // rebuild there interrupts the very gesture we are trying to
+              // support. So this rebuilds exactly ONCE, on the false→true edge.
+              //
+              // The rebuild is required as of 2026-07-20: `_pagerAttached` is no
+              // longer a callback-only flag, it now gates the prev/next controls'
+              // enabled state too (see [_canTurn]). Without this one-shot,
+              // `_onLoaded`'s setState lands BEFORE the pager attaches and
+              // nothing rebuilds afterwards — the controls would sit disabled on
+              // a fully loaded document while the arrow keys worked fine.
+              if (!_pagerAttached) {
+                _pagerAttached = true;
+                _scheduleRebuild();
+              }
               // Let the notification keep bubbling; we only observe it.
               return false;
             },
@@ -847,11 +1103,11 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
                 onDocumentLoaded: _onLoaded,
                 onDocumentError: _onError,
                 onPageChanged: _onPageChanged,
-                // Dark, token-based backdrop for the letterbox around each page
-                // — the default is a light gray that clashes with App Mode
-                // (GL-003 §8.1).
+                // Token-based backdrop for the letterbox around each page.
+                // pdfx's own default is a light gray that clashes with App Mode
+                // (GL-003 §8.1), so this has always been overridden.
                 backgroundDecoration:
-                    BoxDecoration(color: colors.surface1),
+                    BoxDecoration(color: pdfLetterboxColor(colors)),
                 builders: PdfViewBuilders<DefaultBuilderOptions>(
                   options: const DefaultBuilderOptions(),
                   documentLoaderBuilder: (_) => _LoadingState(),
@@ -893,12 +1149,32 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
 /// labelled disabled control rather than a vanishing one. The glyphs are bare
 /// [IconButton]s so they inherit the §8.3 lime focus ring from the global
 /// `iconButtonTheme` instead of painting one locally.
-class _ViewerControlBar extends StatelessWidget {
-  const _ViewerControlBar({
+///
+/// Enabled state arrives as a single [PdfViewerControlState] and the bar applies
+/// it — the bar decides nothing and the screen decides nothing at the call site.
+/// Previously the three zoom callbacks were non-nullable, which made
+/// `enabled = onPressed != null` a constant `true` and published
+/// `Semantics(enabled: true)` on controls that do nothing during loading and
+/// error (see [canZoomPdfPage]).
+///
+/// PUBLIC as of 2026-07-20, purely so its enabled/disabled contract is testable.
+/// The screen it belongs to cannot be exercised in `flutter test` — pdfx needs
+/// native PDFKit, so the pager only exists under an integration test on a real
+/// device. That is what let the previous bug through: the one test named for the
+/// end-of-document bound ("previous is DISABLED on page 1, next on the last
+/// page") only ever visits pages 1 and 2, so mutating the forward bound to
+/// `true` left all 18 integration tests green. Lifting this widget to public
+/// lets a plain widget test pump any (page, count, callback) combination
+/// directly, with no document, no engine and no race. Nothing outside this
+/// library constructs it.
+class PdfViewerControlBar extends StatelessWidget {
+  const PdfViewerControlBar({
+    super.key,
     required this.currentPage,
     required this.pageCount,
     required this.showPageControls,
     required this.showZoomControls,
+    required this.state,
     required this.onPrevious,
     required this.onNext,
     required this.onZoomIn,
@@ -911,11 +1187,16 @@ class _ViewerControlBar extends StatelessWidget {
   final bool showPageControls;
   final bool showZoomControls;
 
-  /// Null disables the control (document start / end).
-  final VoidCallback? onPrevious;
+  /// Which controls are live. Every control's enabled state, its greyed glyph,
+  /// its focus traversal and its `Semantics(enabled:)` flag all come from here,
+  /// so a control can never be announced enabled while its action refuses.
+  final PdfViewerControlState state;
 
-  /// Null disables the control (document start / end).
-  final VoidCallback? onNext;
+  /// Turn to the previous page. Invoked only when [state] says it is live.
+  final VoidCallback onPrevious;
+
+  /// Turn to the next page. Invoked only when [state] says it is live.
+  final VoidCallback onNext;
 
   final VoidCallback onZoomIn;
   final VoidCallback onZoomOut;
@@ -950,7 +1231,10 @@ class _ViewerControlBar extends StatelessWidget {
               _ControlButton(
                 icon: Icons.chevron_left,
                 label: 'Previous page',
-                onPressed: onPrevious,
+                // Null is what disables: it greys the glyph to textDisabled,
+                // drops the control from focus traversal, and flips the
+                // Semantics enabled flag — all three from one decision.
+                onPressed: state.canPrevious ? onPrevious : null,
               ),
             if (multiPage)
               Padding(
@@ -973,7 +1257,7 @@ class _ViewerControlBar extends StatelessWidget {
               _ControlButton(
                 icon: Icons.chevron_right,
                 label: 'Next page',
-                onPressed: onNext,
+                onPressed: state.canNext ? onNext : null,
               ),
             if (showZoomControls) ...<Widget>[
               if (multiPage)
@@ -992,17 +1276,17 @@ class _ViewerControlBar extends StatelessWidget {
               _ControlButton(
                 icon: Icons.zoom_out,
                 label: 'Zoom out',
-                onPressed: onZoomOut,
+                onPressed: state.canZoom ? onZoomOut : null,
               ),
               _ControlButton(
                 icon: Icons.zoom_in,
                 label: 'Zoom in',
-                onPressed: onZoomIn,
+                onPressed: state.canZoom ? onZoomIn : null,
               ),
               _ControlButton(
                 icon: Icons.fit_screen_outlined,
                 label: 'Fit page to window',
-                onPressed: onZoomReset,
+                onPressed: state.canZoom ? onZoomReset : null,
               ),
             ],
           ],
@@ -1012,7 +1296,7 @@ class _ViewerControlBar extends StatelessWidget {
   }
 }
 
-/// One icon control in the [_ViewerControlBar].
+/// One icon control in the [PdfViewerControlBar].
 ///
 /// A bare [IconButton] so the §8.3 focus ring arrives from the global
 /// `iconButtonTheme`. Passing a null [onPressed] both greys the glyph to
