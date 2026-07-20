@@ -70,7 +70,7 @@ import 'wifi_info_service.dart'
 // stub on web and the FFI file on every native platform.
 import 'windows_wifi_ffi_web_stub.dart'
     if (dart.library.io) 'windows_wifi_ffi.dart'
-    show readConnectedApFromNativeWifi;
+    show readConnectedApFromNativeWifi, enumerateNearbyBssFromNativeWifi;
 
 // The win32 surface lives entirely in windows_wifi_ffi.dart. This wrapper is the
 // platform guard: readConnectedApFromNativeWifi() is only ever called once the
@@ -120,5 +120,29 @@ class WindowsWifiReader {
     // and that WlanFreeMemory/WlanCloseHandle leave no leak (run under the
     // win32 ffi_leak_tracker if a leak is suspected).
     return readConnectedApFromNativeWifi();
+  }
+
+  /// Enumerates EVERY nearby BSS as `com.wlanpros.toolbox/ap_scan` payload rows
+  /// — the same row shape the Android and macOS channels return, so the shared
+  /// `ScannedAp` model would consume them unchanged.
+  ///
+  /// DARK PATH — NOT LIVE, by explicit decision. Windows is excluded from
+  /// `ApScanService.isSupportedPlatform` and from `kNativeScanPlatforms`, so the
+  /// Nearby AP Scan tool does not appear on Windows and nothing calls this. It
+  /// is written and reviewable, waiting on real-hardware verification.
+  ///
+  /// TODO(windows-verify): see [enumerateNearbyBssFromNativeWifi] for the exact
+  /// list of claims that have never been executed, including whether the driver
+  /// BSS list is stale without a preceding `WlanScan`. Do NOT add Windows to
+  /// the supported platforms until those are confirmed on real hardware
+  /// ([[feedback_gate_until_clean]]).
+  Future<List<Map<String, Object?>>> scanNearbyBss() async {
+    if (!_isWindows) {
+      throw const WifiInfoUnavailable(
+        WifiInfoUnavailableReason.unsupportedPlatform,
+        'Windows Native Wifi is only available on Windows.',
+      );
+    }
+    return enumerateNearbyBssFromNativeWifi();
   }
 }

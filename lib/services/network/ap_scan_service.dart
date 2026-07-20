@@ -7,12 +7,16 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// One visible access point (BSS) from an Android Wi-Fi scan.
+/// One visible access point (BSS) from a native Wi-Fi scan.
 ///
-/// CLEAN fields only — SSID, BSSID, channel, band, RSSI. The Android scan API
-/// does NOT expose a per-BSS noise floor, SNR, or MCS for a scanned (not
-/// connected) BSS, so those are never modeled here and never shown. Reporting
-/// them would be a fabrication (GL-005 / GL-008).
+/// ONE model for every platform. Android (`WifiManager.getScanResults()`) and
+/// macOS (CoreWLAN `scanForNetworks`) both fill exactly these fields; neither is
+/// forked or extended per platform.
+///
+/// CLEAN fields only — SSID, BSSID, channel, band, RSSI. NEITHER platform's scan
+/// API exposes a per-BSS noise floor, SNR, or MCS for a scanned (not connected)
+/// BSS, so those are never modeled here and never shown. Reporting them would be
+/// a fabrication (GL-005 / GL-008).
 @immutable
 class ScannedAp {
   /// Creates a scanned-AP record.
@@ -84,18 +88,29 @@ class ApScanSnapshot {
 
   /// The visible access points. Empty when Wi-Fi is off, Location is not
   /// granted, or no BSS is in range.
+  ///
+  /// TWO KINDS OF NULL: an empty list means "the scan could not run" whenever
+  /// [poweredOn] is false or [locationAuthorized] is false, and only means
+  /// "the scan ran and found nothing" when BOTH are true. The UI must render
+  /// those differently — an empty list under a missing grant that implied there
+  /// are no APs nearby would be a false verdict
+  /// ([[feedback_app_blames_the_wifi]]).
   final List<ScannedAp> accessPoints;
 
   /// Whether the Wi-Fi radio is on. Scanning needs it on.
   final bool poweredOn;
 
-  /// Whether ACCESS_FINE_LOCATION is granted. Android gates scan results behind
-  /// it; without it [accessPoints] is empty and the UI shows the Location card.
+  /// Whether the Location grant that gates scan results is held. Android gates
+  /// results behind ACCESS_FINE_LOCATION; macOS gates the SSID and BSSID of
+  /// every scanned BSS behind Location Services (macOS 14+). Without it
+  /// [accessPoints] is empty and the UI shows the Location card.
   final bool locationAuthorized;
 
-  /// Whether a requested fresh scan was throttled by the OS, so [accessPoints]
-  /// are from the last cached scan rather than a brand-new one. The UI labels
-  /// the list as "last scan" when this is true.
+  /// Whether a fresh scan was declined, so [accessPoints] are from the last
+  /// cached scan rather than a brand-new one. On Android the OS throttles
+  /// `startScan()`; on macOS the app imposes its own floor between active
+  /// CoreWLAN scans (they take the radio off-channel for seconds). The UI
+  /// labels the list as "last scan" when this is true.
   final bool scanThrottled;
 
   /// Builds a snapshot from the native channel payload.
@@ -124,8 +139,8 @@ class ApScanSnapshot {
 /// Why a nearby-AP scan could not run.
 enum ApScanUnavailableReason {
   /// This build has no wired nearby-AP scan for the current platform. iOS blocks
-  /// it at the OS level (no scan API); macOS and Windows CAN scan but those paths
-  /// are not wired into this tool yet. Only Android is wired today.
+  /// it at the OS level (no scan API); Windows CAN scan but that path is not
+  /// wired into this tool yet. Android and macOS are wired.
   unsupportedPlatform,
 
   /// The native channel returned an error or a null payload.
@@ -137,18 +152,12 @@ enum ApScanUnavailableReason {
 /// Drives honest per-platform copy in the UI. This is about what THIS tool has
 /// wired up today, not a permanent claim about each OS's capabilities.
 enum ApScanPlatformStatus {
-  /// The scan is wired and runs here (Android).
+  /// The scan is wired and runs here (Android and macOS).
   supported,
 
   /// iOS blocks nearby-AP scanning at the OS level — there is no public scan
   /// API at all. This is a true OS hard-no, not an unwired path.
   appleRestricted,
-
-  /// macOS CAN scan for nearby APs (CoreWLAN `scanForNetworks`), but this tool's
-  /// nearby-AP list is not wired here yet. The connected AP's name IS sourced on
-  /// macOS elsewhere (Wi-Fi Information / Roaming Log); only this multi-AP list
-  /// is pending. An unwired path, NOT an OS block ([[feedback_app_blames_the_wifi]]).
-  macosNotWired,
 
   /// Windows can enumerate nearby APs through its Native Wifi API
   /// (`WlanGetNetworkBssList`), but that path is not wired into this tool yet.
@@ -174,27 +183,34 @@ class ApScanUnavailable implements Exception {
   String toString() => 'ApScanUnavailable(reason: $reason, detail: $detail)';
 }
 
-/// Reads nearby APs through the Android native scan bridge.
+/// Reads nearby APs through the native scan bridge.
 ///
-/// Wired for Android only today: [isSupportedPlatform] is true only on Android
-/// and [scan] throws [ApScanUnavailable] everywhere else rather than fabricating
-/// a list. iOS blocks nearby-AP scanning at the OS level (no scan API). macOS
-/// (CoreWLAN `scanForNetworks`) and Windows (`WlanGetNetworkBssList`) CAN
-/// enumerate nearby APs, but those paths are not wired into this tool yet.
+/// Wired for Android and macOS: [isSupportedPlatform] is true on both and [scan]
+/// throws [ApScanUnavailable] everywhere else rather than fabricating a list.
+/// Both platforms answer on the SAME channel name with the SAME payload shape,
+/// so this service has no per-platform branch in its mapping. iOS blocks
+/// nearby-AP scanning at the OS level (no scan API). Windows CAN enumerate
+/// nearby APs (`WlanGetNetworkBssList`), but that path is deliberately NOT
+/// wired here yet — see [ApScanPlatformStatus.windowsNotWired].
 /// [platformStatus] reports which case applies so the UI can show honest
 /// per-platform copy.
 ///
-/// The [invoke] seam is injectable so tests exercise the mapping without a real
-/// platform channel.
+/// The [invoke] and [invokeWifiInfo] seams are injectable so tests exercise the
+/// mapping without a real platform channel.
 class ApScanService {
   /// Creates an AP-scan service.
   ///
-  /// [invoke] defaults to the real method channel; tests pass a fake.
-  /// [platformOverride] defaults to the host operating system.
+  /// [invoke] defaults to the real ap_scan method channel; tests pass a fake.
+  /// [invokeWifiInfo] defaults to the real wifi_info channel and carries the
+  /// macOS Location-permission calls (see [_invokePermission]); when a test
+  /// injects only [invoke], both seams route to it so no test can reach a real
+  /// channel. [platformOverride] defaults to the host operating system.
   ApScanService({
     Future<Object?> Function(String method, [dynamic args])? invoke,
+    Future<Object?> Function(String method, [dynamic args])? invokeWifiInfo,
     String? platformOverride,
   })  : _invoke = invoke ?? _defaultInvoke,
+        _invokeWifiInfo = invokeWifiInfo ?? invoke ?? _defaultWifiInfoInvoke,
         _platform = platformOverride ?? _hostOperatingSystem();
 
   /// Returns the host OS name, or an empty string on web. Never throws.
@@ -206,14 +222,51 @@ class ApScanService {
   static const MethodChannel _channel =
       MethodChannel('com.wlanpros.toolbox/ap_scan');
 
+  /// The Wi-Fi Information channel. On macOS it already owns the shipped
+  /// Location-authorization flow (grant prompt, the "Location Services is off
+  /// system-wide" guard, and the Privacy-pane deep link), so the macOS AP-scan
+  /// channel does not reimplement any of it and this service routes the
+  /// permission calls there instead.
+  static const MethodChannel _wifiInfoChannel =
+      MethodChannel('com.wlanpros.toolbox/wifi_info');
+
   static Future<Object?> _defaultInvoke(String method, [dynamic args]) =>
       _channel.invokeMethod<Object?>(method, args);
 
+  static Future<Object?> _defaultWifiInfoInvoke(String method,
+          [dynamic args]) =>
+      _wifiInfoChannel.invokeMethod<Object?>(method, args);
+
+  /// The platforms whose native nearby-AP scan is wired into this tool.
+  ///
+  /// Windows is deliberately absent. Its enumeration path exists
+  /// ([WindowsWifiReader.scanNearbyBss]) but is written-not-executed against
+  /// real hardware, and unverified code does not go live
+  /// ([[feedback_gate_until_clean]]).
+  static const Set<String> _wiredPlatforms = <String>{'android', 'macos'};
+
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
+  final Future<Object?> Function(String method, [dynamic args])
+      _invokeWifiInfo;
   final String _platform;
 
-  /// Whether this platform supports a nearby-AP scan. Android only.
-  bool get isSupportedPlatform => !kIsWeb && _platform == 'android';
+  /// Whether this platform supports a nearby-AP scan. Android and macOS.
+  bool get isSupportedPlatform =>
+      !kIsWeb && _wiredPlatforms.contains(_platform);
+
+  /// The platform name used in user-visible copy, so the UI can attribute a
+  /// Location gate or a throttled scan to the right OS. Null off the wired
+  /// platforms, where no such copy is shown.
+  String? get platformName {
+    switch (_platform) {
+      case 'android':
+        return 'Android';
+      case 'macos':
+        return 'macOS';
+      default:
+        return null;
+    }
+  }
 
   /// Categorizes why the scan is or isn't available here, for honest UI copy.
   ///
@@ -223,19 +276,18 @@ class ApScanService {
   ApScanPlatformStatus get platformStatus {
     if (isSupportedPlatform) return ApScanPlatformStatus.supported;
     if (_platform == 'windows') return ApScanPlatformStatus.windowsNotWired;
-    // macOS genuinely CAN scan (CoreWLAN scanForNetworks); this tool's nearby-AP
-    // list just is not wired here yet — the same honest posture as Windows, NOT
-    // an OS block. Only iOS is a true OS hard-no (no scan API at all).
-    if (_platform == 'macos') return ApScanPlatformStatus.macosNotWired;
+    // iOS is the only true OS hard-no: no public scan API at all.
     if (_platform == 'ios') return ApScanPlatformStatus.appleRestricted;
     return ApScanPlatformStatus.unavailable;
   }
 
   /// Requests a fresh scan and returns the resulting snapshot.
   ///
-  /// The OS rate-limits fresh scans; when it throttles one, the snapshot carries
-  /// the last cached scan with [ApScanSnapshot.scanThrottled] set. Throws
-  /// [ApScanUnavailable] off Android (never touches the channel there).
+  /// Fresh scans are rate-limited (by the OS on Android, by the app on macOS
+  /// where an active CoreWLAN scan takes the radio off-channel for seconds);
+  /// when one is declined, the snapshot carries the last cached scan with
+  /// [ApScanSnapshot.scanThrottled] set. Throws [ApScanUnavailable] on an
+  /// unwired platform (never touches the channel there).
   Future<ApScanSnapshot> scan() => _read('scan');
 
   /// Returns the last cached scan without requesting a fresh one.
@@ -262,23 +314,35 @@ class ApScanService {
     }
   }
 
-  /// Whether ACCESS_FINE_LOCATION is currently granted (no prompt).
+  /// Routes a Location-permission call to the channel that owns it.
+  ///
+  /// Android's ap_scan channel implements the permission methods itself. macOS
+  /// does not duplicate them: the wifi_info channel already owns the shipped
+  /// authorization flow for exactly the same TCC grant, so the macOS AP scan
+  /// reuses it rather than standing up a second, unproven copy.
+  Future<Object?> _invokePermission(String method) =>
+      _platform == 'macos' ? _invokeWifiInfo(method) : _invoke(method);
+
+  /// Whether the Location grant that gates scan results is currently held (no
+  /// prompt). ACCESS_FINE_LOCATION on Android; Location Services on macOS.
   Future<bool> isLocationAuthorized() async {
-    final result = await _invoke('isLocationAuthorized');
+    final result = await _invokePermission('isLocationAuthorized');
     return (result as bool?) ?? false;
   }
 
-  /// Requests ACCESS_FINE_LOCATION. Returns whether it is granted afterward.
-  /// Android gates scan results behind it.
+  /// Requests the Location grant. Returns whether it is held afterward. Both
+  /// platforms gate scan results behind it: Android withholds the results
+  /// entirely, macOS withholds every SSID and BSSID.
   Future<bool> requestLocationPermission() async {
-    final result = await _invoke('requestLocationPermission');
+    final result = await _invokePermission('requestLocationPermission');
     return (result as bool?) ?? false;
   }
 
-  /// Opens this app's system settings page so the user can enable Location
-  /// after a permanent denial. Returns whether the settings page opened.
+  /// Opens the system settings page so the user can enable Location after a
+  /// denial (the app's own page on Android, the Location Services Privacy pane
+  /// on macOS). Returns whether the settings page opened.
   Future<bool> openLocationSettings() async {
-    final result = await _invoke('openLocationSettings');
+    final result = await _invokePermission('openLocationSettings');
     return (result as bool?) ?? false;
   }
 }

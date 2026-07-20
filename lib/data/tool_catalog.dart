@@ -44,7 +44,7 @@ class ToolEntry {
     this.isLive = false,
     this.keywords = const <String>[],
     this.subgroup,
-    this.androidOnly = false,
+    this.nativeScanOnly = false,
   });
 
   /// Stable identifier (kebab-case). Used as the route argument and for
@@ -84,16 +84,15 @@ class ToolEntry {
   /// Test Network ordering untouched.
   final String? subgroup;
 
-  /// `true` when the tool only WORKS on Android. Apple platforms block
-  /// third-party nearby-AP (Wi-Fi) scanning, so a tool that depends on it (e.g.
-  /// `nearby-ap-scan`) is functional on Android only. The [_buildCatalog]
-  /// NATIVE filter drops `androidOnly` tools on non-Android native targets
-  /// (iOS / macOS), so a gated tool stays out of all navigation and search
-  /// surfaces there. On WEB the tool is KEPT and shows with a web-unavailable
-  /// warning (interface parity, Keith 2026-06-09) — see
+  /// `true` when the tool depends on a native nearby-AP (Wi-Fi) scan, which is
+  /// only wired on some platforms. The [_buildCatalog] NATIVE filter keeps such
+  /// a tool only on the platforms listed in [kNativeScanPlatforms] and drops it
+  /// everywhere else native, so a gated tool stays out of all navigation and
+  /// search surfaces there. On WEB the tool is KEPT and shows with a
+  /// web-unavailable warning (interface parity, Keith 2026-06-09) — see
   /// [kWebUnavailableToolIds]. Default `false` keeps the constructor
   /// backward-compatible.
-  final bool androidOnly;
+  final bool nativeScanOnly;
 
   /// Returns a copy of this entry with [keywords] replaced. Used only by the
   /// catalog builder to fold in the external vocabulary; not for general use.
@@ -105,7 +104,7 @@ class ToolEntry {
         isLive: isLive,
         keywords: keywords,
         subgroup: subgroup,
-        androidOnly: androidOnly,
+        nativeScanOnly: nativeScanOnly,
       );
 }
 
@@ -398,25 +397,25 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/network-discovery',
         isLive: true,
       ),
-      // Nearby AP Scan — wired for Android today. Lists nearby Wi-Fi access
-      // points (SSID, BSSID, channel, band, RSSI) via the Android Wi-Fi scan
-      // API. Gated via `androidOnly` and dropped from the catalog on every other
-      // platform (see [_buildCatalog]). Per-platform reality: iOS and macOS block
-      // nearby-AP scanning at the OS level; Windows IS capable via its Native
-      // Wifi API (WlanGetNetworkBssList already fetches every BSS) but the
-      // Windows scan path isn't wired into this tool yet — the screen's
-      // unavailable state (ApScanService.platformStatus) says so honestly rather
-      // than implying only Apple restricts it. No asset resolver — the screen
-      // reads a native MethodChannel through ApScanService.
+      // Nearby AP Scan — wired for Android and macOS. Lists nearby Wi-Fi access
+      // points (SSID, BSSID, channel, band, RSSI) via the Android Wi-Fi scan API
+      // and the macOS CoreWLAN scan, both behind one method channel and one Dart
+      // model. Gated via `nativeScanOnly` and dropped from the catalog on every
+      // other native platform (see [_buildCatalog]). Per-platform reality: iOS
+      // blocks nearby-AP scanning at the OS level; Windows IS capable via its
+      // Native Wifi API (WlanGetNetworkBssList already fetches every BSS) but
+      // that path is written-not-verified on real hardware, so it stays dark
+      // and the tool is dropped there. No asset resolver — the screen reads a
+      // native MethodChannel through ApScanService.
       ToolEntry(
         id: 'nearby-ap-scan',
         title: 'Nearby AP Scan',
         description:
             'List nearby Wi-Fi access points: SSID, BSSID, channel, band, '
-            'and signal (Android)',
+            'and signal (Android and macOS)',
         routeName: '/tools/nearby-ap-scan',
         isLive: true,
-        androidOnly: true,
+        nativeScanOnly: true,
       ),
       ToolEntry(
         id: 'traceroute',
@@ -2148,14 +2147,27 @@ const String kEducationalResourcesRoute = '/tools/educational-resources';
 /// The catalog the UI renders. This is the same on every platform: the full
 /// [_kAllToolCategories] with no category hidden. On web the network/Wi-Fi
 /// tools still appear (interface parity, Keith 2026-06-09) and carry a web
-/// warning via [toolUnavailableOnWeb]; on native the per-tool `androidOnly`
-/// gate still drops Apple-blocked tools (e.g. nearby-ap-scan) on iOS/macOS.
+/// warning via [toolUnavailableOnWeb]; on native the per-tool `nativeScanOnly`
+/// gate still drops scan-dependent tools (e.g. nearby-ap-scan) on the platforms
+/// where the native scan is not wired.
 /// Every catalog consumer (home grid, category screen, search) reads this list.
 final List<ToolCategory> kToolCategories = _buildCatalog();
 
+/// The native platforms whose nearby-AP scan is wired, and therefore the
+/// platforms where a `nativeScanOnly` tool stays in the catalog.
+///
+/// Mirrors `ApScanService.isSupportedPlatform`. Windows is deliberately absent:
+/// its Native Wifi enumeration path exists in the codebase but is unverified on
+/// real hardware, so the tool stays out of the catalog there rather than
+/// shipping an unproven scan.
+const Set<TargetPlatform> kNativeScanPlatforms = <TargetPlatform>{
+  TargetPlatform.android,
+  TargetPlatform.macOS,
+};
+
 /// Builds the UI catalog: folds the external search vocabulary
 /// ([kToolKeywords], lib/data/tool_keywords.dart) into each [ToolEntry], then
-/// applies the per-tool `androidOnly` NATIVE gate. Keeping the vocabulary in its
+/// applies the per-tool `nativeScanOnly` NATIVE gate. Keeping the vocabulary in its
 /// own file lets Keith iterate the search terms without editing the catalog
 /// structure, and keeps the catalog the single source of truth for everything
 /// else.
@@ -2165,16 +2177,15 @@ List<ToolCategory> _buildCatalog() {
   // catalog deletion).
   const List<ToolCategory> source = _kAllToolCategories;
 
-  // Per-tool NATIVE platform gate: `androidOnly` tools (e.g. nearby-ap-scan,
-  // which depends on a scan API Apple blocks on iOS / macOS) are dropped on
-  // non-Android NATIVE targets so they never reach the home grid, category
-  // screens, or search there. `defaultTargetPlatform` is web-safe (no
-  // `dart:io`). On WEB the tool is KEPT (kIsWeb short-circuits isAndroid to
-  // false but we no longer drop it) so the tile shows with a web warning,
-  // mirroring how iOS/macOS show it nowhere natively but web shows the limit.
+  // Per-tool NATIVE platform gate: `nativeScanOnly` tools (e.g. nearby-ap-scan,
+  // which depends on a native Wi-Fi scan) are kept only on the platforms where
+  // that scan is wired ([kNativeScanPlatforms]) and dropped on every other
+  // NATIVE target, so they never reach the home grid, category screens, or
+  // search there. `defaultTargetPlatform` is web-safe (no `dart:io`). On WEB the
+  // tool is KEPT so the tile shows with a web warning (interface parity).
   final bool isWeb = kIsWeb;
-  final bool isAndroid =
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  final bool hasNativeScan =
+      !kIsWeb && kNativeScanPlatforms.contains(defaultTargetPlatform);
 
   return source
       .map(
@@ -2188,11 +2199,10 @@ List<ToolCategory> _buildCatalog() {
           countLabelOverride: c.countLabelOverride,
           isNew: c.isNew,
           tools: c.tools
-              // Keep an `androidOnly` tool when: we're on Android (it works),
-              // or on web (it shows with a web warning — interface parity).
-              // Drop it only on non-Android NATIVE targets (iOS/macOS), exactly
-              // as before.
-              .where((ToolEntry t) => isWeb || isAndroid || !t.androidOnly)
+              // Keep a `nativeScanOnly` tool when: the native scan is wired here
+              // (it works), or on web (it shows with a web warning — interface
+              // parity). Drop it on every other NATIVE target.
+              .where((ToolEntry t) => isWeb || hasNativeScan || !t.nativeScanOnly)
               .map(
                 (ToolEntry t) => t._copyWithKeywords(
                   kToolKeywords[t.id] ?? const <String>[],

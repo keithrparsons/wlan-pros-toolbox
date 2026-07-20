@@ -1,17 +1,22 @@
-// Nearby AP Scan screen — widget tests (Android-only tool, H3).
+// Nearby AP Scan screen — widget tests (Android + macOS tool, H3).
 //
-// The screen reads APs through the Android `com.wlanpros.toolbox/ap_scan`
-// method channel behind the [ApScanService] seam. The tests drive it with an
+// The screen reads APs through the `com.wlanpros.toolbox/ap_scan` method
+// channel behind the [ApScanService] seam. The tests drive it with an
 // [ApScanService] whose `invoke` is a fake and whose `platformOverride` selects
-// the supported (android) or unsupported (ios) branch — no real channel.
+// the supported (android / macos) or unsupported (ios / windows) branch — no
+// real channel.
 //
 // Covers the SOP-007 §5 state matrix plus the load-bearing honesty rules:
-//   * list renders (SSID / BSSID / channel / band / RSSI).
+//   * list renders (SSID / BSSID / channel / band / RSSI) on BOTH wired
+//     platforms, from ONE payload shape and ONE model.
 //   * channel-occupancy bars render for 2.4 and 5 GHz.
 //   * CLEAN fields only — no Noise / SNR / MCS column ever appears.
-//   * off-Android shows the honest per-platform unavailable state and never
-//     scans; Windows copy says the path isn't wired yet (not an Apple block).
-//   * Location-gate and Wi-Fi-off empty states.
+//   * on an unwired platform the screen shows the honest per-platform
+//     unavailable state and never scans; Windows copy says the path isn't wired
+//     yet (not an Apple block).
+//   * TWO KINDS OF NULL: an unauthorized scan says the scan could not run and
+//     never claims an empty RF environment; a scan that RAN and found nothing
+//     says exactly that. The two states must not be confusable.
 //   * sort control reorders the list.
 
 import 'package:flutter/material.dart';
@@ -186,7 +191,152 @@ void main() {
     });
   });
 
-  group('ApScanScreen — off-Android (unsupported)', () {
+  group('ApScanScreen — macOS (supported, same model as Android)', () {
+    // The macOS CoreWLAN channel returns the SAME payload shape as the Android
+    // channel, so the SAME fixture drives both. If macOS ever needed its own
+    // fixture, the "one model" contract would already be broken.
+    testWidgets('renders the AP list from the identical native payload',
+        (tester) async {
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(_payload(), platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(find.text('a4:83:e7:00:11:22'), findsOneWidget);
+      expect(find.text('-42 dBm'), findsOneWidget);
+      expect(find.text('(hidden network)'), findsOneWidget);
+      // The unwired-platform card must NOT appear on a wired platform.
+      expect(find.textContaining('Not wired'), findsNothing);
+    });
+
+    testWidgets('CLEAN fields only — no Noise / SNR / MCS on macOS either',
+        (tester) async {
+      // CoreWLAN exposes no per-neighbour noise floor. Nothing may be derived
+      // from the connected interface's noise to fill the gap.
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(_payload(), platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Noise'), findsNothing);
+      expect(find.textContaining('SNR'), findsNothing);
+      expect(find.textContaining('MCS'), findsNothing);
+    });
+
+    testWidgets('throttle note names the macOS reason, not Android throttling',
+        (tester) async {
+      await tester.pumpWidget(
+        host(ApScanScreen(
+          service: _service(_payload(scanThrottled: true), platform: 'macos'),
+        )),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('A fresh scan ran moments ago'), findsOneWidget);
+      expect(find.textContaining('Android'), findsNothing);
+    });
+
+    testWidgets('Location gate names the macOS reason (Location Services)',
+        (tester) async {
+      final Map<String, Object?> gated = _payload(
+        aps: const <Map<String, Object?>>[],
+        locationAuthorized: false,
+      );
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(gated, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('macOS requires Location Services'),
+        findsOneWidget,
+      );
+      // Android's wording must not leak onto macOS.
+      expect(find.textContaining('Android requires'), findsNothing);
+    });
+
+    testWidgets('wide window renders the desktop column layout',
+        (tester) async {
+      tester.view.physicalSize = const Size(1400, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(_payload(), platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      // Desktop-only column headings appear, and the list still renders.
+      expect(find.text('NETWORK'), findsOneWidget);
+      expect(find.text('BSSID'), findsOneWidget);
+      expect(find.text('SIGNAL'), findsOneWidget);
+      expect(find.text('CHANNEL'), findsOneWidget);
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('ApScanScreen — the two kinds of null', () {
+    // The load-bearing distinction. An empty list under a missing Location
+    // grant means "the app measured nothing". An empty list from a scan that
+    // RAN means "there is nothing on the air". Rendering them the same way
+    // would state a verdict the app never took
+    // ([[feedback_app_blames_the_wifi]]).
+    for (final String os in const <String>['android', 'macos']) {
+      testWidgets('$os: unauthorized says the scan could NOT run, and never '
+          'claims an empty RF environment', (tester) async {
+        final Map<String, Object?> gated = _payload(
+          aps: const <Map<String, Object?>>[],
+          locationAuthorized: false,
+        );
+        await tester.pumpWidget(
+          host(ApScanScreen(service: _service(gated, platform: os))),
+        );
+        await tester.pumpAndSettle();
+
+        // Says the scan did not run, and offers the way to fix it.
+        expect(find.textContaining('scan could not run'), findsOneWidget);
+        expect(find.text('Grant Location'), findsOneWidget);
+        // Must NOT show the genuinely-empty copy.
+        expect(find.textContaining('The scan ran and found no'), findsNothing);
+        expect(find.textContaining('found no access points'), findsNothing);
+      });
+
+      testWidgets('$os: authorized + powered + zero APs says the scan RAN and '
+          'found nothing, with no Location card', (tester) async {
+        final Map<String, Object?> empty = _payload(
+          aps: const <Map<String, Object?>>[],
+        );
+        await tester.pumpWidget(
+          host(ApScanScreen(service: _service(empty, platform: os))),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('The scan ran and found no'), findsOneWidget);
+        // No gate card, because nothing gated it.
+        expect(find.text('Grant Location'), findsNothing);
+        expect(find.textContaining('scan could not run'), findsNothing);
+      });
+
+      testWidgets('$os: Wi-Fi off says the scan could NOT run, not "no networks"',
+          (tester) async {
+        final Map<String, Object?> off = _payload(
+          aps: const <Map<String, Object?>>[],
+          poweredOn: false,
+        );
+        await tester.pumpWidget(
+          host(ApScanScreen(service: _service(off, platform: os))),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('could not run'), findsWidgets);
+        expect(find.textContaining('The scan ran and found no'), findsNothing);
+      });
+    }
+  });
+
+  group('ApScanScreen — unwired platforms', () {
     testWidgets('iOS shows the honest OS-block copy (iOS only, not macOS)',
         (tester) async {
       await tester.pumpWidget(
@@ -194,31 +344,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Runs on Android'), findsOneWidget);
+      expect(find.text('Runs on Android and macOS'), findsOneWidget);
       expect(
         find.textContaining('iOS blocks nearby-AP scanning'),
         findsOneWidget,
       );
-      // The OS-block claim is now iOS-scoped; macOS must not be blamed.
+      // The OS-block claim is iOS-scoped; macOS must not be blamed.
       expect(find.textContaining('macOS block'), findsNothing);
-      // No list, no AP names off-Android.
-      expect(find.text('KeithNet'), findsNothing);
-    });
-
-    testWidgets('macOS says not-wired-yet, never an OS block (macOS CAN scan)',
-        (tester) async {
-      await tester.pumpWidget(
-        host(ApScanScreen(service: _service(_payload(), platform: 'macos'))),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Not wired for macOS yet'), findsOneWidget);
-      expect(
-        find.textContaining('macOS can list nearby access points'),
-        findsOneWidget,
-      );
-      // Must NOT claim macOS is OS-blocked ([[feedback_app_blames_the_wifi]]).
-      expect(find.textContaining('macOS block'), findsNothing);
+      // No list, no AP names on an unwired platform.
       expect(find.text('KeithNet'), findsNothing);
     });
 
@@ -240,10 +373,11 @@ void main() {
       expect(find.text('KeithNet'), findsNothing);
     });
 
-    testWidgets('off-Android never touches the scan channel', (tester) async {
+    testWidgets('an unwired platform never touches the scan channel',
+        (tester) async {
       bool touched = false;
       final ApScanService svc = ApScanService(
-        platformOverride: 'macos',
+        platformOverride: 'windows',
         invoke: (String method, [dynamic args]) async {
           if (method == 'scan' || method == 'lastResults') touched = true;
           return _payload();
@@ -253,8 +387,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(touched, isFalse);
-      // macOS is the not-wired case now (it CAN scan, just unwired here).
-      expect(find.text('Not wired for macOS yet'), findsOneWidget);
+      expect(find.text('Not wired for Windows yet'), findsOneWidget);
+    });
+
+    testWidgets('Windows stays DARK: it is not a supported platform',
+        (tester) async {
+      // Keith's explicit call. The Windows Native Wifi enumeration path exists
+      // in the codebase but is unverified on real hardware, so the UI must not
+      // treat Windows as wired. This test is the guard on that decision.
+      final ApScanService svc = ApScanService(
+        platformOverride: 'windows',
+        invoke: (String method, [dynamic args]) async => _payload(),
+      );
+      expect(svc.isSupportedPlatform, isFalse);
+      expect(svc.platformStatus, ApScanPlatformStatus.windowsNotWired);
     });
   });
 
@@ -283,18 +429,20 @@ void main() {
           invoke: (String method, [dynamic args]) async => _payload(),
         );
 
-    test('android is the supported (wired) status', () {
+    test('android is a supported (wired) status', () {
       expect(svc('android').platformStatus, ApScanPlatformStatus.supported);
+      expect(svc('android').isSupportedPlatform, isTrue);
+      expect(svc('android').platformName, 'Android');
     });
 
     test('iOS is a true OS-level Apple restriction (no scan API)', () {
       expect(svc('ios').platformStatus, ApScanPlatformStatus.appleRestricted);
     });
 
-    test('macOS maps to not-wired-yet, NOT an OS block (macOS CAN scan)', () {
-      // Honesty fix: macOS CoreWLAN can scan; the tool just is not wired here.
-      // Blaming the OS would be a [[feedback_app_blames_the_wifi]] defect.
-      expect(svc('macos').platformStatus, ApScanPlatformStatus.macosNotWired);
+    test('macOS is a supported (wired) status via CoreWLAN', () {
+      expect(svc('macos').platformStatus, ApScanPlatformStatus.supported);
+      expect(svc('macos').isSupportedPlatform, isTrue);
+      expect(svc('macos').platformName, 'macOS');
     });
 
     test('windows maps to not-wired-yet, NOT an OS block', () {

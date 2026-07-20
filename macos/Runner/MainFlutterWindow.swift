@@ -12,6 +12,9 @@ class MainFlutterWindow: NSWindow {
   // Batch 6 — retained so the Device/System info channel handler (uptime) stays
   // live for the window lifetime.
   private var systemInfoChannel: SystemInfoChannel?
+  // Nearby AP Scan — retained so the CoreWLAN neighbour-scan channel handler
+  // stays live for the window lifetime.
+  private var apScanChannel: ApScanChannel?
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -48,6 +51,14 @@ class MainFlutterWindow: NSWindow {
     // ProcessInfo.systemUptime). Same binary-messenger pattern as the channels
     // above so it is unambiguously available.
     self.systemInfoChannel = SystemInfoChannel(
+      messenger: flutterViewController.engine.binaryMessenger
+    )
+
+    // Nearby AP Scan — register the CoreWLAN neighbour-scan channel. Shares the
+    // `com.wlanpros.toolbox/ap_scan` channel name and payload shape with the
+    // Android implementation so one Dart model serves both. Same binary-
+    // messenger pattern as the channels above so it is unambiguously available.
+    self.apScanChannel = ApScanChannel(
       messenger: flutterViewController.engine.binaryMessenger
     )
 

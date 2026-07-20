@@ -1,31 +1,45 @@
-// Nearby AP Scan (H3) — wired for Android today.
+// Nearby AP Scan (H3) — wired for Android and macOS.
 //
 // Lists the access points visible to a Wi-Fi scan and draws a simple
-// channel-occupancy bar per band. The data comes from the Android
-// `com.wlanpros.toolbox/ap_scan` method channel (MainActivity.kt →
-// WifiManager.getScanResults()).
+// channel-occupancy bar per band. The data comes from the
+// `com.wlanpros.toolbox/ap_scan` method channel: MainActivity.kt →
+// WifiManager.getScanResults() on Android, ApScanChannel.swift → CoreWLAN
+// scanForNetworks on macOS. ONE channel name, ONE payload shape, ONE Dart model.
 //
-// Per-platform reality (GL-005 honesty): iOS and macOS block nearby-AP scanning
-// at the OS level. Windows CAN enumerate nearby APs through its Native Wifi API
-// (WlanGetNetworkBssList), but that path is not wired into this tool yet — so the
-// unavailable state says so honestly instead of implying only Apple restricts
-// it. This screen guards itself: off Android it renders an honest per-platform
-// unavailable state instead of touching the channel (GL-008), with copy chosen
-// from ApScanService.platformStatus.
+// Per-platform reality (GL-005 honesty): iOS blocks nearby-AP scanning at the OS
+// level (no public scan API). Windows CAN enumerate nearby APs through its
+// Native Wifi API (WlanGetNetworkBssList), but that path is unverified on real
+// hardware and stays dark — so the unavailable state says so honestly instead of
+// implying only Apple restricts it. This screen guards itself: on an unwired
+// platform it renders an honest per-platform unavailable state instead of
+// touching the channel (GL-008), with copy chosen from
+// ApScanService.platformStatus.
 //
 // HONESTY (GL-005 / GL-008): the scan exposes CLEAN fields only — SSID, BSSID,
-// channel, band, RSSI. The Android scan API does not expose a per-BSS noise
+// channel, band, RSSI. NEITHER platform's scan API exposes a per-BSS noise
 // floor, SNR, or MCS for a scanned (non-connected) BSS, so those columns do not
-// exist here and are never shown.
+// exist here and are never shown, and none is derived.
+//
+// TWO KINDS OF NULL (load-bearing): an empty AP list is only reported as "no
+// networks found" when the scan actually RAN — radio on AND Location granted.
+// When the radio is off or the Location grant is missing, the screen says the
+// scan could not run and never shows an empty list that would imply there are no
+// access points nearby ([[feedback_app_blames_the_wifi]]).
 //
 // States (SOP-007 §5):
-//   * unsupported (iOS / macOS / web) -> honest "Android only" state.
+//   * unsupported (iOS / Windows / Linux / web) -> honest per-platform state.
 //   * loading  -> labeled spinner (announced via liveRegion) on first scan.
 //   * empty    -> Wi-Fi-off card, Location-gate card, or "no networks found".
 //   * error    -> channel-error card + Retry.
 //   * success  -> sort control + occupancy bars + the AP list.
 //   * disabled -> the Scan action shows a spinner while a scan is in flight.
 //   * interactive -> Scan (app bar) + the sort segmented control.
+//
+// DESKTOP LAYOUT: the screen was built for Android phones. On a wide window the
+// content column widens, the per-band occupancy cards sit side by side instead
+// of stacking, and the AP list switches to a four-column row (name / BSSID /
+// signal / channel) rather than stretching a two-column phone row across the
+// full width.
 
 import 'dart:async';
 
@@ -37,11 +51,11 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 
-/// The Nearby AP Scan tool screen (Android-only).
+/// The Nearby AP Scan tool screen (Android and macOS).
 class ApScanScreen extends StatefulWidget {
   const ApScanScreen({super.key, this.service});
 
-  /// Injectable AP-scan service (tests). Defaults to the real Android channel.
+  /// Injectable AP-scan service (tests). Defaults to the real native channel.
   /// Tests pass an [ApScanService] with a fake `invoke` and a
   /// `platformOverride` so the supported/unsupported branches are exercised
   /// without a real platform channel.
@@ -98,7 +112,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
       });
       if (manual && mounted) {
         final String msg = snap.scanThrottled
-            ? 'Scan throttled by Android: showing the last scan'
+            ? 'Fresh scan declined: showing the last scan'
             : 'Scan updated';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
@@ -195,10 +209,13 @@ class _ApScanScreenState extends State<ApScanScreen> {
           ),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
+              // A phone-width column stranded in the middle of a desktop window
+              // wastes the space this list can actually use, so the column
+              // widens on desktop rather than staying pinned at phone width.
+              constraints: BoxConstraints(maxWidth: isDesktop ? 1040 : 560),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _content(),
+                children: _content(isWide: isDesktop),
               ),
             ),
           ),
@@ -207,7 +224,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
     );
   }
 
-  List<Widget> _content() {
+  List<Widget> _content({required bool isWide}) {
     // First-load spinner: nothing on screen yet.
     if (_loading && _snapshot == null && _error == null) {
       return const <Widget>[_LoadingCard()];
@@ -238,6 +255,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
         ..add(
           _LocationCard(
             attempted: _locationGrantAttempted,
+            platformName: _service.platformName,
             onGrant: _loading ? null : _grantLocation,
             onOpenSettings: _openLocationSettings,
           ),
@@ -248,33 +266,58 @@ class _ApScanScreenState extends State<ApScanScreen> {
     // Throttle note — the list is the last cached scan, said plainly.
     if (snap.scanThrottled && snap.accessPoints.isNotEmpty) {
       children
-        ..add(const _ThrottledNote())
+        ..add(_ThrottledNote(platformName: _service.platformName))
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
     final List<ScannedAp> aps = snap.accessPoints;
 
     if (aps.isEmpty) {
-      // Only show the bare "no networks" empty state when there is no more
-      // specific reason already shown above (Wi-Fi off / Location gate).
+      // TWO KINDS OF NULL: the bare "no networks found" empty state is only
+      // honest when the scan actually RAN. When the radio is off or Location is
+      // missing, the specific card above already says the scan could not run,
+      // and claiming "no networks found" on top of it would state a verdict the
+      // app never measured ([[feedback_app_blames_the_wifi]]).
       if (snap.poweredOn && snap.locationAuthorized) {
         children.add(const _NoNetworksCard());
       }
       return children;
     }
 
-    // Channel-occupancy bars for 2.4 GHz and 5 GHz.
-    final List<ChannelOccupancy> occ24 = channelOccupancy(aps, '2.4 GHz');
-    final List<ChannelOccupancy> occ5 = channelOccupancy(aps, '5 GHz');
-    if (occ24.isNotEmpty) {
-      children
-        ..add(_OccupancyCard(band: '2.4 GHz', occupancy: occ24))
-        ..add(const SizedBox(height: AppSpacing.sm));
-    }
-    if (occ5.isNotEmpty) {
-      children
-        ..add(_OccupancyCard(band: '5 GHz', occupancy: occ5))
-        ..add(const SizedBox(height: AppSpacing.sm));
+    // Channel-occupancy bars per band. 6 GHz is included: macOS CoreWLAN reports
+    // 6 GHz BSSs, and a band that is present in the list but missing from the
+    // charts would be an unexplained gap.
+    final List<Widget> occupancyCards = <Widget>[
+      for (final String band in const <String>['2.4 GHz', '5 GHz', '6 GHz'])
+        if (channelOccupancy(aps, band).isNotEmpty)
+          _OccupancyCard(band: band, occupancy: channelOccupancy(aps, band)),
+    ];
+    if (occupancyCards.isNotEmpty) {
+      if (isWide && occupancyCards.length > 1) {
+        // Side by side on a wide window; stacking them wastes the width and
+        // pushes the AP list below the fold.
+        children
+          ..add(
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  for (int i = 0; i < occupancyCards.length; i++) ...<Widget>[
+                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    Expanded(child: occupancyCards[i]),
+                  ],
+                ],
+              ),
+            ),
+          )
+          ..add(const SizedBox(height: AppSpacing.sm));
+      } else {
+        for (final Widget card in occupancyCards) {
+          children
+            ..add(card)
+            ..add(const SizedBox(height: AppSpacing.sm));
+        }
+      }
     }
 
     // Sort control + AP list.
@@ -284,7 +327,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
         onChanged: (ApSortOrder v) => setState(() => _sort = v),
       ))
       ..add(const SizedBox(height: AppSpacing.sm))
-      ..add(_ApListCard(aps: sortAps(aps, _sort)));
+      ..add(_ApListCard(aps: sortAps(aps, _sort), isWide: isWide));
 
     return children;
   }
@@ -314,15 +357,15 @@ class _ApScanScreenState extends State<ApScanScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Android-only state (off-Android guard)
+// Unwired-platform state (off Android / macOS guard)
 // ---------------------------------------------------------------------------
 
 /// Honest per-platform unavailable state for the nearby-AP scan.
 ///
-/// The scan is wired for Android only today. This card explains WHY it isn't
+/// The scan is wired for Android and macOS. This card explains WHY it isn't
 /// running here without overstating the reason: iOS blocks it at the OS level,
-/// whereas macOS (CoreWLAN) and Windows (Native Wifi) can do it but the path
-/// isn't wired into this tool yet. Copy is chosen from [ApScanPlatformStatus].
+/// whereas Windows (Native Wifi) can do it but the path isn't wired into this
+/// tool yet. Copy is chosen from [ApScanPlatformStatus].
 class _ScanUnavailable extends StatelessWidget {
   const _ScanUnavailable({required this.status});
 
@@ -330,28 +373,21 @@ class _ScanUnavailable extends StatelessWidget {
 
   static const String _lead =
       'Nearby AP Scan lists the access points around you using a native Wi-Fi '
-      'scan. It currently runs on Android. ';
+      'scan. It currently runs on Android and macOS. ';
 
   String get _heading {
     switch (status) {
-      case ApScanPlatformStatus.macosNotWired:
-        return 'Not wired for macOS yet';
       case ApScanPlatformStatus.windowsNotWired:
         return 'Not wired for Windows yet';
       case ApScanPlatformStatus.appleRestricted:
       case ApScanPlatformStatus.unavailable:
       case ApScanPlatformStatus.supported:
-        return 'Runs on Android';
+        return 'Runs on Android and macOS';
     }
   }
 
   String get _detail {
     switch (status) {
-      case ApScanPlatformStatus.macosNotWired:
-        return '${_lead}macOS can list nearby access points through CoreWLAN, '
-            'but this tool does not wire up the macOS nearby-AP list yet. The '
-            'connected AP name is already shown in Wi-Fi Information and the '
-            'Roaming Log. The rest of the toolbox works normally here.';
       case ApScanPlatformStatus.windowsNotWired:
         return '${_lead}Windows can list nearby access points through its '
             'Native Wifi API, but this tool does not wire up the Windows scan '
@@ -453,8 +489,11 @@ class _NoNetworksCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'No access points in range. Move to where Wi-Fi is in use, then '
-              'tap Scan again.',
+              // The ONLY empty state that claims an empty RF environment, and it
+              // is only ever shown when the scan actually ran (radio on and
+              // Location granted). See the two-kinds-of-null note at the top.
+              'The scan ran and found no access points in range. Move to where '
+              'Wi-Fi is in use, then run Scan again.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -479,7 +518,11 @@ class _WifiOffCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Wi-Fi is off. Turn it on to scan for nearby access points.',
+              // The second kind of null: nothing was measured, so the screen
+              // says so rather than showing an empty list that would read as
+              // "no access points nearby".
+              'Wi-Fi is off, so the scan could not run. Turn it on to list the '
+              'nearby access points.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -489,13 +532,27 @@ class _WifiOffCard extends StatelessWidget {
   }
 }
 
+/// Says plainly that the list on screen is the LAST scan, not a fresh one.
+///
+/// The reason differs by platform and the copy names it: Android's OS throttles
+/// `startScan()`, while on macOS an active CoreWLAN scan takes the radio
+/// off-channel for seconds, so the app spaces fresh scans out itself.
 class _ThrottledNote extends StatelessWidget {
-  const _ThrottledNote();
+  const _ThrottledNote({required this.platformName});
+
+  /// The OS name for the copy, or null on a platform with no name to attribute.
+  final String? platformName;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    final String message = platformName == 'macOS'
+        ? 'A fresh scan ran moments ago. Showing those results. A full scan '
+            'briefly takes the radio off channel, so scans are spaced out. Tap '
+            'Scan again in a moment for a new one.'
+        : '${platformName ?? 'The system'} throttled the fresh scan. Showing '
+            'the last scan. Tap Scan again in a moment for newer results.';
     return _Surface(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,8 +561,7 @@ class _ThrottledNote extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Android throttled the fresh scan. Showing the last scan. Tap '
-              'Scan again in a moment for newer results.',
+              message,
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -515,28 +571,57 @@ class _ThrottledNote extends StatelessWidget {
   }
 }
 
+/// The Location gate: the scan COULD NOT RUN, said as such.
+///
+/// This is the first of the two kinds of null. It must never read as "no access
+/// points nearby" — without the Location grant the app measured nothing, and
+/// claiming an empty RF environment would be a verdict it never took
+/// ([[feedback_app_blames_the_wifi]]). The lead sentence therefore states the
+/// scan did not run before anything else.
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
     required this.attempted,
+    required this.platformName,
     required this.onGrant,
     required this.onOpenSettings,
   });
 
   /// Whether a grant has already been attempted (swaps the copy).
   final bool attempted;
+
+  /// The OS name for the copy, or null on a platform with no name to attribute.
+  final String? platformName;
   final VoidCallback? onGrant;
   final VoidCallback? onOpenSettings;
+
+  /// Why this OS gates the scan behind Location. Both are true statements about
+  /// the platform, not a guess: Android withholds scan results entirely, macOS
+  /// withholds the SSID and BSSID of every scanned network.
+  String get _reason {
+    switch (platformName) {
+      case 'macOS':
+        return 'macOS requires Location Services to read the name and BSSID of '
+            'nearby Wi-Fi networks.';
+      case 'Android':
+        return 'Android requires the Location permission to read Wi-Fi scan '
+            'results.';
+      default:
+        return 'This system requires the Location permission to read Wi-Fi '
+            'scan results.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String message = attempted
-        ? 'If you allowed Location, the nearby networks appear on the next '
-            'scan. If the list is still empty, the permission was denied. Open '
-            'Settings to enable Location for this app.'
-        : 'Android requires the Location permission to read Wi-Fi scan '
-            'results. Grant it to list the nearby access points.';
+        ? 'The scan did not run: Location is still not granted. If you just '
+            'allowed it, the nearby networks appear on the next scan. '
+            'Otherwise open Settings and enable Location for this app. This '
+            'list being empty does not mean there are no access points nearby.'
+        : 'The scan could not run. $_reason Grant it to list the nearby access '
+            'points. Until then this screen cannot tell you what is on the air.';
     return _Surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -785,9 +870,13 @@ class _OccupancyBar extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _ApListCard extends StatelessWidget {
-  const _ApListCard({required this.aps});
+  const _ApListCard({required this.aps, required this.isWide});
 
   final List<ScannedAp> aps;
+
+  /// Wide (desktop) window: the row splits into four labeled columns instead of
+  /// the stacked two-column phone row.
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -796,10 +885,50 @@ class _ApListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          if (isWide) ...<Widget>[
+            const _ApColumnHeader(),
+            const _RowDivider(),
+          ],
           for (int i = 0; i < aps.length; i++) ...<Widget>[
             if (i > 0) const _RowDivider(),
-            _ApRow(ap: aps[i]),
+            _ApRow(ap: aps[i], isWide: isWide),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Column headings for the wide (desktop) AP list. Not shown on a phone-width
+/// window, where the row is stacked and self-labeling.
+class _ApColumnHeader extends StatelessWidget {
+  const _ApColumnHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final TextStyle? style = text.labelSmall?.copyWith(
+      color: colors.textTertiary,
+      letterSpacing: 0.4,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Row(
+        children: <Widget>[
+          Expanded(flex: 4, child: Text('NETWORK', style: style)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(flex: 3, child: Text('BSSID', style: style)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 2,
+            child: Text('SIGNAL', style: style, textAlign: TextAlign.end),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 2,
+            child: Text('CHANNEL', style: style, textAlign: TextAlign.end),
+          ),
         ],
       ),
     );
@@ -815,9 +944,13 @@ class _RowDivider extends StatelessWidget {
 }
 
 class _ApRow extends StatelessWidget {
-  const _ApRow({required this.ap});
+  const _ApRow({required this.ap, required this.isWide});
 
   final ScannedAp ap;
+
+  /// Wide (desktop) window: four columns matching [_ApColumnHeader]. Narrow:
+  /// the original stacked phone row.
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -829,6 +962,31 @@ class _ApRow extends StatelessWidget {
     final String name = ap.ssid ?? '(hidden network)';
     final bool hidden = ap.ssid == null;
 
+    final Text nameText = Text(
+      name,
+      style: text.bodyMedium?.copyWith(
+        color: hidden ? colors.textTertiary : colors.textPrimary,
+        fontStyle: hidden ? FontStyle.italic : null,
+      ),
+    );
+    final Text bssidText = Text(
+      ap.bssid ?? 'BSSID unavailable',
+      style: mono.robotoMono.copyWith(
+        fontSize: AppTextSize.caption,
+        color: colors.textTertiary,
+      ),
+    );
+    final Text rssiText = Text(
+      '${ap.rssiDbm} dBm',
+      textAlign: TextAlign.end,
+      style: mono.robotoMono.copyWith(color: colors.textPrimary),
+    );
+    final Text channelText = Text(
+      'ch ${ap.channel} · ${ap.band}',
+      textAlign: TextAlign.end,
+      style: text.bodySmall?.copyWith(color: colors.textSecondary),
+    );
+
     return Semantics(
       container: true,
       label: '$name, '
@@ -837,56 +995,47 @@ class _ApRow extends StatelessWidget {
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              flex: 3,
-              child: Column(
+        child: isWide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(flex: 4, child: nameText),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(flex: 3, child: bssidText),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(flex: 2, child: rssiText),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(flex: 2, child: channelText),
+                ],
+              )
+            : Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    name,
-                    style: text.bodyMedium?.copyWith(
-                      color: hidden ? colors.textTertiary : colors.textPrimary,
-                      fontStyle: hidden ? FontStyle.italic : null,
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        nameText,
+                        const SizedBox(height: AppSpacing.xxs),
+                        bssidText,
+                      ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    ap.bssid ?? 'BSSID unavailable',
-                    style: mono.robotoMono.copyWith(
-                      fontSize: AppTextSize.caption,
-                      color: colors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    '${ap.rssiDbm} dBm',
-                    textAlign: TextAlign.end,
-                    style: mono.robotoMono.copyWith(color: colors.textPrimary),
-                  ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    'ch ${ap.channel} · ${ap.band}',
-                    textAlign: TextAlign.end,
-                    style: text.bodySmall?.copyWith(
-                      color: colors.textSecondary,
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        rssiText,
+                        const SizedBox(height: AppSpacing.xxs),
+                        channelText,
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
