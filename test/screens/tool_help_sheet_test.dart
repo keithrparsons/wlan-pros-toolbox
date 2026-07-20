@@ -75,6 +75,31 @@ Future<void> _pumpSheet(WidgetTester tester, ToolHelp help) async {
 }
 
 void main() {
+  testWidgets(
+    'the Close button reads as an ENABLED button, not just named '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pumpSheet(tester, _calc);
+
+      // A Semantics(button: true) without `enabled:` leaves isEnabled unset,
+      // which AT announces as a DISABLED button (68d9b93). Close always works,
+      // so it must read enabled. Removing `enabled:` (the mutation) → red.
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Close help')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Close help',
+        ),
+        reason: 'the Close affordance must not read as disabled to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('renders every section of a full calculator entry', (
     tester,
   ) async {

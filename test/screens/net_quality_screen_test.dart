@@ -196,6 +196,33 @@ void main() {
       expect(find.byType(MetricSparkline), findsWidgets);
     });
 
+    testWidgets(
+      'the live pause/resume button reads as an ENABLED button, not just named '
+      '(WCAG 2.2 AA SC 4.1.2)',
+      (tester) async {
+        final SemanticsHandle handle = tester.ensureSemantics();
+        await tester.pumpWidget(harness());
+        await tester.pumpAndSettle();
+
+        // A Semantics(button: true) without `enabled:` leaves isEnabled unset,
+        // which AT announces as a DISABLED button (68d9b93 live dump). This
+        // control never disables, so it must read as enabled. Removing the
+        // `enabled:` line (the mutation) drops hasEnabledState → red.
+        expect(
+          tester.getSemantics(find.bySemanticsLabel('Pause live sampling')),
+          isSemantics(
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            label: 'Pause live sampling',
+          ),
+          reason: 'a working live control must not read as disabled to AT',
+        );
+
+        handle.dispose();
+      },
+    );
+
     testWidgets('pause/resume toggles the live indicator and SR label',
         (tester) async {
       await tester.pumpWidget(harness());

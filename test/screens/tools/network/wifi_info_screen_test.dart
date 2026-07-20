@@ -472,6 +472,40 @@ void main() {
   });
 
   group('WifiInfoScreen — macOS source', () {
+    testWidgets(
+      'the Refresh button reads as an ENABLED button, not just named '
+      '(WCAG 2.2 AA SC 4.1.2)',
+      (tester) async {
+        final SemanticsHandle handle = tester.ensureSemantics();
+        await tester.pumpWidget(host(
+          WifiInfoScreen(
+            sourceOverride: WifiInfoSource.macosCoreWlan,
+            macAdapter: _FakeMacAdapter(snapshot: _macSample()),
+          ),
+        ));
+        await tester.pumpAndSettle();
+
+        // A Semantics(button: true) without `enabled:` leaves isEnabled unset,
+        // which AT announces as a DISABLED button (68d9b93). At rest (not
+        // mid-refresh) this control is available, so it must read enabled.
+        // Removing `enabled:` (the mutation) drops hasEnabledState → red.
+        expect(
+          tester.getSemantics(
+            find.bySemanticsLabel('Refresh Wi-Fi information'),
+          ),
+          isSemantics(
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            label: 'Refresh Wi-Fi information',
+          ),
+          reason: 'the idle Refresh control must not read as disabled to AT',
+        );
+
+        handle.dispose();
+      },
+    );
+
     testWidgets('shows the decoded AP name row when the beacon advertised one',
         (tester) async {
       await tester.pumpWidget(host(

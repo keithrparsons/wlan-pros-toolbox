@@ -960,6 +960,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
                 )
               : Semantics(
                   button: true,
+                  // This branch renders only when not mid-refresh, so the
+                  // action is always available; `onPressed` is never null.
+                  // Without this the node leaves isEnabled unset, which AT
+                  // announces as a DISABLED button (see 68d9b93).
+                  enabled: true,
                   label: 'Refresh Wi-Fi information',
                   child: IconButton(
                     icon: const Icon(Icons.refresh),

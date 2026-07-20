@@ -4785,6 +4785,11 @@ class _LiveSignalCard extends StatelessWidget {
                         const SizedBox(width: AppSpacing.xs),
                         Semantics(
                           button: true,
+                          // Always available while streaming; `onPressed:
+                          // sampler.stop` is never null here. Without this the
+                          // node leaves isEnabled unset, which AT announces as a
+                          // DISABLED button (see 68d9b93).
+                          enabled: true,
                           label: 'Stop live Wi-Fi signal',
                           child: IconButton(
                             icon: const Icon(Icons.stop, size: 20),

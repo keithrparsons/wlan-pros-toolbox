@@ -837,6 +837,10 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         // performs, and flips with state.
         Semantics(
           button: true,
+          // Always available: the tap flips pause/resume, it never disables.
+          // Without this the node leaves isEnabled unset, which AT announces as
+          // a DISABLED button (see 68d9b93 live semantics dump).
+          enabled: true,
           label: running ? 'Pause live sampling' : 'Resume live sampling',
           child: IconButton(
             visualDensity: VisualDensity.compact,
