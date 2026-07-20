@@ -8,7 +8,7 @@
   <!-- Each left-right arrow (was &#8596;) is a vector <path>; runs re-flowed
        start-anchored with the arrows in fixed gaps. Em dash stays ASCII-safe
        typography (GL-003 8.6.1). -->
-  <text x="151.3" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="start">QoS Mapping &#8212; WMM AC</text>
+  <text x="151.3" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="start">QoS Mapping: WMM AC</text>
   <path d="M320.4 25 H332.4 M323.9 21.5 L320.4 25 L323.9 28.5 M328.9 21.5 L332.4 25 L328.9 28.5" fill="none" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   <text x="335.4" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="start">802.11e UP</text>
   <path d="M416.5 25 H428.5 M420 21.5 L416.5 25 L420 28.5 M425 21.5 L428.5 25 L425 28.5" fill="none" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -72,5 +72,5 @@
 
   <!-- ============================ FOOTER : the pitfall note ============================ -->
   <text x="310" y="312" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle">Naive default <tspan font-family="DM Mono, monospace" fill="#9C9C9C">UP = DSCP &gt;&gt; 3</tspan> sends voice (EF 46) to UP 5</text>
-  <text x="310" y="332" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">&#8212; into the <tspan fill="#E5E5E5">video</tspan> queue, not voice. RFC 8325 fixes this with an explicit table.</text>
+  <text x="310" y="332" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">into the <tspan fill="#E5E5E5">video</tspan> queue, not voice. RFC 8325 fixes this with an explicit table.</text>
 </svg>

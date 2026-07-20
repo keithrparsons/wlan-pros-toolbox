@@ -5,7 +5,7 @@
        Dark-baked palette per §8.20.7 allow-list. Lime marks ONLY the two special bits. -->
 
   <!-- ============================ HEADER ============================ -->
-  <text x="380" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle">EUI-48 MAC Address &#8212; 48 bits, 6 octets</text>
+  <text x="380" y="30" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle">EUI-48 MAC Address: 48 bits, 6 octets</text>
 
   <!-- ============================ OUI / NIC SPAN BRACKETS (above the boxes) ============================ -->
   <!-- OUI bracket over octets 1-3 (x 60..360) -->
@@ -108,8 +108,8 @@
     <path d="M437.5 254 L437.5 268 L320 268"/>
     <path d="M492.5 254 L492.5 286 L320 286"/>
   </g>
-  <text x="312" y="272" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 1 = U/L &#8212; Universal / Local</text>
-  <text x="312" y="290" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 0 = I/G &#8212; Individual / Group</text>
+  <text x="312" y="272" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 1 = U/L: Universal / Local</text>
+  <text x="312" y="290" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="end">bit 0 = I/G: Individual / Group</text>
 
   <!-- U/L and I/G meaning, to the RIGHT, clear of cells and of each other.
        Each rightwards arrow (was &#8594;) is a vector <path>: the left and right

@@ -22,8 +22,10 @@
 //   3. assets/**/*.json              -> every JSON string VALUE (all bundled
 //      data, not a hardcoded subset).
 //   4. assets/**/*.svg               -> rendered markup (XML comments stripped;
-//      UTF-16 files are decoded, and an undecodable asset FAILS the gate rather
-//      than being silently skipped).
+//      XML character ENTITIES for the em/en dash are decoded, because the SVG
+//      renderer decodes them and the user reads the glyph; UTF-16 files are
+//      decoded, and an undecodable asset FAILS the gate rather than being
+//      silently skipped).
 //
 // EXEMPT (data, not prose):
 //   - The null-value glyph literal: a string whose ENTIRE content is '—' (or
@@ -34,8 +36,17 @@
 //   - En-dash RANGES (0–128, A–Z, 128–255): a tight en dash between two
 //     non-spaces. Only a SPACE-flanked en dash (prose punctuation) is flagged.
 //
-// The glyphs are built from code points so THIS file stays em-dash-free and can
-// never false-positive against its own text.
+// The glyphs are built from code points so THIS file's STRING LITERALS stay
+// dash-free and can never false-positive against the guard's own text.
+//
+// To be precise about what that does and does not claim: this file's COMMENTS
+// do contain em and en dashes (prose written for the next engineer), and that
+// is fine on two independent grounds. First, the Dart tokenizer below strips
+// comments before scanning, so comment prose is invisible to the scan. Second,
+// `test/` is never a scan root at all - the gate walks lib/ and assets/ only.
+// The earlier wording here claimed the whole FILE was em-dash-free, which was
+// simply untrue and invited a reader to "verify" it with a grep that fails.
+// The honest and load-bearing claim is the one about string literals.
 
 import 'dart:convert';
 import 'dart:io';
@@ -47,6 +58,13 @@ const int _kEn = 0x2013; // en dash
 const int _kSpace = 0x20;
 final String _em = String.fromCharCode(_kEm);
 final String _en = String.fromCharCode(_kEn);
+
+/// A backslash, and the TEXT of a Dart unicode escape (not the character it
+/// denotes). Built from code points for the same reason the glyphs above are:
+/// a test that means to plant the SPELLING must never accidentally contain the
+/// real dash, or it passes for a reason unrelated to what it claims to prove.
+final String _bs = String.fromCharCode(0x5C);
+String _uEsc(int cp) => '${_bs}u${cp.toRadixString(16).padLeft(4, '0')}';
 
 /// A flagged occurrence.
 class _Hit {
@@ -99,6 +117,53 @@ int _lineAt(String text, int offset) =>
 // user-facing copy. Interpolation `${...}` is entered as CODE, so nested string
 // literals inside it are scanned exactly like top-level ones.
 // ---------------------------------------------------------------------------
+/// A decoded Dart `\u` escape: the character it produces, and how many source
+/// characters it occupied.
+class _UnicodeEscape {
+  const _UnicodeEscape(this.rune, this.consumed);
+  final int rune;
+  final int consumed;
+}
+
+/// Parse a Dart unicode escape starting at [i] (which must point at the `\`).
+/// Returns null if this is not a well-formed `\u` escape, in which case the
+/// caller falls back to copying the escape pair verbatim.
+_UnicodeEscape? _readUnicodeEscape(String src, int i) {
+  if (i + 1 >= src.length || src[i + 1] != 'u') return null;
+  final int n = src.length;
+
+  // Braced form: \u{1F600} - 1..6 hex digits.
+  if (i + 2 < n && src[i + 2] == '{') {
+    final int close = src.indexOf('}', i + 3);
+    if (close < 0 || close == i + 3 || close - (i + 3) > 6) return null;
+    final int? v = _strictHex(src.substring(i + 3, close));
+    if (v == null || v > 0x10FFFF) return null;
+    return _UnicodeEscape(v, close - i + 1);
+  }
+
+  // Fixed form: backslash-u followed by EXACTLY four hex digits.
+  if (i + 6 > n) return null;
+  final int? v = _strictHex(src.substring(i + 2, i + 6));
+  if (v == null) return null;
+  return _UnicodeEscape(v, 6);
+}
+
+/// Parse [s] as hex, rejecting anything int.tryParse would tolerate but Dart's
+/// escape grammar does not. int.tryParse TRIMS WHITESPACE and accepts a leading
+/// sign, so it would happily read '+20' or ' 14' as a valid escape body and let
+/// the tokenizer consume characters that are not part of any escape. Every
+/// character must be a hex digit and nothing else.
+int? _strictHex(String s) {
+  if (s.isEmpty) return null;
+  for (final int u in s.codeUnits) {
+    final bool isHex = (u >= 0x30 && u <= 0x39) || // 0-9
+        (u >= 0x41 && u <= 0x46) || // A-F
+        (u >= 0x61 && u <= 0x66); // a-f
+    if (!isHex) return null;
+  }
+  return int.parse(s, radix: 16);
+}
+
 class _Frame {
   _Frame.code({required this.interp}) : isString = false;
   _Frame.string({required this.delim, required this.raw, required this.startLine})
@@ -147,6 +212,23 @@ List<_Hit> _scanDart(String path, String src) {
         continue;
       }
       if (!f.raw && c == r'\') {
+        // A `\u` escape is decoded to the character the COMPILER will produce,
+        // so a dash spelled as a backslash-u escape is caught. The guard must
+        // see what SHIPS, not what the source happens to spell. Both Dart forms
+        // are handled: the fixed four-hex-digit form and the braced form.
+        //
+        // Doing this HERE rather than with a regex over the finished buffer is
+        // what keeps it honest: the tokenizer already consumes escape pairs
+        // left to right, so an escaped backslash ('\\u2014' - a literal
+        // backslash followed by the text u2014, which the compiler does NOT
+        // turn into a dash) is consumed as a pair and can never be misread as
+        // the start of an escape. A post-hoc regex would flag it wrongly.
+        final _UnicodeEscape? decoded = _readUnicodeEscape(src, i);
+        if (decoded != null) {
+          f.buf.writeCharCode(decoded.rune);
+          i += decoded.consumed;
+          continue;
+        }
         f.buf.write(c);
         if (nx.isNotEmpty) {
           f.buf.write(nx);
@@ -288,16 +370,69 @@ List<_Hit> _scanJson(String path, String src) {
 }
 
 // ---------------------------------------------------------------------------
-// SVG: strip XML comments, scan the rendered markup.
+// SVG: strip XML comments, decode dash entities, scan the rendered markup.
 // ---------------------------------------------------------------------------
 final RegExp _xmlComment = RegExp(r'<!--.*?-->', dotAll: true);
 
+/// XML character-entity forms of the em and en dash: decimal (`&#8212;`), hex
+/// (`&#x2014;`, any case, optional leading zeros), and named (`&mdash;`).
+///
+/// WHY THIS EXISTS (the bug this guard shipped with). SVG is XML, so the
+/// renderer decodes these before drawing. Scanning the UNDECODED markup meant
+/// an entity-encoded em dash rendered as prose on the user's screen while the
+/// guard reported green - a gate that certified the exact thing it exists to
+/// stop. Twelve bundled graphics carried 26 such dashes past it.
+final RegExp _emEntity = RegExp(r'&(?:#0*8212|#[xX]0*2014|mdash);');
+final RegExp _enEntity = RegExp(r'&(?:#0*8211|#[xX]0*2013|ndash);');
+
+/// Replace each dash entity with the single character it renders as.
+///
+/// Two deliberate choices, both load-bearing - do not "optimize" either:
+///
+/// 1. COMPACT, NOT PADDED. Padding each entity out to its original width to
+///    preserve byte offsets would insert a SPACE next to the glyph, which
+///    would turn a legitimate numeric range (`100&#8211;130 V`) into a
+///    space-flanked prose en dash and make the guard flag correct typography.
+///    The range exemption in _proseDashOffsets only survives a compact decode.
+/// 2. DASH ENTITIES ONLY. A general XML-entity decoder would also expand
+///    `&#10;` into a real newline and shift every line number after it. Dashes
+///    contain no newlines, so decoding only these keeps a decoded offset
+///    mapping to the true SOURCE line.
+///
+/// Double-encoded text (`&amp;#8212;`, which renders as the literal characters
+/// "&#8212;" and not a dash) is correctly left alone: the `&` is consumed by
+/// `&amp;`, so no pattern above can match the remainder.
+String _decodeDashEntities(String s) =>
+    s.replaceAll(_emEntity, _em).replaceAll(_enEntity, _en);
+
+/// Remove XML comments while PRESERVING the line structure around them.
+///
+/// Each comment collapses to the newlines it contained, so every line after a
+/// multi-line comment keeps its true source line number. Deleting comments
+/// outright (the original behaviour) silently shifted every later line: the
+/// gate reported iec-60309.svg:L34 for a dash that actually lives on L40, and
+/// a reported line that does not exist in the file sends the reader hunting.
+String _stripXmlComments(String src) => src.replaceAllMapped(
+      _xmlComment,
+      (Match m) => '\n' * '\n'.allMatches(m.group(0)!).length,
+    );
+
 List<_Hit> _scanSvg(String path, String src) {
-  final String noComments = src.replaceAll(_xmlComment, '');
-  return _proseDashOffsets(noComments)
-      .map((int o) => _Hit(path, 'L${_lineAt(noComments, o)}', noComments))
+  final String text = _decodeDashEntities(_stripXmlComments(src));
+  return _proseDashOffsets(text)
+      .map((int o) => _Hit(path, 'L${_lineAt(text, o)}', _around(text, o)))
       .take(1)
       .toList();
+}
+
+/// A readable window around [offset], for the failure message. The SVG scanner
+/// used to hand the ENTIRE file to _Hit as its snippet, so a failing gate
+/// printed twelve complete XML documents and buried the finding it had just
+/// made. Report the offending text, not the document that contains it.
+String _around(String text, int offset) {
+  final int start = (offset - 60).clamp(0, text.length);
+  final int end = (offset + 60).clamp(0, text.length);
+  return text.substring(start, end).trim();
 }
 
 List<File> _files(String dir, bool Function(String) match) {
@@ -340,6 +475,108 @@ void main() {
     test('allows a documented quoted glyph', () {
       expect(_proseDashOffsets('stays blank ("$_em") until set'), isEmpty);
     });
+    // ---- SVG entity decoding (the 2026-07-20 blind spot). ----
+    // The renderer decodes XML entities; the guard used to scan the raw
+    // markup, so these all shipped green. Each form is planted and must fire.
+    test('detects an em dash written as a DECIMAL entity in an SVG', () {
+      expect(_scanSvg('g.svg', '<text>Yellow &#8212; 100 V</text>'), isNotEmpty);
+    });
+    test('detects an em dash written as a HEX entity in an SVG', () {
+      expect(_scanSvg('g.svg', '<text>Yellow &#x2014; 100 V</text>'), isNotEmpty);
+      expect(_scanSvg('g.svg', '<text>Yellow &#X2014; 100 V</text>'), isNotEmpty);
+      // Leading zeros are legal XML and must not be an escape hatch.
+      expect(_scanSvg('g.svg', '<text>Yellow &#x02014; 100 V</text>'), isNotEmpty);
+      expect(_scanSvg('g.svg', '<text>Yellow &#08212; 100 V</text>'), isNotEmpty);
+    });
+    test('detects an em dash written as a NAMED entity in an SVG', () {
+      expect(_scanSvg('g.svg', '<text>Yellow &mdash; 100 V</text>'), isNotEmpty);
+    });
+    test('detects a PROSE en dash written as an entity in an SVG', () {
+      expect(_scanSvg('g.svg', '<text>one thing &#8211; another</text>'), isNotEmpty);
+      expect(_scanSvg('g.svg', '<text>one thing &ndash; another</text>'), isNotEmpty);
+      expect(_scanSvg('g.svg', '<text>one thing &#x2013; another</text>'), isNotEmpty);
+    });
+
+    // ---- The negative that matters most. ----
+    // A tight en dash between two numbers is CORRECT typography. If decoding
+    // ever pads entities to preserve offsets, a space lands beside the glyph
+    // and this test goes red - which is the whole point of having it.
+    test('does NOT flag an entity-encoded en dash inside a numeric range', () {
+      expect(_scanSvg('g.svg', '<text>100&#8211;130 V</text>'), isEmpty);
+      expect(_scanSvg('g.svg', '<text>bytes 0&#x2013;255</text>'), isEmpty);
+      expect(_scanSvg('g.svg', '<text>A&ndash;Z</text>'), isEmpty);
+    });
+    test('reports the real SOURCE line after decoding shortens the text', () {
+      // Three entities on line 1 shrink it by 18 characters. The dash on line 3
+      // must still report L3, not a line shifted by the decode.
+      const String svg = '<text>0&#8211;9 A&#8211;Z 1&#8211;5</text>\n'
+          '<text>plain</text>\n'
+          '<text>alpha &#8212; beta</text>';
+      expect(_scanSvg('g.svg', svg).single.where, 'L3');
+    });
+    test('does not decode a DOUBLE-encoded entity (renders as literal text)', () {
+      // &amp;#8212; draws the characters "&#8212;" on screen, not a dash.
+      expect(_scanSvg('g.svg', '<text>type &amp;#8212; to get one</text>'), isEmpty);
+    });
+    test('still ignores a dash inside an XML comment', () {
+      expect(_scanSvg('g.svg', '<!-- note &#8212; internal --><text>ok</text>'), isEmpty);
+    });
+    test('a MULTI-LINE comment does not shift the reported line number', () {
+      const String svg = '<svg>\n'
+          '<!-- a licence header\n'
+          '     spanning three\n'
+          '     whole lines -->\n'
+          '<text>alpha &#8212; beta</text>';
+      // The dash is on source line 5 and must be reported as such.
+      expect(_scanSvg('g.svg', svg).single.where, 'L5');
+    });
+
+    // ---- Dart \u escape bypass (latent; zero live instances). ----
+    //
+    // These payloads are built with _uEsc, never typed as a literal. The first
+    // draft of this block was typed by hand and silently acquired REAL dashes
+    // where the escape SPELLING was the thing under test - which made the
+    // detection cases pass for the wrong reason and inverted the raw-string
+    // case entirely. Building the escape from code points makes that class of
+    // mistake unrepresentable. Do not "simplify" these back into literals.
+    test('detects an em dash spelled as a Dart unicode escape', () {
+      expect(_scanDart('x.dart', "final s = 'Term ${_uEsc(_kEm)} gloss';"),
+          isNotEmpty);
+      expect(_scanDart('x.dart', "final s = 'Term ${_bs}u{2014} gloss';"),
+          isNotEmpty);
+    });
+    test('a unicode escape in a RAW string is literal text, not a dash', () {
+      // In a raw string the backslash is data; the compiler produces no dash,
+      // so the guard must stay quiet.
+      expect(_scanDart('x.dart', "final s = r'Term ${_uEsc(_kEm)} gloss';"),
+          isEmpty);
+    });
+    test('an ESCAPED backslash before u2014 is not a unicode escape', () {
+      // Compiles to a literal backslash followed by the text u2014. No dash.
+      expect(_scanDart('x.dart', "final s = 'path $_bs${_bs}u2014 end';"),
+          isEmpty);
+    });
+    // _readUnicodeEscape is pinned DIRECTLY here. Its strictness has no
+    // dash-visible effect through _scanDart (a malformed escape produces no
+    // dash either way), so an outcome-level test for it would be a test that
+    // cannot fail. Testing the parser as a unit is the honest alternative.
+    test('the escape parser accepts only well-formed escapes', () {
+      final String em4 = _uEsc(_kEm); // backslash-u-2-0-1-4
+      expect(_readUnicodeEscape(em4, 0)!.rune, _kEm);
+      expect(_readUnicodeEscape(em4, 0)!.consumed, 6);
+      expect(_readUnicodeEscape('${_bs}u{2014}', 0)!.rune, _kEm);
+      // int.tryParse would tolerate all of these; the escape grammar does not.
+      expect(_readUnicodeEscape('${_bs}u 014', 0), isNull);
+      expect(_readUnicodeEscape('${_bs}u+014', 0), isNull);
+      expect(_readUnicodeEscape('${_bs}u201', 0), isNull); // too short
+      expect(_readUnicodeEscape('${_bs}n', 0), isNull); // not a u escape
+      expect(_readUnicodeEscape('${_bs}u{}', 0), isNull); // empty braces
+    });
+    test('a Dart-escaped en dash in a numeric range is still not flagged', () {
+      expect(_scanDart('x.dart', "final s = 'bytes 0${_uEsc(_kEn)}255';"),
+          isEmpty);
+    });
+
     test('allows an en-dash numeric range but flags a prose en dash', () {
       // Braces are REQUIRED here: '0$_en255' would parse as the identifier
       // `_en255`, not `_en` followed by "255". Do not "simplify" this one.

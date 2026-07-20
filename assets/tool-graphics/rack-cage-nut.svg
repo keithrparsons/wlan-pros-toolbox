@@ -5,7 +5,7 @@
     </marker>
   </defs>
 
-  <text x="60" y="44" font-size="22" font-weight="700" fill="#E5E5E5">Cage nut &#8212; turning a square hole into any thread you need</text>
+  <text x="60" y="44" font-size="22" font-weight="700" fill="#E5E5E5">Cage nut: turning a square hole into any thread you need</text>
 
   <!-- =========================================================
        Three-step assembly. Rails: x-blocks at 100, 450, 800; y=150..350 (h=200).
@@ -69,7 +69,7 @@
   <text x="900" y="384" text-anchor="middle" font-size="15" font-weight="600" fill="#E5E5E5">Now a threaded hole</text>
 
   <!-- thread-choice note in its own clear band below the three captions -->
-  <text x="550" y="420" text-anchor="middle" font-size="14" fill="#9C9C9C">Pick the cage nut to match the gear &#8212; 10-32, 12-24, or M6.</text>
+  <text x="550" y="420" text-anchor="middle" font-size="14" fill="#9C9C9C">Pick the cage nut to match the gear: 10-32, 12-24, or M6.</text>
 
   <!-- divider -->
   <line x1="60" y1="446" x2="1120" y2="446" stroke="#3A3A3A" stroke-width="1"/>
@@ -86,9 +86,9 @@
     <rect x="80" y="514" width="24" height="24" rx="2"/>
     <rect x="80" y="546" width="24" height="24" rx="2"/>
   </g>
-  <text x="146" y="522" font-size="14" fill="#E5E5E5">Thread-agnostic &#8212; swap the cage nut to suit the gear.</text>
+  <text x="146" y="522" font-size="14" fill="#E5E5E5">Thread-agnostic: swap the cage nut to suit the gear.</text>
   <text x="146" y="546" font-size="14" fill="#E5E5E5">Strip a nut? Replace the nut, not the rail.</text>
-  <text x="146" y="570" font-size="14" fill="#E5E5E5">Modern default &#8212; but bring cage nuts, few ship with them.</text>
+  <text x="146" y="570" font-size="14" fill="#E5E5E5">Modern default, but bring cage nuts; few ship with them.</text>
 
   <!-- RIGHT: tapped rail strip -->
   <rect x="640" y="500" width="64" height="84" fill="#222222" stroke="#E5E5E5" stroke-width="2" rx="3"/>
@@ -100,7 +100,7 @@
     <line x1="663" y1="521" x2="681" y2="521"/><line x1="663" y1="526" x2="681" y2="526"/><line x1="663" y1="531" x2="681" y2="531"/>
     <line x1="663" y1="553" x2="681" y2="553"/><line x1="663" y1="558" x2="681" y2="558"/><line x1="663" y1="563" x2="681" y2="563"/>
   </g>
-  <text x="726" y="522" font-size="14" fill="#E5E5E5">Screw goes straight in &#8212; fast, no extra parts.</text>
+  <text x="726" y="522" font-size="14" fill="#E5E5E5">Screw goes straight in: fast, no extra parts.</text>
   <text x="726" y="546" font-size="14" fill="#E5E5E5">Locked to ONE thread type.</text>
   <text x="726" y="570" font-size="14" fill="#E5E5E5">Strip a thread and that position is dead.</text>
 </svg>

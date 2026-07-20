@@ -4,7 +4,7 @@
        Dark-baked palette per §8.20.7. Bright #E5E5E5 for all meaningful text. -->
 
   <!-- HEADER -->
-  <text x="460" y="34" fill="#E5E5E5" font-size="18" font-weight="700" text-anchor="middle">Fiber connector faces &#8212; form factor &amp; ferrule</text>
+  <text x="460" y="34" fill="#E5E5E5" font-size="18" font-weight="700" text-anchor="middle">Fiber connector faces: form factor &amp; ferrule</text>
   <text x="460" y="56" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">Lime = ferrule (the polished tip the fiber ends in). LC&#8217;s 1.25&#8201;mm ferrule is why it packs denser.</text>
 
   <!-- ===================== LC ===================== -->
@@ -108,5 +108,5 @@
 
   <!-- FOOTER NOTE -->
   <line x1="40" y1="408" x2="880" y2="408" stroke="#3A3A3A" stroke-width="1"/>
-  <text x="460" y="430" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">MTP is US&#160;Conec&#8217;s tighter-tolerance, branded MPO &#8212; mechanically intermateable, not a separate standard.</text>
+  <text x="460" y="430" fill="#9C9C9C" font-size="11.5" font-weight="500" text-anchor="middle">MTP is US&#160;Conec&#8217;s tighter-tolerance, branded MPO: mechanically intermateable, not a separate standard.</text>
 </svg>

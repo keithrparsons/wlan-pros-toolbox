@@ -37,8 +37,8 @@
   <!-- ============ VOLTAGE-BAND LEGEND (words, color is not the sole carrier) ============ -->
   <text x="320" y="430" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle">Sleeve color codes the voltage band</text>
   <g font-size="16" font-weight="500" font-family="DM Mono, monospace" fill="#9C9C9C" text-anchor="middle">
-    <text x="320" y="462">Yellow &#8212; 100&#8211;130 V</text>
-    <text x="320" y="490">Blue &#8212; 200&#8211;250 V</text>
-    <text x="320" y="518">Red &#8212; 380&#8211;480 V (3&#216;)</text>
+    <text x="320" y="462">Yellow: 100&#8211;130 V</text>
+    <text x="320" y="490">Blue: 200&#8211;250 V</text>
+    <text x="320" y="518">Red: 380&#8211;480 V (3&#216;)</text>
   </g>
 </svg>
