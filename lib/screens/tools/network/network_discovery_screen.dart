@@ -98,15 +98,29 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   ///
   /// Deliberately HIGHER than [_desktopBreakpoint] because the two answer
   /// different questions. 720 is "is there room for desktop padding"; this is
-  /// "is there room for seven columns to be more readable than a card". The
-  /// widest column set (IP, Name, Type, MAC, Vendor, Services, Open ports) needs
-  /// roughly 900px before it stops being a cramped horizontal scroll and starts
-  /// being the faster thing to scan. Below that the 560px card column genuinely
-  /// reads better, so the cards stay.
+  /// "is there room for the table to beat a card".
+  ///
+  /// Was 900, chosen by estimate on the assumption the full column set (IP,
+  /// Name, Type, MAC, Vendor, Services, Open ports) had to fit before the table
+  /// was worth showing. Two things falsified that. First, the macOS window
+  /// declares 800x600 (`macos/Runner/Base.lproj/MainMenu.xib`) and launches
+  /// narrower than 900, so a 900 threshold meant the default window NEVER
+  /// showed the table -- the feature was invisible on launch with nothing to
+  /// hint that widening the window would reveal it. Second, captures of both
+  /// layouts at the same width (800 and 860) show the table already wins well
+  /// below 900: all six hosts are visible at once against three for the cards,
+  /// and the four identifying columns (IP, Name, Type, MAC) are fully readable
+  /// without scrolling. Fitting EVERY column was never the bar; the bar is
+  /// whether the row beats the card, and it does. Vendor onward is reached by
+  /// the table's own horizontal scroll, which has a visible scrollbar.
+  ///
+  /// 760 sits below the declared 800 default so a fresh install with no saved
+  /// window frame still gets the table, and stays above [_desktopBreakpoint] so
+  /// the two thresholds keep answering different questions.
   ///
   /// Width-based, NOT platform-based: a desktop window dragged narrow reflows
   /// back to cards exactly like a phone.
-  static const double _tableBreakpoint = 900;
+  static const double _tableBreakpoint = 760;
 
   StreamSubscription<DiscoveryProgress>? _sub;
   LanDiscoveryEngine? _engine;
@@ -568,8 +582,17 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           hosts: _orderedHosts(r),
           sort: _sort,
           showMacColumns: _showMacColumns(r),
-          onSort: (DiscoverySortColumn column) =>
-              setState(() => _sort = _sort.select(column)),
+          // Select against the RESOLVED sort, not the stored one. The header
+          // announces the resolved sort, so a tap must act on what the user
+          // was told is active -- otherwise the first tap on the column a
+          // fallback landed on is swallowed, and the control refuses the
+          // state its own accessible name asserts.
+          onSort: (DiscoverySortColumn column) => setState(
+            () => _sort = effectiveDiscoverySort(
+              _sort,
+              showMacColumns: _showMacColumns(r),
+            ).select(column),
+          ),
         )
       else
         // Narrow viewport: the same ordered list, stacked as cards. It takes the

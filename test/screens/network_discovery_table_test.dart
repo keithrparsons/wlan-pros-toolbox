@@ -297,6 +297,39 @@ void main() {
       }
     });
 
+    /// Content width the macOS window declares on a fresh launch, from
+    /// `macos/Runner/Base.lproj/MainMenu.xib`:
+    ///   <rect key="contentRect" x="335" y="390" width="800" height="600"/>
+    /// The live launched window measured 860 wide. Both are below the 900 the
+    /// breakpoint originally used, which meant the default window showed the
+    /// CARDS and never the table -- a customer-requested feature that was
+    /// invisible on launch, with no affordance hinting that widening the window
+    /// would reveal it. Every prior verification ran at 1200+, so nothing
+    /// caught it. This test pins the layout to the real default rather than a
+    /// convenient one.
+    const double kMacOsDefaultContentWidth = 800;
+
+    testWidgets('the table is visible at the DEFAULT macOS window width, not '
+        'only at the width the tests happen to use', (
+      WidgetTester tester,
+    ) async {
+      await pumpAt(tester, const Size(kMacOsDefaultContentWidth, 800));
+
+      expect(
+        find.byType(NetworkDiscoveryTable),
+        findsOneWidget,
+        reason:
+            'a table the default window never shows is a feature the customer '
+            'cannot find',
+      );
+      // The identifying columns read without any horizontal scrolling; Vendor
+      // onward is reached via the table's own scroll. Fitting EVERY column was
+      // never the bar.
+      for (final String header in <String>['IP', 'Name', 'Type', 'MAC']) {
+        expect(find.text(header), findsOneWidget, reason: 'header $header');
+      }
+    });
+
     testWidgets('table scrolls horizontally INSIDE its own container, so the '
         'page never scrolls sideways', (WidgetTester tester) async {
       await pumpAt(tester, const Size(1200, 900));
@@ -509,6 +542,64 @@ void main() {
       final double yOfNine = tester.getTopLeft(find.text('10.0.10.9')).dy;
       final double yOfTen = tester.getTopLeft(find.text('10.0.10.10')).dy;
       expect(yOfNine, lessThan(yOfTen));
+    });
+
+    testWidgets('the FIRST tap on the header the fallback landed on reverses '
+        'it, rather than being swallowed', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      int run = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: NetworkDiscoveryScreen(
+            service: oui,
+            engineFactory: () =>
+                _FakeEngine(resultWith(arpAvailable: run++ == 0)),
+            glanceCard: const SizedBox.shrink(),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Scan local network'));
+      await tester.pumpAndSettle();
+
+      // Sort by MAC, then lose the ARP read. The stored sort still names MAC;
+      // the header truthfully announces the RESOLVED sort, IP ascending.
+      await tester.tap(find.text('MAC'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Scan again'));
+      await tester.pumpAndSettle();
+
+      final DataTable before = tester.widget<DataTable>(find.byType(DataTable));
+      expect(
+        before.sortAscending,
+        isTrue,
+        reason: 'the fallback landed on IP ascending, and says so',
+      );
+
+      // The user reads "IP, sorted ascending" and taps IP to reverse it. ONE
+      // tap must do it. Selecting against the STORED sort (MAC) instead of the
+      // resolved one yields IP ascending AGAIN -- a dead tap, and a control
+      // that refuses the state its own accessible name asserts.
+      await tester.tap(find.text('IP'));
+      await tester.pumpAndSettle();
+
+      final DataTable after = tester.widget<DataTable>(find.byType(DataTable));
+      expect(
+        after.sortAscending,
+        isFalse,
+        reason: 'one tap on the sorted column must reverse it',
+      );
+
+      // And the rows actually moved: .10 now sits above .9.
+      final double yOfNine = tester.getTopLeft(find.text('10.0.10.9')).dy;
+      final double yOfTen = tester.getTopLeft(find.text('10.0.10.10')).dy;
+      expect(
+        yOfTen,
+        lessThan(yOfNine),
+        reason: 'descending IP puts .10 above .9',
+      );
     });
   });
 
