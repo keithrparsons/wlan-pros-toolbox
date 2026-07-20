@@ -1,9 +1,21 @@
-# Test tags. CI runs `flutter test --exclude-tags capture` (see
-# .github/workflows/ci.yml). The rendered-pixel `golden` tests now run in CI:
-# a tolerant comparator in test/flutter_test_config.dart absorbs sub-pixel
-# cross-host font-hinting jitter (0.04–0.12%) while still failing real
-# regressions. Only the `capture` figure-generator stays out of CI (it writes
-# files and is run deliberately). Run either tag locally with:
+# Test tags. CI runs `flutter test --exclude-tags "capture || golden"` (see
+# .github/workflows/ci.yml:40). The rendered-pixel `golden` tests do NOT run in
+# CI. This file previously claimed they did; that claim was false for the whole
+# time it stood, and it is the proximate cause of eight days of unseen golden
+# drift (2026-07-12 to 2026-07-20) -- nobody looked, because something was
+# believed to be watching.
+#
+# The tolerant comparator in test/flutter_test_config.dart does not change this.
+# It was written to absorb cross-host font-hinting jitter (measured 0.04-0.12%)
+# so goldens COULD run in CI, but ci.yml:31-35 records that on Linux CI these
+# same goldens diff 5-10%, far over the 0.5% tolerance. It never enabled CI
+# goldens and does not today.
+#
+# Do not re-enable the golden tag in CI on the strength of the comparator alone.
+# Magnitude cannot separate a real change from jitter here at any threshold:
+# real copy changes have measured 0.12% and 0.03%, at and below the documented
+# noise band. Pin the renderer, or assert rendered strings via the widget tree
+# instead of pixels. Run either tag locally with:
 #   flutter test --tags golden     # the visual-regression goldens
 #   flutter test --tags capture    # regenerate the book figures
 tags:
