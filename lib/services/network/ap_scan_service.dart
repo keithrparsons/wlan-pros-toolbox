@@ -29,12 +29,25 @@ class ScannedAp {
     required this.frequencyMhz,
   });
 
-  /// The network name, or null for a hidden network (empty SSID). The UI shows
-  /// "(hidden network)" for null rather than a blank or a fabricated name.
+  /// The network name, or null for a HIDDEN network — a BSS that is really
+  /// cloaking its SSID. The UI shows "(hidden network)" for null.
+  ///
+  /// A null [ssid] is an RF claim about the AP, so it may only ever mean
+  /// "this AP does not broadcast its name". It must NEVER stand in for "the OS
+  /// withheld the name from us", which is a PERMISSION fact. The discriminator
+  /// is [bssid]: a genuinely hidden BSS still reports a BSSID, whereas a BSS
+  /// whose identity was withheld reports neither. Because [bssid] is
+  /// non-nullable and enforced by [fromMap], a withheld row cannot be built at
+  /// all — so a rendered null [ssid] can only mean cloaked
+  /// ([[feedback_app_blames_the_wifi]]).
   final String? ssid;
 
-  /// The AP MAC address (BSSID). Null only if the OS withheld it.
-  final String? bssid;
+  /// The AP MAC address (BSSID). NON-NULLABLE by design: a scan row with no
+  /// BSSID is one whose identity the OS withheld (macOS revokes SSID and BSSID
+  /// together when Location is lost), and such a row cannot be described
+  /// honestly — it would render as a cloaking AP that does not exist. [fromMap]
+  /// drops those rows instead of admitting them to the model.
+  final String bssid;
 
   /// Received signal strength in dBm (negative; closer to 0 is stronger).
   final int rssiDbm;
@@ -50,17 +63,27 @@ class ScannedAp {
 
   /// Builds a record from the native channel payload. Returns null when a
   /// required field is missing, so a malformed entry is dropped, never guessed.
+  ///
+  /// A missing or empty `bssid` drops the row. That is the load-bearing case,
+  /// not a formality: macOS withholds the SSID AND the BSSID of every scanned
+  /// BSS when Location is revoked, so such a row carries a null SSID for a
+  /// PERMISSION reason. Admitting it would render "(hidden network)" — an
+  /// affirmative claim that the AP is cloaking — over a fact about our own
+  /// grant. Dropping it keeps the only honest discriminator intact: a real
+  /// hidden BSS still has a BSSID ([[feedback_app_blames_the_wifi]]).
   static ScannedAp? fromMap(Map<dynamic, dynamic> map) {
     final int? rssi = (map['rssiDbm'] as num?)?.toInt();
     final int? channel = (map['channel'] as num?)?.toInt();
     final String? band = map['band'] as String?;
     final int? freq = (map['frequencyMhz'] as num?)?.toInt();
+    final String? bssid = map['bssid'] as String?;
     if (rssi == null || channel == null || band == null || freq == null) {
       return null;
     }
+    if (bssid == null || bssid.isEmpty) return null;
     return ScannedAp(
       ssid: map['ssid'] as String?,
-      bssid: map['bssid'] as String?,
+      bssid: bssid,
       rssiDbm: rssi,
       channel: channel,
       band: band,
@@ -84,7 +107,12 @@ class ApScanSnapshot {
     required this.poweredOn,
     required this.locationAuthorized,
     required this.scanThrottled,
-  });
+  }) : assert(
+          locationAuthorized || accessPoints.length == 0,
+          'A snapshot cannot carry access points while locationAuthorized is '
+          'false: the gate card says the scan could not run, so a list beside '
+          'it contradicts it. Drop the rows or fix the flag.',
+        );
 
   /// The visible access points. Empty when Wi-Fi is off, Location is not
   /// granted, or no BSS is in range.
@@ -122,10 +150,18 @@ class ApScanSnapshot {
         .map(ScannedAp.fromMap)
         .whereType<ScannedAp>()
         .toList();
+    final bool locationAuthorized =
+        (map['locationAuthorized'] as bool?) ?? false;
     return ApScanSnapshot(
-      accessPoints: aps,
+      // Rows are only meaningful when the grant that produced them is held.
+      // A channel that reports rows alongside locationAuthorized:false is
+      // describing a scan whose results the OS has since withheld; keeping the
+      // rows would render an AP list DIRECTLY BELOW a card saying the scan
+      // could not run. The flag wins, because it is the one the gate cards
+      // speak from.
+      accessPoints: locationAuthorized ? aps : const <ScannedAp>[],
       poweredOn: (map['poweredOn'] as bool?) ?? false,
-      locationAuthorized: (map['locationAuthorized'] as bool?) ?? false,
+      locationAuthorized: locationAuthorized,
       scanThrottled: (map['scanThrottled'] as bool?) ?? false,
     );
   }
@@ -239,11 +275,18 @@ class ApScanService {
 
   /// The platforms whose native nearby-AP scan is wired into this tool.
   ///
-  /// Windows is deliberately absent. Its enumeration path exists
-  /// ([WindowsWifiReader.scanNearbyBss]) but is written-not-executed against
-  /// real hardware, and unverified code does not go live
-  /// ([[feedback_gate_until_clean]]).
-  static const Set<String> _wiredPlatforms = <String>{'android', 'macos'};
+  /// THE SINGLE SOURCE OF TRUTH for scan platform support. `kNativeScanPlatforms`
+  /// in lib/data/tool_catalog.dart is DERIVED from this set, not copied beside
+  /// it — an earlier version said "mirrors ApScanService" in a comment, and a
+  /// mutation that desynced the two was caught by nothing in the suite. A rule
+  /// stated in prose is a rule the next maker sincerely believes they followed
+  /// (GL-013). Edit this set and the catalog follows automatically.
+  ///
+  /// Values are `Platform.operatingSystem` strings. Windows is deliberately
+  /// absent. Its enumeration path exists ([WindowsWifiReader.scanNearbyBss]) but
+  /// is written-not-executed against real hardware, and unverified code does not
+  /// go live ([[feedback_gate_until_clean]]).
+  static const Set<String> wiredPlatforms = <String>{'android', 'macos'};
 
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
   final Future<Object?> Function(String method, [dynamic args])
@@ -252,7 +295,7 @@ class ApScanService {
 
   /// Whether this platform supports a nearby-AP scan. Android and macOS.
   bool get isSupportedPlatform =>
-      !kIsWeb && _wiredPlatforms.contains(_platform);
+      !kIsWeb && wiredPlatforms.contains(_platform);
 
   /// The platform name used in user-visible copy, so the UI can attribute a
   /// Location gate or a throttled scan to the right OS. Null off the wired

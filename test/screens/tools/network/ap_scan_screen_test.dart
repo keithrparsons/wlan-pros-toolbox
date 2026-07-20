@@ -456,4 +456,126 @@ void main() {
       expect(svc('linux').platformStatus, ApScanPlatformStatus.unavailable);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // A WITHHELD IDENTITY IS NOT A HIDDEN NETWORK
+  //
+  // macOS strips the SSID *and* the BSSID of every scanned BSS when Location is
+  // revoked. Those rows used to survive to the UI, where a null SSID renders
+  // "(hidden network)" — a permission fact told as an RF claim that the AP is
+  // cloaking. An engineer acts on a cloaked SSID; they would be chasing an RF
+  // problem that does not exist ([[feedback_app_blames_the_wifi]]).
+  //
+  // The discriminator that must survive: a GENUINELY hidden BSS still has a
+  // BSSID. That is the only thing separating the two, so it is what the model
+  // keys on.
+  // -------------------------------------------------------------------------
+  group('withheld identity vs hidden network', () {
+    Map<String, Object?> row({
+      String? ssid,
+      String? bssid,
+      int channel = 6,
+      int rssi = -70,
+    }) =>
+        <String, Object?>{
+          'ssid': ssid,
+          'bssid': bssid,
+          'rssiDbm': rssi,
+          'channel': channel,
+          'band': '2.4 GHz',
+          'frequencyMhz': 2437,
+        };
+
+    test('a row with no BSSID is DROPPED, not modeled', () {
+      // Both fields stripped by the OS = identity withheld.
+      expect(ScannedAp.fromMap(row(ssid: null, bssid: null)), isNull);
+      expect(ScannedAp.fromMap(row(ssid: null, bssid: '')), isNull);
+    });
+
+    test('a genuinely hidden BSS keeps its BSSID and SURVIVES', () {
+      final ScannedAp? ap =
+          ScannedAp.fromMap(row(ssid: null, bssid: 'c0:ff:ee:00:00:01'));
+      expect(ap, isNotNull);
+      expect(ap!.ssid, isNull, reason: 'still hidden');
+      expect(ap.bssid, 'c0:ff:ee:00:00:01');
+    });
+
+    testWidgets(
+        'withheld rows never render as "(hidden network)" or as an AP count',
+        (tester) async {
+      // The exact state the gate reproduced: two rows whose SSID and BSSID were
+      // both stripped mid-scan, delivered with the stale pre-scan grant.
+      final Map<String, Object?> payload = _payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: null, bssid: null, channel: 6),
+          row(ssid: null, bssid: null, channel: 36),
+        ],
+      );
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      // No fabricated RF claim: neither AP is cloaking, we simply lost the
+      // grant that names them.
+      expect(find.text('(hidden network)'), findsNothing);
+      // No confident "2 access points" list-card title over rows that carry no
+      // identity, and no occupancy charts built from them.
+      expect(find.text('2 access points'), findsNothing);
+      expect(find.textContaining('channel occupancy'), findsNothing);
+      expect(find.textContaining('BSSID unavailable'), findsNothing);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // GATE CARD + AP LIST IS SELF-CONTRADICTORY
+  //
+  // Every pre-existing two-kinds-of-null test used `aps: []`, so the state
+  // where rows arrive ALONGSIDE locationAuthorized:false was entirely
+  // unguarded. It rendered "The scan could not run…" directly above a populated
+  // AP list and two occupancy charts. The list wins that argument visually, so
+  // the gate card became a lie.
+  // -------------------------------------------------------------------------
+  group('rows + revoked grant cannot render both', () {
+    testWidgets('locationAuthorized:false with rows shows the gate card ONLY',
+        (tester) async {
+      final Map<String, Object?> payload =
+          _payload(locationAuthorized: false); // default 3 well-formed rows
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      // The gate card is the verdict.
+      expect(find.textContaining('scan could not run'), findsOneWidget);
+      // Nothing measured renders beneath it.
+      expect(find.text('KeithNet'), findsNothing);
+      expect(find.text('a4:83:e7:00:11:22'), findsNothing);
+      expect(find.textContaining('channel occupancy'), findsNothing);
+      expect(find.text('3 access points'), findsNothing);
+      // And it still must not claim an empty RF environment on top of the gate.
+      expect(find.textContaining('found no access points'), findsNothing);
+    });
+
+    testWidgets('radio off with rows shows the Wi-Fi-off card ONLY',
+        (tester) async {
+      final Map<String, Object?> payload = _payload(poweredOn: false);
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('KeithNet'), findsNothing);
+      expect(find.textContaining('channel occupancy'), findsNothing);
+    });
+
+    test('the model refuses to carry rows without the grant', () {
+      // Any channel returning rows with the flag false: the flag wins, because
+      // it is what the gate cards speak from.
+      final ApScanSnapshot snap =
+          ApScanSnapshot.fromMap(_payload(locationAuthorized: false));
+      expect(snap.locationAuthorized, isFalse);
+      expect(snap.accessPoints, isEmpty);
+    });
+  });
 }

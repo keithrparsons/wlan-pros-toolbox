@@ -163,11 +163,22 @@ final class ApScanChannel: NSObject {
           return
         }
         self.lastFreshScanAt = Date()
+        // RE-READ the grant on delivery. `authorized` was captured BEFORE a
+        // scan that blocks for seconds — long enough for the user to revoke
+        // Location in Settings while it ran. Shipping the stale capture would
+        // stamp `locationAuthorized: true` onto a result set the OS had already
+        // stripped, and the UI would render it as a complete, confident scan.
+        // The flag must describe the state that produced THESE rows, so it is
+        // the AND of both reads: authorized for the whole scan, or not at all.
+        let stillAuthorized = authorized && self.isLocationAuthorized()
         result([
           "poweredOn": poweredOn,
-          "locationAuthorized": authorized,
+          "locationAuthorized": stillAuthorized,
           "scanThrottled": false,
-          "accessPoints": aps,
+          // A revoked grant invalidates the rows, not just the flag. Dart drops
+          // them too; doing it here keeps the payload self-consistent on the
+          // wire rather than relying on the far side to reconcile it.
+          "accessPoints": stillAuthorized ? aps : [],
         ] as [String: Any?])
       }
     }
@@ -222,13 +233,21 @@ final class ApScanChannel: NSObject {
   /// radios and not probe responses.
   private static func mapNetworks(_ networks: [CWNetwork]) -> [[String: Any?]] {
     var byBssid: [String: [String: Any?]] = [:]
-    var withoutBssid: [[String: Any?]] = []
     for network in networks {
       guard let row = mapNetwork(network) else { continue }
       guard let bssid = row["bssid"] as? String, !bssid.isEmpty else {
-        // BSSID withheld (Location revoked mid-scan). Kept, not merged: without
-        // an identity there is nothing to de-duplicate against.
-        withoutBssid.append(row)
+        // BSSID withheld (Location revoked mid-scan). DROPPED, not kept.
+        //
+        // macOS withholds the SSID and the BSSID together, so such a row
+        // reaches Dart with a null SSID for a PERMISSION reason and renders as
+        // "(hidden network)" — an affirmative claim that the AP is cloaking.
+        // That is a permission fact told as an RF fact, and it sends an
+        // engineer chasing a cloaked SSID that does not exist. A row with no
+        // identity cannot be described honestly, which is the same test every
+        // other drop in `mapNetwork` applies ([[feedback_app_blames_the_wifi]]).
+        //
+        // The discriminator this preserves: a GENUINELY hidden BSS still
+        // reports its BSSID, so it survives here and still renders as hidden.
         continue
       }
       if let existing = byBssid[bssid],
@@ -239,7 +258,7 @@ final class ApScanChannel: NSObject {
       }
       byBssid[bssid] = row
     }
-    return Array(byBssid.values) + withoutBssid
+    return Array(byBssid.values)
   }
 
   /// Maps one `CWNetwork` to the CLEAN payload row, or null when the BSS cannot

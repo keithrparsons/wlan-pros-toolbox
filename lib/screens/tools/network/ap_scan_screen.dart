@@ -263,6 +263,16 @@ class _ApScanScreenState extends State<ApScanScreen> {
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
+    // GATE CARDS ARE TERMINAL. A card above has just told the user the scan
+    // could not run — the radio is off, or Location is not granted. Rendering
+    // an AP list and occupancy charts beneath that card would contradict it on
+    // the same screen, and the list would win, because a list of APs reads as
+    // proof the scan worked. The gate is the honest verdict here, so nothing
+    // measured is rendered below it ([[feedback_app_blames_the_wifi]]).
+    if (!snap.poweredOn || !snap.locationAuthorized) {
+      return children;
+    }
+
     // Throttle note — the list is the last cached scan, said plainly.
     if (snap.scanThrottled && snap.accessPoints.isNotEmpty) {
       children
@@ -348,7 +358,7 @@ class _ApScanScreenState extends State<ApScanScreen> {
     for (final ScannedAp ap in aps) {
       buf.writeln(
         '${ap.ssid ?? '(hidden network)'}  '
-        '${ap.bssid ?? 'BSSID unavailable'}  '
+        '${ap.bssid}  '
         'ch ${ap.channel} (${ap.band})  ${ap.rssiDbm} dBm',
       );
     }
@@ -970,7 +980,7 @@ class _ApRow extends StatelessWidget {
       ),
     );
     final Text bssidText = Text(
-      ap.bssid ?? 'BSSID unavailable',
+      ap.bssid,
       style: mono.robotoMono.copyWith(
         fontSize: AppTextSize.caption,
         color: colors.textTertiary,
@@ -990,7 +1000,7 @@ class _ApRow extends StatelessWidget {
     return Semantics(
       container: true,
       label: '$name, '
-          '${ap.bssid ?? 'BSSID unavailable'}, '
+          '${ap.bssid}, '
           'channel ${ap.channel}, ${ap.band}, ${ap.rssiDbm} dBm',
       excludeSemantics: true,
       child: Padding(

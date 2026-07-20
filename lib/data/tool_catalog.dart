@@ -31,6 +31,7 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 
+import '../services/network/ap_scan_service.dart';
 import 'tool_keywords.dart';
 
 /// A single tool that can be launched from a category screen.
@@ -2156,14 +2157,41 @@ final List<ToolCategory> kToolCategories = _buildCatalog();
 /// The native platforms whose nearby-AP scan is wired, and therefore the
 /// platforms where a `nativeScanOnly` tool stays in the catalog.
 ///
-/// Mirrors `ApScanService.isSupportedPlatform`. Windows is deliberately absent:
-/// its Native Wifi enumeration path exists in the codebase but is unverified on
-/// real hardware, so the tool stays out of the catalog there rather than
-/// shipping an unproven scan.
-const Set<TargetPlatform> kNativeScanPlatforms = <TargetPlatform>{
-  TargetPlatform.android,
-  TargetPlatform.macOS,
+/// DERIVED from [ApScanService.wiredPlatforms], which is the single source of
+/// truth. It is not a hand-kept copy: the previous version said "mirrors
+/// ApScanService" in a comment, and desyncing the two passed the entire suite
+/// byte-identically while the tool vanished from the macOS catalog and Windows
+/// appeared in it. A rule expressed as a comment is not encoded (GL-013), so the
+/// two are now computed from one set and pinned by
+/// test/data/native_scan_platform_ssot_test.dart.
+///
+/// Windows is deliberately absent upstream: its Native Wifi enumeration path
+/// exists in the codebase but is unverified on real hardware, so the tool stays
+/// out of the catalog there rather than shipping an unproven scan.
+final Set<TargetPlatform> kNativeScanPlatforms = <TargetPlatform>{
+  for (final TargetPlatform p in TargetPlatform.values)
+    if (ApScanService.wiredPlatforms.contains(nativeScanPlatformKey(p))) p,
 };
+
+/// Maps a [TargetPlatform] to the `Platform.operatingSystem` string
+/// [ApScanService.wiredPlatforms] is keyed by. Total over the enum, so a new
+/// [TargetPlatform] cannot silently fall through to "unsupported".
+String nativeScanPlatformKey(TargetPlatform platform) {
+  switch (platform) {
+    case TargetPlatform.android:
+      return 'android';
+    case TargetPlatform.iOS:
+      return 'ios';
+    case TargetPlatform.macOS:
+      return 'macos';
+    case TargetPlatform.windows:
+      return 'windows';
+    case TargetPlatform.linux:
+      return 'linux';
+    case TargetPlatform.fuchsia:
+      return 'fuchsia';
+  }
+}
 
 /// Builds the UI catalog: folds the external search vocabulary
 /// ([kToolKeywords], lib/data/tool_keywords.dart) into each [ToolEntry], then
