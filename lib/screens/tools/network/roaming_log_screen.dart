@@ -718,20 +718,156 @@ String _signalCell(RoamEvent e) {
   return '$fromStr -> $toStr$snr';
 }
 
-/// The header signal-summary line: average, strongest, and weakest RSSI across
-/// the roams that carried one. "Signal: not reported" when none did (GL-005).
+/// The pre-roam ("before") RSSI population: the last reading on each AP the
+/// client LEFT. This is the roam TRIGGER level — how weak the client let the
+/// signal get before it let go. Honest-null: a roam whose prior AP carried no
+/// RSSI (always the first roam, which has no prior AP) contributes nothing. It
+/// is never zeroed, because a 0 would read as a signal and drag the average.
+List<int> _preRoamRssi(List<RoamEvent> events) => <int>[
+      for (final RoamEvent e in events)
+        if (e.fromRssiDbm != null) e.fromRssiDbm!,
+    ];
+
+/// The post-roam ("after") RSSI population: the reading on each AP the client
+/// JOINED. This is the roam DESTINATION level — what the client got in return.
+List<int> _postRoamRssi(List<RoamEvent> events) => <int>[
+      for (final RoamEvent e in events)
+        if (e.rssiDbm != null) e.rssiDbm!,
+    ];
+
+/// Average / strongest / weakest over one RSSI population. RSSI is negative
+/// dBm, so the STRONGEST is the greatest value (closest to zero). Returns null
+/// for an empty population so the caller can degrade honestly (GL-005).
+_RssiStats? _rssiStats(List<int> values) {
+  if (values.isEmpty) return null;
+  final int sum = values.reduce((int a, int b) => a + b);
+  return _RssiStats(
+    avg: (sum / values.length).round(),
+    strongest: values.reduce((int a, int b) => a > b ? a : b),
+    weakest: values.reduce((int a, int b) => a < b ? a : b),
+  );
+}
+
+/// Aggregates over ONE RSSI population. Deliberately never mixes the pre-roam
+/// and post-roam sets: an average over the two pooled together describes no
+/// physical quantity, and its value would shift with the ratio of readings the
+/// platform happened to record rather than with the RF.
+class _RssiStats {
+  const _RssiStats({
+    required this.avg,
+    required this.strongest,
+    required this.weakest,
+  });
+
+  final int avg;
+  final int strongest;
+  final int weakest;
+}
+
+/// The sample-size disclosure for ONE RSSI population: `n of N roams`, or the
+/// empty string when the population is COMPLETE (every roam reported).
+///
+/// Suppressing on a complete capture is deliberate. Printing "4 of 4 roams" on
+/// both lines of every report trains the reader to skim past the count, which
+/// would blind them on the one capture where it matters. Because the note is
+/// emitted only when something was omitted, its PRESENCE is the signal.
+///
+/// The test is completeness against the roam count, NOT equality between the
+/// two populations: 3-of-40 beside 3-of-40 is a fair comparison between the two
+/// lines and an unfair one against the session, and the reader is owed that.
+///
+/// Suppressing at n == total also guarantees grammatical output — n < total
+/// implies total >= 2, so the plural "roams" is always correct, and the
+/// degenerate "1 of 1 roams" can never be emitted.
+///
+/// LOAD-BEARING PRECONDITION — do not remove the per-roam table.
+/// Silence on a complete capture is only honest because the export carries the
+/// full per-roam table below the summary, where every non-reporting roam
+/// renders `signal n/a`. That table is what makes completeness auditable FROM
+/// THE ARTIFACT ITSELF, so the absence of a count is checkable rather than
+/// merely trusted. If the table is ever dropped, or a summary-only export
+/// ships, suppression stops being safe and this function must emit the count
+/// unconditionally.
+///
+/// n == 0 also returns empty: an empty population has no statistic to qualify,
+/// so its callers take the honest "not reported" path instead (GL-005).
+///
+/// That guard is REACHED, not unreachable, and no test can currently kill it.
+/// Both halves of that sentence matter, and an earlier version of this comment
+/// got the reason wrong in a way worth recording.
+///
+/// n == 0 DOES arrive: the share-HTML tile block computes `preCoverage` /
+/// `postCoverage` eagerly, before the `if (before != null)` guard four lines
+/// below it, so an empty population calls straight through. Replacing this
+/// body with a `throw` made four existing tests throw from that call when this
+/// was written (a measurement, not an invariant — re-run the probe rather than
+/// trusting the number).
+///
+/// What protects the output is therefore NOT "no caller passes 0" — that is
+/// false. It is that the ONE caller which passes 0 DISCARDS the result: the
+/// coverage string is only ever consumed inside the null guard, so a "0 of 40
+/// roams" label cannot reach a tile. That is a property of that one line, not
+/// of the call sites, and it is fragile in exactly the way the false version
+/// was not: move the consumption out of the guard, or add a caller that uses
+/// the value eagerly, and the guard here becomes the only thing standing
+/// between a reader and a count attached to an average that does not exist.
+///
+/// Removing the guard still passes the whole suite, because the discarded
+/// string is unobservable. So it is documented rather than covered — a test
+/// asserting on a value nothing renders would be theatre. To tell a surviving
+/// mutant apart from genuinely dead code, replace the body with a `throw`:
+/// survival proves nothing, a throw proves reachability or its absence.
+String _coverageNote(int n, int total) =>
+    (n == 0 || n == total) ? '' : '$n of $total roams';
+
+/// The parenthetical for a population line: which AP the reading came from,
+/// plus the sample size when the population is incomplete.
+String _populationQualifier(String population, int n, int total) {
+  final String coverage = _coverageNote(n, total);
+  return coverage.isEmpty ? population : '$population, $coverage';
+}
+
+/// The header signal-summary: ONE line per population, each labeled for the
+/// reading it actually summarizes and for the number of roams behind it.
+///
+/// `rssiDbm` is always the POST-roam reading (the AP just joined, so always
+/// comparatively strong) and `fromRssiDbm` is always the PRE-roam reading (the
+/// AP being left, so always comparatively weak). Summarizing only the former
+/// reported the network as better than the client experienced and discarded
+/// exactly the number a designer needs. The two are reported separately rather
+/// than pooled, because "the level this client roams at" and "the level it
+/// lands on" are different measurements and one average cannot label both.
+///
+/// The two lines are typographic peers but are NOT always sample-size peers:
+/// iOS omits RSSI far more often than macOS, so "before" can be computed from a
+/// handful of roams while "after" is computed from all of them. Presenting those
+/// as a side-by-side comparison without stating n invites exactly the false
+/// read this summary exists to prevent — the same reason the two populations
+/// are never pooled. Each line therefore carries its own [_coverageNote].
+///
+/// "Signal: not reported" when neither population carried a reading (GL-005).
 String _signalSummary(List<RoamEvent> events) {
-  final List<int> rssi = <int>[
-    for (final RoamEvent e in events)
-      if (e.rssiDbm != null) e.rssiDbm!,
+  final List<int> pre = _preRoamRssi(events);
+  final List<int> post = _postRoamRssi(events);
+  final _RssiStats? before = _rssiStats(pre);
+  final _RssiStats? after = _rssiStats(post);
+  if (before == null && after == null) return 'Signal: not reported';
+
+  final int total = events.length;
+  String line(String label, String population, int n, _RssiStats s) =>
+      '$label (${_populationQualifier(population, n, total)}): '
+      'avg ${s.avg} dBm, strongest ${s.strongest} dBm, '
+      'weakest ${s.weakest} dBm';
+
+  final List<String> lines = <String>[
+    before != null
+        ? line('Signal before roam', 'on the AP being left', pre.length, before)
+        : 'Signal before roam: not reported',
+    after != null
+        ? line('Signal after roam', 'on the AP joined', post.length, after)
+        : 'Signal after roam: not reported',
   ];
-  if (rssi.isEmpty) return 'Signal: not reported';
-  final int sum = rssi.reduce((int a, int b) => a + b);
-  final int avg = (sum / rssi.length).round();
-  // RSSI is negative dBm: the strongest is the greatest (closest to zero).
-  final int strongest = rssi.reduce((int a, int b) => a > b ? a : b);
-  final int weakest = rssi.reduce((int a, int b) => a < b ? a : b);
-  return 'Signal: avg $avg dBm, strongest $strongest dBm, weakest $weakest dBm';
+  return lines.join('\n');
 }
 
 /// "45s" / "2m" / "2m 5s" — dwell between consecutive roams, no intl dependency.
@@ -783,10 +919,9 @@ String? buildRoamLogShareHtml({
   String esc(String s) => const HtmlEscape(HtmlEscapeMode.element).convert(s);
 
   // Computed aggregates (each honest: derived only from the events present).
-  final List<int> rssi = <int>[
-    for (final RoamEvent e in events)
-      if (e.rssiDbm != null) e.rssiDbm!,
-  ];
+  // The two RSSI populations stay separate end to end — see [_signalSummary].
+  final List<int> preRssi = _preRoamRssi(events);
+  final List<int> postRssi = _postRoamRssi(events);
   final List<int> snr = <int>[
     for (final RoamEvent e in events)
       if (e.snrDb != null) e.snrDb!,
@@ -802,18 +937,45 @@ String? buildRoamLogShareHtml({
   // ---- Stat tiles (omit a tile whose datum is absent) ----
   final StringBuffer tiles = StringBuffer()
     ..write(_statTile('${events.length}', 'roams in $sessionLen'));
-  if (rssi.isNotEmpty) {
-    final int avg = (rssi.reduce((int a, int b) => a + b) / rssi.length).round();
-    final int strongest = rssi.reduce((int a, int b) => a > b ? a : b);
-    final int weakest = rssi.reduce((int a, int b) => a < b ? a : b);
+  // Signal tiles, each labeled for the population it computes. The old pair
+  // ('dBm avg at roam' / 'dBm strongest / weakest') read as the trigger level
+  // but computed the destination, so a client-facing report could claim a floor
+  // its own table contradicted. Each tile is emitted only when its population
+  // carried a reading (GL-005) — a missing tile, never an invented number.
+  //
+  // The before/after tiles sit adjacent in the grid, so they read as peers. Any
+  // tile computed from fewer than every roam carries its sample size, for the
+  // same reason the copy-report lines do — see [_coverageNote]. The label wraps
+  // inside the tile (`.stat .l` sets no `white-space`), so the suffix costs
+  // height, not width.
+  final _RssiStats? before = _rssiStats(preRssi);
+  final _RssiStats? after = _rssiStats(postRssi);
+  final String preCoverage = _coverageNote(preRssi.length, events.length);
+  final String postCoverage = _coverageNote(postRssi.length, events.length);
+  String tileLabel(String base, String coverage) =>
+      coverage.isEmpty ? base : '$base ($coverage)';
+  if (before != null) {
     tiles
-      ..write(_statTile('$avg', 'dBm avg at roam'))
-      ..write(_statTile('$strongest / $weakest', 'dBm strongest / weakest'));
+      ..write(_statTile('${before.avg}', tileLabel('dBm avg before roam', preCoverage)))
+      // The number the designer sizes cell overlap from: how weak the client
+      // let it get before it let go.
+      ..write(_statTile(
+          '${before.weakest}', tileLabel('dBm weakest before roam', preCoverage)));
   }
+  if (after != null) {
+    tiles.write(_statTile('${after.avg}', tileLabel('dBm avg after roam', postCoverage)));
+  }
+  // SNR carries a count for the same reason the RSSI tiles do, and it is this
+  // change that made it necessary. Before the coverage notes existed, a bare
+  // tile meant nothing in particular. Now that three tiles beside it disclose
+  // their sample size, a SILENT tile asserts completeness by convention — so an
+  // SNR range over 3 of 40 roams, printed bare next to them, would lie in the
+  // vocabulary this commit taught the reader.
   if (snr.isNotEmpty) {
     final int lo = snr.reduce((int a, int b) => a < b ? a : b);
     final int hi = snr.reduce((int a, int b) => a > b ? a : b);
-    tiles.write(_statTile(lo == hi ? '$lo' : '$lo-$hi', 'dB SNR range'));
+    tiles.write(_statTile(lo == hi ? '$lo' : '$lo-$hi',
+        tileLabel('dB SNR range', _coverageNote(snr.length, events.length))));
   }
   if (dwells.isNotEmpty) {
     final int avgDwell =
@@ -846,7 +1008,7 @@ String? buildRoamLogShareHtml({
   }
 
   // ---- Session at a glance: COMPUTED facts only (GL-005) ----
-  final List<String> facts = _sessionFacts(events, rssi, dwells, pingPongs);
+  final List<String> facts = _sessionFacts(events, dwells, pingPongs);
   final StringBuffer glance = StringBuffer();
   if (facts.isNotEmpty) {
     glance.writeln('<h2>Session at a glance</h2>');
@@ -1018,31 +1180,106 @@ bool _bssidEq(String a, String b) =>
 /// (GL-005). No interpretation, no health verdict.
 List<String> _sessionFacts(
   List<RoamEvent> events,
-  List<int> rssi,
   List<Duration> dwells,
   List<_PingPong> pingPongs,
 ) {
   final List<String> facts = <String>[];
 
-  // Signal range with the timestamps of the strongest and weakest roam.
-  if (rssi.isNotEmpty) {
+  /// The extremes of one RSSI population, carrying the event each came from so
+  /// the sentence can timestamp it. [read] selects the reading; an event whose
+  /// reading is null is skipped, never zeroed.
+  (RoamEvent, RoamEvent)? extremes(int? Function(RoamEvent) read) {
     RoamEvent? strongest;
     RoamEvent? weakest;
     for (final RoamEvent e in events) {
-      if (e.rssiDbm == null) continue;
-      if (strongest == null || e.rssiDbm! > strongest.rssiDbm!) strongest = e;
-      if (weakest == null || e.rssiDbm! < weakest.rssiDbm!) weakest = e;
+      final int? v = read(e);
+      if (v == null) continue;
+      if (strongest == null || v > read(strongest)!) strongest = e;
+      if (weakest == null || v < read(weakest)!) weakest = e;
     }
-    if (strongest != null && weakest != null) {
-      if (strongest.rssiDbm == weakest.rssiDbm) {
-        facts.add('Every recorded roam fired at ${strongest.rssiDbm} dBm.');
-      } else {
-        facts.add(
-          'Roams fired between ${strongest.rssiDbm} dBm (strongest, at '
-          '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
-          '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
-        );
-      }
+    if (strongest == null || weakest == null) return null;
+    return (strongest, weakest);
+  }
+
+  /// Prefixes a population sentence with its sample size when the population is
+  /// incomplete, and leaves the sentence untouched when every roam reported.
+  ///
+  /// The narrative gets a LEADING clause rather than the parenthetical the
+  /// tiles and copy lines use: these sentences already carry two parentheticals
+  /// (the strongest/weakest timestamps), and a third turns a readable finding
+  /// into a data dump. Leading with the coverage also puts the caveat before
+  /// the number it qualifies, which is the order a reader needs it in.
+  String scoped(int n, String sentence, String reported) {
+    if (n == events.length) return sentence;
+    final String lower = sentence[0].toLowerCase() + sentence.substring(1);
+    return 'Of ${events.length} roams, $n reported $reported; $lower';
+  }
+
+  /// A UNIVERSAL ("they were all the same value") sentence, quantified over the
+  /// population that was actually MEASURED.
+  ///
+  /// A universal cannot borrow the [scoped] wrapper. "Of 40 roams, 3 reported
+  /// the signal they landed on; every roam landed on -53 dBm" states a coverage
+  /// clause and then contradicts it inside the same sentence: "every roam" is a
+  /// claim about 37 measurements that were never taken, in the document a
+  /// customer quotes back. The quantifier has to shrink to the population, so
+  /// the subject becomes "all 3" — or "the one that did" at n == 1.
+  ///
+  /// This is NOT an edge case. n == 1 always forces strongest == weakest, so
+  /// this branch is the normal path for the sparse captures iOS produces.
+  ///
+  /// At n == total the plain universal is exactly true and needs no hedge —
+  /// note that "every RECORDED roam" is deliberately gone, since on a complete
+  /// population "recorded" is a hedge qualifying nothing.
+  String universal(int n, String reported, String verb, int dbm) {
+    if (n == events.length) return 'Every roam $verb $dbm dBm.';
+    final String subject = n == 1 ? 'the one that did' : 'all $n';
+    return 'Of ${events.length} roams, $n reported $reported; '
+        '$subject $verb $dbm dBm.';
+  }
+
+  // The TRIGGER level, computed from the pre-roam readings. "Roams fired at" is
+  // trigger language, so it must be computed from the signal on the AP the
+  // client was LEAVING. It previously read the post-roam value, which put a
+  // trigger label on a destination number.
+  final (RoamEvent, RoamEvent)? fired = extremes((RoamEvent e) => e.fromRssiDbm);
+  if (fired != null) {
+    final (RoamEvent strongest, RoamEvent weakest) = fired;
+    final int n = _preRoamRssi(events).length;
+    // "1 reported the signal they left" is a number/pronoun mismatch, and n == 1
+    // is the common iOS shape, not a corner.
+    final String reported = n == 1 ? 'the signal it left' : 'the signal they left';
+    if (strongest.fromRssiDbm == weakest.fromRssiDbm) {
+      facts.add(universal(n, reported, 'fired at', strongest.fromRssiDbm!));
+    } else {
+      facts.add(scoped(
+        n,
+        'Roams fired between ${strongest.fromRssiDbm} dBm (strongest, at '
+        '${_RoamRow._formatTime(strongest.at)}) and ${weakest.fromRssiDbm} dBm '
+        '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+        reported,
+      ));
+    }
+  }
+
+  // The DESTINATION level, computed from the post-roam readings and labeled as
+  // what the client landed on rather than what made it move.
+  final (RoamEvent, RoamEvent)? landed = extremes((RoamEvent e) => e.rssiDbm);
+  if (landed != null) {
+    final (RoamEvent strongest, RoamEvent weakest) = landed;
+    final int n = _postRoamRssi(events).length;
+    final String reported =
+        n == 1 ? 'the signal it landed on' : 'the signal they landed on';
+    if (strongest.rssiDbm == weakest.rssiDbm) {
+      facts.add(universal(n, reported, 'landed on', strongest.rssiDbm!));
+    } else {
+      facts.add(scoped(
+        n,
+        'Roams landed between ${strongest.rssiDbm} dBm (strongest, at '
+        '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
+        '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+        reported,
+      ));
     }
   }
 
@@ -1704,7 +1941,7 @@ class _RoamRow extends StatelessWidget {
 }
 
 /// The on-screen from/to signal line for a roam row: the OLD ("from") AP's last
-/// RSSI and the NEW ("to") AP's RSSI at the roam, labelled so it is clear which
+/// RSSI and the NEW ("to") AP's RSSI at the roam, labeled so it is clear which
 /// is the old AP and which is the new, e.g. "Signal on prev AP -64 dBm -> this AP
 /// -56 dBm". The reader sees whether the client left a weakening AP for a
 /// stronger one, or roamed sideways. SNR (the single reading at the roam) trails.
