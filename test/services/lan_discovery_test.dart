@@ -1124,6 +1124,7 @@ void main() {
       // /30 over .1 → hosts .1 and .2.
       final ArpReadResult arp = ArpReadResult(
         available: true,
+        platformSupported: true,
         entries: const <ArpEntry>[
           ArpEntry(ip: '10.0.10.1', mac: 'fc:ec:da:01:23:45'), // Ubiquiti
           ArpEntry(ip: '10.0.10.2', mac: '00:11:22:33:44:55'), // unknown → raw
@@ -1166,7 +1167,7 @@ void main() {
 
     test('the run emits an arp progress phase', () async {
       final LanDiscoveryEngine engine = engineWithArp(
-        _FakeArpReader(const ArpReadResult(available: true)),
+        _FakeArpReader(const ArpReadResult(available: true, platformSupported: true)),
       );
       final List<DiscoveryProgress> events = await engine.run().toList();
       expect(

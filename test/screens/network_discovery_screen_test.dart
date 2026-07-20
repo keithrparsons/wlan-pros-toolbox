@@ -73,7 +73,7 @@ void main() {
       subnetLabel: '10.0.10.1–10.0.10.254',
       selfIp: '10.0.10.20',
       gateway: '10.0.10.1',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -161,7 +161,7 @@ void main() {
       ],
       subnetLabel: '172.20.29.1–172.20.29.254',
       sweptIps: const <String>['172.20.29.10', '172.20.29.11'],
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -200,7 +200,7 @@ void main() {
       ],
       subnetLabel: '172.20.29.1–172.20.29.254',
       sweptIps: const <String>['172.20.29.10', '172.20.29.11'],
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -226,7 +226,7 @@ void main() {
     final DiscoveryResult result = DiscoveryResult(
       hosts: <LanHost>[LanHost(ip: '172.20.0.2', openPorts: <int>{80})],
       subnetLabel: '172.20.29.1–172.20.29.254',
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -365,7 +365,7 @@ void main() {
       hosts: const <LanHost>[],
       subnetLabel: '10.0.10.1–10.0.10.254',
       sweptIps: const <String>['10.0.10.1'],
-      arp: const ArpReadResult(available: true),
+      arp: const ArpReadResult(available: true, platformSupported: true),
     );
 
     await tester.pumpWidget(_host(
@@ -418,7 +418,7 @@ void main() {
     // a real outcome (the way ARP has ArpReadResult), this test should be
     // replaced by a conditional one -- not deleted.
     const List<(String, ArpReadResult?)> cells = <(String, ArpReadResult?)>[
-      ('available', ArpReadResult(available: true)),
+      ('available', ArpReadResult(available: true, platformSupported: true)),
       ('unavailable', ArpReadResult.unsupported('no reader')),
       ('not attempted', null),
     ];

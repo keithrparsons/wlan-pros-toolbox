@@ -2,9 +2,10 @@
 //
 // THERE IS NO CAPABILITY MATRIX IN THIS FILE, ON PURPOSE.
 //
-// There used to be one, and it was INVERTED: it claimed a MAC read on Linux
-// (which this app does not even ship — there is no linux/ directory) and denied
-// it on macOS and Windows, where it works. It was written before
+// There used to be one, and it was INVERTED: it claimed a MAC read on Linux —
+// which no reader in this app performs (platformArpReader() hands Linux an
+// UnavailableArpReader, and this repo carries no linux/ build directory) —
+// and denied it on macOS and Windows, where it works. It was written before
 // macos/Runner/ArpTableChannel.swift existed and was never revisited, so this
 // tool told macOS users "Not exposed on this platform" while Network Discovery
 // read real MACs on the same machine. The app shipped the solution and told the
@@ -241,7 +242,13 @@ class ArpNdpService {
     int concurrency = 48,
     Future<void>? cancel,
   }) {
-    final ArpCapability cap = capabilityOverride ?? capabilityFor();
+    // Derive from THIS service's reader, not from platformArpReader(). Reading
+    // the capability from one reader while reading MACs from another
+    // (`_arpReader`, which tests inject) is two derivations of the single fact
+    // this whole seam exists to unify — the defect one layer down, inside its
+    // own fix.
+    final ArpCapability cap =
+        capabilityOverride ?? capabilityFor(readerOverride: _arpReader);
     final StreamController<ArpScanProgress> controller =
         StreamController<ArpScanProgress>();
 
@@ -289,11 +296,13 @@ class ArpNdpService {
             if (cap == ArpCapability.sweepWithMac && !arpCacheLoaded) {
               arpCacheLoaded = true;
               final ArpReadResult r = await _arpReader.read();
-              // available == false means the read FAILED, not that the
-              // platform is incapable. Keep the two apart all the way to the
-              // UI; collapsing them here is what produced the false claim.
-              macRead =
-                  r.available ? MacReadOutcome.ok : MacReadOutcome.failed;
+              // THREE outcomes from two bits, never two. `available == false`
+              // alone does not say which kind of failure it is — mapping it
+              // straight to `failed` re-collapses `unsupported` into `failed`
+              // and re-creates the exact defect this enum exists to prevent.
+              macRead = !r.platformSupported
+                  ? MacReadOutcome.notAttempted
+                  : (r.available ? MacReadOutcome.ok : MacReadOutcome.failed);
               arpCache = r.available ? r.byIp : <String, String>{};
             }
             final String? mac =

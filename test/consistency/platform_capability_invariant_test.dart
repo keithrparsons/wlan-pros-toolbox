@@ -82,6 +82,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/cellular_info_screen.dart';
@@ -97,6 +100,7 @@ import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
 import 'package:wlan_pros_toolbox/services/network/json_http_client.dart';
+import 'package:wlan_pros_toolbox/services/network/lan_discovery/arp_reader.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/subnet_seed.dart';
 import 'package:wlan_pros_toolbox/services/network/public_ip_service.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
@@ -673,6 +677,167 @@ void main() {
     });
   });
 
+
+  // =======================================================================
+  // PART C — the ARP/NDP MAC-capability invariant, asserted against SHIPPED
+  // USER-FACING COPY.
+  //
+  // WHY THIS EXISTS. On 2026-07-20 the ARP capability matrix in
+  // arp_ndp_service.dart was found INVERTED: it credited Linux (which no
+  // reader in this app serves) with a real MAC read and denied it on macOS and
+  // Windows, where it works. Deleting that one comment was not enough — the SAME
+  // inverted matrix still shipped, verbatim, in `assets/help/tool_help.json`
+  // and `assets/guides/field-manual.md`, one tap away from a capability card
+  // that said the opposite. Three copies of one fact, and fixing the source
+  // caught none of the others.
+  //
+  // Parts A/B pump WIDGETS. A false capability claim in a shipped ASSET is
+  // invisible to them, and that is exactly where two of the three lived. So
+  // this part reads the shipped copy and holds it against the ONE source:
+  // ArpReader.readsMac, declared by the reader that performs the read.
+  //
+  // KEEP INDEPENDENT, same rule as Part A: `_expectedArpMac` is a
+  // hand-maintained expectation. Never build it by calling `readsMac` — that
+  // makes the assertion `seam == seam` and the net stops catching drift.
+  // =======================================================================
+  group('Part C — shipped ARP copy cannot contradict the reader', () {
+    // The reader each platform actually gets, and what we EXPECT it to say
+    // about itself. Hand-maintained on purpose.
+    const Map<String, bool> expectedArpMac = <String, bool>{
+      'macOS': true,
+      'Windows': true,
+      'iOS': false,
+      'Android': false,
+    };
+
+    final Map<String, ArpReader> readers = <String, ArpReader>{
+      'macOS': const MethodChannelArpReader(),
+      'Windows': const WindowsIpNetTableArpReader(),
+      'iOS': const UnavailableArpReader('iOS sandbox'),
+      'Android': const UnavailableArpReader('Android sandbox'),
+    };
+
+    test('the reader SSOT itself matches the expected matrix (anchor)', () {
+      for (final MapEntry<String, bool> e in expectedArpMac.entries) {
+        expect(readers[e.key]!.readsMac, e.value,
+            reason: 'the ARP reader capability drifted for ${e.key}');
+      }
+    });
+
+    // SELF-TEST FIRST. A copy-scanning guard is only as good as its phrase
+    // list, and nothing else in the suite would notice if that list stopped
+    // matching. These two feed the scanners the ACTUAL text that shipped on
+    // 2026-07-20 and require them to flag it — so the detector is proven to
+    // fail on a known defect before it is trusted on the real files.
+    test('SELF-TEST: the scanners flag the real HIGH-1 and HIGH-2 copy', () {
+      const String high1 =
+          'What each platform can do: Android and Linux give you the device '
+          'list plus the real hardware address. macOS and Windows give you '
+          'the device list but no hardware address, because the system does '
+          'not make that table readable here, so MAC shows "Not exposed on '
+          'this platform".';
+      const String high2 =
+          'Platform matrix (honest, in the source): Android / Linux, active '
+          'sweep with MAC from /proc/net/arp. macOS / Windows, active sweep, '
+          'no MAC (no readable ARP file; arp -a/GetIpNetTable out of scope), '
+          'so MAC renders "Not exposed on this platform".';
+      for (final String bad in <String>[high1, high2]) {
+        expect(_denialViolations(_sentencesOf(bad), expectedArpMac), isNotEmpty,
+            reason: 'the denial scanner no longer detects the shipped copy it '
+                'was written to catch. Its phrase list has rotted.');
+      }
+      expect(_creditViolations(_sentencesOf(high1), expectedArpMac), isNotEmpty,
+          reason: 'the credit scanner no longer detects Android being credited '
+              'with a real hardware-address read.');
+    });
+
+    test('SELF-TEST: the scanners do NOT flag the corrected copy', () {
+      const String good =
+          'What each platform can do: macOS and Windows give you the device '
+          'list plus the real hardware address, read from the system own '
+          'neighbour table. iOS and Android give you the device list without '
+          'hardware addresses.';
+      expect(_denialViolations(_sentencesOf(good), expectedArpMac), isEmpty);
+      expect(_creditViolations(_sentencesOf(good), expectedArpMac), isEmpty);
+    });
+
+    test('a capable platform is never DENIED the MAC read in shipped copy', () {
+      expect(_denialViolations(_shippedArpSentences(), expectedArpMac), isEmpty,
+          reason: 'shipped ARP copy denies the MAC read on a platform whose '
+              'reader declares readsMac == true');
+    });
+
+    test('an incapable platform is never CREDITED with a real MAC read', () {
+      expect(_creditViolations(_shippedArpSentences(), expectedArpMac), isEmpty,
+          reason: 'shipped ARP copy credits a platform with a real MAC read '
+              'while its reader declares readsMac == false');
+    });
+
+    test(
+        'platformSupported is a REQUIRED parameter, not a defaulted one — the '
+        'guarantee must be the compiler, not a convention', () {
+      // Vera proved by execution that `ArpReadResult(available: false, error:
+      // 'boom')` compiled while the doc claimed it could not, silently
+      // classifying an incapable platform as a failed read. Required-ness is a
+      // COMPILE-time property, so no runtime test can exercise it; this reads
+      // the declaration, which is the same technique the delegation guard uses.
+      final String src =
+          File('lib/services/network/lan_discovery/arp_reader.dart')
+              .readAsStringSync();
+      final int ctor = src.indexOf('const ArpReadResult({');
+      expect(ctor, isNot(-1), reason: 'the primary constructor was renamed');
+      final String body = src.substring(ctor, src.indexOf('});', ctor));
+      expect(body.contains('required this.platformSupported'), isTrue,
+          reason: 'platformSupported lost its `required` on the primary '
+              'constructor. A default silently re-classifies an unsupported '
+              'platform as a failed read, which is the exact false capability '
+              'claim this type exists to prevent.');
+      expect(RegExp(r'this\.platformSupported\s*=').hasMatch(body), isFalse,
+          reason: 'platformSupported has a default value again');
+    });
+
+    test('SELF-TEST: the /proc/net/arp detector actually detects it', () {
+      // Same discipline as the scanners above: prove the detector fires on the
+      // real defect before trusting it on the real files. Without this, a
+      // detector that quietly stopped looking for the right string would pass
+      // forever.
+      expect(
+          _citesProcNetArp(
+              'on Linux/Android read /proc/net/arp to attach the real MAC'),
+          isTrue);
+      expect(_citesProcNetArp('reads the system neighbour table'), isFalse);
+    });
+
+    test('no shipped asset cites /proc/net/arp — no shipping target reads it',
+        () {
+      // The concrete artifact of the inverted matrix. The app has no linux/
+      // directory, and Android does not expose this file to apps.
+      for (final String path in <String>[
+        'assets/help/tool_help.json',
+        'assets/guides/field-manual.md',
+      ]) {
+        expect(_citesProcNetArp(File(path).readAsStringSync()), isFalse,
+            reason: '$path still cites /proc/net/arp, which no shipping '
+                'platform of this app reads');
+      }
+    });
+
+    test('shipped copy never says a platform "cannot" when a read merely failed',
+        () {
+      // "cannot" is a claim about the PLATFORM; a failed read is a claim about
+      // the ATTEMPT. Windows is the live trap: implemented, unverified.
+      for (final String sentence in _shippedArpSentences()) {
+        final String lower = sentence.toLowerCase();
+        if (!lower.contains('windows')) continue;
+        expect(lower.contains('windows cannot'), isFalse,
+            reason: 'shipped ARP copy states Windows CANNOT read the neighbor '
+                'table. It is implemented (TODO(windows-verify) is about '
+                'confirmation, not capability); a failure is a failed read.\n'
+                'Offending sentence: $sentence');
+      }
+    });
+  });
+
   // =======================================================================
   // PART B — the cross-screen invariant, table-driven over every case.
   // =======================================================================
@@ -708,3 +873,120 @@ class _OnWifiNetworkInfo implements NetworkInfo {
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
+
+/// Every sentence of SHIPPED, user-facing ARP/NDP copy: the `arp-ndp` entry of
+/// the bundled help sheet (pubspec asset) plus the "Lookup (ARP/NDP)" section
+/// of the bundled field manual. Read from the real files on disk, so the thing
+/// under assertion is the thing that ships.
+List<String> _shippedArpSentences() {
+  final List<String> blobs = <String>[];
+
+  final Map<String, dynamic> help = jsonDecode(
+      File('assets/help/tool_help.json').readAsStringSync())
+    as Map<String, dynamic>;
+  final Map<String, dynamic> arp =
+      (help['tools'] as Map<String, dynamic>)['arp-ndp']
+          as Map<String, dynamic>;
+  void collect(Object? v) {
+    if (v is String) {
+      blobs.add(v);
+    } else if (v is List) {
+      for (final Object? e in v) {
+        collect(e);
+      }
+    } else if (v is Map) {
+      for (final Object? e in v.values) {
+        collect(e);
+      }
+    }
+  }
+  collect(arp);
+
+  // The field manual's ARP/NDP section, bounded by its own ### headings.
+  final List<String> lines =
+      File('assets/guides/field-manual.md').readAsLinesSync();
+  final int start =
+      lines.indexWhere((String l) => l.trim() == '### Lookup (ARP/NDP)');
+  expect(start, isNot(-1),
+      reason: 'the field manual ARP/NDP section was renamed — this guard is '
+          'now scanning nothing. Re-point it.');
+  int end = lines.indexWhere((String l) => l.startsWith('### '), start + 1);
+  if (end == -1) end = lines.length;
+  blobs.addAll(lines.sublist(start, end));
+
+  // Split into sentences so a platform name and a denial only collide when
+  // they are actually asserted together.
+  final List<String> sentences = <String>[];
+  for (final String b in blobs) {
+    sentences.addAll(_sentencesOf(b));
+  }
+  return sentences;
+}
+
+/// Phrases that DENY the MAC capability. Kept beside the scanner they feed.
+const List<String> _arpDenialPhrases = <String>[
+  'no hardware address',
+  'not exposed on this platform',
+  'no mac',
+  'cannot read',
+  'does not make that table readable',
+  'no readable arp file',
+];
+
+/// Phrases that CREDIT a real neighbour-table read.
+const List<String> _arpCreditPhrases = <String>[
+  'real hardware address',
+  'real cached mac',
+  'plus the real',
+  'reads the system',
+  'attach the real',
+];
+
+/// Split prose into sentences so a platform name and a claim only collide when
+/// they are actually asserted together.
+List<String> _sentencesOf(String text) => text
+    .split(RegExp(r'(?<=[.!?])\s+'))
+    .map((String x) => x.trim())
+    .where((String x) => x.isNotEmpty)
+    .toList();
+
+/// Sentences that deny the MAC read on a platform expected to HAVE it.
+List<String> _denialViolations(
+  List<String> sentences,
+  Map<String, bool> expected,
+) =>
+    _violations(sentences, expected, capable: true, phrases: _arpDenialPhrases);
+
+/// Sentences that credit a real MAC read to a platform expected to LACK it.
+List<String> _creditViolations(
+  List<String> sentences,
+  Map<String, bool> expected,
+) =>
+    _violations(sentences, expected, capable: false, phrases: _arpCreditPhrases);
+
+List<String> _violations(
+  List<String> sentences,
+  Map<String, bool> expected, {
+  required bool capable,
+  required List<String> phrases,
+}) {
+  final List<String> hits = <String>[];
+  for (final String sentence in sentences) {
+    final String lower = sentence.toLowerCase();
+    for (final MapEntry<String, bool> e in expected.entries) {
+      if (e.value != capable) continue;
+      if (!lower.contains(e.key.toLowerCase())) continue;
+      for (final String phrase in phrases) {
+        if (lower.contains(phrase)) {
+          hits.add('${e.key} :: "$phrase" :: $sentence');
+        }
+      }
+    }
+  }
+  return hits;
+}
+
+/// True when [text] cites the Linux ARP procfs table. No shipping target of
+/// this app reads it: there is no `linux/` directory, and Android does not
+/// expose the file to apps.
+bool _citesProcNetArp(String text) => text.contains('/proc/net/arp');

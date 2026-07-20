@@ -57,9 +57,9 @@ class ArpEntry {
 class ArpReadResult {
   const ArpReadResult({
     required this.available,
+    required this.platformSupported,
     this.entries = const <ArpEntry>[],
     this.error,
-    this.platformSupported = true,
   });
 
   /// The platform has no reader that can read the neighbor table at all
@@ -86,10 +86,16 @@ class ArpReadResult {
   /// [available] and [platformSupported] are different questions and were once
   /// collapsed into one: a single `unavailable` result meant both "iOS cannot"
   /// and "the Windows FFI read failed", so the screen could only render one
-  /// sentence for both and picked the false one. There is deliberately no
-  /// default and no general `unavailable` constructor — every failure site
-  /// must state which kind it is, so forgetting is a compile error rather
-  /// than a lie on screen.
+  /// sentence for both and picked the false one.
+  ///
+  /// REQUIRED on the primary constructor, deliberately. It briefly carried a
+  /// `= true` default while this doc claimed there was none — so the class
+  /// made exactly the false capability claim it exists to prevent, and
+  /// `ArpReadResult(available: false, error: 'boom')` compiled and silently
+  /// classified an incapable platform as a failed read. A convention that
+  /// every call site happens to follow is not a guarantee; a required
+  /// parameter is. Forgetting is now a compile error, which is the only form
+  /// of this rule that cannot be quietly skipped.
   final bool platformSupported;
 
   /// True when the underlying read SUCCEEDED. Note: `available == true` with an
@@ -208,7 +214,7 @@ class MethodChannelArpReader implements ArpReader {
         }
       }
     }
-    return ArpReadResult(available: true, entries: entries);
+    return ArpReadResult(available: true, platformSupported: true, entries: entries);
   }
 }
 
@@ -252,7 +258,7 @@ class WindowsIpNetTableArpReader implements ArpReader {
           if (e.key.isNotEmpty && e.value.isNotEmpty)
             ArpEntry(ip: e.key, mac: e.value.toLowerCase()),
       ];
-      return ArpReadResult(available: true, entries: entries);
+      return ArpReadResult(available: true, platformSupported: true, entries: entries);
     } on WindowsArpReadException catch (e) {
       return ArpReadResult.failed('Windows ARP read failed: ${e.message}');
     } catch (e) {
