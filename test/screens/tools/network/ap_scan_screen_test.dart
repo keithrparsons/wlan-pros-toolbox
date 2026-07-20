@@ -906,7 +906,20 @@ void main() {
       // Replaced by an honest state that claims nothing about the air.
       expect(find.textContaining('Nothing has been measured yet'),
           findsOneWidget);
-      expect(find.text('No scan yet'), findsOneWidget);
+
+      // THE SCREEN DOES WHAT ITS COPY SAYS. In this window a scan is already
+      // running, so the card must not tell the user to tap a Scan button —
+      // there is none to tap while it runs
+      // ([[feedback_screen_does_what_copy_says]]).
+      expect(find.textContaining('A scan is running now'), findsOneWidget);
+      expect(find.textContaining('Tap Scan to look'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(FilledButton),
+          matching: find.text('Scan'),
+        ),
+        findsNothing,
+      );
 
       // Let the fresh scan land so the widget tree tears down cleanly.
       freshScan.complete(empty);

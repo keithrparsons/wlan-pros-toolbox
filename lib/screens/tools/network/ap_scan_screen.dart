@@ -275,7 +275,15 @@ class _ApScanScreenState extends State<ApScanScreen> {
         return children;
 
       case ApScanVerdict.noScanYet:
-        children.add(_NoScanYetCard(onScan: _loading ? null : _retry));
+        // `scanning` is the whole point: the state this card is FOR is the
+        // window between the cache read and the first scan landing, and in that
+        // window a scan is already running. Telling the user to tap a button
+        // that is disabled underneath the sentence is a screen that does not do
+        // what its copy says ([[feedback_screen_does_what_copy_says]]).
+        children.add(_NoScanYetCard(
+          scanning: _loading,
+          onScan: _loading ? null : _retry,
+        ));
         return children;
 
       case ApScanVerdict.nothingInRange:
@@ -662,10 +670,16 @@ class _UnreadableRowsNote extends StatelessWidget {
 /// measured, and offers the one thing that will change that: run a scan
 /// ([[feedback_app_blames_the_wifi]]).
 class _NoScanYetCard extends StatelessWidget {
-  const _NoScanYetCard({required this.onScan});
+  const _NoScanYetCard({required this.onScan, required this.scanning});
 
   /// Runs the first scan. Null while one is already in flight.
   final VoidCallback? onScan;
+
+  /// Whether a scan is already running. In the ordinary first-load path this is
+  /// TRUE, because the card renders in the window between the cache read and
+  /// the first scan landing. The copy and the button both follow it, so the
+  /// card never invites a tap it has already disabled.
+  final bool scanning;
 
   @override
   Widget build(BuildContext context) {
@@ -681,7 +695,7 @@ class _NoScanYetCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'No scan yet',
+                  scanning ? 'Scanning' : 'No scan yet',
                   style: text.titleSmall?.copyWith(color: colors.textPrimary),
                 ),
               ),
@@ -689,19 +703,26 @@ class _NoScanYetCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Nothing has been measured yet. This machine has no stored scan '
-            'results, which is normal before the first scan. Tap Scan to look '
-            'at what is on the air.',
+            scanning
+                ? 'Nothing has been measured yet. This machine has no stored '
+                    'scan results, which is normal before the first scan. A '
+                    'scan is running now.'
+                : 'Nothing has been measured yet. This machine has no stored '
+                    'scan results, which is normal before the first scan. Tap '
+                    'Scan to look at what is on the air.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton(
-              onPressed: onScan,
-              child: const Text('Scan'),
+          // No button at all while a scan runs: a disabled control under copy
+          // that does not ask for a tap is just noise.
+          if (!scanning)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton(
+                onPressed: onScan,
+                child: const Text('Scan'),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -716,12 +737,18 @@ class _NoScanYetCard extends StatelessWidget {
 ///
 /// TODO(keith-decision): this card may be UNREACHABLE on macOS. It renders only
 /// when `unreadableCount > 0`, and the native layers drop those rows before the
-/// payload is built (ApScanChannel.swift:237-288, the 6 GHz `bandUnknown` case
-/// at :314, and MainActivity.kt:485-488). An earlier version of this doc claimed
-/// the `bandUnknown` drop "produces exactly this payload"; that was wrong — it
-/// is handled natively and never reaches Dart. Either the native layers report
-/// what they dropped, or this card and its copy go. See the gate #4 QA report
-/// (F-2/F-3/F-4).
+/// payload is built (ApScanChannel.swift `mapNetwork`/`mapNetworks`, the 6 GHz
+/// `.bandUnknown` case in `bandString`, and MainActivity.kt `mapScanResult`). An
+/// earlier version of this doc claimed the `bandUnknown` drop "produces exactly
+/// this payload"; that was wrong — it is handled natively and never reaches
+/// Dart. Either the native layers report what they dropped, or this card and its
+/// copy go. See the gate #4 QA report (F-2/F-3/F-4).
+///
+/// Pins here name SYMBOLS, not line numbers: the first version of this note
+/// cited `ApScanChannel.swift:314` for the `bandUnknown` case and was wrong by
+/// exactly the length of the note itself, because inserting these lines moved
+/// the target. A line number written inside the file it points into is
+/// self-invalidating.
 ///
 /// The honest verdict is that the RF environment is UNKNOWN, not empty. The
 /// copy therefore states what the radio did (reported networks), what the app

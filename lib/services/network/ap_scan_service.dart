@@ -264,8 +264,9 @@ class ApScanSnapshot {
   ///
   /// TODO(keith-decision): this count is structurally 0 on macOS, and possibly
   /// on Android too. Both native layers already drop these rows before building
-  /// the payload (ApScanChannel.swift:237-288 — including the 6 GHz
-  /// `bandUnknown` case at :314 — and MainActivity.kt:485-488), so the causes
+  /// the payload (ApScanChannel.swift `mapNetwork`/`mapNetworks` — including
+  /// the 6 GHz `.bandUnknown` case in `bandString` — and MainActivity.kt
+  /// `mapScanResult`), so the causes
   /// named above cannot raise it from the platform being field-tested, and the
   /// causes that CAN raise it are Dart-side only. The choice is between having
   /// the native layers report what they dropped, or deleting this field and the

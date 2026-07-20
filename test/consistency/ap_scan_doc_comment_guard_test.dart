@@ -51,7 +51,7 @@ void main() {
           // of the modifier someone would plausibly add later.
           if (!RegExp(
             r'^(abstract\s+|base\s+|final\s+|interface\s+|sealed\s+|mixin\s+)*'
-            r'(class|enum|mixin|extension\s+type)\s+[A-Z]',
+            r'(class|enum|mixin|extension\s+type(\s+const)?)\s+[A-Z]',
           ).hasMatch(line)) {
             continue;
           }
