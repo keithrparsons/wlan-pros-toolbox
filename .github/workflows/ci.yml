@@ -16,13 +16,25 @@ jobs:
           flutter-version: '3.44.0'
           channel: stable
 
+      # Dependency bootstrap + analyzer for the WHOLE repo, via the one script
+      # that owns that job. CI used to hand-roll this with a HARDCODED
+      # `packages/net_quality` alongside the root — the precise failure mode
+      # scripts/analyze.sh exists to prevent. Its package list is DISCOVERED
+      # from the filesystem, so a package added tomorrow is analyzed here
+      # without anyone remembering to edit this file. Two copies of the same
+      # logic, one of them hardcoded, is how the copies drift.
+      #
+      # This step also runs `flutter pub get` in every discovered package, so
+      # the test steps below inherit resolved dependencies. That ordering is
+      # load-bearing: an unresolved package reports phantom uri_does_not_exist
+      # issues rather than real ones.
+      - name: all packages — bootstrap deps + analyze
+        run: scripts/analyze.sh
+
       # net_quality is a separate pure-Dart package with its own tests.
-      - name: net_quality — analyze + test
+      - name: net_quality — test
         working-directory: packages/net_quality
-        run: |
-          flutter pub get
-          flutter analyze
-          flutter test
+        run: flutter test
 
       # Root app: widget + unit tests run on Linux (no Xcode needed).
       # Two tag groups are excluded from the cross-platform Linux CI:
@@ -33,11 +45,8 @@ jobs:
       #     they diff 5-10% (well over tolerance) on this runner. Goldens are
       #     host-specific and are validated locally + on-device by Vera:
       #     flutter test --tags golden
-      - name: app — analyze + test
-        run: |
-          flutter pub get
-          flutter analyze
-          flutter test --exclude-tags "capture || golden"
+      - name: app — test
+        run: flutter test --exclude-tags "capture || golden"
 
   # Windows build skeleton. Runs on GitHub's own windows-latest runner (no
   # local Windows box needed) to surface COMPILE issues in the dormant Native
