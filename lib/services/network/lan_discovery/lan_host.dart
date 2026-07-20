@@ -10,6 +10,27 @@
 
 import 'device_type.dart';
 
+/// Sortable integer key for an IPv4 dotted-quad string.
+///
+/// Packs the four octets into one 32-bit value so addresses order the way a
+/// network engineer reads them: `192.168.1.9` before `192.168.1.10`. Sorting
+/// the dotted-quad STRINGS instead puts `.10` before `.9` (lexical order), which
+/// is the classic wrong answer.
+///
+/// Lives here (pure data, no dart:io, no Flutter) because both the engine and
+/// the UI's sortable host table need it and there must be exactly one
+/// implementation. A malformed address yields 0 rather than throwing, so a
+/// surprise value sorts first instead of crashing a scan result.
+int ipSortKey(String ip) {
+  final List<String> octets = ip.split('.');
+  if (octets.length != 4) return 0;
+  int value = 0;
+  for (final String octet in octets) {
+    value = (value << 8) | (int.tryParse(octet) ?? 0);
+  }
+  return value & 0xFFFFFFFF;
+}
+
 /// One discovered host on the local subnet, enriched across the scan passes.
 ///
 /// A host enters the result set the moment the TCP connect-scan finds ANY open
