@@ -682,9 +682,17 @@ void main() {
     });
 
     testWidgets(
-        'Location denied → the SSID and BSSID rows name the actionable '
-        '"Needs Location permission" reason, NOT a bare "Unavailable", and the '
-        'grant affordance is present', (tester) async {
+        'Location NOT YET DETERMINED → the SSID and BSSID rows name the '
+        'actionable "Needs Location permission" reason, NOT a bare '
+        '"Unavailable", and the grant affordance is present', (tester) async {
+      // NAMED PRECISELY ON PURPOSE. This test used to be called "Location
+      // denied", but `_FakeMacAdapter` collapses authorization to a bool and
+      // reports `notDetermined` whenever it is not granted, so `denied` was
+      // never actually driven here. A test name that claims a state the fake
+      // cannot produce is how the dead-button defect stayed invisible through
+      // five gate cycles ([[feedback_tests_that_enshrine_the_bug]]). The real
+      // `denied` / `restricted` coverage lives in
+      // wifi_info_permission_flow_test.dart.
       // The reported bug: with macOS Location NOT granted, SSID/BSSID rendered a
       // flat "Unavailable" (implying the data does not exist) even though the
       // real, fixable cause is the missing Location permission. Model that state
