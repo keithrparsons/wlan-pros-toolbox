@@ -718,20 +718,82 @@ String _signalCell(RoamEvent e) {
   return '$fromStr -> $toStr$snr';
 }
 
-/// The header signal-summary line: average, strongest, and weakest RSSI across
-/// the roams that carried one. "Signal: not reported" when none did (GL-005).
+/// The pre-roam ("before") RSSI population: the last reading on each AP the
+/// client LEFT. This is the roam TRIGGER level — how weak the client let the
+/// signal get before it let go. Honest-null: a roam whose prior AP carried no
+/// RSSI (always the first roam, which has no prior AP) contributes nothing. It
+/// is never zeroed, because a 0 would read as a signal and drag the average.
+List<int> _preRoamRssi(List<RoamEvent> events) => <int>[
+      for (final RoamEvent e in events)
+        if (e.fromRssiDbm != null) e.fromRssiDbm!,
+    ];
+
+/// The post-roam ("after") RSSI population: the reading on each AP the client
+/// JOINED. This is the roam DESTINATION level — what the client got in return.
+List<int> _postRoamRssi(List<RoamEvent> events) => <int>[
+      for (final RoamEvent e in events)
+        if (e.rssiDbm != null) e.rssiDbm!,
+    ];
+
+/// Average / strongest / weakest over one RSSI population. RSSI is negative
+/// dBm, so the STRONGEST is the greatest value (closest to zero). Returns null
+/// for an empty population so the caller can degrade honestly (GL-005).
+_RssiStats? _rssiStats(List<int> values) {
+  if (values.isEmpty) return null;
+  final int sum = values.reduce((int a, int b) => a + b);
+  return _RssiStats(
+    avg: (sum / values.length).round(),
+    strongest: values.reduce((int a, int b) => a > b ? a : b),
+    weakest: values.reduce((int a, int b) => a < b ? a : b),
+  );
+}
+
+/// Aggregates over ONE RSSI population. Deliberately never mixes the pre-roam
+/// and post-roam sets: an average over the two pooled together describes no
+/// physical quantity, and its value would shift with the ratio of readings the
+/// platform happened to record rather than with the RF.
+class _RssiStats {
+  const _RssiStats({
+    required this.avg,
+    required this.strongest,
+    required this.weakest,
+  });
+
+  final int avg;
+  final int strongest;
+  final int weakest;
+}
+
+/// The header signal-summary: ONE line per population, each labelled for the
+/// reading it actually summarises.
+///
+/// `rssiDbm` is always the POST-roam reading (the AP just joined, so always
+/// comparatively strong) and `fromRssiDbm` is always the PRE-roam reading (the
+/// AP being left, so always comparatively weak). Summarising only the former
+/// reported the network as better than the client experienced and discarded
+/// exactly the number a designer needs. The two are reported separately rather
+/// than pooled, because "the level this client roams at" and "the level it
+/// lands on" are different measurements and one average cannot label both.
+///
+/// "Signal: not reported" when neither population carried a reading (GL-005).
 String _signalSummary(List<RoamEvent> events) {
-  final List<int> rssi = <int>[
-    for (final RoamEvent e in events)
-      if (e.rssiDbm != null) e.rssiDbm!,
+  final _RssiStats? before = _rssiStats(_preRoamRssi(events));
+  final _RssiStats? after = _rssiStats(_postRoamRssi(events));
+  if (before == null && after == null) return 'Signal: not reported';
+
+  String line(String label, _RssiStats s) =>
+      '$label: avg ${s.avg} dBm, strongest ${s.strongest} dBm, '
+      'weakest ${s.weakest} dBm';
+
+  final List<String> lines = <String>[
+    before != null
+        ? line('Signal before roam (on the AP being left)', before)
+        : 'Signal before roam: not reported',
+    after != null
+        ? line('Signal after roam (on the AP joined)', after)
+        : 'Signal after roam: not reported',
   ];
-  if (rssi.isEmpty) return 'Signal: not reported';
-  final int sum = rssi.reduce((int a, int b) => a + b);
-  final int avg = (sum / rssi.length).round();
-  // RSSI is negative dBm: the strongest is the greatest (closest to zero).
-  final int strongest = rssi.reduce((int a, int b) => a > b ? a : b);
-  final int weakest = rssi.reduce((int a, int b) => a < b ? a : b);
-  return 'Signal: avg $avg dBm, strongest $strongest dBm, weakest $weakest dBm';
+  return lines.join('\n');
 }
 
 /// "45s" / "2m" / "2m 5s" — dwell between consecutive roams, no intl dependency.
@@ -783,10 +845,9 @@ String? buildRoamLogShareHtml({
   String esc(String s) => const HtmlEscape(HtmlEscapeMode.element).convert(s);
 
   // Computed aggregates (each honest: derived only from the events present).
-  final List<int> rssi = <int>[
-    for (final RoamEvent e in events)
-      if (e.rssiDbm != null) e.rssiDbm!,
-  ];
+  // The two RSSI populations stay separate end to end — see [_signalSummary].
+  final List<int> preRssi = _preRoamRssi(events);
+  final List<int> postRssi = _postRoamRssi(events);
   final List<int> snr = <int>[
     for (final RoamEvent e in events)
       if (e.snrDb != null) e.snrDb!,
@@ -802,13 +863,22 @@ String? buildRoamLogShareHtml({
   // ---- Stat tiles (omit a tile whose datum is absent) ----
   final StringBuffer tiles = StringBuffer()
     ..write(_statTile('${events.length}', 'roams in $sessionLen'));
-  if (rssi.isNotEmpty) {
-    final int avg = (rssi.reduce((int a, int b) => a + b) / rssi.length).round();
-    final int strongest = rssi.reduce((int a, int b) => a > b ? a : b);
-    final int weakest = rssi.reduce((int a, int b) => a < b ? a : b);
+  // Signal tiles, each labelled for the population it computes. The old pair
+  // ('dBm avg at roam' / 'dBm strongest / weakest') read as the trigger level
+  // but computed the destination, so a client-facing report could claim a floor
+  // its own table contradicted. Each tile is emitted only when its population
+  // carried a reading (GL-005) — a missing tile, never an invented number.
+  final _RssiStats? before = _rssiStats(preRssi);
+  final _RssiStats? after = _rssiStats(postRssi);
+  if (before != null) {
     tiles
-      ..write(_statTile('$avg', 'dBm avg at roam'))
-      ..write(_statTile('$strongest / $weakest', 'dBm strongest / weakest'));
+      ..write(_statTile('${before.avg}', 'dBm avg before roam'))
+      // The number the designer sizes cell overlap from: how weak the client
+      // let it get before it let go.
+      ..write(_statTile('${before.weakest}', 'dBm weakest before roam'));
+  }
+  if (after != null) {
+    tiles.write(_statTile('${after.avg}', 'dBm avg after roam'));
   }
   if (snr.isNotEmpty) {
     final int lo = snr.reduce((int a, int b) => a < b ? a : b);
@@ -846,7 +916,7 @@ String? buildRoamLogShareHtml({
   }
 
   // ---- Session at a glance: COMPUTED facts only (GL-005) ----
-  final List<String> facts = _sessionFacts(events, rssi, dwells, pingPongs);
+  final List<String> facts = _sessionFacts(events, dwells, pingPongs);
   final StringBuffer glance = StringBuffer();
   if (facts.isNotEmpty) {
     glance.writeln('<h2>Session at a glance</h2>');
@@ -1018,31 +1088,58 @@ bool _bssidEq(String a, String b) =>
 /// (GL-005). No interpretation, no health verdict.
 List<String> _sessionFacts(
   List<RoamEvent> events,
-  List<int> rssi,
   List<Duration> dwells,
   List<_PingPong> pingPongs,
 ) {
   final List<String> facts = <String>[];
 
-  // Signal range with the timestamps of the strongest and weakest roam.
-  if (rssi.isNotEmpty) {
+  /// The extremes of one RSSI population, carrying the event each came from so
+  /// the sentence can timestamp it. [read] selects the reading; an event whose
+  /// reading is null is skipped, never zeroed.
+  (RoamEvent, RoamEvent)? extremes(int? Function(RoamEvent) read) {
     RoamEvent? strongest;
     RoamEvent? weakest;
     for (final RoamEvent e in events) {
-      if (e.rssiDbm == null) continue;
-      if (strongest == null || e.rssiDbm! > strongest.rssiDbm!) strongest = e;
-      if (weakest == null || e.rssiDbm! < weakest.rssiDbm!) weakest = e;
+      final int? v = read(e);
+      if (v == null) continue;
+      if (strongest == null || v > read(strongest)!) strongest = e;
+      if (weakest == null || v < read(weakest)!) weakest = e;
     }
-    if (strongest != null && weakest != null) {
-      if (strongest.rssiDbm == weakest.rssiDbm) {
-        facts.add('Every recorded roam fired at ${strongest.rssiDbm} dBm.');
-      } else {
-        facts.add(
-          'Roams fired between ${strongest.rssiDbm} dBm (strongest, at '
-          '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
-          '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
-        );
-      }
+    if (strongest == null || weakest == null) return null;
+    return (strongest, weakest);
+  }
+
+  // The TRIGGER level, computed from the pre-roam readings. "Roams fired at" is
+  // trigger language, so it must be computed from the signal on the AP the
+  // client was LEAVING. It previously read the post-roam value, which put a
+  // trigger label on a destination number.
+  final (RoamEvent, RoamEvent)? fired = extremes((RoamEvent e) => e.fromRssiDbm);
+  if (fired != null) {
+    final (RoamEvent strongest, RoamEvent weakest) = fired;
+    if (strongest.fromRssiDbm == weakest.fromRssiDbm) {
+      facts.add('Every recorded roam fired at ${strongest.fromRssiDbm} dBm.');
+    } else {
+      facts.add(
+        'Roams fired between ${strongest.fromRssiDbm} dBm (strongest, at '
+        '${_RoamRow._formatTime(strongest.at)}) and ${weakest.fromRssiDbm} dBm '
+        '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+      );
+    }
+  }
+
+  // The DESTINATION level, computed from the post-roam readings and labelled as
+  // what the client landed on rather than what made it move.
+  final (RoamEvent, RoamEvent)? landed = extremes((RoamEvent e) => e.rssiDbm);
+  if (landed != null) {
+    final (RoamEvent strongest, RoamEvent weakest) = landed;
+    if (strongest.rssiDbm == weakest.rssiDbm) {
+      facts.add('Every roam landed on ${strongest.rssiDbm} dBm.');
+    } else {
+      facts.add(
+        'Roams landed between ${strongest.rssiDbm} dBm (strongest, at '
+        '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
+        '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+      );
     }
   }
 

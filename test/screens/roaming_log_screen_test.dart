@@ -1009,8 +1009,19 @@ void main() {
       expect(out, contains('Captured on: iOS'));
       expect(out, contains('Session: 2:14:00 PM to 2:15:02 PM'));
       expect(out, contains('2 roams recorded'));
-      expect(out,
-          contains('Signal: avg -70 dBm, strongest -67 dBm, weakest -72 dBm'));
+      // Two populations, each labelled for what it computes. The pre-roam set
+      // is the trigger level (-60, -67); the post-roam set is what the client
+      // landed on (-67, -72). Pooling them would describe neither.
+      expect(
+        out,
+        contains('Signal before roam (on the AP being left): avg -64 dBm, '
+            'strongest -60 dBm, weakest -67 dBm'),
+      );
+      expect(
+        out,
+        contains('Signal after roam (on the AP joined): avg -70 dBm, '
+            'strongest -67 dBm, weakest -72 dBm'),
+      );
 
       // From/to RSSI pair per roam: the OLD AP's last reading, an ASCII arrow,
       // and the NEW AP's reading at the roam, so the delta reads left to right.
@@ -1223,15 +1234,21 @@ void main() {
 
       // Stat tiles present with computed values.
       expect(doc, contains('class="stat"'));
-      expect(doc, contains('dBm avg at roam'));
-      expect(doc, contains('dBm strongest / weakest'));
+      // Tiles name their population. This fixture records no pre-roam readings,
+      // so the before-roam tiles are absent rather than invented (GL-005).
+      expect(doc, contains('dBm avg after roam'));
+      expect(doc, isNot(contains('dBm weakest before roam')));
       expect(doc, contains('dB SNR range'));
       expect(doc, contains('avg dwell per AP'));
       expect(doc, contains('28-36')); // SNR range lo-hi
 
       // Session-at-a-glance computed facts.
       expect(doc, contains('Session at a glance'));
-      expect(doc, contains('Roams fired between -59 dBm'));
+      // These are post-roam readings, so they describe where the client LANDED.
+      // "Roams fired between" is trigger language and must not appear when no
+      // pre-roam reading was recorded.
+      expect(doc, contains('Roams landed between -59 dBm'));
+      expect(doc, isNot(contains('Roams fired between')));
       expect(doc, contains('Dwell on the previous AP'));
       // The ping-pong is precisely detected and named with its tails + window.
       expect(doc, contains('Ping-pong at'));
@@ -1418,6 +1435,237 @@ void main() {
         greaterThanOrEqualTo(2),
       );
       expect(doc, contains('<span class="k">Captured on</span>'));
+    });
+  });
+
+  // The signal summary must never report the network as stronger than the
+  // capture shows. `rssiDbm` is ALWAYS the post-roam reading (the AP joined, so
+  // always comparatively strong); `fromRssiDbm` is ALWAYS the pre-roam reading
+  // (the AP being left, so always comparatively weak). Summarising only the
+  // former discards exactly the number a designer needs — how weak the client
+  // let it get before it roamed — and flatters the network. Regression guard for
+  // the 2026-07-20 field capture whose header read "weakest -71 dBm" while the
+  // table beneath it carried a -81 dBm reading.
+  group('signal summary counts BOTH sides of every roam', () {
+    // Every pre-roam reading here is weaker than every post-roam reading. The
+    // weakest datum in the fixture is -81 dBm and it lives ONLY in fromRssiDbm,
+    // so a summary built from rssiDbm alone can never mention it.
+    List<RoamEvent> lopsided() => <RoamEvent>[
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 0, 0),
+            from: 'aa:bb:cc:dd:ee:01',
+            to: 'aa:bb:cc:dd:ee:02',
+            fromRssi: -78,
+            rssi: -55,
+          ),
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 1, 0),
+            from: 'aa:bb:cc:dd:ee:02',
+            to: 'aa:bb:cc:dd:ee:03',
+            fromRssi: -81,
+            rssi: -50,
+          ),
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 2, 0),
+            from: 'aa:bb:cc:dd:ee:03',
+            to: 'aa:bb:cc:dd:ee:04',
+            fromRssi: -76,
+            rssi: -60,
+          ),
+        ];
+
+    test('copy report header reports the pre-roam floor, not just the landing',
+        () {
+      final String out = buildRoamLogCopyText(
+        events: lopsided(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+
+      final String beforeLine = out
+          .split('\n')
+          .firstWhere((String l) => l.startsWith('Signal before roam'));
+      final String afterLine = out
+          .split('\n')
+          .firstWhere((String l) => l.startsWith('Signal after roam'));
+
+      // The -81 dBm the client held on down to MUST reach the summary. On the
+      // unfixed code the header's weakest is -60 (the weakest LANDING) and -81
+      // appears nowhere outside the table.
+      expect(beforeLine, contains('weakest -81 dBm'),
+          reason: 'weakest pre-roam reading must appear in the summary');
+      expect(beforeLine, contains('avg -78 dBm'));
+
+      // -60 dBm is the weakest LANDING. It is a true number, but only under the
+      // after-roam label; the unfixed code presented it unqualified as the
+      // weakest signal of the session, which the table contradicted.
+      expect(afterLine, contains('weakest -60 dBm'));
+      expect(out, isNot(contains('Signal: avg')),
+          reason: 'the unlabelled single-population header must be gone');
+
+      // Label/computation agreement: the pre-roam and post-roam populations are
+      // reported as distinct, each named for what it actually measures.
+      expect(out, contains('before roam'));
+      expect(out, contains('after roam'));
+      // "at roam" was ambiguous — it read as the trigger and computed the
+      // destination. It must not survive anywhere in the report.
+      expect(out, isNot(contains('avg at roam')));
+    });
+
+    test('share HTML stat tiles surface the pre-roam floor', () {
+      final String doc = buildRoamLogShareHtml(
+        events: lopsided(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+
+      // Scoped to the tiles, not the whole document: the table row carries -81
+      // even on the unfixed code, so an unscoped `contains` would pass while a
+      // tile still showed the post-roam number under a before-roam label.
+      final String tiles = doc.substring(
+        doc.indexOf('class="stat"'),
+        doc.indexOf('<table'),
+      );
+      expect(tiles, contains('<div class="n">-81</div>'),
+          reason: 'the weakest-before tile must carry the pre-roam floor');
+      expect(tiles, contains('<div class="n">-78</div>'),
+          reason: 'the avg-before tile must carry the pre-roam average');
+      expect(tiles, contains('<div class="n">-55</div>'),
+          reason: 'the avg-after tile must carry the post-roam average');
+      expect(tiles, contains('dBm weakest before roam'));
+      expect(tiles, contains('dBm avg before roam'));
+      expect(tiles, contains('dBm avg after roam'));
+      // The mislabelled tiles are gone.
+      expect(doc, isNot(contains('dBm avg at roam')));
+      expect(doc, isNot(contains('dBm strongest / weakest')));
+    });
+
+    test('narrative facts describe the trigger level, not only the landing', () {
+      final String doc = buildRoamLogShareHtml(
+        events: lopsided(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+
+      // "Roams fired between ..." is trigger language: it must be computed from
+      // the pre-roam readings. On the unfixed code it reads "-50 dBm ... -60
+      // dBm" — the landing values wearing a trigger label.
+      expect(doc, contains('Roams fired between -76 dBm'));
+      expect(doc, contains('-81 dBm'));
+      expect(doc, isNot(contains('Roams fired between -50 dBm')));
+    });
+
+    test('screen, copy report and share HTML agree on the weakest reading', () {
+      final List<RoamEvent> events = lopsided();
+      final String out = buildRoamLogCopyText(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+      // Scoped to the SUMMARY, not the whole document: the table row already
+      // contains -81 on the unfixed code, so an unscoped `contains` would pass
+      // before and after and prove nothing.
+      final String copyHeader = out
+          .split('\n')
+          .firstWhere((String l) => l.startsWith('Signal before roam'));
+      expect(copyHeader, contains('-81 dBm'),
+          reason: 'copy summary line must state the pre-roam floor');
+
+      final String tiles = doc.substring(
+        doc.indexOf('class="stat"'),
+        doc.indexOf('<table'),
+      );
+      expect(tiles, contains('-81'),
+          reason: 'share HTML stat tiles must state the same floor');
+
+      // And the table row that proves it is still there, unchanged, on both
+      // surfaces: summary and table now agree instead of contradicting.
+      expect(out, contains('-81 dBm -> -50 dBm'));
+      expect(doc, contains('-81 dBm → -50 dBm'));
+    });
+
+    // fromRssiDbm is honest-null on the first roam (there is no prior AP). A
+    // null must never become a 0 nor drag an average.
+    test('a null pre-roam reading is skipped, never zeroed', () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          rssi: -55,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          fromRssi: -80,
+          rssi: -50,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 2, 0),
+          from: 'aa:bb:cc:dd:ee:03',
+          to: 'aa:bb:cc:dd:ee:04',
+          fromRssi: -70,
+          rssi: -60,
+        ),
+      ];
+
+      final String out = buildRoamLogCopyText(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+
+      // Average of the two REAL pre-roam readings: (-80 + -70) / 2 = -75.
+      // Counting the null as 0 would give -50; counting it as a third sample
+      // would give -50 as well. Both are wrong.
+      expect(out, contains('avg -75 dBm'));
+      expect(out, isNot(contains('avg -50 dBm, strongest')));
+      // A zero must never surface as a signal reading. Anchored so it cannot be
+      // satisfied by the trailing 0 of a real reading such as "-80 dBm".
+      expect(out, isNot(matches(RegExp(r'(^|[^0-9])0 dBm', multiLine: true))),
+          reason: 'a null pre-roam reading must not become 0 dBm');
+    });
+
+    test('all pre-roam readings absent degrades honestly, no invented floor',
+        () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          rssi: -55,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          rssi: -60,
+        ),
+      ];
+
+      final String out = buildRoamLogCopyText(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+
+      // The post-roam population still reports; the pre-roam one says so plainly
+      // rather than inventing a floor (GL-005 honest-null).
+      expect(out, contains('after roam'));
+      expect(out, contains('Signal before roam: not reported'));
+      expect(doc, isNot(contains('dBm weakest before roam')));
+      expect(doc, contains('dBm avg after roam'));
     });
   });
 }
