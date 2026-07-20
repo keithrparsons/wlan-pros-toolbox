@@ -1606,6 +1606,23 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final WifiSecurity? security = info.securityType;
     final bool isIos = _source == WifiInfoSource.iosShortcuts;
 
+    // iOS-only: when the native read is blocked by Location, offer the grant /
+    // settings affordance (same shape as the macOS Location card).
+    //
+    // THE FIX (instance #7 of the dead-control family). This gate used to read
+    // a BOOLEAN `locationAuthorized`, which collapses "never asked" and "asked
+    // and refused" into one false — so under `denied` it rendered a Grant
+    // button that iOS is guaranteed to ignore, because iOS never re-prompts
+    // after a When-In-Use denial. `WifiSecurityInfo` now carries the platform's
+    // own tri-state and the affordance is driven by it.
+    // See [[feedback_ui_rendered_a_decision_it_lacked]].
+    final WifiSecurityInfo? sec = isIos ? _iosSecurity : null;
+    final bool iosNeedsLocation = sec != null &&
+        !sec.available &&
+        !sec.locationAuth.isAuthorized;
+    final LocationAuthStatus securityAuth =
+        sec?.locationAuth ?? LocationAuthStatus.notDetermined;
+
     // Honest note: the coarse-iOS caveat, or the per-platform unavailable reason.
     String? note;
     if (!info.securityAvailable) {
@@ -1613,21 +1630,26 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     } else if (security == null) {
       // Available platform, no value this reading. On iOS surface the precise
       // native reason (permission / no network) when we have one.
-      final WifiSecurityInfo? sec = isIos ? _iosSecurity : null;
-      note = (sec != null && !sec.available && sec.reason != null)
-          ? sec.reason
-          : 'Not in this reading';
+      if (iosNeedsLocation && !securityAuth.isPromptable) {
+        // NOT promptable. The native reason says "Location permission is
+        // needed", which is true but reads as though this app could ask for it.
+        // It cannot. Say so, and name where the switch actually lives — the
+        // prose equivalent of not rendering a dead button.
+        note = 'Location is turned off for this app, and this app cannot ask '
+            'again. Turn it on in Settings > Privacy & Security > Location '
+            'Services > WLAN Pros Toolbox, then tap Refresh';
+      } else {
+        // `sec` is null on every non-iOS source, so this stays a null-SAFE read
+        // (the original guard's shape). A null-assert here would throw on the
+        // whole macOS path.
+        note = (sec != null && !sec.available && sec.reason != null)
+            ? sec.reason
+            : 'Not in this reading';
+      }
     } else if (security.isPersonalCoarse || security.isEnterpriseCoarse) {
       note = 'iOS reports only Open / Personal / Enterprise. It cannot '
           'distinguish WPA2 from WPA3';
     }
-
-    // iOS-only: when the native read is blocked by Location, offer the grant /
-    // settings affordance (same shape as the macOS Location card).
-    final bool iosNeedsLocation = isIos &&
-        _iosSecurity != null &&
-        !_iosSecurity!.available &&
-        !_iosSecurity!.locationAuthorized;
 
     return _Card(
       title: 'Security',
@@ -1641,27 +1663,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           ),
           if (iosNeedsLocation) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: <Widget>[
-                Semantics(
-                  button: true,
-                  label: 'Grant Location permission to read Wi-Fi security',
-                  child: FilledButton(
-                    onPressed: _grantIosSecurityLocation,
-                    child: const Text('Grant Location'),
-                  ),
-                ),
-                Semantics(
-                  button: true,
-                  label: 'Open Location settings',
-                  child: OutlinedButton(
-                    onPressed: _openIosSecuritySettings,
-                    child: const Text('Open Settings'),
-                  ),
-                ),
-              ],
+            _SecurityLocationActions(
+              status: securityAuth,
+              onGrant: _grantIosSecurityLocation,
+              onOpenSettings: _openIosSecuritySettings,
             ),
           ],
         ],
@@ -2045,6 +2050,75 @@ class _LoadingCard extends StatelessWidget {
 
 // ---- Snapshot-source location card (macOS Location Services / Android
 // ACCESS_FINE_LOCATION) ----
+
+/// The Grant / Open Settings affordance pair for the iOS Wi-Fi security gate.
+///
+/// Instance #7 of the dead-control family lived here as an unguarded
+/// `FilledButton('Grant Location')`: it rendered whenever the native read was
+/// blocked, including under `denied`, where iOS will never surface the system
+/// prompt again. Tapping it did nothing, forever.
+class _SecurityLocationActions extends StatelessWidget {
+  const _SecurityLocationActions({
+    required this.status,
+    required this.onGrant,
+    required this.onOpenSettings,
+  });
+
+  /// The platform's own authorization tri-state.
+  ///
+  /// THE load-bearing input. It is `required`, and it is the full enum rather
+  /// than a pre-computed bool, for two reasons: a call site cannot forget to
+  /// consult it (this widget will not compile without it), and the promptable
+  /// question is answered HERE by [LocationAuthStatus.isPromptable] rather than
+  /// re-derived at each call site, where the derivations drift apart.
+  /// See [[feedback_ui_rendered_a_decision_it_lacked]].
+  final LocationAuthStatus status;
+
+  /// Fires the native permission prompt. Only ever rendered while a prompt can
+  /// actually appear.
+  final VoidCallback onGrant;
+
+  /// Deep-links to the app's iOS Settings page — the only route that can work
+  /// once the status leaves `notDetermined`.
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    // THE FIX. The in-app grant renders ONLY where iOS can still surface a
+    // prompt. Under denied / restricted the deep-link is the only route that
+    // can work, so it takes the primary weight instead of sitting as an
+    // outlined afterthought beside a button that cannot act.
+    final bool showGrant = status.isPromptable;
+    return Wrap(
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: <Widget>[
+        if (showGrant)
+          Semantics(
+            button: true,
+            label: 'Grant Location permission to read Wi-Fi security',
+            child: FilledButton(
+              onPressed: onGrant,
+              child: const Text('Grant Location'),
+            ),
+          ),
+        Semantics(
+          button: true,
+          label: 'Open Location settings',
+          child: showGrant
+              ? OutlinedButton(
+                  onPressed: onOpenSettings,
+                  child: const Text('Open Settings'),
+                )
+              : FilledButton(
+                  onPressed: onOpenSettings,
+                  child: const Text('Open Settings'),
+                ),
+        ),
+      ],
+    );
+  }
+}
 
 class _LocationCard extends StatelessWidget {
   const _LocationCard({

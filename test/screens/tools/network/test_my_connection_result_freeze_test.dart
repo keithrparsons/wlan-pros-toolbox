@@ -203,7 +203,8 @@ class _FakeNetDetails extends NetworkDetailsService {
 class _FakeSecurity extends WifiSecurityService {
   @override
   Future<WifiSecurityInfo> fetch() async =>
-      const WifiSecurityInfo.unavailable('no native read in test');
+      const WifiSecurityInfo.unavailable('no native read in test',
+          locationAuth: LocationAuthStatus.notDetermined);
 }
 
 class _FakeIpGeo extends IpGeoService {

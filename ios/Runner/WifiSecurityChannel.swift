@@ -238,6 +238,11 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
       pathMonitor.read(timeoutMillis: 1500) { payload in
         DispatchQueue.main.async { result(payload) }
       }
+    case "locationAuthorizationStatus":
+      // Tri-state form of the gate, matching the macOS channel's method name
+      // and token vocabulary. Lets the UI ask "can I still prompt?" without a
+      // full getSecurityInfo round-trip.
+      result(authorizationStatusToken(currentAuthorizationStatus()))
     case "isLocationAuthorized":
       result(isLocationAuthorized())
     case "requestLocationPermission":
@@ -263,14 +268,25 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
   ///   * bssid               String? — the AP MAC, for the offline OUI lookup.
   ///   * ssid                String? — the network name (context only).
   ///   * locationAuthorized  Bool   — the shared Location gate's current state.
+  ///   * locationAuthStatus  String — the SAME gate as a tri-state token
+  ///                                  ("authorized"/"denied"/"restricted"/
+  ///                                  "notDetermined"). Authoritative: the bool
+  ///                                  above cannot distinguish "never asked"
+  ///                                  from "asked and refused", and iOS only
+  ///                                  re-prompts in the former.
   private func getSecurityInfo(result: @escaping FlutterResult) {
-    let authorized = isLocationAuthorized()
+    // ONE read of the platform status, both representations derived from it, so
+    // the bool and the token can never disagree about the same instant.
+    let status = currentAuthorizationStatus()
+    let authorized = isAuthorized(status)
+    let authToken = authorizationStatusToken(status)
 
     // fetchCurrent requires iOS 14+. Below that, honest-unavailable.
     guard #available(iOS 14.0, *) else {
       result(unavailablePayload(
         reason: "Requires iOS 14 or later.",
-        locationAuthorized: authorized
+        locationAuthorized: authorized,
+        locationAuthStatus: authToken
       ))
       return
     }
@@ -287,7 +303,8 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
               + "not active for this build."
             : "Location permission is needed to read the Wi-Fi security type "
               + "and AP vendor on iOS.",
-          locationAuthorized: authorized
+          locationAuthorized: authorized,
+          locationAuthStatus: authToken
         ))
         return
       }
@@ -308,13 +325,15 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
         "bssid": network.bssid,
         "ssid": network.ssid,
         "locationAuthorized": authorized,
+        "locationAuthStatus": authToken,
       ] as [String: Any?])
     }
   }
 
   private func unavailablePayload(
     reason: String,
-    locationAuthorized: Bool
+    locationAuthorized: Bool,
+    locationAuthStatus: String
   ) -> [String: Any?] {
     return [
       "available": false,
@@ -323,6 +342,7 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
       "bssid": nil,
       "ssid": nil,
       "locationAuthorized": locationAuthorized,
+      "locationAuthStatus": locationAuthStatus,
     ]
   }
 
@@ -371,6 +391,35 @@ final class WifiSecurityChannel: NSObject, CLLocationManagerDelegate {
       return true
     default:
       return false
+    }
+  }
+
+  /// Maps a CLAuthorizationStatus to a stable lower-camel token the Dart side
+  /// resolves into a tri-state (`LocationAuthStatus.fromToken`). Mirrors the
+  /// macOS converter in `macos/Runner/WifiInfoChannel.swift` exactly — one
+  /// token vocabulary across both native platforms.
+  ///
+  /// The bool `isLocationAuthorized` collapses "denied" and "notDetermined"
+  /// into one false, but the UI must tell them apart: `notDetermined` is
+  /// promptable (`requestWhenInUseAuthorization` can still surface the system
+  /// dialog), while `denied`/`restricted` are NOT — iOS never re-prompts after
+  /// a When-In-Use denial, so the UI must deep-link to Settings instead of
+  /// offering a button guaranteed to do nothing. That collapse WAS the defect.
+  /// Never throws across to Dart.
+  private func authorizationStatusToken(_ status: CLAuthorizationStatus) -> String {
+    switch status {
+    case .authorizedAlways, .authorizedWhenInUse:
+      return "authorized"
+    case .denied:
+      return "denied"
+    case .restricted:
+      return "restricted"
+    case .notDetermined:
+      return "notDetermined"
+    @unknown default:
+      // An unrecognized future status is treated as not-yet-determined so the
+      // UI offers the (harmless) prompt path rather than a dead deep-link.
+      return "notDetermined"
     }
   }
 

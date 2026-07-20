@@ -21,6 +21,7 @@ void main() {
             'bssid': 'a4:83:e7:00:11:22',
             'ssid': 'KeithNet',
             'locationAuthorized': true,
+            'locationAuthStatus': 'authorized',
           };
         },
       );
@@ -28,7 +29,7 @@ void main() {
       expect(info.available, isTrue);
       expect(info.securityToken, 'personal');
       expect(info.bssid, 'a4:83:e7:00:11:22');
-      expect(info.locationAuthorized, isTrue);
+      expect(info.locationAuth, LocationAuthStatus.authorized);
       expect(info.reason, isNull);
     });
 

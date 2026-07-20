@@ -134,7 +134,8 @@ class _EmptyBridge extends _StaleHomeBridge {
 class _NativeAbsentSecurity extends WifiSecurityService {
   @override
   Future<WifiSecurityInfo> fetch() async =>
-      const WifiSecurityInfo.unavailable('Location granted to Shortcut, not app');
+      const WifiSecurityInfo.unavailable('Location granted to Shortcut, not app',
+          locationAuth: LocationAuthStatus.notDetermined);
 }
 
 /// Native absent + a STALE stored payload: the HomeNet capture was stored more
@@ -178,7 +179,7 @@ class _ClientNativeSecurity extends WifiSecurityService {
         securityToken: 'personal',
         ssid: 'ClientNet',
         bssid: 'dd:ee:ff:00:00:02',
-        locationAuthorized: true,
+        locationAuth: LocationAuthStatus.authorized,
       );
 }
 

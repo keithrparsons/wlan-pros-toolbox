@@ -1014,7 +1014,11 @@ class _LocationCard extends StatelessWidget {
   /// Whether the OS can still surface an in-app prompt. `notDetermined` is the
   /// ONLY state where it can: once the user (or an MDM/parental restriction)
   /// has answered, macOS will not ask again from inside the app, ever.
-  bool get _promptable => status == LocationAuthStatus.notDetermined;
+  ///
+  /// Delegates to the shared accessor rather than re-deriving the comparison
+  /// locally (Vera LOW-1, 2026-07-20): one representation, one derivation. A
+  /// local re-derivation is the seam where the two definitions drift apart.
+  bool get _promptable => status.isPromptable;
 
   /// Why this OS gates the scan behind Location. Both are true statements about
   /// the platform, not a guess: Android withholds scan results entirely, macOS

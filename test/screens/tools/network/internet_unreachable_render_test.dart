@@ -156,7 +156,8 @@ class _FakeNetDetails extends NetworkDetailsService {
 class _FakeSecurity extends WifiSecurityService {
   @override
   Future<WifiSecurityInfo> fetch() async =>
-      const WifiSecurityInfo.unavailable('not needed in test');
+      const WifiSecurityInfo.unavailable('not needed in test',
+          locationAuth: LocationAuthStatus.notDetermined);
 }
 
 /// THE ISP LOOKUP FAILS. On 34cb906 this is DISCARDED and `publicIpObtained` stays
