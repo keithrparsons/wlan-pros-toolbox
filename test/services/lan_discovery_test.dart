@@ -1276,4 +1276,57 @@ void main() {
       messenger.setMockMethodCallHandler(MethodChannel(channel, codec), null);
     });
   });
+
+  group('DiscoveryResult.hostsOutsideSweep', () {
+    // The screen prints a swept range and a host list. This getter is what
+    // stops those two from contradicting each other. Held against the LITERAL
+    // probed set rather than the label's endpoints, because the seed clamps at
+    // kMaxScanHosts: a range check would call a clamped-off address "in range"
+    // when it was never probed.
+
+    test('empty when every host was probed', () {
+      final DiscoveryResult r = DiscoveryResult(
+        hosts: <LanHost>[LanHost(ip: '10.0.0.5'), LanHost(ip: '10.0.0.6')],
+        subnetLabel: '10.0.0.1-10.0.0.254',
+        sweptIps: const <String>['10.0.0.5', '10.0.0.6'],
+      );
+      expect(r.hostsOutsideSweep, isEmpty);
+    });
+
+    test('names only the hosts that were never probed', () {
+      final DiscoveryResult r = DiscoveryResult(
+        hosts: <LanHost>[
+          LanHost(ip: '172.20.29.10'),
+          LanHost(ip: '172.20.0.2'),
+          LanHost(ip: '172.20.0.69'),
+        ],
+        subnetLabel: '172.20.29.1-172.20.29.254',
+        sweptIps: const <String>['172.20.29.10'],
+      );
+      expect(
+        r.hostsOutsideSweep.map((LanHost h) => h.ip),
+        <String>['172.20.0.2', '172.20.0.69'],
+      );
+    });
+
+    test('an unknown sweep set accuses nobody', () {
+      final DiscoveryResult r = DiscoveryResult(
+        hosts: <LanHost>[LanHost(ip: '10.0.0.5')],
+        subnetLabel: '10.0.0.1-10.0.0.254',
+      );
+      expect(r.sweptIps, isEmpty);
+      expect(r.hostsOutsideSweep, isEmpty);
+    });
+
+    test('a clamped sweep still reports the unprobed tail honestly', () {
+      // kMaxScanHosts can cut the seed short. Addresses past the cut are inside
+      // the label but were NOT probed, so a host found there is a stray.
+      final DiscoveryResult r = DiscoveryResult(
+        hosts: <LanHost>[LanHost(ip: '10.0.0.200')],
+        subnetLabel: '10.0.0.1-10.0.0.254',
+        sweptIps: const <String>['10.0.0.1', '10.0.0.2'],
+      );
+      expect(r.hostsOutsideSweep.single.ip, '10.0.0.200');
+    });
+  });
 }

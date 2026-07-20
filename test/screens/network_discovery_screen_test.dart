@@ -141,4 +141,104 @@ void main() {
       findsOneWidget,
     );
   });
+
+  // --- The summary must not claim a range the list underneath contradicts ---
+  //
+  // The screen printed "Subnet 172.20.29.1-172.20.29.254" while listing hosts
+  // at 172.20.0.2 and 172.20.0.69. Both halves were true — the sweep really was
+  // one /24, and the strays really were found over mDNS/ARP — but together they
+  // read as a tool that does not know what it did. The fix is the copy, never
+  // the capability: out-of-range hosts stay.
+
+  testWidgets('honesty: hosts outside the swept range are reconciled in the '
+      'summary, not silently contradicted', (WidgetTester tester) async {
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[
+        LanHost(ip: '172.20.29.10', openPorts: <int>{80}),
+        // Reached via mDNS / the ARP cache — outside the seeded /24 sweep.
+        LanHost(ip: '172.20.0.2', mdnsServices: <String>{'_airplay._tcp'}),
+        LanHost(ip: '172.20.0.69', mdnsServices: <String>{'_ipp._tcp'}),
+      ],
+      subnetLabel: '172.20.29.1–172.20.29.254',
+      sweptIps: const <String>['172.20.29.10', '172.20.29.11'],
+      arp: const ArpReadResult(available: true),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    // The label no longer asserts "Subnet" (a claim about what exists); it
+    // states what the tool actually did.
+    expect(find.text('Swept'), findsOneWidget);
+    expect(find.text('Subnet'), findsNothing);
+
+    // The two strays are counted and attributed.
+    expect(
+      find.textContaining('2 hosts below are outside that range'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('mDNS or the ARP cache'), findsOneWidget);
+
+    // The capability is untouched: the out-of-range hosts are still listed.
+    expect(find.text('172.20.0.2'), findsOneWidget);
+    expect(find.text('172.20.0.69'), findsOneWidget);
+  });
+
+  testWidgets('honesty: when every host is inside the swept range the caveat '
+      'is absent, not noise', (WidgetTester tester) async {
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[
+        LanHost(ip: '172.20.29.10', openPorts: <int>{80}),
+        LanHost(ip: '172.20.29.11', openPorts: <int>{22}),
+      ],
+      subnetLabel: '172.20.29.1–172.20.29.254',
+      sweptIps: const <String>['172.20.29.10', '172.20.29.11'],
+      arp: const ArpReadResult(available: true),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Swept'), findsOneWidget);
+    // A standing caveat on every run would train the reader to skip the line
+    // on exactly the runs where it carries information.
+    expect(find.textContaining('outside that range'), findsNothing);
+  });
+
+  testWidgets('honesty: an unknown sweep set makes no stray claim either way',
+      (WidgetTester tester) async {
+    // sweptIps empty means "we do not know what was probed" — the screen must
+    // not then accuse every host of being out of range.
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[LanHost(ip: '172.20.0.2', openPorts: <int>{80})],
+      subnetLabel: '172.20.29.1–172.20.29.254',
+      arp: const ArpReadResult(available: true),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('outside that range'), findsNothing);
+  });
 }

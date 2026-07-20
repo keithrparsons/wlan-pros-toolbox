@@ -67,15 +67,15 @@ class LanHost {
   final Set<String> mdnsServices;
 
   /// Heuristic device type inferred from open ports + mDNS service types.
-  /// On mobile there is no MAC anchor, so the heuristic itself uses none; on
-  /// macOS the MAC/vendor below are read from the ARP cache as a separate
-  /// desktop-only enrichment (SPIKE-HSD-01 Gate 2) and do not feed the
-  /// heuristic for the spike.
+  /// The MAC/vendor fields below are a separate enrichment on the platforms
+  /// that can read the ARP cache, and do NOT feed this heuristic — so the
+  /// device type a user sees is derived identically on every platform.
   DeviceType deviceType;
 
-  /// Link-layer MAC read from the macOS ARP cache (Gate 2), or null when no MAC
-  /// was available for this host (every non-macOS platform, or a host not in
-  /// the cache). Never fabricated.
+  /// Link-layer MAC read from the OS ARP/neighbour cache (macOS sysctl channel
+  /// or Windows GetIpNetTable), or null when no MAC was available for this
+  /// host — on a platform with no ARP read (iOS, Android), or for a host that
+  /// simply is not in the cache. Never fabricated.
   String? mac;
 
   /// Vendor name resolved from [mac]'s OUI, or null when there is no MAC.

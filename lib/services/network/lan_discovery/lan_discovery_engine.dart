@@ -71,6 +71,7 @@ class DiscoveryResult {
   const DiscoveryResult({
     required this.hosts,
     required this.subnetLabel,
+    this.sweptIps = const <String>[],
     this.selfIp,
     this.gateway,
     this.error,
@@ -78,10 +79,42 @@ class DiscoveryResult {
   });
 
   /// Discovered hosts, enriched, ascending by IP.
+  ///
+  /// This list is NOT bounded by [sweptIps]. The connect-scan probes the seeded
+  /// range, but mDNS responses and ARP-cache entries can name hosts outside it
+  /// (a second subnet on the same link, a VPN peer, a stale neighbour entry).
+  /// Those hosts are real and are kept — see [hostsOutsideSweep], which exists
+  /// so the UI can SAY so rather than print a range it then contradicts.
   final List<LanHost> hosts;
 
-  /// Human label of the scanned range (e.g. "192.168.1.1–192.168.1.254").
+  /// Human label of the seeded sweep (e.g. "192.168.1.1–192.168.1.254").
+  ///
+  /// This is the range the connect-scan probed, not a bound on [hosts].
   final String subnetLabel;
+
+  /// The exact IPv4 addresses the connect-scan probed — the seed host list,
+  /// verbatim. Empty when no sweep ran (a failed seed) or when a caller built
+  /// a result without one; an empty list means "unknown", so
+  /// [hostsOutsideSweep] stays empty rather than claiming every host is a
+  /// stray.
+  ///
+  /// Held as the literal probed set rather than a first/last pair on purpose:
+  /// the seed clamps at `kMaxScanHosts`, so a range check against the label's
+  /// endpoints would call clamped-off addresses "in range" when they were
+  /// never probed at all.
+  final List<String> sweptIps;
+
+  /// Hosts that were reported but never probed — learned from mDNS or the ARP
+  /// cache. Empty when every host fell inside the sweep, and empty when
+  /// [sweptIps] is unknown.
+  List<LanHost> get hostsOutsideSweep {
+    if (sweptIps.isEmpty) return const <LanHost>[];
+    final Set<String> swept = sweptIps.toSet();
+    return <LanHost>[
+      for (final LanHost h in hosts)
+        if (!swept.contains(h.ip)) h,
+    ];
+  }
 
   final String? selfIp;
   final String? gateway;
@@ -242,6 +275,7 @@ class LanDiscoveryEngine {
       _lastResult = DiscoveryResult(
         hosts: const <LanHost>[],
         subnetLabel: seed.label,
+        sweptIps: seed.hosts,
         selfIp: seed.selfIp,
         gateway: seed.gateway,
         error: 'Connect-scan failed: $e',
@@ -358,6 +392,7 @@ class LanDiscoveryEngine {
     _lastResult = DiscoveryResult(
       hosts: hosts,
       subnetLabel: seed.label,
+      sweptIps: seed.hosts,
       selfIp: seed.selfIp,
       gateway: seed.gateway,
       arp: arp,
