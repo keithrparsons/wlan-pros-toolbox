@@ -274,6 +274,10 @@ class _ApScanScreenState extends State<ApScanScreen> {
         children.add(_NoneReadableCard(count: snap.unreadableCount));
         return children;
 
+      case ApScanVerdict.noScanYet:
+        children.add(_NoScanYetCard(onScan: _loading ? null : _retry));
+        return children;
+
       case ApScanVerdict.nothingInRange:
         // The ONLY state entitled to claim an empty RF environment: the scan
         // ran, and every row it reported was read.
@@ -645,12 +649,79 @@ class _UnreadableRowsNote extends StatelessWidget {
   }
 }
 
+/// No scan has run yet and the OS scan cache is empty.
+///
+/// The screen's first load reads the cache rather than triggering a scan, and
+/// on a machine that has not scanned since boot that cache is empty. This state
+/// used to render "The scan ran and found no access points in range. Move to
+/// where Wi-Fi is in use." — claiming a measurement that had not happened, and
+/// holding that claim on screen for the whole duration of the first real scan.
+/// It is the same false action deleted from [_NoneReadableCard], one path over.
+///
+/// The copy therefore claims nothing about the air, because nothing has been
+/// measured, and offers the one thing that will change that: run a scan
+/// ([[feedback_app_blames_the_wifi]]).
+class _NoScanYetCard extends StatelessWidget {
+  const _NoScanYetCard({required this.onScan});
+
+  /// Runs the first scan. Null while one is already in flight.
+  final VoidCallback? onScan;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return _Surface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.radar, size: 20, color: colors.textTertiary),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'No scan yet',
+                  style: text.titleSmall?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Nothing has been measured yet. This machine has no stored scan '
+            'results, which is normal before the first scan. Tap Scan to look '
+            'at what is on the air.',
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton(
+              onPressed: onScan,
+              child: const Text('Scan'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// The scan ran, the radio reported networks, and NONE could be read.
 ///
 /// This state used to render the "no access points in range" card, which told a
 /// user standing among APs that there were none — and shipped an action with
-/// the false verdict ("move to where Wi-Fi is in use"). The 6 GHz `bandUnknown`
-/// drop produces exactly this payload, so it was reachable, not theoretical.
+/// the false verdict ("move to where Wi-Fi is in use").
+///
+/// TODO(keith-decision): this card may be UNREACHABLE on macOS. It renders only
+/// when `unreadableCount > 0`, and the native layers drop those rows before the
+/// payload is built (ApScanChannel.swift:237-288, the 6 GHz `bandUnknown` case
+/// at :314, and MainActivity.kt:485-488). An earlier version of this doc claimed
+/// the `bandUnknown` drop "produces exactly this payload"; that was wrong — it
+/// is handled natively and never reaches Dart. Either the native layers report
+/// what they dropped, or this card and its copy go. See the gate #4 QA report
+/// (F-2/F-3/F-4).
 ///
 /// The honest verdict is that the RF environment is UNKNOWN, not empty. The
 /// copy therefore states what the radio did (reported networks), what the app

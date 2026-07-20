@@ -45,6 +45,7 @@ final Map<String, Finder> _verdictFinders = <String, Finder>{
   'radio off': find.textContaining('Wi-Fi is off, so the scan could not run'),
   'permission': find.textContaining('Location Services'),
   'none readable': find.textContaining('Networks detected, none readable'),
+  'no scan yet': find.textContaining('Nothing has been measured yet'),
   'nothing in range': find.textContaining('found no access points in range'),
   // The AP-list card title, and only that: "3 access points" / "1 access
   // point", never the same words inside a sentence.
@@ -171,6 +172,7 @@ void main() {
       bool locationAuthorized = true,
       List<ScannedAp> aps = const <ScannedAp>[],
       int unreadableCount = 0,
+      bool scanPerformed = true,
     }) =>
         ApScanSnapshot(
           accessPoints: aps,
@@ -178,6 +180,7 @@ void main() {
           locationAuthorized: locationAuthorized,
           scanThrottled: false,
           unreadableCount: unreadableCount,
+          scanPerformed: scanPerformed,
         );
 
     const ScannedAp ap = ScannedAp(
@@ -189,11 +192,109 @@ void main() {
       frequencyMhz: 2437,
     );
 
-    test('radio off outranks everything — nothing was measured', () {
-      expect(snap(poweredOn: false).verdict, ApScanVerdict.radioOff);
+    // -----------------------------------------------------------------------
+    // EVERY PAIR SET FALSE TOGETHER.
+    //
+    // The original precedence tests each set ONE flag false and left the rest
+    // defaulted true, so no test ever exercised two competing states at once.
+    // Swapping the radioOff/permissionMissing order in the verdict getter left
+    // the ENTIRE suite unchanged — zero tests killed — because nothing pinned
+    // which one wins when both are false. The cross-product matrix generates
+    // that combination in 16 of its 64 cells but only COUNTS cards, and both
+    // orderings render exactly one, so it shared the blind spot from the other
+    // direction.
+    //
+    // These tests pin the ordering itself. Each asserts the winner when two
+    // states compete, which is the only thing that distinguishes one precedence
+    // chain from another.
+    // -----------------------------------------------------------------------
+    test('radio off BEATS a missing grant when both are false', () {
+      // Both are true statements; the radio being off is the more fundamental
+      // one, and it is the one the user must fix first. Pinning the order is
+      // what matters — an unpinned order is a coin flip on every refactor.
+      expect(
+        snap(poweredOn: false, locationAuthorized: false).verdict,
+        ApScanVerdict.radioOff,
+      );
+    });
+
+    test('radio off BEATS unread rows', () {
       expect(
         snap(poweredOn: false, unreadableCount: 3).verdict,
         ApScanVerdict.radioOff,
+      );
+    });
+
+    test('radio off BEATS a populated list', () {
+      expect(
+        snap(poweredOn: false, aps: <ScannedAp>[ap]).verdict,
+        ApScanVerdict.radioOff,
+      );
+    });
+
+    test('radio off BEATS "no scan yet"', () {
+      expect(
+        snap(poweredOn: false, scanPerformed: false).verdict,
+        ApScanVerdict.radioOff,
+      );
+    });
+
+    test('a missing grant BEATS unread rows', () {
+      expect(
+        snap(locationAuthorized: false, unreadableCount: 3).verdict,
+        ApScanVerdict.permissionMissing,
+      );
+    });
+
+    test('a missing grant WITH rows is unrepresentable, not merely outranked',
+        () {
+      // This pair never reaches the precedence chain at all: the constructor
+      // refuses it. A gate card saying the scan could not run, above a list of
+      // APs, is the contradiction an earlier gate found rendered on screen, so
+      // it is barred at the type level rather than resolved by ordering.
+      expect(
+        () => snap(locationAuthorized: false, aps: <ScannedAp>[ap]),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('a missing grant BEATS "no scan yet"', () {
+      expect(
+        snap(locationAuthorized: false, scanPerformed: false).verdict,
+        ApScanVerdict.permissionMissing,
+      );
+    });
+
+    test('a populated list BEATS unread rows', () {
+      expect(
+        snap(aps: <ScannedAp>[ap], unreadableCount: 5).verdict,
+        ApScanVerdict.apsFound,
+      );
+    });
+
+    test('a populated list BEATS "no scan yet"', () {
+      // Cached rows are still real observations, so showing them beats telling
+      // the user nothing has been measured.
+      expect(
+        snap(aps: <ScannedAp>[ap], scanPerformed: false).verdict,
+        ApScanVerdict.apsFound,
+      );
+    });
+
+    test('unread rows BEAT "no scan yet"', () {
+      expect(
+        snap(unreadableCount: 2, scanPerformed: false).verdict,
+        ApScanVerdict.noneReadable,
+      );
+    });
+
+    test('"no scan yet" BEATS "nothing in range"', () {
+      // F-1: the first load reads the OS cache without scanning, and that cache
+      // is empty on a machine which has not scanned since boot. Claiming an
+      // empty RF environment there reports a measurement that never happened.
+      expect(
+        snap(scanPerformed: false).verdict,
+        ApScanVerdict.noScanYet,
       );
     });
 

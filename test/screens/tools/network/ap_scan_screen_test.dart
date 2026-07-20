@@ -19,6 +19,8 @@
 //     says exactly that. The two states must not be confusable.
 //   * sort control reorders the list.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -856,6 +858,89 @@ void main() {
 
       // Drain AppCopyAction's 1.5s confirm-revert timer before teardown.
       await tester.pump(const Duration(seconds: 2));
+    });
+
+    // -----------------------------------------------------------------------
+    // F-1: the FIRST LOAD reads the OS cache without scanning. On a machine
+    // that has not scanned since boot that cache is empty, and reporting it as
+    // "the scan ran and found no access points in range" claims a measurement
+    // that never happened — while holding that claim on screen for the entire
+    // duration of the first real scan. This is the state Keith's field test
+    // opens on.
+    // -----------------------------------------------------------------------
+    testWidgets('an empty cache on first load says NO SCAN YET, not "none"',
+        (tester) async {
+      // _initialLoad reads the cache and THEN starts a fresh scan, so the
+      // defect lives in the window between them — which is the whole duration
+      // of a real CoreWLAN scan (seconds), because the spinner only shows while
+      // _snapshot is null. This fake holds the fresh scan open so the test can
+      // observe exactly what the user stares at during it.
+      final Completer<Map<String, Object?>> freshScan =
+          Completer<Map<String, Object?>>();
+      final Map<String, Object?> empty =
+          _payload(aps: <Map<String, Object?>>[]);
+      final ApScanService svc = ApScanService(
+        platformOverride: 'macos',
+        invoke: (String method, [dynamic args]) async {
+          switch (method) {
+            case 'lastResults':
+              return empty; // cold cache: never scanned since boot
+            case 'scan':
+              return freshScan.future;
+            case 'isLocationAuthorized':
+              return true;
+          }
+          return null;
+        },
+      );
+
+      await tester.pumpWidget(host(ApScanScreen(service: svc)));
+      await tester.pump(); // cache read resolves
+      await tester.pump(); // rebuild with the cached (empty) snapshot
+
+      // THE WINDOW. The false measurement claim and its false action are both
+      // absent while the real scan is still running.
+      expect(find.textContaining('found no access points in range'),
+          findsNothing);
+      expect(find.textContaining('Move to where Wi-Fi is in use'), findsNothing);
+      // Replaced by an honest state that claims nothing about the air.
+      expect(find.textContaining('Nothing has been measured yet'),
+          findsOneWidget);
+      expect(find.text('No scan yet'), findsOneWidget);
+
+      // Let the fresh scan land so the widget tree tears down cleanly.
+      freshScan.complete(empty);
+      await tester.pumpAndSettle();
+    });
+
+    test('lastResults reports scanPerformed:false, scan reports true', () {
+      // The payload cannot say this: a cache read and a completed scan return
+      // the same shape. Only the caller knows which it asked for.
+      final ApScanSnapshot cached =
+          ApScanSnapshot.fromMap(_payload(aps: <Map<String, Object?>>[]),
+              scanPerformed: false);
+      expect(cached.verdict, ApScanVerdict.noScanYet);
+
+      final ApScanSnapshot scanned =
+          ApScanSnapshot.fromMap(_payload(aps: <Map<String, Object?>>[]));
+      expect(scanned.verdict, ApScanVerdict.nothingInRange);
+    });
+
+    testWidgets('after a real scan an empty result DOES say nothing in range',
+        (tester) async {
+      // The counterweight: "no scan yet" must not swallow the honest empty
+      // verdict once a scan has actually run.
+      final Map<String, Object?> payload =
+          _payload(aps: <Map<String, Object?>>[]);
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      // _initialLoad's second leg runs a real scan; settling lands it.
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('found no access points in range'),
+          findsOneWidget);
+      expect(find.textContaining('Nothing has been measured yet'), findsNothing);
     });
 
     test('the model refuses to carry rows without the grant', () {

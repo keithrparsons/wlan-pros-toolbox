@@ -42,7 +42,17 @@ void main() {
           // this to private classes would demand docs on eleven pre-existing
           // private widgets in ap_scan_screen.dart — unrelated churn that would
           // dilute what this guard is for.
-          if (!RegExp(r'^(abstract\s+)?(class|enum)\s+[A-Z]').hasMatch(line)) {
+          //
+          // Every Dart 3 class modifier is accepted, in any legal combination
+          // (`final class`, `sealed class`, `abstract interface class`, …).
+          // The first version of this regex allowed only `abstract`, so
+          // `final class ScannedAp` carrying the identical orphaned-doc defect
+          // reported "All tests passed" — a guard with a hole exactly the shape
+          // of the modifier someone would plausibly add later.
+          if (!RegExp(
+            r'^(abstract\s+|base\s+|final\s+|interface\s+|sealed\s+|mixin\s+)*'
+            r'(class|enum|mixin|extension\s+type)\s+[A-Z]',
+          ).hasMatch(line)) {
             continue;
           }
           // Walk back over annotations (@immutable etc.) to the line that

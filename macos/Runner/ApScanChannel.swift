@@ -303,6 +303,15 @@ final class ApScanChannel: NSObject {
   /// Maps CWChannelBand to the band label the Dart model and the Android
   /// payload both use. Returns null for an unknown band so the BSS is dropped
   /// rather than filed under a guessed band.
+  ///
+  /// TODO(keith-decision): returning nil here DROPS the row before it reaches
+  /// the payload, so Dart never learns the radio saw it. That makes
+  /// `ApScanSnapshot.unreadableCount` structurally 0 on macOS, and the Dart-side
+  /// disclosure it feeds (the "networks detected, none readable" card, the
+  /// unreadable-rows note, and the export note) unreachable on the platform
+  /// being field-tested. The alternative is to report a dropped-row COUNT
+  /// alongside `accessPoints` so the app can disclose the shortfall honestly.
+  /// See the gate #4 QA report (F-2/F-3/F-4). Architecture call, not made here.
   private static func bandString(_ band: CWChannelBand) -> String? {
     switch band {
     case .band2GHz:

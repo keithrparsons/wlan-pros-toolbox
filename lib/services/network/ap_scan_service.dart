@@ -193,6 +193,16 @@ enum ApScanVerdict {
   /// environment is UNKNOWN, not empty.
   noneReadable,
 
+  /// NO SCAN HAS RUN YET, and the OS scan cache is empty.
+  ///
+  /// The screen's first load reads the cache rather than triggering a scan, and
+  /// that cache is empty on a machine which has not scanned since boot. Reading
+  /// an empty cache as "nothing in range" told the user a scan ran and found an
+  /// empty RF environment when nothing had been measured at all — and held that
+  /// false verdict on screen for the entire duration of the first real scan.
+  /// An empty cache is not a scan result ([[feedback_app_blames_the_wifi]]).
+  noScanYet,
+
   /// The scan ran, everything the radio reported was read, and there was
   /// nothing on the air. The only state entitled to say "no networks found".
   nothingInRange,
@@ -212,6 +222,7 @@ class ApScanSnapshot {
     required this.locationAuthorized,
     required this.scanThrottled,
     this.unreadableCount = 0,
+    this.scanPerformed = true,
   }) : assert(
           locationAuthorized || accessPoints.length == 0,
           'A snapshot cannot carry access points while locationAuthorized is '
@@ -247,9 +258,19 @@ class ApScanSnapshot {
   final bool scanThrottled;
 
   /// How many rows the radio reported that could not be parsed into an honest
-  /// [ScannedAp] — a missing or unrecognized channel or band (the 6 GHz
-  /// `bandUnknown` drop lands here), a 0 dBm "no measurement" RSSI, an absent
-  /// or unparseable BSSID, or an entry that was not a map at all.
+  /// [ScannedAp] — a missing or unrecognized channel or band, a 0 dBm "no
+  /// measurement" RSSI, an absent or unparseable BSSID, or an entry that was
+  /// not a map at all.
+  ///
+  /// TODO(keith-decision): this count is structurally 0 on macOS, and possibly
+  /// on Android too. Both native layers already drop these rows before building
+  /// the payload (ApScanChannel.swift:237-288 — including the 6 GHz
+  /// `bandUnknown` case at :314 — and MainActivity.kt:485-488), so the causes
+  /// named above cannot raise it from the platform being field-tested, and the
+  /// causes that CAN raise it are Dart-side only. The choice is between having
+  /// the native layers report what they dropped, or deleting this field and the
+  /// UI it feeds and correcting the copy. See the gate #4 QA report (F-2/F-3/
+  /// F-4). Not decided here; it is an architecture call.
   ///
   /// Carried so the UI can DISCLOSE the shortfall. A scan that silently drops
   /// rows presents a short list as a complete one, which under-reports the RF
@@ -257,6 +278,19 @@ class ApScanSnapshot {
   /// never includes withheld identities: those gate the whole snapshot via
   /// [locationAuthorized] instead of being dropped.
   final int unreadableCount;
+
+  /// Whether a scan was actually REQUESTED to produce this snapshot.
+  ///
+  /// False for [ApScanService.lastResults], which reads the OS scan cache
+  /// without asking the radio to do anything. That cache is empty on a machine
+  /// which has not scanned since boot, and an empty cache is not a measurement:
+  /// without this flag the screen's first load reported "the scan ran and found
+  /// no access points in range" before any scan had run, and held that claim
+  /// for the whole duration of the first real scan.
+  ///
+  /// Defaults true because every other construction site describes a scan that
+  /// did happen; only the cache read has to say otherwise.
+  final bool scanPerformed;
 
   /// The single verdict this snapshot supports.
   ///
@@ -272,11 +306,20 @@ class ApScanSnapshot {
     if (!locationAuthorized) return ApScanVerdict.permissionMissing;
     if (accessPoints.isNotEmpty) return ApScanVerdict.apsFound;
     if (unreadableCount > 0) return ApScanVerdict.noneReadable;
+    // An empty result only means "nothing in range" if something actually
+    // looked. Reading the OS cache is not looking.
+    if (!scanPerformed) return ApScanVerdict.noScanYet;
     return ApScanVerdict.nothingInRange;
   }
 
   /// Builds a snapshot from the native channel payload.
-  factory ApScanSnapshot.fromMap(Map<dynamic, dynamic> map) {
+  /// [scanPerformed] records whether the caller ASKED the radio to scan, which
+  /// the payload itself cannot say: a cache read and a completed scan return
+  /// the same shape, and an empty one means very different things in each case.
+  factory ApScanSnapshot.fromMap(
+    Map<dynamic, dynamic> map, {
+    bool scanPerformed = true,
+  }) {
     final List<dynamic> rawAps =
         (map['accessPoints'] as List<dynamic>?) ?? const <dynamic>[];
     final List<Map<dynamic, dynamic>> rows =
@@ -324,6 +367,7 @@ class ApScanSnapshot {
       locationAuthorized: locationAuthorized,
       scanThrottled: (map['scanThrottled'] as bool?) ?? false,
       unreadableCount: locationAuthorized ? unreadableCount : 0,
+      scanPerformed: scanPerformed,
     );
   }
 
@@ -492,12 +536,21 @@ class ApScanService {
   /// when one is declined, the snapshot carries the last cached scan with
   /// [ApScanSnapshot.scanThrottled] set. Throws [ApScanUnavailable] on an
   /// unwired platform (never touches the channel there).
-  Future<ApScanSnapshot> scan() => _read('scan');
+  Future<ApScanSnapshot> scan() => _read('scan', scanPerformed: true);
 
   /// Returns the last cached scan without requesting a fresh one.
-  Future<ApScanSnapshot> lastResults() => _read('lastResults');
+  ///
+  /// This does NOT ask the radio to do anything, so the resulting snapshot
+  /// carries `scanPerformed: false`. An empty answer here means the OS cache is
+  /// empty — typically a machine that has not scanned since boot — and must not
+  /// be reported as an empty RF environment.
+  Future<ApScanSnapshot> lastResults() =>
+      _read('lastResults', scanPerformed: false);
 
-  Future<ApScanSnapshot> _read(String method) async {
+  Future<ApScanSnapshot> _read(
+    String method, {
+    required bool scanPerformed,
+  }) async {
     if (!isSupportedPlatform) {
       throw const ApScanUnavailable(
         ApScanUnavailableReason.unsupportedPlatform,
@@ -512,7 +565,7 @@ class ApScanService {
           'Native channel returned no payload.',
         );
       }
-      return ApScanSnapshot.fromMap(map);
+      return ApScanSnapshot.fromMap(map, scanPerformed: scanPerformed);
     } on PlatformException catch (e) {
       throw ApScanUnavailable(ApScanUnavailableReason.channelError, e.message);
     }
