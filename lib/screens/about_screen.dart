@@ -125,7 +125,7 @@ class _AboutScreenState extends State<AboutScreen> {
           // §8.16 — copy the full About text. textBuilder is non-null always
           // (the copy is static), so the action renders enabled.
           AppCopyAction(
-            textBuilder: () => _aboutPlainText(_version),
+            textBuilder: () => _aboutPlainText(_version, _update),
             idleLabel: 'Copy About text',
           ),
         ],
@@ -346,7 +346,26 @@ class _AboutScreenState extends State<AboutScreen> {
 /// §8.16 AppCopyAction in the AppBar. Mirrors the on-screen sections in order.
 /// Takes the runtime [AppVersionInfo] (null before it resolves) so the copied
 /// text carries the real shipped version + build number.
-String _aboutPlainText(AppVersionInfo? info) {
+/// The copy-text form of the update line, or null when the screen shows none
+/// (still checking, store-managed, or web). Kept beside [_UpdateLine] so the two
+/// wordings cannot drift apart.
+String? _updatePlainText(AppUpdateResult? update) {
+  final AppUpdateResult? r = update;
+  if (r == null) return null;
+  switch (r.status) {
+    case AppUpdateStatus.upToDate:
+      return 'This is the latest published version.';
+    case AppUpdateStatus.unknown:
+      return 'Could not check for a newer version.';
+    case AppUpdateStatus.updateAvailable:
+      return 'Version ${r.latestVersion} is available: '
+          '${r.releaseUrl ?? kReleasesPageUrl}';
+    case AppUpdateStatus.notApplicable:
+      return null;
+  }
+}
+
+String _aboutPlainText(AppVersionInfo? info, [AppUpdateResult? update]) {
   final AppVersionInfo v = info ?? AppVersion.fallback;
   final StringBuffer b = StringBuffer()
     ..writeln('WLAN Pros Toolbox: About')
@@ -396,7 +415,14 @@ String _aboutPlainText(AppVersionInfo? info) {
     ..writeln('Data not collected.')
     ..writeln()
     ..writeln('Version and Feedback')
-    ..writeln(v.display)
+    ..writeln(v.display);
+  // Carry the update state into the copied text: someone pasting this into a
+  // support ticket should not silently lose "a newer version is available", and
+  // "could not check" is worth knowing too. Mirrors the on-screen wording so
+  // the copy never says more than the screen did.
+  final String? updateLine = _updatePlainText(update);
+  if (updateLine != null) b.writeln(updateLine);
+  b
     ..writeln()
     ..writeln('Credits')
     ..writeln('Built by WLAN Pros.')
@@ -1050,6 +1076,18 @@ class _UpdateLine extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
+    // The line appears AFTER first paint, when the check resolves, and moves
+    // no focus. Without a live region a screen-reader user is never told that
+    // an update exists, because nothing announces the insertion (WCAG 2.2
+    // SC 4.1.3). One region wraps every state so the announcement fires for
+    // "could not check" too, not only the good news.
+    return Semantics(
+      liveRegion: true,
+      child: _line(colors, text, r),
+    );
+  }
+
+  Widget _line(AppColorScheme colors, TextTheme text, AppUpdateResult r) {
     switch (r.status) {
       case AppUpdateStatus.upToDate:
         return Padding(
@@ -1077,7 +1115,12 @@ class _UpdateLine extends StatelessWidget {
             children: <Widget>[
               Text(
                 'Version ${r.latestVersion} is available.',
-                style: text.bodyLarge?.copyWith(color: colors.accent),
+                // textAccent, NOT accent: §8.20.2 makes lime fill-only on
+                // light, where bare `accent` on the card surface falls to
+                // 3.11:1 and misses WCAG AA. textAccent is lime in dark and
+                // darkened lime in light, so both themes clear 4.5:1 with no
+                // call-site branching. Same token the sibling TextButton uses.
+                style: text.bodyLarge?.copyWith(color: colors.textAccent),
               ),
               _ExternalLinkButton(
                 label: 'Get the update',
