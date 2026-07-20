@@ -1551,7 +1551,18 @@ void main() {
       // the pre-roam readings. On the unfixed code it reads "-50 dBm ... -60
       // dBm" — the landing values wearing a trigger label.
       expect(doc, contains('Roams fired between -76 dBm'));
-      expect(doc, contains('-81 dBm'));
+
+      // Scoped to the narrative region, NOT the whole document. Unscoped, this
+      // assertion is dead: the table row supplies '-81 dBm' on defective code
+      // too, so it passed under mutation while its siblings did the killing.
+      final int glanceAt = doc.indexOf('Session at a glance');
+      expect(glanceAt, greaterThanOrEqualTo(0),
+          reason: 'the narrative section must exist for this test to mean anything');
+      final String glance = doc.substring(glanceAt, doc.indexOf('</ul>', glanceAt));
+      expect(glance, contains('-81 dBm'),
+          reason: 'the weakest TRIGGER level must reach the narrative, not only '
+              'the table row that already carried it before the fix');
+
       expect(doc, isNot(contains('Roams fired between -50 dBm')));
     });
 
@@ -1587,6 +1598,202 @@ void main() {
       // surfaces: summary and table now agree instead of contradicting.
       expect(out, contains('-81 dBm -> -50 dBm'));
       expect(doc, contains('-81 dBm → -50 dBm'));
+    });
+
+    // ---- Sample-size disclosure (the `n` carried into every label) ----
+    //
+    // The before/after lines are typographic peers but not always sample-size
+    // peers: iOS omits RSSI far more often than macOS, so "before" can be
+    // computed from a handful of roams while "after" is computed from all of
+    // them. A -79 avg over 3 roams sitting beside a -53 avg over 40 invites
+    // exactly the false comparison the split summary exists to prevent.
+    //
+    // Each site is asserted INDEPENDENTLY, because each is mutated
+    // independently: a single test covering all three would still pass with two
+    // of the three disclosures stripped.
+
+    /// Four roams; only ONE carries a pre-roam reading. The post-roam
+    /// population is complete. This is the lopsided shape iOS actually
+    /// produces, and n=1 is the hard boundary for the wording.
+    List<RoamEvent> sparseBefore() => <RoamEvent>[
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 0, 0),
+            from: 'aa:bb:cc:dd:ee:01',
+            to: 'aa:bb:cc:dd:ee:02',
+            rssi: -55,
+          ),
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 1, 0),
+            from: 'aa:bb:cc:dd:ee:02',
+            to: 'aa:bb:cc:dd:ee:03',
+            rssi: -50,
+          ),
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 2, 0),
+            from: 'aa:bb:cc:dd:ee:03',
+            to: 'aa:bb:cc:dd:ee:04',
+            fromRssi: -79,
+            rssi: -53,
+          ),
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 3, 0),
+            from: 'aa:bb:cc:dd:ee:04',
+            to: 'aa:bb:cc:dd:ee:05',
+            rssi: -52,
+          ),
+        ];
+
+    test('SITE 1 (copy report): each population line states its own n', () {
+      final String out = buildRoamLogCopyText(
+        events: sparseBefore(),
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final String beforeLine = out
+          .split('\n')
+          .firstWhere((String l) => l.startsWith('Signal before roam'));
+      final String afterLine = out
+          .split('\n')
+          .firstWhere((String l) => l.startsWith('Signal after roam'));
+
+      // The incomplete population MUST disclose. Without this, '-79 avg' reads
+      // as the session's pre-roam floor when it is a single reading.
+      expect(beforeLine, contains('1 of 4 roams'),
+          reason: 'a line computed from 1 of 4 roams must say so');
+      expect(beforeLine, contains('on the AP being left'),
+          reason: 'the population label survives alongside the count');
+
+      // The COMPLETE population stays silent — see the suppression rationale.
+      expect(afterLine, isNot(contains('of 4 roams')),
+          reason: 'a complete population must not print a count');
+      expect(afterLine, contains('on the AP joined'));
+
+      // n=1 must not degrade into a plural/singular mismatch or a bare number.
+      expect(beforeLine, isNot(contains('1 of 4 roam,')));
+      expect(beforeLine, isNot(contains('1 of 1')));
+    });
+
+    test('SITE 2 (share HTML tiles): incomplete tiles carry n, complete ones do not',
+        () {
+      final String doc = buildRoamLogShareHtml(
+        events: sparseBefore(),
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final String tiles =
+          doc.substring(doc.indexOf('class="stat"'), doc.indexOf('<table'));
+
+      expect(tiles, contains('dBm avg before roam (1 of 4 roams)'),
+          reason: 'the avg-before tile is computed from 1 of 4 roams');
+      expect(tiles, contains('dBm weakest before roam (1 of 4 roams)'),
+          reason: 'the weakest-before tile shares that population');
+      expect(tiles, contains('dBm avg after roam'),
+          reason: 'the complete tile still renders');
+      expect(tiles, isNot(contains('dBm avg after roam (')),
+          reason: 'a complete population must not print a count');
+    });
+
+    test('SITE 3 (narrative): an incomplete population is scoped in prose', () {
+      final String doc = buildRoamLogShareHtml(
+        events: sparseBefore(),
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final int glanceAt = doc.indexOf('Session at a glance');
+      final String glance = doc.substring(glanceAt, doc.indexOf('</ul>', glanceAt));
+
+      // A LEADING clause, not a third parenthetical: these sentences already
+      // carry strongest/weakest timestamps, and the caveat belongs before the
+      // number it qualifies.
+      expect(glance, contains('Of 4 roams, 1 reported the signal they left'),
+          reason: 'the trigger sentence must state its sample size');
+
+      // The complete destination population reads clean, with no count.
+      expect(glance, contains('Roams landed between'));
+      expect(glance, isNot(contains('reported the signal they landed on')),
+          reason: 'a complete population must not be scoped');
+    });
+
+    test('a COMPLETE capture prints no counts anywhere — the note is the signal',
+        () {
+      // Every roam in lopsided() reports both readings, so nothing was omitted
+      // and every count would read "3 of 3". Printing that on every report is
+      // what trains a reader to skim past the number on the one capture where
+      // it matters.
+      final String out = buildRoamLogCopyText(
+        events: lopsided(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+      final String doc = buildRoamLogShareHtml(
+        events: lopsided(),
+        network: 'KeithNet',
+        capturePlatform: 'macOS',
+      )!;
+      expect(out, isNot(contains('of 3 roams')));
+      expect(doc, isNot(contains('of 3 roams')));
+      expect(out, isNot(contains('3 of 3')));
+      expect(doc, isNot(contains('3 of 3')));
+    });
+
+    test('BOUNDARY: neither population reported — no count, no invented n', () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          rssi: null,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          rssi: null,
+        ),
+      ];
+      final String out = buildRoamLogCopyText(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+
+      // The existing honest-null path wins: there is no statistic to qualify,
+      // so "0 of 2 roams" would be noise attached to nothing.
+      expect(out, contains('Signal: not reported'));
+      expect(out, isNot(contains('of 2 roams')));
+      expect(out, isNot(contains('0 of')));
+    });
+
+    test('BOUNDARY: one population empty, the other complete', () {
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          rssi: -55,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          rssi: -50,
+        ),
+      ];
+      final String out = buildRoamLogCopyText(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+
+      // n=0 takes the not-reported path, never "0 of 2 roams" hung off an
+      // average that does not exist.
+      expect(out, contains('Signal before roam: not reported'));
+      expect(out, isNot(contains('0 of 2 roams')));
+      // The complete population is complete, so it stays silent.
+      final String afterLine = out
+          .split('\n')
+          .firstWhere((String l) => l.startsWith('Signal after roam'));
+      expect(afterLine, isNot(contains('of 2 roams')));
     });
 
     // fromRssiDbm is honest-null on the first roam (there is no prior AP). A

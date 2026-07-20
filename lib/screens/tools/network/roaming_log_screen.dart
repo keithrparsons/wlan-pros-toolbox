@@ -764,8 +764,32 @@ class _RssiStats {
   final int weakest;
 }
 
-/// The header signal-summary: ONE line per population, each labelled for the
-/// reading it actually summarises.
+/// The sample-size disclosure for ONE RSSI population: `n of N roams`, or the
+/// empty string when the population is COMPLETE (every roam reported).
+///
+/// Suppressing on a complete capture is deliberate. Printing "4 of 4 roams" on
+/// both lines of every report trains the reader to skim past the count, which
+/// would blind them on the one capture where it matters. Because the note is
+/// emitted only when something was omitted, its PRESENCE is the signal.
+///
+/// The test is completeness against the roam count, NOT equality between the
+/// two populations: 3-of-40 beside 3-of-40 is a fair comparison between the two
+/// lines and an unfair one against the session, and the reader is owed that.
+///
+/// Suppressing at n == total also guarantees grammatical output — n < total
+/// implies total >= 2, so the plural "roams" is always correct, and the
+/// degenerate "1 of 1 roams" can never be emitted.
+String _coverageNote(int n, int total) => n == total ? '' : '$n of $total roams';
+
+/// The parenthetical for a population line: which AP the reading came from,
+/// plus the sample size when the population is incomplete.
+String _populationQualifier(String population, int n, int total) {
+  final String coverage = _coverageNote(n, total);
+  return coverage.isEmpty ? population : '$population, $coverage';
+}
+
+/// The header signal-summary: ONE line per population, each labeled for the
+/// reading it actually summarizes and for the number of roams behind it.
 ///
 /// `rssiDbm` is always the POST-roam reading (the AP just joined, so always
 /// comparatively strong) and `fromRssiDbm` is always the PRE-roam reading (the
@@ -775,22 +799,33 @@ class _RssiStats {
 /// than pooled, because "the level this client roams at" and "the level it
 /// lands on" are different measurements and one average cannot label both.
 ///
+/// The two lines are typographic peers but are NOT always sample-size peers:
+/// iOS omits RSSI far more often than macOS, so "before" can be computed from a
+/// handful of roams while "after" is computed from all of them. Presenting those
+/// as a side-by-side comparison without stating n invites exactly the false
+/// read this summary exists to prevent — the same reason the two populations
+/// are never pooled. Each line therefore carries its own [_coverageNote].
+///
 /// "Signal: not reported" when neither population carried a reading (GL-005).
 String _signalSummary(List<RoamEvent> events) {
-  final _RssiStats? before = _rssiStats(_preRoamRssi(events));
-  final _RssiStats? after = _rssiStats(_postRoamRssi(events));
+  final List<int> pre = _preRoamRssi(events);
+  final List<int> post = _postRoamRssi(events);
+  final _RssiStats? before = _rssiStats(pre);
+  final _RssiStats? after = _rssiStats(post);
   if (before == null && after == null) return 'Signal: not reported';
 
-  String line(String label, _RssiStats s) =>
-      '$label: avg ${s.avg} dBm, strongest ${s.strongest} dBm, '
+  final int total = events.length;
+  String line(String label, String population, int n, _RssiStats s) =>
+      '$label (${_populationQualifier(population, n, total)}): '
+      'avg ${s.avg} dBm, strongest ${s.strongest} dBm, '
       'weakest ${s.weakest} dBm';
 
   final List<String> lines = <String>[
     before != null
-        ? line('Signal before roam (on the AP being left)', before)
+        ? line('Signal before roam', 'on the AP being left', pre.length, before)
         : 'Signal before roam: not reported',
     after != null
-        ? line('Signal after roam (on the AP joined)', after)
+        ? line('Signal after roam', 'on the AP joined', post.length, after)
         : 'Signal after roam: not reported',
   ];
   return lines.join('\n');
@@ -863,22 +898,33 @@ String? buildRoamLogShareHtml({
   // ---- Stat tiles (omit a tile whose datum is absent) ----
   final StringBuffer tiles = StringBuffer()
     ..write(_statTile('${events.length}', 'roams in $sessionLen'));
-  // Signal tiles, each labelled for the population it computes. The old pair
+  // Signal tiles, each labeled for the population it computes. The old pair
   // ('dBm avg at roam' / 'dBm strongest / weakest') read as the trigger level
   // but computed the destination, so a client-facing report could claim a floor
   // its own table contradicted. Each tile is emitted only when its population
   // carried a reading (GL-005) — a missing tile, never an invented number.
+  //
+  // The before/after tiles sit adjacent in the grid, so they read as peers. Any
+  // tile computed from fewer than every roam carries its sample size, for the
+  // same reason the copy-report lines do — see [_coverageNote]. The label wraps
+  // inside the tile (`.stat .l` sets no `white-space`), so the suffix costs
+  // height, not width.
   final _RssiStats? before = _rssiStats(preRssi);
   final _RssiStats? after = _rssiStats(postRssi);
+  final String preCoverage = _coverageNote(preRssi.length, events.length);
+  final String postCoverage = _coverageNote(postRssi.length, events.length);
+  String tileLabel(String base, String coverage) =>
+      coverage.isEmpty ? base : '$base ($coverage)';
   if (before != null) {
     tiles
-      ..write(_statTile('${before.avg}', 'dBm avg before roam'))
+      ..write(_statTile('${before.avg}', tileLabel('dBm avg before roam', preCoverage)))
       // The number the designer sizes cell overlap from: how weak the client
       // let it get before it let go.
-      ..write(_statTile('${before.weakest}', 'dBm weakest before roam'));
+      ..write(_statTile(
+          '${before.weakest}', tileLabel('dBm weakest before roam', preCoverage)));
   }
   if (after != null) {
-    tiles.write(_statTile('${after.avg}', 'dBm avg after roam'));
+    tiles.write(_statTile('${after.avg}', tileLabel('dBm avg after roam', postCoverage)));
   }
   if (snr.isNotEmpty) {
     final int lo = snr.reduce((int a, int b) => a < b ? a : b);
@@ -1109,6 +1155,20 @@ List<String> _sessionFacts(
     return (strongest, weakest);
   }
 
+  /// Prefixes a population sentence with its sample size when the population is
+  /// incomplete, and leaves the sentence untouched when every roam reported.
+  ///
+  /// The narrative gets a LEADING clause rather than the parenthetical the
+  /// tiles and copy lines use: these sentences already carry two parentheticals
+  /// (the strongest/weakest timestamps), and a third turns a readable finding
+  /// into a data dump. Leading with the coverage also puts the caveat before
+  /// the number it qualifies, which is the order a reader needs it in.
+  String scoped(int n, String sentence, String reported) {
+    if (n == events.length) return sentence;
+    final String lower = sentence[0].toLowerCase() + sentence.substring(1);
+    return 'Of ${events.length} roams, $n reported $reported; $lower';
+  }
+
   // The TRIGGER level, computed from the pre-roam readings. "Roams fired at" is
   // trigger language, so it must be computed from the signal on the AP the
   // client was LEAVING. It previously read the post-roam value, which put a
@@ -1116,30 +1176,46 @@ List<String> _sessionFacts(
   final (RoamEvent, RoamEvent)? fired = extremes((RoamEvent e) => e.fromRssiDbm);
   if (fired != null) {
     final (RoamEvent strongest, RoamEvent weakest) = fired;
+    final int n = _preRoamRssi(events).length;
+    const String reported = 'the signal they left';
     if (strongest.fromRssiDbm == weakest.fromRssiDbm) {
-      facts.add('Every recorded roam fired at ${strongest.fromRssiDbm} dBm.');
+      facts.add(scoped(
+        n,
+        'Every recorded roam fired at ${strongest.fromRssiDbm} dBm.',
+        reported,
+      ));
     } else {
-      facts.add(
+      facts.add(scoped(
+        n,
         'Roams fired between ${strongest.fromRssiDbm} dBm (strongest, at '
         '${_RoamRow._formatTime(strongest.at)}) and ${weakest.fromRssiDbm} dBm '
         '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
-      );
+        reported,
+      ));
     }
   }
 
-  // The DESTINATION level, computed from the post-roam readings and labelled as
+  // The DESTINATION level, computed from the post-roam readings and labeled as
   // what the client landed on rather than what made it move.
   final (RoamEvent, RoamEvent)? landed = extremes((RoamEvent e) => e.rssiDbm);
   if (landed != null) {
     final (RoamEvent strongest, RoamEvent weakest) = landed;
+    final int n = _postRoamRssi(events).length;
+    const String reported = 'the signal they landed on';
     if (strongest.rssiDbm == weakest.rssiDbm) {
-      facts.add('Every roam landed on ${strongest.rssiDbm} dBm.');
+      facts.add(scoped(
+        n,
+        'Every roam landed on ${strongest.rssiDbm} dBm.',
+        reported,
+      ));
     } else {
-      facts.add(
+      facts.add(scoped(
+        n,
         'Roams landed between ${strongest.rssiDbm} dBm (strongest, at '
         '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
         '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
-      );
+        reported,
+      ));
     }
   }
 
