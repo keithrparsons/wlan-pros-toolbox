@@ -1,0 +1,2 @@
+- Accessibility: every toolbar and action button now reports a proper name and enabled state to screen readers.
+- Help text: corrected the ICMP Ping and Traceroute platform notes. WLAN Pi support is coming.
