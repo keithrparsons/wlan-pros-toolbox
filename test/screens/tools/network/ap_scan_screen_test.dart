@@ -25,6 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/ap_scan_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/ap_scan_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 
 /// Builds a native-shaped scan payload (the map the Kotlin channel returns).
 Map<String, Object?> _payload({
@@ -361,7 +362,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Runs on Android and macOS'), findsOneWidget);
+      expect(find.text('Available on Android and macOS'), findsOneWidget);
       expect(
         find.textContaining('iOS blocks nearby-AP scanning'),
         findsOneWidget,
@@ -693,7 +694,168 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('1 access point'), findsOneWidget);
-      expect(find.textContaining('could not be read'), findsOneWidget);
+      expect(find.textContaining('could not read'), findsOneWidget);
+    });
+
+    // -----------------------------------------------------------------------
+    // NEW-3: the app must never tell a user standing among APs there are none.
+    // -----------------------------------------------------------------------
+    testWidgets('every row unreadable renders UNKNOWN, never "none in range"',
+        (tester) async {
+      // This is the 6 GHz bandUnknown payload shape: rows the radio reported
+      // that carry no usable channel/band. Not a race — a real drop path.
+      final Map<String, Object?> payload = _payload(
+        aps: <Map<String, Object?>>[
+          <String, Object?>{'ssid': 'A', 'bssid': 'a4:83:e7:00:11:22'},
+          <String, Object?>{'ssid': 'B', 'bssid': 'a4:83:e7:00:11:23'},
+        ],
+      );
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      // The false verdict, and the action that shipped with it, are both gone.
+      expect(find.textContaining('found no access points in range'), findsNothing);
+      expect(find.textContaining('Move to where Wi-Fi is in use'), findsNothing);
+      // Replaced by an honest one: detected, but unreadable.
+      expect(find.textContaining('Networks detected, none readable'),
+          findsOneWidget);
+      expect(find.textContaining('The air is not quiet'), findsOneWidget);
+    });
+
+    // -----------------------------------------------------------------------
+    // NEW-4: ABSENT is not WITHHELD. One malformed row must not revoke the
+    // grant for the whole scan and blame Location for a parse failure.
+    // -----------------------------------------------------------------------
+    test('a row with no bssid KEY is unreadable, and spares the good APs', () {
+      final ApScanSnapshot snap = ApScanSnapshot.fromMap(_payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: 'Good1', bssid: 'a4:83:e7:00:11:22'),
+          row(ssid: 'Good2', bssid: 'a4:83:e7:00:11:23'),
+          // No 'bssid' key at all — malformed, carries no permission meaning.
+          <String, Object?>{
+            'ssid': 'Malformed',
+            'rssiDbm': -70,
+            'channel': 6,
+            'band': '2.4 GHz',
+            'frequencyMhz': 2437,
+          },
+        ],
+      ));
+      expect(snap.locationAuthorized, isTrue,
+          reason: 'a parse failure must never be blamed on Location');
+      expect(snap.accessPoints, hasLength(2), reason: 'good APs survive');
+      expect(snap.unreadableCount, 1);
+    });
+
+    test('an explicitly null bssid is still WITHHELD, not merely unreadable',
+        () {
+      // The discriminator: macOS sets the key and blanks the value.
+      expect(classifyBssid(<String, Object?>{'bssid': null}),
+          BssidIdentity.withheld);
+      expect(classifyBssid(<String, Object?>{}), BssidIdentity.unreadable);
+    });
+
+    // -----------------------------------------------------------------------
+    // NEW-7: garbled values must not sail through as valid MACs.
+    // -----------------------------------------------------------------------
+    for (final String garbage in <String>['   ', 'unknown', 'a4:83:e7', 'null']) {
+      test('bssid "$garbage" is unreadable, never a rendered AP', () {
+        final BssidIdentity id =
+            classifyBssid(<String, Object?>{'bssid': garbage});
+        expect(id, isNot(BssidIdentity.valid));
+        // Whitespace-only is a BLANK, which is what an OS does when it
+        // withholds; a garbled value is a row we cannot read.
+        expect(id,
+            garbage.trim().isEmpty
+                ? BssidIdentity.withheld
+                : BssidIdentity.unreadable);
+      });
+    }
+
+    testWidgets('garbled bssids never render as hidden networks',
+        (tester) async {
+      final Map<String, Object?> payload = _payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: null, bssid: 'unknown'),
+          row(ssid: null, bssid: 'not-a-mac'),
+        ],
+      );
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('(hidden network)'), findsNothing);
+      expect(find.text('2 access points'), findsNothing);
+    });
+
+    // -----------------------------------------------------------------------
+    // NEW-8: entries that were not maps vanished upstream of the count.
+    // -----------------------------------------------------------------------
+    test('non-map entries are counted as unreadable, not silently dropped', () {
+      final ApScanSnapshot snap =
+          ApScanSnapshot.fromMap(<String, Object?>{
+        'poweredOn': true,
+        'locationAuthorized': true,
+        'scanThrottled': false,
+        'accessPoints': <Object?>[
+          row(ssid: 'Good', bssid: 'a4:83:e7:00:11:22'),
+          'not a map',
+          42,
+        ],
+      });
+      expect(snap.accessPoints, hasLength(1));
+      expect(snap.unreadableCount, 2);
+    });
+
+    // -----------------------------------------------------------------------
+    // NEW-5: the artifact that LEAVES the app must carry the same disclosure.
+    // -----------------------------------------------------------------------
+    testWidgets('the copy export discloses the shortfall the screen discloses',
+        (tester) async {
+      final List<String> copied = <String>[];
+      final Map<String, Object?> payload = _payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: 'Good', bssid: 'a4:83:e7:00:11:22'),
+          <String, Object?>{'ssid': 'Bad', 'bssid': 'a4:83:e7:00:11:23'},
+          <String, Object?>{'ssid': 'Bad2', 'bssid': 'a4:83:e7:00:11:24'},
+        ],
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied.add((call.arguments as Map<Object?, Object?>)['text']
+                as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(() => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
+
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(AppCopyAction));
+      // pump(), not pumpAndSettle(): AppCopyAction runs a 1.5s confirm-revert
+      // timer that pumpAndSettle would block on.
+      await tester.pump();
+
+      expect(copied, isNotEmpty, reason: 'copy action produced no payload');
+      final String text = copied.single;
+      expect(text, contains('1 access point'));
+      // The export is what lands in a client report. It must not present a
+      // short list as a complete one.
+      expect(text, contains('2 further networks'));
+      expect(text, contains('NOT included'));
+
+      // Drain AppCopyAction's 1.5s confirm-revert timer before teardown.
+      await tester.pump(const Duration(seconds: 2));
     });
 
     test('the model refuses to carry rows without the grant', () {

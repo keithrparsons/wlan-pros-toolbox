@@ -7,25 +7,67 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// Whether [bssid] is an identity the OS WITHHELD rather than a real AP MAC.
+/// What a scan row's BSSID field tells us about that row.
 ///
-/// Three forms mean the same thing, and the codebase already rejects all three
-/// in six other places (MainActivity.kt sanitizeBssid, arp_ndp_service.dart,
-/// windows_arp_ffi.dart, windows_wifi_ffi.dart `_decodeBssid`):
-///   * null / empty — macOS strips SSID and BSSID together without Location.
-///   * 00:00:00:00:00:00 — the all-zero MAC, never a real radio.
-///   * 02:00:00:00:00:00 — Android's placeholder. MainActivity.kt:641 names it
-///     exactly: "the 'no permission' placeholder BSSID".
-///
-/// Testing only null-or-empty here was a NARROWER copy of a rule this codebase
-/// states more widely, and feeding a placeholder through reproduced the very
-/// screen the null check was written to prevent. Separators and case are
-/// normalized so `AA-BB-...` and `aa:bb:...` cannot slip past on formatting.
-bool isWithheldBssid(String? bssid) {
-  if (bssid == null || bssid.isEmpty) return true;
-  final String bare = bssid.toLowerCase().replaceAll(RegExp('[^0-9a-f]'), '');
-  return bare == '000000000000' || bare == '020000000000';
+/// THREE outcomes, not two. Collapsing the last two was a real defect: a single
+/// malformed row with no `bssid` key revoked the grant for the whole scan,
+/// destroying two good APs and blaming Location for a parse failure.
+enum BssidIdentity {
+  /// A real, parseable AP MAC.
+  valid,
+
+  /// The OS deliberately BLANKED it. A permission signal: the radio saw the AP,
+  /// we lost the right to name it. Gates the snapshot.
+  withheld,
+
+  /// Absent or unparseable. A MALFORMED row and nothing more — it carries no
+  /// statement about permission, so it must never gate the scan.
+  unreadable,
 }
+
+/// Classifies a scan row's BSSID.
+///
+/// Withheld covers the forms this codebase already rejects in six other places
+/// (MainActivity.kt `sanitizeBssid`, arp_ndp_service.dart, windows_arp_ffi.dart,
+/// windows_wifi_ffi.dart `_decodeBssid`):
+///   * an explicit null or a blank string — macOS strips SSID and BSSID
+///     together without Location, and Android blanks rather than garbles.
+///   * 00:00:00:00:00:00 — the all-zero MAC, never a real radio.
+///   * 02:00:00:00:00:00 — MainActivity.kt:641 names it exactly: "the 'no
+///     permission' placeholder BSSID".
+///
+/// The line between withheld and unreadable is BLANKED vs GARBLED. A blank is
+/// something an OS does deliberately when it withholds. A value like "unknown"
+/// or a truncated MAC is a row we simply cannot read; treating those as a
+/// permission signal would blame Location for a parse bug, and treating them as
+/// valid would render them as cloaking APs — the original defect.
+///
+/// Separators and case are normalized, so `AA-BB-…`, `aa:bb:…` and Cisco dotted
+/// `0200.0000.0000` cannot slip past on formatting alone.
+BssidIdentity classifyBssid(Map<dynamic, dynamic> row) {
+  // ABSENT is not WITHHELD. A row that never carried the key is malformed; an
+  // OS that withholds sets the key and blanks the value.
+  if (!row.containsKey('bssid')) return BssidIdentity.unreadable;
+
+  final Object? raw = row['bssid'];
+  if (raw == null) return BssidIdentity.withheld;
+  if (raw is! String) return BssidIdentity.unreadable;
+  if (raw.trim().isEmpty) return BssidIdentity.withheld;
+
+  final String bare = raw.toLowerCase().replaceAll(RegExp('[^0-9a-f]'), '');
+  if (bare == '000000000000' || bare == '020000000000') {
+    return BssidIdentity.withheld;
+  }
+  // A MAC is 12 hex digits once separators are stripped. Anything else is a
+  // value we cannot read, NOT a permission signal.
+  return bare.length == 12 ? BssidIdentity.valid : BssidIdentity.unreadable;
+}
+
+/// Whether a BSSID VALUE is one the OS withheld. Value-level convenience over
+/// [classifyBssid]; it cannot see an absent key, so prefer the row form when
+/// classifying a payload.
+bool isWithheldBssid(String? bssid) =>
+    classifyBssid(<String, Object?>{'bssid': bssid}) == BssidIdentity.withheld;
 
 /// One visible access point (BSS) from a native Wi-Fi scan.
 ///
@@ -100,10 +142,13 @@ class ScannedAp {
     if (rssi == null || channel == null || band == null || freq == null) {
       return null;
     }
-    // The explicit null test is what promotes `bssid` to non-null for the
-    // constructor below; isWithheldBssid covers it too, but flow analysis does
-    // not see through the call.
-    if (bssid == null || isWithheldBssid(bssid)) return null;
+    // ONLY a VALID identity is admitted. Testing "not withheld" here was a bug:
+    // it let garbled values ("unknown", a truncated MAC) through as real APs,
+    // and a garbled BSSID beside a null SSID rendered as a cloaking AP — the
+    // original defect, reached through the third class rather than the second.
+    // The explicit null test is what promotes `bssid` to non-null below; flow
+    // analysis does not see through classifyBssid.
+    if (bssid == null || classifyBssid(map) != BssidIdentity.valid) return null;
     return ScannedAp(
       ssid: map['ssid'] as String?,
       bssid: bssid,
@@ -118,6 +163,42 @@ class ScannedAp {
   String toString() => 'ScannedAp(ssid: $ssid, bssid: $bssid, '
       'rssiDbm: $rssiDbm, channel: $channel, band: $band, '
       'frequencyMhz: $frequencyMhz)';
+}
+
+/// THE ONE VERDICT a scan snapshot supports — what the screen is entitled to
+/// tell the user happened.
+///
+/// WHY THIS EXISTS. Three separate fixes to this screen each closed a real
+/// defect and opened a new false claim one axis over, because each added a
+/// STATE without re-walking the state matrix. The screen decided its cards from
+/// independent `if`s, so "exactly one verdict renders" was a property nobody
+/// owned: adding a state silently created combinations that rendered two
+/// verdicts, or none.
+///
+/// Deriving the verdict here makes that structural. The screen switches over
+/// this enum, so it renders exactly one verdict card by construction, and a
+/// fourth state cannot be added without extending this enum and failing the
+/// switch to compile. The cross-product test
+/// (test/screens/tools/network/ap_scan_verdict_matrix_test.dart) walks the full
+/// matrix and asserts one card, never zero, never two.
+enum ApScanVerdict {
+  /// The radio is off. Nothing was measured.
+  radioOff,
+
+  /// The Location grant is missing or was withheld mid-scan. Nothing was
+  /// measured — this is NEVER an empty RF environment.
+  permissionMissing,
+
+  /// The scan ran, the radio reported rows, and not one could be read. The RF
+  /// environment is UNKNOWN, not empty.
+  noneReadable,
+
+  /// The scan ran, everything the radio reported was read, and there was
+  /// nothing on the air. The only state entitled to say "no networks found".
+  nothingInRange,
+
+  /// The scan ran and found APs. The list is the verdict.
+  apsFound,
 }
 
 /// A full nearby-AP scan: the visible APs plus the OS-state flags the UI needs
@@ -166,7 +247,9 @@ class ApScanSnapshot {
   final bool scanThrottled;
 
   /// How many rows the radio reported that could not be parsed into an honest
-  /// [ScannedAp] — no channel, no band, or a 0 dBm "no measurement" RSSI.
+  /// [ScannedAp] — a missing or unrecognized channel or band (the 6 GHz
+  /// `bandUnknown` drop lands here), a 0 dBm "no measurement" RSSI, an absent
+  /// or unparseable BSSID, or an entry that was not a map at all.
   ///
   /// Carried so the UI can DISCLOSE the shortfall. A scan that silently drops
   /// rows presents a short list as a complete one, which under-reports the RF
@@ -174,6 +257,23 @@ class ApScanSnapshot {
   /// never includes withheld identities: those gate the whole snapshot via
   /// [locationAuthorized] instead of being dropped.
   final int unreadableCount;
+
+  /// The single verdict this snapshot supports.
+  ///
+  /// Order is precedence, and it is load-bearing. A missing grant outranks an
+  /// empty list, because without the grant the emptiness was never measured.
+  /// Unread rows outrank "nothing in range" for the same reason one axis over:
+  /// the radio DID report something, so the environment is unknown rather than
+  /// empty. Getting this order wrong is exactly how "no access points in range"
+  /// came to be printed to a user standing among APs
+  /// ([[feedback_app_blames_the_wifi]]).
+  ApScanVerdict get verdict {
+    if (!poweredOn) return ApScanVerdict.radioOff;
+    if (!locationAuthorized) return ApScanVerdict.permissionMissing;
+    if (accessPoints.isNotEmpty) return ApScanVerdict.apsFound;
+    if (unreadableCount > 0) return ApScanVerdict.noneReadable;
+    return ApScanVerdict.nothingInRange;
+  }
 
   /// Builds a snapshot from the native channel payload.
   factory ApScanSnapshot.fromMap(Map<dynamic, dynamic> map) {
@@ -191,8 +291,8 @@ class ApScanSnapshot {
     // identity for a false COUNT, which is the same lie wearing a different hat.
     // The radio saw those APs. What we lost was permission to name them, and
     // "we lost permission" is the Location card, not a discard.
-    final bool identityWithheld =
-        rows.any((Map<dynamic, dynamic> r) => isWithheldBssid(r['bssid'] as String?));
+    final bool identityWithheld = rows.any((Map<dynamic, dynamic> r) =>
+        classifyBssid(r) == BssidIdentity.withheld);
 
     final List<ScannedAp> aps = rows
         .map(ScannedAp.fromMap)
@@ -204,7 +304,11 @@ class ApScanSnapshot {
     // these carry no permission signal — they are simply undescribable — so
     // they are dropped, and the count travels with the snapshot so the UI can
     // SAY so rather than presenting a short list as a complete one.
-    final int unreadableCount = rows.length - aps.length;
+    // Entries that were not even maps never reached `rows`, so they used to
+    // vanish before anything could count them — a silent discard upstream of
+    // the disclosure. They are unreadable rows like any other.
+    final int nonMapRows = rawAps.length - rows.length;
+    final int unreadableCount = (rows.length - aps.length) + nonMapRows;
 
     final bool locationAuthorized =
         ((map['locationAuthorized'] as bool?) ?? false) && !identityWithheld;

@@ -244,37 +244,48 @@ class _ApScanScreenState extends State<ApScanScreen> {
 
     final List<Widget> children = <Widget>[];
 
-    if (!snap.poweredOn) {
-      children
-        ..add(const _WifiOffCard())
-        ..add(const SizedBox(height: AppSpacing.sm));
-    }
+    // EXACTLY ONE VERDICT. The cards below used to be decided by independent
+    // `if`s, which made "the screen states one thing" a property nobody owned:
+    // every time a state was added, some combination rendered two verdicts or
+    // none. Switching over [ApScanSnapshot.verdict] makes it structural, and a
+    // future sixth state cannot be added without failing this switch to
+    // compile. See ap_scan_verdict_matrix_test.dart.
+    switch (snap.verdict) {
+      case ApScanVerdict.radioOff:
+        children.add(const _WifiOffCard());
+        return children;
 
-    if (!snap.locationAuthorized) {
-      children
-        ..add(
+      case ApScanVerdict.permissionMissing:
+        children.add(
           _LocationCard(
             attempted: _locationGrantAttempted,
             platformName: _service.platformName,
             onGrant: _loading ? null : _grantLocation,
             onOpenSettings: _openLocationSettings,
           ),
-        )
-        ..add(const SizedBox(height: AppSpacing.sm));
-    }
+        );
+        return children;
 
-    // GATE CARDS ARE TERMINAL. A card above has just told the user the scan
-    // could not run — the radio is off, or Location is not granted. Rendering
-    // an AP list and occupancy charts beneath that card would contradict it on
-    // the same screen, and the list would win, because a list of APs reads as
-    // proof the scan worked. The gate is the honest verdict here, so nothing
-    // measured is rendered below it ([[feedback_app_blames_the_wifi]]).
-    if (!snap.poweredOn || !snap.locationAuthorized) {
-      return children;
+      case ApScanVerdict.noneReadable:
+        // The radio DID report networks. Saying "no access points in range"
+        // here would be a false verdict handed to a user standing among APs,
+        // and the old copy shipped an action with it ("move to where Wi-Fi is
+        // in use"). Unknown is not empty.
+        children.add(_NoneReadableCard(count: snap.unreadableCount));
+        return children;
+
+      case ApScanVerdict.nothingInRange:
+        // The ONLY state entitled to claim an empty RF environment: the scan
+        // ran, and every row it reported was read.
+        children.add(const _NoNetworksCard());
+        return children;
+
+      case ApScanVerdict.apsFound:
+        break;
     }
 
     // Throttle note — the list is the last cached scan, said plainly.
-    if (snap.scanThrottled && snap.accessPoints.isNotEmpty) {
+    if (snap.scanThrottled) {
       children
         ..add(_ThrottledNote(platformName: _service.platformName))
         ..add(const SizedBox(height: AppSpacing.sm));
@@ -289,18 +300,6 @@ class _ApScanScreenState extends State<ApScanScreen> {
     }
 
     final List<ScannedAp> aps = snap.accessPoints;
-
-    if (aps.isEmpty) {
-      // TWO KINDS OF NULL: the bare "no networks found" empty state is only
-      // honest when the scan actually RAN. When the radio is off or Location is
-      // missing, the specific card above already says the scan could not run,
-      // and claiming "no networks found" on top of it would state a verdict the
-      // app never measured ([[feedback_app_blames_the_wifi]]).
-      if (snap.poweredOn && snap.locationAuthorized) {
-        children.add(const _NoNetworksCard());
-      }
-      return children;
-    }
 
     // Channel-occupancy bars per band. 6 GHz is included: macOS CoreWLAN reports
     // 6 GHz BSSs, and a band that is present in the list but missing from the
@@ -360,9 +359,22 @@ class _ApScanScreenState extends State<ApScanScreen> {
     final List<ScannedAp> aps = sortAps(snap.accessPoints, _sort);
     final StringBuffer buf = StringBuffer()
       ..writeln('Nearby AP Scan')
-      ..writeln('${aps.length} access points'
-          '${snap.scanThrottled ? ' (last scan, fresh scan throttled)' : ''}')
-      ..writeln();
+      ..writeln('${aps.length} access point${aps.length == 1 ? '' : 's'}'
+          '${snap.scanThrottled ? ' (last scan, fresh scan throttled)' : ''}');
+    // THE EXPORT MUST CARRY THE DISCLOSURE THE SCREEN MAKES. This text is what
+    // lands in a client report, detached from the screen that qualified it — so
+    // an export claiming "3 access points" with no note is a completeness claim
+    // the app knows to be false, made in the one artifact that outlives the
+    // session. The screen being honest is not enough if the artifact is not.
+    if (snap.unreadableCount > 0) {
+      buf.writeln(
+        'Note: the radio reported ${snap.unreadableCount} further '
+        'network${snap.unreadableCount == 1 ? '' : 's'} this app could not '
+        'read (channel, band or signal missing or not recognized). '
+        'They are NOT included in the count above or the list below.',
+      );
+    }
+    buf.writeln();
     for (final ScannedAp ap in aps) {
       buf.writeln(
         '${ap.ssid ?? '(hidden network)'}  '
@@ -391,7 +403,7 @@ class _ScanUnavailable extends StatelessWidget {
 
   static const String _lead =
       'Nearby AP Scan lists the access points around you using a native Wi-Fi '
-      'scan. It currently runs on Android and macOS. ';
+      'scan. It is available on Android and macOS. ';
 
   String get _heading {
     switch (status) {
@@ -400,7 +412,7 @@ class _ScanUnavailable extends StatelessWidget {
       case ApScanPlatformStatus.appleRestricted:
       case ApScanPlatformStatus.unavailable:
       case ApScanPlatformStatus.supported:
-        return 'Runs on Android and macOS';
+        return 'Available on Android and macOS';
     }
   }
 
@@ -618,14 +630,72 @@ class _UnreadableRowsNote extends StatelessWidget {
           Expanded(
             child: Text(
               count == 1
-                  ? 'The radio reported 1 more network that could not be read: '
-                      'it came back without a usable channel or signal reading. '
-                      'It is not counted below.'
-                  : 'The radio reported $count more networks that could not be '
-                      'read: they came back without a usable channel or signal '
-                      'reading. They are not counted below.',
+                  ? 'The radio reported 1 more network this app could not '
+                      'read: its channel, band or signal reading was missing '
+                      'or not recognized. It is not counted below.'
+                  : 'The radio reported $count more networks this app could '
+                      'not read: their channel, band or signal reading was '
+                      'missing or not recognized. They are not counted below.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The scan ran, the radio reported networks, and NONE could be read.
+///
+/// This state used to render the "no access points in range" card, which told a
+/// user standing among APs that there were none — and shipped an action with
+/// the false verdict ("move to where Wi-Fi is in use"). The 6 GHz `bandUnknown`
+/// drop produces exactly this payload, so it was reachable, not theoretical.
+///
+/// The honest verdict is that the RF environment is UNKNOWN, not empty. The
+/// copy therefore states what the radio did (reported networks), what the app
+/// could not do (read them), and offers no location advice, because nothing
+/// here suggests the user is in the wrong place
+/// ([[feedback_app_blames_the_wifi]]).
+class _NoneReadableCard extends StatelessWidget {
+  const _NoneReadableCard({required this.count});
+
+  /// How many rows the radio reported that could not be read.
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return _Surface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.help_outline, size: 20, color: colors.textTertiary),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Networks detected, none readable',
+                  style: text.titleSmall?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            count == 1
+                ? 'The radio reported 1 network, but its channel, band or '
+                    'signal reading was missing or not recognized, so this app '
+                    'cannot describe it. The air is not quiet. This scan could '
+                    'not read what is on it. Tap Scan again for another look.'
+                : 'The radio reported $count networks, but their channel, band '
+                    'or signal readings were missing or not recognized, so this '
+                    'app cannot describe them. The air is not quiet. This scan '
+                    'could not read what is on it. Tap Scan again for another '
+                    'look.',
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),

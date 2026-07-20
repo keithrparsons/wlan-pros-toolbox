@@ -412,8 +412,13 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         id: 'nearby-ap-scan',
         title: 'Nearby AP Scan',
         description:
+            // No platform parenthetical: the tool is already platform-gated by
+            // kNativeScanPlatforms below, so this description is only ever read
+            // where the scan is available. Naming platforms here restated a
+            // gate the catalog already enforces, in a claim class the app
+            // cannot support.
             'List nearby Wi-Fi access points: SSID, BSSID, channel, band, '
-            'and signal (Android and macOS)',
+            'and signal',
         routeName: '/tools/nearby-ap-scan',
         isLive: true,
         nativeScanOnly: true,
