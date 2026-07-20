@@ -20,7 +20,54 @@
 // exist on iOS — the same ceiling Wi-Fi Check shares); macOS polls continuously
 // while the screen is open.
 
+import 'ap_name_cache.dart';
 import 'connected_ap.dart';
+
+/// The AP name to RENDER for a roam-log row, resolved at READ time.
+///
+/// WHY THIS EXISTS. A [RoamEvent] captures `toApName` at the INSTANT the BSSID
+/// changes. The AP-name beacon scan is fire-and-forget, so when the client roams
+/// to an AP whose name has never been decoded, that name is still null right
+/// then — and the event, once appended to history, is never backfilled. Seconds
+/// later the shared [ApNameCache] knows the name, but the history row stays
+/// frozen at BSSID-only. Resolving at render time instead of trusting only the
+/// capture-instant value closes that race for every row already on screen.
+///
+/// PRECEDENCE. A name captured ON the event is authoritative and is returned
+/// unchanged; the cache is consulted ONLY when the captured name is null or
+/// blank. A cache value can therefore never REPLACE a different captured name.
+///
+/// THE HAZARD THIS GUARDS. Looking a name up by BSSID means a wrong key shows a
+/// REAL AP name against the WRONG BSSID — authoritative-looking fabricated data,
+/// inside a report a consultant hands to a client. Two rules keep that
+/// impossible, and neither may be relaxed:
+///   1. The key comes from [ApNameCache.normalizeBssid] — the SAME normalizer
+///      the cache keys on. A second hand-rolled normalizer is free to drift, and
+///      a drifted key misses silently. Never inline a substitute.
+///   2. The lookup is EXACT-KEY only. There is no nearest match, no prefix/OUI
+///      match, no fallback to "the last name we saw". A null, blank, or
+///      unparseable BSSID resolves to NO name, and a BSSID absent from the cache
+///      resolves to NO name.
+///
+/// HONEST-NULL SURVIVES. An AP that genuinely advertises no name is simply
+/// absent from the cache, so it resolves to null here and renders BSSID-only —
+/// forever. This backfills a LOST name; it never invents a missing one.
+String? resolveApName({
+  required String? capturedName,
+  required String? bssid,
+  ApNameCache? cache,
+}) {
+  // A name captured at roam time wins outright — never overwritten by the cache.
+  final String? captured = capturedName?.trim();
+  if (captured != null && captured.isNotEmpty) return captured;
+
+  final String? key = ApNameCache.normalizeBssid(bssid);
+  if (key == null) return null; // null/blank BSSID → no name, never a guess.
+
+  final String? cached = (cache ?? ApNameCache.instance).nameFor(key);
+  final String? trimmed = cached?.trim();
+  return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+}
 
 /// A single recorded roam: the device moved from [fromBssid] to [toBssid] on the
 /// same [ssid], at [at], with the signal, band, and channel read at the moment
@@ -118,6 +165,24 @@ class RoamEvent {
   /// Whether [toBand] was computed app-side from the channel number. Same caveat
   /// as [fromBandDerived].
   final bool toBandDerived;
+
+  /// The AP name to RENDER for the AP the device left — the captured
+  /// [fromApName] when one was captured, else the shared cache's decoded name
+  /// for [fromBssid]. See [resolveApName].
+  String? resolvedFromApName({ApNameCache? cache}) => resolveApName(
+        capturedName: fromApName,
+        bssid: fromBssid,
+        cache: cache,
+      );
+
+  /// The AP name to RENDER for the AP the device joined — the captured
+  /// [toApName] when one was captured, else the shared cache's decoded name for
+  /// [toBssid]. See [resolveApName].
+  String? resolvedToApName({ApNameCache? cache}) => resolveApName(
+        capturedName: toApName,
+        bssid: toBssid,
+        cache: cache,
+      );
 
   @override
   String toString() =>
@@ -244,6 +309,14 @@ class RoamDetector {
     _lastChannel = ap.channel;
     _lastBand = ap.band;
     _lastBandDerived = ap.bandDerived;
+    // DELIBERATELY UNGUARDED, unlike the same-BSSID anchor update above. There
+    // the guard is right: the BSSID did not change, so a null name is a missing
+    // reading for an AP we already named. HERE the BSSID DID change, so the
+    // anchor now describes a DIFFERENT radio — carrying the old AP's name
+    // forward with an `if (!= null)` guard would attach a real name to the wrong
+    // BSSID, which is exactly the fabrication this feature must never commit. A
+    // name lost here is recovered honestly at render time by [resolveApName],
+    // keyed on the BSSID it actually belongs to. Do not "make these consistent".
     _lastApName = ap.apName;
     if (!sameNetwork) return null;
 

@@ -63,6 +63,26 @@ class ApNameCache {
   /// moment the scan settles, so this map only ever holds genuinely-running work.
   final Map<String, Future<void>> _inFlightScanByBssid = <String, Future<void>>{};
 
+  /// Normalizes a BSSID into THE cache key: trimmed and lowercased, or null when
+  /// it carries no usable value (null or blank).
+  ///
+  /// This is the ONE normalizer for this cache's key space. It lives on the cache
+  /// because the cache OWNS the key contract: every reader and every writer must
+  /// derive its key the same way, and a second hand-rolled normalizer elsewhere
+  /// is free to drift from this one. A drifted key does not fail loudly — it
+  /// MISSES, and a miss on a lookup-by-BSSID is how a real AP name ends up
+  /// rendered against the wrong BSSID. Call this; never re-implement it.
+  ///
+  /// Note this is deliberately NOT a validator. An unparseable string is
+  /// normalized like any other and simply will not be present in the map, so a
+  /// garbage BSSID resolves to no name rather than to a nearest or stale one —
+  /// lookups here are exact-key only, never fuzzy.
+  static String? normalizeBssid(String? bssid) {
+    if (bssid == null) return null;
+    final String t = bssid.trim().toLowerCase();
+    return t.isEmpty ? null : t;
+  }
+
   /// The cached decoded name for [normBssid], or null when none has been decoded
   /// yet. A null return is honest "not decoded", never a guess.
   String? nameFor(String normBssid) => _nameByBssid[normBssid];

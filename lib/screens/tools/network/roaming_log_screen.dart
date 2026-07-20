@@ -640,9 +640,9 @@ String? buildRoamLogCopyText({
       '${i + 1}',
       _RoamRow._formatTime(e.at),
       _apCell(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived,
-          apName: e.fromApName),
+          apName: e.resolvedFromApName()),
       _apCell(e.toBssid, e.toChannel, e.toBand, e.toBandDerived,
-          apName: e.toApName),
+          apName: e.resolvedToApName()),
       _signalCell(e),
       // The first roam has no prior roam to measure dwell from, so it is honestly
       // "n/a" rather than a guessed 0.
@@ -836,8 +836,8 @@ String? buildRoamLogShareHtml({
       '<tr$cls>'
       '<td class="num">${i + 1}</td>'
       '<td>${esc(_RoamRow._formatTime(e.at))}</td>'
-      '<td>${_apCellHtml(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived, esc, apName: e.fromApName)}</td>'
-      '<td>${_apCellHtml(e.toBssid, e.toChannel, e.toBand, e.toBandDerived, esc, apName: e.toApName)}</td>'
+      '<td>${_apCellHtml(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived, esc, apName: e.resolvedFromApName())}</td>'
+      '<td>${_apCellHtml(e.toBssid, e.toChannel, e.toBand, e.toBandDerived, esc, apName: e.resolvedToApName())}</td>'
       '<td class="num">${esc(signal)}</td>'
       '<td class="num">${esc(snrCell)}</td>'
       '<td class="num">${esc(dwell)}</td>'
@@ -1564,6 +1564,14 @@ class _Header extends StatelessWidget {
   }
 }
 
+/// Builds ONE on-screen roam row in isolation, so a test can assert what a row
+/// actually renders without driving a live sampler through a real roam. This is
+/// the SAME widget the list builds — not a stand-in — so a test through it
+/// exercises the real render path.
+@visibleForTesting
+Widget buildRoamRowForTest(RoamEvent event, int index) =>
+    _RoamRow(event: event, index: index);
+
 /// One roam event: ordinal + timestamp, the from→to BSSID pair, and the signal
 /// at the roam. The whole row is one SR node.
 class _RoamRow extends StatelessWidget {
@@ -1588,10 +1596,10 @@ class _RoamRow extends StatelessWidget {
     // identifying last octets) plus the channel-first band for each AP.
     final String fromSpoken = _spokenAp(
       event.fromBssid, event.fromChannel, event.fromBand, event.fromBandDerived,
-      apName: event.fromApName);
+      apName: event.resolvedFromApName());
     final String toSpoken = _spokenAp(
       event.toBssid, event.toChannel, event.toBand, event.toBandDerived,
-      apName: event.toApName);
+      apName: event.resolvedToApName());
 
     return Semantics(
       container: true,
@@ -1645,7 +1653,7 @@ class _RoamRow extends StatelessWidget {
                       band: event.fromBand,
                       bandDerived: event.fromBandDerived,
                       color: colors.textSecondary,
-                      apName: event.fromApName,
+                      apName: event.resolvedFromApName(),
                     ),
                   ),
                   Padding(
@@ -1665,7 +1673,7 @@ class _RoamRow extends StatelessWidget {
                       band: event.toBand,
                       bandDerived: event.toBandDerived,
                       color: colors.textPrimary,
-                      apName: event.toApName,
+                      apName: event.resolvedToApName(),
                     ),
                   ),
                 ],

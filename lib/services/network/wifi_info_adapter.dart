@@ -292,13 +292,11 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     return ap; // honest-null until the async scan resolves
   }
 
-  /// Normalizes a BSSID to a stable cache key (trimmed, lowercase), or null when
-  /// it carries no usable value.
-  static String? _normBssid(String? bssid) {
-    if (bssid == null) return null;
-    final String t = bssid.trim().toLowerCase();
-    return t.isEmpty ? null : t;
-  }
+  /// Normalizes a BSSID to a stable cache key, or null when it carries no usable
+  /// value. Delegates to [ApNameCache.normalizeBssid] rather than re-implementing
+  /// the rule: the cache owns its key contract, and a second copy of this logic
+  /// is free to drift from the one the cache actually keys on.
+  static String? _normBssid(String? bssid) => ApNameCache.normalizeBssid(bssid);
 
   /// Schedules a single background AP-name scan for [bssid] when the throttle
   /// allows and none is already running. Never awaited by [fetch].
