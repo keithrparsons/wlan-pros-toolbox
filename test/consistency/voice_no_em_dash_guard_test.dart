@@ -317,28 +317,34 @@ void main() {
   // ---- The scanner must be able to FAIL (guard against a green no-op). ----
   group('voice guard self-test (proves the guard has teeth)', () {
     test('detects an em dash in a Dart string literal', () {
-      expect(_scanDart('x.dart', "final s = 'Term ${_em} gloss';"), isNotEmpty);
+      expect(_scanDart('x.dart', "final s = 'Term $_em gloss';"), isNotEmpty);
     });
     test('detects an em dash in a NESTED string inside interpolation', () {
       // Builds: final s = 'status: ${x ? 'on — off' : 'idle'}';
-      final String planted =
-          "final s = 'status: " + r"${x ? 'on " + _em + r" off' : 'idle'}" + "';";
+      // One literal, no concatenation. The \$ escape keeps the planted
+      // "${x ? ...}" as literal payload text (it is the code being SCANNED,
+      // not code to run), while $_em interpolates the em dash so this source
+      // file never contains the glyph it hunts for. Verified byte-identical to
+      // the previous concatenated form.
+      final String planted = "final s = 'status: \${x ? 'on $_em off' : 'idle'}';";
       expect(_scanDart('x.dart', planted), isNotEmpty);
     });
     test('ignores an em dash in a Dart comment', () {
-      expect(_scanDart('x.dart', '// a comment ${_em} dash\nfinal s = 1;'), isEmpty);
+      expect(_scanDart('x.dart', '// a comment $_em dash\nfinal s = 1;'), isEmpty);
     });
     test('allows the bare null glyph, but flags a spaced separator', () {
-      expect(_scanDart('x.dart', "String ms() => '${_em}';"), isEmpty);
+      expect(_scanDart('x.dart', "String ms() => '$_em';"), isEmpty);
       // ' — ' (space em space) is a separator, NOT the null glyph.
-      expect(_scanDart('x.dart', "final s = parts.join(' ${_em} ');"), isNotEmpty);
+      expect(_scanDart('x.dart', "final s = parts.join(' $_em ');"), isNotEmpty);
     });
     test('allows a documented quoted glyph', () {
-      expect(_proseDashOffsets('stays blank ("${_em}") until set'), isEmpty);
+      expect(_proseDashOffsets('stays blank ("$_em") until set'), isEmpty);
     });
     test('allows an en-dash numeric range but flags a prose en dash', () {
+      // Braces are REQUIRED here: '0$_en255' would parse as the identifier
+      // `_en255`, not `_en` followed by "255". Do not "simplify" this one.
       expect(_proseDashOffsets('bytes 0${_en}255'), isEmpty);
-      expect(_proseDashOffsets('one thing ${_en} another'), isNotEmpty);
+      expect(_proseDashOffsets('one thing $_en another'), isNotEmpty);
     });
   });
 
