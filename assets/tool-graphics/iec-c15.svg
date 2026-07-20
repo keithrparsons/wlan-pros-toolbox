@@ -38,7 +38,7 @@
   <text x="148" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">L</text>
   <text x="492" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">N</text>
   <!-- notch callout: lime, sits clear BELOW the body in the notch gap -->
-  <text x="320" y="402" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">keying notch &#8212; the only C13 vs C15 tell</text>
+  <text x="320" y="402" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">keying notch: the only C13 vs C15 tell</text>
 
   <!-- ============ LABELS ============ -->
   <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 120 &#176;C</text>

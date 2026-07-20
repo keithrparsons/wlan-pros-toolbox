@@ -23,7 +23,7 @@
 
   <!-- ===== TITLE BLOCK ===== -->
   <text x="40" y="44" fill="#E5E5E5" font-size="26" font-weight="700">NEMA Connector Faces</text>
-  <text x="40" y="68" fill="#9C9C9C" font-size="14" font-weight="400">Front view of the receptacle &#8212; identify the connector by its blade &amp; slot pattern</text>
+  <text x="40" y="68" fill="#9C9C9C" font-size="14" font-weight="400">Front view of the receptacle: identify the connector by its blade &amp; slot pattern</text>
 
   <!-- decode key (top-right) -->
   <g font-family="DM Mono, monospace">
@@ -131,7 +131,7 @@
 
   <!-- row divider -->
   <line x1="40" y1="340" x2="1080" y2="340" stroke="#3A3A3A" stroke-width="1"/>
-  <text x="40" y="364" fill="#9C9C9C" font-size="12" font-weight="500" font-family="DM Mono, monospace">14-SERIES &#8212; 4-WIRE SPLIT-PHASE (2 hots + neutral + ground)</text>
+  <text x="40" y="364" fill="#9C9C9C" font-size="12" font-weight="500" font-family="DM Mono, monospace">14-SERIES: 4-WIRE SPLIT-PHASE (2 hots + neutral + ground)</text>
 
   <!-- =====================================================================
        ROW 2, 14-series (4-wire split-phase) + start of TWIST-LOCK
@@ -235,11 +235,11 @@
 
     <!-- 14-50 note -->
     <text x="22" y="66" fill="#E5E5E5" font-size="13" font-weight="700" font-family="DM Mono, monospace">14-50</text>
-    <text x="104" y="66" fill="#9C9C9C" font-size="13" font-weight="400">is single-phase <tspan fill="#E5E5E5" font-weight="500">SPLIT</tspan> &#8212; two hots 180&#176; apart + neutral + ground. NOT three-phase.</text>
+    <text x="104" y="66" fill="#9C9C9C" font-size="13" font-weight="400">is single-phase <tspan fill="#E5E5E5" font-weight="500">SPLIT</tspan>: two hots 180&#176; apart + neutral + ground. NOT three-phase.</text>
 
     <!-- L21 note -->
     <text x="22" y="98" fill="#E5E5E5" font-size="13" font-weight="700" font-family="DM Mono, monospace">L21</text>
-    <text x="104" y="98" fill="#9C9C9C" font-size="13" font-weight="400">is true <tspan fill="#E5E5E5" font-weight="500">three-phase wye</tspan> &#8212; three hots 120&#176; apart + neutral + ground (4P/5W, 120/208V).</text>
+    <text x="104" y="98" fill="#9C9C9C" font-size="13" font-weight="400">is true <tspan fill="#E5E5E5" font-weight="500">three-phase wye</tspan>: three hots 120&#176; apart + neutral + ground (4P/5W, 120/208V).</text>
   </g>
 
   <!-- legend strip (bottom-left, under L21) -->

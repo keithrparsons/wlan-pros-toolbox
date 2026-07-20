@@ -92,7 +92,7 @@
   <!-- U-boundary label rides ABOVE the dashed line at y=330, in the open space between the
        rail (right edge x=208) and the 1U bracket (x=430). Knockout keeps it off the dash. -->
   <rect x="250" y="306" width="168" height="20" fill="#1A1A1A"/>
-  <text x="252" y="322" text-anchor="start" font-size="13.5" font-weight="600" fill="#A1CC3A">U boundary <tspan fill="#9C9C9C" font-weight="400">&#8212; mid-gap</tspan></text>
+  <text x="252" y="322" text-anchor="start" font-size="13.5" font-weight="600" fill="#A1CC3A">U boundary:<tspan fill="#9C9C9C" font-weight="400"> mid-gap</tspan></text>
 
   <!-- 1U bracket on the RIGHT of the holes, between two U boundaries (330 -> 522.5) -->
   <g stroke="#A1CC3A" stroke-width="1.6">
@@ -106,7 +106,7 @@
   <text x="446" y="460" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#A1CC3A">44.45 mm</text>
 
   <!-- "3 holes per U, repeating" note, clear space below the rail -->
-  <text x="183" y="630" text-anchor="middle" font-size="14" font-weight="600" fill="#E5E5E5">3 holes per U &#8212; uneven, repeating</text>
+  <text x="183" y="630" text-anchor="middle" font-size="14" font-weight="600" fill="#E5E5E5">3 holes per U: uneven, repeating</text>
 
   <!-- Left-half title -->
   <text x="60" y="40" font-size="20" font-weight="700" fill="#E5E5E5">EIA-310 vertical hole pattern</text>

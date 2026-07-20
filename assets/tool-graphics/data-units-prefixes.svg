@@ -73,7 +73,7 @@
   </g>
 
   <!-- lime hero caption, in clear space below the ladders -->
-  <text x="320" y="310" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="middle">A "1 TB" drive (10<tspan font-size="8.5" dy="-4.5">12</tspan><tspan dy="4.5"> bytes) shows as ~931 GiB &#8212; the 7.37% GB/GiB gap.</tspan></text>
+  <text x="320" y="310" fill="#A1CC3A" font-size="12.5" font-weight="600" text-anchor="middle">A "1 TB" drive (10<tspan font-size="8.5" dy="-4.5">12</tspan><tspan dy="4.5"> bytes) shows as ~931 GiB. That is the 7.37% GB/GiB gap.</tspan></text>
 
   <!-- ============================ BIT vs BYTE NOTE ============================ -->
   <!-- separating rule with generous space above and below -->

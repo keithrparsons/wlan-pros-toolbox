@@ -58,6 +58,6 @@
   <text x="218.1" y="130" font-size="7.5" fill="#9C9C9C" text-anchor="start">break (illustrative)</text>
 
   <!-- the rule + attribution, bottom-left, clear of the failure labels above -->
-  <text x="24" y="146" font-size="10.5" font-weight="600" fill="#E5E5E5">Max pull tension &#8212; do not exceed</text>
+  <text x="24" y="146" font-size="10.5" font-weight="600" fill="#E5E5E5">Max pull tension: do not exceed</text>
   <text x="24" y="157" font-size="8.5" fill="#9C9C9C">TIA-568 &#167;10.6.3.2 &#183; engineered safety margin</text>
 </svg>
