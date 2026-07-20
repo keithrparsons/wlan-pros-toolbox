@@ -54,7 +54,6 @@ import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
-import '../../../services/network/wifi_info_service.dart' show LocationAuthStatus;
 import '../../../services/network/wifi_security.dart';
 import '../../../services/network/wifi_security_service.dart';
 import '../../../services/network/wifi_signal_sampler.dart';

@@ -32,8 +32,6 @@ import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
-import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart'
-    show LocationAuthStatus;
 import 'package:wlan_pros_toolbox/services/network/wifi_security_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -97,9 +95,12 @@ WifiSecurityService _availableSecurity() => WifiSecurityService(
               'bssid': 'a4:83:e7:00:11:22',
               'ssid': 'KeithNet',
               'locationAuthorized': true,
+              'locationAuthStatus': 'authorized',
             };
           case 'isLocationAuthorized':
             return true;
+          case 'locationAuthorizationStatus':
+            return 'authorized';
           default:
             return null;
         }

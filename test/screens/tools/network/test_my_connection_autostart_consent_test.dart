@@ -138,7 +138,8 @@ class _FakeNetDetails extends NetworkDetailsService {
 class _FakeSecurity extends WifiSecurityService {
   @override
   Future<WifiSecurityInfo> fetch() async =>
-      const WifiSecurityInfo.unavailable('cellular: no Wi-Fi');
+      const WifiSecurityInfo.unavailable('cellular: no Wi-Fi',
+          locationAuth: LocationAuthStatus.notDetermined);
 }
 
 class _FakeIpGeo extends IpGeoService {

@@ -825,7 +825,8 @@ class _FakeSecurityService extends WifiSecurityService {
 
   @override
   Future<WifiSecurityInfo> fetch() async =>
-      info ?? const WifiSecurityInfo.unavailable('test: not available');
+      info ?? const WifiSecurityInfo.unavailable('test: not available',
+          locationAuth: LocationAuthStatus.notDetermined);
 }
 
 /// An onboarding service seeded "already seen", so a `_FreshBridge`-backed iOS
@@ -3070,7 +3071,7 @@ void main() {
                   securityToken: 'personal',
                   bssid: 'b8:27:eb:11:22:33',
                   ssid: 'KeithNet',
-                  locationAuthorized: true,
+                  locationAuth: LocationAuthStatus.authorized,
                 ),
               ),
               dnsProbeService: _FakeDnsProbe(),
@@ -3141,7 +3142,7 @@ void main() {
                   securityToken: 'personal',
                   bssid: 'a4:83:e7:00:11:22',
                   ssid: 'KeithNet',
-                  locationAuthorized: true,
+                  locationAuth: LocationAuthStatus.authorized,
                 ),
               ),
               onboardingService: _seenOnboarding(),
