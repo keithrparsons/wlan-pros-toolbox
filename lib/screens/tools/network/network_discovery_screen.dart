@@ -22,10 +22,16 @@
 //                honest reason, never a fabricated result.
 //  - MAC/vendor ceiling → when the ARP read is unavailable for this platform,
 //                an honest one-line note explains why no MAC/vendor column
-//                appears — not a blank "Manufacturer: —". macOS (sysctl
-//                channel) and Windows (GetIpNetTable via FFI) both read it;
-//                iOS and Android cannot. The screen branches on the RESULT of
-//                the read, never on a hardcoded platform list.
+//                appears — not a blank "Manufacturer: —". macOS reads it via
+//                the sysctl channel (verified). Windows has an implemented
+//                GetIpNetTable FFI path that is NOT yet verified on real
+//                hardware (see TODO(windows-verify) in arp_reader.dart) — if
+//                it fails it degrades to an honest unavailable, so the screen
+//                is correct either way, but "implemented and degrading
+//                honestly" is not "verified". iOS and Android cannot read it.
+//                The screen branches on the RESULT of the read, never on a
+//                hardcoded platform list — which is why an unverified backend
+//                cannot make this screen lie.
 //  - web        → NetworkUnavailableView (the socket engine needs dart:io).
 //
 // NOT feature-complete: W3 (multi-VLAN grouping), W4 (IPv6), W5 (per-host
@@ -590,10 +596,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         _MessageCard(
           icon: Icons.search_off_outlined,
           title: 'No hosts responded',
-          body:
-              'Nothing answered on the probed ports across ${r.subnetLabel}, '
-              'and nothing replied over mDNS or appeared in the ARP cache. '
-              'Devices may be firewalled, asleep, or the subnet may be empty.',
+          body: _emptyStateBody(r),
         )
       else if (isTable)
         // Wide viewport: one scannable row per host, sortable. MAC and Vendor
@@ -699,6 +702,40 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// MAC + vendor; on iOS (and any platform that cannot read the ARP cache) it
   /// is unavailable — say so once here, plainly, rather than render an empty
   /// "Manufacturer: —" on every row (brief anti-pattern #2).
+  /// The empty state's body. Only names a source it can vouch for having
+  /// actually consulted.
+  ///
+  /// "Not found" is not "not checked" ([[feedback_unsourced_is_not_invalid]]),
+  /// and an empty result screen is where those two are easiest to conflate —
+  /// there is no data on screen to contradict whatever the copy claims. Two
+  /// sources, two different reasons they cannot be asserted flatly:
+  ///
+  ///  * **ARP** — `platformArpReader()` returns an `UnavailableArpReader` on
+  ///    iOS and Android, so on those platforms the cache is never read. Saying
+  ///    "nothing appeared in the ARP cache" there also directly contradicted
+  ///    the MAC-ceiling note this same card renders a moment later, which says
+  ///    the platform cannot do an ARP read at all. Gated on [ArpReadResult
+  ///    .available], which is the outcome of the real read.
+  ///
+  ///  * **mDNS** — deliberately NOT named here, on any platform. The browse is
+  ///    attempted everywhere, but `MdnsBrowser.browse()` is contractually
+  ///    never-throw and returns "whatever it gathered, which may be empty" —
+  ///    so a browse that never ran (no native channel: the EventChannel is
+  ///    implemented only in `ios/Runner/` and `macos/Runner/`, so Windows and
+  ///    Linux have none) is indistinguishable from a browse where nobody
+  ///    answered. There is no signal to condition on, so this copy makes no
+  ///    mDNS claim rather than a claim that is false on shipped platforms.
+  ///    Giving mDNS an honest outcome the way ARP has one is a follow-up.
+  String _emptyStateBody(DiscoveryResult r) {
+    final bool arpRead = r.arp?.available ?? false;
+    final String probed =
+        'Nothing answered on the probed ports across ${r.subnetLabel}';
+    final String sources =
+        arpRead ? '$probed, and nothing appeared in the ARP cache' : probed;
+    return '$sources. Devices may be firewalled, asleep, or the subnet may be '
+        'empty.';
+  }
+
   /// Reconciles the "Swept" range with the list printed under it.
   ///
   /// The connect-scan probes one /24, but mDNS replies and ARP-cache entries

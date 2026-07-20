@@ -241,4 +241,176 @@ void main() {
 
     expect(find.textContaining('outside that range'), findsNothing);
   });
+
+  // --- The empty state, across the FULL platform cross-product -------------
+  //
+  // A fix to the range copy introduced a NEW false claim three lines away: the
+  // empty state began asserting "nothing ... appeared in the ARP cache"
+  // unconditionally, on platforms whose ARP reader is UnavailableArpReader and
+  // never reads the cache at all. On an iOS-shaped result the screen said the
+  // cache was checked AND, in the same card, that this platform cannot check
+  // it. Same defect class as the bug the change existed to remove -- "not
+  // found" is not "not checked" -- reintroduced on the axis nobody re-walked.
+  //
+  // So this walks the cross-product (arp available/unavailable x hosts
+  // empty/non-empty) rather than the one cell that was edited.
+
+  testWidgets('empty x ARP unavailable (iOS/Android): claims no ARP check it '
+      'did not perform, and does not contradict the ceiling note',
+      (WidgetTester tester) async {
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: const <LanHost>[],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.1'],
+      arp: const ArpReadResult.unavailable('iOS cannot read the ARP table.'),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No hosts responded'), findsOneWidget);
+    // THE ASSERTION: no claim about a cache this platform never read.
+    expect(find.textContaining('ARP cache'), findsNothing);
+    // And the ceiling note still stands, with nothing on screen contradicting it.
+    expect(find.textContaining('need a desktop ARP read'), findsOneWidget);
+  });
+
+  testWidgets('empty x ARP available (macOS): the ARP clause is stated, '
+      'because there the cache really was read', (WidgetTester tester) async {
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: const <LanHost>[],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.1'],
+      arp: const ArpReadResult(available: true),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('nothing appeared in the ARP cache'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('empty x no ARP read attempted at all (arp == null): still no '
+      'ARP claim', (WidgetTester tester) async {
+    // arp: null means no read was even attempted. Weaker than "unavailable",
+    // and it must not read as "checked, found nothing" either.
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: const <LanHost>[],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.1'],
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('ARP cache'), findsNothing);
+  });
+
+  testWidgets('the empty state never claims an mDNS result, on any platform',
+      (WidgetTester tester) async {
+    // mDNS gets no clause even when the ARP read succeeded. MdnsBrowser.browse()
+    // is contractually never-throw and returns "whatever it gathered, which may
+    // be empty", and the native EventChannel exists only under ios/Runner and
+    // macos/Runner -- so on Windows/Linux a browse that NEVER RAN is
+    // indistinguishable from one where nobody answered. With no outcome signal
+    // to condition on, the honest move is to make no claim. If mDNS later gains
+    // a real outcome (the way ARP has ArpReadResult), this test should be
+    // replaced by a conditional one -- not deleted.
+    const List<(String, ArpReadResult?)> cells = <(String, ArpReadResult?)>[
+      ('available', ArpReadResult(available: true)),
+      ('unavailable', ArpReadResult.unavailable('no reader')),
+      ('not attempted', null),
+    ];
+    for (final (String label, ArpReadResult? arp) in cells) {
+      final DiscoveryResult result = DiscoveryResult(
+        hosts: const <LanHost>[],
+        subnetLabel: '10.0.10.1–10.0.10.254',
+        sweptIps: const <String>['10.0.10.1'],
+        arp: arp,
+      );
+
+      // A UNIQUE KEY PER CELL, deliberately, and keyed on a STRING LABEL
+      // rather than the ArpReadResult. Two traps here, both hit while writing
+      // this: without any key Flutter reuses the element (same type, same
+      // position) and the State survives into the next iteration, leaving the
+      // screen post-scan with the action reading "Scan again"; and keying on
+      // the result itself does not help either, because ArpReadResult has no
+      // toString override, so 'available' and 'unavailable' both interpolate
+      // to "Instance of 'ArpReadResult'" and the keys collide. Either way the
+      // loop would silently exercise one cell three times and pass. The
+      // fresh-idle assertion below is what makes that failure loud.
+      await tester.pumpWidget(_host(
+        NetworkDiscoveryScreen(
+          key: ValueKey<String>('arp-$label'),
+          service: oui,
+          engineFactory: () => _FakeEngine(result),
+          glanceCard: const SizedBox.shrink(),
+        ),
+      ));
+      expect(
+        find.text('Scan local network'),
+        findsOneWidget,
+        reason: 'cell "$label" did not start from a fresh idle screen',
+      );
+      await tester.tap(find.text('Scan local network'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No hosts responded'), findsOneWidget);
+      expect(
+        find.textContaining('mDNS'),
+        findsNothing,
+        reason: 'empty state asserted an mDNS outcome (ARP $label)',
+      );
+    }
+  });
+
+  testWidgets('non-empty x ARP unavailable: hosts render and no empty-state '
+      'copy appears', (WidgetTester tester) async {
+    // The other half of the cross-product: the empty-state copy must not leak
+    // into a run that found hosts.
+    final DiscoveryResult result = DiscoveryResult(
+      hosts: <LanHost>[LanHost(ip: '10.0.10.5', openPorts: <int>{80})],
+      subnetLabel: '10.0.10.1–10.0.10.254',
+      sweptIps: const <String>['10.0.10.5'],
+      arp: const ArpReadResult.unavailable('iOS cannot read the ARP table.'),
+    );
+
+    await tester.pumpWidget(_host(
+      NetworkDiscoveryScreen(
+        service: oui,
+        engineFactory: () => _FakeEngine(result),
+        glanceCard: const SizedBox.shrink(),
+      ),
+    ));
+    await tester.tap(find.text('Scan local network'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No hosts responded'), findsNothing);
+    expect(find.textContaining('ARP cache'), findsNothing);
+    expect(find.text('10.0.10.5'), findsOneWidget);
+  });
 }

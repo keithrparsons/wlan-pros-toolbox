@@ -1318,15 +1318,147 @@ void main() {
       expect(r.hostsOutsideSweep, isEmpty);
     });
 
-    test('a clamped sweep still reports the unprobed tail honestly', () {
-      // kMaxScanHosts can cut the seed short. Addresses past the cut are inside
-      // the label but were NOT probed, so a host found there is a stray.
+    test('an address inside the label but outside the probed set is a stray',
+        () {
+      // Contract test for the getter, driven by a hand-built sweptIps: an
+      // address can sit inside the LABEL's range and still not have been
+      // probed, and membership must follow the probed set, not the label.
+      //
+      // NOTE: the engine cannot currently produce this input. An earlier
+      // comment here claimed kMaxScanHosts (254) could cut the seed short; it
+      // cannot, because subnet_seed.dart:110 clamps the prefix to >=24 first,
+      // so a /24 exactly meets the cap. This test guards the getter's contract
+      // against that clamp order ever being relaxed -- it is a guard on the
+      // shape, not a reproduction of a reachable engine state.
       final DiscoveryResult r = DiscoveryResult(
         hosts: <LanHost>[LanHost(ip: '10.0.0.200')],
         subnetLabel: '10.0.0.1-10.0.0.254',
         sweptIps: const <String>['10.0.0.1', '10.0.0.2'],
       );
       expect(r.hostsOutsideSweep.single.ip, '10.0.0.200');
+    });
+  });
+
+  group('the engine RECORDS what it probed (sweptIps wiring)', () {
+    // WHY THIS GROUP EXISTS. sweptIps is what lets the screen say "Swept
+    // <range>" and then honestly flag hosts that came from mDNS/ARP outside it.
+    // Every OTHER test builds a DiscoveryResult by hand with an explicit
+    // sweptIps:, so deleting the real wiring in the engine left all 80 tests
+    // green. That gap is worse than ordinary missing coverage: sweptIps empty
+    // means "unknown", which by design suppresses the caveat -- so a regression
+    // in ONE line silently restores the original defect (a stated range with
+    // out-of-range hosts printed under it and no explanation) while every test
+    // still passes. These tests drive the REAL engine.
+    //
+    // Mutation-tested: deleting `sweptIps: seed.hosts` on the success path or
+    // on the connect-scan-failure path turns exactly one test here red.
+
+    late ServerSocket server;
+    late int livePort;
+
+    setUp(() async {
+      server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      livePort = server.port;
+      server.listen((Socket s) => s.destroy());
+    });
+
+    tearDown(() async {
+      await server.close();
+    });
+
+    test('success path: records the probed set, and an mDNS host outside it is '
+        'reported AND flagged as outside', () async {
+      // /29 over 10.0.0.1 → probes 10.0.0.1-10.0.0.6. The mDNS fake announces
+      // 10.0.99.7, which is real, wanted, and was never probed.
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.248'),
+        mdnsBrowser: _fakeMdnsBrowser(
+          serviceTypes: const <String>['_http._tcp'],
+          byType: const <String, List<MdnsDiscoveryEvent>>{
+            '_http._tcp': <MdnsDiscoveryEvent>[
+              MdnsDiscoveryEvent(
+                serviceType: '_http._tcp',
+                name: 'Stray',
+                hostAddresses: <String>['10.0.99.7'],
+              ),
+            ],
+          },
+        ),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[80],
+        connector: (String host, int port, Duration timeout) => Socket.connect(
+            InternetAddress.loopbackIPv4, livePort,
+            timeout: timeout),
+      );
+
+      await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      // The engine recorded the addresses it actually probed.
+      expect(r.sweptIps, <String>[
+        '10.0.0.1',
+        '10.0.0.2',
+        '10.0.0.3',
+        '10.0.0.4',
+        '10.0.0.5',
+        '10.0.0.6',
+      ]);
+
+      // Capability intact: the out-of-range host is still reported.
+      expect(r.hosts.map((LanHost h) => h.ip), contains('10.0.99.7'));
+
+      // Honesty: and it is flagged as outside the sweep, which is the whole
+      // point of recording sweptIps.
+      expect(
+        r.hostsOutsideSweep.map((LanHost h) => h.ip),
+        <String>['10.0.99.7'],
+      );
+    });
+
+    test('success path: an all-in-range run flags nobody', () async {
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.252'),
+        mdnsBrowser: _silentMdnsBrowser(),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[80],
+        connector: (String host, int port, Duration timeout) => Socket.connect(
+            InternetAddress.loopbackIPv4, livePort,
+            timeout: timeout),
+      );
+
+      await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      expect(r.sweptIps, isNotEmpty);
+      expect(r.hosts, isNotEmpty);
+      expect(r.hostsOutsideSweep, isEmpty);
+    });
+
+    test('connect-scan failure path: still records what it MEANT to probe',
+        () async {
+      // A failed run reports no hosts, so nothing can be flagged -- but the
+      // result must still carry the sweep it attempted rather than silently
+      // reporting "unknown".
+      final LanDiscoveryEngine engine = LanDiscoveryEngine(
+        runInIsolate: false,
+        seedDeriver: _seedDeriver(ip: '10.0.0.1', mask: '255.255.255.252'),
+        mdnsBrowser: _silentMdnsBrowser(),
+        multicastLock: const NoopMulticastLock(),
+        reverseDns: (String ip) async => null,
+        ports: const <int>[80],
+        scanRunner: (ConnectScanRequest request) =>
+            Future<List<HostPorts>>.error(StateError('scan blew up')),
+      );
+
+      await engine.run().toList();
+      final DiscoveryResult r = engine.lastResult!;
+
+      expect(r.error, contains('Connect-scan failed'));
+      expect(r.sweptIps, <String>['10.0.0.1', '10.0.0.2']);
     });
   });
 }

@@ -98,10 +98,26 @@ class DiscoveryResult {
   /// [hostsOutsideSweep] stays empty rather than claiming every host is a
   /// stray.
   ///
-  /// Held as the literal probed set rather than a first/last pair on purpose:
-  /// the seed clamps at `kMaxScanHosts`, so a range check against the label's
-  /// endpoints would call clamped-off addresses "in range" when they were
-  /// never probed at all.
+  /// Held as the literal probed set rather than a first/last pair on purpose,
+  /// for two reasons — neither of which is "the seed clamps". It does not: an
+  /// earlier version of this comment justified the choice by a divergence
+  /// between `kMaxScanHosts` (254) and the seeded block, and that divergence
+  /// cannot occur, because `subnet_seed.dart:110` clamps the prefix to >=24
+  /// BEFORE the cap is applied, so a /24's 254 hosts exactly meet the cap and
+  /// it never binds. Measured gap across every mask: zero.
+  ///
+  /// The real reasons:
+  ///  1. It is the *record*, not a re-derivation. Membership is answered by the
+  ///     list the scan actually iterated, so no second implementation of the
+  ///     range maths can drift from the first. Deriving "was this probed?" from
+  ///     the display label would make a UI string load-bearing.
+  ///  2. It survives the clamp order changing. If anyone relaxes the /24 clamp
+  ///     at `subnet_seed.dart:110`, the cap starts binding and endpoint maths
+  ///     would silently start calling never-probed addresses "in range". This
+  ///     shape cannot acquire that bug.
+  ///
+  /// The choice is free (254 short strings) and strictly more honest, so it
+  /// stands on its own merits — but on the correct ones.
   final List<String> sweptIps;
 
   /// Hosts that were reported but never probed — learned from mDNS or the ARP

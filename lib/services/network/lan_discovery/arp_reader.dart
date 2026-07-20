@@ -205,11 +205,14 @@ class WindowsIpNetTableArpReader implements ArpReader {
 
 /// Picks the right reader for the current platform.
 ///
-/// Two platforms have a real read: macOS via the sysctl method channel, and
-/// Windows via GetIpNetTable in pure-Dart FFI (see
-/// [WindowsIpNetTableArpReader]). iOS and Android are sandboxed out of the ARP
-/// table and get an honest unavailable reader; Linux and anything else is out
-/// of scope and says so. No subprocess on any path.
+/// Two platforms have a real read: macOS via the sysctl method channel
+/// (verified in use), and Windows via GetIpNetTable in pure-Dart FFI (see
+/// [WindowsIpNetTableArpReader] — implemented, but still carrying
+/// TODO(windows-verify) below; unverified on real hardware, and it degrades to
+/// an honest unavailable rather than a wrong answer if it fails). iOS and
+/// Android are sandboxed out of the ARP table and get an honest unavailable
+/// reader; Linux and anything else is out of scope and says so. No subprocess
+/// on any path.
 ArpReader platformArpReader() {
   // Web has no dart:io Platform; the engine never runs there (kIsWeb guard in
   // the debug screen), but be defensive.
