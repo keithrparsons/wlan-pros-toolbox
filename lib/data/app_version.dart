@@ -66,7 +66,7 @@ class AppVersion {
   /// [fallbackVersion]. (iOS ship builds inject a CFBundleVersion timestamp that
   /// PackageInfo reads at runtime; this constant is the pubspec-declared build
   /// used only when that runtime read is unavailable.)
-  static const String fallbackBuildNumber = '26071900';
+  static const String fallbackBuildNumber = '26071901';
 
   /// A const fallback snapshot, used before [load] resolves and in tests that
   /// do not bind the platform channel.
