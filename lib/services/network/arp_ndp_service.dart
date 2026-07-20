@@ -192,8 +192,9 @@ class ArpNdpService {
   }
 
   // NOTE: a static parseProcNetArp() lived here and parsed /proc/net/arp. It
-  // was removed with the inverted matrix: this app ships no Linux target, and
-  // the MAC source is now the platform ArpReader on every platform. It was the
+  // was removed with the inverted matrix: no reader in this app reads that file
+  // (platformArpReader() hands Linux an UnavailableArpReader), and the MAC
+  // source is now the platform ArpReader on every platform. It was the
   // second representation the stale table was written against — keeping it as
   // dead code would just re-seed the drift.
 

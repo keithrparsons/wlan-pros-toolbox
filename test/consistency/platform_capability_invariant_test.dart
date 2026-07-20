@@ -724,12 +724,66 @@ void main() {
       }
     });
 
-    // SELF-TEST FIRST. A copy-scanning guard is only as good as its phrase
-    // list, and nothing else in the suite would notice if that list stopped
-    // matching. These two feed the scanners the ACTUAL text that shipped on
-    // 2026-07-20 and require them to flag it — so the detector is proven to
-    // fail on a known defect before it is trusted on the real files.
-    test('SELF-TEST: the scanners flag the real HIGH-1 and HIGH-2 copy', () {
+    // SELF-TESTS FIRST, and they are the part that failed last time.
+    //
+    // Round 1 self-tested the scanner against the two blobs it was WRITTEN to
+    // catch. Vera deleted each of the 11 phrases individually: 11/11 survived,
+    // because each blob matched on 2-3 redundant phrases. The guard proved
+    // non-empty, not adequate — and "a responder list without MACs; that's the
+    // platform ceiling" shipped through it with the suite green.
+    //
+    // So: (1) a fixture the scanner has NEVER seen, (2) per-pattern coverage
+    // where every pattern has its own fixture, and (3) proof that each fixture
+    // pins exactly ONE pattern, so no single deletion can hide behind a
+    // sibling. An audit must be looser than the check it audits (GL-013).
+    test('SELF-TEST: every denial pattern is individually load-bearing', () {
+      expect(_denialFixtures.length, _arpDenialPatterns.length,
+          reason: 'a denial pattern was added or removed without its fixture — '
+              'per-pattern coverage is what makes a deletion fail');
+      for (int i = 0; i < _arpDenialPatterns.length; i++) {
+        final String fixture = _denialFixtures[i];
+        expect(_arpDenialPatterns[i].hasMatch(fixture.toLowerCase()), isTrue,
+            reason: 'fixture $i does not exercise its own pattern '
+                '"${_arpDenialPatterns[i].pattern}"');
+        expect(_matchCount(_arpDenialPatterns, fixture), 1,
+            reason: 'fixture "$fixture" matches more than one denial pattern, '
+                'so deleting one of them would go undetected — the exact hole '
+                'that let "without MACs" ship');
+        expect(_denialViolations(<String>[fixture], expectedArpMac), isNotEmpty,
+            reason: 'the denial scanner does not flag fixture $i end-to-end');
+      }
+    });
+
+    test('SELF-TEST: every credit pattern is individually load-bearing', () {
+      expect(_creditFixtures.length, _arpCreditPatterns.length,
+          reason: 'a credit pattern was added or removed without its fixture');
+      for (int i = 0; i < _arpCreditPatterns.length; i++) {
+        final String fixture = _creditFixtures[i];
+        expect(_arpCreditPatterns[i].hasMatch(fixture.toLowerCase()), isTrue,
+            reason: 'fixture $i does not exercise its own credit pattern');
+        expect(_matchCount(_arpCreditPatterns, fixture), 1,
+            reason: 'credit fixture "$fixture" matches more than one pattern');
+        expect(_creditViolations(<String>[fixture], expectedArpMac), isNotEmpty,
+            reason: 'the credit scanner does not flag fixture $i end-to-end');
+      }
+    });
+
+    test(
+        'SELF-TEST: the scanner flags copy it has NEVER seen — the live defect '
+        'that shipped through the first version of this guard', () {
+      // Vera found this sentence in the file Part C already scanned, while the
+      // suite was 4982/0 green. It is the regression fixture for the HOLE, not
+      // for the wording: no phrase in the round-1 list matched it.
+      const String escaped =
+          "- On macOS/Windows you get a responder list without MACs; that's "
+          'the platform ceiling.';
+      expect(_denialViolations(_sentencesOf(escaped), expectedArpMac),
+          isNotEmpty,
+          reason: 'the denial scanner still misses the sentence that escaped '
+              'it once already');
+    });
+
+    test('SELF-TEST: the scanners flag the original HIGH-1 and HIGH-2 copy', () {
       const String high1 =
           'What each platform can do: Android and Linux give you the device '
           'list plus the real hardware address. macOS and Windows give you '
@@ -744,11 +798,11 @@ void main() {
       for (final String bad in <String>[high1, high2]) {
         expect(_denialViolations(_sentencesOf(bad), expectedArpMac), isNotEmpty,
             reason: 'the denial scanner no longer detects the shipped copy it '
-                'was written to catch. Its phrase list has rotted.');
+                'was written to catch');
       }
       expect(_creditViolations(_sentencesOf(high1), expectedArpMac), isNotEmpty,
           reason: 'the credit scanner no longer detects Android being credited '
-              'with a real hardware-address read.');
+              'with a real hardware-address read');
     });
 
     test('SELF-TEST: the scanners do NOT flag the corrected copy', () {
@@ -923,23 +977,66 @@ List<String> _shippedArpSentences() {
   return sentences;
 }
 
-/// Phrases that DENY the MAC capability. Kept beside the scanner they feed.
-const List<String> _arpDenialPhrases = <String>[
-  'no hardware address',
-  'not exposed on this platform',
-  'no mac',
-  'cannot read',
-  'does not make that table readable',
-  'no readable arp file',
+/// Patterns that DENY the MAC capability. REGEX, not literals, and each one is
+/// individually covered by a fixture in `_denialFixtures` — delete a pattern
+/// and its fixture stops being flagged, which fails the suite.
+///
+/// HONEST LIMIT (do not overread, GL-013). This is a phrase-based guard. It
+/// cannot catch an arbitrary paraphrase of "this platform cannot read MACs";
+/// nothing short of a human reading the copy can. Its FIRST version was a
+/// closed enumeration of the two sentences already known to be bad, and a live
+/// defect ("a responder list without MACs; that's the platform ceiling")
+/// shipped straight through it while the suite was green. The lesson is
+/// encoded in `_fixtureCoverage`: a self-test anchored to the defect it
+/// already caught proves the list is NON-EMPTY, never that it is ADEQUATE.
+/// When you fix a copy defect this guard missed, add the pattern AND a fixture.
+final List<RegExp> _arpDenialPatterns = <RegExp>[
+  RegExp(r'without\s+(a\s+)?(macs?|hardware address)'),
+  RegExp(r'\bno\s+(readable\s+)?(macs?|hardware address)'),
+  RegExp(r'not exposed'),
+  RegExp(r'(cannot|can not|can.t|unable to)\s+read'),
+  RegExp(r'(does not|doesn.t)\s+(make|expose|let|allow)'),
+  RegExp(r'no readable arp'),
+  RegExp(r'platform ceiling'),
+  RegExp(r'out of scope'),
+  RegExp(r'lacks?\s+(a\s+)?(macs?|hardware address)'),
+  RegExp(r'(macs?|hardware address\w*)\s+(is|are)\s+not available'),
 ];
 
-/// Phrases that CREDIT a real neighbour-table read.
-const List<String> _arpCreditPhrases = <String>[
-  'real hardware address',
-  'real cached mac',
-  'plus the real',
-  'reads the system',
-  'attach the real',
+/// One fixture per denial pattern, each mentioning a CAPABLE platform. Every
+/// fixture must match EXACTLY ONE pattern (asserted), so no pattern can hide
+/// behind a redundant sibling.
+const List<String> _denialFixtures = <String>[
+  'On macOS you get a responder list without MACs.',
+  'Windows gives you the device list but no hardware address.',
+  'On macOS the MAC is not exposed to a sandboxed app.',
+  'Windows cannot read the neighbour table.',
+  'On macOS the system does not let apps see that table.',
+  'Windows has no readable arp file to consult.',
+  'On macOS that is the platform ceiling.',
+  'On Windows GetIpNetTable is out of scope.',
+  'macOS lacks a hardware address for each responder.',
+  'On Windows the MAC is not available.',
+];
+
+/// Patterns that CREDIT a real neighbour-table read, checked against platforms
+/// expected to LACK one. Same per-pattern fixture discipline.
+final List<RegExp> _arpCreditPatterns = <RegExp>[
+  RegExp(r'real\s+(hardware address|cached mac|macs?)'),
+  RegExp(r'plus the real'),
+  RegExp(r'reads?\s+the system'),
+  RegExp(r'attach(es|ing)?\s+the real'),
+  RegExp(r'/proc/net/arp'),
+  RegExp(r'\bwith\s+macs?\b'),
+];
+
+const List<String> _creditFixtures = <String>[
+  'Android gives you the real hardware address for each device.',
+  'On Android you get the device list plus the real one.',
+  'Android reads the system neighbour table.',
+  'On iOS it will attach the real value to each responder.',
+  'On Android it reads /proc/net/arp for the cached entry.',
+  'iOS lists every responder with MACs attached.',
 ];
 
 /// Split prose into sentences so a platform name and a claim only collide when
@@ -955,20 +1052,22 @@ List<String> _denialViolations(
   List<String> sentences,
   Map<String, bool> expected,
 ) =>
-    _violations(sentences, expected, capable: true, phrases: _arpDenialPhrases);
+    _violations(sentences, expected,
+        capable: true, patterns: _arpDenialPatterns);
 
 /// Sentences that credit a real MAC read to a platform expected to LACK it.
 List<String> _creditViolations(
   List<String> sentences,
   Map<String, bool> expected,
 ) =>
-    _violations(sentences, expected, capable: false, phrases: _arpCreditPhrases);
+    _violations(sentences, expected,
+        capable: false, patterns: _arpCreditPatterns);
 
 List<String> _violations(
   List<String> sentences,
   Map<String, bool> expected, {
   required bool capable,
-  required List<String> phrases,
+  required List<RegExp> patterns,
 }) {
   final List<String> hits = <String>[];
   for (final String sentence in sentences) {
@@ -976,15 +1075,20 @@ List<String> _violations(
     for (final MapEntry<String, bool> e in expected.entries) {
       if (e.value != capable) continue;
       if (!lower.contains(e.key.toLowerCase())) continue;
-      for (final String phrase in phrases) {
-        if (lower.contains(phrase)) {
-          hits.add('${e.key} :: "$phrase" :: $sentence');
+      for (final RegExp pattern in patterns) {
+        if (pattern.hasMatch(lower)) {
+          hits.add('${e.key} :: ${pattern.pattern} :: $sentence');
         }
       }
     }
   }
   return hits;
 }
+
+/// How many of [patterns] match [sentence]. Used to prove each fixture pins
+/// exactly one pattern.
+int _matchCount(List<RegExp> patterns, String sentence) =>
+    patterns.where((RegExp p) => p.hasMatch(sentence.toLowerCase())).length;
 
 /// True when [text] cites the Linux ARP procfs table. No shipping target of
 /// this app reads it: there is no `linux/` directory, and Android does not

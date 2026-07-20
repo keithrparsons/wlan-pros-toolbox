@@ -404,8 +404,8 @@ Discover local-network neighbors: IP, and MAC where the platform exposes it.
 
 **Field notes**
 - Platform differences: macOS and Windows run the active sweep and attach a real MAC from the system neighbour table. Android runs the sweep without MACs, because the system does not let apps read that table. iOS is unavailable. Web falls back to a download. The tool does not keep its own list of what each platform can do: it asks the reader that performs the read, so the app cannot describe a capability it does not have. The Windows read is implemented but not yet confirmed on real hardware; a read that fails is reported as a failed read, not as a platform limit.
-- A null MAC means the platform doesn't expose it, never an invented value. Incomplete/all-zero ARP entries are skipped.
-- On macOS/Windows you get a responder list without MACs; that's the platform ceiling. For richer enrichment and macOS MAC (via sysctl), see Network Discovery.
+- A missing MAC is never an invented value, and it always names WHICH kind of missing it is. "Not exposed on this platform" means no reader here can read the table at all. "MAC read failed" means the read was attempted on this platform and did not work. "Not in the ARP cache" means the read succeeded and simply held no entry for that host. Collapsing those three into one claim is how the tool used to tell macOS users their platform could not do a read it was performing. Incomplete/all-zero ARP entries are skipped.
+- On macOS and Windows you get a responder list WITH MACs, read from the system neighbour table. iOS and Android are the ceiling: those sandboxes do not expose the table, so responders list without a hardware address. For richer enrichment (device type and vendor) see Network Discovery.
 
 ### Lookup (BGP/ASN)
 
