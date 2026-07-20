@@ -20,9 +20,18 @@
 //                not an error.
 //  - error     → the engine could not derive a subnet / the scan failed; an
 //                honest reason, never a fabricated result.
-//  - desktop MAC/vendor ceiling → when the ARP read is unavailable (every
-//                non-macOS platform), an honest one-line note explains why no
-//                MAC/vendor column appears — not a blank "Manufacturer: —".
+//  - MAC/vendor ceiling → when the ARP read is unavailable for this platform,
+//                an honest one-line note explains why no MAC/vendor column
+//                appears — not a blank "Manufacturer: —". macOS reads it via
+//                the sysctl channel (verified). Windows has an implemented
+//                GetIpNetTable FFI path that is NOT yet verified on real
+//                hardware (see TODO(windows-verify) in arp_reader.dart) — if
+//                it fails it degrades to an honest unavailable, so the screen
+//                is correct either way, but "implemented and degrading
+//                honestly" is not "verified". iOS and Android cannot read it.
+//                The screen branches on the RESULT of the read, never on a
+//                hardcoded platform list — which is why an unverified backend
+//                cannot make this screen lie.
 //  - web        → NetworkUnavailableView (the socket engine needs dart:io).
 //
 // NOT feature-complete: W3 (multi-VLAN grouping), W4 (IPv6), W5 (per-host
@@ -103,23 +112,41 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// Was 900, chosen by estimate on the assumption the full column set (IP,
   /// Name, Type, MAC, Vendor, Services, Open ports) had to fit before the table
   /// was worth showing. Two things falsified that. First, the macOS window
-  /// declares 800x600 (`macos/Runner/Base.lproj/MainMenu.xib`) and launches
-  /// narrower than 900, so a 900 threshold meant the default window NEVER
-  /// showed the table -- the feature was invisible on launch with nothing to
-  /// hint that widening the window would reveal it. Second, captures of both
-  /// layouts at the same width (800 and 860) show the table already wins well
-  /// below 900: all six hosts are visible at once against three for the cards,
-  /// and the four identifying columns (IP, Name, Type, MAC) are fully readable
-  /// without scrolling. Fitting EVERY column was never the bar; the bar is
-  /// whether the row beats the card, and it does. Vendor onward is reached by
-  /// the table's own horizontal scroll, which has a visible scrollbar.
+  /// declares 800x600 (`macos/Runner/Base.lproj/MainMenu.xib:335`) and a fresh
+  /// install launches at exactly that (MainFlutterWindow.swift reuses the nib's
+  /// frame), so a 900 threshold meant the default window NEVER showed the table
+  /// -- the feature was invisible on launch with nothing to hint that widening
+  /// the window would reveal it. Second, captures of both layouts show the
+  /// table already wins well below 900: all six hosts are visible at once
+  /// against three for the cards, and the four identifying columns (IP, Name,
+  /// Type, MAC) are fully readable without scrolling. Fitting EVERY column was
+  /// never the bar; the bar is whether the row beats the card, and it does.
+  /// Vendor onward is reached by the table's own horizontal scroll, which has a
+  /// visible scrollbar.
   ///
-  /// 760 sits below the declared 800 default so a fresh install with no saved
-  /// window frame still gets the table, and stays above [_desktopBreakpoint] so
-  /// the two thresholds keep answering different questions.
+  /// Those comparison captures were taken at 800 and 860. **860 is a screenshot
+  /// width, NOT a launch width** -- it has already been misread as a product
+  /// default at least once. Nothing in `macos/Runner/` contains 860. The launch
+  /// width, and therefore the visibility floor any such threshold must sit
+  /// below, is 800.
+  ///
+  /// 760 sits below that 800 floor so a fresh install with no saved window
+  /// frame still gets the table (GL-003 §8.7.1), and stays above
+  /// [_desktopBreakpoint] so the two thresholds keep answering different
+  /// questions.
+  ///
+  /// OPEN (GL-003 §8.7.1, escalated to Keith): whether 760 should collapse into
+  /// [_desktopBreakpoint]. The captures above never covered 720-760, so whether
+  /// the table still beats the card at 720 is genuinely unknown. Until that is
+  /// settled, 760 stands. Do not "tidy" it into 720 on the grounds that the
+  /// scale is otherwise 440/720/1100.
   ///
   /// Width-based, NOT platform-based: a desktop window dragged narrow reflows
   /// back to cards exactly like a phone.
+  ///
+  /// Behaviour is pinned in test/screens/network_discovery_breakpoint_test.dart
+  /// at the widths that ship. Moving this constant turns that file red by
+  /// design; none of the reasoning above is enforced by the number alone.
   static const double _tableBreakpoint = 760;
 
   StreamSubscription<DiscoveryProgress>? _sub;
@@ -569,10 +596,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         _MessageCard(
           icon: Icons.search_off_outlined,
           title: 'No hosts responded',
-          body:
-              'No devices on ${r.subnetLabel} answered on the probed ports '
-              'or via mDNS. They may be firewalled, asleep, or the subnet may '
-              'be empty.',
+          body: _emptyStateBody(r),
         )
       else if (isTable)
         // Wide viewport: one scannable row per host, sortable. MAC and Vendor
@@ -627,11 +651,12 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          _summaryRow(context, 'Subnet', r.subnetLabel, mono),
+          _summaryRow(context, 'Swept', r.subnetLabel, mono),
           if (r.selfIp != null)
             _summaryRow(context, 'This device', r.selfIp!, mono),
           if (r.gateway != null)
             _summaryRow(context, 'Gateway', r.gateway!, mono),
+          _outsideSweepNote(context, r),
           const SizedBox(height: AppSpacing.xs),
           _macAvailabilityNote(context, r),
         ],
@@ -677,6 +702,77 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// MAC + vendor; on iOS (and any platform that cannot read the ARP cache) it
   /// is unavailable — say so once here, plainly, rather than render an empty
   /// "Manufacturer: —" on every row (brief anti-pattern #2).
+  /// The empty state's body. Only names a source it can vouch for having
+  /// actually consulted.
+  ///
+  /// "Not found" is not "not checked" ([[feedback_unsourced_is_not_invalid]]),
+  /// and an empty result screen is where those two are easiest to conflate —
+  /// there is no data on screen to contradict whatever the copy claims. Two
+  /// sources, two different reasons they cannot be asserted flatly:
+  ///
+  ///  * **ARP** — `platformArpReader()` returns an `UnavailableArpReader` on
+  ///    iOS and Android, so on those platforms the cache is never read. Saying
+  ///    "nothing appeared in the ARP cache" there also directly contradicted
+  ///    the MAC-ceiling note this same card renders a moment later, which says
+  ///    the platform cannot do an ARP read at all. Gated on [ArpReadResult
+  ///    .available], which is the outcome of the real read.
+  ///
+  ///  * **mDNS** — deliberately NOT named here, on any platform. The browse is
+  ///    attempted everywhere, but `MdnsBrowser.browse()` is contractually
+  ///    never-throw and returns "whatever it gathered, which may be empty" —
+  ///    so a browse that never ran (no native channel: the EventChannel is
+  ///    implemented only in `ios/Runner/` and `macos/Runner/`, so Windows and
+  ///    Linux have none) is indistinguishable from a browse where nobody
+  ///    answered. There is no signal to condition on, so this copy makes no
+  ///    mDNS claim rather than a claim that is false on shipped platforms.
+  ///    Giving mDNS an honest outcome the way ARP has one is a follow-up.
+  String _emptyStateBody(DiscoveryResult r) {
+    final bool arpRead = r.arp?.available ?? false;
+    final String probed =
+        'Nothing answered on the probed ports across ${r.subnetLabel}';
+    final String sources =
+        arpRead ? '$probed, and nothing appeared in the ARP cache' : probed;
+    return '$sources. Devices may be firewalled, asleep, or the subnet may be '
+        'empty.';
+  }
+
+  /// Reconciles the "Swept" range with the list printed under it.
+  ///
+  /// The connect-scan probes one /24, but mDNS replies and ARP-cache entries
+  /// legitimately name hosts outside it, and those hosts are kept — they are
+  /// real and they are the point. What was wrong was the COPY: the summary
+  /// asserted a precise range and the results underneath contradicted it, so a
+  /// reader could only conclude the tool did not know what it had done.
+  ///
+  /// Deliberately conditional. When every host fell inside the sweep there is
+  /// nothing to reconcile, and a standing caveat would be noise that trains the
+  /// reader to skip the line on the runs where it actually carries information.
+  Widget _outsideSweepNote(BuildContext context, DiscoveryResult r) {
+    final int n = r.hostsOutsideSweep.length;
+    if (n == 0) return const SizedBox.shrink();
+
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.rowPadding),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.info_outline, size: 16, color: colors.textTertiary),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              '$n host${n == 1 ? '' : 's'} below '
+              '${n == 1 ? 'is' : 'are'} outside that range, learned from mDNS '
+              'or the ARP cache rather than probed.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _macAvailabilityNote(BuildContext context, DiscoveryResult r) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
