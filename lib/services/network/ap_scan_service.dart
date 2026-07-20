@@ -7,6 +7,26 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+/// Whether [bssid] is an identity the OS WITHHELD rather than a real AP MAC.
+///
+/// Three forms mean the same thing, and the codebase already rejects all three
+/// in six other places (MainActivity.kt sanitizeBssid, arp_ndp_service.dart,
+/// windows_arp_ffi.dart, windows_wifi_ffi.dart `_decodeBssid`):
+///   * null / empty — macOS strips SSID and BSSID together without Location.
+///   * 00:00:00:00:00:00 — the all-zero MAC, never a real radio.
+///   * 02:00:00:00:00:00 — Android's placeholder. MainActivity.kt:641 names it
+///     exactly: "the 'no permission' placeholder BSSID".
+///
+/// Testing only null-or-empty here was a NARROWER copy of a rule this codebase
+/// states more widely, and feeding a placeholder through reproduced the very
+/// screen the null check was written to prevent. Separators and case are
+/// normalized so `AA-BB-...` and `aa:bb:...` cannot slip past on formatting.
+bool isWithheldBssid(String? bssid) {
+  if (bssid == null || bssid.isEmpty) return true;
+  final String bare = bssid.toLowerCase().replaceAll(RegExp('[^0-9a-f]'), '');
+  return bare == '000000000000' || bare == '020000000000';
+}
+
 /// One visible access point (BSS) from a native Wi-Fi scan.
 ///
 /// ONE model for every platform. Android (`WifiManager.getScanResults()`) and
@@ -80,7 +100,10 @@ class ScannedAp {
     if (rssi == null || channel == null || band == null || freq == null) {
       return null;
     }
-    if (bssid == null || bssid.isEmpty) return null;
+    // The explicit null test is what promotes `bssid` to non-null for the
+    // constructor below; isWithheldBssid covers it too, but flow analysis does
+    // not see through the call.
+    if (bssid == null || isWithheldBssid(bssid)) return null;
     return ScannedAp(
       ssid: map['ssid'] as String?,
       bssid: bssid,
@@ -107,6 +130,7 @@ class ApScanSnapshot {
     required this.poweredOn,
     required this.locationAuthorized,
     required this.scanThrottled,
+    this.unreadableCount = 0,
   }) : assert(
           locationAuthorized || accessPoints.length == 0,
           'A snapshot cannot carry access points while locationAuthorized is '
@@ -141,17 +165,49 @@ class ApScanSnapshot {
   /// labels the list as "last scan" when this is true.
   final bool scanThrottled;
 
+  /// How many rows the radio reported that could not be parsed into an honest
+  /// [ScannedAp] — no channel, no band, or a 0 dBm "no measurement" RSSI.
+  ///
+  /// Carried so the UI can DISCLOSE the shortfall. A scan that silently drops
+  /// rows presents a short list as a complete one, which under-reports the RF
+  /// environment just as surely as a fabricated row over-reports it. The count
+  /// never includes withheld identities: those gate the whole snapshot via
+  /// [locationAuthorized] instead of being dropped.
+  final int unreadableCount;
+
   /// Builds a snapshot from the native channel payload.
   factory ApScanSnapshot.fromMap(Map<dynamic, dynamic> map) {
     final List<dynamic> rawAps =
         (map['accessPoints'] as List<dynamic>?) ?? const <dynamic>[];
-    final List<ScannedAp> aps = rawAps
-        .whereType<Map<dynamic, dynamic>>()
+    final List<Map<dynamic, dynamic>> rows =
+        rawAps.whereType<Map<dynamic, dynamic>>().toList();
+
+    // A WITHHELD IDENTITY IS EVIDENCE THE GRANT IS COMPROMISED — so it gates
+    // the snapshot; it does not quietly delete the row.
+    //
+    // Dropping these rows was the tempting fix and it is the wrong one. On
+    // Android the placeholder BSSIDs genuinely occur, so dropping would silently
+    // shrink the list and under-report the RF environment — trading a false
+    // identity for a false COUNT, which is the same lie wearing a different hat.
+    // The radio saw those APs. What we lost was permission to name them, and
+    // "we lost permission" is the Location card, not a discard.
+    final bool identityWithheld =
+        rows.any((Map<dynamic, dynamic> r) => isWithheldBssid(r['bssid'] as String?));
+
+    final List<ScannedAp> aps = rows
         .map(ScannedAp.fromMap)
         .whereType<ScannedAp>()
         .toList();
+
+    // Rows the radio reported that we could not parse at all (no channel, no
+    // band, or CoreWLAN's 0 dBm "no measurement"). Unlike a withheld identity
+    // these carry no permission signal — they are simply undescribable — so
+    // they are dropped, and the count travels with the snapshot so the UI can
+    // SAY so rather than presenting a short list as a complete one.
+    final int unreadableCount = rows.length - aps.length;
+
     final bool locationAuthorized =
-        (map['locationAuthorized'] as bool?) ?? false;
+        ((map['locationAuthorized'] as bool?) ?? false) && !identityWithheld;
     return ApScanSnapshot(
       // Rows are only meaningful when the grant that produced them is held.
       // A channel that reports rows alongside locationAuthorized:false is
@@ -163,6 +219,7 @@ class ApScanSnapshot {
       poweredOn: (map['poweredOn'] as bool?) ?? false,
       locationAuthorized: locationAuthorized,
       scanThrottled: (map['scanThrottled'] as bool?) ?? false,
+      unreadableCount: locationAuthorized ? unreadableCount : 0,
     );
   }
 

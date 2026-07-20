@@ -280,6 +280,14 @@ class _ApScanScreenState extends State<ApScanScreen> {
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
+    // Disclosed above the list, so the count in the card title below is read in
+    // the knowledge that it is not the whole radio picture.
+    if (snap.unreadableCount > 0) {
+      children
+        ..add(_UnreadableRowsNote(count: snap.unreadableCount))
+        ..add(const SizedBox(height: AppSpacing.sm));
+    }
+
     final List<ScannedAp> aps = snap.accessPoints;
 
     if (aps.isEmpty) {
@@ -572,6 +580,50 @@ class _ThrottledNote extends StatelessWidget {
           Expanded(
             child: Text(
               message,
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Discloses rows the radio reported that could not be read.
+///
+/// Without this the screen presents a short list as a COMPLETE one: the radio
+/// sees four BSSs, the card title says "2 access points", and nothing tells the
+/// user the other two were discarded. That under-reports the RF environment,
+/// which is the same class of lie as over-reporting it — an engineer counting
+/// APs on a channel would be counting the wrong number and never know
+/// ([[feedback_app_blames_the_wifi]]). The rows genuinely cannot be shown (no
+/// channel, no band, or a 0 dBm non-measurement), so the honest move is to say
+/// how many rather than to invent them or hide them.
+class _UnreadableRowsNote extends StatelessWidget {
+  const _UnreadableRowsNote({required this.count});
+
+  /// How many reported rows could not be parsed into an honest AP row.
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return _Surface(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.filter_alt_off_outlined, size: 20, color: colors.textTertiary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              count == 1
+                  ? 'The radio reported 1 more network that could not be read: '
+                      'it came back without a usable channel or signal reading. '
+                      'It is not counted below.'
+                  : 'The radio reported $count more networks that could not be '
+                      'read: they came back without a usable channel or signal '
+                      'reading. They are not counted below.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),

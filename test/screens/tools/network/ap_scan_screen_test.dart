@@ -97,6 +97,23 @@ void main() {
   Widget host(Widget child) =>
       MaterialApp(theme: AppTheme.dark(), home: child);
 
+  /// One native-shaped scan row, so a test can vary exactly the field under
+  /// examination (usually `bssid`) and leave the rest well-formed.
+  Map<String, Object?> row({
+    String? ssid,
+    String? bssid,
+    int channel = 6,
+    int rssi = -70,
+  }) =>
+      <String, Object?>{
+        'ssid': ssid,
+        'bssid': bssid,
+        'rssiDbm': rssi,
+        'channel': channel,
+        'band': '2.4 GHz',
+        'frequencyMhz': 2437,
+      };
+
   group('ApScanScreen — Android (supported)', () {
     testWidgets('renders the AP list with SSID / BSSID / channel / band / RSSI',
         (tester) async {
@@ -471,21 +488,6 @@ void main() {
   // keys on.
   // -------------------------------------------------------------------------
   group('withheld identity vs hidden network', () {
-    Map<String, Object?> row({
-      String? ssid,
-      String? bssid,
-      int channel = 6,
-      int rssi = -70,
-    }) =>
-        <String, Object?>{
-          'ssid': ssid,
-          'bssid': bssid,
-          'rssiDbm': rssi,
-          'channel': channel,
-          'band': '2.4 GHz',
-          'frequencyMhz': 2437,
-        };
-
     test('a row with no BSSID is DROPPED, not modeled', () {
       // Both fields stripped by the OS = identity withheld.
       expect(ScannedAp.fromMap(row(ssid: null, bssid: null)), isNull);
@@ -567,6 +569,131 @@ void main() {
 
       expect(find.text('KeithNet'), findsNothing);
       expect(find.textContaining('channel occupancy'), findsNothing);
+    });
+
+    // -----------------------------------------------------------------------
+    // A PLACEHOLDER BSSID GATES THE SNAPSHOT — it does not delete the row.
+    //
+    // The first fix tested only null-or-empty, a NARROWER rule than the six
+    // other places in this codebase that reject "no BSSID" (MainActivity.kt
+    // sanitizeBssid, arp_ndp_service, windows_arp_ffi, windows_wifi_ffi). All
+    // of them also reject the zero-MAC and 02:00:00:00:00:00, and feeding a
+    // placeholder through reproduced the original defect exactly: two
+    // "(hidden network)" rows under a confident "2 access points".
+    //
+    // Dropping the placeholder rows would have been the wrong fix. On Android
+    // they genuinely occur, so a drop would shrink the list silently and
+    // under-report the RF environment. MainActivity.kt:641 names what a
+    // placeholder actually means — "the 'no permission' placeholder BSSID" — so
+    // it is evidence the grant is compromised, and that is the Location card.
+    // -----------------------------------------------------------------------
+    for (final String placeholder in <String>[
+      '02:00:00:00:00:00', // Android's no-permission placeholder
+      '00:00:00:00:00:00', // all-zero MAC
+      '02-00-00-00-00-00', // separator variant must not slip past
+      '02:00:00:00:00:00'.toUpperCase(), // case variant must not slip past
+    ]) {
+      test('placeholder BSSID $placeholder revokes the grant, keeps no rows',
+          () {
+        final ApScanSnapshot snap = ApScanSnapshot.fromMap(_payload(
+          aps: <Map<String, Object?>>[
+            row(ssid: null, bssid: placeholder),
+            row(ssid: 'RealNet', bssid: 'a4:83:e7:00:11:22'),
+          ],
+        ));
+        expect(snap.locationAuthorized, isFalse,
+            reason: 'a placeholder is a permission signal, not a bad row');
+        expect(snap.accessPoints, isEmpty);
+        // Crucially NOT reported as an unreadable-row discard: nothing was
+        // undescribable here, we lost the right to name them.
+        expect(snap.unreadableCount, 0);
+      });
+    }
+
+    testWidgets('placeholder rows render the Location gate, never a hidden AP',
+        (tester) async {
+      final Map<String, Object?> payload = _payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: null, bssid: '02:00:00:00:00:00', channel: 6),
+          row(ssid: null, bssid: '02:00:00:00:00:00', channel: 36),
+        ],
+      );
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'android'))),
+      );
+      await tester.pumpAndSettle();
+
+      // The three lines the gate's repro printed, now inverted.
+      expect(find.text('(hidden network)'), findsNothing);
+      expect(find.text('2 access points'), findsNothing);
+      expect(find.textContaining('scan could not run'), findsOneWidget);
+    });
+
+    // -----------------------------------------------------------------------
+    // ANDROID, NAMED. The shared fromMap tests pinned this behaviour without
+    // ever asserting it on the platform it actually ships to.
+    // -----------------------------------------------------------------------
+    testWidgets('Android: a real scan with real BSSIDs still lists normally',
+        (tester) async {
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(_payload(), platform: 'android'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(find.text('3 access points'), findsOneWidget);
+      // The one genuinely cloaked BSS in the fixture keeps its honest label,
+      // because it kept its BSSID.
+      expect(find.text('(hidden network)'), findsOneWidget);
+      expect(find.textContaining('scan could not run'), findsNothing);
+    });
+
+    test('Android: sanitizeBssid placeholders are rejected by the Dart side too',
+        () {
+      // Kotlin sanitizes before the payload is built, but ScanResult.BSSID is a
+      // bare public field with no nullness annotation
+      // ($ANDROID_HOME/sources/android-36.1/android/net/wifi/ScanResult.java:98),
+      // so Kotlin sees a platform type. Dart does not assume it was sanitized.
+      expect(isWithheldBssid('02:00:00:00:00:00'), isTrue);
+      expect(isWithheldBssid('00:00:00:00:00:00'), isTrue);
+      expect(isWithheldBssid(null), isTrue);
+      expect(isWithheldBssid(''), isTrue);
+      expect(isWithheldBssid('a4:83:e7:00:11:22'), isFalse);
+      // A real MAC that merely STARTS with 02 is locally-administered, not a
+      // placeholder, and must survive.
+      expect(isWithheldBssid('02:00:00:00:00:01'), isFalse);
+    });
+
+    // -----------------------------------------------------------------------
+    // NEW-2: the drop must not be silent. False identity became false COUNT.
+    // -----------------------------------------------------------------------
+    test('unparseable rows are counted, not silently swallowed', () {
+      final ApScanSnapshot snap = ApScanSnapshot.fromMap(_payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: 'Good', bssid: 'a4:83:e7:00:11:22'),
+          <String, Object?>{'ssid': 'NoChannel', 'bssid': 'aa:bb:cc:dd:ee:ff'},
+          <String, Object?>{'ssid': 'AlsoBad', 'bssid': 'aa:bb:cc:dd:ee:00'},
+        ],
+      ));
+      expect(snap.accessPoints, hasLength(1));
+      expect(snap.unreadableCount, 2);
+    });
+
+    testWidgets('the screen SAYS how many rows it could not read',
+        (tester) async {
+      final Map<String, Object?> payload = _payload(
+        aps: <Map<String, Object?>>[
+          row(ssid: 'Good', bssid: 'a4:83:e7:00:11:22'),
+          <String, Object?>{'ssid': 'NoChannel', 'bssid': 'aa:bb:cc:dd:ee:ff'},
+        ],
+      );
+      await tester.pumpWidget(
+        host(ApScanScreen(service: _service(payload, platform: 'macos'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 access point'), findsOneWidget);
+      expect(find.textContaining('could not be read'), findsOneWidget);
     });
 
     test('the model refuses to carry rows without the grant', () {
