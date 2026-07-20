@@ -36,6 +36,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_version.dart';
 import '../router/app_router.dart';
+import '../services/app_update_service.dart';
 import '../services/network/wifi_details_bridge.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
@@ -69,7 +70,12 @@ const String _kContactUrl = 'https://wlanprofessionals.com/contact';
 const String _kFeedbackUrl = _kContactUrl;
 
 class AboutScreen extends StatefulWidget {
-  const AboutScreen({super.key});
+  const AboutScreen({super.key, this.updateService});
+
+  /// Injectable update checker. Null in production (the screen builds the real
+  /// [AppUpdateService]); tests pass a scripted one to render each verdict
+  /// without touching the network.
+  final AppUpdateService? updateService;
 
   @override
   State<AboutScreen> createState() => _AboutScreenState();
@@ -81,13 +87,32 @@ class _AboutScreenState extends State<AboutScreen> {
   // window (no crash, no flash of a wrong/hardcoded value).
   AppVersionInfo? _version;
 
+  // Update-check outcome. Null until the check resolves (and on a store-managed
+  // or web build it stays effectively invisible — see [_UpdateLine]). The check
+  // is fire-and-forget and NEVER awaited by build(): the About screen renders
+  // fully before any network I/O starts, so a slow or dead network changes
+  // nothing about how fast this screen appears.
+  AppUpdateResult? _update;
+
   @override
   void initState() {
     super.initState();
     AppVersion.load().then((AppVersionInfo info) {
       if (!mounted) return;
       setState(() => _version = info);
+      _checkForUpdate(info.version);
     });
+  }
+
+  /// Ask whether a newer build is published. [AppUpdateService.check] never
+  /// throws, so there is no error path to handle here and nothing to show the
+  /// user when it cannot answer beyond the honest "could not check" line.
+  Future<void> _checkForUpdate(String currentVersion) async {
+    final AppUpdateResult result = await (widget.updateService ??
+            AppUpdateService())
+        .check(currentVersion: currentVersion);
+    if (!mounted) return;
+    setState(() => _update = result);
   }
 
   @override
@@ -100,7 +125,7 @@ class _AboutScreenState extends State<AboutScreen> {
           // §8.16 — copy the full About text. textBuilder is non-null always
           // (the copy is static), so the action renders enabled.
           AppCopyAction(
-            textBuilder: () => _aboutPlainText(_version),
+            textBuilder: () => _aboutPlainText(_version, _update),
             idleLabel: 'Copy About text',
           ),
         ],
@@ -298,7 +323,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   // 8. Version and Feedback — version row is interactive
                   // (copyable) and the feedback link reuses the contact form.
                   // Reads the same runtime build identity as the top badge.
-                  _VersionSection(info: _version),
+                  _VersionSection(info: _version, update: _update),
 
                   // 8.5 About the founder — Keith Parsons headshot + approved
                   // short bio. Placed below the app/version info and above the
@@ -321,7 +346,26 @@ class _AboutScreenState extends State<AboutScreen> {
 /// §8.16 AppCopyAction in the AppBar. Mirrors the on-screen sections in order.
 /// Takes the runtime [AppVersionInfo] (null before it resolves) so the copied
 /// text carries the real shipped version + build number.
-String _aboutPlainText(AppVersionInfo? info) {
+/// The copy-text form of the update line, or null when the screen shows none
+/// (still checking, store-managed, or web). Kept beside [_UpdateLine] so the two
+/// wordings cannot drift apart.
+String? _updatePlainText(AppUpdateResult? update) {
+  final AppUpdateResult? r = update;
+  if (r == null) return null;
+  switch (r.status) {
+    case AppUpdateStatus.upToDate:
+      return 'This is the latest published version.';
+    case AppUpdateStatus.unknown:
+      return 'Could not check for a newer version.';
+    case AppUpdateStatus.updateAvailable:
+      return 'Version ${r.latestVersion} is available: '
+          '${r.releaseUrl ?? kReleasesPageUrl}';
+    case AppUpdateStatus.notApplicable:
+      return null;
+  }
+}
+
+String _aboutPlainText(AppVersionInfo? info, [AppUpdateResult? update]) {
   final AppVersionInfo v = info ?? AppVersion.fallback;
   final StringBuffer b = StringBuffer()
     ..writeln('WLAN Pros Toolbox: About')
@@ -371,7 +415,14 @@ String _aboutPlainText(AppVersionInfo? info) {
     ..writeln('Data not collected.')
     ..writeln()
     ..writeln('Version and Feedback')
-    ..writeln(v.display)
+    ..writeln(v.display);
+  // Carry the update state into the copied text: someone pasting this into a
+  // support ticket should not silently lose "a newer version is available", and
+  // "could not check" is worth knowing too. Mirrors the on-screen wording so
+  // the copy never says more than the screen did.
+  final String? updateLine = _updatePlainText(update);
+  if (updateLine != null) b.writeln(updateLine);
+  b
     ..writeln()
     ..writeln('Credits')
     ..writeln('Built by WLAN Pros.')
@@ -923,10 +974,13 @@ class _BuildBadge extends StatelessWidget {
 /// [AppVersionInfo] (null before it resolves) so the value matches the top
 /// build badge and the actual shipped build.
 class _VersionSection extends StatelessWidget {
-  const _VersionSection({required this.info});
+  const _VersionSection({required this.info, this.update});
 
   /// Runtime build identity; null until package_info_plus resolves.
   final AppVersionInfo? info;
+
+  /// Update-check outcome; null while the check is still in flight.
+  final AppUpdateResult? update;
 
   @override
   Widget build(BuildContext context) {
@@ -967,6 +1021,11 @@ class _VersionSection extends StatelessWidget {
                 ),
               ),
             ),
+            // One quiet line about whether a newer build is published. Renders
+            // nothing at all while the check is in flight and on builds that do
+            // not check (store-managed installs, web), so the section looks
+            // exactly as it did before on those platforms.
+            _UpdateLine(update: update),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Running into something odd, or have an idea to make this '
@@ -983,6 +1042,97 @@ class _VersionSection extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// One line stating whether a newer build is published, plus a link when there
+/// is one.
+///
+/// The three visible states are deliberately distinct, because the dangerous
+/// failure here is rendering "we could not check" as if it were "you are up to
+/// date". [AppUpdateStatus.unknown] therefore gets its own recessed tertiary
+/// register and says plainly that the check did not complete; it never borrows
+/// the reassuring wording. That is the same rule the rest of the app follows:
+/// do not state a verdict the app could not measure.
+///
+/// [AppUpdateStatus.notApplicable] (a store-managed install, or web) and the
+/// in-flight null case render a zero-size box, so nothing flashes and no build
+/// is ever pointed at a download it should not use.
+///
+/// Tokens: §4 spacing, §8.5 type (body), theme-aware text colors. No hardcoded
+/// color or size.
+class _UpdateLine extends StatelessWidget {
+  const _UpdateLine({required this.update});
+
+  final AppUpdateResult? update;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppUpdateResult? r = update;
+    if (r == null || r.status == AppUpdateStatus.notApplicable) {
+      return const SizedBox.shrink();
+    }
+
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    // The line appears AFTER first paint, when the check resolves, and moves
+    // no focus. Without a live region a screen-reader user is never told that
+    // an update exists, because nothing announces the insertion (WCAG 2.2
+    // SC 4.1.3). One region wraps every state so the announcement fires for
+    // "could not check" too, not only the good news.
+    return Semantics(
+      liveRegion: true,
+      child: _line(colors, text, r),
+    );
+  }
+
+  Widget _line(AppColorScheme colors, TextTheme text, AppUpdateResult r) {
+    switch (r.status) {
+      case AppUpdateStatus.upToDate:
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Text(
+            'This is the latest published version.',
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+          ),
+        );
+
+      case AppUpdateStatus.unknown:
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Text(
+            'Could not check for a newer version.',
+            style: text.bodyLarge?.copyWith(color: colors.textTertiary),
+          ),
+        );
+
+      case AppUpdateStatus.updateAvailable:
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Version ${r.latestVersion} is available.',
+                // textAccent, NOT accent: §8.20.2 makes lime fill-only on
+                // light, where bare `accent` on the card surface falls to
+                // 3.11:1 and misses WCAG AA. textAccent is lime in dark and
+                // darkened lime in light, so both themes clear 4.5:1 with no
+                // call-site branching. Same token the sibling TextButton uses.
+                style: text.bodyLarge?.copyWith(color: colors.textAccent),
+              ),
+              _ExternalLinkButton(
+                label: 'Get the update',
+                url: r.releaseUrl ?? kReleasesPageUrl,
+              ),
+            ],
+          ),
+        );
+
+      case AppUpdateStatus.notApplicable:
+        return const SizedBox.shrink();
+    }
   }
 }
 
