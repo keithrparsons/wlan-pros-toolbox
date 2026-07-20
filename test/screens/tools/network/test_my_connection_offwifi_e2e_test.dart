@@ -299,6 +299,15 @@ Future<_StaleBridge> _runOffWifiCheck(
       theme: AppTheme.dark(),
       home: TestMyConnectionScreen(
         sourceOverride: WifiInfoSource.iosShortcuts,
+        // PIN THE CLOCK. The screen stamps its result with a real wall-clock
+        // "Tested" fact ("Jul 20, 10:29 AM on iOS"), and this file asserts
+        // `isNot(contains('29'))` on the WHOLE screen to prove the stale 29 Mbps
+        // Tx rate never renders. Those two facts collide: on any run that lands
+        // in minute :29 (or on the 29th of a month) the timestamp supplies the
+        // '29' and four tests fail with nothing wrong in the app. Pinning the
+        // clock keeps the assertion at full strength — the alternative, loosening
+        // it to '29 Mbps', would let a bare stale rate through.
+        nowOverride: () => DateTime(2026, 7, 20, 10, 5),
         iosBridge: bridge,
         sampler: sampler,
         securityService: _FakeSecurity(),
