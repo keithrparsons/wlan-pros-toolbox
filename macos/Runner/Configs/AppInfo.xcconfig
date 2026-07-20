@@ -11,4 +11,4 @@ PRODUCT_NAME = wlan_pros_toolbox
 PRODUCT_BUNDLE_IDENTIFIER = com.wlanpros.wlanProsToolbox
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.wlanpros. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Wireless LAN Professionals, Inc. All rights reserved.
