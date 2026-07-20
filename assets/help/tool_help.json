@@ -1961,7 +1961,7 @@
         "Why your speed test may read differently: no single number is \"the\" speed of a connection. When the Toolbox shows an internet throughput figure, it is real throughput to neutral public destinations, measured over a fixed window and reported honestly. If another test on the same connection reads higher, that is the method talking: a different server, more streams, a longer ramp-up. If the Toolbox can't get a clean read, it tells you it couldn't rather than inventing a number. (see: How the Toolbox Measures Throughput)"
       ],
       "fieldNotes": [
-        "Platform differences: runs on macOS, Windows, Linux, Android, and iOS. On the web version it points you to download the app instead.",
+        "Platform differences: runs on macOS, Windows, Android, and iOS, and is coming to the WLAN Pi. On the web version it points you to download the app instead.",
         "Read each grade on its own: a connection can be Excellent on latency and Poor on upload at the same time, which is exactly the point. The download and upload Mbps grades are \"good enough for a household\" rules of thumb, not standards. Responsiveness is directional only.",
         "Latency times a full connection handshake to a real host, so it's a faithful stand-in for ping and reads slightly higher.",
         "The on-screen footnote says it plainly: these are this app's own measurements, not any other service's score. Download adds two streams together, so it reflects your link's total capacity rather than a single flow. A failed measurement reads \"Unavailable\" with a note, never 0."
