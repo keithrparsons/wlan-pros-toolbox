@@ -26,6 +26,28 @@
 // scan could not run and never shows an empty list that would imply there are no
 // access points nearby ([[feedback_app_blames_the_wifi]]).
 //
+// THE LOCATION GATE IS TRI-STATE, NOT BOOLEAN (load-bearing). macOS will not
+// re-prompt for Location once the status has left `notDetermined`, so a screen
+// holding only `isLocationAuthorized` (a bool) cannot tell "never asked" from
+// "asked and refused" and offers an in-app "Grant Location" button in both. In
+// the second case that button is guaranteed to do nothing: Keith clicked it
+// repeatedly in a live deployment and got no prompt, no error, no navigation.
+// The gate card therefore reads `locationAuthorizationStatus` and renders the
+// in-app grant ONLY under `notDetermined`; under `denied` / `restricted` the
+// System Settings deep-link is the sole action, and it is PRIMARY, because it
+// is the only route that can work. The copy follows: telling a denied user to
+// grant Location inside the app is instructing them to do something the OS
+// forbids.
+//
+// A GRANT IS NOT INSTANTANEOUS. The grant lands before CoreWLAN reflects it, so
+// the scan fired immediately after a successful grant comes back unauthorized.
+// Rendering that verdict produced "The scan did not run: Location is still not
+// granted" seconds after the user granted it. The screen now distinguishes
+// "authorization is missing" from "authorization is still propagating"
+// (_GrantPhase) and waits out the second, visibly, rather than reporting it as
+// the first. An app that blames the environment for its own timing is telling
+// the one lie this app must never tell ([[feedback_app_blames_the_wifi]]).
+//
 // States (SOP-007 §5):
 //   * unsupported (iOS / Windows / Linux / web) -> honest per-platform state.
 //   * loading  -> labeled spinner (announced via liveRegion) on first scan.
@@ -34,6 +56,13 @@
 //   * success  -> sort control + occupancy bars + the AP list.
 //   * disabled -> the Scan action shows a spinner while a scan is in flight.
 //   * interactive -> Scan (app bar) + the sort segmented control.
+//   * permission -> FOUR distinct renderings, one per authorization state:
+//       notDetermined -> "Grant Location" (primary) + Open Settings.
+//       denied/restricted -> Open Settings ONLY, primary, naming the manual
+//         path if the pane will not open.
+//       authorized-but-unread -> says the grant is held and the scan still
+//         could not read; never claims the grant is missing.
+//       in-flight (requesting / settling) -> spinner + status text, no verdict.
 //
 // DESKTOP LAYOUT: the screen was built for Android phones. On a wide window the
 // content column widens, the per-band occupancy cards sit side by side instead
@@ -46,20 +75,63 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../services/network/ap_scan_service.dart';
+import '../../../services/network/wifi_info_service.dart'
+    show LocationAuthStatus;
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 
+/// Where the Location grant handshake is.
+///
+/// This exists because a grant is not instantaneous, and the states in between
+/// are not failures. Collapsing them into "authorized or not" is what let the
+/// screen render a denial verdict during a grant that was in fact succeeding.
+enum _GrantPhase {
+  /// No grant in flight.
+  none,
+
+  /// The native prompt has been requested and has not returned. Nothing is
+  /// known about the outcome, so nothing is claimed about it.
+  requesting,
+
+  /// The grant is HELD, and the scan has not yet reflected it. A propagation
+  /// window, NOT an authorization failure.
+  settling,
+}
+
 /// The Nearby AP Scan tool screen (Android and macOS).
 class ApScanScreen extends StatefulWidget {
-  const ApScanScreen({super.key, this.service});
+  const ApScanScreen({
+    super.key,
+    this.service,
+    this.grantSettleBackoff = kDefaultGrantSettleBackoff,
+  });
 
   /// Injectable AP-scan service (tests). Defaults to the real native channel.
   /// Tests pass an [ApScanService] with a fake `invoke` and a
   /// `platformOverride` so the supported/unsupported branches are exercised
   /// without a real platform channel.
   final ApScanService? service;
+
+  /// How long to wait between the re-scans that follow a successful grant.
+  ///
+  /// A freshly granted Location authorization does NOT reach CoreWLAN
+  /// instantly: the TCC grant lands, the authorization delegate fires, and the
+  /// scan path picks it up a beat later. Re-scanning once, immediately, and
+  /// rendering whatever comes back produced a confident "Location is still not
+  /// granted" in the seconds after the user granted it. These are the waits
+  /// between the retries that replace that false verdict; the list length is
+  /// the number of retries. Tests inject zero-duration waits.
+  final List<Duration> grantSettleBackoff;
+
+  /// Real-world backoff. Total worst-case settle ~2.5s, spent showing an honest
+  /// "waiting" state rather than a wrong one.
+  static const List<Duration> kDefaultGrantSettleBackoff = <Duration>[
+    Duration(milliseconds: 300),
+    Duration(milliseconds: 700),
+    Duration(milliseconds: 1500),
+  ];
 
   @override
   State<ApScanScreen> createState() => _ApScanScreenState();
@@ -73,9 +145,22 @@ class _ApScanScreenState extends State<ApScanScreen> {
   ApScanUnavailable? _error;
   ApSortOrder _sort = ApSortOrder.signalDesc;
 
-  /// Set once a Location grant has been attempted, so the Location card swaps to
-  /// its post-attempt copy rather than looping the same prompt.
-  bool _locationGrantAttempted = false;
+  /// The TRI-STATE Location authorization, read from the native side.
+  ///
+  /// This screen used to hold only the boolean `isLocationAuthorized`, which
+  /// cannot tell "never asked" (promptable) from "asked and refused" (NOT
+  /// promptable — macOS never re-prompts once the status has left
+  /// `notDetermined`). Holding only the bool is what made the gate card offer
+  /// an in-app "Grant Location" button in a state where that button was
+  /// guaranteed to do nothing at all.
+  ///
+  /// Defaults to `notDetermined`, matching [LocationAuthStatus.fromToken]'s
+  /// documented fallback: offer the harmless prompt rather than a dead
+  /// deep-link when the truth is not yet known.
+  LocationAuthStatus _locationStatus = LocationAuthStatus.notDetermined;
+
+  /// Where the screen is in the grant handshake. See [_GrantPhase].
+  _GrantPhase _grantPhase = _GrantPhase.none;
 
   @override
   void initState() {
@@ -110,6 +195,13 @@ class _ApScanScreenState extends State<ApScanScreen> {
         _snapshot = snap;
         _loading = false;
       });
+      // The gate card is about to render, and WHICH card it renders depends on
+      // the tri-state, not on the boolean inside the snapshot. Read it here so
+      // the card never has to guess between "never asked" and "refused".
+      if (snap.verdict == ApScanVerdict.permissionMissing) {
+        await _refreshLocationStatus();
+        if (!mounted) return;
+      }
       if (manual && mounted) {
         final String msg = snap.scanThrottled
             ? 'Fresh scan declined: showing the last scan'
@@ -137,15 +229,103 @@ class _ApScanScreenState extends State<ApScanScreen> {
     }
   }
 
-  Future<void> _grantLocation() async {
-    await _service.requestLocationPermission();
+  /// Reads the tri-state authorization and stores it. Never throws; the service
+  /// already falls back to `notDetermined` on a channel failure.
+  Future<void> _refreshLocationStatus() async {
+    final LocationAuthStatus status =
+        await _service.locationAuthorizationStatus();
     if (!mounted) return;
-    _locationGrantAttempted = true;
-    await _runScan(fresh: true);
+    if (status == _locationStatus) return;
+    setState(() => _locationStatus = status);
   }
 
+  /// Runs the grant handshake, and — critically — does NOT report an
+  /// authorization failure while the grant is still propagating.
+  ///
+  /// THE BUG THIS REPLACES: this method used to request the permission and
+  /// immediately re-scan, rendering whatever that scan returned. A grant does
+  /// not reach CoreWLAN instantly, so the immediate scan came back unauthorized
+  /// and the screen stated "The scan did not run: Location is still not
+  /// granted" — in the seconds after the user granted it. It corrected itself a
+  /// moment later, but the user had already been told the feature was broken.
+  /// An app that blames the environment for its own timing is telling the one
+  /// lie this app must never tell ([[feedback_app_blames_the_wifi]]).
+  ///
+  /// So the handshake splits on a question the screen can actually answer: is
+  /// the grant HELD? If it is not (the user refused, or Location Services is
+  /// off system-wide), the tri-state now says so and the card renders the
+  /// honest deep-link path. If it IS held, then anything the scan says about
+  /// authorization from here is a statement about PROPAGATION, not about the
+  /// user's choice — so the screen waits for it, visibly, instead of reporting
+  /// it as a denial.
+  Future<void> _grantLocation() async {
+    setState(() => _grantPhase = _GrantPhase.requesting);
+    try {
+      final bool granted = await _service.requestLocationPermission();
+      if (!mounted) return;
+      await _refreshLocationStatus();
+      if (!mounted) return;
+
+      final bool held =
+          granted || _locationStatus == LocationAuthStatus.authorized;
+      if (!held) {
+        // A real refusal. The card now has the tri-state it needs to offer the
+        // only route that can work, so one scan to reflect reality is enough.
+        await _runScan(fresh: true);
+        return;
+      }
+
+      setState(() => _grantPhase = _GrantPhase.settling);
+      for (final Duration wait in widget.grantSettleBackoff) {
+        await _runScan(fresh: true);
+        if (!mounted) return;
+        // The grant landed AND the scan picked it up. Done.
+        if (_snapshot?.verdict != ApScanVerdict.permissionMissing) return;
+        await Future<void>.delayed(wait);
+        if (!mounted) return;
+      }
+      // Backoff exhausted. The screen does NOT now claim the grant is missing:
+      // the tri-state says it is held, so the card reports what is actually
+      // true — granted, and the scan still could not read.
+      await _runScan(fresh: true);
+    } finally {
+      if (mounted) setState(() => _grantPhase = _GrantPhase.none);
+    }
+  }
+
+  /// Opens the OS Location settings, and says so when it CANNOT.
+  ///
+  /// `openLocationSettings` has always returned whether the pane actually
+  /// opened, and this screen has always thrown that answer away. That was
+  /// survivable while "Open Settings" was the outlined afterthought beside
+  /// "Grant Location". It is not survivable now: under `denied` this is the
+  /// ONLY action on the card, so a silent false makes the sole remaining
+  /// control a dead button — the very defect this change exists to remove, one
+  /// step further along the same path.
+  ///
+  /// The fallback is the manual route, named step by step, because a user who
+  /// cannot be taken to the pane still needs to reach it.
   Future<void> _openLocationSettings() async {
-    await _service.openLocationSettings();
+    final bool opened = await _service.openLocationSettings();
+    if (!mounted || opened) return;
+    final String manualPath;
+    switch (_service.platformName) {
+      case 'macOS':
+        manualPath = 'Open System Settings, then Privacy & Security, then '
+            'Location Services, and enable this app.';
+      case 'Android':
+        manualPath = 'Open Settings, then Apps, then this app, then '
+            'Permissions, and allow Location.';
+      default:
+        manualPath =
+            'Open your system settings and allow Location for this app.';
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Could not open the settings page. $manualPath'),
+        duration: const Duration(seconds: 6),
+      ),
+    );
   }
 
   @override
@@ -258,7 +438,8 @@ class _ApScanScreenState extends State<ApScanScreen> {
       case ApScanVerdict.permissionMissing:
         children.add(
           _LocationCard(
-            attempted: _locationGrantAttempted,
+            status: _locationStatus,
+            phase: _grantPhase,
             platformName: _service.platformName,
             onGrant: _loading ? null : _grantLocation,
             onOpenSettings: _openLocationSettings,
@@ -810,19 +991,30 @@ class _NoneReadableCard extends StatelessWidget {
 /// scan did not run before anything else.
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
-    required this.attempted,
+    required this.status,
+    required this.phase,
     required this.platformName,
     required this.onGrant,
     required this.onOpenSettings,
   });
 
-  /// Whether a grant has already been attempted (swaps the copy).
-  final bool attempted;
+  /// The tri-state authorization. THE load-bearing input: it decides whether an
+  /// in-app grant is even possible, and therefore whether the button exists.
+  final LocationAuthStatus status;
+
+  /// Where the grant handshake is, so the card can describe a grant in flight
+  /// instead of rendering a verdict about one that has not landed yet.
+  final _GrantPhase phase;
 
   /// The OS name for the copy, or null on a platform with no name to attribute.
   final String? platformName;
   final VoidCallback? onGrant;
   final VoidCallback? onOpenSettings;
+
+  /// Whether the OS can still surface an in-app prompt. `notDetermined` is the
+  /// ONLY state where it can: once the user (or an MDM/parental restriction)
+  /// has answered, macOS will not ask again from inside the app, ever.
+  bool get _promptable => status == LocationAuthStatus.notDetermined;
 
   /// Why this OS gates the scan behind Location. Both are true statements about
   /// the platform, not a guess: Android withholds scan results entirely, macOS
@@ -841,17 +1033,69 @@ class _LocationCard extends StatelessWidget {
     }
   }
 
+  /// The OS name for a settings instruction, never a bare "the system".
+  String get _settingsName =>
+      platformName == 'macOS' ? 'System Settings' : 'Settings';
+
+  /// The one sentence this card exists to get right.
+  ///
+  /// Every branch is a statement the app can actually support. There is
+  /// deliberately NO branch that asserts "Location is still not granted",
+  /// because the only moment that sentence used to be reachable was the one
+  /// moment it was most likely to be FALSE: immediately after a successful
+  /// grant, before it had propagated.
+  String get _message {
+    // A grant is in flight. Nothing is known yet, so nothing is claimed.
+    if (phase == _GrantPhase.requesting) {
+      return 'Waiting for the system Location prompt. Answer it to list the '
+          'nearby access points.';
+    }
+    // The grant is HELD and the scan has not caught up. This is a statement
+    // about propagation, and it is said as one.
+    if (phase == _GrantPhase.settling) {
+      return 'Location is granted. Waiting for the scan to pick it up. This '
+          'takes a moment after the grant lands.';
+    }
+    switch (status) {
+      case LocationAuthStatus.denied:
+      case LocationAuthStatus.restricted:
+        // NOT promptable. The old copy said "Grant it to list the nearby
+        // access points", which instructed the user to do something the OS
+        // forbids, beside a button that could not do it. Both are gone.
+        return 'The scan could not run. $_reason Location is turned off for '
+            'this app, and this app cannot ask again. That switch only exists '
+            'in $_settingsName. Open it, enable Location for this app, then '
+            'run Scan again. Until then this screen cannot tell you what is on '
+            'the air, and this list being empty does not mean there are no '
+            'access points nearby.';
+      case LocationAuthStatus.authorized:
+        // Authorization is held but the scan still reports it missing. Saying
+        // the grant is missing would be a false statement about the machine.
+        return 'Location is granted, but the scan still could not read the '
+            'nearby networks. Tap Scan to try again. This screen cannot tell '
+            'you what is on the air until it does, and this list being empty '
+            'does not mean there are no access points nearby.';
+      case LocationAuthStatus.notDetermined:
+        return 'The scan could not run. $_reason Grant it to list the nearby '
+            'access points. Until then this screen cannot tell you what is on '
+            'the air.';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final String message = attempted
-        ? 'The scan did not run: Location is still not granted. If you just '
-            'allowed it, the nearby networks appear on the next scan. '
-            'Otherwise open Settings and enable Location for this app. This '
-            'list being empty does not mean there are no access points nearby.'
-        : 'The scan could not run. $_reason Grant it to list the nearby access '
-            'points. Until then this screen cannot tell you what is on the air.';
+    final String message = _message;
+    // A grant in flight offers no buttons: the prompt owns the interaction, and
+    // a second control underneath it is a race the user cannot win.
+    final bool inFlight = phase != _GrantPhase.none;
+    // THE FIX for the dead button. The in-app grant is rendered ONLY where the
+    // OS can actually surface a prompt. Everywhere else the deep-link is the
+    // only thing that can work, so it carries the primary weight instead of
+    // sitting as an outlined afterthought beside a button that cannot act.
+    final bool showGrant = !inFlight && _promptable && onGrant != null;
+    final bool settingsIsPrimary = !showGrant;
     return _Surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,13 +1118,13 @@ class _LocationCard extends StatelessWidget {
               ),
             ],
           ),
-          if (onGrant != null || onOpenSettings != null) ...<Widget>[
+          if (!inFlight && (showGrant || onOpenSettings != null)) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             Wrap(
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
               children: <Widget>[
-                if (onGrant != null)
+                if (showGrant)
                   Semantics(
                     button: true,
                     label: 'Grant Location permission to scan',
@@ -892,12 +1136,46 @@ class _LocationCard extends StatelessWidget {
                 if (onOpenSettings != null)
                   Semantics(
                     button: true,
-                    label: 'Open Location settings',
-                    child: OutlinedButton(
-                      onPressed: onOpenSettings,
-                      child: const Text('Open Settings'),
-                    ),
+                    label: settingsIsPrimary
+                        ? 'Open $_settingsName to enable Location for this app'
+                        : 'Open Location settings',
+                    // Primary weight when it is the only action that can work,
+                    // so the one usable route is not the quiet one.
+                    child: settingsIsPrimary
+                        ? FilledButton(
+                            onPressed: onOpenSettings,
+                            child: const Text('Open Settings'),
+                          )
+                        : OutlinedButton(
+                            onPressed: onOpenSettings,
+                            child: const Text('Open Settings'),
+                          ),
                   ),
+              ],
+            ),
+          ],
+          // A grant in flight is progress, not a dead card: the spinner is the
+          // visible counterpart to the copy above, so the settling window reads
+          // as "working" rather than "stuck".
+          if (inFlight) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.textAccent,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  phase == _GrantPhase.requesting
+                      ? 'Waiting for your answer…'
+                      : 'Checking again…',
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
+                ),
               ],
             ),
           ],

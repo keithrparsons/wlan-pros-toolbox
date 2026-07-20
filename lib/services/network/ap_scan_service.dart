@@ -7,6 +7,14 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+// LocationAuthStatus is DEFINED beside the Wi-Fi Information service because
+// that is where the shipped authorization flow lives. The AP scan reuses the
+// same enum rather than declaring a parallel one: two tri-state enums for one
+// TCC grant is two things to keep in sync, and the native token vocabulary
+// ("authorized" / "denied" / "restricted" / "notDetermined") is already
+// resolved by LocationAuthStatus.fromToken.
+import 'wifi_info_service.dart' show LocationAuthStatus;
+
 /// What a scan row's BSSID field tells us about that row.
 ///
 /// THREE outcomes, not two. Collapsing the last two was a real defect: a single
@@ -586,6 +594,39 @@ class ApScanService {
   Future<bool> isLocationAuthorized() async {
     final result = await _invokePermission('isLocationAuthorized');
     return (result as bool?) ?? false;
+  }
+
+  /// The tri-state Location authorization status, with no prompt.
+  ///
+  /// [isLocationAuthorized] is a BOOLEAN, and a boolean cannot distinguish
+  /// "never asked" from "asked and refused" — which is precisely the
+  /// distinction the gate card needs, because macOS will not re-prompt once the
+  /// status has left `notDetermined`. A screen holding only the bool offers an
+  /// in-app grant button in both cases, and in the second case that button is
+  /// guaranteed to do nothing.
+  ///
+  /// UNLIKE the other permission calls, this one routes to the wifi_info
+  /// channel on BOTH platforms rather than through [_invokePermission]. The
+  /// Android ap_scan channel implements `isLocationAuthorized`,
+  /// `requestLocationPermission` and `openLocationSettings` but NOT
+  /// `locationAuthorizationStatus` (MainActivity.kt, apScanChannelName handler)
+  /// — routing there would hit `notImplemented`. The wifi_info channel
+  /// implements it on both platforms, against the identical grant and the same
+  /// MainActivity helpers, so it is the authoritative source for either OS.
+  ///
+  /// Falls back to [LocationAuthStatus.notDetermined] when the native side
+  /// returns nothing or the call fails, matching the documented enum contract:
+  /// the safe default offers the harmless prompt path rather than a dead
+  /// deep-link.
+  Future<LocationAuthStatus> locationAuthorizationStatus() async {
+    try {
+      final result = await _invokeWifiInfo('locationAuthorizationStatus');
+      return LocationAuthStatus.fromToken(result as String?);
+    } on PlatformException {
+      return LocationAuthStatus.notDetermined;
+    } on MissingPluginException {
+      return LocationAuthStatus.notDetermined;
+    }
   }
 
   /// Requests the Location grant. Returns whether it is held afterward. Both
