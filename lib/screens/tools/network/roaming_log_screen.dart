@@ -792,13 +792,31 @@ class _RssiStats {
 /// n == 0 also returns empty: an empty population has no statistic to qualify,
 /// so its callers take the honest "not reported" path instead (GL-005).
 ///
-/// That guard is DEFENSIVE AND CURRENTLY UNREACHABLE, and is documented as such
-/// rather than covered by a test that would be theatre. Every call site today
-/// sits inside a null check, so n == 0 never arrives; removing the guard passes
-/// the whole suite. It is here so a FUTURE caller added outside a null check
-/// cannot render "0 of 40 roams" against an average that does not exist. If you
-/// add such a caller, this is the line that saves you — and the line to write a
-/// real test against, because it will then be reachable.
+/// That guard is REACHED, not unreachable, and no test can currently kill it.
+/// Both halves of that sentence matter, and an earlier version of this comment
+/// got the reason wrong in a way worth recording.
+///
+/// n == 0 DOES arrive: the share-HTML tile block computes `preCoverage` /
+/// `postCoverage` eagerly, before the `if (before != null)` guard four lines
+/// below it, so an empty population calls straight through. Replacing this
+/// body with a `throw` made four existing tests throw from that call when this
+/// was written (a measurement, not an invariant — re-run the probe rather than
+/// trusting the number).
+///
+/// What protects the output is therefore NOT "no caller passes 0" — that is
+/// false. It is that the ONE caller which passes 0 DISCARDS the result: the
+/// coverage string is only ever consumed inside the null guard, so a "0 of 40
+/// roams" label cannot reach a tile. That is a property of that one line, not
+/// of the call sites, and it is fragile in exactly the way the false version
+/// was not: move the consumption out of the guard, or add a caller that uses
+/// the value eagerly, and the guard here becomes the only thing standing
+/// between a reader and a count attached to an average that does not exist.
+///
+/// Removing the guard still passes the whole suite, because the discarded
+/// string is unobservable. So it is documented rather than covered — a test
+/// asserting on a value nothing renders would be theatre. To tell a surviving
+/// mutant apart from genuinely dead code, replace the body with a `throw`:
+/// survival proves nothing, a throw proves reachability or its absence.
 String _coverageNote(int n, int total) =>
     (n == 0 || n == total) ? '' : '$n of $total roams';
 
@@ -814,7 +832,7 @@ String _populationQualifier(String population, int n, int total) {
 ///
 /// `rssiDbm` is always the POST-roam reading (the AP just joined, so always
 /// comparatively strong) and `fromRssiDbm` is always the PRE-roam reading (the
-/// AP being left, so always comparatively weak). Summarising only the former
+/// AP being left, so always comparatively weak). Summarizing only the former
 /// reported the network as better than the client experienced and discarded
 /// exactly the number a designer needs. The two are reported separately rather
 /// than pooled, because "the level this client roams at" and "the level it
@@ -947,10 +965,17 @@ String? buildRoamLogShareHtml({
   if (after != null) {
     tiles.write(_statTile('${after.avg}', tileLabel('dBm avg after roam', postCoverage)));
   }
+  // SNR carries a count for the same reason the RSSI tiles do, and it is this
+  // change that made it necessary. Before the coverage notes existed, a bare
+  // tile meant nothing in particular. Now that three tiles beside it disclose
+  // their sample size, a SILENT tile asserts completeness by convention — so an
+  // SNR range over 3 of 40 roams, printed bare next to them, would lie in the
+  // vocabulary this commit taught the reader.
   if (snr.isNotEmpty) {
     final int lo = snr.reduce((int a, int b) => a < b ? a : b);
     final int hi = snr.reduce((int a, int b) => a > b ? a : b);
-    tiles.write(_statTile(lo == hi ? '$lo' : '$lo-$hi', 'dB SNR range'));
+    tiles.write(_statTile(lo == hi ? '$lo' : '$lo-$hi',
+        tileLabel('dB SNR range', _coverageNote(snr.length, events.length))));
   }
   if (dwells.isNotEmpty) {
     final int avgDwell =

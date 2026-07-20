@@ -309,7 +309,7 @@ void main() {
 
     // Unmount the screen (detaches the card's listener), then dispose the
     // injected sampler within the test body so its 2 s auto-poll timer is
-    // cancelled before the pending-timer invariant check (the screen never
+    // canceled before the pending-timer invariant check (the screen never
     // disposes an INJECTED sampler).
     await t.pumpWidget(const SizedBox());
     sampler.dispose();
@@ -1441,7 +1441,7 @@ void main() {
   // The signal summary must never report the network as stronger than the
   // capture shows. `rssiDbm` is ALWAYS the post-roam reading (the AP joined, so
   // always comparatively strong); `fromRssiDbm` is ALWAYS the pre-roam reading
-  // (the AP being left, so always comparatively weak). Summarising only the
+  // (the AP being left, so always comparatively weak). Summarizing only the
   // former discards exactly the number a designer needs — how weak the client
   // let it get before it roamed — and flatters the network. Regression guard for
   // the 2026-07-20 field capture whose header read "weakest -71 dBm" while the
@@ -1752,6 +1752,55 @@ void main() {
       expect(glance, isNot(contains('1 reported the signal they left')));
     });
 
+    test('HIGH-1 n=1 on the POST-roam population: same quantifier, same pronoun',
+        () {
+      // The mirror of the test above. Asserting the pronoun and the quantifier
+      // on the pre-roam population only left the post-roam string unguarded —
+      // the two are built by separate call sites and one can regress alone.
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          fromRssi: -70,
+          rssi: null,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          fromRssi: -80,
+          rssi: null,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 2, 0),
+          from: 'aa:bb:cc:dd:ee:03',
+          to: 'aa:bb:cc:dd:ee:04',
+          fromRssi: -75,
+          rssi: -53,
+        ),
+      ];
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final int g = doc.indexOf('Session at a glance');
+      final String glance = doc.substring(g, doc.indexOf('</ul>', g));
+
+      expect(
+          glance,
+          contains('Of 3 roams, 1 reported the signal it landed on; '
+              'the one that did landed on -53 dBm.'));
+      // The universal that outran its population, and the pronoun mismatch.
+      expect(glance, isNot(contains('every roam landed on')));
+      expect(glance, isNot(contains('Every roam landed on')));
+      expect(glance, isNot(contains('1 reported the signal they landed on')));
+      // Pre-roam is complete here, so it stays unscoped — the mirror image.
+      expect(glance, contains('Roams fired between'));
+      expect(glance, isNot(contains('reported the signal it left')));
+    });
+
     test('HIGH-1 n=3 of 5: the universal is quantified "all 3", both populations',
         () {
       final List<RoamEvent> events = <RoamEvent>[
@@ -1842,6 +1891,83 @@ void main() {
       // nothing: "every RECORDED roam" is meaningless when all were recorded.
       expect(glance, isNot(contains('reported the signal')));
       expect(glance, isNot(contains('recorded roam')));
+    });
+
+    test('MEDIUM-3: the SNR tile carries n under the convention this fix created',
+        () {
+      // Before coverage notes existed, a bare tile meant nothing in particular.
+      // Now that the RSSI tiles beside it disclose their sample size, a SILENT
+      // tile asserts completeness by convention — so a partial SNR range
+      // printed bare would lie in the vocabulary this change taught the reader.
+      final List<RoamEvent> events = <RoamEvent>[
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 0, 0),
+          from: 'aa:bb:cc:dd:ee:01',
+          to: 'aa:bb:cc:dd:ee:02',
+          fromRssi: -70,
+          rssi: -53,
+          snr: 21,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 1, 0),
+          from: 'aa:bb:cc:dd:ee:02',
+          to: 'aa:bb:cc:dd:ee:03',
+          fromRssi: -80,
+          rssi: -54,
+        ),
+        _roam(
+          at: DateTime(2026, 7, 20, 9, 2, 0),
+          from: 'aa:bb:cc:dd:ee:03',
+          to: 'aa:bb:cc:dd:ee:04',
+          fromRssi: -75,
+          rssi: -55,
+          snr: 23,
+        ),
+      ];
+      final String doc = buildRoamLogShareHtml(
+        events: events,
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final String tiles =
+          doc.substring(doc.indexOf('class="stat"'), doc.indexOf('<table'));
+
+      expect(tiles, contains('dB SNR range (2 of 3 roams)'),
+          reason: 'an SNR range over 2 of 3 roams must say so, exactly as the '
+              'RSSI tiles beside it do');
+      // The RSSI populations are complete here, so they stay silent — which is
+      // precisely what makes a silent SNR tile read as "all 3".
+      expect(tiles, contains('dBm avg before roam'));
+      expect(tiles, isNot(contains('dBm avg before roam (')));
+    });
+
+    test('a COMPLETE SNR population leaves the tile silent, like the others', () {
+      final String doc = buildRoamLogShareHtml(
+        events: <RoamEvent>[
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 0, 0),
+            from: 'aa:bb:cc:dd:ee:01',
+            to: 'aa:bb:cc:dd:ee:02',
+            fromRssi: -70,
+            rssi: -53,
+            snr: 21,
+          ),
+          _roam(
+            at: DateTime(2026, 7, 20, 9, 1, 0),
+            from: 'aa:bb:cc:dd:ee:02',
+            to: 'aa:bb:cc:dd:ee:03',
+            fromRssi: -75,
+            rssi: -55,
+            snr: 23,
+          ),
+        ],
+        network: 'KeithNet',
+        capturePlatform: 'iOS',
+      )!;
+      final String tiles =
+          doc.substring(doc.indexOf('class="stat"'), doc.indexOf('<table'));
+      expect(tiles, contains('dB SNR range'));
+      expect(tiles, isNot(contains('dB SNR range (')));
     });
 
     test('a COMPLETE capture prints no counts anywhere — the note is the signal',
