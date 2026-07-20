@@ -351,7 +351,9 @@ class LanDiscoveryEngine {
     }
 
     final List<LanHost> hosts = byIp.values.toList()
-      ..sort((LanHost a, LanHost b) => _ipKey(a.ip).compareTo(_ipKey(b.ip)));
+      ..sort(
+        (LanHost a, LanHost b) => ipSortKey(a.ip).compareTo(ipSortKey(b.ip)),
+      );
 
     _lastResult = DiscoveryResult(
       hosts: hosts,
@@ -517,16 +519,6 @@ class LanDiscoveryEngine {
     }
   }
 
-  /// Sortable integer key for an IPv4 string.
-  static int _ipKey(String ip) {
-    final List<String> p = ip.split('.');
-    if (p.length != 4) return 0;
-    int v = 0;
-    for (final String o in p) {
-      v = (v << 8) | (int.tryParse(o) ?? 0);
-    }
-    return v & 0xFFFFFFFF;
-  }
 }
 
 /// Test seam type: replaces the connect-scan pass wholesale.

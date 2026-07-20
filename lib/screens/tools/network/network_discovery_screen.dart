@@ -44,7 +44,6 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/lan_discovery/arp_reader.dart';
-import '../../../services/network/lan_discovery/device_type.dart';
 import '../../../services/network/lan_discovery/lan_discovery_engine.dart';
 import '../../../services/network/lan_discovery/lan_host.dart';
 import '../../../services/network/mac_oui_service.dart';
@@ -55,6 +54,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
+import 'network_discovery_table.dart';
 import 'network_glance_card.dart';
 import 'network_unavailable_view.dart';
 
@@ -89,8 +89,24 @@ class NetworkDiscoveryScreen extends StatefulWidget {
 }
 
 class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
-  /// Desktop breakpoint, consistent with the other network tools.
+  /// Desktop breakpoint, consistent with the other network tools. Drives the
+  /// screen-edge padding and the concept band only.
   static const double _desktopBreakpoint = 720;
+
+  /// Width at and above which the results render as a sortable TABLE instead of
+  /// the stacked host cards (customer request, Peter, desktop).
+  ///
+  /// Deliberately HIGHER than [_desktopBreakpoint] because the two answer
+  /// different questions. 720 is "is there room for desktop padding"; this is
+  /// "is there room for seven columns to be more readable than a card". The
+  /// widest column set (IP, Name, Type, MAC, Vendor, Services, Open ports) needs
+  /// roughly 900px before it stops being a cramped horizontal scroll and starts
+  /// being the faster thing to scan. Below that the 560px card column genuinely
+  /// reads better, so the cards stay.
+  ///
+  /// Width-based, NOT platform-based: a desktop window dragged narrow reflows
+  /// back to cards exactly like a phone.
+  static const double _tableBreakpoint = 900;
 
   StreamSubscription<DiscoveryProgress>? _sub;
   LanDiscoveryEngine? _engine;
@@ -102,6 +118,15 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   DiscoveryResult? _result;
   String? _error;
   bool _ranOnce = false;
+
+  /// Table sort selection. Defaults to IP ascending, which is the order the
+  /// engine already returns, so the table's first paint matches the card list
+  /// and nothing appears to reshuffle when the layout switches.
+  ///
+  /// Held HERE rather than inside the table so the copy action can emit rows in
+  /// the order on screen: sorting the table and copying must not give two
+  /// different answers.
+  DiscoverySort _sort = const DiscoverySort();
 
   // W2 — the bundled IEEE registry, loaded once. Null until the asset parses;
   // the scan can still run before it lands (vendor stays null, never faked).
@@ -244,6 +269,13 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// empty strings (never fabricated, GL-005). Set fields (ports, services)
   /// are sorted and space-joined inside their single cell so the row stays
   /// one tab-delimited line.
+  ///
+  /// Rows are emitted in the CURRENT table sort order, so what lands on the
+  /// clipboard is the table the user is looking at. The column set stays fixed
+  /// at all seven even when the table hides MAC/Vendor (no ARP read): an export
+  /// with a stable header is more useful to paste into a sheet than one whose
+  /// shape shifts with the platform, and an empty cell in a TSV is unambiguous
+  /// in a way an empty on-screen column is not.
   String? _buildCopyText() {
     final DiscoveryResult? r = _result;
     if (_scanning || r == null || r.error != null || r.hosts.isEmpty) {
@@ -264,8 +296,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         ].join(tab),
       );
 
-    for (final LanHost h in r.hosts) {
-      final String name = h.mdnsName ?? h.hostname ?? '';
+    for (final LanHost h in sortHosts(r.hosts, _sort)) {
+      final String name = hostDisplayName(h) ?? '';
       final String services = (h.mdnsServices.toList()..sort()).join(' ');
       final String ports = (h.openPorts.toList()..sort()).join(' ');
       buf.writeln(
@@ -296,12 +328,20 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+        final bool isTable = constraints.maxWidth >= _tableBreakpoint;
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
         return Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            // The 560 content column is what wastes a desktop window: it is the
+            // right measure for stacked cards and far too narrow for a table.
+            // When the table is showing, widen to the app's scanned-surface cap
+            // (the same token the tile grids use, for the same reason: a table
+            // is scanned, not read, so it may use the window).
+            constraints: BoxConstraints(
+              maxWidth: isTable ? AppSpacing.gridMaxWidth : 560,
+            ),
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,
@@ -334,7 +374,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                       body: _error!,
                     ),
                   ],
-                  ..._resultSection(context),
+                  ..._resultSection(context, isTable: isTable),
                   ToolHelpFooter(toolId: 'network-discovery'),
                 ],
               ),
@@ -359,9 +399,12 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
+            // Pre-existing copy defect found while wiring the table: this read
+            // "a device-type guess, and. On desktop: its MAC address and
+            // vendor." Repaired to a complete sentence (GL-004).
             'Scan the local subnet for live hosts, then enrich each with its '
-            'hostname, advertised services, a device-type guess, and. On '
-            'desktop: its MAC address and vendor.',
+            'hostname, advertised services, and a device-type guess. On '
+            'desktop it also reads the MAC address and vendor.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -463,7 +506,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     );
   }
 
-  List<Widget> _resultSection(BuildContext context) {
+  List<Widget> _resultSection(BuildContext context, {required bool isTable}) {
     final DiscoveryResult? r = _result;
     if (r == null || r.error != null) {
       // A run that failed to even start (no subnet) reports r.error; surface it
@@ -493,6 +536,17 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
               'No devices on ${r.subnetLabel} answered on the probed ports '
               'or via mDNS. They may be firewalled, asleep, or the subnet may '
               'be empty.',
+        )
+      else if (isTable)
+        // Wide viewport: one scannable row per host, sortable. MAC and Vendor
+        // columns appear only when the ARP read succeeded, matching the honest
+        // ceiling note printed in the summary card above.
+        NetworkDiscoveryTable(
+          hosts: sortHosts(r.hosts, _sort),
+          sort: _sort,
+          showMacColumns: r.arp?.available ?? false,
+          onSort: (DiscoverySortColumn column) =>
+              setState(() => _sort = _sort.select(column)),
         )
       else
         _hostListCard(context, r),
@@ -639,24 +693,6 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   };
 }
 
-/// A Material glyph for each coarse device type — a quiet leading affordance,
-/// never the sole carrier of meaning (the worded label sits beside it).
-IconData _deviceIcon(DeviceType type) => switch (type) {
-  DeviceType.printer => Icons.print_outlined,
-  DeviceType.camera => Icons.videocam_outlined,
-  DeviceType.speaker => Icons.speaker_outlined,
-  DeviceType.mediaStreamer => Icons.cast_outlined,
-  DeviceType.appleDevice => Icons.devices_outlined,
-  DeviceType.iosDevice => Icons.smartphone_outlined,
-  DeviceType.windowsHost => Icons.desktop_windows_outlined,
-  DeviceType.accessPoint => Icons.wifi_outlined,
-  DeviceType.networkGear => Icons.router_outlined,
-  DeviceType.webServer => Icons.dns_outlined,
-  DeviceType.sshHost => Icons.terminal_outlined,
-  DeviceType.mdnsDevice => Icons.lan_outlined,
-  DeviceType.unknown => Icons.device_unknown_outlined,
-};
-
 /// One discovered host, rendered as a list row inside the host-list card. Every
 /// enrichment field is shown only when present (honest blanks per GL-005), and
 /// the whole row collapses to a single curated screen-reader label so AT reads
@@ -675,7 +711,7 @@ class _HostRow extends StatelessWidget {
 
     final String ports = (host.openPorts.toList()..sort()).join(', ');
     final String services = (host.mdnsServices.toList()..sort()).join(', ');
-    final String? name = host.mdnsName ?? host.hostname;
+    final String? name = hostDisplayName(host);
 
     return Semantics(
       container: true,
@@ -689,7 +725,7 @@ class _HostRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Icon(
-                _deviceIcon(host.deviceType),
+                deviceTypeIcon(host.deviceType),
                 size: 20,
                 color: colors.textTertiary,
               ),
@@ -779,7 +815,7 @@ class _HostRow extends StatelessWidget {
   String _semanticLabel() {
     final List<String> parts = <String>['Host ${host.ip}'];
     parts.add(host.deviceType.label);
-    final String? name = host.mdnsName ?? host.hostname;
+    final String? name = hostDisplayName(host);
     if (name != null) parts.add('named $name');
     if (host.mac != null) {
       parts.add('MAC ${host.mac}');
