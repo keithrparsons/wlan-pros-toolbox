@@ -96,6 +96,42 @@ class DiscoverySort {
 /// layout, and the copy payload so all three agree on what "Name" means.
 String? hostDisplayName(LanHost host) => host.mdnsName ?? host.hostname;
 
+/// The columns the table renders, in display order.
+///
+/// MAC and Vendor exist only while the ARP read succeeded; when it did not they
+/// are omitted entirely rather than rendered as a column of blanks, matching the
+/// honest ceiling note the screen prints above the results.
+List<DiscoverySortColumn> visibleDiscoveryColumns({
+  required bool showMacColumns,
+}) => <DiscoverySortColumn>[
+  DiscoverySortColumn.ip,
+  DiscoverySortColumn.name,
+  DiscoverySortColumn.type,
+  if (showMacColumns) DiscoverySortColumn.mac,
+  if (showMacColumns) DiscoverySortColumn.vendor,
+  DiscoverySortColumn.services,
+  DiscoverySortColumn.ports,
+];
+
+/// The sort actually in force, given which columns are being rendered.
+///
+/// A sort selection can OUTLIVE its column: sort by MAC while the ARP read is
+/// working, then re-scan on a run where it fails, and the selection still names
+/// a column that is no longer in the header row. Ordering rows by a column the
+/// user cannot see is not a defensible state -- there is no header to carry the
+/// arrow, so the order becomes unexplainable -- so the sort falls back to the
+/// default, IP ascending, which every column set contains.
+///
+/// Deriving this rather than mutating the stored selection is deliberate: it is
+/// pure, it cannot fire a setState during build, and a MAC sort is restored
+/// intact if a later scan reads the ARP cache again.
+DiscoverySort effectiveDiscoverySort(
+  DiscoverySort sort, {
+  required bool showMacColumns,
+}) => visibleDiscoveryColumns(showMacColumns: showMacColumns).contains(sort.column)
+    ? sort
+    : const DiscoverySort();
+
 /// Returns [hosts] ordered by [sort]. Pure and total: never mutates the input,
 /// always tie-breaks on IP ascending so equal keys keep a deterministic order.
 ///
@@ -193,18 +229,23 @@ class NetworkDiscoveryTable extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-    // The visible columns, in display order. Built as a list so the MAC/vendor
-    // gate cannot desynchronise the header row from the cell rows -- both are
-    // generated from this one sequence.
-    final List<DiscoverySortColumn> columns = <DiscoverySortColumn>[
-      DiscoverySortColumn.ip,
-      DiscoverySortColumn.name,
-      DiscoverySortColumn.type,
-      if (showMacColumns) DiscoverySortColumn.mac,
-      if (showMacColumns) DiscoverySortColumn.vendor,
-      DiscoverySortColumn.services,
-      DiscoverySortColumn.ports,
-    ];
+    // The visible columns, in display order. Built from the shared helper so the
+    // MAC/vendor gate cannot desynchronise the header row from the cell rows, or
+    // from the sort resolution the screen ran against the same list.
+    final List<DiscoverySortColumn> columns = visibleDiscoveryColumns(
+      showMacColumns: showMacColumns,
+    );
+
+    // The screen already resolves the sort against the visible column set, but
+    // resolve again here rather than trusting the caller: handing DataTable an
+    // index of -1 for a column that is not rendered trips its own assertion in
+    // debug and silently unsorts every header in release. This widget owns that
+    // invariant, so it enforces it at its own boundary.
+    final DiscoverySort active = effectiveDiscoverySort(
+      sort,
+      showMacColumns: showMacColumns,
+    );
+    final int sortIndex = columns.indexOf(active.column);
 
     return Container(
       decoration: BoxDecoration(
@@ -232,12 +273,14 @@ class NetworkDiscoveryTable extends StatelessWidget {
             color: colors.textTertiary,
             letterSpacing: 0.4,
           ),
-          sortColumnIndex: columns.indexOf(sort.column),
-          sortAscending: sort.ascending,
+          // Null, never -1: "no column is sorted" is a state DataTable accepts,
+          // an out-of-range index is not.
+          sortColumnIndex: sortIndex < 0 ? null : sortIndex,
+          sortAscending: active.ascending,
           columns: <DataColumn>[
             for (final DiscoverySortColumn column in columns)
               DataColumn(
-                label: Text(_headerFor(column)),
+                label: _headerLabel(column, active),
                 // Ports is the only right-aligned column; the rest read as
                 // text. IP and MAC are numeric-ish but are identifiers, so they
                 // stay left-aligned like every other identifier in the app.
@@ -324,9 +367,10 @@ class NetworkDiscoveryTable extends StatelessWidget {
     );
   }
 
-  /// One cell's content. An absent enrichment field renders as an em-free
-  /// placeholder dot in the quiet text colour -- a visibly empty cell, never a
-  /// guessed value.
+  /// One cell's content. An absent enrichment field renders as "n/a" in the
+  /// quiet text colour -- the app's existing placeholder for a value it does not
+  /// have (roaming_log_screen.dart, cloud_apps_panel.dart) -- never a guessed
+  /// value.
   Widget _cellFor(
     DiscoverySortColumn column,
     LanHost host,
@@ -369,8 +413,29 @@ class NetworkDiscoveryTable extends StatelessWidget {
 
   Widget _valueOrBlank(String? value, TextStyle style, AppColorScheme colors) =>
       (value == null || value.isEmpty)
-      ? Text('.', style: style.copyWith(color: colors.textTertiary))
+      ? Text('n/a', style: style.copyWith(color: colors.textTertiary))
       : Text(value, style: style);
+
+  /// A column header, carrying its sort state to assistive tech.
+  ///
+  /// The sort arrow is the only VISUAL signal of which column is active and
+  /// which way it runs, and a screen reader gets no arrow: it would hear a bare
+  /// "IP" whether the table was sorted by IP or not (WCAG 2.2 SC 1.3.1 and
+  /// 4.1.2). Flutter's Semantics exposes no aria-sort equivalent, so the state
+  /// goes into the header's accessible NAME, which every platform announces.
+  ///
+  /// The visible [Text] is kept as the child so the header still reads and
+  /// measures exactly as before; only what AT hears changes.
+  Widget _headerLabel(DiscoverySortColumn column, DiscoverySort active) {
+    final String header = _headerFor(column);
+    final String state = column == active.column
+        ? ', sorted ${active.ascending ? 'ascending' : 'descending'}'
+        : ', sortable';
+    return Semantics(
+      label: '$header$state',
+      child: ExcludeSemantics(child: Text(header)),
+    );
+  }
 
   String _headerFor(DiscoverySortColumn column) => switch (column) {
     DiscoverySortColumn.ip => 'IP',

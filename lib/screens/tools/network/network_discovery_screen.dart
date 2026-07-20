@@ -128,6 +128,28 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// different answers.
   DiscoverySort _sort = const DiscoverySort();
 
+  /// Whether the MAC and Vendor columns exist for this result. Also decides
+  /// whether a sort selection naming one of them is still meaningful.
+  bool _showMacColumns(DiscoveryResult r) => r.arp?.available ?? false;
+
+  /// THE single source of row order for this screen.
+  ///
+  /// Every surface that renders or emits hosts goes through here: the table, the
+  /// card list, and the copy payload. That is the point. The previous shape kept
+  /// two call sites that each decided their own order, and they drifted the
+  /// moment the layout switched -- the cards showed the raw engine order while
+  /// the clipboard emitted the sorted one, so the same screen gave two answers
+  /// to "what order are these hosts in". Keeping two call sites in agreement is
+  /// a promise; having one is a guarantee.
+  ///
+  /// The sort is resolved against the visible column set first, so a selection
+  /// naming a column this result cannot show (MAC without an ARP read) falls
+  /// back to IP ascending here, once, for all three consumers at the same time.
+  List<LanHost> _orderedHosts(DiscoveryResult r) => sortHosts(
+    r.hosts,
+    effectiveDiscoverySort(_sort, showMacColumns: _showMacColumns(r)),
+  );
+
   // W2 — the bundled IEEE registry, loaded once. Null until the asset parses;
   // the scan can still run before it lands (vendor stays null, never faked).
   MacOuiService? _oui;
@@ -270,8 +292,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   /// are sorted and space-joined inside their single cell so the row stays
   /// one tab-delimited line.
   ///
-  /// Rows are emitted in the CURRENT table sort order, so what lands on the
-  /// clipboard is the table the user is looking at. The column set stays fixed
+  /// Rows are emitted via [_orderedHosts], the same call the rendered layout
+  /// makes, so what lands on the clipboard is what the user is looking at in
+  /// EITHER layout. The column set stays fixed
   /// at all seven even when the table hides MAC/Vendor (no ARP read): an export
   /// with a stable header is more useful to paste into a sheet than one whose
   /// shape shifts with the platform, and an empty cell in a TSV is unambiguous
@@ -296,7 +319,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         ].join(tab),
       );
 
-    for (final LanHost h in sortHosts(r.hosts, _sort)) {
+    for (final LanHost h in _orderedHosts(r)) {
       final String name = hostDisplayName(h) ?? '';
       final String services = (h.mdnsServices.toList()..sort()).join(' ');
       final String ports = (h.openPorts.toList()..sort()).join(' ');
@@ -542,14 +565,17 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         // columns appear only when the ARP read succeeded, matching the honest
         // ceiling note printed in the summary card above.
         NetworkDiscoveryTable(
-          hosts: sortHosts(r.hosts, _sort),
+          hosts: _orderedHosts(r),
           sort: _sort,
-          showMacColumns: r.arp?.available ?? false,
+          showMacColumns: _showMacColumns(r),
           onSort: (DiscoverySortColumn column) =>
               setState(() => _sort = _sort.select(column)),
         )
       else
-        _hostListCard(context, r),
+        // Narrow viewport: the same ordered list, stacked as cards. It takes the
+        // ordered hosts, NOT the result, so this layout has no raw list to fall
+        // back to and cannot disagree with the table or the clipboard.
+        _hostListCard(context, _orderedHosts(r)),
     ];
   }
 
@@ -659,7 +685,11 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     );
   }
 
-  Widget _hostListCard(BuildContext context, DiscoveryResult r) {
+  /// The stacked card list. Takes the already-ordered hosts rather than the
+  /// [DiscoveryResult] on purpose: with no access to `r.hosts` this layout
+  /// cannot re-derive its own order, so display and clipboard agree by
+  /// construction instead of by two call sites staying in step.
+  Widget _hostListCard(BuildContext context, List<LanHost> hosts) {
     final AppColorScheme colors = context.colors;
     return Container(
       decoration: BoxDecoration(
@@ -671,10 +701,10 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          for (int i = 0; i < r.hosts.length; i++) ...<Widget>[
+          for (int i = 0; i < hosts.length; i++) ...<Widget>[
             if (i > 0)
               Divider(height: 1, thickness: 1, color: colors.border),
-            _HostRow(host: r.hosts[i]),
+            _HostRow(host: hosts[i]),
           ],
         ],
       ),

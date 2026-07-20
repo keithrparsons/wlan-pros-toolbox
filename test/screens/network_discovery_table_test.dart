@@ -8,6 +8,7 @@
 // surface widths and assert which rendering appears.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_discovery_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/network_discovery_table.dart';
@@ -406,6 +407,433 @@ void main() {
 
       expect(find.byType(NetworkDiscoveryTable), findsNothing);
       expect(find.text('Scan local network'), findsOneWidget);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Regression tests for the two defects the SOP-009 gate found. Both are about
+  // state that OUTLIVES the thing it describes: a sort selection naming a column
+  // that is no longer rendered, and a sort selection honoured by one layout but
+  // not the other. Neither is reachable from the sort-correctness tests above,
+  // which is exactly why those passed while these defects shipped.
+  // ---------------------------------------------------------------------------
+
+  group('a sorted column that disappears', () {
+    final MacOuiService oui = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti',
+    });
+
+    /// Two hosts, MAC + vendor present only when the ARP read succeeded.
+    DiscoveryResult resultWith({required bool arpAvailable}) => DiscoveryResult(
+      hosts: <LanHost>[
+        _host(
+          '10.0.10.9',
+          mac: arpAvailable ? 'fc:ec:da:00:00:09' : null,
+          vendor: arpAvailable ? 'Ubiquiti' : null,
+          ports: <int>{22},
+          type: DeviceType.sshHost,
+        ),
+        _host(
+          '10.0.10.10',
+          mac: arpAvailable ? 'fc:ec:da:00:00:10' : null,
+          vendor: arpAvailable ? 'Aruba' : null,
+          ports: <int>{80},
+          type: DeviceType.webServer,
+        ),
+      ],
+      subnetLabel: '10.0.10.1-10.0.10.254',
+      arp: arpAvailable
+          ? const ArpReadResult(available: true)
+          : const ArpReadResult.unavailable('No ARP read on this platform.'),
+    );
+
+    testWidgets('sorting by MAC and then re-scanning WITHOUT an ARP read does '
+        'not crash, and leaves a sort the user can see', (
+      WidgetTester tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // First scan reads the ARP cache, second one cannot -- the real sequence
+      // on a machine that loses its ARP read between runs. MAC and Vendor are
+      // columns on scan 1 and gone on scan 2, while _sort still names MAC.
+      int run = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: NetworkDiscoveryScreen(
+            service: oui,
+            engineFactory: () =>
+                _FakeEngine(resultWith(arpAvailable: run++ == 0)),
+            glanceCard: const SizedBox.shrink(),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Scan local network'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('MAC'));
+      await tester.pumpAndSettle();
+      expect(find.text('MAC'), findsOneWidget, reason: 'sorted by MAC');
+
+      await tester.tap(find.text('Scan again'));
+      await tester.pumpAndSettle();
+
+      // The column the sort names is gone.
+      expect(find.text('MAC'), findsNothing);
+      expect(find.text('Vendor'), findsNothing);
+      // The table still renders, and DataTable was handed a REAL column index
+      // rather than the -1 that indexOf returns for a missing column (which
+      // trips the assertion in data_table.dart, and in release silently means
+      // "no header is sorted" while the rows ARE sorted by a hidden column).
+      expect(find.byType(NetworkDiscoveryTable), findsOneWidget);
+      final DataTable table = tester.widget<DataTable>(find.byType(DataTable));
+      expect(
+        table.sortColumnIndex,
+        isNot(-1),
+        reason: 'a -1 sortColumnIndex is the crash',
+      );
+      expect(
+        table.sortColumnIndex,
+        isNotNull,
+        reason: 'the rows are ordered, so some header must show as sorted',
+      );
+      expect(
+        table.sortColumnIndex! >= 0 && table.sortColumnIndex! < 5,
+        isTrue,
+        reason: 'index must address one of the five surviving columns',
+      );
+
+      // And the order on screen is the one the visible sorted header claims:
+      // IP ascending, so .9 sits above .10.
+      final double yOfNine = tester.getTopLeft(find.text('10.0.10.9')).dy;
+      final double yOfTen = tester.getTopLeft(find.text('10.0.10.10')).dy;
+      expect(yOfNine, lessThan(yOfTen));
+    });
+  });
+
+  group('accessibility and placeholders', () {
+    final MacOuiService oui = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti',
+    });
+
+    /// One host WITH a name, one WITHOUT, so the placeholder cell is rendered.
+    final DiscoveryResult mixed = DiscoveryResult(
+      hosts: <LanHost>[
+        _host(
+          '10.0.10.9',
+          hostname: 'nine.local',
+          mac: 'fc:ec:da:00:00:09',
+          vendor: 'Ubiquiti',
+          ports: <int>{22},
+          type: DeviceType.sshHost,
+        ),
+        _host('10.0.10.10', ports: <int>{80}, type: DeviceType.webServer),
+      ],
+      subnetLabel: '10.0.10.1-10.0.10.254',
+      arp: const ArpReadResult(available: true),
+    );
+
+    Future<void> pumpTable(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: NetworkDiscoveryScreen(
+            service: oui,
+            engineFactory: () => _FakeEngine(mixed),
+            glanceCard: const SizedBox.shrink(),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Scan local network'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the active column announces its sort direction, not just an '
+        'arrow', (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await pumpTable(tester);
+
+      // Default is IP ascending.
+      expect(find.bySemanticsLabel('IP, sorted ascending'), findsOneWidget);
+      // A column that is not the active one still says it can be sorted, but
+      // never claims a direction.
+      expect(find.bySemanticsLabel('Vendor, sortable'), findsOneWidget);
+      expect(find.bySemanticsLabel('Vendor, sorted ascending'), findsNothing);
+
+      // Toggling to descending is announced, so direction is not carried by the
+      // arrow glyph alone (WCAG 2.2 SC 1.3.1 / 4.1.2).
+      await tester.tap(find.text('IP'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('IP, sorted descending'), findsOneWidget);
+      expect(find.bySemanticsLabel('IP, sorted ascending'), findsNothing);
+
+      handle.dispose();
+    });
+
+    testWidgets('an absent value renders the app\'s "n/a" placeholder', (
+      WidgetTester tester,
+    ) async {
+      await pumpTable(tester);
+
+      // 10.0.10.10 has no name, MAC, vendor or services (4 cells); 10.0.10.9
+      // advertised no services (1 cell). Neither host is missing a port list,
+      // which has its own worded placeholder ("none open"), not n/a.
+      expect(find.text('n/a'), findsNWidgets(5));
+      expect(find.text('none open'), findsNothing);
+      // The lone period the branch invented is gone; it read as content.
+      expect(find.text('.'), findsNothing);
+    });
+  });
+
+  group('effectiveDiscoverySort', () {
+    test('keeps a sort whose column is being rendered', () {
+      const DiscoverySort byMac = DiscoverySort(
+        column: DiscoverySortColumn.mac,
+        ascending: false,
+      );
+      final DiscoverySort resolved = effectiveDiscoverySort(
+        byMac,
+        showMacColumns: true,
+      );
+      expect(resolved.column, DiscoverySortColumn.mac);
+      expect(resolved.ascending, isFalse);
+    });
+
+    test('falls back to IP ascending when the sorted column is not rendered', () {
+      for (final DiscoverySortColumn gone in <DiscoverySortColumn>[
+        DiscoverySortColumn.mac,
+        DiscoverySortColumn.vendor,
+      ]) {
+        final DiscoverySort resolved = effectiveDiscoverySort(
+          DiscoverySort(column: gone, ascending: false),
+          showMacColumns: false,
+        );
+        expect(resolved.column, DiscoverySortColumn.ip, reason: '$gone');
+        expect(resolved.ascending, isTrue, reason: '$gone');
+      }
+    });
+
+    test('leaves the always-present columns alone when MAC is hidden', () {
+      for (final DiscoverySortColumn kept in <DiscoverySortColumn>[
+        DiscoverySortColumn.ip,
+        DiscoverySortColumn.name,
+        DiscoverySortColumn.type,
+        DiscoverySortColumn.services,
+        DiscoverySortColumn.ports,
+      ]) {
+        expect(
+          effectiveDiscoverySort(
+            DiscoverySort(column: kept),
+            showMacColumns: false,
+          ).column,
+          kept,
+        );
+      }
+    });
+
+    test('every resolved column is addressable in the rendered column set', () {
+      // The property the crash violated: whatever comes back must have an index
+      // in the columns actually rendered, for BOTH gate states.
+      for (final bool showMac in <bool>[true, false]) {
+        final List<DiscoverySortColumn> columns = visibleDiscoveryColumns(
+          showMacColumns: showMac,
+        );
+        for (final DiscoverySortColumn column in DiscoverySortColumn.values) {
+          final DiscoverySort resolved = effectiveDiscoverySort(
+            DiscoverySort(column: column),
+            showMacColumns: showMac,
+          );
+          expect(
+            columns.indexOf(resolved.column),
+            greaterThanOrEqualTo(0),
+            reason: 'column $column, showMac $showMac',
+          );
+        }
+      }
+    });
+  });
+
+  group('NetworkDiscoveryTable holds its own index invariant', () {
+    // The screen resolves the sort before handing it over, but the table is the
+    // widget that must never pass an out-of-range index to DataTable. Driven
+    // DIRECTLY here so the guard is pinned at its own boundary rather than only
+    // through the screen that happens to protect it today.
+    testWidgets('a sort naming a hidden column never becomes a -1 index', (
+      WidgetTester tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      for (final DiscoverySortColumn hidden in <DiscoverySortColumn>[
+        DiscoverySortColumn.mac,
+        DiscoverySortColumn.vendor,
+      ]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: Scaffold(
+              body: NetworkDiscoveryTable(
+                hosts: <LanHost>[_host('10.0.10.9'), _host('10.0.10.10')],
+                sort: DiscoverySort(column: hidden, ascending: false),
+                showMacColumns: false,
+                onSort: (DiscoverySortColumn _) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final DataTable table = tester.widget<DataTable>(find.byType(DataTable));
+        expect(table.sortColumnIndex, isNot(-1), reason: 'hidden $hidden');
+        expect(
+          table.sortColumnIndex,
+          0,
+          reason: 'falls back to IP, the first column',
+        );
+        expect(table.sortAscending, isTrue, reason: 'fallback is ascending');
+      }
+    });
+  });
+
+  group('displayed order and copied order', () {
+    final MacOuiService oui = MacOuiService.fromTable(<String, String>{
+      'FCECDA': 'Ubiquiti',
+    });
+
+    /// Raw engine order is IP-ascending (.9 then .10) and the vendors are seeded
+    /// so that vendor-DESCENDING reverses it. Any layout that ignores the sort
+    /// and renders the raw list therefore disagrees visibly.
+    final DiscoveryResult twoHosts = DiscoveryResult(
+      hosts: <LanHost>[
+        _host(
+          '10.0.10.9',
+          mac: 'fc:ec:da:00:00:09',
+          vendor: 'Aruba',
+          ports: <int>{22},
+          type: DeviceType.sshHost,
+        ),
+        _host(
+          '10.0.10.10',
+          mac: 'fc:ec:da:00:00:10',
+          vendor: 'Ubiquiti',
+          ports: <int>{80},
+          type: DeviceType.webServer,
+        ),
+      ],
+      subnetLabel: '10.0.10.1-10.0.10.254',
+      arp: const ArpReadResult(available: true),
+    );
+
+    const List<String> ips = <String>['10.0.10.9', '10.0.10.10'];
+
+    /// The IPs in the order they are painted, top to bottom. Works for either
+    /// layout: the table paints them in DataRows, the cards in list rows.
+    List<String> displayedOrder(WidgetTester tester) {
+      final List<String> found = ips
+          .where((String ip) => find.text(ip).evaluate().isNotEmpty)
+          .toList();
+      found.sort(
+        (String a, String b) => tester
+            .getTopLeft(find.text(a))
+            .dy
+            .compareTo(tester.getTopLeft(find.text(b)).dy),
+      );
+      return found;
+    }
+
+    /// The IP column of the TSV the copy action put on the clipboard.
+    List<String> copiedOrder(String tsv) => tsv
+        .split('\n')
+        .skip(1)
+        .where((String line) => line.trim().isNotEmpty)
+        .map((String line) => line.split('\t').first)
+        .toList();
+
+    testWidgets('agree in BOTH layouts, including across a layout switch with '
+        'an active sort', (WidgetTester tester) async {
+      final List<String> clipboard = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboard.add(
+              (call.arguments as Map<Object?, Object?>)['text']! as String,
+            );
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: NetworkDiscoveryScreen(
+            service: oui,
+            engineFactory: () => _FakeEngine(twoHosts),
+            glanceCard: const SizedBox.shrink(),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Scan local network'));
+      await tester.pumpAndSettle();
+
+      // Sort Vendor DESCENDING: Ubiquiti (.10) above Aruba (.9), which is the
+      // reverse of the raw engine order.
+      await tester.tap(find.text('Vendor'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Vendor'));
+      await tester.pumpAndSettle();
+      expect(
+        displayedOrder(tester),
+        <String>['10.0.10.10', '10.0.10.9'],
+        reason: 'table honours vendor descending',
+      );
+
+      await tester.tap(find.byTooltip('Copy results'));
+      await tester.pumpAndSettle();
+      expect(
+        copiedOrder(clipboard.last),
+        displayedOrder(tester),
+        reason: 'TABLE layout: clipboard must match what is on screen',
+      );
+
+      // Let the §8.16 confirm window lapse so the affordance reverts from
+      // "Results copied" back to "Copy results" and can be found again.
+      await tester.pump(const Duration(milliseconds: 1600));
+
+      // Now the resize. The sort selection survives it; the ordering must too.
+      await tester.binding.setSurfaceSize(const Size(500, 900));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(NetworkDiscoveryTable),
+        findsNothing,
+        reason: 'narrow viewport reflows to cards',
+      );
+
+      await tester.tap(find.byTooltip('Copy results'));
+      await tester.pumpAndSettle();
+      expect(
+        copiedOrder(clipboard.last),
+        displayedOrder(tester),
+        reason: 'CARD layout: clipboard must match what is on screen',
+      );
+      // And the sort the user chose is still the order they see, rather than
+      // the cards silently reverting to raw engine order.
+      expect(displayedOrder(tester), <String>['10.0.10.10', '10.0.10.9']);
+
+      // Drain the second confirm window so no timer outlives the test.
+      await tester.pump(const Duration(milliseconds: 1600));
     });
   });
 }
