@@ -34,6 +34,7 @@
 		8356A0308E680B1970EBBE29 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79A6BC60D5D0C042E37E7C34 /* Pods_Runner.framework */; };
 		A1B2C3D4E5F6A1B2C3D4E5F6 /* ArpTableChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6E5D4C3B2A1F6E5D4C3B2A1 /* ArpTableChannel.swift */; };
 		2CF0BF935DFD6BE34F9760BE /* SystemInfoChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54483E20D90936E1E109BEBF /* SystemInfoChannel.swift */; };
+		3E7B5D9A1C2F4068AB13CD57 /* ApScanChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1C0F3B7D2E4A6B8C0D1E2F /* ApScanChannel.swift */; };
 		B1C2D3E4F5A6B1C2D3E4F5A6 /* MdnsBrowseChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F5E4D3C2B1A6F5E4D3C2B1 /* MdnsBrowseChannel.swift */; };
 /* End PBXBuildFile section */
 
@@ -100,6 +101,7 @@
 		E180CF6C68B00E7619F48402 /* WifiInfoChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WifiInfoChannel.swift; sourceTree = "<group>"; };
 		F6E5D4C3B2A1F6E5D4C3B2A1 /* ArpTableChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArpTableChannel.swift; sourceTree = "<group>"; };
 		54483E20D90936E1E109BEBF /* SystemInfoChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemInfoChannel.swift; sourceTree = "<group>"; };
+		9A1C0F3B7D2E4A6B8C0D1E2F /* ApScanChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApScanChannel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +197,7 @@
 				E180CF6C68B00E7619F48402 /* WifiInfoChannel.swift */,
 				F6E5D4C3B2A1F6E5D4C3B2A1 /* ArpTableChannel.swift */,
 				54483E20D90936E1E109BEBF /* SystemInfoChannel.swift */,
+				9A1C0F3B7D2E4A6B8C0D1E2F /* ApScanChannel.swift */,
 				A6F5E4D3C2B1A6F5E4D3C2B1 /* MdnsBrowseChannel.swift */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
@@ -467,6 +470,7 @@
 				7ED4E4F3D8E59BEDCDD69EAC /* WifiInfoChannel.swift in Sources */,
 				A1B2C3D4E5F6A1B2C3D4E5F6 /* ArpTableChannel.swift in Sources */,
 				2CF0BF935DFD6BE34F9760BE /* SystemInfoChannel.swift in Sources */,
+				3E7B5D9A1C2F4068AB13CD57 /* ApScanChannel.swift in Sources */,
 				B1C2D3E4F5A6B1C2D3E4F5A6 /* MdnsBrowseChannel.swift in Sources */,
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,

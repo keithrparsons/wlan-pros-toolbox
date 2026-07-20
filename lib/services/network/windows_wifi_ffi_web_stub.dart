@@ -20,3 +20,12 @@ WifiInfo readConnectedApFromNativeWifi() {
     WifiInfoUnavailableReason.unsupportedPlatform,
   );
 }
+
+/// Web-target stand-in for the Windows nearby-BSS enumeration. Same contract as
+/// the reader stub above: never called on web, and throws the unsupported-
+/// platform signal if it ever were.
+List<Map<String, Object?>> enumerateNearbyBssFromNativeWifi() {
+  throw const WifiInfoUnavailable(
+    WifiInfoUnavailableReason.unsupportedPlatform,
+  );
+}

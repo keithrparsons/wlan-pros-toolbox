@@ -31,13 +31,13 @@ void main() {
     });
 
     test('every web-unavailable id resolves to a real catalog tool', () {
-      // Use the full platform-agnostic catalog: androidOnly tools (nearby-ap-scan)
+      // Use the full platform-agnostic catalog: nativeScanOnly tools (nearby-ap-scan)
       // are dropped on this native test host but are still legitimate members of
       // the set (they show with a web warning on web). So check membership
       // against the FULL id universe, not the native-filtered one.
       final Set<String> fullCatalogIds = <String>{
         for (final ToolCategory c in kToolCategories) ...c.tools.map((t) => t.id),
-        // androidOnly tools are dropped on the native host; add the known one so
+        // nativeScanOnly tools are dropped on the native host; add the known one so
         // the set membership check is honest about what exists in the product.
         'nearby-ap-scan',
       };

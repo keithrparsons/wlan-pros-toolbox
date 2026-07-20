@@ -22,6 +22,8 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:win32/win32.dart';
 
+import '../../data/channel_frequency_data.dart'
+    show WifiBand, WifiBandInfo, frequencyToChannel;
 import 'ie_parser.dart' show findInformationElement;
 import 'wifi_info_service.dart'
     show WifiInfo, WifiInfoUnavailable, WifiInfoUnavailableReason;
@@ -401,6 +403,52 @@ class WifiBssCandidate {
   final Uint8List? informationElements;
 }
 
+/// Maps decoded BSS-list entries to the `com.wlanpros.toolbox/ap_scan` payload
+/// rows — the SAME row shape the Android and macOS channels return, so the
+/// existing `ScannedAp` model would consume them unchanged.
+///
+/// DARK PATH. This mapper and [enumerateNearbyBssFromNativeWifi] complete the
+/// Windows nearby-AP enumeration, but Windows is deliberately NOT a supported
+/// platform in `ApScanService.isSupportedPlatform` and the Nearby AP Scan tool
+/// is dropped from the Windows catalog. Nothing calls this at runtime. The
+/// module header's `TODO(windows-verify)` applies in full: it has never been
+/// executed against a real wlanapi.dll and a real wireless NIC, and unverified
+/// code does not ship live.
+///
+/// Pure and unit-testable off Windows: it takes plain [WifiBssCandidate] values,
+/// not win32 structs. Channel and band are resolved through the proven
+/// [frequencyToChannel] table rather than a second hand-rolled channel plan; a
+/// BSS whose frequency does not land on the channel plan is DROPPED rather than
+/// filed under a guessed channel, matching the Android and macOS mappers. Note
+/// that WLAN_BSS_ENTRY reports the center frequency in kHz, not MHz.
+///
+/// No noise and no SNR: the Native Wifi BSS list carries no per-BSS noise floor,
+/// so there is nothing to report and nothing is derived (GL-005 / GL-008).
+@visibleForTesting
+List<Map<String, Object?>> scannedApRowsFromBssCandidates(
+  List<WifiBssCandidate> candidates,
+) {
+  final List<Map<String, Object?>> rows = <Map<String, Object?>>[];
+  final Set<String> seen = <String>{};
+  for (final WifiBssCandidate c in candidates) {
+    if (!seen.add(c.bssid)) continue;
+    final double mhz = c.centerFreqKhz / 1000.0;
+    final ({WifiBand band, int channel})? match = frequencyToChannel(mhz);
+    if (match == null) continue;
+    rows.add(<String, Object?>{
+      // A hidden network's empty SSID is passed as null so the UI renders
+      // "(hidden network)" rather than a blank or a fabricated name.
+      'ssid': (c.ssid == null || c.ssid!.isEmpty) ? null : c.ssid,
+      'bssid': c.bssid,
+      'rssiDbm': c.rssiDbm,
+      'channel': match.channel,
+      'band': match.band.label,
+      'frequencyMhz': mhz.round(),
+    });
+  }
+  return rows;
+}
+
 /// First 5 octets of a colon-hex BSSID (`94:2a:6f:a0:a5`), lowercased. Groups
 /// the transmitted + non-transmitted BSSIDs of one AP radio (MBSSID), and
 /// bridges a Wi-Fi 7 AP MLD address to its affiliated per-link APs, which share
@@ -520,6 +568,154 @@ int? _queryOperatingChannel(int handle, Pointer<GUID> guidPtr) {
 ///      the strongest.
 /// Returns null only when nothing advertises the connection at all (then
 /// RSSI-dBm/channel/band stay null and the signal-quality % still shows).
+/// Enumerates EVERY nearby BSS the first wireless interface can see, as the
+/// `com.wlanpros.toolbox/ap_scan` payload the shared `ApScanSnapshot` consumes.
+///
+/// DARK PATH — NOT LIVE. Windows is deliberately excluded from
+/// `ApScanService.isSupportedPlatform` and from `kNativeScanPlatforms`, so the
+/// Nearby AP Scan tool does not appear on Windows and nothing calls this at
+/// runtime. It exists so the enumeration is written and reviewable, ready to be
+/// switched on AFTER it is executed against real hardware.
+///
+/// TODO(windows-verify): never executed. Confirm against a real wlanapi.dll and
+/// a real wireless NIC that: the handle opens; an interface enumerates even when
+/// NOT connected (this path deliberately does not require a connected
+/// interface, unlike [readConnectedApFromNativeWifi]); WlanGetNetworkBssList
+/// returns every visible BSS rather than only the connected network's;
+/// `ulChCenterFrequency` really is kHz on 6 GHz radios as well as 2.4/5 GHz;
+/// and WlanFreeMemory/WlanCloseHandle leave no leak.
+///
+/// UNRESOLVED BEFORE THIS COULD GO LIVE: Windows may return a STALE driver BSS
+/// list unless a scan is requested first (`WlanScan`, which completes
+/// asynchronously via a notification callback). This function does NOT call
+/// `WlanScan`, so the list it returns is whatever the driver last cached. Wiring
+/// it live without settling that would risk presenting stale results as fresh,
+/// which is exactly the kind of unmeasured verdict this app must not state.
+///
+/// Throws [WifiInfoUnavailable] rather than fabricating a list.
+List<Map<String, Object?>> enumerateNearbyBssFromNativeWifi() {
+  final Pointer<Uint32> pdwNegotiated = calloc<Uint32>();
+  final Pointer<IntPtr> phClientHandle = calloc<IntPtr>();
+  Pointer<WLAN_INTERFACE_INFO_LIST> pIfList = nullptr;
+  try {
+    final int openResult = WlanOpenHandle(
+      _kWlanClientVersion,
+      nullptr,
+      pdwNegotiated,
+      phClientHandle,
+    );
+    if (openResult != _kErrorSuccess) {
+      throw WifiInfoUnavailable(
+        WifiInfoUnavailableReason.channelError,
+        'WlanOpenHandle failed (error $openResult).',
+      );
+    }
+    final int handle = phClientHandle.value;
+    try {
+      final Pointer<Pointer<WLAN_INTERFACE_INFO_LIST>> ppIfList =
+          calloc<Pointer<WLAN_INTERFACE_INFO_LIST>>();
+      try {
+        final int enumResult = WlanEnumInterfaces(handle, nullptr, ppIfList);
+        if (enumResult != _kErrorSuccess) {
+          throw WifiInfoUnavailable(
+            WifiInfoUnavailableReason.channelError,
+            'WlanEnumInterfaces failed (error $enumResult).',
+          );
+        }
+        pIfList = ppIfList.value;
+      } finally {
+        calloc.free(ppIfList);
+      }
+
+      if (pIfList.ref.dwNumberOfItems == 0) {
+        throw const WifiInfoUnavailable(
+          WifiInfoUnavailableReason.channelError,
+          'No wireless interface present.',
+        );
+      }
+
+      // Scanning does NOT require a connected interface, so this takes the first
+      // wireless interface rather than the first CONNECTED one.
+      final Pointer<GUID> guidPtr = calloc<GUID>();
+      try {
+        guidPtr.ref.setGUID(pIfList.ref.InterfaceInfo[0].InterfaceGuid.toString());
+
+        final Pointer<Pointer<WLAN_BSS_LIST>> ppBssList =
+            calloc<Pointer<WLAN_BSS_LIST>>();
+        Pointer<WLAN_BSS_LIST> pBssList = nullptr;
+        try {
+          final int bResult = WlanGetNetworkBssList(
+            handle,
+            guidPtr,
+            nullptr,
+            _kBssTypeInfrastructure,
+            0,
+            nullptr,
+            ppBssList,
+          );
+          if (bResult != _kErrorSuccess) {
+            throw WifiInfoUnavailable(
+              WifiInfoUnavailableReason.channelError,
+              'WlanGetNetworkBssList failed (error $bResult).',
+            );
+          }
+          pBssList = ppBssList.value;
+          final int n = pBssList.ref.dwNumberOfItems;
+          final Pointer<WLAN_BSS_ENTRY> entriesBase =
+              Pointer<WLAN_BSS_ENTRY>.fromAddress(
+            pBssList.address + _kBssEntriesOffset,
+          );
+          return scannedApRowsFromBssCandidates(
+            _decodeBssCandidates(pBssList, n, entriesBase),
+          );
+        } finally {
+          if (pBssList != nullptr) {
+            WlanFreeMemory(pBssList.cast());
+          }
+          calloc.free(ppBssList);
+        }
+      } finally {
+        calloc.free(guidPtr);
+      }
+    } finally {
+      if (pIfList != nullptr) {
+        WlanFreeMemory(pIfList.cast());
+      }
+      WlanCloseHandle(handle, nullptr);
+    }
+  } finally {
+    calloc.free(phClientHandle);
+    calloc.free(pdwNegotiated);
+  }
+}
+
+/// Decodes every WLAN_BSS_ENTRY row in a BSS list into plain Dart values.
+///
+/// Extracted so the connected-link path ([_queryConnectedBss]) and the nearby-AP
+/// enumeration path ([enumerateNearbyBssFromNativeWifi]) read the list exactly
+/// once, the same way. Rows whose BSSID cannot be decoded are dropped — there is
+/// no honest identity for them.
+List<WifiBssCandidate> _decodeBssCandidates(
+  Pointer<WLAN_BSS_LIST> pBssList,
+  int count,
+  Pointer<WLAN_BSS_ENTRY> entriesBase,
+) {
+  final List<WifiBssCandidate> candidates = <WifiBssCandidate>[];
+  for (int i = 0; i < count; i++) {
+    final WLAN_BSS_ENTRY entry = pBssList.ref.wlanBssEntries[i];
+    final String? bssid = _decodeBssid(entry.dot11Bssid);
+    if (bssid == null) continue;
+    candidates.add(WifiBssCandidate(
+      bssid: bssid.toLowerCase(),
+      ssid: _decodeSsid(entry.dot11Ssid),
+      rssiDbm: entry.lRssi,
+      centerFreqKhz: entry.ulChCenterFrequency,
+      informationElements: _readIeBlob(entriesBase + i),
+    ));
+  }
+  return candidates;
+}
+
 _BssSnapshot? _queryConnectedBss(
   int handle,
   Pointer<GUID> guidPtr,
@@ -557,19 +753,8 @@ _BssSnapshot? _queryConnectedBss(
       pBssList.address + _kBssEntriesOffset,
     );
 
-    final List<WifiBssCandidate> candidates = <WifiBssCandidate>[];
-    for (int i = 0; i < n; i++) {
-      final WLAN_BSS_ENTRY entry = pBssList.ref.wlanBssEntries[i];
-      final String? bssid = _decodeBssid(entry.dot11Bssid);
-      if (bssid == null) continue;
-      candidates.add(WifiBssCandidate(
-        bssid: bssid.toLowerCase(),
-        ssid: _decodeSsid(entry.dot11Ssid),
-        rssiDbm: entry.lRssi,
-        centerFreqKhz: entry.ulChCenterFrequency,
-        informationElements: _readIeBlob(entriesBase + i),
-      ));
-    }
+    final List<WifiBssCandidate> candidates =
+        _decodeBssCandidates(pBssList, n, entriesBase);
     if (candidates.isEmpty) return null;
 
     final int? operatingChannel = _queryOperatingChannel(handle, guidPtr);
