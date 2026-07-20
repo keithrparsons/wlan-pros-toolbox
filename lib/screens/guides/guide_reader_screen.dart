@@ -223,13 +223,22 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
             idleLabel: 'Copy guide text',
             copiedLabel: 'Guide text copied',
           ),
-          IconButton(
-            icon: const Icon(Icons.list_alt_outlined),
-            tooltip: 'Contents',
-            // Disabled until the document (and thus its TOC) is loaded; a null
-            // onPressed drops it from focus traversal and exposes the disabled
-            // state to AT (§8.16 empty/no-results rule applied to the action).
-            onPressed: ready ? _openContents : null,
+          // Explicit accessible name (WCAG 2.2 AA SC 4.1.2, GL-003 §8.16):
+          // `tooltip:` maps to AXHelp, not AXTitle, so an icon-only button reads
+          // as `label="" button=true` without this. `enabled:` tracks `ready`
+          // so AT hears the same disabled state the null onPressed encodes.
+          Semantics(
+            button: true,
+            enabled: ready,
+            label: 'Open table of contents',
+            child: IconButton(
+              icon: const Icon(Icons.list_alt_outlined),
+              tooltip: 'Contents',
+              // Disabled until the document (and thus its TOC) is loaded; a null
+              // onPressed drops it from focus traversal and exposes the disabled
+              // state to AT (§8.16 empty/no-results rule applied to the action).
+              onPressed: ready ? _openContents : null,
+            ),
           ),
         ],
       ),

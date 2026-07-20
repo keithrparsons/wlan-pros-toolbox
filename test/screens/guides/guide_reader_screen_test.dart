@@ -98,6 +98,32 @@ void main() {
   // Pure substitution: the version fill is a plain string replace, unit-tested
   // in isolation so both the production load path and the widget-test override
   // path share one verified transform.
+  testWidgets(
+    'the Contents action exposes an accessible NAME, not just a tooltip '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pump(tester); // default fixture loads → the TOC action is enabled
+
+      // `tooltip: 'Contents'` maps to AXHelp, not AXTitle; the explicit Semantics
+      // label is the accessible name. Once the document is ready the button is
+      // enabled. Removing the label (the mutation) → red.
+      expect(find.bySemanticsLabel('Open table of contents'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Open table of contents')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Open table of contents',
+        ),
+        reason: 'the Contents action must read as a named, enabled button to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   test('applyGuidePlaceholders fills {{app_version}} with the given version',
       () {
     expect(

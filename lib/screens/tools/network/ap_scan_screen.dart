@@ -360,6 +360,11 @@ class _ApScanScreenState extends State<ApScanScreen> {
             )
           : Semantics(
               button: true,
+              // This branch renders only when not already scanning, so the
+              // scan action is always available; `onPressed` is never null.
+              // Without this the node leaves isEnabled unset, which AT
+              // announces as a DISABLED button (see 68d9b93).
+              enabled: true,
               label: 'Scan for nearby access points',
               child: IconButton(
                 icon: const Icon(Icons.refresh),

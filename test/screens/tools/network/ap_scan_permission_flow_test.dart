@@ -131,6 +131,39 @@ void main() {
     Duration.zero,
   ];
 
+  testWidgets(
+    'the Scan action reads as an ENABLED button, not just named '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      final _PermissionSpy spy = _PermissionSpy();
+      await tester.pumpWidget(host(ApScanScreen(
+        service: _service(spy, status: LocationAuthStatus.authorized),
+        grantSettleBackoff: noWait,
+      )));
+      await tester.pumpAndSettle();
+
+      // A Semantics(button: true) without `enabled:` leaves isEnabled unset,
+      // which AT announces as a DISABLED button (68d9b93). Once the scan has
+      // settled, the idle Scan action is available, so it must read enabled.
+      // Removing `enabled:` (the mutation) drops hasEnabledState → red.
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel('Scan for nearby access points'),
+        ),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Scan for nearby access points',
+        ),
+        reason: 'the idle Scan control must not read as disabled to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   // -------------------------------------------------------------------------
   // DEFECT 1 — the dead "Grant Location" button.
   // -------------------------------------------------------------------------

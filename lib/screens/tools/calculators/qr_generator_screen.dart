@@ -377,18 +377,28 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                 style: text.bodyLarge,
                 decoration: InputDecoration(
                   hintText: 'Network password',
-                  suffixIcon: IconButton(
-                    onPressed: () => setState(
-                      () => _passwordObscured = !_passwordObscured,
+                  // Explicit accessible name (WCAG 2.2 AA SC 4.1.2, GL-003
+                  // §8.16): `tooltip:` maps to AXHelp, not AXTitle, so this
+                  // icon-only toggle would read as `label="" button=true`. The
+                  // label flips with state like the tooltip; `enabled:` is true
+                  // because the toggle is always available.
+                  suffixIcon: Semantics(
+                    button: true,
+                    enabled: true,
+                    label: _passwordObscured ? 'Show password' : 'Hide password',
+                    child: IconButton(
+                      onPressed: () => setState(
+                        () => _passwordObscured = !_passwordObscured,
+                      ),
+                      icon: Icon(
+                        _passwordObscured
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      tooltip: _passwordObscured
+                          ? 'Show password'
+                          : 'Hide password',
                     ),
-                    icon: Icon(
-                      _passwordObscured
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
-                    tooltip: _passwordObscured
-                        ? 'Show password'
-                        : 'Hide password',
                   ),
                 ),
               ),

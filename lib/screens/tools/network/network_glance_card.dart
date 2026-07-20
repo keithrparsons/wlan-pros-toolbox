@@ -698,13 +698,23 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
                 ),
               ),
               // Refresh inherits the global §8.3 focus ring (icon-only control).
-              IconButton(
-                onPressed: _refreshing ? null : _load,
-                tooltip: 'Refresh',
-                icon: const Icon(Icons.refresh),
-                iconSize: 20,
-                color: colors.textSecondary,
-                disabledColor: colors.textDisabled,
+              // Explicit accessible name (WCAG 2.2 AA SC 4.1.2, GL-003 §8.16):
+              // `tooltip:` maps to AXHelp, not AXTitle, so the button would read
+              // as `label="" button=true` without this. `enabled:` tracks the
+              // real onPressed null-ness so AT hears "disabled" only while a
+              // refresh is actually in flight.
+              Semantics(
+                button: true,
+                enabled: !_refreshing,
+                label: 'Refresh network snapshot',
+                child: IconButton(
+                  onPressed: _refreshing ? null : _load,
+                  tooltip: 'Refresh',
+                  icon: const Icon(Icons.refresh),
+                  iconSize: 20,
+                  color: colors.textSecondary,
+                  disabledColor: colors.textDisabled,
+                ),
               ),
             ],
           ),

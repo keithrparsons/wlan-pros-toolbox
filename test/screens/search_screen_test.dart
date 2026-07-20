@@ -18,6 +18,35 @@ Widget _harness({Map<String, WidgetBuilder>? routes}) => MaterialApp(
     );
 
 void main() {
+  testWidgets(
+    'the clear-search button exposes an accessible NAME, not just a tooltip '
+    '(WCAG 2.2 AA SC 4.1.2)',
+    (tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpWidget(_harness());
+      // The clear affordance only renders once the field has text.
+      await tester.enterText(find.byType(TextField), 'channel');
+      await tester.pump();
+
+      // `tooltip:` maps to AXHelp, not AXTitle, so without the explicit
+      // Semantics label this icon-only button reads as `label="" button=true`.
+      // Removing that label (the mutation) drops this node → red.
+      expect(find.bySemanticsLabel('Clear search'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Clear search')),
+        isSemantics(
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Clear search',
+        ),
+        reason: 'the clear button must read as a named, ENABLED button to AT',
+      );
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('empty query shows the start-typing hint', (tester) async {
     await tester.pumpWidget(_harness());
     await tester.pump();

@@ -1771,6 +1771,10 @@ class _Header extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Semantics(
             button: true,
+            // Always available while recording; `onPressed: sampler.stop` is
+            // never null here. Without this the node leaves isEnabled unset,
+            // which AT announces as a DISABLED button (see 68d9b93).
+            enabled: true,
             label: 'Stop recording roams',
             child: IconButton(
               icon: const Icon(Icons.stop, size: 20),

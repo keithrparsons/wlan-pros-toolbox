@@ -91,10 +91,20 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen> {
         actions: [
           if (NetworkSupport.interfaceInfoSupported) ...[
             AppCopyAction(textBuilder: _buildCopyText),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh',
-              onPressed: _load,
+            // Explicit accessible name (WCAG 2.2 AA SC 4.1.2, GL-003 §8.16):
+            // `tooltip:` maps to AXHelp, not AXTitle, so an icon-only button
+            // reads as `label="" button=true` without this. `enabled:` is set
+            // so the node reads as an enabled button; the refresh action is
+            // always available (a fresh read can be requested at any time).
+            Semantics(
+              button: true,
+              enabled: true,
+              label: 'Refresh device info',
+              child: IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh',
+                onPressed: _load,
+              ),
             ),
           ],
         ],

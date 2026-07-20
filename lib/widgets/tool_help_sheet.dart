@@ -157,6 +157,10 @@ class ToolHelpSheet extends StatelessWidget {
                   // Close — reachable without scrolling. 44pt tap target.
                   Semantics(
                     button: true,
+                    // Always available; `onPressed` (pop the sheet) is never
+                    // null. Without this the node leaves isEnabled unset, which
+                    // AT announces as a DISABLED button (see 68d9b93).
+                    enabled: true,
                     label: 'Close help',
                     child: IconButton(
                       icon: const Icon(Icons.close),
