@@ -1,6 +1,6 @@
 Accessibility. Buttons across the app now report their name to VoiceOver and other screen readers.
 
-Location access. Granting Location permission now works on the Nearby AP Scan and Wi-Fi Information screens.
+Location access. Granting Location permission now works on the Wi-Fi Information screen.
 
 Clearer help. The ICMP Ping and Traceroute notes no longer imply a Linux desktop build. WLAN Pi support is coming.
 
