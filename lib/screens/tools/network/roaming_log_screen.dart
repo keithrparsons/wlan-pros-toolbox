@@ -1746,6 +1746,15 @@ class _Header extends StatelessWidget {
     if (sampler.isIos && !sampler.isStreaming) {
       return Semantics(
         button: true,
+        // This branch renders ONLY while `!sampler.isStreaming`, so `onPressed:
+        // sampler.start` is never null here — the Start control is unconditionally
+        // operational whenever it is on screen (it is HIDDEN, not disabled, while
+        // recording — the `isStreaming` branch below replaces it with LIVE + Stop).
+        // Matching that with `enabled: true` mirrors the sibling Stop button; an
+        // UNSET isEnabled would make AT announce this working control as DISABLED
+        // (see 68d9b93). `enabled: true` tracks the real `onPressed` null-ness, not
+        // a blind assertion.
+        enabled: true,
         label: 'Start recording roams',
         child: OutlinedButton.icon(
           onPressed: sampler.start,
