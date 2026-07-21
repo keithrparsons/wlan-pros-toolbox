@@ -15,6 +15,8 @@ import 'package:wlan_pros_toolbox/screens/tools/network/roaming_log_screen.dart'
 import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/device_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/roam_detector.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart'
     show LocationAuthStatus;
@@ -2131,4 +2133,118 @@ void main() {
       expect(doc, contains('dBm avg after roam'));
     });
   });
+
+  // ===================================================================
+  // a11y: the iOS "Start recording roams" control announces ENABLED.
+  //
+  // The 1.8.3 gate fast-follow (68d9b93 live-dump): a `Semantics(button: true)`
+  // with an UNSET `enabled:` announces to VoiceOver/AT as a DISABLED button even
+  // though the control works — the same false announcement the sibling Stop
+  // button was already fixed for. The Start control renders ONLY in the iOS
+  // `!isStreaming` branch, so its `onPressed: sampler.start` is never null when
+  // it is on screen; its Semantics node must carry `enabled: true` to match.
+  //
+  // This state is reachable HERMETICALLY, unlike the Stop button (which needs a
+  // live stream — `isStreaming` gates it): a freshly-constructed, never-started
+  // iOS sampler already satisfies `isIos && !isStreaming`, so no streaming
+  // harness is required to reach and assert the Start control's enabled flag.
+  //
+  // MUTATION-RED (verified 2026-07-20, Felix): removing `enabled:` from the
+  // Start Semantics node (leaving `button: true` unset-enabled) drops the
+  // `hasEnabledState`/`isEnabled` flags from the merged node and turns the
+  // `matchesSemantics(hasEnabledState: true, isEnabled: true)` assertion RED.
+  // ===================================================================
+  testWidgets(
+      'iOS Start control announces ENABLED (a11y: button:true must not leave '
+      'isEnabled unset — 68d9b93 fast-follow)', (t) async {
+    final WifiSignalSampler sampler = WifiSignalSampler(
+      source: WifiInfoSource.iosShortcuts,
+      iosBridge: _QuietIosBridge(),
+    );
+    addTearDown(sampler.dispose);
+
+    await t.binding.setSurfaceSize(const Size(560, 1200));
+    addTearDown(() => t.binding.setSurfaceSize(null));
+    await t.pumpWidget(MaterialApp(
+      theme: AppTheme.dark(),
+      home: RoamingLogScreen(
+        sourceOverride: WifiInfoSource.iosShortcuts,
+        sampler: sampler,
+        deviceInfoReader: () async =>
+            const DeviceInfoSnapshot(modelName: 'iPhone 17', osVersion: '26'),
+      ),
+    ));
+    await t.pump(); // build
+    await t.pump(); // settle load()
+
+    // Guard the precondition: iOS, not yet streaming -> the Start control (not
+    // LIVE + Stop) is the one on screen. If this ever flips, the enabled
+    // assertion below would be checking the wrong node.
+    expect(sampler.isIos, isTrue);
+    expect(sampler.isStreaming, isFalse);
+
+    final Finder start = find.bySemanticsLabel('Start recording roams');
+    expect(start, findsOneWidget,
+        reason: 'the iOS !isStreaming branch must show the Start control');
+
+    // The node must announce ENABLED. An UNSET enabled: (the 68d9b93 bug) drops
+    // both flags and fails this — that is the mutation-red guard.
+    expect(
+      t.getSemantics(start),
+      matchesSemantics(
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: true,
+        label: 'Start recording roams',
+      ),
+      reason: 'Start must announce as an ENABLED button, never DISABLED, since '
+          'onPressed: sampler.start is non-null whenever it renders.',
+    );
+  });
+}
+
+/// A hermetic iOS companion-Shortcut bridge: constructs the sampler's
+/// [WifiMonitorController] without touching any platform channel, never delivers
+/// a payload, and never streams — exactly what the never-started Start-control
+/// state needs. Mirrors the [WiFiDetailsBridge] interface the Test My Connection
+/// tests fake, trimmed to inert defaults.
+class _QuietIosBridge implements WiFiDetailsBridge {
+  @override
+  Future<bool> consumeShortcutMissing() async => false;
+  @override
+  Future<void> markSetupInitiated() async {}
+  @override
+  Future<bool> hasInitiatedSetup() async => false;
+  @override
+  Future<bool> isShortcutsAppInstalled() async => true;
+  @override
+  Future<void> setLiveOriginRoute(String route) async {}
+  @override
+  Future<String?> consumeLiveErrorNav() async => null;
+  @override
+  Future<void> armLiveRun(String route) async {}
+  @override
+  Future<PendingLiveRun?> pendingLiveRun() async => null;
+  @override
+  Future<void> clearLiveRun() async {}
+  @override
+  Future<bool> hasEverReceivedPayload() async => false;
+  @override
+  Future<DateTime?> payloadReceivedAt() async => null;
+  @override
+  Future<WiFiDetails?> readLatest() async => null;
+  @override
+  Future<bool> isMonitoringActive() async => false;
+  @override
+  Future<void> setMonitoringActive(bool active) async {}
+  @override
+  Future<void> resetMonitoringColdStart() async {}
+  @override
+  Future<bool> openUrl(String url) async => true;
+  @override
+  Future<bool> runShortcut(String name) async => true;
+  @override
+  Future<bool> runShortcutOneShot(String name) async => true;
+  @override
+  Stream<WiFiDetails> get updates => const Stream<WiFiDetails>.empty();
 }
