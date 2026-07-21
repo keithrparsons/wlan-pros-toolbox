@@ -1,7 +1,7 @@
-New in 1.8.0
+Accessibility. Buttons across the app now report their name to VoiceOver and other screen readers.
 
-Roaming Log, upgraded. Each roam now shows the band, channel, and signal for both the access point you left and the one you joined, so you can see whether a roam was an upgrade. The BSSID now shows the identifying tail, and Copy and Share are back and improved.
+Location access. Granting Location permission now works on the Nearby AP Scan and Wi-Fi Information screens.
 
-New references. Packet Decode (IPv4, IPv6, TCP, UDP, and ICMP header anatomy, TCP flags and connection states, and ICMP codes), Find the Switch and Port (LLDP and CDP), TCP/IP filters in the Wireshark reference, and nmap, iperf3, tcpdump, and tshark in the command reference.
+Clearer help. The ICMP Ping and Traceroute notes no longer imply a Linux desktop build. WLAN Pi support is coming.
 
-Fixes. Test My Connection no longer shows a stale network name when the live network name is unavailable, plus stability and polish.
+More honest reporting. The Roaming Log states how many samples each summary is based on, and screens no longer report results they did not check.
