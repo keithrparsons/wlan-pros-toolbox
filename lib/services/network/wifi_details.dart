@@ -171,11 +171,13 @@ class WiFiDetails {
 
   /// Cellular carrier / operator name (e.g. "Verizon"), when the combined
   /// payload also carries the cellular slice. Null when absent. Orb key:
-  /// `cell_carrier_name`. Descriptive text, kept verbatim.
+  /// `cell_carrier_name`; live "WLAN Pros Live" Shortcut key: `Carrier`.
+  /// Descriptive text, kept verbatim.
   final String? cellCarrier;
 
   /// Cellular radio access technology label (e.g. "LTE", "5G NR"), verbatim.
-  /// Null when absent. Orb key: `cell_rat`.
+  /// Null when absent. Orb key: `cell_rat`; live "WLAN Pros Live" Shortcut key:
+  /// `radioTechnology`.
   final String? cellRat;
 
   /// Cellular signal bars — a coarse 0-to-4 status-bar indicator, NOT a dBm /
@@ -314,6 +316,12 @@ class WiFiDetails {
 
     // Cellular signal bars are a coarse 0-to-4 indicator; clamp so a stray
     // out-of-range value never renders as "7 of 4".
+    // TODO(cellular): the live "WLAN Pros Live" Shortcut emits a `signalBars`
+    // key, but Apple's "Number of Signal Bars" (from the "Get Wi-Fi network's…"
+    // action) is AMBIGUOUS — it may be the Wi-Fi bars, not the cellular bars.
+    // Do NOT add `'signalBars'` to this alias list until a live dev-build check
+    // confirms the value that actually arrives is cellular. Adding it blind
+    // risks mislabelling Wi-Fi bars as cellular signal (a false RF verdict).
     int? bars = pickInt(<String>['Cell Signal Bars', 'cell_signal_bars']);
     if (bars != null) bars = bars.clamp(0, 4);
 
@@ -328,8 +336,10 @@ class WiFiDetails {
       txRate: pickInt(<String>['TX Rate', 'txRate', 'TX']),
       ipv4Local: pickString(<String>['IPv4 Local', 'ipv4_local']),
       ipv6Local: pickString(<String>['IPv6 Local', 'ipv6_local']),
-      cellCarrier: pickString(<String>['Cell Carrier', 'cell_carrier_name']),
-      cellRat: pickString(<String>['Cell RAT', 'cell_rat']),
+      cellCarrier:
+          pickString(<String>['Cell Carrier', 'cell_carrier_name', 'Carrier']),
+      cellRat:
+          pickString(<String>['Cell RAT', 'cell_rat', 'radioTechnology']),
       cellSignalBars: bars,
       payloadVersion: pickString(<String>['Payload Version', 'version']),
       reachUrl: pickString(<String>['Reachability URL', 'reach_url']),

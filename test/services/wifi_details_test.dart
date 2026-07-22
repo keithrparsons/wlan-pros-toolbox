@@ -313,6 +313,33 @@ void main() {
     });
   });
 
+  group('WiFiDetails — real "WLAN Pros Live" Shortcut cellular keys', () {
+    // Regression: the live companion Shortcut emits the cellular slice under
+    // camelCase/Nice-Case keys the parser did NOT previously accept, so the
+    // fields silently stayed null. Verified against a screenshot of Keith's
+    // actual Shortcut Dictionary: `Carrier`, `radioTechnology`.
+    test('Carrier + radioTechnology populate cellCarrier/cellRat', () {
+      final WiFiDetails d =
+          WiFiDetails.fromJsonString('{"Carrier":"Verizon","radioTechnology":"LTE"}')!;
+      expect(d.cellCarrier, 'Verizon');
+      expect(d.cellRat, 'LTE');
+    });
+
+    test('real Shortcut cellular keys are matched case-insensitively', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(
+          '{"CARRIER":"AT&T","RADIOTECHNOLOGY":"5G NR"}')!;
+      expect(d.cellCarrier, 'AT&T');
+      expect(d.cellRat, '5G NR');
+    });
+
+    test('Orb snake_case keys still populate the same fields (additive)', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(
+          '{"cell_carrier_name":"T-Mobile","cell_rat":"5G NR"}')!;
+      expect(d.cellCarrier, 'T-Mobile');
+      expect(d.cellRat, '5G NR');
+    });
+  });
+
   group('WiFiDetails — Orb-parity fields via our capitalized keys', () {
     const String ours = '{'
         '"IPv4 Local":"10.0.0.5","IPv6 Local":"fe80::abcd",'
