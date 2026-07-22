@@ -27,6 +27,7 @@ import 'package:wlan_pros_toolbox/services/network/connected_ap.dart';
 import 'package:wlan_pros_toolbox/services/network/connected_ap_cache.dart';
 import 'package:wlan_pros_toolbox/services/network/interface_info_service.dart';
 import 'package:wlan_pros_toolbox/services/network/public_ip_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_details.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details_bridge.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_adapter.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart';
@@ -107,9 +108,15 @@ const MethodChannel _networkTransportChannel =
 /// `opened` controls whether the one-shot bounce "succeeds" (true) or fails to
 /// open (false → the screen drops the pending state).
 class _FakeBridge extends WiFiDetailsBridge {
-  _FakeBridge({required this.opened});
+  _FakeBridge({required this.opened, this.extras});
 
   final bool opened;
+
+  /// The Wi-Fi-Shortcut payload [readLatest] returns (Orb-parity local
+  /// addresses). Null by default so the standard tests touch no channel and see
+  /// no new rows (the current-Shortcut, absent state).
+  final WiFiDetails? extras;
+
   int runCount = 0;
 
   @override
@@ -117,6 +124,9 @@ class _FakeBridge extends WiFiDetailsBridge {
     runCount++;
     return opened;
   }
+
+  @override
+  Future<WiFiDetails?> readLatest() async => extras;
 }
 
 /// A PublicIpService that resolves offline to a fixed IP (no network).
@@ -496,6 +506,66 @@ void main() {
       expect(find.text('Refresh Wi-Fi'), findsOneWidget);
       final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
       expect(button.onPressed, isNotNull);
+    });
+  });
+
+  group('Orb-parity Wi-Fi-Shortcut local addresses', () {
+    testWidgets(
+        'PRESENT: a Shortcut-derived local IPv4/IPv6 renders alongside the '
+        'native addresses, attributed to the Wi-Fi Shortcut', (tester) async {
+      final bridge = _FakeBridge(
+        opened: true,
+        extras: const WiFiDetails(
+          ipv4Local: '192.168.1.42',
+          ipv6Local: 'fe80::1c2d',
+        ),
+      );
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+        ),
+        bridge: bridge,
+      ));
+      await tester.pumpAndSettle();
+
+      // Native wifiIPv4/IPv6 are null in these hermetic tests, so the Shortcut
+      // rows surface an address the native read did not — clearly attributed.
+      expect(find.text('IPv4 (Wi-Fi Shortcut)'), findsOneWidget);
+      expect(find.text('192.168.1.42'), findsOneWidget);
+      expect(find.text('IPv6 (Wi-Fi Shortcut)'), findsOneWidget);
+      expect(find.text('fe80::1c2d'), findsOneWidget);
+    });
+
+    testWidgets(
+        'ABSENT: with no Shortcut payload the card reads exactly as today — no '
+        'Wi-Fi Shortcut address rows', (tester) async {
+      final bridge = _FakeBridge(opened: true); // extras == null (current Shortcut)
+      await tester.pumpWidget(buildScreen(
+        readerAp: const ConnectedAp(
+          ssid: 'KeithNet',
+          bssid: 'a4:83:e7:00:11:22',
+        ),
+        bridge: bridge,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('IPv4 (Wi-Fi Shortcut)'), findsNothing);
+      expect(find.text('IPv6 (Wi-Fi Shortcut)'), findsNothing);
+    });
+
+    test(
+        'shortcutLocalAddress: shows a differing address, hides a duplicate or '
+        'a blank (no double-show, honest floor)', () {
+      // PRESENT and different from the native row -> surface it.
+      expect(shortcutLocalAddress('192.168.1.42', null), '192.168.1.42');
+      expect(shortcutLocalAddress('192.168.1.42', '10.0.0.1'), '192.168.1.42');
+      // DUPLICATE of the native row (after trimming) -> hide it.
+      expect(shortcutLocalAddress('192.168.1.42', '192.168.1.42'), isNull);
+      expect(shortcutLocalAddress('  192.168.1.42 ', '192.168.1.42'), isNull);
+      // ABSENT / blank Shortcut value -> hide it (identical to today).
+      expect(shortcutLocalAddress(null, '192.168.1.42'), isNull);
+      expect(shortcutLocalAddress('   ', null), isNull);
     });
   });
 }

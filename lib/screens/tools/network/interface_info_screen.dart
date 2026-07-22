@@ -26,6 +26,7 @@ import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/public_ip_service.dart';
 import '../../../services/network/shortcuts_config.dart';
+import '../../../services/network/wifi_details.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_info_adapter.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -86,6 +87,15 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
   /// the Refresh Wi-Fi button shows a pending state and the resume re-read knows
   /// to expect a freshly stored payload.
   bool _refreshingWifi = false;
+
+  /// The latest Wi-Fi-Shortcut payload, read from the shared App Group via the
+  /// iOS bridge (Orb-parity). Carries the OPTIONAL local IPv4/IPv6 the combined
+  /// companion Shortcut emits alongside the RF metrics. Null off the iOS
+  /// Shortcut path and null until the (separately-updated) Shortcut emits these
+  /// fields, so the Wi-Fi link card reads EXACTLY as it does today under the
+  /// current Shortcut. It supplements the native interface addresses, never
+  /// replaces them.
+  WiFiDetails? _wifiExtras;
 
   /// The platform that owns an unreadable-MAC reason note, derived from the
   /// resolved Wi-Fi source, so the "MAC type" row names the RIGHT OS limit (the
@@ -204,6 +214,25 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
           // disabled (snapshot null). Swallow here so no unhandled-error fires.
         });
     _loadPublicIp();
+    _loadWifiExtras();
+  }
+
+  /// Reads the latest Wi-Fi-Shortcut payload (Orb-parity local IPv4/IPv6) from
+  /// the shared App Group via the iOS bridge, so the Wi-Fi link card can surface
+  /// the Shortcut-derived addresses ALONGSIDE the native interface addresses.
+  /// No-op off the iOS Shortcut path (bridge null). Fire-and-forget with a
+  /// mounted guard; never throws — a failed/absent read leaves [_wifiExtras]
+  /// null and the native address rows stand alone (GL-005 honest floor, and the
+  /// screen reads identically to today).
+  void _loadWifiExtras() {
+    final WiFiDetailsBridge? bridge = _iosBridge;
+    if (bridge == null) return;
+    bridge.readLatest().then((WiFiDetails? extras) {
+      if (!mounted) return;
+      setState(() => _wifiExtras = extras);
+    }).catchError((Object _) {
+      // Honest floor: leave _wifiExtras null; never fabricate an address.
+    });
   }
 
   /// After a read that produced a BSSID but no AP name, await the service's
@@ -366,6 +395,13 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     if (!w.notOnWifi) {
       line('IPv4', w.wifiIPv4);
       line('IPv6', w.wifiIPv6);
+      // Mirror the on-screen Wi-Fi-Shortcut address rows (Orb-parity) so the
+      // report never disagrees with the screen ([[feedback_screenshot_text_match]]).
+      // Same non-duplicating rule the card uses.
+      line('IPv4 (Wi-Fi Shortcut)',
+          shortcutLocalAddress(_wifiExtras?.ipv4Local, w.wifiIPv4));
+      line('IPv6 (Wi-Fi Shortcut)',
+          shortcutLocalAddress(_wifiExtras?.ipv6Local, w.wifiIPv6));
       line('Subnet mask', w.subnetMask);
       line('Gateway', w.gatewayIP);
       line('Interface', w.interfaceName);
@@ -443,12 +479,28 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
                   _wifiSource == WifiInfoSource.iosShortcuts ? _refreshWifi : null,
               refreshingWifi: _refreshingWifi,
               macPlatform: _macPlatform,
+              wifiExtras: _wifiExtras,
             );
           },
         );
       },
     );
   }
+}
+
+/// The Wi-Fi-Shortcut local address to SHOW, or null when nothing should render
+/// (Orb-parity, Interface Info). Returns the trimmed [shortcut] value only when
+/// it is non-empty AND differs from the [native] interface address already on
+/// screen — so the "Wi-Fi Shortcut" row surfaces an address the native read did
+/// not, and never duplicates one it did (GL-005: honest, no double-show). A
+/// null/blank Shortcut value returns null, so the row is absent under the
+/// current Shortcut and the card reads identically to today.
+@visibleForTesting
+String? shortcutLocalAddress(String? shortcut, String? native) {
+  final String s = shortcut?.trim() ?? '';
+  if (s.isEmpty) return null;
+  final String n = native?.trim() ?? '';
+  return s == n ? null : s;
 }
 
 class _Success extends StatelessWidget {
@@ -461,6 +513,7 @@ class _Success extends StatelessWidget {
     required this.onRefreshWifi,
     required this.refreshingWifi,
     required this.macPlatform,
+    required this.wifiExtras,
   });
 
   final InterfaceInfoSnapshot data;
@@ -479,6 +532,12 @@ class _Success extends StatelessWidget {
   /// The platform whose limitation the unreadable-MAC note names, so the row
   /// never leaks one OS's wording onto another (GL-005 / GL-008).
   final MacAddressPlatform macPlatform;
+
+  /// The latest Wi-Fi-Shortcut payload (Orb-parity), or null off the iOS path /
+  /// before the Shortcut emits the optional local-address fields. Its
+  /// ipv4Local/ipv6Local render ALONGSIDE the native interface addresses when
+  /// present and non-duplicative; null renders nothing (identical to today).
+  final WiFiDetails? wifiExtras;
 
   @override
   Widget build(BuildContext context) {
@@ -596,6 +655,26 @@ class _Success extends StatelessWidget {
           ValueRow(label: 'BSSID', value: w.bssid, identifier: true),
           ValueRow(label: 'IPv4', value: w.wifiIPv4, identifier: true),
           ValueRow(label: 'IPv6', value: w.wifiIPv6, identifier: true),
+          // Shortcut-derived local addresses (Orb-parity). Rendered directly
+          // beneath the native interface addresses, attributed to the Wi-Fi
+          // Shortcut, and ONLY when the combined companion Shortcut emitted them
+          // AND they differ from the native row (never a duplicate line — see
+          // [shortcutLocalAddress]). Absent today, so the card reads exactly as
+          // it does now until the (separately-updated) Shortcut emits them.
+          if (shortcutLocalAddress(wifiExtras?.ipv4Local, w.wifiIPv4)
+              case final String v4)
+            ValueRow(
+              label: 'IPv4 (Wi-Fi Shortcut)',
+              value: v4,
+              identifier: true,
+            ),
+          if (shortcutLocalAddress(wifiExtras?.ipv6Local, w.wifiIPv6)
+              case final String v6)
+            ValueRow(
+              label: 'IPv6 (Wi-Fi Shortcut)',
+              value: v6,
+              identifier: true,
+            ),
           ValueRow(label: 'Subnet mask', value: w.subnetMask, identifier: true),
           ValueRow(label: 'Gateway', value: w.gatewayIP, identifier: true),
           ValueRow(label: 'Interface', value: w.interfaceName, identifier: true),

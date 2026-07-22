@@ -26,6 +26,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../../../data/channel_frequency_data.dart'
+    show WifiBand, centerFrequencyMHzForBand, wifiBandFromLabel;
 import '../../../data/pdf_download.dart';
 import '../../../services/network/connected_ap.dart';
 import '../../../services/network/device_info_service.dart';
@@ -1998,7 +2000,11 @@ String _spokenAp(String bssid, int? channel, String? band, bool bandDerived,
   b.write(bssid);
   if (channel != null) b.write(' on channel $channel');
   if (band != null && band.trim().isNotEmpty) {
-    b.write(', $band band${bandDerived ? ' derived' : ''}');
+    final String label = band.trim();
+    final WifiBand? wb = wifiBandFromLabel(label);
+    final int? mhz = wb == null ? null : centerFrequencyMHzForBand(wb, channel);
+    final String freq = mhz != null ? ', $mhz megahertz' : '';
+    b.write(', $label band$freq${bandDerived ? ' derived' : ''}');
   }
   return b.toString();
 }
@@ -2010,10 +2016,35 @@ String _spokenAp(String bssid, int? channel, String? band, bool bandDerived,
 String _rowBandChannel(int? channel, String? band, bool derived) {
   final List<String> parts = <String>[];
   if (channel != null) parts.add('ch $channel');
-  if (band != null && band.trim().isNotEmpty) {
-    parts.add(derived ? '$band (derived)' : band);
-  }
+  final String bandToken = bandFrequencyToken(channel, band, derived);
+  if (bandToken.isNotEmpty) parts.add(bandToken);
   return parts.join(' · ');
+}
+
+/// The band token for an on-screen roam row: the band label with its computed
+/// CENTER FREQUENCY in MHz appended when band + channel resolve to one (e.g.
+/// "5 GHz (5220 MHz)"), for parity with the Wi-Fi Information Band row. The
+/// channel number alone is ambiguous across bands (ch 53 is 5265 MHz on 5 GHz
+/// and 6215 MHz on 6 GHz), so band + MHz is the unmistakable identifier. The
+/// frequency is computed by the physics engine [centerFrequencyMHzForBand]
+/// (start + 5 x channel, plus the two special-case channels) — never a
+/// hardcoded table. A DERIVED band (iOS, computed from the channel) keeps its
+/// honest "(derived)" caption; when a frequency is present the caption rides
+/// inside the same parenthetical ("6 GHz (6135 MHz, derived)") so the token is
+/// never double-bracketed. Degrades to the plain band label — identical to
+/// before this change — when the band is null/blank, the channel is null, or the
+/// band string is not a recognized label. Display-only: it reads the roam's
+/// existing band + channel and never touches the roam-detection path.
+@visibleForTesting
+String bandFrequencyToken(int? channel, String? band, bool derived) {
+  final String label = band?.trim() ?? '';
+  if (label.isEmpty) return '';
+  final WifiBand? wb = wifiBandFromLabel(label);
+  final int? mhz = wb == null ? null : centerFrequencyMHzForBand(wb, channel);
+  if (mhz == null) {
+    return derived ? '$label (derived)' : label;
+  }
+  return derived ? '$label ($mhz MHz, derived)' : '$label ($mhz MHz)';
 }
 
 /// One AP in a roam row: the identifying last two octets (mono, never

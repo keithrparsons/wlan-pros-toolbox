@@ -873,10 +873,15 @@ void main() {
     await driveOneRoam(t, sampler);
     await advanceToRoam(t);
 
-    // Channel leads, band follows, for the left AP (directly reported).
-    expect(find.textContaining('ch 44 · 5 GHz'), findsOneWidget);
-    // The joined AP's band is derived -> it carries the honest caption.
-    expect(find.textContaining('ch 37 · 6 GHz (derived)'), findsOneWidget);
+    // Channel leads, then band with its computed center frequency (Orb-parity),
+    // for the left AP (directly reported): ch 44 on 5 GHz = 5000 + 5x44 MHz.
+    expect(find.textContaining('ch 44 · 5 GHz (5220 MHz)'), findsOneWidget);
+    // The joined AP's band is derived -> the honest caption rides inside the
+    // same parenthetical as the frequency: ch 37 on 6 GHz = 5950 + 5x37 MHz.
+    expect(
+      find.textContaining('ch 37 · 6 GHz (6135 MHz, derived)'),
+      findsOneWidget,
+    );
 
     await t.pumpWidget(const SizedBox());
     sampler.dispose();
@@ -1307,6 +1312,37 @@ void main() {
       expect(bandChannelLabel(44, null), 'ch 44');
       expect(bandChannelLabel(null, '5 GHz'), '5 GHz');
       expect(bandChannelLabel(null, null), '');
+    });
+  });
+
+  group('bandFrequencyToken (Orb-parity center frequency, on-screen rows)', () {
+    // PRESENT state: band + channel resolve to a center frequency, appended.
+    test('appends the computed center frequency for a reported band', () {
+      // 5 GHz: 5000 + 5x44 = 5220 MHz.
+      expect(bandFrequencyToken(44, '5 GHz', false), '5 GHz (5220 MHz)');
+      // 6 GHz: 5950 + 5x53 = 6215 MHz — the collision case the frequency
+      // disambiguates (ch 53 is 5265 MHz on 5 GHz, 6215 MHz on 6 GHz).
+      expect(bandFrequencyToken(53, '6 GHz', false), '6 GHz (6215 MHz)');
+      // 2.4 GHz special case: ch 14 = 2484 MHz (not the linear formula).
+      expect(bandFrequencyToken(14, '2.4 GHz', false), '2.4 GHz (2484 MHz)');
+    });
+
+    // PRESENT + derived: the honest caption rides inside the same parenthetical.
+    test('folds the derived caption in beside the frequency', () {
+      expect(bandFrequencyToken(37, '6 GHz', true), '6 GHz (6135 MHz, derived)');
+    });
+
+    // ABSENT state: no frequency to compute -> the token is IDENTICAL to the
+    // pre-change plain band label, so the row reads exactly as it did before.
+    test('degrades to the plain band label when no frequency resolves', () {
+      // Channel unknown -> plain band (and plain "(derived)" as before).
+      expect(bandFrequencyToken(null, '5 GHz', false), '5 GHz');
+      expect(bandFrequencyToken(null, '6 GHz', true), '6 GHz (derived)');
+      // Unrecognized band label -> plain label, no fabricated frequency.
+      expect(bandFrequencyToken(44, '60 GHz', false), '60 GHz');
+      // No band at all -> empty token, so only the channel shows.
+      expect(bandFrequencyToken(44, null, false), '');
+      expect(bandFrequencyToken(44, '  ', false), '');
     });
   });
 
