@@ -640,7 +640,8 @@ void main() {
       verify: (t) {
         _expectText('WLANPros-6E');
         _expectText('-52');
-        _expectText('6 GHz');
+        // Band now carries its computed center frequency (ch 37 → 6135 MHz).
+        _expectText('6 GHz (6135 MHz)');
         _expectText('1441');
       },
     );
@@ -682,7 +683,8 @@ void main() {
       verify: (t) {
         _expectText('Linksys-Home');
         _expectText('-68');
-        _expectText('2.4 GHz');
+        // Band now carries its computed center frequency (ch 6 → 2437 MHz).
+        _expectText('2.4 GHz (2437 MHz)');
         _expectText('72');
       },
     );
@@ -723,7 +725,8 @@ void main() {
       verify: (t) {
         _expectText('WLANPros-Home');
         _expectText('-72');
-        _expectText('2.4 GHz');
+        // Band now carries its computed center frequency (ch 6 → 2437 MHz).
+        _expectText('2.4 GHz (2437 MHz)');
       },
     );
   });
@@ -764,7 +767,8 @@ void main() {
       verify: (t) {
         _expectText('WLANPros-Home');
         _expectText('-49');
-        _expectText('5 GHz');
+        // Band now carries its computed center frequency (ch 44 → 5220 MHz).
+        _expectText('5 GHz (5220 MHz)');
         _expectText('866');
       },
     );

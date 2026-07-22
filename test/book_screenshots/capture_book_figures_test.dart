@@ -793,7 +793,9 @@ void main() {
       verify: (t) {
         _expectText('WLANPros-6E');
         _expectText('-52');
-        _expectText('6 GHz'); // Band renders directly from the macOS source
+        // Band renders from the macOS source with its computed center frequency
+        // (ch 37 → 6135 MHz).
+        _expectText('6 GHz (6135 MHz)');
       },
     );
   });

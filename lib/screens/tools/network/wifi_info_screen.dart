@@ -70,6 +70,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLabel;
 
+import '../../../data/channel_frequency_data.dart'
+    show WifiBand, centerFrequencyMHzForBand, wifiBandFromLabel;
 import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
 import '../../../services/network/connected_ap.dart';
@@ -1099,7 +1101,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         '  Width: ${info.channelWidthAvailable ? _copyVal(_formatChannelWidth(info.channelWidthMhz), _channelWidthHasUnit(info.channelWidthMhz) ? 'MHz' : null) : 'Not reported for this network'}',
       )
       ..writeln(
-        '  Band: ${_copyVal(info.band, null)}'
+        '  Band: ${_copyVal(_bandDisplay(info), null)}'
         '${info.bandDerived ? ' (derived)' : ''}',
       );
 
@@ -1455,9 +1457,32 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// BOTH platform bodies so the data presentation is identical regardless of
   /// source; only the per-field availability reasons differ ([platformLabel]).
   List<Widget> _metricCards(ConnectedAp info, {required String platformLabel}) {
+    // Orb-parity connection-context fields ride on the iOS live payload only
+    // (the combined companion Shortcut). Read the raw WiFiDetails so the new
+    // rows render from the same live sample the RF cards use. Null off iOS and
+    // null until the (separately-updated) Shortcut emits these fields, so every
+    // card below is absent today and the screen reads EXACTLY as it does now.
+    final WiFiDetails? extras = _source == WifiInfoSource.iosShortcuts
+        ? _liveController?.details
+        : null;
+    final Widget? internetCard = _internetCard(extras);
+    final Widget? addressesCard = _addressesCard(extras);
+    final Widget? cellularCard = _cellularContextCard(extras);
+
     return <Widget>[
       _networkCard(info),
       const SizedBox(height: AppSpacing.sm),
+      // Internet reachability leads the RF cards: the "RF is fine / internet is
+      // down" distinction must read BEFORE Signal, so the app never blames the
+      // Wi-Fi for an upstream outage ([[feedback_app_blames_the_wifi]]).
+      if (internetCard != null) ...<Widget>[
+        internetCard,
+        const SizedBox(height: AppSpacing.sm),
+      ],
+      if (addressesCard != null) ...<Widget>[
+        addressesCard,
+        const SizedBox(height: AppSpacing.sm),
+      ],
       _securityCard(info, platformLabel),
       const SizedBox(height: AppSpacing.sm),
       _signalCard(info, platformLabel),
@@ -1467,9 +1492,100 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       _channelCard(info),
       const SizedBox(height: AppSpacing.sm),
       _radioCard(info),
+      if (cellularCard != null) ...<Widget>[
+        const SizedBox(height: AppSpacing.sm),
+        cellularCard,
+      ],
       const SizedBox(height: AppSpacing.sm),
-      _statusCard(info),
+      _statusCard(info, payloadVersion: extras?.payloadVersion),
     ];
+  }
+
+  /// Internet-reachability card (Orb-parity). Renders ONLY when the live payload
+  /// carried a reachability RESULT ([WiFiDetails.hasReachability]); absent today.
+  ///
+  /// The verdict wears a sanctioned status tone (success = reachable, danger =
+  /// not reachable) so it reads as the load-bearing signal it is. Round-trip ms
+  /// rides alongside a reachable verdict; the tested URL is shown as a quiet
+  /// note. This is the surface that separates "the Wi-Fi RF is fine" from "the
+  /// internet is down" — the app must never conflate the two
+  /// ([[feedback_app_blames_the_wifi]]).
+  Widget? _internetCard(WiFiDetails? d) {
+    if (d == null || !d.hasReachability) return null;
+    final bool ok = d.reachOk!;
+    final int? ms = d.reachMs;
+    final String verdict = ok ? 'Reachable' : 'Not reachable';
+    final String value =
+        (ok && ms != null) ? '$verdict ($ms ms)' : verdict;
+    final String? url = d.reachUrl;
+    return _Card(
+      title: 'Internet',
+      child: Column(
+        children: <Widget>[
+          _MetricRow(
+            label: 'Reachability',
+            value: value,
+            valueTone: ok ? StatusTone.success : StatusTone.danger,
+            note: (url != null && url.trim().isNotEmpty)
+                ? 'Tested $url'
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Local-address card (Orb-parity). Renders ONLY when the live payload carried
+  /// a local IPv4 or IPv6 address; absent today. Addresses use the identifier
+  /// mono register (glyph-by-glyph scan).
+  Widget? _addressesCard(WiFiDetails? d) {
+    if (d == null) return null;
+    final bool hasV4 = d.ipv4Local != null && d.ipv4Local!.trim().isNotEmpty;
+    final bool hasV6 = d.ipv6Local != null && d.ipv6Local!.trim().isNotEmpty;
+    if (!hasV4 && !hasV6) return null;
+    return _Card(
+      title: 'Addresses',
+      child: Column(
+        children: <Widget>[
+          if (hasV4)
+            _MetricRow(label: 'IPv4 (local)', value: d.ipv4Local, mono: true),
+          if (hasV6)
+            _MetricRow(label: 'IPv6 (local)', value: d.ipv6Local, mono: true),
+        ],
+      ),
+    );
+  }
+
+  /// Cellular-context card (Orb-parity), rendered INLINE on the Wi-Fi screen so
+  /// the combined payload's cellular slice sits beside the Wi-Fi RF as fallback
+  /// context. Renders ONLY when the payload carried a carrier, RAT, or signal
+  /// bars; absent today. The dedicated Cellular Information tool is unchanged.
+  ///
+  /// Signal bars are shown as "N of 4" ONLY — never relabeled dBm / RSRP / RSRQ
+  /// (the platform exposes no raw cellular signal), matching [CellularInfo].
+  Widget? _cellularContextCard(WiFiDetails? d) {
+    if (d == null) return null;
+    final bool hasCarrier =
+        d.cellCarrier != null && d.cellCarrier!.trim().isNotEmpty;
+    final bool hasRat = d.cellRat != null && d.cellRat!.trim().isNotEmpty;
+    final bool hasBars = d.cellSignalBars != null;
+    if (!hasCarrier && !hasRat && !hasBars) return null;
+    return _Card(
+      title: 'Cellular',
+      child: Column(
+        children: <Widget>[
+          if (hasCarrier) _MetricRow(label: 'Carrier', value: d.cellCarrier),
+          if (hasRat) _MetricRow(label: 'Radio (RAT)', value: d.cellRat),
+          if (hasBars)
+            _MetricRow(
+              label: 'Signal bars',
+              value: '${d.cellSignalBars} of 4',
+              mono: true,
+              note: 'Coarse status-bar level, not a dBm/RSRP reading',
+            ),
+        ],
+      ),
+    );
   }
 
   /// The actionable reason the network name is empty when a snapshot source
@@ -1799,12 +1915,35 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           ),
           _MetricRow(
             label: 'Band',
-            value: info.band,
+            value: _bandDisplay(info),
             derived: info.bandDerived,
           ),
         ],
       ),
     );
+  }
+
+  /// The Band row value: the band label with its computed CENTER FREQUENCY in
+  /// MHz appended, e.g. "5 GHz (5265 MHz)". The channel number alone is
+  /// ambiguous across bands (channel 53 is 5265 MHz on 5 GHz and 6215 MHz on
+  /// 6 GHz), so band + MHz is the unmistakable identifier. The frequency is
+  /// computed from band + channel by the physics engine in
+  /// channel_frequency_data.dart ([centerFrequencyMHzForBand]) — never a
+  /// hardcoded table.
+  ///
+  /// Degrades to the plain band label (never a wrong or blank value) when the
+  /// band is null, the channel is null, the band string is unrecognized, or the
+  /// engine cannot compute a frequency. The honest "(derived)" caption stays on
+  /// the row itself ([info.bandDerived]) and is untouched by this — an ambiguous
+  /// channel still wears the asterisk.
+  static String? _bandDisplay(ConnectedAp info) {
+    final String? band = info.band;
+    if (band == null) return null;
+    final WifiBand? wb = wifiBandFromLabel(band);
+    final int? channel = info.channel;
+    if (wb == null || channel == null) return band;
+    final int? mhz = centerFrequencyMHzForBand(wb, channel);
+    return mhz == null ? band : '$band ($mhz MHz)';
   }
 
   Widget _radioCard(ConnectedAp info) => _Card(
@@ -1915,14 +2054,29 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     }
   }
 
-  Widget _statusCard(ConnectedAp info) => _Card(
-    title: 'Status',
-    child: Column(
-      children: [
-        _MetricRow(label: 'Wi-Fi Radio', value: info.poweredOn ? 'On' : 'Off'),
-      ],
-    ),
-  );
+  Widget _statusCard(ConnectedAp info, {String? payloadVersion}) {
+    final bool hasVersion =
+        payloadVersion != null && payloadVersion.trim().isNotEmpty;
+    return _Card(
+      title: 'Status',
+      child: Column(
+        children: <Widget>[
+          _MetricRow(
+            label: 'Wi-Fi Radio',
+            value: info.poweredOn ? 'On' : 'Off',
+          ),
+          // Orb-parity payload schema version — a quiet forward-compat
+          // diagnostic. Renders only when the live payload stamps a version.
+          if (hasVersion)
+            _MetricRow(
+              label: 'Payload version',
+              value: payloadVersion,
+              mono: true,
+            ),
+        ],
+      ),
+    );
+  }
 
   /// Whether [channel] is a 6 GHz Preferred Scanning Channel (PSC). PSC channels
   /// are 5, 21, 37, ... 229 -- (ch - 5) a multiple of 16 across 6 GHz. False for
@@ -2502,11 +2656,18 @@ class _MetricRow extends StatelessWidget {
     this.unit,
     this.marker,
     this.derived = false,
+    this.valueTone,
   });
 
   final String label;
   final String? value;
   final bool mono;
+
+  /// Optional sanctioned status tone (§8.13 / §8.20.1) for a PRESENT value —
+  /// e.g. success for "Reachable", danger for "Not reachable" on the Internet
+  /// card. Null keeps the default primary/secondary value color. Resolved to a
+  /// theme-aware color via [AppColorScheme.statusToneColor]; never a raw color.
+  final StatusTone? valueTone;
 
   /// Optional note under the value. For an Unavailable value it explains why
   /// (e.g. "Not exposed by macOS CoreWLAN"); for a present value it is a
@@ -2549,7 +2710,9 @@ class _MetricRow extends StatelessWidget {
     final AppMonoText monoText =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final Color valueColor = hasValue
-        ? colors.textPrimary
+        ? (valueTone != null
+            ? colors.statusToneColor(valueTone!)
+            : colors.textPrimary)
         : colors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
         ? monoText.robotoMono.copyWith(color: valueColor)

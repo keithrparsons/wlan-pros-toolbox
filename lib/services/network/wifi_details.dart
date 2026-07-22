@@ -114,6 +114,15 @@ class WiFiDetails {
     this.standard,
     this.rxRate,
     this.txRate,
+    this.ipv4Local,
+    this.ipv6Local,
+    this.cellCarrier,
+    this.cellRat,
+    this.cellSignalBars,
+    this.payloadVersion,
+    this.reachUrl,
+    this.reachOk,
+    this.reachMs,
   });
 
   /// Network name. May be null if the Shortcut omitted it.
@@ -141,6 +150,69 @@ class WiFiDetails {
 
   /// TX data rate in Mbps. Null when absent.
   final int? txRate;
+
+  // ── Orb-parity OPTIONAL fields (all nullable; absent → render nothing) ──────
+  //
+  // These extend the harvested field set with the connection-context data an
+  // Orb-style combined payload carries alongside the RF metrics. NONE of them
+  // populate until the companion Shortcut is updated (a separate track) to emit
+  // them; every one is nullable and the screen renders nothing when it is
+  // absent, so the app behaves IDENTICALLY to today under the current Shortcut.
+  // The parser accepts BOTH our own capitalized-human keys AND the Orb-style
+  // snake_case keys ([fromMap]).
+
+  /// Device's local IPv4 address on this link (e.g. "192.168.1.42"). Null when
+  /// absent. Orb key: `ipv4_local`.
+  final String? ipv4Local;
+
+  /// Device's local IPv6 address on this link. Null when absent. Orb key:
+  /// `ipv6_local`.
+  final String? ipv6Local;
+
+  /// Cellular carrier / operator name (e.g. "Verizon"), when the combined
+  /// payload also carries the cellular slice. Null when absent. Orb key:
+  /// `cell_carrier_name`. Descriptive text, kept verbatim.
+  final String? cellCarrier;
+
+  /// Cellular radio access technology label (e.g. "LTE", "5G NR"), verbatim.
+  /// Null when absent. Orb key: `cell_rat`.
+  final String? cellRat;
+
+  /// Cellular signal bars — a coarse 0-to-4 status-bar indicator, NOT a dBm /
+  /// RSRP / RSRQ value and never to be presented as one (the platform exposes
+  /// no raw cellular signal to apps). Clamped to 0..4 on parse; null when
+  /// absent. Orb key: `cell_signal_bars`.
+  final int? cellSignalBars;
+
+  /// Payload schema/version string the emitting Shortcut stamps, for
+  /// forward-compatibility diagnostics. Null when absent. Orb key: `version`.
+  final String? payloadVersion;
+
+  // Reachability result — the internet-reachability probe the combined payload
+  // reports. These keys are NEW (no Orb equivalent); the companion Shortcut
+  // will be updated separately to emit them. Canonical keys:
+  //   reachUrl → "Reachability URL"  / reach_url
+  //   reachOk  → "Reachability OK"   / reach_ok   (true/false/1/0/yes/no)
+  //   reachMs  → "Reachability Ms"   / reach_ms   (round-trip milliseconds)
+  // Together they let the screen say "internet is reachable / not reachable"
+  // WITHOUT ever blaming the Wi-Fi for an upstream outage (the standing rule).
+
+  /// The URL the reachability probe targeted (e.g. a keyless HTTPS endpoint).
+  /// Null when absent. Key: `reach_url` / "Reachability URL".
+  final String? reachUrl;
+
+  /// Whether the internet was reachable on the probe. `true` reachable,
+  /// `false` not reachable, `null` when the payload carried no reachability
+  /// result. Key: `reach_ok` / "Reachability OK".
+  final bool? reachOk;
+
+  /// Round-trip time of the reachability probe in milliseconds. Null when
+  /// absent. Key: `reach_ms` / "Reachability Ms".
+  final int? reachMs;
+
+  /// True when the payload carried an internet-reachability RESULT (a definite
+  /// reachable/not-reachable verdict). Drives whether the Internet card renders.
+  bool get hasReachability => reachOk != null;
 
   /// Signal-to-noise ratio in dB, computed as `rssi − noise`. Null unless BOTH
   /// rssi and noise are present (computing it from a missing input would be a
@@ -223,6 +295,28 @@ class WiFiDetails {
       return int.tryParse(m.group(0)!);
     }
 
+    // Tolerant boolean parse for the reachability verdict. Accepts the JSON
+    // literals true/false, the numeric 1/0, and the string forms
+    // true/false/yes/no/1/0 (case-insensitive). Returns null for anything else
+    // so an unparseable value reads as "no reachability result", never a
+    // fabricated verdict.
+    bool? pickBool(List<String> keys) {
+      for (final String key in keys) {
+        final dynamic v = ci[key.toLowerCase()];
+        if (v == null) continue;
+        if (v is bool) return v;
+        final String s = v.toString().trim().toLowerCase();
+        if (s == 'true' || s == '1' || s == 'yes') return true;
+        if (s == 'false' || s == '0' || s == 'no') return false;
+      }
+      return null;
+    }
+
+    // Cellular signal bars are a coarse 0-to-4 indicator; clamp so a stray
+    // out-of-range value never renders as "7 of 4".
+    int? bars = pickInt(<String>['Cell Signal Bars', 'cell_signal_bars']);
+    if (bars != null) bars = bars.clamp(0, 4);
+
     return WiFiDetails(
       ssid: pickString(<String>['SSID']),
       bssid: pickString(<String>['BSSID']),
@@ -232,6 +326,15 @@ class WiFiDetails {
       standard: pickString(<String>['Standard', 'Wi-Fi Standard', 'wifiStandard']),
       rxRate: pickInt(<String>['RX Rate', 'rxRate', 'RX']),
       txRate: pickInt(<String>['TX Rate', 'txRate', 'TX']),
+      ipv4Local: pickString(<String>['IPv4 Local', 'ipv4_local']),
+      ipv6Local: pickString(<String>['IPv6 Local', 'ipv6_local']),
+      cellCarrier: pickString(<String>['Cell Carrier', 'cell_carrier_name']),
+      cellRat: pickString(<String>['Cell RAT', 'cell_rat']),
+      cellSignalBars: bars,
+      payloadVersion: pickString(<String>['Payload Version', 'version']),
+      reachUrl: pickString(<String>['Reachability URL', 'reach_url']),
+      reachOk: pickBool(<String>['Reachability OK', 'reach_ok']),
+      reachMs: pickInt(<String>['Reachability Ms', 'reach_ms']),
     );
   }
 
@@ -245,10 +348,19 @@ class WiFiDetails {
       other.noise == noise &&
       other.standard == standard &&
       other.rxRate == rxRate &&
-      other.txRate == txRate;
+      other.txRate == txRate &&
+      other.ipv4Local == ipv4Local &&
+      other.ipv6Local == ipv6Local &&
+      other.cellCarrier == cellCarrier &&
+      other.cellRat == cellRat &&
+      other.cellSignalBars == cellSignalBars &&
+      other.payloadVersion == payloadVersion &&
+      other.reachUrl == reachUrl &&
+      other.reachOk == reachOk &&
+      other.reachMs == reachMs;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll(<Object?>[
         ssid,
         bssid,
         channel,
@@ -257,11 +369,24 @@ class WiFiDetails {
         standard,
         rxRate,
         txRate,
-      );
+        ipv4Local,
+        ipv6Local,
+        cellCarrier,
+        cellRat,
+        cellSignalBars,
+        payloadVersion,
+        reachUrl,
+        reachOk,
+        reachMs,
+      ]);
 
   @override
   String toString() =>
       'WiFiDetails(ssid: $ssid, bssid: $bssid, channel: $channel, '
       'rssi: $rssi, noise: $noise, snr: $snr, band: ${band?.label}, '
-      'standard: $standard, rxRate: $rxRate, txRate: $txRate)';
+      'standard: $standard, rxRate: $rxRate, txRate: $txRate, '
+      'ipv4Local: $ipv4Local, ipv6Local: $ipv6Local, '
+      'cellCarrier: $cellCarrier, cellRat: $cellRat, '
+      'cellSignalBars: $cellSignalBars, payloadVersion: $payloadVersion, '
+      'reachUrl: $reachUrl, reachOk: $reachOk, reachMs: $reachMs)';
 }

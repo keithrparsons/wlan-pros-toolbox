@@ -268,4 +268,60 @@ void main() {
       expect(k5Channels.length, 28);
     });
   });
+
+  // ── Center-frequency DISPLAY engine (band+channel → MHz, ungated) ──────────
+
+  group('centerFrequencyMHzForBand — the display engine', () {
+    test('THE ambiguity case: channel 53 is 5265 MHz on 5 GHz, 6215 on 6 GHz',
+        () {
+      // The whole point: the bare channel number is ambiguous across bands, but
+      // band + center-MHz is unmistakable. 53 is NOT a valid 5 GHz primary, so
+      // the validity-gated channelToFrequency returns null there — the display
+      // engine computes the physics (5000 + 5x53) regardless.
+      expect(centerFrequencyMHzForBand(WifiBand.band5, 53), 5265);
+      expect(centerFrequencyMHzForBand(WifiBand.band6, 53), 6215);
+      expect(channelToFrequency(WifiBand.band5, 53), isNull); // contrast
+    });
+
+    test('matches channelToFrequency on standard primaries', () {
+      // Where the channel IS a valid primary, the display engine agrees with
+      // the validity-gated engine (both are start + 5 x channel).
+      for (final (num g, int ch) in <(num, int)>[
+        (2.4, 1),
+        (2.4, 11),
+        (5, 36),
+        (5, 149),
+        (6, 37),
+      ]) {
+        final WifiBand b = band(g);
+        expect(centerFrequencyMHzForBand(b, ch), channelToFrequency(b, ch),
+            reason: 'band $g ch $ch');
+      }
+    });
+
+    test('honors the two special-case channels', () {
+      expect(centerFrequencyMHzForBand(WifiBand.band24, 14), 2484);
+      expect(centerFrequencyMHzForBand(WifiBand.band6, 2), 5935);
+    });
+
+    test('returns null for a null or non-positive channel', () {
+      expect(centerFrequencyMHzForBand(WifiBand.band5, null), isNull);
+      expect(centerFrequencyMHzForBand(WifiBand.band5, 0), isNull);
+      expect(centerFrequencyMHzForBand(WifiBand.band5, -7), isNull);
+    });
+  });
+
+  group('wifiBandFromLabel — display-string → enum', () {
+    test('maps the three canonical band labels', () {
+      expect(wifiBandFromLabel('2.4 GHz'), WifiBand.band24);
+      expect(wifiBandFromLabel('5 GHz'), WifiBand.band5);
+      expect(wifiBandFromLabel('6 GHz'), WifiBand.band6);
+    });
+
+    test('returns null for null or an unrecognized string', () {
+      expect(wifiBandFromLabel(null), isNull);
+      expect(wifiBandFromLabel('60 GHz'), isNull);
+      expect(wifiBandFromLabel(''), isNull);
+    });
+  });
 }

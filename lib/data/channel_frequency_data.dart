@@ -266,6 +266,51 @@ bool _isOnChannelization(WifiBand band, int channel) {
   return false;
 }
 
+/// Maps a human band LABEL ("2.4 GHz" / "5 GHz" / "6 GHz") back to its
+/// [WifiBand]. The normalized [ConnectedAp] carries the band as a display
+/// string; this resolves it to the enum so the center-frequency engine can be
+/// applied. Returns `null` for any other string (or null), so the caller shows
+/// the plain band label rather than guessing a frequency.
+WifiBand? wifiBandFromLabel(String? label) {
+  switch (label) {
+    case '2.4 GHz':
+      return WifiBand.band24;
+    case '5 GHz':
+      return WifiBand.band5;
+    case '6 GHz':
+      return WifiBand.band6;
+    default:
+      return null;
+  }
+}
+
+/// CENTER FREQUENCY (MHz) for a channel on a KNOWN band — the display engine.
+///
+/// Applies the single physics rule `start + 5 x channel` with the two hard-coded
+/// special cases (2.4 GHz ch14 = 2484; 6 GHz ch2 = 5935), identical to
+/// [channelToFrequency] — but WITHOUT its channelization-validity gate.
+///
+/// The difference is deliberate and is the whole point of this function. A
+/// connected AP reports a REAL operating channel + band by construction, and the
+/// display job is "what center frequency is this band+channel on" — pure physics
+/// that is defined for the number the platform actually reported, even when that
+/// number is not one of the standard, selectable 20 MHz primaries [k5Channels]
+/// enumerates. This is what disambiguates the channel-number collision across
+/// bands: channel 53 is 5265 MHz on 5 GHz (5000 + 5x53) and 6215 MHz on 6 GHz
+/// (5950 + 5x53) — the band+MHz pair is unmistakable where the bare number is
+/// not. [channelToFrequency] returns null for 53-on-5-GHz (53 is not a valid
+/// 5 GHz primary); this returns 5265, which is the physics.
+///
+/// Returns null only when [channel] is null or not positive (no meaningful
+/// frequency to show).
+int? centerFrequencyMHzForBand(WifiBand band, int? channel) {
+  if (channel == null || channel <= 0) return null;
+  // Special cases first — the linear formula must never touch these.
+  if (band == WifiBand.band24 && channel == 14) return 2484;
+  if (band == WifiBand.band6 && channel == 2) return 5935;
+  return band.startFreqMHz + 5 * channel;
+}
+
 /// FREQUENCY -> (band, channel). Snaps [mhz] to the 5 MHz grid with a +/-1 MHz
 /// tolerance (channel-plan.md sec 1, sec 6.5) and returns the matching band +
 /// 20 MHz primary channel, or `null` when nothing valid is within tolerance.

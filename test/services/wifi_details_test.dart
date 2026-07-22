@@ -260,4 +260,145 @@ void main() {
       expect(a.hashCode, equals(b.hashCode));
     });
   });
+
+  // ── Orb-parity OPTIONAL fields ──────────────────────────────────────────────
+
+  group('WiFiDetails — Orb-parity fields absent (current Shortcut)', () {
+    // The canonical RF-only payload the CURRENT Shortcut emits carries none of
+    // the new fields. Every one must be null, and hasReachability false, so the
+    // app renders exactly as it does today.
+    const String rfOnly = '{"SSID":"Keith","Channel":"36","RSSI":"-50",'
+        '"Noise":"-90","RX Rate":"864","TX Rate":"1297"}';
+
+    test('all new fields are null and hasReachability is false', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(rfOnly)!;
+      expect(d.ipv4Local, isNull);
+      expect(d.ipv6Local, isNull);
+      expect(d.cellCarrier, isNull);
+      expect(d.cellRat, isNull);
+      expect(d.cellSignalBars, isNull);
+      expect(d.payloadVersion, isNull);
+      expect(d.reachUrl, isNull);
+      expect(d.reachOk, isNull);
+      expect(d.reachMs, isNull);
+      expect(d.hasReachability, isFalse);
+    });
+  });
+
+  group('WiFiDetails — Orb-parity fields via Orb snake_case keys', () {
+    // A combined Orb-style payload: RF plus the snake_case extension keys.
+    const String orb = '{'
+        '"SSID":"Keith","Channel":"53","RSSI":"-55","Noise":"-92",'
+        '"ipv4_local":"192.168.1.42",'
+        '"ipv6_local":"fe80::1c2d:3e4f:5a6b:7c8d",'
+        '"cell_carrier_name":"Verizon","cell_rat":"5G NR",'
+        '"cell_signal_bars":3,"version":"orb-1.0",'
+        '"reach_url":"https://ipwho.is","reach_ok":true,"reach_ms":23}';
+
+    test('parses every Orb snake_case extension key', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(orb)!;
+      expect(d.ipv4Local, '192.168.1.42');
+      expect(d.ipv6Local, 'fe80::1c2d:3e4f:5a6b:7c8d');
+      expect(d.cellCarrier, 'Verizon');
+      expect(d.cellRat, '5G NR');
+      expect(d.cellSignalBars, 3);
+      expect(d.payloadVersion, 'orb-1.0');
+      expect(d.reachUrl, 'https://ipwho.is');
+      expect(d.reachOk, isTrue);
+      expect(d.reachMs, 23);
+      expect(d.hasReachability, isTrue);
+      // Existing RF fields still parse alongside the extension keys.
+      expect(d.channel, 53);
+      expect(d.rssi, -55);
+    });
+  });
+
+  group('WiFiDetails — Orb-parity fields via our capitalized keys', () {
+    const String ours = '{'
+        '"IPv4 Local":"10.0.0.5","IPv6 Local":"fe80::abcd",'
+        '"Cell Carrier":"AT&T","Cell RAT":"LTE","Cell Signal Bars":"2",'
+        '"Payload Version":"wlp-2","Reachability URL":"https://ripe.net",'
+        '"Reachability OK":"false","Reachability Ms":"140"}';
+
+    test('parses every capitalized-human extension key', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(ours)!;
+      expect(d.ipv4Local, '10.0.0.5');
+      expect(d.ipv6Local, 'fe80::abcd');
+      expect(d.cellCarrier, 'AT&T');
+      expect(d.cellRat, 'LTE');
+      expect(d.cellSignalBars, 2);
+      expect(d.payloadVersion, 'wlp-2');
+      expect(d.reachUrl, 'https://ripe.net');
+      expect(d.reachOk, isFalse);
+      expect(d.reachMs, 140);
+      expect(d.hasReachability, isTrue);
+    });
+
+    test('extension keys are matched case-insensitively too', () {
+      const String mixed =
+          '{"IPV4_LOCAL":"172.16.0.9","REACH_OK":"YES","reach_MS":"7"}';
+      final WiFiDetails d = WiFiDetails.fromJsonString(mixed)!;
+      expect(d.ipv4Local, '172.16.0.9');
+      expect(d.reachOk, isTrue);
+      expect(d.reachMs, 7);
+    });
+  });
+
+  group('WiFiDetails — reachability bool + bars parsing', () {
+    test('reach_ok accepts bool, 1/0, and true/false/yes/no strings', () {
+      expect(WiFiDetails.fromJsonString('{"reach_ok":true}')!.reachOk, isTrue);
+      expect(WiFiDetails.fromJsonString('{"reach_ok":false}')!.reachOk, isFalse);
+      expect(WiFiDetails.fromJsonString('{"reach_ok":1}')!.reachOk, isTrue);
+      expect(WiFiDetails.fromJsonString('{"reach_ok":0}')!.reachOk, isFalse);
+      expect(WiFiDetails.fromJsonString('{"reach_ok":"YES"}')!.reachOk, isTrue);
+      expect(WiFiDetails.fromJsonString('{"reach_ok":"no"}')!.reachOk, isFalse);
+    });
+
+    test('an unparseable reach_ok is null (no fabricated verdict)', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString('{"reach_ok":"maybe"}')!;
+      expect(d.reachOk, isNull);
+      expect(d.hasReachability, isFalse);
+    });
+
+    test('cell_signal_bars is clamped to 0..4', () {
+      expect(WiFiDetails.fromJsonString('{"cell_signal_bars":7}')!.cellSignalBars,
+          4);
+      expect(
+          WiFiDetails.fromJsonString('{"cell_signal_bars":-3}')!.cellSignalBars,
+          0);
+      expect(WiFiDetails.fromJsonString('{"cell_signal_bars":2}')!.cellSignalBars,
+          2);
+    });
+
+    test('never throws on a malformed extension payload', () {
+      // Array, scalar, and garbage all resolve to null rather than throwing.
+      expect(WiFiDetails.fromJsonString('[1,2,3]'), isNull);
+      expect(WiFiDetails.fromJsonString('not json'), isNull);
+      expect(WiFiDetails.fromJsonString('{"reach_ms":"not-a-number"}')!.reachMs,
+          isNull);
+    });
+  });
+
+  group('WiFiDetails — value semantics include the new fields', () {
+    test('a change in only a new field breaks == and hashCode', () {
+      // Load-bearing: the live screen dedups samples via d == _lastCharted, so a
+      // sample that differs ONLY in reachMs must not compare equal (it would be
+      // silently dropped otherwise).
+      final WiFiDetails a =
+          WiFiDetails.fromJsonString('{"SSID":"X","reach_ok":true,"reach_ms":10}')!;
+      final WiFiDetails b =
+          WiFiDetails.fromJsonString('{"SSID":"X","reach_ok":true,"reach_ms":11}')!;
+      expect(a == b, isFalse);
+      expect(a.hashCode == b.hashCode, isFalse);
+    });
+
+    test('identical extension payloads compare equal and share a hashCode', () {
+      const String json = '{"SSID":"X","ipv4_local":"1.1.1.1",'
+          '"cell_carrier_name":"Verizon","reach_ok":true,"reach_ms":9}';
+      final WiFiDetails a = WiFiDetails.fromJsonString(json)!;
+      final WiFiDetails b = WiFiDetails.fromJsonString(json)!;
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+    });
+  });
 }

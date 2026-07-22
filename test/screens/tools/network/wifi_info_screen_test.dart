@@ -2065,6 +2065,201 @@ void main() {
       );
     });
   });
+
+  // ── Center-frequency display (Orb-parity, correctness fix) ─────────────────
+
+  group('Band row shows the computed center frequency', () {
+    // A macOS snapshot reports the band directly, so it exercises the display
+    // engine for whatever (band, channel) the platform hands over.
+    ConnectedAp macBand({required String band, required int channel}) =>
+        ConnectedAp.fromWifiInfo(
+          WifiInfo(
+            interfaceName: 'en0',
+            ssid: 'KeithNet',
+            bssid: 'a4:83:e7:00:11:22',
+            rssiDbm: -50,
+            noiseDbm: -95,
+            snrDb: 45,
+            txRateMbps: 866,
+            phyMode: '802.11ax',
+            channel: channel,
+            channelWidthMhz: 80,
+            band: band,
+            countryCode: 'US',
+            hardwareAddress: 'a4:83:e7:aa:bb:cc',
+            poweredOn: true,
+            locationAuthorized: true,
+          ),
+        );
+
+    testWidgets('5 GHz / channel 36 renders "5 GHz (5180 MHz)"',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: macBand(band: '5 GHz', channel: 36)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('5 GHz (5180 MHz)'), findsOneWidget);
+    });
+
+    testWidgets('THE ambiguity: channel 53 on 5 GHz renders "5 GHz (5265 MHz)"',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: macBand(band: '5 GHz', channel: 53)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('5 GHz (5265 MHz)'), findsOneWidget);
+    });
+
+    testWidgets('THE ambiguity: channel 53 on 6 GHz renders "6 GHz (6215 MHz)"',
+        (tester) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.macosCoreWlan,
+          macAdapter: _FakeMacAdapter(snapshot: macBand(band: '6 GHz', channel: 53)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('6 GHz (6215 MHz)'), findsOneWidget);
+    });
+
+    testWidgets(
+        'iOS ambiguous channel 149: freq shown AND "(derived)" caption fires',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
+      await tester.pumpAndSettle();
+
+      bridge.controller.add(WiFiDetails.fromMap(const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'Channel': 149, // valid in both 5 and 6 GHz → derived default 5 GHz
+        'RSSI': -55,
+        'Noise': -92,
+      }));
+      await tester.pumpAndSettle();
+
+      // Band derives to 5 GHz and the center frequency is 5000 + 5x149 = 5745.
+      expect(find.text('5 GHz (5745 MHz)'), findsOneWidget);
+      // The honest "(derived)" asterisk (the 'derived' caption) still fires for
+      // an ambiguous channel — the freq addition did not remove it.
+      expect(find.text('derived'), findsWidgets);
+    });
+  });
+
+  // ── Orb-parity new fields: absent → nothing, present → light up ────────────
+
+  group('Orb-parity connection-context rows (iOS live)', () {
+    Future<void> pumpLiveWith(
+      WidgetTester tester,
+      _FakeBridge bridge,
+      Map<String, dynamic> payload,
+    ) async {
+      await tester.pumpWidget(host(
+        WifiInfoScreen(
+          sourceOverride: WifiInfoSource.iosShortcuts,
+          connectionService: _onWifiProbe(),
+          iosBridge: bridge,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Start live monitoring'));
+      await tester.tap(find.text('Start live monitoring'));
+      await tester.pumpAndSettle();
+      bridge.controller.add(WiFiDetails.fromMap(payload));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('ABSENT (current Shortcut): none of the new cards render',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await pumpLiveWith(tester, bridge, const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'Channel': 36,
+        'RSSI': -50,
+        'Noise': -95,
+      });
+
+      // The RF cards render exactly as today; none of the Orb-parity cards do.
+      expect(find.text('Signal'), findsOneWidget);
+      expect(find.text('Internet'), findsNothing);
+      expect(find.text('Addresses'), findsNothing);
+      expect(find.text('Cellular'), findsNothing);
+      expect(find.text('Reachability'), findsNothing);
+      expect(find.text('Payload version'), findsNothing);
+    });
+
+    testWidgets('PRESENT (Orb combined payload): the new cards light up',
+        (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await pumpLiveWith(tester, bridge, const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'Channel': 36,
+        'RSSI': -50,
+        'Noise': -95,
+        'ipv4_local': '192.168.1.42',
+        'cell_carrier_name': 'Verizon',
+        'cell_rat': '5G NR',
+        'cell_signal_bars': 3,
+        'version': 'orb-1.0',
+        'reach_url': 'https://ipwho.is',
+        'reach_ok': true,
+        'reach_ms': 23,
+      });
+
+      // Internet reachability card, positioned before the RF cards.
+      expect(find.text('Internet'), findsOneWidget);
+      expect(find.text('Reachable (23 ms)'), findsOneWidget);
+      // Local address card.
+      expect(find.text('Addresses'), findsOneWidget);
+      expect(find.text('192.168.1.42'), findsOneWidget);
+      // Cellular context card (bars shown as "N of 4", never dBm).
+      expect(find.text('Cellular'), findsOneWidget);
+      expect(find.text('Verizon'), findsOneWidget);
+      expect(find.text('3 of 4'), findsOneWidget);
+      // Payload version diagnostic row.
+      expect(find.text('Payload version'), findsOneWidget);
+      expect(find.text('orb-1.0'), findsOneWidget);
+    });
+
+    testWidgets('reachability false renders "Not reachable"', (tester) async {
+      final bridge = _FakeBridge(
+        everReceived: true,
+        latest: WiFiDetails.fromMap(const <String, dynamic>{'SSID': 'KeithNet'}),
+      );
+      await pumpLiveWith(tester, bridge, const <String, dynamic>{
+        'SSID': 'KeithNet',
+        'Channel': 36,
+        'RSSI': -50,
+        'Noise': -95,
+        'reach_ok': false,
+      });
+      expect(find.text('Internet'), findsOneWidget);
+      expect(find.text('Not reachable'), findsOneWidget);
+    });
+  });
 }
 
 /// Run [body] with the test view sized to [size], then restore. Mirrors the

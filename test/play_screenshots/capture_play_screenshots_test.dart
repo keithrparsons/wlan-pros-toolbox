@@ -502,7 +502,8 @@ void main() {
       // show — their presence proves no platform-unavailable line replaced them.
       verify: (t) {
         _expectText('-52'); // RSSI
-        _expectText('6 GHz'); // Band — channel/band card in frame
+        // Band — now with its computed center frequency (ch 37 → 6135 MHz).
+        _expectText('6 GHz (6135 MHz)');
         _expectText('1441'); // Tx Rate (Mbps)
         _expectText('1200'); // Rx Rate (Mbps) — Android exposes it
         _expectText('WPA3 Personal'); // real security type — Android exposes it
