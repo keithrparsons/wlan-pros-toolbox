@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.8.4+26072201
+version: 1.8.5+26072801
 
 environment:
   sdk: ^3.12.0
@@ -364,12 +364,12 @@ msix_config:
   # Microsoft re-signs Store builds, so this is the manifest identity, not a cert.
   publisher: "CN=3160F864-430A-46A3-88F1-A229CE5344BB"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
-  # 1.8.4) with a trailing .0 revision; the user-facing version stays 1.8.4+26072201.
+  # 1.8.5) with a trailing .0 revision; the user-facing version stays 1.8.5+26072801.
   # Must exceed the live Store version (1.7.0.0) for the cert to accept it.
   # NOTE: this field does NOT move with `version:` automatically. It sat at 1.7.0.0
   # through the whole 1.8.x line, so a Store package built any time in that window
   # would have carried the already-published 1.7.0.0 identity. Bump both together.
-  msix_version: 1.8.4.0
+  msix_version: 1.8.5.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
