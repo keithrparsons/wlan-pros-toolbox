@@ -58,12 +58,30 @@
 // (ToolAssets.hasGraphic), so flutter_svg is only ever handed a path that is
 // confirmed in the bundle.
 //
-// Accessibility (GL-003 §8.6.2): the graphic is decorative/illustrative and
-// never the sole carrier of meaning — every fact it depicts is also in the
-// screen's text (formula card, labeled inputs, result row). It is therefore
-// marked decorative for screen readers via `ExcludeSemantics` +
-// `excludeFromSemantics: true`; VoiceOver / TalkBack skip it and land on the
-// screen title and content. No verbose alt text (that would double the content).
+// Accessibility (GL-003 §8.6.2 rule 1 + §8.6.2.2, ratified 2026-07-27 — the
+// sub-section that replaced the "wrap it" half of the old rule 2): the graphic
+// is decorative/illustrative and never the sole carrier of meaning — every fact
+// it depicts is also in the screen's text (formula card, labeled inputs, result
+// row). It is therefore marked decorative for screen readers by
+// `excludeFromSemantics: true` on EVERY SvgPicture below; VoiceOver / TalkBack
+// skip the art and land on the screen title and content. No verbose alt text
+// (that would double the content).
+//
+//   THE EXCLUSION IS AT THE LEAF, AND ONLY AT THE LEAF (§8.6.2.2 rules 1-2).
+//   Do not wrap the band's subtree in an `ExcludeSemantics`. It looks like a
+//   stronger version of the same rule and is not — it is a different operation:
+//   the leaf property silences one widget, the wrapper deletes the semantics of
+//   the entire subtree, including the `Semantics(button: true, label: 'Zoom
+//   graphic')` that ZoomableGraphic contributes. That is the band's only
+//   operable control, and the wrapper shipped, leaving a screen reader with
+//   nothing to announce and no way to open the zoom view on all 98 call sites.
+//   `ExcludeSemantics` stays correct on a genuinely inert leaf (§8.6.2.2
+//   rule 3) — the zoom badge and the tap layer each keep their own.
+//   Guarded by the semantics-tree regression tests in
+//   test/widgets/concept_graphic_band_test.dart, which pin BOTH halves of the
+//   contract (§8.6.2.2 "both halves, or the pin is fake") against real
+//   SemanticsNodes — never `find.byType`, which reads the widget tree and stays
+//   green whether or not anything reaches a screen reader.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -323,36 +341,41 @@ class ConceptGraphicBand extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final double viewportHeight = MediaQuery.sizeOf(context).height;
 
-    return ExcludeSemantics(
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface1,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: colors.border, width: 1),
-        ),
-        // Tightened from --space-sm (16) to --space-xs (8) so the graphic uses
-        // more of the card and reads bigger (Keith's "too much whitespace").
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            // Width available to the SVG inside the card padding.
-            final double availableWidth = constraints.maxWidth.isFinite
-                ? constraints.maxWidth
-                : MediaQuery.sizeOf(context).width;
-            return _ConceptSvg(
-              toolId: toolId,
-              isLight: colors.isLight,
-              availableWidth: availableWidth,
-              viewportHeight: viewportHeight,
-              isDesktop: isDesktop,
-              aspectFuture: _loadAspect(),
-              swappedFuture: colors.isLight ? _loadSwappedSvg() : null,
-              // Seeded synchronously when a prior frame already parsed it, so a
-              // revisit paints at the exact final size on the first frame.
-              seededAspect: _aspectCache[toolId],
-            );
-          },
-        ),
+    // NO ExcludeSemantics here — see the Accessibility note in this file's
+    // header. The decorative graphic is silenced at the LEAF (every SvgPicture
+    // below passes excludeFromSemantics: true, and the zoom badge / tap layer
+    // carry their own ExcludeSemantics). An ExcludeSemantics at THIS level also
+    // swallowed ZoomableGraphic's `Semantics(button: 'Zoom graphic')` — the one
+    // operable control in the band — leaving VoiceOver / TalkBack with an
+    // unreachable zoom on all 98 call sites of this widget in lib/.
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      // Tightened from --space-sm (16) to --space-xs (8) so the graphic uses
+      // more of the card and reads bigger (Keith's "too much whitespace").
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          // Width available to the SVG inside the card padding.
+          final double availableWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width;
+          return _ConceptSvg(
+            toolId: toolId,
+            isLight: colors.isLight,
+            availableWidth: availableWidth,
+            viewportHeight: viewportHeight,
+            isDesktop: isDesktop,
+            aspectFuture: _loadAspect(),
+            swappedFuture: colors.isLight ? _loadSwappedSvg() : null,
+            // Seeded synchronously when a prior frame already parsed it, so a
+            // revisit paints at the exact final size on the first frame.
+            seededAspect: _aspectCache[toolId],
+          );
+        },
       ),
     );
   }
