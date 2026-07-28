@@ -29,14 +29,31 @@
 // the call site simply does not wrap — this widget is only ever handed a real,
 // rendered graphic. It never paints a zoom affordance over empty space.
 //
-// ACCESSIBILITY (GL-003 §8.6.2):
-//   * The decorative graphic itself stays ExcludeSemantics at the call site (no
-//     verbose alt text — every fact it depicts is in the screen's text).
+// ACCESSIBILITY (GL-003 §8.6.2, and §8.6.2.2 in particular):
+//   * The decorative graphic itself is silenced with `excludeFromSemantics:
+//     true` ON THE SvgPicture at the call site (no verbose alt text — every fact
+//     it depicts is in the screen's text). Silence it AT THE LEAF, never by
+//     wrapping this widget in an ancestor `ExcludeSemantics`: that also swallows
+//     the labeled zoom button below and leaves the control unreachable. This is
+//     now the ratified rule — GL-003 §8.6.2.2, "The decorative exclusion goes on
+//     the image widget, never on a wrapper" (2026-07-27). Any older code or
+//     comment citing the superseded "wrap it AND pass the flag" form of §8.6.2
+//     rule 2 is describing a repealed rule.
 //   * The TAP TARGET is a real, labeled `Semantics(button: true, label: 'Zoom
-//     graphic')` so VoiceOver / TalkBack announce an operable control rather
-//     than a decorative image, and it is keyboard-activatable (InkWell → Enter /
-//     Space). It clears the §8.3 minimum-touch-target via the badge size + the
-//     full-graphic tap area.
+//     graphic')`, so VoiceOver / TalkBack announce an operable control rather
+//     than a decorative image and their "activate" gesture opens the zoom. It
+//     clears the §8.3 minimum-touch-target via the badge size + the full-graphic
+//     tap area.
+//   * KNOWN GAP — NOT keyboard-operable. A physical Tab never stops here: the
+//     tap layer is a bare `GestureDetector` (see the build method — an InkWell
+//     was removed deliberately to fix a macOS double-click bug), and
+//     `Semantics(button:)` alone creates no focus node. Verified by execution
+//     (Vera, 2026-07-27): tap opens the zoom, Tab-then-Enter does not; the node
+//     carries no `isFocusable` and there is no Focus / InkWell /
+//     FocusableActionDetector in the subtree. **WCAG 2.2 SC 2.1.1 Keyboard is
+//     FAILING for every graphic wrapped by this widget.** Restoring focus
+//     without re-introducing the double-click regression is an open design call
+//     — do not describe this control as keyboard-accessible until it lands.
 //   * The full-screen view's close button is a real labeled button; Escape /
 //     back / swipe-down / scrim-tap all dismiss.
 //

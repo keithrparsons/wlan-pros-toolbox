@@ -32,9 +32,17 @@
 // Tokens: surface1 card / surface2 graphic well / AppRadius.card / AppSpacing.*
 // only. No hardcoded color, size, or spacing literal (GL-003 §4/§8.1).
 //
-// Accessibility (GL-003 §8.6.2): the graphic is decorative — ExcludeSemantics +
-// excludeFromSemantics. The title and every spec are real Text the screen reader
-// reads; the graphic adds no alt text (it would double the content).
+// Accessibility (GL-003 §8.6.2, §8.6.2.2): the PAINTED graphic is decorative and
+// stays silent via `excludeFromSemantics: true` on every SvgPicture. The title
+// and every spec are real Text the screen reader reads; the graphic adds no alt
+// text (it would double the content). The tap-to-ZOOM control, however, is an
+// operable button and MUST stay in the semantics tree — so the exclusion goes on
+// the image widget, never on a wrapper around [LargeGraphic]'s subtree (a
+// wrapper swallowed the zoom button; Vera, 1.8.4 → GL-003 §8.6.2.2).
+//
+// NOT keyboard-reachable: the zoom control is announced and activatable by
+// VoiceOver / TalkBack, but WCAG 2.2 SC 2.1.1 Keyboard is still failing for it.
+// See the KNOWN GAP note in zoomable_graphic.dart.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -209,19 +217,40 @@ class LargeGraphic extends StatelessWidget {
               );
             }
 
-            return ExcludeSemantics(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colors.surface2,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: colors.border, width: 1),
-                ),
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: SizedBox(
-                  height: graphicHeight,
-                  width: double.infinity,
-                  child: Center(child: svg),
-                ),
+            // NO ExcludeSemantics around this well — per GL-003 §8.6.2.2, "The
+            // decorative exclusion goes on the image widget, never on a wrapper"
+            // (ratified 2026-07-27).
+            //
+            // This well used to be wrapped, built correctly to the older §8.6.2
+            // rule 2 that said to wrap AND pass `excludeFromSemantics: true`.
+            // That rule was written 2026-05-29 when the band was inert, so the
+            // two were behaviourally identical. ZoomableGraphic (2026-06-08) put
+            // an operable node inside the excluded subtree, and from that day the
+            // ancestor wrapper deleted the tap-to-zoom control from the
+            // screen-reader tree on every face-card page (found by Vera, 1.8.4).
+            //
+            // The exclusion lives at the LEAF: every SvgPicture above (in-page
+            // and zoom-view, dark asset and light string) passes
+            // `excludeFromSemantics: true`, and ZoomableGraphic excludes its own
+            // tap layer and magnifier badge. The graphic is every bit as silent
+            // as it was; only the button survives.
+            //
+            // large_graphic_semantics_test.dart pins both halves — button
+            // announced AND graphic silent, the latter via an explicit
+            // `isImage: false` without which the assertion is dead — so
+            // re-adding a wrapper here fails the suite rather than silently
+            // regressing.
+            return Container(
+              decoration: BoxDecoration(
+                color: colors.surface2,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: colors.border, width: 1),
+              ),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: SizedBox(
+                height: graphicHeight,
+                width: double.infinity,
+                child: Center(child: svg),
               ),
             );
           },
