@@ -1,7 +1,5 @@
-Accessibility. Buttons across the app now report their name to VoiceOver and other screen readers.
+Wi-Fi Information and the Roaming Log now show the exact center frequency next to the band, so a channel number is never ambiguous across bands. Channel 53 reads "6 GHz (6215 MHz)".
 
-Location access. Granting Location permission now works on the Wi-Fi Information screen.
+Interface Info now shows your local IPv4 and IPv6 addresses from the live companion Shortcut.
 
-Clearer help. The ICMP Ping and Traceroute notes no longer imply a Linux desktop build. WLAN Pi support is coming.
-
-More honest reporting. The Roaming Log states how many samples each summary is based on, and screens no longer report results they did not check.
+Accessibility: the Roaming Log's Start-recording control now announces its state correctly to VoiceOver.

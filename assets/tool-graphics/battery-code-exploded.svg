@@ -1,0 +1,128 @@
+<svg width="960" height="720" viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans" fill="none">
+  <!-- HERO for the Batteries reference (BatteryDiagrams.codeExploded).
+       CR2032 exploded into its four labeled parts, beside the same cell drawn to
+       scale so the code and the object carry visibly the same two numbers, with
+       the LR44 / LR1154 counter-case set against it.
+
+       2026-07-25 CORRECTION (Felix). This panel shipped `PR1154` "encodes 11.5
+       by 5.4 mm". Two defects: the split does not parse (digits 1,1,5,4: "11.5"
+       consumes 1,1,5 and "5.4" then needs 5,4, so the 5 does double duty), and
+       `PR1154` is not a designation any manufacturer or standard carries. Every
+       datasheet calls that zinc-air cell `PR44`. Replaced with `LR1154`, which
+       IS datasheet-pinned (Energizer A76, Form EBC-4407F), names the SAME can as
+       LR44, and reads cleanly on the verified rule: `11` + `54`, diameter
+       truncated to whole millimeters, height exact in tenths. It is also the
+       cell that settles truncation against rounding under any convention:
+       11.60 truncates to 11 and rounds to 12, and the code says 11.
+
+       Palette: GL-003 section 8.20.7 swap-list hexes ONLY, dark-baked.
+         #E5E5E5 scaffold (primary text, cell outline)
+         #9C9C9C muted geometry (secondary text, extension lines)
+         #A1CC3A lime  — reserved for THE ONE QUANTITY: a millimeter measurement.
+                          The two dimensional digit groups and the two dimension
+                          lines are lime; nothing else is.
+         #3A3A3A faint internal rule (dividers)
+       No status hue is used: nothing on this canvas is a computed verdict
+       (GL-003 section 8.13 rule 6).
+       Arrowheads are drawn as explicit <polygon> paths, NOT <marker> elements:
+       flutter_svg 2.3.0 / vector_graphics_compiler 1.2.5 does not implement
+       <marker>, so a marker-based arrowhead renders as nothing in the app.
+       STANDING RULE: no label over any outline, dimension line, or other label. -->
+
+  <!-- ============================ HEADER ============================ -->
+  <text x="36" y="46" fill="#A1CC3A" font-size="30" font-weight="600">Reading the code on a cell</text>
+  <text x="36" y="76" fill="#9C9C9C" font-size="17" font-weight="500">The lithium coin code carries the size. The button code beside it is usually a catalog entry.</text>
+  <line x1="36" y1="96" x2="924" y2="96" stroke="#3A3A3A" stroke-width="1.5"/>
+
+  <!-- ======================= EXPLODED CR2032 ======================= -->
+  <text x="36" y="126" fill="#9C9C9C" font-size="15" font-weight="500">Four digits, read two and two.</text>
+
+  <!-- the code, DM Mono 88, split into its four meaningful groups.
+       group extents: C 267.6-320.4 | R 356.4-409.2 | 20 445.2-550.8 | 32 586.8-692.4 -->
+  <text x="294" y="200" text-anchor="middle" font-family="DM Mono" font-size="88" font-weight="500" fill="#E5E5E5">C</text>
+  <text x="382.8" y="200" text-anchor="middle" font-family="DM Mono" font-size="88" font-weight="500" fill="#E5E5E5">R</text>
+  <text x="498" y="200" text-anchor="middle" font-family="DM Mono" font-size="88" font-weight="500" fill="#A1CC3A">20</text>
+  <text x="639.6" y="200" text-anchor="middle" font-family="DM Mono" font-size="88" font-weight="500" fill="#A1CC3A">32</text>
+
+  <!-- group underscores: lime under the two groups that carry a measurement -->
+  <line x1="267.6" y1="214" x2="320.4" y2="214" stroke="#9C9C9C" stroke-width="1.4"/>
+  <line x1="356.4" y1="214" x2="409.2" y2="214" stroke="#9C9C9C" stroke-width="1.4"/>
+  <line x1="445.2" y1="214" x2="550.8" y2="214" stroke="#A1CC3A" stroke-width="2"/>
+  <line x1="586.8" y1="214" x2="692.4" y2="214" stroke="#A1CC3A" stroke-width="2"/>
+
+  <!-- leaders from each group down to its label column (centers 141 / 367 / 593 / 819) -->
+  <path d="M 294,216 V 232 H 141 V 248" stroke="#9C9C9C" stroke-width="1.3" fill="none"/>
+  <path d="M 382.8,216 V 232 H 367 V 248" stroke="#9C9C9C" stroke-width="1.3" fill="none"/>
+  <path d="M 498,216 V 232 H 593 V 248" stroke="#A1CC3A" stroke-width="1.3" fill="none"/>
+  <path d="M 639.6,216 V 232 H 819 V 248" stroke="#A1CC3A" stroke-width="1.3" fill="none"/>
+
+  <!-- column 1: C -->
+  <text x="141" y="268" text-anchor="middle" font-family="DM Mono" font-size="15" fill="#9C9C9C">chemistry</text>
+  <text x="141" y="296" text-anchor="middle" font-size="21" font-weight="600" fill="#E5E5E5">Lithium manganese</text>
+  <text x="141" y="320" text-anchor="middle" font-size="21" font-weight="600" fill="#E5E5E5">dioxide</text>
+  <text x="141" y="344" text-anchor="middle" font-family="DM Mono" font-size="15" fill="#9C9C9C">3.0 V nominal</text>
+
+  <!-- column 2: R -->
+  <text x="367" y="268" text-anchor="middle" font-family="DM Mono" font-size="15" fill="#9C9C9C">shape</text>
+  <text x="367" y="296" text-anchor="middle" font-size="21" font-weight="600" fill="#E5E5E5">Round</text>
+  <text x="367" y="320" text-anchor="middle" font-size="15" fill="#9C9C9C">The shape of the can</text>
+
+  <!-- column 3: 20 -->
+  <text x="593" y="268" text-anchor="middle" font-family="DM Mono" font-size="15" fill="#9C9C9C">diameter</text>
+  <text x="593" y="296" text-anchor="middle" font-family="DM Mono" font-size="21" font-weight="500" fill="#A1CC3A">20.0 mm</text>
+  <text x="593" y="320" text-anchor="middle" font-size="15" fill="#9C9C9C">Whole millimeters</text>
+
+  <!-- column 4: 32 -->
+  <text x="819" y="268" text-anchor="middle" font-family="DM Mono" font-size="15" fill="#9C9C9C">height</text>
+  <text x="819" y="296" text-anchor="middle" font-family="DM Mono" font-size="21" font-weight="500" fill="#A1CC3A">3.2 mm</text>
+  <text x="819" y="320" text-anchor="middle" font-size="15" fill="#9C9C9C">Tenths of a millimeter</text>
+
+  <line x1="36" y1="366" x2="924" y2="366" stroke="#3A3A3A" stroke-width="1.5"/>
+  <line x1="484" y1="386" x2="484" y2="700" stroke="#3A3A3A" stroke-width="1.5"/>
+
+  <!-- ================= LOWER LEFT: the cell, to scale ================= -->
+  <text x="36" y="414" fill="#E5E5E5" font-size="20" font-weight="600">The same two numbers, on the cell</text>
+  <text x="36" y="438" fill="#9C9C9C" font-size="15">Cross section, drawn to scale at 14 px per mm.</text>
+
+  <!-- the can in section: 20.0 mm wide, 3.2 mm high, 14 px/mm -->
+  <rect x="60" y="500" width="280" height="44.8" rx="8" stroke="#E5E5E5" stroke-width="2.2" fill="none"/>
+
+  <!-- vertical dimension: 3.2 mm -->
+  <line x1="340" y1="500" x2="400" y2="500" stroke="#9C9C9C" stroke-width="1"/>
+  <line x1="340" y1="544.8" x2="400" y2="544.8" stroke="#9C9C9C" stroke-width="1"/>
+  <line x1="372" y1="500" x2="372" y2="544.8" stroke="#A1CC3A" stroke-width="1.6"/>
+  <polygon points="372,500 367,512 377,512" fill="#A1CC3A"/>
+  <polygon points="372,544.8 367,532.8 377,532.8" fill="#A1CC3A"/>
+  <text x="386" y="529" font-family="DM Mono" font-size="19" font-weight="500" fill="#A1CC3A">3.2 mm</text>
+
+  <!-- horizontal dimension: 20.0 mm -->
+  <line x1="60" y1="550" x2="60" y2="596" stroke="#9C9C9C" stroke-width="1"/>
+  <line x1="340" y1="550" x2="340" y2="596" stroke="#9C9C9C" stroke-width="1"/>
+  <line x1="60" y1="586" x2="340" y2="586" stroke="#A1CC3A" stroke-width="1.6"/>
+  <polygon points="60,586 72,581 72,591" fill="#A1CC3A"/>
+  <polygon points="340,586 328,581 328,591" fill="#A1CC3A"/>
+  <text x="200" y="578" text-anchor="middle" font-family="DM Mono" font-size="19" font-weight="500" fill="#A1CC3A">20.0 mm</text>
+
+  <text x="36" y="632" fill="#9C9C9C" font-size="15">The code and the object carry the same two numbers.</text>
+  <text x="36" y="654" fill="#9C9C9C" font-size="15">Both figures come from the Energizer datasheet.</text>
+
+  <!-- ============= LOWER RIGHT: the counter-case ============= -->
+  <text x="500" y="414" fill="#E5E5E5" font-size="20" font-weight="600">The same cell, under two codes</text>
+  <text x="500" y="438" fill="#9C9C9C" font-size="15">One is a catalog entry. The other is dimensional.</text>
+
+  <!-- LR44: a catalog number -->
+  <text x="500" y="482" font-family="DM Mono" font-size="14" fill="#9C9C9C">catalog number</text>
+  <text x="500" y="518" font-family="DM Mono" font-size="34" font-weight="500" fill="#9C9C9C">LR</text>
+  <text x="540.8" y="518" font-family="DM Mono" font-size="34" font-weight="500" fill="#E5E5E5">44</text>
+  <text x="500" y="544" fill="#E5E5E5" font-size="16">Catalog entry 44, not 4 mm by 4.4 mm.</text>
+  <text x="500" y="566" fill="#9C9C9C" font-size="15">The can measures 11.60 by 5.40 mm, as manufactured.</text>
+
+  <line x1="500" y1="590" x2="924" y2="590" stroke="#3A3A3A" stroke-width="1"/>
+
+  <!-- LR1154: a dimensional code for the same can -->
+  <text x="500" y="618" font-family="DM Mono" font-size="14" fill="#9C9C9C">dimensional code</text>
+  <text x="500" y="654" font-family="DM Mono" font-size="34" font-weight="500" fill="#9C9C9C">LR</text>
+  <text x="540.8" y="654" font-family="DM Mono" font-size="34" font-weight="500" fill="#A1CC3A">1154</text>
+  <text x="500" y="680" fill="#E5E5E5" font-size="16">Reads 11 and 54: at least 11 mm, 5.4 mm high.</text>
+  <text x="500" y="702" fill="#9C9C9C" font-size="15">Same can. Diameter is truncated; height is exact.</text>
+</svg>

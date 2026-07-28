@@ -44,6 +44,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:wlan_pros_toolbox/screens/tools/reference/ascii_reference_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/batteries_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/channel_map_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/coax_cable_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/db_reference_screen.dart';
@@ -54,6 +55,7 @@ import 'package:wlan_pros_toolbox/screens/tools/reference/mcs_index_screen.dart'
 import 'package:wlan_pros_toolbox/screens/tools/reference/non_wifi_channels_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/osi_model_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/packet_decode_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/sd_cards_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/poe_reference_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/reason_codes_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/roaming_screen.dart';
@@ -73,6 +75,7 @@ typedef _RefScreen = ({String slug, Widget Function() build});
 /// 2026-06-12 when it merged into ethernet_cable; its baseline is dropped and
 /// the ethernet_cable baseline is regenerated for the consolidated layout.)
 final List<_RefScreen> _screens = <_RefScreen>[
+  (slug: 'batteries', build: () => const BatteriesScreen()),
   (slug: 'ascii_reference', build: () => const AsciiReferenceScreen()),
   (slug: 'channel_map', build: () => const ChannelMapScreen()),
   (slug: 'coax_cable', build: () => const CoaxCableScreen()),
@@ -85,6 +88,7 @@ final List<_RefScreen> _screens = <_RefScreen>[
   (slug: 'osi_model', build: () => const OsiModelScreen()),
   (slug: 'packet_decode', build: () => const PacketDecodeScreen()),
   (slug: 'poe_reference', build: () => const PoeReferenceScreen()),
+  (slug: 'sd_cards', build: () => const SdCardsScreen()),
   (slug: 'reason_codes', build: () => const ReasonCodesScreen()),
   (slug: 'roaming', build: () => const RoamingScreen()),
   (slug: 'signal_thresholds', build: () => const SignalThresholdsScreen()),

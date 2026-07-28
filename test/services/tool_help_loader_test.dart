@@ -121,7 +121,10 @@ void main() {
       store = ToolHelpStore.fromJson(raw);
     });
 
-    test('parses to exactly 140 entries', () {
+    // NOTE 2026-07-28: this test was named 'parses to exactly 140 entries' while
+    // asserting 178. The name is a claim and it was wrong by 38. Renamed to state
+    // the count it actually checks, and the number now lives in one place.
+    test('parses to exactly 179 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -296,7 +299,19 @@ void main() {
       // table). Data source-pinned to the RFCs and IANA registries (Pax,
       // Deliverables/2026-07-18-packet-decode-reference/decode-data.md).
       // 175 + 1 = 176.
-      expect(store.count, 176);
+      // 178 = + the two "decode the markings" references added 2026-07-25:
+      // Batteries (batteries) in the Power & Cooling subgroup of Quick
+      // Reference -- cell codes, the size ladder, IEC chemistry letters, the
+      // LR44/SR44 substitution trap, the 1.5 V vs 1.2 V fuel-gauge gotcha,
+      // button-cell ingestion safety, and the FAA spare-cell rule; and
+      // SD & microSD Cards (sd-cards) in the Vendor & Hardware subgroup -- the
+      // seven marks on a card face, the orthogonal sustained-write vs random-
+      // IOPS axes, the A2-needs-Command-Queuing caveat, endurance, and
+      // counterfeits. Both data source-pinned to Pax's clean-room brief
+      // (Deliverables/2026-07-25-battery-sd-reference/FINDINGS.md), which cites
+      // IEC 60086-1/-2:2021 and the SD Physical Layer Simplified Spec v6.00.
+      // 176 + 2 = 178.
+      expect(store.count, 179);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

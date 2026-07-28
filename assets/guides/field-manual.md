@@ -3168,6 +3168,59 @@ A bundled, offline, pinch-zoomable copy of Keith's published "6 GHz channel layo
 - Source / basis: Keith's own published WLAN Pros laminated reference card, exported to PDF and bundled in the app. It renders offline, with no network needed.
 
 
+### 6 GHz Channel Allocations with GVP
+
+The same chart as above, redrawn to carry all four US 6 GHz power classes rather than three. The fourth is Geofenced Variable Power.
+
+**Why it's here.** Geofenced Variable Power entered 47 CFR 15.407(a)(7) effective 27 April 2026, after the familiar three-class card was drawn. This card shows where it is allowed and, more usefully, where it is not.
+
+**How to use**
+1. Open the card and pinch or double-tap to zoom; the page is fit-to-screen on open.
+2. Read the Geofenced Variable Power row against Standard Power directly above it. They are authorized in the same two sub-bands, so GVP inherits the same gap in the middle of the band.
+3. The original three-class card is still in the app and unchanged, for when that is the layout you want.
+
+**Field notes**
+- GVP is rules on paper as of this release. No geofencing system has been approved and no GVP access point or client has been certified, so nothing on the shelf uses it yet.
+- GVP is authorized in 5.925 to 6.425 GHz and 6.525 to 6.875 GHz, the same two sub-bands as Standard Power. It does not reach U-NII-6 or U-NII-8.
+- Card inner content is not accessible to screen readers (flat rasterized PDF). The card title and "pinch to zoom" gesture are announced.
+- Source / basis: Keith's own published WLAN Pros reference card, exported to PDF and bundled in the app. It renders offline, with no network needed.
+
+
+### Batteries
+
+A decode-the-markings reference for cell codes: what the letters and digits on a battery actually mean, and where the pattern stops working.
+
+**Why it's here.** Survey gear, sensors and test kit run on cells whose codes look systematic and are not. Knowing that CR2032 tells you the size while LR44 tells you nothing about it saves you buying the wrong part.
+
+**How to use**
+1. Start with the hero: CR2032 split into its four groups, chemistry, shape, diameter, height, with a cross-section drawn to the same scale so the code and the object carry the same two numbers.
+2. Read the counter-case beside it. LR44 is catalog entry 44, not four by four point four millimetres, and the can it names measures 11.60 by 5.40 mm.
+3. Use the size ladder to compare physical sizes at a glance, drawn to scale.
+
+**Field notes**
+- The lithium coin code is dimensional. The aqueous button code is usually a catalog number. Both live in the same clause of the same standard, which is why they are so easily confused.
+- Rechargeable cells are not in IEC 60086 at all. That document is titled Primary batteries. Secondary lithium sits under IEC 61960, where the same millimetre rounds in the opposite direction.
+- Some sizes on the ladder are not sold at retail and are drawn gray rather than omitted, because the gap is the point.
+
+
+### SD Cards
+
+A decode-the-markings reference for the seven marks on an SD card face, and what each one actually promises.
+
+**Why it's here.** A card face carries up to seven independent marks and only one of them measures two things. Buying by the big number on the front is how people end up with a card that drops frames.
+
+**How to use**
+1. Work the card image left to right against the numbered list: capacity standard, printed capacity, bus interface, then the four performance marks.
+2. Read marks 4, 5, 6 and 7 as a group. They all set a minimum sustained sequential write floor.
+3. Check mark 7 separately if you are booting a single-board computer from the card, because it is the only mark that also promises random IOPS.
+
+**Field notes**
+- The headline read speed printed on the front, 170 MB/s on the card drawn here, is a maximum sequential read. No class regulates it and nothing guarantees it. The class marks are the only floors on the card.
+- A2 is not a faster card than V30. Its sequential floor is 10 MB/s, which is V10 territory. What it adds is a random IOPS guarantee the video classes never make.
+- A2 only delivers A2 performance if the host implements Command Queuing, and falls back to A1 behavior when it does not. That is by design, and it is why Raspberry Pi benchmarks have repeatedly failed to show A2 beating A1.
+- Card graphics are not accessible to screen readers. Every value on them is also present as text on the same screen.
+
+
 ### Antenna Fundamentals
 
 A read-along teaching reference for antenna literacy: what an antenna actually does (shapes where the radio's energy goes, it does not add power), azimuth vs elevation, why gain trades against beamwidth, polarization and the wall-clock mistake, downtilt, how to read a radiation-pattern polar plot (main lobe, the -3 dB beamwidth points, side lobes, nulls, front-to-back ratio), and which antenna type (omni, patch, sector, Yagi, dish) fits which space. Seven line diagrams are embedded at the points they teach.

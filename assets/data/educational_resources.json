@@ -2,8 +2,8 @@
   "_meta": {
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
-    "last_updated": "2026-06-12",
-    "count": 41,
+    "last_updated": "2026-07-27",
+    "count": 42,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -736,6 +736,25 @@
         "independent",
         "cwap",
         "analysis"
+      ],
+      "approval": "pending_outreach"
+    },
+    {
+      "id": "dest-wifrizzy",
+      "title": "WiFrizzy",
+      "summary": "Eva Santos's Wi-Fi blog, plus a free library of printable one-page 802.11 reference sheets.",
+      "description": "WiFrizzy, by Eva Santos (CWNE #521), is an independent Wi-Fi blog carrying something none of the other blogs on this list has: a gallery of free, downloadable one-page reference sheets. More than twenty of them, on the parts of 802.11 that are hard to hold in your head, including co-channel contention, BSS Coloring, RTS/CTS versus CTS-to-Self, the aggregation frames, the AKM suites, and the roaming alphabet. Several map to CWNA-109 exam objectives, so they double as study material rather than wall art.\n\nThe sourcing is better than this genre usually manages. The BSS Coloring sheet cites the clause and the figure in IEEE 802.11-2024, quotes the standard directly, and then tells you plainly that the throughput gains behind it come from simulation and not from a production network. That last part is rare, and it is the reason to trust the rest.\n\nA few of the sheets are multi-page slide decks rather than single printable pages, and a couple of the gallery captions promise more than the PDF delivers, so open the file before you send it to the printer. Santos works in the field and posts an explicit note that her writing does not speak for her employer. Free, independent, no login. Best for engineers who want a reference to pin above the bench, and for anyone working toward CWNA.",
+      "url": "https://wifrizzy.io/",
+      "topic": "Independent blogs and experts",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "destination",
+        "blog",
+        "independent",
+        "reference",
+        "cheat-sheets",
+        "certification"
       ],
       "approval": "pending_outreach"
     }

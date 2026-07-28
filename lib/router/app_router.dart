@@ -58,6 +58,8 @@ import '../screens/tools/reference/optical_transceivers_screen.dart';
 import '../screens/tools/reference/cable_bend_radius_screen.dart';
 import '../screens/tools/reference/rack_units_screen.dart';
 import '../screens/tools/reference/screw_drives_screen.dart';
+import '../screens/tools/reference/batteries_screen.dart';
+import '../screens/tools/reference/sd_cards_screen.dart';
 import '../screens/tools/reference/markdown_cheatsheet_screen.dart';
 import '../screens/tools/reference/wifi_standards_bodies_screen.dart';
 import '../screens/tools/reference/wifi_exposure_perspective_screen.dart';
@@ -282,6 +284,11 @@ class AppRouter {
   static const String cableBendRadius = '/tools/cable-bend-radius';
   static const String rackUnits = '/tools/rack-units';
   static const String screwDrives = '/tools/screw-drives';
+  // Batteries + SD/microSD Cards (2026-07-25): two 'decode the markings'
+  // reference screens. Batteries sits in the Power & Cooling subgroup of Quick
+  // Reference; SD Cards sits in Vendor & Hardware.
+  static const String batteries = '/tools/batteries';
+  static const String sdCards = '/tools/sd-cards';
   // `/tools/rf-connectors` was REMOVED 2026-06-06 (BF6-18): RF Connectors merged
   // into the single Antenna Connectors tool.
   static const String roaming = '/tools/roaming';
@@ -553,6 +560,8 @@ class AppRouter {
       '/tools/channel-allocations-5ghz';
   static const String channelAllocations6ghz =
       '/tools/channel-allocations-6ghz';
+  static const String channelAllocations6ghzGvp =
+      '/tools/channel-allocations-6ghz-gvp';
   static const String mcsIndexCard = '/tools/mcs-index-card';
 
   // Ham Radio PDF reference cards (2026-06-28) — two of Keith's corrected
@@ -647,6 +656,8 @@ class AppRouter {
     cableBendRadius: (_) => const CableBendRadiusScreen(),
     rackUnits: (_) => const RackUnitsScreen(),
     screwDrives: (_) => const ScrewDrivesScreen(),
+    batteries: (_) => const BatteriesScreen(),
+    sdCards: (_) => const SdCardsScreen(),
     roaming: (_) => const RoamingScreen(),
     poeReference: (_) => const PoeReferenceScreen(),
     enclosureRatings: (_) => const EnclosureRatingsScreen(),
@@ -832,6 +843,11 @@ class AppRouter {
       title: '6 GHz Channel Allocations',
       assetPath: 'assets/reference-cards/channel-allocations-6ghz.pdf',
       toolId: 'channel-allocations-6ghz',
+    ),
+    channelAllocations6ghzGvp: (_) => const PdfReferenceScreen(
+      title: '6 GHz Channel Allocations with GVP',
+      assetPath: 'assets/reference-cards/channel-allocations-6ghz-gvp.pdf',
+      toolId: 'channel-allocations-6ghz-gvp',
     ),
     mcsIndexCard: (_) => const PdfReferenceScreen(
       title: 'Modulation and Coding Schemes (MCS Index)',

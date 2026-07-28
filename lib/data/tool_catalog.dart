@@ -1165,6 +1165,24 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Vendor & Hardware',
       ),
+      // SD & microSD Cards (2026-07-25): the "decode the markings" reference for
+      // every mark on a card face. The load-bearing insight is that the class
+      // marks all set a sustained sequential write floor, and A1/A2 set that
+      // same floor (10 MB/s) AND add random 4 KB IOPS on top, plus the
+      // A2-needs-Command-Queuing caveat that
+      // explains why Pi benchmarks keep failing to show A2 beating A1. Data
+      // source-pinned to the SD Physical Layer Simplified Spec v6.00 (Pax,
+      // Deliverables/2026-07-25-battery-sd-reference/FINDINGS.md).
+      ToolEntry(
+        id: 'sd-cards',
+        title: 'SD & microSD Cards',
+        description:
+            'Read every mark on the card face: capacity, bus, speed class, '
+            'and A1 / A2',
+        routeName: '/tools/sd-cards',
+        isLive: true,
+        subgroup: 'Vendor & Hardware',
+      ),
       // ── from the dissolved Infrastructure category ──
       ToolEntry(
         id: 'poe-reference',
@@ -1899,6 +1917,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Power & Cooling',
       ),
+      // Batteries (2026-07-25): the "decode the markings" reference for cell
+      // types, sizes, chemistries, and codes. The load-bearing correction is
+      // that the coin-cell code DECODES (CR2032 = 20.0 mm x 3.2 mm) and the
+      // button-cell code does NOT (LR44 = catalog entry 44), and both
+      // conventions sit in the same IEC 60086-2:2021 clause. Data source-pinned
+      // to Deliverables/2026-07-25-battery-sd-reference/FINDINGS.md (Pax).
+      ToolEntry(
+        id: 'batteries',
+        title: 'Batteries',
+        description:
+            'Cell sizes, chemistries, and how to read a code: CR2032 decodes, '
+            'LR44 does not',
+        routeName: '/tools/batteries',
+        isLive: true,
+        subgroup: 'Power & Cooling',
+      ),
       ToolEntry(
         id: 'ohms-law',
         title: "Ohm's Law & Power Wheel",
@@ -2022,7 +2056,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Educational Resources screen has always counted in its "curated places"
     // intro — so the home badge (54) contradicted the screen header (55). Pin
     // 55 to match what the screen actually presents.
-    countLabelOverride: '55',
+    countLabelOverride: '57',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
@@ -2058,6 +2092,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: '6 GHz Channel Allocations',
         description: '6 GHz channel layout and allocations',
         routeName: '/tools/channel-allocations-6ghz',
+        isLive: true,
+      ),
+      // Added 2026-07-28. The four US 6 GHz power classes on one chart, including
+      // Geofenced Variable Power, which entered 47 CFR 15.407(a)(7) effective
+      // 27 April 2026. The plain 6 GHz card above shows three classes and is kept
+      // because it is the layout most people already know.
+      ToolEntry(
+        id: 'channel-allocations-6ghz-gvp',
+        title: '6 GHz Channel Allocations with GVP',
+        description: 'All four 6 GHz power classes, including Geofenced Variable Power',
+        routeName: '/tools/channel-allocations-6ghz-gvp',
         isLive: true,
       ),
       ToolEntry(

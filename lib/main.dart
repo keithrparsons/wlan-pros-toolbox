@@ -24,6 +24,8 @@ import 'data/bend_diagrams.dart';
 import 'data/rack_diagrams.dart';
 import 'data/screw_drives_diagrams.dart';
 import 'data/fiber_connectors_diagrams.dart';
+import 'data/battery_diagrams.dart';
+import 'data/sd_card_diagrams.dart';
 import 'data/regulatory_logos.dart';
 import 'data/markdown_diagrams.dart';
 import 'data/wifi_bodies_logos.dart';
@@ -248,6 +250,16 @@ Future<void> main() async {
   } catch (_) {}
   try {
     await FiberConnectorsDiagrams.ensureLoaded();
+  } catch (_) {}
+  // Batteries + SD/microSD Cards reference graphics (2026-07-25). Same
+  // manifest-gate convention: until Charta's hero SVGs are bundled, has() stays
+  // false and each graphic slot is omitted, so both pages ship fully working as
+  // tables without them.
+  try {
+    await BatteryDiagrams.ensureLoaded();
+  } catch (_) {}
+  try {
+    await SdCardDiagrams.ensureLoaded();
   } catch (_) {}
   // Regulatory authority logos (2026-06-08); until bundled, has() is false and
   // each Regulatory Domains row shows its abbreviation badge instead of a logo.

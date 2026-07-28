@@ -3620,6 +3620,34 @@
       ],
       "source": "Based on the ISO 1173, 8764, and 10664 drive standards."
     },
+    "batteries": {
+      "name": "Batteries",
+      "category": "Quick Reference",
+      "purpose": "A field reference for the cells you meet on sensors, testers, controllers, and gear: how to read a cell code, the size ladder, the IEC chemistry letters and the voltage each one sets, the LR44 against SR44 substitution trap, the 1.5 V against 1.2 V gotcha, button cell safety, and the air travel rule.",
+      "whyHere": "Because half the codes decode and half do not, and nothing on the cell tells you which half you are holding. CR2032 genuinely is 20.0 mm by 3.2 mm. LR44 is catalog entry 44 and has nothing to do with 4 mm. Both conventions are listed in the same clause of the same standard, and most explanations teach only the first one.",
+      "howToUse": [
+        "Start at Reading the code. The dimensional rule, the truncation caveat, and the button cell exception are the three things worth carrying.",
+        "The size ladder shows the order N, AAAA, AAA, AA, A, B, C, D. The doubled letter means SMALLER, so AA is smaller than A. Only the rungs with a sourced dimension are listed.",
+        "Naming systems shows why one IEC code per size is wrong: the code changes with the chemistry for the same physical cell.",
+        "Chemistry letters gives the nominal voltage and the maximum open-circuit voltage per letter. The maximum open-circuit column is the one that surprises people on lithium primaries.",
+        "LR44 against SR44 is the substitution panel. Silver oxide into an alkaline slot is safe; the reverse drifts a precision instrument as the voltage sags.",
+        "Use the copy button in the toolbar to copy every table and rule as tab-separated text, one section at a time."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Round cell codes are dimensional. Button cell catalog numbers mostly are not. IEC 60086-2:2021 Clause 7, Category 4 lists both conventions in one block, which is why LR1154 (dimensional) and LR44 (a catalog number) name the same can, measured at 11.60 mm by 5.40 mm.",
+        "Read the height group from the right. It is tenths of a millimeter and it is exact. Everything to its left is the diameter in whole millimeters, TRUNCATED, so it is a floor rather than a measurement. LR1154 reads 11 against a can of 11.60 mm, which is how you know the rule truncates rather than rounds.",
+        "Two digits of height means a coin, three digits means a cylinder. CR2032 reads 32, so 3.2 mm. CR17345, the CR123A, reads 345, so 34.5 mm. The same rule reads both, which is why this is not really a coin cell rule.",
+        "A and B did not vanish, they left retail. The A cell is in current production inside packs, measured 17.13 mm by 50.90 mm on the Saft LS17500 datasheet (FDK HR-AUE is the NiMH equivalent). The B cell survives only inside the 3R12 and 3LR12 flat 4.5 V battery, and no standalone B datasheet exists because nobody sells one, so this screen prints no B dimension at all. IEC 60086-2:2021 Clause 7 lists no R23 and no single-cell R12, which is the evidence for that claim.",
+        "The real problem with running NiMH in a 1.5 V slot is the fuel gauge. A voltage-based gauge cannot resolve state of charge on the flat NiMH curve at all, so the meter reads full until it reads empty. Most devices run fine on the lower voltage; the gauge is what breaks.",
+        "Button cell ingestion injures by electrolysis. A cell lodged in the esophagus completes a circuit through moist tissue, electrolysis at the negative pole generates hydroxide, and the hydroxide causes liquefactive necrosis. The cell does not have to leak, be old, or block the airway. A brand new, fully charged cell is the most dangerous one. US National Battery Ingestion Hotline: 800-498-8666.",
+        "Capacity is load-dependent, so treat any single capacity number as wrong. Where a capacity appears on the screen it is tied to a named cell and a named datasheet, and it is approximate.",
+        "Two things are deliberately NOT on this screen because no primary source was found for them: the AA and AAA introduction dates, and the story that the B size was skipped to avoid clashing with the radio B battery. The distinction between the two senses of B battery is real and is shown; the explanation for it is not."
+      ],
+      "source": "Sourced to IEC 60086-1:2021 and IEC 60086-2:2021 publisher previews, Energizer, Renata, FDK and Saft datasheets, the CPSC button-cell rule adopted 11 September 2023, and FAA PackSafe. Where a claim could only be traced to Wikipedia or a content farm it is named as unverified and left off the screen rather than printed."
+    },
     "markdown-cheatsheet": {
       "name": "Markdown Cheatsheet",
       "category": "Quick Reference",
@@ -4135,6 +4163,32 @@
       ],
       "source": "Per-vendor field reference compiled by Keith Parsons / WLAN Pros. Sources per vendor: the Cisco Catalyst 9130AX datasheet and Getting Started Guide, the Aruba 310 Series datasheet, UniFi Tech Specs, the Ruckus product guide, and Extreme Networks product pages."
     },
+    "sd-cards": {
+      "name": "SD & microSD Cards",
+      "category": "Quick Reference",
+      "purpose": "How to read every mark on an SD or microSD card face: the capacity standard and the filesystem it commits you to, the bus interface, the three sustained-write class families (C, U, V), the Application Performance Class (A1 and A2), plus endurance ratings, counterfeits, and the write-protect notch.",
+      "whyHere": "Because a card face carries up to seven independent marks and only one of them measures two things. The C, U, and V marks each set a minimum sustained sequential write floor and nothing else. A1 and A2 set that same floor, 10 MB/s for both, and add a guarantee the others never make: random 4 KB IOPS. That is why a V90 card can be slower than an A2 card at booting a Pi and an A2 card can drop frames the V90 handles.",
+      "howToUse": [
+        "Read the marks in the order the screen lists them: capacity standard first (it is a compatibility gate), then the bus interface (it is the ceiling), then the one class that matches your job.",
+        "For running an operating system on a Pi or WLAN Pi, read the A class. For packet capture or video, read the V class.",
+        "Ignore the headline MB/s on the front of the package. That is an unregulated maximum sequential read; the class marks are the only floors on the card.",
+        "The counterfeit section gives the only test that works. Fill the card completely and read every byte back with h2testw, or f3write and f3read.",
+        "Use the copy button in the toolbar to copy every table as tab-separated text, one section per topic."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "A2 only delivers A2 performance if the host implements Command Queuing. The spec conditions the A2 IOPS figures on the Command Queue scheme with cache enabled, and requires an A2 card to fall back to A1 behavior when they are disabled. That is why real-world Raspberry Pi benchmarks have repeatedly failed to show A2 beating A1. Retail marketing prints A2 unconditionally.",
+        "A1 and A2 both pin sustained write at 10 MB/s, so an A2 card is guaranteed no better than V10 for sustained write unless it separately carries a V mark. An A2 card with no V30 is not a 4K video card, and a V90 card with no A mark says nothing at all about IOPS.",
+        "The capacity mark is a filesystem contract. SDHC means FAT32; SDXC and SDUC mean exFAT. A host that supports SDHC but not SDXC does not fail on capacity, it fails on exFAT. Reformatting an SDXC card as FAT32 makes it work and puts it outside the specification.",
+        "V60 and V90 require UHS-II. A card marked V60 that shows only a Roman I on the face is marked wrongly. A UHS-II card in a UHS-I slot simply runs UHS-I, which is why a fast card in a laptop reader often measures no faster than a cheap one.",
+        "All three sustained-write class families have been OPTIONAL since spec v4.20, so an unmarked card is not necessarily a slow card and a C10 mark is not a modern statement.",
+        "The SD Express maximum is given as ~3.9 GB/s on purpose: the SD Association web table and its own SD 9.1 white paper publish two different figures for the same thing.",
+        "Consumer endurance is quoted in hours at an unstated bitrate and shrinks for 4K, so two cards both labeled high endurance can differ several-fold at the same capacity. TBW is the only comparable endurance number and consumer vendors mostly do not publish it."
+      ],
+      "source": "Every class table, bus speed, contact-row detail, and Application Performance Class figure comes from the SD Physical Layer Simplified Specification v6.00, cited by section and page, because the SD Association publishes its own class tables only as images. Where the SD Association contradicts itself, the screen says so instead of picking a side."
+    },
     "lldp-cdp-reference": {
       "name": "Find the Switch and Port (LLDP/CDP)",
       "category": "CLI & Capture",
@@ -4156,6 +4210,26 @@
         "Client-Windows (Windows 10/11, not Server) availability of the NetLldpAgent module and the Data Center Bridging feature varies by build and NIC driver and is unconfirmed; on Windows Server the feature install is documented."
       ],
       "source": "Fact-checked LLDP/CDP how-to brief (2026-07-15), cross-checked against the Wireshark LLDP wiki, Microsoft Learn (Get-NetLldpAgent, pktmon), lldpd.github.io, Baeldung (tcpdump), and Study-CCNA/Cisco docs."
+    },
+    "channel-allocations-6ghz-gvp": {
+      "name": "6 GHz Channel Allocations with GVP",
+      "category": "Quick Reference",
+      "purpose": "Keith's 6 GHz channel chart showing all four US power classes, including Geofenced Variable Power.",
+      "whyHere": "The 6 GHz card most people know shows three power classes. A fourth, Geofenced Variable Power, entered the rules effective 27 April 2026. This is the same chart with that class added, so you can see where it is allowed and where it is not.",
+      "howToUse": [
+        "Open the card and pinch or double-tap to zoom. It opens fit to the screen.",
+        "Read the Geofenced Variable Power row against Standard Power directly above it. They are authorized in the same two sub-bands, so GVP inherits the same gap in the middle of the band.",
+        "If you want the familiar three-class layout, the plain 6 GHz Channel Allocations card is still here and unchanged."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Geofenced Variable Power is rules on paper as of this release. No geofencing system has been approved and no GVP access point or client has been certified, so nothing on the shelf uses it yet.",
+        "GVP is authorized in the same two sub-bands as Standard Power, 5.925 to 6.425 GHz and 6.525 to 6.875 GHz. It does not reach U-NII-6 or U-NII-8.",
+        "The card is a printed image, so a screen reader cannot read the values inside it. The card title and the pinch-to-zoom gesture are announced."
+      ],
+      "source": "The card ships inside the app as a PDF and displays fully offline."
     }
   }
 }
