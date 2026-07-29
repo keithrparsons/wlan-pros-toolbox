@@ -374,10 +374,12 @@ msix_config:
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
   # scan, TCP ping, ping sweep, WoL, packet sender, host discovery).
-  # NOTE(windows-verify 2026-06-26): confirm whether wlanapi.dll Wi-Fi reads
-  # require the `wiFiControl` device capability under MSIX. If so, add it here
-  # and reflect it in the Store privacy declaration. Native Wifi *reads* often
-  # do not, but the Store may flag it — verify on the first packaged build.
+  # RESOLVED 2026-07-28 by a real Store submission: wlanapi.dll Wi-Fi READS do
+  # NOT require the `wiFiControl` device capability under MSIX. Verified the only
+  # way it could be — 1.8.5.0 passed Microsoft certification and went live with
+  # exactly the four capabilities below and no wiFiControl. (Open since
+  # 2026-06-26; the earlier note guessed "reads often do not" and was right, but
+  # nothing had ever been packaged to prove it.)
   capabilities: internetClient, internetClientServer, privateNetworkClientServer
   # x64 is the SHIPPING target — field Wi-Fi engineers run x64. An ARM64 build
   # from Parallels-on-Apple-Silicon is dev-only and must NOT be what ships.
