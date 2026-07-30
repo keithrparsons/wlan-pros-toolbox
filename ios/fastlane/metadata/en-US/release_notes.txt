@@ -1,9 +1,5 @@
-Two new reference tools.
+Two fixes.
 
-Batteries decodes what is printed on a cell. The code on a lithium coin cell carries its size: CR2032 is 20 mm across and 3.2 mm tall. The code on a button cell usually does not, and the app shows which is which, alongside a to-scale ladder of ten common sizes from AAAA to D.
+On iPhone and iPad, the signal-to-noise ratio could be reported as a negative number, and a strong connection could be graded as poor because of it. Both are corrected. If the app told you your Wi-Fi was weak on a link you knew was good, this was why.
 
-SD Cards reads the marks on a card face. Speed Class, UHS Speed Class, Video Speed Class and Application Performance Class each promise a sustained write floor, and only one of them also promises random IOPS. That is why a card rated for 4K video can still be slow at booting a Raspberry Pi.
-
-The 2.4, 5 and 6 GHz channel allocation cards have been reissued with corrected free-space path loss figures.
-
-New: a 6 GHz Geofenced Variable Power channel card, covering the fourth power class the FCC authorized in 2026.
+The 2.4, 5 and 6 GHz channel allocation cards have been reissued with corrected free-space path loss figures. There is also a new 6 GHz Geofenced Variable Power card, covering the fourth power class the FCC authorized in 2026.

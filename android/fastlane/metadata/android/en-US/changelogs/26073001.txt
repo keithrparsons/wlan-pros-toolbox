@@ -1,0 +1,5 @@
+Two fixes.
+
+The signal-to-noise ratio could be reported as a negative number, and a strong connection could be graded as poor because of it. Both are corrected.
+
+The 2.4, 5 and 6 GHz channel allocation cards have been reissued with corrected free-space path loss figures, plus a new 6 GHz Geofenced Variable Power card.
