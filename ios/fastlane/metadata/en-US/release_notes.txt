@@ -1,7 +1,9 @@
-Accessibility. Buttons across the app now report their name to VoiceOver and other screen readers.
+Two new reference tools.
 
-Location access. Granting Location permission now works on the Wi-Fi Information screen.
+Batteries decodes what is printed on a cell. The code on a lithium coin cell carries its size: CR2032 is 20 mm across and 3.2 mm tall. The code on a button cell usually does not, and the app shows which is which, alongside a to-scale ladder of ten common sizes from AAAA to D.
 
-Clearer help. The ICMP Ping and Traceroute notes no longer imply a Linux desktop build. WLAN Pi support is coming.
+SD Cards reads the marks on a card face. Speed Class, UHS Speed Class, Video Speed Class and Application Performance Class each promise a sustained write floor, and only one of them also promises random IOPS. That is why a card rated for 4K video can still be slow at booting a Raspberry Pi.
 
-More honest reporting. The Roaming Log states how many samples each summary is based on, and screens no longer report results they did not check.
+The 2.4, 5 and 6 GHz channel allocation cards have been reissued with corrected free-space path loss figures.
+
+New: a 6 GHz Geofenced Variable Power channel card, covering the fourth power class the FCC authorized in 2026.

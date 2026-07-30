@@ -33,8 +33,12 @@ void main() {
     // + Antenna Fundamentals, moved here 2026-06-06 BF6-3; + Ham Radio Study
     // Resources, added 2026-06-28).
     final int cardCount = edu.tools.length;
-    expect(cardCount, 13,
-        reason: 'expected 10 PDF reference cards + Antenna Fundamentals + '
+    // 2026-07-28: 11 PDF cards now. Added `channel-allocations-6ghz-gvp`, the
+    // four-power-class 6 GHz chart including Geofenced Variable Power. The
+    // three-class card is kept alongside it, so this is an addition rather
+    // than a replacement.
+    expect(cardCount, 14,
+        reason: 'expected 11 PDF reference cards + Antenna Fundamentals + '
             'Ham Radio Study Resources + Spectrum Analysis');
 
     // Online-resource count from the bundled dataset's _meta block.

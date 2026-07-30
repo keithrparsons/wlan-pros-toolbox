@@ -310,6 +310,21 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'unifi', 'u6', 'u7', 'ruckus', 'r730', 'extreme', 'ap4000', 'wi-fi generation',
     'stream', 'tier', 'suffix', 'what does the model number mean',
   ],
+  // Batteries + SD Cards (2026-07-25). Both are "decode the markings" pages, so
+  // the keywords are weighted toward the codes a person would actually type off
+  // a cell or a card face.
+  'batteries': <String>[
+    'battery', 'cell', 'coin cell', 'button cell', 'cr2032', 'cr2450', 'lr44',
+    'sr44', 'ag13', '357', 'aa', 'aaa', 'alkaline', 'lithium', 'nimh',
+    'silver oxide', 'iec 60086', 'ansi neda', '9 volt', '6lr61', 'lifepo4',
+    'voltage', 'what size battery',
+  ],
+  'sd-cards': <String>[
+    'sd card', 'microsd', 'sdhc', 'sdxc', 'sduc', 'uhs', 'uhs-i', 'uhs-ii',
+    'speed class', 'video speed class', 'v30', 'v60', 'v90', 'u1', 'u3', 'a1',
+    'a2', 'iops', 'exfat', 'fat32', 'raspberry pi', 'wlan pi', 'endurance',
+    'counterfeit', 'fake card', 'which card', 'memory card', 'flash card',
+  ],
   'wavelength': <String>[
     'lambda', 'antenna length', 'quarter wave', 'frequency to wavelength',
   ],

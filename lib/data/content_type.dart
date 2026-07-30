@@ -39,6 +39,7 @@ const Set<String> _pdfCardIds = <String>{
   'channel-allocations-24ghz',
   'channel-allocations-5ghz',
   'channel-allocations-6ghz',
+  'channel-allocations-6ghz-gvp',
   'mcs-index-card',
   'top-20-checklist',
   'extended-checklist',

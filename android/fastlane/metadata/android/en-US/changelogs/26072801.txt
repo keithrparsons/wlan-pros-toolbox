@@ -1,0 +1,7 @@
+Two new reference tools.
+
+Batteries decodes what is printed on a cell. A lithium coin code carries its size (CR2032 is 20 mm across, 3.2 mm tall); a button code usually does not. Includes a to-scale ladder of ten sizes, AAAA to D.
+
+SD Cards reads the marks on a card face, and shows why a card rated for 4K video can still be slow at booting a Raspberry Pi.
+
+The 2.4, 5 and 6 GHz channel cards are reissued with corrected path-loss figures, plus a new 6 GHz Geofenced Variable Power card.

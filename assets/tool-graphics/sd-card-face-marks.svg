@@ -1,0 +1,516 @@
+<svg width="308" height="536" viewBox="0 0 308 536" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans" fill="none">
+  <!-- HERO for the SD and microSD Cards reference (SdCardDiagrams.cardFace).
+       A full-size SD card front drawn to the spec's 24 x 32 mm proportions
+       (11.5 px per mm), with keyed callouts 1 to 7 that match kSdCardMarks in
+       lib/data/sd_card_reference_data.dart one for one.
+
+       ============ REVISION 2026-07-27 (R5): TWO VERA HIGHs, CLOSED ============
+
+       R5 changes WHAT THE CANVAS CLAIMS and HOW BIG IT IS. It does not change a
+       single measured shape: the drawn standards marks, the card silhouette,
+       the chamfer, the slider and the grip are R4's geometry moved -40 px in x
+       and nothing else. See "THE TRANSLATION IS PROVEN" below.
+
+       ---- HIGH-1: THE CANVAS ASSERTED A CLAIM THE SPECIFICATION REFUTES ----
+
+       R4 said, in the subhead and again in mark 7's axis line:
+
+           "Marks 4, 5 and 6 all measure the same thing. Mark 7 measures a
+            different thing."
+           "7: random 4 KB IOPS, a different axis entirely."
+
+       That is wrong, and it is wrong in the direction that misleads a buyer.
+       SD Part 1 Physical Layer Simplified Specification v6.00 (10 April 2017),
+       section 4.16.1.1 (A1) and section 4.16.1.2 (A2), printed p.150, specify
+       for BOTH classes a random read IOPS floor, a random write IOPS floor,
+       AND a minimum sustained sequential write of 10 MB/s. The sustained-write
+       sentence is word for word identical for A1 and A2. So mark 7 sits on the
+       SAME axis as marks 4, 5 and 6 and carries a SECOND one as well. It adds;
+       it does not differ. The canvas now says exactly that:
+
+           "Marks 4, 5, 6 and 7 all set a sustained sequential write floor.
+            Mark 7 adds random 4 KB IOPS."
+
+       THE GREEN GROUPING BAND IS GONE, AND NOT ONLY BECAUSE THE LIST WENT WITH
+       IT. A tinted region drawn around 4, 5 and 6 with 7 outside it asserts the
+       refuted exclusion in GEOMETRY. That is the harder version of the same
+       defect, because voice-lint reads copy, numbers-lint reads copy, and
+       svg-ink-guard reads ink positions - none of the three can see a claim
+       made by a rectangle. For the same reason NOTHING on this canvas separates
+       7 from 4, 5 and 6 by colour, weight or spacing: the three standfirst
+       lines are one colour and one weight, and the seven key rings are
+       identical. The only thing that distinguishes mark 7 is the sentence that
+       says what it adds.
+
+       WHAT IS NOT ON THE CANVAS, DECLARED RATHER THAN QUIETLY DROPPED. The two
+       10 MB/s floors are the same number measured two different ways: the
+       Speed / UHS / Video floors are Pw, averaged over an Allocation Unit under
+       recording conditions (section 4.13.1.3, pp.115-116), while the A-class
+       floor is PSSw, over a 1 GB contiguous region of a fully pre-written card
+       (section 4.16.3.3, p.152). Same quantity, same units, different method -
+       which is why an A2 card is not thereby V10-CERTIFIED even though its
+       guaranteed number is the same. Different method is not different axis.
+       That nuance needs two more lines of type; two more lines do not exist
+       above the card without pushing every glyph back under the type floor,
+       which is the other finding this revision exists to close. It lives in the
+       screen's own text, which is where the reader already is.
+
+       ---- HIGH-2: EVERY GLYPH RENDERED BELOW THE 13 px TYPE FLOOR ----
+
+       R4's canvas was 900 x 760. LargeGraphic paints it into
+       (screen - 2*16 screen edge - 2*24 well padding) = 295 dp at a 375 dp
+       device, so the scale was 295/900 = 0.328 and 15 px body copy landed at
+       4.9 dp against GL-003 section 3's 13 px floor. Every glyph on the asset
+       failed, including the headline.
+
+       The lever was that roughly half the canvas was a keyed list of the seven
+       marks - and that list duplicated kSdCardMarks VERBATIM, as real
+       selectable text, in _MarksCard, immediately below this graphic on the
+       same screen. Keith's ruling: cut the list, let the card fill the canvas.
+       Cut with it, for the same reason and stated so it is reviewable rather
+       than silent:
+
+         * the seven keyed entries and the region wash   -> _MarksCard
+         * "The big number is not a class" panel + leader -> the screen's own
+           ReferenceCallout(kMarketingReadCaution), directly beneath _MarksCard
+         * the title "Seven marks, one face"             -> the screen's own
+           ReferenceSectionHeading('The seven marks'), directly above this slot
+
+       Nothing was cut that the reader loses. Everything cut is on the same
+       screen, in real text, where a screen reader can reach it and this graphic
+       (decorative, ExcludeSemantics) never could.
+
+       WHAT THAT BOUGHT, MEASURED, NOT ASSERTED. Canvas 900x760 -> 308x536.
+       The smallest glyph is now 18 px and the card is 276 px of a 308 px
+       canvas (89.6% of the width; margins are one GL-003 section 4 unit, 16 px,
+       each side).
+
+           device   paint width   scale            smallest glyph   card width
+           375 dp   295 dp        460/536 = 0.858   15.4 dp          236.9 dp
+           320 dp   240 dp        240/308 = 0.779   14.0 dp          215.1 dp
+
+       320 dp is in the table because reference_goldens_test.dart calls it "the
+       narrowest phone surface we support" and Vera's finding was scoped to
+       every width the app uses, not to 375 alone. At 375 the height cap
+       (LargeGraphic.maxHeight = 460) binds before the width does, which is why
+       the 375 scale is 460/536 and not 295/308.
+
+       THE 18 px FLOOR IS WHAT SETS THE LINE LENGTH, so the copy was measured
+       before it was written, not after: measure-copy.js reports true glyph ink
+       via canvas actualBoundingBox in the shipping face. At 18 px the three
+       standfirst lines run 217.9, 256.1 and 255.6 px against a 276 px measure.
+       Not estimated from an average advance.
+
+       THE TRANSLATION IS PROVEN, NOT ASSUMED. A translation is the one edit
+       that cannot alter a measured shape, and it is checked as one rather than
+       trusted. ../verify-card-translation.py compares every numeric token in
+       R4's card block against R5's, in order: 862 tokens, 615 unchanged (y,
+       radii, widths, arc flags), 242 exactly x-40, 5 at x-40 +/- 0.01 where
+       2dp formatting rounds the other way across a .xx5 boundary (118.605
+       prints "118.61", 78.605 prints "78.6"). Worst case 0.01 px = 0.00087 mm
+       of drawn card. ZERO unexplained. The five drawn marks were not
+       hand-translated at all: build-face-marks.py's placement block moved by
+       -40 and the marks were regenerated from the same photo measurements.
+
+       THAT CHECK IS ARITHMETIC ON PURPOSE. The first cut compared rendered
+       alpha masks, with R4 shifted through a viewBox origin offset. It reported
+       3 pixels differing at up to 64/255 and could not say why - a pixel oracle
+       conflates a real coordinate error, harmless 2dp rounding, and Chrome's
+       own subpixel snapping under the oracle's own translate. Settling that
+       with a pixel tolerance would have been threshold-tuning to hide a
+       difference nobody had identified, which is the instrument svg-ink-guard's
+       header rejects by name. Coordinates are exact; rasterizers are not.
+
+       ============ REVISION 2026-07-25: THE CARD IS A CARD ============
+       The first cut drew the card as an outline with rounded corners and one
+       cut corner. Keith's verdict was that it did not read as an SD card. It
+       carries four features that make one recognisable, all of them SHAPES
+       rather than shading, so GL-003 section 5 (flat geometric, solid fills, NO
+       gradients / shadows / 3D) is satisfied with no exemption needed:
+
+         1. A SOLID BODY, drawn as a filled frame. One path, fill-rule=evenodd:
+            the card silhouette with the label well subtracted. The card stops
+            being a wireframe and becomes an object, and because the well is
+            subtracted rather than painted over, NO GLYPH ON THE FACE SITS ON A
+            FILL. That is not cosmetic - svg-ink-guard.js CHECK 2 ANDs the text
+            alpha mask against the geometry alpha mask, so a body fill painted
+            under the type would report every letter on the card as a
+            text-over-geometry hit. The honest construction and the gateable one
+            are the same construction here.
+         2. THE WRITE-PROTECT SLIDER, cut into the LEFT edge as a detour in the
+            silhouette path and filled by a solid bar. Only the SLIDER's extent
+            is drawn, not the full length of travel the reference photo shows
+            below it: at 11.5 px per mm an empty 0.78 mm recess below the tab
+            rendered as an orphan step in the outline, which read as a drawing
+            error rather than a slot.
+         3. THE RIBBED GRIP across the bottom edge, as a recessed strip with
+            flat parallel ticks. Depiction, not assertion: no callout points at
+            it and nothing here claims every card has one.
+         4. A LABEL AREA INSET from the body, as the second tone. Everything
+            printed on a card is printed on the label, so every mark sits inside
+            it, which is also what keeps rule 1 true.
+
+       ORIENTATION, settled rather than copied. The chamfer is on the UPPER
+       RIGHT and the write-protect slider is on the LEFT edge. Both were checked
+       against reference/prograde-sd-card-callouts.webp by pixel measurement,
+       not by eye: the right edge recedes from x=1042 at y=53 to x=1138 at y=153
+       (a 4.15 x 4.24 mm cut at that photo's measured 22.875 px/mm), and the
+       slider sits at x=591-608, y=227-300 on the left edge. THE MIRROR TEST: a
+       mirrored photo would show mirrored type, and "ProGrade", "256GB", "SDXC"
+       and "V90" all read left to right in that frame, so the photo is not
+       flipped and it shows the label face. Chamfer upper right, slider left.
+
+       Geometry taken from that same measurement, in card-relative mm. Photo
+       column, then what is DRAWN, so the two are never confused:
+         chamfer            photo 4.15 x 4.24     drawn 4.17 (48 px)
+         corner radius      photo ~0.7            drawn 0.96 (11 px)
+         label inset sides  photo 1.49            drawn 1.48 (17 px)
+         label top edge     photo 3.54            drawn 3.48 (it clears the chamfer)
+         label bottom edge  photo 28.7            drawn 28.7
+         WP slider on the left edge, 0.78 mm deep, photo tab 7.6 to 10.8 mm down
+                            with its empty slot running on to 14.3; drawn 7.65
+                            to 11.13, tab only (see note 2 above)
+         grip strip         photo 3.7 to 20.3 across, 29.8 to 30.9 down; drawn
+                            3.74 to 20.26 across, 29.83 to 30.87 down
+
+       Palette: GL-003 section 8.20.7 swap-list hexes ONLY, dark-baked.
+         #E5E5E5 scaffold (card outline, mark glyphs, standfirst copy)
+         #9C9C9C muted geometry (caption, leaders, label border, slider, grip)
+                          - swaps to #646464 on light
+         #A1CC3A lime  - reserved for THE CALLOUT SYSTEM and nothing else: the
+                          seven numbered keys. R4 also spent it on the two axis
+                          labels; those labels are gone, and no lime remains on
+                          any line of copy. That is deliberate - see the note on
+                          the grouping band above.
+         #3A3A3A the card body fill - swaps to #E2E1E2 on light, so the body
+                          reads as a solid object in both themes. The label well
+                          is left UNFILLED and shows the band through, which is
+                          what supplies the second tone without a second hex.
+       The region wash rgba(162,204,58,0.08) is no longer used. No status hue is
+       used: nothing here is a computed verdict (GL-003 section 8.13 rule 6).
+
+       NO <marker> ELEMENTS AND NO ARROWHEADS AT ALL in R5 (the one leader that
+       needed one pointed at the panel that is gone). flutter_svg 2.3.0 /
+       vector_graphics_compiler 1.2.5 does not implement <marker>, so a
+       marker-based arrowhead renders as nothing in the app.
+
+       NO viewBox ORIGIN OFFSET. Shrinking the canvas without translating the
+       card would have been one attribute - viewBox="40 0 308 536" - instead of
+       a coordinate edit. It is not used: ZERO of the 124 assets in
+       assets/tool-graphics carries a non-zero viewBox origin, so it would be a
+       fresh untested dependency on a renderer feature in the asset family that
+       already lost its arrowheads to exactly that.
+
+       STANDING RULE: no label over any outline, leader, or other label.
+
+       ============ REVISION 2026-07-27 (R4): THE MARKS ARE THE MARKS ============
+       Keith: "Is there a reason you didn't use the actual glyphs/logos a normal
+       shipping card would have? ... your graphic always seems 'LESS' somehow,
+       more generic." The marks are DRAWN rather than typed, and the reason is
+       not appearance: this screen exists so a reader can decode the card in
+       their hand, so a mark they cannot match against their own card fails at
+       the only job it has. That is a correctness defect, not a style note.
+
+       All five are measured off reference/prograde-sd-card-callouts.webp at
+       threshold L>150, read back as a bitmap, never eyeballed. The generator,
+       the measurement blocks and the re-derivation command live in
+       ../build-face-marks.py.
+
+         1 SD/SDXC lockup   the drawn lockup: italic S, the D as horn + one
+                            diagonal cut + petal, oblique XC below. No shipping
+                            card prints SDXC in a box, so there is no box.
+         3 Bus interface    ONE bar across BOTH stems, top and bottom - not the
+                            two separately serifed capital I's a typeface gives.
+                            Photo 30 x 33, bars 4, stems 7, counter 8, margins 4.
+         4 Speed Class      a ~40 degree aperture (rows 13-26 of 39 on the right
+                            edge) and a stroke at 11% of the diameter.
+         5 UHS Speed Class  STRAIGHT arms running 68% of the height before a
+                            shallow bottom curve. Arm tops are PLAIN - checked
+                            at two thresholds, because a flange is exactly the
+                            1px feature a threshold erodes, and this card has
+                            none.
+         6 Video Speed Cl.  flat wide serif tops, right stroke heavier than left
+                            (measured 10 against 6 - the reverse of a text face,
+                            and part of why the printed mark does not look
+                            typed), blunt apex on the digits' own baseline, with
+                            the 3 tucked under the serif so the two read as ONE
+                            mark.
+         7 Application Perf THE ONE MARK LEFT TYPESET, ON PURPOSE. See the
+                            block below - the reason changed in R5 and got
+                            better, but the answer did not.
+
+       MARK 7 AND THE SDA PICTOGRAPH (R5, 2026-07-27). The hold on mark 7 was
+       "no reference carries an A-class badge." That is now closed:
+       reference/sda-application-performance-class-table.jpg is the SD
+       Association's own Application Performance Class Specification Table
+       (sdcard.org), and its Pictograph column is the standards body's rendering
+       of the mark rather than one manufacturer's printing of it. Measured, the
+       A2 pictograph is 97 x 48 px and is a THREE-part lockup:
+
+         (i)   an italic "A2", 32 px tall, x 22-79
+         (ii)  a skewed ribbon, x 0-96 y 37-47, top edge inset 7 px from the
+               bottom edge - a plain parallelogram, no notched ends
+         (iii) "APP PERFORMANCE" reversed out of that ribbon, cap height 6 px
+
+       Two of the three cannot be drawn at the size the card face gives mark 7
+       (about 49 px wide, between mark 6's digits at x 218.3 and the label well
+       at x 275), and the third alone is not the mark:
+
+         (iii) IS BARRED, NOT MERELY TIGHT. At 49 px wide the ribbon's cap
+               height is 6/48 x 24.7 = 3.1 px, which renders 2.6 dp at 375 dp
+               against GL-003 section 3's 13 px floor - five times under. And
+               mark 7 is the TARGET OF CALLOUT LEADER 7, so GL-003 section
+               3.1's second corollary applies by name: "a sub-floor glyph may
+               never be the target of a leader, arrow, callout, or circle."
+               This is a rule, not a judgement call.
+         (i)   IS NOT RESOLVED BY THIS SOURCE. The A's crossbar-to-left-leg
+               junction moves with the threshold: at L<110 the crossbar is
+               ABSENT at row 26 and stops 4 px short of the leg; at L<170 it
+               reaches within 3 px. Whether the two connect is a property of
+               the threshold, not of the mark. That is the same 1-px-feature
+               hazard that kept the U's arm tops plain, and the answer is the
+               same - a letterform junction is not something to guess on a
+               diagram whose whole purpose is matching a real object.
+         (ii)  ALONE WOULD BE A BLANK BANNER. Drawing the ribbon without the
+               type it exists to carry puts an empty slab under the A2, which
+               reads as a rendering fault rather than as a mark. That is
+               exactly the reasoning that kept the TM off the SD lockup, and it
+               does not change because the shape is bigger.
+
+       So mark 7 stays typeset in R5. The ribbon IS measured and IS four points
+       - top-left (227.0,414.5), top-right (272.6,414.5), bottom-right
+       (269.0,419.8), bottom-left (223.5,419.8) - so if Keith wants the
+       silhouette without its type that is a ten-minute change, not a research
+       task. What would let the mark be DRAWN WHOLE is a higher-resolution
+       source: the SDA publishes these marks as vector artwork in its Trademark
+       and Logo Usage guidelines, and a vector or a 300 px-plus rendering
+       resolves both the letterform and the ribbon type. That is a Pax fetch,
+       and it is the right way to close mark 7 - in a revision where the badge
+       is the change, not bolted onto the one that fixes the claim.
+
+       THE RULE THAT SHAPES ALL OF IT: ARABIC NUMERALS STAY AS <text>. Only the
+       enclosures and the letterforms became geometry. This is a GATE decision,
+       not a drawing one:
+         - svg-ink-guard.js CHECK 2 ANDs the text alpha mask against the
+           geometry alpha mask. A numeral converted to a path LEAVES the text
+           mask, so the guard could no longer see whether it collides with the
+           enclosure it now sits inside - the very collision this change creates
+           the risk of.
+         - extract-svg-copy.js builds graphic-copy.md from <text> nodes ONLY,
+           and that file is what numbers-lint.py reads. A numeral converted to a
+           path silently leaves the numbers gate while its NUMBER-AUDIT.md row
+           stays green. That is a test that cannot fail.
+       So the C is drawn and the 10 is typed, the U is drawn and the 3 is typed,
+       the V is drawn and the 30 is typed. SDXC and II carry no Arabic numeral,
+       so both are drawn whole and neither gate loses a figure.
+
+       WHAT THE GATE COSTS IN FIDELITY, STATED RATHER THAN HIDDEN: on the photo
+       the 10 very nearly touches its ring, at 46% of the outer diameter.
+       svg-ink-guard fires at 12 shared pixels, so the drawn mark cannot be that
+       tight; ours sits at 35% with 2.3px of clearance. That is the right trade
+       and it is the only place the gate makes the drawing less true.
+
+       THE DIAGONAL CUT IN THE D IS NOT HATCHING. GL-003 section 8.6.2 Rule 1
+       bans decorative slash texture with no exceptions. This cut fills nothing,
+       shades nothing and suggests no material - it is constituent geometry of a
+       printed standards mark, drawn under the same section's Rule 4.1 ("if the
+       graphic shows a physical object it must look like that object to someone
+       who handles it daily"). It has exactly the standing of the ribbed grip
+       already on this card. Declared here so the reasoning sits on the artefact
+       instead of being re-derived.
+
+       NOT DRAWN: the TM on the lockup. It IS in the reference, at photo x
+       786-797 y 591-595 (12 x 5 px, 9.2% of the lockup's width). At this
+       lockup's scale it renders 9.2 x 3.8 px - two letterforms about 4px wide,
+       thinner than the stroke weight of every other mark here. Drawn, it is a
+       smudge, and a smudge in the corner of a logo reads as a defect rather
+       than a notice. Omitted deliberately.
+
+       THE GUARD MOVED WITH THE INK. Both of svg-ink-guard's collision checks
+       are anchored on <text>. When SDXC and II left the text layer its coverage
+       shrank while its verdict stayed PASS - a guard that keeps passing because
+       the thing it watches moved out from under it. ../svg-glyph-guard.js is
+       the missing half: every id="glyph-*" group rendered alone, ANDed against
+       the whole asset rendered without it, same 12-shared-pixel floor. It is
+       negative-controlled: nudging the U 12px left makes it report HIT. That is
+       what the id attributes on the five groups below are for.
+
+       NO TRANSFORM WRAPS A GLYPH GROUP, and R5 did not add one even though a
+       single translate() would have been the easy way to move the card.
+       svg-glyph-guard renders each glyph group ALONE, by slicing its markup out
+       of the file - so an ancestor transform would apply to the "everything
+       else" render and NOT to the "alone" render, the two masks would never
+       intersect, and the guard would report a clean PASS while measuring
+       nothing. Baking the translation into the coordinates is what keeps that
+       guard honest. -->
+
+
+  <!-- ======================= THE CORRECTED CLAIM ======================= -->
+  <!-- One colour, one weight, three lines. Nothing here or below distinguishes
+       mark 7 from marks 4, 5 and 6 by any visual means - see HIGH-1 above. -->
+  <text x="16" y="44" fill="#E5E5E5" font-size="18">Marks 4, 5, 6 and 7 all set a</text>
+  <text x="16" y="68" fill="#E5E5E5" font-size="18">sustained sequential write floor.</text>
+  <text x="16" y="92" fill="#E5E5E5" font-size="18">Mark 7 adds random 4 KB IOPS.</text>
+
+  <!-- ===================== THE CARD, 24 x 32 mm ===================== -->
+  <!-- 276 x 368 at 11.5 px per mm, x 16-292, y 124-492. Chamfer on the upper
+       right, the corner that is cut on a card held label up and read the right
+       way round; the write-protect slot on the left edge, which is the pair
+       that fixes the orientation (a mirrored card would put both on the other
+       side). -->
+
+  <!-- the body, as a filled frame: silhouette minus the label well, so the fill
+       never lands under a glyph.
+       THE INNER SUBPATH WINDS THE OTHER WAY ON PURPOSE. No shipped asset in
+       assets/tool-graphics uses fill-rule at all, so this is the first one to
+       depend on it, and an untested dependency on a renderer feature is how the
+       <marker> arrowheads were lost. The outer ring runs clockwise and the
+       label well runs counter-clockwise, which cuts the hole under NONZERO as
+       well as under EVENODD. The attribute stays for explicitness; the drawing
+       does not need it. Verified both ways in out/_render-checks/, and verified
+       through vector_graphics_compiler 1.2.5 + flutter_svg 2.3.0 in the app's
+       own test binding (Vera, 2026-07-25): the hole cuts, the frame fills. -->
+  <path fill-rule="evenodd" fill="#3A3A3A"
+        d="M 27,124 H 244 L 292,172 V 481 Q 292,492 281,492 H 27 Q 16,492 16,481 V 252 H 25 V 212 H 16 V 135 Q 16,124 27,124 Z
+           M 39,164 A 6,6 0 0 0 33,170 V 448 A 6,6 0 0 0 39,454 H 269 A 6,6 0 0 0 275,448 V 170 A 6,6 0 0 0 269,164 Z"/>
+
+  <!-- the silhouette itself, with the write-protect slot cut into the left edge -->
+  <path d="M 27,124 H 244 L 292,172 V 481 Q 292,492 281,492 H 27 Q 16,492 16,481 V 252 H 25 V 212 H 16 V 135 Q 16,124 27,124 Z"
+        stroke="#E5E5E5" stroke-width="2.2" fill="none"/>
+
+  <!-- the write-protect slider itself, filling the slot it sits in -->
+  <rect x="16" y="212" width="9" height="40" fill="#9C9C9C"/>
+
+  <!-- the label area, inset from the body -->
+  <rect x="33" y="164" width="242" height="290" rx="6" stroke="#9C9C9C" stroke-width="1.4" fill="none"/>
+
+  <!-- the ribbed grip across the bottom edge: a recessed strip with flat
+       parallel ticks, dense enough to read as moulded texture rather than a scale -->
+  <rect x="59" y="467" width="190" height="12" rx="5" stroke="#9C9C9C" stroke-width="1.3" fill="none"/>
+  <g stroke="#9C9C9C" stroke-width="1">
+    <line x1="66" y1="470" x2="66" y2="476"/>
+    <line x1="72" y1="470" x2="72" y2="476"/>
+    <line x1="78" y1="470" x2="78" y2="476"/>
+    <line x1="84" y1="470" x2="84" y2="476"/>
+    <line x1="90" y1="470" x2="90" y2="476"/>
+    <line x1="96" y1="470" x2="96" y2="476"/>
+    <line x1="102" y1="470" x2="102" y2="476"/>
+    <line x1="108" y1="470" x2="108" y2="476"/>
+    <line x1="114" y1="470" x2="114" y2="476"/>
+    <line x1="120" y1="470" x2="120" y2="476"/>
+    <line x1="126" y1="470" x2="126" y2="476"/>
+    <line x1="132" y1="470" x2="132" y2="476"/>
+    <line x1="138" y1="470" x2="138" y2="476"/>
+    <line x1="144" y1="470" x2="144" y2="476"/>
+    <line x1="150" y1="470" x2="150" y2="476"/>
+    <line x1="156" y1="470" x2="156" y2="476"/>
+    <line x1="162" y1="470" x2="162" y2="476"/>
+    <line x1="168" y1="470" x2="168" y2="476"/>
+    <line x1="174" y1="470" x2="174" y2="476"/>
+    <line x1="180" y1="470" x2="180" y2="476"/>
+    <line x1="186" y1="470" x2="186" y2="476"/>
+    <line x1="192" y1="470" x2="192" y2="476"/>
+    <line x1="198" y1="470" x2="198" y2="476"/>
+    <line x1="204" y1="470" x2="204" y2="476"/>
+    <line x1="210" y1="470" x2="210" y2="476"/>
+    <line x1="216" y1="470" x2="216" y2="476"/>
+    <line x1="222" y1="470" x2="222" y2="476"/>
+    <line x1="228" y1="470" x2="228" y2="476"/>
+    <line x1="234" y1="470" x2="234" y2="476"/>
+    <line x1="240" y1="470" x2="240" y2="476"/>
+  </g>
+
+  <!-- the printed band split: what the card IS, above; how fast it is, below -->
+  <line x1="41" y1="343" x2="267" y2="343" stroke="#3A3A3A" stroke-width="1.2"/>
+
+  <!-- (1) capacity standard: the SD/SDXC lockup, DRAWN -->
+  <circle cx="97" cy="187" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="97" y="193.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">1</text>
+  <line x1="97" y1="200" x2="97" y2="206" stroke="#A1CC3A" stroke-width="1.4"/>
+  <g id="glyph-1-sdxc">
+    <path d="M 78.6,210 L 100.14,210 L 98.6,215 L 75.53,215.38 L 71.68,216.15 L 71.68,218.07 L 87.06,223.07 L 92.45,226.92 L 93.22,230.76 L 92.45,233.84 L 89.37,236.91 L 83.22,239.22 L 52.46,239.22 L 51.69,238.45 L 54,231.53 L 54.77,230.76 L 78.6,230.38 L 70.91,226.15 L 64.76,223.07 L 61.69,220 L 61.69,215.38 L 62.46,215 Z" fill="#E5E5E5"/>
+    <path d="M 106.29,210 L 120.13,210.23 L 113.98,215.77 L 107.83,215.77 L 104.75,213.84 Z" fill="#E5E5E5"/>
+    <path d="M 127.82,212.15 L 132.05,212.46 L 118.98,218.07 L 117.06,217.84 Z" fill="#E5E5E5"/>
+    <path d="M 133.2,215.38 L 138.59,215.38 L 140.89,216.92 L 142.43,218.46 L 143.97,221.53 L 143.97,225.38 L 142.43,226.92 L 140.12,229.22 L 137.05,231.53 L 133.97,233.07 L 128.59,235.38 L 123.21,236.91 L 114.75,238.45 L 107.83,239.22 L 96.29,239.22 L 97.06,236.15 L 98.6,233.07 L 99.37,229.22 L 101.67,227.69 L 107.83,226.92 L 113.98,225.38 L 117.06,223.84 L 119.36,221.53 L 121.67,218.46 L 127.82,216.92 Z" fill="#E5E5E5"/>
+    <path d="M 62.46,246.14 L 73.99,246.14 L 93.22,266.91 L 81.68,266.91 Z" fill="#E5E5E5"/>
+    <path d="M 90.14,246.14 L 101.67,246.14 L 54,270.75 L 44,270.75 Z" fill="#E5E5E5"/>
+    <path d="M 113.21,246.14 L 137.05,246.14 L 134.74,250.76 L 111.67,251.53 L 106.29,256.14 L 105.52,259.99 L 109.37,263.06 L 128.59,263.06 L 127.05,266.91 L 103.98,266.91 L 95.52,263.06 L 94.75,257.68 L 97.06,253.06 L 99.37,251.53 Z" fill="#E5E5E5"/>
+  </g>
+
+  <!-- (3) bus interface -->
+  <circle cx="212" cy="187" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="212" y="193.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">3</text>
+  <line x1="212" y1="200" x2="212" y2="213" stroke="#A1CC3A" stroke-width="1.4"/>
+  <g id="glyph-3-ii">
+    <rect x="195.91" y="222.7" width="32.18" height="4.29" fill="#E5E5E5"/>
+    <rect x="195.91" y="253.81" width="32.18" height="4.29" fill="#E5E5E5"/>
+    <path d="M 198.7,226.99 L 200.2,229.14 L 200.2,251.66 L 198.7,253.81 L 209.21,253.81 L 207.71,251.66 L 207.71,229.14 L 209.21,226.99 Z" fill="#E5E5E5"/>
+    <path d="M 214.79,226.99 L 216.29,229.14 L 216.29,251.66 L 214.79,253.81 L 225.3,253.81 L 223.8,251.66 L 223.8,229.14 L 225.3,226.99 Z" fill="#E5E5E5"/>
+  </g>
+
+  <!-- (2) printed capacity -->
+  <circle cx="154" cy="269" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="154" y="275.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">2</text>
+  <line x1="154" y1="282" x2="154" y2="290" stroke="#A1CC3A" stroke-width="1.4"/>
+  <text x="154" y="330" text-anchor="middle" font-size="44" font-weight="700" fill="#E5E5E5">128GB</text>
+
+  <!-- (4) Speed Class: the C mark with its number inside -->
+  <circle cx="64" cy="360" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="64" y="366.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">4</text>
+  <line x1="64" y1="373" x2="64" y2="379" stroke="#A1CC3A" stroke-width="1.4"/>
+  <g id="glyph-4-speed-class-c">
+    <path d="M 81.54,408.39 A 18.67,18.67 0 1 1 81.54,395.61" stroke="#E5E5E5" stroke-width="4.66" stroke-linecap="butt" fill="none"/>
+  </g>
+  <text x="64" y="409.5" text-anchor="middle" font-size="21" font-weight="700" fill="#E5E5E5">10</text>
+
+  <!-- (5) UHS Speed Class: the U mark with its number inside -->
+  <circle cx="120" cy="360" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="120" y="366.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">5</text>
+  <line x1="120" y1="373" x2="120" y2="380" stroke="#A1CC3A" stroke-width="1.4"/>
+  <g id="glyph-5-uhs-class-u">
+    <path d="M 100.68,383.75 V 407.01 A 10.56,10.56 0 0 0 111.24,417.57 H 128.76 A 10.56,10.56 0 0 0 139.32,407.01 V 383.75" stroke="#E5E5E5" stroke-width="5.37" stroke-linecap="butt" stroke-linejoin="miter" fill="none"/>
+  </g>
+  <text x="120" y="409.5" text-anchor="middle" font-size="32" font-weight="700" fill="#E5E5E5">3</text>
+
+  <!-- (6) Video Speed Class -->
+  <circle cx="186" cy="360" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="186" y="366.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">6</text>
+  <line x1="186" y1="373" x2="186" y2="379" stroke="#A1CC3A" stroke-width="1.4"/>
+  <g id="glyph-6-video-class-v">
+    <path d="M 152,387 L 162,387 L 157.38,390.85 L 156.62,395.46 L 158.92,400.85 L 162,406.23 L 162.77,405.46 L 164.31,402.38 L 166.62,394.69 L 168.92,387 L 182,387 L 177.38,390.85 L 173.54,394.69 L 172,400.08 L 169.69,406.23 L 168.15,410.08 L 165.85,416.23 L 161.23,416.23 L 158.92,410.08 L 157.38,406.23 L 155.85,402.38 L 153.54,394.69 L 152,390.85 Z" fill="#E5E5E5"/>
+  </g>
+  <text x="179.04" y="417" font-size="35" font-weight="700" fill="#E5E5E5">30</text>
+
+  <!-- (7) Application Performance Class -->
+  <circle cx="250" cy="360" r="13" stroke="#A1CC3A" stroke-width="1.8" fill="none"/>
+  <text x="250" y="366.4" text-anchor="middle" font-family="DM Mono" font-size="18" font-weight="500" fill="#A1CC3A">7</text>
+  <line x1="250" y1="373" x2="250" y2="388" stroke="#A1CC3A" stroke-width="1.4"/>
+  <!-- SET AT 35, NOT 24, AND SHARING MARK 6's BASELINE. At 24 it rendered
+       visibly smaller than every drawn mark beside it, so the row read as
+       "three big marks and a little one" - a visual demotion of the one mark
+       this revision exists to stop demoting. HIGH-1 was a claim made in words
+       and a claim made by a wash; type size is a third way to make it. It now
+       sits on mark 6's baseline (y=417) so the four class marks read as peers.
+
+       32 AND x=250, NOT 35 AND x=248, AND THE DIFFERENCE WAS MEASURED OFF THE
+       RENDER RATHER THAN JUDGED. At 35 centred on 248 the ink guard passed -
+       nothing overlapped - but a column profile of the class-mark row put the
+       gap between mark 6's "30" and mark 7's "A" at 6.5 px, against 15.0 px
+       (mark 4 to 5) and 10.5 px (5 to 6), while the letter gaps INSIDE the
+       marks measure 2.5 px (A to 2) and 3.5 px (3 to 0). A between-mark gap
+       only twice the within-mark gap groups wrong: the row reads "30A2". The
+       whole callout - ring, key, leader and mark - moved to x=250 and the type
+       dropped to 32, which puts the gap at 11.0 px, inside the range the other
+       three gaps set, and leaves 4.9 px to the label well's inner edge at
+       274.3. Non-overlap is what a gate can check; correct grouping is what
+       has to be looked at. -->
+  <text x="250" y="417" text-anchor="middle" font-size="32" font-weight="700" fill="#E5E5E5">A2</text>
+
+  <!-- the headline figure, printed on the face and regulated by nothing. The
+       leader that used to run from here to a "not a class" panel is gone with
+       the panel; the screen carries that caution as a real
+       ReferenceCallout(kMarketingReadCaution) directly beneath _MarksCard. -->
+  <text x="154" y="448" text-anchor="middle" font-size="22" font-weight="600" fill="#9C9C9C">170MB/s</text>
+
+  <text x="16" y="516" fill="#9C9C9C" font-size="18">Drawn to 24 x 32 mm proportions.</text>
+</svg>
