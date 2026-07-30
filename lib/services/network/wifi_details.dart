@@ -297,6 +297,30 @@ class WiFiDetails {
       return int.tryParse(m.group(0)!);
     }
 
+    // RSSI and the noise floor are ALWAYS negative dBm on a real link. A positive
+    // value is a magnitude with the sign dropped somewhere upstream, so negate it.
+    //
+    // WHY THIS EXISTS (2026-07-30, reported by a user): the iOS Shortcut payload was
+    // arriving unsigned. `snr` is computed as `rssi - noise`, so 55 - 95 gave an SNR
+    // of -40 dB, which WifiGrading.gradeSnr scores as POOR. A user on an excellent
+    // link (-55 dBm against a -95 dBm floor, a true 40 dB SNR) was being told their
+    // Wi-Fi was bad. **A false RF verdict is the one thing this app must never
+    // produce.** Windows was unaffected because windows_wifi_ffi reads a genuinely
+    // negative lRssi from the OS.
+    //
+    // Zero is left alone: it is not positive, and inventing a sign for it would be
+    // the same class of guess this fix exists to remove.
+    int? pickDbm(List<String> keys) {
+      final int? v = pickInt(keys);
+      if (v == null || v <= 0) return v;
+      debugPrint(
+        'WiFiDetails: ${keys.first} arrived as +$v dBm, which is not physically '
+        'possible for a received signal. Normalising to ${-v}. If this fires on a '
+        'NEW platform, check that payload before trusting it.',
+      );
+      return -v;
+    }
+
     // Tolerant boolean parse for the reachability verdict. Accepts the JSON
     // literals true/false, the numeric 1/0, and the string forms
     // true/false/yes/no/1/0 (case-insensitive). Returns null for anything else
@@ -329,8 +353,8 @@ class WiFiDetails {
       ssid: pickString(<String>['SSID']),
       bssid: pickString(<String>['BSSID']),
       channel: pickInt(<String>['Channel', 'Channel Number', 'channelNumber']),
-      rssi: pickInt(<String>['RSSI']),
-      noise: pickInt(<String>['Noise']),
+      rssi: pickDbm(<String>['RSSI']),
+      noise: pickDbm(<String>['Noise']),
       standard: pickString(<String>['Standard', 'Wi-Fi Standard', 'wifiStandard']),
       rxRate: pickInt(<String>['RX Rate', 'rxRate', 'RX']),
       txRate: pickInt(<String>['TX Rate', 'txRate', 'TX']),
