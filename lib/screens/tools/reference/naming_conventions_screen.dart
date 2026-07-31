@@ -52,6 +52,8 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../data/graphic_pdfs.dart';
+import '../../../widgets/graphic_pdf_download.dart';
 
 /// One rule row used by the hostname, MAC-format, and OUI/CID tables: a short
 /// name, the specification in prose, and the defining source. Sourced verbatim
@@ -503,6 +505,16 @@ class NamingConventionsScreen extends StatelessWidget {
             assetName: MacBitFieldDiagram.macBitField,
             isDesktop: isDesktop,
           ),
+          // Download control for the bit-field diagram. Gated on BOTH the SVG
+          // being bundled (the band above renders nothing without it) and a PDF
+          // twin existing, so the button can never appear next to a missing
+          // graphic or point at a missing file.
+          if (MacBitFieldDiagram.has(MacBitFieldDiagram.macBitField) &&
+              GraphicPdfs.has(MacBitFieldDiagram.macBitField))
+            GraphicPdfDownload(
+              assetName: MacBitFieldDiagram.macBitField,
+              onShare: shareGraphicPdf,
+            ),
           if (MacBitFieldDiagram.has(MacBitFieldDiagram.macBitField))
             const SizedBox(height: AppSpacing.sm),
           HorizontalScrollTable(

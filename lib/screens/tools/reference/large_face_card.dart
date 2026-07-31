@@ -53,6 +53,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../concept_graphic_band.dart';
 import '../zoomable_graphic.dart';
+import '../../../data/graphic_pdfs.dart';
+import '../../../widgets/graphic_pdf_download.dart';
 
 /// One label/value spec pair shown beside (or beneath) a large face graphic.
 /// The [accent] flag tints the value lime to draw the eye to a load-bearing
@@ -247,10 +249,27 @@ class LargeGraphic extends StatelessWidget {
                 border: Border.all(color: colors.border, width: 1),
               ),
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: SizedBox(
-                height: graphicHeight,
-                width: double.infinity,
-                child: Center(child: svg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(
+                    height: graphicHeight,
+                    width: double.infinity,
+                    child: Center(child: svg),
+                  ),
+                  // The download affordance renders ONLY when a PDF is actually
+                  // bundled for this graphic. Keith picked four of 125 on
+                  // 2026-07-30, so the common case is no control at all — and a
+                  // control that appears and then fails is worse than one that
+                  // never appears.
+                  if (GraphicPdfs.has(assetName)) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    GraphicPdfDownload(
+                      assetName: assetName,
+                      onShare: shareGraphicPdf,
+                    ),
+                  ],
+                ],
               ),
             );
           },

@@ -536,6 +536,13 @@ flutter:
     # the folder, so dropping a new <id>.svg in needs no pubspec change.
     - assets/tool-icons/
     - assets/tool-graphics/
+    # Downloadable PDF twins of selected tool graphics. NOT one per SVG: Keith
+    # reviewed all 125 on 2026-07-30 and picked four, on the grounds that "some
+    # probably are not valuable enough for the PDF level of extra care." Generated
+    # by Team Knowledge/scripts/svg-to-pdf.py, one page each, sized to the
+    # artwork's own viewBox. Bundled rather than fetched so a field tool still
+    # hands somebody a chart with no signal.
+    - assets/tool-graphics-pdf/
     # Tier-1 reference RASTER images (2026-06-12, Pass 2b) — staged 2x PNGs whose
     # VISUAL is the content (the world time-zone map, the semaphore + maritime
     # signal-flag plate, the Diffie-Hellman paint-mixing diagram). Embedded via
