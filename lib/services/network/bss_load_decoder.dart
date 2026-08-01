@@ -113,16 +113,39 @@
 //                    idle AP with no associated stations and a quiet channel is
 //                    a REAL measurement and must read as one.
 //
-// Case 2 splits further, and the split matters more than it looks: a CLIPPED
-// element 11 must not report as case 1. The shared TLV walker in
-// `ie_parser.dart` drops a truncated tail without signalling — correctly, that
-// is what makes it total and never-throwing — so a decoder that only sees the
-// walker's output cannot tell "the AP sent no element 11" from "our capture was
-// cut through the middle of element 11". [decodeBssLoad] therefore re-examines
-// the raw bytes the walker stopped at, purely to tell those two apart, and
-// reports [BssLoadUnavailableReason.truncated] with both the declared and the
-// available value length. It does NOT re-implement the walk and it does NOT
-// decode a clipped element — that would be padding with zeros by another name.
+// Case 1 splits, and this is the split that keeps being got wrong: A CLIPPED
+// CAPTURE IS NOT AN ABSENCE. The shared TLV walker in `ie_parser.dart` drops a
+// truncated tail without signalling — correctly, that is what makes it total and
+// never-throwing — so a decoder that only sees the walker's output cannot tell
+// "the AP sent no element 11" from "our capture was cut before we could tell".
+// The second reported as the first is the app blaming the Wi-Fi for a defect in
+// our own byte handling ([[feedback_app_blames_the_wifi]]).
+//
+// [decodeBssLoad] therefore asks `ie_parser.dart` where the walk stopped
+// ([informationElementWalkTail]) and reports one of THREE different things:
+//
+//   * the clipped element at the tail IS element 11 →
+//     [BssLoadUnavailableReason.truncated] with the declared AND the available
+//     value length (or [BssLoadUnavailableReason.malformedLength] when the
+//     declared length is one element 11 cannot have);
+//   * the walk stopped short somewhere ELSE, so element 11 may have been in the
+//     part that was cut → [BssLoadUnavailableReason.clippedBeforeElement11].
+//     THIS IS THE COMMON CASE IN PRACTICE: element 11 sits well down a beacon,
+//     so a clip is likelier to land before it than on it;
+//   * the walk consumed every octet and none of them was element 11 →
+//     [BssLoadUnavailableReason.absent], the only reading that says anything
+//     about the AP.
+//
+// Nothing re-implements the walk and nothing decodes a clipped element — that
+// would be padding with zeros by another name.
+//
+// WHAT THIS DECODER STILL CANNOT SEE, stated rather than papered over: a capture
+// clipped exactly on an element boundary is byte-for-byte identical to a
+// complete blob. There is no evidence in the bytes, so such a blob reads as
+// `absent`. Only the layer that capped the buffer knows, and a platform layer
+// that truncates an IE blob owes the decoder that fact rather than letting it
+// guess. [decodeBssLoadFromElements] takes it as a required argument for exactly
+// this reason.
 //
 // A field we could not read is not a field that is zero. [decodeBssLoad] returns
 // a sealed [BssLoadReading] so a caller cannot accidentally treat case 1 or 2 as
@@ -182,26 +205,52 @@ const int kAdmissionCapacityFullScale = 31250;
 /// Why a BSS Load reading is not available. Machine-branchable, so a readout can
 /// say the true thing rather than falling back to a zero.
 enum BssLoadUnavailableReason {
-  /// No element ID 11 could be identified in the blob: the AP does not
-  /// advertise BSS Load (it is optional), or the platform handed us no
-  /// information elements (iOS), or the blob was empty or ended before an
-  /// element-11 header was reached.
+  /// The blob was walked to its END and held no element ID 11: this AP does not
+  /// advertise BSS Load (it is optional and many do not), or the platform handed
+  /// us no information elements at all (iOS).
   ///
-  /// A blob whose element-11 header IS present but whose declared length
-  /// overruns the buffer is [truncated], NOT this — see that member for why the
-  /// distinction is load-bearing.
+  /// THIS IS A STATEMENT ABOUT THE AP, AND IT IS ONLY EARNED WHEN EVERY OCTET
+  /// WAS ACCOUNTED FOR. If the walk stopped short — a declared length overrunning
+  /// the buffer, or a lone dangling header octet — then element 11 may simply
+  /// have been in the part that was cut off, and the honest answer is
+  /// [clippedBeforeElement11] or [truncated], never this one. `absent` is
+  /// reported only when [InformationElementWalkTail.isComplete] is true.
   ///
-  /// EDGE, deliberate: a blob whose final byte is `0x0B` with no length octet
-  /// after it reports `absent`. A TLV header is two octets, so one trailing byte
-  /// is not an element-11 header — it is indistinguishable from stray tail
-  /// garbage, and calling it a truncated element 11 would assert an element we
-  /// cannot actually see.
+  /// KNOWN LIMIT, and it lives outside this decoder. A capture clipped exactly
+  /// on an element boundary is byte-for-byte identical to a complete blob, so
+  /// nothing in the bytes can distinguish them and this decoder will report
+  /// `absent`. Only the layer that capped the buffer knows, and a platform layer
+  /// that truncates an IE blob must say so rather than let a decoder guess.
   absent,
 
-  /// An element ID 11 header was present — both its ID and length octets — but
-  /// its declared value length runs past the end of the buffer, so the value
-  /// octets are not all there. The capture was clipped; the AP's advertisement
-  /// was not.
+  /// The walk stopped BEFORE the end of the blob without ever reaching a
+  /// decidable element 11: some earlier element's declared length overran the
+  /// buffer, or the buffer ended one octet into a header. Element 11 may or may
+  /// not have been advertised — the capture ended before we could tell.
+  ///
+  /// WHY THIS IS NOT [absent], AND WHY THE DIFFERENCE IS THE WHOLE POINT.
+  /// Element 11 sits well down a beacon, after the SSID, the rates and the DS
+  /// parameter set, so a capture clipped at a random offset is FAR likelier to
+  /// be cut before element 11 than exactly on it. Reporting those clips as
+  /// `absent` makes the app say "this AP does not advertise BSS Load" about an
+  /// AP that plainly does, on the strength of our own truncated buffer — the app
+  /// blaming the Wi-Fi for a defect in our byte handling
+  /// ([[feedback_app_blames_the_wifi]]).
+  ///
+  /// WHY IT IS NOT [truncated] EITHER. Nothing here identifies an element 11.
+  /// The clipped element at the stop offset carries some other id, or carries no
+  /// readable length at all. Claiming a truncated element 11 would be the
+  /// mirror-image over-claim: inventing an element the bytes never named.
+  ///
+  /// Both [BssLoadUnavailable.valueLength] and
+  /// [BssLoadUnavailable.availableLength] are null here — no element 11 was seen,
+  /// so there is nothing to count.
+  clippedBeforeElement11,
+
+  /// An element ID 11 header was present — both its ID and length octets — it
+  /// declared a length the element is ALLOWED to have (4 or 5), and that length
+  /// runs past the end of the buffer, so the value octets are not all there. The
+  /// capture was clipped; the AP's advertisement was not.
   ///
   /// THIS IS NOT [absent], AND THE DIFFERENCE IS THE WHOLE POINT. Collapsing a
   /// clipped capture into "no element 11 was present" makes the app say "this AP
@@ -211,6 +260,20 @@ enum BssLoadUnavailableReason {
   /// the DECLARED length and [BssLoadUnavailable.availableLength] the number of
   /// value octets actually present, so a readout can say "element 11 present,
   /// declared 5 octets, 2 available" instead of a false absence.
+  ///
+  /// THE DECLARED LENGTH IS VETTED BEFORE THIS IS REPORTED. This member's second
+  /// sentence — "the AP's advertisement was not clipped" — is a positive claim
+  /// about a well-formed element, so it may only be made about a length that
+  /// could belong to a well-formed element. A clipped header declaring 7, or
+  /// 255, or 0 is reported as [malformedLength] instead: `tag_len` outside 4..5
+  /// is not a BSS Load element (`packet-ieee80211.c:32228`), and the header
+  /// alone disqualifies it whether the capture was clipped or not.
+  ///
+  /// A declared length of 4 stays here rather than becoming
+  /// [ciscoQbssVersion1]: 4 is a legal length, but the vendor variant's four
+  /// value octets never arrived, so naming it would assert an element we did not
+  /// see. [BssLoadUnavailable.valueLength] is 4 and a readout that cares can say
+  /// "declared as the Cisco 4-octet variant, clipped".
   ///
   /// Only [decodeBssLoad], which sees the raw bytes, can report this.
   /// [decodeBssLoadFromElements] cannot — see its doc.
@@ -223,12 +286,17 @@ enum BssLoadUnavailableReason {
   /// plausible wrong number. See the file header.
   ciscoQbssVersion1,
 
-  /// An element ID 11 was present with a value length that is neither 4 nor 5.
+  /// An element ID 11 header declared a value length that is neither 4 nor 5.
   /// Too short to hold the fields, or longer than the element is defined to be.
   /// Wireshark treats both as a length error and decodes nothing
   /// (`packet-ieee80211.c:32228`); so does this decoder — no reading past the
   /// end, no padding with zeros, no decoding a prefix of an element we do not
   /// recognize.
+  ///
+  /// Reported for a COMPLETE element with a bad length and for a CLIPPED header
+  /// with a bad length alike, because the length octet alone settles it. The two
+  /// are told apart by [BssLoadUnavailable.availableLength]: null when every
+  /// declared octet arrived, and a count when the buffer ended early.
   malformedLength,
 }
 
@@ -359,20 +427,35 @@ class BssLoadUnavailable extends BssLoadReading {
   final BssLoadUnavailableReason reason;
 
   /// The value length the element ID 11 DECLARED in its length octet, when an
-  /// element was present. Null for [BssLoadUnavailableReason.absent] — there was
-  /// no element to measure. Carried so a pro readout can say "element 11
-  /// present, length 7" instead of a bare shrug.
+  /// element 11 was seen. Carried so a pro readout can say "element 11 present,
+  /// length 7" instead of a bare shrug.
   ///
-  /// For [BssLoadUnavailableReason.truncated] this is what the element CLAIMED,
-  /// not what arrived; [availableLength] is what arrived.
+  /// NULL MEANS NO ELEMENT 11 WAS SEEN, NOT "LENGTH ZERO" — that is
+  /// [BssLoadUnavailableReason.absent] and
+  /// [BssLoadUnavailableReason.clippedBeforeElement11]. A zero-length element 11
+  /// really was seen and carries `valueLength: 0`.
+  ///
+  /// For [BssLoadUnavailableReason.truncated], and for a clipped header reported
+  /// as [BssLoadUnavailableReason.malformedLength], this is what the element
+  /// CLAIMED, not what arrived; [availableLength] is what arrived.
   final int? valueLength;
 
   /// The number of value octets actually present in the buffer, when that is
-  /// FEWER than [valueLength]. Set only for [BssLoadUnavailableReason.truncated].
+  /// FEWER than [valueLength] — i.e. the buffer ended part-way through the
+  /// element. Set for [BssLoadUnavailableReason.truncated] and for a CLIPPED
+  /// header reported as [BssLoadUnavailableReason.malformedLength].
   ///
-  /// Null everywhere else, and null means "the element was complete", i.e. all
-  /// [valueLength] octets were there — it does not mean "unknown". A readout
-  /// wanting the count in every case reads `availableLength ?? valueLength`.
+  /// Null in two different situations, and a readout must not print it either
+  /// way without checking [reason]:
+  ///   * an element 11 was seen and was COMPLETE — all [valueLength] octets
+  ///     arrived ([malformedLength] on a whole element, or
+  ///     [ciscoQbssVersion1]);
+  ///   * no element 11 was seen at all, so there is nothing to count
+  ///     ([absent], [clippedBeforeElement11]) — [valueLength] is null there too.
+  ///
+  /// It never means "unknown". `availableLength ?? valueLength` is the octet
+  /// count of an element that WAS seen and yields null when none was — check
+  /// [reason] first.
   final int? availableLength;
 
   @override
@@ -410,21 +493,38 @@ class BssLoadUnavailable extends BssLoadReading {
 /// Precedence, in order:
 ///   1. a decoded element 11 anywhere in the walked region wins outright;
 ///   2. otherwise the FIRST complete element 11 that failed to decode is
-///      reported — it precedes any truncated tail by construction, so this
+///      reported — it precedes any clipped tail by construction, so this
 ///      preserves the "first element 11 seen" contract of
 ///      [decodeBssLoadFromElements];
-///   3. otherwise a truncated element 11 at the tail;
-///   4. otherwise [BssLoadUnavailableReason.absent].
+///   3. otherwise a clipped element 11 at the tail, as
+///      [BssLoadUnavailableReason.truncated] when its declared length is one
+///      element 11 may have and [BssLoadUnavailableReason.malformedLength] when
+///      it is not;
+///   4. otherwise, if the walk did not reach the end of the blob,
+///      [BssLoadUnavailableReason.clippedBeforeElement11] — something was cut,
+///      and element 11 may have been in it;
+///   5. otherwise [BssLoadUnavailableReason.absent], which is now the ONLY
+///      reading that claims anything about the AP.
+///
+/// The blob is walked twice — once for the elements, once for the tail. Both
+/// walks are lazy, total and pure over a buffer of at most a few hundred octets,
+/// and the alternative is re-deriving the stop offset here, in a module that
+/// does not own the loop.
 BssLoadReading decodeBssLoad(List<int> ieBytes) {
-  final List<InformationElement> elements =
-      walkInformationElements(ieBytes).toList(growable: false);
-  final BssLoadReading reading = decodeBssLoadFromElements(elements);
+  final InformationElementWalkTail tail = informationElementWalkTail(ieBytes);
+  final BssLoadReading reading = decodeBssLoadFromElements(
+    walkInformationElements(ieBytes),
+    blobWalkedToEnd: tail.isComplete,
+  );
   if (reading is BssLoadDecoded) return reading;
-  if (reading is BssLoadUnavailable &&
-      reading.reason != BssLoadUnavailableReason.absent) {
-    return reading;
-  }
-  return _truncatedElement11AtTail(ieBytes, elements) ?? reading;
+
+  final BssLoadUnavailable unavailable = reading as BssLoadUnavailable;
+  final bool sawAnElement11 =
+      unavailable.reason != BssLoadUnavailableReason.absent &&
+          unavailable.reason != BssLoadUnavailableReason.clippedBeforeElement11;
+  if (sawAnElement11) return unavailable;
+
+  return _clippedElement11AtTail(tail) ?? unavailable;
 }
 
 /// Decoder variant taking pre-parsed [elements] (from [walkInformationElements]
@@ -438,13 +538,25 @@ BssLoadReading decodeBssLoad(List<int> ieBytes) {
 ///
 /// KNOWN LIMIT, and the reason [decodeBssLoad] exists as more than a wrapper:
 /// this variant CANNOT report [BssLoadUnavailableReason.truncated]. Pre-parsed
-/// elements are all the elements that survived a bounds check, so a clipped
-/// element 11 was already dropped before this function saw anything, and the
-/// honest answer available here is `absent`. Callers holding the raw bytes must
-/// prefer [decodeBssLoad], which can tell those two apart.
+/// elements are all the elements that SURVIVED a bounds check, so a clipped
+/// element 11 was already dropped before this function saw anything. Callers
+/// holding the raw bytes must prefer [decodeBssLoad], which can tell a clipped
+/// element 11 from every other kind of clip.
+///
+/// [blobWalkedToEnd] IS REQUIRED BECAUSE THE ANSWER IS NOT DERIVABLE HERE, and a
+/// rule that lives only in a doc comment is a trap set for the first caller who
+/// does not read it. Pass true only when every octet of the source blob was
+/// accounted for by a well-formed element — [InformationElementWalkTail.isComplete]
+/// answers it for a raw blob, and a platform channel that TLV-split the bytes
+/// itself knows whether it consumed them all. When it is false and no element 11
+/// is among [elements], the reading is
+/// [BssLoadUnavailableReason.clippedBeforeElement11] rather than a false
+/// `absent`: element 11 may have been in the part that was cut. A caller that
+/// genuinely does not know must pass false, which over-claims nothing.
 BssLoadReading decodeBssLoadFromElements(
-  Iterable<InformationElement> elements,
-) {
+  Iterable<InformationElement> elements, {
+  required bool blobWalkedToEnd,
+}) {
   BssLoadUnavailable? firstFailure;
   for (final InformationElement ie in elements) {
     if (ie.id != kEidBssLoad) continue;
@@ -452,8 +564,12 @@ BssLoadReading decodeBssLoadFromElements(
     if (reading is BssLoadDecoded) return reading;
     firstFailure ??= reading as BssLoadUnavailable;
   }
-  return firstFailure ??
-      const BssLoadUnavailable(BssLoadUnavailableReason.absent);
+  if (firstFailure != null) return firstFailure;
+  return blobWalkedToEnd
+      ? const BssLoadUnavailable(BssLoadUnavailableReason.absent)
+      : const BssLoadUnavailable(
+          BssLoadUnavailableReason.clippedBeforeElement11,
+        );
 }
 
 /// Decodes the VALUE octets of a single element ID 11 (the `[id][len]` header
@@ -497,49 +613,44 @@ BssLoad? decodeBssLoadOrNull(List<int> ieBytes) =>
 
 // ── Internals ────────────────────────────────────────────────────────────────
 
-/// Octets in a non-extended IE header: `[id][len]`.
-const int _kIeHeaderLength = 2;
-
-/// Returns a [BssLoadUnavailableReason.truncated] reading when the bytes the TLV
-/// walker refused to consume begin with an element-11 header whose declared
-/// length overruns [ieBytes]; null otherwise.
+/// Turns the clipped element the walk stopped at into a BSS Load diagnosis, or
+/// null when there is nothing at the tail that names element 11.
 ///
-/// HOW THE TAIL IS LOCATED, and why this is not a second parser. Every element
-/// the walker yielded consumed exactly `2 + bytes.length` contiguous octets
-/// starting at 0, so summing that over [walked] gives the offset where the walk
-/// stopped. That offset is derived FROM the walker's own output, so this cannot
-/// drift out of agreement with `ie_parser.dart` the way a re-implemented walk
-/// could — and `ie_parser.dart` is untouched, its never-throws property intact.
+/// WHERE THE ARITHMETIC LIVES, AND WHY NOT HERE. Locating the stop offset is a
+/// fact about the walk, so it belongs beside the walk:
+/// [informationElementWalkTail] derives it from `walkInformationElements`' own
+/// output, in the module that owns the loop, and is pinned by
+/// `ie_parser_test.dart`. What is left in this file is the part that is about
+/// BSS Load rather than about TLVs — which element id we care about, and which
+/// declared lengths element 11 is allowed to have.
 ///
-/// WHY THE RESIDUE IS UNAMBIGUOUS. `walkInformationElements` loops while
-/// `i + 2 <= n` and breaks only when a declared length overruns. So after it
-/// returns, the unconsumed residue is exactly one of:
-///   * 0 or 1 octets — the loop ran out normally; there is no header to read;
-///   * ≥ 2 octets — the loop `break`ed, and the octets at the stop offset ARE an
-///     element header whose declared length overruns the buffer.
-/// Residue ≥ 2 therefore means "a truncated element starts here", with no
-/// guessing. This is why the check does not scan the blob for a stray `0x0B`:
-/// an `11` byte inside an SSID or a rates element is a value octet, not an
-/// element, and searching for it would invent elements that are not there.
+/// THE DECLARED LENGTH IS VETTED BEFORE `truncated` IS CLAIMED. A `tag_len`
+/// outside 4..5 is not a BSS Load element (`packet-ieee80211.c:32228`), and a
+/// clipped header does not get a weaker rule than a complete one: reporting
+/// `[11, 255]` as `truncated` would assert a well-formed 255-octet element 11
+/// that the reference decoder says cannot exist. The header alone disqualifies
+/// it, so it is [BssLoadUnavailableReason.malformedLength] with the declared
+/// length it claimed and the count that actually arrived.
 ///
 /// NOTHING IS DECODED FROM THE CLIPPED ELEMENT. Its value octets are counted,
 /// never read as fields — a partial element padded out to five octets is the
 /// zero-fill guess this whole file exists to refuse.
-BssLoadUnavailable? _truncatedElement11AtTail(
-  List<int> ieBytes,
-  List<InformationElement> walked,
-) {
-  int consumed = 0;
-  for (final InformationElement ie in walked) {
-    consumed += _kIeHeaderLength + ie.bytes.length;
-  }
-  final int residue = ieBytes.length - consumed;
-  if (residue < _kIeHeaderLength) return null;
-  if ((ieBytes[consumed] & 0xff) != kEidBssLoad) return null;
+BssLoadUnavailable? _clippedElement11AtTail(InformationElementWalkTail tail) {
+  final TruncatedInformationElement? clipped = tail.truncatedElement;
+  if (clipped == null) return null;
+  if (clipped.id != kEidBssLoad) return null;
+
+  final int declared = clipped.declaredLength;
+  final bool declaredLengthIsOneElement11MayHave =
+      declared == kBssLoadStandardValueLength ||
+          declared == kBssLoadCiscoV1ValueLength;
+
   return BssLoadUnavailable(
-    BssLoadUnavailableReason.truncated,
-    valueLength: ieBytes[consumed + 1] & 0xff,
-    availableLength: residue - _kIeHeaderLength,
+    declaredLengthIsOneElement11MayHave
+        ? BssLoadUnavailableReason.truncated
+        : BssLoadUnavailableReason.malformedLength,
+    valueLength: declared,
+    availableLength: clipped.availableLength,
   );
 }
 

@@ -381,18 +381,18 @@ void main() {
       );
     });
 
-    test('a clipped element that is NOT element 11 stays absent', () {
+    test('a clipped element that is NOT element 11 is not a truncated 11', () {
       // DS Parameter Set declaring 4 octets with 1 present. Something was cut
       // off, but it was not element 11, and claiming otherwise would be the
-      // mirror-image over-claim.
+      // mirror-image over-claim. It is not `absent` either — see the
+      // 'a clip landing BEFORE element 11' group for why.
       final BssLoadReading reading = decodeBssLoad(<int>[
         ..._ssidIe('WLANPros'),
         3, 4, 0x24,
       ]);
-      expect(
-        (reading as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.absent,
-      );
+      final BssLoadUnavailable out = reading as BssLoadUnavailable;
+      expect(out.reason, isNot(BssLoadUnavailableReason.truncated));
+      expect(out.valueLength, isNull, reason: 'no element 11 was seen');
     });
 
     test('a 0x0B byte inside another element does not invent an element 11',
@@ -405,23 +405,12 @@ void main() {
         ..._ie(0, <int>[0x57, 0x0B, 0x69]),
         3, 4, 0x24, // clipped, and not element 11
       ]);
+      final BssLoadUnavailable out = reading as BssLoadUnavailable;
       expect(
-        (reading as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.absent,
+        out.reason,
+        isNot(BssLoadUnavailableReason.truncated),
         reason: '0x0B here is a value octet, not an element ID',
       );
-    });
-
-    test('a lone trailing 0x0B is absent — one octet is not a header', () {
-      // Documented edge: a TLV header is two octets, so a single trailing byte
-      // is indistinguishable from tail garbage. Asserting a truncated element 11
-      // here would claim an element we cannot see.
-      final BssLoadReading reading = decodeBssLoad(<int>[
-        ..._ssidIe('WLANPros'),
-        11,
-      ]);
-      final BssLoadUnavailable out = reading as BssLoadUnavailable;
-      expect(out.reason, BssLoadUnavailableReason.absent);
       expect(out.valueLength, isNull);
       expect(out.availableLength, isNull);
     });
@@ -449,18 +438,6 @@ void main() {
       expect(out.reason, BssLoadUnavailableReason.malformedLength);
       expect(out.valueLength, 3);
       expect(out.availableLength, isNull, reason: 'that element was complete');
-    });
-
-    test('decodeBssLoadFromElements cannot see the clip, and says absent', () {
-      // Honest limit, asserted rather than left to a doc comment: the walker
-      // drops the clipped element before this entry point sees anything.
-      final BssLoadReading reading = decodeBssLoadFromElements(
-        walkInformationElements(<int>[11, 5, 0x01, 0x00]),
-      );
-      expect(
-        (reading as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.absent,
-      );
     });
 
     test('truncated readings differ by declared and by available length', () {
@@ -497,6 +474,409 @@ void main() {
         a,
         isNot(const BssLoadUnavailable(BssLoadUnavailableReason.absent)),
       );
+    });
+
+    test('readings differ by DECLARED length alone, with no available length',
+        () {
+      // The field that is in `==` but that nothing else here separates: two
+      // complete elements failing for the same reason with different declared
+      // lengths are different readings. Without this, dropping `valueLength`
+      // from `==` passes the whole file.
+      const BssLoadUnavailable three = BssLoadUnavailable(
+        BssLoadUnavailableReason.malformedLength,
+        valueLength: 3,
+      );
+      const BssLoadUnavailable seven = BssLoadUnavailable(
+        BssLoadUnavailableReason.malformedLength,
+        valueLength: 7,
+      );
+      expect(
+        three,
+        isNot(seven),
+        reason: 'declared length is part of the value',
+      );
+      expect(three, const BssLoadUnavailable(
+        BssLoadUnavailableReason.malformedLength,
+        valueLength: 3,
+      ));
+      // And through the decoder, not only through the constructor.
+      expect(
+        decodeBssLoad(_ie(11, <int>[1, 2, 3])),
+        isNot(decodeBssLoad(_ie(11, <int>[1, 2, 3, 4, 5, 6, 7]))),
+      );
+    });
+  });
+
+  group('a clip landing BEFORE element 11 is not an absence', () {
+    // HIGH-1 from the 2026-08-01 re-gate. The fix before this one closed the
+    // case where the clipped element IS element 11. Element 11 sits well down a
+    // beacon — after the SSID, the rates and the DS parameter set — so a capture
+    // cut at a random offset is FAR likelier to be cut before element 11 than
+    // exactly on it. Those clips were reporting `absent`, whose first documented
+    // meaning is "this AP does not advertise BSS Load".
+
+    /// The same 26-octet advertisement in real beacon order, from an AP that
+    /// plainly DOES advertise BSS Load: SSID, Supported Rates, DS Parameter Set,
+    /// then element 11 carrying 23 stations, utilization 120, capacity 8000.
+    List<int> advertisement() => <int>[
+          ..._ssidIe('WLANPros'), // 10 octets
+          ..._ie(1, <int>[0x82, 0x84, 0x8B, 0x96]), // 6 octets
+          ..._ie(3, <int>[36]), // 3 octets
+          ..._bssLoadIe(
+            stationCount: 23,
+            channelUtilization: 120,
+            admissionCapacity: 8000,
+          ), // 7 octets
+        ];
+
+    test('the intact advertisement decodes, so the clips below are the variable',
+        () {
+      expect(advertisement(), hasLength(26));
+      final BssLoad load = _decoded(decodeBssLoad(advertisement()));
+      expect(load.stationCount, 23);
+      expect(load.rawChannelUtilization, 120);
+      expect(load.rawAdmissionCapacity, 8000);
+    });
+
+    test('a clip on an element BOUNDARY is the one absence we cannot detect',
+        () {
+      // The honest limit, pinned rather than left in a doc comment. Cut at 16 of
+      // 26 — the SSID (10) plus Supported Rates (6) — and every octet still
+      // belongs to a well-formed element. The buffer is byte-for-byte identical
+      // to a complete blob from an AP that advertises neither a DS Parameter Set
+      // nor BSS Load. No decoder can tell them apart, because the difference is
+      // not in the bytes.
+      //
+      // This reads `absent`, and that is the limit's shape: the platform layer
+      // that capped the buffer is the only thing that knows, and it owes the
+      // decoder that fact. Do not "fix" this by weakening `absent` everywhere —
+      // that would make the reading useless for the APs that genuinely do not
+      // advertise BSS Load, which is most of them.
+      final List<int> onBoundary = advertisement().sublist(0, 16);
+      expect(informationElementWalkTail(onBoundary).isComplete, isTrue);
+      expect(
+        (decodeBssLoad(onBoundary) as BssLoadUnavailable).reason,
+        BssLoadUnavailableReason.absent,
+      );
+    });
+
+    test('ONE advertisement, three clip offsets, and not one says absent', () {
+      // The worked example. Only the first offset was covered by the previous
+      // fix; the other two are the ones a real clip is likelier to produce,
+      // because element 11 is the LAST of the four elements here.
+      for (final int cut in <int>[23, 17, 15]) {
+        final BssLoadUnavailable out =
+            decodeBssLoad(advertisement().sublist(0, cut))
+                as BssLoadUnavailable;
+        expect(
+          out.reason,
+          isNot(BssLoadUnavailableReason.absent),
+          reason: 'clipped to $cut of 26 — the AP advertises BSS Load, and '
+              'absent would say it does not',
+        );
+      }
+    });
+
+    test('a clip inside element 11 still reports truncated with both counts',
+        () {
+      // The case the previous fix closed. It must stay closed.
+      final BssLoadUnavailable out =
+          decodeBssLoad(advertisement().sublist(0, 23)) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.truncated);
+      expect(out.valueLength, 5);
+      expect(out.availableLength, 2);
+    });
+
+    test('a clip inside an EARLIER element reports the clip, not an absence',
+        () {
+      // Cut at 15 of 26: inside the Supported Rates value, so the walk stops
+      // there and element 11 is beyond the cut entirely.
+      final BssLoadUnavailable out =
+          decodeBssLoad(advertisement().sublist(0, 15)) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(out.valueLength, isNull, reason: 'no element 11 was seen');
+      expect(out.availableLength, isNull);
+    });
+
+    test('a clip landing exactly on a header octet reports the clip', () {
+      // Cut at 17 of 26: the DS Parameter Set's id octet arrived and its length
+      // octet did not. One dangling octet declares nothing, but it is still
+      // evidence the buffer was cut.
+      final BssLoadUnavailable out =
+          decodeBssLoad(advertisement().sublist(0, 17)) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(out.valueLength, isNull);
+    });
+
+    test('a lone trailing 0x0B reports the clip, and never a truncated 11', () {
+      // The documented edge, re-derived rather than re-asserted. A TLV header is
+      // two octets, so with one octet left nothing was DECLARED and `truncated`
+      // — which owes a declared length — cannot be populated. But the buffer did
+      // end mid-header, so `absent` is a claim the bytes do not support either.
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[..._ssidIe('WLANPros'), 11])
+              as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(
+        out.reason,
+        isNot(BssLoadUnavailableReason.truncated),
+        reason: 'one octet declared no length; truncated could not be filled in',
+      );
+      expect(out.valueLength, isNull);
+      expect(out.availableLength, isNull);
+    });
+
+    test('a clipped capture and a clean blob are DIFFERENT objects', () {
+      // The part a caller cannot recover from. Two readings that compare equal
+      // cannot be told apart downstream however much the caller wants to.
+      final BssLoadReading clipped = decodeBssLoad(<int>[
+        ..._ssidIe('WLANPros'),
+        3, 4, 0x24, // clipped DS Parameter Set, no element 11 anywhere
+      ]);
+      final BssLoadReading clean = decodeBssLoad(<int>[
+        ..._ssidIe('WLANPros'),
+        ..._ie(3, <int>[36]), // complete, and genuinely no element 11
+      ]);
+
+      expect((clean as BssLoadUnavailable).reason,
+          BssLoadUnavailableReason.absent);
+      expect((clipped as BssLoadUnavailable).reason,
+          BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(clipped, isNot(clean));
+      expect(clipped.hashCode, isNot(clean.hashCode));
+    });
+
+    test('absent is earned only by a blob walked to its END', () {
+      // The narrowed meaning. Every octet accounted for, no element 11 in any of
+      // them: now, and only now, is "this AP does not advertise BSS Load" a
+      // statement about the AP.
+      final List<int> blob = <int>[
+        ..._ssidIe('WLANPros'),
+        ..._ie(3, <int>[36]),
+        ..._ie(48, <int>[0x01, 0x00]),
+      ];
+      expect(informationElementWalkTail(blob).isComplete, isTrue);
+      expect(
+        (decodeBssLoad(blob) as BssLoadUnavailable).reason,
+        BssLoadUnavailableReason.absent,
+      );
+    });
+
+    test('an empty blob is absent, not a clip — nothing was cut', () {
+      expect(
+        (decodeBssLoad(<int>[]) as BssLoadUnavailable).reason,
+        BssLoadUnavailableReason.absent,
+      );
+    });
+
+    test('a decoded element 11 wins even when the blob is clipped after it', () {
+      // Precedence is unchanged: a reading we actually have beats any diagnosis.
+      final BssLoadReading reading = decodeBssLoad(<int>[
+        ..._bssLoadIe(
+          stationCount: 9,
+          channelUtilization: 200,
+          admissionCapacity: 1234,
+        ),
+        3, 9, 0x24, // clipped DS Parameter Set at the tail
+      ]);
+      expect(_decoded(reading).stationCount, 9);
+    });
+
+    test('a complete BAD element 11 outranks a clip elsewhere in the blob', () {
+      // The "first element 11 seen is the diagnosis" contract, against the new
+      // reason: a real element 11 we examined beats "we could not tell".
+      final BssLoadUnavailable out = decodeBssLoad(<int>[
+        ..._ie(11, <int>[0x01, 0x02, 0x03]),
+        3, 9, 0x24, // clipped, not element 11
+      ]) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.malformedLength);
+      expect(out.valueLength, 3);
+    });
+  });
+
+  group('the 4..5 length rule holds on the CLIPPED path too', () {
+    // A clipped header declaring a length element 11 cannot have is disqualified
+    // by its header alone. `truncated` says "the capture was clipped; the AP's
+    // advertisement was not", which for a declared 255 would assert a
+    // well-formed 255-octet element 11 that the cited rule says cannot exist
+    // (packet-ieee80211.c:32228).
+
+    test('a clipped header declaring an impossible length is malformed', () {
+      // One value octet arrives, so any declared length above 1 overruns.
+      for (final int declared in <int>[2, 3, 6, 7, 200, 255]) {
+        final BssLoadUnavailable out =
+            decodeBssLoad(<int>[..._ssidIe('X'), 11, declared, 0x01])
+                as BssLoadUnavailable;
+        expect(
+          out.reason,
+          BssLoadUnavailableReason.malformedLength,
+          reason: 'declared $declared is outside 4..5',
+        );
+        expect(out.valueLength, declared, reason: 'what the header claimed');
+        expect(out.availableLength, 1, reason: 'what arrived');
+      }
+    });
+
+    test('declared 1 with nothing following is a clipped malformed header', () {
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[11, 1]) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.malformedLength);
+      expect(out.valueLength, 1);
+      expect(out.availableLength, 0);
+    });
+
+    test('declared 0 can never be clipped — zero octets always fit', () {
+      // The boundary of the clipped path itself: `[11, 0]` is a COMPLETE
+      // element 11 with an empty value, so it is diagnosed on the ordinary path
+      // and carries no available count.
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[11, 0]) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.malformedLength);
+      expect(out.valueLength, 0);
+      expect(out.availableLength, isNull, reason: 'nothing was cut');
+    });
+
+    test('on the clipped path, availableLength is always BELOW valueLength', () {
+      // The invariant that makes the two fields readable together: a clipped
+      // element by definition did not receive everything it declared.
+      for (final int declared in <int>[2, 4, 5, 9, 255]) {
+        for (final int available in <int>[0, 1]) {
+          if (available >= declared) continue;
+          final BssLoadUnavailable out = decodeBssLoad(<int>[
+            11,
+            declared,
+            ...List<int>.filled(available, 0x01),
+          ]) as BssLoadUnavailable;
+          expect(out.availableLength, available);
+          expect(out.availableLength!, lessThan(out.valueLength!));
+        }
+      }
+    });
+
+    test('a clipped header declaring 4 or 5 is truncated, not malformed', () {
+      for (final int declared in <int>[4, 5]) {
+        final BssLoadUnavailable out =
+            decodeBssLoad(<int>[..._ssidIe('X'), 11, declared, 0x01])
+                as BssLoadUnavailable;
+        expect(
+          out.reason,
+          BssLoadUnavailableReason.truncated,
+          reason: 'declared $declared is a length element 11 may have',
+        );
+        expect(out.valueLength, declared);
+        expect(out.availableLength, 1);
+      }
+    });
+
+    test('a clipped 4-octet header keeps its declared length for the caller', () {
+      // It is NOT reported as ciscoQbssVersion1: those four value octets never
+      // arrived, so naming the vendor variant would assert an element we did not
+      // see. The declared 4 is preserved so a readout can still say it.
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[11, 4, 0x17]) as BssLoadUnavailable;
+      expect(out.reason, isNot(BssLoadUnavailableReason.ciscoQbssVersion1));
+      expect(out.reason, BssLoadUnavailableReason.truncated);
+      expect(out.valueLength, kBssLoadCiscoV1ValueLength);
+    });
+
+    test('the same declared length reads differently complete versus clipped',
+        () {
+      // Both are malformedLength with valueLength 7; availableLength is what
+      // separates "the AP advertised a 7-octet element 11" from "a header
+      // claiming 7 octets was cut short".
+      final BssLoadUnavailable complete = decodeBssLoad(
+        _ie(11, <int>[1, 2, 3, 4, 5, 6, 7]),
+      ) as BssLoadUnavailable;
+      final BssLoadUnavailable clipped =
+          decodeBssLoad(<int>[11, 7, 1, 2, 3]) as BssLoadUnavailable;
+
+      expect(complete.reason, BssLoadUnavailableReason.malformedLength);
+      expect(clipped.reason, BssLoadUnavailableReason.malformedLength);
+      expect(complete.valueLength, 7);
+      expect(clipped.valueLength, 7);
+      expect(complete.availableLength, isNull, reason: 'all 7 octets arrived');
+      expect(clipped.availableLength, 3, reason: 'only 3 arrived');
+      expect(complete, isNot(clipped));
+    });
+
+    test('an element 11 header with NO value octets keeps its declared length',
+        () {
+      // Declared 5, nothing after: truncated with availableLength 0. Zero octets
+      // arrived, which is not the same as no element.
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[11, 5]) as BssLoadUnavailable;
+      expect(out.reason, BssLoadUnavailableReason.truncated);
+      expect(out.valueLength, 5);
+      expect(out.availableLength, 0);
+
+      // Declared 255, nothing after: malformed, and it still reports 0 arrived.
+      final BssLoadUnavailable bad =
+          decodeBssLoad(<int>[11, 255]) as BssLoadUnavailable;
+      expect(bad.reason, BssLoadUnavailableReason.malformedLength);
+      expect(bad.valueLength, 255);
+      expect(bad.availableLength, 0);
+    });
+  });
+
+  group('decodeBssLoadFromElements must be TOLD whether the blob was whole', () {
+    // The "callers holding the raw bytes must prefer decodeBssLoad" rule used to
+    // be a doc comment with no mechanism, and this entry point structurally
+    // cannot see a clip: the walker drops the clipped element before it sees
+    // anything. The question is now a required argument, so the first caller
+    // cannot inherit a false `absent` by omission — the compiler asks.
+
+    test('told the blob was whole, no element 11 is absent', () {
+      final BssLoadReading reading = decodeBssLoadFromElements(
+        walkInformationElements(<int>[..._ssidIe('WLANPros')]),
+        blobWalkedToEnd: true,
+      );
+      expect((reading as BssLoadUnavailable).reason,
+          BssLoadUnavailableReason.absent);
+    });
+
+    test('told the blob was cut, no element 11 is a clip, never an absence', () {
+      final BssLoadReading reading = decodeBssLoadFromElements(
+        walkInformationElements(<int>[11, 5, 0x01, 0x00]),
+        blobWalkedToEnd: false,
+      );
+      expect((reading as BssLoadUnavailable).reason,
+          BssLoadUnavailableReason.clippedBeforeElement11);
+    });
+
+    test('it still cannot report truncated, and does not pretend to', () {
+      // The honest limit, unchanged: pre-parsed elements are the elements that
+      // SURVIVED a bounds check, so the clipped one is already gone. The best
+      // this entry point can say is "something was cut".
+      final BssLoadReading reading = decodeBssLoadFromElements(
+        walkInformationElements(<int>[11, 5, 0x01, 0x00]),
+        blobWalkedToEnd: false,
+      );
+      final BssLoadUnavailable out = reading as BssLoadUnavailable;
+      expect(out.reason, isNot(BssLoadUnavailableReason.truncated));
+      expect(out.valueLength, isNull);
+    });
+
+    test('a real element 11 outranks the flag in both directions', () {
+      // The flag only decides the no-element-11 case; it must not colour a
+      // diagnosis we actually made.
+      for (final bool whole in <bool>[true, false]) {
+        final BssLoadReading bad = decodeBssLoadFromElements(
+          walkInformationElements(_ie(11, <int>[1, 2, 3])),
+          blobWalkedToEnd: whole,
+        );
+        expect((bad as BssLoadUnavailable).reason,
+            BssLoadUnavailableReason.malformedLength);
+
+        final BssLoadReading good = decodeBssLoadFromElements(
+          walkInformationElements(_bssLoadIe(
+            stationCount: 6,
+            channelUtilization: 7,
+            admissionCapacity: 8,
+          )),
+          blobWalkedToEnd: whole,
+        );
+        expect(_decoded(good).stationCount, 6);
+      }
     });
   });
 
@@ -613,13 +993,19 @@ void main() {
       expect(reading.valueOrNull, isNull);
     });
 
-    test('a single trailing byte is absent — one octet is not a header', () {
-      // The name matters: `[11, 5]` IS a header with no value and is TRUNCATED,
-      // not absent. Only a lone octet, which cannot be a two-octet header, is
-      // absent. See the 'a clipped element 11 is NOT absent' group.
+    test('a single trailing byte is a clip — one octet is not a header', () {
+      // Three names, three different bit patterns. `[11, 5]` IS a header with no
+      // value and is TRUNCATED. A lone octet cannot be a two-octet header, so
+      // nothing was declared and truncated cannot be filled in — but the buffer
+      // still ended mid-header, so it is not ABSENT either.
       expect(
         (decodeBssLoad(<int>[11]) as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.absent,
+        BssLoadUnavailableReason.clippedBeforeElement11,
+      );
+      expect(
+        (decodeBssLoad(<int>[0xFF]) as BssLoadUnavailable).reason,
+        BssLoadUnavailableReason.clippedBeforeElement11,
+        reason: 'the dangling octet need not be 0x0B',
       );
       expect(decodeBssLoadOrNull(<int>[0xFF]), isNull);
     });

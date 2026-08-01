@@ -13,6 +13,17 @@
 // shared AP-name decoder share a single, tested implementation.
 // `windows_wifi_ffi.dart` re-exports [findInformationElement] for source
 // compatibility with its existing callers and tests.
+//
+// WHO DEPENDS ON THE WALK'S EXACT STOPPING BEHAVIOUR. [walkInformationElements]
+// dropping a truncated tail SILENTLY is what makes it total, and one dependent
+// needs to know that it happened: `bss_load_decoder.dart` must tell "the AP does
+// not advertise BSS Load" apart from "our capture was cut before we could tell",
+// and reporting the first as the second is a false statement about someone's
+// network. That question is answered by [informationElementWalkTail] below —
+// an OPT-IN sibling, not a change to the walk: existing callers are unaffected,
+// the walker's return type is untouched, and nothing here can throw. Its
+// contract is pinned by `test/services/network/ie_parser_test.dart`, which
+// exists because this walk is load-bearing for four modules.
 
 import 'dart:typed_data';
 
@@ -60,6 +71,123 @@ Iterable<InformationElement> walkInformationElements(List<int> ies) sync* {
     );
     i = dataEnd;
   }
+}
+
+/// Octets in a non-extended IE header: `[id][len]`.
+const int _kIeHeaderOctets = 2;
+
+/// The header of the element [walkInformationElements] stopped at: it declared
+/// more value octets than the buffer holds, so the walk yielded it not at all.
+///
+/// Nothing here is decoded from the clipped element — its value octets are
+/// COUNTED, never read as fields. Padding a partial element out to its declared
+/// length is a guess wearing a measurement's clothes.
+class TruncatedInformationElement {
+  const TruncatedInformationElement({
+    required this.id,
+    required this.declaredLength,
+    required this.availableLength,
+  });
+
+  /// Element ID from the header octet actually present in the buffer.
+  final int id;
+
+  /// The value length the element's length octet CLAIMED. What the AP said it
+  /// sent, not what arrived.
+  final int declaredLength;
+
+  /// The number of value octets that actually arrived. Always strictly less than
+  /// [declaredLength] — that is what made the walk stop.
+  final int availableLength;
+
+  @override
+  String toString() => 'TruncatedInformationElement(id: $id, '
+      'declaredLength: $declaredLength, availableLength: $availableLength)';
+}
+
+/// What [walkInformationElements] left behind when it stopped.
+class InformationElementWalkTail {
+  const InformationElementWalkTail({
+    required this.unconsumedOctets,
+    required this.truncatedElement,
+  });
+
+  /// Octets at the end of the blob that no well-formed element accounted for.
+  ///
+  /// 0 means the walk reached the end of the buffer and EVERY octet belonged to
+  /// a well-formed element — the only condition under which "element X was not
+  /// in this blob" is a statement about the AP rather than about the capture.
+  final int unconsumedOctets;
+
+  /// The clipped element header at the stop offset, or null when
+  /// [unconsumedOctets] is 0 or 1.
+  ///
+  /// One dangling octet is NOT a header: a TLV header is two octets, so with a
+  /// residue of 1 no length was ever declared and there is nothing to report a
+  /// declared-versus-available count about. The octet is still evidence the
+  /// buffer ended mid-header — see [isComplete], which is false there.
+  final TruncatedInformationElement? truncatedElement;
+
+  /// True when the walk consumed the whole buffer.
+  ///
+  /// FALSE IS THE LOAD-BEARING DIRECTION: it means the buffer ended in the
+  /// middle of something, so any element not seen in the walked region may
+  /// simply have been cut off. A decoder must not report such an element as
+  /// "not advertised".
+  bool get isComplete => unconsumedOctets == 0;
+
+  @override
+  String toString() => 'InformationElementWalkTail('
+      'unconsumedOctets: $unconsumedOctets, '
+      'truncatedElement: $truncatedElement)';
+}
+
+/// Reports where [walkInformationElements] stopped on [ies], for the decoders
+/// that must tell "this AP did not advertise element X" apart from "our capture
+/// was cut before we could tell". Total; never throws; decodes nothing.
+///
+/// OPT-IN. The walk itself is unchanged and no existing caller inherits this.
+///
+/// HOW THE STOP OFFSET IS DERIVED, and why this is not a second parser. Every
+/// element the walk yields consumed exactly `2 + bytes.length` contiguous octets
+/// starting at 0, so summing that over the yielded elements gives the offset
+/// where the walk stopped. The offset comes FROM the walk's own output, so this
+/// function cannot drift out of agreement with the loop above the way a
+/// re-implemented walk could — there is exactly one walk in this file.
+///
+/// WHY THE RESIDUE IS UNAMBIGUOUS. The loop runs while `i + 2 <= n` and breaks
+/// only when a declared length overruns. So after it returns, the residue is
+/// exactly one of:
+///   * 0 octets — the walk consumed the buffer; nothing was cut;
+///   * 1 octet  — the loop ran out of room for a header. The buffer ended one
+///                octet into an element header, so something WAS cut, but no
+///                length was declared and the element is unidentifiable beyond
+///                its id octet;
+///   * ≥2 octets — the loop broke, and the octets at the stop offset ARE an
+///                element header whose declared length overruns the buffer.
+/// No scanning and no guessing: a caller must never search a blob for an element
+/// id, because an id-valued byte inside an SSID or a rates element is a VALUE
+/// octet, and searching for it invents elements that were never sent.
+InformationElementWalkTail informationElementWalkTail(List<int> ies) {
+  int consumed = 0;
+  for (final InformationElement ie in walkInformationElements(ies)) {
+    consumed += _kIeHeaderOctets + ie.bytes.length;
+  }
+  final int residue = ies.length - consumed;
+  if (residue < _kIeHeaderOctets) {
+    return InformationElementWalkTail(
+      unconsumedOctets: residue,
+      truncatedElement: null,
+    );
+  }
+  return InformationElementWalkTail(
+    unconsumedOctets: residue,
+    truncatedElement: TruncatedInformationElement(
+      id: ies[consumed] & 0xff,
+      declaredLength: ies[consumed + 1] & 0xff,
+      availableLength: residue - _kIeHeaderOctets,
+    ),
+  );
 }
 
 /// Walks an IE TLV blob (`[id][len][data…]` repeated) and returns the `data`
