@@ -13,17 +13,24 @@
 // reason the failure message does not explain.
 //
 // So this file pins the walk itself, including the guarantees nobody had written
-// down. Four edits a maintainer might plausibly make are each covered by a named
-// test below, because each is silent in most of the suite:
+// down. The edits a maintainer might plausibly make are each covered by a named
+// test below, because each is silent in most of the suite. They are NAMED and
+// not numbered, and that is a repair rather than a style: the list used to be
+// numbered and the paragraph below used to say "Edit 3", which is a reference
+// with no grep handle — insert an edit at the top and the sentence silently
+// points at the wrong one. The BSS Load files next door lost two sentences to
+// exactly that.
 //
-//   1. yielding a best-effort PARTIAL element instead of dropping it;
-//   2. SKIPPING a bad element and resuming the walk after it;
-//   3. relaxing the loop guard from `i + 2 <= n` to `i < n`;
-//   4. dropping ZERO-LENGTH elements as uninteresting.
+//   PARTIAL-YIELD — yielding a best-effort PARTIAL element instead of dropping
+//     it;
+//   SKIP-AND-RESUME — skipping a bad element and resuming the walk after it;
+//   LOOSE-LOOP-GUARD — relaxing the loop guard from `i + 2 <= n` to `i < n`;
+//   DROP-ZERO-LENGTH — dropping zero-length elements as uninteresting.
 //
-// Edit 3 does not just change an answer — it makes the walk THROW on a one-octet
-// tail, and this function's whole reason for existing is that attacker-adjacent
-// bytes must fail safe (cf. the recurring Wireshark 802.11-dissector CVEs).
+// LOOSE-LOOP-GUARD does not just change an answer — it makes the walk THROW on a
+// one-octet tail, and this function's whole reason for existing is that
+// attacker-adjacent bytes must fail safe (cf. the recurring Wireshark
+// 802.11-dissector CVEs).
 //
 // Build: Felix 2026-08-01.
 
@@ -519,8 +526,9 @@ void main() {
       // invisible: with both sides moving together, no blob could ever have
       // failed, so nobody would have found out the blobs proved nothing.
       //
-      // The case list is now total over all four walker edits this file names:
-      // run this test alone against each of them and each one goes red.
+      // The case list is now total over every walker edit this file's header
+      // names — PARTIAL-YIELD, SKIP-AND-RESUME, LOOSE-LOOP-GUARD and
+      // DROP-ZERO-LENGTH: run this test alone against each and each goes red.
       //
       // Every expectation below is a CONSTANT. Seven come from the blob's own
       // construction — a well-formed prefix plus a deliberate tail, so the

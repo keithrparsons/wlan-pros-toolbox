@@ -2,20 +2,38 @@
 // platform symbols: every case is a plain Dart byte buffer, so they run on any
 // CI.
 //
-// What these lock, in the order the bugs actually happen:
-//   1. LITTLE-ENDIAN on both 2-octet fields. Every multi-octet vector here uses
-//      two DIFFERENT octets, so a big-endian mistake fails rather than passing
-//      on a palindrome.
-//   2. Human units at the boundary. The raw octet is kept, and the percentage is
-//      converted (raw/255 and raw/31250) — a screen showing "utilization: 128"
-//      would be wrong AND plausible, which is the dangerous kind.
-//   3. The states stay apart: ABSENT (this AP does not advertise it), NOTHING
-//      PROVIDED (this device handed us no information elements), UNAVAILABLE
-//      (bad length / Cisco variant / the capture was cut), and a genuine
-//      ALL-ZERO reading are DIFFERENT answers, named rather than counted here
-//      because the count has already changed once. Only ABSENT says anything
-//      about the AP, and every test that asserts it also asserts what it is not.
-//   4. Nothing throws, ever, on any byte sequence — including a null blob.
+// What these lock, in the order the bugs actually happen. NAMED AND NOT
+// NUMBERED, for the same reason the decoder's honesty contract is: the ordinal
+// would be a label nothing can grep, and this list was the third numbered list
+// in the BSS Load work to survive a gate round only because nothing happened to
+// cite it yet.
+//   LITTLE-ENDIAN on both 2-octet fields. Every multi-octet vector here uses two
+//     DIFFERENT octets, so a big-endian mistake fails rather than passing on a
+//     palindrome.
+//   HUMAN UNITS at the boundary. The raw octet is kept, and the percentage is
+//     converted (raw/255 and raw/31250) — a screen showing "utilization: 128"
+//     would be wrong AND plausible, which is the dangerous kind.
+//   THE OUTCOMES STAY APART, and they are enumerated below rather than here.
+//   NOTHING THROWS, ever, on any byte sequence — including a null blob.
+//
+// ── OUTCOMES, MIRRORED FROM THE DECODER'S HONESTY CONTRACT ───────────────────
+// This block is not prose a reader has to trust. `bss_load_decoder.dart` names
+// these outcomes in its own honesty contract, and
+// `bss_load_ordinal_reference_guard_test.dart` reads BOTH blocks and fails the
+// build unless they name the same members. Insert a fifth outcome over there and
+// this list goes red instead of going quietly incomplete — which is what the
+// previous version of it, a prose sentence listing four names, would have done.
+//
+// Entry shape is load-bearing: a NAME at three spaces, its gloss at five.
+//
+//   ABSENT — this AP does not advertise BSS Load.
+//   NOTHING TO READ — this device handed us no information elements at all.
+//   UNAVAILABLE — an element 11 we will not decode (bad length, the Cisco
+//     variant, or a capture cut before we could tell).
+//   ZERO — a genuine all-zero measurement from an idle AP on a quiet channel.
+//
+// Only ABSENT says anything about the AP, and every test that asserts it also
+// asserts what it is not.
 //
 // Layout and constants are pinned in the decoder's header to Wireshark's
 // dissector at commit b1f51ff4 — read that before changing a number here.

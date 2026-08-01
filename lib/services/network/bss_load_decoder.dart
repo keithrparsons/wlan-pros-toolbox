@@ -125,24 +125,40 @@
 // cited a number — and unlike a rename, there is nothing to grep for. That is
 // not hypothetical: NOTHING TO READ was inserted here, and two sentences
 // elsewhere in this file went on addressing the old numbering without a
-// character of either changing. `bss_load_ordinal_reference_guard_test.dart`
-// now fails the build if a number comes back.
+// character of either changing.
 //
-//   ABSENT      — the blob was walked to its END and held no element 11. The AP
-//                 did not advertise BSS Load (many do not; it is optional). THE
-//                 ONLY OUTCOME HERE THAT CLAIMS ANYTHING ABOUT THE AP.
-//   NOTHING TO  — no information elements reached us at all: a null blob (the
-//   READ          platform does not expose IEs, or would not this time) or an
-//                 empty one. A statement about the platform, never about the
-//                 AP. [BssLoadUnavailableReason.noInformationElementsProvided].
+// WHAT THE GUARD ON THIS BLOCK ACTUALLY DOES, AND WHAT IT DOES NOT — stated
+// here rather than only in the guard, because a reader of this file never opens
+// that one, and an earlier version of this paragraph claimed a guarantee the
+// instrument does not deliver. `bss_load_ordinal_reference_guard_test.dart`
+// reads the entries below BY NAME and fails the build when: an entry stops
+// being a bare upper-case name (a `1.`, `1)`, `(1)` or roman prefix each fail);
+// the mirror of this list in `bss_load_decoder_test.dart` stops matching it
+// member for member; prose in either file cites a numbered list by ordinal; or
+// a sentence states a count of these outcomes that is not the number of entries
+// below. IT IS A TEXT CHECK OVER TWO FILES AND IT DOES NOT READ ENGLISH, so an
+// author can still write a stale sentence in a shape it does not recognize; the
+// guard's own SCOPE paragraph enumerates the shapes it misses. Tripwire on the
+// mistake that actually happened, not a proof that the mistake is impossible.
+//
+// THE INDENTATION BELOW IS LOAD-BEARING: an entry is a name at three spaces,
+// its prose continues at five. Reformat it and entries stop being found, which
+// the mirror check turns red rather than passing quietly.
+//
+//   ABSENT — the blob was walked to its END and held no element 11. The AP did
+//     not advertise BSS Load (many do not; it is optional). THE ONLY OUTCOME
+//     HERE THAT CLAIMS ANYTHING ABOUT THE AP.
+//   NOTHING TO READ — no information elements reached us at all: a null blob
+//     (the platform does not expose IEs, or would not this time) or an empty
+//     one. A statement about the platform, never about the AP.
+//     [BssLoadUnavailableReason.noInformationElementsProvided].
 //   UNAVAILABLE — an element 11 IS present but this build will not decode it
-//                 (wrong length, the Cisco 4-octet variant, or a header whose
-//                 declared length is clipped by the end of the buffer) — or the
-//                 capture was cut before we could tell whether one was there at
-//                 all.
-//   ZERO        — a perfectly good reading whose numbers happen to be 0. An
-//                 idle AP with no associated stations and a quiet channel is a
-//                 REAL measurement and must read as one.
+//     (wrong length, the Cisco 4-octet variant, or a header whose declared
+//     length is clipped by the end of the buffer), or the capture was cut
+//     before we could tell whether one was there at all.
+//   ZERO — a perfectly good reading whose numbers happen to be 0. An idle AP
+//     with no associated stations and a quiet channel is a REAL measurement and
+//     must read as one.
 //
 // ABSENT IS THE ONE THAT KEEPS BEING OVER-CLAIMED, in two separate directions.
 //
@@ -186,14 +202,26 @@
 // guess. [decodeBssLoadFromElements] takes it as a required argument for exactly
 // this reason.
 //
-// A field we could not read is not a field that is zero, and that is the one
-// guarantee the type itself enforces: [decodeBssLoad] returns a sealed
-// [BssLoadReading], so ABSENT, NOTHING TO READ and UNAVAILABLE cannot be read
-// as ZERO. There are no numbers on those branches to reach for, and the compiler
-// makes the caller say which branch it is on. [decodeBssLoadOrNull] is the
-// convenience for callers that genuinely only want the numbers — and it is the
-// one place that collapse is a caller's deliberate choice rather than an
-// accident of a nullable return.
+// A field we could not read is not a field that is zero, and that is what the
+// type is shaped to protect: [decodeBssLoad] returns a sealed [BssLoadReading],
+// so a MEASUREMENT never arrives on the ABSENT, NOTHING TO READ or UNAVAILABLE
+// branches. There is no station count, no channel utilization and no admission
+// capacity to reach for on any of them. (UNAVAILABLE does carry numbers —
+// [BssLoadUnavailable.valueLength] and [BssLoadUnavailable.availableLength] are
+// the octet counts of the element we refused, and a readout is invited to print
+// them; they are diagnostics about our own read, never the AP's load.)
+//
+// WHAT THE SEAL DOES AND DOES NOT COMPEL, because the previous wording said the
+// compiler forces a branch and it does not. A caller that SWITCHES on the sealed
+// type gets exhaustiveness: add a subclass and every switch stops compiling.
+// A caller that does not switch is not forced to — [BssLoadReading.valueOrNull]
+// and [BssLoadReading.isDecoded] are on the base class deliberately, so the
+// collapse to `BssLoad?` is available without one. That is a designed escape
+// hatch, not a hole, and [decodeBssLoadOrNull] is its named form: it is
+// literally `decodeBssLoad(ieBytes).valueOrNull`. Naming it does not make it the
+// only route to it. What the seal buys is that the collapse must be WRITTEN —
+// `valueOrNull` is a word a reviewer can see and grep — rather than happening by
+// default because the return type was nullable.
 
 import 'ie_parser.dart';
 
@@ -604,6 +632,13 @@ class BssLoadUnavailable extends BssLoadReading {
 /// and anything citing a step from elsewhere cites the NAME. This list has
 /// already been renumbered once by an insertion, and an ordinal quoted in
 /// another paragraph goes stale in total silence.
+///
+/// The NAME is the part the guard can enforce, so it does:
+/// `bss_load_ordinal_reference_guard_test.dart` fails the build if a step here
+/// is added without one, which is what would otherwise leave a later author no
+/// handle but the ordinal. Calling these "steps" is deliberate, and the noun
+/// `step` is in the guard's refused set exactly as `rule` and `case` are — this
+/// paragraph is where a reader learns the word, so it is where the hole was.
 ///   1. DECODED — a decoded element 11 anywhere in the walked region wins
 ///      outright;
 ///   2. EXAMINED — otherwise the FIRST complete element 11 that failed to decode
@@ -691,10 +726,18 @@ BssLoadReading decodeBssLoad(List<int>? ieBytes) {
 ///
 /// If a real caller ever cannot answer this question, the honest fix is a reason
 /// member meaning "we were not told" rather than a bool carrying two meanings
-/// ([[feedback_type_must_express_unknown]]) — a change to the rendered contract,
-/// so it needs a design call and not a quiet patch. There is no such caller
-/// today: [decodeBssLoad], the only one in the repo, always knows, because
-/// [InformationElementWalkTail.isComplete] computes it.
+/// ([[feedback_type_must_express_unknown]]). PARKED, AND HERE IS THE REAL REASON,
+/// because the earlier one was wrong: it is not that a rendered contract would
+/// change — nothing renders this today, there is no BSS Load screen and no
+/// non-test caller in `lib/`. It is that adding the member is a public API change
+/// whose cost is lowest NOW and rises the moment a readout has to render it, so
+/// the decision belongs to Keith rather than to whoever next edits this file. It
+/// is logged where he reads it (`Team Knowledge/memory/AWAITING-KEITH.md`), not
+/// only here.
+///
+/// No caller needs it today. [decodeBssLoad] — the only caller of this function
+/// outside `bss_load_decoder_test.dart`, which exercises it directly and often —
+/// always knows, because [InformationElementWalkTail.isComplete] computes it.
 ///
 /// AN EMPTY [elements] WITH [blobWalkedToEnd] TRUE IS NOT `absent` EITHER, and
 /// this entry point can tell on its own: a walk that reached the end of its
