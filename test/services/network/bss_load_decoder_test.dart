@@ -12,7 +12,8 @@
 //   3. The states stay apart: ABSENT (this AP does not advertise it), NOTHING
 //      PROVIDED (this device handed us no information elements), UNAVAILABLE
 //      (bad length / Cisco variant / the capture was cut), and a genuine
-//      ALL-ZERO reading are four different answers. Only ABSENT says anything
+//      ALL-ZERO reading are DIFFERENT answers, named rather than counted here
+//      because the count has already changed once. Only ABSENT says anything
 //      about the AP, and every test that asserts it also asserts what it is not.
 //   4. Nothing throws, ever, on any byte sequence — including a null blob.
 //
@@ -220,7 +221,8 @@ void main() {
     });
   });
 
-  group('absent, malformed and zero are three different answers', () {
+  group('absent, nothing-provided, malformed and zero are DIFFERENT answers',
+      () {
     test('an all-zero element is a REAL reading, not an absence', () {
       final BssLoadReading reading = decodeBssLoad(
         _bssLoadIe(
@@ -711,7 +713,8 @@ void main() {
     });
 
     test('a complete element 11 outranks a CLIPPED ELEMENT 11 at the tail', () {
-      // Precedence rule 2, on the one blob that can tell it apart from rule 3:
+      // The EXAMINED rule, on the one blob that can tell it apart from
+      // CLIPPED-11 (both named in decodeBssLoad's precedence list):
       // both candidates are element 11, so a decoder that let the tail win would
       // report the clipped one and every other test in this file would still
       // pass. The complete element precedes the clipped tail by construction, so
@@ -1069,7 +1072,8 @@ void main() {
     });
   });
 
-  group('isDecoded answers the three-state question in BOTH directions', () {
+  group('isDecoded separates a reading from a non-reading, BOTH directions',
+      () {
     // The predicate the whole sealed design is queried through. Every other
     // assertion on it in this file runs in the TRUE direction, which means a
     // body of `=> true` would satisfy all of them. Both directions are asserted

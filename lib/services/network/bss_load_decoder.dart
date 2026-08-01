@@ -117,26 +117,34 @@
 // out of scope for this decoder.
 //
 // ── HONESTY CONTRACT ─────────────────────────────────────────────────────────
-// Four outcomes that a lesser type collapses into one, and must not:
+// Outcomes that a lesser type collapses into one, and must not.
 //
-//   1. ABSENT      — the blob was walked to its END and held no element 11. The
-//                    AP did not advertise BSS Load (many do not; it is
-//                    optional). THE ONLY OUTCOME HERE THAT CLAIMS ANYTHING ABOUT
-//                    THE AP.
-//   2. NOTHING TO  — no information elements reached us at all: a null blob (the
-//      READ          platform does not expose IEs, or would not this time) or an
-//                    empty one. A statement about the platform, never about the
-//                    AP. [BssLoadUnavailableReason.noInformationElementsProvided].
-//   3. UNAVAILABLE — an element 11 IS present but this build will not decode it
-//                    (wrong length, the Cisco 4-octet variant, or a header whose
-//                    declared length is clipped by the end of the buffer) — or
-//                    the capture was cut before we could tell whether one was
-//                    there at all.
-//   4. ZERO        — a perfectly good reading whose numbers happen to be 0. An
-//                    idle AP with no associated stations and a quiet channel is
-//                    a REAL measurement and must read as one.
+// THESE ARE NAMED AND NOT NUMBERED, ON PURPOSE, AND ANYTHING CITING THEM MUST
+// CITE THE NAME. An ordinal is a label rather than a fact, so inserting an
+// outcome renumbers every later one and silently falsifies every sentence that
+// cited a number — and unlike a rename, there is nothing to grep for. That is
+// not hypothetical: NOTHING TO READ was inserted here, and two sentences
+// elsewhere in this file went on addressing the old numbering without a
+// character of either changing. `bss_load_ordinal_reference_guard_test.dart`
+// now fails the build if a number comes back.
 //
-// CASE 1 IS THE ONE THAT KEEPS BEING OVER-CLAIMED, in two separate directions.
+//   ABSENT      — the blob was walked to its END and held no element 11. The AP
+//                 did not advertise BSS Load (many do not; it is optional). THE
+//                 ONLY OUTCOME HERE THAT CLAIMS ANYTHING ABOUT THE AP.
+//   NOTHING TO  — no information elements reached us at all: a null blob (the
+//   READ          platform does not expose IEs, or would not this time) or an
+//                 empty one. A statement about the platform, never about the
+//                 AP. [BssLoadUnavailableReason.noInformationElementsProvided].
+//   UNAVAILABLE — an element 11 IS present but this build will not decode it
+//                 (wrong length, the Cisco 4-octet variant, or a header whose
+//                 declared length is clipped by the end of the buffer) — or the
+//                 capture was cut before we could tell whether one was there at
+//                 all.
+//   ZERO        — a perfectly good reading whose numbers happen to be 0. An
+//                 idle AP with no associated stations and a quiet channel is a
+//                 REAL measurement and must read as one.
+//
+// ABSENT IS THE ONE THAT KEEPS BEING OVER-CLAIMED, in two separate directions.
 //
 // A CLIPPED CAPTURE IS NOT AN ABSENCE. The shared TLV walker in `ie_parser.dart`
 // drops a truncated tail without signalling — correctly, that is what makes it
@@ -178,10 +186,14 @@
 // guess. [decodeBssLoadFromElements] takes it as a required argument for exactly
 // this reason.
 //
-// A field we could not read is not a field that is zero. [decodeBssLoad] returns
-// a sealed [BssLoadReading] so a caller cannot accidentally treat case 1 or 2 as
-// case 3; [decodeBssLoadOrNull] is the convenience for callers that genuinely
-// only want the numbers.
+// A field we could not read is not a field that is zero, and that is the one
+// guarantee the type itself enforces: [decodeBssLoad] returns a sealed
+// [BssLoadReading], so ABSENT, NOTHING TO READ and UNAVAILABLE cannot be read
+// as ZERO. There are no numbers on those branches to reach for, and the compiler
+// makes the caller say which branch it is on. [decodeBssLoadOrNull] is the
+// convenience for callers that genuinely only want the numbers — and it is the
+// one place that collapse is a caller's deliberate choice rather than an
+// accident of a nullable return.
 
 import 'ie_parser.dart';
 
@@ -463,8 +475,9 @@ class BssLoad {
 /// Outcome of reading BSS Load from an IE blob.
 ///
 /// A sealed result (not a bare nullable) so the caller must branch on "we have a
-/// reading" versus "we do not, and here is why" — the three states in the file
-/// header's honesty contract cannot collapse into a zero.
+/// reading" versus "we do not, and here is why" — ABSENT, NOTHING TO READ and
+/// UNAVAILABLE in the file header's honesty contract cannot collapse into a ZERO
+/// reading.
 sealed class BssLoadReading {
   const BssLoadReading();
 
@@ -586,22 +599,27 @@ class BssLoadUnavailable extends BssLoadReading {
 /// never `absent` either way. See [_clippedElement11AtTail], and
 /// `ie_parser_test.dart` for the walker's side of that contract.
 ///
-/// Precedence, in order:
-///   1. a decoded element 11 anywhere in the walked region wins outright;
-///   2. otherwise the FIRST complete element 11 that failed to decode is
-///      reported — it precedes any clipped tail by construction, so this
+/// Precedence, in order. THIS LIST KEEPS ITS NUMBERS BECAUSE THE ORDER IS THE
+/// CONTENT — each step means "otherwise" — but every step also carries a NAME,
+/// and anything citing a step from elsewhere cites the NAME. This list has
+/// already been renumbered once by an insertion, and an ordinal quoted in
+/// another paragraph goes stale in total silence.
+///   1. DECODED — a decoded element 11 anywhere in the walked region wins
+///      outright;
+///   2. EXAMINED — otherwise the FIRST complete element 11 that failed to decode
+///      is reported; it precedes any clipped tail by construction, so this
 ///      preserves the "first element 11 seen" contract of
 ///      [decodeBssLoadFromElements];
-///   3. otherwise a clipped element 11 at the tail, as
+///   3. CLIPPED-11 — otherwise a clipped element 11 at the tail, as
 ///      [BssLoadUnavailableReason.truncated] when its declared length is one
 ///      element 11 may have and [BssLoadUnavailableReason.malformedLength] when
 ///      it is not;
-///   4. otherwise, if the walk did not reach the end of the blob,
-///      [BssLoadUnavailableReason.clippedWithoutSeeingElement11] — something was
-///      cut, and element 11 may have been in it;
-///   5. otherwise, if nothing was handed to us at all,
+///   4. CLIPPED-ELSEWHERE — otherwise, if the walk did not reach the end of the
+///      blob, [BssLoadUnavailableReason.clippedWithoutSeeingElement11]; something
+///      was cut, and element 11 may have been in it;
+///   5. NOTHING-PROVIDED — otherwise, if nothing was handed to us at all,
 ///      [BssLoadUnavailableReason.noInformationElementsProvided];
-///   6. otherwise [BssLoadUnavailableReason.absent], which is the ONLY reading
+///   6. ABSENT — otherwise [BssLoadUnavailableReason.absent], the ONLY reading
 ///      that claims anything about the AP.
 ///
 /// The blob is walked twice — once for the elements, once for the tail. Both
@@ -624,7 +642,7 @@ BssLoadReading decodeBssLoad(List<int>? ieBytes) {
   final BssLoadUnavailable unavailable = reading as BssLoadUnavailable;
 
   // An element 11 we actually EXAMINED outranks anything at the tail, which is
-  // precedence rule 2 above. `valueLength` is exactly that question — its own
+  // the EXAMINED rule above. `valueLength` is exactly that question — its own
   // doc is "NULL MEANS NO ELEMENT 11 WAS SEEN" — so it is asked directly rather
   // than by enumerating which reasons imply it. An enumeration would need
   // editing every time a member is added and would fail silently when it was
@@ -658,8 +676,25 @@ BssLoadReading decodeBssLoad(List<int>? ieBytes) {
 /// itself knows whether it consumed them all. When it is false and no element 11
 /// is among [elements], the reading is
 /// [BssLoadUnavailableReason.clippedWithoutSeeingElement11] rather than a false
-/// `absent`: element 11 may have been in the part that was cut. A caller that
-/// genuinely does not know must pass false, which over-claims nothing.
+/// `absent`: element 11 may have been in the part that was cut.
+///
+/// A CALLER THAT GENUINELY DOES NOT KNOW MUST STILL PASS FALSE — AND THAT IS THE
+/// SAFE ANSWER, NOT A FREE ONE. Read what it produces:
+/// [BssLoadUnavailableReason.clippedWithoutSeeingElement11] states that the
+/// capture WAS clipped, in its own doc, deliberately. So an uncertain caller
+/// handing us a perfectly whole set of elements gets a reading that says we cut
+/// it. That over-claims exactly one thing, and it is a false statement about OUR
+/// OWN byte handling rather than about somebody's AP — which is the direction to
+/// be wrong in, because the alternative (`absent`) is the app blaming the Wi-Fi
+/// ([[feedback_app_blames_the_wifi]]). A readout on this branch may say the
+/// capture was incomplete; it may never say the AP does not advertise BSS Load.
+///
+/// If a real caller ever cannot answer this question, the honest fix is a reason
+/// member meaning "we were not told" rather than a bool carrying two meanings
+/// ([[feedback_type_must_express_unknown]]) — a change to the rendered contract,
+/// so it needs a design call and not a quiet patch. There is no such caller
+/// today: [decodeBssLoad], the only one in the repo, always knows, because
+/// [InformationElementWalkTail.isComplete] computes it.
 ///
 /// AN EMPTY [elements] WITH [blobWalkedToEnd] TRUE IS NOT `absent` EITHER, and
 /// this entry point can tell on its own: a walk that reached the end of its
