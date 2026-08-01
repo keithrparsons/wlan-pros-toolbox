@@ -132,18 +132,26 @@
 // that one, and an earlier version of this paragraph claimed a guarantee the
 // instrument does not deliver. `bss_load_ordinal_reference_guard_test.dart`
 // reads the entries below BY NAME and fails the build when: an entry stops
-// being a bare upper-case name (a `1.`, `1)`, `(1)` or roman prefix each fail);
-// the mirror of this list in `bss_load_decoder_test.dart` stops matching it
-// member for member; prose in either file cites a numbered list by ordinal; or
-// a sentence states a count of these outcomes that is not the number of entries
-// below. IT IS A TEXT CHECK OVER TWO FILES AND IT DOES NOT READ ENGLISH, so an
-// author can still write a stale sentence in a shape it does not recognize; the
-// guard's own SCOPE paragraph enumerates the shapes it misses. Tripwire on the
-// mistake that actually happened, not a proof that the mistake is impossible.
+// being a bare upper-case name (a `1.`, `1)`, `(1)` or a positional roman
+// prefix each fail); the mirror of this list in `bss_load_decoder_test.dart`
+// stops matching it member for member; the list gets SHORTER than four; prose
+// in this file, its test file or the `ie_parser.dart` pair cites a numbered
+// list by ordinal; or a sentence in the two BSS Load files states a count of
+// these outcomes that is not the number of entries below. IT IS A TEXT CHECK
+// AND IT DOES NOT READ ENGLISH, so an author can still write a stale sentence
+// in a shape it does not recognize; the guard's own SCOPE paragraph enumerates
+// the shapes it misses. Tripwire on the mistake that actually happened, not a
+// proof that the mistake is impossible.
 //
 // THE INDENTATION BELOW IS LOAD-BEARING: an entry is a name at three spaces,
-// its prose continues at five. Reformat it and entries stop being found, which
-// the mirror check turns red rather than passing quietly.
+// its prose continues at five. Do not reformat it — but a reformat is now LOUD
+// rather than quiet, and that repair is worth knowing about, because for two
+// rounds it was the reverse. Every line in this block indented two spaces or
+// more is READ as an entry and then judged, so an entry written with the wrong
+// dash, or at four spaces, fails by name instead of vanishing from the set; and
+// a line at five spaces that reads like an entry head fails too. What a parser
+// silently skips, it silently passes, and every check downstream of it quietly
+// becomes a claim about a shorter list.
 //
 //   ABSENT — the blob was walked to its END and held no element 11. The AP did
 //     not advertise BSS Load (many do not; it is optional). THE ONLY OUTCOME
@@ -174,7 +182,15 @@
 // powered-down radio defeats, arrives here as no bytes. See the top of this file.
 //
 // [decodeBssLoad] therefore asks `ie_parser.dart` where the walk stopped
-// ([informationElementWalkTail]) and reports one of FOUR different things:
+// ([informationElementWalkTail]) and reports one of these, and only these:
+//
+// THE COUNT IS DELIBERATELY NOT STATED. This bullet list is NOT the honesty
+// contract above — these are walk outcomes and they include `truncated` and
+// `malformedLength`, while the contract includes ZERO, which is not a bullet.
+// The two lists coincidentally had the same length, and a sentence that said so
+// went stale the moment a bullet was added: no instrument derives this list's
+// size, so a number here would be a claim nothing checks. Name the reason, do
+// not count the reasons.
 //
 //   * nothing was handed to us — a null or empty blob →
 //     [BssLoadUnavailableReason.noInformationElementsProvided];
@@ -633,12 +649,17 @@ class BssLoadUnavailable extends BssLoadReading {
 /// already been renumbered once by an insertion, and an ordinal quoted in
 /// another paragraph goes stale in total silence.
 ///
-/// The NAME is the part the guard can enforce, so it does:
-/// `bss_load_ordinal_reference_guard_test.dart` fails the build if a step here
-/// is added without one, which is what would otherwise leave a later author no
-/// handle but the ordinal. Calling these "steps" is deliberate, and the noun
-/// `step` is in the guard's refused set exactly as `rule` and `case` are — this
-/// paragraph is where a reader learns the word, so it is where the hole was.
+/// The NAME is the part the guard can enforce, so it does, and the enforcement
+/// is stated exactly rather than generally, because the general version of this
+/// sentence was false for two gate rounds. `bss_load_ordinal_reference_guard_test.dart`
+/// reads EVERY indented line between "Precedence, in order." and "The blob is
+/// walked twice", and fails the build when one of them is not `N. NAME — prose`:
+/// a step written `7)` used to be invisible to it rather than rejected, so an
+/// unnamed step passed while this paragraph claimed it could not. The numbers
+/// must also run 1..n without a gap. Calling these "steps" is deliberate, and
+/// the noun `step` is in the guard's refused set exactly as `rule` and `case`
+/// are — this paragraph is where a reader learns the word, so it is where the
+/// hole was.
 ///   1. DECODED — a decoded element 11 anywhere in the walked region wins
 ///      outright;
 ///   2. EXAMINED — otherwise the FIRST complete element 11 that failed to decode

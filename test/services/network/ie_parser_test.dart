@@ -503,7 +503,7 @@ void main() {
       expect(tail.truncatedElement!.availableLength, 2);
     });
 
-    test('the residue is the tail the blob was BUILT with, across six shapes',
+    test('the residue is the tail the blob was BUILT with, every shape below',
         () {
       // WHY THE ORACLE IS A LITERAL AND NOT A SUM. This test used to compute its
       // expectation as `blob.length - sum(2 + e.bytes.length)` over the walk,
@@ -517,24 +517,35 @@ void main() {
       //
       // THE ORACLE WAS ONLY HALF OF IT, and fixing only the half that was
       // reported would have left the test just as blind. With the literals in
-      // place, the six ORIGINAL blobs still all pass under that same mutant:
-      // every one of them resumes into a region that yields nothing further, so
-      // the residue lands on the same number either way. The seventh case below
-      // exists for that and nothing else — its overrun span contains octets that
-      // parse as a well-formed element, so a resuming walk consumes them and the
-      // residue moves. A coupled oracle is what made a weak case list
-      // invisible: with both sides moving together, no blob could ever have
-      // failed, so nobody would have found out the blobs proved nothing.
+      // place, the six ORIGINAL blobs still all pass under that same mutant
+      // (`e9c2b4b` is where those six live): every one of them resumes into a
+      // region that yields nothing further, so the residue lands on the same
+      // number either way. The case named 'a clipped element whose SPAN would
+      // parse as another element' exists for that and nothing else — its
+      // overrun span contains octets that parse as a well-formed element, so a
+      // resuming walk consumes them and the residue moves. A coupled oracle is
+      // what made a weak case list invisible: with both sides moving together,
+      // no blob could ever have failed, so nobody would have found out the
+      // blobs proved nothing.
+      //
+      // THAT SENTENCE USED TO CITE THAT CASE BY ORDINAL, and it was wrong on
+      // the day it was written: it said "the seventh case below" about the
+      // case sitting SIXTH, because the two new cases went in mid-list while
+      // the sentence was drafted against the six-blob version. An ordinal is
+      // not a reference, it is an arithmetic result nobody recomputes — which
+      // is why every list in this work stream is cited by name now, and why
+      // the guard scans this file.
       //
       // The case list is now total over every walker edit this file's header
       // names — PARTIAL-YIELD, SKIP-AND-RESUME, LOOSE-LOOP-GUARD and
       // DROP-ZERO-LENGTH: run this test alone against each and each goes red.
       //
-      // Every expectation below is a CONSTANT. Seven come from the blob's own
-      // construction — a well-formed prefix plus a deliberate tail, so the
-      // expected residue is the tail's length by definition and cannot be
-      // re-derived from the implementation. The last is a hand-derived number,
-      // shown with its working, because that blob's structure is emergent.
+      // Every expectation below is a CONSTANT. All but the last come from the
+      // blob's own construction — a well-formed prefix plus a deliberate tail,
+      // so the expected residue is the tail's length by definition and cannot
+      // be re-derived from the implementation. The last, the counting blob, is
+      // a hand-derived number shown with its working, because that blob's
+      // structure is emergent.
       const List<int> tail3 = <int>[11, 5, 0x01]; // declares 5, one octet given
       const List<int> tail2 = <int>[7, 200]; // declares 200, none given
       const List<int> tail1 = <int>[11]; // half a header

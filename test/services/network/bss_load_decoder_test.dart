@@ -22,9 +22,14 @@
 // `bss_load_ordinal_reference_guard_test.dart` reads BOTH blocks and fails the
 // build unless they name the same members. Insert a fifth outcome over there and
 // this list goes red instead of going quietly incomplete — which is what the
-// previous version of it, a prose sentence listing four names, would have done.
+// previous version of it, a prose sentence listing the names, would have done.
 //
-// Entry shape is load-bearing: a NAME at three spaces, its gloss at five.
+// Entry shape is load-bearing: a NAME at three spaces, its gloss at five. Every
+// line here indented two spaces or more is read as an entry and then judged, so
+// a wrong dash or a wrong indent fails by name rather than dropping out of the
+// set — and the block may not get shorter than four without a deliberate edit
+// to the guard's floor. Set equality alone cannot see both copies losing the
+// same member.
 //
 //   ABSENT — this AP does not advertise BSS Load.
 //   NOTHING TO READ — this device handed us no information elements at all.

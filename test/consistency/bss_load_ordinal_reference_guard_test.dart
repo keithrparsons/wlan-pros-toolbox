@@ -10,142 +10,330 @@
 // sentences elsewhere kept addressing the old scheme. Not one character of
 // either sentence changed, and both now asserted something false.
 //
-// WHY IT WAS REWRITTEN, which is the more useful history. The first version of
-// this guard forbade a SYNTAX: a regex per defect, each copied from the way the
-// defect happened to be spelled last time. Round 5 defeated four of six
+// WHY IT WAS REWRITTEN TWICE, which is the more useful history.
+//
+// The FIRST version forbade a SYNTAX: a regex per defect, each copied from the
+// way the defect happened to be spelled last time. Round 5 defeated four of six
 // end-to-end mutations against it. Renumbering the whole honesty contract with
 // `1)` instead of `1.` passed every test — one punctuation character. So did
-// `step 2` in place of `rule 2`, because the noun was not in the list. So did
-// wrapping `precedence rule` / newline / `2 above`, because the scanner worked
-// per line. And a sixth mutation turned the build RED on the ordinary English
-// sentence "the two test cases below", which is the failure that actually
-// matters: a guard authors have to write around is a guard authors delete.
+// `step 2` in place of `rule 2`, because the noun was not in the list. And a
+// sixth mutation turned the build RED on the ordinary English sentence "the two
+// test cases below", which is the failure that actually matters: a guard authors
+// have to write around is a guard authors delete.
 //
 // A GUARD THAT FORBIDS A SYNTAX IS DEFEATED BY A SYNONYM. A GUARD THAT ASSERTS A
-// PROPERTY IS NOT. That is Vera's finding and it is the shape of this rewrite:
+// PROPERTY IS NOT. That is Vera's round-5 finding, and the second version acted
+// on it: the contract check became a PRESENCE assertion over named entries, the
+// mirror check became a set equality, and the count check began VERIFYING a
+// stated count instead of forbidding it.
 //
-//   * The contract check is now a PRESENCE assertion. It reads the honesty
-//     contract's entries BY NAME and requires each label to be a bare
-//     upper-case name. `1. ABSENT`, `1) ABSENT`, `(1) ABSENT`, `I. ABSENT` and
-//     `1 ABSENT` all fail on the same assertion, because none of them is a name
-//     — there is no numeral spelling left to enumerate.
-//   * The mirror check is set equality. The decoder names the outcomes; the
-//     decoder's test file lists them; this guard fails unless the two sets are
-//     identical. An absence assertion is satisfied by the absence of everything,
-//     including by a scanner that found nothing. A set equality is not.
-//   * The count check VERIFIES instead of forbidding. A sentence saying "four
-//     outcomes" is true today and is allowed to say so; it goes red when a fifth
-//     entry appears in the contract block. The old rule forbade the true
-//     sentence and had to hand-carve exceptions for ordinary English, which is
-//     how it came to fail on "two test cases".
-//   * Prose is scanned per PARAGRAPH, not per line, so a line wrap between the
-//     noun and the numeral no longer hides a citation.
+// ROUND 6 DEFEATED THAT ONE TOO, in a way worth stating exactly, because it is
+// the lesson this file now exists to carry:
 //
-// SCOPE, STATED SO NOBODY MISTAKES IT FOR MORE. This is a text check over two
-// files. It does not read English. What it does NOT catch, enumerated because an
-// unbounded claim about a guard is the thing that got flagged last round:
+//   A GUARD THAT ASSERTS A PROPERTY STILL HAS TO PARSE THE THING IT ASSERTS THE
+//   PROPERTY OF, AND A PARSER IS AN ENUMERATION.
+//
+// The entry regex read `NAME — prose` at exactly three spaces with exactly an em
+// dash. A fifth outcome written with an ASCII hyphen, or at four spaces, was not
+// REJECTED — it was never seen. The contract set stayed at four, the mirror set
+// stayed at four, the set equality held, and the build was green over a mirror
+// that had silently become incomplete. Reformat an EXISTING entry in both files
+// and the guard quietly narrowed to three of four outcomes and would then have
+// called a true "four outcomes" sentence an error. The precedence block had the
+// same hole one layer down: its step regex read `N.`, so a step written `7)` was
+// invisible and the decoder's claim that the build fails on an unnamed step was
+// false. A PARSER THAT SKIPS SILENTLY CONVERTS EVERY DOWNSTREAM ASSERTION INTO A
+// CLAIM ABOUT A SMALLER SET, AND REPORTS IT IN THE SAME GREEN.
+//
+// So every check below is built the same way, and the shape is general:
+//
+//   * PARSE LOOSELY, JUDGE STRICTLY. A line that is shaped like an entry is
+//     always READ as one; whether it is well formed is a separate, loud
+//     assertion. A regex that refuses to match a malformed entry reports it as
+//     MISSING, which is a weaker failure and a more confusing one.
+//   * EVERY CANDIDATE LINE IS ACCOUNTED FOR. Inside a block, a line is prose (no
+//     indent), an entry (indented, above the continuation level), or a
+//     continuation (at the continuation level). An indented line that cannot be
+//     read as an entry is a FAILURE, not a skip — and a continuation line that
+//     reads like an entry head is one too, which is what closes the
+//     re-indentation evasion.
+//   * THE FLOOR IS ON WHAT WAS READ, NOT ON WHAT PASSED, and every list has one.
+//     [_kContractFloor] and its siblings are LOWER BOUNDS, not a third copy of
+//     the list: they exist so that deleting a member is a deliberate edit here
+//     rather than a silent shrink there. A round-6 mutation deleted an outcome
+//     from BOTH files and the old guard stayed green, because set equality holds
+//     over two sets that lost the same member.
+//   * THE PATTERNS ARE PROVEN ABLE TO FIRE. All five prose regexes matched ZERO
+//     live sites in the guarded files when round 6 measured them, so nothing in
+//     the suite demonstrated they could produce a nonzero. The fixture table at
+//     the bottom of this file is that demonstration: every phrasing that must
+//     fire, and every ordinary-English phrasing that must not, asserted in both
+//     directions.
+//
+// SCOPE, STATED SO NOBODY MISTAKES IT FOR MORE. This is a text check over four
+// files. It does not read English. Two halves with two different scopes:
+//
+//   * THE ORDINAL CHECK runs over all four files in [_ordinalScanned]. It needs
+//     no knowledge of the contract, so keeping it on two files was what let a
+//     live false ordinal sit in `ie_parser_test.dart` through two gate rounds:
+//     "the seventh case below" described the SIXTH. Round 5 repaired one instance
+//     of that class by hand without grepping for the class, which is the mistake
+//     this widening exists to stop repeating.
+//   * THE COUNT CHECK runs only over [_countScanned], the two BSS Load files,
+//     because it verifies a stated number against the honesty contract's real
+//     size and running that over an unrelated list would be a category error.
+//
+// What it does NOT catch, enumerated because an unbounded claim about a guard is
+// the thing that got flagged in round 5:
 //
 //   * a spelled-out ordinal in a shape not listed (`the penultimate rule`, `the
 //     last case`, `the one before ABSENT`);
-//   * a citation using a noun outside [_listNouns] (`the third bullet`);
+//   * a citation using a noun outside [_citableNouns] (`the third bullet`);
+//   * `noun + number` over a noun in [_citableNouns] but not [_indexedNouns].
+//     The two sets differ deliberately and round 6 measured why: `states four
+//     outcomes`, `answers 200`, `point five percent` and `reading two octets`
+//     all turned the build RED under one shared set, in a byte decoder whose
+//     entire subject is reading octets. Those words are VERBS and MEASUREMENTS
+//     here, not list members. `the second state` is still caught, because a
+//     determiner and an ordinal in front of it remove the ambiguity;
+//   * `reading`/`readings` as a citable noun at all — it names an INSTANCE
+//     ([BssLoadReading]), not a contract member. It is still counted by
+//     [_statedInstanceCount] when an enumerating word marks the phrase;
 //   * a positional citation with no determiner. [_ordinalByPosition] requires
-//     `the`/`this`/`that` because without it the pattern fired on "insert a
-//     fifth outcome", which ADDS a member rather than citing one and is the most
-//     natural way to write the sentence this guard exists to protect;
-//   * a bare count over an instance noun. "two readings" is not checked, because
-//     `bss_load_decoder_test.dart` legitimately says "Two readings that compare
-//     equal cannot be told apart downstream". "four different readings" IS
-//     checked — see [_instanceNouns] and [_enumerating];
+//     one because without it the pattern fired on "insert a fifth outcome",
+//     which ADDS a member rather than citing one. The determiner set now
+//     includes possessives — round 6 walked "the contract's second outcome" and
+//     "its third branch" straight past the round-5 set;
+//   * an ordinal inside DOUBLE QUOTES, which is a MENTION rather than a use.
+//     `ie_parser_test.dart` documents its own repair with the sentence
+//     `the paragraph below used to say "Edit 3"`, and a guard that turns the
+//     build red on the record of its own fix is a guard that gets deleted
+//     ([[feedback_guard_must_not_penalise_the_trace]]). Backticks are NOT
+//     suppressed, so a backticked ordinal still fires;
 //   * a stated count using a noun outside [_contractNouns] and [_instanceNouns],
 //     or one that happens to equal the contract's size while counting something
-//     else entirely;
-//   * anything at all in a third file — `ie_parser_test.dart` carries its own
-//     numbered list and had a LIVE `Edit 3` citation into it five lines below
-//     the list, which round 5 recorded as latent. It was repaired by hand rather
-//     than by widening this guard: the count check is about the BSS Load honesty
-//     contract specifically, and running it over an unrelated list would be a
-//     category error.
+//     else entirely. THIS IS LIVE AND KNOWN: `bss_load_decoder.dart` carries a
+//     bullet list of walk outcomes that is a DIFFERENT list from the honesty
+//     contract and coincidentally also had four members. Its sentence used to
+//     state that count; the count was removed rather than covered, because
+//     teaching this check to verify `things` against the contract's size would
+//     have made a sentence about one list pass on the size of another;
+//   * a stated count with more than four words between the number and the noun;
+//     any count whose nearest preceding number word is a different one — "two
+//     of the four outcomes" is read as a claim about `four`; and any count with
+//     an intervening PLURAL NOUN, because that noun re-heads the phrase. All
+//     three exclusions were forced by ordinary sentences, and the third by a
+//     sentence in this very file: "a sentence in the two BSS Load files states
+//     a count" is `two … states`, and `states` is a verb there;
+//   * anything at all in a fifth file.
 //
-// It guards the mistake that actually happened, in the two files it happened in,
-// and the file it guards says so at the claim rather than only here.
+// It guards the mistake that actually happened, in the files it happened in, and
+// the files it guards say so at the claim rather than only here.
 //
-// Build: Felix 2026-08-01, round 4 findings. Rewritten 2026-08-01 from Vera's
-// round-5 H1 / M1 / M2 / M3 and her graduation candidate, "a guard that forbids
-// a syntax is defeated by a synonym; a guard that asserts a property is not."
+// Build: Felix 2026-08-01, round 4 findings. Rewritten from Vera's round-5
+// H1/M1/M2/M3, and again from her round-6 H1/H2/H3/M1/M2/M3/L1/L2.
 
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// The decoder that owns the honesty contract.
-const String _decoderPath = 'lib/services/network/bss_load_decoder.dart';
+// ── The guarded files ────────────────────────────────────────────────────────
 
-/// Its test file, which mirrors the contract's member names.
-const String _decoderTestPath =
-    'test/services/network/bss_load_decoder_test.dart';
+/// A file this guard reads, with the evidence that the read produced the RIGHT
+/// file. A guard whose finding is partly an absence must first show it was
+/// holding something.
+class _GuardedFile {
+  const _GuardedFile(this.path, this.token, this.minTokenHits);
 
-/// The two files whose prose is scanned. Deliberately not three — see SCOPE.
-const List<String> _guardedFiles = <String>[_decoderPath, _decoderTestPath];
+  /// Repo-relative path.
+  final String path;
 
-// ── Block anchors ────────────────────────────────────────────────────────────
-// Each block is opened and closed by a phrase that survives the guard's own fix.
-// A missing anchor is a LOUD failure, never a clean scan of an empty range.
+  /// A substring that any real version of this file contains many times.
+  final String token;
 
-const String _contractOpen = '── HONESTY CONTRACT';
-const String _contractClose = 'IS THE ONE THAT KEEPS BEING OVER-CLAIMED';
-const String _mirrorOpen = '── OUTCOMES, MIRRORED FROM THE DECODER';
-const String _mirrorClose = 'Only ABSENT says anything about the AP';
-const String _precedenceOpen = 'Precedence, in order.';
-const String _precedenceClose = 'The blob is walked twice';
+  /// How many lines must contain [token] before a zero from this file means
+  /// anything.
+  final int minTokenHits;
+}
+
+const _GuardedFile _decoder = _GuardedFile(
+  'lib/services/network/bss_load_decoder.dart',
+  'BSS Load',
+  3,
+);
+const _GuardedFile _decoderTest = _GuardedFile(
+  'test/services/network/bss_load_decoder_test.dart',
+  'BSS Load',
+  3,
+);
+const _GuardedFile _ieParser = _GuardedFile(
+  'lib/services/network/ie_parser.dart',
+  'nformationElement',
+  3,
+);
+const _GuardedFile _ieParserTest = _GuardedFile(
+  'test/services/network/ie_parser_test.dart',
+  'nformationElement',
+  3,
+);
+
+/// Files whose prose may not cite a numbered list by ordinal. Four, because the
+/// ordinal check needs nothing from the contract — see SCOPE.
+const List<_GuardedFile> _ordinalScanned = <_GuardedFile>[
+  _decoder,
+  _decoderTest,
+  _ieParser,
+  _ieParserTest,
+];
+
+/// Files whose stated counts are verified against the honesty contract's size.
+/// Two, because that check is about THIS contract specifically.
+const List<_GuardedFile> _countScanned = <_GuardedFile>[_decoder, _decoderTest];
+
+// ── Block anchors and shapes ─────────────────────────────────────────────────
+
+/// A named list living inside a comment block, with the anchors that bound it
+/// and the indentation that separates an entry from the prose continuing it.
+///
+/// [continuationIndent] is the load-bearing number: below it a line is an ENTRY
+/// and must parse as one; at or above it a line is prose continuing the entry
+/// above, and must NOT read like an entry head. Both halves are asserted, which
+/// is what makes re-indentation loud instead of invisible.
+class _NamedBlock {
+  const _NamedBlock({
+    required this.open,
+    required this.close,
+    required this.continuationIndent,
+    required this.floor,
+  });
+
+  final String open;
+  final String close;
+  final int continuationIndent;
+
+  /// The minimum number of entries this block may contain. A LOWER BOUND, not a
+  /// copy of the list. See the header: a shrink must be a deliberate edit here.
+  final int floor;
+}
+
+/// The honesty contract in `bss_load_decoder.dart`: four outcomes today.
+const _NamedBlock _contractBlock = _NamedBlock(
+  open: '── HONESTY CONTRACT',
+  close: 'IS THE ONE THAT KEEPS BEING OVER-CLAIMED',
+  continuationIndent: 5,
+  floor: _kContractFloor,
+);
+
+/// Its mirror in `bss_load_decoder_test.dart`. Same floor, because the two are
+/// asserted equal anyway — a floor on only one of them is a floor on neither.
+const _NamedBlock _mirrorBlock = _NamedBlock(
+  open: '── OUTCOMES, MIRRORED FROM THE DECODER',
+  close: 'Only ABSENT says anything about the AP',
+  continuationIndent: 5,
+  floor: _kContractFloor,
+);
+
+/// The precedence list in `decodeBssLoad`'s doc comment: six steps today. It
+/// KEEPS its numbers, because there the order is the content — what is enforced
+/// is that every step also carries a NAME.
+const _NamedBlock _precedenceBlock = _NamedBlock(
+  open: 'Precedence, in order.',
+  close: 'The blob is walked twice',
+  continuationIndent: 6,
+  floor: 6,
+);
+
+/// Today's contract size. A lower bound on both the contract and its mirror.
+const int _kContractFloor = 4;
+
+/// The indentation of ordinary prose inside a comment: one space after the
+/// marker, this codebase's house style. Anything indented further, and below the
+/// block's continuation level, is an ENTRY and must parse as one.
+const int _kProseIndent = 1;
 
 // ── Entry shape ──────────────────────────────────────────────────────────────
 
-/// One entry of a named list: a comment marker, exactly three spaces, a label,
-/// then an em dash. Prose continuing an entry is indented five, so it cannot be
-/// mistaken for a new entry even when it contains an em dash of its own.
+/// An entry head, captured LOOSELY on purpose: any non-space run, then a
+/// separator, then a space.
 ///
-/// The label is captured LOOSELY on purpose. A renumbered entry
-/// (`//   1. ABSENT — …`) still matches here and yields the label `1. ABSENT`,
-/// which then fails [_bareName] with a message naming the offender. A regex that
-/// refused to match it would instead have reported the entry as MISSING, which
-/// is a weaker failure and a more confusing one.
-final RegExp _contractEntry = RegExp(r'^\s*//+\s{3}(\S.*?)\s+—\s');
+/// THE SEPARATOR SET IS WIDE AND THE JUDGEMENT IS NARROW. Round 6 added a fifth
+/// outcome written `OVERFLOW - …` with an ASCII hyphen and the em-dash-only
+/// regex did not reject it, it did not SEE it: the entry dropped out of the set,
+/// set equality still held between two equally incomplete sets, and the build
+/// was green. A malformed entry must be read and then judged, never skipped.
+final RegExp _entryHead = RegExp(r'^(\S.*?)\s+[—–:-]\s');
 
-/// A label that is a NAME and nothing else: upper-case words joined by spaces or
-/// hyphens. `ABSENT`, `NOTHING TO READ` and `CLIPPED-ELSEWHERE` pass. `1.
-/// ABSENT`, `1) ABSENT`, `(1) ABSENT`, `1 ABSENT` and `I. ABSENT` do not, and
-/// neither does a sentence.
-final RegExp _bareName = RegExp(r'^[A-Z]+(?:[ -][A-Z]+)*$');
+/// A label that is a NAME and nothing else: upper-case words joined by spaces,
+/// with digits allowed only after a hyphen. `ABSENT`, `NOTHING TO READ`,
+/// `CLIPPED-ELSEWHERE` and `CLIPPED-11` pass. `1. ABSENT`, `1) ABSENT`,
+/// `(1) ABSENT`, `1 ABSENT`, `I. ABSENT`, `ABSENT 2` and a sentence do not.
+///
+/// ONE DEFINITION FOR BOTH BLOCKS. Round 6 found the contract and the precedence
+/// list disagreeing about what a name is — the contract permitted `NOTHING TO
+/// READ` while the precedence list rejected `WALK TAIL` as unnamed, and reported
+/// a two-word name as no name at all.
+final RegExp _bareName = RegExp(r'^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+|\s[A-Z][A-Z0-9]*)*$');
 
-/// A first word made only of roman-numeral letters, which is the one numbering
-/// scheme [_bareName] would otherwise accept (`II ABSENT`).
-final RegExp _romanFirstWord = RegExp(r'^[IVXLCDM]+$');
+/// A well-formed roman numeral, used to catch the one numbering scheme
+/// [_bareName] would otherwise accept (`I ABSENT`, `II NOTHING TO READ`).
+///
+/// VALIDITY ALONE IS NOT ENOUGH, and round 6 proved it: `ID MISMATCH` was
+/// rejected as a roman numeral, and `MID`, `MIX`, `DC` and `CIVIC` collide the
+/// same way. A first word is a NUMBERING only when it is a valid numeral AND its
+/// value is the entry's own position. `MIX` at position four is a name; `IV` at
+/// position four is a number.
+final RegExp _romanNumeral =
+    RegExp(r'^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$');
 
-/// A numbered step of the precedence list, which KEEPS its numbers because there
-/// the order is the content. What is enforced is that every step also carries a
-/// NAME, so that anything citing it from elsewhere has a handle that survives an
-/// insertion.
-final RegExp _precedenceStep = RegExp(r'^\s*///\s+\d+\.\s');
-final RegExp _namedPrecedenceStep =
-    RegExp(r'^\s*///\s+\d+\.\s+([A-Z][A-Z0-9-]*)\s+—\s');
+const Map<String, int> _romanDigits = <String, int>{
+  'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000,
+};
+
+/// The value of [word] as a roman numeral, or null when it is not one.
+int? _romanValue(String word) {
+  if (word.isEmpty || !_romanNumeral.hasMatch(word)) return null;
+  int total = 0;
+  for (int i = 0; i < word.length; i++) {
+    final int current = _romanDigits[word[i]]!;
+    final int next =
+        i + 1 < word.length ? _romanDigits[word[i + 1]]! : 0;
+    total += current < next ? -current : current;
+  }
+  return total;
+}
+
+/// A precedence step head: `N.` then a name. The number is required — order is
+/// the content there — and so is the name.
+final RegExp _precedenceHead = RegExp(r'^(\d+)\.\s+(.+)$');
 
 // ── Prose checks ─────────────────────────────────────────────────────────────
 
-/// Nouns that name a member of a numbered list. A citation is one of these
-/// followed by a numeral or a spelled-out number.
-///
-/// `step` is here because the decoder's own precedence paragraph teaches the
-/// reader that word, and a guard that forbids `rule 2` while the file itself
-/// says "step" has left the door it was built to close standing open.
-const List<String> _listNouns = <String>[
+/// Nouns that can name a member of a numbered list when a determiner and an
+/// ordinal sit in front of them: "the second state", "its third branch". The
+/// determiner removes the verb reading, so this set can be wide.
+const List<String> _citableNouns = <String>[
   'case', 'rule', 'outcome', 'state', 'step', 'item', 'branch', 'point',
-  'entry', 'clause', 'reason', 'answer', 'reading', 'precedence', 'edit',
+  'entry', 'clause', 'reason', 'answer', 'precedence', 'edit', 'bullet',
+];
+
+/// The narrower set for `noun + number` citations (`rule 2`, `case three`).
+///
+/// EVERY WORD MISSING FROM HERE WAS MEASURED, NOT GUESSED. Under one shared set
+/// the build went RED on "the paragraph states four outcomes", "the endpoint
+/// answers 200", "a point five percent difference" and "reading two octets
+/// little-endian" — four ordinary sentences in a byte decoder, none of them
+/// citing anything. `state`, `answer`, `point` and `reason` are verbs or
+/// measurements in this register; `reading` names an instance. A guard authors
+/// have to write around is a guard authors delete.
+const List<String> _indexedNouns = <String>[
+  'case', 'rule', 'outcome', 'step', 'item', 'branch', 'entry', 'clause',
+  'precedence', 'edit', 'bullet',
 ];
 
 /// Nouns the honesty contract's members have actually been called, across every
-/// revision of these two files: `outcomes` today, `states`, `answers` and
-/// `cases` in the versions the gate rounds were run against. A count in front of
-/// one of these is CHECKED against the contract's real size — not forbidden.
+/// revision of these files: `outcomes` today, `states`, `answers` and `cases` in
+/// the versions the gate rounds were run against. A count in front of one of
+/// these is CHECKED against the contract's real size — not forbidden.
 const List<String> _contractNouns = <String>[
   'states', 'outcomes', 'answers', 'cases',
 ];
@@ -156,8 +344,8 @@ const List<String> _contractNouns = <String>[
 /// not a miscount of the contract.
 ///
 /// Counted only when the phrase carries a word that marks it as an enumeration
-/// of the contract ("four DIFFERENT readings"), which is the shape the stale
-/// sentences actually took. Bare "two readings" is left alone.
+/// of the contract ("four DIFFERENT readings"). Bare "two readings" is left
+/// alone.
 const List<String> _instanceNouns = <String>['readings', 'results', 'branches'];
 
 /// The words that turn an instance noun into an enumeration of the contract.
@@ -167,23 +355,32 @@ const List<String> _enumerating = <String>[
 
 /// Words that, sitting between the number and the noun, say the phrase is not
 /// counting the contract. "the two test cases below" is ordinary English in a
-/// test file and must not turn the build red — the guard is worth nothing if
-/// authors learn to route around it.
+/// test file and must not turn the build red.
+///
+/// This is the one hand-authored exception list left in the guard, and it is
+/// old-shaped. It sits on a VERIFY rule, so abusing it costs a missed check
+/// rather than a false block — which is the only reason it is tolerable.
 const List<String> _notTheContract = <String>[
   'test', 'tests', 'edge', 'corner', 'switch', 'vector', 'vectors', 'use',
 ];
 
-/// `two`..`ten`. `one` is excluded: "the one place byte order is decided" is
-/// prose about something else, and a contract with one member is not the failure
-/// mode this guards.
+/// `two`..`ten`. `one` is excluded from COUNTS: "the one place byte order is
+/// decided" is prose about something else, and a contract with one member is not
+/// the failure mode this guards.
 const Map<String, int> _numberWords = <String, int>{
   'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
   'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
 };
 
-/// The alternation used by the citation patterns. Built from the lists above so
-/// a noun is added in exactly one place.
-final String _listNounsAlt = _listNouns.join('|');
+/// Determiners that make a positional phrase a CITATION rather than an addition.
+/// A citation is definite ("the fifth outcome", "the contract's second
+/// outcome"); an addition is indefinite ("a fifth outcome"). `a` and `an` are
+/// deliberately absent.
+const String _determinersAlt =
+    "the|that|this|these|those|its|our|their|his|her|my|your|said|[A-Za-z]+'s";
+
+final String _citableNounsAlt = _citableNouns.join('|');
+final String _indexedNounsAlt = _indexedNouns.join('|');
 final String _contractNounsAlt = _contractNouns.join('|');
 final String _instanceNounsAlt = _instanceNouns.join('|');
 
@@ -196,46 +393,66 @@ const String _positionsAlt =
 
 /// `case 3`, `rule 2`, `step 4`.
 final RegExp _ordinalByDigit =
-    RegExp('\\b($_listNounsAlt)s?\\s+\\d+\\b', caseSensitive: false);
+    RegExp('\\b($_indexedNounsAlt)s?\\s+\\d+\\b', caseSensitive: false);
 
 /// `case three`, `rule two` — the same citation spelled out.
 final RegExp _ordinalByWord = RegExp(
-  '\\b($_listNounsAlt)s?\\s+(one|$_numbersAlt)\\b',
+  '\\b($_indexedNounsAlt)s?\\s+(one|$_numbersAlt)\\b',
   caseSensitive: false,
 );
 
-/// `the second rule`, `that third case` — the same citation inverted.
-///
-/// THE DETERMINER IS REQUIRED, and the reason is on the record: without it this
-/// pattern fired on "insert a fifth outcome over there", which describes ADDING
-/// a member rather than citing one, and is the single most natural way to write
-/// the sentence this whole guard exists to protect. A citation is definite ("the
-/// fifth outcome"); an addition is indefinite ("a fifth outcome"). The residual
-/// is a bare "cite fifth rule", which is not English anyone writes.
+/// `the second rule`, `that third case`, `the contract's second outcome`.
 final RegExp _ordinalByPosition = RegExp(
-  '\\b(the|that|this)\\s+($_positionsAlt)\\s+($_listNounsAlt)s?\\b',
+  '\\b($_determinersAlt)\\s+($_positionsAlt)\\s+($_citableNounsAlt)s?\\b',
   caseSensitive: false,
 );
 
-/// A stated count of the contract's members, with up to two words between the
-/// number and the noun so "four different answers" is seen.
+/// The maximum number of words allowed between the number and the noun it
+/// counts. Round 6 walked "seven clearly quite distinct outcomes" past a bound
+/// of two. Widening is safe only because of [_nearestNumberWins].
+const int _kCountGap = 4;
+
+/// A stated count of the contract's members.
 final RegExp _statedCount = RegExp(
-  '\\b($_numbersAlt)[\\s-]+((?:[\\w-]+[\\s-]+){0,2}?)($_contractNounsAlt)\\b',
+  '\\b($_numbersAlt)[\\s-]+((?:[\\w-]+[\\s-]+){0,$_kCountGap}?)($_contractNounsAlt)\\b',
   caseSensitive: false,
 );
 
-/// The same count, over an instance noun, and only when an [_enumerating] word
+/// The same count over an instance noun, and only when an [_enumerating] word
 /// says the phrase is counting the contract. At least one word must sit between
 /// the number and the noun, because that word is what does the marking.
 final RegExp _statedInstanceCount = RegExp(
-  '\\b($_numbersAlt)[\\s-]+((?:[\\w-]+[\\s-]+){1,2}?)($_instanceNounsAlt)\\b',
+  '\\b($_numbersAlt)[\\s-]+((?:[\\w-]+[\\s-]+){1,$_kCountGap}?)($_instanceNounsAlt)\\b',
   caseSensitive: false,
 );
 
-/// Real Dart switch syntax, which is code rather than a reference. There is none
-/// in either file today; the exclusion exists so adding a switch does not force
-/// someone to weaken the rule.
+/// Real Dart switch syntax, which is code rather than a reference.
 final RegExp _switchCase = RegExp(r'^\s*case\s+\d+\s*:');
+
+/// Closed-class words that end in `s` without being plural nouns. English
+/// function words are a closed class, which is what makes listing them a rule
+/// rather than a whitelist of bug spellings.
+const Set<String> _functionWordsEndingInS = <String>{
+  'these', 'those', 'this', 'its', 'his', 'hers', 'ours', 'theirs', 'yours',
+  'as', 'is', 'was', 'has', 'thus', 'plus', 'less', 'always', 'perhaps',
+};
+
+/// True when [word], sitting between a number and a counted noun, is itself the
+/// plural noun the number is really counting.
+///
+/// WHY THIS EXISTS, and it was learned on a sentence written three minutes
+/// earlier. Widening the word gap to four made "a sentence in the two BSS Load
+/// files states a count" match as `two … states`, because `states` is one of
+/// the nouns the contract's members have been called AND a third-person verb.
+/// The head of that phrase is `files`. An intervening plural noun re-heads the
+/// phrase, so the counted noun after it is not what the number counts.
+bool _reHeadsThePhrase(String word) {
+  if (word.length < 4) return false;
+  if (!word.endsWith('s')) return false;
+  if (word.endsWith('ss') || word.endsWith('ous')) return false;
+  if (_functionWordsEndingInS.contains(word)) return false;
+  return !_enumerating.contains(word);
+}
 
 // ── Machinery ────────────────────────────────────────────────────────────────
 
@@ -267,12 +484,25 @@ class _LineStart {
   final int lineNumber;
 }
 
-/// True for a line whose content is a comment.
-bool _isComment(String line) => line.trimLeft().startsWith('//');
+/// The comment marker at the head of a line, if there is one.
+final RegExp _commentMarker = RegExp(r'^/{2,}');
 
-/// Strips the comment marker so the joined paragraph reads as prose.
-String _commentBody(String line) =>
-    line.trimLeft().replaceFirst(RegExp(r'^/{2,}'), '').trim();
+/// A comment line split into the indentation INSIDE the comment and its body.
+/// Returns null for a line that is not a comment.
+///
+/// The indent is what separates an entry from the prose continuing it, so it is
+/// measured after the marker, not before it.
+({int indent, String body})? _commentParts(String line) {
+  final String trimmed = line.trimLeft();
+  final Match? marker = _commentMarker.matchAsPrefix(trimmed);
+  if (marker == null) return null;
+  final String rest = trimmed.substring(marker.end);
+  int indent = 0;
+  while (indent < rest.length && rest[indent] == ' ') {
+    indent++;
+  }
+  return (indent: indent, body: rest.trim());
+}
 
 /// Splits [lines] into scannable units: each run of consecutive non-empty
 /// comment lines becomes one paragraph; every other line stands alone, so a
@@ -292,18 +522,18 @@ List<_Paragraph> _paragraphs(List<String> lines) {
 
   for (int i = 0; i < lines.length; i++) {
     final String line = lines[i];
-    if (_isComment(line)) {
-      final String body = _commentBody(line);
+    final ({int indent, String body})? parts = _commentParts(line);
+    if (parts != null) {
       // An empty comment line is a paragraph break in this codebase's house
       // style, and joining across one would invent adjacencies that are not in
       // the prose.
-      if (body.isEmpty) {
+      if (parts.body.isEmpty) {
         flush();
         continue;
       }
       if (buffer.isNotEmpty) buffer.write(' ');
       starts.add(_LineStart(buffer.length, i + 1));
-      buffer.write(body);
+      buffer.write(parts.body);
       continue;
     }
     flush();
@@ -314,27 +544,52 @@ List<_Paragraph> _paragraphs(List<String> lines) {
   return out;
 }
 
+/// The `[start, end)` spans of double-quoted runs in [text].
+///
+/// A citation inside quotation marks is a MENTION, not a use — the sentence is
+/// reporting what some other text said, which is exactly what the record of a
+/// repair looks like. Unpaired quotes yield no span, so nothing is suppressed by
+/// accident.
+List<({int start, int end})> _quotedSpans(String text) {
+  final List<({int start, int end})> spans = <({int start, int end})>[];
+  int? open;
+  for (int i = 0; i < text.length; i++) {
+    if (text[i] != '"') continue;
+    if (open == null) {
+      open = i;
+    } else {
+      spans.add((start: open, end: i + 1));
+      open = null;
+    }
+  }
+  return spans;
+}
+
+bool _isQuoted(List<({int start, int end})> spans, int start, int end) =>
+    spans.any((({int start, int end}) s) => start >= s.start && end <= s.end);
+
 /// Reads a file and proves the read produced real content before any absence
 /// assertion is believed.
 ///
 /// THIS IS NOT CEREMONY. An md5 comparison in this same work stream reported
 /// SAME twice, over the digest of an empty string. A guard whose finding is an
 /// absence must first show it was holding something.
-List<String> _readGuardedFile(String path) {
-  final File file = File(path);
-  expect(file.existsSync(), isTrue, reason: '$path not found');
-  final List<String> lines = file.readAsLinesSync();
+List<String> _readGuardedFile(_GuardedFile file) {
+  final File handle = File(file.path);
+  expect(handle.existsSync(), isTrue, reason: '${file.path} not found');
+  final List<String> lines = handle.readAsLinesSync();
   expect(
     lines.length,
     greaterThan(200),
-    reason: '$path read as ${lines.length} lines — the guard is looking at the '
-        'wrong thing, not at a clean file',
+    reason: '${file.path} read as ${lines.length} lines — the guard is looking '
+        'at the wrong thing, not at a clean file',
   );
   expect(
-    lines.where((String l) => l.contains('BSS Load')).length,
-    greaterThan(3),
-    reason: '$path does not read like BSS Load source; a zero from this guard '
-        'would mean nothing',
+    lines.where((String l) => l.contains(file.token)).length,
+    greaterThan(file.minTokenHits),
+    reason: '${file.path} does not read like the file this guard was written '
+        'for ("${file.token}" is nearly absent); a zero from it would mean '
+        'nothing',
   );
   return lines;
 }
@@ -344,125 +599,347 @@ List<String> _readGuardedFile(String path) {
 ({int open, int close}) _blockRange(
   List<String> lines,
   String path,
-  String open,
-  String close,
+  _NamedBlock block,
 ) {
-  final int start = lines.indexWhere((String l) => l.contains(open));
+  final int start = lines.indexWhere((String l) => l.contains(block.open));
   expect(
     start,
     isNot(-1),
-    reason: '$path: the block anchored to "$open" was not found. Without it '
-        'this check would scan an empty range and report clean.',
+    reason: '$path: the block anchored to "${block.open}" was not found. '
+        'Without it this check would scan an empty range and report clean.',
   );
-  final int end = lines.indexWhere((String l) => l.contains(close), start + 1);
+  final int end =
+      lines.indexWhere((String l) => l.contains(block.close), start + 1);
   expect(
     end,
     isNot(-1),
-    reason: '$path: no closing anchor ("$close") after "$open"; scanning to EOF '
-        'would make this check meaningless.',
+    reason: '$path: no closing anchor ("${block.close}") after "${block.open}"; '
+        'scanning to EOF would make this check meaningless.',
   );
   expect(
     end - start,
     greaterThan(4),
-    reason: '$path: the block between "$open" and "$close" read as '
-        '${end - start} lines — too short to be the real list',
+    reason: '$path: the block between "${block.open}" and "${block.close}" read '
+        'as ${end - start} lines — too short to be the real list',
   );
   return (open: start, close: end);
 }
 
-/// Every `NAME — …` entry inside an anchored block, in order.
-List<({int line, String label})> _entriesIn(
+/// One parsed entry, and everything the guard could not parse alongside it.
+class _BlockReading {
+  _BlockReading(this.entries, this.unreadable);
+
+  /// `(line, label)` for every entry that was READ. Whether each label is
+  /// well formed is judged separately and loudly.
+  final List<({int line, String label})> entries;
+
+  /// Lines inside the block that are shaped like an entry and could not be read
+  /// as one, or that sit at continuation indent while reading like an entry
+  /// head. Each one is a hole in every downstream assertion.
+  final List<String> unreadable;
+}
+
+/// Reads every line of an anchored block and accounts for ALL of them.
+///
+/// This is the round-6 fix and the reason the file's header says a parser is an
+/// enumeration. The old reader ran one regex per line and silently skipped
+/// whatever did not match, so an entry written with the wrong dash or the wrong
+/// indent was not rejected — it was never seen, and every assertion downstream
+/// became a claim about a smaller set.
+_BlockReading _readBlock(
   List<String> lines,
+  String path,
+  _NamedBlock block,
   ({int open, int close}) range,
 ) {
-  final List<({int line, String label})> out = <({int line, String label})>[];
+  final List<({int line, String label})> entries =
+      <({int line, String label})>[];
+  final List<String> unreadable = <String>[];
+
   for (int i = range.open; i < range.close; i++) {
-    final RegExpMatch? m = _contractEntry.firstMatch(lines[i]);
-    if (m != null) out.add((line: i + 1, label: m.group(1)!));
+    final ({int indent, String body})? parts = _commentParts(lines[i]);
+    if (parts == null || parts.body.isEmpty) continue;
+    // Prose introducing or closing the block sits one space off the marker.
+    if (parts.indent <= _kProseIndent) continue;
+
+    if (parts.indent < block.continuationIndent) {
+      final RegExpMatch? head = _entryHead.firstMatch(parts.body);
+      if (head == null) {
+        unreadable.add(
+          'L${i + 1}: "${parts.body}" is indented like an entry but could not '
+          'be read as one. An entry is "LABEL — prose"; a separator this parser '
+          'does not know means the entry is INVISIBLE, not rejected.',
+        );
+        continue;
+      }
+      entries.add((line: i + 1, label: head.group(1)!));
+      continue;
+    }
+
+    // At or past the continuation level: prose continuing the entry above. It
+    // must not read like an entry head, or an author can hide a member by
+    // pressing space twice.
+    final RegExpMatch? head = _entryHead.firstMatch(parts.body);
+    if (head != null && _bareName.hasMatch(head.group(1)!)) {
+      unreadable.add(
+        'L${i + 1}: "${parts.body}" sits at continuation indent '
+        '(${parts.indent} spaces) but reads as an entry head. Entries live '
+        'above ${block.continuationIndent} spaces; at or below that they are '
+        'invisible to every check in this file.',
+      );
+    }
   }
-  return out;
+
+  return _BlockReading(entries, unreadable);
+}
+
+/// Reads a block and asserts it was read COMPLETELY, then returns its entries.
+_BlockReading _readBlockOrFail(
+  List<String> lines,
+  _GuardedFile file,
+  _NamedBlock block,
+) {
+  final ({int open, int close}) range = _blockRange(lines, file.path, block);
+  final _BlockReading reading = _readBlock(lines, file.path, block, range);
+
+  expect(
+    reading.unreadable,
+    isEmpty,
+    reason: 'Lines inside the block anchored to "${block.open}" in '
+        '${file.path} could not be accounted for. This is the round-6 defect: '
+        'what a parser cannot read, it passes in silence, and every assertion '
+        'below it quietly becomes a claim about a smaller list:\n  '
+        '${reading.unreadable.join('\n  ')}',
+  );
+  expect(
+    reading.entries.length,
+    greaterThanOrEqualTo(block.floor),
+    reason: '${file.path}: only ${reading.entries.length} entries were read '
+        'from the block anchored to "${block.open}" (lines '
+        '${range.open + 1}..${range.close + 1}), and the floor is '
+        '${block.floor}. Either a member was deleted — which set equality '
+        'CANNOT see when both copies lose it — or the block was reformatted. '
+        'If the list genuinely got shorter, lower the floor here deliberately.',
+  );
+  return reading;
 }
 
 /// The contract's member names, derived from the decoder rather than restated
 /// here. This guard must not become a third place the list lives.
-Set<String> _contractNames(List<String> decoderLines) => _entriesIn(
-      decoderLines,
-      _blockRange(decoderLines, _decoderPath, _contractOpen, _contractClose),
-    ).map((({int line, String label}) e) => e.label).toSet();
+Set<String> _contractNames(List<String> decoderLines) =>
+    _readBlockOrFail(decoderLines, _decoder, _contractBlock)
+        .entries
+        .map((({int line, String label}) e) => e.label)
+        .toSet();
+
+/// Every label that is not a bare NAME, with the reason.
+List<String> _malformedLabels(List<({int line, String label})> entries) {
+  final List<String> out = <String>[];
+  for (int i = 0; i < entries.length; i++) {
+    final ({int line, String label}) e = entries[i];
+    if (!_bareName.hasMatch(e.label)) {
+      out.add('L${e.line}: "${e.label}" is not a bare upper-case NAME');
+      continue;
+    }
+    final String first = e.label.split(RegExp(r'[ -]')).first;
+    final int? roman = _romanValue(first);
+    if (roman != null && roman == i + 1) {
+      out.add(
+        'L${e.line}: "${e.label}" starts with the roman numeral for its own '
+        'position ($roman), which is a numbering scheme wearing a name',
+      );
+    }
+  }
+  return out;
+}
+
+/// Every ordinal citation and false count in [lines].
+///
+/// Factored out so the fixture table at the bottom of this file can drive it
+/// directly. All five patterns matched ZERO live sites when round 6 measured
+/// them, and a check with no live subject and no fixture is a check nobody has
+/// ever seen produce a nonzero.
+List<String> _proseOffences(
+  List<String> lines, {
+  required int contractSize,
+  required bool checkCounts,
+}) {
+  final List<String> offences = <String>[];
+
+  for (final _Paragraph p in _paragraphs(lines)) {
+    final List<({int start, int end})> quoted = _quotedSpans(p.text);
+
+    for (final RegExp r in <RegExp>[
+      _ordinalByDigit,
+      _ordinalByWord,
+      _ordinalByPosition,
+    ]) {
+      for (final RegExpMatch m in r.allMatches(p.text)) {
+        if (_isQuoted(quoted, m.start, m.end)) continue;
+        offences.add(
+          'L${p.lineAt(m.start)} cites a list by ordinal: "${m[0]}" — name the '
+          'member instead. An ordinal has no grep handle, so an insertion '
+          'falsifies this sentence in silence.',
+        );
+      }
+    }
+
+    if (!checkCounts) continue;
+
+    // VERIFY, DO NOT FORBID. "four outcomes" is true today and is allowed to
+    // say so; it turns red the moment a fifth entry appears in the contract
+    // block. The predecessor forbade the true sentence outright, which meant
+    // hand-carving exceptions for ordinary English — and it was one of those
+    // carve-outs that made it fail on "two test cases".
+    for (final RegExpMatch m in <RegExpMatch>[
+      ..._statedCount.allMatches(p.text),
+      ..._statedInstanceCount.allMatches(p.text),
+    ]) {
+      if (_isQuoted(quoted, m.start, m.end)) continue;
+      final List<String> between = (m.group(2) ?? '')
+          .toLowerCase()
+          .split(RegExp(r'[\s-]+'))
+          .where((String w) => w.isNotEmpty)
+          .toList();
+      if (between.any(_notTheContract.contains)) continue;
+      // THE NEAREST NUMBER WINS. Widening the gap to four words made "two of
+      // the four outcomes" match twice — once truthfully on `four`, once
+      // falsely on `two`. The number that counts a noun is the one closest to
+      // it, so a match with another number word in between is not a count.
+      if (between.any(_numberWords.containsKey) ||
+          between.any((String w) => RegExp(r'^\d+$').hasMatch(w))) {
+        continue;
+      }
+      // An intervening plural noun is the real head of the phrase — see
+      // [_reHeadsThePhrase]. Without this, widening the gap turns `states` and
+      // `answers` back into the verbs they also are.
+      if (between.any(_reHeadsThePhrase)) continue;
+      if (_instanceNouns.contains(m.group(3)!.toLowerCase()) &&
+          !between.any(_enumerating.contains)) {
+        continue;
+      }
+      final int stated = _numberWords[m.group(1)!.toLowerCase()]!;
+      if (stated == contractSize) continue;
+      offences.add(
+        'L${p.lineAt(m.start)} states a count that is not the contract\'s '
+        'size: "${m[0]}" says $stated, the honesty contract has $contractSize '
+        'entries.',
+      );
+    }
+  }
+
+  return offences;
+}
+
+/// [_proseOffences] over a single sentence, for the fixture table.
+List<String> _scanSentence(String sentence) => _proseOffences(
+      <String>['// $sentence'],
+      contractSize: 4,
+      checkCounts: true,
+    );
+
+// ── Fixtures ─────────────────────────────────────────────────────────────────
+
+/// Sentences that MUST turn the build red, each one an end-to-end mutation that
+/// defeated some version of this guard.
+const List<String> _mustFire = <String>[
+  'See precedence rule 2 above for the ordering.',
+  'See precedence step 2 above for the ordering.',
+  'The second rule is the one that matters.',
+  "This is the contract's second outcome, restated.",
+  'The decoder reaches its third branch here.',
+  'The third case below is the one that matters.',
+  'See case 3 above for the shape.',
+  'There are seven outcomes in the contract above.',
+  'There are seven clearly quite distinct outcomes in the contract above.',
+  'The decoder produces seven different readings in all.',
+  'Rule two is where the order is decided.',
+];
+
+/// Sentences that MUST NOT turn the build red. Every one of these was either
+/// written by hand in these files or produced a false red in a gate round; a
+/// guard authors have to write around is a guard authors delete.
+const List<String> _mustNotFire = <String>[
+  'The two test cases below are ordinary prose about this file.',
+  'Insert a fifth outcome over there and this list goes red.',
+  'Two readings that compare equal cannot be told apart downstream.',
+  'Reading two octets little-endian is the whole of it.',
+  'The first reading of the field is the one that counts.',
+  'The paragraph above states four outcomes and is right to.',
+  'Two of the four outcomes are about our own read.',
+  'The endpoint answers 200 for a healthy host.',
+  'A point five percent difference is below the noise floor.',
+  'A sentence in the two BSS Load files states a count of these outcomes.',
+  'There are four outcomes in the contract above.',
+  'The four outcomes are named, never numbered.',
+  'Three edge cases cover the boundary.',
+  'The list used to say "Edit 3", which is a reference with no grep handle.',
+  'The one place byte order is decided is here.',
+];
 
 void main() {
   group('BSS Load contracts are named, never numbered', () {
-    test('the honesty contract is a list of NAMES', () {
-      final List<String> lines = _readGuardedFile(_decoderPath);
-      final ({int open, int close}) range =
-          _blockRange(lines, _decoderPath, _contractOpen, _contractClose);
-      final List<({int line, String label})> entries = _entriesIn(lines, range);
+    test('the honesty contract is a list of NAMES, and ALL of them were read',
+        () {
+      final List<String> lines = _readGuardedFile(_decoder);
+      final _BlockReading reading =
+          _readBlockOrFail(lines, _decoder, _contractBlock);
 
-      // POSITIVE, and this is the whole point of the rewrite. The old check
-      // asserted the block LACKED a numeral, which one punctuation character
-      // defeated. This asserts the block CONTAINS named entries, and an empty
-      // or mis-anchored scan fails here instead of passing as clean.
       expect(
-        entries.length,
-        greaterThanOrEqualTo(3),
-        reason: 'only ${entries.length} entries found in the honesty contract '
-            '(lines ${range.open + 1}..${range.close + 1}). Either an outcome '
-            'was deleted, or the block was reformatted and its entries are no '
-            'longer "NAME — prose" at three spaces. Reformatting is the likelier '
-            'one, and it is exactly how an absence check comes to pass over a '
-            'block it can no longer read.',
-      );
-
-      final List<String> notNames = <String>[];
-      for (final ({int line, String label}) e in entries) {
-        final String first = e.label.split(RegExp(r'[ -]')).first;
-        if (!_bareName.hasMatch(e.label) || _romanFirstWord.hasMatch(first)) {
-          notNames.add('L${e.line}: "${e.label}"');
-        }
-      }
-      expect(
-        notNames,
+        _malformedLabels(reading.entries),
         isEmpty,
         reason: 'These contract entries are not bare upper-case NAMES. A '
-            'numeral, a parenthesis or a roman numeral in front of the name '
-            'reintroduces the one handle nothing can grep: insert an outcome '
-            'and every later ordinal changes, silently falsifying any sentence '
-            'that cited one. The outcomes already have names; cite those:\n  '
-            '${notNames.join('\n  ')}',
+            'numeral, a parenthesis or a positional roman numeral in front of '
+            'the name reintroduces the one handle nothing can grep: insert an '
+            'outcome and every later ordinal changes, silently falsifying any '
+            'sentence that cited one. The outcomes already have names; cite '
+            'those:\n  ${_malformedLabels(reading.entries).join('\n  ')}',
       );
 
-      final Set<String> unique =
-          entries.map((({int line, String label}) e) => e.label).toSet();
+      final Set<String> unique = reading.entries
+          .map((({int line, String label}) e) => e.label)
+          .toSet();
       expect(
         unique.length,
-        entries.length,
+        reading.entries.length,
         reason: 'two contract entries share a name, so a citation of that name '
-            'is ambiguous: ${entries.map((({int line, String label}) e) => e.label).toList()}',
+            'is ambiguous: '
+            '${reading.entries.map((({int line, String label}) e) => e.label).toList()}',
       );
     });
 
     test('the decoder test file mirrors the contract member for member', () {
-      final List<String> decoder = _readGuardedFile(_decoderPath);
-      final List<String> tests = _readGuardedFile(_decoderTestPath);
+      final List<String> decoder = _readGuardedFile(_decoder);
+      final List<String> tests = _readGuardedFile(_decoderTest);
 
       final Set<String> contract = _contractNames(decoder);
-      final Set<String> mirror = _entriesIn(
-        tests,
-        _blockRange(tests, _decoderTestPath, _mirrorOpen, _mirrorClose),
-      ).map((({int line, String label}) e) => e.label).toSet();
+      final _BlockReading mirrorReading =
+          _readBlockOrFail(tests, _decoderTest, _mirrorBlock);
+      final Set<String> mirror = mirrorReading.entries
+          .map((({int line, String label}) e) => e.label)
+          .toSet();
 
       expect(contract, isNotEmpty, reason: 'no contract names were derived');
+      expect(
+        _malformedLabels(mirrorReading.entries),
+        isEmpty,
+        reason: 'the mirror carries a label that is not a bare NAME:\n  '
+            '${_malformedLabels(mirrorReading.entries).join('\n  ')}',
+      );
 
       // SET EQUALITY, which is what closes the hole a naming convention alone
       // leaves open. Naming protects a REFERENCE — grep the name and you find
       // every mention. It does not protect an ENUMERATION: a list of four names
       // stays syntactically perfect when a fifth outcome is added, and simply
       // becomes incomplete. Only comparing the two sets catches that.
+      //
+      // What it does NOT catch is both copies losing the SAME member, which is
+      // why both blocks carry a floor.
       expect(
         mirror,
         contract,
-        reason: 'The outcome list in $_decoderTestPath no longer matches the '
-            'honesty contract in $_decoderPath.\n'
+        reason: 'The outcome list in ${_decoderTest.path} no longer matches the '
+            'honesty contract in ${_decoder.path}.\n'
             '  only in the contract: ${contract.difference(mirror)}\n'
             '  only in the mirror:   ${mirror.difference(contract)}\n'
             'Add the new outcome to the mirror, or fix the name. An '
@@ -471,107 +948,113 @@ void main() {
       );
     });
 
-    test('every precedence step carries a NAME', () {
-      final List<String> lines = _readGuardedFile(_decoderPath);
-      final ({int open, int close}) range = _blockRange(
-        lines,
-        _decoderPath,
-        _precedenceOpen,
-        _precedenceClose,
-      );
+    test('every precedence step is numbered in order AND named', () {
+      final List<String> lines = _readGuardedFile(_decoder);
+      final _BlockReading reading =
+          _readBlockOrFail(lines, _decoder, _precedenceBlock);
 
-      final List<String> unnamed = <String>[];
-      int steps = 0;
-      for (int i = range.open; i < range.close; i++) {
-        if (!_precedenceStep.hasMatch(lines[i])) continue;
-        steps++;
-        if (!_namedPrecedenceStep.hasMatch(lines[i])) {
-          unnamed.add('L${i + 1}: ${lines[i].trim()}');
+      final List<String> malformed = <String>[];
+      final List<int> numbers = <int>[];
+      for (final ({int line, String label}) e in reading.entries) {
+        final RegExpMatch? head = _precedenceHead.firstMatch(e.label);
+        if (head == null) {
+          malformed.add(
+            'L${e.line}: "${e.label}" is not "N. NAME". The precedence list '
+            'KEEPS its numbers — order is the content there — so the number is '
+            'required and so is the shape: `7)` is a step this guard cannot '
+            'read, which is how an unnamed step passed round 6.',
+          );
+          continue;
+        }
+        numbers.add(int.parse(head.group(1)!));
+        final String name = head.group(2)!;
+        if (!_bareName.hasMatch(name)) {
+          malformed.add(
+            'L${e.line}: step ${head.group(1)} has no NAME ("$name"). The name '
+            'is the only handle another paragraph can cite that survives an '
+            'insertion. Give it a short upper-case one; two words are fine.',
+          );
         }
       }
 
       expect(
-        steps,
-        greaterThanOrEqualTo(4),
-        reason: 'only $steps numbered steps found in the precedence list — the '
-            'anchors resolved but the list did not, so this check proved '
-            'nothing',
+        malformed,
+        isEmpty,
+        reason: 'The precedence list in ${_decoder.path} is malformed:\n  '
+            '${malformed.join('\n  ')}',
       );
       expect(
-        unnamed,
-        isEmpty,
-        reason: 'The precedence list KEEPS its numbers, because there the order '
-            'is the content. What it may not do is leave a step without a NAME: '
-            'the name is the only handle another paragraph can cite that '
-            'survives an insertion. Give each step a short upper-case name:\n  '
-            '${unnamed.join('\n  ')}',
+        numbers,
+        List<int>.generate(numbers.length, (int i) => i + 1),
+        reason: 'the precedence steps are numbered $numbers, which is not '
+            '1..${numbers.length}. Order is the content in that block, so a '
+            'gap or a repeat there is a real defect, not a typo.',
       );
     });
 
-    for (final String path in _guardedFiles) {
-      test('$path — no ordinal citation, and every stated count is true', () {
-        final List<String> lines = _readGuardedFile(path);
-        final int contractSize = _contractNames(_readGuardedFile(_decoderPath))
-            .length;
-        expect(contractSize, greaterThanOrEqualTo(3),
+    for (final _GuardedFile file in _ordinalScanned) {
+      final bool counts = _countScanned.contains(file);
+      test(
+        '${file.path} — no ordinal citation'
+        '${counts ? ', and every stated count is true' : ''}',
+        () {
+          final List<String> lines = _readGuardedFile(file);
+          final int contractSize = _contractNames(_readGuardedFile(_decoder))
+              .length;
+          expect(
+            contractSize,
+            greaterThanOrEqualTo(_kContractFloor),
             reason: 'the contract size could not be derived, so no count in '
-                '$path can be checked against it');
+                '${file.path} can be checked against it',
+          );
 
-        final List<String> offences = <String>[];
-        for (final _Paragraph p in _paragraphs(lines)) {
-          for (final RegExp r in <RegExp>[
-            _ordinalByDigit,
-            _ordinalByWord,
-            _ordinalByPosition,
-          ]) {
-            for (final RegExpMatch m in r.allMatches(p.text)) {
-              offences.add(
-                'L${p.lineAt(m.start)} cites a list by ordinal: "${m[0]}" — '
-                'name the member instead. An ordinal has no grep handle, so an '
-                'insertion falsifies this sentence in silence.',
-              );
-            }
-          }
-
-          // VERIFY, DO NOT FORBID. "four outcomes" is true today and is allowed
-          // to say so; it turns red the moment a fifth entry appears in the
-          // contract block. The predecessor forbade the true sentence outright,
-          // which meant hand-carving exceptions for ordinary English — and it
-          // was one of those carve-outs that made it fail on "two test cases".
-          for (final RegExpMatch m in <RegExpMatch>[
-            ..._statedCount.allMatches(p.text),
-            ..._statedInstanceCount.allMatches(p.text),
-          ]) {
-            final List<String> between = (m.group(2) ?? '')
-                .toLowerCase()
-                .split(RegExp(r'[\s-]+'))
-                .where((String w) => w.isNotEmpty)
-                .toList();
-            if (between.any(_notTheContract.contains)) continue;
-            if (_instanceNouns.contains(m.group(3)!.toLowerCase()) &&
-                !between.any(_enumerating.contains)) {
-              continue;
-            }
-            final int stated = _numberWords[m.group(1)!.toLowerCase()]!;
-            if (stated == contractSize) continue;
-            offences.add(
-              'L${p.lineAt(m.start)} states a count that is not the contract\'s '
-              'size: "${m[0]}" says $stated, the honesty contract has '
-              '$contractSize entries.',
-            );
-          }
-        }
-
-        expect(
-          offences,
-          isEmpty,
-          reason: 'Sentences in $path address a numbered list by ordinal, or '
-              'miscount the honesty contract. Both go stale in silence when a '
-              'member is inserted, because nothing greps for an ordinal — which '
-              'is exactly how round 4 shipped two false sentences without '
-              'changing a character of either:\n  ${offences.join('\n  ')}',
-        );
-      });
+          expect(
+            _proseOffences(
+              lines,
+              contractSize: contractSize,
+              checkCounts: counts,
+            ),
+            isEmpty,
+            reason: 'Sentences in ${file.path} address a numbered list by '
+                'ordinal, or miscount the honesty contract. Both go stale in '
+                'silence when a member is inserted, because nothing greps for '
+                'an ordinal — which is exactly how round 4 shipped two false '
+                'sentences without changing a character of either:\n  '
+                '${_proseOffences(lines, contractSize: contractSize, checkCounts: counts).join('\n  ')}',
+          );
+        },
+      );
     }
+
+    test('the prose checks can produce a nonzero, and stay quiet on English',
+        () {
+      // A ZERO FROM AN AUDIT IS ONLY MEANINGFUL IF THE AUDIT CAN PRODUCE A
+      // NONZERO. Round 6 measured all five patterns against both guarded files
+      // and found zero live subjects, so nothing in the suite had ever seen one
+      // fire. Both directions are asserted here, because a pattern that fires
+      // on everything is as useless as one that fires on nothing.
+      final List<String> missed = _mustFire
+          .where((String s) => _scanSentence(s).isEmpty)
+          .toList();
+      expect(
+        missed,
+        isEmpty,
+        reason: 'these sentences must turn the build RED and did not — every '
+            'one of them is an end-to-end mutation that defeated some version '
+            'of this guard:\n  ${missed.join('\n  ')}',
+      );
+
+      final List<String> overFired = _mustNotFire
+          .where((String s) => _scanSentence(s).isNotEmpty)
+          .map((String s) => '$s\n      -> ${_scanSentence(s).join('; ')}')
+          .toList();
+      expect(
+        overFired,
+        isEmpty,
+        reason: 'these sentences are ordinary English and must NOT turn the '
+            'build red. A guard authors have to write around is a guard '
+            'authors delete:\n  ${overFired.join('\n  ')}',
+      );
+    });
   });
 }
