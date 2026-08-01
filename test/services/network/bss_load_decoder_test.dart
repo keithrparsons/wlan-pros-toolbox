@@ -9,14 +9,17 @@
 //   2. Human units at the boundary. The raw octet is kept, and the percentage is
 //      converted (raw/255 and raw/31250) — a screen showing "utilization: 128"
 //      would be wrong AND plausible, which is the dangerous kind.
-//   3. The three states stay apart: ABSENT, UNAVAILABLE (bad length / Cisco
-//      variant), and a genuine ALL-ZERO reading are three different answers.
-//   4. Nothing throws, ever, on any byte sequence.
+//   3. The states stay apart: ABSENT (this AP does not advertise it), NOTHING
+//      PROVIDED (this device handed us no information elements), UNAVAILABLE
+//      (bad length / Cisco variant / the capture was cut), and a genuine
+//      ALL-ZERO reading are four different answers. Only ABSENT says anything
+//      about the AP, and every test that asserts it also asserts what it is not.
+//   4. Nothing throws, ever, on any byte sequence — including a null blob.
 //
 // Layout and constants are pinned in the decoder's header to Wireshark's
 // dissector at commit b1f51ff4 — read that before changing a number here.
 //
-// Build: Felix 2026-07-31.
+// Build: Felix 2026-08-01.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/bss_load_decoder.dart';
@@ -246,11 +249,17 @@ void main() {
       expect(reading.valueOrNull, isNull);
     });
 
-    test('an empty blob is absent', () {
+    test('an empty blob is NOT absent — nothing was read, so nothing is known',
+        () {
       final BssLoadReading reading = decodeBssLoad(<int>[]);
       expect(
         (reading as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.absent,
+        BssLoadUnavailableReason.noInformationElementsProvided,
+      );
+      expect(
+        reading.reason,
+        isNot(BssLoadUnavailableReason.absent),
+        reason: 'absent would claim this AP does not advertise BSS Load',
       );
     });
 
@@ -290,10 +299,12 @@ void main() {
       expect(reading.valueOrNull, isNull);
     });
 
-    test('decodeBssLoadOrNull returns null for absent AND for malformed', () {
-      expect(decodeBssLoadOrNull(_ssidIe('WLANPros')), isNull);
-      expect(decodeBssLoadOrNull(_ie(11, <int>[0x01, 0x02, 0x03])), isNull);
-      expect(decodeBssLoadOrNull(<int>[]), isNull);
+    test('decodeBssLoadOrNull returns null for every not-a-reading case', () {
+      expect(decodeBssLoadOrNull(_ssidIe('WLANPros')), isNull, reason: 'absent');
+      expect(decodeBssLoadOrNull(_ie(11, <int>[0x01, 0x02, 0x03])), isNull,
+          reason: 'malformedLength');
+      expect(decodeBssLoadOrNull(<int>[]), isNull, reason: 'empty blob');
+      expect(decodeBssLoadOrNull(null), isNull, reason: 'null blob');
     });
   });
 
@@ -593,7 +604,7 @@ void main() {
       // there and element 11 is beyond the cut entirely.
       final BssLoadUnavailable out =
           decodeBssLoad(advertisement().sublist(0, 15)) as BssLoadUnavailable;
-      expect(out.reason, BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(out.reason, BssLoadUnavailableReason.clippedWithoutSeeingElement11);
       expect(out.valueLength, isNull, reason: 'no element 11 was seen');
       expect(out.availableLength, isNull);
     });
@@ -604,7 +615,7 @@ void main() {
       // evidence the buffer was cut.
       final BssLoadUnavailable out =
           decodeBssLoad(advertisement().sublist(0, 17)) as BssLoadUnavailable;
-      expect(out.reason, BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(out.reason, BssLoadUnavailableReason.clippedWithoutSeeingElement11);
       expect(out.valueLength, isNull);
     });
 
@@ -616,7 +627,7 @@ void main() {
       final BssLoadUnavailable out =
           decodeBssLoad(<int>[..._ssidIe('WLANPros'), 11])
               as BssLoadUnavailable;
-      expect(out.reason, BssLoadUnavailableReason.clippedBeforeElement11);
+      expect(out.reason, BssLoadUnavailableReason.clippedWithoutSeeingElement11);
       expect(
         out.reason,
         isNot(BssLoadUnavailableReason.truncated),
@@ -641,7 +652,7 @@ void main() {
       expect((clean as BssLoadUnavailable).reason,
           BssLoadUnavailableReason.absent);
       expect((clipped as BssLoadUnavailable).reason,
-          BssLoadUnavailableReason.clippedBeforeElement11);
+          BssLoadUnavailableReason.clippedWithoutSeeingElement11);
       expect(clipped, isNot(clean));
       expect(clipped.hashCode, isNot(clean.hashCode));
     });
@@ -662,11 +673,17 @@ void main() {
       );
     });
 
-    test('an empty blob is absent, not a clip — nothing was cut', () {
+    test('an empty blob is not a clip either — nothing was cut, and nothing read',
+        () {
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[]) as BssLoadUnavailable;
       expect(
-        (decodeBssLoad(<int>[]) as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.absent,
+        out.reason,
+        BssLoadUnavailableReason.noInformationElementsProvided,
       );
+      expect(out.reason,
+          isNot(BssLoadUnavailableReason.clippedWithoutSeeingElement11));
+      expect(out.reason, isNot(BssLoadUnavailableReason.absent));
     });
 
     test('a decoded element 11 wins even when the blob is clipped after it', () {
@@ -691,6 +708,178 @@ void main() {
       ]) as BssLoadUnavailable;
       expect(out.reason, BssLoadUnavailableReason.malformedLength);
       expect(out.valueLength, 3);
+    });
+
+    test('a complete element 11 outranks a CLIPPED ELEMENT 11 at the tail', () {
+      // Precedence rule 2, on the one blob that can tell it apart from rule 3:
+      // both candidates are element 11, so a decoder that let the tail win would
+      // report the clipped one and every other test in this file would still
+      // pass. The complete element precedes the clipped tail by construction, so
+      // "the FIRST element 11 seen is the diagnosis" picks it.
+      final BssLoadUnavailable out = decodeBssLoad(<int>[
+        ..._ie(11, <int>[1, 2, 3]), // complete, malformedLength, declared 3
+        11, 5, 0x01, // clipped element 11, declares 5, one octet arrives
+      ]) as BssLoadUnavailable;
+
+      expect(out.reason, BssLoadUnavailableReason.malformedLength);
+      expect(out.valueLength, 3, reason: 'the COMPLETE element 11 declared 3');
+      expect(out.availableLength, isNull, reason: 'that element was whole');
+      expect(
+        out.reason,
+        isNot(BssLoadUnavailableReason.truncated),
+        reason: 'truncated would be the tail winning',
+      );
+    });
+  });
+
+  group('a platform that handed us nothing is not an AP that advertised nothing',
+      () {
+    // HIGH-1 from the 2026-08-01 round-3 re-gate. `absent` was documented in one
+    // place as a statement about the AP and in two others as the right answer
+    // when the platform gave us no bytes at all, and the enum had no member for
+    // the second. It is much wider than the iOS note suggested: `ApIeBlob.
+    // ieBytes` is a `Uint8List?` that is null on every non-macOS platform (no
+    // channel is wired) and on macOS whenever Location is unauthorized, Wi-Fi is
+    // off, or no scanned BSS matches the connected BSSID.
+    //
+    // The fix is not a doc: it is that BOTH spellings a caller would naturally
+    // write — passing the null through, or `?? const []` — now produce the
+    // honest answer. There is no way to reach `absent` from an empty hand.
+
+    test('a NULL blob reports the platform, never the AP', () {
+      final BssLoadUnavailable out =
+          decodeBssLoad(null) as BssLoadUnavailable;
+      expect(
+        out.reason,
+        BssLoadUnavailableReason.noInformationElementsProvided,
+      );
+      expect(
+        out.reason,
+        isNot(BssLoadUnavailableReason.absent),
+        reason: 'a device that cannot see IEs knows nothing about this AP',
+      );
+      expect(out.valueLength, isNull);
+      expect(out.availableLength, isNull);
+    });
+
+    test('the `?? const []` spelling of the same call agrees with it', () {
+      // The trap this member exists to close. A caller with a nullable blob and
+      // a non-nullable parameter writes exactly this, and it used to read
+      // `absent`.
+      const List<int>? fromPlatform = null;
+      expect(
+        decodeBssLoad(fromPlatform ?? const <int>[]),
+        decodeBssLoad(fromPlatform),
+        reason: 'both spellings of "we got nothing" must say the same thing',
+      );
+    });
+
+    test('nothing-provided and absent are DIFFERENT readings, not two names',
+        () {
+      // Value equality, so a caller cannot collapse them downstream even by
+      // accident — the same property `BssLoadUnavailable`'s `==` earned last
+      // round.
+      final BssLoadReading nothing = decodeBssLoad(null);
+      final BssLoadReading absent = decodeBssLoad(<int>[
+        ..._ssidIe('WLANPros'),
+        ..._ie(3, <int>[36]),
+      ]);
+      expect((absent as BssLoadUnavailable).reason,
+          BssLoadUnavailableReason.absent);
+      expect(nothing, isNot(absent));
+      expect(nothing.hashCode, isNot(absent.hashCode));
+    });
+
+    test('a blob that DID carry elements still earns absent', () {
+      // The other direction, and the one that stops the fix over-reaching: a
+      // decoder that answered `noInformationElementsProvided` for every
+      // no-element-11 blob would pass every test above and destroy the only
+      // reading that says anything about the AP.
+      final List<int> blob = <int>[
+        ..._ssidIe('WLANPros'),
+        ..._ie(1, <int>[0x82, 0x84]),
+        ..._ie(48, <int>[0x01, 0x00]),
+      ];
+      expect(informationElementWalkTail(blob).isComplete, isTrue);
+      expect(
+        (decodeBssLoad(blob) as BssLoadUnavailable).reason,
+        BssLoadUnavailableReason.absent,
+      );
+    });
+
+    test('a single zero-length element is enough to earn absent', () {
+      // The boundary between "we were handed no elements" and "we were handed
+      // elements, none of them element 11". One legal zero-length element 0 is
+      // two octets of real advertisement, so the walk yields something and the
+      // AP-facing reading is earned.
+      final List<int> blob = _ie(0, <int>[]);
+      expect(blob, hasLength(2));
+      expect(walkInformationElements(blob).length, 1);
+      expect(
+        (decodeBssLoad(blob) as BssLoadUnavailable).reason,
+        BssLoadUnavailableReason.absent,
+      );
+    });
+
+    test('a clip still outranks nothing-provided, because a clip saw octets',
+        () {
+      // A blob that is nothing BUT a clipped element yields no elements at all,
+      // so the "saw no elements" test alone would call it nothing-provided. It
+      // is not: octets arrived and were cut. Order matters, and this pins it.
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[3, 9, 0x24]) as BssLoadUnavailable;
+      expect(walkInformationElements(<int>[3, 9, 0x24]), isEmpty,
+          reason: 'no element survives the bounds check');
+      expect(
+        out.reason,
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+      );
+      expect(
+        out.reason,
+        isNot(BssLoadUnavailableReason.noInformationElementsProvided),
+        reason: 'bytes did arrive; they were cut',
+      );
+    });
+
+    test('a lone dangling octet is a clip, not nothing-provided', () {
+      // The one-octet residue: no element yielded, nothing declared, but a byte
+      // arrived. Same ordering question as above, reached a different way.
+      final BssLoadUnavailable out =
+          decodeBssLoad(<int>[11]) as BssLoadUnavailable;
+      expect(
+        out.reason,
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+      );
+      expect(out.reason,
+          isNot(BssLoadUnavailableReason.noInformationElementsProvided));
+    });
+
+    test('decodeBssLoadFromElements decides it the same way, in one place', () {
+      // Both entry points route through the same decision, so they cannot drift.
+      expect(
+        (decodeBssLoadFromElements(
+          const <InformationElement>[],
+          blobWalkedToEnd: true,
+        ) as BssLoadUnavailable)
+            .reason,
+        BssLoadUnavailableReason.noInformationElementsProvided,
+      );
+      expect(
+        (decodeBssLoadFromElements(
+          const <InformationElement>[],
+          blobWalkedToEnd: false,
+        ) as BssLoadUnavailable)
+            .reason,
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+        reason: 'a caller that does not know must not get an AP-facing answer',
+      );
+    });
+
+    test('null never throws, and is not decoded', () {
+      expect(() => decodeBssLoad(null), returnsNormally);
+      expect(() => decodeBssLoadOrNull(null), returnsNormally);
+      expect(decodeBssLoad(null).isDecoded, isFalse);
+      expect(decodeBssLoad(null).valueOrNull, isNull);
     });
   });
 
@@ -840,7 +1029,7 @@ void main() {
         blobWalkedToEnd: false,
       );
       expect((reading as BssLoadUnavailable).reason,
-          BssLoadUnavailableReason.clippedBeforeElement11);
+          BssLoadUnavailableReason.clippedWithoutSeeingElement11);
     });
 
     test('it still cannot report truncated, and does not pretend to', () {
@@ -1000,11 +1189,11 @@ void main() {
       // still ended mid-header, so it is not ABSENT either.
       expect(
         (decodeBssLoad(<int>[11]) as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.clippedBeforeElement11,
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
       );
       expect(
         (decodeBssLoad(<int>[0xFF]) as BssLoadUnavailable).reason,
-        BssLoadUnavailableReason.clippedBeforeElement11,
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
         reason: 'the dangling octet need not be 0x0B',
       );
       expect(decodeBssLoadOrNull(<int>[0xFF]), isNull);

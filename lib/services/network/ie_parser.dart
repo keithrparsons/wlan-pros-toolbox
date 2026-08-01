@@ -100,6 +100,22 @@ class TruncatedInformationElement {
   /// [declaredLength] — that is what made the walk stop.
   final int availableLength;
 
+  /// Value equality on all three fields.
+  ///
+  /// A tail is a diagnosis, and a diagnosis a caller cannot compare is a
+  /// diagnosis a caller cannot test, cache or de-duplicate. The sibling
+  /// `BssLoadUnavailable` learned this the expensive way: its equality turned
+  /// out to be load-bearing only after a gate found a field missing from it.
+  @override
+  bool operator ==(Object other) =>
+      other is TruncatedInformationElement &&
+      other.id == id &&
+      other.declaredLength == declaredLength &&
+      other.availableLength == availableLength;
+
+  @override
+  int get hashCode => Object.hash(id, declaredLength, availableLength);
+
   @override
   String toString() => 'TruncatedInformationElement(id: $id, '
       'declaredLength: $declaredLength, availableLength: $availableLength)';
@@ -135,6 +151,19 @@ class InformationElementWalkTail {
   /// simply have been cut off. A decoder must not report such an element as
   /// "not advertised".
   bool get isComplete => unconsumedOctets == 0;
+
+  /// Value equality on the residue AND on the clipped element, which is why
+  /// [TruncatedInformationElement] needed one too — without it, two tails
+  /// carrying different clipped elements would compare equal whenever their
+  /// residues matched.
+  @override
+  bool operator ==(Object other) =>
+      other is InformationElementWalkTail &&
+      other.unconsumedOctets == unconsumedOctets &&
+      other.truncatedElement == truncatedElement;
+
+  @override
+  int get hashCode => Object.hash(unconsumedOctets, truncatedElement);
 
   @override
   String toString() => 'InformationElementWalkTail('

@@ -38,6 +38,11 @@ List<int> _ie(int id, List<int> data) => <int>[id, data.length, ...data];
 /// An SSID element (ID 0) — realistic surrounding traffic in a blob.
 List<int> _ssid(String ssid) => _ie(0, ssid.codeUnits);
 
+/// An extended element: `[255][len][extId][...data]`. The extension id is the
+/// FIRST value octet and is counted in the declared length.
+List<int> _extIe(int extId, List<int> data) =>
+    <int>[kEidExtended, data.length + 1, extId, ...data];
+
 /// Byte sequences that must never throw, whatever a function does with them.
 /// Includes values outside byte range, which a platform channel handing up a
 /// plain `List<int>` (rather than a `Uint8List`) really can produce.
@@ -306,6 +311,108 @@ void main() {
     });
   });
 
+  group('findInformationElement — the EXTENDED (255) element branch', () {
+    // Recorded as a coverage boundary at the 2026-08-01 re-gate: replacing the
+    // `extId == null` path with a `throw` left every suite green, so no test
+    // reached this branch. Both production callers pass an `extId`
+    // (`windows_wifi_ffi.dart`), which makes it unreachable in the app today —
+    // but it is reachable through the public API, and an unasserted branch in
+    // the one walker four modules share is a gap, not a fact about production.
+
+    test('a matching extension id returns the data WITHOUT the ext-id byte', () {
+      // HE Operation is ext-id 36; the returned bytes must start after it, or
+      // every field offset in the caller's decoder is out by one.
+      final Uint8List blob = Uint8List.fromList(<int>[
+        ..._ssid('WLANPros'),
+        ..._extIe(36, <int>[0xF0, 0x0D]),
+      ]);
+      expect(findInformationElement(blob, kEidExtended, extId: 36),
+          <int>[0xF0, 0x0D]);
+    });
+
+    test('a 255 element with a DIFFERENT extension id is skipped, not returned',
+        () {
+      // The comment in the source says "skip and keep walking", and the second
+      // element proves the walk really does continue rather than returning null
+      // at the first 255.
+      final Uint8List blob = Uint8List.fromList(<int>[
+        ..._extIe(35, <int>[0xAA]), // EHT-era neighbour, not what we asked for
+        ..._extIe(36, <int>[0xBB, 0xCC]),
+      ]);
+      expect(findInformationElement(blob, kEidExtended, extId: 36),
+          <int>[0xBB, 0xCC]);
+      expect(findInformationElement(blob, kEidExtended, extId: 99), isNull);
+    });
+
+    test('asking for 255 with NO extId matches nothing, however many are there',
+        () {
+      // The branch the re-gate found unasserted. `extId: null` cannot identify
+      // an extended element — the id is in the value — so the honest answer is
+      // null rather than the first 255 element's bytes.
+      final Uint8List blob = Uint8List.fromList(<int>[
+        ..._extIe(36, <int>[0xF0]),
+        ..._extIe(35, <int>[0x0D]),
+      ]);
+      expect(findInformationElement(blob, kEidExtended), isNull);
+    });
+
+    test('a zero-length 255 element is skipped, and the real one still matches',
+        () {
+      // With no value octets there is no extension id to compare, so the empty
+      // element cannot match and the walk must carry on to the one that can.
+      final Uint8List blob = Uint8List.fromList(<int>[
+        kEidExtended, 0, // declares nothing
+        ..._extIe(36, <int>[0x77]),
+      ]);
+      expect(findInformationElement(blob, kEidExtended, extId: 36), <int>[0x77],
+          reason: 'the empty one is skipped, the real one still matches');
+      expect(findInformationElement(blob, kEidExtended, extId: 0), isNull,
+          reason: 'no ext id was read from the empty element');
+    });
+
+    test('a zero-length 255 element at the END never reads past the buffer', () {
+      // `len >= 1` in the source is a BOUNDS CHECK, not a formality, and the
+      // test above does not prove it: there, the octet after the empty element
+      // exists and merely fails to match, so relaxing the guard to `len >= 0`
+      // survives. Here the empty element is the last thing in the buffer, so
+      // the same relaxation indexes one past the end and THROWS — on bytes that
+      // came off the air, which is the one thing this module may never do.
+      final Uint8List trailing =
+          Uint8List.fromList(<int>[..._ssid('X'), kEidExtended, 0]);
+      expect(
+        () => findInformationElement(trailing, kEidExtended, extId: 36),
+        returnsNormally,
+      );
+      expect(findInformationElement(trailing, kEidExtended, extId: 36), isNull);
+
+      final Uint8List alone = Uint8List.fromList(<int>[kEidExtended, 0]);
+      expect(
+        () => findInformationElement(alone, kEidExtended, extId: 36),
+        returnsNormally,
+      );
+      expect(findInformationElement(alone, kEidExtended, extId: 36), isNull);
+    });
+
+    test('never throws on the EXTENDED path either, on any bytes', () {
+      // The file's existing never-throws case asks for element 11, so it never
+      // enters this branch at all. Same corpus, asked as an extended element.
+      for (final List<int> bytes in _neverThrows) {
+        final Uint8List blob =
+            Uint8List.fromList(bytes.map((int b) => b & 0xff).toList());
+        expect(
+          () => findInformationElement(blob, kEidExtended, extId: 36),
+          returnsNormally,
+          reason: 'find threw on $bytes with an extId',
+        );
+        expect(
+          () => findInformationElement(blob, kEidExtended),
+          returnsNormally,
+          reason: 'find threw on $bytes with no extId',
+        );
+      }
+    });
+  });
+
   group('informationElementWalkTail — did the walk reach the end?', () {
     test('a blob walked to its end is COMPLETE, with no truncated element', () {
       final InformationElementWalkTail tail =
@@ -389,28 +496,102 @@ void main() {
       expect(tail.truncatedElement!.availableLength, 2);
     });
 
-    test('unconsumedOctets equals the blob length minus what the walk consumed',
+    test('the residue is the tail the blob was BUILT with, across six shapes',
         () {
-      // The invariant the derivation rests on, checked against an independently
-      // computed sum rather than against the implementation's own arithmetic.
-      for (final List<int> blob in <List<int>>[
-        <int>[],
-        <int>[11],
-        <int>[..._ssid('WLANPros')],
-        <int>[..._ssid('WLANPros'), 11, 5, 0x01],
-        <int>[..._ssid('A'), ..._ie(3, <int>[36]), 7, 200],
-        List<int>.generate(255, (int i) => i),
-      ]) {
-        int consumed = 0;
-        for (final InformationElement e in walkInformationElements(blob)) {
-          consumed += 2 + e.bytes.length;
-        }
+      // WHY THE ORACLE IS A LITERAL AND NOT A SUM. This test used to compute its
+      // expectation as `blob.length - sum(2 + e.bytes.length)` over the walk,
+      // under a comment claiming an "independently computed sum". That is
+      // `informationElementWalkTail`'s own formula, character for character
+      // (`ie_parser.dart`, `consumed += _kIeHeaderOctets + ie.bytes.length`), so
+      // both sides moved together and the test was blind to exactly the class of
+      // change the invariant exists to catch. Demonstrated at the 2026-08-01
+      // re-gate: under a walker that skips a bad element and resumes, four other
+      // tests in this file go red and that one passed green.
+      //
+      // THE ORACLE WAS ONLY HALF OF IT, and fixing only the half that was
+      // reported would have left the test just as blind. With the literals in
+      // place, the six ORIGINAL blobs still all pass under that same mutant:
+      // every one of them resumes into a region that yields nothing further, so
+      // the residue lands on the same number either way. The seventh case below
+      // exists for that and nothing else — its overrun span contains octets that
+      // parse as a well-formed element, so a resuming walk consumes them and the
+      // residue moves. A coupled oracle is what made a weak case list
+      // invisible: with both sides moving together, no blob could ever have
+      // failed, so nobody would have found out the blobs proved nothing.
+      //
+      // The case list is now total over all four walker edits this file names:
+      // run this test alone against each of them and each one goes red.
+      //
+      // Every expectation below is a CONSTANT. Seven come from the blob's own
+      // construction — a well-formed prefix plus a deliberate tail, so the
+      // expected residue is the tail's length by definition and cannot be
+      // re-derived from the implementation. The last is a hand-derived number,
+      // shown with its working, because that blob's structure is emergent.
+      const List<int> tail3 = <int>[11, 5, 0x01]; // declares 5, one octet given
+      const List<int> tail2 = <int>[7, 200]; // declares 200, none given
+      const List<int> tail1 = <int>[11]; // half a header
+      // Declares 99 and overruns; the octets INSIDE its declared span parse as
+      // a well-formed SSID 'ABC'. A walk that skipped and resumed would consume
+      // five of these seven octets and report a residue of 2.
+      const List<int> tailResumable = <int>[11, 99, 0, 3, 0x41, 0x42, 0x43];
+
+      final List<(String, List<int>, int)> cases = <(String, List<int>, int)>[
+        ('empty blob', <int>[], 0),
+        ('whole blob, nothing cut', <int>[..._ssid('WLANPros')], 0),
+        ('one dangling octet', <int>[...tail1], tail1.length),
+        (
+          'a prefix plus a 3-octet clipped element',
+          <int>[..._ssid('WLANPros'), ...tail3],
+          tail3.length,
+        ),
+        (
+          'two whole elements plus a 2-octet clipped header',
+          <int>[..._ssid('A'), ..._ie(3, <int>[36]), ...tail2],
+          tail2.length,
+        ),
+        (
+          'a clipped element whose SPAN would parse as another element',
+          <int>[..._ssid('WLANPros'), ...tailResumable],
+          tailResumable.length,
+        ),
+        (
+          // A dropped zero-length element takes its two header octets out of
+          // the consumed count, so the residue moves. Without this case the
+          // fourth documented walker edit passes this test.
+          'a zero-length element still consumes its header',
+          <int>[..._ssid('A'), ..._ie(11, <int>[]), ...tail2],
+          tail2.length,
+        ),
+        // 0,1,2… walks as [0](len 1), [3](len 4), [9](len 10), [21](len 22),
+        // [45](len 46), [93](len 94) — ending at offset 189 — then [189] declares
+        // 190 with 64 octets left, which overruns. 255 - 189 = 66.
+        ('0..254 counting blob', List<int>.generate(255, (int i) => i), 66),
+      ];
+
+      for (final (String name, List<int> blob, int expected) in cases) {
         expect(
           informationElementWalkTail(blob).unconsumedOctets,
-          blob.length - consumed,
-          reason: 'residue disagrees with the walk on $blob',
+          expected,
+          reason: '$name: residue must be $expected',
         );
       }
+    });
+
+    test('the counting blob stops where the hand derivation says it does', () {
+      // The working behind the 66 above, asserted rather than trusted, so the
+      // literal in the previous test is checkable without re-running the walk in
+      // one's head. Also a second, independent grip on the same mutant class:
+      // a walk that skipped and resumed would not stop at element 189.
+      final List<int> blob = List<int>.generate(255, (int i) => i);
+      expect(
+        walkInformationElements(blob).map((InformationElement e) => e.id),
+        <int>[0, 3, 9, 21, 45, 93],
+      );
+      final TruncatedInformationElement clipped =
+          informationElementWalkTail(blob).truncatedElement!;
+      expect(clipped.id, 189, reason: 'the header at offset 189');
+      expect(clipped.declaredLength, 190);
+      expect(clipped.availableLength, 64, reason: '255 - 189 - 2');
     });
 
     test('id and declared length are masked to bytes', () {
@@ -433,6 +614,105 @@ void main() {
       expect(
         informationElementWalkTail(<int>[11, 5, 0x01]).toString(),
         allOf(contains('unconsumedOctets: 3'), contains('declaredLength: 5')),
+      );
+    });
+  });
+
+  group('the tail types compare BY VALUE, field by field', () {
+    // Both types shipped with `toString` and no `==`, so two structurally
+    // identical tails compared unequal. No consumer compared them yet, which
+    // made this the cheap moment: the sibling `BssLoadUnavailable` needed a
+    // gate to discover its own equality was load-bearing and short a field.
+    //
+    // Every field gets its OWN discriminating pair below. A test that only
+    // asserts "equal things are equal" survives dropping any field from `==`.
+
+    test('identical tails are equal, and hash the same', () {
+      final InformationElementWalkTail a =
+          informationElementWalkTail(<int>[..._ssid('WLANPros'), 11, 5, 0x01]);
+      final InformationElementWalkTail b =
+          informationElementWalkTail(<int>[..._ssid('WLANPros'), 11, 5, 0x01]);
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a.truncatedElement, b.truncatedElement);
+      expect(a.truncatedElement.hashCode, b.truncatedElement.hashCode);
+    });
+
+    test('a clipped element differs by ID alone', () {
+      expect(
+        const TruncatedInformationElement(
+            id: 11, declaredLength: 5, availableLength: 2),
+        isNot(const TruncatedInformationElement(
+            id: 12, declaredLength: 5, availableLength: 2)),
+      );
+    });
+
+    test('a clipped element differs by DECLARED length alone', () {
+      expect(
+        const TruncatedInformationElement(
+            id: 11, declaredLength: 5, availableLength: 2),
+        isNot(const TruncatedInformationElement(
+            id: 11, declaredLength: 4, availableLength: 2)),
+        reason: 'declared 5 and declared 4 are different diagnoses',
+      );
+    });
+
+    test('a clipped element differs by AVAILABLE length alone', () {
+      expect(
+        const TruncatedInformationElement(
+            id: 11, declaredLength: 5, availableLength: 2),
+        isNot(const TruncatedInformationElement(
+            id: 11, declaredLength: 5, availableLength: 3)),
+      );
+    });
+
+    test('a tail differs by RESIDUE alone, with no clipped element either side',
+        () {
+      expect(
+        const InformationElementWalkTail(
+            unconsumedOctets: 0, truncatedElement: null),
+        isNot(const InformationElementWalkTail(
+            unconsumedOctets: 1, truncatedElement: null)),
+        reason: 'complete and one-octet-cut must not compare equal',
+      );
+    });
+
+    test('a tail differs by its CLIPPED ELEMENT alone, at the same residue', () {
+      // The field that would go unnoticed: both tails have a residue of 4, so
+      // an `==` that compared only `unconsumedOctets` would call them equal.
+      final InformationElementWalkTail eleven =
+          informationElementWalkTail(<int>[..._ssid('X'), 11, 5, 0x01, 0x02]);
+      final InformationElementWalkTail three =
+          informationElementWalkTail(<int>[..._ssid('X'), 3, 5, 0x01, 0x02]);
+
+      expect(eleven.unconsumedOctets, three.unconsumedOctets,
+          reason: 'the residues are deliberately identical');
+      expect(eleven, isNot(three));
+      expect(eleven.hashCode, isNot(three.hashCode));
+    });
+
+    test('a null clipped element is not equal to a present one', () {
+      expect(
+        const InformationElementWalkTail(
+            unconsumedOctets: 2, truncatedElement: null),
+        isNot(const InformationElementWalkTail(
+          unconsumedOctets: 2,
+          truncatedElement: TruncatedInformationElement(
+              id: 11, declaredLength: 5, availableLength: 0),
+        )),
+      );
+    });
+
+    test('neither type equals a foreign object', () {
+      expect(
+        const TruncatedInformationElement(
+            id: 11, declaredLength: 5, availableLength: 2),
+        isNot('not a tail'),
+      );
+      expect(
+        const InformationElementWalkTail(
+            unconsumedOctets: 0, truncatedElement: null),
+        isNot(42),
       );
     });
   });
