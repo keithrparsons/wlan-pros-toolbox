@@ -16,6 +16,18 @@
 // TPUT_SYM, TPUT_MAX_MCS, TPUT_EFF, plus the bandwidth / GI / max-SS option
 // sets from updateTputOptions. Output uses fmt(n, 1) — fixed 1-decimal Mbps.
 //
+// WHERE THE MATH NOW LIVES (extracted 2026-07-31): the tables and the two rate
+// functions moved verbatim, value-for-value, to [WifiPhyRateService] in
+// `lib/services/network/wifi_phy_rate_service.dart`, so a second screen can
+// compute a PHY rate without reaching into this widget's statics. The full
+// PWA provenance travelled with them and lives in that file's header.
+//
+// The statics below are kept as THIN DELEGATES, not duplicates: the calculator
+// screen, the MCS-index screen's cross-check, and the existing tests all call
+// `ThroughputCalcScreen.<member>`, and there is exactly one definition of each
+// number (in the service). [WifiStd] is re-exported from this library so every
+// existing `import '.../throughput_calc_screen.dart'` still resolves it.
+//
 // Dependent options mirror updateTputOptions: changing the standard reclamps
 // bandwidth, MCS, spatial streams, and guard interval to that standard's valid
 // set (keeping the prior choice when it still fits, the PWA behavior).
@@ -27,12 +39,14 @@
 //   or symbol time.
 // - MCS above the standard's max → blank (PWA showError path).
 //
-// Pure, no network, no platform APIs. Math lives in static functions on the
-// public widget so it is unit-testable against the PWA values.
+// Pure, no network, no platform APIs. The math is unit-tested against the PWA
+// values twice over: directly on [WifiPhyRateService], and through the static
+// delegates on this widget that the pre-extraction tests still call.
 
 import 'package:flutter/material.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/wifi_phy_rate_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -42,112 +56,57 @@ import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 
-/// Wi-Fi standard, mirroring the PWA tput-std select (ht/vht/he/eht).
-enum WifiStd { ht, vht, he, eht }
+/// [WifiStd] moved to [WifiPhyRateService] with the math it belongs to. It is
+/// re-exported here so every existing importer of this screen (the MCS-index
+/// screen's cross-check test, the audit suite, this tool's own test) keeps
+/// resolving `WifiStd` from the same import it always used.
+export '../../../services/network/wifi_phy_rate_service.dart' show WifiStd;
 
 class ThroughputCalcScreen extends StatefulWidget {
   const ThroughputCalcScreen({super.key});
 
-  // ─── Constant tables (ports of app.js) ──────────────────────────────────────
+  // ─── Constant tables and math: DELEGATES to WifiPhyRateService ──────────────
+  //
+  // Every member below is an alias, not a copy. The one definition of each
+  // number lives in `lib/services/network/wifi_phy_rate_service.dart`, together
+  // with the PWA provenance. These aliases exist so the calculator screen, the
+  // MCS-index cross-check, and the existing tests keep their call sites
+  // (`ThroughputCalcScreen.maxMcs`, `.phyRateMbps(...)`, and so on) unchanged.
+  //
+  // Building something NEW? Call [WifiPhyRateService] directly. Do not add a
+  // new member here.
 
   /// Bits per symbol per MCS — Nbpsc · Rc (PWA MCS_BPS).
-  static const List<double> mcsBps = [
-    0.5,
-    1.0,
-    1.5,
-    2.0,
-    3.0,
-    4.0,
-    4.5,
-    5.0,
-    6.0,
-    6.6667,
-    7.5,
-    8.3333,
-    9.0,
-    10.0,
-  ];
+  static const List<double> mcsBps = WifiPhyRateService.mcsBps;
 
   /// Modulation label per MCS (PWA MCS_MOD).
-  static const List<String> mcsMod = [
-    'BPSK ½',
-    'QPSK ½',
-    'QPSK ¾',
-    '16-QAM ½',
-    '16-QAM ¾',
-    '64-QAM ⅔',
-    '64-QAM ¾',
-    '64-QAM ⅚',
-    '256-QAM ¾',
-    '256-QAM ⅚',
-    '1024-QAM ¾',
-    '1024-QAM ⅚',
-    '4096-QAM ¾',
-    '4096-QAM ⅚',
-  ];
+  static const List<String> mcsMod = WifiPhyRateService.mcsMod;
 
   /// Long MCS label (index — modulation) for the MCS select (PWA mcsLabels).
-  static String mcsLabel(int mcs) => 'MCS $mcs: ${mcsMod[mcs]}';
+  static String mcsLabel(int mcs) => WifiPhyRateService.mcsLabel(mcs);
 
   /// Data subcarriers per standard per channel width MHz (PWA TPUT_NSD).
-  static const Map<WifiStd, Map<int, int>> nsd = {
-    WifiStd.ht: {20: 52, 40: 108},
-    WifiStd.vht: {20: 52, 40: 108, 80: 234, 160: 468},
-    WifiStd.he: {20: 234, 40: 468, 80: 980, 160: 1960},
-    WifiStd.eht: {20: 234, 40: 468, 80: 980, 160: 1960, 320: 3920},
-  };
+  static const Map<WifiStd, Map<int, int>> nsd = WifiPhyRateService.nsd;
 
   /// OFDM symbol duration µs per standard per guard interval key (PWA TPUT_SYM).
-  static const Map<WifiStd, Map<String, double>> sym = {
-    WifiStd.ht: {'0.4': 3.6, '0.8': 4.0},
-    WifiStd.vht: {'0.4': 3.6, '0.8': 4.0},
-    WifiStd.he: {'0.8': 13.6, '1.6': 14.4, '3.2': 16.0},
-    WifiStd.eht: {'0.8': 13.6, '1.6': 14.4, '3.2': 16.0},
-  };
+  static const Map<WifiStd, Map<String, double>> sym = WifiPhyRateService.sym;
 
   /// Highest valid MCS index per standard (PWA TPUT_MAX_MCS).
-  static const Map<WifiStd, int> maxMcs = {
-    WifiStd.ht: 7,
-    WifiStd.vht: 9,
-    WifiStd.he: 11,
-    WifiStd.eht: 13,
-  };
+  static const Map<WifiStd, int> maxMcs = WifiPhyRateService.maxMcs;
 
   /// Real-throughput efficiency vs PHY rate per standard (PWA TPUT_EFF).
-  static const Map<WifiStd, double> eff = {
-    WifiStd.ht: 0.70,
-    WifiStd.vht: 0.72,
-    WifiStd.he: 0.76,
-    WifiStd.eht: 0.80,
-  };
+  static const Map<WifiStd, double> eff = WifiPhyRateService.eff;
 
   /// Bandwidth options MHz per standard (PWA updateTputOptions bwOpts).
-  static const Map<WifiStd, List<int>> bandwidths = {
-    WifiStd.ht: [20, 40],
-    WifiStd.vht: [20, 40, 80, 160],
-    WifiStd.he: [20, 40, 80, 160],
-    WifiStd.eht: [20, 40, 80, 160, 320],
-  };
+  static const Map<WifiStd, List<int>> bandwidths =
+      WifiPhyRateService.bandwidths;
 
   /// Guard-interval option keys per standard, in display order. Keys index into
   /// [sym] (PWA updateTputOptions giOpts).
-  static const Map<WifiStd, List<String>> giKeys = {
-    WifiStd.ht: ['0.4', '0.8'],
-    WifiStd.vht: ['0.4', '0.8'],
-    WifiStd.he: ['0.8', '1.6', '3.2'],
-    WifiStd.eht: ['0.8', '1.6', '3.2'],
-  };
+  static const Map<WifiStd, List<String>> giKeys = WifiPhyRateService.giKeys;
 
   /// Max spatial streams per standard, capped at 8 (PWA updateTputOptions maxSS).
-  static const Map<WifiStd, int> maxStreams = {
-    WifiStd.ht: 4,
-    WifiStd.vht: 8,
-    WifiStd.he: 8,
-    WifiStd.eht: 8,
-  };
-
-  // ─── Math (pure) ────────────────────────────────────────────────────────────
-  // Mirrors app.js calcThroughput.
+  static const Map<WifiStd, int> maxStreams = WifiPhyRateService.maxStreams;
 
   /// PHY rate in Mbps, or null when the bandwidth / guard-interval combination
   /// is invalid for the standard or the MCS exceeds the standard's max — the
@@ -158,16 +117,14 @@ class ThroughputCalcScreen extends StatefulWidget {
     required int mcs,
     required int streams,
     required String giKey,
-  }) {
-    final int? n = nsd[std]?[bandwidthMHz];
-    final double? s = sym[std]?[giKey];
-    final int? max = maxMcs[std];
-    if (n == null || s == null || s <= 0) return null;
-    if (max == null || mcs < 0 || mcs > max) return null;
-    if (mcs >= mcsBps.length) return null;
-    if (streams <= 0) return null;
-    return (n * mcsBps[mcs] * streams) / s;
-  }
+  }) =>
+      WifiPhyRateService.phyRateMbps(
+        std: std,
+        bandwidthMHz: bandwidthMHz,
+        mcs: mcs,
+        streams: streams,
+        giKey: giKey,
+      );
 
   /// Estimated real throughput in Mbps — phyRate · efficiency(std). Null when
   /// the PHY rate is null (same invalid-combination guard).
@@ -177,18 +134,14 @@ class ThroughputCalcScreen extends StatefulWidget {
     required int mcs,
     required int streams,
     required String giKey,
-  }) {
-    final double? phy = phyRateMbps(
-      std: std,
-      bandwidthMHz: bandwidthMHz,
-      mcs: mcs,
-      streams: streams,
-      giKey: giKey,
-    );
-    final double? e = eff[std];
-    if (phy == null || e == null) return null;
-    return phy * e;
-  }
+  }) =>
+      WifiPhyRateService.realRateMbps(
+        std: std,
+        bandwidthMHz: bandwidthMHz,
+        mcs: mcs,
+        streams: streams,
+        giKey: giKey,
+      );
 
   @override
   State<ThroughputCalcScreen> createState() => _ThroughputCalcScreenState();
