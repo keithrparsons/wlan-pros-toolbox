@@ -239,6 +239,55 @@ class SummaryResult {
   final List<Ipv4Block> extraBlocks;
 }
 
+/// The outcome of a range ⇄ CIDR conversion.
+class RangeResult {
+  const RangeResult({
+    required this.isValid,
+    this.error,
+    this.firstAddress,
+    this.lastAddress,
+    this.totalAddresses = 0,
+    this.blocks = const <Ipv4Block>[],
+    this.derivedFromBlock = false,
+    this.hostBitsWereSet = false,
+  });
+
+  const RangeResult.invalid(String message)
+    : isValid = false,
+      error = message,
+      firstAddress = null,
+      lastAddress = null,
+      totalAddresses = 0,
+      blocks = const <Ipv4Block>[],
+      derivedFromBlock = false,
+      hostBitsWereSet = false;
+
+  final bool isValid;
+  final String? error;
+
+  /// The range endpoints, dotted. Null when [isValid] is false.
+  final String? firstAddress;
+  final String? lastAddress;
+
+  /// Addresses in the range, inclusive of both ends.
+  final int totalAddresses;
+
+  /// The minimal set of aligned CIDR blocks covering the range exactly.
+  final List<Ipv4Block> blocks;
+
+  /// True when the range came from a `/prefix` typed into the first field
+  /// rather than from two endpoints, so the screen can say the second field
+  /// was ignored instead of leaving the user guessing.
+  final bool derivedFromBlock;
+
+  /// True when a typed block carried host bits that were masked off.
+  final bool hostBitsWereSet;
+
+  /// True when the whole range collapses to exactly one CIDR block, which is
+  /// the answer people hope for and rarely get.
+  bool get isSingleBlock => blocks.length == 1;
+}
+
 /// Multi-network IPv4 block arithmetic: VLSM, summarization, range ⇄ CIDR.
 class IpBlockMath {
   const IpBlockMath._();
@@ -470,6 +519,69 @@ class IpBlockMath {
       ));
     }
     return out;
+  }
+
+  // ─── Range ⇄ CIDR ─────────────────────────────────────────────────────────
+
+  /// Turn a start/end address pair into the minimal set of CIDR blocks.
+  ///
+  /// [start] may instead carry a whole block (`10.4.16.0/20`), in which case
+  /// the range is derived from it and [end] is ignored. That is the "and back"
+  /// direction: type a block, read its range; type a range, read its blocks.
+  ///
+  /// An empty input is not an error — it returns null, which the screen renders
+  /// as the idle state. A real problem (a malformed address, a last address
+  /// before the first) comes back as an invalid result with a message.
+  static RangeResult? rangeToBlocks({
+    required String start,
+    required String end,
+  }) {
+    final String s = start.trim();
+    final String e = end.trim();
+    if (s.isEmpty) return null;
+
+    if (s.contains('/')) {
+      final ParsedNetworkLine line = _parseOneNetwork(s, 1);
+      if (line.error != null) return RangeResult.invalid(line.error!);
+      final Ipv4Block b = line.block!;
+      return RangeResult(
+        isValid: true,
+        firstAddress: SubnetCalcService.toDotted(b.network),
+        lastAddress: SubnetCalcService.toDotted(b.lastAddress),
+        totalAddresses: b.size,
+        blocks: <Ipv4Block>[b],
+        derivedFromBlock: true,
+        hostBitsWereSet: line.hostBitsWereSet,
+      );
+    }
+
+    final int? lo = SubnetCalcService.parseIpv4ToInt(s);
+    if (lo == null) {
+      return const RangeResult.invalid(
+        'The first address is not valid IPv4. Try 10.4.16.0, or type a whole '
+        'block like 10.4.16.0/20.',
+      );
+    }
+    if (e.isEmpty) return null;
+    final int? hi = SubnetCalcService.parseIpv4ToInt(e);
+    if (hi == null) {
+      return const RangeResult.invalid(
+        'The last address is not valid IPv4. Try 10.4.31.255.',
+      );
+    }
+    if (hi < lo) {
+      return const RangeResult.invalid(
+        'The last address comes before the first. Swap them.',
+      );
+    }
+
+    return RangeResult(
+      isValid: true,
+      firstAddress: SubnetCalcService.toDotted(lo),
+      lastAddress: SubnetCalcService.toDotted(hi),
+      totalAddresses: hi - lo + 1,
+      blocks: rangeToCidr(lo, hi),
+    );
   }
 
   // ─── VLSM ─────────────────────────────────────────────────────────────────

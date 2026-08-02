@@ -2901,35 +2901,49 @@
     "ipv4-subnet": {
       "name": "IP Subnetting (IPv4)",
       "category": "Networking Tools",
-      "purpose": "Works out the full IPv4 subnet breakdown (network, broadcast, netmask, wildcard, first and last usable host, total addresses, and usable host count) from an address plus a CIDR prefix or a dotted mask.",
-      "whyHere": "The CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for it to confirm a network or broadcast boundary, a usable-host range, or a mask-to-prefix conversion.",
+      "purpose": "Two modes of IPv4 mask arithmetic. Subnet works out the full breakdown (network, broadcast, netmask, wildcard, first and last usable host, total addresses, usable host count, and the same address as an integer, in hex and in binary) from an address plus a CIDR prefix or a dotted mask. Range turns a start and end address into the smallest set of CIDR blocks that covers it exactly, and turns a block back into its range.",
+      "whyHere": "The CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for Subnet to confirm a network or broadcast boundary, a usable-host range, or a mask-to-prefix conversion. Reach for Range when a customer hands you \"10.4.16.0 through 10.4.31.255\" and you need blocks for an ACL, a firewall rule, or a DHCP scope.",
       "howToUse": [
-        "Enter an IPv4 address (for example, 10.20.0.0). You can add the prefix inline as 10.20.0.0/22; an inline prefix wins and the second field is ignored.",
-        "Otherwise enter the prefix or mask in the second field: a CIDR prefix (22 or /22) or a dotted mask (255.255.252.0).",
-        "The breakdown updates live on every valid keystroke. A host inside the subnet (for example, 10.20.0.37/22) reports the same network as the base address.",
-        "Bad input shows a short 'Check your input' note with a specific message rather than a wrong answer.",
-        "Use the Copy action in the top bar to copy the breakdown as a labeled block of text."
+        "Pick Subnet or Range with the control at the top.",
+        "Subnet: enter an IPv4 address (for example, 10.20.0.0). You can add the prefix inline as 10.20.0.0/22; an inline prefix wins and the second field is ignored.",
+        "Subnet: otherwise enter the prefix or mask in the second field: a CIDR prefix (22 or /22) or a dotted mask (255.255.252.0).",
+        "Range: enter the first and last address. Or type a whole block into the first field (10.4.16.0/20) and read its range back; the second field is then ignored and says so.",
+        "Everything updates live on every valid keystroke. Bad input shows a short 'Check your input' note with a specific message rather than a wrong answer.",
+        "Use the Copy action in the top bar to copy the current mode's result as a labeled block of text."
       ],
       "inputs": [
         {
-          "name": "IPv4 address",
+          "name": "IPv4 address (Subnet)",
           "unit": "dotted-decimal, optionally with an inline /prefix",
           "range": "four numbers each 0-255; inline prefix 0-32"
         },
         {
-          "name": "Prefix or mask",
+          "name": "Prefix or mask (Subnet)",
           "unit": "CIDR prefix or dotted mask",
           "range": "prefix 0-32, or a valid dotted mask (for example, 255.255.252.0); ignored when the address already carries an inline prefix"
+        },
+        {
+          "name": "First address (Range)",
+          "unit": "dotted-decimal, or a whole CIDR block",
+          "range": "any IPv4 address; a /prefix here derives the range and ignores the second field"
+        },
+        {
+          "name": "Last address (Range)",
+          "unit": "dotted-decimal",
+          "range": "any IPv4 address at or after the first"
         }
       ],
-      "algorithm": "It does the standard binary subnet math. The mask keeps the leftmost bits set by your prefix. The network address is the address with the host bits cleared; the broadcast address is the network with those host bits all set; the wildcard is the inverse of the mask. Total addresses is 2 raised to the number of host bits. For prefixes up to /30, the usable hosts are the total minus 2 (you drop the network and broadcast), the first usable host is the network plus 1, and the last is the broadcast minus 1. A /31 is a special point-to-point case: there's no network or broadcast reservation, so both addresses are usable hosts. A /32 is a single-host route: one address, no range, no broadcast. A dotted mask is only accepted if it's a valid run of 1 bits with no gaps, and an address must be exactly four numbers, each 0 to 255.",
-      "example": "10.20.0.0/22 gives netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, 1024 total addresses, and 1022 usable. (This is the example the screen opens with.)",
+      "algorithm": "It does the standard binary subnet math. The mask keeps the leftmost bits set by your prefix. The network address is the address with the host bits cleared; the broadcast address is the network with those host bits all set; the wildcard is the inverse of the mask. Total addresses is 2 raised to the number of host bits. For prefixes up to /30, the usable hosts are the total minus 2 (you drop the network and broadcast), the first usable host is the network plus 1, and the last is the broadcast minus 1. A /31 is a special point-to-point case: there's no network or broadcast reservation, so both addresses are usable hosts. A /32 is a single-host route: one address, no range, no broadcast. A dotted mask is only accepted if it's a valid run of 1 bits with no gaps, and an address must be exactly four numbers, each 0 to 255. The number forms are the same 32 bits written differently: the integer is the plain unsigned value, the hex is those four bytes, and the binary lines show all 32 bits with a slash sitting exactly where the prefix ends. The slash replaces the octet dot when the two land in the same place, so there is only ever one separator at any position. The address shown in binary is the one you typed, not the network base, because seeing your host address against the boundary is what shows which bits are host bits. Range works greedily: starting at the first address it takes the largest block that begins there, is aligned to its own size, and does not run past the last address, then repeats from the next free address. That produces the fewest blocks possible, and it is why an unaligned range needs several.",
+      "example": "10.20.0.0/22 gives netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, 1024 total addresses, and 1022 usable. (This is the example the screen opens with.). In number forms, 10.20.0.0 is 169,082,880, hex 0x0A140000, and binary 00001010.00010100.000000/00.00000000 against a mask of 11111111.11111111.111111/00.00000000. In Range mode, 10.4.16.0 through 10.4.31.255 is one block, 10.4.16.0/20, while 192.168.1.1 through 192.168.1.6 takes four: 192.168.1.1/32, 192.168.1.2/31, 192.168.1.4/31 and 192.168.1.6/32.",
       "fieldNotes": [
         "A /31 (RFC 3021) is a point-to-point link: there's no network or broadcast to set aside, so both addresses are usable (usable = 2). The screen calls this out.",
         "A /32 is a single-host route: one address, no range, no broadcast (usable = 1).",
         "A host address inside the block reports the subnet's network, not the host itself. Every value comes from the masked base.",
         "A dotted mask has to be a valid contiguous run of 1 bits; something like 255.0.255.0 is rejected as invalid.",
-        "No network needed, just math, so it runs on every platform including the web."
+        "No network needed, just math, so it runs on every platform including the web.",
+        "A range only collapses to a single block when it starts on a CIDR boundary and is a whole power of two long. Most real ranges do not, so several blocks is the correct answer and not a failure. The screen never rounds up to one block, because that would claim addresses you did not ask for.",
+        "The binary lines are where masking stops being a rule you memorized. Put the address and the mask side by side and the boundary is visible, including mid-octet prefixes like /22 that dotted decimal hides completely.",
+        "The integer form is what shows up in database columns, ACL generators, and some log formats. Nothing else in the app produced it."
       ],
       "source": "Calculated on the device with straight subnet math; nothing leaves the app."
     },

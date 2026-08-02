@@ -356,11 +356,17 @@ Computes the full IPv4 subnet breakdown (network, broadcast, netmask, wildcard, 
 
 **Example.** 10.20.0.0/22 → netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, total 1024, usable 1022. (This is the screen's seeded default.)
 
+**Number forms (Subnet mode).** The result also carries the same address as an unsigned integer, as hex (0x0A140000), as dotted hex (0A.14.00.00), and as 32 bits with a slash sitting exactly where the prefix ends. The slash replaces the octet dot when the two land in the same place, so there is only ever one separator at any position. The address rendered in binary is the one you typed, not the network base: seeing your host address against the boundary is what shows which bits are host bits. The mask renders on the same boundary directly underneath, which is where masking stops being a rule you memorized. 10.20.0.0/22 gives 00001010.00010100.000000/00.00000000 over 11111111.11111111.111111/00.00000000.
+
+**Range mode.** Enter a first and last address and read the smallest set of CIDR blocks that covers the range exactly. Type a whole block into the first field instead (10.4.16.0/20) and the range is derived from it, with the second field ignored and labeled as ignored. The algorithm is greedy and aligned: starting at the first address, take the largest block that begins there, is aligned to its own size, and does not run past the last address, then repeat. That yields the fewest blocks possible. 10.4.16.0 through 10.4.31.255 is one block, 10.4.16.0/20; 192.168.1.1 through 192.168.1.6 takes four (192.168.1.1/32, 192.168.1.2/31, 192.168.1.4/31, 192.168.1.6/32).
+
 **Field notes**
 - /31 (RFC 3021) is a point-to-point link: there is no network/broadcast reservation, so both addresses are usable hosts (usable = 2). The screen annotates this.
 - /32 is a single-host route: one address, no range, no broadcast (usable = 1).
 - A host address inside the block reports the subnet's network, not the host; all values derive from the masked base.
 - A dotted mask must be a valid contiguous-ones mask; 255.0.255.0 is rejected as malformed.
+- A range only collapses to a single block when it starts on a CIDR boundary and is a whole power of two long. Most real ranges do not, so several blocks is the correct answer, not a failure. The screen never rounds up to one block, because that would claim addresses you did not ask for.
+- A last address before the first is refused with a message rather than silently swapped.
 - No network I/O, just pure math, so it runs on every platform including web.
 
 ### IP Subnetting (IPv6)
