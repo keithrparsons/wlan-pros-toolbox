@@ -27,13 +27,32 @@ final MacOuiService _svc = MacOuiService.fromTable(<String, String>{
   'B827EB': 'Raspberry Pi Foundation',
 });
 
-Widget _host({Size size = const Size(390, 844)}) => MaterialApp(
+Widget _host() => MaterialApp(
   theme: AppTheme.dark(),
-  home: MediaQuery(
-    data: MediaQueryData(size: size),
-    child: MacOuiScreen(service: _svc),
-  ),
+  home: MacOuiScreen(service: _svc),
 );
+
+/// Drive the REAL test viewport, not just a MediaQuery wrapper.
+///
+/// This matters, and it is easy to get wrong: wrapping a screen in
+/// `MediaQuery(data: MediaQueryData(size: ...))` changes what the widget is
+/// TOLD about the window while the render surface stays at the 800x600 default,
+/// so a "renders at 320 wide" assertion written that way never rendered at 320
+/// and could not fail. `tester.view.physicalSize` is what actually resizes the
+/// surface. Same helper as test/widget_test.dart and test/screens/home_screen_test.dart.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
+}
 
 Future<void> _lookup(WidgetTester tester, String mac) async {
   await tester.enterText(find.byType(TextField), mac);
@@ -43,7 +62,9 @@ Future<void> _lookup(WidgetTester tester, String mac) async {
 }
 
 void main() {
-  testWidgets('idle: no bits card before a lookup', (WidgetTester tester) async {
+  testWidgets('idle: no bits card before a lookup', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(_host());
     await tester.pumpAndSettle();
     expect(find.text('Address bits'), findsNothing);
@@ -70,7 +91,10 @@ void main() {
     expect(find.text('Address bits'), findsOneWidget);
     expect(find.text('B8 = 10111000'), findsOneWidget);
     expect(find.text('0 (unicast, one interface)'), findsOneWidget);
-    expect(find.text('0 (globally unique, from an IEEE block)'), findsOneWidget);
+    expect(
+      find.text('0 (globally unique, from an IEEE block)'),
+      findsOneWidget,
+    );
     expect(find.text('b8:27:eb:ff:fe:01:23:45'), findsOneWidget);
     expect(find.text('ba27:ebff:fe01:2345'), findsOneWidget);
     expect(find.text('fe80::ba27:ebff:fe01:2345'), findsOneWidget);
@@ -154,12 +178,20 @@ void main() {
     expect(payload, contains('Link-local: fe80::ba27:ebff:fe01:2345'));
   });
 
-  testWidgets('no overflow at the narrowest supported width', (
+  testWidgets('no overflow at phone, tablet or desktop width', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(_host(size: const Size(320, 720)));
-    await tester.pumpAndSettle();
-    await _lookup(tester, 'B8:27:EB:01:23:45');
-    expect(tester.takeException(), isNull);
+    for (final Size size in <Size>[
+      const Size(320, 720),
+      const Size(768, 1024),
+      const Size(1280, 900),
+    ]) {
+      await _withViewport(tester, size, () async {
+        await tester.pumpWidget(_host());
+        await tester.pumpAndSettle();
+        await _lookup(tester, 'B8:27:EB:01:23:45');
+        expect(tester.takeException(), isNull, reason: '\$size');
+      });
+    }
   });
 }

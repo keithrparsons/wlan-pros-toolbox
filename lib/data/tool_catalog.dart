@@ -778,6 +778,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Conversions',
       ),
+      // Transfer Time (2026-08-02): size / speed / time, solve for any one of
+      // the three. Sits beside the Unit Converter because it BORROWS that
+      // tool's bit-based unit tables rather than carrying its own; the
+      // converter changes units, this one divides one by the other.
+      ToolEntry(
+        id: 'transfer-time',
+        title: 'Transfer Time',
+        description: 'How long a transfer takes, or the speed it needs',
+        routeName: '/tools/transfer-time',
+        isLive: true,
+        subgroup: 'Conversions',
+      ),
       // ── Batch 4a: general-purpose unit converter (sibling of the
       // distance-only metric-conversion). Custom icon is a follow-up; the
       // catalog falls back to the category glyph until an SVG ships. ──

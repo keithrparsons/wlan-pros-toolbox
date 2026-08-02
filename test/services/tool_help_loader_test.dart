@@ -320,7 +320,13 @@ void main() {
       // which rates VLSM the largest genuine functional gap and rules that
       // supernetting is not worth a tile standing alone.
       // 179 + 1 = 180.
-      expect(store.count, 180);
+      // 181 = + transfer-time, added 2026-08-02 in the same pass. Size /
+      // speed / time, solve for any one of the three, borrowing the Unit
+      // Converter's bit-based unit tables rather than carrying its own.
+      // Sourced from the same survey (BRIEF.md:125): the unit converter
+      // converts the units but never divided one by the other.
+      // 180 + 1 = 181.
+      expect(store.count, 181);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

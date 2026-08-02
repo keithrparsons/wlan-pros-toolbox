@@ -33,13 +33,32 @@ class _NoInterfaceInfo extends InterfaceInfoService {
       throw StateError('no interface info in tests');
 }
 
-Widget _host({Size size = const Size(390, 844)}) => MaterialApp(
+Widget _host() => MaterialApp(
   theme: AppTheme.dark(),
-  home: MediaQuery(
-    data: MediaQueryData(size: size),
-    child: SubnetCalcScreen(interfaceInfo: _NoInterfaceInfo()),
-  ),
+  home: SubnetCalcScreen(interfaceInfo: _NoInterfaceInfo()),
 );
+
+/// Drive the REAL test viewport, not just a MediaQuery wrapper.
+///
+/// This matters, and it is easy to get wrong: wrapping a screen in
+/// `MediaQuery(data: MediaQueryData(size: ...))` changes what the widget is
+/// TOLD about the window while the render surface stays at the 800x600 default,
+/// so a "renders at 320 wide" assertion written that way never rendered at 320
+/// and could not fail. `tester.view.physicalSize` is what actually resizes the
+/// surface. Same helper as test/widget_test.dart and test/screens/home_screen_test.dart.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
+}
 
 Finder _field(int index) => find.byType(TextField).at(index);
 
@@ -241,13 +260,15 @@ void main() {
       const Size(768, 1024),
       const Size(1280, 900),
     ]) {
-      await tester.pumpWidget(_host(size: size));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: 'subnet at $size');
+      await _withViewport(tester, size, () async {
+        await tester.pumpWidget(_host());
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'subnet at $size');
 
-      await tester.tap(find.text('Range'));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: 'range at $size');
+        await tester.tap(find.text('Range'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'range at $size');
+      });
     }
   });
 }

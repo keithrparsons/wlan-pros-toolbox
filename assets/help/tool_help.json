@@ -2970,6 +2970,45 @@
       ],
       "source": "A curated list carried inside the app; searched entirely offline."
     },
+    "transfer-time": {
+      "name": "Transfer Time",
+      "category": "Calculators & Tools",
+      "purpose": "Divides a file size by a link speed. Pick which of the three you want: how long a transfer takes, how fast a link has to be to finish in a given window, or how much data moves in that window.",
+      "whyHere": "\"How long will this AP firmware push take over this link\" is a field question, and so is \"we have a ten-minute maintenance window, what speed do we need\". The arithmetic is one division. The trap is that link speeds are quoted in bits and file sizes in bytes, and the factor of 8 between them is where the wrong answers come from.",
+      "howToUse": [
+        "Pick Time, Speed or Size at the top: that is the one you want out, and the other two are the ones you type.",
+        "Type each value and pick its unit from the list. Size units are byte units; speed units are bit units unless the label says B/s.",
+        "Read the answer, and read the two lines underneath it that restate what you typed in bits. That is the conversion, shown rather than hidden."
+      ],
+      "inputs": [
+        {
+          "name": "Size",
+          "unit": "B, KB, MB, GB, TB (decimal) or KiB, MiB, GiB, TiB (binary)",
+          "range": "any positive number"
+        },
+        {
+          "name": "Speed",
+          "unit": "bps, kbps, Mbps, Gbps, Tbps, or KB/s and MB/s",
+          "range": "above zero when solving for time"
+        },
+        {
+          "name": "Time",
+          "unit": "ms, s, min, hr, day",
+          "range": "above zero when solving for speed"
+        }
+      ],
+      "algorithm": "One division, done entirely in bits. Your size is converted to bits and your speed to bits per second using the same unit tables the Unit Converter uses, so there is one definition of a MB in the app and not two. Time is bits divided by bits per second. Speed is bits divided by seconds. Size is bits per second multiplied by seconds. A divisor of zero returns no answer at all rather than an infinity.",
+      "example": "1 GB at 100 Mbps: 1,000,000,000 bytes is 8,000,000,000 bits, divided by 100,000,000 bits per second is 80 seconds, shown as 1 min 20 s. The same file quoted as 1 GiB is 1,073,741,824 bytes, which takes 1 min 25.9 s. That six-second gap on a single gigabyte is why the decimal and binary units are kept separate.",
+      "fieldNotes": [
+        "Link speeds are in bits per second and file sizes are in bytes. 1 byte = 8 bits, so a 100 Mbps link moves 12.5 MB per second, not 100. That line is printed on the screen, not buried here.",
+        "A KB is 1000 bytes and a KiB is 1024. Your operating system probably says GB and means GiB, which is why a \"1 GB\" download can take about 7 percent longer than you expected.",
+        "There is no efficiency slider, on purpose. A default of 85 percent would be a made-up number dressed up as help. The answer is the time at exactly the rate you entered. If you want a realistic number, enter a throughput you actually measured rather than the number on the label.",
+        "Real transfers run slower than this: protocol overhead, disk speed, and everyone else on the link all take a share.",
+        "Fully offline: one division on the device.",
+        "CATALOG NOTE: manual category is Calculators & Tools; catalog id is transfer-time with route /tools/transfer-time."
+      ],
+      "source": "Calculated on the device; nothing is sent anywhere."
+    },
     "unit-converter": {
       "name": "Unit Converter",
       "category": "Calculators & Tools",

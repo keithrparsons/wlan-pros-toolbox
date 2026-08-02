@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 174 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 175 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -8,12 +8,12 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
 
 - **Test Network** (6 tools)
 - **Networking Tools** (26 tools)
-- **Calculators & Tools** (32 tools)
+- **Calculators & Tools** (33 tools)
   - RF & Propagation (9)
   - Antenna & Coverage (4)
   - Capacity & Power (3)
   - Coordinates & GPS (4)
-  - Conversions (5)
+  - Conversions (6)
   - Utilities & Generators (4)
   - Ham Radio (2)
   - Learn / RF intuition (1)
@@ -1296,7 +1296,7 @@ Computes the great-circle midpoint between two latitude/longitude points.
 - This is the great-circle (spherical) midpoint, not the average of the coordinates. On east-west paths the midpoint is noticeably closer to the pole than the simple lat/lon average.
 - Spherical model, same accuracy caveats as Distance and Bearing.
 
-## Conversions (5)
+## Conversions (6)
 
 
 ### Channel / Frequency
@@ -1401,6 +1401,36 @@ Converts a length between meters, kilometers, miles, feet, centimeters, inches, 
 - Uses the international mile (1609.344 m) and international foot (0.3048 m), not the US survey foot.
 - Conversions are exact within floating point; the per-unit decimal rounding is for display only.
 
+
+### Transfer Time
+
+Divides a file size by a link speed. Pick which of the three you want out: how long a transfer takes, how fast a link has to be to finish in a given window, or how much data moves in that window.
+
+**Why it's here.** "How long will this AP firmware push take over this link" is a field question, and so is "we have a ten-minute maintenance window, what speed do we need". The arithmetic is one division. The trap is that link speeds are quoted in bits and file sizes in bytes, and the factor of 8 between them is where the wrong answers come from.
+
+**How to use**
+1. Pick Time, Speed or Size at the top: that is the one you want out, and the other two are the ones you type.
+2. Type each value and pick its unit from the list. Size units are byte units; speed units are bit units unless the label says B/s.
+3. Read the answer, then read the two lines underneath it that restate what you typed in bits. That is the conversion, shown rather than hidden.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Size | B, KB, MB, GB, TB (decimal) or KiB, MiB, GiB, TiB (binary) | any positive number |
+| Speed | bps, kbps, Mbps, Gbps, Tbps, or KB/s and MB/s | above zero when solving for time |
+| Time | ms, s, min, hr, day | above zero when solving for speed |
+
+**Formula or method.** One division, done entirely in bits. The size is converted to bits and the speed to bits per second using the same unit tables the Unit Converter uses, so there is one definition of a MB in the app and not two. Time is bits divided by bits per second; speed is bits divided by seconds; size is bits per second multiplied by seconds. A divisor of zero returns no answer at all rather than an infinity.
+
+**Example.** 1 GB at 100 Mbps: 1,000,000,000 bytes is 8,000,000,000 bits, divided by 100,000,000 bits per second is 80 seconds, shown as 1 min 20 s. The same file quoted as 1 GiB is 1,073,741,824 bytes and takes 1 min 25.9 s. That six-second gap on a single gigabyte is why the decimal and binary units stay separate.
+
+**Field notes**
+- Link speeds are in bits per second and file sizes are in bytes. 1 byte = 8 bits, so a 100 Mbps link moves 12.5 MB per second, not 100. That line is printed on the screen itself, not buried in the help sheet.
+- A KB is 1000 bytes and a KiB is 1024. Your operating system probably says GB and means GiB, which is why a "1 GB" download can take about 7 percent longer than you expected.
+- There is no efficiency slider, on purpose. A default of 85 percent would be a made-up number dressed up as help. The answer is the time at exactly the rate entered. For a realistic number, enter a throughput you actually measured rather than the number on the label.
+- Real transfers run slower than this: protocol overhead, disk speed, and everyone else on the link all take a share.
+- Fully offline: one division on the device.
 
 ### Unit Converter
 

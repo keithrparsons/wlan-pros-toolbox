@@ -21,13 +21,29 @@ import 'package:wlan_pros_toolbox/screens/tools/network/subnet_planner_screen.da
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 
-Widget _host({Size size = const Size(390, 844)}) => MaterialApp(
-  theme: AppTheme.dark(),
-  home: MediaQuery(
-    data: MediaQueryData(size: size),
-    child: const SubnetPlannerScreen(),
-  ),
-);
+Widget _host() => const MaterialApp(home: SubnetPlannerScreen());
+
+/// Drive the REAL test viewport, not just a MediaQuery wrapper.
+///
+/// This matters, and it is easy to get wrong: wrapping a screen in
+/// `MediaQuery(data: MediaQueryData(size: ...))` changes what the widget is
+/// TOLD about the window while the render surface stays at the 800x600 default,
+/// so a "renders at 320 wide" assertion written that way never rendered at 320
+/// and could not fail. `tester.view.physicalSize` is what actually resizes the
+/// surface. Same helper as test/widget_test.dart and test/screens/home_screen_test.dart.
+Future<void> _withViewport(
+  WidgetTester tester,
+  Size size,
+  Future<void> Function() body,
+) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await body();
+}
 
 /// The multi-line requirements box is the second TextField in Split mode.
 Finder _field(int index) => find.byType(TextField).at(index);
@@ -133,10 +149,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('512'), findsWidgets); // covered, and extra
-    expect(
-      find.text('Inside the supernet, not in your list'),
-      findsOneWidget,
-    );
+    expect(find.text('Inside the supernet, not in your list'), findsOneWidget);
     expect(find.text('10.0.1.0/24'), findsOneWidget);
     expect(find.text('10.0.2.0/24'), findsOneWidget);
     expect(
@@ -187,9 +200,11 @@ void main() {
       const Size(768, 1024),
       const Size(1280, 900),
     ]) {
-      await tester.pumpWidget(_host(size: size));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: '$size');
+      await _withViewport(tester, size, () async {
+        await tester.pumpWidget(_host());
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '$size');
+      });
     }
   });
 }

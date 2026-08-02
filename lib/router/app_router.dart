@@ -45,6 +45,7 @@ import '../screens/tools/calculators/capacity_planner_screen.dart';
 import '../screens/tools/calculators/ptp_link_screen.dart';
 import '../screens/tools/calculators/ipv6_subnet_screen.dart';
 import '../screens/tools/calculators/throughput_calc_screen.dart';
+import '../screens/tools/calculators/transfer_time_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
 import '../screens/tools/calculators/noise_floor_screen.dart';
 import '../screens/tools/calculators/poe_budget_screen.dart';
@@ -587,6 +588,9 @@ class AppRouter {
   //   qr-generator:   local QR render + share (all platforms; share via share_plus).
   //   dtmf-generator: local audio synthesis + playback via just_audio.
   static const String unitConverter = '/tools/unit-converter';
+
+  /// Transfer Time — size / speed / time, solve for any one. Pure math.
+  static const String transferTime = '/tools/transfer-time';
   static const String qrGenerator = '/tools/qr-generator';
   static const String dtmfGenerator = '/tools/dtmf-generator';
   static const String morseCode = '/tools/morse-code';
@@ -873,6 +877,7 @@ class AppRouter {
     ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),
+    transferTime: (_) => const TransferTimeScreen(),
     qrGenerator: (_) => const QrGeneratorScreen(),
     dtmfGenerator: (_) => const DtmfGeneratorScreen(),
     morseCode: (_) => const MorseCodeScreen(),

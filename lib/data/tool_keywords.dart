@@ -1319,6 +1319,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'hexadecimal',
     'char code',
   ],
+  'transfer-time': <String>[
+    'bandwidth calculator',
+    'download time',
+    'how long',
+    'transfer time',
+    'file size',
+    'bits vs bytes',
+    'throughput',
+    'copy time',
+    'backup window',
+  ],
   'unit-converter': <String>[
     'convert',
     'units',
