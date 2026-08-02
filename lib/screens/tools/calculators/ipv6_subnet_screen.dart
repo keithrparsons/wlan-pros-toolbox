@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/ipv6_address.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -97,113 +98,28 @@ class Ipv6SubnetScreen extends StatefulWidget {
   // ─── Math (pure) ──────────────────────────────────────────────────────────
   // Ports app.js: expandIPv6, compressIPv6, calcIPv6, detectIPv6Type.
 
-  static final BigInt _mask128 = (BigInt.one << 128) - BigInt.one;
-  static final BigInt _mask64 = (BigInt.one << 64) - BigInt.one;
+  // EXTRACTED 2026-08-02: the four text/number primitives below moved verbatim
+  // to [Ipv6Address] (lib/services/network/ipv6_address.dart) so the MAC bit
+  // decoder and the transition-address decoder can reach them without importing
+  // a widget. These statics are THIN DELEGATES, not duplicates — there is
+  // exactly one definition of each algorithm, and every existing caller and
+  // test that says `Ipv6SubnetScreen.expandIPv6(...)` still resolves.
+  static final BigInt _mask128 = Ipv6Address.mask128;
 
   /// Expand an IPv6 literal to its full 8-group, 4-hex-digit form.
   /// Mirrors PWA expandIPv6. Throws [FormatException] on a malformed group
   /// layout (e.g. too many groups, more than one "::").
-  static String expandIPv6(String addr) {
-    if (addr.contains('::')) {
-      // Reject more than one "::" — the PWA's split on "::" silently keeps the
-      // first two parts; we treat anything but exactly one "::" as malformed so
-      // the caller surfaces the invalid-format error instead of a wrong answer.
-      if ('::'.allMatches(addr).length != 1) {
-        throw const FormatException('multiple "::" runs');
-      }
-      final List<String> halves = addr.split('::');
-      final List<String> left = halves[0].isEmpty
-          ? <String>[]
-          : halves[0].split(':');
-      final List<String> right = halves[1].isEmpty
-          ? <String>[]
-          : halves[1].split(':');
-      final int missing = 8 - left.length - right.length;
-      if (missing < 1) {
-        throw const FormatException('"::" with no zero groups to fill');
-      }
-      final List<String> mid = List<String>.filled(missing, '0000');
-      return <String>[
-        ...left,
-        ...mid,
-        ...right,
-      ].map((String g) => g.padLeft(4, '0')).join(':');
-    }
-    return addr.split(':').map((String g) => g.padLeft(4, '0')).join(':');
-  }
+  static String expandIPv6(String addr) => Ipv6Address.expand(addr);
 
   /// Compress a full 8-group form to canonical "::" notation.
   /// Mirrors PWA compressIPv6: collapse the LONGEST run of all-zero groups.
-  static String compressIPv6(String full) {
-    List<String?> parts = full.split(':').cast<String?>();
-    int bestStart = -1, bestLen = 0;
-    int curStart = -1, curLen = 0;
-    for (int i = 0; i < parts.length; i++) {
-      if (parts[i] == '0000') {
-        if (curStart < 0) {
-          curStart = i;
-          curLen = 1;
-        } else {
-          curLen++;
-        }
-        if (curLen > bestLen) {
-          bestStart = curStart;
-          bestLen = curLen;
-        }
-      } else {
-        curStart = -1;
-        curLen = 0;
-      }
-    }
-
-    if (bestLen > 1) {
-      parts = <String?>[
-        ...parts.sublist(0, bestStart),
-        null,
-        ...parts.sublist(bestStart + bestLen),
-      ];
-      final String joined = parts
-          .map(
-            (String? p) =>
-                p == null ? '' : BigInt.parse(p, radix: 16).toRadixString(16),
-          )
-          .join(':')
-          .replaceAll(RegExp(r'^:|:$'), '')
-          .replaceFirst(':::', '::');
-      return joined.isEmpty ? '::' : joined;
-    }
-    return parts
-        .map((String? p) => BigInt.parse(p!, radix: 16).toRadixString(16))
-        .join(':');
-  }
+  static String compressIPv6(String full) => Ipv6Address.compress(full);
 
   /// Render a 128-bit value to the full 8-group form. Mirrors PWA bigToFull.
-  static String bigToFull(BigInt n) {
-    final BigInt hi = (n >> 64) & _mask64;
-    final BigInt lo = n & _mask64;
-    String toHex(BigInt v) {
-      final String s = v.toRadixString(16).padLeft(16, '0');
-      // Split into 4-hex-digit groups.
-      return <String>[
-        s.substring(0, 4),
-        s.substring(4, 8),
-        s.substring(8, 12),
-        s.substring(12, 16),
-      ].join(':');
-    }
-
-    return '${toHex(hi)}:${toHex(lo)}';
-  }
+  static String bigToFull(BigInt n) => Ipv6Address.fromBigInt(n);
 
   /// Parse the expanded form to a 128-bit BigInt. Mirrors PWA word packing.
-  static BigInt toBigInt(String expanded) {
-    final List<String> parts = expanded.split(':');
-    BigInt v = BigInt.zero;
-    for (final String p in parts) {
-      v = (v << 16) | BigInt.parse(p, radix: 16);
-    }
-    return v;
-  }
+  static BigInt toBigInt(String expanded) => Ipv6Address.toBigInt(expanded);
 
   /// RFC range label from the expanded form. Mirrors PWA detectIPv6Type.
   static String detectIPv6Type(String full) {
@@ -404,9 +320,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled while the input is
         // empty or malformed (no valid breakdown); copies the IPv6 breakdown as
         // a labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -654,9 +568,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

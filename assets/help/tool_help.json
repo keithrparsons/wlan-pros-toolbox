@@ -2394,18 +2394,23 @@
     "mac-oui-lookup": {
       "name": "MAC Vendor OUI Lookup",
       "category": "Networking Tools",
-      "purpose": "Turn a MAC (hardware) address into the manufacturer that registered it, fully offline.",
-      "whyHere": "Identify a device's maker from its MAC address with no network connection, and, just as usefully, it tells you honestly when a MAC has no real vendor at all (the case for privacy-randomized phone addresses).",
+      "purpose": "Turn a MAC (hardware) address into the manufacturer that registered it, fully offline, and decode the address itself: the two control bits in its first byte, the same address written four ways, and the IPv6 interface identifier derived from it.",
+      "whyHere": "Identify a device's maker from its MAC address with no network connection, and, just as usefully, learn honestly when a MAC has no real vendor at all. The two control bits are the reason: one says unicast or group, the other says whether the address came from an IEEE block or was made up by software. That second bit is what a phone sets when it randomizes its Wi-Fi MAC, and what many APs set on the extra BSSIDs a multi-SSID radio derives from its base address.",
       "howToUse": [
-        "Enter a MAC address in any common form (colons, hyphens, Cisco dotted aabb.ccdd.eeff, or no separators, any capitalization), then look it up."
+        "Enter a MAC address in any common form (colons, hyphens, Cisco dotted aabb.ccdd.eeff, spaces, or no separators, any capitalization), then look it up.",
+        "Read the vendor card first: a registered name, an honest \"no vendor\" with the reason, or \"not in registry\".",
+        "Read the Address bits card below it for the first byte in binary, what each control bit means, the four notation forms, and the EUI-64 derivation."
       ],
       "inputs": [],
-      "algorithm": "It matches your address against a built-in copy of the official IEEE vendor registry, loaded once and kept ready, with no network needed. The registry hands out address blocks in three sizes, and this checks the most specific first: the smallest block, then the medium, then the largest. That way a small sub-assigned block names the real company it was given to, not just the larger parent block.",
-      "example": null,
+      "algorithm": "Vendor: it matches your address against a built-in copy of the official IEEE vendor registry, loaded once and kept ready, with no network needed. The registry hands out address blocks in three sizes, and this checks the most specific first: the smallest block, then the medium, then the largest. That way a small sub-assigned block names the real company it was given to, not just the larger parent block. Bits: the I/G bit is the lowest bit of the first byte and the U/L bit is the next one up. EUI-64: RFC 4291 Appendix A builds an IPv6 interface identifier from a 48-bit MAC by inserting FF:FE in the middle and then inverting the U/L bit. The screen shows both stages, because the inversion is the step that gets skipped. Prefixing fe80::/64 to the result gives the link-local address a device forms by itself.",
+      "example": "B8:27:EB:01:23:45 is a Raspberry Pi Foundation address. Its first byte B8 is 10111000, so both control bits are 0: unicast, globally unique. Its EUI-64 is b8:27:eb:ff:fe:01:23:45, its interface identifier is ba27:ebff:fe01:2345 (note B8 became BA when the U/L bit flipped), and its link-local address is fe80::ba27:ebff:fe01:2345.",
       "fieldNotes": [
         "This works identically everywhere, since it is fully offline. No platform gives you more or less.",
         "The honest cases: a locally-administered or randomized address (the norm for modern iPhone and Android Wi-Fi) is flagged with no vendor guessed, because any registry match would be pure coincidence. A multicast or group address (not a single device) is also flagged with no vendor. A normal address that simply is not in the built-in copy shows its raw manufacturer prefix (for example B8:27:EB) rather than an invented name.",
         "A randomized phone MAC correctly comes back as \"no vendor\", which is the right answer, not a miss. The built-in registry lists the date it was captured; refresh it to pick up newer assignments.",
+        "The bits card renders for every valid address, including the ones the vendor card has to decline. For those, the bits are the answer.",
+        "When the U/L bit is set, the screen also shows the address with that bit cleared. If the address was derived from real hardware, such as a BSSID off a radio base MAC, those first three bytes are the radio's OUI and you can look them up. If it is a randomized client address, they mean nothing, so treat the cleared form as a lead and not a fact.",
+        "There is no EUI-64 for a group or broadcast address, and the screen says so rather than showing a derivation. An interface identifier identifies one interface, and a group address is not one.",
         "CATALOG NOTE: manual category is Networking Tools; catalog id is mac-oui-lookup with route /tools/mac-oui."
       ],
       "source": "It matches the address against a built-in copy of the official IEEE vendor registry, entirely offline."
