@@ -335,15 +335,17 @@ BssLoadUnavailableCopy bssLoadUnavailableCopy(
         body:
             // SCOPED TO THE ELEMENT, because that is all this reading knows.
             // `decodeBssLoad` returns an EXAMINED element 11 before it consults
-            // the walk tail, so a blob clipped SOMEWHERE ELSE still lands here:
-            // [11,7,0x7] followed by a clipped element renders this sentence,
-            // and "nothing was cut" was false of that blob.
+            // the walk tail, so a blob clipped SOMEWHERE ELSE still lands here.
+            // The blob that proves it, and the one the guarding test drives:
+            // [11, 7, 0, 0, 0, 0, 0, 0, 0, 0, 40, 0x41] -- a complete element 11
+            // with an illegal declared length, followed by a header whose value
+            // never arrived. "Nothing was cut" was false of that blob.
             'The whole element arrived, and none of it was cut. A BSS Load '
             'element carries 5 value octets in IEEE 802.11-2012, or 4 in the '
             'Cisco variant. Wireshark treats any other length as an error and '
-            'decodes '
-            'nothing, and so does this build: reading a prefix of an element we '
-            'do not recognize would be a guess dressed as a measurement.',
+            'decodes nothing, and so does this build: reading a prefix of an '
+            'element we do not recognize would be a guess dressed as a '
+            'measurement.',
         remedy: BssLoadRemedy.none,
         octetDiagnostic: _octetDiagnostic(reading),
       );
