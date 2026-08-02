@@ -163,7 +163,9 @@
 //   UNAVAILABLE — an element 11 IS present but this build will not decode it
 //     (wrong length, the Cisco 4-octet variant, or a header whose declared
 //     length is clipped by the end of the buffer), or the capture was cut
-//     before we could tell whether one was there at all.
+//     before we could tell whether one was there at all, or nobody told us
+//     whether the capture was whole
+//     ([BssLoadUnavailableReason.blobCompletenessNotStated]).
 //   ZERO — a perfectly good reading whose numbers happen to be 0. An idle AP
 //     with no associated stations and a quiet channel is a REAL measurement and
 //     must read as one.
@@ -216,7 +218,9 @@
 // `absent`. Only the layer that capped the buffer knows, and a platform layer
 // that truncates an IE blob owes the decoder that fact rather than letting it
 // guess. [decodeBssLoadFromElements] takes it as a required argument for exactly
-// this reason.
+// this reason — an [IeBlobCompleteness], not a bool, so a layer that genuinely
+// cannot answer says [IeBlobCompleteness.notStated] instead of being forced to
+// assert a clip it has no evidence for.
 //
 // A field we could not read is not a field that is zero, and that is what the
 // type is shaped to protect: [decodeBssLoad] returns a sealed [BssLoadReading],
@@ -288,6 +292,44 @@ const int kAdmissionCapacityUnitMicrosecondsPerSecond = 32;
 const int kAdmissionCapacityFullScale = 31250;
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+/// What a caller knows about whether an information-element blob was consumed to
+/// its end.
+///
+/// THIS EXISTS BECAUSE A BOOL COULD NOT SAY "I WAS NOT TOLD". The parameter it
+/// replaces was `required bool blobWalkedToEnd`, and false had to carry both
+/// "the walk stopped short" and "nobody told me either way". Those are not the
+/// same fact, and collapsing them made [decodeBssLoadFromElements] answer
+/// [BssLoadUnavailableReason.clippedWithoutSeeingElement11] — which states in
+/// its own doc that the capture WAS clipped — to a caller handing over a
+/// perfectly whole set of elements. A false statement about our own byte
+/// handling is the safe direction to be wrong in, but it is still wrong, and a
+/// type that cannot express "unknown" gets handed a guess forever
+/// ([[feedback_type_must_express_unknown]]).
+///
+/// NAMED, NEVER NUMBERED, like everything else in this file. Do not switch on
+/// index and do not cite a member by position.
+enum IeBlobCompleteness {
+  /// Every octet of the source blob was accounted for by a well-formed element.
+  /// [InformationElementWalkTail.isComplete] answers this for a raw blob, and a
+  /// platform channel that TLV-split the bytes itself knows whether it consumed
+  /// them all.
+  walkedToEnd,
+
+  /// The walk stopped before the end of the source: a declared length overran
+  /// the buffer, or the buffer ended part-way through a header. The caller
+  /// POSITIVELY KNOWS the capture was cut.
+  stoppedShort,
+
+  /// The caller was never told, and is saying so rather than guessing.
+  ///
+  /// This is not a weaker [stoppedShort]. It is the honest answer for a platform
+  /// channel that hands up pre-split elements without saying whether it consumed
+  /// the whole blob, and it produces
+  /// [BssLoadUnavailableReason.blobCompletenessNotStated] rather than a claim
+  /// that anything was clipped.
+  notStated,
+}
 
 /// Why a BSS Load reading is not available. Machine-branchable, so a readout can
 /// say the true thing rather than falling back to a zero.
@@ -374,6 +416,48 @@ enum BssLoadUnavailableReason {
   /// [BssLoadUnavailable.availableLength] are null here — no element 11 was seen,
   /// so there is nothing to count.
   clippedWithoutSeeingElement11,
+
+  /// No element 11 was among the elements handed to us, and the caller did not
+  /// say whether the source blob had been consumed to its end
+  /// ([IeBlobCompleteness.notStated]).
+  ///
+  /// THE NAME CLAIMS A GAP IN WHAT WE WERE TOLD, AND NOTHING ABOUT THE CAPTURE.
+  /// That is the entire reason this member exists. It is the sibling of
+  /// [clippedWithoutSeeingElement11], and the difference between them is not
+  /// severity — it is who knows what. `clippedWithoutSeeingElement11` is a
+  /// POSITIVE claim that the capture was cut. Before this member existed, an
+  /// uncertain caller had no way to avoid making that claim: the parameter was a
+  /// bool, false was the only non-committal value, and false meant "clipped". So
+  /// the decoder asserted a defect in our own byte handling that nobody had
+  /// evidence for ([[feedback_type_must_express_unknown]]).
+  ///
+  /// WHY IT IS NOT [absent], WHICH IS THE WHOLE POINT OF NOT GUESSING. `absent`
+  /// says this AP does not advertise BSS Load, and earning that requires knowing
+  /// every octet was accounted for. We do not know that here. Reporting `absent`
+  /// on an unstated blob is the app blaming the Wi-Fi for a gap in its own
+  /// information ([[feedback_app_blames_the_wifi]]), and it is the failure this
+  /// member is shaped to make impossible rather than merely discouraged.
+  ///
+  /// WHY IT IS NOT [noInformationElementsProvided] EITHER. Elements DID reach
+  /// us — the platform is not blind, and saying it is would be a different false
+  /// statement. An empty set with completeness unstated is still this member,
+  /// because a walk that yielded nothing over an unknown extent cannot be told
+  /// from a walk that was cut before the first element.
+  ///
+  /// [decodeBssLoad] NEVER PRODUCES THIS. It reads the raw bytes and asks
+  /// `ie_parser.dart` where the walk stopped, so it always knows; the walk
+  /// outcomes listed in the file header are unchanged and still complete for
+  /// that entry point. Only [decodeBssLoadFromElements] can report it, and only
+  /// when its caller says [IeBlobCompleteness.notStated].
+  ///
+  /// A readout on this branch may say the reading could not be established and
+  /// why. It may never say the AP does not advertise BSS Load, and it may never
+  /// say the capture was clipped.
+  ///
+  /// Both [BssLoadUnavailable.valueLength] and
+  /// [BssLoadUnavailable.availableLength] are null here — no element 11 was
+  /// seen, so there is nothing to count.
+  blobCompletenessNotStated,
 
   /// An element ID 11 header was present — both its ID and length octets — it
   /// declared a length the element is ALLOWED to have (4 or 5), and that length
@@ -691,7 +775,12 @@ BssLoadReading decodeBssLoad(List<int>? ieBytes) {
   final InformationElementWalkTail tail = informationElementWalkTail(ieBytes);
   final BssLoadReading reading = decodeBssLoadFromElements(
     walkInformationElements(ieBytes),
-    blobWalkedToEnd: tail.isComplete,
+    // NEVER [IeBlobCompleteness.notStated] HERE. This entry point holds the raw
+    // bytes and the walk tail, so it always knows; passing "not stated" from a
+    // place that can answer would be manufacturing an uncertainty.
+    blobCompleteness: tail.isComplete
+        ? IeBlobCompleteness.walkedToEnd
+        : IeBlobCompleteness.stoppedShort,
   );
   if (reading is BssLoadDecoded) return reading;
 
@@ -724,52 +813,51 @@ BssLoadReading decodeBssLoad(List<int>? ieBytes) {
 /// holding the raw bytes must prefer [decodeBssLoad], which can tell a clipped
 /// element 11 from every other kind of clip.
 ///
-/// [blobWalkedToEnd] IS REQUIRED BECAUSE THE ANSWER IS NOT DERIVABLE HERE, and a
-/// rule that lives only in a doc comment is a trap set for the first caller who
-/// does not read it. Pass true only when every octet of the source blob was
-/// accounted for by a well-formed element — [InformationElementWalkTail.isComplete]
-/// answers it for a raw blob, and a platform channel that TLV-split the bytes
-/// itself knows whether it consumed them all. When it is false and no element 11
-/// is among [elements], the reading is
+/// [blobCompleteness] IS REQUIRED BECAUSE THE ANSWER IS NOT DERIVABLE HERE, and
+/// a rule that lives only in a doc comment is a trap set for the first caller who
+/// does not read it. Pass [IeBlobCompleteness.walkedToEnd] only when every octet
+/// of the source blob was accounted for by a well-formed element —
+/// [InformationElementWalkTail.isComplete] answers it for a raw blob, and a
+/// platform channel that TLV-split the bytes itself knows whether it consumed
+/// them all. With [IeBlobCompleteness.stoppedShort] and no element 11 among
+/// [elements], the reading is
 /// [BssLoadUnavailableReason.clippedWithoutSeeingElement11] rather than a false
 /// `absent`: element 11 may have been in the part that was cut.
 ///
-/// A CALLER THAT GENUINELY DOES NOT KNOW MUST STILL PASS FALSE — AND THAT IS THE
-/// SAFE ANSWER, NOT A FREE ONE. Read what it produces:
-/// [BssLoadUnavailableReason.clippedWithoutSeeingElement11] states that the
-/// capture WAS clipped, in its own doc, deliberately. So an uncertain caller
-/// handing us a perfectly whole set of elements gets a reading that says we cut
-/// it. That over-claims exactly one thing, and it is a false statement about OUR
-/// OWN byte handling rather than about somebody's AP — which is the direction to
-/// be wrong in, because the alternative (`absent`) is the app blaming the Wi-Fi
-/// ([[feedback_app_blames_the_wifi]]). A readout on this branch may say the
-/// capture was incomplete; it may never say the AP does not advertise BSS Load.
+/// A CALLER THAT GENUINELY DOES NOT KNOW SAYS SO, AND IT COSTS NOTHING TO SAY.
+/// [IeBlobCompleteness.notStated] yields
+/// [BssLoadUnavailableReason.blobCompletenessNotStated], which claims a gap in
+/// what we were told and claims nothing whatever about the capture or the AP.
 ///
-/// If a real caller ever cannot answer this question, the honest fix is a reason
-/// member meaning "we were not told" rather than a bool carrying two meanings
-/// ([[feedback_type_must_express_unknown]]). PARKED, AND HERE IS THE REAL REASON,
-/// because the earlier one was wrong: it is not that a rendered contract would
-/// change — nothing renders this today, there is no BSS Load screen and no
-/// non-test caller in `lib/`. It is that adding the member is a public API change
-/// whose cost is lowest NOW and rises the moment a readout has to render it, so
-/// the decision belongs to Keith rather than to whoever next edits this file. It
-/// is logged where he reads it (`Team Knowledge/memory/AWAITING-KEITH.md`), not
-/// only here.
+/// THIS PARAMETER USED TO BE A BOOL, AND THE BOOL LIED. There was no third
+/// value, so an uncertain caller had to pass false, and false meant
+/// [BssLoadUnavailableReason.clippedWithoutSeeingElement11] — which states in
+/// its own doc that the capture WAS clipped. A caller handing over a perfectly
+/// whole set of elements was told we cut it. That was defended as the safe
+/// direction to be wrong in, and it was: a false claim about OUR OWN byte
+/// handling beats `absent`, which is the app blaming the Wi-Fi
+/// ([[feedback_app_blames_the_wifi]]). But safe-to-be-wrong is not right, and a
+/// type that cannot express "unknown" will be handed a guess every time
+/// ([[feedback_type_must_express_unknown]]). Keith ruled on 2026-08-02 that the
+/// decoder gains the member; it was done while there were still no non-test
+/// callers and the change was free.
 ///
-/// No caller needs it today. [decodeBssLoad] — the only caller of this function
-/// outside `bss_load_decoder_test.dart`, which exercises it directly and often —
-/// always knows, because [InformationElementWalkTail.isComplete] computes it.
-///
-/// AN EMPTY [elements] WITH [blobWalkedToEnd] TRUE IS NOT `absent` EITHER, and
-/// this entry point can tell on its own: a walk that reached the end of its
-/// source having yielded nothing can only have run over an empty source, and a
-/// beacon always carries at least an SSID element. So the source held no
+/// AN EMPTY [elements] WITH [IeBlobCompleteness.walkedToEnd] IS NOT `absent`
+/// EITHER, and this entry point can tell on its own: a walk that reached the end
+/// of its source having yielded nothing can only have run over an empty source,
+/// and a beacon always carries at least an SSID element. So the source held no
 /// information elements — [BssLoadUnavailableReason.noInformationElementsProvided],
 /// a statement about whatever handed us the bytes rather than about the AP. Both
 /// entry points decide this in this one place, so they cannot drift apart.
+///
+/// AN EMPTY [elements] WITH [IeBlobCompleteness.notStated] IS NOT THAT, THOUGH.
+/// The argument above turns on the walk having reached the end, which is exactly
+/// what an unstated blob does not tell us: an empty hand over an unknown extent
+/// cannot be told from a walk cut before the first element. It reports
+/// [BssLoadUnavailableReason.blobCompletenessNotStated].
 BssLoadReading decodeBssLoadFromElements(
   Iterable<InformationElement> elements, {
-  required bool blobWalkedToEnd,
+  required IeBlobCompleteness blobCompleteness,
 }) {
   BssLoadUnavailable? firstFailure;
   bool sawAnyElement = false;
@@ -780,18 +868,30 @@ BssLoadReading decodeBssLoadFromElements(
     if (reading is BssLoadDecoded) return reading;
     firstFailure ??= reading as BssLoadUnavailable;
   }
+  // An element 11 that was SEEN settles the reading on its own merits, whatever
+  // the caller knows about the tail — so this returns before completeness is
+  // consulted at all.
   if (firstFailure != null) return firstFailure;
-  if (!blobWalkedToEnd) {
-    return const BssLoadUnavailable(
-      BssLoadUnavailableReason.clippedWithoutSeeingElement11,
-    );
+  switch (blobCompleteness) {
+    case IeBlobCompleteness.stoppedShort:
+      return const BssLoadUnavailable(
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+      );
+    case IeBlobCompleteness.notStated:
+      // BEFORE THE MEMBER EXISTED THIS FELL INTO THE BRANCH ABOVE and asserted a
+      // clip nobody had evidence for. Named, so it can never silently rejoin it:
+      // rejoining it turns four tests RED, which was measured, not assumed.
+      return const BssLoadUnavailable(
+        BssLoadUnavailableReason.blobCompletenessNotStated,
+      );
+    case IeBlobCompleteness.walkedToEnd:
+      if (!sawAnyElement) {
+        return const BssLoadUnavailable(
+          BssLoadUnavailableReason.noInformationElementsProvided,
+        );
+      }
+      return const BssLoadUnavailable(BssLoadUnavailableReason.absent);
   }
-  if (!sawAnyElement) {
-    return const BssLoadUnavailable(
-      BssLoadUnavailableReason.noInformationElementsProvided,
-    );
-  }
-  return const BssLoadUnavailable(BssLoadUnavailableReason.absent);
 }
 
 /// Decodes the VALUE octets of a single element ID 11 (the `[id][len]` header

@@ -885,7 +885,7 @@ void main() {
       expect(
         (decodeBssLoadFromElements(
           const <InformationElement>[],
-          blobWalkedToEnd: true,
+          blobCompleteness: IeBlobCompleteness.walkedToEnd,
         ) as BssLoadUnavailable)
             .reason,
         BssLoadUnavailableReason.noInformationElementsProvided,
@@ -893,11 +893,27 @@ void main() {
       expect(
         (decodeBssLoadFromElements(
           const <InformationElement>[],
-          blobWalkedToEnd: false,
+          blobCompleteness: IeBlobCompleteness.stoppedShort,
         ) as BssLoadUnavailable)
             .reason,
         BssLoadUnavailableReason.clippedWithoutSeeingElement11,
-        reason: 'a caller that does not know must not get an AP-facing answer',
+        reason: 'a caller that KNOWS the walk stopped short gets the clip',
+      );
+      // THIS ASSERTION'S PREDECESSOR ENSHRINED THE DEFECT. It read "a caller
+      // that does not know must not get an AP-facing answer", and it passed —
+      // on `blobWalkedToEnd: false`, the only non-committal value a bool had.
+      // Not getting an AP-facing answer was true; what it also got was a
+      // POSITIVE claim that we clipped the capture. The predicate was right and
+      // the value was wrong, which is why it stayed green.
+      expect(
+        (decodeBssLoadFromElements(
+          const <InformationElement>[],
+          blobCompleteness: IeBlobCompleteness.notStated,
+        ) as BssLoadUnavailable)
+            .reason,
+        BssLoadUnavailableReason.blobCompletenessNotStated,
+        reason: 'a caller that does not know must claim NOTHING — not about the '
+            'AP, and not about our own byte handling either',
       );
     });
 
@@ -1043,7 +1059,7 @@ void main() {
     test('told the blob was whole, no element 11 is absent', () {
       final BssLoadReading reading = decodeBssLoadFromElements(
         walkInformationElements(<int>[..._ssidIe('WLANPros')]),
-        blobWalkedToEnd: true,
+        blobCompleteness: IeBlobCompleteness.walkedToEnd,
       );
       expect((reading as BssLoadUnavailable).reason,
           BssLoadUnavailableReason.absent);
@@ -1052,7 +1068,7 @@ void main() {
     test('told the blob was cut, no element 11 is a clip, never an absence', () {
       final BssLoadReading reading = decodeBssLoadFromElements(
         walkInformationElements(<int>[11, 5, 0x01, 0x00]),
-        blobWalkedToEnd: false,
+        blobCompleteness: IeBlobCompleteness.stoppedShort,
       );
       expect((reading as BssLoadUnavailable).reason,
           BssLoadUnavailableReason.clippedWithoutSeeingElement11);
@@ -1064,23 +1080,27 @@ void main() {
       // this entry point can say is "something was cut".
       final BssLoadReading reading = decodeBssLoadFromElements(
         walkInformationElements(<int>[11, 5, 0x01, 0x00]),
-        blobWalkedToEnd: false,
+        blobCompleteness: IeBlobCompleteness.stoppedShort,
       );
       final BssLoadUnavailable out = reading as BssLoadUnavailable;
       expect(out.reason, isNot(BssLoadUnavailableReason.truncated));
       expect(out.valueLength, isNull);
     });
 
-    test('a real element 11 outranks the flag in both directions', () {
-      // The flag only decides the no-element-11 case; it must not colour a
-      // diagnosis we actually made.
-      for (final bool whole in <bool>[true, false]) {
+    test('a real element 11 outranks completeness, whatever the caller knows',
+        () {
+      // Completeness only decides the no-element-11 case; it must not colour a
+      // diagnosis we actually made. Every member, not a sample of them — the
+      // predecessor iterated a bool and so could not have covered the third.
+      for (final IeBlobCompleteness known in IeBlobCompleteness.values) {
         final BssLoadReading bad = decodeBssLoadFromElements(
           walkInformationElements(_ie(11, <int>[1, 2, 3])),
-          blobWalkedToEnd: whole,
+          blobCompleteness: known,
         );
         expect((bad as BssLoadUnavailable).reason,
-            BssLoadUnavailableReason.malformedLength);
+            BssLoadUnavailableReason.malformedLength,
+            reason: 'a seen element 11 settles it, but $known changed the '
+                'answer');
 
         final BssLoadReading good = decodeBssLoadFromElements(
           walkInformationElements(_bssLoadIe(
@@ -1088,9 +1108,98 @@ void main() {
             channelUtilization: 7,
             admissionCapacity: 8,
           )),
-          blobWalkedToEnd: whole,
+          blobCompleteness: known,
         );
         expect(_decoded(good).stationCount, 6);
+      }
+    });
+  });
+
+  group('"we were not told" is its own answer, and claims nothing', () {
+    // WHY THIS EXISTS. The parameter above was a `bool`, so it had no value
+    // meaning "nobody told me". An uncertain caller had to pass false, and false
+    // meant clippedWithoutSeeingElement11 — a POSITIVE claim that our own
+    // capture was cut. Safe to be wrong in that direction, and still wrong.
+    // Keith ruled on 2026-08-02 that the decoder gains the member, while there
+    // were no non-test callers and the change was free.
+    // [[feedback_type_must_express_unknown]].
+
+    test('not being told is NOT a clip, and NOT an absence', () {
+      final BssLoadUnavailable out = decodeBssLoadFromElements(
+        walkInformationElements(<int>[..._ssidIe('WLANPros')]),
+        blobCompleteness: IeBlobCompleteness.notStated,
+      ) as BssLoadUnavailable;
+
+      expect(out.reason, BssLoadUnavailableReason.blobCompletenessNotStated);
+      // Both directions named, because this member's whole job is to be neither.
+      expect(out.reason,
+          isNot(BssLoadUnavailableReason.clippedWithoutSeeingElement11),
+          reason: 'this is the exact over-claim the bool forced');
+      expect(out.reason, isNot(BssLoadUnavailableReason.absent),
+          reason: 'and this is the one that would blame the AP');
+      expect(out.valueLength, isNull);
+      expect(out.availableLength, isNull);
+    });
+
+    test('an empty hand with completeness unstated is not nothing-provided', () {
+      // noInformationElementsProvided is a claim about the PLATFORM being blind.
+      // It is earned by a walk that reached the end having yielded nothing, and
+      // reaching the end is precisely what is unknown here.
+      final BssLoadUnavailable out = decodeBssLoadFromElements(
+        const <InformationElement>[],
+        blobCompleteness: IeBlobCompleteness.notStated,
+      ) as BssLoadUnavailable;
+
+      expect(out.reason, BssLoadUnavailableReason.blobCompletenessNotStated);
+      expect(out.reason,
+          isNot(BssLoadUnavailableReason.noInformationElementsProvided));
+    });
+
+    test('every state of knowledge gets its OWN answer, none shared', () {
+      // THE DISCRIMINATION A BOOL COULD NOT MAKE, asserted as a set rather than
+      // one at a time: stoppedShort and notStated collapsed into a single value
+      // before the member existed, so a test that checked them singly would have
+      // passed then too. Named rather than counted, per the file header.
+      final List<BssLoadUnavailableReason> answers = IeBlobCompleteness.values
+          .map((IeBlobCompleteness known) => (decodeBssLoadFromElements(
+                walkInformationElements(<int>[..._ssidIe('WLANPros')]),
+                blobCompleteness: known,
+              ) as BssLoadUnavailable)
+              .reason)
+          .toList();
+
+      expect(answers.toSet(), hasLength(answers.length),
+          reason: 'a state of knowledge shares its reason with another, so the '
+              'caller cannot tell them apart: $answers');
+      expect(answers, <BssLoadUnavailableReason>[
+        BssLoadUnavailableReason.absent,
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+        BssLoadUnavailableReason.blobCompletenessNotStated,
+      ]);
+    });
+
+    test('decodeBssLoad NEVER reports it, because it always knows', () {
+      // The raw-bytes entry point holds the walk tail, so manufacturing an
+      // uncertainty there would be a lie in the other direction. Swept over
+      // every shape this file exercises, including the clipped and empty ones.
+      final List<List<int>?> blobs = <List<int>?>[
+        null,
+        <int>[],
+        <int>[11],
+        <int>[11, 5, 0x01, 0x00],
+        <int>[11, 0],
+        _ie(11, <int>[1, 2, 3]),
+        _ssidIe('WLANPros'),
+        _bssLoadIe(stationCount: 1, channelUtilization: 2, admissionCapacity: 3),
+      ];
+      for (final List<int>? blob in blobs) {
+        final BssLoadReading reading = decodeBssLoad(blob);
+        if (reading is BssLoadUnavailable) {
+          expect(reading.reason,
+              isNot(BssLoadUnavailableReason.blobCompletenessNotStated),
+              reason: 'decodeBssLoad computed the tail for $blob and still '
+                  'claimed it was not told');
+        }
       }
     });
   });
