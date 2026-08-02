@@ -1,12 +1,12 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 173 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 174 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
 ## Contents
 
-- **Test Network** (6 tools)
+- **Test Network** (7 tools)
 - **Networking Tools** (25 tools)
 - **Calculators & Tools** (32 tools)
   - RF & Propagation (9)
@@ -158,6 +158,28 @@ Record each time your device roams from one access point (BSSID) to another on t
 - The signal shown is the reading at the moment the new BSSID first appeared, not an average. "Signal unavailable" prints honestly when the platform omitted RSSI for that sample, never a fake value.
 - Stopping and starting (iOS) clears the session log so a new walk does not inherit the prior walk's roams.
 - Copy-to-save: the §8.16 Copy action in the app bar exports the whole recorded roam session as paste-ready plain text (each roam with its time, network, from→to BSSID pair, and signal), built by the pure buildRoamLogCopyText so a walk can be saved to a ticket or note.
+
+### BSS Load
+
+Read BSS Load, element 11 of the beacon, off the access point you are connected to: associated station count, channel utilization, and available admission capacity.
+
+**Why it's here.** These are the access point's own numbers about itself, which is a different question from what your client radio is doing. Reach for it when you want the AP's view of the channel alongside your own, or when you are deciding whether a cell is carrying more clients than its coverage suggests. The element is optional, so plenty of access points never send it, and knowing that is itself a finding.
+
+**How to use**
+1. macOS: open the tool and it takes a snapshot; tap Read again to re-read. macOS will not hand beacon information elements to an app without Location access, so if the screen reports no information elements, grant Location and read again.
+2. Every other platform: the screen opens and reports that this device gave it no information elements. iOS exposes none to any app, and the connected-AP information-element channel is wired for macOS only today.
+3. When there is no reading, read the small label above the sentence first: it says whether the reason is about this access point, about this read, or about what we were told.
+
+**Formula or method.** The raw information elements are walked by the shared bounds-checked TLV walker (`ie_parser.dart`) and element 11 is decoded by `bss_load_decoder.dart` per IEEE 802.11-2012 section 8.4.2.30, cross-checked field for field against Wireshark's `packet-ieee80211.c` dissector. Station Count is 2 octets little-endian. Channel Utilization is one octet on a linear 0 to 255 scale, so percent = raw × 100 ÷ 255, and the raw octet prints beside it. Available Admission Capacity is 2 octets little-endian in units of 32 microseconds of medium time per second; 1 000 000 ÷ 32 = 31 250 raw represents one full second, which is 100 percent. Nothing is graded. The decoder returns three numbers and one out-of-range flag, and the screen renders three numbers and one out-of-range flag.
+
+**Field notes**
+- An all-zero reading is a reading. An idle access point on a quiet channel really does advertise zeros, and they print as zeros, never as a blank or a dash.
+- The screen never collapses the not-available cases into one grey state, and the distinction is the point. "This access point does not advertise BSS Load" is a claim about somebody's network and is shown only when the beacon was walked end to end with every octet accounted for. A capture cut short, a device that exposed no information elements at all, an element this build refuses to decode, and a source that never said whether the capture was whole are all findings about our own read, and each says so under its own label.
+- The Cisco "QBSS Version 1, non CCA" variant rides the same element ID 11 with a one-octet admission-capacity field carrying different semantics. It is recognized and deliberately not decoded: the standard layout would produce a plausible wrong number. Do not add support for it without a live Cisco capture pinning what that octet means.
+- Channel Utilization is the access point's own sense of the medium over its own measurement window, by physical or virtual carrier sense. It is not a measurement this device made, so two access points on one channel can honestly report different numbers.
+- Station Count is an association count, not a traffic measure. It says nothing about how much air those stations use.
+- A capture clipped exactly on an element boundary is byte for byte identical to a complete one. There is no evidence in the bytes, so such a blob reads as absent. That limit is stated rather than papered over, and it lives in the layer that capped the buffer, not in the decoder.
+- Web routes to the download-the-app fallback: there is no method channel in a browser.
 
 ### How the Toolbox Measures Throughput
 

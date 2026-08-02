@@ -349,6 +349,25 @@ class WifiInfoService {
     }
   }
 
+  /// Whether ANY channel on this platform hands up raw beacon/probe information
+  /// elements for the connected AP.
+  ///
+  /// NARROWER THAN [isSupportedPlatform], and deliberately so: Android and
+  /// Windows both read Wi-Fi link metrics, and neither exposes the connected
+  /// BSS's raw IE blob to this app. Only macOS wires `connectedApIeBlob` today.
+  ///
+  /// EXPOSED BECAUSE A CALLER THAT CANNOT ASK THIS QUESTION GUESSES THE ANSWER.
+  /// `decodeBssLoad` reports a null blob as
+  /// `BssLoadUnavailableReason.noInformationElementsProvided`, which is a true
+  /// statement about the platform and a deliberately silent one about the cause;
+  /// a readout that wants to say WHICH platform limit it hit needs this flag,
+  /// and re-deriving it from an OS-name string at the call site is how two
+  /// answers to one question drift apart
+  /// ([[feedback_ui_rendered_a_decision_it_lacked]], "one representation, one
+  /// derivation"). [connectedApIeBlob] gates on this same getter, so the flag
+  /// and the behavior cannot disagree.
+  bool get connectedApIeBlobSupported => !kIsWeb && _platform == 'macos';
+
   /// Reads the raw beacon/probe IE bytes for the currently-connected AP (macOS),
   /// matched by BSSID against a CoreWLAN scan.
   ///
@@ -358,9 +377,11 @@ class WifiInfoService {
   /// carrying no IE data. The caller hands [ApIeBlob.ieBytes] to
   /// `decodeApName` and attaches the result to the connected-AP model.
   Future<ApIeBlob> connectedApIeBlob() async {
-    if (kIsWeb || _platform != 'macos') {
+    if (!connectedApIeBlobSupported) {
       // Only macOS wires this today; return honest-null rather than touch a
-      // channel that has no handler on other platforms.
+      // channel that has no handler on other platforms. The condition lives in
+      // the getter above so a caller asking "will this platform give me IEs?"
+      // and this method answering it can never disagree.
       return const ApIeBlob(
         ieBytes: null,
         bssid: null,

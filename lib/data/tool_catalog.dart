@@ -196,6 +196,7 @@ const Set<String> kWebUnavailableToolIds = <String>{
   'wifi-info', // native Wi-Fi link metrics (CoreWLAN / platform bridge)
   'cellular-info', // native cellular radio bridge
   'roaming-log', // live Wi-Fi BSSID monitoring (CoreWLAN poll / iOS bridge)
+  'bss-load', // beacon information elements via the macOS platform channel
   // Networking Tools — socket / lookup / scan / native utilities.
   'interface-info', // reads the device interface table
   'device-info', // device system facts via platform bridge
@@ -300,6 +301,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Records each time your device roams between access points on the '
             'same network (foreground session)',
         routeName: '/tools/roaming-log',
+        isLive: true,
+      ),
+      // Felix 2026-08-02 (Keith's direct ask): the BSS Load readout, the first
+      // non-test consumer of `bss_load_decoder.dart`. Lives beside Wi-Fi
+      // Information because it answers the sibling question about the same
+      // radio: not "what is my link doing" but "what does the access point say
+      // about its own load".
+      ToolEntry(
+        id: 'bss-load',
+        title: 'BSS Load',
+        description:
+            'The access point\'s own advertised station count, channel '
+            'utilization, and available admission capacity, read from beacon '
+            'element 11 (macOS)',
+        routeName: '/tools/bss-load',
         isLive: true,
       ),
     ],

@@ -2030,6 +2030,29 @@
       ],
       "source": "Watches the connected access point and logs a roam whenever it changes while the network name stays the same."
     },
+    "bss-load": {
+      "name": "BSS Load",
+      "category": "Test Network",
+      "purpose": "Reads BSS Load, element 11 of the beacon, off the access point you are connected to: how many stations it says are associated, how busy it senses the medium to be, and how much admission capacity it has left.",
+      "whyHere": "These are the access point's own numbers about itself, which is a different question from what your client radio is doing. Reach for it when you want the AP's view of the channel next to your own, or when you are deciding whether a cell is carrying more clients than its coverage suggests. The element is optional, so plenty of access points never send it, and knowing that is itself a finding.",
+      "howToUse": [
+        "macOS: open the tool and it takes a snapshot. Tap Read again to re-read. macOS will not hand beacon information elements to an app without Location access, so if the screen says it got no information elements, grant Location and read again.",
+        "Every other platform: the screen opens and says this device gave it no information elements. That is true and it is deliberate. iOS exposes none to any app, and the connected-AP information-element channel is wired for macOS only today.",
+        "When there is no reading, read the small label above the sentence first. It says whether the reason is about this access point, about this read, or about what we were told. Those are three different findings and the label is the fastest way to tell which one you are looking at.",
+        "Tap Copy results in the top bar to put the reading on the clipboard as plain text. The copied text carries the same label the screen shows, so a pasted result cannot lose the distinction."
+      ],
+      "inputs": [],
+      "algorithm": "The raw beacon information elements are walked by the shared bounds-checked TLV walker and element 11 is decoded per IEEE 802.11-2012 section 8.4.2.30, cross-checked against Wireshark's own dissector. Station Count is 2 octets little-endian. Channel Utilization is one octet on a linear 0 to 255 scale, so the percentage is raw times 100 divided by 255; the raw octet is always shown beside it. Available Admission Capacity is 2 octets little-endian in units of 32 microseconds of medium time per second, so 31250 raw represents a full second, which is 100 percent. Nothing is graded: the tool shows the three numbers and does not decide whether a channel is busy. A value above full scale is flagged and shown exactly as it was read, never capped.",
+      "example": "An access point advertising a Channel Utilization octet of 120 reads as 47.1 percent, with \"120 of 255 on the wire\" printed underneath so you can check the conversion rather than take it on trust.",
+      "fieldNotes": [
+        "An all-zero reading is a reading. An idle access point on a quiet channel really does advertise zeros, and the screen prints them as zeros rather than as a blank.",
+        "BSS Load can be unavailable for several distinct reasons and the screen never collapses them. \"This access point does not advertise BSS Load\" is a finding about the access point and is only ever shown when the beacon was read end to end. A capture that was cut short, a device that exposed no information elements at all, and an element this build refuses to decode are findings about our own read, and they say so.",
+        "The Cisco \"QBSS Version 1, non CCA\" variant rides the same element ID with a one-octet admission-capacity field that means something different. The tool recognizes it and refuses to decode it, because reading it with the standard layout would produce a number that looks plausible and is wrong.",
+        "Channel Utilization is the access point's own sense of the medium over its own measurement window, by physical or virtual carrier sense. It is not a measurement this device made, so two access points on one channel can honestly report different numbers.",
+        "Station Count is how many stations are associated, not how much traffic they generate. A high count on a quiet channel and a low count on a saturated one are both ordinary."
+      ],
+      "source": "bss_load_screen.dart"
+    },
     "interface-info": {
       "name": "Interface Information",
       "category": "Networking Tools",

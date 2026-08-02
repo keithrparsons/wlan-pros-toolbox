@@ -166,6 +166,7 @@ import '../screens/tools/network/wake_on_lan_screen.dart';
 import '../screens/tools/network/whois_screen.dart';
 import '../screens/tools/network/wifi_info_screen.dart';
 import '../screens/tools/network/cellular_info_screen.dart';
+import '../screens/tools/network/bss_load_screen.dart';
 import '../screens/tools/network/roaming_log_screen.dart';
 import '../screens/tools/calculators/hex_ascii_screen.dart';
 import '../screens/tools/command/cli_commands_screen.dart';
@@ -402,6 +403,13 @@ class AppRouter {
   static const String wifiInfo = '/tools/wifi-info';
   static const String cellularInfo = '/tools/cellular-info';
   static const String roamingLog = '/tools/roaming-log';
+
+  /// BSS Load (802.11 element 11) — the connected AP's own advertised station
+  /// count, channel utilization and available admission capacity, read out of
+  /// the beacon information elements. Renders the decoder's honest
+  /// not-available readings by name rather than collapsing them into one grey
+  /// state; see `bss_load_presentation.dart`.
+  static const String bssLoad = '/tools/bss-load';
   static const String traceroute = '/tools/traceroute';
   static const String mobileTraceroute = '/tools/mobile-traceroute';
   static const String sslInspect = '/tools/ssl-inspect';
@@ -751,6 +759,10 @@ class AppRouter {
     // shared WifiSignalSampler. macOS auto-polls; iOS records while foregrounded
     // behind a Start tap (no background Wi-Fi monitoring exists on iOS).
     roamingLog: (_) => const RoamingLogScreen(),
+    // Felix 2026-08-02: the first non-test consumer of `bss_load_decoder.dart`.
+    // No concept graphic or tool icon ships yet, so ConceptGraphicBand collapses
+    // to an empty SizedBox and the row falls back to its Tier-1 group glyph.
+    bssLoad: (_) => const BssLoadScreen(),
     traceroute: (_) => const TracerouteScreen(),
     mobileTraceroute: (_) => const MobileTracerouteScreen(),
     sslInspect: (_) => const SslInspectScreen(),

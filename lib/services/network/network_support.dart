@@ -167,6 +167,22 @@ class NetworkSupport {
   /// screen, not gated here.
   static bool get networkDiscoverySupported => !kIsWeb;
 
+  /// BSS Load (802.11 element 11) readout support.
+  ///
+  /// The gate is `!kIsWeb` and NOT "is this macOS", even though macOS is the
+  /// only platform that hands up beacon information elements today. That is
+  /// deliberate. Every other native platform reaches the screen and gets the
+  /// decoder's honest
+  /// `BssLoadUnavailableReason.noInformationElementsProvided` reading, which
+  /// says what this device could see and pointedly says nothing about the
+  /// access point. Hiding the tool behind a platform check would replace that
+  /// true, specific sentence with silence, and silence is the one thing a
+  /// reader cannot tell apart from "we looked and found nothing"
+  /// ([[feedback_blanking_reads_as_absence]]). Web has no method channel at
+  /// all, so it routes to the download-the-app fallback like every other
+  /// native-only tool.
+  static bool get bssLoadSupported => !kIsWeb;
+
   /// The reason active tools are unavailable, or null when they are available.
   static NetworkUnavailableReason? get unavailableReason =>
       kIsWeb ? NetworkUnavailableReason.web : null;

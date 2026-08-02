@@ -124,7 +124,7 @@ void main() {
     // NOTE 2026-07-28: this test was named 'parses to exactly 140 entries' while
     // asserting 178. The name is a claim and it was wrong by 38. Renamed to state
     // the count it actually checks, and the number now lives in one place.
-    test('parses to exactly 179 entries', () {
+    test('parses to exactly 180 entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -311,7 +311,16 @@ void main() {
       // (Deliverables/2026-07-25-battery-sd-reference/FINDINGS.md), which cites
       // IEC 60086-1/-2:2021 and the SD Physical Layer Simplified Spec v6.00.
       // 176 + 2 = 178.
-      expect(store.count, 179);
+      // 180 = + BSS Load (bss-load) 2026-08-02, a Test Network tile: the
+      // readout for 802.11 element 11 (station count, channel utilization,
+      // available admission capacity) off the connected access point's beacon,
+      // and the first non-test consumer of `bss_load_decoder.dart`. The comment
+      // chain above jumps 178 to 180 because it never recorded the 179th entry;
+      // the count assertion below was already 179 before this change, so the
+      // step taken here is one. Do not "repair" the arithmetic by editing 180
+      // down to 179: the number that is checked is the one on the expect line,
+      // and the gap is in this prose, not in the file.
+      expect(store.count, 180);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
