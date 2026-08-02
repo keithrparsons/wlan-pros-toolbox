@@ -45,6 +45,29 @@
 // false. A PARSER THAT SKIPS SILENTLY CONVERTS EVERY DOWNSTREAM ASSERTION INTO A
 // CLAIM ABOUT A SMALLER SET, AND REPORTS IT IN THE SAME GREEN.
 //
+// ROUND 7 DEFEATED THAT ONE WITH ONE CHARACTER, WHICH IS THE HISTORY REPEATING
+// AT THE LEVEL BELOW. The property assertions were sound; the SEPARATOR was not.
+// `rule 2`, `rule two` and `the second rule` were all in the fixture table and
+// all RED — and `rule-2`, `rule-two` and `the second-rule` were GREEN, because
+// the three ordinal patterns joined their parts with `\s+`. The count check had
+// already been written with `[\s-]+`, so the file disagreed with itself, and the
+// header's own list of blind spots did not mention hyphens at all.
+//
+// The second half was worse, because it was not hypothetical. The count check
+// held its nouns as PLURALS ONLY, so `the three-state question` — a claim of
+// three against a contract of four — had no noun to match and passed clean.
+// That sentence was really in `bss_load_decoder_test.dart`; it was found by a
+// gate and repaired by hand in `1b7c0d5`. The guard written to make that repair
+// durable could not see it. A GUARD THAT ASSERTS A PROPERTY STILL HAS TO
+// TOKENISE THE SENTENCE, AND A TOKENISER IS ALSO AN ENUMERATION — of separators
+// and of word forms, which is where round 7 went in.
+//
+// Both are closed by ONE definition ([_citationGap]) shared by every pattern,
+// and by holding the contract nouns as stems that match `s?`. Widening a guard
+// is the dangerous direction, so the negative table grew six hyphenated
+// sentences at the same time: `a seven-case switch` really did turn RED under
+// the singular nouns, and [_headSaysNotTheContract] exists because of it.
+//
 // So every check below is built the same way, and the shape is general:
 //
 //   * PARSE LOOSELY, JUDGE STRICTLY. A line that is shaped like an entry is
@@ -110,6 +133,19 @@
 //     build red on the record of its own fix is a guard that gets deleted
 //     ([[feedback_guard_must_not_penalise_the_trace]]). Backticks are NOT
 //     suppressed, so a backticked ordinal still fires;
+//   * a citation separated by an EM DASH (`the entry — 3 lines below`).
+//     [_citationGap] covers whitespace, the ASCII hyphen and U+2010..U+2013,
+//     and stops deliberately short of U+2014: this codebase writes em-dash
+//     parentheticals constantly, so covering it would turn the house
+//     punctuation style into a build failure. Locked by a fixture;
+//   * an attributive singular whose HEAD NOUN is in [_notTheContract] (`a
+//     seven-case switch`). That exception is what makes reading `three-state`
+//     affordable, and it is a deliberately bought miss: a citation phrased
+//     `a three-case test` will not fire;
+//   * an INSTANCE noun in its attributive singular (`a four-reading average`).
+//     [_instanceNouns] are still plural-only, because they are already the
+//     narrower check — they need an [_enumerating] word before they count at
+//     all, and no compound of that shape has been written in these files;
 //   * a stated count using a noun outside [_contractNouns] and [_instanceNouns],
 //     or one that happens to equal the contract's size while counting something
 //     else entirely. THIS IS LIVE AND KNOWN: `bss_load_decoder.dart` carries a
@@ -131,7 +167,8 @@
 // the files it guards say so at the claim rather than only here.
 //
 // Build: Felix 2026-08-01, round 4 findings. Rewritten from Vera's round-5
-// H1/M1/M2/M3, and again from her round-6 H1/H2/H3/M1/M2/M3/L1/L2.
+// H1/M1/M2/M3, again from her round-6 H1/H2/H3/M1/M2/M3/L1/L2, and widened
+// 2026-08-02 from the round-7 cold-eyes gate's H1/H2/H3.
 
 import 'dart:io';
 
@@ -331,11 +368,23 @@ const List<String> _indexedNouns = <String>[
 ];
 
 /// Nouns the honesty contract's members have actually been called, across every
-/// revision of these files: `outcomes` today, `states`, `answers` and `cases` in
-/// the versions the gate rounds were run against. A count in front of one of
-/// these is CHECKED against the contract's real size — not forbidden.
+/// revision of these files, as SINGULAR STEMS: `outcomes` today, `states`,
+/// `answers` and `cases` in the versions the gate rounds were run against. A
+/// count in front of one of these is CHECKED against the contract's real size —
+/// not forbidden.
+///
+/// THE STEM IS THE LOAD-BEARING PART, and it was learned on a sentence that was
+/// really in this repo. `bss_load_decoder_test.dart` carried
+/// `isDecoded answers the three-state question` — three, against a contract of
+/// four. That is precisely the false count this check exists to catch, and the
+/// round-7 gate found the guard GREEN over it. The set held PLURALS ONLY, so the
+/// attributive singular `three-state` had no noun to match and the count check
+/// never ran. It was repaired by hand in `1b7c0d5`; the guard that was supposed
+/// to make that repair durable would not have found it, and would not find it
+/// coming back. [_contractNounsAlt] now closes on `s?`, so the plural and the
+/// attributive singular both fire.
 const List<String> _contractNouns = <String>[
-  'states', 'outcomes', 'answers', 'cases',
+  'state', 'outcome', 'answer', 'case',
 ];
 
 /// Nouns that name INSTANCES rather than contract members. `BssLoadReading` is a
@@ -381,7 +430,9 @@ const String _determinersAlt =
 
 final String _citableNounsAlt = _citableNouns.join('|');
 final String _indexedNounsAlt = _indexedNouns.join('|');
-final String _contractNounsAlt = _contractNouns.join('|');
+/// The contract nouns as an alternation that matches the plural AND the
+/// attributive singular: `four outcomes`, `three-state`. See [_contractNouns].
+final String _contractNounsAlt = '(?:${_contractNouns.join('|')})s?';
 final String _instanceNounsAlt = _instanceNouns.join('|');
 
 /// Every counting word this guard understands, as an alternation.
@@ -391,19 +442,46 @@ const String _numbersAlt = 'two|three|four|five|six|seven|eight|nine|ten';
 const String _positionsAlt =
     'first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth';
 
-/// `case 3`, `rule 2`, `step 4`.
-final RegExp _ordinalByDigit =
-    RegExp('\\b($_indexedNounsAlt)s?\\s+\\d+\\b', caseSensitive: false);
+/// What may sit between the parts of a citation: whitespace, an ASCII hyphen,
+/// or the typographic dashes U+2010..U+2013 (hyphen, non-breaking hyphen,
+/// figure dash, en dash).
+///
+/// A HYPHEN IS A SEPARATOR, NOT AN ESCAPE HATCH. The round-7 gate defeated all
+/// three ordinal patterns with one character: `rule 2`, `rule two` and `the
+/// second rule` were already in [_mustFire] and RED, while `rule-2`,
+/// `rule-two` and `the second-rule` were green. The patterns joined their parts
+/// with `\s+`, which cannot match a hyphen — and [_statedCount] below had
+/// already been written with the wider class, so the file disagreed with itself.
+/// One definition now, used by every one of them.
+///
+/// THE UNICODE DASHES WERE MEASURED, NOT ASSUMED. The gate listed them as
+/// "likely open, but that is an inference, not a measurement". They were open:
+/// `rule‑2` with a non-breaking hyphen and `rule–2` with an en dash both sat
+/// green after the ASCII widening, and all four are now fixtures.
+///
+/// THE EM DASH IS EXCLUDED DELIBERATELY, and it is the one dash that must be.
+/// This codebase writes em-dash parentheticals everywhere — including this
+/// comment — so `the entry — 3 lines below` is ordinary prose here, not a
+/// citation. Including U+2014 would turn the house punctuation style into a
+/// build failure, which is how a guard gets deleted. Locked by a fixture in
+/// [_mustNotFire].
+const String _citationGap = '[\\s\\u2010-\\u2013-]+';
 
-/// `case three`, `rule two` — the same citation spelled out.
+/// `case 3`, `rule 2`, `step 4`, `rule-2`.
+final RegExp _ordinalByDigit =
+    RegExp('\\b($_indexedNounsAlt)s?$_citationGap\\d+\\b', caseSensitive: false);
+
+/// `case three`, `rule two`, `rule-two` — the same citation spelled out.
 final RegExp _ordinalByWord = RegExp(
-  '\\b($_indexedNounsAlt)s?\\s+(one|$_numbersAlt)\\b',
+  '\\b($_indexedNounsAlt)s?$_citationGap(one|$_numbersAlt)\\b',
   caseSensitive: false,
 );
 
-/// `the second rule`, `that third case`, `the contract's second outcome`.
+/// `the second rule`, `that third case`, `the contract's second outcome`,
+/// `the second-rule`.
 final RegExp _ordinalByPosition = RegExp(
-  '\\b($_determinersAlt)\\s+($_positionsAlt)\\s+($_citableNounsAlt)s?\\b',
+  '\\b($_determinersAlt)$_citationGap($_positionsAlt)$_citationGap'
+  '($_citableNounsAlt)s?\\b',
   caseSensitive: false,
 );
 
@@ -412,9 +490,12 @@ final RegExp _ordinalByPosition = RegExp(
 /// of two. Widening is safe only because of [_nearestNumberWins].
 const int _kCountGap = 4;
 
-/// A stated count of the contract's members.
+/// A stated count of the contract's members. Shares [_citationGap], which is
+/// what lets `three-state` and `three–state` be read the same way as
+/// `three states`.
 final RegExp _statedCount = RegExp(
-  '\\b($_numbersAlt)[\\s-]+((?:[\\w-]+[\\s-]+){0,$_kCountGap}?)($_contractNounsAlt)\\b',
+  '\\b($_numbersAlt)$_citationGap'
+  '((?:[\\w-]+$_citationGap){0,$_kCountGap}?)($_contractNounsAlt)\\b',
   caseSensitive: false,
 );
 
@@ -422,7 +503,8 @@ final RegExp _statedCount = RegExp(
 /// says the phrase is counting the contract. At least one word must sit between
 /// the number and the noun, because that word is what does the marking.
 final RegExp _statedInstanceCount = RegExp(
-  '\\b($_numbersAlt)[\\s-]+((?:[\\w-]+[\\s-]+){1,$_kCountGap}?)($_instanceNounsAlt)\\b',
+  '\\b($_numbersAlt)$_citationGap'
+  '((?:[\\w-]+$_citationGap){1,$_kCountGap}?)($_instanceNounsAlt)\\b',
   caseSensitive: false,
 );
 
@@ -453,6 +535,32 @@ bool _reHeadsThePhrase(String word) {
   if (_functionWordsEndingInS.contains(word)) return false;
   return !_enumerating.contains(word);
 }
+
+/// The next whole word after [offset] in [text], lower-cased; empty when the
+/// match ends the paragraph.
+String _wordAfter(String text, int offset) {
+  final RegExpMatch? m = RegExp('^(?:$_citationGap)?([A-Za-z][\\w-]*)')
+      .firstMatch(text.substring(offset));
+  return m == null ? '' : m.group(1)!.toLowerCase();
+}
+
+/// True when a count matched an ATTRIBUTIVE SINGULAR whose head noun says the
+/// phrase is not counting the contract.
+///
+/// WHY THIS EXISTS, and it is the price of reading `three-state`. An attributive
+/// singular does not stand alone — it modifies the noun after it, and THAT noun
+/// is the head of the phrase. `a seven-case switch` counts SWITCH ARMS, and
+/// `switch` is already in [_notTheContract] for the mirror-image phrasing `seven
+/// switch cases`. Teaching the check to read the singular without this taught it
+/// to fail on every such compound, which was measured, not feared: adding
+/// `A seven-case switch covers every reason the decoder can return.` to
+/// [_mustNotFire] turned it RED before this existed. `three-state question`
+/// still fires, because `question` is not one of those words.
+///
+/// Plurals are excluded because they head their own phrase; only the singular
+/// borrows one.
+bool _headSaysNotTheContract(String noun, String next) =>
+    !noun.endsWith('s') && _notTheContract.contains(next);
 
 // ── Machinery ────────────────────────────────────────────────────────────────
 
@@ -798,7 +906,7 @@ List<String> _proseOffences(
       if (_isQuoted(quoted, m.start, m.end)) continue;
       final List<String> between = (m.group(2) ?? '')
           .toLowerCase()
-          .split(RegExp(r'[\s-]+'))
+          .split(RegExp(_citationGap))
           .where((String w) => w.isNotEmpty)
           .toList();
       if (between.any(_notTheContract.contains)) continue;
@@ -814,6 +922,15 @@ List<String> _proseOffences(
       // [_reHeadsThePhrase]. Without this, widening the gap turns `states` and
       // `answers` back into the verbs they also are.
       if (between.any(_reHeadsThePhrase)) continue;
+      // AN ATTRIBUTIVE SINGULAR BORROWS THE HEAD AFTER IT — see
+      // [_headSaysNotTheContract]. This is the mirror of the rule above: there
+      // an intervening plural re-heads the phrase, here a following noun does.
+      if (_headSaysNotTheContract(
+        m.group(3)!.toLowerCase(),
+        _wordAfter(p.text, m.end),
+      )) {
+        continue;
+      }
       if (_instanceNouns.contains(m.group(3)!.toLowerCase()) &&
           !between.any(_enumerating.contains)) {
         continue;
@@ -842,6 +959,14 @@ List<String> _scanSentence(String sentence) => _proseOffences(
 
 /// Sentences that MUST turn the build red, each one an end-to-end mutation that
 /// defeated some version of this guard.
+///
+/// The last nine are round 7's, and they are the same three citations the first
+/// eleven already caught, respelled with a hyphen or a typographic dash, plus
+/// the false count `three-state` that was really written in
+/// `bss_load_decoder_test.dart` and had to be repaired by hand. Every one of
+/// them was verified GREEN against the unwidened patterns before the widening
+/// landed — a fixture nobody has watched fail is a claim, not a guard
+/// ([[feedback_red_green_is_not_coverage]]).
 const List<String> _mustFire = <String>[
   'See precedence rule 2 above for the ordering.',
   'See precedence step 2 above for the ordering.',
@@ -854,6 +979,15 @@ const List<String> _mustFire = <String>[
   'There are seven clearly quite distinct outcomes in the contract above.',
   'The decoder produces seven different readings in all.',
   'Rule two is where the order is decided.',
+  'See precedence rule-2 above for that ordering.',
+  'See precedence rule-two above for that ordering.',
+  'The second-rule here is the one that matters most.',
+  'isDecoded answers the three-state question in both directions.',
+  'The three state question is answered in both directions.',
+  'See precedence rule‑2 above for that ordering.',
+  'See precedence rule–2 above for that ordering.',
+  'The second–rule here is the one that matters most.',
+  'isDecoded answers the three–state question in both directions.',
 ];
 
 /// Sentences that MUST NOT turn the build red. Every one of these was either
@@ -875,6 +1009,19 @@ const List<String> _mustNotFire = <String>[
   'Three edge cases cover the boundary.',
   'The list used to say "Edit 3", which is a reference with no grep handle.',
   'The one place byte order is decided is here.',
+  // ROUND 7. Six hyphenated sentences, because the widening to `[\s-]+` and the
+  // typographic dashes had to be provable against ordinary hyphenated English,
+  // and a negative table with one hyphen in it could not do that. The
+  // `seven-case switch` line is not decoration: it turned the build RED when
+  // the singular contract nouns first landed, and [_headSaysNotTheContract]
+  // exists because of it. The em-dash line locks the one dash [_citationGap]
+  // deliberately does not include.
+  'A first-class citizen of the parser is the element header.',
+  'The second-order effect is well below the noise floor.',
+  'A three-byte header precedes the payload.',
+  'The two-step handshake is out of scope for this decoder.',
+  'A seven-case switch covers every reason the decoder can return.',
+  'The entry — 3 lines below — explains how the tail is walked.',
 ];
 
 void main() {
@@ -1026,13 +1173,21 @@ void main() {
       );
     }
 
-    test('the prose checks can produce a nonzero, and stay quiet on English',
-        () {
+    // TWO TESTS, NOT ONE, AND THE SPLIT IS THE POINT. These were a single test
+    // with two `expect`s, and round 7 walked straight into what that costs: the
+    // widened separator was applied, `_mustFire` still had a miss, the first
+    // `expect` threw, and THE ENTIRE `_mustNotFire` TABLE WENT UNEVALUATED —
+    // the precise table the gate had asked to see the widening proven against.
+    // A compound assertion reports the first half and hides the second, so the
+    // half that answers "did this change make the guard too wide?" is exactly
+    // the half that goes silent while the guard is being changed. Separate
+    // tests both run, always.
+
+    test('the prose checks can produce a nonzero', () {
       // A ZERO FROM AN AUDIT IS ONLY MEANINGFUL IF THE AUDIT CAN PRODUCE A
       // NONZERO. Round 6 measured all five patterns against both guarded files
       // and found zero live subjects, so nothing in the suite had ever seen one
-      // fire. Both directions are asserted here, because a pattern that fires
-      // on everything is as useless as one that fires on nothing.
+      // fire.
       final List<String> missed = _mustFire
           .where((String s) => _scanSentence(s).isEmpty)
           .toList();
@@ -1043,7 +1198,14 @@ void main() {
             'one of them is an end-to-end mutation that defeated some version '
             'of this guard:\n  ${missed.join('\n  ')}',
       );
+    });
 
+    test('the prose checks stay quiet on ordinary English', () {
+      // A pattern that fires on everything is as useless as one that fires on
+      // nothing, and this table is where a WIDENING shows up as a false red.
+      // Five of these carry hyphens, because round 7 widened every separator to
+      // `[\s-]+` and a negative table with no hyphens in it could not have
+      // caught the over-fire that widening actually produced.
       final List<String> overFired = _mustNotFire
           .where((String s) => _scanSentence(s).isNotEmpty)
           .map((String s) => '$s\n      -> ${_scanSentence(s).join('; ')}')
