@@ -1,0 +1,85 @@
+{
+  "_meta": {
+    "title": "Apple device Wi-Fi capabilities",
+    "source": "Apple Platform Deployment guide, \"Wi-Fi and Ethernet specifications for Apple devices\", https://support.apple.com/guide/deployment/wi-fi-ethernet-specifications-apple-devices-dep268652e6c/web",
+    "why_this_source": "The consumer tech-spec pages stop at phrasing like \"Wi-Fi 7 with 2x2 MIMO\". This guide publishes literal columns for Maximum channel bandwidth, Maximum MCS index and Maximum spatial streams, which are the three fields the PHY-rate math needs. It is the only Apple source that carries them.",
+    "why_a_table_exists_at_all": "iOS exposes no Wi-Fi capability API to third-party apps, so iOS is the one platform where a published table is the best available answer. Every other platform is read live from the operating system and never consults this file.",
+    "retrieved": "2026-08-02",
+    "last_updated": "2026-08-02",
+    "schema_version": 1,
+    "schema": "devices[]: { names[]: verbatim Apple model names, familyNames[]: our expansion of an Apple phrase like \"All iPhone 14 models\", expansionNote: why familyNames exist, bands[], standards[], maxChannelWidthMhz, spatialStreams, maxMcsIndex, applePublishedMaxPhyRateMbps, source }",
+    "rules": [
+      "Every row carries a source. A row with an empty source is DROPPED at load, not trusted, so the device reads as not in the table.",
+      "Every field is the maximum across all of Apple's per-band rows for that model group, which is what a device ceiling means.",
+      "applePublishedMaxPhyRateMbps is Apple's own figure and exists so a test can check our derived ceiling against it. It is not displayed as a separate number.",
+      "This file is a permanent maintenance commitment: one row per new Apple device, forever. It is deliberately small, and a model that is not here reads as an honest unknown rather than as a similar model's numbers.",
+      "This table is consulted on iOS and iPadOS only. macOS reads its own radio live."
+    ],
+    "known_conflicts_in_the_source": [
+      "iPhone 15 and iPhone 15 Plus are listed by Apple in TWO tables with contradictory figures: the iPhone 15 Pro table (160 MHz, 6 GHz, 2400 Mbps) and the iPhone 14-era table (80 MHz, no 6 GHz, 1200 Mbps). Both were present on the page retrieved 2026-08-02. Neither figure is seeded here, because picking one would be us resolving a contradiction we have no authority to resolve. Both models therefore read as not in the table, which is the honest answer until Apple corrects the page or a second source settles it."
+    ]
+  },
+  "devices": [
+    {
+      "names": [
+        "iPhone 17 Pro Max",
+        "iPhone 17 Pro",
+        "iPhone 17",
+        "iPhone Air",
+        "iPhone 16 Pro Max",
+        "iPhone 16 Pro",
+        "iPhone 16 Plus",
+        "iPhone 16"
+      ],
+      "familyNames": [],
+      "bands": ["2.4 GHz", "5 GHz", "6 GHz"],
+      "standards": ["802.11n", "802.11ac", "802.11ax", "802.11be"],
+      "maxChannelWidthMhz": 160,
+      "spatialStreams": 2,
+      "maxMcsIndex": 11,
+      "applePublishedMaxPhyRateMbps": 2400,
+      "source": "Apple Platform Deployment, Wi-Fi and Ethernet specifications for Apple devices, iPhone 17 and iPhone 16 table (be@6 GHz row: 2400 Mbps, 160 MHz, MCS 11 EHT, 2/MIMO), retrieved 2026-08-02"
+    },
+    {
+      "names": ["iPhone 15 Pro Max", "iPhone 15 Pro"],
+      "familyNames": [],
+      "bands": ["2.4 GHz", "5 GHz", "6 GHz"],
+      "standards": ["802.11n", "802.11ac", "802.11ax"],
+      "maxChannelWidthMhz": 160,
+      "spatialStreams": 2,
+      "maxMcsIndex": 11,
+      "applePublishedMaxPhyRateMbps": 2400,
+      "source": "Apple Platform Deployment, Wi-Fi and Ethernet specifications for Apple devices, iPhone 15 table (ax@6 GHz row: 2400 Mbps, 160 MHz, MCS 11 HE, 2/MIMO), retrieved 2026-08-02. iPhone 15 and iPhone 15 Plus are deliberately excluded from this row: Apple lists them in this table AND in the 80 MHz table, and the two disagree"
+    },
+    {
+      "names": ["iPhone 17e", "iPhone 16e", "iPhone SE 3rd generation"],
+      "familyNames": [
+        "iPhone 14",
+        "iPhone 14 Plus",
+        "iPhone 14 Pro",
+        "iPhone 14 Pro Max",
+        "iPhone 13 mini",
+        "iPhone 13",
+        "iPhone 13 Pro",
+        "iPhone 13 Pro Max",
+        "iPhone 12 mini",
+        "iPhone 12",
+        "iPhone 12 Pro",
+        "iPhone 12 Pro Max",
+        "iPhone 11",
+        "iPhone 11 Pro",
+        "iPhone 11 Pro Max",
+        "iPhone SE (3rd generation)",
+        "iPhone SE (2nd generation)"
+      ],
+      "expansionNote": "Apple writes \"All iPhone 14 models\", \"All iPhone 13 models\", \"All iPhone 12 models\", \"All iPhone 11 models\" and \"iPhone SE 2nd generation\" rather than listing each device. familyNames is OUR expansion of those phrases into the individual marketing names a device actually reports. A match against familyNames is still tier 2, and its pin says the match came through this expansion so a reader can check it.",
+      "bands": ["2.4 GHz", "5 GHz"],
+      "standards": ["802.11n", "802.11ac", "802.11ax"],
+      "maxChannelWidthMhz": 80,
+      "spatialStreams": 2,
+      "maxMcsIndex": 11,
+      "applePublishedMaxPhyRateMbps": 1200,
+      "source": "Apple Platform Deployment, Wi-Fi and Ethernet specifications for Apple devices, iPhone 17e / 16e / 14 / 13 / 12 / 11 / SE table (ax@5 GHz row: 1200 Mbps, 80 MHz, MCS 11 HE, 2/MIMO), retrieved 2026-08-02. iPhone 15 and iPhone 15 Plus appear in Apple's list for this table and also in the 160 MHz table; both are excluded here for that reason"
+    }
+  ]
+}

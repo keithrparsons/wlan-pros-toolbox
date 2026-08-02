@@ -54,6 +54,8 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
     switch call.method {
     case "getWifiInfo":
       result(currentWifiInfo())
+    case "getWifiCapabilities":
+      result(wifiCapabilities())
     case "connectedApIeBlob":
       connectedApIeBlob(result: result)
     case "isLocationAuthorized":
@@ -133,6 +135,83 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
       "hardwareAddress": interface.hardwareAddress(),
       "securityToken": securityToken(interface.security()),
       "locationAuthorized": authorized,
+    ]
+  }
+
+  // MARK: - Client capabilities (what this Mac's radio can do)
+
+  /// The largest channel width `CWChannelWidth` is able to express, in MHz.
+  ///
+  /// DERIVED from `channelWidthMhz(_:)` rather than typed in, so the Dart side's
+  /// "is this reading at the vocabulary ceiling" test can never disagree with
+  /// the mapping that produced the reading. If a future SDK adds a 320 MHz case
+  /// and it is added to `channelWidthMhz(_:)`, this follows automatically.
+  ///
+  /// This matters because CoreWLAN has no 320 MHz case today, so a Wi-Fi 7 Mac
+  /// reports at most 160 MHz here. That is a limit of the vocabulary, not of the
+  /// radio, and Dart marks such a reading as a floor rather than an exact value.
+  private var widthVocabularyCeilingMhz: Int {
+    let expressible: [CWChannelWidth] = [
+      .width20MHz, .width40MHz, .width80MHz, .width160MHz,
+    ]
+    return expressible.compactMap { channelWidthMhz($0) }.max() ?? 0
+  }
+
+  /// Reports what the Wi-Fi radio in this Mac SUPPORTS, as distinct from what
+  /// the current link happens to be doing.
+  ///
+  /// `supportedWLANChannels()` enumerates the channels the INTERFACE supports,
+  /// each carrying its band and its width, which is a genuine capability read.
+  /// `activePHYMode()` is not: it reports the mode currently negotiated, so Dart
+  /// treats it as a floor on the generations supported and says so on screen.
+  ///
+  /// Spatial streams and the maximum MCS index are absent from this payload
+  /// because macOS publishes neither to apps. They are not estimated here, and
+  /// the Dart side renders them as honest unknowns rather than as a default.
+  ///
+  /// Never throws across to Dart: a missing interface returns
+  /// `interfacePresent: false` and nulls, never an error.
+  private func wifiCapabilities() -> [String: Any?] {
+    let authorized = isLocationAuthorized()
+    guard let interface = CWWiFiClient.shared().interface() else {
+      return [
+        "interfacePresent": false,
+        "locationAuthorized": authorized,
+        "supportedBands": [String](),
+        "maxChannelWidthMhz": nil,
+        "widthVocabularyCeilingMhz": widthVocabularyCeilingMhz,
+        "activePhyMode": nil,
+        "supportedChannelCount": 0,
+      ]
+    }
+
+    var bands: [String] = []
+    var maxWidth: Int?
+    var channelCount = 0
+    if let channels = interface.supportedWLANChannels() {
+      channelCount = channels.count
+      for channel in channels {
+        if let band = bandString(channel.channelBand), !bands.contains(band) {
+          bands.append(band)
+        }
+        if let width = channelWidthMhz(channel.channelWidth) {
+          if maxWidth == nil || width > maxWidth! {
+            maxWidth = width
+          }
+        }
+      }
+    }
+    // Stable order so the Dart side and any golden read the same list.
+    bands.sort()
+
+    return [
+      "interfacePresent": true,
+      "locationAuthorized": authorized,
+      "supportedBands": bands,
+      "maxChannelWidthMhz": maxWidth,
+      "widthVocabularyCeilingMhz": widthVocabularyCeilingMhz,
+      "activePhyMode": phyModeString(interface.activePHYMode()),
+      "supportedChannelCount": channelCount,
     ]
   }
 
