@@ -1261,12 +1261,14 @@
     "ipv6-subnet": {
       "name": "IP Subnetting (IPv6)",
       "category": "Networking Tools",
-      "purpose": "Enter an IPv6 address and prefix length and get back the expanded and compressed forms, the network address, the first and last address in the prefix, the number of hosts, and the address type.",
-      "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes.",
+      "purpose": "Enter an IPv6 address and prefix length and get back the expanded and compressed forms, the network address, the first and last address in the prefix, the number of hosts, and the address type. It also decodes transition addresses: whether the address you typed carries an IPv4 address inside it, and how a given IPv4 address is written the four ways IPv6 can carry one.",
+      "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes. The transition section answers a different question: NAT64, 6to4 and IPv4-mapped addresses genuinely turn up in captures and firewall logs, and \"what am I looking at\" is the moment they cause.",
       "howToUse": [
         "Enter an IPv6 address (default 2001:db8::1).",
         "Enter the prefix length (default 32).",
-        "Read the expanded form, compressed form, network and prefix, first and last address, host count, and address type."
+        "Read the expanded form, compressed form, network and prefix, first and last address, host count, and address type.",
+        "Read the transition section at the bottom. It decodes the same address you typed above and names the format, the embedded IPv4, and what that IPv4 actually is.",
+        "The IPv4 field in that section runs the other direction: type an IPv4 address and read it as IPv4-mapped, NAT64, a 6to4 prefix, and the deprecated IPv4-compatible form."
       ],
       "inputs": [
         {
@@ -1278,15 +1280,26 @@
           "name": "Prefix",
           "unit": "whole number",
           "range": "0 to 128 (anything outside that shows an error)"
+        },
+        {
+          "name": "IPv4 address (transition section)",
+          "unit": "dotted-decimal",
+          "range": "four octets, each 0 to 255"
         }
       ],
-      "algorithm": "It expands the address to its full form, works out which bits the prefix fixes, and from that gives you the network address plus the first and last address in the block. It also shows the shortest valid compressed form by collapsing the longest run of zero groups. Host count is 2 raised to the number of host bits (128 minus the prefix); anything above 2 to the 63rd is reported as \"More than 2^63\" rather than a full number. The address type is identified by matching the address against the well-known IPv6 ranges (unspecified, loopback, link-local, unique-local, multicast, 6to4, IPv4-mapped, documentation, or global unicast).",
+      "algorithm": "It expands the address to its full form, works out which bits the prefix fixes, and from that gives you the network address plus the first and last address in the block. It also shows the shortest valid compressed form by collapsing the longest run of zero groups. Host count is 2 raised to the number of host bits (128 minus the prefix); anything above 2 to the 63rd is reported as \"More than 2^63\" rather than a full number. The address type is identified by matching the address against the well-known IPv6 ranges (unspecified, loopback, link-local, unique-local, multicast, 6to4, IPv4-mapped, documentation, or global unicast). Transition decoding matches the address against five known formats and reports the first that fits: IPv4-mapped (::ffff:0:0/96, RFC 4291), the NAT64 well-known prefix (64:ff9b::/96, RFC 6052), 6to4 (2002::/16, RFC 3056, where the 32 bits after 2002 are the site endpoint), Teredo (2001:0::/32, RFC 4380, where the client address and port are stored with every bit inverted and are shown flipped back), and the deprecated IPv4-compatible form (::/96, RFC 4291), which excludes :: and ::1 because those are not IPv4 at all. Writing an IPv4 address as IPv6 is the same work in reverse.",
       "example": "2001:db8::1 with a /64 gives expanded form 2001:0db8:0000:0000:0000:0000:0000:0001, compressed form 2001:db8::1, network 2001:db8::/64, 64 host bits (so the host count shows \"More than 2^63\"), and type Documentation (2001:db8::/32).",
       "fieldNotes": [
         "Host counts above 2 to the 63rd are shown as \"More than 2^63\" rather than a full number.",
         "The \"first address\" is the network address itself. IPv6 has no broadcast address and does not reserve the all-zeros host the way IPv4 does.",
         "Address-type detection covers the common well-known ranges, not every reserved block.",
-        "This tool lives under Networking Tools in the current menu."
+        "This tool lives under Networking Tools in the current menu.",
+        "An address literal with a dotted IPv4 tail, such as ::ffff:192.168.1.1, is accepted. That form is legal IPv6 and is how a mapped or NAT64 address is written in a log.",
+        "NAT64 is decoded against the well-known 64:ff9b::/96 prefix only. A network can run its own NAT64 prefix at /32, /40, /48, /56 or /64, and the IPv4 bits sit at a different offset in each. That prefix length is not carried in the address, so decoding one without being told which prefix is in use would be guessing. The screen says so rather than guessing.",
+        "Teredo stores the client address and port with every bit inverted. Read raw, they look like nonsense. The screen flips them back and says it did.",
+        "An address with no IPv4 inside is reported as having none. The screen never invents an embedded address to fill the row.",
+        "IPv4-compatible (::a.b.c.d) is deprecated. It is decoded so you can recognize one in an old configuration, and labeled so you do not build on it.",
+        "The 6to4 output is a PREFIX for a whole site (a /48), not a host address."
       ],
       "source": "The result is calculated on your device."
     },

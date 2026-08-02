@@ -35,6 +35,7 @@ import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/ipv6_address.dart';
+import '../../../services/network/ipv6_transition.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -113,7 +114,18 @@ class Ipv6SubnetScreen extends StatefulWidget {
 
   /// Compress a full 8-group form to canonical "::" notation.
   /// Mirrors PWA compressIPv6: collapse the LONGEST run of all-zero groups.
-  static String compressIPv6(String full) => Ipv6Address.compress(full);
+  ///
+  /// Delegates to [Ipv6Address.compressPwaParity], NOT to
+  /// [Ipv6Address.compress]. The two differ, and the difference is a live
+  /// defect this screen inherits from the PWA: when the zero run touches
+  /// either end, the parity version drops half the "::", so this screen's
+  /// Network row prints `2001:db8/64` and `fe80/10`. Those are not addresses.
+  /// The parity behavior is kept here because this file states a deliberate
+  /// field-for-field contract with the PWA and its tests name the quirk out
+  /// loud, so changing it is Keith's call and not a builder's. New code uses
+  /// [Ipv6Address.compress], which is correct.
+  static String compressIPv6(String full) =>
+      Ipv6Address.compressPwaParity(full);
 
   /// Render a 128-bit value to the full 8-group form. Mirrors PWA bigToFull.
   static String bigToFull(BigInt n) => Ipv6Address.fromBigInt(n);
@@ -224,6 +236,13 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
   );
   final TextEditingController _prefixCtrl = TextEditingController(text: '32');
 
+  /// The transition section's own IPv4 field (item 8, IPv4 -> IPv6). The
+  /// IPv6 -> IPv4 direction reads the address field above, so the section
+  /// answers both directions without a second IPv6 input.
+  final TextEditingController _v4Ctrl = TextEditingController(
+    text: '192.0.2.1',
+  );
+
   Ipv6Result? _result;
 
   // Screen-reader announcement gating (Vera calculator-gate finding #8 — IPv6
@@ -256,6 +275,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     super.initState();
     _addrCtrl.addListener(_recompute);
     _prefixCtrl.addListener(_recompute);
+    _v4Ctrl.addListener(() => setState(() {}));
     // Seed an initial result so the screen opens on a worked example.
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
   }
@@ -265,6 +285,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     _announceTimer?.cancel();
     _addrCtrl.dispose();
     _prefixCtrl.dispose();
+    _v4Ctrl.dispose();
     super.dispose();
   }
 
@@ -336,17 +357,33 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     final Ipv6Result? r = _result;
     if (r == null || !r.isValid) return null;
 
-    return (StringBuffer()
-          ..writeln('IPv6 Subnet')
-          ..writeln('Network: ${r.network}')
-          ..writeln('Expanded: ${r.expanded}')
-          ..writeln('Compressed: ${r.compressed}')
-          ..writeln('First: ${r.first}')
-          ..writeln('Last: ${r.last}')
-          ..writeln('Addresses: ${r.hosts}')
-          ..writeln('Type: ${r.type}'))
-        .toString()
-        .trimRight();
+    final StringBuffer buf = StringBuffer()
+      ..writeln('IPv6 Subnet')
+      ..writeln('Network: ${r.network}')
+      ..writeln('Expanded: ${r.expanded}')
+      ..writeln('Compressed: ${r.compressed}')
+      ..writeln('First: ${r.first}')
+      ..writeln('Last: ${r.last}')
+      ..writeln('Addresses: ${r.hosts}')
+      ..writeln('Type: ${r.type}');
+
+    // The transition decode travels with the breakdown, but ONLY when an IPv4
+    // address was actually found. Pasting "Embedded IPv4: none" into a ticket
+    // is noise, and pasting nothing is the honest alternative.
+    final Ipv6ToIpv4Result t = Ipv6Transition.decode(_addrCtrl.text);
+    if (t.isValid && t.hasIpv4) {
+      buf
+        ..writeln('Embedded IPv4: ${t.ipv4} (${t.label}, ${t.rfc})')
+        ..writeln('Which is: ${t.ipv4Role}');
+      if (t.teredoServer != null) {
+        buf.writeln(
+          'Teredo server: ${t.teredoServer}, '
+          'client port ${t.teredoPort}',
+        );
+      }
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -398,6 +435,8 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                           : _errorCard(context, _result!.error!),
                     ),
                   ],
+                  const SizedBox(height: AppSpacing.sm),
+                  _transitionCard(context),
                   ToolHelpFooter(toolId: 'ipv6-subnet'),
                 ],
               ),
@@ -405,6 +444,150 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Transition addresses — the IPv4-in-IPv6 formats, both directions.
+  ///
+  /// Item 7 (IPv6 -> IPv4) reads the SAME address field the breakdown above
+  /// uses, because that is the field a pasted log line lands in. Item 8
+  /// (IPv4 -> IPv6) needs an IPv4 address, so it carries one small field of its
+  /// own. A section, not a tile: neither direction is a question a user goes
+  /// looking for, they are both "what am I looking at" moments that happen
+  /// while already on this screen
+  /// (Deliverables/2026-08-02-iptoolkits-survey/BRIEF.md:128 and :129).
+  Widget _transitionCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    final Ipv6ToIpv4Result decoded = Ipv6Transition.decode(_addrCtrl.text);
+    final Ipv4ToIpv6Result encoded = Ipv6Transition.encode(_v4Ctrl.text);
+
+    Widget heading(String s) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Text(
+        s,
+        style: text.labelMedium?.copyWith(
+          color: colors.textSecondary,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+
+    Widget note(String s) => Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Text(
+        s,
+        style: text.labelSmall?.copyWith(color: colors.textTertiary),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          heading('IPv4 inside this address'),
+          if (!decoded.isValid)
+            note(
+              'Enter a valid IPv6 address above and this section will say '
+              'whether it carries an IPv4 address.',
+            )
+          else ...<Widget>[
+            ValueRow(
+              label: 'Format',
+              value: decoded.label,
+              emphasize: decoded.hasIpv4,
+            ),
+            if (decoded.rfc != null)
+              ValueRow(label: 'Defined in', value: decoded.rfc),
+            if (decoded.hasIpv4) ...<Widget>[
+              ValueRow(
+                label: 'IPv4',
+                value: decoded.ipv4,
+                identifier: true,
+                emphasize: true,
+              ),
+              if (decoded.ipv4Role != null)
+                ValueRow(label: 'Which is', value: decoded.ipv4Role),
+            ],
+            if (decoded.teredoServer != null)
+              ValueRow(
+                label: 'Teredo server',
+                value: decoded.teredoServer,
+                identifier: true,
+              ),
+            if (decoded.teredoPort != null)
+              ValueRow(
+                label: 'Client port',
+                value: '${decoded.teredoPort}',
+                mono: true,
+              ),
+            if (decoded.note != null) note(decoded.note!),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          heading('An IPv4 address written as IPv6'),
+          LabeledField(
+            label: 'IPv4 address',
+            field: TextField(
+              controller: _v4Ctrl,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '192.0.2.1'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (!encoded.isValid)
+            note(encoded.error!)
+          else ...<Widget>[
+            ValueRow(
+              label: 'As IPv4-mapped',
+              value: encoded.mappedDotted,
+              identifier: true,
+              emphasize: true,
+            ),
+            ValueRow(
+              label: 'Same, in hex',
+              value: encoded.mappedHex,
+              identifier: true,
+            ),
+            ValueRow(
+              label: 'NAT64',
+              value: encoded.nat64Dotted,
+              identifier: true,
+            ),
+            ValueRow(
+              label: '6to4 prefix',
+              value: encoded.sixToFourPrefix,
+              identifier: true,
+            ),
+            ValueRow(
+              label: 'As IPv4-compatible',
+              value: encoded.compatibleDotted,
+              identifier: true,
+            ),
+            note(
+              'IPv4-mapped is what a dual-stack socket shows for an IPv4 peer; '
+              'it is not something you configure. The 6to4 value is a PREFIX '
+              'for a whole site, not a host address. The NAT64 line uses the '
+              'well-known 64:ff9b::/96 prefix; a network running its own '
+              'prefix will differ. IPv4-compatible is deprecated and is here '
+              'only so you can recognize one in an old configuration.',
+            ),
+          ],
+        ],
+      ),
     );
   }
 

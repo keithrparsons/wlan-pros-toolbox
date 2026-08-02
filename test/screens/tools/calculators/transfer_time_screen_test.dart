@@ -22,7 +22,8 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 
-Widget _host() => const MaterialApp(home: TransferTimeScreen());
+Widget _host() =>
+    MaterialApp(theme: AppTheme.dark(), home: const TransferTimeScreen());
 
 /// Drive the REAL test viewport, not just a MediaQuery wrapper.
 ///

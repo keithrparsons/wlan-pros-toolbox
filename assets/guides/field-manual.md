@@ -395,7 +395,22 @@ From an IPv6 address and prefix length, derives the expanded and compressed form
 - Host counts above 2⁶³ are reported qualitatively ("More than 2⁶³") rather than as a full number.
 - The "first address" is the network address itself (IPv6 has no broadcast and does not reserve the all-zeros host as IPv4 does).
 - Address-type detection is prefix-pattern based and covers the common RFC ranges, not every reserved block.
-- The parser expects a hexadecimal literal. A dotted IPv4-tailed form such as ::ffff:192.168.1.1 is reported as an invalid format rather than expanded; use the fully hexadecimal equivalent (::ffff:c0a8:0101).
+- A dotted IPv4-tailed literal such as ::ffff:192.168.1.1 IS accepted (changed 2026-08-02). That form is legal IPv6 under RFC 4291 section 2.2 and is how a mapped or NAT64 address is written in a log, so rejecting it was a defect rather than a limitation.
+
+**Transition addresses (section at the bottom of the screen).** Decodes whether the address you typed carries an IPv4 address inside it, and writes a given IPv4 address the four ways IPv6 can carry one.
+
+The decode matches five formats and reports the first that fits: IPv4-mapped (::ffff:0:0/96, RFC 4291 section 2.5.5.2), the NAT64 well-known prefix (64:ff9b::/96, RFC 6052 section 2.1), 6to4 (2002::/16, RFC 3056, where the 32 bits after 2002 are the site's IPv4 endpoint), Teredo (2001:0::/32, RFC 4380, where the client address and UDP port are stored with every bit inverted), and the deprecated IPv4-compatible form (::/96, RFC 4291 section 2.5.5.1). Each result names what the IPv4 address actually IS - a peer, a translated host, a site endpoint, a client behind a NAT - so the number is not read as the wrong thing.
+
+- ::ffff:192.0.2.1 is IPv4-mapped and carries 192.0.2.1. It is what a dual-stack socket shows for an IPv4 peer; it never appears on the wire.
+- 64:ff9b::192.0.2.33 is NAT64 and carries 192.0.2.33.
+- 2002:c000:204::1 is 6to4 and carries 192.0.2.4.
+- 2001:0:4136:e378:8000:63bf:3fff:fdd2 is Teredo: server 65.54.227.120, client port 40000, client 192.0.2.45. The client half is stored inverted, which is why a raw read of it looks like nonsense.
+- :: and ::1 sit numerically inside the deprecated ::/96 range but are the unspecified and loopback addresses, and are reported as such rather than as 0.0.0.0 and 0.0.0.1.
+- An address with no IPv4 inside is reported as having none. The screen never invents one.
+
+**NAT64 limit, stated plainly.** Only the well-known 64:ff9b::/96 prefix is decoded. RFC 6052 also allows a network-specific prefix at /32, /40, /48, /56 or /64, and the IPv4 bits sit at a different offset in each. That prefix length is not carried in the address, so the same 128 bits decode to different IPv4 addresses depending on a value the tool cannot see. Guessing would be inventing an answer, so the screen says so instead.
+
+The reverse direction takes an IPv4 address and shows it as IPv4-mapped (dotted and hex), as a NAT64 address on the well-known prefix, as a 6to4 /48 PREFIX for a site rather than a host address, and as the deprecated IPv4-compatible form, which is there only so you can recognize one in an old configuration.
 
 ### Subnet Planner (VLSM)
 

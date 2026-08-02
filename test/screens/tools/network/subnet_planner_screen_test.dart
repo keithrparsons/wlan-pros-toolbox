@@ -21,7 +21,8 @@ import 'package:wlan_pros_toolbox/screens/tools/network/subnet_planner_screen.da
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/app_copy_action.dart';
 
-Widget _host() => const MaterialApp(home: SubnetPlannerScreen());
+Widget _host() =>
+    MaterialApp(theme: AppTheme.dark(), home: const SubnetPlannerScreen());
 
 /// Drive the REAL test viewport, not just a MediaQuery wrapper.
 ///

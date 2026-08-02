@@ -28,10 +28,17 @@ class Ipv6Address {
 
   /// Expand an IPv6 literal to its full 8-group, 4-hex-digit form.
   ///
+  /// Accepts the RFC 4291 §2.2 form-3 literal with a trailing dotted quad
+  /// (`::ffff:192.0.2.1`), folding it into two hex groups first. That form is
+  /// legal IPv6 and is exactly how a mapped or NAT64 address is written in a
+  /// log, so rejecting it was a defect, not a limitation.
+  ///
   /// Throws [FormatException] on a malformed group layout (more than one "::",
-  /// a "::" that fills no groups). Does NOT validate that each group is hex —
-  /// callers check that, because the caller's error message is the useful one.
-  static String expand(String addr) {
+  /// a "::" that fills no groups, a bad dotted tail). Does NOT validate that
+  /// each remaining group is hex — callers check that, because the caller's
+  /// error message is the useful one.
+  static String expand(String literal) {
+    final String addr = _foldIpv4Tail(literal);
     if (addr.contains('::')) {
       // Reject more than one "::" — a split on "::" would silently keep the
       // first two parts and answer a question the user did not ask.
@@ -59,10 +66,100 @@ class Ipv6Address {
     return addr.split(':').map((String g) => g.padLeft(4, '0')).join(':');
   }
 
+  /// Rewrite a trailing dotted-quad tail as two hex groups, leaving anything
+  /// without a tail untouched. `::ffff:192.0.2.1` becomes `::ffff:c000:0201`.
+  static String _foldIpv4Tail(String addr) {
+    final int lastColon = addr.lastIndexOf(':');
+    if (lastColon < 0) return addr;
+    final String tail = addr.substring(lastColon + 1);
+    if (!tail.contains('.')) return addr;
+
+    final List<String> octets = tail.split('.');
+    if (octets.length != 4) {
+      throw const FormatException('malformed IPv4 tail');
+    }
+    int value = 0;
+    for (final String o in octets) {
+      if (o.isEmpty || o.length > 3 || !RegExp(r'^\d+$').hasMatch(o)) {
+        throw const FormatException('malformed IPv4 tail');
+      }
+      final int n = int.parse(o);
+      if (n > 255) throw const FormatException('IPv4 tail octet above 255');
+      value = (value << 8) | n;
+    }
+    String hex4(int v) => v.toRadixString(16).padLeft(4, '0');
+    return '${addr.substring(0, lastColon + 1)}'
+        '${hex4((value >> 16) & 0xFFFF)}:${hex4(value & 0xFFFF)}';
+  }
+
   /// Compress a full 8-group form to canonical "::" notation, collapsing the
   /// LONGEST run of all-zero groups (a run of one is never collapsed, per
   /// RFC 5952 §4.2.2).
   static String compress(String full) {
+    List<String?> parts = full.split(':').cast<String?>();
+    int bestStart = -1, bestLen = 0;
+    int curStart = -1, curLen = 0;
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == '0000') {
+        if (curStart < 0) {
+          curStart = i;
+          curLen = 1;
+        } else {
+          curLen++;
+        }
+        if (curLen > bestLen) {
+          bestStart = curStart;
+          bestLen = curLen;
+        }
+      } else {
+        curStart = -1;
+        curLen = 0;
+      }
+    }
+
+    if (bestLen > 1) {
+      // The head and tail are built EXPLICITLY around the "::" rather than
+      // joined with a placeholder and tidied afterwards. An empty head or tail
+      // is exactly what a leading or trailing "::" means, so there is nothing
+      // to disambiguate. See [compressPwaParity] for why that distinction is
+      // load-bearing.
+      String strip(String? p) => BigInt.parse(p!, radix: 16).toRadixString(16);
+      final String head = parts.sublist(0, bestStart).map(strip).join(':');
+      final String tail = parts
+          .sublist(bestStart + bestLen)
+          .map(strip)
+          .join(':');
+      return '$head::$tail';
+    }
+    return parts
+        .map((String? p) => BigInt.parse(p!, radix: 16).toRadixString(16))
+        .join(':');
+  }
+
+  /// The HISTORICAL compressor, quirk included. Do not use in new code.
+  ///
+  /// ⚠ THIS FUNCTION PRODUCES TEXT THAT IS NOT A VALID IPv6 ADDRESS when the
+  /// longest zero run touches either end of the address:
+  ///
+  ///     ::1                 →  1
+  ///     2001:db8::          →  2001:db8
+  ///     fe80::              →  fe80
+  ///     ::ffff:c000:201     →  ffff:c000:201
+  ///
+  /// The cause is the `.replaceAll(RegExp(r'^:|:$'), '')` below: it cannot tell
+  /// a join seam from the colon that IS the "::", so it eats half of it. The
+  /// behavior is ported from the RF Tools PWA, and `Ipv6SubnetScreen` states a
+  /// deliberate field-for-field parity contract with that PWA. Its tests name
+  /// the defect out loud ("trailing-run quirk"), so this is a CHOSEN behavior
+  /// and not an oversight, and unpicking it changes what a shipped screen
+  /// prints. That is a direction call for Keith, not a build call, so this
+  /// function preserves the behavior byte-for-byte while [compress] gives new
+  /// code the RFC 5952 answer.
+  ///
+  /// The user-visible consequence, for whoever makes that call: the IPv6
+  /// Subnetting screen's Network row currently reads `2001:db8/64` and
+  /// `fe80/10`, neither of which is an address anything will accept.
+  static String compressPwaParity(String full) {
     List<String?> parts = full.split(':').cast<String?>();
     int bestStart = -1, bestLen = 0;
     int curStart = -1, curLen = 0;
