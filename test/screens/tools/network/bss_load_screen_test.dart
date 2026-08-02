@@ -1,7 +1,7 @@
 // BssLoadScreen, widget tests: every state this screen can render, driven.
 //
 // THE POINT OF THIS FILE IS THAT EACH STATE FAILS SEPARATELY. A screen whose
-// seven unavailable readings collapse into one grey wall passes any test that
+// seven unavailable readings collapse into one gray wall passes any test that
 // only asserts "something rendered", and the collapse is exactly the defect
 // `bss_load_decoder.dart` was rewritten twice to prevent
 // ([[feedback_tests_that_cannot_fail]]). So the table below pumps every reading
@@ -19,6 +19,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/bss_load_presentation.dart';
 import 'package:wlan_pros_toolbox/screens/tools/network/bss_load_screen.dart';
@@ -84,6 +85,38 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
+/// Records what `SemanticsService.sendAnnouncement` puts on the platform
+/// accessibility channel, in order.
+///
+/// THIS IS THE ONLY WAY TO SEE A WCAG 4.1.3 STATUS MESSAGE FROM A TEST. A
+/// one-shot announcement leaves no trace in the semantics tree — it is a
+/// message, not a node — so a test that inspected the tree would pass on a
+/// build that never spoke ([[feedback_tests_that_cannot_fail]]). Install it
+/// BEFORE pumping: this screen reads once on open.
+List<String> _captureAnnouncements(WidgetTester tester) {
+  final List<String> spoken = <String>[];
+  tester.binding.defaultBinaryMessenger.setMockDecodedMessageHandler<Object?>(
+    SystemChannels.accessibility,
+    (Object? message) async {
+      final Map<Object?, Object?> event = message! as Map<Object?, Object?>;
+      if (event['type'] == 'announce') {
+        final Map<Object?, Object?> data =
+            event['data']! as Map<Object?, Object?>;
+        spoken.add(data['message']! as String);
+      }
+      return null;
+    },
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger
+        .setMockDecodedMessageHandler<Object?>(
+          SystemChannels.accessibility,
+          null,
+        ),
+  );
+  return spoken;
+}
+
 void main() {
   group('every unavailable reading renders its own sentence', () {
     // ONE ROW PER RENDERED OUTCOME. Eight rows over seven enum members, because
@@ -111,7 +144,7 @@ void main() {
               BssLoadUnavailableReason.clippedWithoutSeeingElement11,
             ),
             'About this read',
-            'Our capture was cut short before we reached a BSS Load element.',
+            'Our capture was cut short, and we saw no BSS Load element.',
           ),
           (
             'blobCompletenessNotStated',
@@ -613,7 +646,7 @@ void main() {
       expect(
         text,
         contains(
-          'Our capture was cut short before we reached a BSS Load element.',
+          'Our capture was cut short, and we saw no BSS Load element.',
         ),
       );
       expect(text, isNot(contains('does not advertise')));
@@ -644,6 +677,139 @@ void main() {
       expect(text, contains('Associated stations: 10'));
       expect(text, contains('47.1% (120 of 255 on the wire)'));
       expect(text, contains('256000 µs/s, raw 8000'));
+    });
+  });
+
+  group('the finished read is announced (WCAG 2.2 SC 4.1.3)', () {
+    // THE PROGRESS BAR'S LIVE REGION LEAVES THE TREE WHEN THE READ LANDS, so
+    // without a one-shot announcement an assistive-technology user hears the
+    // read begin and then hears nothing: no result, no error, and above all no
+    // attribution, which is the entire product of this screen. Every assertion
+    // below fails on a build with no `SemanticsService.sendAnnouncement`.
+
+    testWidgets('an unavailable reading speaks its attribution and headline', (
+      WidgetTester tester,
+    ) async {
+      final List<String> spoken = _captureAnnouncements(tester);
+      await _pump(
+        tester,
+        _FakeSource(
+          _snapshot(
+            const BssLoadUnavailable(
+              BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+            ),
+          ),
+        ),
+      );
+      expect(spoken, hasLength(1));
+      expect(spoken.single, contains('About this read'));
+      expect(
+        spoken.single,
+        contains('Our capture was cut short, and we saw no BSS Load element.'),
+      );
+      // An announcement that dropped the attribution and kept only the sentence
+      // would let the spoken screen claim more than the printed one.
+      expect(spoken.single, isNot(contains('does not advertise')));
+    });
+
+    testWidgets('the one access-point claim is spoken as such', (
+      WidgetTester tester,
+    ) async {
+      final List<String> spoken = _captureAnnouncements(tester);
+      await _pump(
+        tester,
+        _FakeSource(
+          _snapshot(const BssLoadUnavailable(BssLoadUnavailableReason.absent)),
+        ),
+      );
+      expect(spoken, hasLength(1));
+      expect(spoken.single, startsWith('About this access point.'));
+      expect(
+        spoken.single,
+        contains('This access point does not advertise BSS Load.'),
+      );
+    });
+
+    testWidgets('a decoded reading speaks the three numbers', (
+      WidgetTester tester,
+    ) async {
+      final List<String> spoken = _captureAnnouncements(tester);
+      await _pump(
+        tester,
+        _FakeSource(
+          _snapshot(
+            const BssLoadDecoded(
+              BssLoad(
+                stationCount: 10,
+                rawChannelUtilization: 120,
+                rawAdmissionCapacity: 8000,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(spoken, hasLength(1));
+      expect(spoken.single, contains('Advertised by this access point'));
+      expect(spoken.single, contains('Associated stations 10'));
+      expect(spoken.single, contains('Channel utilization 47.1%'));
+      expect(spoken.single, contains('Available admission capacity 25.6%'));
+      expect(spoken.single, isNot(contains('above full scale')));
+    });
+
+    testWidgets('an above-full-scale reading says so out loud too', (
+      WidgetTester tester,
+    ) async {
+      // The chip is the only thing that carries this on screen, and a chip is
+      // not spoken by a result announcement unless it is put there.
+      final List<String> spoken = _captureAnnouncements(tester);
+      await _pump(
+        tester,
+        _FakeSource(
+          _snapshot(
+            const BssLoadDecoded(
+              BssLoad(
+                stationCount: 0,
+                rawChannelUtilization: 0,
+                rawAdmissionCapacity: 65535,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(spoken, hasLength(1));
+      expect(
+        spoken.single,
+        contains('Admission capacity is above full scale'),
+      );
+    });
+
+    testWidgets('a failed read is announced, not left silent', (
+      WidgetTester tester,
+    ) async {
+      final List<String> spoken = _captureAnnouncements(tester);
+      await _pump(tester, _ThrowingSource());
+      expect(spoken, hasLength(1));
+      expect(spoken.single, startsWith('The read did not complete.'));
+      expect(spoken.single, contains('channel exploded'));
+    });
+
+    testWidgets('Read again announces a second time', (
+      WidgetTester tester,
+    ) async {
+      // The finding was raised against this exact interaction: activate the
+      // button, hear the read start, hear nothing after.
+      final List<String> spoken = _captureAnnouncements(tester);
+      await _pump(
+        tester,
+        _FakeSource(
+          _snapshot(const BssLoadUnavailable(BssLoadUnavailableReason.absent)),
+        ),
+      );
+      expect(spoken, hasLength(1));
+      await tester.tap(find.widgetWithText(FilledButton, 'Read again'));
+      await tester.pumpAndSettle();
+      expect(spoken, hasLength(2));
+      expect(spoken.last, spoken.first);
     });
   });
 

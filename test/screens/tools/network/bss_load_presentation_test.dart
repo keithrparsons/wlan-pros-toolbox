@@ -95,7 +95,7 @@ final List<_Expected> _kExpected = <_Expected>[
     ),
     attribution: BssLoadAttribution.thisRead,
     headline:
-        'Our capture was cut short before we reached a BSS Load element.',
+        'Our capture was cut short, and we saw no BSS Load element.',
     octetDiagnostic: null,
     context: _kNoIeContextMacosAuthorized,
     remedy: BssLoadRemedy.none,
@@ -313,6 +313,82 @@ void main() {
             'no live copy matches any deficiency phrase, so the loop above '
             'proves nothing',
       );
+    });
+  });
+
+  group('clippedWithoutSeeingElement11 claims two facts and no third', () {
+    // THE MEMBER WAS RENAMED ACROSS A COMMIT TO STOP MAKING ONE CLAIM, and the
+    // rename did not propagate to the copy: the shipped headline read "cut short
+    // BEFORE we reached a BSS Load element", which presupposes element 11 was in
+    // the blob to be reached — "the very thing this member exists to say we
+    // cannot know" (`bss_load_decoder.dart:393-399`) — while the body two
+    // sentences later denied it. A contract rename is worth nothing if the
+    // user-facing sentence keeps the retired claim, so the contract is pinned
+    // here rather than the wording ([[feedback_tests_that_enshrine_the_bug]]).
+
+    /// Phrasings that assert WHERE the clip landed relative to element 11.
+    /// Every one of them smuggles back "element 11 is in the blob somewhere".
+    const List<String> reachedPhrases = <String>[
+      'before we reached',
+      'before reaching',
+      'before we got to',
+      'before the bss load element',
+      'before element 11',
+      'never reached',
+      'did not reach',
+    ];
+
+    BssLoadUnavailableCopy clipped() => bssLoadUnavailableCopy(
+      const BssLoadUnavailable(
+        BssLoadUnavailableReason.clippedWithoutSeeingElement11,
+      ),
+      context: _kNoIeContextMacosAuthorized,
+    );
+
+    test('the copy never says where the clip landed', () {
+      final String prose = '${clipped().headline} ${clipped().body}'
+          .toLowerCase();
+      for (final String phrase in reachedPhrases) {
+        expect(
+          prose.contains(phrase),
+          isFalse,
+          reason:
+              'the copy says "$phrase", which asserts element 11 was in the '
+              'blob to be reached. The decoder deliberately does not know that.',
+        );
+      }
+    });
+
+    test('the phrase list can actually fire', () {
+      // The retired headline, kept only as the thing the guard must catch. A
+      // guard never shown firing might be scanning nothing.
+      const String retired =
+          'Our capture was cut short before we reached a BSS Load element.';
+      expect(
+        reachedPhrases.any((String p) => retired.toLowerCase().contains(p)),
+        isTrue,
+      );
+      expect(clipped().headline, isNot(retired));
+    });
+
+    test('the headline still states both facts it IS allowed to state', () {
+      // Killing the over-claim by saying less is not a fix if it says nothing.
+      // The member's two facts: the capture was clipped, and no element 11 was
+      // seen. Both must survive in the headline, which is what users read.
+      final String headline = clipped().headline.toLowerCase();
+      expect(headline, contains('cut short'));
+      expect(headline, contains('no bss load element'));
+    });
+
+    test('the headline and the body do not contradict each other', () {
+      // The defect was a headline that claimed and a body that denied.
+      final BssLoadUnavailableCopy copy = clipped();
+      expect(copy.attribution, BssLoadAttribution.thisRead);
+      expect(
+        copy.body.toLowerCase(),
+        contains('nothing here says whether this access point advertises it'),
+      );
+      expect(copy.headline.toLowerCase(), isNot(contains('access point')));
     });
   });
 
@@ -671,6 +747,120 @@ void main() {
       );
       expect(copy.attribution, BssLoadAttribution.thisRead);
       expect(copy.octetDiagnostic, isNull);
+    });
+
+    // THE SPLIT THIS SCREEN IS BUILT AROUND WAS THE ONE BRANCH NO BYTES DROVE.
+    // Every assertion about the malformedLength split above is made against a
+    // hand-built `BssLoadUnavailable`, so the two rows in the pinned table
+    // agreed with each other and with nothing on the wire. These drive the
+    // decoder, which is where the discriminating field is actually set.
+
+    test('a COMPLETE element 11 with an illegal length is an AP claim', () {
+      // Declared 7, and all 7 arrived: `availableLength` stays null, which is
+      // the decoder's own discriminator for "every declared octet arrived".
+      final BssLoadReading reading = decodeBssLoad(
+        <int>[11, 7, 0, 0, 0, 0, 0, 0, 0],
+      );
+      final BssLoadUnavailable unavailable = reading as BssLoadUnavailable;
+      expect(unavailable.reason, BssLoadUnavailableReason.malformedLength);
+      expect(unavailable.availableLength, isNull);
+      final BssLoadUnavailableCopy copy = bssLoadUnavailableCopy(
+        unavailable,
+        context: _kNoIeContextMacosAuthorized,
+      );
+      expect(copy.attribution, BssLoadAttribution.thisAccessPoint);
+      expect(
+        copy.headline,
+        'This access point sent a BSS Load element with a length it cannot '
+        'have.',
+      );
+      expect(
+        copy.octetDiagnostic,
+        'Element 11 declared 7 value octets, and all of them arrived.',
+      );
+    });
+
+    test('a CLIPPED element 11 with an illegal length blames our capture', () {
+      // The same declared length, one octet arrived. Same decoder reason, and
+      // the sentence must land on the other side of the read.
+      final BssLoadReading reading = decodeBssLoad(<int>[11, 7, 0]);
+      final BssLoadUnavailable unavailable = reading as BssLoadUnavailable;
+      expect(unavailable.reason, BssLoadUnavailableReason.malformedLength);
+      expect(unavailable.availableLength, 1);
+      final BssLoadUnavailableCopy copy = bssLoadUnavailableCopy(
+        unavailable,
+        context: _kNoIeContextMacosAuthorized,
+      );
+      expect(copy.attribution, BssLoadAttribution.thisRead);
+      expect(
+        copy.headline,
+        'Our capture cut short an element we would have refused.',
+      );
+      expect(copy.headline.toLowerCase(), isNot(contains('access point')));
+      expect(
+        copy.octetDiagnostic,
+        'Element 11 declared 7 value octets, and 1 octet arrived before the '
+        'buffer ended.',
+      );
+    });
+
+    test('one declared length, two sentences, decided only by the bytes', () {
+      // The pair above stated as the property: identical reason, identical
+      // declared length, opposite attributions. This is the design decision the
+      // extra headline exists for, and until now nothing drove it from bytes.
+      BssLoadAttribution attributionOf(List<int> bytes) => bssLoadUnavailableCopy(
+        decodeBssLoad(bytes) as BssLoadUnavailable,
+        context: _kNoIeContextMacosAuthorized,
+      ).attribution;
+      expect(
+        attributionOf(<int>[11, 7, 0, 0, 0, 0, 0, 0, 0]),
+        BssLoadAttribution.thisAccessPoint,
+      );
+      expect(attributionOf(<int>[11, 7, 0]), BssLoadAttribution.thisRead);
+    });
+
+    test('a complete bad element followed by a clipped tail cuts something', () {
+      // M-1: `decodeBssLoad` returns an EXAMINED element 11 before it consults
+      // the walk tail, so a blob clipped SOMEWHERE ELSE still renders the
+      // complete-element sentence. The old copy said "nothing was cut" of this
+      // blob, whose tail plainly was ([[feedback_screen_does_what_copy_says]]).
+      final BssLoadReading reading = decodeBssLoad(
+        <int>[11, 7, 0, 0, 0, 0, 0, 0, 0, 0, 40, 0x41],
+      );
+      final BssLoadUnavailable unavailable = reading as BssLoadUnavailable;
+      expect(unavailable.reason, BssLoadUnavailableReason.malformedLength);
+      expect(unavailable.availableLength, isNull);
+      final BssLoadUnavailableCopy copy = bssLoadUnavailableCopy(
+        unavailable,
+        context: _kNoIeContextMacosAuthorized,
+      );
+      // The attribution is still earned: a whole element with an illegal length
+      // is a fact about the AP, unaffected by a clip elsewhere in the blob.
+      expect(copy.attribution, BssLoadAttribution.thisAccessPoint);
+      expect(
+        copy.body,
+        isNot(contains('nothing was cut')),
+        reason: 'the tail of this blob was cut, so the claim must be scoped to '
+            'the element',
+      );
+      expect(copy.body, contains('none of it was cut'));
+    });
+
+    test('a real Cisco QBSS v1 element renders the refusal, not a number', () {
+      // Declared 4 and all 4 arrived: the variant this build recognizes and
+      // refuses rather than reading with the standard layout.
+      final BssLoadReading reading = decodeBssLoad(<int>[11, 4, 0, 0, 0, 0]);
+      final BssLoadUnavailable unavailable = reading as BssLoadUnavailable;
+      expect(unavailable.reason, BssLoadUnavailableReason.ciscoQbssVersion1);
+      final BssLoadUnavailableCopy copy = bssLoadUnavailableCopy(
+        unavailable,
+        context: _kNoIeContextMacosAuthorized,
+      );
+      expect(copy.attribution, BssLoadAttribution.thisRead);
+      expect(
+        copy.headline,
+        'This build does not decode the Cisco QBSS variant.',
+      );
     });
 
     test('blobCompletenessNotStated comes only from the elements entry point',

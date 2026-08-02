@@ -31,7 +31,11 @@
 // STATES (SOP-007 section 5):
 //   - loading   -> progress indicator; Read again and Copy both disabled.
 //   - success   -> the three numbers, each beside its wire value.
-//   - "empty"   -> the eight named unavailable readings. NOT one grey wall.
+//   - "empty"   -> the eleven named unavailable outcomes, carrying eight
+//                  distinct headlines. NOT one gray wall. (Eleven, not eight:
+//                  `noInformationElementsProvided` renders four outcomes that
+//                  share a headline and differ in body. See the presentation
+//                  file's header, which states the count as measured.)
 //   - error     -> the read threw. The platform source swallows its own channel
 //                  failures, so this is reachable through the injected seam.
 //   - disabled  -> Read again while a read is in flight; Copy with nothing kept.
@@ -40,6 +44,7 @@
 // Build: Felix 2026-08-02, on Keith's direct ask.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/bss_load_decoder.dart';
@@ -170,14 +175,65 @@ class _BssLoadScreenState extends State<BssLoadScreen> {
         _snapshot = snapshot;
         _reading = false;
       });
+      _announce(_readingAnnouncement(snapshot));
     } catch (e) {
       if (!mounted) return;
+      final String message = 'The read failed before it produced anything: $e';
       setState(() {
         _reading = false;
         // The last good snapshot is deliberately kept: a failed re-read does not
         // erase a reading we really took.
-        _error = 'The read failed before it produced anything: $e';
+        _error = message;
       });
+      _announce('The read did not complete. $message');
+    }
+  }
+
+  /// WCAG 2.2 SC 4.1.3 (Status Messages): say the outcome without moving focus.
+  ///
+  /// THE LOADING LIVE REGION IS GONE BY THE TIME THERE IS SOMETHING TO SAY. The
+  /// `LinearProgressIndicator` and its `liveRegion` leave the tree the instant
+  /// `_reading` goes false, so an assistive-technology user who heard "Reading
+  /// the beacon information elements" hears nothing afterwards unless this
+  /// fires. One-shot announcement rather than a live region on the result card,
+  /// which is the convention `dns_lookup_screen.dart` states in its own words
+  /// and seven sibling network screens implement.
+  void _announce(String message) {
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      message,
+      TextDirection.ltr,
+    );
+  }
+
+  /// What a screen-reader user hears when a read lands.
+  ///
+  /// THE ATTRIBUTION IS SPOKEN FIRST, for the same reason it is printed first.
+  /// "Whose side is this on" is the product of this screen, so an announcement
+  /// carrying the headline alone would be the collapse this screen refuses,
+  /// happening in the audio channel instead of the visual one. The decoded case
+  /// speaks the same words its card header carries, and the above-full-scale
+  /// flag is spoken because on screen it is carried by a chip, which a result
+  /// announcement does not pick up on its own.
+  String _readingAnnouncement(BssLoadSnapshot snapshot) {
+    final BssLoadReading reading = snapshot.reading;
+    switch (reading) {
+      case BssLoadDecoded(:final BssLoad load):
+        final BssLoadNumbers n = BssLoadNumbers.of(load);
+        final String numbers =
+            'Advertised by this access point. '
+            'Associated stations ${n.stationCount}. '
+            'Channel utilization ${n.channelUtilization}. '
+            'Available admission capacity ${n.admissionCapacity}.';
+        if (!n.admissionCapacityExceedsFullScale) return numbers;
+        return '$numbers Admission capacity is above full scale, shown as read '
+            'and never capped.';
+      case BssLoadUnavailable():
+        final BssLoadUnavailableCopy copy = bssLoadUnavailableCopy(
+          reading,
+          context: snapshot.context,
+        );
+        return '${copy.attribution.label}. ${copy.headline}';
     }
   }
 

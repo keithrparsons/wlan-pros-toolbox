@@ -12,7 +12,7 @@
 // ([[feedback_app_blames_the_wifi]]). It ended up with seven distinct
 // unavailable reasons where a lesser type would have had one.
 //
-// A SCREEN THAT RENDERS ALL SEVEN AS ONE GREY "UNAVAILABLE" THROWS AWAY
+// A SCREEN THAT RENDERS ALL SEVEN AS ONE GRAY "UNAVAILABLE" THROWS AWAY
 // EVERYTHING THOSE TWO REWRITES BOUGHT, and it does it silently: the decoder
 // stays correct, the tests stay green, and the user reads a shrug. This file is
 // the place that refuses, and it is separate so a test can assert the refusal
@@ -28,11 +28,22 @@
 //     this reason on". That is the axis a WLAN engineer cares about, because it
 //     decides whether the finding is about the network they are standing in or
 //     about the tool in their hand.
-//   * EIGHT headlines, one per rendered outcome, each one sentence. Nothing is
-//     merged. Reading two of them never leaves a reader thinking they read the
-//     same thing twice.
+//   * ELEVEN RENDERED OUTCOMES CARRYING EIGHT DISTINCT HEADLINES, each one
+//     sentence, each with its own body. No two reasons are collapsed into one
+//     shrug.
 //
-// EIGHT, NOT SEVEN, AND THE EXTRA ONE IS NOT AN INVENTION.
+// COUNT THEM, BECAUSE AN EARLIER DRAFT OF THIS PARAGRAPH GOT IT WRONG. It said
+// "eight headlines, one per rendered outcome ... nothing is merged", and the
+// file contradicts that 300 lines below at [_noInformationElements]: ONE decoder
+// reason renders FOUR outcomes that SHARE a headline verbatim and differ in the
+// body. So a reader who hits two of those four does read the same headline
+// twice, and the honest claim is the narrower one — seven distinct headlines
+// across the other seven outcomes, plus one shared by the four platform-and-
+// grant branches, whose bodies carry the difference. A header that overstates
+// the design is the comment-versus-code drift this file names as its own guarded
+// defect, so it is stated as measured.
+//
+// EIGHT HEADLINES FOR SEVEN ENUM MEMBERS, AND THE EXTRA ONE IS NOT AN INVENTION.
 // [BssLoadUnavailableReason.malformedLength] covers two materially different
 // findings, and the decoder hands over the field that tells them apart: its own
 // doc says they are "told apart by [BssLoadUnavailable.availableLength]: null
@@ -55,11 +66,18 @@
 // THAT RULE IS CITED BY ITS NAME AND NOT BY ITS POSITION IN THE LIST, which is
 // the same discipline the decoder applies to its own honesty contract: an
 // ordinal has no grep handle, so an insertion upstream falsifies the sentence in
-// total silence. Measured, not assumed: this file is not among the four
-// `bss_load_ordinal_reference_guard_test.dart` scans, but it was run against
-// them on 2026-08-02 and the bare "rule 6" phrasing this paragraph used to carry
-// was rejected. Naming the rule means the guard can be widened to cover this
-// screen without a copy edit falling out of it.
+// total silence.
+//
+// WHAT IS ACTUALLY CONTROLLING THIS, STATED HONESTLY. This file and the screen
+// are NOT in `bss_load_ordinal_reference_guard_test.dart`'s scan set, which
+// covers the decoder, the decoder test, `ie_parser.dart` and `ie_parser_test`
+// (`:195-213`). An earlier version of this paragraph said the guard "was run
+// against them on 2026-08-02" — a manual run nobody can repeat, which is a
+// claim rather than a control ([[feedback_citation_must_be_pinned]]). The real
+// control today is that every GL-003 rule below is cited BY NAME, so there is
+// nothing ordinal here for the guard to catch. Widening the scan set to these
+// two files is the durable fix and is left as a follow-up: the guard lives under
+// `test/consistency/`, which this branch is not permitted to edit.
 //
 // ── WHAT THIS FILE MAY NEVER SAY ─────────────────────────────────────────────
 //
@@ -231,8 +249,14 @@ BssLoadUnavailableCopy bssLoadUnavailableCopy(
     case BssLoadUnavailableReason.clippedWithoutSeeingElement11:
       return const BssLoadUnavailableCopy(
         attribution: BssLoadAttribution.thisRead,
-        headline:
-            'Our capture was cut short before we reached a BSS Load element.',
+        // THIS HEADLINE CLAIMS THE MEMBER'S TWO FACTS AND NO THIRD ONE, which
+        // is the member's own contract verbatim: "The capture was clipped, and
+        // no element 11 was seen." An earlier draft read "cut short BEFORE we
+        // reached a BSS Load element", and "before we reached X" presupposes X
+        // was there to be reached — the exact assertion the decoder's member was
+        // RENAMED across a commit to stop making, restored at the most visible
+        // layer, with the body two lines down denying it.
+        headline: 'Our capture was cut short, and we saw no BSS Load element.',
         body:
             'The walk stopped part way through the beacon, so a BSS Load '
             'element may have been in the part that was cut. BSS Load sits well '
@@ -309,9 +333,15 @@ BssLoadUnavailableCopy bssLoadUnavailableCopy(
             'This access point sent a BSS Load element with a length it cannot '
             'have.',
         body:
-            'The whole element arrived, and nothing was cut. A BSS Load element '
-            'carries 5 value octets in IEEE 802.11-2012, or 4 in the Cisco '
-            'variant. Wireshark treats any other length as an error and decodes '
+            // SCOPED TO THE ELEMENT, because that is all this reading knows.
+            // `decodeBssLoad` returns an EXAMINED element 11 before it consults
+            // the walk tail, so a blob clipped SOMEWHERE ELSE still lands here:
+            // [11,7,0x7] followed by a clipped element renders this sentence,
+            // and "nothing was cut" was false of that blob.
+            'The whole element arrived, and none of it was cut. A BSS Load '
+            'element carries 5 value octets in IEEE 802.11-2012, or 4 in the '
+            'Cisco variant. Wireshark treats any other length as an error and '
+            'decodes '
             'nothing, and so does this build: reading a prefix of an element we '
             'do not recognize would be a guess dressed as a measurement.',
         remedy: BssLoadRemedy.none,

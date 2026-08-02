@@ -407,7 +407,7 @@ class AppRouter {
   /// BSS Load (802.11 element 11) — the connected AP's own advertised station
   /// count, channel utilization and available admission capacity, read out of
   /// the beacon information elements. Renders the decoder's honest
-  /// not-available readings by name rather than collapsing them into one grey
+  /// not-available readings by name rather than collapsing them into one gray
   /// state; see `bss_load_presentation.dart`.
   static const String bssLoad = '/tools/bss-load';
   static const String traceroute = '/tools/traceroute';
