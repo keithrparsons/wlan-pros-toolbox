@@ -1,13 +1,13 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 173 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 174 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
 ## Contents
 
 - **Test Network** (6 tools)
-- **Networking Tools** (25 tools)
+- **Networking Tools** (26 tools)
 - **Calculators & Tools** (32 tools)
   - RF & Propagation (9)
   - Antenna & Coverage (4)
@@ -390,6 +390,39 @@ From an IPv6 address and prefix length, derives the expanded and compressed form
 - The "first address" is the network address itself (IPv6 has no broadcast and does not reserve the all-zeros host as IPv4 does).
 - Address-type detection is prefix-pattern based and covers the common RFC ranges, not every reserved block.
 - The parser expects a hexadecimal literal. A dotted IPv4-tailed form such as ::ffff:192.168.1.1 is reported as an invalid format rather than expanded; use the fully hexadecimal equivalent (::ffff:c0a8:0101).
+
+### Subnet Planner (VLSM)
+
+Two jobs on IPv4 blocks that span more than one network. **Split** carves a parent block into right-sized subnets from a list of host counts. **Summarize** takes a list of networks and returns the single block that covers them all, plus the smallest set of blocks that covers them exactly.
+
+**Why it's here.** "Here is your /22 for the site, now give me a VLAN for staff, one for guests, one for the IoT gear and a point-to-point link" is a design question the single-subnet calculator cannot answer, because it works on one network at a time. Summarize is the same math in reverse, for when you are writing a route, an ACL, or a DHCP scope and want one line instead of nine.
+
+**How to use**
+1. Pick Split or Summarize with the segmented control at the top.
+2. Split: type the block you are carving (10.20.0.0/22), then list the subnets you need, one per line, as a name and a host count ("Staff 500") or just a count ("500").
+3. Summarize: paste your networks, one per line. A prefix, a dotted mask, or a bare address all work.
+4. Everything recalculates as you type. Copy takes the whole plan as a labeled text block.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Block to carve up (Split) | CIDR, or address and dotted mask | any IPv4 block, /0 to /32 |
+| Subnets you need (Split) | one per line: name then host count, or just the count | 1 host or more per line; blank lines and # comments are skipped |
+| Networks to summarize | one per line: CIDR, address and mask, or a bare address read as /32 | any IPv4 networks, in any order; overlaps and duplicates are fine |
+
+**Formula or method.** Split sorts the requirements largest-first, then places each block at the next free address. Because every block size is a power of two and the list runs largest to smallest, each block lands on its own boundary with no padding, which is what makes VLSM efficient and why the output is not in the order you typed. The prefix for a host count uses the classic reservation (network + broadcast), so 500 hosts gets a /23 with 510 usable and 2 hosts gets a /30; a request for 1 gets a /32. Leftover space is expressed as the largest aligned CIDR blocks that cover it exactly. Summarize sorts the inputs, merges them into continuous ranges (so an overlap counts once and two touching networks become one range), then reports two different answers: the smallest single block containing all of them, found by walking the prefix down until the lowest and highest addresses agree under the mask; and the minimal set of aligned CIDR blocks that covers the merged ranges exactly. The difference between those two is reported as an address count and enumerated as the gap blocks.
+
+**Example.** Split 10.20.0.0/22 for Staff 500, Guest 200, IoT 100 and a 2-host point-to-point link gives 10.20.0.0/23, 10.20.2.0/24, 10.20.3.0/25 and 10.20.3.128/30, with 124 addresses still free in five blocks (10.20.3.132/30, .136/29, .144/28, .160/27, .192/26). Summarize 10.0.0.0/24 and 10.0.3.0/24 and the covering supernet is 10.0.0.0/22, which also claims 512 addresses that are not in your list: 10.0.1.0/24 and 10.0.2.0/24.
+
+**Field notes**
+- The Extra count in Summarize is the number that matters. A covering supernet almost always includes addresses you did not ask for, and advertising it pulls in traffic for networks you may not own. The screen names those gaps as blocks so you can see exactly what you would be claiming.
+- A subnet that does not fit is named and told why, and the ones that do fit are still placed. A plan where the last VLAN overflowed is more useful than no plan at all.
+- A 2-host request gets a /30, because that works everywhere. If your gear supports RFC 3021, a /31 carries the same two hosts on a point-to-point link in half the space, and the screen says so.
+- A 1-host request gets a /32: a single host route, with no room for a gateway. Ask for 2 if you meant a device and its router.
+- A bad line is skipped by line number rather than rejecting the whole paste, so a messy list still produces a plan.
+- A network typed with host bits set (10.0.0.37/24) is read as 10.0.0.0/24, and the screen says it did that rather than quietly answering a different question.
+- No network I/O, just integer math, so it runs on every platform including web.
 
 ### Lookup (ARP/NDP)
 

@@ -1290,6 +1290,48 @@
       ],
       "source": "The result is calculated on your device."
     },
+    "subnet-planner": {
+      "name": "Subnet Planner (VLSM)",
+      "category": "Networking Tools",
+      "purpose": "Two jobs on IPv4 blocks that span more than one network. Split carves a parent block into right-sized subnets from a list of host counts. Summarize takes a list of networks and gives the single block that covers them all, plus the smallest set of blocks that covers them exactly.",
+      "whyHere": "\"Here is your /22 for the site, now give me a VLAN for staff, one for guests, one for the IoT gear and a point-to-point link\" is a design question the single-subnet calculator cannot answer, because it works on one network at a time. Summarize is the same math in reverse, for when you are writing a route, an ACL, or a firewall rule and want one line instead of nine.",
+      "howToUse": [
+        "Pick Split or Summarize at the top.",
+        "Split: type the block you are carving, for example 10.20.0.0/22, then list the subnets you need, one per line, as a name and a host count (\"Staff 500\") or just a count (\"500\").",
+        "Summarize: paste your networks, one per line. A prefix, a dotted mask, or a bare address all work.",
+        "Everything recalculates as you type. Use Copy to take the whole plan with you."
+      ],
+      "inputs": [
+        {
+          "name": "Block to carve up (Split)",
+          "unit": "CIDR or address and mask",
+          "range": "any IPv4 block, /0 to /32"
+        },
+        {
+          "name": "Subnets you need (Split)",
+          "unit": "one per line, name then host count",
+          "range": "1 host or more per line"
+        },
+        {
+          "name": "Networks to summarize",
+          "unit": "one per line",
+          "range": "any IPv4 networks, in any order"
+        }
+      ],
+      "algorithm": "Split sorts your subnets largest first, then places each one at the next free address. Because every block size is a power of two and the list runs from largest to smallest, each block lands on its own boundary with no wasted space in between. That ordering is what makes VLSM efficient, and it is why the output is not in the order you typed. Host counts use the classic reservation, so a subnet for 500 hosts gets a /23 (510 usable) and one for 2 hosts gets a /30. Whatever is left over is reported as the largest whole blocks that fit it. Summarize merges your networks into continuous ranges (so an overlap counts once and two touching networks become one), then reports the smallest single block containing all of them and, separately, the smallest set of blocks that covers them exactly.",
+      "example": "Split 10.20.0.0/22 for Staff 500, Guest 200, IoT 100 and a 2-host point-to-point link and you get 10.20.0.0/23, 10.20.2.0/24, 10.20.3.0/25 and 10.20.3.128/30, with 124 addresses still free in five blocks. Summarize 10.0.0.0/24 and 10.0.3.0/24 and the covering supernet is 10.0.0.0/22, which also claims 512 addresses that are not in your list: 10.0.1.0/24 and 10.0.2.0/24.",
+      "fieldNotes": [
+        "The Extra count in Summarize is the number that matters. A covering supernet almost always includes addresses you did not ask for, and advertising it pulls in traffic for networks you may not own. The screen names those gaps as blocks so you can see exactly what you would be claiming.",
+        "A subnet that does not fit is named and told why, and the ones that do fit are still placed. A plan where the last VLAN overflowed is more useful than no plan at all.",
+        "A request for 2 hosts gets a /30 here, because that is what works everywhere. If your gear supports RFC 3021 a /31 carries the same two hosts on a point-to-point link in half the space, and the screen says so.",
+        "A request for 1 host gets a /32. That is a single host route with no room for a gateway, so ask for 2 if you meant a device and its router.",
+        "A bad line is skipped by line number, not by rejecting the whole paste. Paste a messy list and fix the lines it names.",
+        "If a network is typed with host bits set, for example 10.0.0.37/24, it is read as 10.0.0.0/24 and the screen tells you it did that rather than quietly answering a different question.",
+        "Fully offline: this is integer arithmetic on the device, and it works on every platform including the web build.",
+        "CATALOG NOTE: manual category is Networking Tools; catalog id is subnet-planner with route /tools/subnet-planner."
+      ],
+      "source": "Calculated on the device; nothing is sent anywhere."
+    },
     "non-wifi-channels": {
       "name": "Non-Wi-Fi Wireless Channels",
       "category": "Quick Reference",

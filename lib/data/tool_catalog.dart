@@ -98,15 +98,15 @@ class ToolEntry {
   /// Returns a copy of this entry with [keywords] replaced. Used only by the
   /// catalog builder to fold in the external vocabulary; not for general use.
   ToolEntry _copyWithKeywords(List<String> keywords) => ToolEntry(
-        id: id,
-        title: title,
-        description: description,
-        routeName: routeName,
-        isLive: isLive,
-        keywords: keywords,
-        subgroup: subgroup,
-        nativeScanOnly: nativeScanOnly,
-      );
+    id: id,
+    title: title,
+    description: description,
+    routeName: routeName,
+    isLive: isLive,
+    keywords: keywords,
+    subgroup: subgroup,
+    nativeScanOnly: nativeScanOnly,
+  );
 }
 
 /// One of the home-grid categories.
@@ -538,6 +538,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/ipv6-subnet',
         isLive: true,
       ),
+      // Subnet Planner (2026-08-02): the IPv4 block math that spans MORE THAN
+      // ONE network. Two modes behind one tile — carve a parent block into
+      // right-sized subnets (VLSM), or aggregate a list into a covering
+      // supernet. Deliberately not two tiles: they are two directions of the
+      // same operation over the same multi-line list, and the single-network
+      // math stays on ipv4-subnet.
+      ToolEntry(
+        id: 'subnet-planner',
+        title: 'Subnet Planner (VLSM)',
+        description:
+            'Carve a block into right-sized subnets, or summarize a list into '
+            'a supernet',
+        routeName: '/tools/subnet-planner',
+        isLive: true,
+      ),
     ],
   ),
 
@@ -788,7 +803,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'dtmf-generator',
         title: 'DTMF Generator',
-        description: 'Touch-Tone keypad tones, plus Blue Box and Red Box history',
+        description:
+            'Touch-Tone keypad tones, plus Blue Box and Red Box history',
         routeName: '/tools/dtmf-generator',
         isLive: true,
         subgroup: 'Utilities & Generators',
@@ -953,7 +969,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'enclosure-ratings',
         title: 'Enclosure Ratings',
-        description: 'Decode IP and NEMA ingress ratings, and bridge NEMA to IP',
+        description:
+            'Decode IP and NEMA ingress ratings, and bridge NEMA to IP',
         routeName: '/tools/enclosure-ratings',
         isLive: true,
         subgroup: 'Codes & Safety',
@@ -1293,7 +1310,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'diffie-hellman',
         title: 'Diffie-Hellman',
-        description: 'Key exchange by colors: the paint analogy, the math, WPA3 SAE',
+        description:
+            'Key exchange by colors: the paint analogy, the math, WPA3 SAE',
         routeName: '/tools/diffie-hellman',
         isLive: true,
         subgroup: 'Wi-Fi & RF',
@@ -1339,8 +1357,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'plmn-id-reference',
         title: 'PLMN ID Reference',
-        description:
-            'US mobile carrier codes: MCC, MNC, PLMN ID. Offline',
+        description: 'US mobile carrier codes: MCC, MNC, PLMN ID. Offline',
         routeName: '/tools/plmn-id-reference',
         isLive: true,
         subgroup: 'Protocols',
@@ -1377,8 +1394,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'http-status-codes',
         title: 'HTTP Status Codes',
-        description:
-            'HTTP response status codes by class: 1xx to 5xx, offline',
+        description: 'HTTP response status codes by class: 1xx to 5xx, offline',
         routeName: '/tools/http-status-codes',
         isLive: true,
         subgroup: 'Protocols',
@@ -1677,7 +1693,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'http-methods',
         title: 'HTTP Methods & Headers',
-        description: 'HTTP request methods plus common request/response headers',
+        description:
+            'HTTP request methods plus common request/response headers',
         routeName: '/tools/http-methods',
         isLive: true,
         subgroup: 'Protocols',
@@ -1811,7 +1828,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'phonetic-alphabet',
         title: 'Phonetic Alphabet',
-        description: 'NATO spelling words, Morse, semaphore, and maritime flags',
+        description:
+            'NATO spelling words, Morse, semaphore, and maritime flags',
         routeName: '/tools/phonetic-alphabet',
         isLive: true,
         subgroup: 'Encoding',
@@ -2101,7 +2119,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'channel-allocations-6ghz-gvp',
         title: '6 GHz Channel Allocations with GVP',
-        description: 'All four 6 GHz power classes, including Geofenced Variable Power',
+        description:
+            'All four 6 GHz power classes, including Geofenced Variable Power',
         routeName: '/tools/channel-allocations-6ghz-gvp',
         isLive: true,
       ),
@@ -2280,7 +2299,9 @@ List<ToolCategory> _buildCatalog() {
               // Keep a `nativeScanOnly` tool when: the native scan is wired here
               // (it works), or on web (it shows with a web warning — interface
               // parity). Drop it on every other NATIVE target.
-              .where((ToolEntry t) => isWeb || hasNativeScan || !t.nativeScanOnly)
+              .where(
+                (ToolEntry t) => isWeb || hasNativeScan || !t.nativeScanOnly,
+              )
               .map(
                 (ToolEntry t) => t._copyWithKeywords(
                   kToolKeywords[t.id] ?? const <String>[],

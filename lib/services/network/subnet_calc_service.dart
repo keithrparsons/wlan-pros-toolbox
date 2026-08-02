@@ -36,18 +36,18 @@ class SubnetResult {
 
   /// Convenience constructor for a validation failure.
   const SubnetResult.invalid(String message)
-      : isValid = false,
-        error = message,
-        inputAddress = null,
-        prefix = null,
-        dottedMask = null,
-        wildcardMask = null,
-        networkAddress = null,
-        broadcastAddress = null,
-        firstHost = null,
-        lastHost = null,
-        totalAddresses = null,
-        usableHosts = null;
+    : isValid = false,
+      error = message,
+      inputAddress = null,
+      prefix = null,
+      dottedMask = null,
+      wildcardMask = null,
+      networkAddress = null,
+      broadcastAddress = null,
+      firstHost = null,
+      lastHost = null,
+      totalAddresses = null,
+      usableHosts = null;
 
   final bool isValid;
 
@@ -90,11 +90,7 @@ class SubnetCalcService {
   ///
   /// Never throws — every rejection comes back as
   /// [SubnetResult.invalid] with a clear message for `error_card`.
-  SubnetResult calculate({
-    required String address,
-    int? prefix,
-    String? mask,
-  }) {
+  SubnetResult calculate({required String address, int? prefix, String? mask}) {
     final int? addr = _parseIpv4(address);
     if (addr == null) {
       return const SubnetResult.invalid(
@@ -212,6 +208,19 @@ class SubnetCalcService {
 
   /// Public IPv4 validator for callers/tests.
   static bool isValidIpv4(String s) => _parseIpv4(s) != null;
+
+  /// Parse dotted-decimal IPv4 to its 32-bit integer value, or null when
+  /// malformed. Public so the block-math service ([IpBlockMath]) and the
+  /// range/CIDR tooling share ONE parser with this calculator rather than
+  /// each carrying its own definition of "a valid address".
+  static int? parseIpv4ToInt(String s) => _parseIpv4(s);
+
+  /// Format a 32-bit integer as dotted-decimal. The inverse of
+  /// [parseIpv4ToInt], exposed for the same reason.
+  static String toDotted(int v) => _toDotted(v);
+
+  /// The 32-bit integer mask for a prefix length (e.g. 22 → 0xFFFFFC00).
+  static int maskIntForPrefix(int prefix) => _maskForPrefix(prefix);
 
   /// Convert a dotted subnet mask to a prefix length, or null when the mask is
   /// not a valid contiguous-ones mask (e.g. 255.0.255.0).

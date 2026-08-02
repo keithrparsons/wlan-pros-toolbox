@@ -311,7 +311,16 @@ void main() {
       // (Deliverables/2026-07-25-battery-sd-reference/FINDINGS.md), which cites
       // IEC 60086-1/-2:2021 and the SD Physical Layer Simplified Spec v6.00.
       // 176 + 2 = 178.
-      expect(store.count, 179);
+      // 180 = + subnet-planner, added 2026-08-02 in the address-math depth
+      // pass. ONE tile with two modes (carve a parent block into right-sized
+      // subnets, or summarize a list into a covering supernet), deliberately
+      // not two tiles: they are two directions of the same operation over the
+      // same multi-line list. Sourced from Pax's iptoolkits survey
+      // (Deliverables/2026-08-02-iptoolkits-survey/BRIEF.md:123 and :126),
+      // which rates VLSM the largest genuine functional gap and rules that
+      // supernetting is not worth a tile standing alone.
+      // 179 + 1 = 180.
+      expect(store.count, 180);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help
