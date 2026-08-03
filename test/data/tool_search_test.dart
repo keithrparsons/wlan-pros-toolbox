@@ -88,6 +88,64 @@ void main() {
       );
     });
 
+    // THE DEAD-END KEYWORD, 2026-08-02. Pax's iptoolkits survey found that
+    // `vlsm` existed only as a search keyword on `ipv4-subnet`
+    // (Deliverables/2026-08-02-iptoolkits-survey/BRIEF.md:88), with no VLSM
+    // tool behind it. Searching for it returned a plausible-looking answer
+    // from a calculator that cannot carve a block into right-sized subnets,
+    // which is worse than returning nothing: a no-match tells you to look
+    // elsewhere. The keyword now points at `subnet-planner`.
+    //
+    // This guards the FIX, so it must fail if the keyword drifts back or if
+    // the tile it points at goes away.
+    test('"vlsm" resolves to a tool that can actually carve a block', () {
+      final List<ToolSearchHit> hits = searchTools('vlsm');
+      expect(hits, isNotEmpty, reason: 'vlsm must not be a dead-end search');
+      final Set<String> ids = hits.map((ToolSearchHit h) => h.tool.id).toSet();
+      expect(ids, contains('subnet-planner'));
+      expect(
+        ids,
+        isNot(contains('ipv4-subnet')),
+        reason: 'the single-subnet calculator cannot do VLSM; surfacing it '
+            'for this term is the defect, not the fix',
+      );
+    });
+
+    test('the subnet-planner tile is live and routed', () {
+      final ToolSearchHit hit = searchTools(
+        'vlsm',
+      ).firstWhere((ToolSearchHit h) => h.tool.id == 'subnet-planner');
+      expect(hit.tool.isLive, isTrue);
+      expect(hit.tool.routeName, '/tools/subnet-planner');
+    });
+
+    test('the other new address-math terms resolve too', () {
+      // Every term Pax named as uncovered, checked against the tile that now
+      // answers it. A term with no tool behind it is the same defect as vlsm.
+      const Map<String, String> termToTool = <String, String>{
+        'supernet': 'subnet-planner',
+        'summarization': 'subnet-planner',
+        'route summary': 'subnet-planner',
+        'eui-64': 'mac-oui-lookup',
+        'randomized mac': 'mac-oui-lookup',
+        'locally administered': 'mac-oui-lookup',
+        'slaac': 'mac-oui-lookup',
+        'transfer time': 'transfer-time',
+        'bandwidth calculator': 'transfer-time',
+        'ip range': 'ipv4-subnet',
+      };
+      termToTool.forEach((String term, String toolId) {
+        final Set<String> ids = searchTools(
+          term,
+        ).map((ToolSearchHit h) => h.tool.id).toSet();
+        expect(
+          ids,
+          contains(toolId),
+          reason: '"$term" must reach $toolId',
+        );
+      });
+    });
+
     test('search reads the (web-gated) kToolCategories list', () {
       // Every hit's category must be one that is actually in kToolCategories —
       // proving the engine reads the gated UI list, not the raw catalog.

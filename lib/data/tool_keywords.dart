@@ -247,6 +247,12 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'fix',
     'accuracy',
   ],
+  // The bit decoder and EUI-64 derivation landed on this screen on 2026-08-02
+  // and arrived with no way to FIND them: every keyword here was a vendor-
+  // lookup term, so a user searching "eui-64" or "randomized mac" got nothing
+  // while the answer sat on a tile called MAC Vendor OUI Lookup. That is the
+  // same defect as the old `vlsm` dead end, one step earlier: a shipped
+  // capability behind a search index that does not know it exists.
   'mac-oui-lookup': <String>[
     'vendor',
     'manufacturer',
@@ -254,6 +260,19 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'oui',
     'who makes',
     'mac vendor',
+    'eui-64',
+    'eui64',
+    'modified eui-64',
+    'slaac',
+    'randomized mac',
+    'private mac',
+    'locally administered',
+    'globally unique',
+    'u/l bit',
+    'i/g bit',
+    'mac format',
+    'mac notation',
+    'bssid derivation',
   ],
   'packet-sender': <String>[
     'raw packet',
