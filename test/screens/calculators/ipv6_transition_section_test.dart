@@ -177,6 +177,77 @@ void main() {
     expect(p, contains('RFC 6052'));
   });
 
+  // REGRESSION, live defect found 2026-08-02. The address field's input
+  // formatter allowed `[0-9A-Fa-f:.]` only, so pasting `fe80::1%en0` off
+  // `ifconfig` dropped the `%` and the `n` and left `fe80::1e0` — a valid but
+  // DIFFERENT address, breaking down confidently and wrongly with nothing on
+  // screen to say anything had been removed. This failed red before the fix.
+  testWidgets('a pasted link-local is not silently mangled by the field', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_host());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_field(0), 'fe80::1%en0');
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(_field(0)).controller!.text,
+      'fe80::1%en0',
+      reason: 'the field must keep every character the user pasted',
+    );
+    expect(
+      find.text('fe80:0000:0000:0000:0000:0000:00e0:0000'),
+      findsNothing,
+      reason: 'the mangled fe80::1e0 breakdown must not appear',
+    );
+  });
+
+  // A zone index (`%en0`) is what a link-local address looks like everywhere a
+  // WLAN engineer meets one. It is stripped for the math, so the screen owes
+  // the user an acknowledgement that it was read rather than ignored.
+  testWidgets('a zoned link-local computes, and the Zone is shown back', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_host());
+    await tester.pumpAndSettle();
+
+    // No zone typed → no Zone row. Asserted FIRST so the row's appearance
+    // below is a change and not a constant.
+    expect(find.text('Zone'), findsNothing);
+
+    await tester.enterText(_field(0), 'fe80::1%en0');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Link-Local (fe80::/10)'), findsOneWidget);
+    expect(
+      find.text('fe80:0000:0000:0000:0000:0000:0000:0001'),
+      findsOneWidget,
+      reason: 'the zone must not change the address',
+    );
+    expect(find.text('Zone'), findsOneWidget);
+    expect(find.text('en0'), findsOneWidget);
+    expect(_copyPayload(tester), contains('Zone: en0'));
+  });
+
+  testWidgets('a half-typed zone is an error, not a silent truncation', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_host());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_field(0), 'fe80::1%');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invalid IPv6 address format.'), findsOneWidget);
+    expect(find.text('Zone'), findsNothing);
+    expect(
+      _copyPayload(tester),
+      isNull,
+      reason: 'there is no valid breakdown to copy',
+    );
+  });
+
   testWidgets('no overflow at phone, tablet or desktop width', (
     WidgetTester tester,
   ) async {

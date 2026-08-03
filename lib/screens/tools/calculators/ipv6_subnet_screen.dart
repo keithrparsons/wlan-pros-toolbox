@@ -55,6 +55,7 @@ class Ipv6Result {
     required this.last,
     required this.hosts,
     required this.type,
+    this.zone,
   }) : error = null;
 
   const Ipv6Result.invalid(this.error)
@@ -64,7 +65,8 @@ class Ipv6Result {
       first = '',
       last = '',
       hosts = '',
-      type = '';
+      type = '',
+      zone = null;
 
   /// Full 8-group, 4-hex-digit form (PWA ipv6-expanded).
   final String expanded;
@@ -86,6 +88,14 @@ class Ipv6Result {
 
   /// RFC range label (PWA ipv6-type).
   final String type;
+
+  /// The zone index the user typed (`en0` from `fe80::1%en0`), or null when
+  /// they typed none. A zone is a LOCAL interface selector, not part of the
+  /// 128 bits, so it is stripped before any math. It is carried here so the
+  /// screen can show it back rather than silently swallowing something the
+  /// user typed — a value that vanishes with no acknowledgement reads as a
+  /// tool that did not understand the input.
+  final String? zone;
 
   /// Non-null when input was rejected; all other fields are empty.
   final String? error;
@@ -190,7 +200,12 @@ class Ipv6SubnetScreen extends StatefulWidget {
     }
 
     String expanded;
+    String? zone;
     try {
+      // A zone index is read for display and stripped for the math; see
+      // [Ipv6Address.zoneOf]. A malformed one (empty, or repeated) throws here
+      // rather than being quietly truncated off.
+      zone = Ipv6Address.zoneOf(raw);
       expanded = expandIPv6(raw.toLowerCase());
     } on FormatException {
       return const Ipv6Result.invalid('Invalid IPv6 address format.');
@@ -223,6 +238,7 @@ class Ipv6SubnetScreen extends StatefulWidget {
       last: compressIPv6(lastFull),
       hosts: hostsForPrefix(prefix),
       type: detectIPv6Type(addrFull),
+      zone: zone,
     );
   }
 
@@ -262,8 +278,20 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
 
   // Address: hex digits, colon, and the optional IPv4-tail dot. Prefix:
   // digits and a leading slash. No spaces — these are typed literals.
+  /// WIDENED 2026-08-02, and this was a live defect, not a nicety.
+  ///
+  /// This used to allow `[0-9A-Fa-f:.]` only. Paste a link-local straight off
+  /// `ifconfig` — `fe80::1%en0` — and the filter deleted the `%` and the `n`,
+  /// leaving `fe80::1e0`. That is a VALID but DIFFERENT address, so the screen
+  /// computed a full, confident, wrong breakdown with nothing on it to say
+  /// characters had been removed. A silent mangle is worse than a rejection:
+  /// a rejection tells you to look, a mangle does not.
+  ///
+  /// The set now covers what an interface name can contain, and validation —
+  /// not the keyboard filter — decides whether the address is real. A stray
+  /// letter now reaches "Invalid IPv6 address format." instead of vanishing.
   static final List<TextInputFormatter> _addrFormatters = <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Fa-f:.]')),
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Za-z:.%_-]')),
   ];
   static final List<TextInputFormatter> _prefixFormatters =
       <TextInputFormatter>[
@@ -366,6 +394,8 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
       ..writeln('Last: ${r.last}')
       ..writeln('Addresses: ${r.hosts}')
       ..writeln('Type: ${r.type}');
+    // Matches the on-screen row: present only when the user typed a zone.
+    if (r.zone != null) buf.writeln('Zone: ${r.zone}');
 
     // The transition decode travels with the breakdown, but ONLY when an IPv4
     // address was actually found. Pasting "Embedded IPv4: none" into a ticket
@@ -704,6 +734,16 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
             ValueRow(label: 'Addresses', value: r.hosts, mono: true),
           ),
           _semanticRow('Type', r.type, ValueRow(label: 'Type', value: r.type)),
+          // Only when the user typed one. A zone index names a LOCAL
+          // interface, so it is stripped before the math — but it is shown
+          // back, because a value that disappears with no acknowledgement
+          // reads as an input the tool failed to understand.
+          if (r.zone != null)
+            _semanticRow(
+              'Zone',
+              r.zone,
+              ValueRow(label: 'Zone', value: r.zone, mono: true),
+            ),
         ],
       ),
     );

@@ -1265,7 +1265,7 @@
       "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes. The transition section answers a different question: NAT64, 6to4 and IPv4-mapped addresses genuinely turn up in captures and firewall logs, and \"what am I looking at\" is the moment they cause.",
       "howToUse": [
         "Enter an IPv6 address (default 2001:db8::1).",
-        "Enter the prefix length (default 32).",
+        "Enter the prefix length (default 32). A link-local address pasted straight off ifconfig or ip -6 addr works as-is, zone index and all: fe80::1%en0 is accepted, and the zone comes back on its own row.",
         "Read the expanded form, compressed form, network and prefix, first and last address, host count, and address type.",
         "Read the transition section at the bottom. It decodes the same address you typed above and names the format, the embedded IPv4, and what that IPv4 actually is.",
         "The IPv4 field in that section runs the other direction: type an IPv4 address and read it as IPv4-mapped, NAT64, a 6to4 prefix, and the deprecated IPv4-compatible form."
@@ -1280,6 +1280,11 @@
           "name": "Prefix",
           "unit": "whole number",
           "range": "0 to 128 (anything outside that shows an error)"
+        },
+        {
+          "name": "Zone index (optional, on the address)",
+          "unit": "interface name or ifindex after a %",
+          "range": "fe80::1%en0, fe80::1%12, or the %25en0 spelling used inside a URL"
         },
         {
           "name": "IPv4 address (transition section)",
@@ -1299,7 +1304,8 @@
         "Teredo stores the client address and port with every bit inverted. Read raw, they look like nonsense. The screen flips them back and says it did.",
         "An address with no IPv4 inside is reported as having none. The screen never invents an embedded address to fill the row.",
         "IPv4-compatible (::a.b.c.d) is deprecated. It is decoded so you can recognize one in an old configuration, and labeled so you do not build on it.",
-        "The 6to4 output is a PREFIX for a whole site (a /48), not a host address."
+        "The 6to4 output is a PREFIX for a whole site (a /48), not a host address.",
+        "A zone index (the %en0 on fe80::1%en0) names the local interface the scope belongs to, so it sits outside the 128 bits and is set aside before the math runs. The Zone row shows it back, because a character you typed that vanishes with no acknowledgement looks like an input the tool failed to read. A half-typed zone such as fe80::1% is reported as an invalid address."
       ],
       "source": "The result is calculated on your device."
     },

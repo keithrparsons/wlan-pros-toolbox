@@ -33,12 +33,16 @@ class Ipv6Address {
   /// legal IPv6 and is exactly how a mapped or NAT64 address is written in a
   /// log, so rejecting it was a defect, not a limitation.
   ///
+  /// Also accepts and STRIPS a zone index (`fe80::1%en0`, RFC 4007 §11.2) for
+  /// the same reason. See [zoneOf] for why stripping is lossless here and how
+  /// to recover the zone for display.
+  ///
   /// Throws [FormatException] on a malformed group layout (more than one "::",
-  /// a "::" that fills no groups, a bad dotted tail). Does NOT validate that
-  /// each remaining group is hex — callers check that, because the caller's
-  /// error message is the useful one.
+  /// a "::" that fills no groups, a bad dotted tail, an empty or repeated zone
+  /// index). Does NOT validate that each remaining group is hex — callers check
+  /// that, because the caller's error message is the useful one.
   static String expand(String literal) {
-    final String addr = _foldIpv4Tail(literal);
+    final String addr = _foldIpv4Tail(_stripZone(literal));
     if (addr.contains('::')) {
       // Reject more than one "::" — a split on "::" would silently keep the
       // first two parts and answer a question the user did not ask.
@@ -64,6 +68,56 @@ class Ipv6Address {
       ].map((String g) => g.padLeft(4, '0')).join(':');
     }
     return addr.split(':').map((String g) => g.padLeft(4, '0')).join(':');
+  }
+
+  /// The zone index on a literal, or null when there is none.
+  ///
+  /// A zone index (RFC 4007 §11.2) is the `%en0` a link-local address wears in
+  /// `ifconfig`, `ip -6 addr`, a macOS log line, or a copied link-local URL. It
+  /// names the LOCAL INTERFACE the scope is relative to. It is not part of the
+  /// 128 bits, so `fe80::1%en0` and `fe80::1` are the same address and
+  /// stripping it cannot change any computed answer.
+  ///
+  /// Both spellings are handled: the bare `%en0`, and the `%25en0` that RFC
+  /// 6874 requires inside a URI (`%25` is a percent-encoded `%`). The returned
+  /// zone is the decoded one, so both give `en0`.
+  ///
+  /// It is NOT discarded silently at the UI layer — the IPv6 screen renders it
+  /// on its own row, so a user who typed a zone can see the tool read it.
+  ///
+  /// STATED AMBIGUITY, because it cannot be resolved from the text alone. A
+  /// zone can be a NAME (`en0`, BSD and macOS) or a NUMERIC ifindex (`12`,
+  /// Windows). That collides with the RFC 6874 encoding: `fe80::1%25` is
+  /// either "URI-encoded, zone missing" or "plain, ifindex 25". This decodes
+  /// the `25` prefix ONLY when something follows it, so `%25` reads as ifindex
+  /// 25 and `%25en0` reads as `en0` — the reading that is right in every case
+  /// except an all-digit zone written in the URI form (`%2512`, which reads as
+  /// ifindex 2512 rather than 12). The zone is display-only and changes no
+  /// computed value, so the cost of that residual case is one cosmetic row.
+  ///
+  /// Throws [FormatException] on an empty zone (`fe80::1%`, a truncated log
+  /// line or a user mid-keystroke) or more than one `%`. Neither is "no zone";
+  /// both are a question that was not finished being asked.
+  static String? zoneOf(String literal) {
+    final int pct = literal.indexOf('%');
+    if (pct < 0) return null;
+    String zone = literal.substring(pct + 1);
+    if (zone.contains('%')) {
+      throw const FormatException('more than one zone index');
+    }
+    // RFC 6874's percent-encoded "%", but only when a zone follows it.
+    if (zone.length > 2 && zone.startsWith('25')) zone = zone.substring(2);
+    if (zone.isEmpty) throw const FormatException('empty zone index');
+    return zone;
+  }
+
+  /// The literal with any zone index removed. Validates it via [zoneOf] first,
+  /// so a malformed zone throws rather than being quietly truncated away.
+  static String _stripZone(String literal) {
+    final int pct = literal.indexOf('%');
+    if (pct < 0) return literal;
+    zoneOf(literal); // throws on an empty or repeated zone
+    return literal.substring(0, pct);
   }
 
   /// Rewrite a trailing dotted-quad tail as two hex groups, leaving anything

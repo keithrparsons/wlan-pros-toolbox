@@ -37,6 +37,7 @@
 // unparseable IPv6 literal.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/ipv6_subnet_screen.dart';
 import 'package:wlan_pros_toolbox/services/network/ipv6_address.dart';
 import 'package:wlan_pros_toolbox/services/network/ipv6_transition.dart';
 
@@ -73,6 +74,123 @@ void main() {
         () => Ipv6Address.expand('::ffff:192.0.2.999'),
         throwsA(isA<FormatException>()),
       );
+    });
+  });
+
+  // A ZONE INDEX (RFC 4007 §11.2) is the "%en0" a link-local address wears
+  // everywhere a WLAN pro actually meets one: `ifconfig`, `ip -6 addr`, a
+  // macOS log line, a browser's copy of a link-local URL. It is a LOCAL SCOPE
+  // SELECTOR, not part of the 128 bits, so stripping it cannot change any
+  // answer — `fe80::1%en0` and `fe80::1` are the same address. Before
+  // 2026-08-02 the parser rejected the whole literal as malformed, which sent
+  // the one address family a Wi-Fi engineer pastes most often to an error
+  // card. These cases failed red before the fix.
+  group('zone index', () {
+    test('a zone index is stripped, and the address parses as if absent', () {
+      expect(
+        Ipv6Address.expand('fe80::1%en0'),
+        Ipv6Address.expand('fe80::1'),
+      );
+      expect(
+        Ipv6Address.expand('fe80::1%en0'),
+        'fe80:0000:0000:0000:0000:0000:0000:0001',
+      );
+    });
+
+    test('every zone spelling in the wild strips the same', () {
+      // Numeric (Windows/Linux ifindex), named (BSD/macOS), and the
+      // percent-encoded form RFC 6874 uses inside a URI.
+      for (final String literal in <String>[
+        'fe80::1%1',
+        'fe80::1%12',
+        'fe80::1%en0',
+        'fe80::1%utun3',
+        'fe80::1%25en0',
+        'fe80::1%25',
+      ]) {
+        expect(
+          Ipv6Address.expand(literal),
+          'fe80:0000:0000:0000:0000:0000:0000:0001',
+          reason: '$literal must parse to the same address',
+        );
+      }
+    });
+
+    test('zoneOf returns the zone, or null when there is none', () {
+      expect(Ipv6Address.zoneOf('fe80::1%en0'), 'en0');
+      expect(Ipv6Address.zoneOf('fe80::1%25en0'), 'en0');
+      expect(Ipv6Address.zoneOf('fe80::1%1'), '1');
+      expect(Ipv6Address.zoneOf('fe80::1'), isNull);
+      expect(Ipv6Address.zoneOf('2001:db8::1'), isNull);
+    });
+
+    // THE AMBIGUITY, ASSERTED SO THE CHOICE IS VISIBLE RATHER THAN INCIDENTAL.
+    // "%25" is either the RFC 6874 URI encoding of "%" with the zone missing,
+    // or a plain Windows ifindex 25. The text cannot say which. zoneOf decodes
+    // the "25" prefix only when something follows it, so a bare "%25" reads as
+    // ifindex 25. The residual wrong case is an all-digit zone in URI form.
+    test('"%25" reads as ifindex 25, and "%2512" is the case that loses', () {
+      expect(Ipv6Address.zoneOf('fe80::1%25'), '25');
+      // Documented wrong answer: the URI form of ifindex 12 reads as 2512.
+      // The zone is display-only, so this costs one cosmetic row and no math.
+      expect(Ipv6Address.zoneOf('fe80::1%2512'), '12');
+      expect(
+        Ipv6Address.expand('fe80::1%25'),
+        Ipv6Address.expand('fe80::1'),
+        reason: 'whatever the zone reads as, the ADDRESS is unaffected',
+      );
+    });
+
+    test('an EMPTY zone is malformed, not an absent zone', () {
+      // "fe80::1%" is a user mid-keystroke or a truncated log line. Treating
+      // it as "no zone" would answer a question that was not finished being
+      // asked.
+      expect(
+        () => Ipv6Address.expand('fe80::1%'),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => Ipv6Address.zoneOf('fe80::1%'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('more than one "%" is malformed', () {
+      expect(
+        () => Ipv6Address.expand('fe80::1%en0%en1'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('the zone does not rescue an otherwise-bad address', () {
+      // Stripping the zone must not turn a malformed literal into a valid one.
+      expect(
+        () => Ipv6Address.expand('fe80::1::2%en0'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('a zoned transition address still decodes', () {
+      // The zone rides along on exactly the addresses this section is for:
+      // a NAT64 or mapped literal copied off an interface.
+      final Ipv6ToIpv4Result r = Ipv6Transition.decode(
+        '64:ff9b::192.0.2.33%utun0',
+      );
+      expect(r.isValid, isTrue);
+      expect(r.hasIpv4, isTrue);
+      expect(r.ipv4, '192.0.2.33');
+      expect(
+        r.label,
+        Ipv6Transition.decode('64:ff9b::192.0.2.33').label,
+        reason: 'the zone must not change the format verdict',
+      );
+    });
+
+    test('a zoned link-local reaches the whole breakdown, not an error', () {
+      final Ipv6Result r = Ipv6SubnetScreen.calculate('fe80::1%en0', 64);
+      expect(r.isValid, isTrue, reason: r.error ?? '');
+      expect(r.type, 'Link-Local (fe80::/10)');
+      expect(r.expanded, 'fe80:0000:0000:0000:0000:0000:0000:0001');
     });
   });
 
