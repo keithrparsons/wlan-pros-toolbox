@@ -189,10 +189,31 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('IPv6 Subnet Calculator'), findsWidgets);
-      expect(find.text('IPv6 address'), findsOneWidget);
-      expect(find.text('Prefix length'), findsOneWidget);
-      // Two inputs: address + prefix.
-      expect(find.byType(TextField), findsNWidgets(2));
+      // ENUMERATE the fields, then assert the count MATCHES the enumeration.
+      // This assertion used to be a bare `findsNWidgets(2)` with the comment
+      // "address + prefix". When the transition section added its IPv4 field
+      // on 2026-08-02 the count broke, and a bare count cannot say WHICH field
+      // is new or whether it was meant to be there. The labels are the
+      // contract; the count exists only so a fourth, un-enumerated field
+      // fails here instead of shipping unnoticed.
+      const List<String> expectedFields = <String>[
+        'IPv6 address',
+        'Prefix length',
+        'IPv4 address', // transition section, added 2026-08-02
+      ];
+      for (final String label in expectedFields) {
+        expect(
+          find.text(label),
+          findsOneWidget,
+          reason: 'the "$label" input is part of this screen\'s contract',
+        );
+      }
+      expect(
+        find.byType(TextField),
+        findsNWidgets(expectedFields.length),
+        reason: 'a TextField exists that is not in expectedFields — add it '
+            'there (with its label) or remove it from the screen',
+      );
 
       // Seeded with 2001:db8::1 /32 → Documentation type row renders.
       expect(find.text('Documentation (2001:db8::/32)'), findsOneWidget);
@@ -209,8 +230,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Subnet'), findsOneWidget);
 
-      // Clear the address field (first TextField) → result panel disappears.
-      await tester.enterText(find.byType(TextField).at(0), '');
+      // Clear the ADDRESS field → result panel disappears. Found by its hint
+      // rather than by position: the transition section added a third field
+      // on 2026-08-02, and `.at(0)` only happened to still be the address
+      // because the form card renders above the transition card. A positional
+      // finder silently re-aims at whatever moves into slot 0.
+      await tester.enterText(
+        find.byWidgetPredicate(
+          (Widget w) =>
+              w is TextField && w.decoration?.hintText == '2001:db8::1',
+          description: 'the IPv6 address field',
+        ),
+        '',
+      );
       await tester.pumpAndSettle();
       expect(find.text('Subnet'), findsNothing);
     });
