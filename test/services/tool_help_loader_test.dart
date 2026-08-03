@@ -4,10 +4,14 @@
 // - The pure parser (ToolHelpStore.fromJson): a well-formed fixture, malformed
 //   entries dropped, garbage document → empty-but-valid, null algorithm/example
 //   preserved as null, field notes preserved verbatim (GL-005).
-// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 97
-//   entries, and every key matches a catalog tool id (the lookup contract),
-//   except for a small allowlist of known non-catalog help ids.
+// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly
+//   [_expectedEntryCount] entries, and every key matches a catalog tool id (the
+//   lookup contract), except for a small allowlist of known non-catalog ids.
 // - helpForId() reads the cached store and returns null for an unknown id.
+//
+// This header used to say "parses to exactly 97 entries" — the third place in
+// this file where a hand-written count outlived the assertion it described.
+// Counts are named, never spelled out again (2026-08-02).
 
 import 'dart:convert';
 
@@ -17,6 +21,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
+
+/// The number of entries the bundled help asset must contain.
+///
+/// THE ONE PLACE THIS NUMBER LIVES. The test title interpolates it and the
+/// assertion compares against it, so the two cannot disagree — which is exactly
+/// what they did twice, in 2026-07 (name 140 vs assertion 178) and again in
+/// 2026-08 (name 179 vs assertion 181). The running commentary above the
+/// assertion below shows how the figure was reached; bump BOTH together by
+/// bumping this.
+const int _expectedEntryCount = 182;
 
 const String _fixture = '''
 {
@@ -124,7 +138,15 @@ void main() {
     // NOTE 2026-07-28: this test was named 'parses to exactly 140 entries' while
     // asserting 178. The name is a claim and it was wrong by 38. Renamed to state
     // the count it actually checks, and the number now lives in one place.
-    test('parses to exactly 180 entries', () {
+    //
+    // NOTE 2026-08-02: it happened AGAIN — the name said 179 while the assertion
+    // below said 181 (Vera's gate, MEDIUM-2). "The number lives in one place"
+    // was a promise the file had no way to keep: a test name is a string
+    // literal, so nothing stopped the next person bumping the expectation and
+    // leaving the title behind. The number now genuinely lives in one place,
+    // [_expectedEntryCount], and the title INTERPOLATES it. Renaming and
+    // hoping is not a fix; making the drift impossible is.
+    test('parses to exactly $_expectedEntryCount entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -320,7 +342,32 @@ void main() {
       // step taken here is one. Do not "repair" the arithmetic by editing 180
       // down to 179: the number that is checked is the one on the expect line,
       // and the gap is in this prose, not in the file.
-      expect(store.count, 180);
+      // 180 = + subnet-planner, added 2026-08-02 in the address-math depth
+      // pass. ONE tile with two modes (carve a parent block into right-sized
+      // subnets, or summarize a list into a covering supernet), deliberately
+      // not two tiles: they are two directions of the same operation over the
+      // same multi-line list. Sourced from Pax's iptoolkits survey
+      // (Deliverables/2026-08-02-iptoolkits-survey/BRIEF.md:123 and :126),
+      // which rates VLSM the largest genuine functional gap and rules that
+      // supernetting is not worth a tile standing alone.
+      // 179 + 1 = 180.
+      // 181 = + transfer-time, added 2026-08-02 in the same pass. Size /
+      // speed / time, solve for any one of the three, borrowing the Unit
+      // Converter's bit-based unit tables rather than carrying its own.
+      // Sourced from the same survey (BRIEF.md:125): the unit converter
+      // converts the units but never divided one by the other.
+      // 180 + 1 = 181.
+      //
+      // MERGE RECONCILIATION 2026-08-03, v1.8.7 integration. Both blocks
+      // above are correct in isolation and both land on 180, because each
+      // branch counted 179 as its base and neither could see the other.
+      // bss-load added ONE entry; the address-math pass added TWO
+      // (subnet-planner and transfer-time). 179 + 1 + 2 = 182.
+      // The constant was NOT derived from this arithmetic. It was counted
+      // off assets/help/tool_help.json at merge time, which also confirmed
+      // all three ids present and no duplicates. The prose explains the
+      // number; the file is what decides it.
+      expect(store.count, _expectedEntryCount);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

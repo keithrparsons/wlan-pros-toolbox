@@ -2,10 +2,15 @@
 // network, first/last addresses, host count, and address type from a prefix.
 //
 // Math mirrors the RF Tools PWA (app.js calcIPv6 / expandIPv6 / compressIPv6 /
-// detectIPv6Type, line 2155+) exactly, ported to Dart BigInt 128-bit math so
-// the native app and the PWA agree field-for-field:
+// detectIPv6Type, line 2155+), ported to Dart BigInt 128-bit math so the native
+// app and the PWA agree field-for-field — with ONE deliberate divergence, ruled
+// by Keith on 2026-08-02 and marked below:
 //   expand     — pad each group to 4 hex digits, fill the :: run with zeros.
 //   compress   — collapse the longest run of all-zero groups to "::".
+//                DIVERGES FROM THE PWA, on purpose. The PWA drops half the "::"
+//                when the zero run touches either end, so it prints "fe80/10"
+//                and "ffff:c000:201", which are not addresses. This screen uses
+//                the RFC 5952 compressor; see [compressIPv6].
 //   network    — address & prefix-mask (128-bit).
 //   first/last — network (first) and network | host-mask (last).
 //   hosts      — 2^(128-prefix), shown as a count; ">2^63" above 63 host bits.
@@ -34,6 +39,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/ipv6_address.dart';
+import '../../../services/network/ipv6_transition.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
@@ -53,6 +60,7 @@ class Ipv6Result {
     required this.last,
     required this.hosts,
     required this.type,
+    this.zone,
   }) : error = null;
 
   const Ipv6Result.invalid(this.error)
@@ -62,7 +70,8 @@ class Ipv6Result {
       first = '',
       last = '',
       hosts = '',
-      type = '';
+      type = '',
+      zone = null;
 
   /// Full 8-group, 4-hex-digit form (PWA ipv6-expanded).
   final String expanded;
@@ -85,10 +94,46 @@ class Ipv6Result {
   /// RFC range label (PWA ipv6-type).
   final String type;
 
+  /// The zone index the user typed (`en0` from `fe80::1%en0`), or null when
+  /// they typed none. A zone is a LOCAL interface selector, not part of the
+  /// 128 bits, so it is stripped before any math. It is carried here so the
+  /// screen can show it back rather than silently swallowing something the
+  /// user typed — a value that vanishes with no acknowledgement reads as a
+  /// tool that did not understand the input.
+  ///
+  /// Carries its READING, not just its text ([Ipv6Zone]): `%25` and `%2512`
+  /// each have two defensible readings, and a bare `String?` would force the
+  /// screen to print one of them as though it were the only one.
+  final Ipv6Zone? zone;
+
   /// Non-null when input was rejected; all other fields are empty.
   final String? error;
 
   bool get isValid => error == null;
+}
+
+/// The one definition of what the screen says about a zone index, used by both
+/// the rendered row and the copy payload so the two cannot drift.
+///
+/// WHY THIS EXISTS (Vera gate 2026-08-02, MEDIUM-1): the Zone row rendered a
+/// bare `Zone: 25` for `fe80::1%25` with no caveat and no alternate reading.
+/// The parser standing on one reading is correct — RFC 4007 keeps the zone
+/// outside the 128 bits, so the math is untouched either way — but the ROW was
+/// stating a guess as a fact. Tests that pin both readings are not a user
+/// surface ([[feedback_ui_rendered_a_decision_it_lacked]]).
+String zoneHelperText(Ipv6Zone zone) {
+  switch (zone.reading) {
+    case Ipv6ZoneReading.certain:
+      return 'A zone names a local interface, so it is not part of the '
+          'address and changes nothing above.';
+    case Ipv6ZoneReading.bareTwentyFive:
+      return 'Read as interface index 25. In a URL "%25" means "%", so a zone '
+          'name may have been cut off. Either way the address is the same.';
+    case Ipv6ZoneReading.escapedDigits:
+      return 'Read as a URL, where "%25" means "%", so the zone is '
+          '${zone.value}. Typed outside a URL it would be ${zone.alternate}. '
+          'Either way the address is the same.';
+  }
 }
 
 class Ipv6SubnetScreen extends StatefulWidget {
@@ -97,113 +142,42 @@ class Ipv6SubnetScreen extends StatefulWidget {
   // ─── Math (pure) ──────────────────────────────────────────────────────────
   // Ports app.js: expandIPv6, compressIPv6, calcIPv6, detectIPv6Type.
 
-  static final BigInt _mask128 = (BigInt.one << 128) - BigInt.one;
-  static final BigInt _mask64 = (BigInt.one << 64) - BigInt.one;
+  // EXTRACTED 2026-08-02: the four text/number primitives below moved verbatim
+  // to [Ipv6Address] (lib/services/network/ipv6_address.dart) so the MAC bit
+  // decoder and the transition-address decoder can reach them without importing
+  // a widget. These statics are THIN DELEGATES, not duplicates — there is
+  // exactly one definition of each algorithm, and every existing caller and
+  // test that says `Ipv6SubnetScreen.expandIPv6(...)` still resolves.
+  static final BigInt _mask128 = Ipv6Address.mask128;
 
   /// Expand an IPv6 literal to its full 8-group, 4-hex-digit form.
   /// Mirrors PWA expandIPv6. Throws [FormatException] on a malformed group
   /// layout (e.g. too many groups, more than one "::").
-  static String expandIPv6(String addr) {
-    if (addr.contains('::')) {
-      // Reject more than one "::" — the PWA's split on "::" silently keeps the
-      // first two parts; we treat anything but exactly one "::" as malformed so
-      // the caller surfaces the invalid-format error instead of a wrong answer.
-      if ('::'.allMatches(addr).length != 1) {
-        throw const FormatException('multiple "::" runs');
-      }
-      final List<String> halves = addr.split('::');
-      final List<String> left = halves[0].isEmpty
-          ? <String>[]
-          : halves[0].split(':');
-      final List<String> right = halves[1].isEmpty
-          ? <String>[]
-          : halves[1].split(':');
-      final int missing = 8 - left.length - right.length;
-      if (missing < 1) {
-        throw const FormatException('"::" with no zero groups to fill');
-      }
-      final List<String> mid = List<String>.filled(missing, '0000');
-      return <String>[
-        ...left,
-        ...mid,
-        ...right,
-      ].map((String g) => g.padLeft(4, '0')).join(':');
-    }
-    return addr.split(':').map((String g) => g.padLeft(4, '0')).join(':');
-  }
+  static String expandIPv6(String addr) => Ipv6Address.expand(addr);
 
-  /// Compress a full 8-group form to canonical "::" notation.
-  /// Mirrors PWA compressIPv6: collapse the LONGEST run of all-zero groups.
-  static String compressIPv6(String full) {
-    List<String?> parts = full.split(':').cast<String?>();
-    int bestStart = -1, bestLen = 0;
-    int curStart = -1, curLen = 0;
-    for (int i = 0; i < parts.length; i++) {
-      if (parts[i] == '0000') {
-        if (curStart < 0) {
-          curStart = i;
-          curLen = 1;
-        } else {
-          curLen++;
-        }
-        if (curLen > bestLen) {
-          bestStart = curStart;
-          bestLen = curLen;
-        }
-      } else {
-        curStart = -1;
-        curLen = 0;
-      }
-    }
-
-    if (bestLen > 1) {
-      parts = <String?>[
-        ...parts.sublist(0, bestStart),
-        null,
-        ...parts.sublist(bestStart + bestLen),
-      ];
-      final String joined = parts
-          .map(
-            (String? p) =>
-                p == null ? '' : BigInt.parse(p, radix: 16).toRadixString(16),
-          )
-          .join(':')
-          .replaceAll(RegExp(r'^:|:$'), '')
-          .replaceFirst(':::', '::');
-      return joined.isEmpty ? '::' : joined;
-    }
-    return parts
-        .map((String? p) => BigInt.parse(p!, radix: 16).toRadixString(16))
-        .join(':');
-  }
+  /// Compress a full 8-group form to canonical "::" notation, collapsing the
+  /// LONGEST run of all-zero groups (RFC 5952 §4.2).
+  ///
+  /// KEITH'S RULING, 2026-08-02: this screen uses the RFC-correct compressor.
+  /// It previously delegated to a PWA-parity version that dropped half the
+  /// "::" whenever the zero run touched either end, so the Network row printed
+  /// `2001:db8/64` and `fe80/10` and the Compressed row printed
+  /// `ffff:c000:201` — none of which is an IPv6 literal. Vera's gate proved
+  /// the harm by pasting the screen's own Compressed value back into its own
+  /// field and getting "Invalid IPv6 address format"
+  /// (Deliverables/2026-08-02-ip-address-math-gate/evidence/paste-back-proof/).
+  ///
+  /// Text parity with the PWA is therefore NOT claimed for compression, and is
+  /// deliberately given up: the PWA's strings were the defect. Parity still
+  /// holds for expansion, the 128-bit math, host counts, and type detection.
+  /// The paste-back property is guarded in ipv6_subnet_screen_test.dart.
+  static String compressIPv6(String full) => Ipv6Address.compress(full);
 
   /// Render a 128-bit value to the full 8-group form. Mirrors PWA bigToFull.
-  static String bigToFull(BigInt n) {
-    final BigInt hi = (n >> 64) & _mask64;
-    final BigInt lo = n & _mask64;
-    String toHex(BigInt v) {
-      final String s = v.toRadixString(16).padLeft(16, '0');
-      // Split into 4-hex-digit groups.
-      return <String>[
-        s.substring(0, 4),
-        s.substring(4, 8),
-        s.substring(8, 12),
-        s.substring(12, 16),
-      ].join(':');
-    }
-
-    return '${toHex(hi)}:${toHex(lo)}';
-  }
+  static String bigToFull(BigInt n) => Ipv6Address.fromBigInt(n);
 
   /// Parse the expanded form to a 128-bit BigInt. Mirrors PWA word packing.
-  static BigInt toBigInt(String expanded) {
-    final List<String> parts = expanded.split(':');
-    BigInt v = BigInt.zero;
-    for (final String p in parts) {
-      v = (v << 16) | BigInt.parse(p, radix: 16);
-    }
-    return v;
-  }
+  static BigInt toBigInt(String expanded) => Ipv6Address.toBigInt(expanded);
 
   /// RFC range label from the expanded form. Mirrors PWA detectIPv6Type.
   static String detectIPv6Type(String full) {
@@ -262,7 +236,12 @@ class Ipv6SubnetScreen extends StatefulWidget {
     }
 
     String expanded;
+    Ipv6Zone? zone;
     try {
+      // A zone index is read for display and stripped for the math; see
+      // [Ipv6Address.zoneParse]. A malformed one (empty, or repeated) throws
+      // here rather than being quietly truncated off.
+      zone = Ipv6Address.zoneParse(raw);
       expanded = expandIPv6(raw.toLowerCase());
     } on FormatException {
       return const Ipv6Result.invalid('Invalid IPv6 address format.');
@@ -295,6 +274,7 @@ class Ipv6SubnetScreen extends StatefulWidget {
       last: compressIPv6(lastFull),
       hosts: hostsForPrefix(prefix),
       type: detectIPv6Type(addrFull),
+      zone: zone,
     );
   }
 
@@ -307,6 +287,13 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     text: '2001:db8::1',
   );
   final TextEditingController _prefixCtrl = TextEditingController(text: '32');
+
+  /// The transition section's own IPv4 field (item 8, IPv4 -> IPv6). The
+  /// IPv6 -> IPv4 direction reads the address field above, so the section
+  /// answers both directions without a second IPv6 input.
+  final TextEditingController _v4Ctrl = TextEditingController(
+    text: '192.0.2.1',
+  );
 
   Ipv6Result? _result;
 
@@ -327,8 +314,20 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
 
   // Address: hex digits, colon, and the optional IPv4-tail dot. Prefix:
   // digits and a leading slash. No spaces — these are typed literals.
+  /// WIDENED 2026-08-02, and this was a live defect, not a nicety.
+  ///
+  /// This used to allow `[0-9A-Fa-f:.]` only. Paste a link-local straight off
+  /// `ifconfig` — `fe80::1%en0` — and the filter deleted the `%` and the `n`,
+  /// leaving `fe80::1e0`. That is a VALID but DIFFERENT address, so the screen
+  /// computed a full, confident, wrong breakdown with nothing on it to say
+  /// characters had been removed. A silent mangle is worse than a rejection:
+  /// a rejection tells you to look, a mangle does not.
+  ///
+  /// The set now covers what an interface name can contain, and validation —
+  /// not the keyboard filter — decides whether the address is real. A stray
+  /// letter now reaches "Invalid IPv6 address format." instead of vanishing.
   static final List<TextInputFormatter> _addrFormatters = <TextInputFormatter>[
-    FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Fa-f:.]')),
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Za-z:.%_-]')),
   ];
   static final List<TextInputFormatter> _prefixFormatters =
       <TextInputFormatter>[
@@ -340,6 +339,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     super.initState();
     _addrCtrl.addListener(_recompute);
     _prefixCtrl.addListener(_recompute);
+    _v4Ctrl.addListener(() => setState(() {}));
     // Seed an initial result so the screen opens on a worked example.
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
   }
@@ -349,6 +349,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     _announceTimer?.cancel();
     _addrCtrl.dispose();
     _prefixCtrl.dispose();
+    _v4Ctrl.dispose();
     super.dispose();
   }
 
@@ -404,9 +405,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled while the input is
         // empty or malformed (no valid breakdown); copies the IPv6 breakdown as
         // a labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -422,17 +421,44 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
     final Ipv6Result? r = _result;
     if (r == null || !r.isValid) return null;
 
-    return (StringBuffer()
-          ..writeln('IPv6 Subnet')
-          ..writeln('Network: ${r.network}')
-          ..writeln('Expanded: ${r.expanded}')
-          ..writeln('Compressed: ${r.compressed}')
-          ..writeln('First: ${r.first}')
-          ..writeln('Last: ${r.last}')
-          ..writeln('Addresses: ${r.hosts}')
-          ..writeln('Type: ${r.type}'))
-        .toString()
-        .trimRight();
+    final StringBuffer buf = StringBuffer()
+      ..writeln('IPv6 Subnet')
+      ..writeln('Network: ${r.network}')
+      ..writeln('Expanded: ${r.expanded}')
+      ..writeln('Compressed: ${r.compressed}')
+      ..writeln('First: ${r.first}')
+      ..writeln('Last: ${r.last}')
+      ..writeln('Addresses: ${r.hosts}')
+      ..writeln('Type: ${r.type}');
+    // Matches the on-screen row: present only when the user typed a zone.
+    // The caveat travels ONLY when the reading is uncertain, and it travels
+    // because it qualifies the VALUE — pasting a bare "Zone: 25" into a ticket
+    // would re-commit MEDIUM-1 in another medium. The certain-case helper line
+    // is an explanation rather than a qualifier, so it stays on screen with
+    // the transition section's other notes and out of the payload.
+    final Ipv6Zone? z = r.zone;
+    if (z != null) {
+      buf.writeln('Zone: ${z.value}');
+      if (!z.isCertain) buf.writeln('Zone note: ${zoneHelperText(z)}');
+    }
+
+    // The transition decode travels with the breakdown, but ONLY when an IPv4
+    // address was actually found. Pasting "Embedded IPv4: none" into a ticket
+    // is noise, and pasting nothing is the honest alternative.
+    final Ipv6ToIpv4Result t = Ipv6Transition.decode(_addrCtrl.text);
+    if (t.isValid && t.hasIpv4) {
+      buf
+        ..writeln('Embedded IPv4: ${t.ipv4} (${t.label}, ${t.rfc})')
+        ..writeln('Which is: ${t.ipv4Role}');
+      if (t.teredoServer != null) {
+        buf.writeln(
+          'Teredo server: ${t.teredoServer}, '
+          'client port ${t.teredoPort}',
+        );
+      }
+    }
+
+    return buf.toString().trimRight();
   }
 
   Widget _body() {
@@ -484,6 +510,8 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                           : _errorCard(context, _result!.error!),
                     ),
                   ],
+                  const SizedBox(height: AppSpacing.sm),
+                  _transitionCard(context),
                   ToolHelpFooter(toolId: 'ipv6-subnet'),
                 ],
               ),
@@ -491,6 +519,150 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Transition addresses — the IPv4-in-IPv6 formats, both directions.
+  ///
+  /// Item 7 (IPv6 -> IPv4) reads the SAME address field the breakdown above
+  /// uses, because that is the field a pasted log line lands in. Item 8
+  /// (IPv4 -> IPv6) needs an IPv4 address, so it carries one small field of its
+  /// own. A section, not a tile: neither direction is a question a user goes
+  /// looking for, they are both "what am I looking at" moments that happen
+  /// while already on this screen
+  /// (Deliverables/2026-08-02-iptoolkits-survey/BRIEF.md:128 and :129).
+  Widget _transitionCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+
+    final Ipv6ToIpv4Result decoded = Ipv6Transition.decode(_addrCtrl.text);
+    final Ipv4ToIpv6Result encoded = Ipv6Transition.encode(_v4Ctrl.text);
+
+    Widget heading(String s) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Text(
+        s,
+        style: text.labelMedium?.copyWith(
+          color: colors.textSecondary,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+
+    Widget note(String s) => Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Text(
+        s,
+        style: text.labelSmall?.copyWith(color: colors.textTertiary),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          heading('IPv4 inside this address'),
+          if (!decoded.isValid)
+            note(
+              'Enter a valid IPv6 address above and this section will say '
+              'whether it carries an IPv4 address.',
+            )
+          else ...<Widget>[
+            ValueRow(
+              label: 'Format',
+              value: decoded.label,
+              emphasize: decoded.hasIpv4,
+            ),
+            if (decoded.rfc != null)
+              ValueRow(label: 'Defined in', value: decoded.rfc),
+            if (decoded.hasIpv4) ...<Widget>[
+              ValueRow(
+                label: 'IPv4',
+                value: decoded.ipv4,
+                identifier: true,
+                emphasize: true,
+              ),
+              if (decoded.ipv4Role != null)
+                ValueRow(label: 'Which is', value: decoded.ipv4Role),
+            ],
+            if (decoded.teredoServer != null)
+              ValueRow(
+                label: 'Teredo server',
+                value: decoded.teredoServer,
+                identifier: true,
+              ),
+            if (decoded.teredoPort != null)
+              ValueRow(
+                label: 'Client port',
+                value: '${decoded.teredoPort}',
+                mono: true,
+              ),
+            if (decoded.note != null) note(decoded.note!),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          heading('An IPv4 address written as IPv6'),
+          LabeledField(
+            label: 'IPv4 address',
+            field: TextField(
+              controller: _v4Ctrl,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              cursorColor: colors.textAccent,
+              decoration: const InputDecoration(hintText: '192.0.2.1'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (!encoded.isValid)
+            note(encoded.error!)
+          else ...<Widget>[
+            ValueRow(
+              label: 'As IPv4-mapped',
+              value: encoded.mappedDotted,
+              identifier: true,
+              emphasize: true,
+            ),
+            ValueRow(
+              label: 'Same, in hex',
+              value: encoded.mappedHex,
+              identifier: true,
+            ),
+            ValueRow(
+              label: 'NAT64',
+              value: encoded.nat64Dotted,
+              identifier: true,
+            ),
+            ValueRow(
+              label: '6to4 prefix',
+              value: encoded.sixToFourPrefix,
+              identifier: true,
+            ),
+            ValueRow(
+              label: 'As IPv4-compatible',
+              value: encoded.compatibleDotted,
+              identifier: true,
+            ),
+            note(
+              'IPv4-mapped is what a dual-stack socket shows for an IPv4 peer; '
+              'it is not something you configure. The 6to4 value is a PREFIX '
+              'for a whole site, not a host address. The NAT64 line uses the '
+              'well-known 64:ff9b::/96 prefix; a network running its own '
+              'prefix will differ. IPv4-compatible is deprecated and is here '
+              'only so you can recognize one in an old configuration.',
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -607,6 +779,35 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
             ValueRow(label: 'Addresses', value: r.hosts, mono: true),
           ),
           _semanticRow('Type', r.type, ValueRow(label: 'Type', value: r.type)),
+          // Only when the user typed one. A zone index names a LOCAL
+          // interface, so it is stripped before the math — but it is shown
+          // back, because a value that disappears with no acknowledgement
+          // reads as an input the tool failed to understand.
+          //
+          // The row is followed by its helper line in every case: when the
+          // reading is certain it says why the value changed nothing, and when
+          // it is not it names the other reading instead of letting the row
+          // pass a guess off as a fact (Vera MEDIUM-1, 2026-08-02).
+          if (r.zone != null) ...<Widget>[
+            _semanticRow(
+              'Zone',
+              r.zone!.value,
+              ValueRow(label: 'Zone', value: r.zone!.value, mono: true),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                zoneHelperText(r.zone!),
+                // bodySmall, NOT the labelSmall this screen's other notes use.
+                // GL-003 §8.5.0's standing rule: a caption or label that wraps
+                // to 3+ lines is promoted to a body style rather than squeezed
+                // into the caption register. Measured at 390 dp the "%2512"
+                // string wraps to three lines, so the caption register is not
+                // available to it.
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -654,9 +855,7 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

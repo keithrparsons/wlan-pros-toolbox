@@ -1,19 +1,19 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 174 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 176 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
 ## Contents
 
 - **Test Network** (7 tools)
-- **Networking Tools** (25 tools)
-- **Calculators & Tools** (32 tools)
+- **Networking Tools** (26 tools)
+- **Calculators & Tools** (33 tools)
   - RF & Propagation (9)
   - Antenna & Coverage (4)
   - Capacity & Power (3)
   - Coordinates & GPS (4)
-  - Conversions (5)
+  - Conversions (6)
   - Utilities & Generators (4)
   - Ham Radio (2)
   - Learn / RF intuition (1)
@@ -378,11 +378,17 @@ Computes the full IPv4 subnet breakdown (network, broadcast, netmask, wildcard, 
 
 **Example.** 10.20.0.0/22 → netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, total 1024, usable 1022. (This is the screen's seeded default.)
 
+**Number forms (Subnet mode).** The result also carries the same address as an unsigned integer, as hex (0x0A140000), as dotted hex (0A.14.00.00), and as 32 bits with a slash sitting exactly where the prefix ends. The slash replaces the octet dot when the two land in the same place, so there is only ever one separator at any position. The address rendered in binary is the one you typed, not the network base: seeing your host address against the boundary is what shows which bits are host bits. The mask renders on the same boundary directly underneath, which is where masking stops being a rule you memorized. 10.20.0.0/22 gives 00001010.00010100.000000/00.00000000 over 11111111.11111111.111111/00.00000000.
+
+**Range mode.** Enter a first and last address and read the smallest set of CIDR blocks that covers the range exactly. Type a whole block into the first field instead (10.4.16.0/20) and the range is derived from it, with the second field ignored and labeled as ignored. The algorithm is greedy and aligned: starting at the first address, take the largest block that begins there, is aligned to its own size, and does not run past the last address, then repeat. That yields the fewest blocks possible. 10.4.16.0 through 10.4.31.255 is one block, 10.4.16.0/20; 192.168.1.1 through 192.168.1.6 takes four (192.168.1.1/32, 192.168.1.2/31, 192.168.1.4/31, 192.168.1.6/32).
+
 **Field notes**
 - /31 (RFC 3021) is a point-to-point link: there is no network/broadcast reservation, so both addresses are usable hosts (usable = 2). The screen annotates this.
 - /32 is a single-host route: one address, no range, no broadcast (usable = 1).
 - A host address inside the block reports the subnet's network, not the host; all values derive from the masked base.
 - A dotted mask must be a valid contiguous-ones mask; 255.0.255.0 is rejected as malformed.
+- A range only collapses to a single block when it starts on a CIDR boundary and is a whole power of two long. Most real ranges do not, so several blocks is the correct answer, not a failure. The screen never rounds up to one block, because that would claim addresses you did not ask for.
+- A last address before the first is refused with a message rather than silently swapped.
 - No network I/O, just pure math, so it runs on every platform including web.
 
 ### IP Subnetting (IPv6)
@@ -411,7 +417,59 @@ From an IPv6 address and prefix length, derives the expanded and compressed form
 - Host counts above 2⁶³ are reported qualitatively ("More than 2⁶³") rather than as a full number.
 - The "first address" is the network address itself (IPv6 has no broadcast and does not reserve the all-zeros host as IPv4 does).
 - Address-type detection is prefix-pattern based and covers the common RFC ranges, not every reserved block.
-- The parser expects a hexadecimal literal. A dotted IPv4-tailed form such as ::ffff:192.168.1.1 is reported as an invalid format rather than expanded; use the fully hexadecimal equivalent (::ffff:c0a8:0101).
+- A dotted IPv4-tailed literal such as ::ffff:192.168.1.1 IS accepted (changed 2026-08-02). That form is legal IPv6 under RFC 4291 section 2.2 and is how a mapped or NAT64 address is written in a log, so rejecting it was a defect rather than a limitation.
+- A zone index IS accepted (changed 2026-08-02). fe80::1%en0 is what a link-local address looks like in ifconfig, in ip -6 addr, in a macOS log line, and in a copied link-local URL, which makes it the form a Wi-Fi engineer pastes most often. Under RFC 4007 section 11.2 the zone names the local interface the scope belongs to, so it sits outside the 128 bits and is set aside before the math runs. The Zone row shows it back rather than swallowing it. Both spellings work: the bare %en0, and the %25en0 that RFC 6874 requires inside a URI.
+- Before that change the address field's keyboard filter allowed hex digits, colons and dots only, so a pasted fe80::1%en0 lost its % and its n and became fe80::1e0. That is a valid but different address, and the screen produced a complete, confident, wrong breakdown of it with nothing on screen to say characters had been removed. The filter now keeps what you paste and validation decides what is real.
+- A half-typed zone such as fe80::1% is reported as an invalid address rather than read as "no zone". A truncated log line is a question that was not finished being asked.
+- One ambiguity is left standing on purpose, because the text cannot resolve it. A zone can be a name (en0, on BSD and macOS) or a numeric ifindex (12, on Windows), which collides with the RFC 6874 encoding: fe80::1%25 is either the URI form with the zone missing, or ifindex 25 written plainly. The tool decodes the %25 prefix only when something follows it, so a bare %25 reads as ifindex 25. The one case that reads wrong is an all-digit zone written in URI form (%2512 reads as 2512 rather than 12). The zone is display-only and changes no computed value, so the cost is one cosmetic row.
+
+**Transition addresses (section at the bottom of the screen).** Decodes whether the address you typed carries an IPv4 address inside it, and writes a given IPv4 address the four ways IPv6 can carry one.
+
+The decode matches five formats and reports the first that fits: IPv4-mapped (::ffff:0:0/96, RFC 4291 section 2.5.5.2), the NAT64 well-known prefix (64:ff9b::/96, RFC 6052 section 2.1), 6to4 (2002::/16, RFC 3056, where the 32 bits after 2002 are the site's IPv4 endpoint), Teredo (2001:0::/32, RFC 4380, where the client address and UDP port are stored with every bit inverted), and the deprecated IPv4-compatible form (::/96, RFC 4291 section 2.5.5.1). Each result names what the IPv4 address actually IS - a peer, a translated host, a site endpoint, a client behind a NAT - so the number is not read as the wrong thing.
+
+- ::ffff:192.0.2.1 is IPv4-mapped and carries 192.0.2.1. It is what a dual-stack socket shows for an IPv4 peer; it never appears on the wire.
+- 64:ff9b::192.0.2.33 is NAT64 and carries 192.0.2.33.
+- 2002:c000:204::1 is 6to4 and carries 192.0.2.4.
+- 2001:0:4136:e378:8000:63bf:3fff:fdd2 is Teredo: server 65.54.227.120, client port 40000, client 192.0.2.45. The client half is stored inverted, which is why a raw read of it looks like nonsense.
+- :: and ::1 sit numerically inside the deprecated ::/96 range but are the unspecified and loopback addresses, and are reported as such rather than as 0.0.0.0 and 0.0.0.1.
+- An address with no IPv4 inside is reported as having none. The screen never invents one.
+
+**NAT64 limit, stated plainly.** Only the well-known 64:ff9b::/96 prefix is decoded. RFC 6052 also allows a network-specific prefix at /32, /40, /48, /56 or /64, and the IPv4 bits sit at a different offset in each. That prefix length is not carried in the address, so the same 128 bits decode to different IPv4 addresses depending on a value the tool cannot see. Guessing would be inventing an answer, so the screen says so instead.
+
+The reverse direction takes an IPv4 address and shows it as IPv4-mapped (dotted and hex), as a NAT64 address on the well-known prefix, as a 6to4 /48 PREFIX for a site rather than a host address, and as the deprecated IPv4-compatible form, which is there only so you can recognize one in an old configuration.
+
+### Subnet Planner (VLSM)
+
+Two jobs on IPv4 blocks that span more than one network. **Split** carves a parent block into right-sized subnets from a list of host counts. **Summarize** takes a list of networks and returns the single block that covers them all, plus the smallest set of blocks that covers them exactly.
+
+**Why it's here.** "Here is your /22 for the site, now give me a VLAN for staff, one for guests, one for the IoT gear and a point-to-point link" is a design question the single-subnet calculator cannot answer, because it works on one network at a time. Summarize is the same math in reverse, for when you are writing a route, an ACL, or a DHCP scope and want one line instead of nine.
+
+**How to use**
+1. Pick Split or Summarize with the segmented control at the top.
+2. Split: type the block you are carving (10.20.0.0/22), then list the subnets you need, one per line, as a name and a host count ("Staff 500") or just a count ("500").
+3. Summarize: paste your networks, one per line. A prefix, a dotted mask, or a bare address all work.
+4. Everything recalculates as you type. Copy takes the whole plan as a labeled text block.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Block to carve up (Split) | CIDR, or address and dotted mask | any IPv4 block, /0 to /32 |
+| Subnets you need (Split) | one per line: name then host count, or just the count | 1 host or more per line; blank lines and # comments are skipped |
+| Networks to summarize | one per line: CIDR, address and mask, or a bare address read as /32 | any IPv4 networks, in any order; overlaps and duplicates are fine |
+
+**Formula or method.** Split sorts the requirements largest-first, then places each block at the next free address. Because every block size is a power of two and the list runs largest to smallest, each block lands on its own boundary with no padding, which is what makes VLSM efficient and why the output is not in the order you typed. The prefix for a host count uses the classic reservation (network + broadcast), so 500 hosts gets a /23 with 510 usable and 2 hosts gets a /30; a request for 1 gets a /32. Leftover space is expressed as the largest aligned CIDR blocks that cover it exactly. Summarize sorts the inputs, merges them into continuous ranges (so an overlap counts once and two touching networks become one range), then reports two different answers: the smallest single block containing all of them, found by walking the prefix down until the lowest and highest addresses agree under the mask; and the minimal set of aligned CIDR blocks that covers the merged ranges exactly. The difference between those two is reported as an address count and enumerated as the gap blocks.
+
+**Example.** Split 10.20.0.0/22 for Staff 500, Guest 200, IoT 100 and a 2-host point-to-point link gives 10.20.0.0/23, 10.20.2.0/24, 10.20.3.0/25 and 10.20.3.128/30, with 124 addresses still free in five blocks (10.20.3.132/30, .136/29, .144/28, .160/27, .192/26). Summarize 10.0.0.0/24 and 10.0.3.0/24 and the covering supernet is 10.0.0.0/22, which also claims 512 addresses that are not in your list: 10.0.1.0/24 and 10.0.2.0/24.
+
+**Field notes**
+- The Extra count in Summarize is the number that matters. A covering supernet almost always includes addresses you did not ask for, and advertising it pulls in traffic for networks you may not own. The screen names those gaps as blocks so you can see exactly what you would be claiming.
+- A subnet that does not fit is named and told why, and the ones that do fit are still placed. A plan where the last VLAN overflowed is more useful than no plan at all.
+- A 2-host request gets a /30, because that works everywhere. If your gear supports RFC 3021, a /31 carries the same two hosts on a point-to-point link in half the space, and the screen says so.
+- A 1-host request gets a /32: a single host route, with no room for a gateway. Ask for 2 if you meant a device and its router.
+- A bad line is skipped by line number rather than rejecting the whole paste, so a messy list still produces a plan.
+- A network typed with host bits set (10.0.0.37/24) is read as 10.0.0.0/24, and the screen says it did that rather than quietly answering a different question.
+- No network I/O, just integer math, so it runs on every platform including web.
 
 ### Lookup (ARP/NDP)
 
@@ -1279,7 +1337,7 @@ Computes the great-circle midpoint between two latitude/longitude points.
 - This is the great-circle (spherical) midpoint, not the average of the coordinates. On east-west paths the midpoint is noticeably closer to the pole than the simple lat/lon average.
 - Spherical model, same accuracy caveats as Distance and Bearing.
 
-## Conversions (5)
+## Conversions (6)
 
 
 ### Channel / Frequency
@@ -1384,6 +1442,36 @@ Converts a length between meters, kilometers, miles, feet, centimeters, inches, 
 - Uses the international mile (1609.344 m) and international foot (0.3048 m), not the US survey foot.
 - Conversions are exact within floating point; the per-unit decimal rounding is for display only.
 
+
+### Transfer Time
+
+Divides a file size by a link speed. Pick which of the three you want out: how long a transfer takes, how fast a link has to be to finish in a given window, or how much data moves in that window.
+
+**Why it's here.** "How long will this AP firmware push take over this link" is a field question, and so is "we have a ten-minute maintenance window, what speed do we need". The arithmetic is one division. The trap is that link speeds are quoted in bits and file sizes in bytes, and the factor of 8 between them is where the wrong answers come from.
+
+**How to use**
+1. Pick Time, Speed or Size at the top: that is the one you want out, and the other two are the ones you type.
+2. Type each value and pick its unit from the list. Size units are byte units; speed units are bit units unless the label says B/s.
+3. Read the answer, then read the two lines underneath it that restate what you typed in bits. That is the conversion, shown rather than hidden.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Size | B, KB, MB, GB, TB (decimal) or KiB, MiB, GiB, TiB (binary) | any positive number |
+| Speed | bps, kbps, Mbps, Gbps, Tbps, or KB/s and MB/s | above zero when solving for time |
+| Time | ms, s, min, hr, day | above zero when solving for speed |
+
+**Formula or method.** One division, done entirely in bits. The size is converted to bits and the speed to bits per second using the same unit tables the Unit Converter uses, so there is one definition of a MB in the app and not two. Time is bits divided by bits per second; speed is bits divided by seconds; size is bits per second multiplied by seconds. A divisor of zero returns no answer at all rather than an infinity.
+
+**Example.** 1 GB at 100 Mbps: 1,000,000,000 bytes is 8,000,000,000 bits, divided by 100,000,000 bits per second is 80 seconds, shown as 1 min 20 s. The same file quoted as 1 GiB is 1,073,741,824 bytes and takes 1 min 25.9 s. That six-second gap on a single gigabyte is why the decimal and binary units stay separate.
+
+**Field notes**
+- Link speeds are in bits per second and file sizes are in bytes. 1 byte = 8 bits, so a 100 Mbps link moves 12.5 MB per second, not 100. That line is printed on the screen itself, not buried in the help sheet.
+- A KB is 1000 bytes and a KiB is 1024. Your operating system probably says GB and means GiB, which is why a "1 GB" download can take about 7 percent longer than you expected.
+- There is no efficiency slider, on purpose. A default of 85 percent would be a made-up number dressed up as help. The answer is the time at exactly the rate entered. For a realistic number, enter a throughput you actually measured rather than the number on the label.
+- Real transfers run slower than this: protocol overhead, disk speed, and everyone else on the link all take a share.
+- Fully offline: one division on the device.
 
 ### Unit Converter
 

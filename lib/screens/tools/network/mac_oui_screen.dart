@@ -20,6 +20,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../../data/tool_assets.dart';
+import '../../../services/network/mac_address_bits.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -49,6 +50,14 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
   String? _loadError;
   bool _canRun = false;
   OuiResult? _result;
+
+  /// The bit-level decode of the same input (I/G, U/L, notation forms, EUI-64).
+  /// Computed alongside the vendor lookup and rendered as a second card, so the
+  /// screen answers "who made this" AND "what kind of address is this" without
+  /// a second tile. Null before the first lookup, and non-null but invalid for
+  /// a malformed MAC (the vendor error card already covers that case, so the
+  /// bits card is not rendered then).
+  MacBitsResult? _bits;
 
   @override
   void initState() {
@@ -99,7 +108,11 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     if (svc == null || !_canRun) return;
     _macFocus.unfocus();
     final OuiResult result = svc.lookup(_macCtrl.text);
-    setState(() => _result = result);
+    final MacBitsResult bits = MacAddressBits.decode(_macCtrl.text);
+    setState(() {
+      _result = result;
+      _bits = bits;
+    });
 
     // WCAG 4.1.3 — announce the outcome to assistive tech.
     final String announcement;
@@ -130,9 +143,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a valid MAC
         // has been looked up; copies the vendor verdict + MAC/OUI/registry as a
         // labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -175,6 +186,39 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     line('OUI', r.oui);
     if (r.matched && r.registry != null) line('Registry', r.registry!.label);
 
+    // The bit decode travels with the vendor verdict, because for a randomized
+    // or group address the bits ARE the answer and the vendor line is a
+    // deliberate blank. Suppressed when the decoder disagrees with the lookup
+    // (it cannot, for the same input, but a null-check beats an assumption).
+    final MacBitsResult? b = _bits;
+    if (b != null && b.isValid) {
+      buf
+        ..writeln('First octet: ${b.firstOctetHex} = ${b.firstOctetBinary}')
+        ..writeln(
+          'I/G bit: ${b.cast == MacCast.multicast ? 1 : 0} '
+          '(${b.isBroadcast
+              ? 'broadcast'
+              : b.cast == MacCast.multicast
+              ? 'multicast'
+              : 'unicast'})',
+        )
+        ..writeln(
+          'U/L bit: ${b.administration == MacAdministration.local ? 1 : 0} '
+          '(${b.administration == MacAdministration.local ? 'locally administered' : 'globally unique'})',
+        );
+      line('U/L bit inverted', b.ulFlippedForm);
+      line('Hyphen form', b.hyphenForm);
+      line('Cisco form', b.ciscoForm);
+      line('Bare hex', b.bareForm);
+      if (b.eui64 == null) {
+        buf.writeln('EUI-64: Unavailable. ${b.eui64UnavailableReason}');
+      } else {
+        line('EUI-64', b.eui64);
+        line('Interface ID (modified EUI-64)', b.modifiedEui64);
+        line('Link-local', b.linkLocal);
+      }
+    }
+
     return buf.toString().trimRight();
   }
 
@@ -216,6 +260,10 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _resultCard(context, _result!),
+                  ],
+                  if (_bits != null && _bits!.isValid) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _bitsCard(context, _bits!),
                   ],
                   ToolHelpFooter(toolId: 'mac-oui-lookup'),
                 ],
@@ -375,6 +423,117 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
     );
   }
 
+  /// The bit-level decode card: the four notation forms, the two control bits,
+  /// and the EUI-64 derivation. Rendered for every VALID MAC, including the
+  /// locally-administered and multicast cases the vendor card has to decline —
+  /// those are exactly the addresses whose bits carry the answer.
+  Widget _bitsCard(BuildContext context, MacBitsResult b) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    Widget heading(String s) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Text(
+        s,
+        style: text.labelMedium?.copyWith(
+          color: colors.textSecondary,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+
+    Widget note(String s) => Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Text(
+        s,
+        style: text.labelSmall?.copyWith(color: colors.textTertiary),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          heading('Address bits'),
+          _row(
+            context,
+            'First octet',
+            '${b.firstOctetHex} = ${b.firstOctetBinary}',
+            mono,
+            identifier: true,
+          ),
+          _row(
+            context,
+            'I/G bit',
+            b.isBroadcast
+                ? '1 (broadcast, every station)'
+                : b.cast == MacCast.multicast
+                ? '1 (multicast, a group of stations)'
+                : '0 (unicast, one interface)',
+            mono,
+          ),
+          _row(
+            context,
+            'U/L bit',
+            b.administration == MacAdministration.local
+                ? '1 (locally administered, assigned by software)'
+                : '0 (globally unique, from an IEEE block)',
+            mono,
+          ),
+          note(
+            b.administration == MacAdministration.local
+                ? 'A set U/L bit is what a phone does when it randomizes its '
+                      'Wi-Fi MAC, and what many APs do to the extra BSSIDs they '
+                      'derive from a radio base MAC. Clearing the bit gives '
+                      '${b.ulFlippedForm}. If this address was derived from real '
+                      'hardware, those first three octets are the radio OUI. If '
+                      'it is a randomized client address, they mean nothing.'
+                : 'The two low bits of the first octet carry the whole story. '
+                      'Setting the U/L bit turns this into '
+                      '${b.ulFlippedForm}, which is what a randomized client MAC '
+                      'or a derived BSSID looks like.',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          heading('Notation'),
+          _row(context, 'Colon', b.colonForm!, mono, identifier: true),
+          _row(context, 'Hyphen', b.hyphenForm!, mono, identifier: true),
+          _row(context, 'Cisco', b.ciscoForm!, mono, identifier: true),
+          _row(context, 'Bare hex', b.bareForm!, mono, identifier: true),
+          const SizedBox(height: AppSpacing.sm),
+          heading('EUI-64'),
+          if (b.eui64 == null)
+            note(b.eui64UnavailableReason!)
+          else ...[
+            _row(context, 'EUI-64', b.eui64!, mono, identifier: true),
+            _row(
+              context,
+              'Interface ID',
+              b.modifiedEui64!,
+              mono,
+              identifier: true,
+            ),
+            _row(context, 'Link-local', b.linkLocal!, mono, identifier: true),
+            note(
+              'IPv6 builds an interface ID from a MAC by inserting FF:FE in '
+              'the middle and then inverting the U/L bit. That inversion is '
+              'the step people skip: the EUI-64 row keeps the original bit, '
+              'the interface ID row has it flipped. SLAAC prepends fe80::/64 '
+              'to give the link-local address.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _row(
     BuildContext context,
     String label,
@@ -483,9 +642,7 @@ class _NoVendorCard extends StatelessWidget {
                 Expanded(
                   child: SelectableText(
                     mac,
-                    style: mono.robotoMono.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: mono.robotoMono.copyWith(color: colors.textPrimary),
                   ),
                 ),
               ],
@@ -540,9 +697,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

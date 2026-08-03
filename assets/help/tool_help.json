@@ -1261,12 +1261,14 @@
     "ipv6-subnet": {
       "name": "IP Subnetting (IPv6)",
       "category": "Networking Tools",
-      "purpose": "Enter an IPv6 address and prefix length and get back the expanded and compressed forms, the network address, the first and last address in the prefix, the number of hosts, and the address type.",
-      "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes.",
+      "purpose": "Enter an IPv6 address and prefix length and get back the expanded and compressed forms, the network address, the first and last address in the prefix, the number of hosts, and the address type. It also decodes transition addresses: whether the address you typed carries an IPv4 address inside it, and how a given IPv4 address is written the four ways IPv6 can carry one.",
+      "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes. The transition section answers a different question: NAT64, 6to4 and IPv4-mapped addresses genuinely turn up in captures and firewall logs, and \"what am I looking at\" is the moment they cause.",
       "howToUse": [
         "Enter an IPv6 address (default 2001:db8::1).",
-        "Enter the prefix length (default 32).",
-        "Read the expanded form, compressed form, network and prefix, first and last address, host count, and address type."
+        "Enter the prefix length (default 32). A link-local address pasted straight off ifconfig or ip -6 addr works as-is, zone index and all: fe80::1%en0 is accepted, and the zone comes back on its own row.",
+        "Read the expanded form, compressed form, network and prefix, first and last address, host count, and address type.",
+        "Read the transition section at the bottom. It decodes the same address you typed above and names the format, the embedded IPv4, and what that IPv4 actually is.",
+        "The IPv4 field in that section runs the other direction: type an IPv4 address and read it as IPv4-mapped, NAT64, a 6to4 prefix, and the deprecated IPv4-compatible form."
       ],
       "inputs": [
         {
@@ -1278,17 +1280,76 @@
           "name": "Prefix",
           "unit": "whole number",
           "range": "0 to 128 (anything outside that shows an error)"
+        },
+        {
+          "name": "Zone index (optional, on the address)",
+          "unit": "interface name or ifindex after a %",
+          "range": "fe80::1%en0, fe80::1%12, or the %25en0 spelling used inside a URL"
+        },
+        {
+          "name": "IPv4 address (transition section)",
+          "unit": "dotted-decimal",
+          "range": "four octets, each 0 to 255"
         }
       ],
-      "algorithm": "It expands the address to its full form, works out which bits the prefix fixes, and from that gives you the network address plus the first and last address in the block. It also shows the shortest valid compressed form by collapsing the longest run of zero groups. Host count is 2 raised to the number of host bits (128 minus the prefix); anything above 2 to the 63rd is reported as \"More than 2^63\" rather than a full number. The address type is identified by matching the address against the well-known IPv6 ranges (unspecified, loopback, link-local, unique-local, multicast, 6to4, IPv4-mapped, documentation, or global unicast).",
+      "algorithm": "It expands the address to its full form, works out which bits the prefix fixes, and from that gives you the network address plus the first and last address in the block. It also shows the shortest valid compressed form by collapsing the longest run of zero groups. Host count is 2 raised to the number of host bits (128 minus the prefix); anything above 2 to the 63rd is reported as \"More than 2^63\" rather than a full number. The address type is identified by matching the address against the well-known IPv6 ranges (unspecified, loopback, link-local, unique-local, multicast, 6to4, IPv4-mapped, documentation, or global unicast). Transition decoding matches the address against five known formats and reports the first that fits: IPv4-mapped (::ffff:0:0/96, RFC 4291), the NAT64 well-known prefix (64:ff9b::/96, RFC 6052), 6to4 (2002::/16, RFC 3056, where the 32 bits after 2002 are the site endpoint), Teredo (2001:0::/32, RFC 4380, where the client address and port are stored with every bit inverted and are shown flipped back), and the deprecated IPv4-compatible form (::/96, RFC 4291), which excludes :: and ::1 because those are not IPv4 at all. Writing an IPv4 address as IPv6 is the same work in reverse.",
       "example": "2001:db8::1 with a /64 gives expanded form 2001:0db8:0000:0000:0000:0000:0000:0001, compressed form 2001:db8::1, network 2001:db8::/64, 64 host bits (so the host count shows \"More than 2^63\"), and type Documentation (2001:db8::/32).",
       "fieldNotes": [
         "Host counts above 2 to the 63rd are shown as \"More than 2^63\" rather than a full number.",
         "The \"first address\" is the network address itself. IPv6 has no broadcast address and does not reserve the all-zeros host the way IPv4 does.",
         "Address-type detection covers the common well-known ranges, not every reserved block.",
-        "This tool lives under Networking Tools in the current menu."
+        "This tool lives under Networking Tools in the current menu.",
+        "An address literal with a dotted IPv4 tail, such as ::ffff:192.168.1.1, is accepted. That form is legal IPv6 and is how a mapped or NAT64 address is written in a log.",
+        "NAT64 is decoded against the well-known 64:ff9b::/96 prefix only. A network can run its own NAT64 prefix at /32, /40, /48, /56 or /64, and the IPv4 bits sit at a different offset in each. That prefix length is not carried in the address, so decoding one without being told which prefix is in use would be guessing. The screen says so rather than guessing.",
+        "Teredo stores the client address and port with every bit inverted. Read raw, they look like nonsense. The screen flips them back and says it did.",
+        "An address with no IPv4 inside is reported as having none. The screen never invents an embedded address to fill the row.",
+        "IPv4-compatible (::a.b.c.d) is deprecated. It is decoded so you can recognize one in an old configuration, and labeled so you do not build on it.",
+        "The 6to4 output is a PREFIX for a whole site (a /48), not a host address.",
+        "A zone index (the %en0 on fe80::1%en0) names the local interface the scope belongs to, so it sits outside the 128 bits and is set aside before the math runs. The Zone row shows it back, because a character you typed that vanishes with no acknowledgement looks like an input the tool failed to read. A half-typed zone such as fe80::1% is reported as an invalid address."
       ],
       "source": "The result is calculated on your device."
+    },
+    "subnet-planner": {
+      "name": "Subnet Planner (VLSM)",
+      "category": "Networking Tools",
+      "purpose": "Two jobs on IPv4 blocks that span more than one network. Split carves a parent block into right-sized subnets from a list of host counts. Summarize takes a list of networks and gives the single block that covers them all, plus the smallest set of blocks that covers them exactly.",
+      "whyHere": "\"Here is your /22 for the site, now give me a VLAN for staff, one for guests, one for the IoT gear and a point-to-point link\" is a design question the single-subnet calculator cannot answer, because it works on one network at a time. Summarize is the same math in reverse, for when you are writing a route, an ACL, or a firewall rule and want one line instead of nine.",
+      "howToUse": [
+        "Pick Split or Summarize at the top.",
+        "Split: type the block you are carving, for example 10.20.0.0/22, then list the subnets you need, one per line, as a name and a host count (\"Staff 500\") or just a count (\"500\").",
+        "Summarize: paste your networks, one per line. A prefix, a dotted mask, or a bare address all work.",
+        "Everything recalculates as you type. Use Copy to take the whole plan with you."
+      ],
+      "inputs": [
+        {
+          "name": "Block to carve up (Split)",
+          "unit": "CIDR or address and mask",
+          "range": "any IPv4 block, /0 to /32"
+        },
+        {
+          "name": "Subnets you need (Split)",
+          "unit": "one per line, name then host count",
+          "range": "1 host or more per line"
+        },
+        {
+          "name": "Networks to summarize",
+          "unit": "one per line",
+          "range": "any IPv4 networks, in any order"
+        }
+      ],
+      "algorithm": "Split sorts your subnets largest first, then places each one at the next free address. Because every block size is a power of two and the list runs from largest to smallest, each block lands on its own boundary with no wasted space in between. That ordering is what makes VLSM efficient, and it is why the output is not in the order you typed. Host counts use the classic reservation, so a subnet for 500 hosts gets a /23 (510 usable) and one for 2 hosts gets a /30. Whatever is left over is reported as the largest whole blocks that fit it. Summarize merges your networks into continuous ranges (so an overlap counts once and two touching networks become one), then reports the smallest single block containing all of them and, separately, the smallest set of blocks that covers them exactly.",
+      "example": "Split 10.20.0.0/22 for Staff 500, Guest 200, IoT 100 and a 2-host point-to-point link and you get 10.20.0.0/23, 10.20.2.0/24, 10.20.3.0/25 and 10.20.3.128/30, with 124 addresses still free in five blocks. Summarize 10.0.0.0/24 and 10.0.3.0/24 and the covering supernet is 10.0.0.0/22, which also claims 512 addresses that are not in your list: 10.0.1.0/24 and 10.0.2.0/24.",
+      "fieldNotes": [
+        "The Extra count in Summarize is the number that matters. A covering supernet almost always includes addresses you did not ask for, and advertising it pulls in traffic for networks you may not own. The screen names those gaps as blocks so you can see exactly what you would be claiming.",
+        "A subnet that does not fit is named and told why, and the ones that do fit are still placed. A plan where the last VLAN overflowed is more useful than no plan at all.",
+        "A request for 2 hosts gets a /30 here, because that is what works everywhere. If your gear supports RFC 3021 a /31 carries the same two hosts on a point-to-point link in half the space, and the screen says so.",
+        "A request for 1 host gets a /32. That is a single host route with no room for a gateway, so ask for 2 if you meant a device and its router.",
+        "A bad line is skipped by line number, not by rejecting the whole paste. Paste a messy list and fix the lines it names.",
+        "If a network is typed with host bits set, for example 10.0.0.37/24, it is read as 10.0.0.0/24 and the screen tells you it did that rather than quietly answering a different question.",
+        "Fully offline: this is integer arithmetic on the device, and it works on every platform including the web build.",
+        "CATALOG NOTE: manual category is Networking Tools; catalog id is subnet-planner with route /tools/subnet-planner."
+      ],
+      "source": "Calculated on the device; nothing is sent anywhere."
     },
     "non-wifi-channels": {
       "name": "Non-Wi-Fi Wireless Channels",
@@ -2417,18 +2478,23 @@
     "mac-oui-lookup": {
       "name": "MAC Vendor OUI Lookup",
       "category": "Networking Tools",
-      "purpose": "Turn a MAC (hardware) address into the manufacturer that registered it, fully offline.",
-      "whyHere": "Identify a device's maker from its MAC address with no network connection, and, just as usefully, it tells you honestly when a MAC has no real vendor at all (the case for privacy-randomized phone addresses).",
+      "purpose": "Turn a MAC (hardware) address into the manufacturer that registered it, fully offline, and decode the address itself: the two control bits in its first byte, the same address written four ways, and the IPv6 interface identifier derived from it.",
+      "whyHere": "Identify a device's maker from its MAC address with no network connection, and, just as usefully, learn honestly when a MAC has no real vendor at all. The two control bits are the reason: one says unicast or group, the other says whether the address came from an IEEE block or was made up by software. That second bit is what a phone sets when it randomizes its Wi-Fi MAC, and what many APs set on the extra BSSIDs a multi-SSID radio derives from its base address.",
       "howToUse": [
-        "Enter a MAC address in any common form (colons, hyphens, Cisco dotted aabb.ccdd.eeff, or no separators, any capitalization), then look it up."
+        "Enter a MAC address in any common form (colons, hyphens, Cisco dotted aabb.ccdd.eeff, spaces, or no separators, any capitalization), then look it up.",
+        "Read the vendor card first: a registered name, an honest \"no vendor\" with the reason, or \"not in registry\".",
+        "Read the Address bits card below it for the first byte in binary, what each control bit means, the four notation forms, and the EUI-64 derivation."
       ],
       "inputs": [],
-      "algorithm": "It matches your address against a built-in copy of the official IEEE vendor registry, loaded once and kept ready, with no network needed. The registry hands out address blocks in three sizes, and this checks the most specific first: the smallest block, then the medium, then the largest. That way a small sub-assigned block names the real company it was given to, not just the larger parent block.",
-      "example": null,
+      "algorithm": "Vendor: it matches your address against a built-in copy of the official IEEE vendor registry, loaded once and kept ready, with no network needed. The registry hands out address blocks in three sizes, and this checks the most specific first: the smallest block, then the medium, then the largest. That way a small sub-assigned block names the real company it was given to, not just the larger parent block. Bits: the I/G bit is the lowest bit of the first byte and the U/L bit is the next one up. EUI-64: RFC 4291 Appendix A builds an IPv6 interface identifier from a 48-bit MAC by inserting FF:FE in the middle and then inverting the U/L bit. The screen shows both stages, because the inversion is the step that gets skipped. Prefixing fe80::/64 to the result gives the link-local address a device forms by itself.",
+      "example": "B8:27:EB:01:23:45 is a Raspberry Pi Foundation address. Its first byte B8 is 10111000, so both control bits are 0: unicast, globally unique. Its EUI-64 is b8:27:eb:ff:fe:01:23:45, its interface identifier is ba27:ebff:fe01:2345 (note B8 became BA when the U/L bit flipped), and its link-local address is fe80::ba27:ebff:fe01:2345.",
       "fieldNotes": [
         "This works identically everywhere, since it is fully offline. No platform gives you more or less.",
         "The honest cases: a locally-administered or randomized address (the norm for modern iPhone and Android Wi-Fi) is flagged with no vendor guessed, because any registry match would be pure coincidence. A multicast or group address (not a single device) is also flagged with no vendor. A normal address that simply is not in the built-in copy shows its raw manufacturer prefix (for example B8:27:EB) rather than an invented name.",
         "A randomized phone MAC correctly comes back as \"no vendor\", which is the right answer, not a miss. The built-in registry lists the date it was captured; refresh it to pick up newer assignments.",
+        "The bits card renders for every valid address, including the ones the vendor card has to decline. For those, the bits are the answer.",
+        "When the U/L bit is set, the screen also shows the address with that bit cleared. If the address was derived from real hardware, such as a BSSID off a radio base MAC, those first three bytes are the radio's OUI and you can look them up. If it is a randomized client address, they mean nothing, so treat the cleared form as a lead and not a fact.",
+        "There is no EUI-64 for a group or broadcast address, and the screen says so rather than showing a derivation. An interface identifier identifies one interface, and a group address is not one.",
         "CATALOG NOTE: manual category is Networking Tools; catalog id is mac-oui-lookup with route /tools/mac-oui."
       ],
       "source": "It matches the address against a built-in copy of the official IEEE vendor registry, entirely offline."
@@ -2877,35 +2943,49 @@
     "ipv4-subnet": {
       "name": "IP Subnetting (IPv4)",
       "category": "Networking Tools",
-      "purpose": "Works out the full IPv4 subnet breakdown (network, broadcast, netmask, wildcard, first and last usable host, total addresses, and usable host count) from an address plus a CIDR prefix or a dotted mask.",
-      "whyHere": "The CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for it to confirm a network or broadcast boundary, a usable-host range, or a mask-to-prefix conversion.",
+      "purpose": "Two modes of IPv4 mask arithmetic. Subnet works out the full breakdown (network, broadcast, netmask, wildcard, first and last usable host, total addresses, usable host count, and the same address as an integer, in hex and in binary) from an address plus a CIDR prefix or a dotted mask. Range turns a start and end address into the smallest set of CIDR blocks that covers it exactly, and turns a block back into its range.",
+      "whyHere": "The CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for Subnet to confirm a network or broadcast boundary, a usable-host range, or a mask-to-prefix conversion. Reach for Range when a customer hands you \"10.4.16.0 through 10.4.31.255\" and you need blocks for an ACL, a firewall rule, or a DHCP scope.",
       "howToUse": [
-        "Enter an IPv4 address (for example, 10.20.0.0). You can add the prefix inline as 10.20.0.0/22; an inline prefix wins and the second field is ignored.",
-        "Otherwise enter the prefix or mask in the second field: a CIDR prefix (22 or /22) or a dotted mask (255.255.252.0).",
-        "The breakdown updates live on every valid keystroke. A host inside the subnet (for example, 10.20.0.37/22) reports the same network as the base address.",
-        "Bad input shows a short 'Check your input' note with a specific message rather than a wrong answer.",
-        "Use the Copy action in the top bar to copy the breakdown as a labeled block of text."
+        "Pick Subnet or Range with the control at the top.",
+        "Subnet: enter an IPv4 address (for example, 10.20.0.0). You can add the prefix inline as 10.20.0.0/22; an inline prefix wins and the second field is ignored.",
+        "Subnet: otherwise enter the prefix or mask in the second field: a CIDR prefix (22 or /22) or a dotted mask (255.255.252.0).",
+        "Range: enter the first and last address. Or type a whole block into the first field (10.4.16.0/20) and read its range back; the second field is then ignored and says so.",
+        "Everything updates live on every valid keystroke. Bad input shows a short 'Check your input' note with a specific message rather than a wrong answer.",
+        "Use the Copy action in the top bar to copy the current mode's result as a labeled block of text."
       ],
       "inputs": [
         {
-          "name": "IPv4 address",
+          "name": "IPv4 address (Subnet)",
           "unit": "dotted-decimal, optionally with an inline /prefix",
           "range": "four numbers each 0-255; inline prefix 0-32"
         },
         {
-          "name": "Prefix or mask",
+          "name": "Prefix or mask (Subnet)",
           "unit": "CIDR prefix or dotted mask",
           "range": "prefix 0-32, or a valid dotted mask (for example, 255.255.252.0); ignored when the address already carries an inline prefix"
+        },
+        {
+          "name": "First address (Range)",
+          "unit": "dotted-decimal, or a whole CIDR block",
+          "range": "any IPv4 address; a /prefix here derives the range and ignores the second field"
+        },
+        {
+          "name": "Last address (Range)",
+          "unit": "dotted-decimal",
+          "range": "any IPv4 address at or after the first"
         }
       ],
-      "algorithm": "It does the standard binary subnet math. The mask keeps the leftmost bits set by your prefix. The network address is the address with the host bits cleared; the broadcast address is the network with those host bits all set; the wildcard is the inverse of the mask. Total addresses is 2 raised to the number of host bits. For prefixes up to /30, the usable hosts are the total minus 2 (you drop the network and broadcast), the first usable host is the network plus 1, and the last is the broadcast minus 1. A /31 is a special point-to-point case: there's no network or broadcast reservation, so both addresses are usable hosts. A /32 is a single-host route: one address, no range, no broadcast. A dotted mask is only accepted if it's a valid run of 1 bits with no gaps, and an address must be exactly four numbers, each 0 to 255.",
-      "example": "10.20.0.0/22 gives netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, 1024 total addresses, and 1022 usable. (This is the example the screen opens with.)",
+      "algorithm": "It does the standard binary subnet math. The mask keeps the leftmost bits set by your prefix. The network address is the address with the host bits cleared; the broadcast address is the network with those host bits all set; the wildcard is the inverse of the mask. Total addresses is 2 raised to the number of host bits. For prefixes up to /30, the usable hosts are the total minus 2 (you drop the network and broadcast), the first usable host is the network plus 1, and the last is the broadcast minus 1. A /31 is a special point-to-point case: there's no network or broadcast reservation, so both addresses are usable hosts. A /32 is a single-host route: one address, no range, no broadcast. A dotted mask is only accepted if it's a valid run of 1 bits with no gaps, and an address must be exactly four numbers, each 0 to 255. The number forms are the same 32 bits written differently: the integer is the plain unsigned value, the hex is those four bytes, and the binary lines show all 32 bits with a slash sitting exactly where the prefix ends. The slash replaces the octet dot when the two land in the same place, so there is only ever one separator at any position. The address shown in binary is the one you typed, not the network base, because seeing your host address against the boundary is what shows which bits are host bits. Range works greedily: starting at the first address it takes the largest block that begins there, is aligned to its own size, and does not run past the last address, then repeats from the next free address. That produces the fewest blocks possible, and it is why an unaligned range needs several.",
+      "example": "10.20.0.0/22 gives netmask 255.255.252.0, wildcard 0.0.3.255, network 10.20.0.0, broadcast 10.20.3.255, first host 10.20.0.1, last host 10.20.3.254, 1024 total addresses, and 1022 usable. (This is the example the screen opens with.). In number forms, 10.20.0.0 is 169,082,880, hex 0x0A140000, and binary 00001010.00010100.000000/00.00000000 against a mask of 11111111.11111111.111111/00.00000000. In Range mode, 10.4.16.0 through 10.4.31.255 is one block, 10.4.16.0/20, while 192.168.1.1 through 192.168.1.6 takes four: 192.168.1.1/32, 192.168.1.2/31, 192.168.1.4/31 and 192.168.1.6/32.",
       "fieldNotes": [
         "A /31 (RFC 3021) is a point-to-point link: there's no network or broadcast to set aside, so both addresses are usable (usable = 2). The screen calls this out.",
         "A /32 is a single-host route: one address, no range, no broadcast (usable = 1).",
         "A host address inside the block reports the subnet's network, not the host itself. Every value comes from the masked base.",
         "A dotted mask has to be a valid contiguous run of 1 bits; something like 255.0.255.0 is rejected as invalid.",
-        "No network needed, just math, so it runs on every platform including the web."
+        "No network needed, just math, so it runs on every platform including the web.",
+        "A range only collapses to a single block when it starts on a CIDR boundary and is a whole power of two long. Most real ranges do not, so several blocks is the correct answer and not a failure. The screen never rounds up to one block, because that would claim addresses you did not ask for.",
+        "The binary lines are where masking stops being a rule you memorized. Put the address and the mask side by side and the boundary is visible, including mid-octet prefixes like /22 that dotted decimal hides completely.",
+        "The integer form is what shows up in database columns, ACL generators, and some log formats. Nothing else in the app produced it."
       ],
       "source": "Calculated on the device with straight subnet math; nothing leaves the app."
     },
@@ -2931,6 +3011,45 @@
         "Bad or incomplete entries are simply left out rather than shown as blanks."
       ],
       "source": "A curated list carried inside the app; searched entirely offline."
+    },
+    "transfer-time": {
+      "name": "Transfer Time",
+      "category": "Calculators & Tools",
+      "purpose": "Divides a file size by a link speed. Pick which of the three you want: how long a transfer takes, how fast a link has to be to finish in a given window, or how much data moves in that window.",
+      "whyHere": "\"How long will this AP firmware push take over this link\" is a field question, and so is \"we have a ten-minute maintenance window, what speed do we need\". The arithmetic is one division. The trap is that link speeds are quoted in bits and file sizes in bytes, and the factor of 8 between them is where the wrong answers come from.",
+      "howToUse": [
+        "Pick Time, Speed or Size at the top: that is the one you want out, and the other two are the ones you type.",
+        "Type each value and pick its unit from the list. Size units are byte units; speed units are bit units unless the label says B/s.",
+        "Read the answer, and read the two lines underneath it that restate what you typed in bits. That is the conversion, shown rather than hidden."
+      ],
+      "inputs": [
+        {
+          "name": "Size",
+          "unit": "B, KB, MB, GB, TB (decimal) or KiB, MiB, GiB, TiB (binary)",
+          "range": "any positive number"
+        },
+        {
+          "name": "Speed",
+          "unit": "bps, kbps, Mbps, Gbps, Tbps, or KB/s and MB/s",
+          "range": "above zero when solving for time"
+        },
+        {
+          "name": "Time",
+          "unit": "ms, s, min, hr, day",
+          "range": "above zero when solving for speed"
+        }
+      ],
+      "algorithm": "One division, done entirely in bits. Your size is converted to bits and your speed to bits per second using the same unit tables the Unit Converter uses, so there is one definition of a MB in the app and not two. Time is bits divided by bits per second. Speed is bits divided by seconds. Size is bits per second multiplied by seconds. A divisor of zero returns no answer at all rather than an infinity.",
+      "example": "1 GB at 100 Mbps: 1,000,000,000 bytes is 8,000,000,000 bits, divided by 100,000,000 bits per second is 80 seconds, shown as 1 min 20 s. The same file quoted as 1 GiB is 1,073,741,824 bytes, which takes 1 min 25.9 s. That six-second gap on a single gigabyte is why the decimal and binary units are kept separate.",
+      "fieldNotes": [
+        "Link speeds are in bits per second and file sizes are in bytes. 1 byte = 8 bits, so a 100 Mbps link moves 12.5 MB per second, not 100. That line is printed on the screen, not buried here.",
+        "A KB is 1000 bytes and a KiB is 1024. Your operating system probably says GB and means GiB, which is why a \"1 GB\" download can take about 7 percent longer than you expected.",
+        "There is no efficiency slider, on purpose. A default of 85 percent would be a made-up number dressed up as help. The answer is the time at exactly the rate you entered. If you want a realistic number, enter a throughput you actually measured rather than the number on the label.",
+        "Real transfers run slower than this: protocol overhead, disk speed, and everyone else on the link all take a share.",
+        "Fully offline: one division on the device.",
+        "CATALOG NOTE: manual category is Calculators & Tools; catalog id is transfer-time with route /tools/transfer-time."
+      ],
+      "source": "Calculated on the device; nothing is sent anywhere."
     },
     "unit-converter": {
       "name": "Unit Converter",

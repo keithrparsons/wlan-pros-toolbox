@@ -45,6 +45,7 @@ import '../screens/tools/calculators/capacity_planner_screen.dart';
 import '../screens/tools/calculators/ptp_link_screen.dart';
 import '../screens/tools/calculators/ipv6_subnet_screen.dart';
 import '../screens/tools/calculators/throughput_calc_screen.dart';
+import '../screens/tools/calculators/transfer_time_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
 import '../screens/tools/calculators/noise_floor_screen.dart';
 import '../screens/tools/calculators/poe_budget_screen.dart';
@@ -160,6 +161,7 @@ import '../screens/tools/network/ping_sweep_screen.dart';
 import '../screens/tools/network/port_reference_screen.dart';
 import '../screens/tools/network/port_scan_screen.dart';
 import '../screens/tools/network/subnet_calc_screen.dart';
+import '../screens/tools/network/subnet_planner_screen.dart';
 import '../screens/tools/network/ssl_inspect_screen.dart';
 import '../screens/tools/network/traceroute_screen.dart';
 import '../screens/tools/network/wake_on_lan_screen.dart';
@@ -429,6 +431,10 @@ class AppRouter {
   static const String ntpTime = '/tools/ntp-time';
   static const String ipv4Subnet = '/tools/ipv4-subnet';
 
+  /// Subnet Planner — VLSM carve + supernet summarization, two modes on one
+  /// screen. Pure math, no I/O, so it runs on every platform including web.
+  static const String subnetPlanner = '/tools/subnet-planner';
+
   /// Network Discovery — LAN host + service scan (TICKET-HSD-02). The id
   /// `network-discovery` is permanent (backs this route, the catalog entry, the
   /// icon/graphic assets, and tests; never renamed).
@@ -590,6 +596,9 @@ class AppRouter {
   //   qr-generator:   local QR render + share (all platforms; share via share_plus).
   //   dtmf-generator: local audio synthesis + playback via just_audio.
   static const String unitConverter = '/tools/unit-converter';
+
+  /// Transfer Time — size / speed / time, solve for any one. Pure math.
+  static const String transferTime = '/tools/transfer-time';
   static const String qrGenerator = '/tools/qr-generator';
   static const String dtmfGenerator = '/tools/dtmf-generator';
   static const String morseCode = '/tools/morse-code';
@@ -777,6 +786,7 @@ class AppRouter {
     packetSender: (_) => const PacketSenderScreen(),
     ntpTime: (_) => const NtpScreen(),
     ipv4Subnet: (_) => const SubnetCalcScreen(),
+    subnetPlanner: (_) => const SubnetPlannerScreen(),
     networkDiscovery: (_) => const NetworkDiscoveryScreen(),
     nearbyApScan: (_) => const ApScanScreen(),
     portReference: (_) => const PortReferenceScreen(),
@@ -879,6 +889,7 @@ class AppRouter {
     ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),
+    transferTime: (_) => const TransferTimeScreen(),
     qrGenerator: (_) => const QrGeneratorScreen(),
     dtmfGenerator: (_) => const DtmfGeneratorScreen(),
     morseCode: (_) => const MorseCodeScreen(),
