@@ -121,17 +121,14 @@ class ThroughputComparison {
     final double? ceilingMbps = ceiling.valueOrNull;
 
     if (ceilingMbps == null || ceilingMbps <= 0) {
-      final String missing = ceiling is UnknownCapability<double>
-          ? (ceiling.detail ?? ceiling.reason.label)
-          : 'the device ceiling';
       return ThroughputComparison._(
         measuredMbps: measuredMbps,
         ceiling: ceiling,
         position: null,
         percentOfCeiling: null,
         headline: 'You measured ${_mbps(measuredMbps)}.',
-        detail: 'There is nothing to compare it against yet, because this '
-            'device does not tell us $missing. The measurement stands on its '
+        detail: 'There is nothing to compare it against yet. '
+            '${_whyThereIsNoCeiling(ceiling)} The measurement stands on its '
             'own.',
         normalReasons: const <String>[],
         caveat: _kCaveat,
@@ -139,17 +136,24 @@ class ThroughputComparison {
     }
 
     final double fraction = measuredMbps / ceilingMbps;
-    final double favorableFraction =
-        (capabilities.favorableThroughputEstimateMbps.valueOrNull ??
-                ceilingMbps) /
-            ceilingMbps;
+    // M-3. The favorable estimate is a SEPARATE capability and can be unknown
+    // while the ceiling is known. It previously fell back to the ceiling
+    // itself, which silently made the favorable fraction 1.0 and let the copy
+    // name "the favorable estimate this app can produce" when no such estimate
+    // existed. A null here removes that position from the ladder instead.
+    final double? favorable =
+        capabilities.favorableThroughputEstimateMbps.valueOrNull;
+    final double? favorableFraction =
+        favorable == null ? null : favorable / ceilingMbps;
 
     final ThroughputPosition position;
     if (fraction < kPublishedRealThroughputLow) {
       position = ThroughputPosition.belowThePublishedRange;
     } else if (fraction <= kPublishedRealThroughputHigh) {
       position = ThroughputPosition.withinThePublishedRange;
-    } else if (fraction < favorableFraction) {
+    } else if (favorableFraction == null || fraction < favorableFraction) {
+      // With no favorable estimate, "above the published range" is still fully
+      // supported by the data, and it is the strongest claim that is.
       position = ThroughputPosition.aboveThePublishedRange;
     } else {
       position = ThroughputPosition.atOrAboveTheOptimisticEstimate;
@@ -215,7 +219,7 @@ class ThroughputComparison {
       'The theoretical figure assumes the widest channel, every spatial '
       'stream, the highest modulation and a quiet radio environment, all at '
       'once. No device sustains it. Published measurements put real throughput '
-      'at roughly 40 to 60 percent of the theoretical rate, and our own '
+      'at 40 to 60 percent of the theoretical rate, and our own '
       'estimate of achievable throughput sits above even that, so falling '
       'short of either is the normal case and not a finding about your '
       'network.';
@@ -242,6 +246,39 @@ class ThroughputComparison {
         return 'That is $pct of the theoretical figure, at or above even the '
             'favorable estimate this app can produce for achievable '
             'throughput.';
+    }
+  }
+
+  /// One plain sentence saying why there is no ceiling to compare against.
+  ///
+  /// L-4, and a defect found alongside it. The old line interpolated the
+  /// unknown's `detail` straight into prose: `…does not tell us $missing.`
+  /// That read as a dropped word for the derived-input case ("does not tell us
+  /// spatial streams"), and for the NOT-COMPUTABLE case `detail` is the
+  /// derivation pin, so it would have printed a sentence beginning "this device
+  /// does not tell us WifiPhyRateService.phyRateMbps over the highest known
+  /// standard…" to a user. Each reason now gets its own finished sentence.
+  static String _whyThereIsNoCeiling(Capability<double> ceiling) {
+    if (ceiling is! UnknownCapability<double>) {
+      return 'This device does not report enough to work one out.';
+    }
+    final String? detail = ceiling.detail?.trim();
+    switch (ceiling.reason) {
+      case CapabilityUnknownReason.derivedInputUnknown:
+        if (detail == null || detail.isEmpty) {
+          return 'This device does not report everything the figure needs.';
+        }
+        return 'Working one out needs the $detail of this device, and it does '
+            'not report that.';
+      case CapabilityUnknownReason.notComputable:
+        return 'The values this device reports have no defined combined rate '
+            'in the standard, so there is no honest figure to compute.';
+      case CapabilityUnknownReason.platformDoesNotExpose:
+      case CapabilityUnknownReason.deviceNotInTable:
+      case CapabilityUnknownReason.permissionNotGranted:
+      case CapabilityUnknownReason.queryFailed:
+      case CapabilityUnknownReason.noReaderForPlatform:
+        return '${ceiling.reason.label}.';
     }
   }
 

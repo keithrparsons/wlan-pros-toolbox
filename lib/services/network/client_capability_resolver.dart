@@ -126,9 +126,17 @@ WiFiBand? wifiBandFromLabel(String? label) {
 /// rather than unfinished work:
 ///
 ///  * BANDS and MAXIMUM CHANNEL WIDTH come from
-///    `CWInterface.supportedWLANChannels()`, which enumerates the channels the
-///    INTERFACE supports, each carrying its band and width. That is a genuine
-///    capability read, not a reading of the current link.
+///    `CWInterface.supportedWLANChannels()`, which Apple documents as "An array
+///    of channels supported by the interface FOR THE ACTIVE COUNTRY CODE".
+///    That last clause is the whole story. It is a REGULATORY read, not a
+///    hardware read: a 6 GHz-capable MacBook sitting in a region with no 6 GHz
+///    allocation enumerates no 6 GHz channels, and a region that permits only
+///    narrow channels caps the widest width the same way. Publishing either as
+///    exact would be a false negative about the user's own radio, manufactured
+///    out of a question we did not ask. Both are therefore
+///    [CapabilityBound.atLeast], permanently, and both say so on screen.
+///    This is the same class of defect the Android reader guards below: a
+///    platform answer narrowed by something the value cannot express.
 ///  * WI-FI GENERATIONS have no capability API. `activePHYMode()` reports the
 ///    mode currently negotiated, which is a FLOOR on what the radio can do, so
 ///    it is reported as [CapabilityBound.atLeast] and never as the exact set.
@@ -227,7 +235,12 @@ class MacOsCapabilityReader implements CapabilityReader {
             bands,
             tier: CapabilityTier.livePlatformQuery,
             pin: 'macOS CoreWLAN CWInterface.supportedWLANChannels(), '
-                'channelBand of every supported channel',
+                'channelBand of every supported channel. Apple scopes that '
+                'list to the active country code, so it is a floor on the '
+                'radio, not an exact reading of it',
+            // A band absent from a region's channel list has not been ruled
+            // out. See the H-1 note in the class comment.
+            bound: CapabilityBound.atLeast,
           );
 
     // Maximum channel width, with the vocabulary-ceiling caveat.
@@ -244,10 +257,14 @@ class MacOsCapabilityReader implements CapabilityReader {
             width,
             tier: CapabilityTier.livePlatformQuery,
             pin: 'macOS CoreWLAN CWInterface.supportedWLANChannels(), widest '
-                'channelWidth of any supported channel',
-            bound: (ceiling != null && width >= ceiling)
-                ? CapabilityBound.atLeast
-                : CapabilityBound.exact,
+                'channelWidth of any supported channel. Apple scopes that list '
+                'to the active country code, so it is a floor on the radio, '
+                'not an exact reading of it',
+            // ALWAYS a floor, for two independent reasons that push the same
+            // way: the region may permit nothing wider (H-1), and
+            // CWChannelWidth may not be able to SAY anything wider even if it
+            // did. Neither is a property of the radio.
+            bound: CapabilityBound.atLeast,
           );
 
     // Wi-Fi generations, from the negotiated mode, as a floor.
@@ -284,6 +301,13 @@ class MacOsCapabilityReader implements CapabilityReader {
         detail: 'macOS reports the current transmit rate, not a maximum',
       ),
       notes: <String>[
+        // H-1. Stated whenever either value derived from the channel list is
+        // shown, because a floor with no sentence next to it renders as a bare
+        // value and reads as exact.
+        if (bands.isNotEmpty || width != null)
+          'macOS lists the channels permitted by the region this Mac is set '
+              'to, so a band or a width missing here may still be supported by '
+              'the radio.',
         if (active != null)
           'macOS reports the Wi-Fi generation in use, not the generations the '
               'radio supports, so the list here is a floor.',
@@ -480,11 +504,26 @@ class AndroidCapabilityReader implements CapabilityReader {
 /// A model that is not in the table resolves to
 /// [CapabilityUnknownReason.deviceNotInTable] on every field. It never falls
 /// back to a similar model, and it never falls back to a typical value.
+///
+/// ─────────────────────────────────────────────────────────────────────────────
+/// THE LOOKUP KEY IS A MARKETING NAME, AND IT IS NOT THE ONE iOS HANDS YOU
+///
+/// Apple's table is keyed by marketing name ("iPhone 16 Pro"), so that is what
+/// [deviceModelName] must be. iOS supplies `utsname.machine` ("iPhone17,1"),
+/// `model` ("iPhone") and the user's chosen device name; it exposes NO API for
+/// the marketing name. Passing a machine identifier here therefore misses every
+/// row in the shipped table, which is an honest miss rather than a wrong answer,
+/// but it is still a miss.
+///
+/// Closing that gap needs a SOURCED identifier-to-name mapping shipped as its
+/// own pinned asset. That is a spec-level decision, not something this reader
+/// should paper over: an unsourced mapping layer between two sourced facts is
+/// precisely the seam a wrong row would enter through.
 class PublishedTableCapabilityReader implements CapabilityReader {
-  /// Creates the reader for [deviceIdentifier] (e.g. `iPhone16,1`), reading
+  /// Creates the reader for [deviceModelName] (e.g. `iPhone 16 Pro`), reading
   /// [loadJson] for the table.
   PublishedTableCapabilityReader({
-    required this.deviceIdentifier,
+    required this.deviceModelName,
     required Future<String> Function() loadJson,
   })  :
         // The field is private, so an initializing formal would name the
@@ -493,9 +532,12 @@ class PublishedTableCapabilityReader implements CapabilityReader {
         // ignore: prefer_initializing_formals
         _loadJson = loadJson;
 
-  /// The machine identifier to look up, e.g. `iPhone16,1`. Null when the device
-  /// could not be identified at all.
-  final String? deviceIdentifier;
+  /// The MARKETING model name to look up, e.g. `iPhone 16 Pro` — not the
+  /// machine identifier. Null when the device could not be identified at all.
+  ///
+  /// See the class comment: a machine identifier passed here is a guaranteed
+  /// miss, because no row in the shipped table is keyed by one.
+  final String? deviceModelName;
 
   final Future<String> Function() _loadJson;
 
@@ -507,10 +549,10 @@ class PublishedTableCapabilityReader implements CapabilityReader {
 
   @override
   Future<ClientCapabilities> read() async {
-    if (deviceIdentifier == null || deviceIdentifier!.trim().isEmpty) {
+    if (deviceModelName == null || deviceModelName!.trim().isEmpty) {
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.deviceNotInTable,
-        detail: 'This device did not report a model identifier',
+        detail: 'This device did not report a model name',
       );
     }
     final String raw;
@@ -520,10 +562,10 @@ class PublishedTableCapabilityReader implements CapabilityReader {
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.queryFailed,
         detail: 'The capability table could not be loaded',
-        deviceIdentifier: deviceIdentifier,
+        deviceName: deviceModelName,
       );
     }
-    return parse(raw, deviceIdentifier!);
+    return parse(raw, deviceModelName!);
   }
 
   /// Pure lookup. Testable with a literal JSON string.
@@ -531,7 +573,7 @@ class PublishedTableCapabilityReader implements CapabilityReader {
   /// Every row must carry a `source` string; a row without one is DROPPED
   /// rather than trusted, because an unsourced capability row is the exact
   /// thing the table exists to avoid.
-  static ClientCapabilities parse(String rawJson, String deviceIdentifier) {
+  static ClientCapabilities parse(String rawJson, String deviceModelName) {
     final Map<String, Object?> root;
     try {
       final Object? decoded = jsonDecode(rawJson);
@@ -539,7 +581,7 @@ class PublishedTableCapabilityReader implements CapabilityReader {
         return ClientCapabilities.allUnknown(
           CapabilityUnknownReason.queryFailed,
           detail: 'The capability table is not a JSON object',
-          deviceIdentifier: deviceIdentifier,
+          deviceName: deviceModelName,
         );
       }
       root = decoded.cast<String, Object?>();
@@ -547,7 +589,7 @@ class PublishedTableCapabilityReader implements CapabilityReader {
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.queryFailed,
         detail: 'The capability table is not valid JSON',
-        deviceIdentifier: deviceIdentifier,
+        deviceName: deviceModelName,
       );
     }
 
@@ -563,16 +605,18 @@ class PublishedTableCapabilityReader implements CapabilityReader {
     final Object? rows = root['devices'];
     Map<String, Object?>? row;
     bool matchedThroughOurExpansion = false;
-    final String target = _normalizeModelName(deviceIdentifier);
+    String? matchedName;
+    final String target = _normalizeModelName(deviceModelName);
     if (rows is List) {
       // Verbatim Apple names first, so an exact source match always wins over
       // an expansion of ours.
       for (final Object? entry in rows) {
         if (entry is! Map) continue;
         final Map<String, Object?> candidate = entry.cast<String, Object?>();
-        if (_namesContain(candidate['names'], target) ||
-            _normalizeModelName(candidate['identifier']?.toString()) == target) {
+        final String? hit = _matchingName(candidate['names'], target);
+        if (hit != null) {
           row = candidate;
+          matchedName = hit;
           break;
         }
       }
@@ -580,8 +624,11 @@ class PublishedTableCapabilityReader implements CapabilityReader {
         for (final Object? entry in rows) {
           if (entry is! Map) continue;
           final Map<String, Object?> candidate = entry.cast<String, Object?>();
-          if (_namesContain(candidate['familyNames'], target)) {
+          final String? hit =
+              _matchingName(candidate['familyNames'], target);
+          if (hit != null) {
             row = candidate;
+            matchedName = hit;
             matchedThroughOurExpansion = true;
             break;
           }
@@ -591,23 +638,27 @@ class PublishedTableCapabilityReader implements CapabilityReader {
     if (row == null) {
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.deviceNotInTable,
-        detail: '$deviceIdentifier is not in the table',
-        deviceIdentifier: deviceIdentifier,
+        detail: '$deviceModelName is not in the table',
+        deviceName: deviceModelName,
         tableVersion: tableVersion,
       );
     }
 
     final String source = row['source']?.toString().trim() ?? '';
-    final String? name = row['name']?.toString();
+    // The VERBATIM entry that matched, not `row['name']`. The shipped asset
+    // carries no `name` key on any row, so reading one returned null for every
+    // real device while the test fixture supplied it and hid that. Same defect
+    // class as the `identifier` key in H-3, found by making the fixture
+    // resemble the asset.
+    final String? name = matchedName;
     if (source.isEmpty) {
       // A row with no source does not ship. Dropping it is the honest outcome:
       // the device is then simply not in the table.
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.deviceNotInTable,
-        detail: '$deviceIdentifier has a row with no source, so it is not '
+        detail: '$deviceModelName has a row with no source, so it is not '
             'trusted',
-        deviceIdentifier: deviceIdentifier,
-        deviceName: name,
+        deviceName: name ?? deviceModelName,
         tableVersion: tableVersion,
       );
     }
@@ -616,9 +667,9 @@ class PublishedTableCapabilityReader implements CapabilityReader {
     // models" is a weaker link than a verbatim Apple name, and the reader of
     // the screen is entitled to know which one they are looking at.
     final String pin = matchedThroughOurExpansion
-        ? '$source (row matched for $deviceIdentifier through our expansion of '
+        ? '$source (row matched for $deviceModelName through our expansion of '
             "Apple's model-family wording, not a verbatim Apple name)"
-        : '$source (row: $deviceIdentifier)';
+        : '$source (row: $deviceModelName)';
 
     Capability<int> intField(String key) {
       final int? v = _asInt(row![key]);
@@ -681,7 +732,6 @@ class PublishedTableCapabilityReader implements CapabilityReader {
         CapabilityUnknownReason.platformDoesNotExpose,
         detail: 'iOS reports no maximum rate to apps',
       ),
-      deviceIdentifier: deviceIdentifier,
       deviceName: name,
       tableVersion: tableVersion,
       notes: <String>[
@@ -726,7 +776,10 @@ class ClientCapabilityService {
   final bool _isWeb;
 
   /// The readers that apply, strongest tier first.
-  List<CapabilityReader> readersFor({String? deviceIdentifier}) {
+  ///
+  /// [deviceModelName] is the MARKETING name, because that is what the published
+  /// table is keyed by. Passing a machine identifier here misses every row.
+  List<CapabilityReader> readersFor({String? deviceModelName}) {
     if (_readersOverride != null) return _readersOverride;
     if (_isWeb) return const <CapabilityReader>[];
     switch (_platform) {
@@ -737,7 +790,7 @@ class ClientCapabilityService {
       case TargetPlatform.iOS:
         return <CapabilityReader>[
           PublishedTableCapabilityReader(
-            deviceIdentifier: deviceIdentifier,
+            deviceModelName: deviceModelName,
             loadJson: loadAppleCapabilityTable,
           ),
         ];
@@ -760,12 +813,18 @@ class ClientCapabilityService {
   ///
   /// [deviceIdentifier] and [deviceName] come from the device-info layer; they
   /// are passed in rather than read here so this service stays free of plugins.
+  ///
+  /// The published table is looked up by [deviceName], the MARKETING name, not
+  /// by [deviceIdentifier]. Handing the machine identifier to the table reader
+  /// was H-3: it misses every row, on every device. iOS does not supply a
+  /// marketing name, so tier 2 stays inert on iOS until a sourced
+  /// identifier-to-name mapping ships.
   Future<ClientCapabilities> resolve({
     String? deviceIdentifier,
     String? deviceName,
   }) async {
     final List<CapabilityReader> readers =
-        readersFor(deviceIdentifier: deviceIdentifier);
+        readersFor(deviceModelName: deviceName);
     if (readers.isEmpty) {
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.noReaderForPlatform,
@@ -806,12 +865,17 @@ class ClientCapabilityService {
 String _normalizeModelName(String? name) =>
     (name ?? '').trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
-bool _namesContain(Object? list, String normalizedTarget) {
-  if (list is! List || normalizedTarget.isEmpty) return false;
+/// The VERBATIM entry in [list] matching [normalizedTarget], or null.
+///
+/// Returns the entry rather than a bool so the caller can report the name the
+/// table actually carries, instead of echoing back whatever the caller typed.
+String? _matchingName(Object? list, String normalizedTarget) {
+  if (list is! List || normalizedTarget.isEmpty) return null;
   for (final Object? entry in list) {
-    if (_normalizeModelName(entry?.toString()) == normalizedTarget) return true;
+    final String? text = entry?.toString();
+    if (_normalizeModelName(text) == normalizedTarget) return text;
   }
-  return false;
+  return null;
 }
 
 int? _asInt(Object? v) {

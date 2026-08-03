@@ -104,7 +104,11 @@ void main() {
       }
     });
 
-    test('every row carries all five capability fields', () {
+    // L-1. This test iterates SIX fields and used to be named "five", and
+    // `client_capabilities.dart` called `allFields` "the five READ fields"
+    // while returning six. A wrong count in a name is how a seventh field gets
+    // silently dropped later.
+    test('every row carries all six capability fields', () {
       for (final Object? entry in devices) {
         final Map<String, Object?> row = entry! as Map<String, Object?>;
         for (final String field in <String>[
@@ -118,6 +122,83 @@ void main() {
           expect(row[field], isNotNull, reason: '${row['names']} lacks $field');
         }
       }
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // H-3. The shipped asset is the only thing production ever reads. These tests
+  // exist because the resolver's own fixture once carried an `identifier` key
+  // and a `name` key that the asset carries on ZERO rows, so the suite proved
+  // two lookup paths production can never take, and the path production DOES
+  // take went untested. A fixture that does not resemble the asset hides the
+  // defect it was written to catch.
+  // ───────────────────────────────────────────────────────────────────────────
+  group('H-3: the lookup key is what the platform can actually supply', () {
+    test('no row is keyed by a machine identifier, so nothing may be looked up '
+        'by one', () {
+      for (final Object? entry in devices) {
+        final Map<String, Object?> row = entry! as Map<String, Object?>;
+        expect(
+          row.containsKey('identifier'),
+          isFalse,
+          reason: 'a row gained an `identifier` key. The resolver fixture and '
+              'the machine-identifier miss test below are now both stale, and '
+              'the resolver lookup needs re-pointing at it deliberately.',
+        );
+        expect(
+          row.containsKey('name'),
+          isFalse,
+          reason: 'a row gained a `name` key. `parse` reports the VERBATIM '
+              'matched entry as the device name; a `name` key would be a '
+              'second, competing answer.',
+        );
+      }
+    });
+
+    test('a machine identifier misses every row in the SHIPPED table, and '
+        'misses honestly', () {
+      // This is what iOS can actually supply: utsname.machine. Apple exposes no
+      // API for the marketing name the table is keyed by.
+      for (final String machineId in <String>[
+        'iPhone17,1',
+        'iPhone16,1',
+        'iPhone14,2',
+      ]) {
+        final ClientCapabilities caps =
+            PublishedTableCapabilityReader.parse(raw, machineId);
+        expect(
+          caps.isEntirelyUnknown,
+          isTrue,
+          reason: '$machineId resolved against a table keyed by marketing '
+              'name, which means something is matching that should not',
+        );
+        for (final Capability<Object> c in caps.allFields.values) {
+          expect(
+            (c as UnknownCapability<Object>).reason,
+            CapabilityUnknownReason.deviceNotInTable,
+            reason: 'the miss must name itself, not read as a blank',
+          );
+        }
+      }
+    });
+
+    test('the marketing name the table IS keyed by resolves, so the miss above '
+        'is about the key and not about the table', () {
+      final ClientCapabilities caps =
+          PublishedTableCapabilityReader.parse(raw, 'iPhone 16 Pro');
+      expect(caps.spatialStreams.valueOrNull, 2);
+      expect(caps.maxChannelWidthMhz.valueOrNull, 160);
+      expect(caps.theoreticalMaxPhyRateMbps.isKnown, isTrue);
+    });
+
+    test('the device name reported back is the VERBATIM table entry', () {
+      final ClientCapabilities caps =
+          PublishedTableCapabilityReader.parse(raw, 'iphone   16   pro');
+      expect(
+        caps.deviceName,
+        'iPhone 16 Pro',
+        reason: 'the table\'s own spelling, not the caller\'s',
+      );
     });
   });
 

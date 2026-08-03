@@ -6,16 +6,25 @@
 // R1. macOS, a Wi-Fi 6E MacBook reporting 2.4/5/6 GHz channels, a widest
 //     supported width of 80 MHz, a vocabulary ceiling of 160 MHz, and an active
 //     PHY mode of 802.11ax:
-//       bands              KNOWN {2.4, 5, 6}, tier 1, EXACT
+//       bands              KNOWN {2.4, 5, 6}, tier 1, AT LEAST
+//                          (H-1: supportedWLANChannels() is scoped to the
+//                          ACTIVE COUNTRY CODE, so it is a regulatory read and
+//                          a band it omits has not been ruled out)
 //       generations        KNOWN {ht, vht, he}, tier 1, AT LEAST
 //                          (the mode in use is a floor on what is supported)
-//       max channel width  KNOWN 80, tier 1, EXACT  (80 < the 160 ceiling)
+//       max channel width  KNOWN 80, tier 1, AT LEAST
+//                          (H-1: same country-code scope. A region that permits
+//                          nothing wider caps this independently of the radio,
+//                          so it is a floor at EVERY width, not only at the
+//                          vocabulary ceiling.)
 //       spatial streams    UNKNOWN platformDoesNotExpose
 //       max MCS index      UNKNOWN platformDoesNotExpose
 //       theoretical rate   UNKNOWN derivedInputUnknown, naming spatial streams
 //
 // R2. The same Mac reporting 160 MHz, which IS the vocabulary ceiling:
-//       max channel width  KNOWN 160, tier 1, AT LEAST
+//       max channel width  KNOWN 160, tier 1, AT LEAST, and the note naming
+//                          the 160 MHz vocabulary limit is present ON TOP OF
+//                          the standing regional note
 //
 // R3. macOS with Location denied and an empty channel list:
 //       bands              UNKNOWN permissionNotGranted, not queryFailed
@@ -98,13 +107,24 @@ Map<String, Object?> _androidPayload({
     };
 
 /// A minimal two-row table, so a miss cannot be confused with an empty file.
+///
+/// H-3. This fixture is SHAPED LIKE THE SHIPPED ASSET, and that is load-bearing
+/// rather than tidy. It previously keyed both rows on an `identifier` field
+/// (`"iPhone16,1"`) that the shipped asset carries on ZERO rows, so the whole
+/// tier-2 suite proved a lookup path production can never take, while the path
+/// production DOES take went untested. A fixture that does not resemble the
+/// asset hides the defect it was written to catch.
+///
+/// The lookup key is a MARKETING NAME, because that is what Apple's table is
+/// keyed by. `_assetRowKeysAreASupersetOfTheFixture` below fails if the asset
+/// and this fixture ever drift apart again.
 const String _tableJson = '''
 {
   "_meta": { "last_updated": "2026-08-02" },
   "devices": [
     {
-      "identifier": "iPhone16,1",
-      "name": "iPhone 15 Pro",
+      "names": ["iPhone 15 Pro", "iPhone 15 Pro Max"],
+      "familyNames": [],
       "bands": ["2.4 GHz", "5 GHz", "6 GHz"],
       "standards": ["802.11n", "802.11ac", "802.11ax"],
       "maxChannelWidthMhz": 160,
@@ -113,8 +133,8 @@ const String _tableJson = '''
       "source": "Apple Platform Deployment, Wi-Fi specifications"
     },
     {
-      "identifier": "iPhone14,2",
-      "name": "unsourced device",
+      "names": ["unsourced device"],
+      "familyNames": [],
       "bands": ["2.4 GHz", "5 GHz"],
       "standards": ["802.11ax"],
       "maxChannelWidthMhz": 80,
@@ -135,7 +155,11 @@ void main() {
       expect(caps.bands.valueOrNull,
           <WiFiBand>{WiFiBand.band24, WiFiBand.band5, WiFiBand.band6});
       expect(caps.bands.tierOrNull, CapabilityTier.livePlatformQuery);
-      expect(caps.bands.boundOrNull, CapabilityBound.exact);
+      expect(
+        caps.bands.boundOrNull,
+        CapabilityBound.atLeast,
+        reason: 'H-1: the channel list is scoped to the active country code',
+      );
 
       expect(caps.standards.valueOrNull,
           <WifiStd>{WifiStd.ht, WifiStd.vht, WifiStd.he});
@@ -146,7 +170,12 @@ void main() {
       );
 
       expect(caps.maxChannelWidthMhz.valueOrNull, 80);
-      expect(caps.maxChannelWidthMhz.boundOrNull, CapabilityBound.exact);
+      expect(
+        caps.maxChannelWidthMhz.boundOrNull,
+        CapabilityBound.atLeast,
+        reason: 'H-1: 80 MHz is the widest channel this REGION permits, which '
+            'is not the widest channel the radio supports',
+      );
 
       expect(caps.spatialStreams.valueOrNull, isNull);
       expect(
@@ -192,10 +221,27 @@ void main() {
       );
     });
 
-    test('a width below the ceiling stays exact', () {
+    // Was 'a width below the ceiling stays exact'. That assertion ENSHRINED
+    // H-1: it proved the width was exact whenever the vocabulary ceiling was
+    // not reached, which is exactly the false claim. What the original test was
+    // really guarding is that the two reasons are DISTINCT and reported
+    // separately, so that is what it now checks.
+    test('below the vocabulary ceiling, only the regional reason is given, and '
+        'the bound is still a floor', () {
       final ClientCapabilities caps =
           MacOsCapabilityReader.parse(_macPayload(maxWidth: 40));
-      expect(caps.maxChannelWidthMhz.boundOrNull, CapabilityBound.exact);
+      expect(caps.maxChannelWidthMhz.boundOrNull, CapabilityBound.atLeast);
+      expect(
+        caps.notes.any((String n) => n.contains('region')),
+        isTrue,
+        reason: 'the regional limit applies at every width',
+      );
+      expect(
+        caps.notes.any((String n) => n.contains('vocabulary')),
+        isFalse,
+        reason: '40 MHz is nowhere near the 160 MHz vocabulary ceiling, so '
+            'claiming that limit here would be a second wrong reason',
+      );
     });
 
     test('R3: no channels with Location denied is a permission answer', () {
@@ -222,6 +268,60 @@ void main() {
         (caps.bands as UnknownCapability<Set<WiFiBand>>).reason,
         CapabilityUnknownReason.queryFailed,
       );
+    });
+
+    // H-1. `supportedWLANChannels()` is documented by Apple as "An array of
+    // channels supported by the interface FOR THE ACTIVE COUNTRY CODE". It is a
+    // regulatory permission read, not a hardware capability read. A 6 GHz-capable
+    // MacBook in a region with no 6 GHz allocation reports 2.4/5 only, so
+    // publishing that set as EXACT is a false negative about the user's radio.
+    // Everything CoreWLAN derives from that channel list is therefore a floor.
+    test('H-1: macOS bands are a floor, because the OS answered a regulatory '
+        'question and not a hardware one', () {
+      final ClientCapabilities caps =
+          MacOsCapabilityReader.parse(_macPayload());
+      expect(
+        caps.bands.boundOrNull,
+        CapabilityBound.atLeast,
+        reason: 'supportedWLANChannels() is scoped to the active country code, '
+            'so a band missing here may still be supported by the radio',
+      );
+    });
+
+    test('H-1: macOS width is a floor even well below the vocabulary ceiling',
+        () {
+      final ClientCapabilities caps =
+          MacOsCapabilityReader.parse(_macPayload(maxWidth: 40));
+      expect(caps.maxChannelWidthMhz.valueOrNull, 40);
+      expect(
+        caps.maxChannelWidthMhz.boundOrNull,
+        CapabilityBound.atLeast,
+        reason: 'the widest PERMITTED channel in this region is not the widest '
+            'channel the radio supports',
+      );
+    });
+
+    test('H-1: the regional narrowing is stated on screen, not just in a bound',
+        () {
+      final ClientCapabilities caps =
+          MacOsCapabilityReader.parse(_macPayload());
+      expect(
+        caps.notes.any((String n) => n.contains('region')),
+        isTrue,
+        reason: 'a bound with no sentence next to it renders as a bare value',
+      );
+    });
+
+    test('H-1: the pin names the country-code scope, so the provenance line '
+        'cannot overstate the read', () {
+      final ClientCapabilities caps =
+          MacOsCapabilityReader.parse(_macPayload());
+      for (final Capability<Object> c
+          in <Capability<Object>>[caps.bands, caps.maxChannelWidthMhz]) {
+        expect((c as KnownCapability<Object>).pin.contains('country code'),
+            isTrue,
+            reason: 'the pin claims a hardware read it did not perform');
+      }
     });
 
     test('no Wi-Fi interface is all-unknown, never all-zero', () {
@@ -378,7 +478,7 @@ void main() {
   group('iOS tier 2, the published table', () {
     test('R6: a listed model resolves every field at tier 2 with a pin', () {
       final ClientCapabilities caps =
-          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone16,1');
+          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone 15 Pro');
       expect(caps.deviceName, 'iPhone 15 Pro');
       expect(caps.tableVersion, '2026-08-02');
       expect(caps.maxChannelWidthMhz.valueOrNull, 160);
@@ -393,14 +493,14 @@ void main() {
         expect(c.tier, CapabilityTier.publishedTable, reason: e.key);
         expect(c.pin.contains('Apple Platform Deployment'), isTrue,
             reason: '${e.key} does not carry the row source');
-        expect(c.pin.contains('iPhone16,1'), isTrue,
+        expect(c.pin.contains('iPhone 15 Pro'), isTrue,
             reason: '${e.key} does not name the row');
       }
     });
 
     test('a tier-2 ceiling is computable and is stamped tier 2', () {
       final ClientCapabilities caps =
-          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone16,1');
+          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone 15 Pro');
       final Capability<double> rate = caps.theoreticalMaxPhyRateMbps;
       expect(rate.isKnown, isTrue);
       expect(rate.tierOrNull, CapabilityTier.publishedTable);
@@ -408,7 +508,7 @@ void main() {
 
     test('R7: an unlisted model is unknown everywhere and leaks nothing', () {
       final ClientCapabilities caps =
-          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone99,9');
+          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone 99 Ultra');
       expect(caps.isEntirelyUnknown, isTrue);
       for (final MapEntry<String, Capability<Object>> e
           in caps.allFields.entries) {
@@ -424,7 +524,7 @@ void main() {
 
     test('R8: a row with an empty source does not ship', () {
       final ClientCapabilities caps =
-          PublishedTableCapabilityReader.parse(_tableJson, 'iPhone14,2');
+          PublishedTableCapabilityReader.parse(_tableJson, 'unsourced device');
       expect(
         caps.isEntirelyUnknown,
         isTrue,
@@ -438,7 +538,7 @@ void main() {
     test('a device that reported no identifier is not in the table', () async {
       final PublishedTableCapabilityReader reader =
           PublishedTableCapabilityReader(
-        deviceIdentifier: null,
+        deviceModelName: null,
         loadJson: () async => _tableJson,
       );
       final ClientCapabilities caps = await reader.read();
@@ -448,7 +548,7 @@ void main() {
     test('malformed JSON is a query failure, not a crash and not a default',
         () {
       final ClientCapabilities caps =
-          PublishedTableCapabilityReader.parse('{ not json', 'iPhone16,1');
+          PublishedTableCapabilityReader.parse('{ not json', 'iPhone 15 Pro');
       expect(caps.isEntirelyUnknown, isTrue);
     });
 
@@ -461,7 +561,7 @@ void main() {
       row.remove('maxMcsIndex');
       final ClientCapabilities caps = PublishedTableCapabilityReader.parse(
         jsonEncode(table),
-        'iPhone16,1',
+        'iPhone 15 Pro',
       );
       expect(caps.maxMcsIndex.valueOrNull, isNull);
       expect(caps.spatialStreams.valueOrNull, 2,
@@ -507,7 +607,7 @@ void main() {
         ClientCapabilityService(
           platformOverride: TargetPlatform.iOS,
           isWebOverride: false,
-        ).readersFor(deviceIdentifier: 'iPhone16,1').single,
+        ).readersFor(deviceModelName: 'iPhone 15 Pro').single,
         isA<PublishedTableCapabilityReader>(),
       );
       expect(
@@ -530,7 +630,7 @@ void main() {
           ),
           _FakeReader(
             CapabilityTier.publishedTable,
-            PublishedTableCapabilityReader.parse(_tableJson, 'iPhone16,1'),
+            PublishedTableCapabilityReader.parse(_tableJson, 'iPhone 15 Pro'),
           ),
         ],
       );
@@ -563,7 +663,7 @@ void main() {
         readersOverride: <CapabilityReader>[
           _FakeReader(
             CapabilityTier.publishedTable,
-            PublishedTableCapabilityReader.parse(_tableJson, 'iPhone16,1'),
+            PublishedTableCapabilityReader.parse(_tableJson, 'iPhone 15 Pro'),
           ),
         ],
       );

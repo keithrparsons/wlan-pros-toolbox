@@ -142,15 +142,30 @@ final class WifiInfoChannel: NSObject, CLLocationManagerDelegate {
 
   /// The largest channel width `CWChannelWidth` is able to express, in MHz.
   ///
-  /// DERIVED from `channelWidthMhz(_:)` rather than typed in, so the Dart side's
-  /// "is this reading at the vocabulary ceiling" test can never disagree with
-  /// the mapping that produced the reading. If a future SDK adds a 320 MHz case
-  /// and it is added to `channelWidthMhz(_:)`, this follows automatically.
+  /// The widths are mapped through `channelWidthMhz(_:)` so the number reported
+  /// here and the number reported as the reading always come from one mapping.
+  ///
+  /// MAINTENANCE, AND IT IS MANUAL. `expressible` is a hand-written list.
+  /// `CWChannelWidth` is an imported Objective-C enum and does not conform to
+  /// `CaseIterable`, so there is nothing to enumerate it from. A future SDK that
+  /// adds a 320 MHz case therefore does NOT flow through here on its own: the
+  /// case has to be added to `channelWidthMhz(_:)` AND to this list, or the
+  /// ceiling silently stays at 160.
+  ///
+  /// Getting that wrong is safe in the value it produces and unsafe in the
+  /// sentence it produces. The ceiling would be too LOW, so a reading would be
+  /// marked a floor when it did not need to be, which over-hedges rather than
+  /// over-claims. But Dart prints "The macOS channel-width vocabulary stops at
+  /// 160 MHz" next to whatever width was read, so a 320 MHz reading would sit
+  /// beside a sentence denying 320 MHz can be reported: one screen contradicting
+  /// itself in a single frame.
   ///
   /// This matters because CoreWLAN has no 320 MHz case today, so a Wi-Fi 7 Mac
   /// reports at most 160 MHz here. That is a limit of the vocabulary, not of the
   /// radio, and Dart marks such a reading as a floor rather than an exact value.
   private var widthVocabularyCeilingMhz: Int {
+    // Every case CWChannelWidth defines, other than .widthUnknown. ADD NEW SDK
+    // CASES HERE as well as to channelWidthMhz(_:) — see the note above.
     let expressible: [CWChannelWidth] = [
       .width20MHz, .width40MHz, .width80MHz, .width160MHz,
     ]

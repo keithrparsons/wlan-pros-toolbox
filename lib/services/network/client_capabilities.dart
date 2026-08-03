@@ -335,8 +335,8 @@ final class UnknownCapability<T extends Object> extends Capability<T> {
 /// The Wi-Fi capabilities of one device, every field independently knowable.
 ///
 /// Build one with [ClientCapabilities.allUnknown] and copy known fields in, so
-/// a reader that resolves two of five fields cannot accidentally leave the
-/// other three holding stale or defaulted values.
+/// a reader that resolves two of six fields cannot accidentally leave the
+/// other four holding stale or defaulted values.
 @immutable
 class ClientCapabilities {
   /// Creates a capability set. Every field is required so a new field can never
@@ -405,9 +405,16 @@ class ClientCapabilities {
   final Capability<int> osReportedMaxPhyRateMbps;
 
   /// Machine model identifier, e.g. `iPhone16,1`. Null when unread.
+  ///
+  /// Identity only. This is NOT the key the published table is looked up by —
+  /// Apple keys that table by marketing name, so [deviceName] is the key. The
+  /// two are not interchangeable and iOS supplies only this one.
   final String? deviceIdentifier;
 
   /// Marketing model name, e.g. `iPhone 15 Pro`. Null when unread.
+  ///
+  /// This IS the published-table lookup key. iOS exposes no API that returns
+  /// it, which is why tier 2 is currently inert on iOS.
   final String? deviceName;
 
   /// Version stamp of the published table a tier-2 answer came from, so a stale
@@ -480,9 +487,20 @@ class ClientCapabilities {
         'spatial streams': spatialStreams,
         'maximum MCS index': maxMcsIndex,
       },
+      // M-2. The guard interval is NOT one of the declared inputs above, and
+      // nothing reported it: no OS exposes it and no table row carries it. It
+      // is an ASSUMPTION this computation makes, so the pin says so rather than
+      // presenting it as something that was derived. It matters unevenly: the
+      // shortest GI is mandatory for HE and EHT, but OPTIONAL in the standard
+      // for HT and VHT, so an HT-only or VHT-only device is credited with Short
+      // GI support it never claimed. Every row seeded today is HE or EHT, so no
+      // over-claim is reachable yet, and this pin is what keeps it visible when
+      // one is.
       pin: 'WifiPhyRateService.phyRateMbps over the highest known standard, '
-          'widest channel, all spatial streams, highest MCS and the shortest '
-          'guard interval that standard defines',
+          'widest channel, all spatial streams and highest MCS, ASSUMING the '
+          'shortest guard interval that standard defines. The guard interval '
+          'is assumed, not reported: it is mandatory for Wi-Fi 6 and Wi-Fi 7, '
+          'and optional for 802.11n and 802.11ac',
       compute: () {
         final WifiStd? s = std.valueOrNull;
         final int? width = maxChannelWidthMhz.valueOrNull;
@@ -555,7 +573,7 @@ class ClientCapabilities {
   bool get isEntirelyUnknown =>
       allFields.values.every((Capability<Object> f) => !f.isKnown);
 
-  /// The five READ fields, labelled. Derived values are not included: they are
+  /// The six READ fields, labelled. Derived values are not included: they are
   /// computed from these, so counting them would double-count provenance.
   Map<String, Capability<Object>> get allFields => <String, Capability<Object>>{
         'Bands': bands,

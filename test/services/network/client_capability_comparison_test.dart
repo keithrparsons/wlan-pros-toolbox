@@ -31,16 +31,54 @@
 // measure.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/network/client_capabilities.dart';
 import 'package:wlan_pros_toolbox/services/network/client_capability_comparison.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_details.dart'
     show WiFiBand;
 import 'package:wlan_pros_toolbox/services/network/wifi_phy_rate_service.dart'
-    show WifiStd;
+    show WifiPhyRateService, WifiStd;
 
 /// The ceiling of the fixture device, pinned in client_capabilities_test.dart.
 const double kFixtureCeiling = 2882.3529411764707;
+
+/// A device whose fields are ALL known but whose combination has no defined
+/// rate: Wi-Fi 6 tops out at 160 MHz, so 320 MHz against HE is undefined.
+///
+/// This is the only way to reach [CapabilityUnknownReason.notComputable] from
+/// the public model, and it is the branch whose `detail` is the derivation pin.
+ClientCapabilities _impossibleCombination() => ClientCapabilities(
+      bands: Capability<Set<WiFiBand>>.known(
+        <WiFiBand>{WiFiBand.band6},
+        tier: CapabilityTier.publishedTable,
+        pin: 'test fixture',
+      ),
+      standards: Capability<Set<WifiStd>>.known(
+        <WifiStd>{WifiStd.he},
+        tier: CapabilityTier.publishedTable,
+        pin: 'test fixture',
+      ),
+      maxChannelWidthMhz: Capability<int>.known(
+        320,
+        tier: CapabilityTier.publishedTable,
+        pin: 'test fixture',
+      ),
+      spatialStreams: Capability<int>.known(
+        2,
+        tier: CapabilityTier.publishedTable,
+        pin: 'test fixture',
+      ),
+      maxMcsIndex: Capability<int>.known(
+        11,
+        tier: CapabilityTier.publishedTable,
+        pin: 'test fixture',
+      ),
+      osReportedMaxPhyRateMbps: const Capability<int>.unknown(
+        CapabilityUnknownReason.platformDoesNotExpose,
+      ),
+    );
 
 ClientCapabilities _device({Capability<int>? spatialStreams}) =>
     ClientCapabilities(
@@ -171,6 +209,94 @@ void main() {
       expect(c.detail.contains('spatial streams'), isTrue);
       expect(c.headline.contains('500'), isTrue,
           reason: 'the measurement is still worth showing on its own');
+    });
+
+    // L-4, and the defect found next to it. The no-ceiling sentence used to
+    // interpolate the unknown's `detail` directly. For a NOT-COMPUTABLE ceiling
+    // that detail IS the derivation pin, so the user would have been shown
+    // "this device does not tell us WifiPhyRateService.phyRateMbps over the
+    // highest known standard…". Every reason now gets a finished sentence.
+    // The reason a device has no ceiling is NOT the reason its fields are
+    // unknown: the ceiling is derived, so an all-unknown device always reports
+    // `derivedInputUnknown` no matter what its fields say. Reaching the other
+    // branches needs devices actually built to land on them, which is why this
+    // table constructs them rather than looping over the enum. A loop over
+    // `CapabilityUnknownReason.values` looks broader and exercises one branch.
+    final Map<String, ClientCapabilities> noCeilingDevices =
+        <String, ClientCapabilities>{
+      // Every input unknown -> derivedInputUnknown, detail = the input's name.
+      'a platform that exposes nothing': ClientCapabilities.allUnknown(
+        CapabilityUnknownReason.platformDoesNotExpose,
+      ),
+      'a model absent from the table': ClientCapabilities.allUnknown(
+        CapabilityUnknownReason.deviceNotInTable,
+      ),
+      // One input missing, the rest known -> derivedInputUnknown.
+      'a device that reports everything but its spatial streams': _device(
+        spatialStreams: const Capability<int>.unknown(
+          CapabilityUnknownReason.platformDoesNotExpose,
+        ),
+      ),
+      // Every input KNOWN, but the combination has no defined rate, so
+      // compute() returns null -> notComputable, whose detail IS the
+      // derivation pin. This is the branch that leaked a symbol name.
+      'a device whose reported combination has no defined rate':
+          _impossibleCombination(),
+    };
+
+    test('no reason leaks an internal identifier into the copy', () {
+      noCeilingDevices.forEach((String label, ClientCapabilities device) {
+        final ThroughputComparison c =
+            ThroughputComparison.of(measuredMbps: 500, capabilities: device);
+        expect(c.isComparable, isFalse, reason: '$label should have no ceiling');
+        for (final String symbol in <String>[
+          'WifiPhyRateService',
+          'phyRateMbps',
+          'Capability',
+          'giKey',
+        ]) {
+          expect(
+            c.detail.contains(symbol),
+            isFalse,
+            reason: '"$symbol" reached the screen for $label: ${c.detail}',
+          );
+        }
+      });
+    });
+
+    test('every no-ceiling reason produces finished sentences', () {
+      noCeilingDevices.forEach((String label, ClientCapabilities device) {
+        final ThroughputComparison c =
+            ThroughputComparison.of(measuredMbps: 500, capabilities: device);
+        // The reason clause sits between two fixed sentences. If it does not
+        // terminate itself, the paragraph runs straight on into the next one.
+        expect(
+          c.detail,
+          contains('. The measurement stands on its own.'),
+          reason: 'the reason clause for $label does not end in a full stop, '
+              'so it runs into the sentence after it: ${c.detail}',
+        );
+        expect(c.detail.trim(), endsWith('.'), reason: c.detail);
+        expect(c.detail.contains('..'), isFalse,
+            reason: 'doubled full stop for $label: ${c.detail}');
+        expect(c.detail.contains(r'$'), isFalse,
+            reason: 'an uninterpolated placeholder for $label: ${c.detail}');
+      });
+    });
+
+    test('the notComputable branch really is reached, so the two tests above '
+        'are not vacuous', () {
+      final Capability<double> ceiling =
+          _impossibleCombination().theoreticalMaxPhyRateMbps;
+      expect(
+        (ceiling as UnknownCapability<double>).reason,
+        CapabilityUnknownReason.notComputable,
+        reason: 'if this stops being notComputable, the pin-leak branch is no '
+            'longer covered by anything',
+      );
+      expect(ceiling.detail, contains('WifiPhyRateService'),
+          reason: 'the detail must still BE the pin, or there is nothing to '
+              'leak and the guard above proves nothing');
     });
 
     test('an unknown ceiling never states a percentage for the measurement',
@@ -335,8 +461,83 @@ void main() {
         'why they are not used as the yardstick', () {
       // If this ever stops being true, the honesty note in the caveat becomes
       // wrong and has to be rewritten rather than quietly left in place.
-      const double lowestOurs = 0.70;
-      expect(lowestOurs, greaterThan(kPublishedRealThroughputHigh));
+      //
+      // H-2. This READS the shipped factors rather than restating them as a
+      // literal. A literal here asserts that 0.70 > 0.60, which is arithmetic,
+      // not a fact about the code, and it stayed green when the factors were
+      // mutated below Vajda's upper bound.
+      expect(
+        WifiPhyRateService.eff,
+        isNotEmpty,
+        reason: 'an empty table would make the reduce below vacuous',
+      );
+      final double lowestOurs =
+          WifiPhyRateService.eff.values.reduce(math.min);
+      expect(
+        lowestOurs,
+        greaterThan(kPublishedRealThroughputHigh),
+        reason: 'the shipped caveat tells the user our own estimate sits above '
+            'the published range. If that stops being true the sentence is '
+            'false in user-facing copy.',
+      );
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // M-3. `atOrAboveTheOptimisticEstimate` names "the favorable estimate this
+  // app can produce". The classifier used to fall back to the CEILING when that
+  // estimate was unknown, which made the favorable fraction exactly 1.0 and let
+  // the copy name an estimate that did not exist. It is now emitted only when
+  // the estimate is real.
+  //
+  // The branch is unreachable today because every standard has an eff factor,
+  // so the first test PINS that reachability fact: if a standard is ever added
+  // without one, it fails and says the dead branch just came alive.
+  // ───────────────────────────────────────────────────────────────────────────
+  group('M-3: a position never names a value the app does not have', () {
+    test('the branch is currently unreachable, and this is what makes it so',
+        () {
+      final List<WifiStd> withoutEff = WifiStd.values
+          .where((WifiStd s) => WifiPhyRateService.eff[s] == null)
+          .toList();
+      expect(
+        withoutEff,
+        isEmpty,
+        reason: 'every standard has an efficiency factor, so a known ceiling '
+            'always yields a known favorable estimate. If that stops being '
+            'true, the no-estimate path in ThroughputComparison.of is now '
+            'REACHABLE and its copy needs re-reading.',
+      );
+    });
+
+    test('wherever the optimistic position IS emitted, the estimate behind it '
+        'is real', () {
+      final ClientCapabilities device = _device();
+      bool sawTheOptimisticPosition = false;
+      // Sweep the whole range rather than sampling the one value that happens
+      // to land there.
+      for (int i = 1; i <= 400; i++) {
+        final ThroughputComparison c = ThroughputComparison.of(
+          measuredMbps: kFixtureCeiling * i / 200,
+          capabilities: device,
+        );
+        if (c.position != ThroughputPosition.atOrAboveTheOptimisticEstimate) {
+          continue;
+        }
+        sawTheOptimisticPosition = true;
+        expect(
+          device.favorableThroughputEstimateMbps.isKnown,
+          isTrue,
+          reason: 'the copy for this position names an estimate the app '
+              'produced. It must exist.',
+        );
+      }
+      expect(
+        sawTheOptimisticPosition,
+        isTrue,
+        reason: 'a sweep that never reaches the position under test proves '
+            'nothing about it',
+      );
     });
   });
 }
