@@ -119,6 +119,78 @@ void main() {
       );
     });
 
+    // THE BROADCAST BOUNDARY. 10.0.0.254 is the last usable host of a /24,
+    // 10.0.0.255 is that /24's broadcast, and 10.0.1.0 is the next network
+    // address. A range written across those three is the everyday case when
+    // someone hands you "everything from here to there" out of a DHCP scope
+    // or a firewall object, and it is where an off-by-one shows up first.
+    // rangeToCidr works on the address space and does not treat network or
+    // broadcast addresses as special, which is the correct behavior here: the
+    // caller asked which blocks COVER these addresses, not which of them a
+    // host may be assigned.
+    test('a range straddling a broadcast boundary is covered exactly', () {
+      expect(
+        _cidrs(IpBlockMath.rangeToCidr(_ip('10.0.0.254'), _ip('10.0.1.1'))),
+        <String>['10.0.0.254/31', '10.0.1.0/31'],
+      );
+      // And the asymmetric version, which cannot pair up so neatly.
+      expect(
+        _cidrs(IpBlockMath.rangeToCidr(_ip('10.0.0.255'), _ip('10.0.1.0'))),
+        <String>['10.0.0.255/32', '10.0.1.0/32'],
+        reason: 'a broadcast and the next network address are not adjacent '
+            'under alignment, so they cannot merge into one /31',
+      );
+    });
+
+    test('an exact /31 and an exact /30 each collapse to one block', () {
+      expect(
+        _cidrs(IpBlockMath.rangeToCidr(_ip('10.0.0.4'), _ip('10.0.0.5'))),
+        <String>['10.0.0.4/31'],
+      );
+      expect(
+        _cidrs(IpBlockMath.rangeToCidr(_ip('10.0.0.4'), _ip('10.0.0.7'))),
+        <String>['10.0.0.4/30'],
+      );
+      // Shifted off its boundary by one, the same span cannot be one block.
+      expect(
+        _cidrs(IpBlockMath.rangeToCidr(_ip('10.0.0.5'), _ip('10.0.0.6'))),
+        <String>['10.0.0.5/32', '10.0.0.6/32'],
+      );
+    });
+
+    // THE TOP OF THE SPACE. The walk advances with `cur += sizeOfPrefix(...)`,
+    // so a range ending at 255.255.255.255 pushes the cursor to 2^32, one past
+    // anything 32 bits can hold. The loop must end on the `cur <= end` test
+    // before that value ever reaches a bitwise operator, because bitwise ops
+    // are 32-bit on the web build and 2^32 masks down to 0 there — which would
+    // restart the walk at 0.0.0.0 and hang. This asserts termination as much
+    // as it asserts the answer.
+    test('a range that ends at 255.255.255.255 terminates and is exact', () {
+      expect(
+        _cidrs(
+          IpBlockMath.rangeToCidr(
+            _ip('255.255.255.250'),
+            _ip('255.255.255.255'),
+          ),
+        ),
+        <String>['255.255.255.250/31', '255.255.255.252/30'],
+      );
+      expect(
+        _cidrs(
+          IpBlockMath.rangeToCidr(
+            _ip('255.255.255.255'),
+            _ip('255.255.255.255'),
+          ),
+        ),
+        <String>['255.255.255.255/32'],
+      );
+      // The bottom of the space, for the same reason at the other end.
+      expect(
+        _cidrs(IpBlockMath.rangeToCidr(_ip('0.0.0.0'), _ip('0.0.0.0'))),
+        <String>['0.0.0.0/32'],
+      );
+    });
+
     test('the blocks tile the range exactly, with no gap and no overlap', () {
       final List<Ipv4Block> b = IpBlockMath.rangeToCidr(
         _ip('172.16.5.3'),
