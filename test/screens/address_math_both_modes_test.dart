@@ -1,5 +1,5 @@
-// The four surfaces of the 2026-08-02 address-math pass, rendered in BOTH
-// color modes at phone, tablet and desktop width.
+// The surfaces of the 2026-08-02 address-math pass, rendered in BOTH color
+// modes at phone, tablet and desktop width.
 //
 // WHY THIS FILE EXISTS. Each of the four screens already carries its own
 // responsive test, and every one of them renders in dark mode only. Light mode
@@ -118,6 +118,24 @@ void main() {
         // The binary row is 32 characters plus a boundary mark and is the
         // widest thing on the screen, which makes it the overflow candidate.
         await t.enterText(find.byType(TextField).at(0), '10.20.30.40/22');
+      },
+    );
+  });
+
+  testWidgets('IPv6 Subnet — the zone caveat, which is the longest wrapped '
+      'line the Subnet card renders', (WidgetTester tester) async {
+    // Added 2026-08-02 with Vera's MEDIUM-1. The caveat is a labelSmall
+    // caption in `textTertiary`, and GL-003 §3's line-height rule warns that
+    // small wrapped text is where a caption stops fitting. 320 dp light mode
+    // is the tightest combination the app ships.
+    await _renderBothModes(
+      tester,
+      'IPv6 Subnet (zone caveat)',
+      () => const Ipv6SubnetScreen(),
+      drive: (WidgetTester t) async {
+        // "%2512" is the longest of the three caveat strings: it names both
+        // readings, so it carries two interpolated numbers.
+        await t.enterText(find.byType(TextField).at(0), 'fe80::1%2512');
       },
     );
   });

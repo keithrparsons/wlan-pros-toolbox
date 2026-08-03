@@ -141,6 +141,55 @@ void main() {
       );
     });
 
+    // Added 2026-08-02 with Vera's MEDIUM-1. The tests above pin WHICH reading
+    // the parser takes. They cannot pin that the OTHER reading survives the
+    // trip to the screen, and it did not: the Zone row printed the winner
+    // alone. zoneParse carries the reading so the row can say what it is
+    // standing on ([[feedback_type_must_express_unknown]]).
+    test('zoneParse carries the reading, not just the winning text', () {
+      final Ipv6Zone bare = Ipv6Address.zoneParse('fe80::1%25')!;
+      expect(bare.value, '25');
+      expect(bare.reading, Ipv6ZoneReading.bareTwentyFive);
+      expect(bare.isCertain, isFalse);
+      // The competing reading has no zone at all, so there is nothing to name.
+      expect(bare.alternate, isNull);
+
+      final Ipv6Zone escaped = Ipv6Address.zoneParse('fe80::1%2512')!;
+      expect(escaped.value, '12');
+      expect(escaped.reading, Ipv6ZoneReading.escapedDigits);
+      expect(escaped.alternate, '2512');
+
+      for (final String certain in <String>[
+        'fe80::1%en0',
+        'fe80::1%25en0',
+        'fe80::1%1',
+        'fe80::1%utun3',
+      ]) {
+        final Ipv6Zone z = Ipv6Address.zoneParse(certain)!;
+        expect(z.isCertain, isTrue, reason: '$certain has one reading');
+        expect(z.alternate, isNull);
+      }
+
+      expect(Ipv6Address.zoneParse('fe80::1'), isNull);
+    });
+
+    test('zoneOf still answers exactly what zoneParse reads', () {
+      for (final String literal in <String>[
+        'fe80::1%en0',
+        'fe80::1%25en0',
+        'fe80::1%25',
+        'fe80::1%2512',
+        'fe80::1%1',
+        'fe80::1',
+      ]) {
+        expect(
+          Ipv6Address.zoneOf(literal),
+          Ipv6Address.zoneParse(literal)?.value,
+          reason: 'the two entry points must not fork on $literal',
+        );
+      }
+    });
+
     test('an EMPTY zone is malformed, not an absent zone', () {
       // "fe80::1%" is a user mid-keystroke or a truncated log line. Treating
       // it as "no zone" would answer a question that was not finished being

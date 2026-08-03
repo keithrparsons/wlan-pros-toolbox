@@ -4,10 +4,14 @@
 // - The pure parser (ToolHelpStore.fromJson): a well-formed fixture, malformed
 //   entries dropped, garbage document → empty-but-valid, null algorithm/example
 //   preserved as null, field notes preserved verbatim (GL-005).
-// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly 97
-//   entries, and every key matches a catalog tool id (the lookup contract),
-//   except for a small allowlist of known non-catalog help ids.
+// - The REAL bundled asset (assets/help/tool_help.json): parses to exactly
+//   [_expectedEntryCount] entries, and every key matches a catalog tool id (the
+//   lookup contract), except for a small allowlist of known non-catalog ids.
 // - helpForId() reads the cached store and returns null for an unknown id.
+//
+// This header used to say "parses to exactly 97 entries" — the third place in
+// this file where a hand-written count outlived the assertion it described.
+// Counts are named, never spelled out again (2026-08-02).
 
 import 'dart:convert';
 
@@ -17,6 +21,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
+
+/// The number of entries the bundled help asset must contain.
+///
+/// THE ONE PLACE THIS NUMBER LIVES. The test title interpolates it and the
+/// assertion compares against it, so the two cannot disagree — which is exactly
+/// what they did twice, in 2026-07 (name 140 vs assertion 178) and again in
+/// 2026-08 (name 179 vs assertion 181). The running commentary above the
+/// assertion below shows how the figure was reached; bump BOTH together by
+/// bumping this.
+const int _expectedEntryCount = 181;
 
 const String _fixture = '''
 {
@@ -124,7 +138,15 @@ void main() {
     // NOTE 2026-07-28: this test was named 'parses to exactly 140 entries' while
     // asserting 178. The name is a claim and it was wrong by 38. Renamed to state
     // the count it actually checks, and the number now lives in one place.
-    test('parses to exactly 179 entries', () {
+    //
+    // NOTE 2026-08-02: it happened AGAIN — the name said 179 while the assertion
+    // below said 181 (Vera's gate, MEDIUM-2). "The number lives in one place"
+    // was a promise the file had no way to keep: a test name is a string
+    // literal, so nothing stopped the next person bumping the expectation and
+    // leaving the title behind. The number now genuinely lives in one place,
+    // [_expectedEntryCount], and the title INTERPOLATES it. Renaming and
+    // hoping is not a fix; making the drift impossible is.
+    test('parses to exactly $_expectedEntryCount entries', () {
       // 97 = 95 (origin/main: 93 + Antenna Connectors + Optical Transceivers)
       // + 2 backfilled v1.1 help entries (PLMN ID Reference and the Wi-Fi
       // Authentication Glossary).
@@ -326,7 +348,7 @@ void main() {
       // Sourced from the same survey (BRIEF.md:125): the unit converter
       // converts the units but never divided one by the other.
       // 180 + 1 = 181.
-      expect(store.count, 181);
+      expect(store.count, _expectedEntryCount);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

@@ -2,10 +2,15 @@
 // network, first/last addresses, host count, and address type from a prefix.
 //
 // Math mirrors the RF Tools PWA (app.js calcIPv6 / expandIPv6 / compressIPv6 /
-// detectIPv6Type, line 2155+) exactly, ported to Dart BigInt 128-bit math so
-// the native app and the PWA agree field-for-field:
+// detectIPv6Type, line 2155+), ported to Dart BigInt 128-bit math so the native
+// app and the PWA agree field-for-field — with ONE deliberate divergence, ruled
+// by Keith on 2026-08-02 and marked below:
 //   expand     — pad each group to 4 hex digits, fill the :: run with zeros.
 //   compress   — collapse the longest run of all-zero groups to "::".
+//                DIVERGES FROM THE PWA, on purpose. The PWA drops half the "::"
+//                when the zero run touches either end, so it prints "fe80/10"
+//                and "ffff:c000:201", which are not addresses. This screen uses
+//                the RFC 5952 compressor; see [compressIPv6].
 //   network    — address & prefix-mask (128-bit).
 //   first/last — network (first) and network | host-mask (last).
 //   hosts      — 2^(128-prefix), shown as a count; ">2^63" above 63 host bits.
@@ -95,12 +100,40 @@ class Ipv6Result {
   /// screen can show it back rather than silently swallowing something the
   /// user typed — a value that vanishes with no acknowledgement reads as a
   /// tool that did not understand the input.
-  final String? zone;
+  ///
+  /// Carries its READING, not just its text ([Ipv6Zone]): `%25` and `%2512`
+  /// each have two defensible readings, and a bare `String?` would force the
+  /// screen to print one of them as though it were the only one.
+  final Ipv6Zone? zone;
 
   /// Non-null when input was rejected; all other fields are empty.
   final String? error;
 
   bool get isValid => error == null;
+}
+
+/// The one definition of what the screen says about a zone index, used by both
+/// the rendered row and the copy payload so the two cannot drift.
+///
+/// WHY THIS EXISTS (Vera gate 2026-08-02, MEDIUM-1): the Zone row rendered a
+/// bare `Zone: 25` for `fe80::1%25` with no caveat and no alternate reading.
+/// The parser standing on one reading is correct — RFC 4007 keeps the zone
+/// outside the 128 bits, so the math is untouched either way — but the ROW was
+/// stating a guess as a fact. Tests that pin both readings are not a user
+/// surface ([[feedback_ui_rendered_a_decision_it_lacked]]).
+String zoneHelperText(Ipv6Zone zone) {
+  switch (zone.reading) {
+    case Ipv6ZoneReading.certain:
+      return 'A zone names a local interface, so it is not part of the '
+          'address and changes nothing above.';
+    case Ipv6ZoneReading.bareTwentyFive:
+      return 'Read as interface index 25. In a URL "%25" means "%", so a zone '
+          'name may have been cut off. Either way the address is the same.';
+    case Ipv6ZoneReading.escapedDigits:
+      return 'Read as a URL, where "%25" means "%", so the zone is '
+          '${zone.value}. Typed outside a URL it would be ${zone.alternate}. '
+          'Either way the address is the same.';
+  }
 }
 
 class Ipv6SubnetScreen extends StatefulWidget {
@@ -122,20 +155,23 @@ class Ipv6SubnetScreen extends StatefulWidget {
   /// layout (e.g. too many groups, more than one "::").
   static String expandIPv6(String addr) => Ipv6Address.expand(addr);
 
-  /// Compress a full 8-group form to canonical "::" notation.
-  /// Mirrors PWA compressIPv6: collapse the LONGEST run of all-zero groups.
+  /// Compress a full 8-group form to canonical "::" notation, collapsing the
+  /// LONGEST run of all-zero groups (RFC 5952 §4.2).
   ///
-  /// Delegates to [Ipv6Address.compressPwaParity], NOT to
-  /// [Ipv6Address.compress]. The two differ, and the difference is a live
-  /// defect this screen inherits from the PWA: when the zero run touches
-  /// either end, the parity version drops half the "::", so this screen's
-  /// Network row prints `2001:db8/64` and `fe80/10`. Those are not addresses.
-  /// The parity behavior is kept here because this file states a deliberate
-  /// field-for-field contract with the PWA and its tests name the quirk out
-  /// loud, so changing it is Keith's call and not a builder's. New code uses
-  /// [Ipv6Address.compress], which is correct.
-  static String compressIPv6(String full) =>
-      Ipv6Address.compressPwaParity(full);
+  /// KEITH'S RULING, 2026-08-02: this screen uses the RFC-correct compressor.
+  /// It previously delegated to a PWA-parity version that dropped half the
+  /// "::" whenever the zero run touched either end, so the Network row printed
+  /// `2001:db8/64` and `fe80/10` and the Compressed row printed
+  /// `ffff:c000:201` — none of which is an IPv6 literal. Vera's gate proved
+  /// the harm by pasting the screen's own Compressed value back into its own
+  /// field and getting "Invalid IPv6 address format"
+  /// (Deliverables/2026-08-02-ip-address-math-gate/evidence/paste-back-proof/).
+  ///
+  /// Text parity with the PWA is therefore NOT claimed for compression, and is
+  /// deliberately given up: the PWA's strings were the defect. Parity still
+  /// holds for expansion, the 128-bit math, host counts, and type detection.
+  /// The paste-back property is guarded in ipv6_subnet_screen_test.dart.
+  static String compressIPv6(String full) => Ipv6Address.compress(full);
 
   /// Render a 128-bit value to the full 8-group form. Mirrors PWA bigToFull.
   static String bigToFull(BigInt n) => Ipv6Address.fromBigInt(n);
@@ -200,12 +236,12 @@ class Ipv6SubnetScreen extends StatefulWidget {
     }
 
     String expanded;
-    String? zone;
+    Ipv6Zone? zone;
     try {
       // A zone index is read for display and stripped for the math; see
-      // [Ipv6Address.zoneOf]. A malformed one (empty, or repeated) throws here
-      // rather than being quietly truncated off.
-      zone = Ipv6Address.zoneOf(raw);
+      // [Ipv6Address.zoneParse]. A malformed one (empty, or repeated) throws
+      // here rather than being quietly truncated off.
+      zone = Ipv6Address.zoneParse(raw);
       expanded = expandIPv6(raw.toLowerCase());
     } on FormatException {
       return const Ipv6Result.invalid('Invalid IPv6 address format.');
@@ -395,7 +431,16 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
       ..writeln('Addresses: ${r.hosts}')
       ..writeln('Type: ${r.type}');
     // Matches the on-screen row: present only when the user typed a zone.
-    if (r.zone != null) buf.writeln('Zone: ${r.zone}');
+    // The caveat travels ONLY when the reading is uncertain, and it travels
+    // because it qualifies the VALUE — pasting a bare "Zone: 25" into a ticket
+    // would re-commit MEDIUM-1 in another medium. The certain-case helper line
+    // is an explanation rather than a qualifier, so it stays on screen with
+    // the transition section's other notes and out of the payload.
+    final Ipv6Zone? z = r.zone;
+    if (z != null) {
+      buf.writeln('Zone: ${z.value}');
+      if (!z.isCertain) buf.writeln('Zone note: ${zoneHelperText(z)}');
+    }
 
     // The transition decode travels with the breakdown, but ONLY when an IPv4
     // address was actually found. Pasting "Embedded IPv4: none" into a ticket
@@ -738,12 +783,31 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
           // interface, so it is stripped before the math — but it is shown
           // back, because a value that disappears with no acknowledgement
           // reads as an input the tool failed to understand.
-          if (r.zone != null)
+          //
+          // The row is followed by its helper line in every case: when the
+          // reading is certain it says why the value changed nothing, and when
+          // it is not it names the other reading instead of letting the row
+          // pass a guess off as a fact (Vera MEDIUM-1, 2026-08-02).
+          if (r.zone != null) ...<Widget>[
             _semanticRow(
               'Zone',
-              r.zone,
-              ValueRow(label: 'Zone', value: r.zone, mono: true),
+              r.zone!.value,
+              ValueRow(label: 'Zone', value: r.zone!.value, mono: true),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                zoneHelperText(r.zone!),
+                // bodySmall, NOT the labelSmall this screen's other notes use.
+                // GL-003 §8.5.0's standing rule: a caption or label that wraps
+                // to 3+ lines is promoted to a body style rather than squeezed
+                // into the caption register. Measured at 390 dp the "%2512"
+                // string wraps to three lines, so the caption register is not
+                // available to it.
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -136,10 +136,10 @@ void main() {
     expect(find.text('::ffff:203.0.113.77'), findsOneWidget);
     expect(find.text('2002:cb00:714d::/48'), findsOneWidget);
     // The IPv6 breakdown above is untouched by the IPv4 field. Anchored on the
-    // EXPANDED row rather than the Network row: the Network row goes through
-    // the PWA-parity compressor and currently prints "2001:db8/32", and
-    // writing that into an assertion would enshrine a defect this branch
-    // deliberately left for Keith to rule on.
+    // EXPANDED row, which is the same string under either compressor. Keith
+    // ruled on the compressor 2026-08-02 and the Network row now prints
+    // "2001:db8::/32"; the Network row's own values are asserted in
+    // ipv6_subnet_screen_test.dart, so this test stays off them either way.
     expect(
       find.text('2001:0db8:0000:0000:0000:0000:0000:0001'),
       findsOneWidget,
@@ -265,6 +265,14 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '$size');
+
+        // The zone helper line, added 2026-08-02, is the longest wrapped text
+        // the Subnet card can render. 320 dp is the narrowest phone the app
+        // supports, so it is the width where a caption would blow the box.
+        await tester.enterText(_field(0), 'fe80::1%2512');
+        await tester.pumpAndSettle();
+        expect(find.textContaining('it would be 2512'), findsOneWidget);
+        expect(tester.takeException(), isNull, reason: 'zone caveat at $size');
       });
     }
   });
