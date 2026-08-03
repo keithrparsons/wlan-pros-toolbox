@@ -1,0 +1,5 @@
+Subnet Planner carves an IPv4 block into subnets sized to your host counts, or summarizes a list of networks into one covering block, printing what that block claims beyond your list.
+
+Transfer Time divides a file size by a link speed and solves for time, speed or size. Speeds are in bits and sizes in bytes, so a 100 Mbps link moves 12.5 MB per second, not 100.
+
+BSS Load is listed, but on Android it gives no reading: no beacon information elements reach the app. It reads on macOS.
