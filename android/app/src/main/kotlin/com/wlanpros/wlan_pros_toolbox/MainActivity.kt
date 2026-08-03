@@ -123,6 +123,7 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "getWifiInfo" -> result.success(readWifiInfo())
+                    "getWifiCapabilities" -> result.success(readWifiCapabilities())
                     "isLocationAuthorized" -> result.success(isLocationAuthorized())
                     "locationAuthorizationStatus" ->
                         result.success(locationAuthorizationStatusToken())
@@ -512,6 +513,76 @@ class MainActivity : FlutterActivity() {
     /// Reads a snapshot of the connected Wi-Fi link as a map matching the shared
     /// Dart WifiInfo payload. Returns a powered-off / disconnected snapshot
     /// (honest nulls) rather than throwing when there is no active link.
+    // ── Client capabilities ────────────────────────────────────────────────
+    //
+    // What the RADIO supports, as distinct from what the current link is doing.
+    //
+    // EVERY SUPPORT FLAG IS NULLABLE ON PURPOSE, and null is not false. A device
+    // running Android 10 cannot be ASKED whether it supports 802.11ax; answering
+    // "false" would turn a missing API into a claim about the hardware. Null
+    // crosses to Dart as an absent value and renders as an honest unknown.
+    //
+    // Three deliberate gaps, all permanent rather than unfinished:
+    //   * There is NO 2.4 GHz support query. is5GHzBandSupported() and
+    //     is6GHzBandSupported() exist and have no 2.4 GHz sibling, so the band
+    //     list is a floor and the Dart side labels it as one.
+    //   * There is no public maximum-channel-width, spatial-stream or MCS API.
+    //     None of the three is estimated here.
+    //   * getMaxSupportedTxLinkSpeedMbps() is only meaningful while associated,
+    //     and returns a negative sentinel otherwise, which is passed through as
+    //     null rather than as a number.
+    private fun readWifiCapabilities(): Map<String, Any?> {
+        val wifiManager = applicationContext
+            .getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val sdk = Build.VERSION.SDK_INT
+
+        val band5: Boolean? =
+            if (sdk >= Build.VERSION_CODES.LOLLIPOP) wifiManager.is5GHzBandSupported
+            else null
+        val band6: Boolean? =
+            if (sdk >= Build.VERSION_CODES.R) wifiManager.is6GHzBandSupported
+            else null
+
+        // isWifiStandardSupported() landed in API 30. Below that every answer is
+        // null, which Dart reads as "this Android version cannot answer".
+        fun standardSupported(standard: Int): Boolean? =
+            if (sdk >= Build.VERSION_CODES.R) {
+                wifiManager.isWifiStandardSupported(standard)
+            } else {
+                null
+            }
+
+        // ScanResult.WIFI_STANDARD_11BE is API 33. Asking for it on API 30-32
+        // would throw, so it is only asked where it exists.
+        val standard11be: Boolean? =
+            if (sdk >= Build.VERSION_CODES.TIRAMISU) {
+                wifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11BE)
+            } else {
+                null
+            }
+
+        val maxTx: Int? =
+            if (sdk >= Build.VERSION_CODES.Q) {
+                @Suppress("DEPRECATION")
+                val info: WifiInfo? = wifiManager.connectionInfo
+                val v = info?.maxSupportedTxLinkSpeedMbps ?: -1
+                if (v > 0) v else null
+            } else {
+                null
+            }
+
+        return mapOf(
+            "apiLevel" to sdk,
+            "band5Supported" to band5,
+            "band6Supported" to band6,
+            "standard11n" to standardSupported(ScanResult.WIFI_STANDARD_11N),
+            "standard11ac" to standardSupported(ScanResult.WIFI_STANDARD_11AC),
+            "standard11ax" to standardSupported(ScanResult.WIFI_STANDARD_11AX),
+            "standard11be" to standard11be,
+            "maxSupportedTxLinkSpeedMbps" to maxTx,
+        )
+    }
+
     private fun readWifiInfo(): Map<String, Any?> {
         val wifiManager = applicationContext
             .getSystemService(Context.WIFI_SERVICE) as WifiManager

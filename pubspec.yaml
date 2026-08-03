@@ -526,6 +526,11 @@ flutter:
     # copyright, permission pending). Source/provenance in _meta (V6 workbook +
     # Pax brief 2026-06-05). Tamosoft intentionally excluded (Keith 2026-06-05).
     - assets/data/wifi_tools_comparison.json
+    # Apple per-model Wi-Fi capabilities (Client Capabilities tier 2). iOS is the
+    # only platform with no capability API, so it is the only platform that reads
+    # a table. Source, retrieval date and the rule that an unsourced row is
+    # dropped all live in the file's _meta.
+    - assets/data/client_capabilities_apple.json
     # Per-tool Tier-2 custom icons (GL-003 §8.6 / §8.6.1) and in-tool concept
     # graphics (GL-003 §8.6.2). Convention-based lookup by catalog id:
     #   icon    = assets/tool-icons/<tool-id>.svg
