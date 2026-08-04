@@ -364,12 +364,14 @@ msix_config:
   # Microsoft re-signs Store builds, so this is the manifest identity, not a cert.
   publisher: "CN=3160F864-430A-46A3-88F1-A229CE5344BB"
   # MSIX requires a strict 4-part version. Tracks the app version (currently
-  # 1.8.5) with a trailing .0 revision; the user-facing version stays 1.8.5+26072801.
-  # Must exceed the live Store version (1.7.0.0) for the cert to accept it.
-  # NOTE: this field does NOT move with `version:` automatically. It sat at 1.7.0.0
-  # through the whole 1.8.x line, so a Store package built any time in that window
-  # would have carried the already-published 1.7.0.0 identity. Bump both together.
-  msix_version: 1.8.5.0
+  # 1.8.7) with a trailing .0 revision; the user-facing version stays 1.8.7+26080301.
+  # Must exceed the live Store version for the cert to accept it.
+  # NOTE: this field does NOT move with `version:` automatically, and this warning
+  # has now failed twice. It sat at 1.7.0.0 through the early 1.8.x line, then sat
+  # at 1.8.5.0 through the 1.8.6 bump (1884cef) and the 1.8.7 bump (9bfdfea) — so a
+  # Store package built any time in that window would have carried an
+  # already-published identity. Bump both together, in the same commit.
+  msix_version: 1.8.7.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
