@@ -167,7 +167,7 @@ Read BSS Load, element 11 of the beacon, off the access point you are connected 
 
 **How to use**
 1. macOS: open the tool and it takes a snapshot; tap Read again to re-read. macOS will not hand beacon information elements to an app without Location access, so if the screen reports no information elements, grant Location and read again.
-2. Every other platform: the screen opens and reports that this device gave it no information elements. iOS exposes none to any app, and the connected-AP information-element channel is wired for macOS only today.
+2. Every other platform: the screen opens and reports that this device gave it no information elements. No beacon information elements reach this app on iOS, and the connected-AP information-element channel is wired for macOS only today.
 3. When there is no reading, read the small label above the sentence first: it says whether the reason is about this access point, about this read, or about what we were told.
 
 **Formula or method.** The raw information elements are walked by the shared bounds-checked TLV walker (`ie_parser.dart`) and element 11 is decoded by `bss_load_decoder.dart` per IEEE 802.11-2012 section 8.4.2.30, cross-checked field for field against Wireshark's `packet-ieee80211.c` dissector. Station Count is 2 octets little-endian. Channel Utilization is one octet on a linear 0 to 255 scale, so percent = raw × 100 ÷ 255, and the raw octet prints beside it. Available Admission Capacity is 2 octets little-endian in units of 32 microseconds of medium time per second; 1 000 000 ÷ 32 = 31 250 raw represents one full second, which is 100 percent. Nothing is graded. The decoder returns three numbers and one out-of-range flag, and the screen renders three numbers and one out-of-range flag.

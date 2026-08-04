@@ -2098,7 +2098,7 @@
       "whyHere": "These are the access point's own numbers about itself, which is a different question from what your client radio is doing. Reach for it when you want the AP's view of the channel next to your own, or when you are deciding whether a cell is carrying more clients than its coverage suggests. The element is optional, so plenty of access points never send it, and knowing that is itself a finding.",
       "howToUse": [
         "macOS: open the tool and it takes a snapshot. Tap Read again to re-read. macOS will not hand beacon information elements to an app without Location access, so if the screen says it got no information elements, grant Location and read again.",
-        "Every other platform: the screen opens and says this device gave it no information elements. That is true and it is deliberate. iOS exposes none to any app, and the connected-AP information-element channel is wired for macOS only today.",
+        "Every other platform: the screen opens and says this device gave it no information elements. That is true and it is deliberate. No beacon information elements reach this app on iOS, and the connected-AP information-element channel is wired for macOS only today.",
         "When there is no reading, read the small label above the sentence first. It says whether the reason is about this access point, about this read, or about what we were told. Those are three different findings and the label is the fastest way to tell which one you are looking at.",
         "Tap Copy results in the top bar to put the reading on the clipboard as plain text. The copied text carries the same label the screen shows, so a pasted result cannot lose the distinction."
       ],

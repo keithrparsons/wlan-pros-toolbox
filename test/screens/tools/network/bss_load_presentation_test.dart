@@ -412,7 +412,17 @@ void main() {
         ),
       );
       expect(copy.body, contains('macOS is the only platform'));
-      expect(copy.body, contains('iOS exposes none'));
+      // NAMES iOS, AND SCOPES THE CLAIM TO THIS APP. The earlier wording,
+      // "iOS exposes none to any app at all", is an absolute claim about an
+      // operating system that nothing in this repo pins, and it was stronger
+      // than the store copy describing the same screen in the same release.
+      // What we can prove is what reaches US: wifi_info_service.dart returns
+      // an honest null without touching a channel on any non-macOS platform.
+      // Assert the scoping, not the prose, so a future edit cannot quietly
+      // widen it back into a claim about the OS.
+      expect(copy.body, contains('iOS'));
+      expect(copy.body, contains('reach this app'));
+      expect(copy.body, isNot(contains('any app')));
       expect(copy.remedy, BssLoadRemedy.none);
       // It must NOT reach for Location on a platform where Location gates
       // nothing.

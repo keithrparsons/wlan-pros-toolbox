@@ -369,7 +369,8 @@ BssLoadUnavailableCopy _noInformationElements(BssLoadReadContext context) {
       headline: headline,
       body:
           'macOS is the only platform that hands raw beacon information '
-          'elements to this app today, and iOS exposes none to any app at all. '
+          'elements to this app today. No beacon information elements reach '
+          'this app on iOS. '
           'Nothing on this screen is a finding about the access point you are '
           'connected to.',
       remedy: BssLoadRemedy.none,
