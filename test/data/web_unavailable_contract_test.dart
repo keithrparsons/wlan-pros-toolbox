@@ -128,5 +128,56 @@ void main() {
         );
       }
     });
+
+    // REGRESSION GUARD (2026-08-09). `ntp-time` shipped with its screen
+    // returning NetworkUnavailableView on web (ntp_screen.dart `_body()`, gated
+    // on `NetworkSupport.ntpSupported => !kIsWeb`) while its tile carried no web
+    // badge, because nothing forced a decision when a tool was added to the
+    // Networking category. The Test Network category above has had a
+    // whole-category guard since 2026-06-09; Networking had none, so a new
+    // socket tool could be added and silently default to "works on web".
+    //
+    // The rule this pins: a Networking tool is web-unavailable BY DEFAULT.
+    // Anything that genuinely runs in a browser must be added to the explicit
+    // allow-list below, which makes the claim visible and reviewable rather
+    // than inferred from an omission.
+    test('every Networking tool is flagged web-unavailable or explicitly '
+        'allow-listed as web-safe', () {
+      // Tools in the Networking category that genuinely run in a browser:
+      // bundled offline data, pure math, or a browser-native API. Each one is
+      // a deliberate claim that the tool works on web (GL-005 — never warn on
+      // a tool that works).
+      const Set<String> webSafeNetworkingIds = <String>{
+        'mac-oui-lookup', // bundled offline IEEE OUI table, no I/O
+        'ipv4-subnet', // pure subnet math, no I/O
+        'ipv6-subnet', // pure subnet math, no I/O
+        'subnet-planner', // pure subnet math, no I/O
+        'my-current-location', // browser Geolocation API via geolocator
+      };
+
+      final ToolCategory networking =
+          kToolCategories.firstWhere((ToolCategory c) => c.id == 'networking');
+      final List<String> undecided = networking.tools
+          .map((ToolEntry t) => t.id)
+          .where((String id) =>
+              !kWebUnavailableToolIds.contains(id) &&
+              !webSafeNetworkingIds.contains(id))
+          .toList();
+
+      expect(
+        undecided,
+        isEmpty,
+        reason: 'Networking tools with no web verdict: ${undecided.join(", ")}. '
+            'Add each to kWebUnavailableToolIds (its screen refuses on web) or '
+            'to webSafeNetworkingIds (it genuinely runs in a browser).',
+      );
+    });
+
+    test('ntp-time carries a web warning (its screen refuses on web)', () {
+      // Pins the specific defect: SNTP needs an outbound UDP/123 datagram
+      // socket, which no browser can open, so ntp_screen.dart renders
+      // NetworkUnavailableView. The tile must say so too.
+      expect(kWebUnavailableToolIds.contains('ntp-time'), isTrue);
+    });
   });
 }

@@ -218,6 +218,7 @@ const Set<String> kWebUnavailableToolIds = <String>{
   'bgp-asn', // RIPEstat over dart:io HttpClient (CORS unverified)
   'ip-geo', // ipinfo.io over dart:io HttpClient (CORS unverified)
   'packet-sender', // raw TCP/UDP socket
+  'ntp-time', // SNTP over an outbound UDP/123 datagram socket
 };
 
 /// True when [toolId] cannot function in a browser AND we are running on web,
