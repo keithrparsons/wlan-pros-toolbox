@@ -2107,7 +2107,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // 2026-08-09 added three Hamina-adjacent community tools to the bundled
     // JSON (Robin Decloedt's attenuation object library, Kjetil Teigen Hansen's
     // teigenRF tools, Joel Crane's Hamina clipboard tools), 42 -> 45.
-    countLabelOverride: '60',
+    // 61 = 45 -> 46. Robin Decloedt offered his Hamina Attenuation Object
+    // Editor unprompted when he approved the library listing, same day.
+    countLabelOverride: '61',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

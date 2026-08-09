@@ -3,7 +3,7 @@
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
     "last_updated": "2026-08-09",
-    "count": 45,
+    "count": 46,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -774,8 +774,27 @@
         "attenuation",
         "predictive"
       ],
-      "approval": "pending_outreach",
-      "notes": "Added 2026-08-09. Every object in the library's own data file carries CC BY 4.0; the WordPress plugin behind the page is separately GPL-2.0-or-later, which is a different grant over different work. The license permits use without asking, so 'pending_outreach' records the OUTREACH state here rather than a legal blocker: Keith emailed Robin Decloedt 2026-08-09 and had no reply when this was written. Flip to 'approved' on reply. NO object count appears in the description on purpose: the page footer is rendered client-side from a JSON file that grows as objects are submitted, so any number baked in here goes stale. The description credits a 'companion object editor on the same site' because the page links its own Hamina Attenuation Object Editor, verified against the live page 2026-08-09."
+      "approval": "approved",
+      "notes": "Added 2026-08-09. Approval explicitly granted by the owner the same day: Robin Decloedt answered Keith's listing request with 'It would be an honour to be referenced by you and your app', and mentioned he already has the Toolbox installed. Every object in the library's own data file carries CC BY 4.0; the WordPress plugin behind the page is separately GPL-2.0-or-later, which is a different grant over different work. NO object count appears in the description on purpose: the page footer is rendered client-side from a JSON file that grows as objects are submitted, so any number baked in here goes stale. The description credits a 'companion object editor on the same site' because the page links its own Hamina Attenuation Object Editor, verified against the live page 2026-08-09; that editor is listed separately as 'robinwifi-hamina-object-editor'."
+    },
+    {
+      "id": "robinwifi-hamina-object-editor",
+      "title": "Hamina Attenuation Object Editor",
+      "summary": "Paste a Hamina object in, reshape its zones, and copy it back out, without leaving the browser.",
+      "description": "The Hamina Attenuation Object Editor, by Robin Decloedt, is a free browser tool for changing an attenuation object after you have copied it out of Hamina. You paste the clipboard document in, select zones on the drawing, then move, rotate, scale, or mirror them, and edit what each zone type is made of. Editing a type changes every zone using it, so one change updates every part built from that material. Sizing is exact when you need it to be: type a width or depth in meters and press Enter, or nudge with the arrow keys in steps of 10 mm, 100 mm with Shift, and 1 mm with Alt. When you copy back out, anything in the original paste that was not an attenuation zone comes through untouched.\n\nThe library is where you get an object and this is where you change it. Everything runs in your browser, and the page states that nothing is uploaded and nothing is stored, which is worth knowing when the document you are pasting came out of a client's floor plan. Decloedt says his tools are still being worked on, so expect this one to keep changing. Free to use, no sign-in, nothing to install. Best for anyone holding a Hamina object that is close to right and needs it turned, resized, or rebuilt out of a different material.",
+      "url": "https://robinwifi.eu/tools/hamina-object-editor/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "design",
+        "hamina",
+        "attenuation",
+        "editor"
+      ],
+      "approval": "approved",
+      "notes": "Added 2026-08-09. Approval explicitly granted by the owner the same day, unprompted, in the same reply that cleared the object library: 'You're free to include that one as well if you like it.' NO license statement appears anywhere on this page. Fetched 2026-08-09: zero matches for 'licen', 'creative commons', 'cc by' or 'gpl' in 92 KB of HTML, and the only 'all rights reserved' is the site-wide WordPress footer that also sits under the library page, which nonetheless grants CC BY 4.0. So this entry states NO terms at all, and the library's CC BY 4.0 was deliberately NOT carried across: that grant is about the objects. 'cost: free' rests on the page's own meta description ('Free Hamina object editor ...') plus the absence of any sign-in, account, or pricing text. The 'still being worked on' line comes from Decloedt's 2026-08-09 reply to Keith rather than from the page; his words were that the tools are 'still a bit of work in progress'. The page itself was published 2026-08-08 and last modified 2026-08-09, so it is new. The page also credits Joel Crane's clipboard tool as prior art. That credit is Decloedt's to give on his own page and is deliberately absent from this description, because repeating it in a directory would assert a relationship between two separate listings that is not ours to assert."
     },
     {
       "id": "teigenrf-ai-tools",

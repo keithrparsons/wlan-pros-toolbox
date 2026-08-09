@@ -2,7 +2,7 @@
 // tolerance), topic grouping in `_meta.topics` order, free-text search across
 // title/summary/description/topic/tags, and the approval field surviving onto
 // the model. Most tests use a small in-memory fixture; the last group loads the
-// REAL bundled asset to prove all 45 entries parse and group into the 7 topics.
+// REAL bundled asset to prove all 46 entries parse and group into the 7 topics.
 
 import 'dart:convert';
 import 'dart:io';
@@ -199,7 +199,7 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 45 curated entries into the 7 topic groups', () {
+    test('parses the 46 curated entries into the 7 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
@@ -230,8 +230,10 @@ void main() {
       // 2026-08-09: added three Hamina-adjacent community tools under the
       // existing "Tools and utilities" topic (42 -> 45) — Robin Decloedt's
       // Hamina Attenuation Object Library, Kjetil Teigen Hansen's teigenRF
-      // tools, and Joel Crane's Hamina Clipboard Tools. All three sit in an
-      // existing topic, so the group count is unchanged.
+      // tools, and Joel Crane's Hamina Clipboard Tools. Decloedt then offered
+      // his Hamina Attenuation Object Editor unprompted in the reply approving
+      // the library, taking it to 46. All four sit in an existing topic, so the
+      // group count is unchanged.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -239,7 +241,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 45);
+      expect(real.count, 46);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 7);
@@ -263,15 +265,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 45.
+      // Every entry lands in exactly one group; counts sum to 46.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 45);
+      expect(sum, 46);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 45);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 46);
     });
 
     // 2026-08-09, part one: outreach was complete for everything shipped
@@ -283,22 +285,27 @@ void main() {
     //
     // 2026-08-09, part two: three entries were added the same day and are the
     // FIRST use of the staging state the enum was deliberately kept parseable
-    // for. Keith emailed all three owners that day. Kjetil Teigen Hansen
-    // replied within the day and his entry is 'approved'; Robin Decloedt and
-    // Joel Crane had not replied, so their two rows stay staged. The earlier
-    // version of this test asserted the pending set was EMPTY, which would have
-    // blocked exactly the case the enum comment promised to support.
+    // for. The earlier version of this test asserted the pending set was EMPTY,
+    // which would have blocked exactly the case the enum comment promised to
+    // support.
     //
-    // NAMED, NOT COUNTED, on purpose. An id set still fails if a THIRD entry
-    // drifts into pending_outreach, or if one of these two is flipped to
-    // 'approved' without the row's `notes` being updated to say who replied.
-    // A bare count would let one silently swap for another.
+    // Keith emailed all three owners that day and TWO replied within it. Kjetil
+    // Teigen Hansen said yes. Robin Decloedt said yes and offered a fourth
+    // resource unprompted, his Hamina Attenuation Object Editor, which is
+    // therefore born 'approved' and never passes through the staged state at
+    // all. Joel Crane had not replied, so exactly one row stays staged.
+    //
+    // NAMED, NOT COUNTED, on purpose, and this is the day that earned it: the
+    // pending set has now changed twice in one session. A count would have gone
+    // 3 -> 2 -> 1 while saying nothing about WHICH row moved, and a row flipped
+    // to 'approved' without its `notes` recording who replied would look
+    // identical to a row that was answered. An id set fails on both.
     //
     // divdyn-wifi-design-flowchart also moved not_required -> approved in this
     // change (its own notes recorded an explicit grant from Devin Akin). With
-    // Hansen's reply that makes 29 approved and 14 not_required, up from 27
-    // and 15.
-    test('only the two unanswered 2026-08-09 additions are pending outreach',
+    // both replies and the offered fourth entry that makes 31 approved and 14
+    // not_required, up from 27 and 15.
+    test('only the one unanswered 2026-08-09 addition is pending outreach',
         () {
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(
@@ -312,10 +319,7 @@ void main() {
           .toSet();
       expect(
         pending,
-        <String>{
-          'robinwifi-hamina-objects',
-          'potatofi-hamina-clipboard',
-        },
+        <String>{'potatofi-hamina-clipboard'},
         reason: 'outreach completed 2026-08-08 for every earlier entry; only '
             'the 2026-08-09 additions whose owners have not replied may be '
             'staged. Found: ${pending.join(", ")}',
@@ -326,7 +330,7 @@ void main() {
             .where((EducationalResource e) =>
                 e.approval == ResourceApproval.approved)
             .length,
-        29,
+        31,
       );
       expect(
         real.all
@@ -346,16 +350,13 @@ void main() {
     // would notice. Asserting on the PARSED model rather than on the JSON text
     // is the whole point: reading the string back out of the file would pass
     // even when the parser rejects it.
-    test('the staged additions round-trip to pendingOutreach on the model', () {
+    test('the staged addition round-trips to pendingOutreach on the model', () {
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(
               File('assets/data/educational_resources.json')
                   .readAsStringSync());
 
-      for (final String id in <String>[
-        'robinwifi-hamina-objects',
-        'potatofi-hamina-clipboard',
-      ]) {
+      for (final String id in <String>['potatofi-hamina-clipboard']) {
         final EducationalResource? e = real.byId(id);
         expect(e, isNotNull, reason: '$id missing from the bundled asset');
         expect(e!.approval, ResourceApproval.pendingOutreach,
@@ -364,11 +365,19 @@ void main() {
         expect(e.cost, ResourceCost.free);
       }
 
-      // Kjetil Teigen Hansen replied to Keith the same day ("Share it! Yes!"),
-      // so his entry is the one 2026-08-09 addition that is already approved.
-      // One reply must not cascade into three approvals.
+      // Two of the four owners replied on 2026-08-09 and their rows are
+      // 'approved'. ONE REPLY GRANTS ONE PERMISSION: Decloedt's yes covers his
+      // two resources because he named both, and it does NOT reach Joel Crane's
+      // clipboard tool, which is a different author on a different domain.
       expect(real.byId('teigenrf-ai-tools')?.approval,
           ResourceApproval.approved);
+      expect(real.byId('robinwifi-hamina-objects')?.approval,
+          ResourceApproval.approved);
+      // Offered by its author unprompted, in the reply approving the library.
+      expect(real.byId('robinwifi-hamina-object-editor')?.approval,
+          ResourceApproval.approved);
+      expect(real.byId('robinwifi-hamina-object-editor')?.cost,
+          ResourceCost.free);
       expect(real.byId('teigenrf-ai-tools')?.url,
           'https://tools.teigenrf.org/',
           reason: 'the author asked for the shorter address 2026-08-09');

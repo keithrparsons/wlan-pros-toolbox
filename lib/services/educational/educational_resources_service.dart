@@ -31,10 +31,14 @@
 // could be staged before its owner replied, and on 2026-08-09 three additions
 // exercised it (Robin Decloedt's object library, Kjetil Teigen Hansen's
 // teigenRF tools, Joel Crane's Hamina clipboard tools). Keith emailed all three
-// owners that day; Hansen replied and is 'approved', the other two stay staged.
-// Current split: 29 'approved', 14 'not_required', 2 'pending_outreach'. THESE
-// COUNTS ARE PROSE AND CANNOT ENFORCE THEMSELVES — the test 'only the two
-// unanswered 2026-08-09 additions are pending outreach' is what holds them.
+// owners that day and two replied within it, so the staged set went 3 -> 2 -> 1
+// in a single session. Decloedt also offered a fourth resource unprompted, his
+// Hamina Attenuation Object Editor, which was born 'approved' and never passed
+// through the staged state. Joel Crane's row is the one still waiting.
+// Current split: 31 'approved', 14 'not_required', 1 'pending_outreach'. THESE
+// COUNTS ARE PROSE AND CANNOT ENFORCE THEMSELVES — the test 'only the one
+// unanswered 2026-08-09 addition is pending outreach' is what holds them, and
+// it names the row rather than counting it precisely because this set moves.
 //
 // The field is metadata only: this build shows ALL entries and the field is NOT
 // used to hide anything.
@@ -125,8 +129,8 @@ enum ResourceApproval {
   /// of outreach; every owner responded positively).
   approved,
 
-  /// The owner has been asked and has not replied yet. Two entries added
-  /// 2026-08-09 are in this state; they flip to [approved] on reply.
+  /// The owner has been asked and has not replied yet. One entry added
+  /// 2026-08-09 is in this state; it flips to [approved] on reply.
   pendingOutreach,
 
   /// Unrecognized or missing token. NOTE: [parse] degrades to this rather than

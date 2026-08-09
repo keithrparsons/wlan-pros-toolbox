@@ -236,6 +236,7 @@ void main() {
 
     const List<String> titles = <String>[
       'Hamina Attenuation Object Library',
+      'Hamina Attenuation Object Editor',
       'teigenRF Free Tools for Hamina and Ekahau',
       'Hamina Clipboard Tools (PotatoFi)',
     ];
@@ -290,5 +291,16 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'teigenrf');
     await tester.pump();
     expect(find.text('teigenRF Free Tools for Hamina and Ekahau'), findsWidgets);
+
+    // 'Hamina Attenuation Object Library' and 'Hamina Attenuation Object
+    // Editor' share a 32-character prefix and both landed on 2026-08-09. A
+    // search for the shared prefix must return BOTH, and find.text is exact, so
+    // this also proves the two rows are distinct widgets rather than one row
+    // matched twice.
+    await tester.enterText(
+        find.byType(TextField).first, 'hamina attenuation object');
+    await tester.pump();
+    expect(find.text('Hamina Attenuation Object Library'), findsWidgets);
+    expect(find.text('Hamina Attenuation Object Editor'), findsWidgets);
   });
 }
