@@ -2,7 +2,7 @@
   "_meta": {
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
-    "last_updated": "2026-07-27",
+    "last_updated": "2026-08-07",
     "count": 42,
     "topics": [
       "Tools and utilities",
@@ -248,7 +248,7 @@
       "summary": "Ferney Munoz's bilingual English and Spanish Wi-Fi education hub, one of the few covering Wi-Fi in Spanish.",
       "description": "The Wi-Fi of Things, run by Ferney Munoz, is a Wi-Fi education hub published in both English and Spanish, with sessions, industry news, and tool reviews. The Spanish-language coverage is what sets it apart, since very little serious Wi-Fi training exists in Spanish at all.\n\nIf you work with Spanish-speaking teams, or you want a second voice teaching the same concepts in a second language, this is a rare resource. Free, independent. Useful across all levels.",
       "url": "https://thewifiofthings.com/",
-      "topic": "Podcasts",
+      "topic": "Independent blogs and experts",
       "cost": "free",
       "level": "all",
       "tags": [
