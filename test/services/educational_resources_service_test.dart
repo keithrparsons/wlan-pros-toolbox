@@ -2,7 +2,7 @@
 // tolerance), topic grouping in `_meta.topics` order, free-text search across
 // title/summary/description/topic/tags, and the approval field surviving onto
 // the model. Most tests use a small in-memory fixture; the last group loads the
-// REAL bundled asset to prove all 42 entries parse and group into the 7 topics.
+// REAL bundled asset to prove all 45 entries parse and group into the 7 topics.
 
 import 'dart:convert';
 import 'dart:io';
@@ -199,7 +199,7 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 42 curated entries into the 7 topic groups', () {
+    test('parses the 45 curated entries into the 7 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
@@ -227,6 +227,11 @@ void main() {
       // (Eva Santos, CWNE #521, wifrizzy.io) under the existing "Independent
       // blogs and experts" topic (41 -> 42), marked pending_outreach; still
       // within the existing 7 topics, so the group count is unchanged.
+      // 2026-08-09: added three Hamina-adjacent community tools under the
+      // existing "Tools and utilities" topic (42 -> 45) — Robin Decloedt's
+      // Hamina Attenuation Object Library, Kjetil Teigen Hansen's teigenRF
+      // tools, and Joel Crane's Hamina Clipboard Tools. All three sit in an
+      // existing topic, so the group count is unchanged.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -234,7 +239,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 42);
+      expect(real.count, 45);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 7);
@@ -258,50 +263,171 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 42.
+      // Every entry lands in exactly one group; counts sum to 45.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 42);
+      expect(sum, 45);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 42);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 45);
     });
 
-    // 2026-08-09: outreach is complete. Keith: "I have already contact ALL the
-    // educational resource owners, and they have each responded positively" /
-    // "clear the 27 outreach to educational resources ... no need to carry
-    // that". The 27 previously-pending entries became 'approved'; the 15 that
-    // never needed permission stay 'not_required'.
-    test('no bundled entry is still pending outreach', () {
+    // 2026-08-09, part one: outreach was complete for everything shipped
+    // before that date. Keith: "I have already contact ALL the educational
+    // resource owners, and they have each responded positively" / "clear the 27
+    // outreach to educational resources ... no need to carry that". The 27
+    // previously-pending entries became 'approved'; the 15 that never needed
+    // permission stayed 'not_required'.
+    //
+    // 2026-08-09, part two: three entries were added the same day and are the
+    // FIRST use of the staging state the enum was deliberately kept parseable
+    // for. Keith emailed all three owners that day. Kjetil Teigen Hansen
+    // replied within the day and his entry is 'approved'; Robin Decloedt and
+    // Joel Crane had not replied, so their two rows stay staged. The earlier
+    // version of this test asserted the pending set was EMPTY, which would have
+    // blocked exactly the case the enum comment promised to support.
+    //
+    // NAMED, NOT COUNTED, on purpose. An id set still fails if a THIRD entry
+    // drifts into pending_outreach, or if one of these two is flipped to
+    // 'approved' without the row's `notes` being updated to say who replied.
+    // A bare count would let one silently swap for another.
+    //
+    // divdyn-wifi-design-flowchart also moved not_required -> approved in this
+    // change (its own notes recorded an explicit grant from Devin Akin). With
+    // Hansen's reply that makes 29 approved and 14 not_required, up from 27
+    // and 15.
+    test('only the two unanswered 2026-08-09 additions are pending outreach',
+        () {
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(
               File('assets/data/educational_resources.json')
                   .readAsStringSync());
 
-      final Iterable<String> pending = real.all
+      final Set<String> pending = real.all
           .where((EducationalResource e) =>
               e.approval == ResourceApproval.pendingOutreach)
-          .map((EducationalResource e) => e.id);
-      expect(pending, isEmpty,
-          reason: 'outreach completed 2026-08-08; still pending: '
-              '${pending.join(", ")}');
+          .map((EducationalResource e) => e.id)
+          .toSet();
+      expect(
+        pending,
+        <String>{
+          'robinwifi-hamina-objects',
+          'potatofi-hamina-clipboard',
+        },
+        reason: 'outreach completed 2026-08-08 for every earlier entry; only '
+            'the 2026-08-09 additions whose owners have not replied may be '
+            'staged. Found: ${pending.join(", ")}',
+      );
 
       expect(
         real.all
             .where((EducationalResource e) =>
                 e.approval == ResourceApproval.approved)
             .length,
-        27,
+        29,
       );
       expect(
         real.all
             .where((EducationalResource e) =>
                 e.approval == ResourceApproval.notRequired)
             .length,
-        15,
+        14,
       );
+    });
+
+    // THE ROUND-TRIP ASSERTION. 'pending_outreach' had no bundled user before
+    // today, so nothing proved the token survives the asset -> parser -> model
+    // path on real data. It matters here more than for the other two values:
+    // `ResourceApprovalToken.parse` degrades an unrecognized token to `unknown`
+    // WITHOUT throwing, so a typo in the JSON ('pending-outreach', 'pending')
+    // would render an entry with a silently wrong approval state and no test
+    // would notice. Asserting on the PARSED model rather than on the JSON text
+    // is the whole point: reading the string back out of the file would pass
+    // even when the parser rejects it.
+    test('the staged additions round-trip to pendingOutreach on the model', () {
+      final EducationalResourcesService real =
+          EducationalResourcesService.fromJson(
+              File('assets/data/educational_resources.json')
+                  .readAsStringSync());
+
+      for (final String id in <String>[
+        'robinwifi-hamina-objects',
+        'potatofi-hamina-clipboard',
+      ]) {
+        final EducationalResource? e = real.byId(id);
+        expect(e, isNotNull, reason: '$id missing from the bundled asset');
+        expect(e!.approval, ResourceApproval.pendingOutreach,
+            reason: '$id did not parse to pendingOutreach');
+        expect(e.topic, 'Tools and utilities');
+        expect(e.cost, ResourceCost.free);
+      }
+
+      // Kjetil Teigen Hansen replied to Keith the same day ("Share it! Yes!"),
+      // so his entry is the one 2026-08-09 addition that is already approved.
+      // One reply must not cascade into three approvals.
+      expect(real.byId('teigenrf-ai-tools')?.approval,
+          ResourceApproval.approved);
+      expect(real.byId('teigenrf-ai-tools')?.url,
+          'https://tools.teigenrf.org/',
+          reason: 'the author asked for the shorter address 2026-08-09');
+
+      // The corrected defect row: its notes recorded an explicit grant while
+      // the value said no permission was ever needed.
+      expect(real.byId('divdyn-wifi-design-flowchart')?.approval,
+          ResourceApproval.approved);
+      // The row whose VALUE was right and whose NOTE was stale.
+      expect(real.byId('frame-exchange-reference')?.approval,
+          ResourceApproval.approved);
+    });
+
+    // THE NOTE/VALUE CONTRADICTION GUARD. Two rows shipped with an `approval`
+    // value that its own `notes` prose contradicted: 'divdyn-wifi-design-
+    // flowchart' sat at 'not_required' while its note recorded that the owner
+    // explicitly granted approval, and 'frame-exchange-reference' moved to
+    // 'approved' in the 2026-08-09 sweep while its note still read "Approval
+    // pending owner outreach" from 2026-06-12. Nothing caught either, because
+    // `notes` is prose the model never parses.
+    //
+    // This is a NARROW PHRASE GUARD, not a semantic checker. It knows two
+    // phrasings and no more: a note that says outreach is pending may not sit
+    // on 'approved', and a note that says approval was explicitly granted may
+    // not sit on 'not_required'. It cannot read a sentence it has not been
+    // taught. It is here because it fails red on exactly the two rows that
+    // were wrong.
+    test('no entry notes contradict the approval value', () {
+      final Map<String, dynamic> decoded = jsonDecode(
+              File('assets/data/educational_resources.json').readAsStringSync())
+          as Map<String, dynamic>;
+      final List<dynamic> rows = decoded['resources'] as List<dynamic>;
+
+      final List<String> contradictions = <String>[];
+      for (final dynamic row in rows) {
+        final Map<String, dynamic> r = row as Map<String, dynamic>;
+        final String notes = (r['notes'] as String? ?? '').toLowerCase();
+        final String approval = (r['approval'] as String? ?? '').toLowerCase();
+        final String id = r['id'] as String? ?? '(no id)';
+        if (notes.isEmpty) continue;
+
+        final bool notesSayPending = notes.contains('approval pending') ||
+            notes.contains('pending owner outreach');
+        if (notesSayPending && approval != 'pending_outreach') {
+          contradictions.add('$id: notes say outreach pending, approval='
+              '$approval');
+        }
+
+        final bool notesSayGranted =
+            notes.contains('approval explicitly granted');
+        if (notesSayGranted && approval != 'approved') {
+          contradictions.add('$id: notes say approval granted, approval='
+              '$approval');
+        }
+      }
+
+      expect(contradictions, isEmpty,
+          reason: 'approval value contradicts its own notes for: '
+              '${contradictions.join(" | ")}');
     });
 
     // THE PAIRING GUARD. `ResourceApprovalToken.parse` degrades an unrecognized

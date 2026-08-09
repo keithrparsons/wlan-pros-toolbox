@@ -3,7 +3,7 @@
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
     "last_updated": "2026-08-09",
-    "count": 42,
+    "count": 45,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -664,8 +664,8 @@
         "reference",
         "divergent dynamics"
       ],
-      "approval": "not_required",
-      "notes": "Devin Akin (Divergent Dynamics) approved adding his Wi-Fi Design Flowchart 2026-06-12, pointing to divdyn.com. Approval explicitly GRANTED by the owner. The dataset's schema carries no separate 'granted' token, so approval='not_required' records that this entry is cleared for publish (no pending outreach), per the EducationalResourcesService approval enum (not_required | pending_outreach)."
+      "approval": "approved",
+      "notes": "Devin Akin (Divergent Dynamics) approved adding his Wi-Fi Design Flowchart 2026-06-12, pointing to divdyn.com. Approval explicitly GRANTED by the owner. Corrected 2026-08-09 from 'not_required' to 'approved': the earlier value was a workaround recorded in this note, which said the enum offered only (not_required | pending_outreach) and used not_required to mean 'cleared for publish'. The enum gained 'approved' on 2026-08-09, so the granted approval is now recordable as itself. This row was outside the sweep that moved the other 27, because the sweep matched on 'pending_outreach'."
     },
     {
       "id": "dest-wireshark-wifi-wiki",
@@ -719,7 +719,7 @@
         "reference"
       ],
       "approval": "approved",
-      "notes": "Jonathan Davis publicly released this 2026-06-12 at Wi-Co NC and invited the community to share it; Keith's description, added 2026-06-12. Approval pending owner outreach per the dataset convention for independent authors."
+      "notes": "Jonathan Davis publicly released this 2026-06-12 at Wi-Co NC and invited the community to share it; Keith's description, added 2026-06-12. Note corrected 2026-08-09. The VALUE was already right and the NOTE was stale: the closing sentence used to report approval as still awaiting owner contact, which contradicted the 'approved' value this row moved to on 2026-08-09 when Keith confirmed every owner had been contacted and had responded positively. (Paraphrased rather than quoted, because the guard test that caught this reads note prose by substring and a verbatim quote of the wrong sentence re-trips it.) Jonathan Davis is separately on record as approving frames.bitbucketlabs.com on 2026-06-05, so the approval predates that sweep."
     },
     {
       "id": "dest-mackenziewifi",
@@ -757,6 +757,64 @@
         "certification"
       ],
       "approval": "approved"
+    },
+    {
+      "id": "robinwifi-hamina-objects",
+      "title": "Hamina Attenuation Object Library",
+      "summary": "Ready-made 3D attenuation objects you copy straight into a Hamina design.",
+      "description": "The Hamina Attenuation Object Library, by Robin Decloedt, is a free collection of pre-drawn attenuation objects for Hamina. Desks and meeting tables at real sizes, task chairs, steel cupboards, server racks, pallet racking both loaded and empty, and warehouse trucks, each one built from separate parts with their own materials instead of one solid block. You pick an object, hit copy, and paste it into Hamina with Ctrl+V. A companion object editor on the same site takes the object back out of your clipboard when you need to turn it, resize it, or change what a part is made of.\n\nHamina gives you attenuation profiles and the tools to draw obstacles, and leaves the furniture to you. That is why most predictive models stop at walls, and why a warehouse full of loaded pallet racking so often gets modeled as one big cube. This is the missing middle. Decloedt drew most of the objects himself and the library is open to contributions: contributors agree to a short set of terms before submitting, and are credited by name on every object they send. Everything is published under Creative Commons Attribution 4.0, so you can use the objects commercially and change them. Dropping one into a survey or a client deliverable needs no credit at all. Credit is owed only if you republish the objects themselves. The site is straight about the limits: the loss figures are starting points for 5 GHz rather than measurements, so validate against your own survey data before you trust a prediction. Best for anyone doing predictive design in Hamina who wants the model to look like the room.",
+      "url": "https://robinwifi.eu/tools/hamina-objects/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "design",
+        "hamina",
+        "attenuation",
+        "predictive"
+      ],
+      "approval": "pending_outreach",
+      "notes": "Added 2026-08-09. Every object in the library's own data file carries CC BY 4.0; the WordPress plugin behind the page is separately GPL-2.0-or-later, which is a different grant over different work. The license permits use without asking, so 'pending_outreach' records the OUTREACH state here rather than a legal blocker: Keith emailed Robin Decloedt 2026-08-09 and had no reply when this was written. Flip to 'approved' on reply. NO object count appears in the description on purpose: the page footer is rendered client-side from a JSON file that grows as objects are submitted, so any number baked in here goes stale. The description credits a 'companion object editor on the same site' because the page links its own Hamina Attenuation Object Editor, verified against the live page 2026-08-09."
+    },
+    {
+      "id": "teigenrf-ai-tools",
+      "title": "teigenRF Free Tools for Hamina and Ekahau",
+      "summary": "Browser generators and editors that build attenuation objects and edit Hamina and Ekahau project files.",
+      "description": "A set of free tools by Kjetil Teigen Hansen for people who build Wi-Fi designs. A library hands you finished objects; these hand you the means to make and change them. There are browser generators for office clutter, vehicles, vegetation, and people, a 3D object editor for adjusting the geometry and attenuation properties of any object you import, and project editors that open Hamina and Ekahau files so you can modify access points, walls, and attenuation objects directly. An experimental converter takes an Ekahau ESX file to OpenIntent 3D, and a desktop app displays live and recorded traces from the NetAlly NXT-2000 spectrum analyzer.\n\nHansen built these with AI assistance and says so in the name of the site. None of it is official, and none of it carries a vendor's endorsement. Treat them as what they are: useful unofficial utilities from a working engineer. Keep a copy of any project file before you feed it to an editor, and look at what comes back before it reaches a client. Free to use, with a tip jar and no paywall. The two tools labeled Pro are free as well; Pro is a name here, not a price tier. Best for designers comfortable enough with project files to check the output.",
+      "url": "https://tools.teigenrf.org/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "advanced",
+      "tags": [
+        "tool",
+        "design",
+        "hamina",
+        "ekahau",
+        "attenuation",
+        "generator"
+      ],
+      "approval": "approved",
+      "notes": "Added 2026-08-09. Approval explicitly granted by the owner the same day: Kjetil Teigen Hansen answered Keith's listing request with 'Share it! Yes!'. He also asked that the listing use tools.teigenrf.org rather than the longer ai-tools.teigenrf.org, and the two addresses served byte-identical pages when both were fetched 2026-08-09, so his preferred address is the one carried here. 'cost: free' rests on his own words to Keith, 'all is and will forever be free', and on both Pro tool pages carrying no pricing, purchase, or subscription text. His 'forever' is his promise and is deliberately not repeated as a guarantee in the description. NO license statement exists on the tools site or in the linked GitHub repository, whose API reports no license, so the work is all rights reserved by default: listing the URL needs no permission, but nothing here may be mirrored, rehosted, or republished. The description names NO platform for the NXT-2000 desktop app on purpose: the tools page offers a Windows download while the GitHub repository ships three macOS builds alongside the Windows installer, so any single-platform wording would be false."
+    },
+    {
+      "id": "potatofi-hamina-clipboard",
+      "title": "Hamina Clipboard Tools (PotatoFi)",
+      "summary": "Paste a Hamina selection in, rotate or convert it, and copy it back out.",
+      "description": "Hamina Clipboard Tools, by Joel Crane, is a free web tool that sits between two clipboard operations. You paste a selection out of Hamina onto its canvas, change it, and copy it back. It rotates everything on the canvas in either direction in steps of 1, 5, 22.5, or 45 degrees. It converts every zone and object on the canvas to a different kind: attenuating object, floor hole, building edge, scope zone, or capacity zone. It also generates geometry from nothing, either a circular wall or attenuating object built from a segment count and a diameter in meters, or a grid of access points or map notes with rows, columns, spacing, and an optional triangular pattern.\n\nRotation is the one most people find first, because a library of pre-drawn objects hands you every object facing the same direction. Zone conversion is the quiet time-saver: drawing a capacity zone and then deciding it should have been a scope zone stops meaning you draw it twice. The grid generator gives you a starting access point layout to argue with rather than a blank floor plan. This is an independent tool on the author's own domain, with no vendor behind it. Free to use, nothing to install, and the work happens in your browser. Best for anyone working in Hamina who has hit the limits of what the canvas lets them change directly.",
+      "url": "https://clipboard.potatofi.com",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "design",
+        "hamina",
+        "clipboard",
+        "attenuation"
+      ],
+      "approval": "pending_outreach",
+      "notes": "Added 2026-08-09. Joel Crane approved the sibling listing 'potatofi-spectrum' on 2026-06-05, but that approval covered the spectrum chart and not this tool, so this row starts at 'pending_outreach' rather than inheriting it: Keith emailed him 2026-08-09 and had no reply when this was written. Flip to 'approved' on reply. NO license statement appears on the clipboard tool page. It is a different subdomain from the spectrum chart and does not carry the spectrum chart's note about linking rather than rehosting, so this description states no terms at all. The page also carries no author byline; attribution comes from the shared potatofi.com domain and the existing approved listing, not from the page. Feature list verified against the live page 2026-08-09."
     }
   ]
 }

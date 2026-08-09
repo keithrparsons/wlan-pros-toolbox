@@ -6,6 +6,8 @@
 // asset load or the live catalog. A tall viewport is used so all list rows are
 // laid out (a ListView only builds on-screen children).
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -214,5 +216,79 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
     }
+  });
+
+  // RENDER PROOF FOR THE 2026-08-09 ADDITIONS. Every other test in this file
+  // injects a fixture on purpose, so none of them would notice a real row that
+  // parses but never reaches the screen. This one pumps the BUNDLED asset and
+  // looks for the three new rows at mobile, tablet and desktop widths, because
+  // "the parser accepted it" and "a user can see it" are different claims.
+  testWidgets('the 2026-08-09 additions render from the bundled asset',
+      (tester) async {
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final EducationalResourcesService real =
+        EducationalResourcesService.fromJson(
+            File('assets/data/educational_resources.json').readAsStringSync());
+
+    const List<String> titles = <String>[
+      'Hamina Attenuation Object Library',
+      'teigenRF Free Tools for Hamina and Ekahau',
+      'Hamina Clipboard Tools (PotatoFi)',
+    ];
+
+    for (final double width in <double>[375, 768, 1280]) {
+      tester.view.physicalSize = Size(width, 6000);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: EducationalResourcesScreen(service: real, cards: _cards),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
+
+      for (final String title in titles) {
+        expect(find.text(title), findsWidgets,
+            reason: '"$title" did not render at ${width}px');
+      }
+    }
+  });
+
+  testWidgets('search reaches the 2026-08-09 additions by name and by tag',
+      (tester) async {
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    tester.view.physicalSize = const Size(900, 4000);
+    tester.view.devicePixelRatio = 1.0;
+
+    final EducationalResourcesService real =
+        EducationalResourcesService.fromJson(
+            File('assets/data/educational_resources.json').readAsStringSync());
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: EducationalResourcesScreen(service: real, cards: _cards),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'attenuation object');
+    await tester.pump();
+    expect(find.text('Hamina Attenuation Object Library'), findsWidgets);
+
+    await tester.enterText(find.byType(TextField).first, 'clipboard');
+    await tester.pump();
+    expect(find.text('Hamina Clipboard Tools (PotatoFi)'), findsWidgets);
+
+    await tester.enterText(find.byType(TextField).first, 'teigenrf');
+    await tester.pump();
+    expect(find.text('teigenRF Free Tools for Hamina and Ekahau'), findsWidgets);
   });
 }

@@ -2103,7 +2103,11 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Educational Resources screen has always counted in its "curated places"
     // intro — so the home badge (54) contradicted the screen header (55). Pin
     // 55 to match what the screen actually presents.
-    countLabelOverride: '57',
+    // 60 = 14 reference cards + the in-app Field Manual + 45 online resources.
+    // 2026-08-09 added three Hamina-adjacent community tools to the bundled
+    // JSON (Robin Decloedt's attenuation object library, Kjetil Teigen Hansen's
+    // teigenRF tools, Joel Crane's Hamina clipboard tools), 42 -> 45.
+    countLabelOverride: '60',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

@@ -20,16 +20,24 @@
 //
 // APPROVAL: every entry carries an `approval` field recording the permission
 // state of the listing ('not_required' / 'approved' / 'pending_outreach').
-// Outreach is COMPLETE as of 2026-08-09 (Keith: "I have already contact ALL the
-// educational resource owners, and they have each responded positively"), so no
-// entry is 'pending_outreach' any more: 27 entries whose owners were asked and
-// agreed are 'approved', and 15 that never needed permission stay
-// 'not_required'. The two are kept distinct because they are different facts —
-// "we asked and they said yes" is not "we never had to ask".
+// Outreach was COMPLETE for every entry shipped before 2026-08-09 (Keith: "I
+// have already contact ALL the educational resource owners, and they have each
+// responded positively"): entries whose owners were asked and agreed are
+// 'approved', and those that never needed permission are 'not_required'. The
+// two are kept distinct because they are different facts — "we asked and they
+// said yes" is not "we never had to ask".
+//
+// 'pending_outreach' was retained as a parseable value so a future addition
+// could be staged before its owner replied, and on 2026-08-09 three additions
+// exercised it (Robin Decloedt's object library, Kjetil Teigen Hansen's
+// teigenRF tools, Joel Crane's Hamina clipboard tools). Keith emailed all three
+// owners that day; Hansen replied and is 'approved', the other two stay staged.
+// Current split: 29 'approved', 14 'not_required', 2 'pending_outreach'. THESE
+// COUNTS ARE PROSE AND CANNOT ENFORCE THEMSELVES — the test 'only the two
+// unanswered 2026-08-09 additions are pending outreach' is what holds them.
 //
 // The field is metadata only: this build shows ALL entries and the field is NOT
-// used to hide anything. 'pending_outreach' is retained as a parseable value so
-// a future addition can be staged before its owner replies.
+// used to hide anything.
 
 import 'dart:convert';
 
@@ -117,9 +125,8 @@ enum ResourceApproval {
   /// of outreach; every owner responded positively).
   approved,
 
-  /// The owner has been asked and has not replied yet. No entry is in this
-  /// state today — the value stays parseable so a future addition can be
-  /// staged before its owner replies.
+  /// The owner has been asked and has not replied yet. Two entries added
+  /// 2026-08-09 are in this state; they flip to [approved] on reply.
   pendingOutreach,
 
   /// Unrecognized or missing token. NOTE: [parse] degrades to this rather than
