@@ -9,10 +9,14 @@
  Lime highlight = Type I (looks interchangeable AU/China/Argentina,
  but Argentina reverses line/neutral). One highlight only.
  Data verified: RESEARCH-BRIEF.md international section.
- Canvas dark #1A1A1A per App Mode; faces are decorative schematics.
+ TRANSPARENT CANVAS per GL-003 §11.8: this file paints no background.
+ The background is the themed card the graphic sits on. A baked
+ #1A1A1A rect here would survive the §8.20.7 light swap unchanged
+ (#1A1A1A is deliberately off the allow-list) while every mark on it
+ swapped to dark, so the drawing rendered dark-on-dark and vanished;
+ in dark mode it read as a black box on the lighter card. Faces are
+ decorative schematics.
  -->
-
-  <rect x="0" y="0" width="1240" height="720" fill="#1A1A1A"/>
 
   <!-- HEADER -->
   <text x="40" y="44" fill="#E5E5E5" font-size="26" font-weight="700">International Power Plug Faces</text>
