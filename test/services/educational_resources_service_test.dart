@@ -268,5 +268,79 @@ void main() {
           jsonDecode(raw) as Map<String, dynamic>;
       expect((decoded['_meta'] as Map<String, dynamic>)['count'], 42);
     });
+
+    // 2026-08-09: outreach is complete. Keith: "I have already contact ALL the
+    // educational resource owners, and they have each responded positively" /
+    // "clear the 27 outreach to educational resources ... no need to carry
+    // that". The 27 previously-pending entries became 'approved'; the 15 that
+    // never needed permission stay 'not_required'.
+    test('no bundled entry is still pending outreach', () {
+      final EducationalResourcesService real =
+          EducationalResourcesService.fromJson(
+              File('assets/data/educational_resources.json')
+                  .readAsStringSync());
+
+      final Iterable<String> pending = real.all
+          .where((EducationalResource e) =>
+              e.approval == ResourceApproval.pendingOutreach)
+          .map((EducationalResource e) => e.id);
+      expect(pending, isEmpty,
+          reason: 'outreach completed 2026-08-08; still pending: '
+              '${pending.join(", ")}');
+
+      expect(
+        real.all
+            .where((EducationalResource e) =>
+                e.approval == ResourceApproval.approved)
+            .length,
+        27,
+      );
+      expect(
+        real.all
+            .where((EducationalResource e) =>
+                e.approval == ResourceApproval.notRequired)
+            .length,
+        15,
+      );
+    });
+
+    // THE PAIRING GUARD. `ResourceApprovalToken.parse` degrades an unrecognized
+    // token to `unknown` instead of throwing, so a wire value the enum does not
+    // know fails SILENTLY — the entry still renders, just with a wrong approval
+    // state. That is precisely how a data-only edit (JSON changed, enum not)
+    // would slip through unnoticed. This asserts every bundled token resolves.
+    test('every bundled approval token is recognized by the parser', () {
+      final EducationalResourcesService real =
+          EducationalResourcesService.fromJson(
+              File('assets/data/educational_resources.json')
+                  .readAsStringSync());
+
+      final Iterable<String> unresolved = real.all
+          .where((EducationalResource e) =>
+              e.approval == ResourceApproval.unknown)
+          .map((EducationalResource e) => e.id);
+      expect(unresolved, isEmpty,
+          reason: 'approval token not handled in ResourceApprovalToken.parse '
+              'for: ${unresolved.join(", ")}');
+    });
+  });
+
+  group('approval parsing', () {
+    test('parses every wire token, case-insensitively', () {
+      expect(ResourceApprovalToken.parse('not_required'),
+          ResourceApproval.notRequired);
+      expect(
+          ResourceApprovalToken.parse('approved'), ResourceApproval.approved);
+      expect(ResourceApprovalToken.parse('  APPROVED  '),
+          ResourceApproval.approved);
+      expect(ResourceApprovalToken.parse('pending_outreach'),
+          ResourceApproval.pendingOutreach);
+    });
+
+    test('an unrecognized token degrades to unknown rather than throwing', () {
+      // Documents the silent-failure mode the pairing guard above exists for.
+      expect(ResourceApprovalToken.parse('cleared'), ResourceApproval.unknown);
+      expect(ResourceApprovalToken.parse(''), ResourceApproval.unknown);
+    });
   });
 }

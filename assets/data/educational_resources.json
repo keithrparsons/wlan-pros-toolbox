@@ -2,7 +2,7 @@
   "_meta": {
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
-    "last_updated": "2026-08-07",
+    "last_updated": "2026-08-09",
     "count": 42,
     "topics": [
       "Tools and utilities",
@@ -29,7 +29,7 @@
         "client-behavior",
         "reference"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "artofrf-pcap-io-graph",
@@ -46,7 +46,7 @@
         "pcap",
         "analysis"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "wlan-pi",
@@ -63,7 +63,7 @@
         "open-source",
         "field"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "wlan-pi-cookbook",
@@ -79,7 +79,7 @@
         "open-source",
         "how-to"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "wavelify",
@@ -96,7 +96,7 @@
         "planning",
         "survey"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-wlpc-youtube",
@@ -206,7 +206,7 @@
         "podcast",
         "independent"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-heavy-wireless",
@@ -240,7 +240,7 @@
         "podcast",
         "independent"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-wifi-of-things",
@@ -259,7 +259,7 @@
         "spanish",
         "bilingual"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-wifi-ninjas",
@@ -276,7 +276,7 @@
         "blog",
         "independent"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-ruckcast",
@@ -310,7 +310,7 @@
         "packet-analysis",
         "certification"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-wirednot",
@@ -327,7 +327,7 @@
         "independent",
         "opinion"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-artofrf",
@@ -345,7 +345,7 @@
         "rf",
         "802.1X"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-packetologist",
@@ -363,7 +363,7 @@
         "troubleshooting",
         "automation"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-semfio-blog",
@@ -380,7 +380,7 @@
         "independent",
         "how-to"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-intuitibits-blog",
@@ -398,7 +398,7 @@
         "analysis",
         "packet-capture"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-hamina-blog",
@@ -434,7 +434,7 @@
         "archive",
         "dormant"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-wifinigel-archive",
@@ -453,7 +453,7 @@
         "dormant",
         "wlan-pi"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-cwnp-certification",
@@ -542,7 +542,7 @@
         "ip",
         "training"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "wlananalyser",
@@ -559,7 +559,7 @@
         "capture",
         "analysis"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-shankarwifi",
@@ -577,7 +577,7 @@
         "independent",
         "certification"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "potatofi-spectrum",
@@ -594,7 +594,7 @@
         "rf",
         "reference"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "badgerwifi-tools",
@@ -611,7 +611,7 @@
         "survey",
         "automation"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-framebyframe",
@@ -629,7 +629,7 @@
         "analysis",
         "certification"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-divergent-dynamics",
@@ -647,7 +647,7 @@
         "design",
         "vendor-neutral"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "divdyn-wifi-design-flowchart",
@@ -718,7 +718,7 @@
         "security",
         "reference"
       ],
-      "approval": "pending_outreach",
+      "approval": "approved",
       "notes": "Jonathan Davis publicly released this 2026-06-12 at Wi-Co NC and invited the community to share it; Keith's description, added 2026-06-12. Approval pending owner outreach per the dataset convention for independent authors."
     },
     {
@@ -737,7 +737,7 @@
         "cwap",
         "analysis"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     },
     {
       "id": "dest-wifrizzy",
@@ -756,7 +756,7 @@
         "cheat-sheets",
         "certification"
       ],
-      "approval": "pending_outreach"
+      "approval": "approved"
     }
   ]
 }

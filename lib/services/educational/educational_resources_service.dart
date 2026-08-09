@@ -18,10 +18,18 @@
 // HONESTY: an unmatched query returns an empty result, never a fabricated row.
 // A malformed entry is dropped, not rendered as a blank line.
 //
-// APPROVAL: every entry carries an `approval` field ('not_required' /
-// 'pending_outreach') driving Keith's pre-publish pruning. This build shows ALL
-// entries (the field is kept on the model so a future pre-publish filter is
-// trivial; it is NOT used to hide anything here).
+// APPROVAL: every entry carries an `approval` field recording the permission
+// state of the listing ('not_required' / 'approved' / 'pending_outreach').
+// Outreach is COMPLETE as of 2026-08-09 (Keith: "I have already contact ALL the
+// educational resource owners, and they have each responded positively"), so no
+// entry is 'pending_outreach' any more: 27 entries whose owners were asked and
+// agreed are 'approved', and 15 that never needed permission stay
+// 'not_required'. The two are kept distinct because they are different facts —
+// "we asked and they said yes" is not "we never had to ask".
+//
+// The field is metadata only: this build shows ALL entries and the field is NOT
+// used to hide anything. 'pending_outreach' is retained as a parseable value so
+// a future addition can be staged before its owner replies.
 
 import 'dart:convert';
 
@@ -98,10 +106,27 @@ extension ResourceLevelLabel on ResourceLevel {
   }
 }
 
-/// Pre-publish approval status. Metadata only in this build — kept on the model
-/// so a future "hide pending_outreach before public publish" filter is a
-/// one-line `where`, never a re-parse.
-enum ResourceApproval { notRequired, pendingOutreach, unknown }
+/// Permission state of a listing. Metadata only in this build — kept on the
+/// model so a future "hide anything not cleared before public publish" filter
+/// is a one-line `where`, never a re-parse.
+enum ResourceApproval {
+  /// No permission was ever needed to list this resource.
+  notRequired,
+
+  /// The owner was asked and agreed to the listing (Keith's 2026-08-08 round
+  /// of outreach; every owner responded positively).
+  approved,
+
+  /// The owner has been asked and has not replied yet. No entry is in this
+  /// state today — the value stays parseable so a future addition can be
+  /// staged before its owner replies.
+  pendingOutreach,
+
+  /// Unrecognized or missing token. NOTE: [parse] degrades to this rather than
+  /// throwing, so a typo'd wire value fails SILENTLY. Any new token must be
+  /// added to [parse] in the same change as the data, or it lands here.
+  unknown,
+}
 
 extension ResourceApprovalToken on ResourceApproval {
   /// Parse a wire token (case-insensitive).
@@ -109,6 +134,8 @@ extension ResourceApprovalToken on ResourceApproval {
     switch (token.trim().toLowerCase()) {
       case 'not_required':
         return ResourceApproval.notRequired;
+      case 'approved':
+        return ResourceApproval.approved;
       case 'pending_outreach':
         return ResourceApproval.pendingOutreach;
       default:
@@ -159,7 +186,7 @@ class EducationalResource {
   /// Free-form tags.
   final List<String> tags;
 
-  /// Pre-publish approval status (metadata; not used to hide entries here).
+  /// Permission state of the listing (metadata; not used to hide entries here).
   final ResourceApproval approval;
 
   /// Build from a decoded JSON map. Returns null when the row is malformed
