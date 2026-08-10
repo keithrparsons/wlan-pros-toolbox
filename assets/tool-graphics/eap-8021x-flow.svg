@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" fill="none" font-family="IBM Plex Sans">
   <!-- 802.1X authentication flow: Supplicant <-> Authenticator <-> Authentication Server (RADIUS).
        EAP over the first link, RADIUS over the second. Server authenticated by certificate (lime hero).
        Dark-baked palette per §8.20.7 allow-list. markerUnits=userSpaceOnUse on the arrowhead. -->
@@ -39,9 +39,9 @@
         marker-start="url(#arrowHead)" marker-end="url(#arrowHead)"/>
 
   <!-- link protocol labels ABOVE each link, clear of nodes and line -->
-  <text x="235" y="138" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">EAP</text>
+  <text x="235" y="138" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle" font-family="DM Mono">EAP</text>
   <text x="235" y="100" fill="#9C9C9C" font-size="10.5" font-weight="500" text-anchor="middle">EAPOL</text>
-  <text x="485" y="138" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">RADIUS</text>
+  <text x="485" y="138" fill="#E5E5E5" font-size="12.5" font-weight="600" text-anchor="middle" font-family="DM Mono">RADIUS</text>
   <text x="485" y="100" fill="#9C9C9C" font-size="10.5" font-weight="500" text-anchor="middle">EAP-in-RADIUS</text>
 
   <!-- ============================ CERTIFICATE NOTE (lime hero) ============================ -->

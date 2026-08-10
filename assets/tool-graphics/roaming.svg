@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Roaming: a client moving between two AP cells, handoff at the RSSI threshold.
        APs drawn as real APs (rounded-rect body + two dipoles). RF radiates OUTWARD
        (downward) from each AP. Lime = the roam trigger / handoff. 802.11r/k/v. -->
 
   <!-- Header -->
-  <text x="160" y="18" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.11r / k / v handoff</text>
+  <text x="160" y="18" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono">802.11r / k / v handoff</text>
 
   <!-- Ceiling line -->
   <line x1="14" y1="34" x2="306" y2="34" stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round" opacity="0.7"/>

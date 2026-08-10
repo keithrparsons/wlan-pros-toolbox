@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Ping: an echo to a host and the round-trip back. Request out (neutral), reply in (lime).
        Lime = the round-trip and its measured RTT. Archetype C (path / sequence). -->
 
@@ -23,5 +23,5 @@
   <text x="160" y="120" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle">echo reply</text>
 
   <!-- RTT readout (lime, the one measured quantity) -->
-  <text x="160" y="152" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">RTT = 24 ms</text>
+  <text x="160" y="152" fill="#A2CC3A" font-size="13" font-weight="600" text-anchor="middle" font-family="DM Mono">RTT = 24 ms</text>
 </svg>

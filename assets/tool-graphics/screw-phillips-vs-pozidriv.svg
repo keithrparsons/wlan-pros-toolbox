@@ -1,7 +1,7 @@
 <svg width="720" height="500" viewBox="0 0 720 500" xmlns="http://www.w3.org/2000/svg">
   <!-- THE teaching graphic: Phillips vs Pozidriv. Lime = the Pozi 45-degree tick marks that distinguish it. -->
   <!-- Palette: canvas #1A1A1A, bright #E5E5E5, lime #A1CC3A -->
-  <text x="360" y="44" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="700" font-size="26" fill="#E5E5E5">Phillips vs Pozidriv: tell them apart</text>
+  <text x="360" y="44" text-anchor="middle" font-family="IBM Plex Sans" font-weight="700" font-size="26" fill="#E5E5E5">Phillips vs Pozidriv: tell them apart</text>
 
   <!-- ===== Phillips (left) ===== -->
   <g transform="translate(190,200)">
@@ -10,8 +10,8 @@
     <line x1="0" y1="-66" x2="0" y2="66" fill="none" stroke="#E5E5E5" stroke-width="9" stroke-linecap="round"/>
     <rect x="-15" y="-15" width="30" height="30" rx="5" fill="#E5E5E5" stroke="none"/>
   </g>
-  <text x="190" y="320" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="22" fill="#E5E5E5">Phillips</text>
-  <text x="190" y="346" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="400" font-size="15" fill="#E5E5E5">Clean cross. No tick marks.</text>
+  <text x="190" y="320" text-anchor="middle" font-family="IBM Plex Sans" font-weight="600" font-size="22" fill="#E5E5E5">Phillips</text>
+  <text x="190" y="346" text-anchor="middle" font-family="IBM Plex Sans" font-weight="400" font-size="15" fill="#E5E5E5">Clean cross. No tick marks.</text>
 
   <!-- ===== Pozidriv (right) ===== -->
   <g transform="translate(530,200)">
@@ -27,25 +27,25 @@
       <line x1="-27" y1="-27" x2="-55" y2="-55"/>
     </g>
   </g>
-  <text x="530" y="320" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="22" fill="#E5E5E5">Pozidriv</text>
-  <text x="530" y="346" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#A1CC3A">Extra 45&#176; tick marks between the arms.</text>
+  <text x="530" y="320" text-anchor="middle" font-family="IBM Plex Sans" font-weight="600" font-size="22" fill="#E5E5E5">Pozidriv</text>
+  <text x="530" y="346" text-anchor="middle" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#A1CC3A">Extra 45&#176; tick marks between the arms.</text>
 
   <!-- the memorize rule. Each rightwards arrow (was &#8594;) is a vector <path>; the
        runs are re-flowed start-anchored with the arrow in a fixed gap (GL-003 8.6.1). -->
-  <text x="102.2" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">No tick lines</text>
+  <text x="102.2" y="392" text-anchor="start" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#E5E5E5">No tick lines</text>
   <path d="M187.6 387 H198.6 M195.1 383 L198.6 387 L195.1 391" fill="none" stroke="#E5E5E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="200.6" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">use a </text>
-  <text x="239.8" y="392" text-anchor="start" font-family="DM Mono,monospace" font-weight="400" font-size="14" fill="#E5E5E5">PH</text>
-  <text x="256.6" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5"> bit</text>
+  <text x="200.6" y="392" text-anchor="start" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#E5E5E5">use a </text>
+  <text x="239.8" y="392" text-anchor="start" font-family="DM Mono" font-weight="400" font-size="14" fill="#E5E5E5">PH</text>
+  <text x="256.6" y="392" text-anchor="start" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#E5E5E5"> bit</text>
 
-  <text x="451.8" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#A1CC3A">Tick lines</text>
+  <text x="451.8" y="392" text-anchor="start" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#A1CC3A">Tick lines</text>
   <path d="M518 387 H529 M525.5 383 L529 387 L525.5 391" fill="none" stroke="#E5E5E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="531" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">use a </text>
-  <text x="570.2" y="392" text-anchor="start" font-family="DM Mono,monospace" font-weight="400" font-size="14" fill="#E5E5E5">PZ</text>
-  <text x="587" y="392" text-anchor="start" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5"> bit</text>
+  <text x="531" y="392" text-anchor="start" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#E5E5E5">use a </text>
+  <text x="570.2" y="392" text-anchor="start" font-family="DM Mono" font-weight="400" font-size="14" fill="#E5E5E5">PZ</text>
+  <text x="587" y="392" text-anchor="start" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#E5E5E5"> bit</text>
 
   <!-- not-interchangeable warning band -->
   <rect x="56" y="420" width="608" height="62" rx="8" fill="none" stroke="#E5E5E5" stroke-width="2"/>
-  <text x="360" y="446" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="600" font-size="15" fill="#E5E5E5">Not interchangeable.</text>
-  <text  x="360" y="467" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-weight="400" font-size="15" fill="#E5E5E5">The wrong bit cams out and strips the head. The #1 field mistake on EU enclosures.</text>
+  <text x="360" y="446" text-anchor="middle" font-family="IBM Plex Sans" font-weight="600" font-size="15" fill="#E5E5E5">Not interchangeable.</text>
+  <text  x="360" y="467" text-anchor="middle" font-family="IBM Plex Sans" font-weight="400" font-size="15" fill="#E5E5E5">The wrong bit cams out and strips the head. The #1 field mistake on EU enclosures.</text>
 </svg>

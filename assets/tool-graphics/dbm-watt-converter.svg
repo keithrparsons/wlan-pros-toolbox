@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- dBm <-> Watt: a level scale showing the log relationship. dBm is linear on the scale; Watts multiply x10 every +10 dB. -->
 
   <!-- Scale axis -->
@@ -14,7 +14,7 @@
   </g>
 
   <!-- dBm labels (below, even spacing = linear) -->
-  <g fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">
+  <g fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono">
     <text x="56"  y="116">0 dBm</text>
     <text x="114" y="116">10</text>
     <text x="172" y="116">20</text>
@@ -22,7 +22,7 @@
   </g>
 
   <!-- Watt values (above, ×10 each step = the log relationship, in lime) -->
-  <g fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">
+  <g fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono">
     <text x="56"  y="74">1 mW</text>
     <text x="114" y="74">10 mW</text>
     <text x="172" y="74">100 mW</text>

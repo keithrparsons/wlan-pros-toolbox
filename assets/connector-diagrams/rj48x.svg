@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans">
   <!-- RJ48X - 8P8C. T1 variant with a SHORTING BAR (in the JACK) that loops the
        line back when the plug is removed, for loopback testing. Body is the same
        8P8C. Lime marks the shorting bar bridging the outer pins (the identifying

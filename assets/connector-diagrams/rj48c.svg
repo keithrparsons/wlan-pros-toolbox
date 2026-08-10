@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans">
   <!-- RJ48C - 8P8C. The common T1 variant on a wall jack. Body is identical
        8P8C; the distinguishing fact is the active pin set: 1/2 = Rx, 4/5 = Tx.
        Lime marks the four pins T1 actually uses (1,2,4,5). Pins 3,6,7,8 unused. -->

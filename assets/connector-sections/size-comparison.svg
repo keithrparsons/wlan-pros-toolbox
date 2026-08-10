@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" fill="none" font-family="IBM Plex Sans">
   <!-- SIZE COMPARISON — original clean-room line art, drawn to TRUE RELATIVE SCALE.
        Scale: 6 px = 1 mm (horizontal body width). Verified widths from antenna_connectors.json
        + research brief (line 87): across-flats hex for threaded parts, outer diameter for board parts.

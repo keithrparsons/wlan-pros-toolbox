@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Interface info: this device + its NIC, reading out its own network identity as a record card.
        Lime = the active interface (the NIC port and its live address rows). Archetype G (lookup/record). -->
 
@@ -20,7 +20,7 @@
   <text x="128" y="47" fill="#E5E5E5" font-size="12" font-weight="500">interface</text>
 
   <!-- Rows: label (neutral) + value (lime, the live readout) -->
-  <g font-family="DM Mono, monospace" font-size="11" font-weight="500">
+  <g font-family="DM Mono" font-size="11" font-weight="500">
     <text x="128" y="68" fill="#9C9C9C">IP</text>
     <text x="290" y="68" fill="#A2CC3A" text-anchor="end">192.168.1.42</text>
     <text x="128" y="84" fill="#9C9C9C">GW</text>

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Wavelength = c/f: one sine cycle with the lambda span dimensioned. Lime = the wavelength. -->
 
   <!-- Center axis (zero crossing baseline) -->
@@ -32,7 +32,7 @@
        fixed left anchor so no monospace alignment is lost (GL-003 8.6.1). -->
   <path d="M134.9 9.0 L130.0 20.5 M133.0 13.2 L138.1 20.5" fill="none"
         stroke="#E5E5E5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="142" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace"> = c / f</text>
+  <text x="142" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono"> = c / f</text>
 
   <!-- Frequency label: arrow and trailing lambda are <path>s; the ASCII text is
        split into two left-anchored runs so the arrow + lambda sit in fixed gaps. -->

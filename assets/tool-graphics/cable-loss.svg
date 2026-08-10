@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Cable loss: a coax run of length L; signal level dropping along it. Lime = the dB lost over distance. -->
 
   <!-- Input connector (left) -->
@@ -37,5 +37,5 @@
   <text x="168" y="156" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">length L</text>
 
   <!-- Header -->
-  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">loss = dB/m &#215; L</text>
+  <text x="160" y="20" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono">loss = dB/m &#215; L</text>
 </svg>

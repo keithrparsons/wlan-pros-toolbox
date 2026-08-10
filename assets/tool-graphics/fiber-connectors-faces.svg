@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 440" width="920" height="440" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 440" width="920" height="440" fill="none" font-family="IBM Plex Sans">
   <!-- Connector face silhouettes: LC / SC / ST / FC / MPO-MTP. Form-factor recognition.
        Ferrule size is the lime teaching element (1.25mm LC vs 2.5mm SC/ST/FC; rectangular MPO).
        Dark-baked palette per §8.20.7. Bright #E5E5E5 for all meaningful text. -->
@@ -26,7 +26,7 @@
       <circle cx="32" cy="83" r="6.5"/>
     </g>
     <text x="32" y="132" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle">LC</text>
-    <text x="32" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">1.25&#8201;mm</text>
+    <text x="32" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">1.25&#8201;mm</text>
     <text x="32" y="170" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">simplex / duplex</text>
     <text x="32" y="188" fill="#A2CC3A" font-size="11" font-weight="600" text-anchor="middle">dominant today</text>
   </g>
@@ -42,7 +42,7 @@
     <!-- 2.5mm ferrule (lime), visibly bigger than LC -->
     <circle cx="34" cy="40" r="12" fill="#A2CC3A" stroke="none"/>
     <text x="34" y="132" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle">SC</text>
-    <text x="34" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5&#8201;mm</text>
+    <text x="34" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2.5&#8201;mm</text>
     <text x="34" y="170" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">simplex / duplex</text>
     <text x="34" y="188" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">push-pull snap</text>
   </g>
@@ -56,7 +56,7 @@
     <!-- 2.5mm ferrule -->
     <circle cx="36" cy="40" r="12" fill="#A2CC3A" stroke="none"/>
     <text x="36" y="132" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle">ST</text>
-    <text x="36" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5&#8201;mm</text>
+    <text x="36" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2.5&#8201;mm</text>
     <text x="36" y="170" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">simplex only</text>
     <text x="36" y="188" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">bayonet twist-lock</text>
   </g>
@@ -79,7 +79,7 @@
     <!-- 2.5mm ferrule -->
     <circle cx="36" cy="40" r="12" fill="#A2CC3A" stroke="none"/>
     <text x="36" y="132" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle">FC</text>
-    <text x="36" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.5&#8201;mm</text>
+    <text x="36" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2.5&#8201;mm</text>
     <text x="36" y="170" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">simplex only</text>
     <text x="36" y="188" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">threaded screw</text>
   </g>
@@ -101,7 +101,7 @@
       <circle cx="82" cy="40" r="2.4"/><circle cx="90.5" cy="40" r="2.4"/>
     </g>
     <text x="50" y="132" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle">MPO / MTP</text>
-    <text x="50" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">8 / 12 / 24 fiber</text>
+    <text x="50" y="152" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">8 / 12 / 24 fiber</text>
     <text x="50" y="170" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">ribbon, keyed</text>
     <text x="50" y="188" fill="#E5E5E5" font-size="11" font-weight="500" text-anchor="middle">40/100/400G parallel</text>
   </g>

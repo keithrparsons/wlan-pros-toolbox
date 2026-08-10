@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" fill="none" font-family="IBM Plex Sans">
   <!-- U.FL / MHF I vs MHF 4 scale comparison. Tiny board-level snap-on connectors.
        U.FL = I-PEX MHF I: 2.0 mm male OD, intermateable. MHF 4: 1.5 mm OD, smaller, does NOT mate.
        Drawn to TRUE relative scale (3.5 px per 0.1 mm) so the size gap is the message.

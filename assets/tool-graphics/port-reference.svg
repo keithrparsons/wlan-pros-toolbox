@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Port reference: a query field over a port->service list; lime = the matched port row. Archetype E. -->
 
   <!-- Query field (left): a port number being looked up -->
   <rect x="22" y="40" width="74" height="26" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="34" y="57" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">443</text>
+  <text x="34" y="57" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">443</text>
   <!-- magnifier glyph in the field -->
   <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round">
     <circle cx="78" cy="51" r="5"/>
@@ -16,7 +16,7 @@
   </g>
 
   <!-- Port -> service table (right) -->
-  <g font-family="DM Mono, monospace">
+  <g font-family="DM Mono">
     <!-- header rule -->
     <line x1="134" y1="36" x2="298" y2="36" stroke="#9C9C9C" stroke-width="1.25"/>
     <text x="140" y="33" fill="#9C9C9C" font-size="10" font-weight="500">port</text>

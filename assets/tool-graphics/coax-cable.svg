@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Coax construction: concentric cross-section (left) + cutaway run (right).
        Lime = the impedance / velocity-factor spec, the quantity the tool reports. -->
 
@@ -41,8 +41,8 @@
   <!-- Ohm signs (was &#937; in DM Mono, which carries no Greek -> tofu) drawn as
        vector <path>s; the ASCII text is split into start-anchored monospace runs
        with each omega in its fixed gap (GL-003 8.6.1). -->
-  <text x="104.8" y="138" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">Z0 = 50</text>
-  <text x="167.8" y="138" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace"> / 75</text>
+  <text x="104.8" y="138" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">Z0 = 50</text>
+  <text x="167.8" y="138" fill="#A2CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono"> / 75</text>
   <g fill="none" stroke="#A2CC3A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
     <path d="M160.3 135.1 A4.0 4.0 0 1 1 166.9 135.1 M160.3 135.1 L159.0 138.0 M166.9 135.1 L168.2 138.0"/>
     <path d="M207.7 135.1 A4.0 4.0 0 1 1 214.3 135.1 M207.7 135.1 L206.4 138.0 M214.3 135.1 L215.6 138.0"/>

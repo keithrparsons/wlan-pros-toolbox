@@ -1,4 +1,4 @@
-<svg width="1180" height="640" viewBox="0 0 1180 640" xmlns="http://www.w3.org/2000/svg" font-family="'IBM Plex Sans', sans-serif">
+<svg width="1180" height="640" viewBox="0 0 1180 640" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans">
   <defs>
     <!-- dimension arrowheads -->
     <marker id="dimArrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto">
@@ -85,9 +85,9 @@
        ABOVE the small gap (in clear space over the rail top) with a knockout, since the gap
        is only 55px tall and the U-boundary dash crosses its middle. -->
   <rect x="40" y="96" width="82" height="22" fill="#1A1A1A"/>
-  <text x="118" y="113" text-anchor="end" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#A1CC3A">0.5"</text>
-  <text x="118" y="203" text-anchor="end" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#E5E5E5">0.625"</text>
-  <text x="118" y="272" text-anchor="end" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#E5E5E5">0.625"</text>
+  <text x="118" y="113" text-anchor="end" font-family="DM Mono" font-size="17" font-weight="500" fill="#A1CC3A">0.5"</text>
+  <text x="118" y="203" text-anchor="end" font-family="DM Mono" font-size="17" font-weight="500" fill="#E5E5E5">0.625"</text>
+  <text x="118" y="272" text-anchor="end" font-family="DM Mono" font-size="17" font-weight="500" fill="#E5E5E5">0.625"</text>
 
   <!-- U-boundary label rides ABOVE the dashed line at y=330, in the open space between the
        rail (right edge x=208) and the 1U bracket (x=430). Knockout keeps it off the dash. -->
@@ -101,9 +101,9 @@
     <line x1="424" y1="522.5" x2="436" y2="522.5"/>
   </g>
   <!-- 1U value block placed to the right of the bracket, clear of all lines -->
-  <text x="446" y="412" font-family="'DM Mono', monospace" font-size="26" font-weight="500" fill="#A1CC3A">1U</text>
-  <text x="446" y="438" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#A1CC3A">1.75 in</text>
-  <text x="446" y="460" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#A1CC3A">44.45 mm</text>
+  <text x="446" y="412" font-family="DM Mono" font-size="26" font-weight="500" fill="#A1CC3A">1U</text>
+  <text x="446" y="438" font-family="DM Mono" font-size="16" font-weight="500" fill="#A1CC3A">1.75 in</text>
+  <text x="446" y="460" font-family="DM Mono" font-size="16" font-weight="500" fill="#A1CC3A">44.45 mm</text>
 
   <!-- "3 holes per U, repeating" note, clear space below the rail -->
   <text x="183" y="630" text-anchor="middle" font-size="14" font-weight="600" fill="#E5E5E5">3 holes per U: uneven, repeating</text>
@@ -152,7 +152,7 @@
   <line x1="1160" y1="86" x2="1160" y2="116" stroke="#A1CC3A" stroke-width="1.2"/>
   <!-- label sits above the dim line in clear space -->
   <rect x="855" y="62" width="110" height="24" fill="#1A1A1A"/>
-  <text x="910" y="80" text-anchor="middle" font-family="'DM Mono', monospace" font-size="17" font-weight="500" fill="#A1CC3A">19 in panel</text>
+  <text x="910" y="80" text-anchor="middle" font-family="DM Mono" font-size="17" font-weight="500" fill="#A1CC3A">19 in panel</text>
 
   <!-- DIM 2: 18.312in hole spacing (center-to-center), middle band -->
   <!-- hole center x left = 696, right = 1124 -->
@@ -161,7 +161,7 @@
   <line x1="696" y1="450" x2="696" y2="531" stroke="#3A3A3A" stroke-width="1"/>
   <line x1="1124" y1="450" x2="1124" y2="531" stroke="#3A3A3A" stroke-width="1"/>
   <rect x="838" y="513" width="144" height="24" fill="#1A1A1A"/>
-  <text x="910" y="531" text-anchor="middle" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#E5E5E5">18.312 in holes</text>
+  <text x="910" y="531" text-anchor="middle" font-family="DM Mono" font-size="16" font-weight="500" fill="#E5E5E5">18.312 in holes</text>
 
   <!-- DIM 3: 17.72in opening, lower band -->
   <line x1="714" y1="568" x2="1106" y2="568" stroke="#E5E5E5" stroke-width="1.4"
@@ -169,7 +169,7 @@
   <line x1="714" y1="484" x2="714" y2="574" stroke="#3A3A3A" stroke-width="1"/>
   <line x1="1106" y1="484" x2="1106" y2="574" stroke="#3A3A3A" stroke-width="1"/>
   <rect x="842" y="556" width="136" height="24" fill="#1A1A1A"/>
-  <text x="910" y="574" text-anchor="middle" font-family="'DM Mono', monospace" font-size="16" font-weight="500" fill="#E5E5E5">17.72 in opening</text>
+  <text x="910" y="574" text-anchor="middle" font-family="DM Mono" font-size="16" font-weight="500" fill="#E5E5E5">17.72 in opening</text>
 
   <!-- post / flange labels, in clear space beside the geometry -->
   <text x="670" y="500" text-anchor="middle" font-size="12.5" fill="#9C9C9C">flange</text>

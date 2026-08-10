@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Free Space Path Loss: Tx antenna -> weakening wave over distance -> Rx antenna -->
 
   <!-- Tx antenna (left) — schematic aerial symbol (mast + base + 3 splayed rays) -->
@@ -35,7 +35,7 @@
   <text x="34" y="140" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle">freq f</text>
 
   <!-- Formula -->
-  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">FSPL = 20·log f + 20·log d + 92.45</text>
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono">FSPL = 20·log f + 20·log d + 92.45</text>
 
   <!-- "loss grows" cue: small lime label on faded far arc. The up-arrow (loss
        grows) is a vector <path>, NOT a font glyph (was U+2191 ↑), because

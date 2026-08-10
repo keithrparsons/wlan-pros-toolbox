@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans" fill="none">
   <!-- NEMA L5-20R twist-lock FACE, drawn LARGE & centered. Cloned from the Vera-passed
        L5-30 face (shared twistblade def). L5-20 = 3 hooked locking blades 120 deg apart:
        hot + neutral + ground. 125V / 20A / 1-phase. Same pole pattern as L5-30, lower amps.
@@ -14,7 +14,7 @@
   </defs>
 
   <!-- Header -->
-  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">L5-20</text>
+  <text x="320" y="44" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono">L5-20</text>
   <text x="320" y="76" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Twist-lock &#183; 3 poles: hot + neutral + ground</text>
 
   <!-- ============ FACE: round bezel, centered (320,250), r=110 ============ -->
@@ -26,7 +26,7 @@
   </g>
 
   <!-- ============ LABELS ============ -->
-  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">125 V &#183; 20 A</text>
-  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">single-phase &#183; 2-pole, 3-wire &#183; locking</text>
+  <text x="320" y="448" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono">125 V &#183; 20 A</text>
+  <text x="320" y="482" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono">single-phase &#183; 2-pole, 3-wire &#183; locking</text>
   <text x="320" y="514" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Server racks, AV &#183; 20A locking branch circuits</text>
 </svg>

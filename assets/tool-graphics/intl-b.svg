@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans" fill="none">
   <!-- Type B (North America grounded, NEMA 5-15) FACE. BRIGHT REWORK 2026-06-08 (Charta gfx3-intl-bright).
        Keith directive (overrides §8.20.7 FOR THIS SET, intended): ALL plug geometry (frame + blades + U ground)
        -> lime #A1CC3A; ALL text -> near-white #E5E5E5. Palette = #1A1A1A + #E5E5E5 + #A1CC3A.
@@ -23,13 +23,13 @@
         stroke="#A1CC3A" stroke-width="11" fill="none" stroke-linecap="round"/>
 
   <!-- pin callouts, in clear space beside / below each contact -->
-  <text x="276" y="288" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">L</text>
-  <text x="365" y="288" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">N</text>
-  <text x="320" y="358" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">E</text>
+  <text x="276" y="288" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono">L</text>
+  <text x="365" y="288" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono">N</text>
+  <text x="320" y="358" fill="#E5E5E5" font-size="16" font-weight="700" text-anchor="middle" font-family="DM Mono">E</text>
 
   <!-- LABELS -->
-  <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Type B</text>
-  <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">NEMA 5-15 &#183; 120 V &#183; 15 A</text>
+  <text x="320" y="436" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono">Type B</text>
+  <text x="320" y="468" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle" font-family="DM Mono">NEMA 5-15 &#183; 120 V &#183; 15 A</text>
   <text x="320" y="498" fill="#E5E5E5" font-size="16" font-weight="500" text-anchor="middle">US, Canada, Japan, Mexico</text>
   <text x="320" y="524" fill="#E5E5E5" font-size="15" font-weight="500" text-anchor="middle">Low-voltage class (100&#8211;127 V)</text>
 </svg>

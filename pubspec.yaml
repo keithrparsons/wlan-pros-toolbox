@@ -284,6 +284,15 @@ dev_dependencies:
   # dependency (satisfies depend_on_referenced_packages).
   plugin_platform_interface: ^2.1.8
 
+  # vector_graphics_compiler — used ONLY in
+  # test/graphics/svg_font_family_resolves_test.dart, which resolves each
+  # bundled SVG's <text> font-family through the SAME decoder flutter_svg uses
+  # at runtime rather than regexing the source, so inheritance from an ancestor
+  # <svg>/<g> is resolved the way the app resolves it. Already present
+  # transitively via flutter_svg; declared here so the test import is a direct
+  # dependency (satisfies depend_on_referenced_packages).
+  vector_graphics_compiler: ^1.2.5
+
   # visibility_detector — used ONLY in the guide-reader widget tests to zero
   # VisibilityDetectorController.updateInterval. markdown_widget wraps each block
   # in a VisibilityDetector whose periodic timer otherwise leaves a pending

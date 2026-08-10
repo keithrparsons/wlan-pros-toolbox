@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans" fill="none">
   <!-- IEC 60309 industrial pin-and-sleeve FACE, drawn LARGE & centered.
        Geometry reused from the composite (cell 6), scaled up: circular face, keyway notch at 12 o'clock,
        three line/phase round pins + one LARGER EARTH pin set at a CLOCK POSITION (the earth-pin clock
@@ -30,13 +30,13 @@
   </g>
 
   <!-- keyway + earth callouts, clear of geometry -->
-  <text x="320" y="94" fill="#9C9C9C" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">keyway (12h ref)</text>
-  <text x="446" y="312" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="start" font-family="DM Mono, monospace">earth pin</text>
-  <text x="446" y="332" fill="#A1CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">clock position</text>
+  <text x="320" y="94" fill="#9C9C9C" font-size="14" font-weight="500" text-anchor="middle" font-family="DM Mono">keyway (12h ref)</text>
+  <text x="446" y="312" fill="#A1CC3A" font-size="15" font-weight="600" text-anchor="start" font-family="DM Mono">earth pin</text>
+  <text x="446" y="332" fill="#A1CC3A" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">clock position</text>
 
   <!-- ============ VOLTAGE-BAND LEGEND (words, color is not the sole carrier) ============ -->
   <text x="320" y="430" fill="#E5E5E5" font-size="18" font-weight="600" text-anchor="middle">Sleeve color codes the voltage band</text>
-  <g font-size="16" font-weight="500" font-family="DM Mono, monospace" fill="#9C9C9C" text-anchor="middle">
+  <g font-size="16" font-weight="500" font-family="DM Mono" fill="#9C9C9C" text-anchor="middle">
     <text x="320" y="462">Yellow: 100&#8211;130 V</text>
     <text x="320" y="490">Blue: 200&#8211;250 V</text>
     <text x="320" y="518">Red: 380&#8211;480 V (3&#216;)</text>

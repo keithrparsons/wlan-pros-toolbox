@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Final point / destination (type A spatial): a start pin, a bearing vector (angle from north)
        carrying a distance, arriving at the computed destination pin. Lime = the vector + the endpoint. -->
 
   <!-- Header. Rightwards arrow (was &#8594;) is a vector <path>: DM Mono carries no
        arrow, so a font arrow tofu'd. Header is split into two start-anchored
        monospace runs with the arrow in the fixed gap (GL-003 8.6.1). -->
-  <text x="64" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">bearing + distance</text>
+  <text x="64" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">bearing + distance</text>
   <path d="M208 18 H221 M217.5 14 L221 18 L217.5 22" fill="none" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="227" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">point</text>
+  <text x="227" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">point</text>
 
   <!-- Curved graticule grid, neutral scaffold -->
   <g stroke="#9C9C9C" stroke-width="1" fill="none" opacity="0.5">
@@ -25,14 +25,14 @@
           stroke="#E5E5E5" stroke-width="1.75" fill="none" stroke-linejoin="round"/>
     <circle cx="69" cy="110" r="3" fill="#E5E5E5"/>
   </g>
-  <text x="69" y="142" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">start</text>
+  <text x="69" y="142" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">start</text>
 
   <!-- North reference at start -->
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
     <line x1="69" y1="108" x2="69" y2="62"/>
     <path d="M65 67 L69 62 L73 67"/>
   </g>
-  <text x="69" y="56" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">N</text>
+  <text x="69" y="56" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">N</text>
 
   <!-- Bearing angle arc from north (lime) -->
   <path d="M69 86 A22 22 0 0 1 88 98" stroke="#A2CC3A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
@@ -49,7 +49,7 @@
     <path d="M228 75 L236 80 L230 87"/>
   </g>
   <!-- distance label along the vector -->
-  <text x="156" y="86" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">d (km)</text>
+  <text x="156" y="86" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono">d (km)</text>
 
   <!-- Computed destination pin (right, lime = the result) -->
   <g>
@@ -57,5 +57,5 @@
           stroke="#A2CC3A" stroke-width="2" fill="none" stroke-linejoin="round"/>
     <circle cx="244" cy="64" r="3.5" fill="#A2CC3A"/>
   </g>
-  <text x="244" y="100" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">destination</text>
+  <text x="244" y="100" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">destination</text>
 </svg>

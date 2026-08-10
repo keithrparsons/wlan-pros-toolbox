@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- HTTP headers: a request returning a status line + response headers; lime = the status code. Archetype G. -->
 
   <!-- request line (left) -->
   <rect x="18" y="40" width="92" height="26" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="28" y="57" fill="#9C9C9C" font-size="11" font-weight="500" font-family="DM Mono, monospace">GET /</text>
+  <text x="28" y="57" fill="#9C9C9C" font-size="11" font-weight="500" font-family="DM Mono">GET /</text>
 
   <!-- request arrow into the response -->
   <g stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -13,7 +13,7 @@
 
   <!-- response: status line + header rows (right) -->
   <rect x="146" y="32" width="156" height="100" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
-  <g font-family="DM Mono, monospace">
+  <g font-family="DM Mono">
     <!-- status line (matched, lime) -->
     <rect x="146" y="32" width="156" height="22" fill="#A2CC3A" fill-opacity="0.08"/>
     <text x="156" y="48" fill="#9C9C9C" font-size="10" font-weight="500">HTTP/2</text>
@@ -21,7 +21,7 @@
     <text x="244" y="48" fill="#A2CC3A" font-size="11" font-weight="500">OK</text>
   </g>
   <line x1="146" y1="54" x2="302" y2="54" stroke="#9C9C9C" stroke-width="1.25"/>
-  <g font-family="DM Mono, monospace">
+  <g font-family="DM Mono">
     <text x="156" y="70" fill="#9C9C9C" font-size="9.5" font-weight="500">content-type</text>
     <text x="156" y="83" fill="#E5E5E5" font-size="10" font-weight="500">text/html</text>
 

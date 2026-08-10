@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Capacity planner: a cluster of client devices x per-client demand, served by APs;
        lime = the recommended AP count (the computed output). Archetype F (flow / transform). -->
 
@@ -40,9 +40,9 @@
 
   <!-- Count readout (lime = recommended AP count) -->
   <rect x="214" y="56" width="78" height="48" rx="4" stroke="#A2CC3A" stroke-width="1.75"/>
-  <text x="253" y="88" fill="#A2CC3A" font-size="26" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">3</text>
+  <text x="253" y="88" fill="#A2CC3A" font-size="26" font-weight="500" text-anchor="middle" font-family="DM Mono">3</text>
   <text x="253" y="120" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">APs needed</text>
 
   <!-- Header -->
-  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">APs = demand / AP capacity</text>
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono">APs = demand / AP capacity</text>
 </svg>

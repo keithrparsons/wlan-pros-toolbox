@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 720" width="1240" height="720" font-family="IBM Plex Sans, sans-serif" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 720" width="1240" height="720" font-family="IBM Plex Sans" fill="none">
   <!-- 
  INTERNATIONAL POWER PLUG FACES (IEC World Plugs, Types A/B-M)
  WLAN Pros Toolbox reference. Front-view socket/plug FACES drawn to
@@ -160,77 +160,77 @@
   <!-- ROW 1 labels (column centers 164,396,628,860,1092 ; baseline set) -->
   <g text-anchor="middle">
     <!-- C -->
-    <text x="164" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type C</text>
+    <text x="164" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type C</text>
     <text x="164" y="316" fill="#E5E5E5" font-size="13" font-weight="600">Europlug</text>
-    <text x="164" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEE 7/16</text>
+    <text x="164" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono">CEE 7/16</text>
     <text x="164" y="350" fill="#9C9C9C" font-size="11.5">Europe &#183; unearthed</text>
-    <text x="164" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 2.5 A</text>
+    <text x="164" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 2.5 A</text>
 
     <!-- E -->
-    <text x="396" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type E</text>
+    <text x="396" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type E</text>
     <text x="396" y="316" fill="#E5E5E5" font-size="13" font-weight="600">French</text>
-    <text x="396" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEE 7/5</text>
+    <text x="396" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono">CEE 7/5</text>
     <text x="396" y="350" fill="#9C9C9C" font-size="11.5">France, Belgium, Poland</text>
-    <text x="396" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 16 A</text>
+    <text x="396" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 16 A</text>
 
     <!-- F -->
-    <text x="628" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type F</text>
+    <text x="628" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type F</text>
     <text x="628" y="316" fill="#E5E5E5" font-size="13" font-weight="600">Schuko</text>
-    <text x="628" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEE 7/4</text>
+    <text x="628" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono">CEE 7/4</text>
     <text x="628" y="350" fill="#9C9C9C" font-size="11.5">Germany &#183; continental EU</text>
-    <text x="628" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 16 A</text>
+    <text x="628" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 16 A</text>
 
     <!-- G -->
-    <text x="860" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type G</text>
+    <text x="860" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type G</text>
     <text x="860" y="316" fill="#E5E5E5" font-size="13" font-weight="600">UK / British</text>
-    <text x="860" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">BS 1363</text>
+    <text x="860" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono">BS 1363</text>
     <text x="860" y="350" fill="#9C9C9C" font-size="11.5">UK, Ireland, ~50 countries</text>
-    <text x="860" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 13 A fused</text>
+    <text x="860" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 13 A fused</text>
 
     <!-- D -->
-    <text x="1092" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type D</text>
+    <text x="1092" y="296" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type D</text>
     <text x="1092" y="316" fill="#E5E5E5" font-size="13" font-weight="600">India</text>
-    <text x="1092" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">BS 546 (5A)</text>
+    <text x="1092" y="334" fill="#9C9C9C" font-size="12" font-family="DM Mono">BS 546 (5A)</text>
     <text x="1092" y="350" fill="#9C9C9C" font-size="11.5">India, ~40 countries</text>
-    <text x="1092" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 5 A</text>
+    <text x="1092" y="366" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 5 A</text>
   </g>
 
   <!-- ROW 2 labels -->
   <g text-anchor="middle">
     <!-- I (highlighted) -->
-    <text x="164" y="606" fill="#A1CC3A" font-size="22" font-weight="700" font-family="DM Mono, monospace">Type I</text>
+    <text x="164" y="606" fill="#A1CC3A" font-size="22" font-weight="700" font-family="DM Mono">Type I</text>
     <text x="164" y="626" fill="#E5E5E5" font-size="13" font-weight="600">AU / China / Argentina</text>
-    <text x="164" y="644" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">AS/NZS 3112 &#183; GB 2099</text>
-    <text x="164" y="660" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">IRAM 2073</text>
-    <text x="164" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 10&#8211;16 A</text>
+    <text x="164" y="644" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">AS/NZS 3112 &#183; GB 2099</text>
+    <text x="164" y="660" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">IRAM 2073</text>
+    <text x="164" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 10&#8211;16 A</text>
 
     <!-- J -->
-    <text x="396" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type J</text>
+    <text x="396" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type J</text>
     <text x="396" y="626" fill="#E5E5E5" font-size="13" font-weight="600">Switzerland</text>
-    <text x="396" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">SEV 1011</text>
+    <text x="396" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono">SEV 1011</text>
     <text x="396" y="660" fill="#9C9C9C" font-size="11.5">Switzerland, Liechtenstein</text>
-    <text x="396" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 10 / 16 A</text>
+    <text x="396" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 10 / 16 A</text>
 
     <!-- L -->
-    <text x="628" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type L</text>
+    <text x="628" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type L</text>
     <text x="628" y="626" fill="#E5E5E5" font-size="13" font-weight="600">Italy</text>
-    <text x="628" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">CEI 23-50</text>
+    <text x="628" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono">CEI 23-50</text>
     <text x="628" y="660" fill="#9C9C9C" font-size="11.5">Italy, Chile</text>
-    <text x="628" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 10 / 16 A</text>
+    <text x="628" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 10 / 16 A</text>
 
     <!-- A/B -->
-    <text x="860" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type A / B</text>
+    <text x="860" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type A / B</text>
     <text x="860" y="626" fill="#E5E5E5" font-size="13" font-weight="600">North America</text>
-    <text x="860" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">NEMA 1-15 / 5-15</text>
+    <text x="860" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono">NEMA 1-15 / 5-15</text>
     <text x="860" y="660" fill="#9C9C9C" font-size="11.5">US, Canada, Japan, Mexico</text>
-    <text x="860" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">120 V &#183; 15 A</text>
+    <text x="860" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">120 V &#183; 15 A</text>
 
     <!-- M -->
-    <text x="1092" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono, monospace">Type M</text>
+    <text x="1092" y="606" fill="#A1CC3A" font-size="22" font-weight="500" font-family="DM Mono">Type M</text>
     <text x="1092" y="626" fill="#E5E5E5" font-size="13" font-weight="600">South Africa</text>
-    <text x="1092" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono, monospace">BS 546 (15A)</text>
+    <text x="1092" y="644" fill="#9C9C9C" font-size="12" font-family="DM Mono">BS 546 (15A)</text>
     <text x="1092" y="660" fill="#9C9C9C" font-size="11.5">South Africa, ~India (large)</text>
-    <text x="1092" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono, monospace">230 V &#183; 15 A</text>
+    <text x="1092" y="676" fill="#9C9C9C" font-size="11.5" font-family="DM Mono">230 V &#183; 15 A</text>
   </g>
 
   <!-- 

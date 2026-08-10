@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Fresnel zone: two antennas, elliptical zone between them, radius r at midpoint, ground clearance, 60% rule -->
 
   <!-- Line-of-sight axis -->

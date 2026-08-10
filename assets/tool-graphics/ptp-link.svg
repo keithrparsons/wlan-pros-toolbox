@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Point-to-point link: two dishes facing across a path; received level vs Rx sensitivity,
        the fade-margin gap marked. Lime = the margin (pass when positive). PtP sibling of link-budget. -->
 
@@ -43,5 +43,5 @@
   <text x="79" y="124" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle">pass</text>
 
   <!-- Header -->
-  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">margin = Rx level &#8722; sensitivity</text>
+  <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle" font-family="DM Mono">margin = Rx level &#8722; sensitivity</text>
 </svg>

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- PoE reference: the 802.3 standards/classes as rising power steps (af -> at -> bt).
        Lime = the class power level at the top of the ladder. -->
 
@@ -13,18 +13,18 @@
   <!-- Power steps (rising staircase, neutral) -->
   <!-- 802.3af step -->
   <rect x="52" y="98" width="50" height="22" stroke="#E5E5E5" stroke-width="1.75"/>
-  <text x="77" y="134" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3af</text>
-  <text x="77" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">15.4 W</text>
+  <text x="77" y="134" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">802.3af</text>
+  <text x="77" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">15.4 W</text>
 
   <!-- 802.3at step -->
   <rect x="112" y="78" width="50" height="42" stroke="#E5E5E5" stroke-width="1.75"/>
-  <text x="137" y="134" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3at</text>
-  <text x="137" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">30 W</text>
+  <text x="137" y="134" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">802.3at</text>
+  <text x="137" y="148" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">30 W</text>
 
   <!-- 802.3bt step (top class, lime = the measured/key quantity) -->
   <rect x="172" y="46" width="50" height="74" stroke="#A2CC3A" stroke-width="2" fill="#A2CC3A" fill-opacity="0.08"/>
-  <text x="197" y="134" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">802.3bt</text>
-  <text x="197" y="148" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">90 W</text>
+  <text x="197" y="134" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">802.3bt</text>
+  <text x="197" y="148" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">90 W</text>
 
   <!-- RJ45 plug with a power bolt (right, neutral jack + lime bolt = power) -->
   <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">

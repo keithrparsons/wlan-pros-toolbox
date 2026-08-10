@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none" font-family="IBM Plex Sans">
   <!-- RJ48 - 8P8C. Same physical 8-position body as RJ45; all 8 gold contacts.
        Difference is the pin assignment (T1/E1/ISDN) and frequent shielding,
        NOT the connector shape. Lime marks the shield shell (the identifying

@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Metric conversion (type F flow): a measured segment read on two aligned unit scales,
        with a swap/transform between them. Lime = the converted reading. -->
 
   <!-- Header. Rightwards arrow (was &#8594;) is a vector <path>: DM Mono carries no
        arrow so a font arrow tofu'd. "ft" and "m" stay as start-anchored
        monospace text with the arrow in the fixed center gap (GL-003 8.6.1). -->
-  <text x="142" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">ft</text>
+  <text x="142" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">ft</text>
   <path d="M161 18 H174 M170.5 14 L174 18 L170.5 22" fill="none" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="180" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">m</text>
+  <text x="180" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="start" font-family="DM Mono">m</text>
 
   <!-- Top scale: feet (neutral source) -->
   <g stroke="#E5E5E5" stroke-width="1.75" stroke-linecap="round">
@@ -25,14 +25,14 @@
     <line x1="190" y1="58" x2="190" y2="51"/>
     <line x1="250" y1="58" x2="250" y2="51"/>
   </g>
-  <text x="40" y="40" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">ft</text>
+  <text x="40" y="40" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono">ft</text>
 
   <!-- The measured segment, called out on the source scale -->
   <g stroke="#9C9C9C" stroke-width="1.25" stroke-linecap="round">
     <line x1="40" y1="70" x2="232" y2="70"/>
     <path d="M46 67 L40 70 L46 73 M226 67 L232 70 L226 73"/>
   </g>
-  <text x="136" y="84" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">100 ft</text>
+  <text x="136" y="84" fill="#9C9C9C" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono">100 ft</text>
 
   <!-- Transform / swap arrow between the two scales -->
   <g stroke="#A2CC3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -53,10 +53,10 @@
     <line x1="158" y1="124" x2="158" y2="131"/>
     <line x1="237" y1="124" x2="237" y2="131"/>
   </g>
-  <text x="40" y="151" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">m</text>
+  <text x="40" y="151" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="start" font-family="DM Mono">m</text>
 
   <!-- Converted reading marked on the meter scale (100 ft = 30.48 m) -->
   <line x1="40" y1="118" x2="40" y2="124" stroke="#A2CC3A" stroke-width="2" stroke-linecap="round"/>
   <line x1="161" y1="118" x2="161" y2="124" stroke="#A2CC3A" stroke-width="2" stroke-linecap="round"/>
-  <text x="240" y="151" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">30.48 m</text>
+  <text x="240" y="151" fill="#A2CC3A" font-size="12" font-weight="500" text-anchor="middle" font-family="DM Mono">30.48 m</text>
 </svg>

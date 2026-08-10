@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" width="640" height="420" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" width="640" height="420" fill="none" font-family="IBM Plex Sans">
   <!-- Two parallel ladders: SI decimal (1 kB = 1000 B) vs IEC binary (1 KiB = 1024 B).
        Center column shows the divergence growing down the rungs. Lime hero = the GB/GiB
        step (7.37%) - the famous "1 TB drive shows ~931 GiB" gap. Bit-vs-byte (x8) note below.
@@ -10,10 +10,10 @@
   <!-- ============================ COLUMN HEADERS ============================ -->
   <!-- SI column centered x=150 ; gap column x=320 ; IEC column x=490 -->
   <text x="150" y="62" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">SI &#183; decimal</text>
-  <text x="150" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">1 kB = 1000 B</text>
+  <text x="150" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">1 kB = 1000 B</text>
 
   <text x="490" y="62" fill="#E5E5E5" font-size="13" font-weight="600" text-anchor="middle">IEC &#183; binary</text>
-  <text x="490" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">1 KiB = 1024 B</text>
+  <text x="490" y="80" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">1 KiB = 1024 B</text>
 
   <text x="320" y="71" fill="#9C9C9C" font-size="11" font-weight="600" text-anchor="middle">gap</text>
 
@@ -25,42 +25,42 @@
   <!-- rung 1 : kB / KiB -->
   <rect x="75"  y="102" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <rect x="415" y="102" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="118" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">kB</text>
+  <text x="118" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono">kB</text>
   <!-- Exponents rendered as raised ASCII <tspan> (smaller size + dy), NOT Unicode
        superscript glyphs: DM Mono lacks the superscripts U+2070/2076/2079 so the
        0/6/9 exponents tofu'd while 2/3/4 rendered, breaking the exponents
        unevenly. ASCII digits in every font (GL-003 8.6.1). -->
-  <text x="195" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">3</tspan></text>
-  <text x="458" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">KiB</text>
-  <text x="538" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">10</tspan></text>
-  <text x="320" y="124" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2.4%</text>
+  <text x="195" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">10<tspan font-size="7.5" dy="-4">3</tspan></text>
+  <text x="458" y="125" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono">KiB</text>
+  <text x="538" y="125" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2<tspan font-size="7.5" dy="-4">10</tspan></text>
+  <text x="320" y="124" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono">2.4%</text>
 
   <!-- rung 2 : MB / MiB -->
   <rect x="75"  y="150" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <rect x="415" y="150" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="118" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">MB</text>
-  <text x="195" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">6</tspan></text>
-  <text x="458" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">MiB</text>
-  <text x="538" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">20</tspan></text>
-  <text x="320" y="172" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">4.9%</text>
+  <text x="118" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono">MB</text>
+  <text x="195" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">10<tspan font-size="7.5" dy="-4">6</tspan></text>
+  <text x="458" y="173" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono">MiB</text>
+  <text x="538" y="173" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2<tspan font-size="7.5" dy="-4">20</tspan></text>
+  <text x="320" y="172" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono">4.9%</text>
 
   <!-- rung 3 : GB / GiB - LIME HERO -->
   <rect x="75"  y="198" width="150" height="36" rx="4" stroke="#A1CC3A" stroke-width="2"/>
   <rect x="415" y="198" width="150" height="36" rx="4" stroke="#A1CC3A" stroke-width="2"/>
-  <text x="118" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">GB</text>
-  <text x="195" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">9</tspan></text>
-  <text x="458" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">GiB</text>
-  <text x="538" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">30</tspan></text>
-  <text x="320" y="220" fill="#A1CC3A" font-size="14" font-weight="700" text-anchor="middle" font-family="DM Mono, monospace">7.37%</text>
+  <text x="118" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono">GB</text>
+  <text x="195" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">10<tspan font-size="7.5" dy="-4">9</tspan></text>
+  <text x="458" y="221" fill="#A1CC3A" font-size="15" font-weight="700" text-anchor="middle" font-family="DM Mono">GiB</text>
+  <text x="538" y="221" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2<tspan font-size="7.5" dy="-4">30</tspan></text>
+  <text x="320" y="220" fill="#A1CC3A" font-size="14" font-weight="700" text-anchor="middle" font-family="DM Mono">7.37%</text>
 
   <!-- rung 4 : TB / TiB -->
   <rect x="75"  y="246" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
   <rect x="415" y="246" width="150" height="36" rx="4" stroke="#E5E5E5" stroke-width="1.5"/>
-  <text x="118" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">TB</text>
-  <text x="195" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10<tspan font-size="7.5" dy="-4">12</tspan></text>
-  <text x="458" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">TiB</text>
-  <text x="538" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">2<tspan font-size="7.5" dy="-4">40</tspan></text>
-  <text x="320" y="268" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">9.95%</text>
+  <text x="118" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono">TB</text>
+  <text x="195" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">10<tspan font-size="7.5" dy="-4">12</tspan></text>
+  <text x="458" y="269" fill="#E5E5E5" font-size="15" font-weight="600" text-anchor="middle" font-family="DM Mono">TiB</text>
+  <text x="538" y="269" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">2<tspan font-size="7.5" dy="-4">40</tspan></text>
+  <text x="320" y="268" fill="#9C9C9C" font-size="12.5" font-weight="500" text-anchor="middle" font-family="DM Mono">9.95%</text>
 
   <!-- divergence line down the center, in SHORT SEGMENTS that live only in the
        inter-row whitespace between the gap figures - never crossing a glyph.
@@ -79,14 +79,14 @@
   <!-- separating rule with generous space above and below -->
   <line x1="75" y1="334" x2="565" y2="334" stroke="#9C9C9C" stroke-width="1" opacity="0.5"/>
 
-  <text x="118" y="368" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">b</text>
+  <text x="118" y="368" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle" font-family="DM Mono">b</text>
   <text x="118" y="390" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">bit</text>
 
   <!-- x8 relation in the middle, clear of both glyphs -->
-  <text x="320" y="362" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">1 B = 8 b</text>
+  <text x="320" y="362" fill="#E5E5E5" font-size="14" font-weight="600" text-anchor="middle" font-family="DM Mono">1 B = 8 b</text>
   <text x="320" y="384" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">link speed in bits &#183; storage in bytes &#183; &#247; 8 to convert</text>
 
-  <text x="522" y="368" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">B</text>
+  <text x="522" y="368" fill="#E5E5E5" font-size="22" font-weight="600" text-anchor="middle" font-family="DM Mono">B</text>
   <text x="522" y="390" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle">byte</text>
 
   <!-- arrows connecting b -> B (x8), kept off the glyphs -->

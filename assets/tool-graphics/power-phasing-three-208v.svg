@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- 208V Three-Phase (Wye): three hots 120 deg apart. Line-to-neutral = 120V;
        line-to-line = sqrt(3) x 120 ~ 208V (the measured span, lime). Original WLAN Pros schematic.
        Lime bracket is anchored at x=100, the instant L2 crosses zero while L1 sits at +103.9V (y=50.56)
@@ -22,7 +22,7 @@
     <line x1="46" y1="80" x2="54" y2="80"/>
     <line x1="46" y1="114" x2="54" y2="114"/>
   </g>
-  <g fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">
+  <g fill="#9C9C9C" font-size="10" font-weight="500" text-anchor="end" font-family="DM Mono">
     <text x="42" y="49">+120</text>
     <text x="42" y="83">0</text>
     <text x="42" y="117">-120</text>
@@ -35,7 +35,7 @@
 
   <!-- line-to-neutral reference, tied to the axis in guaranteed-clear space (left margin):
        each phase peaks at 120V above neutral. Kept off the dense waveform area to avoid collisions. -->
-  <text x="64" y="135" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">120V L-N</text>
+  <text x="64" y="135" fill="#9C9C9C" font-size="9" font-weight="500" text-anchor="start" font-family="DM Mono">120V L-N</text>
 
   <!-- line-to-line span ~208V (measured quantity, lime): at x=100, L1 at +103.9V (y=50.56) to L3 at -103.9V
        (y=109.44) while L2 crosses zero; endpoints sit ON the two non-zero curves, spanning 58.9px = 207.8V = sqrt(3) x 120 -->
@@ -47,11 +47,11 @@
   <!-- callout moved out of the dense curve sweep into the clear lower margin (below the troughs at y=114,
        right of the L2 and 120V L-N labels). The green double-arrow at x=100 stays put and still marks the
        measured line-to-line span. -->
-  <text x="168" y="126" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">208V</text>
+  <text x="168" y="126" fill="#A1CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">208V</text>
   <text x="168" y="138" fill="#A1CC3A" font-size="9" font-weight="500" text-anchor="middle">line-to-line</text>
 
   <!-- Header -->
   <text x="160" y="22" fill="#E5E5E5" font-size="13" font-weight="500" text-anchor="middle">208V Three-Phase (Wye)</text>
   <!-- Footer: the sqrt(3) relationship -->
-  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">three hots 120&#176; apart &#183; 120 &#215; &#8730;3 &#8776; 208</text>
+  <text x="160" y="150" fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">three hots 120&#176; apart &#183; 120 &#215; &#8730;3 &#8776; 208</text>
 </svg>

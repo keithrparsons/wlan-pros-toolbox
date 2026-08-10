@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans" fill="none">
   <!-- CS8365 PLUG (male) FACE, drawn LARGE & centered. Mating male of the CS8364.
        Style matched to the Vera-passed twist-lock tile (L21-30): viewBox 640x560, round
        bezel at (320,250) r=110, curved arc-segment twist-lock blades.
@@ -20,7 +20,7 @@
   </defs>
 
   <!-- Header -->
-  <text x="320" y="42" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">CS8365</text>
+  <text x="320" y="42" fill="#E5E5E5" font-size="30" font-weight="600" text-anchor="middle" font-family="DM Mono">CS8365</text>
   <text x="320" y="70" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">California Standard &#183; Non-NEMA &#183; plug (male)</text>
   <text x="320" y="92" fill="#9C9C9C" font-size="13" font-weight="400" text-anchor="middle">mirror of CS8364 &#183; angular spacing representative</text>
 
@@ -40,13 +40,13 @@
 
   <!-- pin callouts, outside the face / clear of pins / ground / ring.
        Mirrored: X stays top; Y now lower-LEFT, Z lower-RIGHT (the plug is flipped). -->
-  <text x="320" y="120" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">X</text>
-  <text x="164" y="318" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Y</text>
-  <text x="476" y="318" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">Z</text>
-  <text x="320" y="392" fill="#A1CC3A" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">G</text>
+  <text x="320" y="120" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono">X</text>
+  <text x="164" y="318" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono">Y</text>
+  <text x="476" y="318" fill="#9C9C9C" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono">Z</text>
+  <text x="320" y="392" fill="#A1CC3A" font-size="16" font-weight="600" text-anchor="middle" font-family="DM Mono">G</text>
 
   <!-- ============ LABELS ============ -->
-  <text x="320" y="450" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">250 V &#183; 50 A</text>
-  <text x="320" y="484" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">3-phase &#183; 3-pole, 4-wire (no neutral)</text>
+  <text x="320" y="450" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono">250 V &#183; 50 A</text>
+  <text x="320" y="484" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono">3-phase &#183; 3-pole, 4-wire (no neutral)</text>
   <text x="320" y="516" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">X / Y / Z hots + G ground &#183; twist-lock &#183; no neutral, no W</text>
 </svg>

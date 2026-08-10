@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans, sans-serif" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 560" width="640" height="560" font-family="IBM Plex Sans" fill="none">
   <!-- C15 / C16 FEMALE coupler face, drawn LARGE & centered. The TRUE "kettle cord" (hot-condition).
        Geometry reused from the composite (cell 4), scaled ~3x: the SAME C13 chamfered-hex body
        PLUS the rectangular KEYING NOTCH cut into the bottom edge. The notch is the ONLY difference
@@ -34,14 +34,14 @@
   <rect x="380" y="288" width="54" height="34" rx="4" fill="#9C9C9C"/>   <!-- neutral, lower right -->
 
   <!-- pin callouts in clear space -->
-  <text x="320" y="166" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">E</text>
-  <text x="148" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="end" font-family="DM Mono, monospace">L</text>
-  <text x="492" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="start" font-family="DM Mono, monospace">N</text>
+  <text x="320" y="166" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle" font-family="DM Mono">E</text>
+  <text x="148" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="end" font-family="DM Mono">L</text>
+  <text x="492" y="290" fill="#9C9C9C" font-size="15" font-weight="500" text-anchor="start" font-family="DM Mono">N</text>
   <!-- notch callout: lime, sits clear BELOW the body in the notch gap -->
-  <text x="320" y="402" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">keying notch: the only C13 vs C15 tell</text>
+  <text x="320" y="402" fill="#A1CC3A" font-size="17" font-weight="600" text-anchor="middle" font-family="DM Mono">keying notch: the only C13 vs C15 tell</text>
 
   <!-- ============ LABELS ============ -->
-  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 120 &#176;C</text>
-  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">10 A &#183; 120 &#176;C &#183; 3-pin (with earth)</text>
+  <text x="320" y="468" fill="#E5E5E5" font-size="34" font-weight="600" text-anchor="middle" font-family="DM Mono">10 A &#183; 120 &#176;C</text>
+  <text x="320" y="502" fill="#9C9C9C" font-size="18" font-weight="500" text-anchor="middle" font-family="DM Mono">10 A &#183; 120 &#176;C &#183; 3-pin (with earth)</text>
   <text x="320" y="532" fill="#9C9C9C" font-size="16" font-weight="500" text-anchor="middle">Hot-running gear &#183; keyed so a C13 cord won't fit</text>
 </svg>

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" font-family="IBM Plex Sans">
   <!-- Signal thresholds: an RSSI (dBm) axis with five quality bands matching the
        screen data (Excellent > -55, Good -55..-65, Fair -65..-75, Weak -75..-80,
        Poor < -80). Status palette (GL-003 §8.13) grouped Poor/Weak = danger,
@@ -38,7 +38,7 @@
   </g>
 
   <!-- dBm boundary labels (below axis, DM Mono) -->
-  <g fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">
+  <g fill="#9C9C9C" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">
     <text x="73"  y="118">-80</text>
     <text x="105" y="118">-75</text>
     <text x="170" y="118">-65</text>
@@ -47,7 +47,7 @@
 
   <!-- Target threshold (lime = the application target, e.g. VoIP needs >= -65) -->
   <line x1="170" y1="34" x2="170" y2="100" stroke="#A2CC3A" stroke-width="2" stroke-dasharray="3 3"/>
-  <text x="170" y="30" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono, monospace">VoIP &#8805; -65</text>
+  <text x="170" y="30" fill="#A2CC3A" font-size="11" font-weight="500" text-anchor="middle" font-family="DM Mono">VoIP &#8805; -65</text>
 
   <!-- Footer -->
   <text fill="#9C9C9C" font-size="11" font-weight="500" x="83.0" y="138.0" text-anchor="start">stronger signal (higher dBm)</text>
