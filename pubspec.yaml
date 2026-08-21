@@ -624,6 +624,22 @@ flutter:
     # pinch-zoomable PdfViewPinch (lib/screens/tools/reference/
     # pdf_reference_screen.dart) via pdfx → Apple PDFKit on iOS + macOS.
     - assets/reference-cards/
+    # Field & Trade Reference PRINT PLATES (2026-08-21) — the single-sheet
+    # graphic that accompanies each native Field Reference screen, bundled one
+    # PDF per tool and named by catalog id (assets/field-plates/<tool-id>.pdf)
+    # so the lookup is mechanical (lib/widgets/field_plate_action.dart). Opened
+    # in the same offline PdfReferenceScreen as the laminated cards, which is
+    # where the share/download affordance already lives.
+    #   SOURCE OF TRUTH lives in myPKA (treat these as copies; re-copy on edit):
+    #     Deliverables/2026-07-05-field-trade-reference/pdf/NN-<slug>.pdf
+    #     Deliverables/2026-06-10-throughput-testing-where/light-print-variant/
+    # NOTE ON SIZE: the thirteen Field Reference plates are large-format (17.5in
+    # wide, heights 9.94-21.62in) — excellent in the pinch-zoom viewer, roughly
+    # 6.9pt smallest type if printed to Letter. A Letter re-lay is queued and
+    # will swap these files IN PLACE; the asset paths stay stable, so no catalog
+    # or screen change is needed when it lands. throughput-testing-where.pdf is
+    # already Letter (8.5x11 portrait) and is the standard the rest move toward.
+    - assets/field-plates/
     # Bundled downloadable companion files exported via the share/download seam
     # (lib/data/pdf_download.dart shareAsset): the dual-Orb Debian package
     # (wlanpi-dual-orb_1.1.3_all.deb) for the "Dual Orbs on WLAN Pi" how-to, and

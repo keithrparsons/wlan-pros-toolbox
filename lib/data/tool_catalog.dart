@@ -947,6 +947,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Ham Radio',
       ),
+      // Field & Trade Reference plate 14 (2026-08-21). The other thirteen
+      // plates hang off their native reference screen's FieldPlateAction; this
+      // one has no native screen, so it is its own PDF-card entry. It is also
+      // the only plate already at the Letter print standard (8.5x11 portrait).
+      ToolEntry(
+        id: 'throughput-testing-where',
+        title: 'Throughput Testing: Where You Test',
+        description:
+            'Where you put the test server decides what the number means: '
+            'the Wi-Fi link, the local network, or the WAN',
+        routeName: '/tools/throughput-testing-where',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       // ── Field & Trade Reference set (pilot, 2026-07-05) ──
       // Enclosure Ratings is the pilot REFERENCE-screen entry of the Field
       // Reference build order: the IP (IEC 60529) and NEMA (NEMA 250) ingress

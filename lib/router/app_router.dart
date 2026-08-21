@@ -562,6 +562,14 @@ class AppRouter {
   static const String hamRadioGeneralExamStudyNotes =
       '/tools/ham-radio-general-exam-study-notes';
 
+  // Field & Trade Reference plate 14 (2026-08-21) — "Throughput Testing: where
+  // you test changes the number", the LIGHT print variant. The only plate with
+  // no native reference screen behind it, so unlike the other thirteen (which
+  // reach their plate from the screen's FieldPlateAction) this one is a
+  // first-class catalog entry rendered by the shared PdfReferenceScreen.
+  static const String throughputTestingWhere =
+      '/tools/throughput-testing-where';
+
   // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
   // const-derived table, all platforms incl. web).
   static const String hexAscii = '/tools/hex-ascii';
@@ -850,6 +858,11 @@ class AppRouter {
       assetPath:
           'assets/reference-cards/ham-radio-general-exam-study-notes.pdf',
       toolId: 'ham-radio-general-exam-study-notes',
+    ),
+    throughputTestingWhere: (_) => const PdfReferenceScreen(
+      title: 'Throughput Testing: Where You Test',
+      assetPath: 'assets/field-plates/throughput-testing-where.pdf',
+      toolId: 'throughput-testing-where',
     ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),
