@@ -34,6 +34,7 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/field_plate_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
@@ -317,6 +318,10 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
         toolbarHeight: 64,
         actions: <Widget>[
           AppCopyAction(textBuilder: _buildCopyText),
+          const FieldPlateAction(
+            toolId: 'spectrum',
+            plateTitle: 'Spectrum Matrix',
+          ),
         ],
       ),
       body: SafeArea(top: false, child: _body()),

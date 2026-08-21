@@ -39,6 +39,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/field_plate_action.dart';
 import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 
@@ -200,6 +201,10 @@ class _Card extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
           ],
           child,
+          const FieldPlateAction(
+            toolId: 'safety-basics',
+            plateTitle: 'PPE Standards',
+          ),
         ],
       ),
     );

@@ -23,6 +23,7 @@ import '../../../data/reference_pdfs.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/field_plate_action.dart';
 import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_prose.dart';
@@ -40,7 +41,13 @@ class NetworkInScopeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Network in Scope'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _copyText),
+          const FieldPlateAction(
+            toolId: 'network-in-scope',
+            plateTitle: 'Compliance Scope Matrix',
+          ),
+        ],
       ),
       body: SafeArea(top: false, child: _body()),
     );
