@@ -273,7 +273,10 @@ void main() {
       // (vendor-model-decode), the per-vendor model-number scheme reader. Unlike
       // the static reference screens these carry selection state. 173 + 2 = 175.
       // AP Placement retired 2026-07-07 (Keith's call): 175 − 1 = 174.
-      expect(store.count, 174);
+      // 173 = 174 - 1: the Dual Orbs on WLAN Pi help entry, removed with the
+      // tool itself on 2026-08-21 (its bundled .deb payload had already been
+      // dropped by the 90035 signing work, leaving the tool live but broken).
+      expect(store.count, 173);
     });
 
     // Help ids that intentionally have NO catalog tile but still ship a help

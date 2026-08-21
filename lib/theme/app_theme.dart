@@ -324,7 +324,7 @@ class AppTheme {
       ),
 
       // Elevated button — the Material `ElevatedButton`/`ElevatedButton.icon`
-      // variant used by the bundled-asset download buttons (Dual Orb, FreeRADIUS).
+      // variant used by the bundled-asset download button (FreeRADIUS).
       // It reads from `elevatedButtonTheme`, NOT `filledButtonTheme`, so without
       // this slot every ElevatedButton.icon shipped with NO keyboard focus ring
       // (§8.3 SC 2.4.7 gap). Mirrors filledButtonTheme exactly — lime fill / dark

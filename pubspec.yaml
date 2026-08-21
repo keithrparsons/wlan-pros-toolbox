@@ -641,10 +641,10 @@ flutter:
     # already Letter (8.5x11 portrait) and is the standard the rest move toward.
     - assets/field-plates/
     # Bundled downloadable companion files exported via the share/download seam
-    # (lib/data/pdf_download.dart shareAsset): the dual-Orb Debian package
-    # (wlanpi-dual-orb_1.1.3_all.deb) for the "Dual Orbs on WLAN Pi" how-to, and
-    # install_freeradius.sh for the "FreeRADIUS on WLAN Pi" how-to. Both keep
-    # their REAL filenames (meaningful to the install command), are bundled
+    # (lib/data/pdf_download.dart shareAsset): install_freeradius.sh for the
+    # "FreeRADIUS on WLAN Pi" how-to. (The dual-Orb .deb was dropped by the
+    # 90035 signing work and its tool was fully removed on 2026-08-21.) It keeps
+    # its REAL filename (meaningful to the install command), is bundled
     # VERBATIM, shown inline, and offered as a download; never executed in-app
     # (the Toolbox runs no shell, GL-008).
     - assets/downloads/
