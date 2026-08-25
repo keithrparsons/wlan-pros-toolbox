@@ -20,6 +20,59 @@ void main() {
       expect(searchTools('zzzznotarealterm'), isEmpty);
     });
 
+    // REGRESSION (2026-08-25). Keith went looking for an IP subnet calculator,
+    // searched "calculator", got nothing, and reasonably concluded the app
+    // shipped only reference tables. It shipped three calculators. Neither
+    // their titles nor the keyword index carried the word "calculator", so no
+    // search could reach them, and they were filed under Networking Tools
+    // rather than Calculators & Tools.
+    //
+    // These three assertions pin all three halves of that fix. They are
+    // deliberately written against the WORDS A USER TYPES, not against ids —
+    // an id-based test would still have passed on the broken build.
+    test('"calculator" reaches all three IP subnet tools', () {
+      final List<ToolSearchHit> hits = searchTools('calculator');
+      final Set<String> ids = hits.map((ToolSearchHit h) => h.tool.id).toSet();
+      expect(
+        ids,
+        containsAll(<String>['ipv4-subnet', 'ipv6-subnet', 'subnet-planner']),
+        reason: 'searching "calculator" must reach the IP subnet calculators',
+      );
+    });
+
+    test('"ip calculator" and "subnet calculator" both reach ipv4-subnet', () {
+      for (final String q in <String>[
+        'ip calculator',
+        'subnet calculator',
+        'ip calc',
+      ]) {
+        final Set<String> ids =
+            searchTools(q).map((ToolSearchHit h) => h.tool.id).toSet();
+        expect(
+          ids,
+          contains('ipv4-subnet'),
+          reason: 'query "$q" must reach the IPv4 subnet calculator',
+        );
+      }
+    });
+
+    test('the IP subnet tools live in Calculators & Tools, not Networking', () {
+      for (final String id in <String>[
+        'ipv4-subnet',
+        'ipv6-subnet',
+        'subnet-planner',
+      ]) {
+        final ToolCategory owner = kToolCategories.firstWhere(
+          (ToolCategory c) => c.tools.any((ToolEntry t) => t.id == id),
+        );
+        expect(
+          owner.id,
+          'rf-calculators',
+          reason: '$id must be findable where a user looks for a calculator',
+        );
+      }
+    });
+
     test('"channel" matches across at least 3 categories (mockup 04)', () {
       final List<ToolSearchHit> hits = searchTools('channel');
       expect(hits, isNotEmpty);

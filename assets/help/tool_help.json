@@ -1259,7 +1259,7 @@
       "source": "The result is calculated on your device using standard base conversion."
     },
     "ipv6-subnet": {
-      "name": "IP Subnetting (IPv6)",
+      "name": "IP Subnet Calculator (IPv6)",
       "category": "Networking Tools",
       "purpose": "Enter an IPv6 address and prefix length and get back the expanded and compressed forms, the network address, the first and last address in the prefix, the number of hosts, and the address type. It also decodes transition addresses: whether the address you typed carries an IPv4 address inside it, and how a given IPv4 address is written the four ways IPv6 can carry one.",
       "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes. The transition section answers a different question: NAT64, 6to4 and IPv4-mapped addresses genuinely turn up in captures and firewall logs, and \"what am I looking at\" is the moment they cause.",
@@ -2941,7 +2941,7 @@
       "source": "Uses the WLAN Pros channel plan, computed on the device."
     },
     "ipv4-subnet": {
-      "name": "IP Subnetting (IPv4)",
+      "name": "IP Subnet Calculator (IPv4)",
       "category": "Networking Tools",
       "purpose": "Two modes of IPv4 mask arithmetic. Subnet works out the full breakdown (network, broadcast, netmask, wildcard, first and last usable host, total addresses, usable host count, and the same address as an integer, in hex and in binary) from an address plus a CIDR prefix or a dotted mask. Range turns a start and end address into the smallest set of CIDR blocks that covers it exactly, and turns a block back into its range.",
       "whyHere": "The CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for Subnet to confirm a network or broadcast boundary, a usable-host range, or a mask-to-prefix conversion. Reach for Range when a customer hands you \"10.4.16.0 through 10.4.31.255\" and you need blocks for an ACL, a firewall rule, or a DHCP scope.",
