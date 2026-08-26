@@ -1,0 +1,103 @@
+# Build the WLAN Pi web bundle in CI, so nobody has to upload 86 MB.
+#
+# WHY THIS EXISTS. The Toolbox-on-WLAN-Pi build needs a Flutter web bundle that
+# is ~86 MB, of which 37 MB is CanvasKit and 38 MB is bundled assets. Getting it
+# to a tester meant either mailing 86 MB or asking them to install Flutter. On a
+# ship sharing one Starlink with 2,700 people, uploading it was not realistic.
+# GitHub does the build instead, and hosts the result.
+#
+# IT MUST BE THIS BRANCH'S BUNDLE, NOT THE WEBSITE'S. The build on
+# toolbox.wlanpros.com is `main`, which contains NO Pi integration at all - no
+# /toolboxapi/ client, no Pi Wi-Fi source. Deployed to a Pi it loads, finds no
+# backend, and hides every networking tool while telling the user to download
+# the native app. That is precisely the wrong artifact for a Pi tester, so this
+# workflow only ever builds the WLAN Pi branches.
+#
+# --base-href / IS LOAD-BEARING. The shipped web bundle uses `/app/`; the Pi
+# serves at the server root. Building with the wrong base-href gives a page of
+# 404s for every asset.
+
+name: WLAN Pi web bundle
+
+on:
+  push:
+    branches: ['wlanpi-hosting', 'wlanpi-hosting-catchup']
+  workflow_dispatch:        # so a bundle can be cut on demand without a commit
+
+permissions:
+  contents: write           # needed to attach the bundle to a release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build the Pi-hosted web bundle
+        run: flutter build web --release --base-href /
+
+      - name: Record what this bundle actually is
+        # A version string is a label somebody wrote; a hash is the artifact.
+        # On 2026-08-26 the app reported 1.8.7 while running 1.7.0, because
+        # version.json is a separate file from main.dart.js. So the manifest
+        # carries BOTH, and the hash is the one to believe.
+        run: |
+          cd build/web
+          {
+            echo "commit:      ${GITHUB_SHA}"
+            echo "branch:      ${GITHUB_REF_NAME}"
+            echo "built_at:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "base_href:   $(grep -o '<base href="[^"]*">' index.html)"
+            echo "version.json: $(cat version.json)"
+            echo "main.dart.js sha256: $(sha256sum main.dart.js | cut -d' ' -f1)"
+          } > BUNDLE-INFO.txt
+          cat BUNDLE-INFO.txt
+
+      - name: Package
+        run: |
+          cd build
+          tar -czf wlanpi-toolbox-web-bundle.tar.gz web
+          ls -lh wlanpi-toolbox-web-bundle.tar.gz
+
+      - name: Upload as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wlanpi-toolbox-web-bundle
+          path: build/wlanpi-toolbox-web-bundle.tar.gz
+          retention-days: 30
+
+      # A pre-release, not a release: this branch is deliberately NOT on main
+      # until the Pi build is proven end to end, and the download should not
+      # look like a shipping artifact.
+      - name: Publish a downloadable pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: wlanpi-web-${{ github.run_number }}
+          name: WLAN Pi web bundle (build ${{ github.run_number }})
+          prerelease: true
+          body: |
+            Flutter web bundle for the **Toolbox on WLAN Pi** build, built from
+            `${{ github.ref_name }}` at `${{ github.sha }}`.
+
+            This is NOT the website build. It contains the Pi backend client and
+            the Pi Wi-Fi source; the bundle on toolbox.wlanpros.com does not, and
+            would hide every networking tool if deployed to a Pi.
+
+            To install on a WLAN Pi, alongside the installer kit:
+
+                tar -xzf wlanpi-toolbox-web-bundle.tar.gz
+                cd pi-hosting-kit
+                sudo ./install.sh ../web
+
+            Then open `http://<pi-ip>:8080/`. `BUNDLE-INFO.txt` inside the
+            archive records the commit and the `main.dart.js` SHA256 — if a
+            version and a hash ever disagree, believe the hash.
+          files: build/wlanpi-toolbox-web-bundle.tar.gz
