@@ -35,6 +35,7 @@
 import 'package:network_info_plus/network_info_plus.dart';
 
 import 'lan_discovery/subnet_seed.dart';
+import 'pi_backend_client.dart';
 
 /// The prefill suggestion derived from the device's current network. Field
 /// names mirror the spec's record shape `({cidr, gatewayIp, deviceIp,
@@ -125,6 +126,76 @@ class CurrentNetwork {
       gateway = await info.getWifiGatewayIP();
     } catch (_) {/* leave null */}
     return (ip: ip, mask: mask, gateway: gateway);
+  }
+
+  /// A [CurrentNetwork] that asks the WLAN Pi hosting this page instead of the
+  /// browser.
+  ///
+  /// WHY THIS EXISTS: the default reader calls `network_info_plus`, which on
+  /// web has no Wi-Fi API at all. It returns nothing, so the subnet field stays
+  /// empty and the user has to type their own network back to a tool that is
+  /// running ON that network. The failure was silent and honest, but it was
+  /// still a blank field where an exact answer was available: the Pi knows its
+  /// own addressing, and under the Ethernet-access design the address the user
+  /// typed IS one of the Pi's interfaces.
+  factory CurrentNetwork.pi({PiBackendClient? client}) {
+    final PiBackendClient c = client ?? PiBackendClient();
+    return CurrentNetwork(reader: () => _piReader(c));
+  }
+
+  /// Reads ip + prefix from the Pi's own interfaces.
+  ///
+  /// INTERFACE CHOICE: prefer the interface whose address matches the host this
+  /// client talks to (in production, the origin the page was served from),
+  /// because that is provably the network the user is on with the Pi. Falls back to the first global IPv4 on a non-loopback
+  /// interface. Returns all-null rather than guessing when nothing qualifies,
+  /// so [suggestFrom]'s honest-NONE path still applies and no subnet is
+  /// fabricated.
+  ///
+  /// GATEWAY IS LEFT NULL DELIBERATELY: `/toolboxapi/interfaces` does not carry
+  /// a default gateway, and deriving one by assuming `.1` would be exactly the
+  /// fabrication this file exists to avoid.
+  static Future<({String? ip, String? mask, String? gateway})> _piReader(
+    PiBackendClient client,
+  ) async {
+    final List<PiInterface> ifaces;
+    try {
+      ifaces = await client.interfaces();
+    } on Object {
+      return (ip: null, mask: null, gateway: null);
+    }
+
+    final String servedHost = client.baseHost;
+    PiInterfaceAddress? chosen;
+
+    for (final PiInterface i in ifaces) {
+      if (i.name == 'lo') continue;
+      for (final PiInterfaceAddress a in i.addresses) {
+        if (!a.isIPv4 || a.prefixLen == null) continue;
+        if (a.local == servedHost) {
+          chosen = a;
+          break;
+        }
+        chosen ??= a;
+      }
+      if (chosen != null && chosen.local == servedHost) break;
+    }
+
+    if (chosen == null) return (ip: null, mask: null, gateway: null);
+    return (
+      ip: chosen.local,
+      mask: _maskFromPrefix(chosen.prefixLen!),
+      gateway: null,
+    );
+  }
+
+  /// Dotted-quad mask for a prefix length, so the Pi path can reuse
+  /// [suggestFrom] unchanged rather than growing a second derivation.
+  static String _maskFromPrefix(int prefix) {
+    final int m =
+        prefix == 0 ? 0 : (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
+    return '${(m >> 24) & 0xFF}.${(m >> 16) & 0xFF}.'
+        '${(m >> 8) & 0xFF}.${m & 0xFF}';
   }
 
   /// Reads the network and derives the suggestion.

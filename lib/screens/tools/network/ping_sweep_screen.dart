@@ -116,7 +116,10 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     if (!_piBacked) {
       _service = widget.service ?? PingSweepService();
     }
-    _network = widget.network ?? CurrentNetwork();
+    // On the Pi path the browser has no Wi-Fi API, so ask the Pi for its own
+    // addressing instead of leaving the field blank.
+    _network =
+        widget.network ?? (_piBacked ? CurrentNetwork.pi() : CurrentNetwork());
     _subnetCtrl.addListener(_onSubnetChanged);
     _prefillFromCurrentNetwork();
   }

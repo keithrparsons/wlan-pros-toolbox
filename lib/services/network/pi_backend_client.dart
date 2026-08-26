@@ -424,6 +424,11 @@ class PiBackendClient {
   final http.Client _http;
   final Uri _base;
 
+  /// The host this client talks to. In production that is the origin the page
+  /// was served from, i.e. the Pi's own address as the user reached it, which
+  /// is what lets the prefill pick the interface the user is actually on.
+  String get baseHost => _base.host;
+
   /// Root-anchored `/toolboxapi/{path}` on the SAME origin as the loaded page,
   /// independent of the app's base-href (the proxy is mounted at the root).
   Uri _endpoint(String path, {Map<String, String>? query}) {
