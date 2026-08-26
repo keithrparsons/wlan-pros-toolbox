@@ -18,6 +18,8 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+import 'pi_backend.dart';
+
 /// Why a given network capability is unavailable, so the UI can render a
 /// precise, non-apologetic message (brief §10 anti-patterns) instead of a
 /// zero or a crash.
@@ -51,47 +53,76 @@ class NetworkSupport {
   /// (Interface Info, Port Scan, future Ping/Traceroute). False on web.
   static bool get activeNetworkSupported => !kIsWeb;
 
-  /// DNS Lookup support. Tied to [activeNetworkSupported] per the §15 product
-  /// decision (DoH is technically web-capable, but the network category is
-  /// native-only for a coherent download story). Flip this independently if
-  /// that decision changes.
-  static bool get dnsLookupSupported => !kIsWeb;
+  /// DNS Lookup support. Native everywhere; ALSO available on Pi-hosted web,
+  /// where the lookup runs ON the Pi via `/toolboxapi/dns` (the catalog id is
+  /// `dns-lookup`; the proxy route is `dns`). On Netlify web the Pi backend is
+  /// absent so this stays false and the tool keeps the download-the-app
+  /// fallback. Off the Pi it remains the §15 native-only DoH decision.
+  static bool get dnsLookupSupported => !kIsWeb || PiBackend.available;
 
   /// Interface Information support.
-  static bool get interfaceInfoSupported => !kIsWeb;
+  ///
+  /// Native everywhere; ALSO available on Pi-hosted web, where the device
+  /// interface table is read from the Pi via `/toolboxapi/interfaces` (the
+  /// browser has no `dart:io` interface table). On Netlify web the Pi backend is
+  /// absent so this stays false and the tool keeps the download-the-app fallback.
+  static bool get interfaceInfoSupported => !kIsWeb || PiBackend.available;
 
-  /// Port Scan support.
-  static bool get portScanSupported => !kIsWeb;
+  /// Network Quality (Test My Connection, `net-quality`) support.
+  ///
+  /// Native everywhere; ALSO available on Pi-hosted web, where the connection
+  /// test runs ON the Pi via `/toolboxapi/conntest` instead of the browser's
+  /// (absent) `dart:io` sockets. On Netlify web this stays false and the tool
+  /// keeps the download-the-app fallback. Distinct from
+  /// [activeNetworkSupported], which stays `!kIsWeb`: only the capabilities with
+  /// a live Pi endpoint are re-enabled on web (brief Phase A).
+  static bool get netQualitySupported => !kIsWeb || PiBackend.available;
 
-  /// Ping support. Implemented as a TCP-handshake RTT probe (see
-  /// PingService) — needs no raw socket and works on every native platform,
-  /// so the gate is the same `!kIsWeb` as the other socket tools.
-  static bool get pingSupported => !kIsWeb;
+  /// Port Scan support. Native everywhere via a raw TCP-connect scan; ALSO
+  /// available on Pi-hosted web, where the scan runs ON the Pi via
+  /// `/toolboxapi/portscan`. On Netlify web the Pi backend is absent so this
+  /// stays false and the tool keeps the download-the-app fallback.
+  static bool get portScanSupported => !kIsWeb || PiBackend.available;
+
+  /// Ping support. Native everywhere as a TCP-handshake RTT probe (see
+  /// PingService — needs no raw socket, works on every native platform); ALSO
+  /// available on Pi-hosted web, where a real ICMP ping runs ON the Pi via
+  /// `/toolboxapi/ping`. On Netlify web the Pi backend is absent so this stays
+  /// false and the tool keeps the download-the-app fallback.
+  static bool get pingSupported => !kIsWeb || PiBackend.available;
 
   /// Ping Sweep support. Discovers responsive hosts on a subnet by running the
   /// same TCP-handshake probe as Ping across a range of addresses (see
-  /// PingSweepService) — no raw socket, no subprocess. Works on every native
-  /// platform, so the gate is the same `!kIsWeb` as the other socket tools.
-  static bool get pingSweepSupported => !kIsWeb;
+  /// PingSweepService) — no raw socket, no subprocess. Native everywhere; ALSO
+  /// available on Pi-hosted web, where the sweep runs ON the Pi via
+  /// `/toolboxapi/pingsweep`. On Netlify web the Pi backend is absent so this
+  /// stays false and the tool keeps the download-the-app fallback.
+  static bool get pingSweepSupported => !kIsWeb || PiBackend.available;
 
   /// SSL/TLS Certificate Inspector support. Needs a raw outbound TLS socket
   /// (`SecureSocket.connect`), which a browser cannot open — and a browser
-  /// cannot read an arbitrary peer's certificate either. Native-only; web is
-  /// routed to the download-the-app fallback. Same `!kIsWeb` gate as the other
-  /// socket tools.
-  static bool get sslInspectSupported => !kIsWeb;
+  /// cannot read an arbitrary peer's certificate either. Native everywhere;
+  /// ALSO available on Pi-hosted web, where the handshake and cert read run ON
+  /// the Pi via `/toolboxapi/ssl`. On Netlify web the Pi backend is absent so
+  /// this stays false and the tool keeps the download-the-app fallback.
+  static bool get sslInspectSupported => !kIsWeb || PiBackend.available;
 
   /// HTTP Header Inspector support. Needs to read arbitrary cross-origin
   /// response headers and follow the redirect chain — both blocked in a
-  /// browser by CORS. Native-only; web is routed to the fallback.
-  static bool get httpHeadersSupported => !kIsWeb;
+  /// browser by CORS. Native everywhere; ALSO available on Pi-hosted web, where
+  /// the request and header read run ON the Pi via `/toolboxapi/httphead`. On
+  /// Netlify web the Pi backend is absent so this stays false and the tool keeps
+  /// the download-the-app fallback.
+  static bool get httpHeadersSupported => !kIsWeb || PiBackend.available;
 
   /// WHOIS lookup support. Runs over a raw outbound TCP socket to port 43
   /// (`Socket.connect`), the same socket capability the port scanner uses, so
   /// it works on every native platform. A browser cannot open a TCP/43 socket
-  /// and the public RDAP endpoints are CORS-blocked, so web is routed to the
-  /// download-the-app fallback. Same `!kIsWeb` gate as the other socket tools.
-  static bool get whoisSupported => !kIsWeb;
+  /// and the public RDAP endpoints are CORS-blocked. Native everywhere; ALSO
+  /// available on Pi-hosted web, where the TCP/43 lookup runs ON the Pi via
+  /// `/toolboxapi/whois`. On Netlify web the Pi backend is absent so this stays
+  /// false and the tool keeps the download-the-app fallback.
+  static bool get whoisSupported => !kIsWeb || PiBackend.available;
 
   /// Time Server (NTP) support. Sends a unicast SNTP request over an outbound
   /// UDP datagram (`RawDatagramSocket.bind` + `send`) to a remote time server
@@ -104,68 +135,89 @@ class NetworkSupport {
 
   /// Wake-on-LAN support. Sends a UDP magic packet via a broadcast datagram
   /// socket (`RawDatagramSocket.bind` + `broadcastEnabled`). Browsers cannot
-  /// open UDP sockets or send broadcasts, so web is routed to the fallback.
-  /// Same `!kIsWeb` gate as the other socket tools.
-  static bool get wakeOnLanSupported => !kIsWeb;
+  /// open UDP sockets or send broadcasts. Native everywhere; ALSO available on
+  /// Pi-hosted web, where the magic packet is sent from the Pi via POST
+  /// `/toolboxapi/wol`. On Netlify web the Pi backend is absent so this stays
+  /// false and the tool keeps the download-the-app fallback.
+  static bool get wakeOnLanSupported => !kIsWeb || PiBackend.available;
 
   /// Packet Sender support. Sends a custom payload over TCP (`Socket`) or UDP
   /// (`RawDatagramSocket`) and reads the reply. Browsers cannot open either
-  /// socket type, so web is routed to the download-the-app fallback. Same
-  /// `!kIsWeb` gate as the other socket tools. (Raw-IP/ICMP framing is out of
-  /// scope per TICKET-005 — TCP/UDP only.)
-  static bool get packetSenderSupported => !kIsWeb;
+  /// socket type. Native everywhere; ALSO available on Pi-hosted web, where the
+  /// payload is sent and the reply read ON the Pi via POST `/toolboxapi/packet`.
+  /// On Netlify web the Pi backend is absent so this stays false and the tool
+  /// keeps the download-the-app fallback. (Raw-IP/ICMP framing is out of scope
+  /// per TICKET-005 — TCP/UDP only.)
+  static bool get packetSenderSupported => !kIsWeb || PiBackend.available;
 
   /// BGP / ASN Lookup support. Talks to the RIPEstat Data API over HTTPS via
   /// `dart:io HttpClient`. Because `dart:io` does not exist on web and we have
-  /// not verified the API sends permissive CORS, the tool is native-only and
-  /// web is routed to the download-the-app fallback. Same `!kIsWeb` gate.
-  static bool get bgpAsnSupported => !kIsWeb;
+  /// not verified the API sends permissive CORS, the browser cannot make this
+  /// call. Native everywhere; ALSO available on Pi-hosted web, where the
+  /// RIPEstat lookup runs ON the Pi via `/toolboxapi/bgpasn`. On Netlify web the
+  /// Pi backend is absent so this stays false and the tool keeps the
+  /// download-the-app fallback.
+  static bool get bgpAsnSupported => !kIsWeb || PiBackend.available;
 
   /// IP Geolocation support. Talks to the ipinfo.io API (geojs.io fallback)
-  /// over HTTPS via `dart:io HttpClient`. Native-only for the same reason as
-  /// [bgpAsnSupported] (no `dart:io` on web; CORS unverified). Web → fallback.
-  static bool get ipGeoSupported => !kIsWeb;
+  /// over HTTPS via `dart:io HttpClient`. The browser cannot make this call for
+  /// the same reason as [bgpAsnSupported] (no `dart:io` on web; CORS unverified).
+  /// Native everywhere; ALSO available on Pi-hosted web, where the lookup runs
+  /// ON the Pi via `/toolboxapi/ipgeo`. On Netlify web the Pi backend is absent
+  /// so this stays false and the tool keeps the download-the-app fallback.
+  static bool get ipGeoSupported => !kIsWeb || PiBackend.available;
 
   /// ARP / NDP neighbor discovery support. The *screen* is reachable off-web on
   /// every native platform so the catalog can route to it, but the genuine
   /// per-platform capability (sweep-with-MAC on Linux/Android, sweep-no-MAC on
   /// macOS/Windows, unavailable on iOS) is decided inside ArpNdpService
-  /// (`capabilityFor`) and surfaced in the UI. This flag only excludes web,
-  /// where raw sockets and the neighbor table are both inaccessible.
-  static bool get arpNdpSupported => !kIsWeb;
+  /// (`capabilityFor`) and surfaced in the UI. On Pi-hosted web the Pi's live
+  /// neighbor table is read ON the Pi via `/toolboxapi/neigh`. This flag
+  /// otherwise excludes web, where raw sockets and the neighbor table are both
+  /// inaccessible, so on Netlify web it stays false and the tool keeps the
+  /// download-the-app fallback.
+  static bool get arpNdpSupported => !kIsWeb || PiBackend.available;
 
   /// Real ICMP Ping support. The *screen* is reachable off-web on every native
   /// platform so the catalog can route to it, but the genuine ICMP-echo
   /// capability is per-platform (available on iOS/Android, sandboxed-out on
   /// desktop where the only ICMP path is a subprocess the macOS App Sandbox
   /// blocks). That verdict is decided inside IcmpService (`echoCapability`) and
-  /// surfaced in the UI; this flag only excludes web, where no raw-socket /
-  /// dart:io path exists at all.
-  static bool get icmpPingSupported => !kIsWeb;
+  /// surfaced in the UI. On Pi-hosted web a real ICMP ping runs ON the Pi via
+  /// `/toolboxapi/ping` (final aggregate, one-shot); on Netlify web the Pi
+  /// backend is absent so this stays false and the tool keeps the fallback.
+  static bool get icmpPingSupported => !kIsWeb || PiBackend.available;
 
-  /// Mobile Traceroute (ICMP TTL-walk) support. Same web exclusion; the genuine
-  /// per-platform verdict (available on Android, unavailable-no-TimeExceeded on
-  /// iOS, sandboxed-out on desktop where the system traceroute is the path) is
-  /// decided inside IcmpService (`tracerouteCapability`) and surfaced in the UI.
-  static bool get icmpTracerouteSupported => !kIsWeb;
+  /// Mobile Traceroute (ICMP TTL-walk) support. The genuine per-platform verdict
+  /// (available on Android, unavailable-no-TimeExceeded on iOS, sandboxed-out on
+  /// desktop where the system traceroute is the path) is decided inside
+  /// IcmpService (`tracerouteCapability`) and surfaced in the UI. On Pi-hosted
+  /// web the traceroute runs ON the Pi via `/toolboxapi/traceroute` (final hop
+  /// list, one-shot); on Netlify web the Pi backend is absent so this stays
+  /// false and the tool keeps the download-the-app fallback.
+  static bool get icmpTracerouteSupported => !kIsWeb || PiBackend.available;
 
   /// Traceroute support. The *screen* is reachable off-web on every native
   /// platform (so the tool catalog can route to it), but the genuine
   /// hop-by-hop run only works on desktop where the OS traceroute binary can
   /// be spawned. The per-platform desktop-vs-mobile verdict is decided inside
   /// TracerouteService (`isSupportedPlatform`) and surfaced in the UI; this
-  /// flag only excludes web, where no part of it can run.
-  static bool get tracerouteSupported => !kIsWeb;
+  /// flag excludes web EXCEPT Pi-hosted web, where the traceroute runs ON the
+  /// Pi via `/toolboxapi/traceroute`. On Netlify web the Pi backend is absent
+  /// so this stays false and the tool keeps the download-the-app fallback.
+  static bool get tracerouteSupported => !kIsWeb || PiBackend.available;
 
   /// Network Discovery (LAN host + service scan) support. The *screen* is
   /// reachable off-web on every native platform so the catalog can route to it.
   /// The scan uses `dart:io` TCP connect probes (liveness), the in-house mDNS
   /// EventChannel (enrichment), and — desktop-only — a sandbox-safe sysctl ARP
-  /// read for MAC/vendor; none of those exist in a browser, so the gate is the
-  /// same `!kIsWeb` as the other socket tools. The per-platform MAC/vendor
-  /// ceiling (desktop reads it, iOS cannot) is surfaced honestly inside the
-  /// screen, not gated here.
-  static bool get networkDiscoverySupported => !kIsWeb;
+  /// read for MAC/vendor; none of those exist in a browser. Native everywhere;
+  /// ALSO available on Pi-hosted web, where the LAN scan runs ON the Pi via
+  /// `/toolboxapi/discovery`. On Netlify web the Pi backend is absent so this
+  /// stays false and the tool keeps the download-the-app fallback. The
+  /// per-platform MAC/vendor ceiling (desktop reads it, iOS cannot) is surfaced
+  /// honestly inside the screen, not gated here.
+  static bool get networkDiscoverySupported => !kIsWeb || PiBackend.available;
 
   /// BSS Load (802.11 element 11) readout support.
   ///

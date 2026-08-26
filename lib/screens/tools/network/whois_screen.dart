@@ -12,11 +12,15 @@
 // The lookup walks the referral chain (IANA → registry → optional registrar);
 // the consulted servers are shown so the path is transparent.
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/network_target.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/whois_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -45,10 +49,24 @@ class _WhoisScreenState extends State<WhoisScreen> {
   bool _canRun = false;
   WhoisResult? _result;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the WHOIS
+  /// lookup runs ON the Pi via `/toolboxapi/whois` (TCP/43 is unreachable from a
+  /// browser), returning the SAME [WhoisResult] the native path builds, so the
+  /// existing highlights / raw-record cards render it unchanged. Only when no
+  /// test service is injected, on web, with a Pi backend that serves this tool —
+  /// otherwise the native path is byte-for-byte unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? WhoisService();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('whois') && widget.service == null;
+    // On the Pi path the native WHOIS service is never constructed — the lookup
+    // runs server-side on the Pi through PiBackendClient.
+    if (!_piBacked) {
+      _service = widget.service ?? WhoisService();
+    }
     _queryCtrl.addListener(_recomputeCanRun);
   }
 
@@ -68,7 +86,9 @@ class _WhoisScreenState extends State<WhoisScreen> {
     if (_loading || !_canRun) return;
     _queryFocus.unfocus();
     setState(() => _loading = true);
-    final WhoisResult result = await _service.lookup(rawQuery: _queryCtrl.text);
+    final WhoisResult result = _piBacked
+        ? await _runPi()
+        : await _service.lookup(rawQuery: _queryCtrl.text);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -89,6 +109,23 @@ class _WhoisScreenState extends State<WhoisScreen> {
       announcement,
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted lookup: the WHOIS referral walk runs ON the WLAN Pi hosting this
+  /// page and comes back as the SAME [WhoisResult] the native path builds, so
+  /// [_resultsSection] renders the highlights, consulted-server path, and raw
+  /// record identically — including the model's `isEmpty` no-record state. The
+  /// query is normalized with the shared [NetworkTarget.hostFromUserInput] so a
+  /// pasted URL reduces to the registrable name. A transport failure — including
+  /// a [PiBackendException] from an unreachable Pi — is folded into the model's
+  /// failure state and surfaced by the existing error card. Never throws.
+  Future<WhoisResult> _runPi() async {
+    final String query = NetworkTarget.hostFromUserInput(_queryCtrl.text);
+    try {
+      return await PiBackendClient().whois(query: query);
+    } on PiBackendException catch (e) {
+      return WhoisResult.failure(query: query, message: e.message);
+    }
   }
 
   @override
@@ -183,6 +220,7 @@ class _WhoisScreenState extends State<WhoisScreen> {
 
   Widget _queryCard(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -208,6 +246,14 @@ class _WhoisScreenState extends State<WhoisScreen> {
               decoration: const InputDecoration(hintText: 'example.com'),
             ),
           ),
+          if (_piBacked) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'The WHOIS query runs on the WLAN Pi hosting this page, not from '
+              'this browser.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: (_loading || !_canRun) ? null : _run,

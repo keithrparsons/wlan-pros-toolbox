@@ -29,11 +29,13 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:net_quality/net_quality.dart';
 
+import '../../../data/tool_assets.dart';
 import '../../../router/app_router.dart';
 import '../../guides/guide_reader_screen.dart';
 import '../../../services/network/cellular_data_cost.dart';
@@ -51,6 +53,8 @@ import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_details_service.dart';
 import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../services/network/wifi_details_bridge.dart';
 import '../../../services/network/wifi_grading.dart';
 import '../../../services/network/wifi_info_adapter.dart';
@@ -66,6 +70,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/packet_flow_progress.dart';
 import '../../../widgets/sparkline.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../concept_graphic_band.dart';
 import 'analyze_results_screen.dart';
 import 'cloud_apps_panel.dart';
 import 'get_reading_icon.dart';
@@ -74,6 +79,7 @@ import 'install_shortcut_sheet.dart';
 import 'live_setup_card.dart';
 import 'network_unavailable_view.dart';
 import 'not_on_wifi_card.dart';
+import 'pi_view_honesty.dart';
 
 /// The footnote method-disclosure, VERBATIM from the pro screen's spec. Kept as
 /// a named constant so the test asserts the exact string and the technical
@@ -253,6 +259,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   LiveOnboardingService? _onboardingService;
   late final QualityClient _quality;
+
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web) — this is the
+  /// home hero and the `/tools/wifi-vs-internet` redirect target, so it is the
+  /// most likely first click on the hosted page. The browser cannot read the
+  /// visitor's own Wi-Fi link, so the full consumer "is it your Wi-Fi or your
+  /// internet?" verdict is impossible here; instead the Pi runs a connection
+  /// test on itself (`/toolboxapi/conntest`) and the honest reading is rendered
+  /// by [_PiConnectionBody]. False on native and on Netlify web (no Pi backend),
+  /// so both are byte-for-byte unchanged. Set before the web bail in initState.
+  late final bool _piBacked;
 
   /// Guards the first-run onboarding gate so it presents at most once per mount.
   /// Retained with [_maybeShowFirstRunOnboarding] for the inline opt-in path; the
@@ -677,6 +693,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   void initState() {
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+
+    // Pi-hosted web: the front door runs a Pi-side connection test instead of
+    // the native consumer verdict (the browser cannot read this device's Wi-Fi
+    // link). Computed BEFORE the web bail below so _body() can branch to the
+    // self-contained [_PiConnectionBody]. Never true on native or Netlify web,
+    // where the injected-client guard also keeps every test on the native path.
+    _piBacked = kIsWeb && PiBackend.available && widget.qualityClient == null;
 
     // WEB GATE (launch-critical, 2026-07-06). The browser has no dart:io, and
     // several of the native services constructed below touch it at CONSTRUCTION
@@ -2322,6 +2345,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Pi-hosted front door: hand the whole screen to the self-contained
+    // [_PiConnectionBody], which carries its OWN AppBar + working copy action.
+    // The parent's AppBar copy action reads [_verdict], which the Pi path never
+    // produces (the browser cannot read the visitor's Wi-Fi link), so under the
+    // parent it would sit permanently greyed even after a good Pi run — the
+    // dead-copy bug Vera flagged (MEDIUM-1, 2026-07-09). Branching here keeps the
+    // Pi body self-contained and the native path byte-for-byte unchanged:
+    // _piBacked is false on native and Netlify web, so the native Scaffold below
+    // renders exactly as before.
+    if (_piBacked) {
+      return _PiConnectionBody(autoStart: widget.autoStart);
+    }
     return Scaffold(
       appBar: AppBar(
         // §8.5 `--text-h2` (28px) screen title. At every real iPhone width
@@ -2368,6 +2403,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   }
 
   Widget _body() {
+    // NB: the Pi-hosted front door is handled in [build] (it returns the
+    // self-contained [_PiConnectionBody] with its own AppBar + copy action), so
+    // this native body is only ever reached when `_piBacked` is false.
     // The internet measurement needs dart:io sockets the browser does not have;
     // route web (and any no-socket platform) to the shared fallback.
     if (!NetworkSupport.activeNetworkSupported) {
@@ -6324,6 +6362,654 @@ class _ShortcutOfferCard extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pi-hosted front-door body. The browser cannot read the visitor's own Wi-Fi
+/// link, so the consumer "is it your Wi-Fi or your internet?" verdict is
+/// impossible here (that needs the native app). Instead this runs the WLAN Pi's
+/// own connection test (`/toolboxapi/conntest`) and renders the honest reading:
+/// latency + packet loss to the internet and the gateway, plus DNS resolution
+/// time. It is deliberately self-contained — it touches none of the native
+/// screen's state — so the native path stays byte-for-byte unchanged.
+///
+/// States (SOP-007 §5): idle · loading (spinner, Run disabled) · success (the
+/// hop reachability rows + latency/loss summary) · error (honest failure with a
+/// Retry). It never fabricates a value or claims to measure the visitor's own
+/// device (GL-005 / GL-008).
+class _PiConnectionBody extends StatefulWidget {
+  const _PiConnectionBody({this.autoStart = false});
+
+  /// When true (the home hero's one-tap entry) the test runs on first mount.
+  final bool autoStart;
+
+  @override
+  State<_PiConnectionBody> createState() => _PiConnectionBodyState();
+}
+
+class _PiConnectionBodyState extends State<_PiConnectionBody> {
+  final PiBackendClient _client = PiBackendClient();
+
+  bool _running = false;
+  PiConntestResult? _result;
+  String? _error;
+
+  /// The Pi's own uplink throughput (Pi -> internet) for the most recent run.
+  /// Best-effort: measured AFTER the conntest lands (so the two internet-bound
+  /// probes do not contend), it never fails the whole run. Null until it lands;
+  /// a leg that failed on the Pi stays honest-null inside the result. Mirrors
+  /// net_quality_screen's Pi wiring via [PiBackendClient.throughput].
+  PiThroughputResult? _throughput;
+  bool _throughputRunning = false;
+
+  /// The browser<->Pi Wi-Fi-hop throughput (this device to the Pi over the local
+  /// network), timed same-origin in the browser via the garbage/perfsink loop.
+  /// DISTINCT from the Pi uplink above; the two rows are never conflated (Keith
+  /// decision + [[project_throughput_methodology]]). Null until the run measures
+  /// them; [_deviceToPiError] is set when the local timing failed.
+  double? _deviceToPiDownMbps;
+  double? _deviceToPiUpMbps;
+  bool _deviceToPiRunning = false;
+  String? _deviceToPiError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _run();
+      });
+    }
+  }
+
+  Future<void> _run() async {
+    setState(() {
+      _running = true;
+      _error = null;
+      _result = null;
+      _throughput = null;
+      _throughputRunning = false;
+      _deviceToPiDownMbps = null;
+      _deviceToPiUpMbps = null;
+      _deviceToPiError = null;
+    });
+    // The local Wi-Fi hop (this device <-> the Pi) is a DIFFERENT link than the
+    // Pi's internet uplink, so it runs concurrently with the conntest. Best-
+    // effort: a failure records the honest error, never a fabricated number, and
+    // never fails the whole run. Mirrors net_quality_screen's `_measureDeviceToPiHop`.
+    unawaited(_measureDeviceToPiHop());
+    try {
+      final PiConntestResult ct = await _client.conntest();
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _result = ct;
+      });
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Connection test complete',
+        TextDirection.ltr,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _error =
+            "The WLAN Pi couldn't complete the connection test. Please try "
+            'again.';
+      });
+      return;
+    }
+    // Pi uplink throughput runs AFTER the conntest so the two internet-bound
+    // measurements do not contend for the Pi's uplink. Best-effort and honest.
+    await _measurePiUplink();
+  }
+
+  /// Measures the Pi's own uplink to the internet (Pi -> internet download /
+  /// upload). Best-effort: a failure leaves [_throughput] null and the uplink
+  /// card falls back to its honest "Unavailable" rows, never a fabricated number
+  /// (GL-005). Uses the SAME [PiBackendClient.throughput] path Network Quality uses.
+  Future<void> _measurePiUplink() async {
+    if (!mounted) return;
+    setState(() => _throughputRunning = true);
+    PiThroughputResult? tp;
+    try {
+      tp = await _client.throughput();
+    } on Object {
+      tp = null;
+    }
+    if (!mounted) return;
+    setState(() {
+      _throughputRunning = false;
+      _throughput = tp;
+    });
+  }
+
+  /// LibreSpeed-style local-hop timing: download then upload against the Pi's
+  /// garbage/perfsink endpoints, sequentially so they do not contend for the
+  /// Wi-Fi link. Best-effort and honest — a failure records the error, never a
+  /// fake number. Mirrors net_quality_screen's identical helper.
+  Future<void> _measureDeviceToPiHop() async {
+    if (!mounted) return;
+    setState(() => _deviceToPiRunning = true);
+    double? down;
+    double? up;
+    String? error;
+    try {
+      down = await _client.deviceToPiDownloadMbps();
+      up = await _client.deviceToPiUploadMbps();
+    } on Object catch (e) {
+      error = 'The local Wi-Fi-hop test to the Pi could not complete ($e).';
+    }
+    if (!mounted) return;
+    setState(() {
+      _deviceToPiRunning = false;
+      _deviceToPiDownMbps = down;
+      _deviceToPiUpMbps = up;
+      _deviceToPiError = error;
+    });
+  }
+
+  /// §8.16 copy payload for the Pi front door — the conntest reading as a labeled
+  /// summary plus a hop TSV, honest about the Pi origin. Returns null (→ the
+  /// disabled affordance) until a run has produced a result: idle, loading, and
+  /// a failed run all have nothing to keep — matching the three sibling Pi tools.
+  /// The content is built by the pure [piConntestCopyText], which is unit-tested
+  /// so the copy can never silently regress to the old always-greyed state
+  /// (Vera MEDIUM-1). Never fabricates a value (GL-005).
+  String? _buildPiCopyText() {
+    final PiConntestResult? ct = _result;
+    if (_running || ct == null) return null;
+    return piConntestCopyText(
+      ct,
+      throughput: _throughput,
+      deviceToPiDownMbps: _deviceToPiDownMbps,
+      deviceToPiUpMbps: _deviceToPiUpMbps,
+      deviceToPiError: _deviceToPiError,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // The Pi front door carries its OWN Scaffold + AppBar so the §8.16 copy
+    // action reads THIS widget's [_result] (via [_buildPiCopyText]) rather than
+    // the parent's [_verdict], which the Pi path never sets. That is the fix for
+    // the dead, permanently-greyed copy button Vera flagged (MEDIUM-1): copy is
+    // now enabled the moment a run lands and disabled only when there is nothing
+    // to keep. The title matches the native AppBar so the page reads identically.
+    return Scaffold(
+      appBar: AppBar(
+        title: const Align(
+          alignment: Alignment.centerLeft,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text('Test My Connection'),
+          ),
+        ),
+        toolbarHeight: 64,
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _buildPiCopyText),
+        ],
+      ),
+      body: SafeArea(top: false, child: _content(context)),
+    );
+  }
+
+  Widget _content(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 720;
+        final double edge = isDesktop
+            ? AppSpacing.screenEdgeDesktop
+            : AppSpacing.screenEdgeMobile;
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                edge,
+                AppSpacing.sm,
+                edge,
+                edge + AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ConceptGraphicBand(
+                    toolId: 'net-quality',
+                    isDesktop: isDesktop,
+                  ),
+                  if (ToolAssets.hasGraphic('net-quality'))
+                    const SizedBox(height: AppSpacing.md),
+                  _runCard(context),
+                  if (_result != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _hopsCard(context, _result!),
+                    // Pi -> Internet throughput card — the Pi's OWN uplink,
+                    // measured after the conntest. Shown once the probe starts;
+                    // a failed leg stays honest-null (never a fabricated 0).
+                    if (_throughputRunning || _throughput != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      _piUplinkCard(context),
+                    ],
+                    // This device <-> Pi Wi-Fi-hop card — the SECOND, local
+                    // throughput number, in its own labeled card so it is never
+                    // read as the Pi's uplink. Shown once its timing starts.
+                    if (_deviceToPiRunning ||
+                        _deviceToPiDownMbps != null ||
+                        _deviceToPiUpMbps != null ||
+                        _deviceToPiError != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      _deviceToPiCard(context),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
+                    _caption(context),
+                  ],
+                  const ToolHelpFooter(toolId: 'net-quality'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _runCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Runs a connection test on the WLAN Pi hosting this page: latency, '
+            'jitter, and packet loss to the internet and to the gateway, DNS '
+            'resolution time, and two throughput numbers. The Pi measures its '
+            'own uplink to the internet, and this page times the local Wi-Fi '
+            'hop between your device and the Pi. A browser cannot read your own '
+            'device\'s Wi-Fi signal, so the full "is it your Wi-Fi or your '
+            'internet?" verdict runs in the native app.',
+            style: text.bodyLarge?.copyWith(color: colors.textSecondary),
+          ),
+          if (_error != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _error!,
+              style: text.labelMedium?.copyWith(color: colors.statusDanger),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Semantics(
+            button: true,
+            enabled: !_running,
+            label: _running
+                ? 'Running the connection test'
+                : 'Run the connection test on the WLAN Pi',
+            child: FilledButton(
+              onPressed: _running ? null : _run,
+              child: Text(_running ? 'Running…' : 'Run connection test'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _hopsCard(BuildContext context, PiConntestResult ct) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'Measured on the WLAN Pi',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _hopRow(
+            context,
+            label: _named('Gateway', ct.gateway.target),
+            reachable: ct.gateway.reachable,
+            latencyMs: ct.gateway.reachable ? ct.gateway.avgMs : null,
+          ),
+          _hopRow(
+            context,
+            label: _named('Internet', ct.internet.target),
+            reachable: ct.internet.reachable,
+            latencyMs: ct.internet.reachable ? ct.internet.avgMs : null,
+            lossPct: ct.internet.lossPct,
+          ),
+          _hopRow(
+            context,
+            label: _named('DNS resolve', ct.dns.host),
+            reachable: ct.dns.ms != null,
+            latencyMs: ct.dns.ms,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _named(String base, String? id) =>
+      (id == null || id.isEmpty) ? base : '$base ($id)';
+
+  Widget _hopRow(
+    BuildContext context, {
+    required String label,
+    required bool reachable,
+    double? latencyMs,
+    double? lossPct,
+  }) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+
+    // WCAG 1.4.1 — outcome carried by icon shape AND a status word, never color.
+    final IconData icon = reachable ? Icons.check_circle : Icons.cancel;
+    final Color iconColor =
+        reachable ? colors.statusSuccess : colors.statusDanger;
+    final String status = reachable ? 'reachable' : 'unreachable';
+    final String rtt = reachable && latencyMs != null
+        ? '${latencyMs.round()} ms'
+        : '—';
+    final String lossSuffix =
+        lossPct == null ? '' : ', ${lossPct.round()}% loss';
+
+    return Semantics(
+      label: '$label, $status'
+          '${reachable && latencyMs != null ? ', ${latencyMs.round()} milliseconds' : ''}'
+          '$lossSuffix',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyLarge?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+              Text(
+                status,
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              SizedBox(
+                width: 64,
+                child: Text(
+                  rtt,
+                  textAlign: TextAlign.right,
+                  style: mono.inlineCode.copyWith(
+                    color: reachable ? colors.textAccent : colors.textTertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _caption(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Text(
+      'Measured on the WLAN Pi hosting this page, not from this browser and not '
+      'an Orb or Ookla score. Two throughput numbers are reported: the Pi '
+      'uplink to the internet, and the local hop between this device and the '
+      'Pi. To read your own device\'s Wi-Fi signal and get the full "is it your '
+      'Wi-Fi or your internet?" verdict, run Test My Connection in the native app.',
+      style: text.labelMedium?.copyWith(color: colors.textSecondary),
+    );
+  }
+
+  /// The Pi -> Internet throughput card: the Pi's OWN uplink download/upload,
+  /// clearly attributed so it is never confused with the local Wi-Fi hop below.
+  /// A leg that has not landed shows a spinner; a leg the Pi could not measure
+  /// shows the honest "Unavailable" (or the Pi's own error), never a fabricated
+  /// number (GL-005).
+  Widget _piUplinkCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final PiThroughputResult? tp = _throughput;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'Pi to internet (throughput)',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'The WLAN Pi\'s own uplink to the internet, measured on the Pi. This '
+            'is separate from the local Wi-Fi hop between this device and the Pi '
+            'shown below.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _throughputRow(context, 'Download', tp?.downloadMbps, tp?.downloadError),
+          _throughputRow(context, 'Upload', tp?.uploadMbps, tp?.uploadError),
+        ],
+      ),
+    );
+  }
+
+  /// One Pi-uplink throughput row. Pending (no value, probe still running) shows
+  /// a spinner; a present value renders in Mbps; a null value with the probe
+  /// done renders the Pi's own error note when present, else a plain
+  /// "Unavailable" — never a fabricated number (GL-005).
+  Widget _throughputRow(
+    BuildContext context,
+    String label,
+    double? mbps,
+    String? error,
+  ) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool pending = mbps == null && _throughputRunning;
+    final String valueLabel =
+        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    final String? errText =
+        (error != null && error.trim().isNotEmpty) ? error.trim() : null;
+    final bool showErr = mbps == null && !pending && errText != null;
+    return Semantics(
+      label: '$label, ${pending ? 'measuring' : valueLabel}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: text.bodyLarge?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  if (pending)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.textTertiary,
+                      ),
+                    )
+                  else
+                    Text(
+                      valueLabel,
+                      textAlign: TextAlign.right,
+                      style: mono.outputMedium.copyWith(
+                        color: mbps != null
+                            ? colors.textAccent
+                            : colors.textTertiary,
+                      ),
+                    ),
+                ],
+              ),
+              if (showErr) ...<Widget>[
+                const SizedBox(height: 2),
+                Text(
+                  errText,
+                  style: text.labelSmall?.copyWith(color: colors.textTertiary),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The browser<->Pi Wi-Fi-hop throughput card — the SECOND, local throughput
+  /// number, in its own labeled card so it is never confused with the Pi's
+  /// uplink above. A value that has not measured yet shows a spinner; a failure
+  /// shows the honest error, never a fabricated number (GL-005).
+  Widget _deviceToPiCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'This device ↔ Pi (Wi-Fi hop)',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Throughput between this device and the WLAN Pi over your local '
+            'network, timed in the browser. This is the local hop, separate from '
+            'the Pi uplink to the internet shown above.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (_deviceToPiError != null)
+            Text(
+              _deviceToPiError!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            )
+          else ...<Widget>[
+            _deviceToPiRow(context, 'Download', _deviceToPiDownMbps),
+            _deviceToPiRow(context, 'Upload', _deviceToPiUpMbps),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _deviceToPiRow(BuildContext context, String label, double? mbps) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool pending = mbps == null && _deviceToPiRunning;
+    final String valueLabel =
+        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    return Semantics(
+      label: '$label, ${pending ? 'measuring' : valueLabel}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              if (pending)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.textTertiary,
+                  ),
+                )
+              else
+                Text(
+                  valueLabel,
+                  textAlign: TextAlign.right,
+                  style: mono.outputMedium.copyWith(
+                    color: mbps != null
+                        ? colors.textAccent
+                        : colors.textTertiary,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

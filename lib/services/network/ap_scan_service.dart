@@ -7,6 +7,9 @@ import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/channel_frequency_data.dart';
+import 'pi_backend.dart';
+import 'pi_backend_client.dart';
 // LocationAuthStatus is DEFINED beside the Wi-Fi Information service because
 // that is where the shipped authorization flow lives. The AP scan reuses the
 // same enum rather than declaring a parallel one: two tri-state enums for one
@@ -455,13 +458,26 @@ class ApScanService {
   /// macOS Location-permission calls (see [_invokePermission]); when a test
   /// injects only [invoke], both seams route to it so no test can reach a real
   /// channel. [platformOverride] defaults to the host operating system.
+  ///
+  /// PI-HOSTED WEB: when this bundle is served from a WLAN Pi, the scan runs on
+  /// the Pi's radio via `/toolboxapi/scan` (a genuine off-channel neighbor scan
+  /// the browser cannot do). [piBackedOverride] / [piClient] / [piInterface] are
+  /// test seams; in production `_piBacked` is `kIsWeb && PiBackend.available`, so
+  /// native behavior is byte-for-byte unchanged and Netlify web stays unsupported.
   ApScanService({
     Future<Object?> Function(String method, [dynamic args])? invoke,
     Future<Object?> Function(String method, [dynamic args])? invokeWifiInfo,
     String? platformOverride,
+    bool? piBackedOverride,
+    PiBackendClient? piClient,
+    String piInterface = 'wlan0',
   })  : _invoke = invoke ?? _defaultInvoke,
         _invokeWifiInfo = invokeWifiInfo ?? invoke ?? _defaultWifiInfoInvoke,
-        _platform = platformOverride ?? _hostOperatingSystem();
+        _platform = platformOverride ?? _hostOperatingSystem(),
+        _piBacked = piBackedOverride ?? (kIsWeb && PiBackend.available) {
+    _piClient = piClient;
+    _piInterface = piInterface;
+  }
 
   /// Returns the host OS name, or an empty string on web. Never throws.
   static String _hostOperatingSystem() {
@@ -507,9 +523,45 @@ class ApScanService {
       _invokeWifiInfo;
   final String _platform;
 
-  /// Whether this platform supports a nearby-AP scan. Android and macOS.
+  /// True when the scan is served by the Pi hosting backend (web only).
+  final bool _piBacked;
+
+  /// The Pi's scan-radio interface. Lazily-created client so native builds never
+  /// construct an http.Client they will not use.
+  PiBackendClient? _piClient;
+  String _piInterface = 'wlan0';
+
+  PiBackendClient get _pi => _piClient ??= PiBackendClient();
+
+  /// True when this bundle is served from a WLAN Pi (web only). The Nearby AP
+  /// Scan screen consults this to offer the scan-radio picker — the picker is
+  /// Pi-path only, so native and Netlify web never see it and stay unchanged.
+  bool get isPiBacked => _piBacked;
+
+  /// The Pi radio the next [scan] will run on. Defaults to "wlan0".
+  String get piInterface => _piInterface;
+
+  /// Sets the Pi radio the next [scan] runs on (the picker selection), so a
+  /// multi-NIC Pi scans on the chosen radio.
+  void selectPiInterface(String name) => _piInterface = name;
+
+  /// The Pi's scan-capable radios, for the picker. Empty off the Pi path
+  /// (native / Netlify) and empty — not thrown — when the endpoint is missing or
+  /// errors, so the caller falls back to the wlan0 default with no crash.
+  Future<List<PiScanInterface>> scanInterfaces() async {
+    if (!_piBacked) return const <PiScanInterface>[];
+    try {
+      return await _pi.scanInterfaces();
+    } on PiBackendException {
+      return const <PiScanInterface>[];
+    }
+  }
+
+  /// Whether this platform supports a nearby-AP scan. Android and macOS
+  /// natively, OR any browser served from a WLAN Pi (the scan runs on the Pi's
+  /// radio).
   bool get isSupportedPlatform =>
-      !kIsWeb && wiredPlatforms.contains(_platform);
+      _piBacked || (!kIsWeb && wiredPlatforms.contains(_platform));
 
   /// The platform name used in user-visible copy, so the UI can attribute a
   /// Location gate or a throttled scan to the right OS. Null off the wired
@@ -560,6 +612,30 @@ class ApScanService {
     String method, {
     required bool scanPerformed,
   }) async {
+    // Pi-hosted web: fetch a neighbor scan from the Pi's radio and map it into
+    // the same snapshot shape. The Pi has no Location gate or scan throttle, so
+    // those flags are true/false accordingly; a backend failure surfaces as the
+    // same channelError the native path uses.
+    if (_piBacked) {
+      try {
+        final List<PiScanNet> nets =
+            await _pi.scan(interface: _piInterface);
+        return ApScanSnapshot(
+          accessPoints: nets
+              .map(_scannedApFromPi)
+              .whereType<ScannedAp>()
+              .toList(growable: false),
+          poweredOn: true,
+          locationAuthorized: true,
+          scanThrottled: false,
+        );
+      } on PiBackendException catch (e) {
+        throw ApScanUnavailable(
+          ApScanUnavailableReason.channelError,
+          e.message,
+        );
+      }
+    }
     if (!isSupportedPlatform) {
       throw const ApScanUnavailable(
         ApScanUnavailableReason.unsupportedPlatform,
@@ -592,6 +668,9 @@ class ApScanService {
   /// Whether the Location grant that gates scan results is currently held (no
   /// prompt). ACCESS_FINE_LOCATION on Android; Location Services on macOS.
   Future<bool> isLocationAuthorized() async {
+    // Pi path: the scan runs on the Pi, not behind an OS Location gate, so
+    // the Location card never shows there.
+    if (_piBacked) return true;
     final result = await _invokePermission('isLocationAuthorized');
     return (result as bool?) ?? false;
   }
@@ -633,8 +712,59 @@ class ApScanService {
   /// platforms gate scan results behind it: Android withholds the results
   /// entirely, macOS withholds every SSID and BSSID.
   Future<bool> requestLocationPermission() async {
+    if (_piBacked) return true;
     final result = await _invokePermission('requestLocationPermission');
     return (result as bool?) ?? false;
+  }
+
+  /// Maps one Pi BSS into a [ScannedAp], deriving the channel + band from the
+  /// reported center frequency via the verified channel-plan converter. Falls
+  /// back to arithmetic band/channel derivation only when the frequency does not
+  /// snap to a known 20 MHz primary (rare), so a scanned AP is always shown.
+  static ScannedAp? _scannedApFromPi(PiScanNet net) {
+    // SAME ADMISSION RULE AS [ScannedAp.fromMap]: a row without a real BSSID is
+    // not an AP we can honestly show. Coercing it to an empty string would put a
+    // garbled identity beside a null SSID and render it as a cloaking AP, which
+    // is the exact defect fromMap's null test exists to prevent.
+    final String? bssid = net.bssid;
+    if (bssid == null || bssid.isEmpty) return null;
+    final ({WifiBand band, int channel})? match =
+        frequencyToChannel(net.freqMhz.toDouble());
+    final int channel;
+    final String band;
+    if (match != null) {
+      channel = match.channel;
+      band = match.band.label;
+    } else {
+      final (int ch, String b) = _deriveChannelBand(net.freqMhz);
+      channel = ch;
+      band = b;
+    }
+    return ScannedAp(
+      ssid: net.ssid,
+      bssid: bssid,
+      rssiDbm: net.signalDbm,
+      channel: channel,
+      band: band,
+      frequencyMhz: net.freqMhz,
+    );
+  }
+
+  /// Arithmetic fallback (channel, band) from a center frequency (MHz), using
+  /// the universal channel<->frequency formula. Only reached when
+  /// [frequencyToChannel] returns null.
+  static (int, String) _deriveChannelBand(int freq) {
+    if (freq == 2484) return (14, '2.4 GHz');
+    if (freq >= 2401 && freq <= 2495) {
+      return (((freq - 2407) / 5).round(), '2.4 GHz');
+    }
+    if (freq >= 5150 && freq <= 5895) {
+      return (((freq - 5000) / 5).round(), '5 GHz');
+    }
+    if (freq >= 5925 && freq <= 7125) {
+      return (((freq - 5950) / 5).round(), '6 GHz');
+    }
+    return (0, '$freq MHz');
   }
 
   /// Opens the system settings page so the user can enable Location after a

@@ -135,6 +135,54 @@ abstract final class NetworkTarget {
     return base;
   }
 
+  /// Extracts a bare host / IP from looser user input, BEFORE validation.
+  ///
+  /// People paste a whole URL (`http://example.com/path?q=1`), a `host:port`,
+  /// or a `user@host`. The network primitives (traceroute, ping) want just the
+  /// host, so this strips — in order — a leading URL scheme, any path / query /
+  /// fragment tail, userinfo, and a trailing `:port`. IPv6 is preserved: a
+  /// bracketed literal (`[2001:db8::1]:443`) is unwrapped to its address, and a
+  /// bare IPv6 literal (which is itself all colons) is passed through untouched
+  /// rather than mistaking a hextet separator for a port.
+  ///
+  /// Returns the trimmed host, or an empty string when nothing host-like is
+  /// left (the caller then shows its inline "enter a host" hint). This does NOT
+  /// validate syntax — feed the result to [validateHostOrIp].
+  static String hostFromUserInput(String input) {
+    String s = input.trim();
+    if (s.isEmpty) return '';
+
+    // 1. Strip a leading URL scheme (`http://`, `https://`, `ftp://`, …).
+    s = s.replaceFirst(RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://'), '');
+
+    // 2. Cut off a path / query / fragment tail at the first `/`, `?`, or `#`.
+    final int cut = s.indexOf(RegExp(r'[/?#]'));
+    if (cut >= 0) s = s.substring(0, cut);
+
+    // 3. Drop userinfo (`user:pass@host`) — keep what follows the last `@`.
+    final int at = s.lastIndexOf('@');
+    if (at >= 0) s = s.substring(at + 1);
+
+    // 4. Bracketed IPv6 literal, optionally with a port: `[::1]` / `[::1]:443`.
+    if (s.startsWith('[')) {
+      final int close = s.indexOf(']');
+      return (close > 0 ? s.substring(1, close) : s.substring(1)).trim();
+    }
+
+    // 5. Strip a trailing `:port`, but only when the remainder is NOT itself a
+    //    bare IPv6 literal (those carry no port here, and every colon is part
+    //    of the address).
+    final int colon = s.lastIndexOf(':');
+    if (colon >= 0 && !isIpv6(s)) {
+      final String tail = s.substring(colon + 1);
+      if (tail.isNotEmpty && RegExp(r'^\d+$').hasMatch(tail)) {
+        s = s.substring(0, colon);
+      }
+    }
+
+    return s.trim();
+  }
+
   static InvalidNetworkTarget _malformed() => const InvalidNetworkTarget(
         reason: NetworkTargetRejection.malformedSyntax,
         message: 'Not a valid host or IP address.',

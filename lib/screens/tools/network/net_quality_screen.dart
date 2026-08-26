@@ -29,6 +29,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:net_quality/net_quality.dart';
@@ -37,6 +38,9 @@ import '../../../data/tool_assets.dart';
 import '../../../services/network/cellular_data_cost.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/wifi_connection_service.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
+import '../../../services/network/pi_backend_quality_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -47,6 +51,7 @@ import 'live_quality_monitor.dart';
 import 'metric_sparkline.dart';
 import 'net_quality_help_sheet.dart';
 import 'network_unavailable_view.dart';
+import 'pi_view_honesty.dart';
 
 /// Network Quality screen. Runs one transport measurement and a popular-site
 /// reachability pass, then renders six graded metric rows and a reachability
@@ -90,6 +95,26 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   late final QualityClient _client;
   late final ReachabilityProbe _reachability;
   late final LiveQualityMonitor _monitor;
+
+  /// True when the connection test runs on the Pi (Pi-hosted web) rather than
+  /// over `dart:io` sockets. Drives the Pi-appropriate reachability rows, the
+  /// suppressed live-sampling affordance, and the honest attribution copy.
+  late final bool _piBacked;
+
+  /// The Pi client when [_piBacked], so `onDone` can read the raw gateway /
+  /// internet / DNS hops for the reachability card. Null off the Pi path.
+  PiBackendQualityClient? _piClient;
+
+  /// The browser↔Pi Wi-Fi-hop throughput (this device to the Pi over the local
+  /// network), measured same-origin in the browser via the garbage/perfsink
+  /// LibreSpeed-style timing loop. DISTINCT from the Pi's own uplink (Pi →
+  /// internet) which the QualityClient carries; the two rows are never conflated
+  /// (Keith decision + [[project_throughput_methodology]]). Null until the Pi
+  /// run measures them; the error string is set when the local timing failed.
+  double? _deviceToPiDownMbps;
+  double? _deviceToPiUpMbps;
+  bool _deviceToPiRunning = false;
+  String? _deviceToPiError;
 
   bool _running = false;
   String? _error;
@@ -146,15 +171,23 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   @override
   void initState() {
     super.initState();
+    // Pi-hosted web: the browser has no dart:io sockets, so the connection test
+    // runs on the Pi via /toolboxapi/conntest. Only when no client is injected
+    // (production), on web, with a Pi backend present — otherwise the native
+    // engine (or an injected test client) is used, byte-for-byte unchanged.
+    _piBacked = kIsWeb && PiBackend.available && widget.client == null;
+    _piClient = _piBacked ? PiBackendQualityClient() : null;
     // Injection seam: real engine + real reachability in production, fakes in
     // tests. Default target is Cloudflare's one.one.one.one on port 443.
-    _client =
-        widget.client ?? OwnEngineQualityClient.forHost('one.one.one.one');
+    _client = widget.client ??
+        _piClient ??
+        OwnEngineQualityClient.forHost('one.one.one.one');
     _reachability = widget.reachabilityProbe ?? ReachabilityProbe();
     // The live monitor samples the cheap latency trio while the screen is
     // mounted. Built with a real LatencyProbe in production (same host as the
     // one-shot client); injected with a fake sampler in tests. Only started on
-    // a platform that can actually run the sockets — never on web.
+    // a platform that can actually run the sockets — never on web (including
+    // Pi-hosted web, where the one-shot Pi conntest carries the reading instead).
     _monitor = widget.monitor ?? LiveQualityMonitor(host: 'one.one.one.one');
     _connection = widget.connectionService ?? WifiConnectionService();
     if (NetworkSupport.activeNetworkSupported) {
@@ -244,24 +277,39 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       _fraction = 0;
       _result = null;
       _sites = <SiteReachability>[];
+      _deviceToPiDownMbps = null;
+      _deviceToPiUpMbps = null;
+      _deviceToPiError = null;
     });
 
     // Reachability runs concurrently with the transport stream. Its result
-    // populates the popular-sites section as soon as it lands.
-    unawaited(
-      _reachability
-          .measure()
-          .then((List<SiteReachability> sites) {
-            if (!mounted) return;
-            setState(() => _sites = sites);
-          })
-          .catchError((Object _) {
-            // A reachability failure is non-fatal: leave the section empty rather
-            // than surfacing an error over the transport result.
-            if (!mounted) return;
-            setState(() => _sites = <SiteReachability>[]);
-          }),
-    );
+    // populates the popular-sites section as soon as it lands. On Pi-hosted web
+    // the browser cannot socket-probe the popular-site list, so this native
+    // probe is skipped; the gateway / internet / DNS hops from the Pi conntest
+    // populate the section in `onDone` instead.
+    if (!_piBacked) {
+      unawaited(
+        _reachability
+            .measure()
+            .then((List<SiteReachability> sites) {
+              if (!mounted) return;
+              setState(() => _sites = sites);
+            })
+            .catchError((Object _) {
+              // A reachability failure is non-fatal: leave the section empty
+              // rather than surfacing an error over the transport result.
+              if (!mounted) return;
+              setState(() => _sites = <SiteReachability>[]);
+            }),
+      );
+    } else {
+      // Pi-hosted web: measure the LOCAL Wi-Fi hop (this device ↔ the Pi) with a
+      // same-origin timing loop against the Pi's garbage/perfsink endpoints. This
+      // is the second, distinct throughput number — the browser side of the two
+      // the tool reports. Best-effort: a failure fills the honest error state,
+      // never a fabricated number, and never fails the whole run.
+      unawaited(_measureDeviceToPiHop());
+    }
 
     // THE RPM STAGE FAILS CLOSED TOO, ON THE SAME RULE (round 5).
     //
@@ -296,14 +344,20 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       onDone: () {
         if (!mounted) return;
         final QualityResult? result = _client.lastResult;
+        final PiConntestResult? ct = _piClient?.lastConntest;
         setState(() {
           _running = false;
           _result = result;
+          // Pi-hosted: show gateway / internet / DNS as the reachability rows,
+          // built from the same conntest the transport metrics came from.
+          if (_piBacked && ct != null) _sites = _hopsFromConntest(ct);
         });
         // Feed all six metric values into the live history. The expensive trio
         // (download/upload/responsiveness) gets points ONLY here, which is why
-        // those sparklines are sparse by design (spec §2).
-        if (result != null) _monitor.addFullResult(result);
+        // those sparklines are sparse by design (spec §2). Native only — the
+        // live sparklines are driven by the socket sampler, which does not run
+        // on Pi-hosted web, so there is no live history to feed there.
+        if (!_piBacked && result != null) _monitor.addFullResult(result);
         // WCAG 4.1.3 — announce completion to assistive tech.
         SemanticsService.sendAnnouncement(
           View.of(context),
@@ -319,6 +373,32 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         });
       },
     );
+  }
+
+  /// LibreSpeed-style local-hop timing: download then upload against the Pi's
+  /// garbage/perfsink endpoints, sequentially so they do not contend for the
+  /// Wi-Fi link. Best-effort and honest — a failure records the error, never a
+  /// fake number.
+  Future<void> _measureDeviceToPiHop() async {
+    if (!mounted) return;
+    setState(() => _deviceToPiRunning = true);
+    final PiBackendClient client = PiBackendClient();
+    double? down;
+    double? up;
+    String? error;
+    try {
+      down = await client.deviceToPiDownloadMbps();
+      up = await client.deviceToPiUploadMbps();
+    } on Object catch (e) {
+      error = 'The local Wi-Fi-hop test to the Pi could not complete ($e).';
+    }
+    if (!mounted) return;
+    setState(() {
+      _deviceToPiRunning = false;
+      _deviceToPiDownMbps = down;
+      _deviceToPiUpMbps = up;
+      _deviceToPiError = error;
+    });
   }
 
   @override
@@ -390,7 +470,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
 
     buf
       ..writeln()
-      ..writeln('Cloud apps reachable?');
+      ..writeln(
+          _piBacked ? 'Connection hops (via the Pi)' : 'Cloud apps reachable?');
     if (_sites.isEmpty) {
       buf.writeln('  No reachability results.');
     } else {
@@ -403,22 +484,99 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       }
     }
 
+    // Pi min/max detail — the Pi reports the internet-target RTT spread the
+    // on-screen average summarizes, so the clipboard carries the fuller figure.
+    final PiConntestResult? ct = _piBacked ? _piClient?.lastConntest : null;
+    if (ct != null && ct.internet.minMs != null && ct.internet.maxMs != null) {
+      buf.writeln(
+        '  Internet RTT min/max: '
+        '${ct.internet.minMs!.round()} / ${ct.internet.maxMs!.round()} ms',
+      );
+    }
+
+    // The local device ↔ Pi Wi-Fi-hop throughput — the second, distinct
+    // throughput number, kept clearly labeled in the clipboard too.
+    if (_piBacked &&
+        (_deviceToPiDownMbps != null ||
+            _deviceToPiUpMbps != null ||
+            _deviceToPiError != null)) {
+      buf
+        ..writeln()
+        ..writeln('This device ↔ Pi (Wi-Fi hop)');
+      if (_deviceToPiError != null) {
+        buf.writeln('  ${_deviceToPiError!}');
+      } else {
+        final String d = _deviceToPiDownMbps != null
+            ? '${_deviceToPiDownMbps!.toStringAsFixed(1)} Mbps'
+            : 'Unavailable';
+        final String u = _deviceToPiUpMbps != null
+            ? '${_deviceToPiUpMbps!.toStringAsFixed(1)} Mbps'
+            : 'Unavailable';
+        buf
+          ..writeln('  Download: $d')
+          ..writeln('  Upload: $u');
+      }
+    }
+
     buf
       ..writeln()
       ..writeln(
-        "These are this app's own measurements, not a third-party score. "
-        'The Responsiveness grade is an indicative figure inspired by '
-        'RFC 9097, not the full standard.',
+        _piBacked
+            ? 'Measured on the WLAN Pi hosting this page, not from this browser '
+                'and not a third-party score. Two throughput numbers are '
+                'reported: the Pi uplink to the internet, and the local hop '
+                'between this device and the Pi. Your own Wi-Fi RF is not '
+                'visible to the Pi.'
+            : "These are this app's own measurements, not a third-party score. "
+                'The Responsiveness grade is an indicative figure inspired by '
+                'RFC 9097, not the full standard.',
       );
 
     return buf.toString().trimRight();
   }
 
+  /// Gateway / internet / DNS reachability rows built from the Pi conntest, so
+  /// the reachability card shows the three hops the Pi actually measured. Each
+  /// hop's latency is its average RTT (null when the hop was unreachable, never
+  /// zero-filled); DNS shows its resolve time.
+  List<SiteReachability> _hopsFromConntest(PiConntestResult ct) {
+    String named(String base, String? id) =>
+        (id == null || id.isEmpty) ? base : '$base ($id)';
+    return <SiteReachability>[
+      SiteReachability(
+        site: PopularSite(
+          name: named('Gateway', ct.gateway.target),
+          host: ct.gateway.target ?? 'gateway',
+        ),
+        reachable: ct.gateway.reachable,
+        latencyMs: ct.gateway.reachable ? ct.gateway.avgMs : null,
+      ),
+      SiteReachability(
+        site: PopularSite(
+          name: named('Internet', ct.internet.target),
+          host: ct.internet.target ?? 'internet',
+        ),
+        reachable: ct.internet.reachable,
+        latencyMs: ct.internet.reachable ? ct.internet.avgMs : null,
+      ),
+      SiteReachability(
+        site: PopularSite(
+          name: named('DNS resolve', ct.dns.host),
+          host: ct.dns.host ?? 'dns',
+        ),
+        reachable: ct.dns.ms != null,
+        latencyMs: ct.dns.ms,
+      ),
+    ];
+  }
+
   Widget _body() {
     // Web (and any platform with no socket stack) → the shared
-    // download-the-native-app fallback. The engine needs dart:io sockets/HTTP
-    // that browsers do not provide, so the screen never tries to run there.
-    if (!NetworkSupport.activeNetworkSupported) {
+    // download-the-native-app fallback, UNLESS this is Pi-hosted web, where the
+    // connection test runs on the Pi. `netQualitySupported` is `!kIsWeb ||
+    // PiBackend.available`, so Netlify web still gets the fallback and native is
+    // unchanged.
+    if (!NetworkSupport.netQualitySupported) {
       return NetworkUnavailableView(
         toolName: 'Network Quality',
         reason:
@@ -478,6 +636,18 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     _sitesCard(context),
                   ],
+                  // The browser↔Pi Wi-Fi-hop throughput card — the SECOND, local
+                  // throughput number, kept in its own labeled card so it is
+                  // never read as the Pi's uplink (the Download/Upload rows
+                  // above). Shown once a Pi run has started measuring it.
+                  if (_piBacked &&
+                      (_deviceToPiRunning ||
+                          _deviceToPiDownMbps != null ||
+                          _deviceToPiUpMbps != null ||
+                          _deviceToPiError != null)) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _deviceToPiCard(context),
+                  ],
                   if (_result != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _honestyCaption(context),
@@ -516,11 +686,11 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Measures latency, jitter, loss, download, upload, and '
-            'responsiveness over a TCP-connect probe and HTTPS transfers, then '
-            'checks whether your device can reach a set of popular cloud apps '
-            'right now. Each dimension is graded on its own; there is no single '
-            'score.',
+            // GL-005 honesty branch (Pi vs native), extracted to a pure,
+            // kIsWeb-independent function so both blurbs are unit-tested without
+            // a web harness (Vera MEDIUM-2). The Pi blurb promises only what the
+            // Pi sensor backs; the native blurb is unchanged.
+            netQualityBlurb(_piBacked),
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
           ),
           if (_error != null) ...[
@@ -787,10 +957,23 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               ),
               const SizedBox(width: AppSpacing.sm),
               // The indicator takes the remaining width so its caption can
-              // ellipsize on narrow phones instead of overflowing the row.
-              Expanded(child: _liveIndicator(context)),
+              // ellipsize on narrow phones instead of overflowing the row. It is
+              // suppressed on Pi-hosted web: nothing is sampled live there (the
+              // Pi runs a one-shot conntest), so a "Live · sampling" affordance
+              // would be dishonest.
+              if (!_piBacked) Expanded(child: _liveIndicator(context)),
             ],
           ),
+          // Pi path: attribute the download/upload rows to the Pi's OWN uplink so
+          // they read as the Pi → internet number, distinct from the local
+          // device ↔ Pi hop shown in its own card below.
+          if (_piBacked) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Download and upload are the Pi uplink to the internet.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           for (final String id in _metricOrder) _metricRow(context, id),
         ],
@@ -960,8 +1143,10 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               ),
               // Sparkline (>= 2 points) or a hint (0–1 points). The grade chip
               // above always carries the true grade; the sparkline is a visual
-              // trend reference only (spec §3 + §4).
-              if (domain != null) ...[
+              // trend reference only (spec §3 + §4). Suppressed on Pi-hosted web:
+              // there is no live socket sampler there, so a trend line / "start
+              // tracking" hint would be misleading — the Pi run is one-shot.
+              if (domain != null && !_piBacked) ...[
                 const SizedBox(height: AppSpacing.xs),
                 if (enoughForLine)
                   MetricSparkline(
@@ -1217,7 +1402,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           Semantics(
             header: true,
             child: Text(
-              'Cloud apps reachable?',
+              _piBacked ? 'Connection hops (via the Pi)' : 'Cloud apps reachable?',
               style: text.labelMedium?.copyWith(
                 color: colors.textSecondary,
                 letterSpacing: 0.4,
@@ -1227,9 +1412,14 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           const SizedBox(height: AppSpacing.xxs),
           // HONESTY (GL-005): a TCP-connect proves the service EDGE answers and
           // times that hop. It is not a measure of in-app call / stream quality.
+          // On Pi-hosted web these are the three hops the Pi itself measured
+          // (gateway, internet, DNS), not a probe from this browser.
           Text(
-            'Reachability and latency to each service edge. Not a measure of '
-            'in-app call or stream quality.',
+            _piBacked
+                ? 'Gateway, internet, and DNS reachability measured on the '
+                    'WLAN Pi hosting this page, not from this browser.'
+                : 'Reachability and latency to each service edge. Not a measure '
+                    'of in-app call or stream quality.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -1310,6 +1500,108 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     );
   }
 
+  /// The browser↔Pi Wi-Fi-hop throughput card. Two rows — download and upload
+  /// between THIS device and the Pi over the local network — clearly attributed
+  /// so they are never confused with the Pi's own uplink (the Download/Upload
+  /// rows in the Transport card). A value that has not measured yet shows a
+  /// spinner; a failure shows the honest error, never a fabricated number.
+  Widget _deviceToPiCard(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Semantics(
+            header: true,
+            child: Text(
+              'This device ↔ Pi (Wi-Fi hop)',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Throughput between this device and the WLAN Pi over your local '
+            'network, timed in the browser. This is the local hop, separate '
+            'from the Pi uplink to the internet shown above.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (_deviceToPiError != null)
+            Text(
+              _deviceToPiError!,
+              style: text.labelMedium?.copyWith(color: colors.textTertiary),
+            )
+          else ...<Widget>[
+            _deviceToPiRow(context, 'Download', _deviceToPiDownMbps),
+            _deviceToPiRow(context, 'Upload', _deviceToPiUpMbps),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _deviceToPiRow(BuildContext context, String label, double? mbps) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool pending = mbps == null && _deviceToPiRunning;
+    final String valueLabel =
+        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    return Semantics(
+      label: '$label, ${pending ? 'measuring' : valueLabel}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  label,
+                  style: text.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              if (pending)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.textTertiary,
+                  ),
+                )
+              else
+                Text(
+                  valueLabel,
+                  textAlign: TextAlign.right,
+                  style: mono.outputMedium.copyWith(
+                    color: mbps != null
+                        ? colors.textAccent
+                        : colors.textTertiary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _honestyCaption(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
@@ -1318,9 +1610,15 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // (textSecondary) so it remains supporting copy without dropping below the
     // 12px floor.
     return Text(
-      'These are this app\'s own measurements, not a third-party score. '
-      'The Responsiveness grade is an indicative figure inspired by RFC 9097, '
-      'not the full standard.',
+      _piBacked
+          ? 'Measured on the WLAN Pi hosting this page, not from this browser '
+              'and not a third-party score. Two throughput numbers are '
+              'reported: the Pi uplink to the internet, and the local hop '
+              'between this device and the Pi. Your own Wi-Fi RF is not visible '
+              'to the Pi.'
+          : 'These are this app\'s own measurements, not a third-party score. '
+              'The Responsiveness grade is an indicative figure inspired by '
+              'RFC 9097, not the full standard.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }

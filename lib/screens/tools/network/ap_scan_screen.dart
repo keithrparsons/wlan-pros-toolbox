@@ -77,10 +77,13 @@ import 'package:flutter/material.dart';
 import '../../../services/network/ap_scan_service.dart';
 import '../../../services/network/wifi_info_service.dart'
     show LocationAuthStatus;
+import '../../../services/network/pi_backend_client.dart' show PiScanInterface;
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/app_select.dart';
+import '../labeled_field.dart';
 
 /// Where the Location grant handshake is.
 ///
@@ -162,15 +165,41 @@ class _ApScanScreenState extends State<ApScanScreen> {
   /// Where the screen is in the grant handshake. See [_GrantPhase].
   _GrantPhase _grantPhase = _GrantPhase.none;
 
+  /// Pi-path only: the Pi's scan-capable radios. Empty off the Pi (native /
+  /// Netlify) or when the Pi reports fewer than two, so the picker never shows.
+  List<PiScanInterface> _scanInterfaces = const <PiScanInterface>[];
+
+  /// The radio the scan runs on (Pi path). Null until the interface list loads.
+  String? _selectedInterface;
+
   @override
   void initState() {
     super.initState();
     _service = widget.service ?? ApScanService();
     if (_service.isSupportedPlatform) {
-      // Seed with the last cached scan immediately (cheap, no throttle), then
-      // request a fresh one so the list fills without a manual tap.
-      _initialLoad();
+      _bootstrap();
     }
+  }
+
+  /// Pi-hosted web: discover the scan-capable radios first so a multi-NIC Pi can
+  /// offer the picker before the first scan, then seed + refresh. Off the Pi the
+  /// interface fetch returns empty and the flow is byte-for-byte the old one.
+  Future<void> _bootstrap() async {
+    if (_service.isPiBacked) {
+      final List<PiScanInterface> ifaces = await _service.scanInterfaces();
+      if (!mounted) return;
+      if (ifaces.isNotEmpty) {
+        setState(() {
+          _scanInterfaces = ifaces;
+          _selectedInterface = ifaces.first.name;
+        });
+        _service.selectPiInterface(ifaces.first.name);
+      }
+    }
+    if (!mounted) return;
+    // Seed with the last cached scan immediately (cheap, no throttle), then
+    // request a fresh one so the list fills without a manual tap.
+    await _initialLoad();
   }
 
   Future<void> _initialLoad() async {
@@ -227,6 +256,16 @@ class _ApScanScreenState extends State<ApScanScreen> {
         _loading = false;
       });
     }
+  }
+
+  /// Pi path: switch the scan radio and re-scan on the chosen interface. No
+  /// confirmation snackbar — the refreshed picker and list are the feedback, and
+  /// the Pi path never throttles, so there is nothing extra to announce.
+  void _onInterfaceChanged(String name) {
+    if (name == _selectedInterface) return;
+    setState(() => _selectedInterface = name);
+    _service.selectPiInterface(name);
+    _runScan(fresh: true);
   }
 
   /// Reads the tri-state authorization and stores it. Never throws; the service
@@ -428,6 +467,20 @@ class _ApScanScreenState extends State<ApScanScreen> {
     }
 
     final List<Widget> children = <Widget>[];
+
+    // Pi path, multi-NIC only: the scan-radio picker sits above everything so
+    // the user chooses which radio scans before reading the results. Skipped
+    // entirely when the Pi reports one radio (or none) so the UI stays clean.
+    if (_scanInterfaces.length > 1 && _selectedInterface != null) {
+      children
+        ..add(_RadioPickerCard(
+          interfaces: _scanInterfaces,
+          selected: _selectedInterface!,
+          enabled: !_loading,
+          onChanged: _onInterfaceChanged,
+        ))
+        ..add(const SizedBox(height: AppSpacing.sm));
+    }
 
     // EXACTLY ONE VERDICT. The cards below used to be decided by independent
     // `if`s, which made "the screen states one thing" a property nobody owned:
@@ -1289,6 +1342,47 @@ class _SortControl extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Scan-radio picker (Pi path, multi-NIC only)
+// ---------------------------------------------------------------------------
+
+/// Lets the user choose which of the Pi's scan-capable radios runs the neighbor
+/// scan (e.g. the onboard BE200 vs a USB Panda). Only rendered when the Pi
+/// reports more than one radio; reuses the canonical [AppSelect] inside the
+/// shared [LabeledField], so it inherits the §8.14 select tokens and semantics.
+class _RadioPickerCard extends StatelessWidget {
+  const _RadioPickerCard({
+    required this.interfaces,
+    required this.selected,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final List<PiScanInterface> interfaces;
+  final String selected;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Surface(
+      child: LabeledField(
+        label: 'Scan radio',
+        semanticLabel: 'Scan radio',
+        field: AppSelect<String>(
+          value: selected,
+          semanticLabel: 'Scan radio',
+          enabled: enabled,
+          items: interfaces
+              .map((PiScanInterface i) => (i.name, i.label))
+              .toList(growable: false),
+          onChanged: onChanged,
+        ),
+      ),
     );
   }
 }

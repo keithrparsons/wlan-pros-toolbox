@@ -11,12 +11,15 @@
 //  - disabled → "Inspect" disabled until a URL is entered.
 //  - web      → NetworkUnavailableView (CORS blocks reading arbitrary headers).
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import '../../../data/tool_assets.dart';
 import '../../../services/network/http_header_service.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/pi_backend.dart';
+import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -46,10 +49,25 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
   bool _canRun = false;
   HttpHeaderResult? _result;
 
+  /// True when this build is served FROM a WLAN Pi (Pi-hosted web): the request
+  /// and redirect chain run ON the Pi via `/toolboxapi/httphead` (a browser
+  /// cannot read arbitrary cross-origin headers), returning the SAME
+  /// [HttpHeaderResult] the native path builds, so the existing hop / header
+  /// cards render it unchanged. Only when no test service is injected, on web,
+  /// with a Pi backend that serves this tool — otherwise the native path is
+  /// byte-for-byte unchanged.
+  late final bool _piBacked;
+
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? HttpHeaderService();
+    _piBacked =
+        kIsWeb && PiBackend.canServe('http-headers') && widget.service == null;
+    // On the Pi path the native HTTP service is never constructed — the request
+    // runs server-side on the Pi through PiBackendClient.
+    if (!_piBacked) {
+      _service = widget.service ?? HttpHeaderService();
+    }
     _urlCtrl.addListener(_recomputeCanRun);
   }
 
@@ -69,10 +87,9 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
     if (_loading || !_canRun) return;
     _urlFocus.unfocus();
     setState(() => _loading = true);
-    final HttpHeaderResult result = await _service.inspect(
-      rawUrl: _urlCtrl.text,
-      method: _method,
-    );
+    final HttpHeaderResult result = _piBacked
+        ? await _runPi()
+        : await _service.inspect(rawUrl: _urlCtrl.text, method: _method);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -94,6 +111,25 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
       announcement,
       TextDirection.ltr,
     );
+  }
+
+  /// Pi-hosted request: the fetch + redirect follow run ON the WLAN Pi hosting
+  /// this page and come back as the SAME [HttpHeaderResult] the native path
+  /// builds, so [_resultsSection] renders the hop list and header table
+  /// identically. The Pi endpoint takes only the URL (it does HEAD with a GET
+  /// fallback, and each hop carries its own method), so the method selector does
+  /// not apply on this path. The full URL is passed through unchanged — this
+  /// tool needs the scheme and path, so [NetworkTarget.hostFromUserInput] is
+  /// deliberately not used here. A transport failure — including a
+  /// [PiBackendException] from an unreachable Pi — is folded into the model's
+  /// failure state and surfaced by the existing error card. Never throws.
+  Future<HttpHeaderResult> _runPi() async {
+    final String url = _urlCtrl.text.trim();
+    try {
+      return await PiBackendClient().httpHeaders(url: url);
+    } on PiBackendException catch (e) {
+      return HttpHeaderResult.failure(requestedUrl: url, message: e.message);
+    }
   }
 
   @override
@@ -256,44 +292,57 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Method',
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w500,
+          // The Pi endpoint takes only the URL (it does HEAD with a GET
+          // fallback), so the method selector is shown on the native path only;
+          // on the Pi path an honest note replaces it.
+          if (!_piBacked) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Method',
+              style: text.labelMedium?.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Wrap(
-            spacing: AppSpacing.xs,
-            children: HttpMethod.values.map((HttpMethod m) {
-              final bool selected = m == _method;
-              return ChoiceChip(
-                label: Text(m.label),
-                selected: selected,
-                showCheckmark: false,
-                labelStyle: text.labelMedium?.copyWith(
-                  color: selected
-                      ? colors.onPrimary
-                      : colors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-                selectedColor: colors.primary,
-                backgroundColor: colors.surface2,
-                materialTapTargetSize: MaterialTapTargetSize.padded,
-                // §8.3 — shared resolver: idle/selected/disabled borders + 2px
-                // lime keyboard-focus ring.
-                side: AppTheme.chipSide(Theme.of(context).brightness),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                onSelected: _loading
-                    ? null
-                    : (_) => setState(() => _method = m),
-              );
-            }).toList(),
-          ),
+            const SizedBox(height: AppSpacing.xs),
+            Wrap(
+              spacing: AppSpacing.xs,
+              children: HttpMethod.values.map((HttpMethod m) {
+                final bool selected = m == _method;
+                return ChoiceChip(
+                  label: Text(m.label),
+                  selected: selected,
+                  showCheckmark: false,
+                  labelStyle: text.labelMedium?.copyWith(
+                    color: selected
+                        ? colors.onPrimary
+                        : colors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  selectedColor: colors.primary,
+                  backgroundColor: colors.surface2,
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
+                  // §8.3 — shared resolver: idle/selected/disabled borders + 2px
+                  // lime keyboard-focus ring.
+                  side: AppTheme.chipSide(Theme.of(context).brightness),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.control),
+                  ),
+                  onSelected: _loading
+                      ? null
+                      : (_) => setState(() => _method = m),
+                );
+              }).toList(),
+            ),
+          ],
+          if (_piBacked) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'The request runs on the WLAN Pi hosting this page, not from this '
+              'browser. The Pi issues a HEAD and falls back to GET.',
+              style: text.labelSmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: (_loading || !_canRun) ? null : _run,
