@@ -38,6 +38,8 @@ import 'package:flutter/foundation.dart'
 import 'ap_name_cache.dart';
 import 'ap_name_decoder.dart';
 import 'connected_ap.dart';
+import 'pi_backend.dart';
+import 'pi_backend_client.dart';
 import 'wifi_info_service.dart';
 import 'windows_wifi_reader.dart';
 
@@ -66,7 +68,16 @@ enum WifiInfoSource {
   /// Honest "coming in a later update" state.
   unsupported,
 
-  /// Running in a browser — download-the-app fallback.
+  /// Served from a WLAN Pi, reading the Pi's OWN radio through
+  /// `/toolboxapi/wifi` via [PiWifiInfoAdapter].
+  ///
+  /// This is the case that stops the browser fallback from being a lie. A
+  /// browser genuinely cannot read Wi-Fi state, so on Netlify [web] is correct.
+  /// On a WLAN Pi the page is served BY a machine with radios, and telling that
+  /// user to go download a macOS build is the wrong advice, not a limitation.
+  piBackend,
+
+  /// Running in a browser with no Pi behind it — download-the-app fallback.
   web,
 }
 
@@ -79,7 +90,13 @@ class WifiInfoSourceResolver {
   ///
   /// [platformOverride] lets tests assert each branch without a real platform.
   static WifiInfoSource resolve({TargetPlatform? platformOverride}) {
-    if (kIsWeb) return WifiInfoSource.web;
+    // ORDER MATTERS: a Pi-hosted page is also a browser, so the Pi test has to
+    // come first or it can never win.
+    if (kIsWeb) {
+      return PiBackend.available
+          ? WifiInfoSource.piBackend
+          : WifiInfoSource.web;
+    }
     final TargetPlatform platform = platformOverride ?? defaultTargetPlatform;
     return switch (platform) {
       TargetPlatform.macOS => WifiInfoSource.macosCoreWlan,
@@ -602,4 +619,104 @@ class WindowsWifiInfoAdapter implements WifiInfoAdapter {
   /// No name-gating settings pane to deep-link to on Windows.
   @override
   Future<bool> openNamePermissionSettings() async => false;
+}
+
+
+/// Reads the WLAN Pi's own radio through `/toolboxapi/wifi`.
+///
+/// The browser cannot see Wi-Fi state; the Pi serving the page can, completely.
+/// This adapter is the bridge, and it exists because Keith's 2026-08-26
+/// click-through found the screen telling a Pi user to go download a macOS
+/// build while standing in front of the one machine on the network that could
+/// answer.
+///
+/// NO PERMISSION GATE. Unlike macOS and Android, nothing on the Pi hides the
+/// SSID or BSSID behind a user grant, so every permission member here is a
+/// truthful no-op rather than a stub.
+class PiWifiInfoAdapter implements WifiInfoAdapter {
+  PiWifiInfoAdapter({PiBackendClient? client, this.interface})
+      : _client = client ?? PiBackendClient();
+
+  final PiBackendClient _client;
+
+  /// Which radio to read. Null lets the Pi choose, and it prefers an associated
+  /// one — so a two-radio Pi with a client link and a free capture radio shows
+  /// the link rather than the idle radio.
+  final String? interface;
+
+  /// The last link read, so a caller can surface the Pi's own reasons (why a
+  /// radio is unassociated, why the driver reports no noise floor) rather than
+  /// re-deriving them.
+  PiWifiLink? get lastLink => _lastLink;
+  PiWifiLink? _lastLink;
+
+  @override
+  Future<ConnectedAp> fetch() async {
+    final PiWifiLink link;
+    try {
+      link = await _client.wifi(interface: interface);
+    } on PiBackendException catch (e) {
+      throw WifiInfoUnavailable(
+        WifiInfoUnavailableReason.channelError,
+        e.message,
+      );
+    }
+    _lastLink = link;
+
+    // NOT ASSOCIATED IS A REAL ANSWER, NOT AN ERROR. On a two-radio Pi one
+    // radio is deliberately free for scanning or capture. A null SSID is
+    // exactly "joined to nothing", and the radio is still powered, so the
+    // screen renders honest Unavailable rows instead of a failure.
+    return ConnectedAp(
+      ssid: link.ssid,
+      bssid: link.bssid,
+      rssiDbm: link.signalAvgDbm ?? link.signalDbm,
+      // Noise and SNR stay null. The Pi says WHICH radio cannot report a floor
+      // (see PiWifiLink.noiseReason); inventing one to fill the row is the
+      // thing this whole path exists to stop (GL-005).
+      noiseDbm: null,
+      snrDb: null,
+      txRateMbps: link.txRateMbps,
+      rxRateMbps: link.rxRateMbps,
+      channel: link.channel,
+      channelWidthMhz: link.widthMhz,
+      band: link.band,
+      standard: link.phyMode,
+      countryCode: link.country,
+      interfaceName: link.interface.isEmpty ? null : link.interface,
+      hardwareAddress: link.mac,
+      poweredOn: true,
+      rxRateAvailable: true,
+      channelWidthAvailable: true,
+      // The Pi reads the band from the radio's own frequency rather than
+      // inferring it from a channel number, so it is measured, not derived.
+      bandDerived: false,
+      snrDerived: false,
+      // The association carries MFP but not the full security suite, and half a
+      // security answer is worse than an honest absence.
+      securityAvailable: false,
+    );
+  }
+
+  @override
+  bool get gatesNameBehindPermission => false;
+
+  @override
+  Future<bool> requestNamePermission() async => true;
+
+  @override
+  Future<bool> currentNameAuthorization() async => true;
+
+  @override
+  Future<LocationAuthStatus> nameAuthorizationStatus() async =>
+      LocationAuthStatus.authorized;
+
+  @override
+  Future<bool> openNamePermissionSettings() async => false;
+
+  /// Names the Pi in the per-field honest copy, so a missing row reads
+  /// "not exposed by the WLAN Pi" — true and specific, rather than the
+  /// "not available on this platform" that sent users to a different app.
+  @override
+  String get platformLabel => 'the WLAN Pi';
 }

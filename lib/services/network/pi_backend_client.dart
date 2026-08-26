@@ -312,6 +312,141 @@ class PiScanInterface {
   }
 }
 
+/// The WLAN Pi's OWN Wi-Fi association, from `/toolboxapi/wifi`.
+///
+/// WHY THIS EXISTS: the Wi-Fi Information screen was gated off in the browser
+/// with "download the native app". True of a browser, wrong as advice on a
+/// WLAN Pi, whose radios answer the question completely. This is the model that
+/// lets the Pi keep the promise the rest of the Pi build rests on.
+///
+/// EVERY ABSENT FIELD IS HONEST-NULL AND CARRIES ITS OWN REASON. `noiseDbm` is
+/// null because the driver reports no noise floor, which is a different fact
+/// from "not associated", which is different again from "this platform cannot"
+/// — and collapsing the three into one message is the defect this endpoint was
+/// built to end (GL-005).
+class PiWifiLink {
+  const PiWifiLink({
+    required this.interface,
+    required this.associated,
+    this.reason,
+    this.ssid,
+    this.bssid,
+    this.signalDbm,
+    this.signalAvgDbm,
+    this.noiseDbm,
+    this.snrDb,
+    this.noiseReason,
+    this.txRateMbps,
+    this.rxRateMbps,
+    this.phyMode,
+    this.mcs,
+    this.nss,
+    this.freqMhz,
+    this.channel,
+    this.widthMhz,
+    this.band,
+    this.country,
+    this.mac,
+    this.txPowerDbm,
+    this.mfp,
+    this.beaconInterval,
+    this.dtimPeriod,
+    this.radios = const <PiScanInterface>[],
+  });
+
+  final String interface;
+
+  /// Whether this radio is joined to a network. FALSE IS A REAL ANSWER, not an
+  /// error: on a two-radio Pi one radio is deliberately free for scanning or
+  /// capture, and [reason] says so.
+  final bool associated;
+
+  /// Why there is no association, when [associated] is false.
+  final String? reason;
+
+  final String? ssid;
+  final String? bssid;
+  final int? signalDbm;
+  final int? signalAvgDbm;
+
+  /// Null on hardware whose driver reports no noise floor; [noiseReason] says
+  /// which. Never a fabricated floor, and never a derived SNR on top of one.
+  final int? noiseDbm;
+  final int? snrDb;
+  final String? noiseReason;
+
+  final double? txRateMbps;
+  final double? rxRateMbps;
+
+  /// e.g. "802.11ax (Wi-Fi 6E)". The Pi derives this because it knows the band,
+  /// and 802.11ax on 6 GHz is Wi-Fi 6E rather than Wi-Fi 6.
+  final String? phyMode;
+  final int? mcs;
+  final int? nss;
+  final int? freqMhz;
+  final int? channel;
+  final int? widthMhz;
+  final String? band;
+  final String? country;
+  final String? mac;
+  final double? txPowerDbm;
+
+  /// 802.11w management-frame protection on this association.
+  final bool? mfp;
+  final int? beaconInterval;
+  final int? dtimPeriod;
+
+  /// Every managed radio on the Pi and whether each is associated, so the UI can
+  /// offer a picker without a second round trip.
+  final List<PiScanInterface> radios;
+
+  static int? _int(Object? v) => v == null ? null : (v as num).toInt();
+  static double? _dbl(Object? v) => v == null ? null : (v as num).toDouble();
+
+  factory PiWifiLink.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> raw =
+        (json['radios'] as List<dynamic>?) ?? const <dynamic>[];
+    final List<PiScanInterface> radios = raw
+        .whereType<Map<dynamic, dynamic>>()
+        .map((Map<dynamic, dynamic> m) {
+          final String? name = m['name'] as String?;
+          if (name == null || name.isEmpty) return null;
+          return PiScanInterface(name: name);
+        })
+        .whereType<PiScanInterface>()
+        .toList(growable: false);
+
+    return PiWifiLink(
+      interface: (json['interface'] as String?) ?? '',
+      associated: (json['associated'] as bool?) ?? false,
+      reason: json['reason'] as String?,
+      ssid: json['ssid'] as String?,
+      bssid: json['bssid'] as String?,
+      signalDbm: _int(json['signal_dbm']),
+      signalAvgDbm: _int(json['signal_avg_dbm']),
+      noiseDbm: _int(json['noise_dbm']),
+      snrDb: _int(json['snr_db']),
+      noiseReason: json['noise_reason'] as String?,
+      txRateMbps: _dbl(json['tx_rate_mbps']),
+      rxRateMbps: _dbl(json['rx_rate_mbps']),
+      phyMode: json['phy_mode'] as String?,
+      mcs: _int(json['mcs']),
+      nss: _int(json['nss']),
+      freqMhz: _int(json['freq_mhz']),
+      channel: _int(json['channel']),
+      widthMhz: _int(json['width_mhz']),
+      band: json['band'] as String?,
+      country: json['country'] as String?,
+      mac: json['mac'] as String?,
+      txPowerDbm: _dbl(json['tx_power_dbm']),
+      mfp: json['mfp'] as bool?,
+      beaconInterval: _int(json['beacon_interval']),
+      dtimPeriod: _int(json['dtim_period']),
+      radios: radios,
+    );
+  }
+}
+
 /// One IP address bound to a Pi interface.
 class PiInterfaceAddress {
   const PiInterfaceAddress({
@@ -491,6 +626,18 @@ class PiBackendClient {
             PiScanInterface.fromJson(m.cast<String, dynamic>()))
         .whereType<PiScanInterface>()
         .toList(growable: false);
+  }
+
+  /// The Pi's own Wi-Fi association on [interface] (default: the Pi picks its
+  /// associated radio). Cheap — four `iw` reads, no radio dwell — so it carries
+  /// a short timeout.
+  Future<PiWifiLink> wifi({String? interface}) async {
+    final Map<String, dynamic> json = await _getJsonObject(
+      'wifi',
+      query: interface == null ? null : <String, String>{'interface': interface},
+      timeout: const Duration(seconds: 10),
+    );
+    return PiWifiLink.fromJson(json);
   }
 
   /// The Pi's interface table (`ip -j addr`-shaped: a map of ifname -> [detail]).

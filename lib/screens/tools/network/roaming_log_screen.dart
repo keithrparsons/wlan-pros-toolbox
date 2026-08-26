@@ -508,6 +508,11 @@ String capturePlatformLabel(WifiInfoSource source) {
       return 'Android';
     case WifiInfoSource.windowsNativeWifi:
       return 'Windows';
+    // A capture taken THROUGH a WLAN Pi is a reading of the Pi's radio, not of
+    // the laptop driving the browser. Exported reports are compared
+    // side by side, so the stamp has to name the thing that did the measuring.
+    case WifiInfoSource.piBackend:
+      return 'WLAN Pi';
     case WifiInfoSource.unsupported:
     case WifiInfoSource.web:
       return 'this device';

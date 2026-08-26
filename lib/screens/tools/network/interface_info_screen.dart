@@ -124,6 +124,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
       case null:
         return MacAddressPlatform.other;

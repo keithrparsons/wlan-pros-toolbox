@@ -348,6 +348,7 @@ class InterfaceInfoService {
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return (ap: null, authorized: true);
     }
@@ -373,7 +374,7 @@ class InterfaceInfoService {
       WifiInfoSource.macosCoreWlan => MacWifiInfoAdapter(enrichApName: true),
       WifiInfoSource.iosShortcuts ||
       WifiInfoSource.unsupported ||
-      WifiInfoSource.web =>
+      WifiInfoSource.piBackend || WifiInfoSource.web =>
         null,
     };
   }

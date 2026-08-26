@@ -496,6 +496,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return _screenRisk;
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
       case WifiInfoSource.unsupported:
         // No cellular radio this app can detect. `none` is the final answer and it
@@ -682,8 +683,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'Windows';
       case WifiInfoSource.iosShortcuts:
         return 'iOS';
+      // "Tested on the WLAN Pi" is the honest fact when the Pi ran the probes.
+      // Saying "this browser" would credit the measurement to the wrong machine.
+      case WifiInfoSource.piBackend:
+        return 'WLAN Pi';
       case WifiInfoSource.unsupported:
         return 'this device';
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return 'this browser';
     }
@@ -751,6 +757,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         _onboardingService =
             widget.onboardingService ?? LiveOnboardingService();
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         break;
     }
@@ -1269,6 +1276,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // those rows populate without a Shortcut bounce.
           return _enrichIosSecurity(rf, payloadAt: _iosPayloadReceivedAt);
         case WifiInfoSource.unsupported:
+        case WifiInfoSource.piBackend:
         case WifiInfoSource.web:
           return null;
       }

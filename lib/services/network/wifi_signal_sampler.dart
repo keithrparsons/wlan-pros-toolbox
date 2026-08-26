@@ -65,12 +65,17 @@ class WifiSignalSampler extends ChangeNotifier {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
-        // All three snapshot sources poll a [WifiInfoAdapter]; pick the
-        // platform's.
+      case WifiInfoSource.piBackend:
+        // All four snapshot sources poll a [WifiInfoAdapter]; pick the
+        // platform's. The WLAN Pi belongs here for the same reason the other
+        // three do: `/toolboxapi/wifi` is a cheap read (four `iw` calls, no
+        // radio dwell), so polling it yields a real RSSI series rather than a
+        // single frozen reading.
         _macAdapter = macAdapter ??
             switch (source) {
               WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+              WifiInfoSource.piBackend => PiWifiInfoAdapter(),
               // macOS enriches the connected-AP name (beacon IE decode) so the
               // live cards and the Roaming Log can show it. Best-effort,
               // Location-gated, honest-null (see MacWifiInfoAdapter.enrichApName).
@@ -242,6 +247,7 @@ class WifiSignalSampler extends ChangeNotifier {
       source == WifiInfoSource.macosCoreWlan ||
       source == WifiInfoSource.androidWifiManager ||
       source == WifiInfoSource.windowsNativeWifi ||
+      source == WifiInfoSource.piBackend ||
       source == WifiInfoSource.iosShortcuts;
 
   /// The latest connected-AP reading from whichever feed is active. Null until
@@ -251,6 +257,7 @@ class WifiSignalSampler extends ChangeNotifier {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
         return _macInfo;
       case WifiInfoSource.iosShortcuts:
         final WiFiDetails? d = _controller?.details;
@@ -346,6 +353,7 @@ class WifiSignalSampler extends ChangeNotifier {
         return _snapshotMeteredRisk;
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
       case WifiInfoSource.unsupported:
       case WifiInfoSource.iosShortcuts:
@@ -368,6 +376,7 @@ class WifiSignalSampler extends ChangeNotifier {
         return _snapshotRiskResolved;
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
       case WifiInfoSource.unsupported:
       case WifiInfoSource.iosShortcuts:
@@ -396,6 +405,7 @@ class WifiSignalSampler extends ChangeNotifier {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
         await _pollMac(); // seed
         _startMacPoll();
       case WifiInfoSource.iosShortcuts:
@@ -436,6 +446,7 @@ class WifiSignalSampler extends ChangeNotifier {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
         await _pollMac();
         return true;
       case WifiInfoSource.iosShortcuts:
@@ -536,6 +547,7 @@ class WifiSignalSampler extends ChangeNotifier {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
         // Android only — `_connectionService` is null on macOS / Windows, so this
         // is still the no-op it has always been there.
         final WifiConnectionService? svc = _connectionService;
@@ -579,6 +591,7 @@ class WifiSignalSampler extends ChangeNotifier {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
         _stopMacPoll();
       case WifiInfoSource.iosShortcuts:
         await _controller?.stopMonitoring();

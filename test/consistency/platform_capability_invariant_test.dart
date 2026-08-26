@@ -628,6 +628,11 @@ void main() {
         WifiInfoSource.androidWifiManager: true,
         WifiInfoSource.windowsNativeWifi: true,
         WifiInfoSource.iosShortcuts: true,
+        // The WLAN Pi polls /toolboxapi/wifi through the same snapshot adapter
+        // seam, so it backs a live feed exactly as macOS/Android/Windows do.
+        // Stated by hand, deliberately: this map must never be derived from the
+        // seam it checks (see the CAUTION above).
+        WifiInfoSource.piBackend: true,
         WifiInfoSource.unsupported: false,
         WifiInfoSource.web: false,
       };

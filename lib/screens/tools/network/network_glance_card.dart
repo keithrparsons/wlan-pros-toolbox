@@ -356,6 +356,7 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
         // wrongly darkened before because the card kept a macOS||Android list.
         await _autoReadWifi();
         return;
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
       case WifiInfoSource.unsupported:
         // Genuinely unreadable: no shipped reader for this surface. State it

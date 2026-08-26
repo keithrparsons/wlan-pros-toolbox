@@ -303,15 +303,21 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
-        // The macOS CoreWLAN, Android WifiManager, and Windows Native Wifi
-        // sources are all pull-only snapshot adapters behind the SAME
+      case WifiInfoSource.piBackend:
+        // The macOS CoreWLAN, Android WifiManager, Windows Native Wifi and WLAN
+        // Pi sources are all pull-only snapshot adapters behind the SAME
         // [WifiInfoAdapter] seam and render the SAME snapshot body; only the
         // per-field platform label differs (see [_snapshotPlatformLabel]). Pick
         // the right adapter for the source, then drive the shared snapshot flow.
+        //
+        // THE PI JOINS THIS GROUP RATHER THAN GETTING A BODY OF ITS OWN. It is
+        // a pull-only snapshot like the other three, so a separate path would
+        // have been a second copy of the same screen to keep in sync.
         _macAdapter = widget.macAdapter ??
             switch (_source) {
               WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
+              WifiInfoSource.piBackend => PiWifiInfoAdapter(),
               // macOS decodes the connected AP's advertised name from its beacon
               // IEs (best-effort, Location-gated, honest-null) so the Network card
               // can show it next to the BSSID.
@@ -354,6 +360,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // the inline opt-in) so the one-time semantics and the 1.5.5 double-prompt
         // fix are preserved — only the AUTO-FIRE is removed.
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         break;
     }
@@ -392,6 +399,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return MacAddressPlatform.other;
     }
@@ -982,6 +990,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           AppCopyAction(textBuilder: _buildCopyText),
         ];
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return const [];
     }
@@ -1009,6 +1018,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         }
         return _enrichIos(ConnectedAp.fromWifiDetails(d));
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return null;
     }
@@ -1132,6 +1142,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   Widget _body() {
     switch (_source) {
       case WifiInfoSource.web:
+        // A browser with no Pi behind it genuinely cannot read Wi-Fi state, so
+        // this fallback stays exactly as it was. It is only WRONG when a WLAN
+        // Pi is serving the page, and that case is handled above.
         return const NetworkUnavailableView(
           toolName: 'Wi-Fi Information',
           reason: NetworkUnavailableReason.web,
@@ -1141,6 +1154,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
       case WifiInfoSource.windowsNativeWifi:
+      case WifiInfoSource.piBackend:
         return _macBody();
       case WifiInfoSource.iosShortcuts:
         return _iosBody();
@@ -2003,6 +2017,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.windowsNativeWifi:
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return null;
     }
@@ -2049,6 +2064,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.iosShortcuts:
       case WifiInfoSource.unsupported:
+      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         return null;
     }
