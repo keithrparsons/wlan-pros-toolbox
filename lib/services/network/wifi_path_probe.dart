@@ -12,6 +12,11 @@
 // type, distinct from `_cellular` and `_wired` (SDK: Network.framework
 // Headers/interface.h:47-52), so a USB-tethered `en*` cannot be mistaken for Wi-Fi
 // the way the `network_info_plus` address probe mistakes it.
+//
+// ROUND 6 (2026-08-27) added the wired facts, because the mistake the paragraph
+// above describes stopped being hypothetical: an iPhone with the radio OFF and a
+// USB-C Ethernet adapter attached had its ETHERNET address read as a Wi-Fi IPv4,
+// and Interface Info named an SSID the device was not associated with.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +29,8 @@ class WifiPathFacts {
     required this.usesWifi,
     required this.wifiSatisfied,
     required this.wifiInterfacePresent,
+    this.usesWired = false,
+    this.wiredSatisfied = false,
   });
 
   /// The DEFAULT route currently runs over a Wi-Fi interface
@@ -43,10 +50,32 @@ class WifiPathFacts {
   /// to resolve either way.
   final bool wifiInterfacePresent;
 
+  /// The DEFAULT route currently runs over a WIRED interface
+  /// (`nw_path_uses_interface_type(path, nw_interface_type_wired)`).
+  ///
+  /// A POSITIVE fact about the wire, not a negative about Wi-Fi, and the
+  /// distinction is the whole reason it is safe to act on. The decision table
+  /// refuses to conclude "no Wi-Fi" from the ABSENCE of a Wi-Fi signal, because
+  /// absence can be a transient. It can conclude it when something else is
+  /// provably carrying the traffic.
+  ///
+  /// Defaults to false so an older native side, or any payload without the key,
+  /// behaves exactly as before.
+  final bool usesWired;
+
+  /// A wired-REQUIRED path has a usable route
+  /// (`NWPathMonitor(requiredInterfaceType: .wiredEthernet).status == .satisfied`).
+  /// True whenever a usable wired link exists, even when the default route runs
+  /// elsewhere. Not consulted by the Wi-Fi decision table; carried because the
+  /// Ethernet work needs it and it costs nothing to report.
+  final bool wiredSatisfied;
+
   @override
   String toString() => 'WifiPathFacts(usesWifi: $usesWifi, '
       'wifiSatisfied: $wifiSatisfied, '
-      'wifiInterfacePresent: $wifiInterfacePresent)';
+      'wifiInterfacePresent: $wifiInterfacePresent, '
+      'usesWired: $usesWired, '
+      'wiredSatisfied: $wiredSatisfied)';
 }
 
 /// Reads [WifiPathFacts] from the platform. The seam that keeps the decision
@@ -96,6 +125,10 @@ class MethodChannelWifiPathProbe implements WifiPathProbe {
         usesWifi: payload['usesWifi'] == true,
         wifiSatisfied: payload['wifiSatisfied'] == true,
         wifiInterfacePresent: payload['wifiInterfacePresent'] == true,
+        // Absent on an older native side; `== true` makes that read false, which
+        // is the pre-round-6 behavior exactly.
+        usesWired: payload['usesWired'] == true,
+        wiredSatisfied: payload['wiredSatisfied'] == true,
       );
     } on Object catch (e) {
       // MissingPluginException off iOS, or any platform error. Never a verdict.

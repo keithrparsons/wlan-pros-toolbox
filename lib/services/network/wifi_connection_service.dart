@@ -70,6 +70,7 @@
 //   |-------------------------------------------------------|-------------|
 //   | default route runs over Wi-Fi (`usesWifi`)             | `onWifi`    |
 //   | a Wi-Fi-required path is satisfied (`wifiSatisfied`)   | `onWifi`    |
+//   | the WIRE carries the default route, and no Wi-Fi at all | `notOnWifi` |
 //   | no Wi-Fi interface, no Wi-Fi route                     | ↓ ADDRESSES |
 //   | a Wi-Fi interface is present but carries no route      | ↓ ADDRESSES |
 //   | the platform did not answer (null)                     | ↓ ADDRESSES |
@@ -482,6 +483,49 @@ class WifiConnectionService {
           meteredRisk: MeteredRisk.none,
         );
       }
+      // ====================================================================
+      // THE WIRE IS CARRYING THE TRAFFIC ⇒ `notOnWifi`. (Round 6, 2026-08-27.)
+      //
+      // FOUND IN THE FIELD, NOT REASONED INTO EXISTENCE. An iPhone in airplane
+      // mode with a USB-C Ethernet adapter attached rendered a Wi-Fi card naming
+      // the ship's SSID from an earlier association, with the ETHERNET address
+      // 192.168.8.232 printed as the Wi-Fi IPv4. The radio was off.
+      //
+      // WHY THE EXISTING TABLE COULD NOT CATCH IT, and it is not an oversight:
+      // the round-4 note below states the fall-through's price in writing, as
+      // "only USB-tether discrimination (a tethered `en*` carries an address, so
+      // the probe below reads it as Wi-Fi)". A USB Ethernet adapter is that same
+      // shape. The cost was accepted knowingly; it simply had not been paid yet.
+      //
+      // WHY THIS IS NOT THE REJECTED `!wifiInterfacePresent` BRANCH WEARING A HAT.
+      // That branch concluded "no Wi-Fi" from the ABSENCE of a Wi-Fi signal, and
+      // absence can be a transient — a phone mid-roam or backgrounded could have
+      // blanked a live link. This concludes it from the PRESENCE of a different
+      // active route: iOS says the default path is running over a wired
+      // interface. In the feared failure shape, a genuinely-associated phone
+      // routes over Wi-Fi or over cellular, so `usesWired` is false and control
+      // falls through exactly as it does today. CELLULAR IS UNTOUCHED, which
+      // matters because the round-5 money work depends on that path.
+      //
+      // ALL FOUR CONDITIONS ARE REQUIRED. `usesWifi` and `wifiSatisfied` are
+      // already false here (the positive branch above returned), and they are
+      // restated rather than assumed so a future edit above cannot silently
+      // widen this. `wifiInterfacePresent` false is what separates "radio off,
+      // on the wire" from "on Wi-Fi AND wired at once", where a Mac-shaped device
+      // is genuinely on both and must not be told otherwise.
+      // ====================================================================
+      if (path.usesWired &&
+          !path.usesWifi &&
+          !path.wifiSatisfied &&
+          !path.wifiInterfacePresent) {
+        return const LinkVerdict(
+          status: WifiConnectionStatus.notOnWifi,
+          // A wired route is not a metered one, and unlike the Wi-Fi axis this
+          // is a positive: the OS named the interface carrying the bytes.
+          meteredRisk: MeteredRisk.none,
+        );
+      }
+
       // THE PATH ANSWERED AND THE ACTIVE ROUTE IS NOT WI-FI. Hold that for the money
       // axis: a raw en0 IPv4 from the address probe below must not be read as "safe
       // to spend" when iOS has already said the bytes are not going over Wi-Fi

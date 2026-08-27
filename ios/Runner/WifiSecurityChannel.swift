@@ -95,12 +95,33 @@ final class WifiPathMonitor {
   /// with a usable route exists, even when the default route runs elsewhere.
   private let wifiMonitor = NWPathMonitor(requiredInterfaceType: .wifi)
 
+  /// A path that REQUIRES a wired interface (round 6, 2026-08-27).
+  ///
+  /// WHY IT WAS ADDED. Keith connected an iPhone to a USB-C Ethernet adapter with
+  /// the radio OFF, and Interface Info rendered a Wi-Fi card naming the ship's
+  /// SSID from an earlier association, with the ETHERNET address printed as the
+  /// Wi-Fi IPv4. Root cause is the address probe, not this class:
+  /// `network_info_plus` selects its "Wi-Fi" address with
+  /// `strncmp(ifa_name, "en", 2)`, and a USB Ethernet adapter is an `en*`.
+  ///
+  /// The class note above already predicted this and called it "a USB-tether
+  /// `en*`". It is the same shape, and the round-4 fall-through accepted exactly
+  /// this cost in writing. What was missing was any POSITIVE evidence of a
+  /// different active route, which is what this monitor supplies.
+  ///
+  /// SAFE TO ADD: a device with no wired NIC still gets a path update here
+  /// (`status = unsatisfied`, `availableInterfaces = []`), measured 2026-07-13,
+  /// so `readyPayload()` still becomes ready on an ordinary phone and no read
+  /// starts timing out.
+  private let wiredMonitor = NWPathMonitor(requiredInterfaceType: .wiredEthernet)
+
   // NOTE: `NWPath` MUST be module-qualified. NetworkExtension declares its own
   // legacy `NWPath` class, and this file imports BOTH frameworks (the
   // NEHotspotNetwork read needs NetworkExtension), so the bare name is
   // ambiguous and does not compile. Caught by the iOS build, not by review.
   private var defaultPath: Network.NWPath?
   private var wifiPath: Network.NWPath?
+  private var wiredPath: Network.NWPath?
   private var waiters: [Waiter] = []
 
   init() {
@@ -114,13 +135,20 @@ final class WifiPathMonitor {
       self.wifiPath = path
       self.flushIfReady()
     }
+    wiredMonitor.pathUpdateHandler = { [weak self] path in
+      guard let self = self else { return }
+      self.wiredPath = path
+      self.flushIfReady()
+    }
     defaultMonitor.start(queue: queue)
     wifiMonitor.start(queue: queue)
+    wiredMonitor.start(queue: queue)
   }
 
   deinit {
     defaultMonitor.cancel()
     wifiMonitor.cancel()
+    wiredMonitor.cancel()
   }
 
   /// Reads the latest path facts. The monitors fire their first update almost
@@ -145,10 +173,12 @@ final class WifiPathMonitor {
     }
   }
 
-  /// Both monitors have reported at least once → we can answer.
+  /// All three monitors have reported at least once → we can answer.
   private func readyPayload() -> [String: Any]? {
-    guard let d = defaultPath, let w = wifiPath else { return nil }
-    return WifiPathMonitor.facts(defaultPath: d, wifiPath: w)
+    guard let d = defaultPath, let w = wifiPath, let e = wiredPath else {
+      return nil
+    }
+    return WifiPathMonitor.facts(defaultPath: d, wifiPath: w, wiredPath: e)
   }
 
   private func flushIfReady() {
@@ -158,14 +188,21 @@ final class WifiPathMonitor {
     for waiter in pending { waiter.completion(payload) }
   }
 
-  /// The RAW facts. Three booleans, no interpretation (see the class note).
+  /// The RAW facts. Five booleans, no interpretation (see the class note).
   ///
   ///   * usesWifi             the DEFAULT route runs over a Wi-Fi interface.
   ///   * wifiSatisfied        a Wi-Fi-required path has a usable route.
   ///   * wifiInterfacePresent a Wi-Fi interface appears on either path at all.
+  ///   * usesWired            the DEFAULT route runs over a WIRED interface.
+  ///   * wiredSatisfied       a wired-required path has a usable route.
+  ///
+  /// `usesWired` is a POSITIVE fact about the wire, deliberately, not a negative
+  /// about Wi-Fi. The decision table refuses negatives drawn from absence; it
+  /// accepts them when something else is provably carrying the traffic.
   static func facts(
     defaultPath d: Network.NWPath,
-    wifiPath w: Network.NWPath
+    wifiPath w: Network.NWPath,
+    wiredPath e: Network.NWPath
   ) -> [String: Any] {
     let wifiOnDefault = d.availableInterfaces.contains { $0.type == .wifi }
     let wifiOnWifiPath = w.availableInterfaces.contains { $0.type == .wifi }
@@ -174,6 +211,8 @@ final class WifiPathMonitor {
       "usesWifi": d.usesInterfaceType(.wifi),
       "wifiSatisfied": w.status == .satisfied,
       "wifiInterfacePresent": wifiOnDefault || wifiOnWifiPath,
+      "usesWired": d.usesInterfaceType(.wiredEthernet),
+      "wiredSatisfied": e.status == .satisfied,
     ]
   }
 
@@ -185,6 +224,8 @@ final class WifiPathMonitor {
       "usesWifi": false,
       "wifiSatisfied": false,
       "wifiInterfacePresent": false,
+      "usesWired": false,
+      "wiredSatisfied": false,
     ]
   }
 }

@@ -135,6 +135,21 @@ WifiConnectionService _service({
 /// family) — so that when the NATIVE path says something different, we can prove
 /// which one actually decided the verdict. Without this, a native `notOnWifi` test
 /// would pass even if the native path were ignored entirely.
+/// The FIELD shape: the address probe returns the WIRED address, because
+/// network_info_plus cannot tell a wired `en*` from a Wi-Fi one. These are the
+/// literal values off Keith's iPhone on 2026-08-27 with the adapter attached and
+/// the radio off. Without this, a wired test would pass on the address probe's
+/// own null-address verdict and prove nothing.
+WifiConnectionService _wiredService(WifiPathFacts? facts) =>
+    WifiConnectionService(
+      networkInfo: _FakeNetworkInfo(
+        wifiIp: '192.168.8.232',
+        wifiIpv6: 'fe80::1834:3385:aa5',
+      ),
+      platformOverride: TargetPlatform.iOS,
+      pathProbe: _FakePathProbe(facts),
+    );
+
 WifiConnectionService _nativeService(WifiPathFacts? facts) => WifiConnectionService(
       networkInfo: _FakeNetworkInfo(wifiIp: null, wifiIpv6: null),
       platformOverride: TargetPlatform.iOS,
@@ -361,6 +376,127 @@ void main() {
             'override it. If this reads notOnWifi, the native signal is being '
             'ignored and we are back to inferring Wi-Fi from addresses.',
       );
+    });
+
+    // ========================================================================
+    // ROUND 6: THE WIRE. Reproduces the field bug and pins every guard on it.
+    //
+    // THESE USE `_wiredService`, NOT `_nativeService`, AND THE DIFFERENCE IS THE
+    // WHOLE TEST. `_nativeService` hands the address probe no addresses at all,
+    // so it resolves to `notOnWifi` on its own and a wired test built on it would
+    // pass whether or not the wired branch exists. The field bug is precisely
+    // that the address probe DOES return an address: network_info_plus selects
+    // its "Wi-Fi" IP with strncmp(ifa_name, "en", 2), and a USB Ethernet adapter
+    // is an en*, so it hands back the WIRED address and says onWifi. The fake
+    // below carries the real values off Keith's phone for that reason.
+    // ========================================================================
+    test('THE FIELD BUG: iPhone on a USB-C Ethernet adapter, radio OFF -> '
+        'notOnWifi', () async {
+      // MEASURED 2026-08-27. iPhone in airplane mode, Anker USB-C Ethernet
+      // adapter, 192.168.8.232 on the wire. Interface Info rendered a Wi-Fi card
+      // naming the ship's SSID from an earlier association and printed the
+      // ETHERNET address as the Wi-Fi IPv4.
+      final s = _wiredService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+        usesWired: true,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.notOnWifi,
+        reason: 'the address probe says onWifi here, because it cannot tell a '
+            'wired en* from a Wi-Fi one. Only the path monitor can. If this '
+            'reads onWifi the app names an SSID the device is not joined to.',
+      );
+    });
+
+    test('WITHOUT the wired fact the SAME shape reads onWifi, which is the bug',
+        () async {
+      // The control. Identical facts but `usesWired: false`, i.e. exactly what
+      // shipped before round 6. This documents the defect rather than describing
+      // it, and it fails the moment someone makes the wired branch fire on
+      // something weaker than a proven wired route.
+      final s = _wiredService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      ));
+      expect(await s.status(), WifiConnectionStatus.onWifi);
+    });
+
+    test('WIRED AND WI-FI AT ONCE -> onWifi. The wire must not blank a real '
+        'link', () async {
+      // A Mac-shaped device: plugged in AND associated. macOS moves the default
+      // route to the adapter (measured 2026-08-27: service order puts Ethernet
+      // at #1 and Wi-Fi at #7), so usesWired is true while the Wi-Fi link is
+      // perfectly real. Blanking it would be the R2 bug class all over again.
+      final s = _wiredService(const WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: true,
+        wifiInterfacePresent: true,
+        usesWired: true,
+      ));
+      expect(
+        await s.status(),
+        WifiConnectionStatus.onWifi,
+        reason: 'wifiSatisfied is a proven positive and outranks the wire',
+      );
+    });
+
+    test('A WI-FI INTERFACE PRESENT BUT IDLE, on the wire: the wired fact '
+        'changes NOTHING', () async {
+      // Radio ON but unassociated, or mid-join, while the wire carries traffic.
+      // wifiInterfacePresent is the ambiguity flag and this branch refuses to
+      // resolve it. Asserted as an EQUIVALENCE rather than a value, because what
+      // matters is that adding the wired fact did not move the verdict.
+      const WifiPathFacts ambiguous = WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: true,
+        usesWired: true,
+      );
+      const WifiPathFacts withoutWire = WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: true,
+      );
+      expect(
+        await _wiredService(ambiguous).status(),
+        await _wiredService(withoutWire).status(),
+        reason: 'an idle Wi-Fi interface is ambiguous, and a wired route does '
+            'not make it unambiguous',
+      );
+    });
+
+    test('CELLULAR IS UNTOUCHED: with no wire, the fall-through is unchanged',
+        () async {
+      // The common shape, and the one the round-5 money work depends on. With
+      // usesWired false the branch cannot fire at all.
+      const WifiPathFacts cellular = WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      );
+      expect(
+        await _nativeService(cellular).status(),
+        WifiConnectionStatus.notOnWifi,
+        reason: 'radio off with no addresses still resolves via the ADDRESS '
+            'probe, exactly as before round 6',
+      );
+    });
+
+    test('usesWired defaults to false, so an older native payload is unchanged',
+        () async {
+      // The Swift side may be older than the Dart side on a given install. A
+      // payload with no usesWired key must behave exactly as it did before.
+      const WifiPathFacts old = WifiPathFacts(
+        usesWifi: false,
+        wifiSatisfied: false,
+        wifiInterfacePresent: false,
+      );
+      expect(old.usesWired, isFalse);
+      expect(old.wiredSatisfied, isFalse);
     });
 
     test('usesWifi ALONE is enough -> onWifi (the first disjunct, isolated)',
