@@ -172,6 +172,136 @@ void main() {
     });
   });
 
+  // ---- the observed unplug/replug, wlanpi-a02, 2026-08-27 12:11:40-12:11:56 --
+  //
+  // PROVENANCE, stated so it is not mistaken for a verbatim capture. Keith pulled
+  // the Ethernet cable and put it back while /toolboxapi/links was polled once a
+  // second over wlan0 (the wired address goes away with the cable, so observing
+  // over it would have lost the event). 66 samples, none unreachable. The three
+  // bodies below are reconstructed from the recorded per-sample digest of that
+  // run, field for field; they are not hand-invented states, and they are not
+  // raw response bodies either.
+  //
+  // THE FINDING THAT CHANGED THE DESIGN: wlan0 NEVER TOOK OVER. For the fifteen
+  // seconds the cable was out, the Pi held a perfectly good Wi-Fi address
+  // (192.168.8.152) and had NO default route at all. "I have an IP address" and
+  // "I can reach anything" are different facts, and an app that reads the first
+  // and reports the second is the exact failure this one exists to avoid.
+  group('LinkTable — the cable came out and went back in', () {
+    LinkTable cableOut() => _parse('''
+      {"links": [
+        {"name": "eth0", "kind": "wired", "operstate": "DOWN", "carrier": false,
+         "speed_mbps": null, "duplex": null, "driver": "bcmgenet",
+         "is_default_route_v4": false, "is_default_route_v6": false,
+         "addresses": []},
+        {"name": "wlan0", "kind": "wifi", "operstate": "UP", "carrier": true,
+         "is_default_route_v4": false, "is_default_route_v6": false,
+         "addresses": [
+           {"family": "inet", "address": "192.168.8.152", "prefixlen": 24,
+            "link_local": false}]}
+      ], "default_route": null}
+    ''');
+
+    LinkTable linkUpNoLease() => _parse('''
+      {"links": [
+        {"name": "eth0", "kind": "wired", "operstate": "UP", "carrier": true,
+         "speed_mbps": 1000, "duplex": "full", "driver": "bcmgenet",
+         "is_default_route_v4": false, "is_default_route_v6": false,
+         "addresses": [
+           {"family": "inet6", "address": "fe80::da3a:ddff:fe95:9a02",
+            "prefixlen": 64, "link_local": true}]},
+        {"name": "wlan0", "kind": "wifi", "operstate": "UP", "carrier": true,
+         "is_default_route_v4": false,
+         "addresses": [
+           {"family": "inet", "address": "192.168.8.152", "prefixlen": 24,
+            "link_local": false}]}
+      ], "default_route": null}
+    ''');
+
+    test('CABLE OUT: no carrier, no speed, no addresses, and no route anywhere',
+        () {
+      final LinkTable t = cableOut();
+      final LinkInfo eth0 = t.links.first;
+      expect(eth0.carrier, isFalse);
+      expect(eth0.operState, 'DOWN');
+      expect(eth0.addresses, isEmpty);
+      expect(eth0.speedMbps, isNull,
+          reason: 'sysfs reports no speed while the cable is out; a stale '
+              'last-known speed would read as a live link');
+      expect(t.primary, isNull);
+    });
+
+    test('CABLE OUT: wlan0 has an address and is still NOT the answer', () {
+      final LinkTable t = cableOut();
+      final LinkInfo wlan0 =
+          t.links.firstWhere((LinkInfo l) => l.name == 'wlan0');
+      expect(wlan0.operState, 'UP');
+      expect(wlan0.firstRoutableIPv4, '192.168.8.152');
+      expect(wlan0.isDefaultRoute, isFalse);
+      expect(t.primary, isNull, reason: 'observed: nothing routed for 15s');
+      expect(t.hasLinkButNoRoute, isTrue);
+    });
+
+    test('THE ONE-SECOND WINDOW: 1000 Mbps negotiated and nothing reachable',
+        () {
+      final LinkTable t = linkUpNoLease();
+      final LinkInfo eth0 = t.links.first;
+      expect(eth0.carrier, isTrue);
+      expect(eth0.speedMbps, 1000, reason: 'the PHY is up and full speed');
+      expect(eth0.duplex, 'full');
+      // ...and none of that means the user can reach anything.
+      expect(eth0.firstRoutableIPv4, isNull);
+      expect(t.primary, isNull);
+      expect(t.hasLinkButNoRoute, isTrue);
+    });
+
+    test('carrier and speed arrive BEFORE addressing, so link != usable', () {
+      final LinkInfo out = cableOut().links.first;
+      final LinkInfo up = linkUpNoLease().links.first;
+      expect(out.carrier, isFalse);
+      expect(up.carrier, isTrue);
+      // The whole window: both states report nothing routable.
+      expect(out.firstRoutableIPv4, isNull);
+      expect(up.firstRoutableIPv4, isNull);
+      expect(up.speedMbps, isNotNull);
+      expect(out.speedMbps, isNull);
+    });
+
+    test('LEASE LANDS: the address and the route appear together', () {
+      final LinkTable t = _parse('''
+        {"links": [
+          {"name": "eth0", "kind": "wired", "operstate": "UP", "carrier": true,
+           "speed_mbps": 1000, "duplex": "full", "driver": "bcmgenet",
+           "is_default_route_v4": true, "is_default_route_v6": false,
+           "addresses": [
+             {"family": "inet", "address": "192.168.8.176", "prefixlen": 24,
+              "dynamic": true, "link_local": false},
+             {"family": "inet6", "address": "fe80::da3a:ddff:fe95:9a02",
+              "prefixlen": 64, "link_local": true}]}
+        ], "default_route": {"inet": {"dev": "eth0", "gateway": "192.168.8.1"}}}
+      ''');
+      expect(t.primary?.name, 'eth0');
+      expect(t.primary?.firstRoutableIPv4, '192.168.8.176');
+      expect(t.primary?.addresses.first.isDynamic, isTrue);
+      expect(t.hasLinkButNoRoute, isFalse);
+      expect(t.defaultGatewayV4, '192.168.8.1');
+    });
+
+    test('NOT OBSERVED, and the code must not pretend otherwise: an IPv4 '
+        'link-local fallback never appeared', () {
+      // dhcpcd got a lease inside one second, so 169.254.x.x never happened on
+      // this run. hasOnlyLinkLocalIPv4 is therefore modeled and unit-tested but
+      // NOT field-observed for IPv4. Recorded here so nobody upgrades it to
+      // "verified on hardware" later.
+      final LinkTable t = linkUpNoLease();
+      final Iterable<LinkAddress> v4 =
+          t.links.first.addresses.where((LinkAddress a) => a.isIPv4);
+      expect(v4, isEmpty, reason: 'no IPv4 at all, not an APIPA address');
+      expect(t.links.first.hasOnlyLinkLocalIPv4, isFalse,
+          reason: 'the getter needs an IPv4 to be true, and there was none');
+    });
+  });
+
   group('LinkTable — states the fixture cannot show', () {
     test('a usable link that routes nothing is named, not silently primary', () {
       final LinkTable t = _parse('''
