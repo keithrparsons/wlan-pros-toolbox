@@ -87,6 +87,40 @@ def _targets(root: str, argv: list[str]) -> list[str]:
     return files
 
 
+# pubspec `msix_version: 1.8.7.0` — the Windows Store's own four-part field.
+_MSIX = re.compile(r"^\s*msix_version:\s*(\d+\.\d+\.\d+)\.(\d+)\s*$", re.M)
+
+
+def _check_msix(root: str, expected: str) -> list[str]:
+    """msix_version must track the app version. They are SEPARATE pubspec fields.
+
+    WHY THIS IS CHECKED HERE. The Windows package version is not derived from
+    `version:` — it is its own key, and bumping one without the other is a
+    documented trap in this project's own notes ("msix_version MUST be bumped
+    alongside version"). It was missed again on 2026-08-27: the app went to
+    1.8.8 while msix_version sat at 1.8.7.0, and nothing anywhere would have
+    said so. A Store upload carrying a stale package version is either rejected
+    as a duplicate or, worse, accepted as an update that claims to be older than
+    it is.
+
+    Only the X.Y.Z part is compared. The fourth component is the Store's
+    revision field and is not the app's to mirror.
+    """
+    with open(os.path.join(root, "pubspec.yaml"), encoding="utf-8") as fh:
+        body = fh.read()
+    m = _MSIX.search(body)
+    if not m:
+        return []          # no msix_config in this pubspec: nothing to check
+    if m.group(1) != expected:
+        return [
+            f"  pubspec.yaml: msix_version '{m.group(1)}.{m.group(2)}' does not "
+            f"track the app version '{expected}'.  Fix: set msix_version to "
+            f"{expected}.0 — they are separate fields and only this guard "
+            f"connects them."
+        ]
+    return []
+
+
 def main(argv: list[str]) -> int:
     root = _repo_root()
     expected = _pubspec_version(root)
@@ -109,6 +143,8 @@ def main(argv: list[str]) -> int:
                             f"!= pubspec '{expected}'  ->  {m.group(0).strip()}"
                         )
 
+    failures.extend(_check_msix(root, expected))
+
     if failures:
         print("VERSION GUARD: FAIL — hardcoded app-version literal(s) disagree "
               f"with pubspec {expected}:")
@@ -119,7 +155,8 @@ def main(argv: list[str]) -> int:
         return 1
 
     print(f"VERSION GUARD: clean — no drifted app-version literal in "
-          f"{scanned} shipped prose file(s) (pubspec {expected}).")
+          f"{scanned} shipped prose file(s), and msix_version tracks "
+          f"pubspec {expected}.")
     return 0
 
 

@@ -376,7 +376,7 @@ msix_config:
   # at 1.8.5.0 through the 1.8.6 bump (1884cef) and the 1.8.7 bump (9bfdfea) — so a
   # Store package built any time in that window would have carried an
   # already-published identity. Bump both together, in the same commit.
-  msix_version: 1.8.7.0
+  msix_version: 1.8.8.0
   logo_path: assets/branding/app-icon-1024.png
   # Capabilities: internetClient for outbound HTTP/DNS/speed-test probes;
   # internetClientServer for the inbound side of the LAN/socket tools (port
