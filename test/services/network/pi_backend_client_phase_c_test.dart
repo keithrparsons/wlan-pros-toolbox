@@ -283,6 +283,40 @@ void main() {
       expect(ns.first.mac, '0c:ea:14:32:91:c4');
       expect(ns.first.fromArpTable, isTrue);
       expect(ns.first.rttMs, isNull);
+      expect(ns.first.state, 'REACHABLE');
+    });
+
+    test('carries the FAILED state through, so the row can say who did not '
+        'answer instead of blaming the platform', () async {
+      final PiBackendClient client = _client(MockClient((http.Request req) async {
+        return _json(<String, dynamic>{
+          'neighbors': <dynamic>[
+            <String, dynamic>{
+              'ip': '10.0.10.42',
+              'mac': null,
+              'state': 'FAILED',
+              'dev': 'eth0',
+              'is_ipv6': false,
+            },
+            <String, dynamic>{
+              'ip': '10.0.10.43',
+              'mac': null,
+              'state': '',
+            },
+          ],
+        });
+      }));
+      final List<Neighbor> ns = await client.neighbors();
+      expect(ns, hasLength(2));
+      expect(ns.first.mac, isNull);
+      expect(ns.first.state, 'FAILED');
+      expect(
+        missingMacReason(MacReadOutcome.notAttempted,
+            neighborState: ns.first.state, isIpv6: ns.first.isIpv6),
+        'Did not answer ARP',
+      );
+      // A blank state is normalized to null, not to the empty string.
+      expect(ns[1].state, isNull);
     });
   });
 

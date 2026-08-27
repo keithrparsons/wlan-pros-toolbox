@@ -4,6 +4,16 @@
 // empty value shows the canonical "Not available on this platform" treatment
 // (brief §10) in tertiary text — never a 0, never a blank that reads as a bug.
 //
+// THAT DEFAULT IS A PLATFORM CLAIM, AND IT IS ONLY SOMETIMES TRUE. A row goes
+// empty for three different reasons and they are not interchangeable: this
+// platform cannot produce the datum, the upstream data source did not return
+// it, or the network did not answer. Only the first is a statement about the
+// platform. On the WLAN Pi build this misfired visibly — RIPEstat returned
+// null for Registry and AS type and the screen reported it as a limitation of
+// the machine (2026-08-26). Callers whose blanks are NOT platform limits pass
+// [absentLabel] and name the real reason. The default is unchanged so no
+// existing screen shifts underneath its own review.
+//
 // Two distinct fixed-width registers, per GL-003 §8.5:
 //   - `mono`       → DM Mono (`inlineCode`) — computed numerics (counts, coords,
 //                    measured durations) so decimal columns align.
@@ -27,6 +37,7 @@ class ValueRow extends StatelessWidget {
     this.mono = false,
     this.identifier = false,
     this.emphasize = false,
+    this.absentLabel = 'Not available on this platform',
   });
 
   /// Fixed width of the left-hand label column, shared by every label/value
@@ -53,6 +64,11 @@ class ValueRow extends StatelessWidget {
 
   /// Lime + larger weight for the headline value (e.g. Primary IPv4).
   final bool emphasize;
+
+  /// What an empty value says. Defaults to the platform sentence; override it
+  /// wherever an absent datum is NOT a platform limit, so the row states the
+  /// reason that is actually true.
+  final String absentLabel;
 
   bool get _available => value != null && value!.trim().isNotEmpty;
 
@@ -98,7 +114,7 @@ class ValueRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: SelectableText(
-              _available ? value! : 'Not available on this platform',
+              _available ? value! : absentLabel,
               style: valueStyle,
               textAlign: TextAlign.right,
             ),

@@ -82,11 +82,37 @@ enum MacReadOutcome {
 /// other two describe this run: a read that failed, and a read that succeeded
 /// without covering this host. Rendering all three as "not exposed on this
 /// platform" is the false capability claim this enum exists to prevent.
-String missingMacReason(MacReadOutcome outcome) => switch (outcome) {
-      MacReadOutcome.notAttempted => 'Not exposed on this platform',
-      MacReadOutcome.failed => 'MAC read failed',
-      MacReadOutcome.ok => 'Not in the ARP cache',
+/// [neighborState] is the OS neighbor-table state (`ip neigh`: FAILED, STALE,
+/// REACHABLE, INCOMPLETE, ...) when the row came from a table READ that carries
+/// one. The WLAN Pi path does; the native sweep does not, and passes null.
+///
+/// WHEN A STATE IS PRESENT IT WINS, and the reason stops being about us at all.
+/// A row in FAILED means the HOST did not answer — a fact about the network,
+/// and the more useful of the two things we could say. On the Pi this is not a
+/// corner case: on 2026-08-26 a read returned 62 rows, 56 of them FAILED, and
+/// every one of those rendered "MAC not exposed on this platform" on a machine
+/// that had just exposed six MACs in the same table. The platform sentence was
+/// false and it displaced the true one.
+String missingMacReason(
+  MacReadOutcome outcome, {
+  String? neighborState,
+  bool isIpv6 = false,
+}) {
+  final String? state = neighborState?.trim().toUpperCase();
+  if (state != null && state.isNotEmpty) {
+    final String protocol = isIpv6 ? 'NDP' : 'ARP';
+    return switch (state) {
+      'FAILED' => 'Did not answer $protocol',
+      'INCOMPLETE' => 'Resolving now, no answer yet',
+      _ => 'No address in the neighbor table',
     };
+  }
+  return switch (outcome) {
+    MacReadOutcome.notAttempted => 'Not exposed on this platform',
+    MacReadOutcome.failed => 'MAC read failed',
+    MacReadOutcome.ok => 'Not in the ARP cache',
+  };
+}
 
 /// One discovered neighbor on the local subnet.
 class Neighbor {
@@ -95,9 +121,20 @@ class Neighbor {
     this.mac,
     this.rttMs,
     this.fromArpTable = false,
+    this.state,
   });
 
   final String ip;
+
+  /// OS neighbor-table state (FAILED, STALE, REACHABLE, INCOMPLETE, ...) when
+  /// the source reports one, else null. Carried rather than collapsed to a
+  /// bool: a null MAC in FAILED and a null MAC in STALE are different facts,
+  /// and the row has to be able to say which.
+  final String? state;
+
+  /// True when [ip] is IPv6, which decides whether an unanswered row names ARP
+  /// or NDP. Derived, never stored twice.
+  bool get isIpv6 => ip.contains(':');
 
   /// Link-layer address, or null when the platform does not expose it. Never
   /// fabricated.

@@ -121,7 +121,11 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
 
   /// Why this neighbor has no MAC. Delegates to the shared [missingMacReason]
   /// so the row, the export, and any future surface read one derivation.
-  String get _missingMacReason => missingMacReason(_macRead);
+  String _reasonFor(Neighbor n) => missingMacReason(
+        _macRead,
+        neighborState: n.state,
+        isIpv6: n.isIpv6,
+      );
 
   Future<void> _start() async {
     if (_running || _service == null || _interfaceService == null) return;
@@ -276,7 +280,9 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
 
     for (final Neighbor n in _neighbors) {
       final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
-      final String mac = hasMac ? n.mac! : _missingMacReason;
+      // Same derivation as the visible row, per this tool's one-fact-one-source
+      // rule: the export must never disagree with the screen it was copied from.
+      final String mac = hasMac ? n.mac! : _reasonFor(n);
       final String rtt = n.rttMs == null ? '' : n.rttMs!.toStringAsFixed(0);
       buf.writeln(<String>[n.ip, mac, rtt].join(tab));
     }
@@ -658,9 +664,10 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     final String rtt = n.rttMs == null
         ? ''
         : '${n.rttMs!.toStringAsFixed(0)} ms';
+    final String reason = hasMac ? '' : _reasonFor(n);
     final String semantic = hasMac
         ? 'Neighbor ${n.ip}, MAC ${n.mac}, $rtt'
-        : 'Neighbor ${n.ip}, MAC not exposed on this platform, $rtt';
+        : 'Neighbor ${n.ip}, $reason, $rtt';
 
     return Semantics(
       container: true,
@@ -702,9 +709,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                       ),
                     )
                   : Text(
-                      _macRead == MacReadOutcome.notAttempted
-                          ? 'MAC not exposed on this platform'
-                          : _missingMacReason,
+                      reason,
                       style: text.labelSmall?.copyWith(
                         color: colors.textTertiary,
                         fontStyle: FontStyle.italic,

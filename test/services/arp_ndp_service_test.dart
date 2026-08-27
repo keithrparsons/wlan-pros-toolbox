@@ -240,6 +240,64 @@ void main() {
     });
   });
 
+  group('missingMacReason — a neighbor-table state outranks the outcome', () {
+    // The 2026-08-26 WLAN Pi read: 62 rows, 6 with a real MAC, 56 in FAILED.
+    // All 56 rendered "MAC not exposed on this platform" on a machine that had
+    // just exposed six MACs from the same table.
+    test('FAILED says the HOST did not answer, and never blames the platform',
+        () {
+      final String s = missingMacReason(MacReadOutcome.notAttempted,
+          neighborState: 'FAILED');
+      expect(s, 'Did not answer ARP');
+      expect(s, isNot(contains('platform')));
+    });
+
+    test('FAILED on IPv6 names NDP, not ARP', () {
+      expect(
+          missingMacReason(MacReadOutcome.notAttempted,
+              neighborState: 'FAILED', isIpv6: true),
+          'Did not answer NDP');
+    });
+
+    test('INCOMPLETE is in-progress, not a failure and not a platform claim',
+        () {
+      final String s =
+          missingMacReason(MacReadOutcome.ok, neighborState: 'INCOMPLETE');
+      expect(s, 'Resolving now, no answer yet');
+      expect(s, isNot(contains('platform')));
+    });
+
+    test('any other state with no MAC describes the table, not the platform',
+        () {
+      for (final String st in <String>['STALE', 'DELAY', 'PROBE', 'NOARP']) {
+        final String s =
+            missingMacReason(MacReadOutcome.notAttempted, neighborState: st);
+        expect(s, 'No address in the neighbor table', reason: st);
+        expect(s, isNot(contains('platform')), reason: st);
+      }
+    });
+
+    test('state is matched case-insensitively and trimmed', () {
+      expect(missingMacReason(MacReadOutcome.ok, neighborState: '  failed  '),
+          'Did not answer ARP');
+    });
+
+    test('no state, or a blank one, falls back to the outcome unchanged', () {
+      expect(missingMacReason(MacReadOutcome.notAttempted),
+          'Not exposed on this platform');
+      expect(missingMacReason(MacReadOutcome.notAttempted, neighborState: ''),
+          'Not exposed on this platform');
+      expect(missingMacReason(MacReadOutcome.notAttempted, neighborState: '  '),
+          'Not exposed on this platform');
+    });
+
+    test('Neighbor derives isIpv6 from the address, and never stores it twice',
+        () {
+      expect(const Neighbor(ip: '10.0.10.7').isIpv6, isFalse);
+      expect(const Neighbor(ip: 'fe80::1c2b:44ff:fe0a:9d31').isIpv6, isTrue);
+    });
+  });
+
   group('discover', () {
     // A connector that "connects" (host up) for an allow-listed set, and
     // throws the REAL dead-host SocketException (Connection timed out, errno

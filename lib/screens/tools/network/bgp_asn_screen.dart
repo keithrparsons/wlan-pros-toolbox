@@ -29,6 +29,16 @@ import 'error_card.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
 
+/// What an empty routing/registry row says on this screen. NOT the default
+/// platform sentence: every field on this card comes from RIPEstat, so a blank
+/// means RIPEstat did not return it. On the WLAN Pi, Registry and AS type both
+/// came back null and the screen blamed the machine (2026-08-26). The Pi could
+/// not have produced them either way; the API simply had nothing to say.
+///
+/// File-level so the result card and anything else rendering these fields
+/// cannot drift into two different sentences for the same absence.
+const String _absent = 'Not reported by RIPEstat';
+
 class BgpAsnScreen extends StatefulWidget {
   const BgpAsnScreen({super.key, this.service});
 
@@ -484,36 +494,50 @@ class _ResultCard extends StatelessWidget {
             value: r.asn,
             identifier: true,
             emphasize: true,
+            absentLabel: _absent,
           ),
-          ValueRow(label: 'Holder', value: r.holder),
+          ValueRow(label: 'Holder', value: r.holder, absentLabel: _absent),
           ValueRow(
             label: 'Announced prefix',
             value: r.announcedPrefix,
             identifier: true,
+            absentLabel: _absent,
           ),
-          ValueRow(label: 'Registry', value: r.registry),
-          ValueRow(label: 'AS type', value: r.asnType),
+          ValueRow(
+            label: 'Registry',
+            value: r.registry,
+            absentLabel: _absent,
+          ),
+          ValueRow(
+            label: 'AS type',
+            value: r.asnType,
+            absentLabel: _absent,
+          ),
           ValueRow(
             label: 'In routing table',
             value: r.isAnnounced == null
                 ? null
                 : (r.isAnnounced! ? 'Yes: announced' : 'No: not announced'),
+            absentLabel: _absent,
           ),
           if (r.kind == BgpQueryKind.asn) ...[
             ValueRow(
               label: 'Upstreams',
               value: r.upstreamCount?.toString(),
               mono: true,
+              absentLabel: _absent,
             ),
             ValueRow(
               label: 'Peers',
               value: r.peerCount?.toString(),
               mono: true,
+              absentLabel: _absent,
             ),
             ValueRow(
               label: 'Downstreams',
               value: r.downstreamCount?.toString(),
               mono: true,
+              absentLabel: _absent,
             ),
           ],
           if (r.relatedAsns.isNotEmpty)

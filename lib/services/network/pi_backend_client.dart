@@ -970,6 +970,9 @@ class PiBackendClient {
             mac: _blankNull(n['mac'] as String?),
             rttMs: null,
             fromArpTable: true,
+            // The Pi reports `ip neigh` state. Dropping it is what made 56
+            // unanswered hosts claim the platform could not expose a MAC.
+            state: _blankNull(n['state'] as String?),
           );
         })
         .whereType<Neighbor>()
