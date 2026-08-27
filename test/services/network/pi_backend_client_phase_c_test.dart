@@ -18,6 +18,7 @@ import 'package:wlan_pros_toolbox/services/network/arp_ndp_service.dart';
 import 'package:wlan_pros_toolbox/services/network/bgp_asn_service.dart';
 import 'package:wlan_pros_toolbox/services/network/http_header_service.dart';
 import 'package:wlan_pros_toolbox/services/network/ip_geo_service.dart';
+import 'package:wlan_pros_toolbox/services/network/link_info.dart';
 import 'package:wlan_pros_toolbox/services/network/lan_discovery/lan_discovery_engine.dart';
 import 'package:wlan_pros_toolbox/services/network/packet_sender_service.dart';
 import 'package:wlan_pros_toolbox/services/network/ping_plot_controller.dart';
@@ -317,6 +318,61 @@ void main() {
       );
       // A blank state is normalized to null, not to the empty string.
       expect(ns[1].state, isNull);
+    });
+  });
+
+  group('links() — Phase E', () {
+    test('reads the Pi link table, including which interface routes', () async {
+      final PiBackendClient client = _client(MockClient((http.Request req) async {
+        expect(req.url.path, '/toolboxapi/links');
+        return _json(<String, dynamic>{
+          'links': <dynamic>[
+            <String, dynamic>{
+              'name': 'eth0', 'kind': 'wired', 'operstate': 'UP',
+              'carrier': true, 'speed_mbps': 1000, 'duplex': 'full',
+              'mtu': 1500, 'mac': 'd8:3a:dd:95:9a:02', 'driver': 'bcmgenet',
+              'bus': 'platform', 'is_default_route_v4': true,
+              'is_default_route_v6': false,
+              'addresses': <dynamic>[
+                <String, dynamic>{'family': 'inet', 'address': '192.168.8.176',
+                                  'prefixlen': 24, 'dynamic': true,
+                                  'link_local': false},
+              ],
+            },
+            <String, dynamic>{
+              'name': 'wlan0', 'kind': 'wifi', 'operstate': 'UP',
+              'carrier': true, 'is_default_route_v4': false,
+              'addresses': <dynamic>[
+                <String, dynamic>{'family': 'inet', 'address': '192.168.8.152',
+                                  'prefixlen': 24, 'link_local': false},
+              ],
+            },
+            <String, dynamic>{'name': 'wlanpi0', 'kind': 'monitor'},
+          ],
+          'default_route': <String, dynamic>{
+            'inet': <String, dynamic>{'dev': 'eth0', 'gateway': '192.168.8.1'},
+          },
+          'source': 'sysfs + ip addr on the WLAN Pi',
+        });
+      }));
+      final LinkTable t = await client.links();
+      expect(t.links, hasLength(3));
+      expect(t.primary?.name, 'eth0');
+      expect(t.primary?.speedMbps, 1000);
+      expect(t.defaultGatewayV4, '192.168.8.1');
+      // wlan0 is up and addressed and is still not the answer to "what am I on"
+      expect(t.links[1].isDefaultRoute, isFalse);
+      // the capture interface never reaches a connection list
+      expect(t.usable.map((LinkInfo l) => l.name), <String>['eth0', 'wlan0']);
+    });
+
+    test('a backend that reports nothing yields an empty table, not a throw',
+        () async {
+      final PiBackendClient client = _client(
+          MockClient((http.Request req) async => _json(<String, dynamic>{})));
+      final LinkTable t = await client.links();
+      expect(t.links, isEmpty);
+      expect(t.primary, isNull);
     });
   });
 

@@ -41,6 +41,7 @@ import 'http_header_service.dart'
     show HeaderEntry, HttpHeaderResult, HttpHop, HttpMethod;
 import 'ip_geo_service.dart' show IpGeoProvider, IpGeoResult;
 import 'lan_discovery/device_type.dart' show DeviceType;
+import 'link_info.dart' show LinkTable;
 import 'lan_discovery/lan_discovery_engine.dart' show DiscoveryResult;
 import 'lan_discovery/lan_host.dart' show LanHost;
 import 'packet_sender_service.dart'
@@ -977,6 +978,22 @@ class PiBackendClient {
         })
         .whereType<Neighbor>()
         .toList(growable: false);
+  }
+
+  /// The Pi's LINK table via `/toolboxapi/links` (Phase E).
+  ///
+  /// Distinct from [interfaces], which is `ip -j addr` and therefore addressing
+  /// only. This one carries what a wired user needs: carrier, negotiated speed
+  /// and duplex, driver and bus, an evidence-based kind, and which interface
+  /// holds the default route. See [LinkTable] for why that last one matters:
+  /// on a WLAN Pi two interfaces are routinely up on the SAME subnet and only
+  /// one of them is carrying traffic.
+  Future<LinkTable> links() async {
+    final Map<String, dynamic> json = await _getJsonObject(
+      'links',
+      timeout: const Duration(seconds: 12),
+    );
+    return LinkTable.fromJson(json);
   }
 
   /// TCP-connect port scan run ON the Pi via `/toolboxapi/portscan`. Returns the
