@@ -974,6 +974,9 @@ class PiBackendClient {
             // The Pi reports `ip neigh` state. Dropping it is what made 56
             // unanswered hosts claim the platform could not expose a MAC.
             state: _blankNull(n['state'] as String?),
+            // ...and it reports `dev`. Dropping THAT made one host learned on
+            // two interfaces render as two identical rows.
+            dev: _blankNull(n['dev'] as String?),
           );
         })
         .whereType<Neighbor>()

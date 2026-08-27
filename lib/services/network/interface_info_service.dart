@@ -46,6 +46,37 @@ import 'wifi_info_adapter.dart';
 /// label rows ("Wi-Fi", "Ethernet", "Loopback") rather than show raw `en0`.
 enum InterfaceKind { wifi, ethernet, cellular, loopback, vpn, other }
 
+/// True when [ip] is an IPv4 address that could sensibly be shown as "your IP".
+///
+/// REJECTS BY IANA DEFINITION, NOT BY VENDOR. Two ranges are excluded because
+/// neither is ever a general host address, whatever holds it:
+///
+///  * `169.254.0.0/16` link-local (RFC 3927). An APIPA address means DHCP did
+///    not answer. It is a diagnosis, not an address.
+///  * `192.0.0.0/29` the IPv4 Service Continuity Prefix (RFC 7335). This is the
+///    464XLAT CLAT's own address on a cellular stack. A real iPhone reported
+///    `192.0.0.6` here on 2026-08-27 while its actual address sat elsewhere.
+///
+/// Loopback is excluded too. Everything else, including RFC 1918 and CGNAT, IS
+/// a real host address and is accepted: a device behind NAT still has an IP, and
+/// telling the user otherwise would be the fake-precision this app avoids.
+bool isGeneralHostAddressV4(String ip) {
+  final List<String> parts = ip.split('.');
+  if (parts.length != 4) return false;
+  final List<int> o = <int>[];
+  for (final String p in parts) {
+    final int? v = int.tryParse(p);
+    if (v == null || v < 0 || v > 255) return false;
+    o.add(v);
+  }
+  if (o[0] == 127) return false;                          // loopback
+  if (o[0] == 169 && o[1] == 254) return false;           // RFC 3927 link-local
+  if (o[0] == 192 && o[1] == 0 && o[2] == 0 && o[3] < 8) {
+    return false;                                         // RFC 7335 192.0.0.0/29
+  }
+  return true;
+}
+
 /// A single IP address bound to an interface, with its family.
 class InterfaceAddress {
   const InterfaceAddress({required this.ip, required this.isIPv4});
@@ -177,19 +208,55 @@ class InterfaceInfoSnapshot {
   final WifiLinkInfo wifi;
   final String? hostname;
 
-  /// The device's primary routable IPv4 — first non-loopback IPv4 across all
-  /// interfaces, preferring the Wi-Fi link IP when known. This is the device's
-  /// own IP that other network tools surface to the user.
+  /// The device's primary routable IPv4, preferring the Wi-Fi link IP when known.
+  /// This is the device's own IP that other network tools surface to the user.
+  ///
+  /// IT USED TO RETURN WHATEVER CAME FIRST IN THE LIST, AND THAT WAS WRONG ON A
+  /// REAL DEVICE. Measured 2026-08-27: an iPhone with Wi-Fi off and a USB-C
+  /// Ethernet adapter attached reported `192.0.0.6` as its primary address while
+  /// the actual wired address, 192.168.8.232, sat on `en11` further down the same
+  /// screen. `192.0.0.6` is the 464XLAT CLAT address on an `ipsec` interface, and
+  /// it won purely because it appeared earlier in `NetworkInterface.list()`.
+  ///
+  /// Two independent guards now, on purpose, so neither has to be perfect:
+  ///
+  ///  1. [isGeneralHostAddressV4] rejects addresses that are never the answer to
+  ///     "what is my IP", by their IANA special-purpose definition rather than by
+  ///     a list of vendors.
+  ///  2. Real links are preferred over tunnels and unknowns. A VPN or a CLAT
+  ///     interface holds a valid address that is nonetheless not the one a user
+  ///     means, so it is used only when nothing better exists.
+  ///
+  /// Order is still LAST resort, never first. Where a backend can name the
+  /// interface holding the default route, that answer is better than any of this;
+  /// see `LinkTable.primary`.
   String? get primaryIPv4 {
     if (wifi.wifiIPv4 != null && wifi.wifiIPv4!.isNotEmpty) {
       return wifi.wifiIPv4;
     }
-    for (final NetworkInterfaceInfo iface in interfaces) {
-      if (iface.kind == InterfaceKind.loopback) continue;
-      final String? v4 = iface.firstIPv4;
-      if (v4 != null) return v4;
+
+    String? firstIn(Iterable<InterfaceKind> kinds) {
+      for (final NetworkInterfaceInfo iface in interfaces) {
+        if (!kinds.contains(iface.kind)) continue;
+        for (final InterfaceAddress a in iface.addresses) {
+          if (a.isIPv4 && isGeneralHostAddressV4(a.ip)) return a.ip;
+        }
+      }
+      return null;
     }
-    return null;
+
+    // A link the user is actually on, first.
+    return firstIn(const <InterfaceKind>[
+          InterfaceKind.wifi,
+          InterfaceKind.ethernet,
+          InterfaceKind.cellular,
+        ]) ??
+        // Then anything else that is at least a general host address. A VPN
+        // address IS the device's address when the VPN is all it has.
+        firstIn(const <InterfaceKind>[
+          InterfaceKind.vpn,
+          InterfaceKind.other,
+        ]);
   }
 }
 
@@ -617,7 +684,8 @@ class InterfaceInfoService {
         n.contains('cellular')) {
       return InterfaceKind.cellular;
     }
-    if (n.startsWith('utun') ||
+    if (n.startsWith('ipsec') ||
+        n.startsWith('utun') ||
         n.startsWith('tun') ||
         n.startsWith('tap') ||
         n.startsWith('ppp') ||

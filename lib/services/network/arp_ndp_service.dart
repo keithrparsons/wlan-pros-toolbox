@@ -122,6 +122,7 @@ class Neighbor {
     this.rttMs,
     this.fromArpTable = false,
     this.state,
+    this.dev,
   });
 
   final String ip;
@@ -147,6 +148,23 @@ class Neighbor {
   /// True when this entry came from the OS ARP table read (vs. only an active
   /// probe response).
   final bool fromArpTable;
+
+  /// The interface this neighbor was learned on (`eth0`, `wlan0`, ...), where
+  /// the source reports one. Null on platforms whose reader does not say.
+  ///
+  /// WHY IT IS CARRIED. A dual-homed host learns the SAME neighbor on more than
+  /// one interface, and `ip neigh` returns one row per interface. Dropping this
+  /// field turned that into what looked like duplicate rows: on the WLAN Pi,
+  /// 192.168.8.1 and 192.168.8.232 each appeared twice with identical addresses
+  /// and no way to tell why (measured 2026-08-27). The duplication is real and
+  /// interesting - those hosts are reachable over BOTH the wire and the radio -
+  /// and it reads as a bug only because the distinguishing field was thrown away.
+  ///
+  /// This is the SECOND field dropped from the same payload in the same round
+  /// trip. `state` was the first, fixed earlier the same day. The lesson is not
+  /// about either field: when a backend is richer than the model, fix the model
+  /// against the payload, not against the one symptom you were shown.
+  final String? dev;
 }
 
 /// Live progress of a discovery sweep, streamed to the UI.

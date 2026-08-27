@@ -276,7 +276,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln('ARP / NDP Neighbors')
-      ..writeln(<String>['IP', 'MAC', 'RTT (ms)'].join(tab));
+      ..writeln(<String>['IP', 'MAC', 'RTT (ms)', 'Interface'].join(tab));
 
     for (final Neighbor n in _neighbors) {
       final bool hasMac = n.mac != null && n.mac!.isNotEmpty;
@@ -284,7 +284,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       // rule: the export must never disagree with the screen it was copied from.
       final String mac = hasMac ? n.mac! : _reasonFor(n);
       final String rtt = n.rttMs == null ? '' : n.rttMs!.toStringAsFixed(0);
-      buf.writeln(<String>[n.ip, mac, rtt].join(tab));
+      buf.writeln(<String>[n.ip, mac, rtt, n.dev ?? ''].join(tab));
     }
 
     return buf.toString().trimRight();
@@ -665,9 +665,10 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
         ? ''
         : '${n.rttMs!.toStringAsFixed(0)} ms';
     final String reason = hasMac ? '' : _reasonFor(n);
+    final String on = n.dev == null ? '' : ' on ${n.dev}';
     final String semantic = hasMac
-        ? 'Neighbor ${n.ip}, MAC ${n.mac}, $rtt'
-        : 'Neighbor ${n.ip}, $reason, $rtt';
+        ? 'Neighbor ${n.ip}, MAC ${n.mac}$on, $rtt'
+        : 'Neighbor ${n.ip}, $reason$on, $rtt';
 
     return Semantics(
       container: true,
@@ -701,12 +702,31 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
               ),
               const SizedBox(height: 2),
               hasMac
-                  ? SelectableText(
-                      n.mac!,
-                      style: mono.robotoMono.copyWith(
-                        color: colors.textSecondary,
-                        fontSize: AppTextSize.caption,
-                      ),
+                  ? Row(
+                      children: <Widget>[
+                        Flexible(
+                          child: SelectableText(
+                            n.mac!,
+                            style: mono.robotoMono.copyWith(
+                              color: colors.textSecondary,
+                              fontSize: AppTextSize.caption,
+                            ),
+                          ),
+                        ),
+                        // THE INTERFACE, when the source names one. Without it a
+                        // dual-homed host renders as two identical rows and reads
+                        // as a duplication bug; with it, the same two rows read as
+                        // the useful fact they are - reachable over both links.
+                        if (n.dev != null) ...<Widget>[
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            'on ${n.dev}',
+                            style: text.labelSmall?.copyWith(
+                              color: colors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ],
                     )
                   : Text(
                       reason,

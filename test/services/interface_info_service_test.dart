@@ -29,6 +29,7 @@ List<int> _unifiNameBlob(String name) =>
     _ie(221, <int>[0x00, 0x15, 0x6D, 0x01, ...name.codeUnits]);
 
 void main() {
+  _primaryIPv4Tests();
   // The AP-name cache is now the app-wide singleton; reset it between cases so
   // the enrichment tests below (which reuse one BSSID across a "decodes a name"
   // and a "never fabricates a name" case) start cold.
@@ -507,4 +508,147 @@ class _CellularOnlyNetworkInfo implements NetworkInfo {
   Future<String?> getWifiIPv6() async => null;
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+// ---------------------------------------------------------------------------
+// primaryIPv4 and the address predicate. Round 2026-08-27.
+//
+// THE FIXTURE IS A REAL PHONE. The interface list below is Keith's iPhone with
+// Wi-Fi OFF and a USB-C Ethernet adapter attached, read off the device on
+// 2026-08-27. The app reported `192.0.0.6` as the primary address while the
+// actual wired address sat on `en11` further down the same screen. 192.0.0.6 is
+// the 464XLAT CLAT address, and it won on list position alone.
+// ---------------------------------------------------------------------------
+void _primaryIPv4Tests() {
+  InterfaceInfoSnapshot snapshotOf(List<NetworkInterfaceInfo> ifaces) =>
+      InterfaceInfoSnapshot(
+        interfaces: ifaces,
+        wifi: const WifiLinkInfo(notOnWifi: true),
+        hostname: null,
+      );
+
+  NetworkInterfaceInfo ifaceOf(String name, List<String> v4) =>
+      NetworkInterfaceInfo(
+        name: name,
+        kind: InterfaceInfoService.classifyInterface(name),
+        addresses: <InterfaceAddress>[
+          for (final String a in v4) InterfaceAddress(ip: a, isIPv4: true),
+        ],
+      );
+
+  group('isGeneralHostAddressV4 — rejects by IANA definition, not by vendor', () {
+    test('the CLAT prefix 192.0.0.0/29 is not a host address', () {
+      for (final String a in <String>['192.0.0.0', '192.0.0.6', '192.0.0.7']) {
+        expect(isGeneralHostAddressV4(a), isFalse, reason: a);
+      }
+      // ...and the very next address IS ordinary space.
+      expect(isGeneralHostAddressV4('192.0.0.8'), isTrue);
+    });
+
+    test('link-local is a diagnosis, not an address', () {
+      expect(isGeneralHostAddressV4('169.254.43.1'), isFalse);
+      expect(isGeneralHostAddressV4('169.253.0.1'), isTrue);
+    });
+
+    test('loopback is excluded', () {
+      expect(isGeneralHostAddressV4('127.0.0.1'), isFalse);
+    });
+
+    test('RFC1918 and CGNAT ARE real host addresses and must be accepted', () {
+      // A device behind NAT still has an IP. Rejecting these would be the
+      // fake precision this app exists to avoid.
+      for (final String a in <String>[
+        '192.168.8.232', '10.0.0.5', '172.16.250.100', '100.64.0.1', '8.8.8.8',
+      ]) {
+        expect(isGeneralHostAddressV4(a), isTrue, reason: a);
+      }
+    });
+
+    test('malformed input is rejected rather than thrown on', () {
+      for (final String a in <String>['', 'x', '1.2.3', '1.2.3.4.5', '1.2.3.999',
+        '1.2.3.-1', 'fe80::1']) {
+        expect(isGeneralHostAddressV4(a), isFalse, reason: a);
+      }
+    });
+  });
+
+  group('primaryIPv4 — the field bug', () {
+    test('THE FIELD SHAPE: ipsec3 with the CLAT address, ahead of en11', () {
+      // Interface ORDER is the phone's, with ipsec3 ahead of en11 exactly as
+      // NetworkInterface.list() returned it on 2026-08-27.
+      //
+      // NOTE THIS TEST DOES NOT ISOLATE EITHER GUARD. Both fire here, so it
+      // passes if EITHER works. It is kept because it is the real-world shape,
+      // and the two tests below are the ones that prove each mechanism.
+      final InterfaceInfoSnapshot i = snapshotOf(<NetworkInterfaceInfo>[
+        ifaceOf('lo0', <String>['127.0.0.1']),
+        ifaceOf('ipsec3', <String>['192.0.0.6']),
+        ifaceOf('en11', <String>['192.168.8.232']),
+      ]);
+      expect(i.primaryIPv4, '192.168.8.232',
+          reason: 'the wired address is the answer; 192.0.0.6 is the CLAT');
+    });
+
+    test('GUARD 1 ALONE, the address predicate: same kind, CLAT sorts first',
+        () {
+      // Both interfaces classify as ethernet, so the kind preference cannot
+      // break the tie and ONLY isGeneralHostAddressV4 can. Slightly artificial
+      // by design: an isolating test has to remove the other mechanism.
+      final InterfaceInfoSnapshot i = snapshotOf(<NetworkInterfaceInfo>[
+        ifaceOf('en10', <String>['192.0.0.6']),
+        ifaceOf('en11', <String>['192.168.8.232']),
+      ]);
+      expect(i.primaryIPv4, '192.168.8.232',
+          reason: 'delete the 192.0.0.0/29 branch and this must go red');
+    });
+
+    test('GUARD 2 ALONE, real links outrank non-links regardless of order', () {
+      // 10.9.9.9 is a perfectly good host address, so the address predicate
+      // accepts it and ONLY the two-pass kind preference can prefer en11.
+      //
+      // WHAT THIS ACTUALLY GUARDS, corrected after the first version of this
+      // test failed to discriminate: it is NOT the ipsec-is-a-tunnel change.
+      // Removing that leaves ipsec3 classified `other`, which is deprioritised
+      // too, so the answer is unchanged. What this pins is the two-pass search
+      // itself. Collapse it back to first-match-wins and this goes red.
+      final InterfaceInfoSnapshot i = snapshotOf(<NetworkInterfaceInfo>[
+        ifaceOf('ipsec3', <String>['10.9.9.9']),
+        ifaceOf('en11', <String>['192.168.8.232']),
+      ]);
+      expect(i.primaryIPv4, '192.168.8.232',
+          reason: 'a tunnel address must never outrank a real link on position');
+    });
+
+    test('a real link beats a tunnel even when the tunnel sorts first', () {
+      final InterfaceInfoSnapshot i = snapshotOf(<NetworkInterfaceInfo>[
+        ifaceOf('utun0', <String>['10.9.9.9']),
+        ifaceOf('en0', <String>['192.168.8.134']),
+      ]);
+      expect(i.primaryIPv4, '192.168.8.134');
+    });
+
+    test('but a VPN address IS the answer when it is all the device has', () {
+      final InterfaceInfoSnapshot i = snapshotOf(<NetworkInterfaceInfo>[
+        ifaceOf('lo0', <String>['127.0.0.1']),
+        ifaceOf('utun0', <String>['10.9.9.9']),
+      ]);
+      expect(i.primaryIPv4, '10.9.9.9',
+          reason: 'refusing to answer would be worse than naming the tunnel');
+    });
+
+    test('a link-local-only device reports NOTHING rather than an APIPA address',
+        () {
+      final InterfaceInfoSnapshot i = snapshotOf(<NetworkInterfaceInfo>[
+        ifaceOf('en11', <String>['169.254.43.1']),
+      ]);
+      expect(i.primaryIPv4, isNull);
+    });
+
+    test('ipsec* is classified as a tunnel, which it is', () {
+      expect(InterfaceInfoService.classifyInterface('ipsec3'),
+          InterfaceKind.vpn);
+      expect(InterfaceInfoService.classifyInterface('ipsec6'),
+          InterfaceKind.vpn);
+    });
+  });
 }
