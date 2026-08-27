@@ -689,7 +689,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         return 'WLAN Pi';
       case WifiInfoSource.unsupported:
         return 'this device';
-      case WifiInfoSource.piBackend:
+      // piBackend returns 'WLAN Pi' above and must never fall to 'this browser':
+      // crediting a Pi-run measurement to the browser names the wrong machine.
+      // It was listed in both arms; the second was unreachable and is removed so
+      // nobody re-derives the wrong answer from a case that could not fire.
       case WifiInfoSource.web:
         return 'this browser';
     }

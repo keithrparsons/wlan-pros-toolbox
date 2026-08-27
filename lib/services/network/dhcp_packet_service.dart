@@ -146,10 +146,16 @@ class DhcpPacketResult {
 
 /// Reads the last DHCP packet macOS received on an interface.
 class DhcpPacketService {
+  // The lint's own fix does not compile here. It wants `this._isMacOsOverride`
+  // as the parameter, but Dart forbids a named parameter whose name starts with
+  // an underscore, and the field is private on purpose: it is a test seam, not
+  // API. Widening the field or renaming the seam to satisfy a style lint would
+  // be the tail wagging the dog, so it is suppressed on the line it fires on.
   DhcpPacketService({
     Future<ProcessResult> Function(String, List<String>)? runProcess,
     bool? isMacOsOverride,
   })  : _run = runProcess ?? Process.run,
+        // ignore: prefer_initializing_formals
         _isMacOsOverride = isMacOsOverride;
 
   final Future<ProcessResult> Function(String, List<String>) _run;

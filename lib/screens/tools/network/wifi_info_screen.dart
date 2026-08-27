@@ -359,8 +359,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // gate; it is removed here. The gate method stays intact (reachable via
         // the inline opt-in) so the one-time semantics and the 1.5.5 double-prompt
         // fix are preserved — only the AUTO-FIRE is removed.
+      // piBackend is NOT listed here: it is handled with the snapshot sources
+      // above, which is where it belongs. It was listed in both places, so this
+      // one was dead and the analyzer said so.
       case WifiInfoSource.unsupported:
-      case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
         break;
     }
