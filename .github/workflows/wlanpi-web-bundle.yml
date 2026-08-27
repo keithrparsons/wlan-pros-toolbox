@@ -21,7 +21,12 @@ name: WLAN Pi web bundle
 
 on:
   push:
-    branches: ['wlanpi-hosting', 'wlanpi-hosting-catchup']
+    # `main` was added 2026-08-27, the day the Pi work merged. Until then this
+    # workflow only knew the feature branches, so the moment the work landed on
+    # main a push to main built NO bundle and the tester's download silently
+    # stopped tracking the code. Ferney is downloading from the release this
+    # produces, so the trigger has to follow the branch the work lives on.
+    branches: ['main', 'wlanpi-hosting', 'wlanpi-hosting-catchup']
   workflow_dispatch:        # so a bundle can be cut on demand without a commit
 
 permissions:
