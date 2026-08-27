@@ -31,7 +31,18 @@ BUILD_NUMBER="$(date +%Y%m%d%H%M)"
 # Always put the project's signing back to Automatic, even if the build fails,
 # so local device runs in Xcode are unaffected.
 restore_signing() { git checkout -- "$PBXPROJ" 2>/dev/null || true; }
-trap restore_signing EXIT
+
+# ONE exit handler, deliberately. `trap ... EXIT` REPLACES any previous EXIT
+# trap rather than adding to it, so a second one further down would silently
+# stop the signing restore from running and leave the project on manual signing
+# after any failure. Everything that must happen on exit is called from here.
+RSYNC_SHIM=""
+on_exit() {
+  restore_signing
+  [ -n "${RSYNC_SHIM}" ] && rm -rf "${RSYNC_SHIM}"
+  return 0
+}
+trap on_exit EXIT
 
 echo "==> Build ${BUILD_NUMBER}: switching Runner to manual distribution signing"
 ( cd ios && fastlane run update_code_signing_settings \
@@ -43,9 +54,35 @@ echo "==> Build ${BUILD_NUMBER}: switching Runner to manual distribution signing
     bundle_identifier:"${BUNDLE}" \
     targets:"Runner" )
 
+# ---------------------------------------------------------------------------
+# THE rsync SHIM, AND WHY THE EXPORT KEPT FAILING.  Root cause found 2026-08-27.
+#
+# Xcode's IPA packaging step (IDEDistributionCreateIPAStep) shells out to
+# `rsync`.  Line 18 above puts /opt/homebrew/bin FIRST, which fastlane needs,
+# and Homebrew's rsync 3.4.4 then shadows Apple's /usr/bin/rsync (openrsync).
+# Xcode passes arguments 3.4.x rejects, so it dies with:
+#
+#     rsync error: syntax or usage error (code 1) at main.c(1806)
+#
+# which xcodebuild surfaces only as the opaque "error: exportArchive Copy
+# failed".  Nothing in that message points at rsync; the real cause is buried in
+# IDEDistributionPipeline.log inside a temp .xcdistributionlogs bundle.
+#
+# THIS IS THE BUG THAT SHIPPED A SIX-DAY-OLD BINARY ON 2026-07-28.  The guard
+# below was added then and it works, but it only ever caught the symptom: every
+# run since has had to be exported by hand.  Prepending a directory that holds
+# nothing but a symlink to Apple's rsync fixes the cause while leaving every
+# other Homebrew tool on PATH exactly where fastlane expects it.
+#
+# Verified 2026-08-27: same archive, same ExportOptions, Homebrew rsync ->
+# "Copy failed"; Apple rsync -> "EXPORT SUCCEEDED".
+# ---------------------------------------------------------------------------
+RSYNC_SHIM="$(mktemp -d)"
+ln -sf /usr/bin/rsync "${RSYNC_SHIM}/rsync"
+
 echo "==> Building signed App Store IPA (Flutter, clean CocoaPods env)"
 # Run Flutter directly (NOT inside fastlane) so CocoaPods uses the correct Ruby.
-flutter build ipa --release \
+PATH="${RSYNC_SHIM}:${PATH}" flutter build ipa --release \
   --build-number="${BUILD_NUMBER}" \
   --export-options-plist=ios/ExportOptions.plist
 
