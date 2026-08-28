@@ -1,0 +1,7 @@
+Fixed: with Wi-Fi off and a USB-C Ethernet adapter or USB tethering attached, the app named a Wi-Fi network you were not on and showed the wired address as the wireless one. It now says plainly that you are not on Wi-Fi.
+
+Fixed: the address shown as yours could be the carrier's translation layer instead of the one on your cable.
+
+Fixed: Lookup now says whether a neighbor is unexposed or simply silent, and which interface saw it.
+
+The subnet calculators are findable, and searchable by name.
