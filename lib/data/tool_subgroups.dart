@@ -92,6 +92,16 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     'RF & Propagation',
     'Antenna & Coverage',
     'Capacity & Power',
+    // IP & Addressing (2026-08-25): the three IP subnet calculators, moved in
+    // from Networking Tools because Keith went looking for a subnet calculator
+    // in Calculators & Tools, did not find one, and reasonably concluded the
+    // app only had reference tables.
+    //
+    // Placed in the top half, after the core RF sections and ahead of
+    // Coordinates & GPS: IP addressing is closer to daily network work than
+    // grid squares are, but it does not outrank the RF math this app is for.
+    // The position is editorial and reversible — it is Keith's to overrule.
+    'IP & Addressing',
     'Coordinates & GPS',
     'Conversions',
     // Ham Radio (2026-06-28): amateur-radio pure-math tools that are useful to

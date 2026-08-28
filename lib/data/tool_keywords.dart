@@ -300,7 +300,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   // meant a search for "vlsm" surfaced the single-subnet calculator — a
   // plausible-looking answer from a tool that cannot carve a block into
   // right-sized subnets. It now points at `subnet-planner`, which can.
+  // 'calculator' and its variants added 2026-08-25. Keith searched for a
+  // "calculator", got nothing, and concluded the app had no IP calculator — it
+  // had three. Neither the titles nor this index carried the word, so no search
+  // could reach them. The tools were also retitled to say "Calculator" outright.
   'ipv4-subnet': <String>[
+    'calculator',
+    'ip calculator',
+    'subnet calculator',
+    'ip calc',
+    'subnet calc',
+    'ipv4',
     'cidr',
     'netmask',
     'subnet mask',
@@ -321,6 +331,12 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   // type it that way. Every user-facing string on the screen uses the US
   // spelling per GL-004.
   'subnet-planner': <String>[
+    'calculator',
+    'ip calculator',
+    'subnet calculator',
+    'ip calc',
+    'subnet calc',
+    'ipv4',
     'vlsm',
     'supernet',
     'summarization',
@@ -335,6 +351,12 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'cidr merge',
   ],
   'ipv6-subnet': <String>[
+    'calculator',
+    'ip calculator',
+    'subnet calculator',
+    'ip calc',
+    'subnet calc',
+    'ipv6',
     'cidr',
     'prefix',
     'expand address',

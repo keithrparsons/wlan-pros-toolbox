@@ -339,7 +339,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   ToolCategory(
     id: 'networking',
     title: 'Networking Tools',
-    summary: 'Interface info, lookups, scans, subnetting',
+    summary: 'Interface info, lookups, scans, discovery',
     icon: Icons.lan_outlined,
     // Mockup 01 showed "Wi-Fi Information" here, but that tool lives in Test
     // Network — examples must name tools that are actually in this category
@@ -552,19 +552,51 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/ntp-time',
         isLive: true,
       ),
+    ],
+  ),
+
+  // ─────────────────────── 3. Calculators & Tools ───────────────────
+  // id stays 'rf-calculators' (stable — backs routes, assets, tests). Title
+  // broadened from 'Calculators'. Original RF/GPS/signal calculators plus ALL
+  // former Planning Tools (PoE Budget, Throughput, Capacity, PtP) appended.
+  ToolCategory(
+    id: 'rf-calculators',
+    title: 'Calculators & Tools',
+    summary: 'RF, IP, GPS, signal, and planning math: subnets, FSPL, EIRP, PoE',
+    icon: Icons.calculate_outlined,
+    exampleToolTitles: <String>[
+      'IP Subnet Calculator (IPv4)',
+      'Free Space Path Loss',
+      'EIRP Calculator',
+      'dBm / Watt Converter',
+    ],
+    tools: <ToolEntry>[
+      // IP & Addressing (2026-08-25) — MOVED here from Networking Tools on
+      // Keith's ruling after he went looking for a subnet calculator, checked
+      // Calculators, checked Quick Reference, and concluded the app had only
+      // reference tables. It did not: these three shipped and were simply
+      // filed somewhere a person looking for a calculator would never look.
+      //
+      // These are pure math with no I/O — the same shape as every other tool in
+      // this category — so this is where they belong. ids and routeNames are
+      // UNCHANGED (they back routes, tests, help entries and the keyword index);
+      // only category membership and subgroup moved. Networking Tools keeps the
+      // tools that actually touch the network.
       ToolEntry(
         id: 'ipv4-subnet',
-        title: 'IP Subnetting (IPv4)',
+        title: 'IP Subnet Calculator (IPv4)',
         description: 'Network, broadcast, host range, mask ⇄ prefix, CIDR math',
         routeName: '/tools/ipv4-subnet',
         isLive: true,
+        subgroup: 'IP & Addressing',
       ),
       ToolEntry(
         id: 'ipv6-subnet',
-        title: 'IP Subnetting (IPv6)',
+        title: 'IP Subnet Calculator (IPv6)',
         description: 'IPv6 prefix, expansion, and address counts',
         routeName: '/tools/ipv6-subnet',
         isLive: true,
+        subgroup: 'IP & Addressing',
       ),
       // Subnet Planner (2026-08-02): the IPv4 block math that spans MORE THAN
       // ONE network. Two modes behind one tile — carve a parent block into
@@ -580,26 +612,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'a supernet',
         routeName: '/tools/subnet-planner',
         isLive: true,
+        subgroup: 'IP & Addressing',
       ),
-    ],
-  ),
-
-  // ─────────────────────── 3. Calculators & Tools ───────────────────
-  // id stays 'rf-calculators' (stable — backs routes, assets, tests). Title
-  // broadened from 'Calculators'. Original RF/GPS/signal calculators plus ALL
-  // former Planning Tools (PoE Budget, Throughput, Capacity, PtP) appended.
-  ToolCategory(
-    id: 'rf-calculators',
-    title: 'Calculators & Tools',
-    summary: 'RF, GPS, signal, and planning math: FSPL, EIRP, PoE, capacity',
-    icon: Icons.calculate_outlined,
-    exampleToolTitles: <String>[
-      'Free Space Path Loss',
-      'EIRP Calculator',
-      'Link Budget',
-      'dBm / Watt Converter',
-    ],
-    tools: <ToolEntry>[
       ToolEntry(
         id: 'dbm-watt-converter',
         title: 'dBm / Watt Converter',
