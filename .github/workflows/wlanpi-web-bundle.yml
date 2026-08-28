@@ -6,12 +6,18 @@
 # ship sharing one Starlink with 2,700 people, uploading it was not realistic.
 # GitHub does the build instead, and hosts the result.
 #
-# IT MUST BE THIS BRANCH'S BUNDLE, NOT THE WEBSITE'S. The build on
-# toolbox.wlanpros.com is `main`, which contains NO Pi integration at all - no
-# /toolboxapi/ client, no Pi Wi-Fi source. Deployed to a Pi it loads, finds no
-# backend, and hides every networking tool while telling the user to download
-# the native app. That is precisely the wrong artifact for a Pi tester, so this
-# workflow only ever builds the WLAN Pi branches.
+# IT MUST BE A BUNDLE THAT CARRIES THE PI INTEGRATION. Before 2026-08-27 the
+# Pi work lived on its own branch and `main` had no /toolboxapi/ client and no
+# Pi Wi-Fi source at all; deployed to a Pi, a main-built bundle loaded, found no
+# backend, and hid every networking tool. That is why this workflow originally
+# watched only the Pi branches. The Pi work merged to `main` on 2026-08-27, so
+# main is now the branch that carries it.
+#
+# SINGLE BRANCH, RULED BY KEITH 2026-08-28: "a single main is better than
+# branches". The two `wlanpi-hosting*` entries are removed. If a Pi branch is
+# ever cut again, use workflow_dispatch rather than re-adding a trigger -- two
+# branches building the same artifact is how the tester's download stopped
+# tracking the code the first time.
 #
 # --base-href / IS LOAD-BEARING. The shipped web bundle uses `/app/`; the Pi
 # serves at the server root. Building with the wrong base-href gives a page of
@@ -21,12 +27,10 @@ name: WLAN Pi web bundle
 
 on:
   push:
-    # `main` was added 2026-08-27, the day the Pi work merged. Until then this
-    # workflow only knew the feature branches, so the moment the work landed on
-    # main a push to main built NO bundle and the tester's download silently
-    # stopped tracking the code. Ferney is downloading from the release this
-    # produces, so the trigger has to follow the branch the work lives on.
-    branches: ['main', 'wlanpi-hosting', 'wlanpi-hosting-catchup']
+    # `main` only. Ferney downloads from the release this produces, so the
+    # trigger has to follow the branch the work actually lives on, and since
+    # 2026-08-27 that is main.
+    branches: ['main']
   workflow_dispatch:        # so a bundle can be cut on demand without a commit
 
 permissions:
