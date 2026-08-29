@@ -2134,7 +2134,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // teigenRF tools, Joel Crane's Hamina clipboard tools), 42 -> 45.
     // 61 = 45 -> 46. Robin Decloedt offered his Hamina Attenuation Object
     // Editor unprompted when he approved the library listing, same day.
-    countLabelOverride: '61',
+    // 62 = 46 -> 47. Jonathan Finney's SSID Airtime Calculator, listing granted
+    // by him on 2026-08-21 and merged 2026-08-29 on Keith's go.
+    countLabelOverride: '62',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

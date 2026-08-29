@@ -199,7 +199,7 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 46 curated entries into the 7 topic groups', () {
+    test('parses the 47 curated entries into the 7 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
@@ -233,7 +233,10 @@ void main() {
       // tools, and Joel Crane's Hamina Clipboard Tools. Decloedt then offered
       // his Hamina Attenuation Object Editor unprompted in the reply approving
       // the library, taking it to 46. All four sit in an existing topic, so the
-      // group count is unchanged.
+      // group count is unchanged. 2026-08-29: added Jonathan Finney's SSID
+      // Airtime Calculator under the existing "Tools and utilities" topic
+      // (46 -> 47), approved by him 2026-08-21; still within the existing 7
+      // topics, so the group count is unchanged.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -241,7 +244,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 46);
+      expect(real.count, 47);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 7);
@@ -265,15 +268,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 46.
+      // Every entry lands in exactly one group; counts sum to 47.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 46);
+      expect(sum, 47);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 46);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 47);
     });
 
     // 2026-08-09, part one: outreach was complete for everything shipped
@@ -325,12 +328,14 @@ void main() {
             'staged. Found: ${pending.join(", ")}',
       );
 
+      // 32 = 31 + Jonathan Finney's SSID Airtime Calculator, whose owner
+      // agreed to the listing on 2026-08-21.
       expect(
         real.all
             .where((EducationalResource e) =>
                 e.approval == ResourceApproval.approved)
             .length,
-        31,
+        32,
       );
       expect(
         real.all
