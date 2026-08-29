@@ -217,9 +217,11 @@ void main() {
     });
 
     test('payload received before, not monitoring -> idleWithData', () async {
+      final DateTime storedAt = DateTime(2026, 8, 29, 14, 2);
       final bridge = _FakeBridge()
         ..everReceived = true
         ..latest = _details()
+        ..payloadAt = storedAt
         ..monitoringFlag = false;
       final c = WifiMonitorController(bridge: bridge);
 
@@ -228,7 +230,62 @@ void main() {
       expect(c.phase, WifiMonitorPhase.idleWithData);
       expect(c.details, isNotNull);
       expect(c.details!.ssid, 'Keith');
-      expect(c.lastUpdated, isNotNull);
+      expect(c.lastUpdated, storedAt);
+      c.dispose();
+      await bridge.close();
+    });
+
+    // ======================================================================
+    // A RESTORED PAYLOAD CARRIES ITS OWN AGE. (2026-08-29, Keith device.)
+    //
+    // Keith joined a ship network after powering his travel router OFF, and the
+    // Roaming tool kept naming the router. The stored payload was genuinely old;
+    // the bug was that `load()` stamped it `DateTime.now()`, so the reading did
+    // not merely fail to look stale, it claimed to be current.
+    // ======================================================================
+    test('a payload restored from the App Group is dated when it was STORED, '
+        'never now', () async {
+      final DateTime storedAt =
+          DateTime.now().subtract(const Duration(hours: 6));
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details(ssid: 'MUDI-Travel')
+        ..payloadAt = storedAt
+        ..monitoringFlag = false;
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.details!.ssid, 'MUDI-Travel');
+      expect(c.lastUpdated, storedAt,
+          reason: 'the App Group store-time is the only honest age for a '
+              'payload nobody delivered this session');
+      expect(
+        DateTime.now().difference(c.lastUpdated!).inMinutes,
+        greaterThan(60),
+        reason: 'a six-hour-old reading must READ as six hours old, so the '
+            'screen can say so instead of vouching for it',
+      );
+      c.dispose();
+      await bridge.close();
+    });
+
+    test('no store-time available -> lastUpdated stays null, never fabricated',
+        () async {
+      // The real bridge returns null off-iOS and whenever the method channel
+      // cannot answer. Null means "we do not know when this was read", and the
+      // honest render of that is an absent stamp — not the current time.
+      final bridge = _FakeBridge()
+        ..everReceived = true
+        ..latest = _details()
+        ..payloadAt = null
+        ..monitoringFlag = false;
+      final c = WifiMonitorController(bridge: bridge);
+
+      await c.load();
+
+      expect(c.details, isNotNull);
+      expect(c.lastUpdated, isNull);
       c.dispose();
       await bridge.close();
     });

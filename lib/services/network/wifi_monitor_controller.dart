@@ -287,7 +287,24 @@ class WifiMonitorController extends ChangeNotifier {
     _hasEverReceived = received || (latest != null && latest.hasAnyData);
     if (latest != null && latest.hasAnyData) {
       _details = latest;
-      _lastUpdated ??= DateTime.now();
+      // ======================================================================
+      // A RESTORED PAYLOAD IS DATED BY WHEN IT WAS STORED, NEVER BY NOW.
+      // (2026-08-29, Keith device — the ship/MUDI stale-SSID report.)
+      //
+      // This line was `_lastUpdated ??= DateTime.now()`. [readLatest] returns
+      // the payload the App Group has been holding since the last Shortcut run,
+      // which may be hours or days old — Keith's read the SSID of a travel
+      // router that was powered OFF. Stamping it `now` did not merely fail to
+      // flag that: it ASSERTED the reading was current, so the one affordance
+      // that could have exposed a stale value vouched for it instead.
+      //
+      // [payloadReceivedAt] is the instant the native receiver STORED it, and it
+      // has existed since 2026-07-14 for exactly this class of question. When the
+      // platform cannot answer, the honest result is null — "we do not know when
+      // this was read" — never a fabricated timestamp. `??=` is preserved so a
+      // live delivery already recorded this session is never aged backwards.
+      // ======================================================================
+      _lastUpdated ??= await _bridge.payloadReceivedAt();
     }
     // Honest connection flag: true ONLY on a positive not-on-Wi-Fi signal; an
     // `unknown` (ambiguous / wired desktop / read failed) leaves it false so the
