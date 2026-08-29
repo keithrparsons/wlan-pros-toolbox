@@ -13,6 +13,35 @@ def asc_api_key
 end
 
 APP_ID = "com.wlanpros.wlanProsToolbox".freeze
+
+# The marketing version, read from pubspec.yaml so it can never be stale.
+#
+# ADDED 2026-08-29. Both App Store lanes used to carry a hardcoded fallback:
+# `ENV["APPSTORE_VERSION"] || "1.5.5"` in appstore_release and `|| "1.8.3"` in
+# the metadata lane. APPSTORE_VERSION is set in ZERO files in this repo
+# (`grep -rn APPSTORE_VERSION` finds it only inside this Fastfile), so running
+# either lane bare targeted a version that was two years old in one case and
+# five releases old in the other. Nothing warned; it would simply have written
+# metadata onto the wrong App Store version.
+#
+# pubspec.yaml is the one place the version is already maintained, because the
+# build reads it. Deriving from it means the default cannot drift from what was
+# actually built. APPSTORE_VERSION still wins if set, so a deliberate override
+# (re-submitting metadata for an older release) is unchanged.
+def app_version
+  override = ENV["APPSTORE_VERSION"]
+  return override unless override.nil? || override.empty?
+
+  pubspec = File.expand_path("../../pubspec.yaml", __dir__)
+  line = File.readlines(pubspec).find { |l| l.start_with?("version:") }
+  UI.user_error!("no `version:` line in #{pubspec}") if line.nil?
+
+  # "version: 1.8.8+26082701" -> "1.8.8"
+  version = line.split(":", 2).last.strip.split("+").first
+  UI.user_error!("unparseable version in pubspec.yaml: #{line.inspect}") if version.to_s.empty?
+  version
+end
+
 APP_NAME = "WLAN Pros Toolbox".freeze
 TEAM_ID = "MNMCTY7YZT".freeze
 INTERNAL_GROUP = "Field Testers".freeze
@@ -216,7 +245,7 @@ platform :ios do
 
   desc "Submit a PUBLIC App Store UPDATE: set 'What's New', attach the latest uploaded " \
        "build, reuse the existing listing + screenshots, submit for review, auto-release " \
-       "on approval. Version via APPSTORE_VERSION (default 1.5.5)."
+       "on approval. Version from pubspec.yaml; APPSTORE_VERSION overrides."
   # The binary is already uploaded (ship_ios.sh -> App Store Connect), and the
   # listing metadata + screenshots were loaded for 1.5.4 and are reused as-is.
   # The metadata/ dir here contains ONLY en-US/release_notes.txt, so deliver
@@ -228,7 +257,7 @@ platform :ios do
     upload_to_app_store(
       api_key: api_key,
       app_identifier: APP_ID,
-      app_version: ENV["APPSTORE_VERSION"] || "1.5.5",
+      app_version: app_version,
       skip_binary_upload: true,
       skip_screenshots: true,
       skip_metadata: false,
@@ -268,7 +297,7 @@ platform :ios do
     upload_to_app_store(
       api_key: api_key,
       app_identifier: APP_ID,
-      app_version: ENV["APPSTORE_VERSION"] || "1.8.3",
+      app_version: app_version,
       skip_binary_upload: true,
       skip_screenshots: true,
       skip_metadata: false,
