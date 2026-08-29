@@ -834,6 +834,24 @@
       ],
       "approval": "pending_outreach",
       "notes": "Added 2026-08-09. Joel Crane approved the sibling listing 'potatofi-spectrum' on 2026-06-05, but that approval covered the spectrum chart and not this tool, so this row starts at 'pending_outreach' rather than inheriting it: Keith emailed him 2026-08-09 and had no reply when this was written. Flip to 'approved' on reply. NO license statement appears on the clipboard tool page. It is a different subdomain from the spectrum chart and does not carry the spectrum chart's note about linking rather than rehosting, so this description states no terms at all. The page also carries no author byline; attribution comes from the shared potatofi.com domain and the existing approved listing, not from the page. Feature list verified against the live page 2026-08-09."
+    },
+    {
+      "id": "finney-ssid-airtime",
+      "title": "SSID Airtime Calculator",
+      "summary": "Compute what your SSIDs actually cost the channel instead of inheriting the old three-or-four rule.",
+      "description": "The three-or-four SSID rule was correct when it was written, and the conditions that made it correct are gone. Jonathan Finney's calculator lets you compute the number for your own network instead of inheriting someone else's. It shows what an SSID costs on a single access point alongside what it costs on the channel, which matters more than it sounds, because most arguments about SSID overhead turn out to be two people quoting different denominators. Every constant is editable, including beacon size, basic rate, co-channel count and beacon interval, so if you think the model is wrong you can point at the input rather than the conclusion. It is also deliberately explicit about where SSIDs still cost you, because airtime was never the only reason to keep the count down.",
+      "url": "https://fintheman.github.io/wifi-tools/ssid-airtime-calculator.html",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "design",
+        "planning",
+        "independent",
+        "vendor-neutral"
+      ],
+      "approval": "granted"
     }
   ]
 }
