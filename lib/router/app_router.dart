@@ -44,6 +44,7 @@ import '../screens/tools/calculators/downtilt_coverage_screen.dart';
 import '../screens/tools/calculators/capacity_planner_screen.dart';
 import '../screens/tools/calculators/ptp_link_screen.dart';
 import '../screens/tools/calculators/ipv6_subnet_screen.dart';
+import '../screens/tools/calculators/ssid_airtime_screen.dart';
 import '../screens/tools/calculators/throughput_calc_screen.dart';
 import '../screens/tools/calculators/transfer_time_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
@@ -261,6 +262,7 @@ class AppRouter {
   static const String capacityPlanner = '/tools/capacity-planner';
   static const String ptpLink = '/tools/ptp-link';
   static const String ipv6Subnet = '/tools/ipv6-subnet';
+  static const String ssidAirtime = '/tools/ssid-airtime';
   static const String throughputCalc = '/tools/throughput-calc';
   static const String rfAttenuation = '/tools/rf-attenuation';
   static const String noiseFloor = '/tools/noise-floor';
@@ -660,6 +662,7 @@ class AppRouter {
     capacityPlanner: (_) => const CapacityPlannerScreen(),
     ptpLink: (_) => const PtpLinkScreen(),
     ipv6Subnet: (_) => const Ipv6SubnetScreen(),
+    ssidAirtime: (_) => const SsidAirtimeScreen(),
     throughputCalc: (_) => const ThroughputCalcScreen(),
     rfAttenuation: (_) => const RfAttenuationScreen(),
     noiseFloor: (_) => const NoiseFloorScreen(),

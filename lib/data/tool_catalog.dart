@@ -889,6 +889,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Capacity & Power',
       ),
       ToolEntry(
+        id: 'ssid-airtime',
+        title: 'SSID Airtime',
+        description: 'What each extra SSID costs the channel',
+        routeName: '/tools/ssid-airtime',
+        isLive: true,
+        subgroup: 'Capacity & Power',
+      ),
+      ToolEntry(
         id: 'capacity-planner',
         title: 'Capacity Planner',
         description: 'Why capacity planning needs a pro, not a calculator',
