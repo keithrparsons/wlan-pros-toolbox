@@ -44,6 +44,11 @@ class LinkTableResult {
 typedef ProcessRunner = Future<String?> Function(String exe, List<String> args);
 
 Future<String?> _runProcess(String exe, List<String> args) async {
+  // Same guard as DefaultRouteProbe: a real process launch inside a widget
+  // test's FakeAsync leaves a timer the test cannot drain, and this now runs
+  // on the Wi-Fi Information load path. Parsing coverage is unaffected, since
+  // macos_link_table_test.dart feeds the parser Keith's real captures directly.
+  if (Platform.environment.containsKey('FLUTTER_TEST')) return null;
   try {
     final r = await Process.run(exe, args);
     return r.exitCode == 0 ? r.stdout as String : null;

@@ -80,6 +80,9 @@ import '../../../services/network/live_onboarding_service.dart';
 import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
+import '../../../services/network/link_table_service.dart';
+import '../../../services/network/transport_chooser.dart' show selectDefaultLink;
+import '../../../services/network/wifi_absence.dart';
 import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/wifi_details.dart';
 import '../../../services/network/wifi_details_bridge.dart';
@@ -292,10 +295,44 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   // ignore: unused_field
   bool _firstRunChecked = false;
 
+  /// WHY THIS SCREEN NOW READS THE LINK TABLE (Keith, approved 2026-08-31).
+  ///
+  /// `WifiConnectionStatus.notOnWifi` is only reachable on iOS and Android.
+  /// Everywhere else an absent Wi-Fi address resolves to `unknown`, and
+  /// `unknown` correctly keeps the normal flow. So a Mac on Ethernet with the
+  /// radio idle fell through to "Start Live Monitoring" for RF that does not
+  /// exist. That is the same silent dead-end Keith had fixed in June for
+  /// cellular, still standing on the wired path.
+  ///
+  /// The link table's PER-INTERFACE CARRIER makes "the radio is present and
+  /// joined to nothing" a MEASUREMENT rather than an inference, which licenses
+  /// the claim the old code was right to refuse. Stays [WifiAbsence.unknown]
+  /// on any platform that cannot answer, and unknown never renders a message.
+  WifiAbsence _absence = WifiAbsence.unknown;
+  String? _wiredInterfaceName;
+
+  /// Fire-and-forget. Never blocks the screen, and a failure leaves
+  /// [_absence] at unknown, which renders nothing.
+  Future<void> _resolveAbsence() async {
+    try {
+      final LinkTableResult r = await LinkTableService().read();
+      if (!mounted || !r.hasTable) return;
+      final WifiAbsence a = classifyWifiAbsence(r.table);
+      if (a == _absence) return;
+      setState(() {
+        _absence = a;
+        _wiredInterfaceName = selectDefaultLink(r.table!.links)?.name;
+      });
+    } on Object {
+      // Cannot tell. Say nothing.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _source = widget.sourceOverride ?? WifiInfoSourceResolver.resolve();
+    _resolveAbsence();
     _apCache = widget.connectedApCache ?? ConnectedApCache.instance;
     _loadOuiTable();
 
@@ -1441,6 +1478,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           // the connection probe + install-state resolve so the screen advances
           // out of the not-on-Wi-Fi state the moment Wi-Fi is back.
           onRetryConnection: _retryConnection,
+          absence: _absence,
+          wiredInterfaceName: _wiredInterfaceName,
           // Fold the native security token + BSSID onto each live reading so the
           // Security / AP-vendor rows render from the same enriched model the
           // rest of the cards use.
@@ -2814,6 +2853,8 @@ class _LiveBody extends StatelessWidget {
     required this.onStop,
     required this.onSetUp,
     required this.onRetryConnection,
+    this.absence = WifiAbsence.unknown,
+    this.wiredInterfaceName,
     required this.enrich,
     required this.metricCardsBuilder,
     required this.nativeIdentity,
@@ -2838,6 +2879,14 @@ class _LiveBody extends StatelessWidget {
   /// not-on-Wi-Fi card's "Check again" action so a user who has just joined Wi-Fi
   /// can re-check without leaving the screen.
   final VoidCallback onRetryConnection;
+
+  /// Why this Wi-Fi surface has nothing to show, where the platform can say.
+  /// [WifiAbsence.unknown] renders nothing and keeps every prior behaviour.
+  final WifiAbsence absence;
+
+  /// The interface actually carrying traffic, named in the wired message so the
+  /// user can check it against what they plugged in.
+  final String? wiredInterfaceName;
 
   /// Folds the native iOS security token + BSSID onto a Shortcut-derived reading
   /// so the Security / AP-vendor rows render from the same model as every other
@@ -2904,6 +2953,30 @@ class _LiveBody extends StatelessWidget {
                   edge + AppSpacing.sm,
                 ),
                 child: NotOnWifiCard(onRetry: onRetryConnection),
+              );
+            }
+
+            // THE WIRED PATH (Keith, approved 2026-08-31). Reached only when the
+            // phase above did NOT fire, so iOS and Android behaviour is
+            // byte-for-byte unchanged: their positive signal still wins. This
+            // covers the desktop case that signal cannot reach.
+            final ({String title, String message})? absent = wifiAbsenceCopy(
+              absence,
+              wiredInterfaceName: wiredInterfaceName,
+            );
+            if (absent != null && series.isEmpty && !controller.isStreaming) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  edge,
+                  AppSpacing.sm,
+                  edge,
+                  edge + AppSpacing.sm,
+                ),
+                child: NotOnWifiCard(
+                  onRetry: onRetryConnection,
+                  title: absent.title,
+                  message: absent.message,
+                ),
               );
             }
 

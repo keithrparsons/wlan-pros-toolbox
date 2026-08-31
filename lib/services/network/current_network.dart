@@ -32,6 +32,8 @@
 // (its now-public statics), so there is one implementation of the number
 // crunching, not two that can drift.
 
+import 'dart:io' show InternetAddress, InternetAddressType, NetworkInterface;
+
 import 'package:network_info_plus/network_info_plus.dart';
 
 import 'default_route_probe.dart';
@@ -43,12 +45,45 @@ import 'pi_backend_client.dart';
 /// names mirror the spec's record shape `({cidr, gatewayIp, deviceIp,
 /// maskWasReal})`; a class is used over the raw record for readability and
 /// testable value-equality.
+/// WHERE the addressing came from, because on a multi-homed desktop the two
+/// sources can disagree and one of them is right.
+///
+/// THIS EXISTS BECAUSE THE FIX FOR THE `en0` DEFECT CANNOT REACH EVERY BUILD.
+/// `DefaultRouteProbe` reads the routing table by running `route` and
+/// `ifconfig`. The macOS App Store build ships sandboxed and DENIES that; the
+/// Developer ID direct-download build does not (traceroute_service.dart:171,
+/// network_details_service.dart:10). When the probe is refused we fall back to
+/// `network_info_plus`, which matches on the interface NAME `en0`.
+///
+/// A SILENT FALLBACK IS THE WORSE FAILURE. The user would be shown the Wi-Fi
+/// subnet while plugged into a different one, with nothing on screen saying the
+/// better source had been refused. So the source travels with the answer, the
+/// same way [maskWasReal] already travels with the prefix.
+enum NetworkSource {
+  /// The operating system named the interface holding the default route. This
+  /// is the link carrying traffic, and it is not an inference.
+  routingTable,
+
+  /// The Wi-Fi interface's own address, from `network_info_plus`.
+  ///
+  /// CORRECT ON A PHONE AND SUSPECT ON A DESKTOP, which is the whole point. An
+  /// iPhone has no wired NIC to confuse the read, so this IS the right answer
+  /// there. A Mac with an Ethernet adapter can be on a completely different
+  /// network from the one this reports.
+  wifiInterface,
+
+  /// Nothing was readable.
+  none,
+}
+
 class NetworkSuggestion {
   const NetworkSuggestion({
     required this.cidr,
     required this.gatewayIp,
     required this.deviceIp,
     required this.maskWasReal,
+    this.source = NetworkSource.none,
+    this.multiHomed = false,
   });
 
   /// The suggested subnet in CIDR notation (e.g. `172.19.0.0/24`), or null when
@@ -69,8 +104,34 @@ class NetworkSuggestion {
   /// UI must show the "assumed /24" hint iff `cidr != null && !maskWasReal`.
   final bool maskWasReal;
 
+  /// Where the addressing came from.
+  final NetworkSource source;
+
+  /// True when this device has more than one link that could be carrying
+  /// traffic, so naming the wrong one is a live possibility rather than a
+  /// theoretical one.
+  final bool multiHomed;
+
   /// True when a subnet CIDR was derived at all (BEST or PARTIAL).
   bool get hasCidr => cidr != null;
+
+  /// The honesty gate for the second visible hint, and it mirrors
+  /// [isAssumedPrefix] exactly: show it iff we fell back to the Wi-Fi
+  /// interface ON A DEVICE THAT HAS ANOTHER LINK.
+  ///
+  /// NOT shown on a phone, where the Wi-Fi interface is genuinely the answer,
+  /// and NOT shown on a single-homed desktop, where both sources agree. Warning
+  /// in either of those cases would be noise, and noise is how a real warning
+  /// stops being read.
+  bool get linkMayBeWrong =>
+      source == NetworkSource.wifiInterface && multiHomed && cidr != null;
+
+  /// What the UI says when [linkMayBeWrong]. Never empty.
+  String get linkWarning =>
+      'This is the Wi-Fi interface\'s network. This build could not ask the '
+      'system which link is actually carrying your traffic, and this device '
+      'has more than one. If you are on a cable, check the address before you '
+      'trust it.';
 
   /// The honesty gate for the visible hint: a derived-but-assumed /24.
   bool get isAssumedPrefix => cidr != null && !maskWasReal;
@@ -81,6 +142,7 @@ class NetworkSuggestion {
     gatewayIp: null,
     deviceIp: null,
     maskWasReal: false,
+    source: NetworkSource.none,
   );
 
   @override
@@ -138,6 +200,7 @@ class CurrentNetwork {
     try {
       final DefaultRoute? route = await DefaultRouteProbe().readV4();
       if (route != null && route.address != null) {
+        _lastSource = NetworkSource.routingTable;
         return (
           ip: route.address,
           // Null rather than a guessed /24: a wrong prefix silently changes the
@@ -151,6 +214,7 @@ class CurrentNetwork {
       // A platform we cannot shell, or a sandbox that refused. Fall through.
     }
 
+    _lastSource = NetworkSource.wifiInterface;
     final NetworkInfo info = NetworkInfo();
     String? ip;
     String? mask;
@@ -240,7 +304,57 @@ class CurrentNetwork {
   /// Reads the network and derives the suggestion.
   Future<NetworkSuggestion> suggest() async {
     final ({String? ip, String? mask, String? gateway}) net = await _reader();
-    return suggestFrom(ip: net.ip, mask: net.mask, gateway: net.gateway);
+    final NetworkSuggestion base =
+        suggestFrom(ip: net.ip, mask: net.mask, gateway: net.gateway);
+
+    // STAMP WHERE IT CAME FROM. `_lastSource` is set by `_defaultReader`; an
+    // injected reader (every test, and the Pi path) leaves it null and the
+    // suggestion carries `NetworkSource.none`, claiming nothing either way.
+    final NetworkSource src = _lastSource ?? NetworkSource.none;
+    return NetworkSuggestion(
+      cidr: base.cidr,
+      gatewayIp: base.gatewayIp,
+      deviceIp: base.deviceIp,
+      maskWasReal: base.maskWasReal,
+      source: src,
+      multiHomed: src == NetworkSource.wifiInterface
+          ? await _looksMultiHomed()
+          : false,
+    );
+  }
+
+  /// Set by [_defaultReader] only. Static because the reader is static; the
+  /// value is read immediately after the await in [suggest], on the same
+  /// microtask chain.
+  static NetworkSource? _lastSource;
+
+  /// Does this device have more than one link that could be carrying traffic?
+  ///
+  /// PURE dart:io, so it works inside the App Sandbox where the shell-out does
+  /// not. It cannot tell us WHICH link is carrying traffic, which is the thing
+  /// we actually wanted, but it can tell us whether getting it wrong is
+  /// possible here. That is exactly enough to decide whether to warn.
+  ///
+  /// Counts interfaces holding a non-link-local IPv4, excluding loopback. Two
+  /// or more means the Wi-Fi address might not be the one in use.
+  static Future<bool> _looksMultiHomed() async {
+    try {
+      final List<NetworkInterface> ifs = await NetworkInterface.list(
+        includeLoopback: false,
+        includeLinkLocal: false,
+        type: InternetAddressType.IPv4,
+      );
+      int usable = 0;
+      for (final NetworkInterface ni in ifs) {
+        final bool hasGlobal = ni.addresses.any((InternetAddress a) =>
+            !a.address.startsWith('169.254.') && a.address != '0.0.0.0');
+        if (hasGlobal) usable++;
+      }
+      return usable > 1;
+    } on Object {
+      // Cannot tell. Do not warn on a guess.
+      return false;
+    }
   }
 
   /// PURE: derive the suggestion from an ip + mask + gateway. No plugins, so
