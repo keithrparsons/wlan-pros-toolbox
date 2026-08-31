@@ -203,6 +203,8 @@ const Set<String> kWebUnavailableToolIds = <String>{
   // Shells out to ifconfig / networksetup / route on macOS, or asks the Pi for
   // its own link table. A browser can do neither and says so on the screen.
   'link-info',
+  // Pi-only: it POSTs to /toolboxapi/wifi-connect, which exists only on a Pi.
+  'join-network',
   'device-info', // device system facts via platform bridge
   'dns-lookup', // DNS-over-HTTPS via dart:io HttpClient (no web path)
   'port-scan', // raw TCP connect scan
@@ -359,6 +361,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Interface Information',
         description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
         routeName: '/tools/interface-info',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'join-network',
+        title: 'Join a Network',
+        description: 'Pick an SSID and associate this WLAN Pi\'s own radio to '
+            'it, then see exactly which AP it landed on',
+        routeName: '/tools/join-network',
         isLive: true,
       ),
       ToolEntry(

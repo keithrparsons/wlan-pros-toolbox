@@ -146,6 +146,7 @@ import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/device_info_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
 import '../screens/tools/network/link_info_screen.dart';
+import '../screens/tools/network/join_network_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/my_current_location_screen.dart';
@@ -379,6 +380,11 @@ class AppRouter {
   /// speed, duplex, and which one holds the default route. The id `link-info`
   /// is permanent (backs this route, the catalog entry, and tests).
   static const String linkInfo = '/tools/link-info';
+
+  /// Join a Network - pick an SSID and associate the Pi's own radio to it.
+  /// Pi-only: it POSTs to /toolboxapi/wifi-connect. The id `join-network` is
+  /// permanent (backs this route, the catalog entry, and tests).
+  static const String joinNetwork = '/tools/join-network';
 
   /// Device Info — the device's own system facts (model, total memory, uptime,
   /// cellular IP). Batch 6. The id `device-info` is permanent (backs this route,
@@ -743,6 +749,7 @@ class AppRouter {
     markdownCheatsheet: (_) => const MarkdownCheatsheetScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
     linkInfo: (_) => const LinkInfoScreen(),
+    joinNetwork: (_) => const JoinNetworkScreen(),
     deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
