@@ -31,6 +31,7 @@ class PiBackend {
     'net-quality', // -> /toolboxapi/conntest
     'nearby-ap-scan', // -> /toolboxapi/scan
     'interface-info', // -> /toolboxapi/interfaces
+    'link-info', // -> /toolboxapi/links (Phase E: the wired link table)
     'ping', // -> /toolboxapi/ping
     'traceroute', // -> /toolboxapi/traceroute
     // NAMING MISMATCH (deliberate): the CATALOG tool id is `dns-lookup`, so the

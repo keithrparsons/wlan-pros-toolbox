@@ -200,6 +200,9 @@ const Set<String> kWebUnavailableToolIds = <String>{
   'bss-load', // beacon information elements via the macOS platform channel
   // Networking Tools — socket / lookup / scan / native utilities.
   'interface-info', // reads the device interface table
+  // Shells out to ifconfig / networksetup / route on macOS, or asks the Pi for
+  // its own link table. A browser can do neither and says so on the screen.
+  'link-info',
   'device-info', // device system facts via platform bridge
   'dns-lookup', // DNS-over-HTTPS via dart:io HttpClient (no web path)
   'port-scan', // raw TCP connect scan
@@ -356,6 +359,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Interface Information',
         description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
         routeName: '/tools/interface-info',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'link-info',
+        title: 'Link Info',
+        description: 'Every interface by what it IS: carrier, negotiated speed, '
+            'duplex, and which one is carrying your traffic',
+        routeName: '/tools/link-info',
         isLive: true,
       ),
       ToolEntry(

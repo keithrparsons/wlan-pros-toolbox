@@ -145,6 +145,7 @@ import '../screens/tools/network/dns_lookup_screen.dart';
 import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/device_info_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
+import '../screens/tools/network/link_info_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/my_current_location_screen.dart';
@@ -373,6 +374,11 @@ class AppRouter {
   // download-the-app fallback inside each screen, so the routes are always
   // registered and never crash on web).
   static const String interfaceInfo = '/tools/interface-info';
+
+  /// Link Info - every interface described by what it IS: carrier, negotiated
+  /// speed, duplex, and which one holds the default route. The id `link-info`
+  /// is permanent (backs this route, the catalog entry, and tests).
+  static const String linkInfo = '/tools/link-info';
 
   /// Device Info — the device's own system facts (model, total memory, uptime,
   /// cellular IP). Batch 6. The id `device-info` is permanent (backs this route,
@@ -736,6 +742,7 @@ class AppRouter {
     regexCheatsheet: (_) => const RegexCheatsheetScreen(),
     markdownCheatsheet: (_) => const MarkdownCheatsheetScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
+    linkInfo: (_) => const LinkInfoScreen(),
     deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
