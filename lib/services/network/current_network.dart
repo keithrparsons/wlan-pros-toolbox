@@ -34,6 +34,8 @@
 
 import 'package:network_info_plus/network_info_plus.dart';
 
+import 'default_route_probe.dart';
+
 import 'lan_discovery/subnet_seed.dart';
 import 'pi_backend_client.dart';
 
@@ -110,18 +112,55 @@ class CurrentNetwork {
 
   final CurrentNetworkReader _reader;
 
+  /// ASK THE ROUTING TABLE FIRST. `network_info_plus` FALLS BACK, it does not
+  /// lead.
+  ///
+  /// THE DEFECT, measured 2026-08-31. On macOS that plugin answers "your local
+  /// IP" by looking for an interface literally NAMED `en0`
+  /// (NetworkInfoPlusPlugin.swift:143). On a MacBook `en0` is Wi-Fi. With both
+  /// links up on Keith's M5 the default route was `en5` at 192.168.8.233 while
+  /// the plugin returned `en0` at 192.168.8.134, so every screen that prefills
+  /// a target from here offered the WIRELESS network to a user on a cable. On
+  /// Network Discovery, which derives its entire scan range from this and gives
+  /// no field to correct, that means scanning a network you are not on and
+  /// reporting the result as if you were.
+  ///
+  /// Phase 0's rule is "select by carrier, never by name, index or flag", and
+  /// the default route is the only field that means "traffic goes here". So the
+  /// route is asked first, and the name-matching plugin is what we fall back to
+  /// where the route cannot be read at all (iOS, Android, web).
+  ///
+  /// THE FALLBACK IS STILL RIGHT WHERE IT APPLIES. On an iPhone there is no
+  /// wired NIC to confuse the read, which is exactly why the plugin's
+  /// assumption holds there and fails on a desktop.
   static Future<({String? ip, String? mask, String? gateway})>
       _defaultReader() async {
+    try {
+      final DefaultRoute? route = await DefaultRouteProbe().readV4();
+      if (route != null && route.address != null) {
+        return (
+          ip: route.address,
+          // Null rather than a guessed /24: a wrong prefix silently changes the
+          // size of a scan, and a sweep of the wrong range looks like a
+          // successful sweep that found nothing.
+          mask: route.netmask,
+          gateway: route.gateway,
+        );
+      }
+    } on Object {
+      // A platform we cannot shell, or a sandbox that refused. Fall through.
+    }
+
     final NetworkInfo info = NetworkInfo();
     String? ip;
     String? mask;
     String? gateway;
     try {
       ip = await info.getWifiIP();
-    } catch (_) {/* leave null — honest NONE, not a fabricated address */}
+    } catch (_) {/* leave null - honest NONE, not a fabricated address */}
     try {
       mask = await info.getWifiSubmask();
-    } catch (_) {/* leave null — mask often unreadable on wired/cell/web */}
+    } catch (_) {/* leave null - mask often unreadable on wired/cell/web */}
     try {
       gateway = await info.getWifiGatewayIP();
     } catch (_) {/* leave null */}

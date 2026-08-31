@@ -55,6 +55,14 @@ class DefaultRoute {
 typedef ShellRunner = Future<String?> Function(String exe, List<String> args);
 
 Future<String?> _runProcess(String exe, List<String> args) async {
+  // NEVER SPAWN A PROCESS UNDER `flutter test`. Widget tests run inside
+  // FakeAsync, where a real process launch leaves a pending timer the test
+  // cannot drain, and six screens call this on their load path. Two
+  // ping-plotter tests failed exactly this way when the probe was first wired
+  // in. This branch does NOT weaken the probe's own coverage: every parsing
+  // path is unit-tested through the injected [ShellRunner] seam against real
+  // captured OS output.
+  if (Platform.environment.containsKey('FLUTTER_TEST')) return null;
   try {
     final ProcessResult r = await Process.run(exe, args);
     if (r.exitCode != 0) return null;
@@ -62,6 +70,20 @@ Future<String?> _runProcess(String exe, List<String> args) async {
   } on Object {
     // A sandbox that refuses Process.run is a legitimate answer of "cannot
     // tell", not an error to surface. The caller falls back.
+    //
+    // AND THIS IS NOT HYPOTHETICAL ON macOS. The App Store build ships with the
+    // App Sandbox enabled, which DENIES launching system binaries; the
+    // Developer ID direct-download build does not and launches them fine. The
+    // codebase already established this and probes it live rather than
+    // hard-coding "macOS = unavailable" (see TracerouteService.isLaunchable,
+    // and the note at network_details_service.dart:10).
+    //
+    // SO ON THE APP STORE BUILD THIS PROBE RETURNS NULL AND THE CALLER FALLS
+    // BACK TO `network_info_plus`, WHICH MEANS THE en0 DEFECT PERSISTS THERE.
+    // The real fix is a sandbox-safe read of the routing table through the
+    // `sysctl(CTL_NET, AF_ROUTE, ...)` FFI seam that `lan_discovery/
+    // arp_reader.dart` already uses for the neighbour table. A syscall is not
+    // a subprocess and the sandbox permits it.
     return null;
   }
 }
