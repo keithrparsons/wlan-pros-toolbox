@@ -14,8 +14,8 @@ import 'package:wlan_pros_toolbox/services/network/pi_backend_client.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 /// A stand-in Pi. Only the four calls the screen makes are implemented.
-class _FakePi implements PiBackendClient {
-  _FakePi({this.joinResult, this.throwOnJoin});
+class FakePi implements PiBackendClient {
+  FakePi({this.joinResult, this.throwOnJoin});
 
   final PiJoinResult? joinResult;
   final Object? throwOnJoin;
@@ -140,7 +140,7 @@ Future<void> shot(WidgetTester tester, String slug) => expectLater(
 void main() {
   testWidgets('idle: action panel above the list, radio picker present',
       (WidgetTester tester) async {
-    await pump(tester, _FakePi());
+    await pump(tester, FakePi());
     // REQUIREMENT 1: the panel is above the list even before anything is
     // picked, so the user never learns it lives at the bottom.
     expect(find.text('Pick a network below'), findsOneWidget);
@@ -152,7 +152,7 @@ void main() {
 
   testWidgets('802.1X: no passphrase box, and it says why',
       (WidgetTester tester) async {
-    await pump(tester, _FakePi());
+    await pump(tester, FakePi());
     await tester.tap(find.text('CorpSecure').first);
     await tester.pumpAndSettle();
     // REQUIREMENT 2, and this is the copy Keith approved on 2026-08-31.
@@ -164,7 +164,7 @@ void main() {
 
   testWidgets('open network: no passphrase box, and it says why',
       (WidgetTester tester) async {
-    await pump(tester, _FakePi());
+    await pump(tester, FakePi());
     await tester.tap(find.text('Lobby Guest').first);
     await tester.pumpAndSettle();
     expect(find.textContaining('open, so there is no passphrase'),
@@ -173,7 +173,7 @@ void main() {
   });
 
   testWidgets('WPA3 network offers the box', (WidgetTester tester) async {
-    await pump(tester, _FakePi());
+    await pump(tester, FakePi());
     // The 5 GHz MUDI row is the SECOND one: quieter, and WPA3-SAE.
     await tester.tap(find.text('MUDI').last);
     await tester.pumpAndSettle();
@@ -185,7 +185,7 @@ void main() {
 
   testWidgets('connected: the verdict is the largest thing on the card',
       (WidgetTester tester) async {
-    await pump(tester, _FakePi(joinResult: connected()));
+    await pump(tester, FakePi(joinResult: connected()));
     await tester.tap(find.text('MUDI').last);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'a-real-passphrase');
@@ -207,7 +207,7 @@ void main() {
 
   testWidgets('a wrong passphrase is NOT reported as success',
       (WidgetTester tester) async {
-    await pump(tester, _FakePi(joinResult: wrongKey()));
+    await pump(tester, FakePi(joinResult: wrongKey()));
     await tester.tap(find.text('MUDI').last);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'wrong-one');
@@ -224,7 +224,7 @@ void main() {
 
   testWidgets('a hidden network cannot be joined from a list, and says so',
       (WidgetTester tester) async {
-    await pump(tester, _FakePi());
+    await pump(tester, FakePi());
     // The hidden BSS is the weakest, so it sorts last and a lazy ListView has
     // not built it yet. Scroll it in before tapping.
     await tester.scrollUntilVisible(find.text('Hidden network'), 120);
@@ -238,7 +238,7 @@ void main() {
       (WidgetTester tester) async {
     await pump(
       tester,
-      _FakePi(
+      FakePi(
           throwOnJoin: PiBackendException(
               'wifi-connect failed: psk must be 8-63 characters '
               '(or a 64-char hex PMK)')),
