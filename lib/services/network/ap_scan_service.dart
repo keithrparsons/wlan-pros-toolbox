@@ -16,7 +16,8 @@ import 'pi_backend_client.dart';
 // TCC grant is two things to keep in sync, and the native token vocabulary
 // ("authorized" / "denied" / "restricted" / "notDetermined") is already
 // resolved by LocationAuthStatus.fromToken.
-import 'wifi_info_service.dart' show LocationAuthStatus;
+import 'wifi_info_service.dart' show LocationAuthStatus, WifiInfoUnavailable;
+import 'windows_wifi_reader.dart' show WindowsWifiReader;
 
 /// What a scan row's BSSID field tells us about that row.
 ///
@@ -469,7 +470,9 @@ class ApScanService {
     bool? piBackedOverride,
     PiBackendClient? piClient,
     String piInterface = 'wlan0',
+    Future<List<Map<String, Object?>>> Function()? windowsScan,
   })  : _invoke = invoke ?? _defaultInvoke,
+        _windowsScan = windowsScan ?? _defaultWindowsScan,
         _invokeWifiInfo = invokeWifiInfo ?? invoke ?? _defaultWifiInfoInvoke,
         _platform = platformOverride ?? _hostOperatingSystem(),
         _piBacked = piBackedOverride ?? (kIsWeb && PiBackend.available) {
@@ -538,6 +541,18 @@ class ApScanService {
     'macos',
     'windows',
   };
+
+  /// WINDOWS DOES NOT HAVE A METHOD CHANNEL, and that is the whole reason this
+  /// field exists. Android and macOS answer `com.wlanpros.toolbox/ap_scan` from
+  /// native code; Windows answers nothing, because its enumeration is pure Dart
+  /// over dart:ffi. Routing Windows through [_invoke] therefore does not fail
+  /// politely -- it throws MissingPluginException, which is NOT a
+  /// PlatformException and so slips past the catch below and reaches the user
+  /// raw. Keith saw exactly that on 2026-09-06.
+  final Future<List<Map<String, Object?>>> Function() _windowsScan;
+
+  static Future<List<Map<String, Object?>>> _defaultWindowsScan() =>
+      WindowsWifiReader().scanNearbyBss();
 
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
   final Future<Object?> Function(String method, [dynamic args])
@@ -667,6 +682,31 @@ class ApScanService {
         ApScanUnavailableReason.unsupportedPlatform,
       );
     }
+    // WINDOWS: pure Dart over dart:ffi, no channel. See [_windowsScan].
+    //
+    // There is no Location gate and no scan throttle here: the live proof run
+    // (windows_scan_proof_live_test.dart) enumerated 57 BSS with no prompt of
+    // any kind, and two enumerations 12 s apart moved the set without an
+    // explicit WlanScan, so the driver refreshes on its own cadence.
+    if (_platform == 'windows') {
+      try {
+        final List<Map<String, Object?>> rows = await _windowsScan();
+        return ApScanSnapshot.fromMap(
+          <String, Object?>{
+            'accessPoints': rows,
+            'poweredOn': true,
+            'locationAuthorized': true,
+            'scanThrottled': false,
+          },
+          scanPerformed: scanPerformed,
+        );
+      } on WifiInfoUnavailable catch (e) {
+        throw ApScanUnavailable(
+          ApScanUnavailableReason.channelError,
+          e.detail ?? e.reason.name,
+        );
+      }
+    }
     try {
       final result = await _invoke(method);
       final map = result as Map<dynamic, dynamic>?;
@@ -697,6 +737,9 @@ class ApScanService {
     // Pi path: the scan runs on the Pi, not behind an OS Location gate, so
     // the Location card never shows there.
     if (_piBacked) return true;
+    // Windows Native Wifi enumeration is not gated on Location. Proven, not
+    // assumed: the live run took 57 BSS with no prompt.
+    if (_platform == 'windows') return true;
     final result = await _invokePermission('isLocationAuthorized');
     return (result as bool?) ?? false;
   }
@@ -724,6 +767,7 @@ class ApScanService {
   /// the safe default offers the harmless prompt path rather than a dead
   /// deep-link.
   Future<LocationAuthStatus> locationAuthorizationStatus() async {
+    if (_platform == 'windows') return LocationAuthStatus.authorized;
     try {
       final result = await _invokeWifiInfo('locationAuthorizationStatus');
       return LocationAuthStatus.fromToken(result as String?);
@@ -739,6 +783,7 @@ class ApScanService {
   /// entirely, macOS withholds every SSID and BSSID.
   Future<bool> requestLocationPermission() async {
     if (_piBacked) return true;
+    if (_platform == 'windows') return true;
     final result = await _invokePermission('requestLocationPermission');
     return (result as bool?) ?? false;
   }
@@ -797,6 +842,8 @@ class ApScanService {
   /// denial (the app's own page on Android, the Location Services Privacy pane
   /// on macOS). Returns whether the settings page opened.
   Future<bool> openLocationSettings() async {
+    // Nothing to open: there is no grant to change.
+    if (_platform == 'windows') return false;
     final result = await _invokePermission('openLocationSettings');
     return (result as bool?) ?? false;
   }

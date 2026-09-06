@@ -83,6 +83,17 @@ ApScanService _service(
 }) {
   return ApScanService(
     platformOverride: platform,
+    // WINDOWS DOES NOT USE THE CHANNEL. Its rows come from the dart:ffi
+    // enumeration, so a Windows fixture has to be fed through `windowsScan`;
+    // feeding it through `invoke` tests a path Windows never takes. This helper
+    // fed only `invoke` until 2026-09-06, which is precisely why the suite was
+    // green while the shipped Windows scan threw MissingPluginException.
+    windowsScan: () async => ((payload['accessPoints'] as List<dynamic>?) ??
+            const <dynamic>[])
+        .whereType<Map<dynamic, dynamic>>()
+        .map((Map<dynamic, dynamic> m) => m.map<String, Object?>(
+            (dynamic k, dynamic v) => MapEntry<String, Object?>('$k', v)))
+        .toList(growable: false),
     invoke: (String method, [dynamic args]) async {
       switch (method) {
         case 'scan':

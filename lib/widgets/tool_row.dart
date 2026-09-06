@@ -161,6 +161,8 @@ class _ToolRowState extends State<ToolRow> {
   /// false, so native tiles are byte-for-byte unchanged. The tile still
   /// navigates; the tool's screen shows the honest unavailable surface.
   bool get _webUnavailable => toolUnavailableOnWeb(widget.tool.id);
+  ToolUnavailableReason? get _unavailableReason =>
+      toolUnavailableReason(widget.tool.id);
 
   Widget _content(TextTheme text, bool live) {
     final AppColorScheme colors = context.colors;
@@ -181,9 +183,9 @@ class _ToolRowState extends State<ToolRow> {
               ),
             )
           else if (_webUnavailable)
-            const Padding(
-              padding: EdgeInsets.only(left: AppSpacing.xs),
-              child: _WebUnavailableBadge(),
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.xs),
+              child: _WebUnavailableBadge(reason: _unavailableReason),
             ),
         ],
       ),
@@ -303,7 +305,11 @@ class _ToolRowState extends State<ToolRow> {
     final StringBuffer b = StringBuffer(t.title);
     b.write('. ');
     if (!_live) b.write('Coming soon. ');
-    if (_live && _webUnavailable) b.write('Not available on the web. ');
+    if (_live && _webUnavailable) {
+      b.write(_unavailableReason == ToolUnavailableReason.needsWlanPi
+          ? 'Needs a WLAN Pi. '
+          : 'Not available on the web. ');
+    }
     if (widget.categorySourceLabel != null) {
       b.write('In ${widget.categorySourceLabel}. ');
       if (widget.matchNote != null) b.write('${widget.matchNote}. ');
@@ -389,7 +395,11 @@ class _LeadingIcon extends StatelessWidget {
 /// collapsed label ("Not available on the web"), so this glyph+word pair is
 /// excluded from the accessibility tree.
 class _WebUnavailableBadge extends StatelessWidget {
-  const _WebUnavailableBadge();
+  const _WebUnavailableBadge({this.reason});
+
+  /// Null is treated as [ToolUnavailableReason.web], preserving the original
+  /// behaviour for any caller that has not been updated.
+  final ToolUnavailableReason? reason;
 
   @override
   Widget build(BuildContext context) {
@@ -410,13 +420,15 @@ class _WebUnavailableBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Icon(
-              Icons.public_off_outlined,
+              reason == ToolUnavailableReason.needsWlanPi
+                  ? Icons.router_outlined
+                  : Icons.public_off_outlined,
               size: 14,
               color: colors.statusInfo,
             ),
             const SizedBox(width: AppSpacing.xxs),
             Text(
-              'Web',
+              reason == ToolUnavailableReason.needsWlanPi ? 'WLAN Pi' : 'Web',
               style: text.labelSmall?.copyWith(
                 color: colors.statusInfo,
                 letterSpacing: 0.4,

@@ -245,6 +245,36 @@ bool toolUnavailableOnWeb(String toolId) =>
         !PiBackend.canServe(toolId)) ||
     (kPiOnlyToolIds.contains(toolId) && !PiBackend.available);
 
+/// WHY a tool is unavailable here, so the badge can say something TRUE.
+///
+/// FOUND BY KEITH 2026-09-06, USING THE APP ON WINDOWS. Join a Network carried a
+/// badge reading "Web" on a native desktop. The gate was right -- the tool needs
+/// a WLAN Pi and there is not one -- but the WORD was wrong twice over: it is
+/// not a web limitation, and the machine reading it was not a browser. A user
+/// told "Web" on Windows learns nothing except that the app is confused.
+///
+/// The two causes are genuinely different and now say so.
+enum ToolUnavailableReason {
+  /// Running in a browser, and this tool needs something a browser cannot do.
+  web,
+
+  /// The tool drives a WLAN Pi's own radio, and no Pi backend is serving.
+  needsWlanPi,
+}
+
+/// The reason [toolUnavailableOnWeb] is true, or null when the tool is fine.
+ToolUnavailableReason? toolUnavailableReason(String toolId) {
+  if (kPiOnlyToolIds.contains(toolId) && !PiBackend.available) {
+    return ToolUnavailableReason.needsWlanPi;
+  }
+  if (kIsWeb &&
+      kWebUnavailableToolIds.contains(toolId) &&
+      !PiBackend.canServe(toolId)) {
+    return ToolUnavailableReason.web;
+  }
+  return null;
+}
+
 /// Tools that run ONLY on a WLAN Pi, and the inverse of the set above.
 ///
 /// FOUND BY KEITH 2026-09-04, USING THE APP ON A MacBOOK. Join a Network was
@@ -269,9 +299,19 @@ bool toolUnavailableOnWeb(String toolId) =>
 /// Pi-only tool that is not yet served should read as unavailable-here, not as
 /// a tool that exists on this device.
 const Set<String> kPiOnlyToolIds = <String>{
-  // Associates the PI\'S OWN radio. There is no macOS/iOS/Android equivalent:
-  // joining a network from the app is not something those platforms expose to
-  // an unprivileged app, which is why no native path was ever built.
+  // Associates the PI\'S OWN radio. NO NATIVE PATH HAS BEEN BUILT -- which is a
+  // statement about this codebase, not about the platforms.
+  //
+  // CORRECTED 2026-09-06. This comment used to say joining "is not something
+  // those platforms expose to an unprivileged app". Our own research refutes
+  // that for two of them (Deliverables/2026-09-01-ssid-picker-platform-apis):
+  // Windows joins via Win32 WlanConnect or WinRT WiFiAdapter.ConnectAsync, and
+  // macOS can join too, though it may demand an administrator password. iOS and
+  // Android are the genuinely restricted pair.
+  //
+  // The distinction matters because it changes what "unavailable" means: not
+  // impossible, just unbuilt. Keith asked for the Windows picker on 2026-09-06,
+  // on the reasonable grounds that the scan it would feed from now works.
   'join-network',
 };
 

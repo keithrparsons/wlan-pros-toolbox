@@ -13,7 +13,11 @@
 // enumeration ever returns real BSS rows, they map to the shared payload shape
 // correctly.
 
+import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/network/ap_scan_service.dart';
+import 'package:wlan_pros_toolbox/services/network/wifi_info_service.dart'
+    show LocationAuthStatus, WifiInfoUnavailable, WifiInfoUnavailableReason;
 import 'package:wlan_pros_toolbox/services/network/windows_wifi_ffi.dart';
 
 /// Builds a candidate. Center frequency is in kHz, as WLAN_BSS_ENTRY reports it.
@@ -32,6 +36,7 @@ WifiBssCandidate _candidate({
 }
 
 void main() {
+  _wiringTests();
   group('scannedApRowsFromBssCandidates — shared payload shape', () {
     test('maps kHz center frequency to the right channel, band, and MHz', () {
       final List<Map<String, Object?>> rows = scannedApRowsFromBssCandidates(
@@ -131,6 +136,108 @@ void main() {
     test('an empty candidate list maps to an empty row list, never a null row',
         () {
       expect(scannedApRowsFromBssCandidates(<WifiBssCandidate>[]), isEmpty);
+    });
+  });
+}
+
+// ===========================================================================
+// THE WIRING, added 2026-09-06 after it shipped broken for about an hour.
+//
+// THE DEFECT: Windows was added to ApScanService.wiredPlatforms the moment the
+// FFI enumeration was proven on real hardware, and the tool went live -- but
+// nothing routed Windows to that enumeration. `scan()` still called
+// `_invoke(method)`, a MethodChannel that only Android and macOS answer
+// natively. Keith opened the tool on the Framework and got
+// `MissingPluginException - no implementation found`.
+//
+// WHY IT REACHED HIM RAW: MissingPluginException is NOT a PlatformException,
+// so the `on PlatformException` catch in that method never saw it. There was no
+// honest error card either -- the exception escaped the service entirely.
+//
+// WHY NO EXISTING TEST CAUGHT IT: every Windows test above is a PURE MAPPING
+// test, and its own header says so -- "A passing test here is NOT evidence the
+// Windows scan works". It was right. The mapping was always correct; the wiring
+// never existed. A green suite proved a claim nobody had made.
+//
+// These tests bind the wiring itself, which is the thing that broke.
+
+void _wiringTests() {
+  group('Windows scan wiring (the MissingPluginException defect)', () {
+    test('scan() reads the FFI enumeration and NEVER touches the channel',
+        () async {
+      bool channelTouched = false;
+      final ApScanService svc = ApScanService(
+        platformOverride: 'windows',
+        invoke: (String method, [dynamic args]) async {
+          channelTouched = true;
+          throw MissingPluginException('no implementation found for $method');
+        },
+        windowsScan: () async => <Map<String, Object?>>[
+          <String, Object?>{
+            'ssid': 'KeithNet',
+            'bssid': '94:2a:6f:42:e5:3f',
+            'rssiDbm': -33,
+            'channel': 117,
+            'band': '6 GHz',
+            'frequencyMhz': 6535,
+          },
+        ],
+      );
+
+      final ApScanSnapshot snap = await svc.scan();
+
+      expect(channelTouched, isFalse,
+          reason: 'the channel call is the defect; Windows has no handler for '
+              'it and MissingPluginException is not caught by the '
+              'PlatformException guard');
+      expect(snap.accessPoints, hasLength(1));
+      expect(snap.accessPoints.single.ssid, 'KeithNet');
+      expect(snap.accessPoints.single.channel, 117);
+    });
+
+    test('no Location gate on Windows, and no channel call to discover that',
+        () async {
+      bool channelTouched = false;
+      final ApScanService svc = ApScanService(
+        platformOverride: 'windows',
+        invoke: (String method, [dynamic args]) async {
+          channelTouched = true;
+          throw MissingPluginException('no implementation found for $method');
+        },
+        invokeWifiInfo: (String method, [dynamic args]) async {
+          channelTouched = true;
+          throw MissingPluginException('no implementation found for $method');
+        },
+        windowsScan: () async => const <Map<String, Object?>>[],
+      );
+
+      // Proven, not assumed: the live run enumerated 57 BSS with no prompt.
+      expect(await svc.isLocationAuthorized(), isTrue);
+      expect(await svc.requestLocationPermission(), isTrue);
+      expect(await svc.locationAuthorizationStatus(),
+          LocationAuthStatus.authorized);
+      expect(await svc.openLocationSettings(), isFalse);
+      expect(channelTouched, isFalse);
+    });
+
+    test('an FFI failure becomes an honest error card, not a raw exception',
+        () async {
+      final ApScanService svc = ApScanService(
+        platformOverride: 'windows',
+        invoke: (String method, [dynamic args]) async => null,
+        windowsScan: () async => throw const WifiInfoUnavailable(
+          WifiInfoUnavailableReason.channelError,
+          'wlanapi returned ERROR_INVALID_HANDLE',
+        ),
+      );
+      await expectLater(
+        svc.scan(),
+        throwsA(isA<ApScanUnavailable>().having(
+          (ApScanUnavailable e) => e.reason,
+          'reason',
+          ApScanUnavailableReason.channelError,
+        )),
+      );
     });
   });
 }

@@ -41,6 +41,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../services/network/join_network_list.dart';
+import '../../../services/network/pi_backend.dart';
 import '../../../services/network/pi_backend_client.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -205,6 +206,46 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     final double edge = MediaQuery.sizeOf(context).width < 600
         ? AppSpacing.sm
         : AppSpacing.md;
+
+    // NO PI, NO SCREEN (Keith, 2026-09-06, on Windows). This tool drives a WLAN
+    // Pi's OWN radio through PiBackendClient, which only answers when a Pi is
+    // serving the app. Off a Pi there was no guard at all: the screen built,
+    // immediately scanned, and failed in front of the user.
+    //
+    // The tile already carries a badge, but a badge is not a gate -- the row
+    // stays tappable, so the honest explanation has to live HERE as well. It
+    // says what the tool needs rather than that something went wrong, because
+    // nothing did: this machine simply is not a WLAN Pi.
+    if (widget.client == null && !PiBackend.available) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Join a Network')),
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(edge),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Coming to this device',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Join a Network points a radio at a Wi-Fi network. Today only '
+                  'the WLAN Pi edition has it wired up, and there it joins the '
+                  'Pi\'s own radio rather than this one.\n\n'
+                  'Joining THIS device, picked straight from the nearby-network '
+                  'scan, is being built. Until then, open the Toolbox from a '
+                  'WLAN Pi in your browser and the tool works there. Every '
+                  'other tool works normally here.',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
