@@ -29,7 +29,12 @@
 // passphrase box, and the same rule Keith earned in June when a silent screen
 // on cellular read as broken.
 
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'link_info.dart';
+import 'pi_backend.dart';
 
 /// The three paths a person thinks in. Deliberately NOT [LinkKind]: monitor,
 /// virtual and loopback interfaces are never a transport a user chooses, and
@@ -115,6 +120,7 @@ class TransportOption {
     required this.kind,
     required this.state,
     required this.reason,
+    required this.shortReason,
     this.link,
   });
 
@@ -125,6 +131,24 @@ class TransportOption {
   /// [selectable]**, and asserted by test. This is the whole point of the file:
   /// a greyed row that does not say why reads as a bug.
   final String reason;
+
+  /// The one-clause form of [reason], for the collapsed row.
+  ///
+  /// RULED BY KEITH, 2026-09-04, choosing "short reason always, long on tap"
+  /// over both "full reason always" (a screen and a half on a phone) and
+  /// "collapsed behind a Why? link". The rejected option was rejected for a
+  /// specific reason worth keeping here: **a row showing only a badge is the
+  /// greyed-without-saying-why defect this whole file exists to prevent.**
+  ///
+  /// So this field carries the same guarantee [reason] does: **never empty,
+  /// for any state, asserted by test.** The long form is the extra; the short
+  /// form is what a person is guaranteed to see. If you add a construction
+  /// site below, you write both strings or the test fails.
+  ///
+  /// Keep it to one clause and no interface-name-plus-explanation compounds:
+  /// it has to survive a 330 px phone row without wrapping to three lines,
+  /// which is the entire reason it exists.
+  final String shortReason;
 
   /// The interface behind this option, when there is one.
   final LinkInfo? link;
@@ -167,6 +191,57 @@ class TransportCapability {
 /// The platforms this app runs on, named here so the table does not depend on
 /// `dart:io` and stays unit-testable.
 enum TransportPlatform { macos, windows, linux, ios, android, web, wlanPi }
+
+/// Which platform this build is running on, for [buildTransportOptions].
+///
+/// HOISTED HERE 2026-09-01 because a second caller appeared. It lived inline in
+/// `link_info_screen.dart`; `CurrentNetwork` now needs the same answer to
+/// resolve the app-wide transport choice. **Two copies of a platform table
+/// drift, and the one that drifts is the one nobody is looking at.**
+///
+/// [tableSource] is [LinkTable.source]. On web it is the only way to tell a
+/// browser on a laptop from a browser served by the WLAN Pi, because both are
+/// `kIsWeb` and they have completely different capabilities.
+TransportPlatform currentTransportPlatform({String? tableSource}) {
+  if (kIsWeb) {
+    // THIS WAS A ONE-WORD BUG WITH THE WHOLE PI EDITION DOWNSTREAM OF IT, found
+    // by Keith on 2026-09-04 with the chooser sitting inert on a real R4.
+    //
+    // The test was `tableSource.contains('wlanpi')` -- case-sensitive, against a
+    // string a human wrote for humans. The Pi actually reports:
+    //
+    //     "sysfs + ip addr on the WLAN Pi (no ethtool; it is not installed)"
+    //
+    // "WLAN Pi" does not contain "wlanpi", so a genuine WLAN Pi was classified
+    // as a PLAIN BROWSER. `kTransportCapabilities[web]` says `canEnumerate:
+    // false`, so every row collapsed to absent with "A browser is not allowed to
+    // see or choose network interfaces", nothing was choosable, and the chooser
+    // rendered read-only. **On the same screen that was listing eth0 at 1 Gbps
+    // directly above it.**
+    //
+    // THE REAL FIX IS NOT A BETTER SUBSTRING. [PiBackend.available] is the
+    // authoritative answer -- it is set by a same-origin GET of the Pi's own
+    // /toolboxapi/health, which is exactly the question being asked, and it is
+    // already what [LinkTableService] uses to decide to call the Pi at all.
+    // Deriving a capability from prose was the mistake; the prose is free to
+    // change wording and nothing downstream should care.
+    //
+    // The source sniff is KEPT as a fallback, now case-insensitive and matching
+    // the spaced spelling too, for callers that hold a table but no live probe
+    // (the tool harnesses, and any test that constructs a table by hand).
+    if (PiBackend.available) return TransportPlatform.wlanPi;
+    final String s = (tableSource ?? '').toLowerCase();
+    return (s.contains('wlanpi') || s.contains('wlan pi'))
+        ? TransportPlatform.wlanPi
+        : TransportPlatform.web;
+  }
+  if (Platform.isMacOS) return TransportPlatform.macos;
+  if (Platform.isWindows) return TransportPlatform.windows;
+  if (Platform.isLinux) return TransportPlatform.linux;
+  if (Platform.isIOS) return TransportPlatform.ios;
+  if (Platform.isAndroid) return TransportPlatform.android;
+  return TransportPlatform.macos;
+}
 
 /// The capability table.
 ///
@@ -329,6 +404,7 @@ List<TransportOption> buildTransportOptions({
               kind: k,
               state: TransportState.absent,
               reason: cap.mechanism,
+              shortReason: 'Not available on this platform.',
             ))
         .toList(growable: false);
   }
@@ -357,6 +433,9 @@ List<TransportOption> buildTransportOptions({
             ? 'No wired interface is present. Plug in an adapter or a cable '
                 'and check again.'
             : 'No Wi-Fi interface is present on this device.',
+        shortReason: kind == TransportKind.ethernet
+            ? 'No wired interface on this device.'
+            : 'No Wi-Fi interface on this device.',
       ));
       continue;
     }
@@ -375,6 +454,11 @@ List<TransportOption> buildTransportOptions({
                 ? '${first.name} is present with no link. A cable into a dead '
                     'switch looks exactly like no cable at all, so check both.'
                 : '${first.name} is present but not associated to a network.',
+        shortReason: first.carrier == true
+            ? '${first.name} is up but has no address.'
+            : kind == TransportKind.ethernet
+                ? '${first.name} has no link. Check both ends.'
+                : '${first.name} is not associated to a network.',
       ));
       continue;
     }
@@ -385,6 +469,7 @@ List<TransportOption> buildTransportOptions({
         state: TransportState.active,
         link: up,
         reason: 'Carrying traffic now. ${up.name} holds the default route.',
+        shortReason: 'Carrying traffic now.',
       ));
       continue;
     }
@@ -407,6 +492,7 @@ TransportOption _cellularOption(
       kind: TransportKind.cellular,
       state: TransportState.absent,
       reason: 'This kind of device has no cellular radio.',
+      shortReason: 'No cellular radio on this device.',
     );
   }
   if (cellularLink == null) {
@@ -415,6 +501,7 @@ TransportOption _cellularOption(
       state: TransportState.absent,
       reason: 'No cellular connection. The radio may be off, in airplane '
           'mode, or without service.',
+      shortReason: 'No cellular connection.',
     );
   }
   if (active != null && cellularLink.name == active.name) {
@@ -424,11 +511,16 @@ TransportOption _cellularOption(
       link: cellularLink,
       reason: 'Carrying traffic now. This is a metered path, so a throughput '
           'test spends your data.',
+      // The metered warning stays in the SHORT form. It is the one fact here
+      // that costs the user money if they miss it, and a cost warning that
+      // only appears after a tap is not a warning.
+      shortReason: 'Carrying traffic now. Metered, so tests spend your data.',
     );
   }
   return _supportRow(
       TransportKind.cellular, support, cellularLink, cap, scope, probed,
-      extra: ' Testing over cellular spends your data allowance.');
+      extra: ' Testing over cellular spends your data allowance.',
+      shortExtra: ' Metered.');
 }
 
 /// Turn a [SelectSupport] into the row a user reads.
@@ -444,6 +536,7 @@ TransportOption _supportRow(
   TransportScope scope,
   Map<String, bool> probed, {
   String extra = '',
+  String shortExtra = '',
 }) {
   switch (support) {
     case SelectSupport.yes:
@@ -452,6 +545,7 @@ TransportOption _supportRow(
         state: TransportState.selectable,
         link: link,
         reason: '${link.name} is up and tests can be sent from it.$extra',
+        shortReason: '${link.name} is up.$shortExtra',
       );
     case SelectSupport.no:
       return TransportOption(
@@ -460,6 +554,7 @@ TransportOption _supportRow(
         link: link,
         reason: '${link.name} is up and carrying its own traffic, but this '
             'test cannot be moved onto it. ${cap.mechanism}',
+        shortReason: '${link.name} is up, but tests cannot be moved onto it.',
       );
     case SelectSupport.mustProbe:
       final bool? result = probed[link.name];
@@ -470,6 +565,7 @@ TransportOption _supportRow(
           link: link,
           reason: 'Tested on this machine: a connection sent from '
               '${link.name} succeeded.$extra',
+          shortReason: 'Tested on this machine: it worked.$shortExtra',
         );
       }
       if (result == false) {
@@ -480,6 +576,7 @@ TransportOption _supportRow(
           reason: '${link.name} is up, but a test connection sent from it did '
               'not get through. That usually means this machine routes to the '
               'internet through a different gateway.',
+          shortReason: 'Tested: the connection did not get through.',
         );
       }
       return TransportOption(
@@ -489,6 +586,7 @@ TransportOption _supportRow(
         reason: '${link.name} is up. Whether a test can be pinned to it '
             'depends on how this machine is wired, and that has not been '
             'checked yet.$extra',
+        shortReason: 'Not checked on this machine yet.$shortExtra',
       );
   }
 }

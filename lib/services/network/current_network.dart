@@ -39,6 +39,10 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'default_route_probe.dart';
 
 import 'lan_discovery/subnet_seed.dart';
+import 'link_info.dart';
+import 'link_table_service.dart';
+import 'transport_chooser.dart';
+import 'transport_preference.dart';
 import 'pi_backend_client.dart';
 
 /// The prefill suggestion derived from the device's current network. Field
@@ -84,6 +88,7 @@ class NetworkSuggestion {
     required this.maskWasReal,
     this.source = NetworkSource.none,
     this.multiHomed = false,
+    this.transport,
   });
 
   /// The suggested subnet in CIDR notation (e.g. `172.19.0.0/24`), or null when
@@ -111,6 +116,49 @@ class NetworkSuggestion {
   /// traffic, so naming the wrong one is a live possibility rather than a
   /// theoretical one.
   final bool multiHomed;
+
+  /// What became of the user's app-wide transport choice, or null when the
+  /// caller supplied no [TransportPreference] at all.
+  ///
+  /// NULL AND "NOTHING CHOSEN" ARE DIFFERENT AND THE UI MUST NOT MERGE THEM.
+  /// Null means this code path never consulted a preference, which is every
+  /// existing caller and every current test. A non-null value carrying
+  /// [TransportResolution.followingSystem] means a preference WAS consulted and
+  /// the user has deliberately left the OS in charge. Collapsing the two would
+  /// make a screen claim a choice was honoured on a build that never read one.
+  final ResolvedTransport? transport;
+
+  /// The user picked a transport and the tools are NOT using it. The screen
+  /// must say so; silence here is the whole defect this field exists to stop.
+  bool get transportIgnored => transport?.isStale ?? false;
+
+  /// Plain words for [transportIgnored], never empty when it is true.
+  ///
+  /// The chooser's own [TransportOption.reason] is used verbatim when it has
+  /// one, because that string is already written for a human and writing a
+  /// second one here would put two authors on the same sentence.
+  String? get transportWarning {
+    final ResolvedTransport? t = transport;
+    if (t == null || !t.isStale) return null;
+    final String kind = t.chosen?.label ?? 'the chosen link';
+    final String tail = t.reason != null && t.reason!.isNotEmpty
+        ? ' ${t.reason}'
+        : '';
+    return switch (t.resolution) {
+      TransportResolution.chosenUnavailable =>
+        'You chose $kind, and it has no usable link right now, so these '
+        'numbers are for the link the system is actually using.$tail',
+      TransportResolution.chosenNotSelectable =>
+        'You chose $kind, and this platform will not let the app send this '
+        'kind of traffic over it. These numbers are for the link the system '
+        'is actually using.$tail',
+      TransportResolution.chosenUntested =>
+        'You chose $kind, and whether traffic can be pinned to it has not '
+        'been established on this machine. These numbers are for the link '
+        'the system is actually using.$tail',
+      _ => null,
+    };
+  }
 
   /// True when a subnet CIDR was derived at all (BEST or PARTIAL).
   bool get hasCidr => cidr != null;
@@ -169,10 +217,26 @@ typedef CurrentNetworkReader
 
 /// Derives a [NetworkSuggestion] from the device's current network.
 class CurrentNetwork {
-  CurrentNetwork({CurrentNetworkReader? reader})
-      : _reader = reader ?? _defaultReader;
+  CurrentNetwork({
+    CurrentNetworkReader? reader,
+    TransportPreference? preference,
+    LinkTableService? linkTable,
+  })  : _reader = reader ?? _defaultReader,
+        // ignore: prefer_initializing_formals
+        _preference = preference,
+        // ignore: prefer_initializing_formals
+        _linkTable = linkTable;
 
   final CurrentNetworkReader _reader;
+
+  /// The app-wide transport choice. NULL means this instance does not consult
+  /// one, which keeps every existing caller byte-identical in behaviour.
+  final TransportPreference? _preference;
+
+  /// Enumerates the links a preference is resolved against. Only read when
+  /// [_preference] is set, so no caller pays for a link-table read it did not
+  /// ask for.
+  final LinkTableService? _linkTable;
 
   /// ASK THE ROUTING TABLE FIRST. `network_info_plus` FALLS BACK, it does not
   /// lead.
@@ -311,6 +375,29 @@ class CurrentNetwork {
     // injected reader (every test, and the Pi path) leaves it null and the
     // suggestion carries `NetworkSource.none`, claiming nothing either way.
     final NetworkSource src = _lastSource ?? NetworkSource.none;
+
+    // THE APP-WIDE TRANSPORT CHOICE. Ruled by Keith 2026-09-01: one choice,
+    // every tool honours it. This is the single place it is applied, which is
+    // why all seven surfaces that prefill a target inherit it without any of
+    // them being edited.
+    //
+    // A FAILURE HERE MUST NEVER COST THE USER A SUGGESTION. Every path below
+    // falls back to the routing table's answer, which is what the screens got
+    // before this feature existed.
+    final ResolvedTransport? resolved = await _resolvePreference();
+    if (resolved != null && resolved.isHonoured && resolved.link != null) {
+      final NetworkSuggestion chosen = _fromLink(resolved.link!, base);
+      return NetworkSuggestion(
+        cidr: chosen.cidr,
+        gatewayIp: chosen.gatewayIp,
+        deviceIp: chosen.deviceIp,
+        maskWasReal: chosen.maskWasReal,
+        source: NetworkSource.routingTable,
+        multiHomed: false,
+        transport: resolved,
+      );
+    }
+
     return NetworkSuggestion(
       cidr: base.cidr,
       gatewayIp: base.gatewayIp,
@@ -320,6 +407,66 @@ class CurrentNetwork {
       multiHomed: src == NetworkSource.wifiInterface
           ? await _looksMultiHomed()
           : false,
+      transport: resolved,
+    );
+  }
+
+  /// Reads the stored choice and resolves it against this machine's links.
+  ///
+  /// Returns null when no [TransportPreference] was supplied, so a caller that
+  /// never asked for this behaves exactly as it did before.
+  Future<ResolvedTransport?> _resolvePreference() async {
+    final TransportPreference? pref = _preference;
+    if (pref == null) return null;
+    try {
+      final TransportKind? chosen = await pref.read();
+      final LinkTableResult result =
+          await (_linkTable ?? LinkTableService()).read();
+      final LinkTable? table = result.table;
+      // No link table means nothing to resolve a choice against. Honest null:
+      // the routing table's answer stands and no screen claims a choice was
+      // applied.
+      if (table == null) return null;
+      return resolveTransport(
+        chosen: chosen,
+        options: buildTransportOptions(
+          links: table.links,
+          scope: TransportScope.localSubnet,
+          platform: currentTransportPlatform(tableSource: table.source),
+        ),
+        activeLink: table.primary,
+      );
+    } on Object {
+      // A link table we could not read is not a reason to lose the prefill.
+      // Null here means "no preference applied", and the routing table's
+      // answer stands.
+      return null;
+    }
+  }
+
+  /// Derives a suggestion from a specific link rather than the default route.
+  ///
+  /// THE GATEWAY IS DELIBERATELY DROPPED when the chosen link is not the one
+  /// holding the default route. We know that link's address and prefix; we do
+  /// NOT know its gateway, because a gateway belongs to a route and this link
+  /// is not carrying one. Offering the DEFAULT route's gateway beside a
+  /// different link's subnet would be the same class of lie the `en0` defect
+  /// told: two numbers from two different networks presented as one.
+  static NetworkSuggestion _fromLink(LinkInfo link, NetworkSuggestion base) {
+    LinkAddress? v4;
+    for (final LinkAddress a in link.addresses) {
+      if (a.isIPv4 && !a.isLinkLocal) {
+        v4 = a;
+        break;
+      }
+    }
+    if (v4 == null) return base;
+    final String? mask =
+        v4.prefixLength != null ? _maskFromPrefix(v4.prefixLength!) : null;
+    return suggestFrom(
+      ip: v4.address,
+      mask: mask,
+      gateway: link.isDefaultRouteV4 ? base.gatewayIp : null,
     );
   }
 

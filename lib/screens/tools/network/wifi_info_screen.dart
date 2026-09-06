@@ -409,18 +409,47 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// WifiManager). Both share the `_macAdapter` snapshot machinery, the poll
   /// timer, the location-grant flow, and the `_macBody` rendering — only the
   /// per-field platform label differs (see [_snapshotPlatformLabel]).
+  /// **THE PI BELONGS IN THIS SET AND WAS MISSING FROM IT UNTIL 2026-09-04.**
+  ///
+  /// `initState` adds the lifecycle observer and arms the poll for ALL FOUR
+  /// snapshot sources unconditionally, but `dispose` removes the observer and
+  /// cancels the timer only `if (_isSnapshotSource)`. With the Pi excluded,
+  /// leaving this screen on the Pi edition **leaked the observer and left a
+  /// periodic timer polling the Pi forever**, and backgrounding never paused it.
+  ///
+  /// Same root cause as the `_snapshotPlatformLabel` bug below: `piBackend` was
+  /// added to the `case` block and to the adapter switch, and to nothing else.
   bool get _isSnapshotSource =>
       _source == WifiInfoSource.macosCoreWlan ||
       _source == WifiInfoSource.androidWifiManager ||
-      _source == WifiInfoSource.windowsNativeWifi;
+      _source == WifiInfoSource.windowsNativeWifi ||
+      _source == WifiInfoSource.piBackend;
 
   /// The per-field platform label the snapshot cards use in honest
   /// "not exposed by `<platform>`" copy. Each snapshot platform exposes a
   /// different field subset (Android + Windows have no noise/SNR), so the reason
   /// text names the real source.
+  /// **NAME THE PLATFORM YOU ARE ACTUALLY ON.** Every arm is explicit and the
+  /// wildcard now covers only macOS, because a `_ =>` default that silently
+  /// swallows a NEW enum value is what produced the bug this comment exists for.
+  ///
+  /// KEITH, 2026-09-04, running the Pi edition: the Security card read
+  /// **"Unavailable — Not exposed by macOS CoreWLAN"** on a WLAN Pi, which has
+  /// no CoreWLAN and is not macOS. `piBackend` fell into `_` and inherited the
+  /// macOS label, so the screen stated a false reason for a real absence.
+  ///
+  /// **THIS IS THE SECOND TIME THIS EXACT SHAPE HAS SHIPPED IN THIS FILE.** The
+  /// `_macPlatform` comment directly below records the first: *"the S24 bug was
+  /// the iOS 'Apple does not expose…' reason leaking onto Android."* A wrong
+  /// reason is worse than no reason, because a reader believes it.
+  ///
+  /// The Pi genuinely does not report security type: `/toolboxapi/wifi` returns
+  /// 26 fields and none of them is a security/key-management value, verified
+  /// live 2026-09-04. **The absence is real; only the attribution was wrong.**
   String get _snapshotPlatformLabel => switch (_source) {
         WifiInfoSource.androidWifiManager => 'Android',
         WifiInfoSource.windowsNativeWifi => 'Windows',
+        WifiInfoSource.piBackend => 'the WLAN Pi',
         _ => 'macOS CoreWLAN',
       };
 

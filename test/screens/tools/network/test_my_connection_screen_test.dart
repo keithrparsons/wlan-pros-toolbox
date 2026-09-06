@@ -1105,6 +1105,17 @@ void main() {
         ),
         findsOneWidget,
       );
+      // MOVE-AND-RE-RUN TIP (2026-09-04). Both roads were measured, so there is
+      // a verdict that can actually change when the user moves, and the nudge
+      // that teaches this screen's whole lesson is shown.
+      expect(
+        find.text(
+          'Walk to another spot and run it again. This answer often changes '
+          'when you move.',
+        ),
+        findsOneWidget,
+        reason: 'a real comparison must carry the move-and-re-run nudge',
+      );
     },
   );
 
@@ -1283,6 +1294,16 @@ void main() {
           'We could not read your Wi-Fi or your internet.',
         ),
         findsOneWidget,
+      );
+      // AND NO MOVE-AND-RE-RUN TIP (2026-09-04). Nothing was measured, so there
+      // is no verdict to watch change. Telling someone to walk to another room
+      // and re-run, on a card that just said it could not read either side, is
+      // the "offer a control that cannot work" defect. The tip lives inside the
+      // comparison branch precisely so this cannot happen, and this asserts it.
+      expect(
+        find.textContaining('Walk to another spot and run it again'),
+        findsNothing,
+        reason: 'no measurement means no verdict to watch change',
       );
     },
   );

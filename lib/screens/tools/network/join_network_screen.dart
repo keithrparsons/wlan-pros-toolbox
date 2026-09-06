@@ -304,9 +304,35 @@ class _RadioPicker extends StatelessWidget {
   final bool enabled;
   final ValueChanged<String> onChanged;
 
+  /// A dropdown shows ONE name and hides the rest behind a tap. On the standard
+  /// two-radio WLAN Pi that is the difference between "here are your radios"
+  /// and "here is your radio".
+  ///
+  /// KEITH, 2026-09-04, on an R4 with two Panda (mt7921u) NICs:
+  /// *"On the WLAN Pi it only offered me a single NIC, the WLAN0 to choose
+  /// from. But this R4 has two of the same PANDA NICs plugged in."*
+  ///
+  /// **BOTH RADIOS WERE THERE THE WHOLE TIME.** The Pi's own access log shows
+  /// `GET /toolboxapi/scan-interfaces 200 96` returning `wlan0` AND `wlan1`, and
+  /// this widget was rendering with `radios.length == 2`. Nothing failed. The
+  /// control simply displayed `wlan0 (mt7921u)` and said nothing about the
+  /// second, and a user reading it concluded the Pi had one radio.
+  ///
+  /// **That is a real defect even though every layer below it was correct**, and
+  /// it is the same failure as the rest of this session: the app knew something
+  /// and did not say it. Two radios is the NORMAL WLAN Pi build, not an edge
+  /// case, and choosing between them is most of the point of the tool.
+  ///
+  /// So: two or three radios render as a [SegmentedButton] with every name
+  /// visible at once, matching the sort control on Nearby AP Scan. Four or more
+  /// falls back to the dropdown, because segments stop fitting.
+  static const int _maxSegments = 3;
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme c = context.colors;
+    final bool asSegments =
+        radios.length > 1 && radios.length <= _maxSegments;
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,20 +340,41 @@ class _RadioPicker extends StatelessWidget {
           LabeledField(
             label: 'Radio that scans and joins',
             semanticLabel: 'Radio that scans and joins',
-            field: AppSelect<String>(
-              value: selected,
-              semanticLabel: 'Radio that scans and joins',
-              enabled: enabled,
-              items: radios
-                  .map((PiScanInterface i) => (i.name, i.label))
-                  .toList(growable: false),
-              onChanged: onChanged,
-            ),
+            field: asSegments
+                ? SegmentedButton<String>(
+                    segments: radios
+                        .map((PiScanInterface i) => ButtonSegment<String>(
+                              value: i.name,
+                              label: Text(i.name),
+                              tooltip: i.label,
+                            ))
+                        .toList(growable: false),
+                    selected: <String>{selected},
+                    showSelectedIcon: false,
+                    onSelectionChanged: enabled
+                        ? (Set<String> s) => onChanged(s.first)
+                        : null,
+                  )
+                : AppSelect<String>(
+                    value: selected,
+                    semanticLabel: 'Radio that scans and joins',
+                    enabled: enabled,
+                    items: radios
+                        .map((PiScanInterface i) => (i.name, i.label))
+                        .toList(growable: false),
+                    onChanged: onChanged,
+                  ),
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'This radio does both. On a two-radio Pi the other one stays free '
-            'for scanning or capture, which is usually what you want.',
+            radios.length > 1
+                // Name the count, so a two-radio Pi never again reads as one.
+                ? 'This Pi has ${radios.length} radios. The one you pick does '
+                    'both the scanning and the joining; the other stays free '
+                    'for scanning or capture, which is usually what you want.'
+                : 'This radio does both. On a two-radio Pi the other one stays '
+                    'free for scanning or capture, which is usually what you '
+                    'want.',
             style: TextStyle(fontSize: 13, color: c.textTertiary),
           ),
         ],

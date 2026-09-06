@@ -240,9 +240,40 @@ const Set<String> kWebUnavailableToolIds = <String>{
 /// exactly as before and every listed tool stays hidden — one artifact, two
 /// behaviors.
 bool toolUnavailableOnWeb(String toolId) =>
-    kIsWeb &&
-    kWebUnavailableToolIds.contains(toolId) &&
-    !PiBackend.canServe(toolId);
+    (kIsWeb &&
+        kWebUnavailableToolIds.contains(toolId) &&
+        !PiBackend.canServe(toolId)) ||
+    (kPiOnlyToolIds.contains(toolId) && !PiBackend.available);
+
+/// Tools that run ONLY on a WLAN Pi, and the inverse of the set above.
+///
+/// FOUND BY KEITH 2026-09-04, USING THE APP ON A MacBOOK. Join a Network was
+/// offered with no badge, described as *"associate this WLAN Pi\'s own radio to
+/// it"* to a man holding a Mac, and could not possibly work:
+/// `join_network_screen.dart` constructs a [PiBackendClient] unconditionally,
+/// and that client only runs on web behind `PiBackend.available`.
+///
+/// **THE GATE ABOVE WAS DOING EXACTLY WHAT IT WAS TOLD.** `join-network` IS in
+/// [kWebUnavailableToolIds], but `toolUnavailableOnWeb` short-circuits to false
+/// OFF web on purpose, so that native tile behaviour stays byte-for-byte
+/// unchanged. That is correct for every other member of that set, because they
+/// are NATIVE tools a browser cannot run.
+///
+/// **Join a Network is the opposite shape and was in the wrong set.** It runs
+/// only IN a browser, served BY a Pi. The set\'s own membership rule says so:
+/// *"a tool is in this set ONLY when it genuinely cannot run in a browser."*
+/// This set is the missing half: tools that cannot run ANYWHERE except a Pi.
+///
+/// The condition is [PiBackend.available] rather than [PiBackend.canServe],
+/// because canServe additionally requires membership of `servedToolIds` and a
+/// Pi-only tool that is not yet served should read as unavailable-here, not as
+/// a tool that exists on this device.
+const Set<String> kPiOnlyToolIds = <String>{
+  // Associates the PI\'S OWN radio. There is no macOS/iOS/Android equivalent:
+  // joining a network from the app is not something those platforms expose to
+  // an unprivileged app, which is why no native path was ever built.
+  'join-network',
+};
 
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
 /// header). The list order IS the home-grid order: Test Network, Networking
@@ -366,8 +397,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'join-network',
         title: 'Join a Network',
-        description: 'Pick an SSID and associate this WLAN Pi\'s own radio to '
-            'it, then see exactly which AP it landed on',
+        // Says WHOSE radio without assuming the reader has one. The old wording
+        // ("this WLAN Pi's own radio") was written for the Pi edition and read
+        // as nonsense on a Mac, where the tool was also being offered and could
+        // not run (Keith, 2026-09-04). The tile is now gated by kPiOnlyToolIds,
+        // so this line is only ever read ON a Pi -- but it no longer depends on
+        // that gate holding to make sense.
+        description: 'Pick an SSID and associate a WLAN Pi radio to it, then '
+            'see exactly which AP it landed on',
         routeName: '/tools/join-network',
         isLive: true,
       ),
@@ -2339,9 +2376,10 @@ final List<ToolCategory> kToolCategories = _buildCatalog();
 /// two are now computed from one set and pinned by
 /// test/data/native_scan_platform_ssot_test.dart.
 ///
-/// Windows is deliberately absent upstream: its Native Wifi enumeration path
-/// exists in the codebase but is unverified on real hardware, so the tool stays
-/// out of the catalog there rather than shipping an unproven scan.
+/// Windows joined upstream on 2026-09-06 once its Native Wifi enumeration was
+/// executed against a real BE200 rather than merely reviewed. Nothing is edited
+/// here to add it: this set is DERIVED from `ApScanService.wiredPlatforms`, so
+/// the catalog followed the moment that set changed.
 final Set<TargetPlatform> kNativeScanPlatforms = <TargetPlatform>{
   for (final TargetPlatform p in TargetPlatform.values)
     if (ApScanService.wiredPlatforms.contains(nativeScanPlatformKey(p))) p,

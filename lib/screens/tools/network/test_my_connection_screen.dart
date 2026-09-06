@@ -48,6 +48,8 @@ import '../../../services/network/connected_ap.dart';
 import '../../../services/network/connection_check.dart';
 import '../../../services/network/connection_comparison.dart';
 import '../../../services/network/consumer_verdict.dart';
+import '../../../services/network/transport_preference.dart'
+    show measurementAttribution;
 import '../../../services/network/dns_probe_service.dart';
 import '../../../services/network/ip_geo_service.dart';
 import '../../../services/network/network_details_service.dart';
@@ -2501,6 +2503,31 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                       // _run re-settles the probe before spending.
                       runAgainUsesData: _needsConsent && _throughputConsented,
                     ),
+                    // (A2) WHAT THE RESULT IS ABOUT (Keith, 2026-09-06).
+                    //
+                    // "Nothing names which transport a result used. Now that a
+                    // user can choose one, this matters." Before the chooser
+                    // existed the answer was always "whatever the OS picked", so
+                    // the question never arose; it does now, and a number with no
+                    // named subject is a number the reader cannot act on.
+                    //
+                    // Built from the FROZEN result fields, never the live probe:
+                    // attributing a completed check to whatever holds the default
+                    // route now is the freeze defect this screen already guards
+                    // against, where a phone that moved after the run rewrites
+                    // what the run was about.
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      measurementAttribution(
+                        notOnWifi: _resultNotOnWifi,
+                        interfaceName: _resultAp?.interfaceName,
+                        ssid: _resultAp?.ssid,
+                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: context.colors.textSecondary),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     // THE OPT-IN THE RESULT SCREEN NEVER HAD (round-4b, 2026-07-14).
                     //
@@ -3046,9 +3073,13 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             ? 'You are not on Wi-Fi right now.'
             : 'We checked your internet, but not your Wi-Fi.';
       case ConsumerOutcome.couldntComplete:
-        return (_engine?.notOnWifi ?? false)
-            ? 'You are not on Wi-Fi right now.'
-            : 'We could not finish the check.';
+        // ROUND 6, and it is ROUND 5 from the other side. See
+        // ConsumerVerdictMapper.headlineForCouldntComplete for the whole story;
+        // the copy lives there so a unit test can reach it.
+        return ConsumerVerdictMapper.headlineForCouldntComplete(
+          notOnWifi: _engine?.notOnWifi ?? false,
+          usableWifiMbps: _engine?.usableWifiMbps,
+        );
       case ConsumerOutcome.online:
         return 'You are online.';
       // ROUND 5. THIS IS THE SENTENCE KEITH'S PHONE COULD NOT PRINT. On a conference
@@ -3157,12 +3188,10 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             : 'We measured your internet, but could not read your Wi-Fi on '
                 'this device.';
       case ConsumerOutcome.couldntComplete:
-        // Neither side read — honest neutral line.
-        return (_engine?.notOnWifi ?? false)
-            ? 'You are not connected to Wi-Fi, and your internet could not be '
-                'measured. Join a Wi-Fi network, then try again.'
-            : 'We could not read your Wi-Fi or your internet. Make sure you '
-                'are on Wi-Fi, then try again.';
+        return ConsumerVerdictMapper.bodyForCouldntComplete(
+          notOnWifi: _engine?.notOnWifi ?? false,
+          usableWifiMbps: _engine?.usableWifiMbps,
+        );
       case ConsumerOutcome.online:
         // The speed test stalled but the device is clearly online (DNS + public
         // IP + cloud reachability) — lead with the reachable truth (Keith's
@@ -4362,9 +4391,46 @@ class _StatusChip extends StatelessWidget {
 /// sentence is the headline answer, bumped to `titleMedium` weight so it reads
 /// as the prominent takeaway. The comparison line is omitted entirely when null
 /// (internet not measured / ~0) — the honest verdict line then stands alone
-/// (GL-005). The two lines read as one container for screen readers.
+/// (GL-005). The lines read as one container for screen readers.
+///
+/// THE MOVE-AND-RE-RUN TIP, ADDED 2026-09-04, AND IT CAME FROM THE BOOK.
+///
+/// Book 3 ("Fix Your Own Wi-Fi") chapter 2 told the reader: *"Now do the thing
+/// the tip on the screen is asking you to do. Walk around your home and run it
+/// again in a few different spots. Watch the verdict flip."* **There was no such
+/// tip.** The book had described a better screen than the one that existed, and
+/// the mismatch survived the author, the QA gate and Keith's own review because
+/// all three read the words rather than looking at the screen.
+///
+/// Keith ruled on 2026-09-04 to fix BOTH SIDES: the book now instructs directly
+/// and no longer depends on any app string, and the app gains the nudge it
+/// should always have had. **Those are deliberately independent.** The book must
+/// never again assert what a particular build of this screen says, and this tip
+/// must stand on its own merits rather than as a prop for a paragraph.
+///
+/// Its merit: this screen's whole lesson is that the two roads move on their own.
+/// A reader who runs it once in one chair learns a number. A reader who runs it
+/// in the far corner and watches the verdict swing learns the concept. Reporting
+/// the answer is what a tool does; inviting the second reading is what teaching
+/// does.
+///
+/// **IT IS RENDERED INSIDE THE `cmp != null` BRANCH ON PURPOSE, AND THAT
+/// PLACEMENT IS THE GUARANTEE.** The tip may only appear when BOTH roads were
+/// actually measured — [_comparisonLine] already returns null when either side
+/// is missing or the internet rate is ~0. Telling someone to walk to another
+/// room and re-run, on a card that just said it could not read their Wi-Fi, is
+/// the "offer a control that cannot work" defect. Nesting it here makes that
+/// impossible by construction rather than by a second condition a later edit
+/// can forget to keep in step.
 class _VerdictLine extends StatelessWidget {
   const _VerdictLine({required this.verdict, required this.comparison});
+
+  /// The nudge shown under a real comparison. Plain, imperative, and it promises
+  /// only what the screen can deliver: that the answer OFTEN changes, not that
+  /// it will.
+  static const String moveAndRerunTip =
+      'Walk to another spot and run it again. This answer often changes when '
+      'you move.';
 
   final String verdict;
 
@@ -4379,7 +4445,7 @@ class _VerdictLine extends StatelessWidget {
     final String? cmp = comparison;
     return Semantics(
       container: true,
-      label: cmp == null ? verdict : '$verdict $cmp',
+      label: cmp == null ? verdict : '$verdict $cmp $moveAndRerunTip',
       child: ExcludeSemantics(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -4396,6 +4462,11 @@ class _VerdictLine extends StatelessWidget {
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                moveAndRerunTip,
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ],
           ],

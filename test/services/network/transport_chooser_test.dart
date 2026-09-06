@@ -119,6 +119,69 @@ void main() {
     });
   });
 
+  group('platform detection must not depend on prose', () {
+    // THE REAL STRING A WLAN Pi SENDS, copied verbatim from an R4 running
+    // wlanpi-core 2.1.10 on 2026-09-04. Keep it verbatim: the bug this guards
+    // was a case-sensitive substring match against exactly this sentence.
+    const String kRealPiSource =
+        'sysfs + ip addr on the WLAN Pi (no ethtool; it is not installed)';
+
+    test('the Pi source string does NOT contain the lowercase needle', () {
+      // The assertion that explains the bug. `contains('wlanpi')` was the whole
+      // test, and on a real Pi it is false -- so a genuine WLAN Pi was
+      // classified as a plain browser, `canEnumerate` went false, every row
+      // collapsed to "a browser is not allowed to see network interfaces", and
+      // the chooser rendered read-only ON TOP OF a screen listing eth0 at
+      // 1 Gbps. If this ever starts passing, the source wording changed and the
+      // fallback below is what keeps working.
+      expect(kRealPiSource.contains('wlanpi'), isFalse,
+          reason: 'this is why the old detection failed on real hardware');
+      expect(kRealPiSource.toLowerCase().contains('wlan pi'), isTrue,
+          reason: 'the spaced, cased spelling is what a Pi actually sends');
+    });
+
+    test('a browser is a browser when nothing says otherwise', () {
+      // Off web this returns a native platform, so the web branch is only
+      // reachable in a real browser. What we CAN pin here is the table: the web
+      // capability must stay unable to enumerate, because that is the thing the
+      // misdetection wrongly applied to a Pi.
+      final TransportCapability web =
+          kTransportCapabilities[TransportPlatform.web]!;
+      expect(web.canEnumerate, isFalse);
+      final TransportCapability pi =
+          kTransportCapabilities[TransportPlatform.wlanPi]!;
+      expect(pi.canEnumerate, isTrue,
+          reason: 'the Pi enumerates its own interfaces; that is the point');
+      expect(pi.canSelectLocal, SelectSupport.yes);
+      expect(pi.canSelectInternet, SelectSupport.yes);
+    });
+
+    test('a Pi-classified table yields CHOOSABLE rows, not a dead card', () {
+      // The user-visible consequence, asserted end to end. Misdetected as web,
+      // every row is absent and nothing is choosable, which is exactly what
+      // Keith saw. Classified correctly, the Ethernet row is live.
+      final List<TransportOption> asPi = buildTransportOptions(
+        platform: TransportPlatform.wlanPi,
+        scope: TransportScope.internet,
+        links: r4LinkTable(),
+      );
+      expect(asPi.any((TransportOption o) => o.isChoosable), isTrue,
+          reason: 'a Pi must offer at least one choosable transport');
+
+      final List<TransportOption> asWeb = buildTransportOptions(
+        platform: TransportPlatform.web,
+        scope: TransportScope.internet,
+        links: r4LinkTable(),
+      );
+      expect(asWeb.any((TransportOption o) => o.isChoosable), isFalse,
+          reason: 'a plain browser can choose nothing -- correct, and the '
+              'misdetection is what wrongly applied this to a Pi');
+      // And the contradiction that made it obvious on screen: the browser copy
+      // denies interface visibility while the Pi table plainly has interfaces.
+      expect(asWeb.first.reason.toLowerCase(), contains('browser'));
+    });
+  });
+
   group('THE GUARANTEE: every unavailable option says why', () {
     test('across every platform and both scopes, no silent absence', () {
       for (final TransportPlatform p in TransportPlatform.values) {
@@ -139,6 +202,191 @@ void main() {
           }
         }
       }
+    });
+
+    // KEITH RULED THE COLLAPSED ROW ON 2026-09-04: short reason always
+    // visible, long form on tap. He rejected hiding the explanation behind a
+    // "Why?" link because a person who does not tap sees a greyed row and no
+    // explanation -- which is exactly what the test above exists to prevent.
+    //
+    // So the short form inherits the SAME guarantee, and it inherits it for
+    // EVERY state rather than only the un-choosable ones: the short string is
+    // the one a user is guaranteed to see on every row, choosable or not.
+    test('the SHORT reason carries the same promise, on every row', () {
+      for (final TransportPlatform p in TransportPlatform.values) {
+        for (final TransportScope s in TransportScope.values) {
+          final List<TransportOption> rows = buildTransportOptions(
+            platform: p,
+            scope: s,
+            links: r4LinkTable(),
+          );
+          for (final TransportOption o in rows) {
+            expect(o.shortReason.trim(), isNotEmpty,
+                reason: 'the collapsed ${o.kind.label} row on $p / $s would '
+                    'render with no explanation at all');
+          }
+        }
+      }
+    });
+
+    // The short form exists to fit a 330px phone row without wrapping to three
+    // lines. A "short" string that is as long as the long one is the option
+    // Keith rejected, arrived at by drift instead of by decision.
+    test('the short form is actually short, and shorter than the long one', () {
+      for (final TransportPlatform p in TransportPlatform.values) {
+        for (final TransportScope s in TransportScope.values) {
+          final List<TransportOption> rows = buildTransportOptions(
+            platform: p,
+            scope: s,
+            links: r4LinkTable(),
+          );
+          for (final TransportOption o in rows) {
+            expect(o.shortReason.length, lessThanOrEqualTo(72),
+                reason: '${o.kind.label} on $p / $s: "${o.shortReason}" is too '
+                    'long for a collapsed row');
+            expect(o.shortReason.length, lessThanOrEqualTo(o.reason.length),
+                reason: '${o.kind.label} on $p / $s: the short form is not '
+                    'shorter than the long form, so "More" would do nothing');
+          }
+        }
+      }
+    });
+
+    // The metered warning is the one fact on this screen that costs the user
+    // money if they miss it, so it must survive into the collapsed form -- a
+    // cost warning that only appears after a tap is not a warning.
+    //
+    // BUT IT IS SCOPED TO THE ROWS WHERE MONEY CAN ACTUALLY BE SPENT, and that
+    // scoping is deliberate rather than an oversight. This test first asserted
+    // the warning on an iOS present-but-idle cellular row and failed, which was
+    // the test being wrong: on iOS both scopes are SelectSupport.no, so the
+    // user CANNOT move a test onto cellular, so there is no impending spend to
+    // warn about. Warning there would be noise attached to an action that does
+    // not exist. The two rows that can cost money are the one already carrying
+    // traffic and the one you are able to select.
+    test('a cellular path you can CHOOSE warns about data in the SHORT form',
+        () {
+      LinkInfo cellular() => LinkInfo(
+            name: 'rmnet0',
+            kind: LinkKind.wired,
+            carrier: true,
+            addresses: <LinkAddress>[addr('10.44.2.9')],
+          );
+      List<LinkInfo> onWifi() => <LinkInfo>[
+            LinkInfo(
+              name: 'wlan0',
+              kind: LinkKind.wifi,
+              carrier: true,
+              isDefaultRouteV4: true,
+              addresses: <LinkAddress>[addr('192.168.8.187')],
+            ),
+          ];
+
+      // Android can bind to a chosen network, so this row is selectable and
+      // choosing it spends data.
+      final TransportOption selectable = buildTransportOptions(
+        platform: TransportPlatform.android,
+        scope: TransportScope.internet,
+        links: onWifi(),
+        cellularLink: cellular(),
+      ).firstWhere((TransportOption o) => o.kind == TransportKind.cellular);
+      expect(selectable.isChoosable, isTrue);
+      expect(selectable.shortReason.toLowerCase(), contains('metered'));
+
+      // And the row that is already carrying traffic, where the data is being
+      // spent right now. The cellular link has to appear in the link table AS
+      // WELL as in cellularLink for this state: "active" means it holds the
+      // default route, and selectDefaultLink only ever looks at the table.
+      // That is how a real device reports it -- a modem presents as a network
+      // device, which is why cellularLink is passed separately at all.
+      final LinkInfo onCell = LinkInfo(
+        name: 'rmnet0',
+        kind: LinkKind.wired,
+        carrier: true,
+        isDefaultRouteV4: true,
+        addresses: <LinkAddress>[addr('10.44.2.9')],
+      );
+      final TransportOption active = buildTransportOptions(
+        platform: TransportPlatform.android,
+        scope: TransportScope.internet,
+        links: <LinkInfo>[onCell],
+        cellularLink: onCell,
+      ).firstWhere((TransportOption o) => o.kind == TransportKind.cellular);
+      expect(active.state, TransportState.active);
+      expect(active.shortReason.toLowerCase(), contains('metered'));
+    });
+  });
+
+  // THE PROBE PATH. `probed` has been a parameter of buildTransportOptions
+  // since it was written and NOTHING populated it until 2026-09-04. These
+  // pin the three outcomes the "Try it now" button now drives.
+  group('the probe answers what the platform table cannot', () {
+    List<LinkInfo> multiHomedMac() => <LinkInfo>[
+          LinkInfo(
+            name: 'en5',
+            kind: LinkKind.wired,
+            carrier: true,
+            isDefaultRouteV4: true,
+            addresses: <LinkAddress>[
+              const LinkAddress(address: '192.168.8.234', prefixLength: 24, isIPv4: true),
+            ],
+          ),
+          LinkInfo(
+            name: 'en0',
+            kind: LinkKind.wifi,
+            carrier: true,
+            addresses: <LinkAddress>[
+              const LinkAddress(address: '192.168.8.134', prefixLength: 24, isIPv4: true),
+            ],
+          ),
+        ];
+
+    TransportOption wifiRow(Map<String, bool> probed) =>
+        buildTransportOptions(
+          platform: TransportPlatform.macos,
+          scope: TransportScope.internet,
+          links: multiHomedMac(),
+          probed: probed,
+        ).firstWhere((TransportOption o) => o.kind == TransportKind.wifi);
+
+    test('unprobed is NOT TESTED -- an open question, not a refusal', () {
+      final TransportOption o = wifiRow(const <String, bool>{});
+      expect(o.state, TransportState.presentUntested);
+      expect(o.isChoosable, isFalse);
+      expect(o.shortReason, contains('Not checked'));
+    });
+
+    test('a probe that succeeded makes the row selectable', () {
+      final TransportOption o = wifiRow(const <String, bool>{'en0': true});
+      expect(o.state, TransportState.selectable);
+      expect(o.isChoosable, isTrue);
+      expect(o.reason, contains('succeeded'));
+    });
+
+    test('a probe that failed is CANNOT PIN, and names the likely cause', () {
+      final TransportOption o = wifiRow(const <String, bool>{'en0': false});
+      expect(o.state, TransportState.presentNotSelectable);
+      expect(o.isChoosable, isFalse);
+      expect(o.reason, contains('different gateway'));
+    });
+
+    // The three outcomes must stay visibly different. Rendering "we will not"
+    // and "we have not found out yet" identically is the two-kinds-of-null
+    // error this file has already paid for twice.
+    test('the three outcomes are distinguishable, not collapsed', () {
+      final Set<TransportState> states = <TransportState>{
+        wifiRow(const <String, bool>{}).state,
+        wifiRow(const <String, bool>{'en0': true}).state,
+        wifiRow(const <String, bool>{'en0': false}).state,
+      };
+      expect(states.length, 3);
+    });
+
+    // A probe result for a DIFFERENT interface must not leak onto this row.
+    test('a probe result is keyed to its own interface', () {
+      final TransportOption o = wifiRow(const <String, bool>{'en5': true});
+      expect(o.state, TransportState.presentUntested,
+          reason: 'en5 being probeable says nothing about en0');
     });
   });
 

@@ -22,21 +22,31 @@
 // `media: autoselect (none)` / `status: inactive`. So the copy says to check
 // both ends.
 
-import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show InternetAddress;
+
 import 'package:flutter/material.dart';
 
+import '../../../services/network/link_bind_probe.dart';
 import '../../../services/network/link_info.dart';
 import '../../../services/network/link_table_service.dart';
 import '../../../services/network/transport_chooser.dart';
+import '../../../services/network/transport_preference.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 
 class LinkInfoScreen extends StatefulWidget {
-  const LinkInfoScreen({super.key, this.service});
+  const LinkInfoScreen({super.key, this.service, this.preference, this.probe});
 
   final LinkTableService? service;
+
+  /// Injectable so a widget test can drive the chooser without a platform
+  /// channel. Null means the real one.
+  final TransportPreference? preference;
+
+  /// Injectable so a widget test can settle "Try it now" without opening a
+  /// socket. Null means the real one.
+  final LinkBindProbe? probe;
 
   @override
   State<LinkInfoScreen> createState() => _LinkInfoScreenState();
@@ -107,7 +117,11 @@ class _LinkInfoScreenState extends State<LinkInfoScreen> {
         children: <Widget>[
           _Verdict(carrying: carrying, table: t),
           const SizedBox(height: AppSpacing.sm),
-          _Chooser(table: t),
+          _Chooser(
+            table: t,
+            preference: widget.preference,
+            probe: widget.probe,
+          ),
           const SizedBox(height: AppSpacing.sm),
           for (final LinkInfo l in shown) ...<Widget>[
             _LinkCard(link: l),
@@ -150,26 +164,165 @@ class _LinkInfoScreenState extends State<LinkInfoScreen> {
 /// saying why reads as a bug, which is the same rule as the join screen's
 /// absent passphrase box and the same rule that produced NotOnWifiCard in June.
 ///
-/// It is READ-ONLY here on purpose. Showing the chooser before wiring it into
-/// the tools lets the design be judged on its own, and an interactive control
-/// that silently failed to move the traffic would be worse than none.
-class _Chooser extends StatelessWidget {
-  const _Chooser({required this.table});
+/// IT IS NO LONGER READ-ONLY. Keith looked at three laid-out candidates on
+/// 2026-09-04 and picked this one: **the card that already explains the paths
+/// becomes the control that chooses between them.** The two rejected layouts
+/// both moved the control away from the explanation - into the verdict card, or
+/// into a card of its own above it - and both were rejected for the same
+/// reason: they put a disabled row on one part of the screen and the sentence
+/// explaining it on another. **That is the greyed-without-saying-why defect
+/// with a scroll bar in the middle of it**, and it is precisely what this file
+/// was written to prevent. Keeping choice and reason in one row is the whole
+/// design, not a layout preference.
+///
+/// THREE THINGS THIS WIDGET REFUSES TO DO:
+///
+///  * It never shows a selected row without saying whether the choice is being
+///    honoured. A stale preference gets a banner, because a radio button that
+///    is filled in while the traffic goes elsewhere is a lie the user cannot
+///    see. [ResolvedTransport.isStale] exists for exactly this.
+///  * It never silently swallows a failed write. shared_preferences can fail,
+///    and a selected radio that is gone next launch is worse than a refusal.
+///  * It never leaves a row saying NOT TESTED with no way to test it. That was
+///    the third thing Keith ruled on 2026-09-04, and it is the one that changes
+///    behaviour rather than layout - see [_probe].
+class _Chooser extends StatefulWidget {
+  const _Chooser({required this.table, this.preference, this.probe});
 
   final LinkTable table;
+  final TransportPreference? preference;
+  final LinkBindProbe? probe;
 
-  TransportPlatform get _platform {
-    if (kIsWeb) {
-      return table.source != null && table.source!.contains('wlanpi')
-          ? TransportPlatform.wlanPi
-          : TransportPlatform.web;
+  @override
+  State<_Chooser> createState() => _ChooserState();
+}
+
+class _ChooserState extends State<_Chooser> {
+  late final TransportPreference _pref =
+      widget.preference ?? TransportPreference();
+  late final LinkBindProbe _probe = widget.probe ?? LinkBindProbe();
+
+  TransportKind? _chosen;
+  bool _loaded = false;
+
+  /// Interface name -> did a bound connection get through. Populated ONLY by
+  /// [_probe]; an interface absent from this map has not been tested, which the
+  /// rows render differently from one that was tested and failed.
+  ///
+  /// DELIBERATELY NOT PERSISTED. The answer belongs to how this machine is
+  /// wired RIGHT NOW - a different dock, a different network, a cable moved,
+  /// and it changes. A remembered "it worked" that is quietly six weeks old is
+  /// the same class of claim as a negotiated speed printed beside a dead port.
+  final Map<String, bool> _probed = <String, bool>{};
+
+  /// The kind currently being probed, so its row can say so rather than
+  /// appearing to do nothing for up to five seconds.
+  TransportKind? _probing;
+
+  /// Rows whose long reason the user has opened.
+  final Set<TransportKind> _expanded = <TransportKind>{};
+
+  /// Set when a write did not land. The UI says so; see [_choose].
+  bool _writeFailed = false;
+
+  TransportPlatform get _platform =>
+      currentTransportPlatform(tableSource: widget.table.source);
+
+  @override
+  void initState() {
+    super.initState();
+    _read();
+  }
+
+  Future<void> _read() async {
+    final TransportKind? k = await _pref.read();
+    if (!mounted) return;
+    setState(() {
+      _chosen = k;
+      _loaded = true;
+    });
+  }
+
+  /// Persist a choice, or clear it when [kind] is null ("let the system
+  /// decide").
+  ///
+  /// THE OPTIMISTIC UPDATE IS DELIBERATE AND SO IS THE ROLLBACK. The radio
+  /// moves at once because a control that lags a tap feels broken, but a write
+  /// that did not land puts the old value back and says so. Showing a selected
+  /// radio for a preference that will be gone next launch is the failure this
+  /// guards - and [TransportPreference.write] returns a bool precisely so a
+  /// caller can tell the difference.
+  Future<void> _choose(TransportKind? kind) async {
+    final TransportKind? previous = _chosen;
+    setState(() {
+      _chosen = kind;
+      _writeFailed = false;
+    });
+    final bool ok = await _pref.write(kind);
+    if (!mounted || ok) return;
+    setState(() {
+      _chosen = previous;
+      _writeFailed = true;
+    });
+  }
+
+  /// Run one bound connection from [option]'s interface and record what
+  /// happened.
+  ///
+  /// KEITH RULED THIS ON 2026-09-04, and it was not one of the two questions he
+  /// was asked - it was the one underneath them. On macOS and Windows an
+  /// internet-scope test is [SelectSupport.mustProbe]: the answer belongs to
+  /// the machine, not the platform, so the honest state is NOT TESTED. The
+  /// alternative considered was leaving that row greyed. **It was rejected
+  /// because nothing else in the app would ever test it** - there is no other
+  /// trigger - so the row would have read NOT TESTED forever, which is a dead
+  /// end that looks like a bug.
+  ///
+  /// Both outcome strings already existed in `_supportRow` for
+  /// `probed[name] == true` and `== false`, and the `probed` map has been a
+  /// parameter of [buildTransportOptions] since it was written. **Nothing in
+  /// the app populated it until this method.**
+  ///
+  /// cloudflare.com:443 is the destination because it is the first host in
+  /// [DnsProbeService]'s own stable list, and the scope being tested here is
+  /// the internet one. Probing a local address would answer a different
+  /// question than the row is asking.
+  Future<void> _runProbe(TransportOption option) async {
+    final LinkInfo? link = option.link;
+    if (link == null || _probing != null) return;
+
+    LinkAddress? v4;
+    for (final LinkAddress a in link.addresses) {
+      if (a.isIPv4 && !a.isLinkLocal) {
+        v4 = a;
+        break;
+      }
     }
-    if (Platform.isMacOS) return TransportPlatform.macos;
-    if (Platform.isWindows) return TransportPlatform.windows;
-    if (Platform.isLinux) return TransportPlatform.linux;
-    if (Platform.isIOS) return TransportPlatform.ios;
-    if (Platform.isAndroid) return TransportPlatform.android;
-    return TransportPlatform.macos;
+    // No global v4 address means there is nothing to bind to. The row already
+    // says why in that case, so this is a guard rather than a state.
+    if (v4 == null) return;
+
+    setState(() => _probing = option.kind);
+    Map<String, bool> result = const <String, bool>{};
+    try {
+      result = await _probe.probe(
+        sourceAddresses: <String, InternetAddress>{
+          link.name: InternetAddress(v4.address)
+        },
+        host: 'cloudflare.com',
+        port: 443,
+      );
+    } on Object {
+      // LinkBindProbe does not throw, but an invalid address literal from a
+      // link table we did not write could. A probe that could not run leaves
+      // the row UNTESTED, which is true. It must never record a false.
+      result = const <String, bool>{};
+    }
+    if (!mounted) return;
+    setState(() {
+      _probed.addAll(result);
+      _probing = null;
+    });
   }
 
   @override
@@ -178,7 +331,25 @@ class _Chooser extends StatelessWidget {
     final List<TransportOption> rows = buildTransportOptions(
       platform: _platform,
       scope: TransportScope.internet,
-      links: table.links,
+      links: widget.table.links,
+      probed: _probed,
+    );
+
+    // Can anything be chosen on this device at all? On iOS and on the web every
+    // row is a refusal, and offering radio buttons that cannot do anything
+    // would be the control-that-does-not-work defect in its purest form. The
+    // same screen is therefore a CHOOSER on a Mac and a REPORT on a phone, and
+    // that falls out of the capability table rather than a special case anyone
+    // has to remember.
+    final bool anyChoosable = rows.any((TransportOption o) => o.isChoosable);
+    final bool anyProbable = rows.any(
+        (TransportOption o) => o.state == TransportState.presentUntested);
+    final bool interactive = _loaded && (anyChoosable || anyProbable);
+
+    final ResolvedTransport resolved = resolveTransport(
+      chosen: _chosen,
+      options: rows,
+      activeLink: selectDefaultLink(widget.table.links),
     );
 
     return Container(
@@ -186,33 +357,385 @@ class _Chooser extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: c.border),
+        border: Border.all(color: interactive ? c.primary : c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Which path a test would take',
+          Text(interactive ? 'Which path the tools use' : 'Which path a test would take',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: c.textPrimary)),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'For a test that reaches the internet. A local-network test can '
-            'sometimes be pinned where an internet test cannot.',
+            interactive
+                ? 'One choice. Every tool in the app honours it.'
+                : 'For a test that reaches the internet. A local-network test '
+                    'can sometimes be pinned where an internet test cannot.',
             style: TextStyle(fontSize: 13, color: c.textTertiary),
           ),
+          if (resolved.isStale) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            _ChooserBanner(
+              tone: c.statusWarning,
+              text: _staleText(resolved),
+            ),
+          ],
+          if (_writeFailed) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            _ChooserBanner(
+              tone: c.statusDanger,
+              text: 'That choice could not be saved, so it has been put back. '
+                  'The tools are still following the system.',
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
+          if (interactive)
+            _PickRow(
+              label: 'Let the system decide',
+              shortReason: _systemSubtitle(resolved),
+              selected: _chosen == null,
+              enabled: true,
+              onTap: () => _choose(null),
+            ),
           for (final TransportOption o in rows) ...<Widget>[
-            _ChooserRow(option: o),
+            if (interactive)
+              _PickRow(
+                label: o.kind.label,
+                badge: _badgeFor(o.state),
+                badgeTone: _toneFor(o.state, c),
+                shortReason: o.shortReason,
+                longReason: o.reason,
+                expanded: _expanded.contains(o.kind),
+                onToggleReason: () => setState(() {
+                  if (!_expanded.remove(o.kind)) _expanded.add(o.kind);
+                }),
+                selected: _chosen == o.kind,
+                enabled: o.isChoosable,
+                onTap: o.isChoosable ? () => _choose(o.kind) : null,
+                onProbe: o.state == TransportState.presentUntested
+                    ? () => _runProbe(o)
+                    : null,
+                probing: _probing == o.kind,
+              )
+            else
+              _ChooserRow(option: o),
             const SizedBox(height: AppSpacing.xxs),
           ],
         ],
       ),
     );
   }
+
+  /// What the "let the system decide" row says underneath itself.
+  ///
+  /// It reports the CURRENT default route rather than a generic sentence,
+  /// because "the system decides" is not information and "right now that is
+  /// Ethernet, en5" is.
+  String _systemSubtitle(ResolvedTransport resolved) {
+    final LinkInfo? active = selectDefaultLink(widget.table.links);
+    if (active == null) {
+      return 'The routing table picks. Nothing currently holds the default '
+          'route.';
+    }
+    final TransportKind? kind = transportKindOf(active);
+    final String named = kind == null ? active.name : '${kind.label}, ${active.name}';
+    return 'The routing table picks. Right now that is $named.';
+  }
+
+  /// The stale-choice sentence. Every branch names BOTH what was chosen and
+  /// what is actually carrying the traffic, because a banner that says only
+  /// "unavailable" leaves the user not knowing what they are measuring.
+  String _staleText(ResolvedTransport resolved) {
+    final String want = resolved.chosen?.label ?? 'Your choice';
+    final LinkInfo? on = resolved.link;
+    final TransportKind? onKind = on == null ? null : transportKindOf(on);
+    final String running = onKind?.label ?? on?.name ?? 'the system default';
+    return switch (resolved.resolution) {
+      TransportResolution.chosenUnavailable =>
+        'You chose $want and it is not available. Tests are running over '
+            '$running until it is back.',
+      TransportResolution.chosenNotSelectable =>
+        'You chose $want, and this device will not move a test onto it. Tests '
+            'are running over $running.',
+      TransportResolution.chosenUntested =>
+        'You chose $want, and whether a test can be pinned to it has not been '
+            'checked on this machine. Tests are running over $running until it '
+            'is.',
+      _ => 'Tests are running over $running.',
+    };
+  }
 }
 
+String _badgeFor(TransportState s) => switch (s) {
+      TransportState.active => 'IN USE',
+      TransportState.selectable => 'AVAILABLE',
+      TransportState.presentUntested => 'NOT TESTED',
+      TransportState.presentNotSelectable => 'CANNOT PIN',
+      TransportState.presentNoLink => 'NO LINK',
+      TransportState.absent => 'NOT PRESENT',
+    };
+
+Color _toneFor(TransportState s, AppColorScheme c) => switch (s) {
+      TransportState.active => c.statusSuccess,
+      TransportState.selectable => c.textPrimary,
+      TransportState.presentUntested => c.statusWarning,
+      TransportState.presentNotSelectable => c.textTertiary,
+      TransportState.presentNoLink => c.textTertiary,
+      TransportState.absent => c.textTertiary,
+    };
+
+/// A selectable transport row.
+///
+/// THE SHORT REASON IS ALWAYS RENDERED. Keith ruled on 2026-09-04 between three
+/// treatments, and the one he rejected outright was hiding the whole
+/// explanation behind a "Why?" link: a person who does not tap sees greyed rows
+/// and no explanation, which is the exact reading this feature exists to
+/// prevent. So [shortReason] is unconditional and [longReason] is the extra.
+class _PickRow extends StatelessWidget {
+  const _PickRow({
+    required this.label,
+    required this.shortReason,
+    required this.selected,
+    required this.enabled,
+    this.badge,
+    this.badgeTone,
+    this.longReason,
+    this.expanded = false,
+    this.onToggleReason,
+    this.onTap,
+    this.onProbe,
+    this.probing = false,
+  });
+
+  final String label;
+  final String shortReason;
+  final String? longReason;
+  final bool expanded;
+  final VoidCallback? onToggleReason;
+  final bool selected;
+  final bool enabled;
+  final String? badge;
+  final Color? badgeTone;
+  final VoidCallback? onTap;
+  final VoidCallback? onProbe;
+  final bool probing;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme c = context.colors;
+    // A row that cannot be chosen is dimmed and outlined rather than removed.
+    // It still carries its reason, and it still occupies the place a person
+    // expects to find it.
+    final Color bg = selected ? c.surface2 : c.surface0;
+    final Color edge = selected
+        ? c.primary
+        : enabled
+            ? c.border
+            : c.borderStrong.withValues(alpha: 0.35);
+    // The long form is only worth offering when it says more than the short
+    // one. Identical strings would give the user a control that does nothing.
+    final bool hasMore = longReason != null && longReason != shortReason;
+
+    return Semantics(
+      button: enabled,
+      selected: selected,
+      label: '$label. ${badge ?? ''} $shortReason',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.xxs),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          border: Border.all(color: edge),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.control),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs + 3, vertical: AppSpacing.xs + 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _Radio(selected: selected, enabled: enabled),
+                  const SizedBox(width: AppSpacing.xs + 3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Wrap(
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xxs,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: <Widget>[
+                            Text(label,
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: enabled
+                                        ? c.textPrimary
+                                        : c.textDisabled)),
+                            if (badge != null)
+                              _Chip(
+                                  label: badge!,
+                                  tone: badgeTone ?? c.textTertiary),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          expanded && hasMore ? longReason! : shortReason,
+                          style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.45,
+                              color: enabled ? c.textSecondary : c.textTertiary),
+                        ),
+                        if (hasMore)
+                          GestureDetector(
+                            onTap: onToggleReason,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 3),
+                              child: Text(expanded ? 'Less' : 'More',
+                                  style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: c.primary)),
+                            ),
+                          ),
+                        if (onProbe != null) ...<Widget>[
+                          const SizedBox(height: AppSpacing.xs),
+                          _TryItNow(onPressed: probing ? null : onProbe,
+                              busy: probing),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Try it now" affordance on a NOT TESTED row.
+///
+/// It says what it will do rather than naming a verb with no object. "Try it
+/// now" on its own could mean "try the network"; the busy state names the one
+/// action actually taken, which is a single connection.
+class _TryItNow extends StatelessWidget {
+  const _TryItNow({required this.onPressed, required this.busy});
+
+  final VoidCallback? onPressed;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme c = context.colors;
+    if (busy) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          SizedBox(
+            width: 13,
+            height: 13,
+            child: CircularProgressIndicator(strokeWidth: 2, color: c.primary),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text('Trying one connection...',
+              style: TextStyle(fontSize: 12.5, color: c.textSecondary)),
+        ],
+      );
+    }
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: c.primary,
+        side: BorderSide(color: c.primary),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+        minimumSize: const Size(0, 36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.control)),
+      ),
+      child: const Text('Try it now',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _Radio extends StatelessWidget {
+  const _Radio({required this.selected, required this.enabled});
+
+  final bool selected;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme c = context.colors;
+    final Color edge = selected
+        ? c.primary
+        : enabled
+            ? c.borderStrong
+            : c.textDisabled;
+    return Container(
+      width: 18,
+      height: 18,
+      margin: const EdgeInsets.only(top: 2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: edge, width: 2),
+      ),
+      child: selected
+          ? Center(
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration:
+                    BoxDecoration(shape: BoxShape.circle, color: c.primary),
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _ChooserBanner extends StatelessWidget {
+  const _ChooserBanner({required this.tone, required this.text});
+
+  final Color tone;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme c = context.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs + 4, vertical: AppSpacing.xs + 2),
+      decoration: BoxDecoration(
+        color: c.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        border: Border.all(color: tone),
+      ),
+      child: Text(text,
+          style: TextStyle(fontSize: 13, height: 1.45, color: c.textSecondary)),
+    );
+  }
+}
+
+/// The READ-ONLY row, still used on every platform that cannot choose.
+///
+/// iOS and the web keep exactly the screen they shipped with: both scopes are
+/// [SelectSupport.no] there, so no row is choosable and none is probable. **A
+/// radio button that cannot do anything is worse than no radio button**, so the
+/// card stays a report. This is the part of the original design that the
+/// 2026-09-04 ruling did not change.
 class _ChooserRow extends StatelessWidget {
   const _ChooserRow({required this.option});
   final TransportOption option;
@@ -220,14 +743,8 @@ class _ChooserRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme c = context.colors;
-    final (Color tone, String badge) = switch (option.state) {
-      TransportState.active => (c.statusSuccess, 'IN USE'),
-      TransportState.selectable => (c.textPrimary, 'AVAILABLE'),
-      TransportState.presentUntested => (c.statusWarning, 'NOT TESTED'),
-      TransportState.presentNotSelectable => (c.textTertiary, 'CANNOT PIN'),
-      TransportState.presentNoLink => (c.textTertiary, 'NO LINK'),
-      TransportState.absent => (c.textTertiary, 'NOT PRESENT'),
-    };
+    final Color tone = _toneFor(option.state, c);
+    final String badge = _badgeFor(option.state);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
