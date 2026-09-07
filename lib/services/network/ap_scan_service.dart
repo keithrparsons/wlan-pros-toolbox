@@ -16,7 +16,8 @@ import 'pi_backend_client.dart';
 // TCC grant is two things to keep in sync, and the native token vocabulary
 // ("authorized" / "denied" / "restricted" / "notDetermined") is already
 // resolved by LocationAuthStatus.fromToken.
-import 'wifi_info_service.dart' show LocationAuthStatus;
+import 'wifi_info_service.dart' show LocationAuthStatus, WifiInfoUnavailable;
+import 'windows_wifi_reader.dart' show WindowsWifiReader;
 
 /// What a scan row's BSSID field tells us about that row.
 ///
@@ -412,10 +413,6 @@ enum ApScanPlatformStatus {
   /// API at all. This is a true OS hard-no, not an unwired path.
   appleRestricted,
 
-  /// Windows can enumerate nearby APs through its Native Wifi API
-  /// (`WlanGetNetworkBssList`), but that path is not wired into this tool yet.
-  windowsNotWired,
-
   /// Any other platform (web, Linux) where the scan is not available.
   unavailable,
 }
@@ -438,13 +435,15 @@ class ApScanUnavailable implements Exception {
 
 /// Reads nearby APs through the native scan bridge.
 ///
-/// Wired for Android and macOS: [isSupportedPlatform] is true on both and [scan]
+/// Wired for Android, macOS and Windows: [isSupportedPlatform] is true on all
+/// three and [scan]
 /// throws [ApScanUnavailable] everywhere else rather than fabricating a list.
 /// Both platforms answer on the SAME channel name with the SAME payload shape,
 /// so this service has no per-platform branch in its mapping. iOS blocks
 /// nearby-AP scanning at the OS level (no scan API). Windows CAN enumerate
 /// nearby APs (`WlanGetNetworkBssList`), but that path is deliberately NOT
-/// wired here yet — see [ApScanPlatformStatus.windowsNotWired].
+/// wired on Windows since 2026-09-06, once its Native Wifi path was executed
+/// against real hardware.
 /// [platformStatus] reports which case applies so the UI can show honest
 /// per-platform copy.
 ///
@@ -471,7 +470,9 @@ class ApScanService {
     bool? piBackedOverride,
     PiBackendClient? piClient,
     String piInterface = 'wlan0',
+    Future<List<Map<String, Object?>>> Function()? windowsScan,
   })  : _invoke = invoke ?? _defaultInvoke,
+        _windowsScan = windowsScan ?? _defaultWindowsScan,
         _invokeWifiInfo = invokeWifiInfo ?? invoke ?? _defaultWifiInfoInvoke,
         _platform = platformOverride ?? _hostOperatingSystem(),
         _piBacked = piBackedOverride ?? (kIsWeb && PiBackend.available) {
@@ -512,11 +513,46 @@ class ApScanService {
   /// stated in prose is a rule the next maker sincerely believes they followed
   /// (GL-013). Edit this set and the catalog follows automatically.
   ///
-  /// Values are `Platform.operatingSystem` strings. Windows is deliberately
-  /// absent. Its enumeration path exists ([WindowsWifiReader.scanNearbyBss]) but
-  /// is written-not-executed against real hardware, and unverified code does not
-  /// go live ([[feedback_gate_until_clean]]).
-  static const Set<String> wiredPlatforms = <String>{'android', 'macos'};
+  /// Values are `Platform.operatingSystem` strings.
+  ///
+  /// WINDOWS JOINED 2026-09-06, and the gate it was held behind was satisfied
+  /// rather than waived. `[[feedback_gate_until_clean]]` kept it out because the
+  /// Native Wifi enumeration was written-not-executed; it was executed that day
+  /// against a real Intel BE200 on the Framework box and the run is reproducible
+  /// as `test/services/network/windows_scan_proof_live_test.dart`:
+  ///
+  ///   57 BSS rows, no access violation, so the hand-written dart:ffi struct
+  ///   walk and free discipline hold. 23 rows on 6 GHz (ch 21/85/117/149/165/
+  ///   197), 17 on 5 GHz, 17 on 2.4 GHz, across 30 AP radios. Every row carried
+  ///   a 6-octet BSSID, a dBm inside -89..-33, and a channel/band resolved
+  ///   through `frequencyToChannel`. Zero nulls outside SSID.
+  ///
+  /// The module's open question about a stale driver list was also ANSWERED, not
+  /// deferred: two enumerations 12 s apart with no explicit `WlanScan` moved the
+  /// set by 7 appeared / 4 vanished, so the driver refreshes on its own cadence
+  /// and this path does not need to trigger a scan first.
+  ///
+  /// STILL NOT PROVEN, so nothing downstream may assume it: that every AP on air
+  /// appears here (the driver returns what its last scan found), and that the
+  /// channel-width / country IE parse at the +8 offset is correct — a wrong
+  /// offset yields null rather than a wrong value, so a null stays ambiguous.
+  static const Set<String> wiredPlatforms = <String>{
+    'android',
+    'macos',
+    'windows',
+  };
+
+  /// WINDOWS DOES NOT HAVE A METHOD CHANNEL, and that is the whole reason this
+  /// field exists. Android and macOS answer `com.wlanpros.toolbox/ap_scan` from
+  /// native code; Windows answers nothing, because its enumeration is pure Dart
+  /// over dart:ffi. Routing Windows through [_invoke] therefore does not fail
+  /// politely -- it throws MissingPluginException, which is NOT a
+  /// PlatformException and so slips past the catch below and reaches the user
+  /// raw. Keith saw exactly that on 2026-09-06.
+  final Future<List<Map<String, Object?>>> Function() _windowsScan;
+
+  static Future<List<Map<String, Object?>>> _defaultWindowsScan() =>
+      WindowsWifiReader().scanNearbyBss();
 
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
   final Future<Object?> Function(String method, [dynamic args])
@@ -572,6 +608,8 @@ class ApScanService {
         return 'Android';
       case 'macos':
         return 'macOS';
+      case 'windows':
+        return 'Windows';
       default:
         return null;
     }
@@ -579,12 +617,15 @@ class ApScanService {
 
   /// Categorizes why the scan is or isn't available here, for honest UI copy.
   ///
-  /// Reports what THIS tool has wired up today. Windows genuinely can enumerate
-  /// nearby APs via Native Wifi; that path just isn't wired here yet, so it maps
-  /// to [ApScanPlatformStatus.windowsNotWired] rather than a false OS-block.
+  /// Reports what THIS tool has wired up today.
+  ///
+  /// `windowsNotWired` was REMOVED on 2026-09-06 rather than left unreachable.
+  /// Windows is now a wired platform, so the branch could never fire again, and
+  /// a status whose own doc comment says "not wired into this tool yet" is a
+  /// claim the code no longer supports. A dead enum value that lies is worse
+  /// than one deleted.
   ApScanPlatformStatus get platformStatus {
     if (isSupportedPlatform) return ApScanPlatformStatus.supported;
-    if (_platform == 'windows') return ApScanPlatformStatus.windowsNotWired;
     // iOS is the only true OS hard-no: no public scan API at all.
     if (_platform == 'ios') return ApScanPlatformStatus.appleRestricted;
     return ApScanPlatformStatus.unavailable;
@@ -641,6 +682,31 @@ class ApScanService {
         ApScanUnavailableReason.unsupportedPlatform,
       );
     }
+    // WINDOWS: pure Dart over dart:ffi, no channel. See [_windowsScan].
+    //
+    // There is no Location gate and no scan throttle here: the live proof run
+    // (windows_scan_proof_live_test.dart) enumerated 57 BSS with no prompt of
+    // any kind, and two enumerations 12 s apart moved the set without an
+    // explicit WlanScan, so the driver refreshes on its own cadence.
+    if (_platform == 'windows') {
+      try {
+        final List<Map<String, Object?>> rows = await _windowsScan();
+        return ApScanSnapshot.fromMap(
+          <String, Object?>{
+            'accessPoints': rows,
+            'poweredOn': true,
+            'locationAuthorized': true,
+            'scanThrottled': false,
+          },
+          scanPerformed: scanPerformed,
+        );
+      } on WifiInfoUnavailable catch (e) {
+        throw ApScanUnavailable(
+          ApScanUnavailableReason.channelError,
+          e.detail ?? e.reason.name,
+        );
+      }
+    }
     try {
       final result = await _invoke(method);
       final map = result as Map<dynamic, dynamic>?;
@@ -671,6 +737,9 @@ class ApScanService {
     // Pi path: the scan runs on the Pi, not behind an OS Location gate, so
     // the Location card never shows there.
     if (_piBacked) return true;
+    // Windows Native Wifi enumeration is not gated on Location. Proven, not
+    // assumed: the live run took 57 BSS with no prompt.
+    if (_platform == 'windows') return true;
     final result = await _invokePermission('isLocationAuthorized');
     return (result as bool?) ?? false;
   }
@@ -698,6 +767,7 @@ class ApScanService {
   /// the safe default offers the harmless prompt path rather than a dead
   /// deep-link.
   Future<LocationAuthStatus> locationAuthorizationStatus() async {
+    if (_platform == 'windows') return LocationAuthStatus.authorized;
     try {
       final result = await _invokeWifiInfo('locationAuthorizationStatus');
       return LocationAuthStatus.fromToken(result as String?);
@@ -713,6 +783,7 @@ class ApScanService {
   /// entirely, macOS withholds every SSID and BSSID.
   Future<bool> requestLocationPermission() async {
     if (_piBacked) return true;
+    if (_platform == 'windows') return true;
     final result = await _invokePermission('requestLocationPermission');
     return (result as bool?) ?? false;
   }
@@ -771,6 +842,8 @@ class ApScanService {
   /// denial (the app's own page on Android, the Location Services Privacy pane
   /// on macOS). Returns whether the settings page opened.
   Future<bool> openLocationSettings() async {
+    // Nothing to open: there is no grant to change.
+    if (_platform == 'windows') return false;
     final result = await _invokePermission('openLocationSettings');
     return (result as bool?) ?? false;
   }

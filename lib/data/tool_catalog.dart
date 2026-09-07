@@ -200,6 +200,11 @@ const Set<String> kWebUnavailableToolIds = <String>{
   'bss-load', // beacon information elements via the macOS platform channel
   // Networking Tools — socket / lookup / scan / native utilities.
   'interface-info', // reads the device interface table
+  // Shells out to ifconfig / networksetup / route on macOS, or asks the Pi for
+  // its own link table. A browser can do neither and says so on the screen.
+  'link-info',
+  // Pi-only: it POSTs to /toolboxapi/wifi-connect, which exists only on a Pi.
+  'join-network',
   'device-info', // device system facts via platform bridge
   'dns-lookup', // DNS-over-HTTPS via dart:io HttpClient (no web path)
   'port-scan', // raw TCP connect scan
@@ -235,9 +240,80 @@ const Set<String> kWebUnavailableToolIds = <String>{
 /// exactly as before and every listed tool stays hidden — one artifact, two
 /// behaviors.
 bool toolUnavailableOnWeb(String toolId) =>
-    kIsWeb &&
-    kWebUnavailableToolIds.contains(toolId) &&
-    !PiBackend.canServe(toolId);
+    (kIsWeb &&
+        kWebUnavailableToolIds.contains(toolId) &&
+        !PiBackend.canServe(toolId)) ||
+    (kPiOnlyToolIds.contains(toolId) && !PiBackend.available);
+
+/// WHY a tool is unavailable here, so the badge can say something TRUE.
+///
+/// FOUND BY KEITH 2026-09-06, USING THE APP ON WINDOWS. Join a Network carried a
+/// badge reading "Web" on a native desktop. The gate was right -- the tool needs
+/// a WLAN Pi and there is not one -- but the WORD was wrong twice over: it is
+/// not a web limitation, and the machine reading it was not a browser. A user
+/// told "Web" on Windows learns nothing except that the app is confused.
+///
+/// The two causes are genuinely different and now say so.
+enum ToolUnavailableReason {
+  /// Running in a browser, and this tool needs something a browser cannot do.
+  web,
+
+  /// The tool drives a WLAN Pi's own radio, and no Pi backend is serving.
+  needsWlanPi,
+}
+
+/// The reason [toolUnavailableOnWeb] is true, or null when the tool is fine.
+ToolUnavailableReason? toolUnavailableReason(String toolId) {
+  if (kPiOnlyToolIds.contains(toolId) && !PiBackend.available) {
+    return ToolUnavailableReason.needsWlanPi;
+  }
+  if (kIsWeb &&
+      kWebUnavailableToolIds.contains(toolId) &&
+      !PiBackend.canServe(toolId)) {
+    return ToolUnavailableReason.web;
+  }
+  return null;
+}
+
+/// Tools that run ONLY on a WLAN Pi, and the inverse of the set above.
+///
+/// FOUND BY KEITH 2026-09-04, USING THE APP ON A MacBOOK. Join a Network was
+/// offered with no badge, described as *"associate this WLAN Pi\'s own radio to
+/// it"* to a man holding a Mac, and could not possibly work:
+/// `join_network_screen.dart` constructs a [PiBackendClient] unconditionally,
+/// and that client only runs on web behind `PiBackend.available`.
+///
+/// **THE GATE ABOVE WAS DOING EXACTLY WHAT IT WAS TOLD.** `join-network` IS in
+/// [kWebUnavailableToolIds], but `toolUnavailableOnWeb` short-circuits to false
+/// OFF web on purpose, so that native tile behaviour stays byte-for-byte
+/// unchanged. That is correct for every other member of that set, because they
+/// are NATIVE tools a browser cannot run.
+///
+/// **Join a Network is the opposite shape and was in the wrong set.** It runs
+/// only IN a browser, served BY a Pi. The set\'s own membership rule says so:
+/// *"a tool is in this set ONLY when it genuinely cannot run in a browser."*
+/// This set is the missing half: tools that cannot run ANYWHERE except a Pi.
+///
+/// The condition is [PiBackend.available] rather than [PiBackend.canServe],
+/// because canServe additionally requires membership of `servedToolIds` and a
+/// Pi-only tool that is not yet served should read as unavailable-here, not as
+/// a tool that exists on this device.
+const Set<String> kPiOnlyToolIds = <String>{
+  // Associates the PI\'S OWN radio. NO NATIVE PATH HAS BEEN BUILT -- which is a
+  // statement about this codebase, not about the platforms.
+  //
+  // CORRECTED 2026-09-06. This comment used to say joining "is not something
+  // those platforms expose to an unprivileged app". Our own research refutes
+  // that for two of them (Deliverables/2026-09-01-ssid-picker-platform-apis):
+  // Windows joins via Win32 WlanConnect or WinRT WiFiAdapter.ConnectAsync, and
+  // macOS can join too, though it may demand an administrator password. iOS and
+  // Android are the genuinely restricted pair.
+  //
+  // The distinction matters because it changes what "unavailable" means: not
+  // impossible, just unbuilt. Keith asked for the Windows picker on 2026-09-06,
+  // on the reasonable grounds that the scan it would feed from now works.
+  'join-network',
+};
 
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
 /// header). The list order IS the home-grid order: Test Network, Networking
@@ -356,6 +432,28 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Interface Information',
         description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
         routeName: '/tools/interface-info',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'join-network',
+        title: 'Join a Network',
+        // Says WHOSE radio without assuming the reader has one. The old wording
+        // ("this WLAN Pi's own radio") was written for the Pi edition and read
+        // as nonsense on a Mac, where the tool was also being offered and could
+        // not run (Keith, 2026-09-04). The tile is now gated by kPiOnlyToolIds,
+        // so this line is only ever read ON a Pi -- but it no longer depends on
+        // that gate holding to make sense.
+        description: 'Pick an SSID and associate a WLAN Pi radio to it, then '
+            'see exactly which AP it landed on',
+        routeName: '/tools/join-network',
+        isLive: true,
+      ),
+      ToolEntry(
+        id: 'link-info',
+        title: 'Link Info',
+        description: 'Every interface by what it IS: carrier, negotiated speed, '
+            'duplex, and which one is carrying your traffic',
+        routeName: '/tools/link-info',
         isLive: true,
       ),
       ToolEntry(
@@ -889,6 +987,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Capacity & Power',
       ),
       ToolEntry(
+        id: 'ssid-airtime',
+        title: 'SSID Airtime',
+        description: 'What each extra SSID costs the channel',
+        routeName: '/tools/ssid-airtime',
+        isLive: true,
+        subgroup: 'Capacity & Power',
+      ),
+      ToolEntry(
         id: 'capacity-planner',
         title: 'Capacity Planner',
         description: 'Why capacity planning needs a pro, not a calculator',
@@ -1010,6 +1116,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/ham-radio-general-exam-study-notes',
         isLive: true,
         subgroup: 'Ham Radio',
+      ),
+      // Field & Trade Reference plate 14 (2026-08-21). The other thirteen
+      // plates hang off their native reference screen's FieldPlateAction; this
+      // one has no native screen, so it is its own PDF-card entry. It is also
+      // the only plate already at the Letter print standard (8.5x11 portrait).
+      ToolEntry(
+        id: 'throughput-testing-where',
+        title: 'Throughput Testing: Where You Test',
+        description:
+            'Where you put the test server decides what the number means: '
+            'the Wi-Fi link, the local network, or the WAN',
+        routeName: '/tools/throughput-testing-where',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
       ),
       // ── Field & Trade Reference set (pilot, 2026-07-05) ──
       // Enclosure Ratings is the pilot REFERENCE-screen entry of the Field
@@ -2296,9 +2416,10 @@ final List<ToolCategory> kToolCategories = _buildCatalog();
 /// two are now computed from one set and pinned by
 /// test/data/native_scan_platform_ssot_test.dart.
 ///
-/// Windows is deliberately absent upstream: its Native Wifi enumeration path
-/// exists in the codebase but is unverified on real hardware, so the tool stays
-/// out of the catalog there rather than shipping an unproven scan.
+/// Windows joined upstream on 2026-09-06 once its Native Wifi enumeration was
+/// executed against a real BE200 rather than merely reviewed. Nothing is edited
+/// here to add it: this set is DERIVED from `ApScanService.wiredPlatforms`, so
+/// the catalog followed the moment that set changed.
 final Set<TargetPlatform> kNativeScanPlatforms = <TargetPlatform>{
   for (final TargetPlatform p in TargetPlatform.values)
     if (ApScanService.wiredPlatforms.contains(nativeScanPlatformKey(p))) p,

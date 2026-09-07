@@ -654,25 +654,19 @@ class _ScanUnavailable extends StatelessWidget {
 
   static const String _lead =
       'Nearby AP Scan lists the access points around you using a native Wi-Fi '
-      'scan. It is available on Android and macOS. ';
+      'scan. It is available on Android, macOS and Windows. ';
 
   String get _heading {
     switch (status) {
-      case ApScanPlatformStatus.windowsNotWired:
-        return 'Not wired for Windows yet';
       case ApScanPlatformStatus.appleRestricted:
       case ApScanPlatformStatus.unavailable:
       case ApScanPlatformStatus.supported:
-        return 'Available on Android and macOS';
+        return 'Available on Android, macOS and Windows';
     }
   }
 
   String get _detail {
     switch (status) {
-      case ApScanPlatformStatus.windowsNotWired:
-        return '${_lead}Windows can list nearby access points through its '
-            'Native Wifi API, but this tool does not wire up the Windows scan '
-            'yet. The rest of the toolbox works normally here.';
       case ApScanPlatformStatus.appleRestricted:
         return '${_lead}iOS blocks nearby-AP scanning at the OS level, so this '
             'tool cannot run it there. The rest of the toolbox works normally '

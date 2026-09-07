@@ -28,9 +28,10 @@ const String kNecGotchasToolId = 'nec-gotchas';
 /// The lead: what the article set is and the recognize-and-defer stance.
 const String kNecLead =
     'The six code articles that actually bite a WLAN installer. Each one is here '
-    'so you can recognize it on site, then hand it to the AHJ, a licensed '
-    'electrician, or the equipment listing. This is recognize-and-defer, never '
-    'how-to-comply.';
+    'so you can recognize it on site, then hand it to the authority having '
+    'jurisdiction (the AHJ: the local building official or inspector whose '
+    'word governs), a licensed electrician, or the equipment listing. This is '
+    'recognize-and-defer, never how-to-comply.';
 
 // ─────────────────────────────── the articles ───────────────────────────────
 

@@ -98,6 +98,22 @@ void main() {
       // the Android-only scan. This is the guard that keeps native iOS/macOS/
       // Android tile behavior byte-for-byte unchanged.
       for (final String id in kWebUnavailableToolIds) {
+        // PI-ONLY TOOLS ARE THE ONE EXCEPTION, ADDED 2026-09-04, AND THE
+        // EXCEPTION IS THE POINT rather than a loosening of this guard.
+        //
+        // This assertion used to cover EVERY id, on the reasoning that the set
+        // holds tools a BROWSER cannot run, so off web there is nothing to warn
+        // about. That held while every member was a native-capable tool.
+        // `join-network` is the inverse shape: it runs ONLY in a browser served
+        // BY a Pi, and on macOS it was therefore offered with no badge,
+        // described as associating "this WLAN Pi's own radio" to a man holding
+        // a MacBook, and could not work at all (Keith found it by using it).
+        //
+        // So the contract is now NARROWER, not weaker: off web the gate is
+        // false for everything EXCEPT tools that exist only on a Pi. The
+        // positive half is asserted in the next test, so neither half can be
+        // quietly dropped.
+        if (kPiOnlyToolIds.contains(id)) continue;
         expect(
           toolUnavailableOnWeb(id),
           isFalse,
@@ -106,6 +122,52 @@ void main() {
       }
       expect(toolUnavailableOnWeb('fspl'), isFalse);
       expect(toolUnavailableOnWeb('not-a-real-id'), isFalse);
+    });
+
+    test('a Pi-only tool IS flagged off a Pi, on every platform', () {
+      // The other half of the contract above. This test host is the Dart VM
+      // with no Pi backend, which is exactly the macOS case Keith hit.
+      expect(kPiOnlyToolIds, isNotEmpty,
+          reason: 'the set exists to name tools that only a Pi can run');
+      for (final String id in kPiOnlyToolIds) {
+        expect(
+          toolUnavailableOnWeb(id),
+          isTrue,
+          reason: '$id runs only on a WLAN Pi and must not be offered as '
+              'though it works here',
+        );
+      }
+    });
+
+    test('every Pi-only id is a real, live catalog tool', () {
+      // Same guard the web-unavailable set gets: a typo'd id would silently
+      // gate nothing, and the tool would go on being offered where it cannot
+      // run -- the exact defect this set was added to fix.
+      final Set<String> all = <String>{
+        for (final ToolCategory c in kToolCategories)
+          for (final ToolEntry t in c.tools) t.id,
+      };
+      for (final String id in kPiOnlyToolIds) {
+        expect(all, contains(id),
+            reason: '$id is in kPiOnlyToolIds but not in the catalog');
+      }
+    });
+
+    test('no Pi-only tool describes hardware the reader may not have', () {
+      // The tile copy said "this WLAN Pi's own radio" on a Mac. The gate now
+      // stops the tile appearing there, but copy that only makes sense when a
+      // gate holds is one edit away from being wrong again.
+      for (final ToolCategory c in kToolCategories) {
+        for (final ToolEntry t in c.tools) {
+          if (!kPiOnlyToolIds.contains(t.id)) continue;
+          expect(
+            t.description.contains("this WLAN Pi's"),
+            isFalse,
+            reason: '${t.id}: do not say "this WLAN Pi" to a reader who may be '
+                'on a Mac; name the hardware without assuming they hold it',
+          );
+        }
+      }
     });
 
     test('the formerly-web-gated network categories are in the catalog', () {

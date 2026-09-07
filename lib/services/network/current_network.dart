@@ -32,21 +32,63 @@
 // (its now-public statics), so there is one implementation of the number
 // crunching, not two that can drift.
 
+import 'dart:io' show InternetAddress, InternetAddressType, NetworkInterface;
+
 import 'package:network_info_plus/network_info_plus.dart';
 
+import 'default_route_probe.dart';
+
 import 'lan_discovery/subnet_seed.dart';
+import 'link_info.dart';
+import 'link_table_service.dart';
+import 'transport_chooser.dart';
+import 'transport_preference.dart';
 import 'pi_backend_client.dart';
 
 /// The prefill suggestion derived from the device's current network. Field
 /// names mirror the spec's record shape `({cidr, gatewayIp, deviceIp,
 /// maskWasReal})`; a class is used over the raw record for readability and
 /// testable value-equality.
+/// WHERE the addressing came from, because on a multi-homed desktop the two
+/// sources can disagree and one of them is right.
+///
+/// THIS EXISTS BECAUSE THE FIX FOR THE `en0` DEFECT CANNOT REACH EVERY BUILD.
+/// `DefaultRouteProbe` reads the routing table by running `route` and
+/// `ifconfig`. The macOS App Store build ships sandboxed and DENIES that; the
+/// Developer ID direct-download build does not (traceroute_service.dart:171,
+/// network_details_service.dart:10). When the probe is refused we fall back to
+/// `network_info_plus`, which matches on the interface NAME `en0`.
+///
+/// A SILENT FALLBACK IS THE WORSE FAILURE. The user would be shown the Wi-Fi
+/// subnet while plugged into a different one, with nothing on screen saying the
+/// better source had been refused. So the source travels with the answer, the
+/// same way [maskWasReal] already travels with the prefix.
+enum NetworkSource {
+  /// The operating system named the interface holding the default route. This
+  /// is the link carrying traffic, and it is not an inference.
+  routingTable,
+
+  /// The Wi-Fi interface's own address, from `network_info_plus`.
+  ///
+  /// CORRECT ON A PHONE AND SUSPECT ON A DESKTOP, which is the whole point. An
+  /// iPhone has no wired NIC to confuse the read, so this IS the right answer
+  /// there. A Mac with an Ethernet adapter can be on a completely different
+  /// network from the one this reports.
+  wifiInterface,
+
+  /// Nothing was readable.
+  none,
+}
+
 class NetworkSuggestion {
   const NetworkSuggestion({
     required this.cidr,
     required this.gatewayIp,
     required this.deviceIp,
     required this.maskWasReal,
+    this.source = NetworkSource.none,
+    this.multiHomed = false,
+    this.transport,
   });
 
   /// The suggested subnet in CIDR notation (e.g. `172.19.0.0/24`), or null when
@@ -67,8 +109,77 @@ class NetworkSuggestion {
   /// UI must show the "assumed /24" hint iff `cidr != null && !maskWasReal`.
   final bool maskWasReal;
 
+  /// Where the addressing came from.
+  final NetworkSource source;
+
+  /// True when this device has more than one link that could be carrying
+  /// traffic, so naming the wrong one is a live possibility rather than a
+  /// theoretical one.
+  final bool multiHomed;
+
+  /// What became of the user's app-wide transport choice, or null when the
+  /// caller supplied no [TransportPreference] at all.
+  ///
+  /// NULL AND "NOTHING CHOSEN" ARE DIFFERENT AND THE UI MUST NOT MERGE THEM.
+  /// Null means this code path never consulted a preference, which is every
+  /// existing caller and every current test. A non-null value carrying
+  /// [TransportResolution.followingSystem] means a preference WAS consulted and
+  /// the user has deliberately left the OS in charge. Collapsing the two would
+  /// make a screen claim a choice was honoured on a build that never read one.
+  final ResolvedTransport? transport;
+
+  /// The user picked a transport and the tools are NOT using it. The screen
+  /// must say so; silence here is the whole defect this field exists to stop.
+  bool get transportIgnored => transport?.isStale ?? false;
+
+  /// Plain words for [transportIgnored], never empty when it is true.
+  ///
+  /// The chooser's own [TransportOption.reason] is used verbatim when it has
+  /// one, because that string is already written for a human and writing a
+  /// second one here would put two authors on the same sentence.
+  String? get transportWarning {
+    final ResolvedTransport? t = transport;
+    if (t == null || !t.isStale) return null;
+    final String kind = t.chosen?.label ?? 'the chosen link';
+    final String tail = t.reason != null && t.reason!.isNotEmpty
+        ? ' ${t.reason}'
+        : '';
+    return switch (t.resolution) {
+      TransportResolution.chosenUnavailable =>
+        'You chose $kind, and it has no usable link right now, so these '
+        'numbers are for the link the system is actually using.$tail',
+      TransportResolution.chosenNotSelectable =>
+        'You chose $kind, and this platform will not let the app send this '
+        'kind of traffic over it. These numbers are for the link the system '
+        'is actually using.$tail',
+      TransportResolution.chosenUntested =>
+        'You chose $kind, and whether traffic can be pinned to it has not '
+        'been established on this machine. These numbers are for the link '
+        'the system is actually using.$tail',
+      _ => null,
+    };
+  }
+
   /// True when a subnet CIDR was derived at all (BEST or PARTIAL).
   bool get hasCidr => cidr != null;
+
+  /// The honesty gate for the second visible hint, and it mirrors
+  /// [isAssumedPrefix] exactly: show it iff we fell back to the Wi-Fi
+  /// interface ON A DEVICE THAT HAS ANOTHER LINK.
+  ///
+  /// NOT shown on a phone, where the Wi-Fi interface is genuinely the answer,
+  /// and NOT shown on a single-homed desktop, where both sources agree. Warning
+  /// in either of those cases would be noise, and noise is how a real warning
+  /// stops being read.
+  bool get linkMayBeWrong =>
+      source == NetworkSource.wifiInterface && multiHomed && cidr != null;
+
+  /// What the UI says when [linkMayBeWrong]. Never empty.
+  String get linkWarning =>
+      'This is the Wi-Fi interface\'s network. This build could not ask the '
+      'system which link is actually carrying your traffic, and this device '
+      'has more than one. If you are on a cable, check the address before you '
+      'trust it.';
 
   /// The honesty gate for the visible hint: a derived-but-assumed /24.
   bool get isAssumedPrefix => cidr != null && !maskWasReal;
@@ -79,6 +190,7 @@ class NetworkSuggestion {
     gatewayIp: null,
     deviceIp: null,
     maskWasReal: false,
+    source: NetworkSource.none,
   );
 
   @override
@@ -105,23 +217,78 @@ typedef CurrentNetworkReader
 
 /// Derives a [NetworkSuggestion] from the device's current network.
 class CurrentNetwork {
-  CurrentNetwork({CurrentNetworkReader? reader})
-      : _reader = reader ?? _defaultReader;
+  CurrentNetwork({
+    CurrentNetworkReader? reader,
+    TransportPreference? preference,
+    LinkTableService? linkTable,
+  })  : _reader = reader ?? _defaultReader,
+        // ignore: prefer_initializing_formals
+        _preference = preference,
+        // ignore: prefer_initializing_formals
+        _linkTable = linkTable;
 
   final CurrentNetworkReader _reader;
 
+  /// The app-wide transport choice. NULL means this instance does not consult
+  /// one, which keeps every existing caller byte-identical in behaviour.
+  final TransportPreference? _preference;
+
+  /// Enumerates the links a preference is resolved against. Only read when
+  /// [_preference] is set, so no caller pays for a link-table read it did not
+  /// ask for.
+  final LinkTableService? _linkTable;
+
+  /// ASK THE ROUTING TABLE FIRST. `network_info_plus` FALLS BACK, it does not
+  /// lead.
+  ///
+  /// THE DEFECT, measured 2026-08-31. On macOS that plugin answers "your local
+  /// IP" by looking for an interface literally NAMED `en0`
+  /// (NetworkInfoPlusPlugin.swift:143). On a MacBook `en0` is Wi-Fi. With both
+  /// links up on Keith's M5 the default route was `en5` at 192.168.8.233 while
+  /// the plugin returned `en0` at 192.168.8.134, so every screen that prefills
+  /// a target from here offered the WIRELESS network to a user on a cable. On
+  /// Network Discovery, which derives its entire scan range from this and gives
+  /// no field to correct, that means scanning a network you are not on and
+  /// reporting the result as if you were.
+  ///
+  /// Phase 0's rule is "select by carrier, never by name, index or flag", and
+  /// the default route is the only field that means "traffic goes here". So the
+  /// route is asked first, and the name-matching plugin is what we fall back to
+  /// where the route cannot be read at all (iOS, Android, web).
+  ///
+  /// THE FALLBACK IS STILL RIGHT WHERE IT APPLIES. On an iPhone there is no
+  /// wired NIC to confuse the read, which is exactly why the plugin's
+  /// assumption holds there and fails on a desktop.
   static Future<({String? ip, String? mask, String? gateway})>
       _defaultReader() async {
+    try {
+      final DefaultRoute? route = await DefaultRouteProbe().readV4();
+      if (route != null && route.address != null) {
+        _lastSource = NetworkSource.routingTable;
+        return (
+          ip: route.address,
+          // Null rather than a guessed /24: a wrong prefix silently changes the
+          // size of a scan, and a sweep of the wrong range looks like a
+          // successful sweep that found nothing.
+          mask: route.netmask,
+          gateway: route.gateway,
+        );
+      }
+    } on Object {
+      // A platform we cannot shell, or a sandbox that refused. Fall through.
+    }
+
+    _lastSource = NetworkSource.wifiInterface;
     final NetworkInfo info = NetworkInfo();
     String? ip;
     String? mask;
     String? gateway;
     try {
       ip = await info.getWifiIP();
-    } catch (_) {/* leave null — honest NONE, not a fabricated address */}
+    } catch (_) {/* leave null - honest NONE, not a fabricated address */}
     try {
       mask = await info.getWifiSubmask();
-    } catch (_) {/* leave null — mask often unreadable on wired/cell/web */}
+    } catch (_) {/* leave null - mask often unreadable on wired/cell/web */}
     try {
       gateway = await info.getWifiGatewayIP();
     } catch (_) {/* leave null */}
@@ -201,7 +368,140 @@ class CurrentNetwork {
   /// Reads the network and derives the suggestion.
   Future<NetworkSuggestion> suggest() async {
     final ({String? ip, String? mask, String? gateway}) net = await _reader();
-    return suggestFrom(ip: net.ip, mask: net.mask, gateway: net.gateway);
+    final NetworkSuggestion base =
+        suggestFrom(ip: net.ip, mask: net.mask, gateway: net.gateway);
+
+    // STAMP WHERE IT CAME FROM. `_lastSource` is set by `_defaultReader`; an
+    // injected reader (every test, and the Pi path) leaves it null and the
+    // suggestion carries `NetworkSource.none`, claiming nothing either way.
+    final NetworkSource src = _lastSource ?? NetworkSource.none;
+
+    // THE APP-WIDE TRANSPORT CHOICE. Ruled by Keith 2026-09-01: one choice,
+    // every tool honours it. This is the single place it is applied, which is
+    // why all seven surfaces that prefill a target inherit it without any of
+    // them being edited.
+    //
+    // A FAILURE HERE MUST NEVER COST THE USER A SUGGESTION. Every path below
+    // falls back to the routing table's answer, which is what the screens got
+    // before this feature existed.
+    final ResolvedTransport? resolved = await _resolvePreference();
+    if (resolved != null && resolved.isHonoured && resolved.link != null) {
+      final NetworkSuggestion chosen = _fromLink(resolved.link!, base);
+      return NetworkSuggestion(
+        cidr: chosen.cidr,
+        gatewayIp: chosen.gatewayIp,
+        deviceIp: chosen.deviceIp,
+        maskWasReal: chosen.maskWasReal,
+        source: NetworkSource.routingTable,
+        multiHomed: false,
+        transport: resolved,
+      );
+    }
+
+    return NetworkSuggestion(
+      cidr: base.cidr,
+      gatewayIp: base.gatewayIp,
+      deviceIp: base.deviceIp,
+      maskWasReal: base.maskWasReal,
+      source: src,
+      multiHomed: src == NetworkSource.wifiInterface
+          ? await _looksMultiHomed()
+          : false,
+      transport: resolved,
+    );
+  }
+
+  /// Reads the stored choice and resolves it against this machine's links.
+  ///
+  /// Returns null when no [TransportPreference] was supplied, so a caller that
+  /// never asked for this behaves exactly as it did before.
+  Future<ResolvedTransport?> _resolvePreference() async {
+    final TransportPreference? pref = _preference;
+    if (pref == null) return null;
+    try {
+      final TransportKind? chosen = await pref.read();
+      final LinkTableResult result =
+          await (_linkTable ?? LinkTableService()).read();
+      final LinkTable? table = result.table;
+      // No link table means nothing to resolve a choice against. Honest null:
+      // the routing table's answer stands and no screen claims a choice was
+      // applied.
+      if (table == null) return null;
+      return resolveTransport(
+        chosen: chosen,
+        options: buildTransportOptions(
+          links: table.links,
+          scope: TransportScope.localSubnet,
+          platform: currentTransportPlatform(tableSource: table.source),
+        ),
+        activeLink: table.primary,
+      );
+    } on Object {
+      // A link table we could not read is not a reason to lose the prefill.
+      // Null here means "no preference applied", and the routing table's
+      // answer stands.
+      return null;
+    }
+  }
+
+  /// Derives a suggestion from a specific link rather than the default route.
+  ///
+  /// THE GATEWAY IS DELIBERATELY DROPPED when the chosen link is not the one
+  /// holding the default route. We know that link's address and prefix; we do
+  /// NOT know its gateway, because a gateway belongs to a route and this link
+  /// is not carrying one. Offering the DEFAULT route's gateway beside a
+  /// different link's subnet would be the same class of lie the `en0` defect
+  /// told: two numbers from two different networks presented as one.
+  static NetworkSuggestion _fromLink(LinkInfo link, NetworkSuggestion base) {
+    LinkAddress? v4;
+    for (final LinkAddress a in link.addresses) {
+      if (a.isIPv4 && !a.isLinkLocal) {
+        v4 = a;
+        break;
+      }
+    }
+    if (v4 == null) return base;
+    final String? mask =
+        v4.prefixLength != null ? _maskFromPrefix(v4.prefixLength!) : null;
+    return suggestFrom(
+      ip: v4.address,
+      mask: mask,
+      gateway: link.isDefaultRouteV4 ? base.gatewayIp : null,
+    );
+  }
+
+  /// Set by [_defaultReader] only. Static because the reader is static; the
+  /// value is read immediately after the await in [suggest], on the same
+  /// microtask chain.
+  static NetworkSource? _lastSource;
+
+  /// Does this device have more than one link that could be carrying traffic?
+  ///
+  /// PURE dart:io, so it works inside the App Sandbox where the shell-out does
+  /// not. It cannot tell us WHICH link is carrying traffic, which is the thing
+  /// we actually wanted, but it can tell us whether getting it wrong is
+  /// possible here. That is exactly enough to decide whether to warn.
+  ///
+  /// Counts interfaces holding a non-link-local IPv4, excluding loopback. Two
+  /// or more means the Wi-Fi address might not be the one in use.
+  static Future<bool> _looksMultiHomed() async {
+    try {
+      final List<NetworkInterface> ifs = await NetworkInterface.list(
+        includeLoopback: false,
+        includeLinkLocal: false,
+        type: InternetAddressType.IPv4,
+      );
+      int usable = 0;
+      for (final NetworkInterface ni in ifs) {
+        final bool hasGlobal = ni.addresses.any((InternetAddress a) =>
+            !a.address.startsWith('169.254.') && a.address != '0.0.0.0');
+        if (hasGlobal) usable++;
+      }
+      return usable > 1;
+    } on Object {
+      // Cannot tell. Do not warn on a guess.
+      return false;
+    }
   }
 
   /// PURE: derive the suggestion from an ip + mask + gateway. No plugins, so

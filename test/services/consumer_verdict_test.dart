@@ -327,6 +327,96 @@ void main() {
     );
   });
 
+  group('D2 copy (ROUND 6: the contradiction Keith hit on 2026-09-06)', () {
+    // THE DEFECT, in his words: the hero said "We could not finish the check."
+    // while the Wi-Fi chip beside it read Weak and the card below printed a
+    // usable capacity of 95 Mbps, on a machine that was on Wi-Fi.
+    //
+    // usableWifiMbps comes off the LINK, not off a throughput test, so it is
+    // known whenever the radio associated -- which is why D2 could display a
+    // number and deny having read it in the same breath.
+
+    test('a MEASURED Wi-Fi is never described as unread', () {
+      final String headline =
+          ConsumerVerdictMapper.headlineForCouldntComplete(
+        notOnWifi: false,
+        usableWifiMbps: 95.0,
+      );
+      final String body = ConsumerVerdictMapper.bodyForCouldntComplete(
+        notOnWifi: false,
+        usableWifiMbps: 95.0,
+      );
+
+      expect(headline, 'We checked your Wi-Fi, but not your internet.');
+      expect(body, contains('about 95 Mbps'));
+
+      // THE THREE FALSE STATEMENTS, each pinned so it cannot come back.
+      expect(headline, isNot(contains('could not finish')));
+      expect(body.toLowerCase(), isNot(contains('could not read your wi-fi')));
+      expect(body.toLowerCase(), isNot(contains('make sure you are on wi-fi')),
+          reason: 'telling a user whose Wi-Fi we just measured at 95 Mbps to '
+              'get on Wi-Fi is the advice SelfHelpTopic.reconnect already names '
+              'as the one that made this bug famous');
+    });
+
+    test('and it still offers no verdict, because there is nothing to compare',
+        () {
+      final String body = ConsumerVerdictMapper.bodyForCouldntComplete(
+        notOnWifi: false,
+        usableWifiMbps: 95.0,
+      );
+      // The absence is STATED, not papered over with a guess.
+      expect(body, contains('did not finish'));
+      expect(body, contains('could not compare'));
+    });
+
+    test('genuinely unread Wi-Fi keeps the original honest copy', () {
+      expect(
+        ConsumerVerdictMapper.headlineForCouldntComplete(
+          notOnWifi: false,
+          usableWifiMbps: null,
+        ),
+        'We could not finish the check.',
+      );
+      expect(
+        ConsumerVerdictMapper.bodyForCouldntComplete(
+          notOnWifi: false,
+          usableWifiMbps: null,
+        ),
+        contains('could not read your Wi-Fi or your internet'),
+      );
+    });
+
+    test('off Wi-Fi is a THIRD case and outranks both', () {
+      for (final double? usable in <double?>[null, 95.0]) {
+        expect(
+          ConsumerVerdictMapper.headlineForCouldntComplete(
+            notOnWifi: true,
+            usableWifiMbps: usable,
+          ),
+          'You are not on Wi-Fi right now.',
+        );
+        expect(
+          ConsumerVerdictMapper.bodyForCouldntComplete(
+            notOnWifi: true,
+            usableWifiMbps: usable,
+          ),
+          contains('Join a Wi-Fi network'),
+        );
+      }
+    });
+
+    test('the figure is rounded, not printed with decimals', () {
+      expect(
+        ConsumerVerdictMapper.bodyForCouldntComplete(
+          notOnWifi: false,
+          usableWifiMbps: 94.6,
+        ),
+        contains('about 95 Mbps'),
+      );
+    });
+  });
+
   group('D1 body substitution (bodyForCouldntCheckWifi)', () {
     test('substitutes the rounded figure and "fine" when healthy', () {
       final body = ConsumerVerdictMapper.bodyForCouldntCheckWifi(

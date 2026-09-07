@@ -4372,6 +4372,75 @@
         "The card is a printed image, so a screen reader cannot read the values inside it. The card title and the pinch-to-zoom gesture are announced."
       ],
       "source": "The card ships inside the app as a PDF and displays fully offline."
+    },
+    "ssid-airtime": {
+      "name": "SSID Airtime",
+      "category": "Calculators & Tools",
+      "purpose": "Works out how much of a channel's time is spent on beacons and probe responses, and what one MORE SSID would cost, across 2.4, 5 and 6 GHz side by side.",
+      "whyHere": "Best-practice documents routinely ask for three or four SSIDs without ever costing them. This puts a number on the request, so the conversation stops being a matter of opinion. Airtime is a property of the CHANNEL, not of one access point, so every audible co-channel AP multiplies the figure.",
+      "howToUse": [
+        "Enter how many SSIDs one access point advertises, and how many co-channel APs you can hear (including that one).",
+        "Choose whether the APs beacon once per SSID, or use MBSSID to carry several BSSs in one beacon.",
+        "Set the management basic rate for each band. This is the single biggest lever: a beacon at 6 Mbps takes twice the airtime of the same beacon at 12.",
+        "Read the large number on each band card: that is what advertising ONE more SSID would add."
+      ],
+      "inputs": [
+        {
+          "name": "SSIDs advertised",
+          "unit": "count",
+          "range": "1 to 64, per access point"
+        },
+        {
+          "name": "Audible co-channel APs",
+          "unit": "count",
+          "range": "1 to 40, including this one"
+        },
+        {
+          "name": "Beaconing",
+          "unit": "toggle",
+          "range": "One beacon per SSID, or MBSSID"
+        },
+        {
+          "name": "Basic rate",
+          "unit": "Mbps",
+          "range": "1 to 54. CCK rates are hidden on 5 and 6 GHz, which have no CCK"
+        },
+        {
+          "name": "Beacon length",
+          "unit": "bytes",
+          "range": "60 to 2300, INCLUDING the 4-byte FCS"
+        },
+        {
+          "name": "Beacon interval",
+          "unit": "TU",
+          "range": "20 to 1000. One TU is 1024 microseconds, not 1000"
+        },
+        {
+          "name": "Amendment",
+          "unit": "select",
+          "range": "802.11ac, 802.11ax (default), or 802.11be. Sets the beacon size estimate"
+        },
+        {
+          "name": "Airtime counted",
+          "unit": "toggle",
+          "range": "Occupancy (default), or with contention added"
+        },
+        {
+          "name": "Probe exchanges",
+          "unit": "toggle",
+          "range": "Not counted (default), or counted"
+        }
+      ],
+      "algorithm": "Each beacon's time on air is the preamble plus the payload rounded UP to whole 4-microsecond OFDM symbols. Without MBSSID an AP sends one full beacon per SSID, so cost rises linearly with SSID count. With MBSSID it sends one beacon carrying a shared part plus a small profile per extra BSS, which is far cheaper and gets relatively cheaper as the count grows. That total is divided by the beacon interval and multiplied by the number of audible co-channel APs, because they all share the same channel time. Occupancy mode counts only the frames themselves; contention mode adds DIFS plus average backoff, which is the time an AP spends winning the medium.",
+      "example": "Four SSIDs, three audible co-channel APs, 331-byte beacons at a 12 Mbps basic rate, 100 TU interval, one beacon per SSID: the next SSID you add costs roughly another third of a percentage point of channel time on 5 GHz. Drop the basic rate to 6 Mbps and that cost doubles.",
+      "fieldNotes": [
+        "MANAGEMENT FRAMES ONLY. No data traffic, no RTS/CTS or ERP protection, no retries, no DTIM or buffered multicast. Real channel utilisation is always HIGHER than this figure, never lower.",
+        "Beacon length must INCLUDE the 4-byte FCS. Analysers commonly display the length without it; a 327-byte display means 331 here. Getting this wrong under-reports by about 2%.",
+        "Occupancy is the default on purpose. It makes no assumption about contention, so it is the figure that survives an argument.",
+        "The same SSID count lands far harder on 2.4 GHz, because there are only three non-overlapping channels to spread across. A ship network measured in August 2026 ran 2.4 GHz at 2.27 times the channel utilisation of its own 5 GHz, with identical SSIDs.",
+        "Beacon byte sizes per amendment are ESTIMATES. Replace them with a real length from a capture whenever you have one."
+      ],
+      "source": "Ported with permission from the SSID Airtime Calculator by Jonathan Finney (MIT licensed). Computed entirely on your device."
     }
   }
 }

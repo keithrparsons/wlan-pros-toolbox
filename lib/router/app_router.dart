@@ -44,6 +44,7 @@ import '../screens/tools/calculators/downtilt_coverage_screen.dart';
 import '../screens/tools/calculators/capacity_planner_screen.dart';
 import '../screens/tools/calculators/ptp_link_screen.dart';
 import '../screens/tools/calculators/ipv6_subnet_screen.dart';
+import '../screens/tools/calculators/ssid_airtime_screen.dart';
 import '../screens/tools/calculators/throughput_calc_screen.dart';
 import '../screens/tools/calculators/transfer_time_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
@@ -144,6 +145,8 @@ import '../screens/tools/network/dns_lookup_screen.dart';
 import '../screens/tools/network/http_header_screen.dart';
 import '../screens/tools/network/device_info_screen.dart';
 import '../screens/tools/network/interface_info_screen.dart';
+import '../screens/tools/network/link_info_screen.dart';
+import '../screens/tools/network/join_network_screen.dart';
 import '../screens/tools/network/icmp_ping_screen.dart';
 import '../screens/tools/network/ip_geo_screen.dart';
 import '../screens/tools/network/my_current_location_screen.dart';
@@ -261,6 +264,7 @@ class AppRouter {
   static const String capacityPlanner = '/tools/capacity-planner';
   static const String ptpLink = '/tools/ptp-link';
   static const String ipv6Subnet = '/tools/ipv6-subnet';
+  static const String ssidAirtime = '/tools/ssid-airtime';
   static const String throughputCalc = '/tools/throughput-calc';
   static const String rfAttenuation = '/tools/rf-attenuation';
   static const String noiseFloor = '/tools/noise-floor';
@@ -371,6 +375,16 @@ class AppRouter {
   // download-the-app fallback inside each screen, so the routes are always
   // registered and never crash on web).
   static const String interfaceInfo = '/tools/interface-info';
+
+  /// Link Info - every interface described by what it IS: carrier, negotiated
+  /// speed, duplex, and which one holds the default route. The id `link-info`
+  /// is permanent (backs this route, the catalog entry, and tests).
+  static const String linkInfo = '/tools/link-info';
+
+  /// Join a Network - pick an SSID and associate the Pi's own radio to it.
+  /// Pi-only: it POSTs to /toolboxapi/wifi-connect. The id `join-network` is
+  /// permanent (backs this route, the catalog entry, and tests).
+  static const String joinNetwork = '/tools/join-network';
 
   /// Device Info — the device's own system facts (model, total memory, uptime,
   /// cellular IP). Batch 6. The id `device-info` is permanent (backs this route,
@@ -587,6 +601,14 @@ class AppRouter {
   static const String hamRadioGeneralExamStudyNotes =
       '/tools/ham-radio-general-exam-study-notes';
 
+  // Field & Trade Reference plate 14 (2026-08-21) — "Throughput Testing: where
+  // you test changes the number", the LIGHT print variant. The only plate with
+  // no native reference screen behind it, so unlike the other thirteen (which
+  // reach their plate from the screen's FieldPlateAction) this one is a
+  // first-class catalog entry rendered by the shared PdfReferenceScreen.
+  static const String throughputTestingWhere =
+      '/tools/throughput-testing-where';
+
   // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
   // const-derived table, all platforms incl. web).
   static const String hexAscii = '/tools/hex-ascii';
@@ -652,6 +674,7 @@ class AppRouter {
     capacityPlanner: (_) => const CapacityPlannerScreen(),
     ptpLink: (_) => const PtpLinkScreen(),
     ipv6Subnet: (_) => const Ipv6SubnetScreen(),
+    ssidAirtime: (_) => const SsidAirtimeScreen(),
     throughputCalc: (_) => const ThroughputCalcScreen(),
     rfAttenuation: (_) => const RfAttenuationScreen(),
     noiseFloor: (_) => const NoiseFloorScreen(),
@@ -725,6 +748,8 @@ class AppRouter {
     regexCheatsheet: (_) => const RegexCheatsheetScreen(),
     markdownCheatsheet: (_) => const MarkdownCheatsheetScreen(),
     interfaceInfo: (_) => const InterfaceInfoScreen(),
+    linkInfo: (_) => const LinkInfoScreen(),
+    joinNetwork: (_) => const JoinNetworkScreen(),
     deviceInfo: (_) => const DeviceInfoScreen(),
     dnsLookup: (_) => const DnsLookupScreen(),
     portScan: (_) => const PortScanScreen(),
@@ -886,6 +911,11 @@ class AppRouter {
       assetPath:
           'assets/reference-cards/ham-radio-general-exam-study-notes.pdf',
       toolId: 'ham-radio-general-exam-study-notes',
+    ),
+    throughputTestingWhere: (_) => const PdfReferenceScreen(
+      title: 'Throughput Testing: Where You Test',
+      assetPath: 'assets/field-plates/throughput-testing-where.pdf',
+      toolId: 'throughput-testing-where',
     ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),

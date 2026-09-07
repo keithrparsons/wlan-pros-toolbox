@@ -57,6 +57,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/centered_content.dart';
 import '../../../widgets/dark_raster_diagram_card.dart';
+import '../../../widgets/field_plate_action.dart';
 import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_drilldown.dart';
@@ -127,7 +128,13 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
       appBar: AppBar(
         title: const Text('LED Decoder'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
+        actions: <Widget>[
+          AppCopyAction(textBuilder: _copyText),
+          const FieldPlateAction(
+            toolId: 'led-decoder',
+            plateTitle: 'LED Master Comparison',
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,

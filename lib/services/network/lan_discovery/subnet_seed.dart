@@ -15,6 +15,8 @@
 
 import 'package:network_info_plus/network_info_plus.dart';
 
+import '../default_route_probe.dart';
+
 /// Hard cap on hosts the spike will enumerate for a single scan (a /24's worth
 /// of usable hosts). Mirrors PingSweepService.maxHosts.
 const int kMaxScanHosts = 254;
@@ -61,8 +63,33 @@ class SubnetSeedDeriver {
 
   final WifiNetworkReader _reader;
 
+  /// THE ROUTING TABLE LEADS HERE, AND IT MATTERS MORE HERE THAN ANYWHERE ELSE.
+  ///
+  /// Every other caller of `network_info_plus` uses it to PREFILL a field the
+  /// user can correct. Network Discovery does not offer a field: it derives the
+  /// scan range and scans it. So on a wired Mac, where that plugin matches on
+  /// the name `en0` and returns the Wi-Fi address, this tool scanned a network
+  /// the user was not on and reported the result as if they were. A sweep of
+  /// the wrong subnet looks exactly like a successful sweep that found nothing.
+  ///
+  /// Measured on Keith's M5, 2026-08-31: default route `en5` at 192.168.8.233,
+  /// `getWifiIP()` returning `en0` at 192.168.8.134.
   static Future<({String? ip, String? mask, String? gateway})>
       _defaultReader() async {
+    try {
+      final DefaultRoute? route = await DefaultRouteProbe().readV4();
+      if (route != null && route.address != null) {
+        return (
+          ip: route.address,
+          mask: route.netmask,
+          gateway: route.gateway,
+        );
+      }
+    } on Object {
+      // A platform we cannot shell. Fall through to the plugin, whose
+      // name-matching assumption holds on a phone with no wired NIC.
+    }
+
     final NetworkInfo info = NetworkInfo();
     String? ip;
     String? mask;

@@ -1,0 +1,9 @@
+New: SSID Airtime shows what a network actually costs the air, not just its speed.
+
+New: Link Info reports your wired links, and lets you choose which one the tools test over.
+
+New: all 14 Field Plates download as PDFs from the screens they belong to.
+
+Fixed: on a slow link, Test My Connection said it could not read your Wi-Fi while showing you a Wi-Fi speed. It now says which side it measured, and every result names the connection it used.
+
+The subnet calculators are searchable by name.

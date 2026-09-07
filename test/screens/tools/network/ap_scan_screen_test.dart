@@ -83,6 +83,17 @@ ApScanService _service(
 }) {
   return ApScanService(
     platformOverride: platform,
+    // WINDOWS DOES NOT USE THE CHANNEL. Its rows come from the dart:ffi
+    // enumeration, so a Windows fixture has to be fed through `windowsScan`;
+    // feeding it through `invoke` tests a path Windows never takes. This helper
+    // fed only `invoke` until 2026-09-06, which is precisely why the suite was
+    // green while the shipped Windows scan threw MissingPluginException.
+    windowsScan: () async => ((payload['accessPoints'] as List<dynamic>?) ??
+            const <dynamic>[])
+        .whereType<Map<dynamic, dynamic>>()
+        .map((Map<dynamic, dynamic> m) => m.map<String, Object?>(
+            (dynamic k, dynamic v) => MapEntry<String, Object?>('$k', v)))
+        .toList(growable: false),
     invoke: (String method, [dynamic args]) async {
       switch (method) {
         case 'scan':
@@ -368,7 +379,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Available on Android and macOS'), findsOneWidget);
+      expect(find.text('Available on Android, macOS and Windows'), findsOneWidget);
       expect(
         find.textContaining('iOS blocks nearby-AP scanning'),
         findsOneWidget,
@@ -379,29 +390,32 @@ void main() {
       expect(find.text('KeithNet'), findsNothing);
     });
 
-    testWidgets('Windows says the scan path is not wired yet (never an Apple '
-        'block, never "can\'t")', (tester) async {
+    testWidgets('Windows reports supported, and shows no unwired block',
+        (tester) async {
       await tester.pumpWidget(
         host(ApScanScreen(service: _service(_payload(), platform: 'windows'))),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Not wired for Windows yet'), findsOneWidget);
+      // Windows renders the SCAN now, not an explanation of why it cannot.
+      expect(find.text('KeithNet'), findsOneWidget);
+      expect(find.text('Not wired for Windows yet'), findsNothing);
       expect(
         find.textContaining('Windows can list nearby access points'),
-        findsOneWidget,
+        findsNothing,
       );
-      // Must NOT blame Apple or claim Windows fundamentally can't scan.
+      // And it still must not blame Apple.
       expect(find.textContaining('Apple'), findsNothing);
-      expect(find.textContaining('block'), findsNothing);
-      expect(find.text('KeithNet'), findsNothing);
     });
 
     testWidgets('an unwired platform never touches the scan channel',
         (tester) async {
+      // The example moved from 'windows' to 'linux' on 2026-09-06. Windows is
+      // wired now, so using it here would have made this guard assert the
+      // opposite of the truth while still passing on the old copy.
       bool touched = false;
       final ApScanService svc = ApScanService(
-        platformOverride: 'windows',
+        platformOverride: 'linux',
         invoke: (String method, [dynamic args]) async {
           if (method == 'scan' || method == 'lastResults') touched = true;
           return _payload();
@@ -411,20 +425,24 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(touched, isFalse);
-      expect(find.text('Not wired for Windows yet'), findsOneWidget);
+      expect(find.text('KeithNet'), findsNothing);
     });
 
-    testWidgets('Windows stays DARK: it is not a supported platform',
+    testWidgets('Windows is WIRED: the inverted guard on the 09-06 ruling',
         (tester) async {
-      // Keith's explicit call. The Windows Native Wifi enumeration path exists
-      // in the codebase but is unverified on real hardware, so the UI must not
-      // treat Windows as wired. This test is the guard on that decision.
+      // INVERTED 2026-09-06. This test used to guard Keith's call that Windows
+      // must NOT be treated as wired while its Native Wifi enumeration was
+      // unverified. The enumeration was executed that day against a real BE200
+      // (57 rows, all three bands, zero incoherent rows -- see
+      // test/services/network/windows_scan_proof_live_test.dart) and Keith ruled
+      // it live for 1.9.0. The guard is kept, pointing the other way, so a
+      // regression that silently drops Windows again is caught.
       final ApScanService svc = ApScanService(
         platformOverride: 'windows',
         invoke: (String method, [dynamic args]) async => _payload(),
       );
-      expect(svc.isSupportedPlatform, isFalse);
-      expect(svc.platformStatus, ApScanPlatformStatus.windowsNotWired);
+      expect(svc.isSupportedPlatform, isTrue);
+      expect(svc.platformStatus, ApScanPlatformStatus.supported);
     });
   });
 
@@ -593,11 +611,10 @@ void main() {
       expect(svc('macos').platformName, 'macOS');
     });
 
-    test('windows maps to not-wired-yet, NOT an OS block', () {
-      expect(
-        svc('windows').platformStatus,
-        ApScanPlatformStatus.windowsNotWired,
-      );
+    test('windows is a supported (wired) status via Native Wifi', () {
+      expect(svc('windows').platformStatus, ApScanPlatformStatus.supported);
+      expect(svc('windows').isSupportedPlatform, isTrue);
+      expect(svc('windows').platformName, 'Windows');
     });
 
     test('other native platforms map to generic unavailable', () {

@@ -30,7 +30,24 @@ class PiBackend {
   static const Set<String> servedToolIds = <String>{
     'net-quality', // -> /toolboxapi/conntest
     'nearby-ap-scan', // -> /toolboxapi/scan
+    // ADDED 2026-09-04. THE ROUTE, THE CLIENT METHOD AND THE ADAPTER ALL
+    // ALREADY EXISTED; ONLY THIS STRING WAS MISSING, SO THE TOOL WAS BADGED
+    // "Web" AND UNREACHABLE ON A PI THAT WAS ANSWERING THE WHOLE TIME.
+    //
+    // Found by Keith 2026-09-04 running the Pi edition and seeing Wi-Fi
+    // Information greyed on a box where `GET /toolboxapi/wifi` returns a
+    // fuller payload than the macOS path does: phy_mode, mcs, nss,
+    // beacon_interval, dtim_period and a radios[] array, plus an honest
+    // `noise_reason` when the driver reports no noise floor.
+    //
+    // `WifiInfoSourceResolver.resolve()` already returns
+    // `WifiInfoSource.piBackend` for `kIsWeb && PiBackend.available` and does
+    // NOT consult this set, so the data path was live and only the catalog
+    // gate (`toolUnavailableOnWeb`) stood in front of it.
+    'wifi-info', // -> /toolboxapi/wifi
     'interface-info', // -> /toolboxapi/interfaces
+    'link-info', // -> /toolboxapi/links (Phase E: the wired link table)
+    'join-network', // -> /toolboxapi/wifi-connect + /wifi-disconnect (Phase D)
     'ping', // -> /toolboxapi/ping
     'traceroute', // -> /toolboxapi/traceroute
     // NAMING MISMATCH (deliberate): the CATALOG tool id is `dns-lookup`, so the

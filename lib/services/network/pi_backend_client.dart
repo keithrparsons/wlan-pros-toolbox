@@ -552,6 +552,116 @@ class PiThroughputResult {
 /// Same-origin REST adapter for the Pi hosting backend. Web-only in practice
 /// (guarded by `PiBackend.available`); every method is a plain GET to
 /// `/toolboxapi/{endpoint}` anchored at the server root.
+/// How a scanned network is secured, reduced from the Pi's `key_mgmt` string to
+/// the ONE question the join screen has to answer: what does this user have to
+/// type, if anything, and can we join it at all.
+///
+/// WHY AN ENUM AND NOT THE RAW STRING: `key_mgmt` arrives as a slash-joined list
+/// of everything the BSS advertises (`wpa-psk/sae`, `wpa-psk/wpa-psk-sha256`,
+/// `wpa-eap`), and a screen that pattern-matches those inline gets one of them
+/// wrong the first time a transition-mode AP appears. Reduced once, here, with
+/// tests.
+enum PiJoinSecurity {
+  /// No `key_mgmt` at all. No passphrase to enter.
+  open,
+
+  /// `wpa-psk` and its SHA-256 variant. A passphrase joins it.
+  wpa2Psk,
+
+  /// `sae` is advertised. WPA3-SAE, or WPA2/WPA3 transition mode when `wpa-psk`
+  /// is advertised alongside it. A passphrase still joins it.
+  wpa3Psk,
+
+  /// `wpa-eap` / `wpa-eap-suite-b` / OWE. 802.1X and OWE both need material this
+  /// endpoint cannot yet accept, so the screen must SAY SO rather than present a
+  /// passphrase box that cannot work.
+  ///
+  /// NOT A FAILURE STATE. On a real enterprise site this is the majority of what
+  /// a scan returns, and "we cannot join this yet" is an honest, useful answer.
+  unsupported,
+}
+
+/// The `security` value POST `/toolboxapi/wifi-connect` accepts, or null when
+/// this network cannot be joined by that endpoint at all.
+String? piJoinSecurityWireValue(PiJoinSecurity s) {
+  switch (s) {
+    case PiJoinSecurity.open:
+      return 'OPEN';
+    case PiJoinSecurity.wpa2Psk:
+      return 'WPA2-PSK';
+    case PiJoinSecurity.wpa3Psk:
+      return 'WPA3-PSK';
+    case PiJoinSecurity.unsupported:
+      return null;
+  }
+}
+
+/// Reduce a scan row's `key_mgmt` to [PiJoinSecurity].
+///
+/// ORDER MATTERS AND IS DELIBERATE. A transition-mode BSS advertises BOTH
+/// `wpa-psk` and `sae`; joining it as WPA3 is correct and joining it as WPA2 is
+/// merely tolerated, so `sae` is tested first. `wpa-eap` is tested before either
+/// PSK case because a BSS advertising both is an enterprise network with a
+/// PSK fallback we are not equipped to choose between.
+PiJoinSecurity piJoinSecurityFromKeyMgmt(String? keyMgmt) {
+  final String k = (keyMgmt ?? '').trim().toLowerCase();
+  if (k.isEmpty || k == 'none' || k == 'open') return PiJoinSecurity.open;
+  if (k.contains('eap') || k.contains('owe')) return PiJoinSecurity.unsupported;
+  if (k.contains('sae')) return PiJoinSecurity.wpa3Psk;
+  if (k.contains('psk')) return PiJoinSecurity.wpa2Psk;
+  // Something advertised that we do not recognise. GL-005: an unrecognised
+  // security type is NOT an open network, and guessing it open would put a user
+  // one tap from a join that silently cannot work.
+  return PiJoinSecurity.unsupported;
+}
+
+/// The outcome of POST `/toolboxapi/wifi-connect` or `/wifi-disconnect`.
+///
+/// The body is a `wifi_link` shape with three fields added by the join path, so
+/// this wraps [PiWifiLink] rather than duplicating twenty-four accessors.
+class PiJoinResult {
+  const PiJoinResult({
+    required this.link,
+    required this.requestedSsid,
+    required this.secureTransport,
+  });
+
+  /// The radio's state AFTER the attempt. [PiWifiLink.reason] carries the Pi's
+  /// own words on a failure, and they distinguish a refused handshake (a wrong
+  /// passphrase) from never reaching the network at all.
+  final PiWifiLink link;
+
+  /// The SSID that was asked for. The Pi echoes it so a UI can prove the radio
+  /// joined THE network requested rather than merely joining something.
+  final String? requestedSsid;
+
+  /// Whether the passphrase reached the Pi over TLS.
+  ///
+  /// FALSE IS THE BENCH DEFAULT AND THE SCREEN MUST SAY SO. A normal install is
+  /// plain HTTP with authentication off; the hardened image build turns TLS on.
+  /// The endpoint deliberately does not refuse plain HTTP, so the honesty has to
+  /// live in the UI.
+  final bool secureTransport;
+
+  /// True only when the radio is joined to the network that was ASKED FOR.
+  ///
+  /// The Pi already enforces this server-side (it polls until the SSID matches
+  /// AND the controlled port is authorized, because a wrong passphrase reports
+  /// "Connected to `<bssid>`" on every retry cycle before it is torn down). This
+  /// re-states it client-side so a UI can never render a bare `associated` as
+  /// success.
+  bool get joinedRequested =>
+      link.associated &&
+      requestedSsid != null &&
+      link.ssid == requestedSsid;
+
+  static PiJoinResult fromJson(Map<String, dynamic> json) => PiJoinResult(
+        link: PiWifiLink.fromJson(json),
+        requestedSsid: json['requested_ssid'] as String?,
+        secureTransport: json['secure_transport'] == true,
+      );
+}
+
 class PiBackendClient {
   PiBackendClient({http.Client? httpClient, Uri? base})
       : _http = httpClient ?? http.Client(),
@@ -999,6 +1109,53 @@ class PiBackendClient {
     return LinkTable.fromJson(json);
   }
 
+  /// Join [ssid] on the Pi's [interface] radio via POST `/toolboxapi/wifi-connect`.
+  ///
+  /// TIMEOUT IS 40s ON PURPOSE. The Pi polls for up to 25 seconds before it will
+  /// call a join failed, because it refuses to report success off a stale
+  /// association. A client timeout shorter than that would abandon a join that
+  /// was still legitimately in progress and leave the radio in a state the user
+  /// never sees a verdict for.
+  ///
+  /// [security] must not be [PiJoinSecurity.unsupported]; the caller is expected
+  /// to have refused that case in the UI, with a reason, rather than sending it.
+  Future<PiJoinResult> wifiConnect({
+    required String ssid,
+    required PiJoinSecurity security,
+    String? psk,
+    String? interface,
+  }) async {
+    final String? wire = piJoinSecurityWireValue(security);
+    if (wire == null) {
+      throw PiBackendException(
+        'wifi-connect does not support this network\'s security type',
+      );
+    }
+    final Map<String, dynamic> json = await _postJsonObject(
+      'wifi-connect',
+      body: <String, dynamic>{
+        'ssid': ssid,
+        'security': wire,
+        if (security != PiJoinSecurity.open) 'psk': ?psk,
+        'interface': ?interface,
+      },
+      timeout: const Duration(seconds: 40),
+    );
+    return PiJoinResult.fromJson(json);
+  }
+
+  /// Leave the current network on [interface] via POST `/toolboxapi/wifi-disconnect`.
+  Future<PiJoinResult> wifiDisconnect({String? interface}) async {
+    final Map<String, dynamic> json = await _postJsonObject(
+      'wifi-disconnect',
+      body: <String, dynamic>{
+        'interface': ?interface,
+      },
+      timeout: const Duration(seconds: 20),
+    );
+    return PiJoinResult.fromJson(json);
+  }
+
   /// TCP-connect port scan run ON the Pi via `/toolboxapi/portscan`. Returns the
   /// final [PortResult] list (one-shot, no streaming). [ports] is a
   /// comma-separated list (≤128 per the Pi's cap).
@@ -1333,9 +1490,19 @@ class PiBackendClient {
       String detail = 'HTTP ${resp.statusCode}';
       try {
         final Object? body = jsonDecode(resp.body);
-        if (body is Map && body['error'] is String &&
-            (body['error'] as String).isNotEmpty) {
-          detail = body['error'] as String;
+        // TWO KEYS, BOTH SERVER-CONTROLLED. Phase C endpoints answer with
+        // `error`; the Phase D join path answers with `detail` (e.g.
+        // {"detail": "missing ssid"}, verified against the live R4 on
+        // 2026-08-31). Reading only `error` turned every precise join refusal
+        // the Pi had taken care to word into a bare "HTTP 400" on screen.
+        if (body is Map) {
+          for (final String key in const <String>['error', 'detail']) {
+            final Object? v = body[key];
+            if (v is String && v.isNotEmpty) {
+              detail = v;
+              break;
+            }
+          }
         }
       } on Object {
         // Non-JSON error body — keep the status-code detail.

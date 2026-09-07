@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 182;
+const int _expectedEntryCount = 183;
 
 const String _fixture = '''
 {
@@ -367,6 +367,12 @@ void main() {
       // off assets/help/tool_help.json at merge time, which also confirmed
       // all three ids present and no duplicates. The prose explains the
       // number; the file is what decides it.
+      //
+      // 2026-08-30: ssid-airtime added ONE entry. 182 + 1 = 183. Counted off
+      // the file, not derived: `len(json[...]['tools'])` returned 183 and the
+      // id appears exactly once. This guard did its job -- it failed the
+      // moment the entry landed, which is the whole reason it is a hardcoded
+      // number rather than a computed one.
       expect(store.count, _expectedEntryCount);
     });
 

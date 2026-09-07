@@ -45,13 +45,27 @@ void main() {
       }
     });
 
-    test('the shipped value is Android and macOS', () {
-      // Pins the decision itself. Windows stays out until its Native Wifi path
-      // is verified on real hardware ([[feedback_gate_until_clean]]); changing
-      // this list is a deliberate act that must edit this test too.
-      expect(ApScanService.wiredPlatforms, <String>{'android', 'macos'});
-      expect(kNativeScanPlatforms,
-          <TargetPlatform>{TargetPlatform.android, TargetPlatform.macOS});
+    test('the shipped value is Android, macOS and Windows', () {
+      // Pins the decision itself, and it changed on 2026-09-06. Windows was out
+      // while its Native Wifi path was unverified on real hardware
+      // ([[feedback_gate_until_clean]]). That path was executed that day against
+      // an Intel BE200 -- 57 BSS rows, all three bands, zero incoherent rows,
+      // reproducible as test/services/network/windows_scan_proof_live_test.dart
+      // -- and Keith ruled it live for 1.9.0. The gate was SATISFIED, not
+      // waived, which is the only reason this list may grow.
+      //
+      // This test earning its keep is why the edit was safe: it failed the
+      // moment wiredPlatforms changed, so the decision could not drift in
+      // silently. Changing this list is still a deliberate act.
+      expect(
+        ApScanService.wiredPlatforms,
+        <String>{'android', 'macos', 'windows'},
+      );
+      expect(kNativeScanPlatforms, <TargetPlatform>{
+        TargetPlatform.android,
+        TargetPlatform.macOS,
+        TargetPlatform.windows,
+      });
     });
 
     test('the platform key mapping is total and unique', () {

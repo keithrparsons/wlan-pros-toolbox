@@ -611,6 +611,56 @@ class ConsumerVerdictMapper {
     }
   }
 
+  /// The D2 headline and body, as pure functions of the two facts that decide
+  /// them. They live HERE, next to the D1 builder, rather than inline in the
+  /// screen for one reason: this copy has now been wrong twice, and copy that
+  /// only exists inside a `State` method is copy no unit test can reach.
+  ///
+  /// ROUND 5 was a conference SSID with a healthy 97/77 Mbps link and a dead
+  /// internet, which said "We could not finish the check." That was closed by
+  /// [ConsumerOutcome.internetDown] — but only for a PROVABLY dead internet.
+  ///
+  /// ROUND 6 (Keith, 2026-09-06) is the common case: the speed test merely
+  /// TIMED OUT. That still lands in D2, and D2 claimed nothing was read while
+  /// the Wi-Fi chip beside it showed a tier and the card below printed a usable
+  /// capacity. [WifiVsInternetResult.usableWifiMbps] comes off the LINK, not
+  /// off a throughput test, so it is known whenever the radio associated.
+  ///
+  /// The rule these encode: never claim a read failed when its number is on
+  /// screen, and never tell a user who is demonstrably on Wi-Fi to get on
+  /// Wi-Fi — the advice [SelfHelpTopic.reconnect] already names as the one that
+  /// made this bug famous.
+  static String headlineForCouldntComplete({
+    required bool notOnWifi,
+    required double? usableWifiMbps,
+  }) {
+    if (notOnWifi) return 'You are not on Wi-Fi right now.';
+    return usableWifiMbps != null
+        ? 'We checked your Wi-Fi, but not your internet.'
+        : 'We could not finish the check.';
+  }
+
+  /// Companion body for [headlineForCouldntComplete]. Rounds the figure: a
+  /// consumer does not need decimals.
+  static String bodyForCouldntComplete({
+    required bool notOnWifi,
+    required double? usableWifiMbps,
+  }) {
+    if (notOnWifi) {
+      return 'You are not connected to Wi-Fi, and your internet could not be '
+          'measured. Join a Wi-Fi network, then try again.';
+    }
+    if (usableWifiMbps != null) {
+      // No verdict is offered, because there is nothing to compare the Wi-Fi
+      // against. That absence is STATED rather than papered over.
+      return 'We measured your Wi-Fi at about ${usableWifiMbps.round()} Mbps, '
+          'but the internet speed test did not finish, so we could not compare '
+          'the two. Try again in a moment.';
+    }
+    return 'We could not read your Wi-Fi or your internet. Make sure you are '
+        'on Wi-Fi, then try again.';
+  }
+
   /// Builds the D1 body with the measured-internet figure substituted in, per
   /// the spec row: "Your internet measured about [X] Mbps, which looks
   /// [fine/slow]." [internetMbps] is the engine's download figure; [healthy]

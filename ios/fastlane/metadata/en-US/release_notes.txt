@@ -1,9 +1,11 @@
-Fixed: with the Wi-Fi radio switched off and a USB-C Ethernet adapter attached, the app named a Wi-Fi network you were not connected to and printed the Ethernet address as the Wi-Fi one. It now says plainly that you are not on Wi-Fi. The cause is that the address the app was reading is chosen by interface name, and a USB Ethernet adapter looks like an interface name Wi-Fi uses, so the wired address was read as a wireless one. The same mistake applied to USB tethering, which is far more common than a dongle, so that is fixed too.
+New: SSID Airtime. A network's speed is not what it costs the air around it. This calculator shows the airtime a given SSID consumes, so you can see why adding one more network makes everything slower. The model is Jonathan Finney's, ported with his numbers and checked against his own calculator.
 
-Fixed: the address shown as your own could be the wrong one. On a phone with the radio off and a cable attached, the app reported an address belonging to the carrier's translation layer rather than the address on the cable. Addresses that are never a device's real address, including the 169.254 range that means no address was issued at all, are no longer offered as yours, and a real link is now preferred over a tunnel.
+New: Link Info. The wired side of your connection, reported the way the Wi-Fi side always has been: which links exist, which one holds the default route, and what each one is actually carrying. Where the platform allows it, you can choose which link the other tools test over instead of accepting whatever the system picked.
 
-Fixed: Lookup (ARP/NDP) said a MAC address was not exposed on this platform when the platform had exposed several on the same screen. Those entries were hosts that did not answer, which is a useful thing to know about a network, and the app said something false about itself instead. Each entry now says which of the two it is, and where the source reports it, which interface the neighbor was seen on. A host reachable over both a cable and a radio appears once for each, which is a fact rather than a repeat.
+New: every Field Plate downloads as a PDF from the screen it belongs to. All fourteen, no hunting.
 
-Fixed: Lookup (BGP/ASN) reported Registry and AS type as not available on this platform when the routing database had simply returned nothing for those fields. The app now names the source of the silence rather than blaming your device.
+Fixed: on a slow link, Test My Connection could tell you it had not managed to read your Wi-Fi while showing you a Wi-Fi speed on the same card. It now says which side it measured and which it did not, and offers no verdict when there is nothing to compare. Every result also names the connection it was taken over, which matters now that you can choose one.
 
-The guide describes every platform the Toolbox runs on rather than two of them, and the Ping Sweep illustration no longer draws its label through its own arrow.
+Fixed: a saved Wi-Fi reading is dated when it was taken, not when it was reopened.
+
+The subnet calculators are findable, and searchable by name.
