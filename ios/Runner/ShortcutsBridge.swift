@@ -154,6 +154,22 @@ enum ShortcutsBridge {
   /// battery unnoticed.
   static let monitoringMaxDuration: TimeInterval = 5 * 60
 
+  // MARK: - Loop verdict (the one-round-trip gate)
+
+  /// The verdict `ReceiveLiveDetailsIntent` returns while the Live loop should
+  /// keep running. The companion Shortcut tests `If (result) is "Continue"`.
+  ///
+  /// THIS STRING IS A WIRE CONTRACT WITH THE PUBLISHED SHORTCUT. Changing it
+  /// silently stops every installed Shortcut's loop after one sample (the test
+  /// stops matching), and the published iCloud Shortcut cannot be hot-fixed —
+  /// users re-install it by hand. Treat it as frozen.
+  static let continueVerdict = "Continue"
+
+  /// The verdict returned when the loop should stop. Any value that is not
+  /// [continueVerdict] stops the loop, so the exact spelling matters less here;
+  /// it is named so the two halves of the contract read together.
+  static let stopVerdict = "Stop"
+
   /// Darwin notification name posted after a write, so a foregrounded Flutter
   /// engine can react immediately. Plain Darwin names are process-global.
   static let darwinNotificationName = "com.wlanpros.toolbox.shortcuts_bridge.delivered"

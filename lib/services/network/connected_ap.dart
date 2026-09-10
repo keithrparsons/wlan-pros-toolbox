@@ -328,7 +328,12 @@ class ConnectedAp {
       standard: d.standard,
       countryCode: null,
       interfaceName: null,
-      hardwareAddress: null,
+      // THIS DEVICE's Wi-Fi MAC, harvested by the Shortcut ("Get Wi-Fi
+      // network's Hardware MAC Address"). Same meaning as the macOS CoreWLAN
+      // hardwareAddress: the client's address, not the AP's (that is [bssid]).
+      // On iOS it is normally the private per-SSID randomized address, which is
+      // what the screen's MAC-type row exists to say out loud.
+      hardwareAddress: d.clientMac,
       // The Shortcut does not carry the security type. iOS reads it from the
       // native NEHotspotNetwork channel and enriches this model via
       // [withSecurity]; until then it is null but [securityAvailable] is true so

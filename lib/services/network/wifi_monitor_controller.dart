@@ -454,6 +454,12 @@ class WifiMonitorController extends ChangeNotifier {
   /// the user's feed, the badge is not close.
   static const Duration _loopLivenessWindow = Duration(seconds: 10);
 
+  /// How far back a Shortcut-stamped sample time may sit and still be trusted
+  /// as the reading's age. Generous on purpose: it exists to reject a payload
+  /// whose clock is plainly wrong (a wrong time zone, a device clock adrift),
+  /// not to second-guess a delivery iOS held for a few seconds.
+  static const Duration _sampleStampWindow = Duration(minutes: 5);
+
   /// Is the monitoring loop behind the persisted flag GENUINELY RUNNING?
   ///
   /// Evidence, in order of strength:
@@ -822,11 +828,30 @@ class WifiMonitorController extends ChangeNotifier {
     _sub = _bridge.updates.listen(_onPayload);
   }
 
+  /// When this sample was TAKEN, for the "updated N seconds ago" line.
+  ///
+  /// Prefers [WiFiDetails.sampledAt] — the timestamp the Shortcut stamps at
+  /// harvest time — over the arrival clock, because iOS can defer a delivery
+  /// and then the arrival clock reports a stale RF reading as brand new.
+  ///
+  /// Falls back to now() unless the stamp is BOTH not in the future and inside
+  /// [_sampleStampWindow]. A payload whose clock disagrees with ours by more
+  /// than that is not evidence of when the sample was taken, and showing it
+  /// would date the reading by a number we cannot stand behind.
+  DateTime _stampFor(WiFiDetails d) {
+    final DateTime now = DateTime.now();
+    final DateTime? stamped = d.sampledAt;
+    if (stamped == null) return now;
+    final Duration age = now.difference(stamped);
+    if (age.isNegative || age > _sampleStampWindow) return now;
+    return stamped;
+  }
+
   void _onPayload(WiFiDetails d) {
     if (!d.hasAnyData) return;
     _details = d;
     _hasEverReceived = true;
-    _lastUpdated = DateTime.now();
+    _lastUpdated = _stampFor(d);
     // A payload arrived since the last Start: the stream is alive, so the
     // Start-aware missing settle must not fire.
     _sampleSinceStart = true;

@@ -428,4 +428,116 @@ void main() {
       expect(a.hashCode, equals(b.hashCode));
     });
   });
+
+  group('WiFiDetails — generation-2 Shortcut payload (MAC, timestamp, version)',
+      () {
+    // The shape the updated companion Shortcut emits: Orb-style snake_case keys
+    // alongside our own, a client MAC that is NOT the BSSID, an ISO-8601 sample
+    // time stamped inside the Shortcut, and the schema stamp.
+    // House style: the same capitalized keys the published Shortcut already
+    // emits for the other 13 fields, extended with the three new ones.
+    const String gen2 = '{"Timestamp":"2026-09-10T08:13:41Z",'
+        '"SSID":"Keith","BSSID":"94:2a:6f:a0:a5:5d",'
+        '"Client MAC":"1a:2b:3c:4d:5e:6f","RSSI":"-52","Noise":"-95",'
+        '"Payload Version":"2"}';
+
+    test('parses the client MAC without confusing it for the BSSID', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(gen2)!;
+      expect(d.clientMac, '1a:2b:3c:4d:5e:6f');
+      expect(d.bssid, '94:2a:6f:a0:a5:5d');
+      expect(d.clientMac, isNot(d.bssid));
+    });
+
+    test('also accepts the Orb-style and action-label MAC keys', () {
+      // A hand-built Shortcut may name the key after the action label, and an
+      // Orb-shaped payload uses snake_case. Both reach the same field.
+      for (final String key in <String>[
+        'Hardware MAC Address',
+        'wifi_mac',
+        'clientMac',
+      ]) {
+        expect(
+          WiFiDetails.fromJsonString('{"$key":"aa:bb:cc:dd:ee:ff"}')!.clientMac,
+          'aa:bb:cc:dd:ee:ff',
+          reason: 'key $key should populate clientMac',
+        );
+      }
+    });
+
+    test('accepts the snake_case timestamp and version keys too', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(
+          '{"timestamp":"2026-09-10T08:13:41Z","version":"2"}')!;
+      expect(d.sampledAt, DateTime.utc(2026, 9, 10, 8, 13, 41));
+      expect(d.payloadVersion, '2');
+    });
+
+    test('parses the ISO-8601 sample time the Shortcut stamps', () {
+      final WiFiDetails d = WiFiDetails.fromJsonString(gen2)!;
+      expect(d.sampledAt, DateTime.utc(2026, 9, 10, 8, 13, 41));
+    });
+
+    test('accepts epoch seconds and milliseconds', () {
+      expect(
+        WiFiDetails.fromJsonString('{"timestamp":"1757492021"}')!.sampledAt,
+        DateTime.fromMillisecondsSinceEpoch(1757492021 * 1000),
+      );
+      expect(
+        WiFiDetails.fromJsonString('{"timestamp":"1757492021000"}')!.sampledAt,
+        DateTime.fromMillisecondsSinceEpoch(1757492021000),
+      );
+    });
+
+    test('a timestamp it cannot read is null, never a guess', () {
+      // A Format Date action left on a locale style ("Sep 10, 2026 at 08:13")
+      // is unparseable. Null makes the screen fall back to receipt time; a
+      // fabricated date would silently mis-date the RF reading.
+      expect(
+        WiFiDetails.fromJsonString('{"timestamp":"Sep 10, 2026 at 08:13"}')!
+            .sampledAt,
+        isNull,
+      );
+      expect(WiFiDetails.fromJsonString('{"timestamp":""}')!.sampledAt, isNull);
+    });
+
+    test('reads the schema stamp, and an unstamped payload is generation 1',
+        () {
+      expect(WiFiDetails.fromJsonString(gen2)!.payloadVersion, '2');
+      expect(
+        WiFiDetails.fromJsonString('{"SSID":"Keith"}')!.payloadVersion,
+        isNull,
+      );
+    });
+
+    test('the whole generation-1 payload still parses unchanged', () {
+      // The published Shortcut that predates these keys must keep working
+      // byte-for-byte: every new field is absent, nothing else shifts.
+      final WiFiDetails d = WiFiDetails.fromJsonString(
+        '{"SSID":"Keith","BSSID":"94:2a:6f:a0:a5:5d","Channel":"197",'
+        '"RSSI":"-45","Noise":"-95","Standard":"802.11be - Wi-Fi 7",'
+        '"RX Rate":"864","TX Rate":"1297"}',
+      )!;
+      expect(d.ssid, 'Keith');
+      expect(d.snr, 50);
+      expect(d.clientMac, isNull);
+      expect(d.sampledAt, isNull);
+      expect(d.payloadVersion, isNull);
+    });
+
+    test('a sample differing only in MAC or sample time is not equal', () {
+      // Same dedup guard as the reachability fields: the live screen drops a
+      // sample that compares equal to the last one charted.
+      final WiFiDetails a = WiFiDetails.fromJsonString(
+          '{"SSID":"X","Client MAC":"aa:bb:cc:00:00:01"}')!;
+      final WiFiDetails b = WiFiDetails.fromJsonString(
+          '{"SSID":"X","Client MAC":"aa:bb:cc:00:00:02"}')!;
+      expect(a == b, isFalse);
+      expect(a.hashCode == b.hashCode, isFalse);
+
+      final WiFiDetails t1 = WiFiDetails.fromJsonString(
+          '{"SSID":"X","Timestamp":"2026-09-10T08:13:41Z"}')!;
+      final WiFiDetails t2 = WiFiDetails.fromJsonString(
+          '{"SSID":"X","Timestamp":"2026-09-10T08:13:42Z"}')!;
+      expect(t1 == t2, isFalse);
+    });
+  });
 }

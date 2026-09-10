@@ -119,6 +119,8 @@ class WiFiDetails {
     this.cellCarrier,
     this.cellRat,
     this.cellSignalBars,
+    this.clientMac,
+    this.sampledAt,
     this.payloadVersion,
     this.reachUrl,
     this.reachOk,
@@ -186,8 +188,33 @@ class WiFiDetails {
   /// absent. Orb key: `cell_signal_bars`.
   final int? cellSignalBars;
 
+  /// THIS DEVICE's Wi-Fi MAC address, as reported by "Get Wi-Fi network's
+  /// Hardware MAC Address". Null when absent. Shortcut key: `wifi_mac`.
+  ///
+  /// NOT the same thing as [bssid]. [bssid] is the AP radio's address; this is
+  /// the client's, and on iOS it is normally the PRIVATE, per-SSID randomized
+  /// address rather than the burned-in one. That is exactly what makes it
+  /// useful: it is the string to search for in a controller's client list to
+  /// find yourself, and it will differ per SSID. Never present it as the
+  /// device's permanent hardware address.
+  final String? clientMac;
+
+  /// When the Shortcut TOOK the sample, as stamped inside the Shortcut itself.
+  /// Null when absent or unparseable.
+  ///
+  /// This is sample time, not receipt time. The two differ when iOS defers the
+  /// delivery (the app backgrounded, several cycles coalescing), and in that
+  /// case the receipt clock quietly lies about how fresh the RF reading is.
+  ///
+  /// The Shortcut must format it as ISO 8601 for this to parse; anything else
+  /// lands as null and the screen falls back to receipt time rather than
+  /// showing a guess. Shortcut key: `timestamp`.
+  final DateTime? sampledAt;
+
   /// Payload schema/version string the emitting Shortcut stamps, for
   /// forward-compatibility diagnostics. Null when absent. Orb key: `version`.
+  /// A payload with NO version is generation 1 (every Shortcut published before
+  /// the stamp existed); the current companion Shortcut stamps "2".
   final String? payloadVersion;
 
   // Reachability result — the internet-reachability probe the combined payload
@@ -346,6 +373,27 @@ class WiFiDetails {
     // Do NOT add `'signalBars'` to this alias list until a live dev-build check
     // confirms the value that actually arrives is cellular. Adding it blind
     // risks mislabelling Wi-Fi bars as cellular signal (a false RF verdict).
+    // Sample time. ISO 8601 is the contract with the Shortcut; we also accept a
+    // bare epoch number because a hand-built Shortcut may hand over a raw Unix
+    // time. Anything else -> null: a timestamp we cannot read is worse than no
+    // timestamp, because the screen would present a fabricated freshness.
+    DateTime? pickDateTime(List<String> keys) {
+      final String? raw = pickString(keys);
+      if (raw == null) return null;
+      // EPOCH FIRST, and the order is load-bearing. DateTime.tryParse accepts
+      // ISO 8601 BASIC format, so a bare 10-digit epoch is not rejected — it is
+      // read as a packed yyyyyyMMdd date: tryParse('1757492021') returns the
+      // year 175750, not September 2025. Matching the epoch shapes first is
+      // what keeps a Unix timestamp from becoming a date 173,000 years out.
+      if (RegExp(r'^\d{10}$').hasMatch(raw)) {
+        return DateTime.fromMillisecondsSinceEpoch(int.parse(raw) * 1000);
+      }
+      if (RegExp(r'^\d{13}$').hasMatch(raw)) {
+        return DateTime.fromMillisecondsSinceEpoch(int.parse(raw));
+      }
+      return DateTime.tryParse(raw);
+    }
+
     int? bars = pickInt(<String>['Cell Signal Bars', 'cell_signal_bars']);
     if (bars != null) bars = bars.clamp(0, 4);
 
@@ -365,6 +413,10 @@ class WiFiDetails {
       cellRat:
           pickString(<String>['Cell RAT', 'cell_rat', 'radioTechnology']),
       cellSignalBars: bars,
+      clientMac: pickString(
+        <String>['Client MAC', 'wifi_mac', 'Hardware MAC Address', 'clientMac'],
+      ),
+      sampledAt: pickDateTime(<String>['Timestamp', 'timestamp', 'sampledAt']),
       payloadVersion: pickString(<String>['Payload Version', 'version']),
       reachUrl: pickString(<String>['Reachability URL', 'reach_url']),
       reachOk: pickBool(<String>['Reachability OK', 'reach_ok']),
@@ -388,6 +440,8 @@ class WiFiDetails {
       other.cellCarrier == cellCarrier &&
       other.cellRat == cellRat &&
       other.cellSignalBars == cellSignalBars &&
+      other.clientMac == clientMac &&
+      other.sampledAt == sampledAt &&
       other.payloadVersion == payloadVersion &&
       other.reachUrl == reachUrl &&
       other.reachOk == reachOk &&
@@ -408,6 +462,8 @@ class WiFiDetails {
         cellCarrier,
         cellRat,
         cellSignalBars,
+        clientMac,
+        sampledAt,
         payloadVersion,
         reachUrl,
         reachOk,
@@ -421,6 +477,7 @@ class WiFiDetails {
       'standard: $standard, rxRate: $rxRate, txRate: $txRate, '
       'ipv4Local: $ipv4Local, ipv6Local: $ipv6Local, '
       'cellCarrier: $cellCarrier, cellRat: $cellRat, '
-      'cellSignalBars: $cellSignalBars, payloadVersion: $payloadVersion, '
+      'cellSignalBars: $cellSignalBars, clientMac: $clientMac, '
+      'sampledAt: $sampledAt, payloadVersion: $payloadVersion, '
       'reachUrl: $reachUrl, reachOk: $reachOk, reachMs: $reachMs)';
 }
