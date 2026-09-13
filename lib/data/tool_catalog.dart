@@ -1,11 +1,24 @@
 // Tool catalog — single source of truth for what appears on the home grid and
 // what tools each category exposes.
 //
-// Category structure: the 4-category reorganization (Keith, 2026-06-01), which
+// Category structure: the reorganization Keith ruled 2026-06-01, which
 // SUPERSEDES the prior LOCKED 6-category map
 // (Deliverables/2026-05-30-quick-reference-additions-triage/
-//  LOCKED-6-category-structure.md). The four current categories, in home-grid
-// order, are:
+//  LOCKED-6-category-structure.md).
+//
+// THIS COMMENT SAID "the 4-category reorganization" AND "the four current
+// categories" UNTIL 2026-09-13, AND THERE ARE FIVE. Educational Resources was
+// added after this was written and nothing brought the header along, because
+// nothing checks prose against the list below it. The same drift ran in
+// GL-003, which called it "the 8-category home screen" in three places -- a
+// number that was never right for any structure this file has ever held.
+//
+// SO THE COUNT IS NOT WRITTEN DOWN HERE EITHER. It is a fact about
+// kToolCategories, and the home grid is data-driven from that list and renders
+// however many exist. Read it when you need it:
+//     grep -c "^  ToolCategory(" lib/data/tool_catalog.dart
+//
+// The categories, in home-grid order:
 //   1. Test Network    — live Wi-Fi/internet diagnostics (NEW; holds the three
 //                         pinned tools moved out of Networking Tools:
 //                         wifi-vs-internet, wifi-info, net-quality).
@@ -16,6 +29,10 @@
 //                         Absorbs all former Planning Tools.
 //   4. Quick Reference — reference tables + the former Command & Capture and
 //                         Checklists tools.
+//   5. Educational Resources — curated external places to learn Wi-Fi. Added
+//                         after the reorganization above; its tile is
+//                         intercepted in home_screen.dart to push the
+//                         dedicated directory screen rather than CategoryScreen.
 // The three dissolved categories (Planning Tools, Command & Capture,
 // Checklists) merged their tools into the survivors per this map; nothing was
 // dropped or duplicated. The tappable-checklist screen type
