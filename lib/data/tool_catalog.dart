@@ -1131,6 +1131,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi & RF',
       ),
+      // Field Plate 15 — the Book 3 master graphic. Ruled into 1.10.0 by Keith
+      // on 2026-09-06. The description states what the drawing ARGUES rather
+      // than what it depicts, because the whole point of the graphic is that
+      // Wi-Fi is one hop of several and the blame usually lands on the wrong
+      // one.
+      ToolEntry(
+        id: 'how-devices-access-the-internet',
+        title: 'How Your Devices Access the Internet',
+        description:
+            'Every hop between a device and the Internet, drawn to scale: '
+            'Wi-Fi is only the first one',
+        routeName: '/tools/how-devices-access-the-internet',
+        isLive: true,
+        subgroup: 'Wi-Fi & RF',
+      ),
       // ── Field & Trade Reference set (pilot, 2026-07-05) ──
       // Enclosure Ratings is the pilot REFERENCE-screen entry of the Field
       // Reference build order: the IP (IEC 60529) and NEMA (NEMA 250) ingress

@@ -14,8 +14,15 @@ import CoreLocation
 ///       "poweredOn": Bool,
 ///       "locationAuthorized": Bool,
 ///       "scanThrottled": Bool,
-///       "accessPoints": [ { ssid, bssid, rssiDbm, channel, band, frequencyMhz } ]
+///       "accessPoints": [ { ssid, bssid, rssiDbm, channel, band, frequencyMhz,
+///                          security } ]
 ///     }
+///
+/// `security` is a LIST of scheme tokens, never one value: a CWNetwork answers
+/// `supportsSecurity(_:)` per scheme and can say yes to several. A WPA2/WPA3
+/// transition BSS is exactly that, and it is the case Join a Network exists to
+/// get right. An EMPTY list means none of the nameable schemes were advertised
+/// and must never be read as "open"; `.none` is itself a scheme in the list.
 ///
 /// Three honest constraints are encoded here:
 ///   1. CoreWLAN returns a nil/empty SSID and BSSID without Location Services
@@ -297,7 +304,55 @@ final class ApScanChannel: NSObject {
       "channel": channelNumber,
       "band": band,
       "frequencyMhz": frequency,
+      "security": securityTokens(network),
     ]
+  }
+
+  /// The security schemes this BSS advertises, as the SAME lower-camel tokens
+  /// `WifiInfoChannel.securityToken` already emits for the CONNECTED network, so
+  /// the Dart `WifiSecurityClassifier` resolves both without a second vocabulary.
+  ///
+  /// A LIST, NOT A VALUE, AND THAT IS THE WHOLE POINT. `CWInterface` has one
+  /// `security()`; a scan row is a `CWNetwork`, which answers
+  /// `supportsSecurity(_:)` per scheme and can legitimately answer yes to more
+  /// than one. A WPA2/WPA3 transition BSS is exactly that case, and it is the
+  /// case Join a Network exists to get right: flattening it to a single token
+  /// would let the UI offer a WPA2 association to a BSS that also speaks SAE.
+  ///
+  /// An EMPTY list means "this BSS advertised none of the schemes we can name",
+  /// which is honest. It must never be read as "open" — `.none` is a scheme in
+  /// its own right and appears in the list when CoreWLAN reports it (GL-005).
+  ///
+  /// Newer cases live behind availability guards for the same reason the
+  /// connected-network mapper guards them: a bare case does not compile against
+  /// an older SDK or deployment target.
+  private static func securityTokens(_ network: CWNetwork) -> [String] {
+    var tokens: [String] = []
+
+    func probe(_ security: CWSecurity, _ token: String) {
+      if network.supportsSecurity(security) { tokens.append(token) }
+    }
+
+    probe(.none, "none")
+    probe(.WEP, "wep")
+    probe(.wpaPersonal, "wpaPersonal")
+    probe(.wpaPersonalMixed, "wpaPersonalMixed")
+    probe(.wpa2Personal, "wpa2Personal")
+    probe(.wpaEnterprise, "wpaEnterprise")
+    probe(.wpaEnterpriseMixed, "wpaEnterpriseMixed")
+    probe(.wpa2Enterprise, "wpa2Enterprise")
+    probe(.personal, "personal")
+    probe(.enterprise, "enterprise")
+
+    if #available(macOS 13.0, *) {
+      probe(.wpa3Personal, "wpa3Personal")
+      probe(.wpa3Enterprise, "wpa3Enterprise")
+      probe(.wpa3Transition, "wpa3Transition")
+      probe(.OWE, "owe")
+      probe(.oweTransition, "oweTransition")
+    }
+
+    return tokens
   }
 
   /// Maps CWChannelBand to the band label the Dart model and the Android

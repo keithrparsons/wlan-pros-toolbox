@@ -609,6 +609,24 @@ class AppRouter {
   static const String throughputTestingWhere =
       '/tools/throughput-testing-where';
 
+  // Field Plate 15, "How your devices access the Internet" — the Book 3 master
+  // graphic, ruled into 1.10.0 by Keith on 2026-09-06 (option 2 of four), which
+  // also puts it in the updated book automatically.
+  //
+  // SECOND plate with no native reference screen behind it, so it follows the
+  // throughputTestingWhere precedent directly above rather than inventing a
+  // pattern: a first-class catalog entry rendered by the shared
+  // PdfReferenceScreen.
+  //
+  // The bundled PDF is print-letter.pdf from the LOCKED-2026-09-06 set, chosen
+  // by measurement and not by preference: at 612x792 it is byte-identical in
+  // page size to plate 14. The eleven older plates are 1260 pt wide with height
+  // to content, which is a poster shape and not a paper size, and none of the
+  // master's four outputs is that shape — re-rendering to it would fight the
+  // graphic's own one-block-one-transform architecture.
+  static const String howDevicesAccessTheInternet =
+      '/tools/how-devices-access-the-internet';
+
   // Calculators — Hex / ASCII converter + printable-ASCII table (pure math +
   // const-derived table, all platforms incl. web).
   static const String hexAscii = '/tools/hex-ascii';
@@ -916,6 +934,11 @@ class AppRouter {
       title: 'Throughput Testing: Where You Test',
       assetPath: 'assets/field-plates/throughput-testing-where.pdf',
       toolId: 'throughput-testing-where',
+    ),
+    howDevicesAccessTheInternet: (_) => const PdfReferenceScreen(
+      title: 'How Your Devices Access the Internet',
+      assetPath: 'assets/field-plates/how-devices-access-the-internet.pdf',
+      toolId: 'how-devices-access-the-internet',
     ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),

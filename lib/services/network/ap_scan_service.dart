@@ -101,6 +101,7 @@ class ScannedAp {
     required this.channel,
     required this.band,
     required this.frequencyMhz,
+    this.security = const <String>[],
   });
 
   /// The network name, or null for a HIDDEN network — a BSS that is really
@@ -135,6 +136,22 @@ class ScannedAp {
   /// The center frequency in MHz the channel/band were derived from.
   final int frequencyMhz;
 
+  /// The security schemes this BSS advertises, as lower-camel tokens the
+  /// `WifiSecurityClassifier` resolves — the same vocabulary the connected
+  /// network already uses, so there is one set of names and not two.
+  ///
+  /// A LIST, NOT A VALUE, and the list is the point. A BSS can advertise more
+  /// than one scheme at once, which is exactly what a WPA2/WPA3 transition
+  /// network does. Join a Network keys its candidates on (SSID, band) precisely
+  /// because one name can run different security per band; collapsing this to a
+  /// single token would put that defect back one layer down.
+  ///
+  /// EMPTY means the platform named no scheme we can resolve. It must NEVER be
+  /// read as "open": an open network reports the token `none`, and absence of
+  /// information is not information (GL-005). A UI seeing an empty list says so
+  /// rather than offering an open join.
+  final List<String> security;
+
   /// Builds a record from the native channel payload. Returns null when a
   /// required field is missing, so a malformed entry is dropped, never guessed.
   ///
@@ -161,6 +178,15 @@ class ScannedAp {
     // The explicit null test is what promotes `bssid` to non-null below; flow
     // analysis does not see through classifyBssid.
     if (bssid == null || classifyBssid(map) != BssidIdentity.valid) return null;
+    // A MISSING `security` key is not a malformed row. Android does not send it
+    // and neither did any build before 2026-09-13, so absence degrades to an
+    // empty list rather than dropping an otherwise readable AP. Non-string
+    // entries are discarded individually: a garbled token must not become a
+    // security claim.
+    final Object? rawSecurity = map['security'];
+    final List<String> security = rawSecurity is List
+        ? rawSecurity.whereType<String>().where((String t) => t.isNotEmpty).toList()
+        : const <String>[];
     return ScannedAp(
       ssid: map['ssid'] as String?,
       bssid: bssid,
@@ -168,13 +194,14 @@ class ScannedAp {
       channel: channel,
       band: band,
       frequencyMhz: freq,
+      security: security,
     );
   }
 
   @override
   String toString() => 'ScannedAp(ssid: $ssid, bssid: $bssid, '
       'rssiDbm: $rssiDbm, channel: $channel, band: $band, '
-      'frequencyMhz: $frequencyMhz)';
+      'frequencyMhz: $frequencyMhz, security: $security)';
 }
 
 /// THE ONE VERDICT a scan snapshot supports — what the screen is entitled to
