@@ -11,7 +11,7 @@
 // Order (2026-09-13): hero card → SEARCH → book → guide → category grid.
 // It was hero → book → guide → grid → search from 2026-06-03 until then; the
 // search field moved up because it had ended up below the fold on a phone,
-// which is the one place a user overwhelmed by 185 tools would look for it.
+// which is the one place a user overwhelmed by 183 tools would look for it.
 //
 // The grid is data-driven from kToolCategories, so it scales from the current 4
 // categories to 6 automatically. Per Keith (2026-06-03) NOTHING sets isNew in
@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   //     and all five category tiles, which put it off the bottom
                   //     of a phone screen. The complaint it answers is Ed
                   //     Chuchaisri's and Thanaris's, arriving independently the
-                  //     same morning: with 185 tools the app "can feel a little
+                  //     same morning: with 183 tools the app "can feel a little
                   //     overwhelming at first". For someone who already knows the
                   //     tool's name, search IS the answer to that, and it was the
                   //     single hardest thing on the screen to find.

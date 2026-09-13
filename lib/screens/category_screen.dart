@@ -4,9 +4,11 @@
 // (section headers + per-section count chip) in ONE scroll (mockup 02), plus an
 // in-category search field that filters the rendered rows live and a row of
 // section filter chips (selected = lime §8.3, unselected = neutral §8.17).
-// Categories without a subgroup map (Test Network, Networking Tools) render FLAT
-// with no headers, exactly as before — the pinned Test Network order is
-// untouched (it stays on the orderedCategoryTools path via groupedCategoryTools).
+// Categories without a subgroup map (Test Network, Educational Resources)
+// render FLAT with no headers — the pinned Test Network order is untouched (it
+// stays on the orderedCategoryTools path via groupedCategoryTools).
+// NETWORKING TOOLS LEFT THIS LIST ON 2026-09-13 and is now grouped into five
+// sections; this comment named it as flat for one commit after it stopped being.
 //
 // Live tools route via Navigator.pushNamed (default in ToolRow). Non-live tools
 // render as a disabled "Coming soon" row.

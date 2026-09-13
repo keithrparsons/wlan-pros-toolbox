@@ -5,8 +5,9 @@
 // alphabetical on the subgroup string, so it lives here as an ordered list per
 // category. A tool's section membership is its ToolEntry.subgroup (set in the
 // catalog). Categories absent from kCategorySubgroupOrder render FLAT (one
-// unnamed section, no headers) — so the pinned Test Network ordering and the
-// plain Networking list are untouched by this change.
+// unnamed section, no headers) — so the pinned Test Network ordering is
+// untouched by this change, as is Educational Resources.
+// NETWORKING TOOLS WAS IN THAT FLAT SET UNTIL 2026-09-13 and is now grouped.
 
 import 'tool_catalog.dart';
 import 'tool_ordering.dart';

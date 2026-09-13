@@ -1,7 +1,9 @@
 // Widget tests for the consumer front-door home (Option A, 2026-06-03).
 //
 // Covers: the "Check My Connection" hero renders and routes to Test My
-// Connection; the search field is present (now at the BOTTOM) and navigates;
+// Connection; the search field is present (directly UNDER THE HERO since
+// 2026-09-13, was at the bottom before that), sits where it should, and
+// navigates;
 // each tile shows the live tool-count badge and the example-tools line; NO NEW
 // pill renders anywhere in this build (Keith, 2026-06-03 — nothing is new to a
 // user yet); the grid renders all categories; the TILE GRID stretches to 3 then
@@ -162,6 +164,52 @@ void main() {
       await tester.tap(find.text('Search all tools…'));
       await tester.pumpAndSettle();
       expect(pushedSearch, isTrue);
+    });
+  });
+
+  // THE REGRESSION GUARD FOR THE 2026-09-13 MOVE (Vera A2). The test above
+  // asserts the search field EXISTS and NAVIGATES; neither would notice if a
+  // future sliver reorder put it back at the bottom, which is the whole point
+  // of the change. Assert its POSITION, and assert it relatively rather than
+  // against a pixel value so ordinary spacing edits do not fail it.
+  testWidgets('the search field sits under the hero and above the grid', (
+    tester,
+  ) async {
+    await _withViewport(tester, const Size(800, 1200), () async {
+      await tester.pumpWidget(_app());
+      await tester.pumpAndSettle();
+
+      final double hero = tester.getTopLeft(
+        find.text('Check My Connection'),
+      ).dy;
+      final double search = tester.getTopLeft(
+        find.text('Search all tools…'),
+      ).dy;
+      final double guide = tester.getTopLeft(
+        find.text('How this app works'),
+      ).dy;
+      final double firstTile = tester.getTopLeft(
+        find.text('Test Network'),
+      ).dy;
+
+      expect(
+        search,
+        greaterThan(hero),
+        reason: 'search must stay BELOW the consumer hero — the hero is the '
+            'front door and auto-runs on arrival',
+      );
+      expect(
+        search,
+        lessThan(guide),
+        reason: 'search must sit above the book and guide entries',
+      );
+      expect(
+        search,
+        lessThan(firstTile),
+        reason: 'search must sit above the category grid — it was below all '
+            'five tiles until 2026-09-13, which put it off the bottom of a '
+            'phone screen',
+      );
     });
   });
 
