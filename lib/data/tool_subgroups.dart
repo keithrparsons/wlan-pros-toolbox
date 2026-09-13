@@ -124,6 +124,26 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // Future plan-set-reading references land in Quick Reference, not here.
     'AEC & Documentation',
   ],
+  // Networking Tools (2026-09-13, Keith): 25 tools rendering FLAT was the one
+  // real findability gap left in the app. Every other oversized category was
+  // already grouped; this one had never been given an entry here, so its 25
+  // tools arrived as one undifferentiated alphabetical list.
+  //
+  // SECTIONED BY THE JOB, NOT BY THE PROTOCOL. The order below is the order a
+  // troubleshooting job actually unfolds: start where you are, find out whether
+  // you can get out, see what else is on the wire, work out who something is,
+  // then poke the service itself. Grouping by protocol family instead would put
+  // Ping (ICMP) and Ping (TCP) in different sections, which is precisely the
+  // distinction a person hunting for "ping" does not have in mind yet.
+  //
+  // Five sections of five. Editorial and reversible — Keith's to overrule.
+  'networking': <String>[
+    'This Device',
+    'Reachability & Path',
+    'Discovery & Scanning',
+    'Names & Ownership',
+    'Services & Protocols',
+  ],
 };
 
 /// One rendered section of a category screen: a header (empty for the flat

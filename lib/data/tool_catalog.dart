@@ -433,6 +433,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Local IPs, gateway, DNS, Wi-Fi link, interface type',
         routeName: '/tools/interface-info',
         isLive: true,
+        subgroup: 'This Device',
       ),
       ToolEntry(
         id: 'join-network',
@@ -447,6 +448,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'see exactly which AP it landed on',
         routeName: '/tools/join-network',
         isLive: true,
+        subgroup: 'This Device',
       ),
       ToolEntry(
         id: 'link-info',
@@ -455,6 +457,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'duplex, and which one is carrying your traffic',
         routeName: '/tools/link-info',
         isLive: true,
+        subgroup: 'This Device',
       ),
       ToolEntry(
         id: 'device-info',
@@ -464,6 +467,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             "device's own system facts",
         routeName: '/tools/device-info',
         isLive: true,
+        subgroup: 'This Device',
       ),
       ToolEntry(
         id: 'dns-lookup',
@@ -473,6 +477,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'DNS-over-HTTPS',
         routeName: '/tools/dns-lookup',
         isLive: true,
+        subgroup: 'Names & Ownership',
       ),
       ToolEntry(
         id: 'port-scan',
@@ -480,6 +485,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'TCP connect scan: common ports preset or custom range',
         routeName: '/tools/port-scan',
         isLive: true,
+        subgroup: 'Discovery & Scanning',
       ),
       ToolEntry(
         id: 'ping',
@@ -489,6 +495,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'platform incl. sandboxed desktop',
         routeName: '/tools/ping',
         isLive: true,
+        subgroup: 'Reachability & Path',
       ),
       ToolEntry(
         id: 'icmp-ping',
@@ -497,6 +504,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Real ICMP echo round-trip (mobile): live RTT, min/avg/max, loss',
         routeName: '/tools/icmp-ping',
         isLive: true,
+        subgroup: 'Reachability & Path',
       ),
       ToolEntry(
         id: 'ping-plotter',
@@ -506,6 +514,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'min/avg/max, jitter, and visible dropped probes',
         routeName: '/tools/ping-plotter',
         isLive: true,
+        subgroup: 'Reachability & Path',
       ),
       ToolEntry(
         id: 'ping-sweep',
@@ -514,6 +523,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Discover responsive hosts on a subnet: TCP-probe sweep, no ICMP',
         routeName: '/tools/ping-sweep',
         isLive: true,
+        subgroup: 'Discovery & Scanning',
       ),
       ToolEntry(
         id: 'network-discovery',
@@ -523,6 +533,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and vendor (desktop)',
         routeName: '/tools/network-discovery',
         isLive: true,
+        subgroup: 'Discovery & Scanning',
       ),
       // Nearby AP Scan — wired for Android and macOS. Lists nearby Wi-Fi access
       // points (SSID, BSSID, channel, band, RSSI) via the Android Wi-Fi scan API
@@ -548,6 +559,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/nearby-ap-scan',
         isLive: true,
         nativeScanOnly: true,
+        subgroup: 'Discovery & Scanning',
       ),
       ToolEntry(
         id: 'traceroute',
@@ -555,6 +567,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Hop-by-hop path via the OS traceroute: desktop',
         routeName: '/tools/traceroute',
         isLive: true,
+        subgroup: 'Reachability & Path',
       ),
       ToolEntry(
         id: 'mobile-traceroute',
@@ -563,6 +576,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Hop-by-hop path via an ICMP TTL-walk: Android (iOS unsupported)',
         routeName: '/tools/mobile-traceroute',
         isLive: true,
+        subgroup: 'Reachability & Path',
       ),
       ToolEntry(
         id: 'ssl-inspect',
@@ -570,6 +584,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Certificate fields, validity, SAN, fingerprints over TLS',
         routeName: '/tools/ssl-inspect',
         isLive: true,
+        subgroup: 'Services & Protocols',
       ),
       ToolEntry(
         id: 'http-headers',
@@ -577,6 +592,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Status, redirect chain, and all response headers',
         routeName: '/tools/http-headers',
         isLive: true,
+        subgroup: 'Services & Protocols',
       ),
       ToolEntry(
         id: 'whois',
@@ -584,6 +600,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Domain / IP registration record over WHOIS (port 43)',
         routeName: '/tools/whois',
         isLive: true,
+        subgroup: 'Names & Ownership',
       ),
       ToolEntry(
         id: 'wake-on-lan',
@@ -591,6 +608,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Send a magic packet to wake a host by MAC address',
         routeName: '/tools/wake-on-lan',
         isLive: true,
+        subgroup: 'Services & Protocols',
       ),
       ToolEntry(
         id: 'arp-ndp',
@@ -598,6 +616,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Discover local neighbors: IP and MAC where exposed',
         routeName: '/tools/arp-ndp',
         isLive: true,
+        subgroup: 'Discovery & Scanning',
       ),
       ToolEntry(
         id: 'bgp-asn',
@@ -605,6 +624,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'ASN, holder, prefix, registry, peers via RIPEstat',
         routeName: '/tools/bgp-asn',
         isLive: true,
+        subgroup: 'Names & Ownership',
       ),
       ToolEntry(
         id: 'ip-geo',
@@ -612,6 +632,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Country, city, coordinates, timezone, ISP, ASN',
         routeName: '/tools/ip-geo',
         isLive: true,
+        subgroup: 'Names & Ownership',
       ),
       // My Current Location (BF5-16): auto-runs the GPS fix on open and shows
       // latitude / longitude / altitude / accuracy directly. Reuses the
@@ -625,6 +646,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'open',
         routeName: '/tools/my-current-location',
         isLive: true,
+        subgroup: 'This Device',
       ),
       ToolEntry(
         id: 'mac-oui-lookup',
@@ -633,6 +655,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'MAC → vendor from a bundled IEEE OUI table, fully offline',
         routeName: '/tools/mac-oui',
         isLive: true,
+        subgroup: 'Names & Ownership',
       ),
       ToolEntry(
         id: 'packet-sender',
@@ -640,6 +663,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         description: 'Send a custom TCP/UDP payload and read the reply',
         routeName: '/tools/packet-sender',
         isLive: true,
+        subgroup: 'Services & Protocols',
       ),
       ToolEntry(
         id: 'ntp-time',
@@ -649,6 +673,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and round-trip delay',
         routeName: '/tools/ntp-time',
         isLive: true,
+        subgroup: 'Services & Protocols',
       ),
     ],
   ),

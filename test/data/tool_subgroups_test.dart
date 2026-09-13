@@ -84,11 +84,38 @@ void main() {
       expect(sections.single.tools.first.id, 'net-quality');
     });
 
-    test('networking returns a single unnamed section', () {
-      final List<ToolSection> sections = groupedCategoryTools(cat('networking'));
+    // Networking Tools was asserted flat here until 2026-09-13, when Keith had
+    // its 25 tools sectioned. It is now covered by the grouped-category block
+    // above, which loops kCategorySubgroupOrder.keys. Educational Resources
+    // takes its place as the flat case so this branch keeps a real subject.
+    test('educational-resources returns a single unnamed section', () {
+      final List<ToolSection> sections =
+          groupedCategoryTools(cat('educational-resources'));
       expect(sections, hasLength(1));
       expect(sections.single.header, isEmpty);
-      expect(sections.single.count, cat('networking').tools.length);
+      expect(
+        sections.single.count,
+        cat('educational-resources').tools.length,
+      );
+    });
+
+    test('networking is no longer flat, and is sectioned five ways', () {
+      final List<ToolSection> sections = groupedCategoryTools(cat('networking'));
+      expect(sections, hasLength(5));
+      expect(
+        sections.map((ToolSection s) => s.header).toList(),
+        <String>[
+          'This Device',
+          'Reachability & Path',
+          'Discovery & Scanning',
+          'Names & Ownership',
+          'Services & Protocols',
+        ],
+      );
+      // Every tool placed, none orphaned into "Other", none duplicated.
+      final int placed =
+          sections.fold<int>(0, (int n, ToolSection s) => n + s.count);
+      expect(placed, cat('networking').tools.length);
     });
   });
 }

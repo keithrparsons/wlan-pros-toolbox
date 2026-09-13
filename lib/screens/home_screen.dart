@@ -4,11 +4,14 @@
 //   * richer category tiles: a tool-count badge (or a NEW pill / "~27" override
 //     for the 6-category future) top-right, and a line of 2–3 example tool names
 //     instead of the generic summary sentence,
-//   * a "Search all tools…" field at the BOTTOM that pushes /search (it is a
-//     navigation trigger, not an inline filter — inline-as-you-type lives on the
-//     search screen).
+//   * a "Search all tools…" field directly UNDER THE HERO that pushes /search
+//     (it is a navigation trigger, not an inline filter — inline-as-you-type
+//     lives on the search screen). It was at the BOTTOM until 2026-09-13.
 //
-// Order (Option A front door, 2026-06-03): hero card → category grid → search.
+// Order (2026-09-13): hero card → SEARCH → book → guide → category grid.
+// It was hero → book → guide → grid → search from 2026-06-03 until then; the
+// search field moved up because it had ended up below the fold on a phone,
+// which is the one place a user overwhelmed by 185 tools would look for it.
 //
 // The grid is data-driven from kToolCategories, so it scales from the current 4
 // categories to 6 automatically. Per Keith (2026-06-03) NOTHING sets isNew in
@@ -139,6 +142,34 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+                  // 1a. Search trigger — MOVED UP FROM THE BOTTOM (Keith,
+                  //     2026-09-13). It sat below the hero, the book, the guide
+                  //     and all five category tiles, which put it off the bottom
+                  //     of a phone screen. The complaint it answers is Ed
+                  //     Chuchaisri's and Thanaris's, arriving independently the
+                  //     same morning: with 185 tools the app "can feel a little
+                  //     overwhelming at first". For someone who already knows the
+                  //     tool's name, search IS the answer to that, and it was the
+                  //     single hardest thing on the screen to find.
+                  //
+                  //     IT SITS UNDER THE HERO, NOT ABOVE IT, and that is
+                  //     deliberate. "Check My Connection" is the consumer front
+                  //     door, it auto-runs on arrival, and Thanaris's own guide
+                  //     independently leads with the same question it answers.
+                  //     Displacing it would trade a validated front door for a
+                  //     text field. Above the book and the grid is what "top"
+                  //     needed to mean here.
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
+                    sliver: SliverToBoxAdapter(
+                      child: CenteredContent(
+                        child: _HomeSearchField(
+                          onTap: () =>
+                              Navigator.of(context).pushNamed(AppRouter.search),
+                        ),
+                      ),
+                    ),
+                  ),
                   // 1b. "Fix Your Own Wi-Fi" book entry (Book 3, 2026-06-12).
                   //     Keith's consumer book, bundled FREE — the book that goes
                   //     with this app. Ordered by the consumer journey (Option A
@@ -228,24 +259,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                         childCount: kToolCategories.length,
-                      ),
-                    ),
-                  ),
-                  // 3. Search trigger — moved to the bottom (Option A, 2026-06-03)
-                  //    so the consumer hero leads and the grid is denser up top.
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      edge,
-                      0,
-                      edge,
-                      AppSpacing.md,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: CenteredContent(
-                        child: _HomeSearchField(
-                          onTap: () => Navigator.of(context)
-                              .pushNamed(AppRouter.search),
-                        ),
                       ),
                     ),
                   ),
