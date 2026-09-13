@@ -2,7 +2,7 @@
   "_meta": {
     "title": "Wi-Fi Tools Comparison",
     "pricingDate": "July 2026",
-    "pricingNote": "Pricing as of July 2026. Confirm current pricing with the vendor before you buy.",
+    "pricingNote": "Pricing as of July 2026, except Ekahau, which is MSRP from its September 2026 licensing launch. Confirm current pricing with the vendor before you buy.",
     "estimateNote": "Cost figures are modeled estimates assembled by WLAN Pros from vendor-supplied numbers and list pricing, not vendor-published quotes. Treat every dollar amount as a planning estimate, not a binding price.",
     "betaNote": "This comparison is in beta review. Vendors are being consulted on the figures, and a few may change before the final release.",
     "neutralityNote": "This is a capability and cost reference, not a ranking. Tools are listed alphabetically within each activity. The same vendor can appear under more than one activity. Real toolkits are assembled across vendors. This reflects vendors interviewed by WLAN Pros, not every tool that exists.",
@@ -19,11 +19,11 @@
       "configs": [
         {
           "vendor": "Ekahau",
-          "product": "Ekahau AI Pro + Connect",
+          "product": "Ekahau Plan",
           "costModel": "subscription",
-          "upFront": 7990,
-          "tco3yr": 11980,
-          "notes": "AI Pro desktop and online, with 4G and 5G planning. First year is $5,995 plus $1,995 Connect."
+          "upFront": 1495,
+          "tco3yr": 4035,
+          "notes": "Design and optimize. AI Pro, Optimizer, API integrations, Cloud Project Sync. $1,495/yr, or $4,035 prepaid for 3 years. No Sidekick 2 needed; some features use Sidekick data shared from another license."
         },
         {
           "vendor": "Hamina",
@@ -66,11 +66,11 @@
       "configs": [
         {
           "vendor": "Ekahau",
-          "product": "Ekahau Measure + Sidekick 2",
+          "product": "Ekahau Measure Pro + Sidekick 2",
           "costModel": "subscription",
-          "upFront": 6290,
-          "tco3yr": 8880,
-          "notes": "4 triband radios with spectrum analysis, the Survey app, and Sidekick support. First year is $4,995 plus $1,295."
+          "upFront": 6490,
+          "tco3yr": 9030,
+          "notes": "Survey and troubleshoot. Survey and Analyzer apps, Cloud Project Sync. $1,495/yr, or $4,035 prepaid for 3 years, plus Sidekick 2 at $4,995 one time."
         },
         {
           "vendor": "Hamina",
@@ -115,9 +115,9 @@
           "vendor": "Ekahau",
           "product": "Ekahau Measure Pro + Sidekick 2",
           "costModel": "subscription",
-          "upFront": 6990,
-          "tco3yr": 10980,
-          "notes": "4 radios with spectrum analysis, the Survey and Analyzer apps, and Sidekick support. First year is $4,995 plus $1,995."
+          "upFront": 6490,
+          "tco3yr": 9030,
+          "notes": "Live tri-band spectrum analysis through the Analyzer app with Sidekick 2. $1,495/yr, or $4,035 prepaid for 3 years, plus Sidekick 2 at $4,995 one time."
         },
         {
           "vendor": "Hamina",
@@ -170,9 +170,9 @@
           "vendor": "Ekahau",
           "product": "Ekahau Measure Pro + Sidekick 2",
           "costModel": "subscription",
-          "upFront": 6990,
-          "tco3yr": 10980,
-          "notes": "4 radios with spectrum analysis, the Survey and Analyzer apps, and Sidekick support."
+          "upFront": 6490,
+          "tco3yr": 9030,
+          "notes": "Multi-channel packet capture and live client diagnostics through the Analyzer app with Sidekick 2. $1,495/yr, or $4,035 prepaid for 3 years, plus Sidekick 2 at $4,995 one time."
         },
         {
           "vendor": "Hamina",
@@ -252,9 +252,9 @@
   "toolkits": [
     {
       "vendor": "Ekahau",
-      "product": "Ekahau AI Pro/Connect + Sidekick 2",
-      "tco3yr": 16975,
-      "notes": "AI Pro, Survey, Analyzer, Optimizer. Sidekick support optional."
+      "product": "Ekahau Software Suite + Sidekick 2",
+      "tco3yr": 11730,
+      "notes": "AI Pro, Optimizer, Survey, Analyzer, API integrations, Cloud Project Sync. $2,495/yr, or $6,735 prepaid for 3 years, plus Sidekick 2 at $4,995 one time. Bundle starts at $7,490 for year one."
     },
     {
       "vendor": "Hamina",
@@ -290,7 +290,7 @@
   "vendors": [
     {
       "name": "Ekahau",
-      "summary": "A long-established Wi-Fi design and survey company, now part of Ookla. Its platform centers on Ekahau AI Pro for design and analysis, paired with Connect services and the Sidekick 2 measurement device, plus mobile Survey, Measure, and Analyzer apps. Together the suite spans predictive design, on-site survey and validation, spectrum analysis with the Sidekick, and troubleshooting. The Ekahau figures here were confirmed directly with the vendor in June 2026.",
+      "summary": "A long-established Wi-Fi design and survey company, now part of Ookla. Its software is sold as three role-based annual packages: Ekahau Plan for design and optimization, Ekahau Measure Pro for survey and troubleshooting, and Ekahau Software Suite for both. The Sidekick 2 measurement device is bought once and is required for all survey, spectrum and capture work. The Ekahau figures here are MSRP from the vendor's September 2026 licensing launch.",
       "website": "https://www.ekahau.com",
       "docs": "https://support.ekahau.com"
     },
