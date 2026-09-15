@@ -17,6 +17,10 @@ import 'package:wlan_pros_toolbox/screens/tools/educational/educational_resource
 import 'package:wlan_pros_toolbox/services/educational/educational_resources_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
+/// The credit string inside [_fixture]. Named once so the fixture and the
+/// assertions cannot drift apart, which is how F2 became able to pass vacuously.
+const String _kFixtureCredit = 'Inspired by example.net by A Person';
+
 const String _fixture = '''
 {
   "_meta": {
@@ -88,14 +92,27 @@ void main() {
     // did not render for three months, because nothing read the key. This is
     // the assertion that would have caught it.
     await _pump(tester, _svc());
-    expect(find.text('Inspired by example.net by A Person'), findsOneWidget);
+    expect(find.text(_kFixtureCredit), findsOneWidget);
   });
 
   testWidgets('renders no credit line when _meta carries none', (tester) async {
+    // F2, Vera 2026-09-15. This was built by replaceAll surgery on the fixture
+    // JSON, and she proved it could pass while testing nothing: change the
+    // fixture's credit WORDING and the replace silently matches nothing, the
+    // credit renders anyway, and the negative assertion still passes because it
+    // was looking for the old wording. Green because the thing that would have
+    // said otherwise was never reached.
+    //
+    // fromEntries takes no _meta at all, so "carries none" is structural rather
+    // than the result of a string edit that may or may not have happened.
     final EducationalResourcesService bare =
-        EducationalResourcesService.fromJson(
-            _fixture.replaceAll('"attribution": "Inspired by example.net by A Person",', ''));
+        EducationalResourcesService.fromEntries(_svc().all);
+    expect(bare.attribution, isEmpty,
+        reason: 'the bare service must genuinely carry no credit, or the '
+            'assertion below is vacuous');
+
     await _pump(tester, bare);
+    expect(find.text(_kFixtureCredit), findsNothing);
     expect(find.textContaining('Inspired by'), findsNothing);
   });
 
@@ -274,6 +291,17 @@ void main() {
         expect(find.text(title), findsWidgets,
             reason: '"$title" did not render at ${width}px');
       }
+
+      // F1, Vera 2026-09-15. The fixture render test proves the WIDGET can show
+      // a credit. It does not prove the SHIPPED credit reaches a user, and that
+      // exact gap is this feature's own history: the line sat correct in the
+      // data for three months while nothing rendered it. Vera reproduced it by
+      // reverting one argument, and all four data/service guards still passed.
+      // This is the assertion that goes red for that.
+      expect(find.text('Inspired by wlan-talks.net by Victor Gatuna'),
+          findsOneWidget,
+          reason: 'the real credit from the real asset did not reach the real '
+              'screen at ${width}px');
     }
   });
 

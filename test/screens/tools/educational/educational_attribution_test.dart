@@ -57,7 +57,10 @@ void main() {
       'specified',
       'Njoroge',
       'CRM',
-      'Keith',
+      // 'Keith' was on this list and came off it, Vera 2026-09-15: it would
+      // block a legitimate future credit that names him. The list guards
+      // yesterday's vocabulary and is the weakest of the three checks here.
+      // The date regex and the length ceiling below are the structural ones.
     ]) {
       expect(shown.toLowerCase(), isNot(contains(banned.toLowerCase())),
           reason: 'the credit line names the creator and the site, nothing '
