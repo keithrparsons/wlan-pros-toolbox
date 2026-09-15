@@ -2,7 +2,8 @@
   "_meta": {
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
-    "attribution": "Inspired by wlan-talks.net by Victor Gatuna. Display this credit line in the Educational Resources category. Specified 2026-06-03, carried in the destinations source file, and NOT shipped: the destinations set merged in without it and no code reads this key yet. The name was WRONG until 2026-09-15, recorded as 'Victor Njoroge' against an explicit instruction not to record either name until Keith settled it; Keith settled it as GATUNA on 2026-09-15.",
+    "attribution": "Inspired by wlan-talks.net by Victor Gatuna",
+    "attribution_note": "Provenance for the line above, NOT for display. Specified 2026-06-03 in the destinations source file and dropped when that set was merged in, so the feature shipped for three months with no credit. The name read 'Victor Njoroge' until 2026-09-15, sourced circularly from Keith's own 2026-04-10 WLAN Pros Weekly article, which he ruled wrong. Victor Gatuna gave explicit permission on LinkedIn 2026-09-15: 'Happy to help in any way and I am okay for you to use the link as you wish.' Keep the display string short and free of dates and internal process.",
     "last_updated": "2026-09-15",
     "count": 48,
     "topics": [

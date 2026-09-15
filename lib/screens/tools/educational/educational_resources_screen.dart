@@ -192,7 +192,7 @@ class _EducationalResourcesScreenState
     final bool filtering = _query.trim().isNotEmpty;
 
     final List<Widget> children = <Widget>[
-      _IntroCard(total: total),
+      _IntroCard(total: total, attribution: svc.attribution),
       const SizedBox(height: AppSpacing.sm),
       _SearchField(
         controller: _queryCtrl,
@@ -336,11 +336,19 @@ class _EducationalResourcesScreenState
   }
 }
 
-/// One-line directory intro + count.
+/// One-line directory intro + count, and the credit this feature owes.
 class _IntroCard extends StatelessWidget {
-  const _IntroCard({required this.total});
+  const _IntroCard({required this.total, this.attribution = ''});
 
   final int total;
+
+  /// The `_meta.attribution` credit line. Empty renders nothing.
+  ///
+  /// This whole category exists because of wlan-talks.net. The credit was
+  /// written into the data on 2026-06-03 and then shipped without for three
+  /// months, because it lived in a key nothing read. It renders here so that
+  /// cannot recur quietly.
+  final String attribution;
 
   @override
   Widget build(BuildContext context) {
@@ -353,11 +361,24 @@ class _IntroCard extends StatelessWidget {
         border: Border.all(color: colors.border, width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Text(
-        '$total curated places to learn Wi-Fi: tools, talk archives, channels, '
-        'podcasts, blogs, and training. Tap any resource to read more and open '
-        'its website.',
-        style: text.labelMedium?.copyWith(color: colors.textSecondary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            '$total curated places to learn Wi-Fi: tools, talk archives, '
+            'channels, podcasts, blogs, and training. Tap any resource to read '
+            'more and open its website.',
+            style: text.labelMedium?.copyWith(color: colors.textSecondary),
+          ),
+          if (attribution.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              attribution,
+              style: text.labelSmall?.copyWith(color: colors.textSecondary),
+            ),
+          ],
+        ],
       ),
     );
   }

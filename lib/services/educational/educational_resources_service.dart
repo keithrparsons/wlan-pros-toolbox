@@ -257,6 +257,7 @@ class EducationalResourcesService {
   EducationalResourcesService.fromEntries(
     List<EducationalResource> entries, {
     this.title = 'Educational Resources',
+    this.attribution = '',
     Set<String>? topicOrder,
   })  : _entries = List<EducationalResource>.unmodifiable(entries),
         _topicOrder = topicOrder == null
@@ -277,11 +278,16 @@ class EducationalResourcesService {
     final List<EducationalResource> entries = parseEntries(decoded);
 
     String title = 'Educational Resources';
+    String attribution = '';
     Set<String>? topicOrder;
     final Object? meta = decoded['_meta'];
     if (meta is Map<String, dynamic>) {
       final String t = EducationalResource._str(meta['title']);
       if (t.isNotEmpty) title = t;
+      // `_meta.attribution` is the DISPLAY credit and nothing else. The
+      // provenance behind it lives in `_meta.attribution_note`, which is
+      // deliberately NOT read here: internal process never renders.
+      attribution = EducationalResource._str(meta['attribution']);
       final Object? rawTopics = meta['topics'];
       if (rawTopics is List) {
         final List<String> order = <String>[];
@@ -295,6 +301,7 @@ class EducationalResourcesService {
     return EducationalResourcesService.fromEntries(
       entries,
       title: title,
+      attribution: attribution,
       topicOrder: topicOrder,
     );
   }
@@ -307,6 +314,15 @@ class EducationalResourcesService {
 
   /// Directory title from `_meta.title`.
   final String title;
+
+  /// The credit line from `_meta.attribution`, or empty when absent.
+  ///
+  /// This feature exists because of wlan-talks.net, and the credit was
+  /// specified on 2026-06-03 and then shipped without for three months because
+  /// nothing read it. It is a field rather than a hardcoded string so the same
+  /// thing cannot happen again silently: the guard test asserts the asset
+  /// carries it and the screen renders it.
+  final String attribution;
 
   /// All entries, in asset order.
   List<EducationalResource> get all => _entries;
