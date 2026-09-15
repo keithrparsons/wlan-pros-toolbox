@@ -38,6 +38,34 @@ void main() {
             'per-tool help alone is not enough, the field manual must keep pace.');
   });
 
+  test('the user guide walks every category the app has', () async {
+    // It said "organized into four areas" and walked four, while the app had
+    // five: Educational Resources and its live tools were absent from the
+    // consumer tour entirely. Keith ruled on 2026-09-15 that it belongs there.
+    // This asserts the claim and the coverage together, because a correct
+    // number over an incomplete tour is the worse of the two failures.
+    final String md = await rootBundle.loadString('assets/guides/user-guide.md');
+    final int categories = kToolCategories.length;
+
+    expect(md, contains('organized into five areas'),
+        reason: 'the guide states its own scope; the app has $categories '
+            'categories, so the words must follow the catalog');
+
+    // Prose spells out "and" where the tile label uses "&". That is a
+    // legitimate register difference, not drift: "Calculators and Tools" reads
+    // correctly in a sentence and "Calculators & Tools" reads correctly on a
+    // tile. Normalise before comparing so this guard catches a MISSING
+    // category and never an ampersand.
+    String norm(String s) => s.replaceAll(' & ', ' and ');
+    final String prose = norm(md);
+
+    for (final ToolCategory c in kToolCategories) {
+      expect(prose, contains(norm(c.title)),
+          reason: '"${c.title}" is a category in the app and is not named '
+              'anywhere in the consumer tour');
+    }
+  });
+
   test('both guides carry the app-version placeholder, not a frozen number',
       () async {
     for (final String path in <String>[

@@ -130,7 +130,7 @@ Wi-Fi, the internet, and cellular are three different things. Get clear on which
 
 ## A tour of the app, section by section
 
-The Toolbox is organized into four areas. I'll walk you through them in the order that matters most to a normal user, spending the most time on the tools you'll actually touch.
+The Toolbox is organized into five areas. I'll walk you through them in the order that matters most to a normal user, spending the most time on the tools you'll actually touch.
 
 ### Test Network: the everyday answers
 
@@ -184,9 +184,21 @@ For everyone else, a few of these cards are genuinely worth a look:
 
 The rest of the reference cards are deep professional material. They're there when you need them and out of the way when you don't.
 
+### Educational Resources: other people's good work
+
+The other four sections are things the app does. This one is a door out.
+
+It is a curated list of places to learn Wi-Fi, gathered in one spot so you never have to go hunting: independent blogs, conference talk archives, YouTube channels, podcasts, training paths, and free tools built by working engineers. Tap any entry to read what it is and why it is worth your time, then open its website.
+
+Two things worth knowing about what is in here. **It is community work, not vendor marketing.** Manufacturer documentation is deliberately left out, so what remains is people explaining Wi-Fi because they wanted to. And **almost all of it is free**, with the cost noted on every entry so you are never surprised.
+
+Most of it is aimed at people who do this for a living. For everyone else, the glossary-style blogs and the beginner podcast episodes are the gentle way in, and the search box at the top will find them faster than scrolling.
+
+This section also holds the in-app reference cards and the full Field Manual, which is the deep version of this guide for people who want the professional detail.
+
 ## Where to go next
 
-That's the whole app in five minutes: tap Check My Connection on the front page for the everyday answer, and dip into the four sections when you want more. Most of the time, that one tap on the front page tells you whether to restart your router, move closer to it, or call your internet provider.
+That's the whole app in five minutes: tap Check My Connection on the front page for the everyday answer, and dip into the other sections when you want more. Most of the time, that one tap on the front page tells you whether to restart your router, move closer to it, or call your internet provider.
 
 If you want to actually understand your Wi-Fi, and fix it yourself, open the free book "Fix Your Own Wi-Fi" from the front page. This guide maps the app; the book teaches the Wi-Fi. Between the two, you've got the answer and the understanding.
 
