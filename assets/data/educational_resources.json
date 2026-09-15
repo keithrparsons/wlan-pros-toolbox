@@ -2,8 +2,8 @@
   "_meta": {
     "title": "Educational Resources",
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
-    "last_updated": "2026-08-29",
-    "count": 47,
+    "last_updated": "2026-09-15",
+    "count": 48,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -852,6 +852,28 @@
         "vendor-neutral"
       ],
       "approval": "approved"
+    },
+    {
+      "id": "dest-wlan-talks",
+      "title": "WLAN Talks (wlan-talks.net)",
+      "summary": "A community-built index of every WLPC talk from 2014 to today, filterable by topic, year and talk type.",
+      "description": "This is the finding tool the WLPC archive never had. It covers WLPC from 2014 to the present, adds Wi-Fi Design Day, and lets you filter by topic, by year, and by whether a talk was a short summary or a deep dive, then sort alphabetically or by age.\n\nThe videos themselves live on the Wireless LAN Professionals YouTube channel and this site pulls them in, so nothing is duplicated and nothing goes stale. What it adds is the search. Ten years of conference talks is a lot to scroll past, and this turns the pile into something you can query by the thing you actually care about. Give it a moment on first load while it fetches the playlists; a brief empty state is the site working, not failing. Free, no login.",
+      "url": "https://wlan-talks.net/wlpc-reviews.html",
+      "topic": "Conference and talk archives",
+      "cost": "free",
+      "level": "all",
+      "tags": [
+        "destination",
+        "video-archive",
+        "wlpc",
+        "wdd",
+        "conference",
+        "searchable-index",
+        "community",
+        "vendor-neutral"
+      ],
+      "approval": "pending_outreach",
+      "notes": "Added 2026-09-15 at Keith's instruction after he supplied the URL. NOT YET LIVE-READY: approval is pending_outreach because the site names no author or credit anywhere Larry could find, and Keith's words were 'They made this site', so he knows who they are and Larry does not. The courtesy-email-before-listing policy that covers the other independent authors in this dataset applies here too, and the entry should not ship until the author is identified and asked. The content is Keith's own conference, which inverts the usual sensitivity, but the SITE is someone else's work and the attribution is theirs. Mechanism confirmed twice, 2026-06-03 by Pax and 2026-09-15 by fetch: a client-side page that queries YouTube playlists live, so the 'Loading WLPC videos... 0 talks found' state is its loading behaviour and not a broken site. Nothing here is mirrored or rehosted; this is a link-out only."
     }
   ]
 }

@@ -35,7 +35,7 @@
 // in a single session. Decloedt also offered a fourth resource unprompted, his
 // Hamina Attenuation Object Editor, which was born 'approved' and never passed
 // through the staged state. Joel Crane's row is the one still waiting.
-// Current split: 31 'approved', 14 'not_required', 1 'pending_outreach'. THESE
+// Current split: 32 'approved', 14 'not_required', 2 'pending_outreach'. THESE
 // COUNTS ARE PROSE AND CANNOT ENFORCE THEMSELVES — the test 'only the one
 // unanswered 2026-08-09 addition is pending outreach' is what holds them, and
 // it names the row rather than counting it precisely because this set moves.

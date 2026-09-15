@@ -2311,9 +2311,13 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // teigenRF tools, Joel Crane's Hamina clipboard tools), 42 -> 45.
     // 61 = 45 -> 46. Robin Decloedt offered his Hamina Attenuation Object
     // Editor unprompted when he approved the library listing, same day.
+    // 63 = 47 -> 48. WLAN Talks (wlan-talks.net), the community-built searchable
+    // index of every WLPC talk since 2014, added 2026-09-15 at Keith's
+    // instruction. Staged as 'pending_outreach': the site credits no author
+    // anywhere, and Keith's "They made this site" means he knows who they are.
     // 62 = 46 -> 47. Jonathan Finney's SSID Airtime Calculator, listing granted
     // by him on 2026-08-21 and merged 2026-08-29 on Keith's go.
-    countLabelOverride: '62',
+    countLabelOverride: '63',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(
