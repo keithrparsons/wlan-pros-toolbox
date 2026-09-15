@@ -11,7 +11,6 @@
 // credit cannot go missing again without something going red.
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/educational/educational_resources_service.dart';
@@ -81,17 +80,10 @@ void main() {
     expect(svc.attribution, isNot(equals(meta['attribution_note'])));
   });
 
-  testWidgets('the credit renders on screen', (WidgetTester tester) async {
-    final Map<String, dynamic> meta = await loadMeta();
-    final String shown = meta['attribution'] as String;
-
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Builder(
-          builder: (BuildContext context) => Text(shown),
-        ),
-      ),
-    ));
-    expect(find.text(shown), findsOneWidget);
-  });
+  // The RENDER assertion lives in educational_resources_screen_test.dart,
+  // which pumps the real screen off a fixture. It is not here because
+  // rootBundle.loadString inside testWidgets never resolves without
+  // tester.runAsync, and the first version of this file hung forever on
+  // exactly that. A test that hangs is worse than no test: it reports
+  // nothing and it stalls the suite.
 }

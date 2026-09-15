@@ -21,6 +21,7 @@ const String _fixture = '''
 {
   "_meta": {
     "title": "Educational Resources",
+    "attribution": "Inspired by example.net by A Person",
     "topics": [
       "Tools and utilities",
       "Podcasts"
@@ -82,6 +83,22 @@ Future<void> _pump(WidgetTester tester, EducationalResourcesService svc) async {
 }
 
 void main() {
+  testWidgets('renders the _meta credit line under the intro', (tester) async {
+    // The credit for wlan-talks.net was specified in the data on 2026-06-03 and
+    // did not render for three months, because nothing read the key. This is
+    // the assertion that would have caught it.
+    await _pump(tester, _svc());
+    expect(find.text('Inspired by example.net by A Person'), findsOneWidget);
+  });
+
+  testWidgets('renders no credit line when _meta carries none', (tester) async {
+    final EducationalResourcesService bare =
+        EducationalResourcesService.fromJson(
+            _fixture.replaceAll('"attribution": "Inspired by example.net by A Person",', ''));
+    await _pump(tester, bare);
+    expect(find.textContaining('Inspired by'), findsNothing);
+  });
+
   testWidgets('renders the Reference Cards section header + a card title',
       (tester) async {
     await _pump(tester, _svc());
