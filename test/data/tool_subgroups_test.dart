@@ -74,6 +74,56 @@ void main() {
     }
   });
 
+  // ── The anti-decay guard (2026-09-16) ───────────────────────────────────
+  //
+  // Quick Reference was reorganised on 2026-09-16 because it had rotted: 19
+  // sections, one holding 24 tools and THREE holding exactly one. It rotted
+  // quietly, one well-meaning addition at a time, and nothing noticed for
+  // months. Without a floor it will rot the same way again.
+  //
+  // Keith asked for this guard by name when he approved the reorg.
+  //
+  // SCOPE: quick-reference only, deliberately. rf-calculators FAILS this floor
+  // today -- 'Learn / RF intuition' and 'AEC & Documentation' hold one tool each
+  // -- and that is RECORDED rather than silently fixed, because collapsing
+  // someone else's category to make a test pass is how a guard becomes a lie.
+  // When rf-calculators gets the same treatment, add it to the set below.
+  const Set<String> kFloorEnforced = <String>{'quick-reference'};
+  const int kMinSectionSize = 4;
+
+  group('subgroup floor — a section of one is not a section', () {
+    for (final String id in kFloorEnforced) {
+      test('$id: no section holds fewer than $kMinSectionSize tools', () {
+        final List<ToolSection> tooSmall = groupedCategoryTools(cat(id))
+            .where((ToolSection s) => s.count < kMinSectionSize)
+            .toList();
+        expect(
+          tooSmall.map((ToolSection s) => '${s.header} (${s.count})').toList(),
+          isEmpty,
+          reason: '$id has sections below the floor. Do not shrink the floor to '
+              'make this pass -- dissolve the runt into its nearest survivor, '
+              'which is the rule Keith set on 2026-06-01.',
+        );
+      });
+
+      test('$id: no section holds more than a third of the category', () {
+        // The other half of the same disease. Wi-Fi & RF held 24 of 102 before
+        // the reorg; a third is a generous ceiling that still catches a giant.
+        final List<ToolSection> sections = groupedCategoryTools(cat(id));
+        final int total =
+            sections.fold<int>(0, (int n, ToolSection s) => n + s.count);
+        final int ceiling = (total / 3).ceil();
+        final List<String> tooBig = sections
+            .where((ToolSection s) => s.count > ceiling)
+            .map((ToolSection s) => '${s.header} (${s.count} of $total)')
+            .toList();
+        expect(tooBig, isEmpty,
+            reason: '$id has a section above $ceiling. Split it by the JOB a '
+                'reader was doing, not by topic.');
+      });
+    }
+  });
+
   group('groupedCategoryTools — flat categories', () {
     test('test-network returns a single unnamed section in pinned order', () {
       final List<ToolSection> sections = groupedCategoryTools(cat('test-network'));

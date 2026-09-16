@@ -25,69 +25,42 @@ import 'tool_ordering.dart';
 /// "Checklists" section below.
 const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
   'quick-reference': <String>[
-    'Wi-Fi & RF',
-    // Ham Radio (2026-06-28): the band-dependent amateur-radio references that
-    // pair with the pure-math Ham Radio tools in Calculators & Tools. Sits right
-    // after Wi-Fi & RF since these are RF-spectrum references a Wi-Fi pro
-    // crosses into. Members: US Amateur Band Plan, Band Names & Wavelengths,
-    // Spectrum Band Designations, Part 15 vs Part 97.
-    'Ham Radio',
-    // Addressing & Subnetting (2026-06-08): IP address reference, CIDR/subnet
-    // table, naming/addressing conventions.
-    'Addressing & Subnetting',
-    'Protocols',
-    // Models & Standards (2026-06-08): 802.1X/EAP types, 802.11 feature matrix.
-    'Models & Standards',
-    'Cabling & Connectors',
-    // Power & Cooling (2026-06-08): demoted from a standalone top-level
-    // category to a Quick Reference subgroup. Power phasing/voltages, the
-    // Ohm's-Law power wheel, thermal conversions, and the IEC/NEMA/
-    // international connector references. Sits after Cabling & Connectors —
-    // connectors lead into the power feeds they carry.
+    // REORGANISED 2026-09-16, applying the rule Keith set for CATEGORIES on
+    // 2026-06-01 ("Planning Tools / Command & Capture / Checklists dissolved
+    // into survivors") one layer down, to subgroups. 19 sections -> 13.
+    //
+    // The disease it cured: 'Wi-Fi & RF' held 24 tools -- nearly a quarter of
+    // the category and everything Wi-Fi-shaped -- while NINE sections held three
+    // or fewer and THREE held exactly one. A section of one is not a section.
+    //
+    // 'Wi-Fi & RF' split four ways by the JOB, not the topic: what is in the air
+    // (Radio & Spectrum), what the spec says (Wi-Fi Standards & Terminology),
+    // how you get on (Security & Auth), what the client end does (Clients &
+    // Field Wi-Fi). 'Models & Standards' dissolved into TWO different survivors,
+    // which is correct rather than untidy -- a feature matrix and an EAP-type
+    // table are looked up on different days.
+    //
+    // Order below is editorial and runs from the air outward: the RF, the
+    // standard, getting on, the client, debugging it, the wire, the plant, the
+    // power, the rules, the building -- then the adjacent and the incidental.
+    //
+    // NOTE 'Ham Radio' and 'AEC & Documentation' are ALSO subgroup names under
+    // rf-calculators. They are scoped per category and the 2026-09-16 rewrite
+    // was confined to the quick-reference block for exactly that reason; a
+    // global rename would have silently rewritten a different category.
+    'Radio & Spectrum',
+    'Wi-Fi Standards & Terminology',
+    'Security & Auth',
+    'Clients & Field Wi-Fi',
+    'Capture & Troubleshooting',
+    'Networking & Protocols',
+    'Cabling, Connectors & Hardware',
     'Power & Cooling',
-    // Travel & Field (2026-06-12): on-site-international field aids for a Wi-Fi
-    // pro travelling to a job. Sits right after Power & Cooling (which holds the
-    // International Power Plugs reference) since both answer "what do I need to
-    // know before I land on this site". First member: Emergency Phrases.
-    'Travel & Field',
-    'Encoding',
-    // Time & Formats (2026-06-08): date/time standards, data units.
-    'Time & Formats',
-    'CLI & Capture',
-    'Checklists',
-    // Step-by-step how-tos that bundle a downloadable companion file
-    // (FreeRADIUS on WLAN Pi). Added 2026-06-05.
-    'Guides',
-    // Codes & Safety (2026-07-05): the field/trade-reference cluster — the
-    // codes, ratings, and standards a Wi-Fi pro reads on spec sheets and job
-    // sites but was never taught. Pilot member: Enclosure Ratings (IP / NEMA
-    // ingress protection). Keeps Enclosure Ratings, Hazardous Locations, NEC
-    // Gotchas, Safety Basics, Site Access, and Credentials & Licenses.
-    'Codes & Safety',
-    // AEC & Documentation (2026-07-05): the built-environment / plan-set
-    // literacy cluster, split OUT of Codes & Safety on Keith's confirmed
-    // topical-subgroup taxonomy. Members re-homed from Codes & Safety: Plan-Set
-    // Literacy, CAD & BIM Formats, Structured Cabling, AEC Process & Glossary.
-    // (Separate from the same-named Calculators subgroup that holds the
-    // Architectural Scale calc — that calc stays in rf-calculators.)
-    'AEC & Documentation',
-    // Compliance & Governance (2026-07-05): the "before you upload / when the
-    // framework reaches the WLAN" cluster. Members: Cloud Tool Trust (reading a
-    // cloud tool's security badges) and Network in Scope (PCI/HIPAA/SOX/GDPR).
-    'Compliance & Governance',
-    // Wireless Landscape (2026-07-05): the non-Wi-Fi radios a WLAN pro
-    // coexists with and designs around. Member: Adjacent Radio Systems.
-    'Wireless Landscape',
-    // Verticals (2026-07-05): what each industry tends to trigger. Members:
-    // Verticals Index, Healthcare Wi-Fi, Data Centers & Wi-Fi, Telecom Spaces.
-    'Verticals',
-    // Vendor & Hardware (2026-07-05): the two INTERACTIVE drill-down references
-    // for identifying gear in the field — the cross-vendor AP status-LED decoder
-    // (LED Decoder) and the per-vendor model-number scheme reader (Vendor Model
-    // Decode). NAME flagged for Keith's confirmation ("Vendor & Hardware" vs
-    // "Hardware ID"); defaulted here so the catalog compiles. Sits last as the
-    // hardware-identification pillar of Quick Reference.
-    'Vendor & Hardware',
+    'Codes, Safety & Compliance',
+    'Buildings & Verticals',
+    'Ham Radio',
+    'Encoding & Formats',
+    'Travel & International',
   ],
   'rf-calculators': <String>[
     'RF & Propagation',
