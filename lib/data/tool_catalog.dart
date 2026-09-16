@@ -1029,6 +1029,14 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Capacity & Power',
       ),
       ToolEntry(
+        id: 'shannon-capacity',
+        title: 'Shannon Capacity',
+        description: 'Theoretical maximum from bandwidth and SNR',
+        routeName: '/tools/shannon-capacity',
+        isLive: true,
+        subgroup: 'Capacity & Power',
+      ),
+      ToolEntry(
         id: 'ssid-airtime',
         title: 'SSID Airtime',
         description: 'What each extra SSID costs the channel',

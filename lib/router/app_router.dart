@@ -49,6 +49,7 @@ import '../screens/tools/calculators/throughput_calc_screen.dart';
 import '../screens/tools/calculators/transfer_time_screen.dart';
 import '../screens/tools/calculators/rf_attenuation_screen.dart';
 import '../screens/tools/calculators/noise_floor_screen.dart';
+import '../screens/tools/calculators/shannon_capacity_screen.dart';
 import '../screens/tools/calculators/poe_budget_screen.dart';
 import '../screens/tools/reference/standards_screen.dart';
 import '../screens/tools/reference/mcs_index_screen.dart';
@@ -269,6 +270,7 @@ class AppRouter {
   static const String throughputCalc = '/tools/throughput-calc';
   static const String rfAttenuation = '/tools/rf-attenuation';
   static const String noiseFloor = '/tools/noise-floor';
+  static const String shannonCapacity = '/tools/shannon-capacity';
   static const String poeBudget = '/tools/poe-budget';
 
   // Reference tables (read-only lookup data, all platforms incl. web).
@@ -698,6 +700,7 @@ class AppRouter {
     throughputCalc: (_) => const ThroughputCalcScreen(),
     rfAttenuation: (_) => const RfAttenuationScreen(),
     noiseFloor: (_) => const NoiseFloorScreen(),
+    shannonCapacity: (_) => const ShannonCapacityScreen(),
     poeBudget: (_) => const PoeBudgetScreen(),
     standards: (_) => const StandardsScreen(),
     mcsIndex: (_) => const McsIndexScreen(),

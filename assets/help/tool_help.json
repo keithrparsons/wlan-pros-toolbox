@@ -723,6 +723,50 @@
       ],
       "source": "Standard link-budget arithmetic done on the values you enter, right on your device."
     },
+    "shannon-capacity": {
+      "name": "Shannon Capacity",
+      "category": "Calculators & Tools",
+      "purpose": "Works out the theoretical maximum data rate a channel can carry, from its bandwidth and signal-to-noise ratio, and in reverse the SNR a target rate would demand.",
+      "whyHere": "Every Wi-Fi generation pushes against this ceiling and none of them breaks it. Bandwidth and signal-to-noise decide the maximum, and everything a vendor sells you is an attempt to get closer to it. Put this next to Noise Floor and the Throughput Calculator and you can see how much of the theoretical maximum your link is actually using.",
+      "howToUse": [
+        "Choose whether to solve for capacity or for the required SNR.",
+        "Pick the channel bandwidth.",
+        "Enter the SNR in dB, or in reverse the capacity you are aiming for in Mbps.",
+        "Set the number of spatial streams, because the bound applies to each stream separately.",
+        "Read the capacity, the per-stream figure, and the spectral efficiency in bits per second per Hz."
+      ],
+      "inputs": [
+        {
+          "name": "Bandwidth",
+          "unit": "MHz",
+          "range": "Choose from 20, 40, 80, 160, or 320 MHz"
+        },
+        {
+          "name": "SNR",
+          "unit": "dB",
+          "range": "Any value, including negative. Wi-Fi really does operate near and below 0 dB at the lowest data rates"
+        },
+        {
+          "name": "Target capacity",
+          "unit": "Mbps",
+          "range": "Greater than zero (required SNR mode only)"
+        },
+        {
+          "name": "Spatial streams",
+          "unit": "NSS",
+          "range": "1 to 8"
+        }
+      ],
+      "algorithm": "Capacity equals the number of spatial streams times the bandwidth times the base-2 logarithm of one plus the signal-to-noise ratio, with that ratio as a linear power ratio rather than dB. Reversing it gives the spectral efficiency a target rate needs, and from that the SNR it demands.",
+      "example": "At 80 MHz and 25 dB SNR on one spatial stream the ceiling is about 664.8 Mbps, or 8.31 bits per second per Hz. Asked the other way, 1,000 Mbps on one 80 MHz stream needs 12.5 bits per second per Hz, which needs about 37.6 dB. That is why a gigabit demo only works standing under the access point.",
+      "fieldNotes": [
+        "This is a single-channel bound, and Wi-Fi is MIMO. A radio advertising 1,200 Mbps is not beating Shannon: that rate is the sum of parallel spatial streams, each sitting under its own bound. That is why spatial streams are an input here.",
+        "The ratio is linear, not dB. Feeding 25 straight into the formula instead of 316 is the most common mistake with this equation, so the screen shows the conversion.",
+        "An impossible target is not an error. Asking for 10 Gbps on one 20 MHz stream honestly needs about 1505 dB, and printing that number is the point.",
+        "The ceiling assumes perfect coding and no interference, so a real link always lands below it. The gap between the two is the useful part."
+      ],
+      "source": "Shannon-Hartley, published by Claude Shannon in 1948. Computed from the bandwidth, SNR, and stream count you enter, on your device."
+    },
     "noise-floor": {
       "name": "Noise Floor",
       "category": "Calculators & Tools",
