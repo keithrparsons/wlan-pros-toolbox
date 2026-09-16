@@ -60,6 +60,7 @@ const Set<String> _cliSheetIds = <String>{
   'cli-commands',
   'linux-wlan-commands',
   'wireshark-80211-filters',
+  'voip-wifi-filters',
 };
 
 /// The how-to / guide tool ids (the "Guides & How-To" subgroup). A guide is a

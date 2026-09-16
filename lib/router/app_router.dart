@@ -177,6 +177,7 @@ import '../screens/tools/calculators/hex_ascii_screen.dart';
 import '../screens/tools/command/cli_commands_screen.dart';
 import '../screens/tools/command/linux_wlan_commands_screen.dart';
 import '../screens/tools/command/lldp_cdp_reference_screen.dart';
+import '../screens/tools/command/voip_wifi_filters_screen.dart';
 import '../screens/tools/command/wireshark_filters_screen.dart';
 import '../screens/tools/reference/osi_model_screen.dart';
 import '../screens/tools/reference/freeradius_wlanpi_screen.dart';
@@ -649,6 +650,7 @@ class AppRouter {
   static const String linuxWlanCommands = '/tools/linux-wlan-commands';
   static const String lldpCdpReference = '/tools/lldp-cdp-reference';
   static const String wiresharkFilters = '/tools/wireshark-80211-filters';
+  static const String voipWifiFilters = '/tools/voip-wifi-filters';
 
   // Checklists category — interactive session-state checklists (in-memory,
   // all platforms incl. web).
@@ -950,6 +952,7 @@ class AppRouter {
     linuxWlanCommands: (_) => const LinuxWlanCommandsScreen(),
     lldpCdpReference: (_) => const LldpCdpReferenceScreen(),
     wiresharkFilters: (_) => const WiresharkFiltersScreen(),
+    voipWifiFilters: (_) => const VoipWifiFiltersScreen(),
     checklistApInstall: (_) => const ChecklistScreen(
       checklist: kApInstallChecklist,
       toolId: 'checklist-ap-install',

@@ -2099,6 +2099,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'CLI & Capture',
       ),
+      // NET-NEW (2026-09-15, Keith: "We do VoIP packet analysis quite a bit in
+      // Wi-Fi so those would be useful to add as their own card."). Sits beside
+      // the 802.11 filter sheet rather than inside it: the 802.11 card carries
+      // zero VoIP filters, and this one is built around the three questions
+      // that are about the AIR (did the QoS marking survive, did the call break
+      // at a roam, is power save eating it) rather than a generic VoIP filter
+      // list. Cross-links to dscp-qos, which explains the marking it checks.
+      ToolEntry(
+        id: 'voip-wifi-filters',
+        title: 'VoIP over Wi-Fi Filters',
+        description: 'Packet-analysis filters for voice on Wi-Fi',
+        routeName: '/tools/voip-wifi-filters',
+        isLive: true,
+        subgroup: 'CLI & Capture',
+      ),
       // ── moved in from the dissolved Checklists category (2026-06-01):
       // tappable-checklist screens + PDF reference-card checklists ──
       // The two INTERACTIVE (non-PDF) checklists — these stay in "Checklists".

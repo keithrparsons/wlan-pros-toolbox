@@ -2050,6 +2050,28 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'sniffer',
     'wlan filter',
   ],
+  'voip-wifi-filters': <String>[
+    'voip',
+    'voice over wifi',
+    'voice over ip',
+    'sip',
+    'rtp',
+    'rtcp',
+    'sdp',
+    'telephony',
+    'phone call',
+    'call quality',
+    'jitter',
+    'codec',
+    'display filter',
+    'packet capture',
+    'tshark',
+    'dscp',
+    'qos marking',
+    'wmm',
+    'power save',
+    'roaming',
+  ],
 
   // ── Interactive checklists ──
   'checklist-ap-install': <String>[

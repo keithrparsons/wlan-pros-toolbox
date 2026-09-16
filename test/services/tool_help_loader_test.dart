@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 183;
+const int _expectedEntryCount = 184;
 
 const String _fixture = '''
 {
@@ -373,6 +373,10 @@ void main() {
       // id appears exactly once. This guard did its job -- it failed the
       // moment the entry landed, which is the whole reason it is a hardcoded
       // number rather than a computed one.
+      //
+      // 2026-09-15: voip-wifi-filters added ONE entry. 183 + 1 = 184. Counted
+      // off the file, not derived: `len(json[...]['tools'])` returned 184 and
+      // the id appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
 

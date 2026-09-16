@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 183 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · covers 184 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -17,13 +17,13 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Utilities & Generators (4)
   - Ham Radio (2)
   - Learn / RF intuition (1)
-- **Quick Reference** (89 tools)
+- **Quick Reference** (90 tools)
   - Wi-Fi & RF (23)
   - Cabling & Connectors (9)
   - Protocols (19)
   - Encoding (5)
   - Power & Cooling (6)
-  - CLI & Capture (4)
+  - CLI & Capture (5)
   - Checklists (2)
   - Guides (2)
   - Ham Radio (6)
@@ -2809,7 +2809,7 @@ Regular-expression syntax (anchors, character classes, quantifiers, groups and r
 - Honesty note: there is no single normative regex authority: POSIX (BRE/ERE), PCRE2, ECMAScript, Python, Java, Go (RE2), and .NET differ. No token is presented as universal unless the source data marks it so; non-universal tokens carry a DIALECT badge.
 - Data source / standard: the common PCRE2 subset per the PCRE2 syntax reference. Offline, read-only.
 
-## CLI & Capture (5)
+## CLI & Capture (6)
 
 
 ### Find the Switch and Port (LLDP/CDP)
@@ -2904,6 +2904,33 @@ Copy-ready Wireshark display filters (typed into the filter bar after capture) a
 - Footnote: type_subtype is the combined value (type in the high bits, subtype in the low bits) matching IEEE 802.11 frame type/subtype assignments; capture filters require capturing with a RadioTap header (monitor mode); for the full RSN cipher/AKM number-to-name map, see the RSN groups or the WPA Security reference tool. The bundled status-code and reason-code tables list the highest-frequency 802.11 codes only (the full tables live in the 802.11 Reason Codes reference tool).
 - Two deliberate corrections are baked in. (1) The RSN cipher-suite vs AKM tables were rebuilt from IEEE 802.11-2020 Tables 9-149 (cipher = wlan.rsn.pcs.type / wlan.rsn.gcs.type) and 9-151 (AKM = wlan.rsn.akms.type) because the original source card mislabeled cipher values as AKM. (2) The 5 GHz/2.4 GHz/6 GHz band filters ship a deliberate safe fallback using documented radiotap.channel.freq ranges instead of the unverified radiotap.channel.flags.5ghz child-token. Band-edge detail: the 5 GHz range stops at < 5900 and the 6 GHz range starts at >= 5925, so center frequencies in the 5900 to 5924 MHz gap fall into neither band filter. This is intentional.
 - Source / basis: targets Wireshark display-filter (dfref) and libpcap/BPF capture-filter conventions, sourced from the Wireshark dfref, the RadioTap dfref, pcap-filter(7), and IEEE 802.11-2020.
+
+
+### VoIP over Wi-Fi Filters
+
+Wireshark display filters for analyzing voice calls carried over Wi-Fi: the SIP signaling, the RTP and RTCP media, and then the three questions that are specifically about the air rather than about VoIP in general. Did the QoS marking survive the trip onto the wireless side, did the call break at a roam, and is power save eating it. A seventh group covers the loss and jitter figures Wireshark computes as statistics rather than as filterable fields.
+
+**Why it's here.** Anyone can list `sip` and `rtp`, and the web is full of enterprise VoIP filter sheets built around firewall and session-border playbooks. A WLAN pro opens a capture for a different reason: a call sounded bad, the wired side looks perfect, and the answer is usually in the 802.11 header. These are the filters that put the IP marking and the 802.11 User Priority on screen at the same time, and the ones that line an RTP gap up against a reassociation. This is the companion to the Wireshark 802.11 Filters card, which carries no VoIP filters at all, and to the DSCP / QoS Markings reference, which explains the marking this card teaches you to check.
+
+**How to use**
+1. Filters are grouped by the question they answer; filter the list by syntax or task, and a group-label match surfaces the whole group.
+2. The syntax is selectable for copy.
+3. Several groups carry a short note above their filters. That note is the method, not decoration: it says what the filter is for and how to read what comes back.
+4. The last group is deliberately not display filters. Those are tshark statistics taps and Wireshark menu paths, and typing them into the filter bar will not work.
+
+**Example.** Filters as shipped. Find the call, signaling: sip, sip.Method == "INVITE", sip.Method == "BYE", sip.Status-Code >= 400, sip.Status-Code == 486 (Busy Here), sip.Call-ID (present on every message of one dialog), sip.resend == 1 (a retransmitted SIP message), sdp, sdp.media.format, udp.port == 5060, tcp.port == 5060. Find the media: rtp, rtcp, rtp.ssrc == 0x12345678 (one stream, by its synchronization source), rtp.seq, rtp.timestamp, rtp.marker == 1 (talkspurt starts), rtp.p_type, and the payload types rtp.p_type == 0 (G.711 PCMU), == 8 (G.711 PCMA), == 9 (G.722), == 18 (G.729), plus rtp.setup-frame. Did the QoS marking survive: ip.dsfield.dscp == 46 (EF, what voice should be marked on the wire), wlan.qos.priority == 6 (User Priority 6, the Voice access category on the air), ip.dsfield.dscp == 46 && wlan.qos.priority != 6 (the bug: marked EF on the wire, not Voice on the air), ip.dsfield.dscp == 46 && wlan.qos.priority == 5 (the classic signature, EF landing in the Video access category), rtp && wlan.qos.priority == 0 (media riding Best Effort), ip.dsfield.dscp == 0 && rtp, sip && ip.dsfield.dscp == 0, ip.dsfield.dscp == 40 (CS5), ip.dsfield.dscp == 34 (AF41), wlan.qos.priority. Did it break at a roam: wlan.fc.type_subtype == 0x02 (Reassociation request, the roam itself), == 0x03 (Reassociation response), == 0x0b (Authentication), == 0x0c (Deauthentication, a roam that was not the client's idea), wlan.tag.number == 55 (Mobility Domain element, present when 802.11r Fast Transition is in play), rtp.ssrc == 0x12345678 && wlan.fc.retry == 1. Is power save eating it: wlan.fc.pwrmgt == 1, wlan.fc.pwrmgt == 1 && rtp (a voice client sleeping mid-call), wlan.fc.type_subtype == 0x2c (QoS Null), == 0x1a (PS-Poll), wlan.qos.eosp == 1 (end of a U-APSD service period). What the endpoint itself says: rtcp.pt == 200 (Sender Report), rtcp.pt == 201 (Receiver Report), rtcp.ssrc.fraction (Fraction lost), rtcp.ssrc.fraction > 0, rtcp.ssrc.cum_nr (Cumulative number of packets lost), rtcp.ssrc.high_seq (Highest sequence number received), rtcp.ssrc.jitter (Interarrival jitter), rtcp.ssrc.jitter > 30, rtcp.senderssrc. Loss and jitter as statistics rather than filters: tshark -q -z rtp,streams -r capture.pcapng, tshark -q -z sip,stat -r capture.pcapng, tshark -q -z follow,sip -r capture.pcapng, and Telephony then RTP then RTP Streams in the Wireshark GUI.
+
+**Field notes**
+- The teaching point sits on the card, not only in the help. DSCP lives in the IP header and User Priority lives in the 802.11 header, so something has to map one to the other. When that mapping is missing, wrong, or stripped by a tunnel, the call competes with everything else on the channel and the wired capture still looks perfect.
+- Most equipment, with no explicit policy applied, derives User Priority from the top three bits of the DSCP value. EF is 46, which is 101110 in binary, and the top three bits are 101, which is 5. So EF lands in User Priority 5, the Video access category, rather than User Priority 6, which is Voice. That is why the `ip.dsfield.dscp == 46 && wlan.qos.priority != 6` filter usually turns up UP 5 rather than nothing, and it is why the card ships a filter for that exact case. The DSCP / QoS Markings reference carries the full mapping table and the RFC 8325 fix.
+- Reading a roam: filter to one rtp.ssrc, note the sequence numbers either side of the gap, then look at what the client did in between. A roam that costs 300 ms is audible. A roam that costs 50 ms is not. An RTP gap that lines up with a reassociation is a roaming problem wearing a VoIP costume.
+- Reading power save: a voice client that sleeps between packets sounds exactly like a network with loss, and the far end's own report will call it loss. The Power Management bit rides in the frame control field of every frame, so watch for where it flips rather than looking for a single announcement.
+- There are two sources for loss and jitter and they measure different things. The RTCP fields are what the far endpoint reported about what it received. The tshark rtp,streams tap is what this capture actually saw. When the two disagree, that is the result rather than an error: the capture point and the endpoint did not experience the same stream, which on Wi-Fi usually means the loss happened between them.
+- Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where there is no 802.11 header to filter on.
+- Worth flagging (intentional, not a defect): Wireshark has no `rtp.analysis` display filter of any kind. Its per-stream loss and jitter is a statistic, not a filterable field, so there is no field name to type into the filter bar however plausible one sounds. Four names that look right and do not exist are rtp.analysis.lost, rtp.analysis.jitter, rtp.analysis.delta, and rtp.analysis.out_of_seq. All four were compile-tested against Wireshark and rejected before this card shipped.
+- Frame type and subtype values are shown in hexadecimal on this card (0x02 is Reassociation request, 0x0c is Deauthentication). The Wireshark 802.11 Filters card shows the same values in decimal. Wireshark accepts either form.
+- The RTCP jitter figure is in RTP timestamp units, not milliseconds. At an 8 kHz sampling clock, one unit is 125 microseconds.
+- Source / basis: every filter on the card was compiled with dftest, the display-filter compiler Wireshark ships, against Wireshark 4.6.6 on 2026-09-15, before it shipped. RTP and RTCP per RFC 3550, payload type numbers per RFC 3551, DSCP to User Priority per RFC 8325.
 
 
 ### Packet Decode
