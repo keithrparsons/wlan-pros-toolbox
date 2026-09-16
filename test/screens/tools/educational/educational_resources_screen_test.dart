@@ -7,6 +7,7 @@
 // laid out (a ListView only builds on-screen children).
 
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +16,27 @@ import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/screens/guides/guide_reader_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/educational/educational_resources_screen.dart';
 import 'package:wlan_pros_toolbox/services/educational/educational_resources_service.dart';
+import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+
+/// WCAG 2.2 relative luminance (SC 1.4.3), same method as
+/// pdf_letterbox_contrast_test.dart so the two agree by construction.
+double _luminance(Color c) {
+  double channel(double v) =>
+      v <= 0.04045 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+  return 0.2126 * channel(c.r) +
+      0.7152 * channel(c.g) +
+      0.0722 * channel(c.b);
+}
+
+/// WCAG contrast ratio between two opaque colors.
+double _contrast(Color a, Color b) {
+  final double la = _luminance(a);
+  final double lb = _luminance(b);
+  final double hi = math.max(la, lb);
+  final double lo = math.min(la, lb);
+  return (hi + 0.05) / (lo + 0.05);
+}
 
 /// The credit string inside [_fixture]. Named once so the fixture and the
 /// assertions cannot drift apart, which is how F2 became able to pass vacuously.
@@ -70,7 +91,17 @@ EducationalResourcesService _svc() =>
 
 /// Pump the screen on a tall viewport so the whole list is laid out (cards +
 /// both topic groups all build), and reset it on teardown.
-Future<void> _pump(WidgetTester tester, EducationalResourcesService svc) async {
+///
+/// [theme] defaults to dark, which is what every test here used when this
+/// helper hardcoded `AppTheme.dark()`. It is a PARAMETER now because nothing
+/// pumped this screen in light theme at all: Vera covered light by screenshot
+/// once, by hand, on 2026-09-15, and a hand measurement guards nothing after
+/// the session that made it. Pass `AppTheme.light()` to cover the other half.
+Future<void> _pump(
+  WidgetTester tester,
+  EducationalResourcesService svc, {
+  ThemeData? theme,
+}) async {
   addTearDown(() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
@@ -79,7 +110,7 @@ Future<void> _pump(WidgetTester tester, EducationalResourcesService svc) async {
   tester.view.devicePixelRatio = 1.0;
   await tester.pumpWidget(
     MaterialApp(
-      theme: AppTheme.dark(),
+      theme: theme ?? AppTheme.dark(),
       home: EducationalResourcesScreen(service: svc, cards: _cards),
     ),
   );
@@ -347,5 +378,116 @@ void main() {
     await tester.pump();
     expect(find.text('Hamina Attenuation Object Library'), findsWidgets);
     expect(find.text('Hamina Attenuation Object Editor'), findsWidgets);
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // LIGHT THEME. Recorded as a gap on 2026-09-15 and fixed here.
+  //
+  // `_pump` hardcoded dark, so every assertion above this line had only ever
+  // run against one of the two themes the app ships. Vera covered light once by
+  // screenshot and measured the contrast by hand: 8.86:1 light and 12.63:1
+  // dark. Both numbers are REPRODUCED below from the tokens themselves, which
+  // is what makes them a guard rather than a note in a report.
+  // ══════════════════════════════════════════════════════════════════════════
+  group('light theme', () {
+    testWidgets('the screen renders in light theme, not only dark',
+        (tester) async {
+      await _pump(tester, _svc(), theme: AppTheme.light());
+
+      // The same assertions the dark tests make, against the other theme. The
+      // point is not that light is special; it is that NOTHING pumped this
+      // screen in light, so a light-only layout or colour failure could ship.
+      expect(find.text(_kFixtureCredit), findsOneWidget);
+      expect(find.text('Top 20 Wi-Fi Checklist'), findsWidgets);
+    });
+
+    testWidgets('search works in light theme too', (tester) async {
+      // Searches the INJECTED fixture, so the title asserted here is one the
+      // fixture defines. The dark sibling at 'search reaches the 2026-08-09
+      // additions' builds a service from the real bundled JSON instead, which
+      // is why it can look for a Hamina entry and this cannot.
+      await _pump(tester, _svc(), theme: AppTheme.light());
+      await tester.enterText(find.byType(TextField).first, 'alpha');
+      await tester.pump();
+      expect(find.text('Alpha Tool'), findsWidgets);
+      expect(find.text('Beta Podcast'), findsNothing);
+    });
+  });
+
+  group('contrast of the tokens this screen actually uses', () {
+    // Every text token the screen paints, against every surface it paints them
+    // on. Derived by counting the `colors.<token>` references in
+    // educational_resources_screen.dart rather than guessed: textTertiary (12),
+    // textAccent (7), textPrimary (6), textSecondary (4), on surface1 (5),
+    // surface2 (2) and the surface0 canvas beneath them.
+    //
+    // SC 1.4.3 floor for body text is 4.5:1.
+    const double kFloor = 4.5;
+
+    List<(String, Color)> textTokens(AppColorScheme c) => <(String, Color)>[
+          ('textPrimary', c.textPrimary),
+          ('textSecondary', c.textSecondary),
+          ('textTertiary', c.textTertiary),
+          ('textAccent', c.textAccent),
+        ];
+
+    List<(String, Color)> surfaces(AppColorScheme c) => <(String, Color)>[
+          ('surface0', c.surface0),
+          ('surface1', c.surface1),
+          ('surface2', c.surface2),
+        ];
+
+    for (final (String name, AppColorScheme scheme) in <(String, AppColorScheme)>[
+      ('light', AppColorScheme.light()),
+      ('dark', AppColorScheme.dark()),
+    ]) {
+      test('$name: every text token clears 4.5:1 on every surface', () {
+        for (final (String tName, Color tColor) in textTokens(scheme)) {
+          for (final (String sName, Color sColor) in surfaces(scheme)) {
+            final double ratio = _contrast(tColor, sColor);
+            expect(
+              ratio,
+              greaterThanOrEqualTo(kFloor),
+              reason: '$name $tName on $sName is '
+                  '${ratio.toStringAsFixed(2)}:1, below the $kFloor:1 floor',
+            );
+          }
+        }
+      });
+    }
+
+    test("Vera's two hand-measured numbers, reproduced from the tokens", () {
+      // She measured the credit line, which paints in textSecondary, on a card,
+      // which is surface1. Reproducing her exact figures is what proves this
+      // guard measures the same thing her screenshot did.
+      expect(
+        _contrast(
+          AppColorScheme.light().textSecondary,
+          AppColorScheme.light().surface1,
+        ),
+        closeTo(8.86, 0.01),
+      );
+      expect(
+        _contrast(
+          AppColorScheme.dark().textSecondary,
+          AppColorScheme.dark().surface1,
+        ),
+        closeTo(12.63, 0.01),
+      );
+    });
+
+    test('the TIGHTEST pair is named, so a drift is visible before it fails',
+        () {
+      // Light textAccent on the light canvas is 4.60:1. It clears the floor by
+      // 0.10, which is the smallest margin anywhere on this screen in either
+      // theme, so it is the pair that breaks first if a token is nudged.
+      // Asserting the VALUE rather than only the floor means a change that
+      // still passes 4.5 does not pass silently.
+      final AppColorScheme light = AppColorScheme.light();
+      expect(
+        _contrast(light.textAccent, light.surface0),
+        closeTo(4.60, 0.01),
+      );
+    });
   });
 }
