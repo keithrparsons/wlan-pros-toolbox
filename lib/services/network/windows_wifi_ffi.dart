@@ -33,6 +33,7 @@ import 'package:win32/win32.dart';
 import '../../data/channel_frequency_data.dart'
     show WifiBand, WifiBandInfo, frequencyToChannel;
 import 'ie_parser.dart' show findInformationElement;
+import 'rsn_security_parser.dart' show securityTokensFromIes;
 import 'wifi_info_service.dart'
     show WifiInfo, WifiInfoUnavailable, WifiInfoUnavailableReason;
 
@@ -400,12 +401,22 @@ class WifiBssCandidate {
     required this.rssiDbm,
     required this.centerFreqKhz,
     this.informationElements,
+    this.capabilityInformation,
   });
 
   final String bssid; // lowercase colon-hex
   final String? ssid;
   final int rssiDbm;
   final int centerFreqKhz;
+
+  /// The 802.11 Capability Information field from this entry, when read.
+  ///
+  /// Carried ONLY so open can be told apart from WEP. Neither advertises an RSN
+  /// or WPA element, so from the IE blob alone they are indistinguishable, and
+  /// the Privacy bit is the one thing that separates them. Null means it was
+  /// not read, and the decoder then returns an empty token list rather than
+  /// guessing which of the two it was.
+  final int? capabilityInformation;
 
   /// The raw IE blob copied out of this entry's WLAN_BSS_ENTRY (Beacon/Probe
   /// Response elements), or null when the entry carries none. Parsed for the
@@ -450,6 +461,18 @@ List<Map<String, Object?>> scannedApRowsFromBssCandidates(
     final double mhz = c.centerFreqKhz / 1000.0;
     final ({WifiBand band, int channel})? match = frequencyToChannel(mhz);
     if (match == null) continue;
+    // PER-BSS security, read from this BSS's own beacon rather than from the
+    // OS's per-NETWORK answer. Measured on real hardware 2026-09-16: `netsh`
+    // prints Authentication once per SSID and never per BSSID, so the OS route
+    // cannot express one SSID running different security per band, which is
+    // the case Join a Network keys its candidates on.
+    final Uint8List? ies = c.informationElements;
+    final List<String> security = ies == null
+        ? const <String>[]
+        : securityTokensFromIes(
+            ies,
+            capabilityInformation: c.capabilityInformation,
+          );
     rows.add(<String, Object?>{
       // A hidden network's empty SSID is passed as null so the UI renders
       // "(hidden network)" rather than a blank or a fabricated name.
@@ -459,6 +482,9 @@ List<Map<String, Object?>> scannedApRowsFromBssCandidates(
       'channel': match.channel,
       'band': match.band.label,
       'frequencyMhz': mhz.round(),
+      // A LIST, and an EMPTY list is not "open": see ScannedAp.security. An
+      // open BSS reports the token `none`.
+      'security': security,
     });
   }
   return rows;
@@ -742,6 +768,7 @@ List<WifiBssCandidate> _decodeBssCandidates(
       rssiDbm: entry.lRssi,
       centerFreqKhz: entry.ulChCenterFrequency,
       informationElements: _readIeBlob(entriesBase + i),
+      capabilityInformation: entry.usCapabilityInformation,
     ));
   }
   return candidates;

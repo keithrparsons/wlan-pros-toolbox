@@ -173,3 +173,86 @@ String absentPassphraseReason(PiJoinSecurity security) {
       return '';
   }
 }
+
+// ── The native-scan adapter ─────────────────────────────────────────────────
+//
+// `buildJoinCandidates` above consumes `PiScanNet`, the WLAN Pi's scan row.
+// macOS and Windows produce `ScannedAp` instead, from their own OS scan. Rather
+// than grow a second grouping implementation that has to be kept in step with
+// the one the MUDI incident is written into, this converts a native row into
+// the Pi's shape and reuses that grouping unchanged.
+//
+// THE ONE THING THAT NEEDS CARE IS SECURITY, because the two sides speak
+// different vocabularies. `ScannedAp.security` is a LIST of our own tokens
+// (`wpa3Personal`, `owe`, ...). `PiScanNet.keyMgmt` is a single wpa_supplicant
+// string (`wpa-psk sae`). This maps the first into the second rather than
+// re-deriving a `PiJoinSecurity` by hand, so `piJoinSecurityFromKeyMgmt` stays
+// the ONE place the precedence rules live: SAE before PSK so a transition BSS
+// joins as WPA3, and EAP before either so an enterprise network with a PSK
+// fallback is never silently downgraded.
+//
+// It is not a fudge: `wpa-psk sae` is precisely what wpa_supplicant reports for
+// the transition BSS our tokens describe as `[wpa2Personal, wpa3Personal]`. The
+// same fact, in the other side's words.
+
+/// The `key_mgmt` string a Pi scan would have carried for a BSS whose security
+/// our native scanners describe as [tokens].
+///
+/// EMPTY IN, UNSUPPORTED OUT. An empty token list means the platform named no
+/// scheme we could resolve, and `ScannedAp.security` is explicit that this must
+/// never be read as open. Returning `''` here would resolve to
+/// `PiJoinSecurity.open` and put a user one tap from a join that cannot work,
+/// so an unresolvable BSS is reported as unsupported instead.
+String keyMgmtFromSecurityTokens(List<String> tokens) {
+  if (tokens.isEmpty) return 'unresolved';
+  final Set<String> parts = <String>{};
+  for (final String raw in tokens) {
+    switch (raw.trim().toLowerCase()) {
+      case 'none' || 'open':
+        parts.add('none');
+      case 'wep':
+        // No WEP case exists in PiJoinSecurity, and there should not be one: a
+        // WEP join needs key material this path cannot accept. It must land on
+        // unsupported, NOT on open, so it is passed through as a token the
+        // resolver does not recognise.
+        parts.add('wep');
+      case 'wpapersonal' || 'wpa2personal' || 'personal':
+        parts.add('wpa-psk');
+      case 'wpa3personal' || 'wpa3transition':
+        parts.add('sae');
+      case 'wpaenterprise' || 'wpa2enterprise' || 'wpa3enterprise' || 'enterprise':
+        parts.add('wpa-eap');
+      case 'owe' || 'owetransition':
+        parts.add('owe');
+      default:
+        // An unknown token is NOT nothing. Dropping it would leave an empty
+        // string, which reads as open.
+        parts.add('unresolved');
+    }
+  }
+  // `none` alongside a real scheme is a contradiction in the source data; the
+  // real scheme wins, because offering an open join for a BSS that also
+  // advertises encryption is the failure that matters.
+  if (parts.length > 1) parts.remove('none');
+  return parts.join(' ');
+}
+
+/// Join-list rows from a native OS scan, grouped by the same (SSID, band) rule
+/// the Pi path uses.
+///
+/// [rows] are `ScannedAp`-shaped maps as the platform channels deliver them,
+/// which keeps this layer free of a dependency on the scan service.
+List<JoinCandidate> joinCandidatesFromNativeRows(
+  List<({String? ssid, String bssid, int rssiDbm, int frequencyMhz, List<String> security})> rows,
+) {
+  return buildJoinCandidates(<PiScanNet>[
+    for (final r in rows)
+      PiScanNet(
+        ssid: r.ssid,
+        bssid: r.bssid,
+        signalDbm: r.rssiDbm,
+        freqMhz: r.frequencyMhz,
+        keyMgmt: keyMgmtFromSecurityTokens(r.security),
+      ),
+  ]);
+}

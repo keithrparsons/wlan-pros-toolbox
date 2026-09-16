@@ -72,10 +72,17 @@ void main() {
       expect(rows[2]['band'], '6 GHz');
     });
 
-    test('every row carries exactly the six shared-model keys, no noise or SNR',
+    test('every row carries exactly the seven shared-model keys, no noise or SNR',
         () {
       // The Native Wifi BSS list has no per-BSS noise floor. Nothing may be
       // derived to fill the gap (GL-005 / GL-008).
+      //
+      // SIX became SEVEN on 2026-09-16 when `security` landed on this path.
+      // That is not this guard weakening: macOS has emitted `security` since
+      // 2026-09-13 (ApScanChannel.swift), so the shared model already had seven
+      // keys and Windows was the one out of step. The guard's real job is the
+      // two assertions below it, that nothing invents a noise floor or an SNR,
+      // and those are untouched.
       final List<Map<String, Object?>> rows = scannedApRowsFromBssCandidates(
         <WifiBssCandidate>[
           _candidate(bssid: 'a4:83:e7:00:11:22', centerFreqKhz: 5180000),
@@ -90,10 +97,24 @@ void main() {
           'channel',
           'band',
           'frequencyMhz',
+          'security',
         },
       );
       expect(rows.single.containsKey('noiseDbm'), isFalse);
       expect(rows.single.containsKey('snrDb'), isFalse);
+    });
+
+    test('a candidate with NO IE blob reports EMPTY security, never open', () {
+      // The helper builds candidates without IEs. Empty must stay empty: an
+      // open BSS reports the token `none`, and absence of information is not
+      // information (ScannedAp.security, GL-005).
+      final List<Map<String, Object?>> rows = scannedApRowsFromBssCandidates(
+        <WifiBssCandidate>[
+          _candidate(bssid: 'a4:83:e7:00:11:22', centerFreqKhz: 5180000),
+        ],
+      );
+      expect(rows.single['security'], isEmpty);
+      expect(rows.single['security'], isNot(contains('none')));
     });
 
     test('a hidden network becomes a null SSID, never a blank or a made-up name',
