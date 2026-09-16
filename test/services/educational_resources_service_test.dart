@@ -236,7 +236,15 @@ void main() {
       // group count is unchanged. 2026-08-29: added Jonathan Finney's SSID
       // Airtime Calculator under the existing "Tools and utilities" topic
       // (46 -> 47), approved by him 2026-08-21; still within the existing 7
-      // topics, so the group count is unchanged.
+      // topics, so the group count is unchanged. 2026-09-15: added WLAN Talks
+      // (wlan-talks.net), Victor Gatuna's talk archive, under an existing topic
+      // (47 -> 48). Victor gave explicit permission the same day.
+      //
+      // THIS ASSERTION WENT RED ON 2026-09-15 AND NOBODY SAW IT. The entry
+      // landed, the count moved to 48, and this test still said 47 -- but
+      // `flutter test` could not run on that machine at all (the Xcode licence
+      // was unaccepted), so the suite never reported it. Fixed 2026-09-16, the
+      // day the licence was accepted and the full suite ran for the first time.
       final File asset = File('assets/data/educational_resources.json');
       expect(asset.existsSync(), isTrue,
           reason: 'bundled asset must exist at assets/data/');
@@ -244,7 +252,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 47);
+      expect(real.count, 48);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 7);
@@ -268,15 +276,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 47.
+      // Every entry lands in exactly one group; counts sum to 48.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 47);
+      expect(sum, 48);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 47);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 48);
     });
 
     // 2026-08-09, part one: outreach was complete for everything shipped
@@ -330,12 +338,14 @@ void main() {
 
       // 32 = 31 + Jonathan Finney's SSID Airtime Calculator, whose owner
       // agreed to the listing on 2026-08-21.
+      // 33 = 32 + WLAN Talks, approved by Victor Gatuna on 2026-09-15. Same
+      // unrun-suite story as the count above.
       expect(
         real.all
             .where((EducationalResource e) =>
                 e.approval == ResourceApproval.approved)
             .length,
-        32,
+        33,
       );
       expect(
         real.all
