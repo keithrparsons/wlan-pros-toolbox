@@ -4,7 +4,7 @@
 //      voice-gated facts verbatim (the discipline designators incl. A/E/T, the
 //      sheet-type digits, the three RCP reasons, the six plan-set elements),
 //      plus the no-em-dash and "Wi-Fi" glyph guards, with a count guard.
-//   2. Registration: a live Quick Reference tile in the "AEC & Documentation"
+//   2. Registration: a live Quick Reference tile in the "Buildings & Verticals"
 //      subgroup (placement flagged for Keith; AEC & Documentation is a
 //      Calculators subgroup, not a reference subgroup), a registered route
 //      builder, a keyword set, and a help entry.
@@ -88,8 +88,8 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile, defaulted to "AEC & Documentation"', () {
-      // Placement flagged for Keith: an "AEC & Documentation" subgroup exists
+    test('live Quick Reference tile, defaulted to "Buildings & Verticals"', () {
+      // Placement flagged for Keith: an "Buildings & Verticals" subgroup exists
       // only under Calculators & Tools (for the Architectural Scale calc), not
       // as a reference subgroup, so this reference screen defaults here.
       final ToolCategory qr = kToolCategories.firstWhere(
@@ -101,10 +101,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/plan-set-literacy');
       expect(t.title, 'Plan-Set Literacy');
-      expect(t.subgroup, 'AEC & Documentation');
+      expect(t.subgroup, 'Buildings & Verticals');
     });
 
-    test('grouping places the tool under "AEC & Documentation", not "Other"', () {
+    test('grouping places the tool under "Buildings & Verticals", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -119,7 +119,7 @@ void main() {
         );
       }
       final ToolSection codes =
-          sections.firstWhere((ToolSection s) => s.header == 'AEC & Documentation');
+          sections.firstWhere((ToolSection s) => s.header == 'Buildings & Verticals');
       expect(
         codes.tools.any((ToolEntry e) => e.id == 'plan-set-literacy'),
         isTrue,

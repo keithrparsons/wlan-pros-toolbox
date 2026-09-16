@@ -5,7 +5,7 @@
 //      voice-gated facts verbatim (the four TIA standards, the four cable
 //      categories, the 90+10 m channel rule), plus the no-em-dash and "Wi-Fi"
 //      glyph guards across all rendered prose, with a data-fidelity count guard.
-//   2. Registration: a live Quick Reference tile in the "AEC & Documentation"
+//   2. Registration: a live Quick Reference tile in the "Buildings & Verticals"
 //      subgroup, a registered route builder, and a keyword set.
 //   3. Widget render: the read-only screen renders its title and key content in
 //      BOTH dark and light themes with no RenderFlex overflow at 320/375/768/
@@ -105,7 +105,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in the "AEC & Documentation" subgroup', () {
+    test('live Quick Reference tile in the "Buildings & Verticals" subgroup', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -115,10 +115,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/structured-cabling');
       expect(t.title, 'Structured Cabling');
-      expect(t.subgroup, 'AEC & Documentation');
+      expect(t.subgroup, 'Buildings & Verticals');
     });
 
-    test('grouping places the tool under "AEC & Documentation", not "Other"', () {
+    test('grouping places the tool under "Buildings & Verticals", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -133,7 +133,7 @@ void main() {
         );
       }
       final ToolSection codes =
-          sections.firstWhere((ToolSection s) => s.header == 'AEC & Documentation');
+          sections.firstWhere((ToolSection s) => s.header == 'Buildings & Verticals');
       expect(
         codes.tools.any((ToolEntry e) => e.id == 'structured-cabling'),
         isTrue,

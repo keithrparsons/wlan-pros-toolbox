@@ -97,7 +97,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in "Compliance & Governance"', () {
+    test('live Quick Reference tile in "Codes, Safety & Compliance"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -107,10 +107,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/cloud-tool-trust');
       expect(t.title, 'Cloud Tool Trust');
-      expect(t.subgroup, 'Compliance & Governance');
+      expect(t.subgroup, 'Codes, Safety & Compliance');
     });
 
-    test('grouping places the tool under "Compliance & Governance", not "Other"',
+    test('grouping places the tool under "Codes, Safety & Compliance", not "Other"',
         () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
@@ -125,7 +125,7 @@ void main() {
         );
       }
       final ToolSection cg = sections.firstWhere(
-        (ToolSection s) => s.header == 'Compliance & Governance',
+        (ToolSection s) => s.header == 'Codes, Safety & Compliance',
       );
       expect(cg.tools.any((ToolEntry e) => e.id == 'cloud-tool-trust'), isTrue);
     });

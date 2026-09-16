@@ -1,7 +1,7 @@
 // Tests for the Network in Scope reference screen, a Field & Trade Reference set
 // entry (2026-07-05). Three layers: data fidelity (the five PCI asks, four
 // HIPAA safeguards, three SOX touches, plus the no-em-dash / "Wi-Fi" guards),
-// registration (a live "Compliance & Governance" Quick Reference tile, route,
+// registration (a live "Codes, Safety & Compliance" Quick Reference tile, route,
 // keywords), and widget render (dark + light, no overflow at 320/375/768/1280,
 // plate omitted when unbundled and shown once when bundled).
 
@@ -71,7 +71,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in "Compliance & Governance"', () {
+    test('live Quick Reference tile in "Codes, Safety & Compliance"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -81,10 +81,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/network-in-scope');
       expect(t.title, 'Network in Scope');
-      expect(t.subgroup, 'Compliance & Governance');
+      expect(t.subgroup, 'Codes, Safety & Compliance');
     });
 
-    test('grouping places the tool under "Compliance & Governance", not "Other"',
+    test('grouping places the tool under "Codes, Safety & Compliance", not "Other"',
         () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
@@ -99,7 +99,7 @@ void main() {
         );
       }
       final ToolSection cg = sections.firstWhere(
-        (ToolSection s) => s.header == 'Compliance & Governance',
+        (ToolSection s) => s.header == 'Codes, Safety & Compliance',
       );
       expect(cg.tools.any((ToolEntry e) => e.id == 'network-in-scope'), isTrue);
     });

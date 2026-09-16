@@ -57,7 +57,7 @@ void main() {
       expect(entry.title, 'Optical Transceivers');
       expect(entry.routeName, '/tools/optical-transceivers');
       expect(entry.isLive, isTrue);
-      expect(entry.subgroup, 'Cabling & Connectors');
+      expect(entry.subgroup, 'Cabling, Connectors & Hardware');
 
       final ToolCategory cat = kToolCategories.firstWhere(
         (ToolCategory c) =>

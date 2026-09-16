@@ -1,7 +1,7 @@
 // Tests for the Credentials & Licenses reference screen, a Field & Trade
 // Reference set entry (2026-07-05). Three layers: data fidelity (the
 // six-credential lead-time table, the two GROL facts, the three FCC concepts,
-// plus the no-em-dash / "Wi-Fi" guards), registration (a live "Codes & Safety"
+// plus the no-em-dash / "Wi-Fi" guards), registration (a live "Codes, Safety & Compliance"
 // Quick Reference tile, route, keywords), and widget render (dark + light, no
 // overflow at 320/375/768/1280, plate omitted when unbundled and shown once
 // when bundled).
@@ -72,7 +72,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in "Codes & Safety"', () {
+    test('live Quick Reference tile in "Codes, Safety & Compliance"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -82,10 +82,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/credentials-licenses');
       expect(t.title, 'Credentials & Licenses');
-      expect(t.subgroup, 'Codes & Safety');
+      expect(t.subgroup, 'Codes, Safety & Compliance');
     });
 
-    test('grouping places the tool under "Codes & Safety", not "Other"', () {
+    test('grouping places the tool under "Codes, Safety & Compliance", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -99,7 +99,7 @@ void main() {
         );
       }
       final ToolSection codes = sections.firstWhere(
-        (ToolSection s) => s.header == 'Codes & Safety',
+        (ToolSection s) => s.header == 'Codes, Safety & Compliance',
       );
       expect(
         codes.tools.any((ToolEntry e) => e.id == 'credentials-licenses'),

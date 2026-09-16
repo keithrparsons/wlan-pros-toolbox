@@ -1,7 +1,7 @@
 // Tests for the Healthcare Wi-Fi reference screen, a Field & Trade Reference set
 // entry (2026-07-05). Three layers: data fidelity (the three WMTS bands, the
 // five authorities incl. the biomed handoff, the eight-item pre-quote checklist,
-// plus the no-em-dash / "Wi-Fi" guards), registration (a live "Verticals" Quick
+// plus the no-em-dash / "Wi-Fi" guards), registration (a live "Buildings & Verticals" Quick
 // Reference tile, route, keywords), and widget render (dark + light, no overflow
 // at 320/375/768/1280, the shielded-rooms caution rendered as a warning band,
 // plate omitted when unbundled and shown once when bundled).
@@ -82,7 +82,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in "Verticals"', () {
+    test('live Quick Reference tile in "Buildings & Verticals"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -92,10 +92,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/healthcare-vertical');
       expect(t.title, 'Healthcare Wi-Fi');
-      expect(t.subgroup, 'Verticals');
+      expect(t.subgroup, 'Buildings & Verticals');
     });
 
-    test('grouping places the tool under "Verticals", not "Other"', () {
+    test('grouping places the tool under "Buildings & Verticals", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -109,7 +109,7 @@ void main() {
         );
       }
       final ToolSection v = sections.firstWhere(
-        (ToolSection s) => s.header == 'Verticals',
+        (ToolSection s) => s.header == 'Buildings & Verticals',
       );
       expect(v.tools.any((ToolEntry e) => e.id == 'healthcare-vertical'), isTrue);
     });

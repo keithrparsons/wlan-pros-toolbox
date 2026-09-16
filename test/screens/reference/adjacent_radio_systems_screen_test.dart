@@ -1,7 +1,7 @@
 // Tests for the Adjacent Radio Systems reference screen, a Field & Trade
 // Reference set entry (2026-07-05). Three layers: data fidelity (the ten-system
 // coexistence table, the five 2.4 GHz contenders, the three corrections, plus
-// the no-em-dash / "Wi-Fi" guards), registration (a live "Wireless Landscape"
+// the no-em-dash / "Wi-Fi" guards), registration (a live "Radio & Spectrum"
 // Quick Reference tile, route, keywords), and widget render (dark + light, no
 // overflow at 320/375/768/1280, the envelope caution rendered as a warning
 // band, plate omitted when unbundled and shown once when bundled).
@@ -76,7 +76,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in "Wireless Landscape"', () {
+    test('live Quick Reference tile in "Radio & Spectrum"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -86,10 +86,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/adjacent-radio-systems');
       expect(t.title, 'Adjacent Radio Systems');
-      expect(t.subgroup, 'Wireless Landscape');
+      expect(t.subgroup, 'Radio & Spectrum');
     });
 
-    test('grouping places the tool under "Wireless Landscape", not "Other"', () {
+    test('grouping places the tool under "Radio & Spectrum", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -103,7 +103,7 @@ void main() {
         );
       }
       final ToolSection wl = sections.firstWhere(
-        (ToolSection s) => s.header == 'Wireless Landscape',
+        (ToolSection s) => s.header == 'Radio & Spectrum',
       );
       expect(
         wl.tools.any((ToolEntry e) => e.id == 'adjacent-radio-systems'),

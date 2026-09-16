@@ -186,13 +186,16 @@ void main() {
   group('registration (catalog + router + keywords)', () {
     // cable-connector removed 2026-06-12 (merged into ethernet-cable).
     const Map<String, String> subgroupById = <String, String>{
-      'keyboard-shortcuts': 'Encoding',
-      'time-zone-maps': 'Time & Formats',
-      'phonetic-alphabet': 'Encoding',
-      'diffie-hellman': 'Wi-Fi & RF',
-      // Integration batch (2026-06-12): RF Bands + Wi-Fi HaLow, both Wi-Fi & RF.
-      'rf-bands': 'Wi-Fi & RF',
-      'wifi-halow': 'Wi-Fi & RF',
+      // Subgroups renamed 2026-09-16 by the Quick Reference reorg (19 -> 13).
+      // The tools did not move; the sections they sit in were renamed or split.
+      'keyboard-shortcuts': 'Encoding & Formats',
+      'time-zone-maps': 'Travel & International',
+      'phonetic-alphabet': 'Encoding & Formats',
+      'diffie-hellman': 'Security & Auth',
+      // Integration batch (2026-06-12): RF Bands + Wi-Fi HaLow, both now under
+      // Radio & Spectrum, which is where the old Wi-Fi & RF spectrum half went.
+      'rf-bands': 'Radio & Spectrum',
+      'wifi-halow': 'Radio & Spectrum',
     };
 
     test(

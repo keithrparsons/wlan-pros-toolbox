@@ -5,7 +5,7 @@
 //      voice-gated facts verbatim (the eight-environment access checklist, its
 //      gates and ask-about lists), plus the no-em-dash and "Wi-Fi" glyph
 //      guards across all rendered prose, with a data-fidelity count guard.
-//   2. Registration: a live Quick Reference tile in the "Codes & Safety"
+//   2. Registration: a live Quick Reference tile in the "Codes, Safety & Compliance"
 //      subgroup, a registered route builder, a keyword set, and a help entry.
 //   3. Widget render: the read-only screen renders its title and key content in
 //      BOTH dark and light themes with no RenderFlex overflow; the embedded-PNG
@@ -72,7 +72,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in the "Codes & Safety" subgroup', () {
+    test('live Quick Reference tile in the "Codes, Safety & Compliance" subgroup', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -82,10 +82,10 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/site-access');
       expect(t.title, 'Site Access');
-      expect(t.subgroup, 'Codes & Safety');
+      expect(t.subgroup, 'Codes, Safety & Compliance');
     });
 
-    test('grouping places the tool under "Codes & Safety", not "Other"', () {
+    test('grouping places the tool under "Codes, Safety & Compliance", not "Other"', () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
       );
@@ -100,7 +100,7 @@ void main() {
         );
       }
       final ToolSection codes =
-          sections.firstWhere((ToolSection s) => s.header == 'Codes & Safety');
+          sections.firstWhere((ToolSection s) => s.header == 'Codes, Safety & Compliance');
       expect(
         codes.tools.any((ToolEntry e) => e.id == 'site-access'),
         isTrue,

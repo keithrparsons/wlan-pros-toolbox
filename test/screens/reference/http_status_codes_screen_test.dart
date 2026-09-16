@@ -108,7 +108,7 @@ void main() {
       expect(tile.title, 'HTTP Status Codes');
       expect(tile.routeName, '/tools/http-status-codes');
       expect(tile.isLive, isTrue);
-      expect(tile.subgroup, 'Protocols');
+      expect(tile.subgroup, 'Networking & Protocols');
     });
 
     test('route resolves to a registered builder', () {

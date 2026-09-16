@@ -62,7 +62,7 @@ void main() {
       expect(entry.title, 'Wi-Fi Authentication Glossary');
       expect(entry.routeName, '/tools/wifi-auth-glossary');
       expect(entry.isLive, isTrue);
-      expect(entry.subgroup, 'Wi-Fi & RF');
+      expect(entry.subgroup, 'Security & Auth');
 
       // It lives in the same category as the Wi-Fi Glossary (Quick Reference).
       final ToolCategory cat = kToolCategories.firstWhere(

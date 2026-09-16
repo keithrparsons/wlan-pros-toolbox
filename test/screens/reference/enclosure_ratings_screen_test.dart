@@ -7,7 +7,7 @@
 //      the NEMA types, the one-way NEMA->IP mapping, the placement guidance),
 //      plus the no-em-dash and "Wi-Fi" glyph rules across all rendered prose.
 //   2. Registration: the tool has a live Quick Reference tile in the proposed
-//      "Codes & Safety" subgroup, a registered route builder, a keyword set, and
+//      "Codes, Safety & Compliance" subgroup, a registered route builder, a keyword set, and
 //      a help entry. The help count guard is asserted in tool_help_loader_test.
 //   3. Widget render: the read-only screen renders its title and key content
 //      across phone/tablet/desktop widths, in BOTH dark and light themes, with
@@ -129,7 +129,7 @@ void main() {
   });
 
   group('registration (catalog + subgroup + router + keywords)', () {
-    test('live Quick Reference tile in the proposed "Codes & Safety" subgroup',
+    test('live Quick Reference tile in the proposed "Codes, Safety & Compliance" subgroup',
         () {
       final ToolCategory qr = kToolCategories.firstWhere(
         (ToolCategory c) => c.id == 'quick-reference',
@@ -140,13 +140,13 @@ void main() {
       expect(t.isLive, isTrue);
       expect(t.routeName, '/tools/enclosure-ratings');
       expect(t.title, 'Enclosure Ratings');
-      expect(t.subgroup, 'Codes & Safety');
+      expect(t.subgroup, 'Codes, Safety & Compliance');
     });
 
-    test('"Codes & Safety" is a registered subgroup header for quick-reference',
+    test('"Codes, Safety & Compliance" is a registered subgroup header for quick-reference',
         () {
       expect(
-        kCategorySubgroupOrder['quick-reference']!.contains('Codes & Safety'),
+        kCategorySubgroupOrder['quick-reference']!.contains('Codes, Safety & Compliance'),
         isTrue,
       );
     });
@@ -167,7 +167,7 @@ void main() {
         );
       }
       final ToolSection codes =
-          sections.firstWhere((ToolSection s) => s.header == 'Codes & Safety');
+          sections.firstWhere((ToolSection s) => s.header == 'Codes, Safety & Compliance');
       expect(
         codes.tools.any((ToolEntry e) => e.id == 'enclosure-ratings'),
         isTrue,

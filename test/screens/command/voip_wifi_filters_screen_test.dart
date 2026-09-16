@@ -166,7 +166,7 @@ void main() {
           .firstWhere((ToolCategory c) => c.id == 'quick-reference');
       final ToolEntry t =
           qr.tools.firstWhere((ToolEntry e) => e.id == 'voip-wifi-filters');
-      expect(t.subgroup, 'CLI & Capture');
+      expect(t.subgroup, 'Capture & Troubleshooting');
       expect(t.routeName, '/tools/voip-wifi-filters');
       expect(t.isLive, isTrue);
       // It ships beside the 802.11 filter sheet, not inside it.
