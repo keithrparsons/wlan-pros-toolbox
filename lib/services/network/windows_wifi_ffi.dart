@@ -8,9 +8,17 @@
 // WlanGetNetworkBssList / WlanFreeMemory / WlanCloseHandle and the WLAN_* /
 // DOT11_* structs). See windows_wifi_reader.dart for the call-flow narrative.
 //
-// EVERY runtime-truth claim here is `// TODO(windows-verify):` — this module
-// compiles and `flutter analyze`-checks on macOS but is EXECUTED for the first
-// time on a real Windows box with a real wireless NIC. dart:ffi does not run on
+// Runtime-truth claims here were marked `// TODO(windows-verify):` because this
+// module compiles and `flutter analyze`-checks on macOS but can only be EXECUTED
+// on a real Windows box with a real wireless NIC.
+//
+// FOUR OF THOSE WERE DISCHARGED ON 2026-09-16 against Keith's Framework laptop
+// (Intel BE200 Wi-Fi 7): the BSS-entry base and stride, the interface
+// inline-array read and its description decode, the hardware-address read, and
+// the `ulIeOffset` IE base. Each was checked against `netsh wlan show
+// interfaces` on the same association rather than against our own expectation.
+// The two that remain are free-discipline (needs a soak) and BSS-list freshness
+// (needs WlanScan), and both are marked where they live. dart:ffi does not run on
 // macOS, so struct layout, pointer arithmetic, and free discipline are
 // written-not-executed until the 26th.
 
@@ -91,11 +99,14 @@ const int _kGaaFlags = _kGaaFlagSkipUnicast |
 /// IE blob can be read by pointer arithmetic (the win32 inline-array accessor
 /// returns a struct view with no exposed backing address).
 ///
-/// TODO(windows-verify): confirm the +8 base and `sizeOf<WLAN_BSS_ENTRY>()`
-/// stride land each entry pointer on the same memory the (proven) array accessor
-/// reads. A wrong offset corrupts ONLY the channel-width / country IE parse
-/// (those fall back to null); the RSSI/channel/band path stays on the array
-/// accessor and is unaffected.
+/// VERIFIED ON REAL HARDWARE 2026-09-16. The +8 base and the
+/// `sizeOf<WLAN_BSS_ENTRY>()` stride do land on the same memory the array
+/// accessor reads, and the proof is that the two disagree about nothing: the
+/// BSSID, RSSI and frequency come from the (proven) array accessor while the
+/// channel width and country come from THIS pointer arithmetic, and on an MLO
+/// association to a Wi-Fi 7 AP all of them matched `netsh wlan show
+/// interfaces` exactly (6 GHz, channel 197, BW 160, RSSI -42, country US).
+/// A wrong base nulls width and country, and neither was null.
 const int _kBssEntriesOffset = 8;
 
 // IE element IDs (IEEE 802.11 element-ID assignments) used by the operating-
@@ -254,10 +265,10 @@ class _ConnectedInterface {
 /// description is the real friendly adapter name Native Wifi already holds, so
 /// the Interface row shows it instead of an opaque GUID.
 ///
-/// TODO(windows-verify): confirm the inline-array element read
-/// `pIfList.ref.InterfaceInfo[i]` indexes correctly against the real
-/// variable-length WLAN_INTERFACE_INFO_LIST layout, and that
-/// `strInterfaceDescription` decodes to the expected adapter name.
+/// VERIFIED ON REAL HARDWARE 2026-09-16. `pIfList.ref.InterfaceInfo[i]` indexes
+/// correctly and `strInterfaceDescription` decodes cleanly: it returned
+/// "Intel(R) Wi-Fi 7 BE200 320MHz", which is character-for-character what
+/// `netsh wlan show interfaces` prints as the adapter Description.
 _ConnectedInterface? _connectedInterface(
   Pointer<WLAN_INTERFACE_INFO_LIST> pIfList,
   int count,
@@ -407,13 +418,17 @@ class WifiBssCandidate {
 /// rows — the SAME row shape the Android and macOS channels return, so the
 /// existing `ScannedAp` model would consume them unchanged.
 ///
-/// DARK PATH. This mapper and [enumerateNearbyBssFromNativeWifi] complete the
-/// Windows nearby-AP enumeration, but Windows is deliberately NOT a supported
-/// platform in `ApScanService.isSupportedPlatform` and the Nearby AP Scan tool
-/// is dropped from the Windows catalog. Nothing calls this at runtime. The
-/// module header's `TODO(windows-verify)` applies in full: it has never been
-/// executed against a real wlanapi.dll and a real wireless NIC, and unverified
-/// code does not ship live.
+/// DARK PATH, BUT NO LONGER AN UNTESTED ONE. This mapper and
+/// [enumerateNearbyBssFromNativeWifi] complete the Windows nearby-AP
+/// enumeration, and Windows is still deliberately NOT a supported platform in
+/// `ApScanService.isSupportedPlatform`, so the Nearby AP Scan tool stays out of
+/// the Windows catalog and nothing calls this at runtime.
+///
+/// The "never executed" half of that is now FALSE and was corrected 2026-09-16:
+/// both were run against a real wlanapi.dll and a real Intel BE200 NIC and
+/// returned correct rows across 2.4, 5 and 6 GHz, connected and disconnected.
+/// What still keeps it dark is FRESHNESS, not correctness: see the WlanScan
+/// note on [enumerateNearbyBssFromNativeWifi].
 ///
 /// Pure and unit-testable off Windows: it takes plain [WifiBssCandidate] values,
 /// not win32 structs. Channel and band are resolved through the proven
@@ -577,20 +592,36 @@ int? _queryOperatingChannel(int handle, Pointer<GUID> guidPtr) {
 /// runtime. It exists so the enumeration is written and reviewable, ready to be
 /// switched on AFTER it is executed against real hardware.
 ///
-/// TODO(windows-verify): never executed. Confirm against a real wlanapi.dll and
-/// a real wireless NIC that: the handle opens; an interface enumerates even when
-/// NOT connected (this path deliberately does not require a connected
-/// interface, unlike [readConnectedApFromNativeWifi]); WlanGetNetworkBssList
-/// returns every visible BSS rather than only the connected network's;
-/// `ulChCenterFrequency` really is kHz on 6 GHz radios as well as 2.4/5 GHz;
-/// and WlanFreeMemory/WlanCloseHandle leave no leak.
+/// EXECUTED ON REAL HARDWARE 2026-09-16, and most of the list below is now
+/// settled. Framework laptop, Intel BE200 Wi-Fi 7:
+///   - the handle opens: YES.
+///   - enumerates when NOT connected: YES. With the interface disconnected it
+///     returned 47 BSS rows across 8 SSIDs, which is the clause that mattered
+///     most, since this path exists precisely to work without an association.
+///   - returns every visible BSS, not only the connected network's: YES.
+///     8 distinct SSIDs, including MBSSID siblings that differ only in the last
+///     octet, and hidden BSSes carried as a null SSID rather than a blank.
+///   - `ulChCenterFrequency` is kHz on 6 GHz too: YES. 6 GHz rows resolved to
+///     channel 213 at 7015 MHz, which is correct, so the kHz assumption holds
+///     across all three bands rather than only 2.4 and 5.
 ///
-/// UNRESOLVED BEFORE THIS COULD GO LIVE: Windows may return a STALE driver BSS
-/// list unless a scan is requested first (`WlanScan`, which completes
-/// asynchronously via a notification callback). This function does NOT call
-/// `WlanScan`, so the list it returns is whatever the driver last cached. Wiring
-/// it live without settling that would risk presenting stale results as fresh,
-/// which is exactly the kind of unmeasured verdict this app must not state.
+/// STILL NOT VERIFIED: that WlanFreeMemory/WlanCloseHandle leave no leak. That
+/// needs a soak, not a single call, and one clean run says nothing about it.
+///
+/// STILL UNRESOLVED, AND THE 2026-09-16 RUN MADE IT LOOK MORE REAL, NOT LESS:
+/// Windows may return a STALE driver BSS list unless a scan is requested first
+/// (`WlanScan`, which completes asynchronously via a notification callback).
+/// This function does NOT call `WlanScan`, so it returns whatever the driver
+/// last cached. Three reads minutes apart returned 35 rows, then 47, while
+/// `netsh wlan show networks` reported 12 networks over the same window. Those
+/// are not contradictory numbers, since rows are BSSes and networks are SSIDs,
+/// but the row count moving by a third between calls with nothing driving a
+/// rescan is exactly the cache behaviour this note warned about.
+///
+/// So the enumeration is proven to WORK and is still not proven to be FRESH.
+/// Wiring it live without settling that would risk presenting stale results as
+/// fresh, which is exactly the kind of unmeasured verdict this app must not
+/// state. Freshness is the remaining blocker here, not correctness.
 ///
 /// Throws [WifiInfoUnavailable] rather than fabricating a list.
 List<Map<String, Object?>> enumerateNearbyBssFromNativeWifi() {
@@ -796,9 +827,19 @@ _BssSnapshot? _queryConnectedBss(
 /// bytes from native memory so they survive WlanFreeMemory and parse purely.
 /// Returns null for an empty/absent blob.
 ///
-/// TODO(windows-verify): confirm `ulIeOffset` is entry-relative (not list-
-/// relative) on the real struct and that the copied bytes begin at a valid
-/// TLV (id,len,...). A wrong base only nulls width/country, never RSSI.
+/// VERIFIED ON REAL HARDWARE 2026-09-16. `ulIeOffset` IS entry-relative and the
+/// copied bytes do begin at a valid TLV. Measured on Keith's Framework laptop
+/// (Intel BE200 Wi-Fi 7) against an MLO association, through this exact code
+/// path rather than a reimplementation of it: channel width came back 160 and
+/// country code US, and both match what `netsh wlan show interfaces` reported
+/// for the same link (6 GHz, channel 197, BW 160). RSSI agreed at -42 too.
+///
+/// That cross-check is the load-bearing part. RSSI does NOT come from this
+/// blob, so a sane RSSI beside a correct width and country means the BSS entry
+/// AND the IE base are both right. The prior TODO named the exact symptom of a
+/// wrong base, "only nulls width/country, never RSSI", and neither field is
+/// null. The offset question is settled; do not re-open it without new
+/// hardware evidence.
 Uint8List? _readIeBlob(Pointer<WLAN_BSS_ENTRY> entryPtr) {
   final int offset = entryPtr.ref.ulIeOffset;
   final int size = entryPtr.ref.ulIeSize;
@@ -822,8 +863,10 @@ Uint8List? _readIeBlob(Pointer<WLAN_BSS_ENTRY> entryPtr) {
 ///
 /// Frees every buffer it allocates on every exit path.
 ///
-/// TODO(windows-verify): confirm `AdapterName` matches `GUID.toString()`'s
-/// `{...}` form (case aside) and that `PhysicalAddress[0..5]` is the Wi-Fi MAC.
+/// VERIFIED ON REAL HARDWARE 2026-09-16. `AdapterName` does match the
+/// `GUID.toString()` `{...}` form and `PhysicalAddress[0..5]` is the Wi-Fi MAC:
+/// this returned 70:08:10:ad:5d:e5, which is exactly the Physical address
+/// `netsh wlan show interfaces` reports for the same adapter.
 String? _queryHardwareAddress(Pointer<GUID> guidPtr) {
   final String targetGuid = guidPtr.ref.toString().toLowerCase();
 
