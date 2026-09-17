@@ -35,11 +35,37 @@ void main() {
       expect(piJoinSecurityFromKeyMgmt('sae'), PiJoinSecurity.wpa3Psk);
     });
 
-    test('enterprise and OWE are unsupported, not open', () {
+    test('enterprise is unsupported, not open', () {
       expect(piJoinSecurityFromKeyMgmt('wpa-eap'), PiJoinSecurity.unsupported);
       expect(piJoinSecurityFromKeyMgmt('wpa-eap-suite-b-192'),
           PiJoinSecurity.unsupported);
-      expect(piJoinSecurityFromKeyMgmt('owe'), PiJoinSecurity.unsupported);
+    });
+
+    test('OWE is JOINABLE, and is neither unsupported nor plain open', () {
+      // CHANGED 2026-09-17 by Keith, testing the macOS build: "Why can we not
+      // join and OWE? It needs no credentials." He is right. OWE derives keys
+      // automatically and a client associates as it would to an open network.
+      // It had been bucketed with 802.1X because both were "not joinable by the
+      // Pi endpoint", which was true of that endpoint and never true of the
+      // physics: 802.1X needs material we do not collect, OWE needs NOTHING.
+      expect(piJoinSecurityFromKeyMgmt('owe'), PiJoinSecurity.owe);
+      expect(piJoinSecurityFromKeyMgmt('owe'), isNot(PiJoinSecurity.unsupported));
+      // Not plain `open` either: it IS encrypted, and calling it open would
+      // understate what the user is getting.
+      expect(piJoinSecurityFromKeyMgmt('owe'), isNot(PiJoinSecurity.open));
+    });
+
+    test('an OWE TRANSITION BSS resolves to OWE, not to open', () {
+      // A transition BSS advertises both. Both associate; OWE is the better of
+      // the two, so it must win rather than falling through to open.
+      expect(piJoinSecurityFromKeyMgmt('none owe'), PiJoinSecurity.owe);
+      expect(piJoinSecurityFromKeyMgmt('owe none'), PiJoinSecurity.owe);
+    });
+
+    test('OWE never outranks enterprise in a mixed advertisement', () {
+      // An enterprise BSS that also advertises OWE still needs credentials.
+      expect(piJoinSecurityFromKeyMgmt('wpa-eap owe'),
+          isNot(PiJoinSecurity.owe));
     });
 
     test('an unrecognised key_mgmt is unsupported, never open', () {

@@ -75,8 +75,15 @@ void main() {
       expect(resolve(<String>['wpa2Enterprise']), PiJoinSecurity.unsupported);
     });
 
-    test('OWE is unsupported, and is not treated as open', () {
-      expect(resolve(<String>['owe']), PiJoinSecurity.unsupported);
+    test('OWE is JOINABLE through the native tokens too', () {
+      expect(resolve(<String>['owe']), PiJoinSecurity.owe);
+    });
+
+    test('an OWE TRANSITION BSS keeps OWE rather than collapsing to open', () {
+      // macOS answers yes to BOTH `none` and `owe` for a transition BSS, which
+      // is how Keith's RACHEL-SLOW and Keith Guest were being mislabelled.
+      expect(resolve(<String>['none', 'owe']), PiJoinSecurity.owe);
+      expect(resolve(<String>['oweTransition']), PiJoinSecurity.owe);
     });
 
     test('an enterprise BSS with a PSK fallback is NOT downgraded', () {

@@ -182,7 +182,13 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       final JoinOutcome r = await _backend.join(
         ssid: c.ssid!,
         security: c.security,
-        psk: c.security == PiJoinSecurity.open ? null : _psk.text,
+        // OWE sends nothing, exactly like open. There is no passphrase box to
+        // read from and nothing to transmit.
+        psk:
+            (c.security == PiJoinSecurity.open ||
+                c.security == PiJoinSecurity.owe)
+            ? null
+            : _psk.text,
         interface: _radio,
       );
       if (!mounted) return;
@@ -1001,5 +1007,9 @@ String _securityLabel(PiJoinSecurity s) => switch (s) {
   PiJoinSecurity.open => 'Open',
   PiJoinSecurity.wpa2Psk => 'WPA2-PSK',
   PiJoinSecurity.wpa3Psk => 'WPA3-SAE',
-  PiJoinSecurity.unsupported => '802.1X / OWE',
+  // OWE AND 802.1X ARE NO LONGER ONE LABEL. Keith saw an OPEN network listed
+  // as "802.1X / OWE" and an OWE network refused. One label for two unrelated
+  // things made both of those look like the same problem.
+  PiJoinSecurity.owe => 'OWE',
+  PiJoinSecurity.unsupported => '802.1X',
 };

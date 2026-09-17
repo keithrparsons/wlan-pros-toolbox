@@ -89,7 +89,6 @@ final class ApScanChannel: NSObject {
   /// request inside the window is answered from `cachedScanResults()` with
   /// `scanThrottled=true`, which is exactly the "showing the last scan" state
   /// the Android path already surfaces and the Dart UI already labels.
-  private static let freshScanMinimumInterval: TimeInterval = 10
 
   /// Registers the channel on the given binary messenger.
   init(messenger: FlutterBinaryMessenger) {
@@ -220,12 +219,23 @@ final class ApScanChannel: NSObject {
   /// and the FlutterResult is delivered back on the main thread. The method-
   /// channel handler returns immediately; it never blocks on the scan.
   private func scan(result: @escaping FlutterResult) {
-    // Inside the rate-limit window, or a scan is already running: answer from
-    // the OS scan cache and SAY so, rather than queueing another active scan.
-    let now = Date()
-    if scanInFlight ||
-        (lastFreshScanAt.map { now.timeIntervalSince($0) } ?? .greatestFiniteMagnitude)
-        < ApScanChannel.freshScanMinimumInterval {
+    // THE TIME-BASED THROTTLE IS GONE. Keith, 2026-09-17: "we should allow for
+    // Scan whenever without the warning or the throttle. If someone is sitting
+    // at their device and clicking that button, they EXPECT it to work, and
+    // KNOW they'll be off channel."
+    //
+    // The physics were never in dispute: a full scan takes the radio off
+    // channel and the connection drops packets while it is away. The judgement
+    // was wrong for THIS audience. Wi-Fi engineers tap Scan deliberately, often
+    // while walking a site, and a tool that makes them wait and then explains
+    // the trade-off they teach is protecting someone who did not ask for it.
+    //
+    // `scanInFlight` STAYS, and it is not the same thing. That is a correctness
+    // guard: two concurrent active scans on one radio is a real fault, not a
+    // policy. It also appears to be behind the "Scanning..." hang Keith saw,
+    // where a throttled answer came back with an empty cache and the screen
+    // waited forever for a scan that was never going to run.
+    if scanInFlight {
       result(cachedSnapshot(scanThrottled: true))
       return
     }

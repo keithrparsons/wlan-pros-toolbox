@@ -156,7 +156,16 @@ void main() {
     await tester.tap(find.text('CorpSecure').first);
     await tester.pumpAndSettle();
     // REQUIREMENT 2, and this is the copy Keith approved on 2026-08-31.
-    expect(find.textContaining('802.1X or OWE'), findsOneWidget);
+    // COPY CHANGED 2026-09-17. The 2026-08-31 wording said "802.1X or OWE",
+    // which named two unrelated things in one breath and made an OWE network
+    // look unjoinable. 802.1X still needs credentials we do not collect; OWE
+    // needs none and is now joinable, so they no longer share a sentence.
+    // findsWidgets, not findsOneWidget: the security LABEL now reads "802.1X"
+    // as well as the explanation, because the label no longer says
+    // "802.1X / OWE". Two mentions is correct and expected.
+    expect(find.textContaining('802.1X'), findsWidgets);
+    expect(find.textContaining('OWE'), findsNothing,
+        reason: 'an 802.1X network must not be described as OWE');
     expect(find.byType(TextField), findsNothing,
         reason: 'a passphrase box that cannot work must not be offered');
     await shot(tester, 'join_8021x');

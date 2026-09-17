@@ -149,12 +149,16 @@ int _rank(PiJoinSecurity s) {
   switch (s) {
     case PiJoinSecurity.open:
       return 0;
-    case PiJoinSecurity.wpa2Psk:
+    // OWE sits ABOVE open and below PSK: it encrypts, but it authenticates
+    // nobody. Relative order of everything else is unchanged.
+    case PiJoinSecurity.owe:
       return 1;
-    case PiJoinSecurity.wpa3Psk:
+    case PiJoinSecurity.wpa2Psk:
       return 2;
-    case PiJoinSecurity.unsupported:
+    case PiJoinSecurity.wpa3Psk:
       return 3;
+    case PiJoinSecurity.unsupported:
+      return 4;
   }
 }
 
@@ -168,9 +172,19 @@ String absentPassphraseReason(PiJoinSecurity security) {
   switch (security) {
     case PiJoinSecurity.open:
       return 'This network is open, so there is no passphrase to enter.';
+    case PiJoinSecurity.owe:
+      return 'This network uses OWE, sometimes called Enhanced Open. It '
+          'encrypts your traffic without a password, so there is nothing to '
+          'enter and nothing is sent.';
     case PiJoinSecurity.unsupported:
-      return 'This network uses 802.1X or OWE. Joining it needs credentials '
-          'this Pi edition cannot accept yet, so there is nothing to type here.';
+      // SAYS 802.1X AND NOT "Pi edition". Keith saw "this Pi edition cannot
+      // accept yet" on a Mac, which is the Web-badge-on-Windows defect wearing
+      // a different coat: a true statement about the wrong machine. This
+      // sentence is true on every platform, because the tool deliberately
+      // collects no enterprise credentials anywhere.
+      return 'This network uses 802.1X. Joining it needs enterprise '
+          'credentials this tool does not collect, so there is nothing to type '
+          'here.';
     case PiJoinSecurity.wpa2Psk:
     case PiJoinSecurity.wpa3Psk:
       return '';

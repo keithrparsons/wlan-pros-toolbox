@@ -571,9 +571,23 @@ enum PiJoinSecurity {
   /// is advertised alongside it. A passphrase still joins it.
   wpa3Psk,
 
-  /// `wpa-eap` / `wpa-eap-suite-b` / OWE. 802.1X and OWE both need material this
-  /// endpoint cannot yet accept, so the screen must SAY SO rather than present a
-  /// passphrase box that cannot work.
+  /// OWE, "Enhanced Open". ENCRYPTED, AND THERE IS NOTHING TO TYPE.
+  ///
+  /// SPLIT OUT OF [unsupported] ON 2026-09-17, and the split is the point.
+  /// Keith, testing the macOS build: *"Why can we not join and OWE? It needs no
+  /// credentials. And we shold be able to easily NOT send credentials and treat
+  /// it as an Open Network."* He is right. OWE derives its keys automatically
+  /// and a client associates exactly as it would to an open network.
+  ///
+  /// It had been bucketed with 802.1X because both were "not joinable by this
+  /// endpoint". That was true of the Pi and it was never true of the physics:
+  /// 802.1X needs material this tool deliberately does not collect, OWE needs
+  /// NOTHING. One bucket, two opposite reasons.
+  owe,
+
+  /// `wpa-eap` / `wpa-eap-suite-b`. 802.1X needs credentials this tool does not
+  /// collect, so the screen must SAY SO rather than present a passphrase box
+  /// that cannot work.
   ///
   /// NOT A FAILURE STATE. On a real enterprise site this is the majority of what
   /// a scan returns, and "we cannot join this yet" is an honest, useful answer.
@@ -590,6 +604,11 @@ String? piJoinSecurityWireValue(PiJoinSecurity s) {
       return 'WPA2-PSK';
     case PiJoinSecurity.wpa3Psk:
       return 'WPA3-PSK';
+    case PiJoinSecurity.owe:
+      // The Pi endpoint accepts OPEN, WPA2-PSK and WPA3-PSK only. OWE is
+      // joinable in principle and this endpoint has no word for it, so it is
+      // refused HERE rather than sent as OPEN and silently downgraded.
+      return null;
     case PiJoinSecurity.unsupported:
       return null;
   }
@@ -605,7 +624,15 @@ String? piJoinSecurityWireValue(PiJoinSecurity s) {
 PiJoinSecurity piJoinSecurityFromKeyMgmt(String? keyMgmt) {
   final String k = (keyMgmt ?? '').trim().toLowerCase();
   if (k.isEmpty || k == 'none' || k == 'open') return PiJoinSecurity.open;
-  if (k.contains('eap') || k.contains('owe')) return PiJoinSecurity.unsupported;
+  // EAP FIRST, AND THE ORDER IS LOAD-BEARING. A first pass put OWE ahead of it,
+  // and an enterprise BSS that also advertised OWE resolved to OWE: a silent
+  // downgrade from "needs credentials" to "needs nothing". A test written in the
+  // same change caught it. Enterprise always wins.
+  if (k.contains('eap')) return PiJoinSecurity.unsupported;
+  // THEN OWE, ahead of the PSK cases and ahead of `none`. An OWE transition BSS
+  // advertises `none` alongside `owe`; both associate, OWE is the better of the
+  // two, so it wins rather than falling through to open.
+  if (k.contains('owe')) return PiJoinSecurity.owe;
   if (k.contains('sae')) return PiJoinSecurity.wpa3Psk;
   if (k.contains('psk')) return PiJoinSecurity.wpa2Psk;
   // Something advertised that we do not recognise. GL-005: an unrecognised

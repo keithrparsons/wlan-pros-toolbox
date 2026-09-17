@@ -66,7 +66,13 @@ class MacNativeJoinBackend implements JoinBackend {
       final Map<Object?, Object?>? r = await _channel
           .invokeMapMethod<Object?, Object?>('join', <String, Object?>{
             'ssid': ssid,
-            'password': security == PiJoinSecurity.open ? null : psk,
+            // OWE and open both send NOTHING. CoreWLAN associates and derives
+            // the OWE keys itself.
+            'password':
+                (security == PiJoinSecurity.open ||
+                    security == PiJoinSecurity.owe)
+                ? null
+                : psk,
           });
       // `connected` is read back from the interface on the Swift side, not
       // inferred from the call returning. See the note in ApScanChannel.join.

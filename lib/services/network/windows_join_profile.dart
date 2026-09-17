@@ -56,6 +56,11 @@ String windowsAuthenticationFor(PiJoinSecurity security) {
   switch (security) {
     case PiJoinSecurity.open:
       return 'open';
+    case PiJoinSecurity.owe:
+      // Windows profile XML has no OWE authentication value. An OWE BSS is
+      // joinable as open and the encryption is negotiated without us, so the
+      // profile says open and carries no key.
+      return 'open';
     case PiJoinSecurity.wpa2Psk:
       return 'WPA2PSK';
     case PiJoinSecurity.wpa3Psk:
@@ -72,6 +77,7 @@ String windowsAuthenticationFor(PiJoinSecurity security) {
 String windowsEncryptionFor(PiJoinSecurity security) {
   switch (security) {
     case PiJoinSecurity.open:
+    case PiJoinSecurity.owe:
       return 'none';
     case PiJoinSecurity.wpa2Psk:
     case PiJoinSecurity.wpa3Psk:
@@ -107,7 +113,9 @@ String buildWindowsJoinProfileXml({
   }
   final String auth = windowsAuthenticationFor(security);
   final String enc = windowsEncryptionFor(security);
-  final bool needsKey = security != PiJoinSecurity.open;
+  // OWE joins like an open network: nothing is typed and nothing is sent.
+  final bool needsKey =
+      security != PiJoinSecurity.open && security != PiJoinSecurity.owe;
 
   if (needsKey && (passphrase == null || passphrase.isEmpty)) {
     throw const JoinProfileUnsupported(
