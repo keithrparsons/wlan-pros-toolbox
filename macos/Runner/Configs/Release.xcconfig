@@ -1,2 +1,26 @@
 #include "../../Flutter/Flutter-Release.xcconfig"
 #include "Warnings.xcconfig"
+
+// APPLE SILICON ONLY, RULED BY KEITH 2026-09-17.
+//
+// WHY THIS IS HERE AND NOT A PREFERENCE. Xcode 27 changed how `lipo` parses
+// `-verify_arch`: a second architecture is now read as a second INPUT FILE, so
+// `lipo <framework> -verify_arch arm64 x86_64` fails with "requires exactly one
+// input file". Flutter's universal-build step makes exactly that call, so a
+// UNIVERSAL macOS build cannot complete on Xcode 27 at all. This is not
+// specific to this project.
+//
+// Verified on this machine 2026-09-17: each arch passes `-verify_arch` alone,
+// both together fail, and `arm64 arm64` also fails, which is how the argument
+// parsing was identified rather than guessed at.
+//
+// THE OPTION NOT TAKEN was patching Flutter's darwin.dart locally. It is five
+// lines and it works, but it is a file we do not own, it is lost on every
+// Flutter upgrade, and the WLAN Pi team's review taught us what patching other
+// people's files costs. Keith chose this.
+//
+// THE COST, STATED: Intel Macs are dropped. Apple stopped selling them in 2023
+// and the deployment target is 12.0 regardless. Revisit when Flutter ships a
+// fix and universal builds work again.
+ARCHS = arm64
+ONLY_ACTIVE_ARCH = NO

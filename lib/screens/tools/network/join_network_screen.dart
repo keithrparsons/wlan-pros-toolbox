@@ -257,7 +257,19 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     // stays tappable, so the honest explanation has to live HERE as well. It
     // says what the tool needs rather than that something went wrong, because
     // nothing did: this machine simply is not a WLAN Pi.
-    if (widget.client == null && !PiBackend.available) {
+    // THE GUARD MUST ASK BOTH QUESTIONS. It used to ask only whether a Pi was
+    // serving, which was right while a Pi was the ONLY way to join. Native join
+    // landed for macOS and Windows on 2026-09-17 and this line did not follow,
+    // so the Mac showed "Open this from a WLAN Pi" and the native backend it
+    // had just selected was never reached. Keith found it in the first minute
+    // of using the build.
+    //
+    // Every screen test injects a client, which makes the first clause false
+    // and skips this block entirely, so the tests could not have caught it.
+    // join_network_native_gate_test.dart now covers exactly this path.
+    if (widget.client == null &&
+        !PiBackend.available &&
+        !deviceCanJoinNatively) {
       return Scaffold(
         appBar: AppBar(title: const Text('Join a Network')),
         body: SafeArea(

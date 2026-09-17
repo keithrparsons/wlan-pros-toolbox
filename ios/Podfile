@@ -40,5 +40,12 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    # XCODE 27 REFUSES ANYTHING BELOW 15.0, and a pod was still declaring 13.0.
+    # Our own target is 17.0, so pods are pinned to the SAME value rather than
+    # to the bare minimum: a pod built against an older SDK than the app is a
+    # mismatch waiting to surface as a link error nobody can place.
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+    end
   end
 end

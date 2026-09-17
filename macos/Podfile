@@ -1,4 +1,4 @@
-platform :osx, '10.15'
+platform :osx, '12.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -38,5 +38,13 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+    # XCODE 27 RAISED THE FLOOR. It refuses any deployment target below 12.0,
+    # and several pods still declare 10.15, so a build fails on the POD rather
+    # than on anything we wrote. Forcing it here keeps every pod in step with
+    # the app instead of leaving it to whichever version each pod happens to
+    # ship with.
+    target.build_configurations.each do |config|
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
+    end
   end
 end
