@@ -49,6 +49,8 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 
 import '../services/network/ap_scan_service.dart';
+import '../services/network/join_backend_selector.dart'
+    show deviceCanJoinNatively;
 import '../services/network/pi_backend.dart';
 import 'tool_keywords.dart';
 
@@ -260,7 +262,9 @@ bool toolUnavailableOnWeb(String toolId) =>
     (kIsWeb &&
         kWebUnavailableToolIds.contains(toolId) &&
         !PiBackend.canServe(toolId)) ||
-    (kPiOnlyToolIds.contains(toolId) && !PiBackend.available);
+    (kPiOnlyToolIds.contains(toolId) &&
+        !PiBackend.available &&
+        !_deviceServesItself(toolId));
 
 /// WHY a tool is unavailable here, so the badge can say something TRUE.
 ///
@@ -281,7 +285,9 @@ enum ToolUnavailableReason {
 
 /// The reason [toolUnavailableOnWeb] is true, or null when the tool is fine.
 ToolUnavailableReason? toolUnavailableReason(String toolId) {
-  if (kPiOnlyToolIds.contains(toolId) && !PiBackend.available) {
+  if (kPiOnlyToolIds.contains(toolId) &&
+      !PiBackend.available &&
+      !_deviceServesItself(toolId)) {
     return ToolUnavailableReason.needsWlanPi;
   }
   if (kIsWeb &&
@@ -291,6 +297,21 @@ ToolUnavailableReason? toolUnavailableReason(String toolId) {
   }
   return null;
 }
+
+/// Whether THIS device can perform [toolId] with its own hardware, making a
+/// WLAN Pi unnecessary rather than merely absent.
+///
+/// ADDED 2026-09-16 FOR NATIVE JOIN, AND SCOPED TO ONE TOOL ON PURPOSE. Join a
+/// Network is in [kPiOnlyToolIds] because no native path existed. One now does,
+/// on Windows, proven against a real radio. Removing the tool from the set
+/// outright would ungate it on iOS and Android too, where nothing can join, and
+/// the tile would offer a screen that cannot work.
+///
+/// So the set still says "this needs a Pi" and this function says "except where
+/// the device does it itself". Any other Pi-only tool is unaffected, because the
+/// switch names the tool rather than testing the platform alone.
+bool _deviceServesItself(String toolId) =>
+    toolId == 'join-network' && deviceCanJoinNatively;
 
 /// Tools that run ONLY on a WLAN Pi, and the inverse of the set above.
 ///
@@ -461,7 +482,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         // not run (Keith, 2026-09-04). The tile is now gated by kPiOnlyToolIds,
         // so this line is only ever read ON a Pi -- but it no longer depends on
         // that gate holding to make sense.
-        description: 'Pick an SSID and associate a WLAN Pi radio to it, then '
+        description:
+            'Pick an SSID and associate a WLAN Pi radio to it, then '
             'see exactly which AP it landed on',
         routeName: '/tools/join-network',
         isLive: true,
@@ -470,7 +492,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'link-info',
         title: 'Link Info',
-        description: 'Every interface by what it IS: carrier, negotiated speed, '
+        description:
+            'Every interface by what it IS: carrier, negotiated speed, '
             'duplex, and which one is carrying your traffic',
         routeName: '/tools/link-info',
         isLive: true,
