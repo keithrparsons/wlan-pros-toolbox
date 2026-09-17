@@ -331,6 +331,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
             // REQUIREMENT 1: the action panel is ABOVE the list, always.
             _ActionPanel(
+              joinsThisDevice: _backend.joinsThisDevice,
               selected: _selected,
               psk: _psk,
               busy: _busy,
@@ -491,7 +492,13 @@ class _ActionPanel extends StatelessWidget {
     required this.error,
     required this.onJoin,
     required this.onDisconnect,
+    required this.joinsThisDevice,
   });
+
+  /// Whether THIS device's radio does the joining. Passed in rather than read
+  /// from a global: a StatelessWidget that reaches for platform state is a
+  /// widget that cannot be tested on the platform it is not running on.
+  final bool joinsThisDevice;
 
   final JoinCandidate? selected;
   final TextEditingController psk;
@@ -618,9 +625,19 @@ class _ActionPanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Text(
-                'The Pi waits up to 25 seconds and will not report success off '
-                'a stale association, so a real failure takes that long to be '
-                'certain of.',
+                // KEITH, 2026-09-17: "Why does it still have WLAN Pi in the
+                // text? And why 25 seconds?" Both fair. This sentence was
+                // written for the Pi, where a join really does poll for up to
+                // 25 seconds, and it was shown verbatim on a Mac that joins in
+                // about a second. A true statement about the wrong machine,
+                // which is the same defect as the "Web" badge on Windows.
+                joinsThisDevice
+                    ? 'This computer checks the radio afterwards rather than '
+                          'trusting the request, so the verdict is the radio\'s '
+                          'and not the call\'s.'
+                    : 'The Pi waits up to 25 seconds and will not report '
+                          'success off a stale association, so a real failure '
+                          'takes that long to be certain of.',
                 style: TextStyle(fontSize: 12.5, color: c.textTertiary),
               ),
             ),
@@ -778,6 +795,10 @@ class _ResultCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             result.secureTransport
+                // Pi-ONLY BY CONSTRUCTION, and checked rather than assumed:
+                // _ResultCard renders only when JoinOutcome.detail is non-null,
+                // and a native join always leaves that null. So naming the Pi
+                // here cannot leak onto a Mac.
                 ? 'The passphrase reached the Pi over TLS.'
                 : 'The passphrase was sent over plain HTTP. That is the normal '
                       'bench default and it is fine on your own bench. On a '

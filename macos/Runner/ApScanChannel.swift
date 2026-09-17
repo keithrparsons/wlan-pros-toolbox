@@ -166,10 +166,27 @@ final class ApScanChannel: NSObject {
         return
       }
       do {
-        // Find the BSS by name first. `associate` needs a CWNetwork, and
-        // scanning by name is narrower and faster than a full scan.
-        let found = try iface.scanForNetworks(withName: ssid)
-        guard let network = found.first else {
+        // THE CACHE FIRST, AND THIS IS A SPEED FIX WITH A MEASUREMENT BEHIND IT.
+        //
+        // This used to call `scanForNetworks(withName:)` unconditionally. That
+        // is an ACTIVE scan: it takes the radio off channel for seconds before
+        // the join even begins. Keith, 2026-09-17: "This 'feels' slow to me. If
+        // I did this change myself, it would take mere seconds to accomplish."
+        // He was right, and the delay was entirely self-inflicted -- the join
+        // was re-discovering a network the list on screen had already found.
+        //
+        // It is also the likely source of the "Resource busy" failure he hit:
+        // a join that starts its own scan while a scan is already in flight.
+        //
+        // `cachedScanResults()` is the OS's own cache and costs no radio time.
+        // The fresh scan stays as a FALLBACK for a network that is not in it,
+        // so a hidden or newly-appeared SSID still works.
+        let cached = iface.cachedScanResults() ?? []
+        var match = cached.first { $0.ssid == ssid }
+        if match == nil {
+          match = try iface.scanForNetworks(withName: ssid).first
+        }
+        guard let network = match else {
           DispatchQueue.main.async {
             result(["connected": false,
                     "ssid": ssid,
