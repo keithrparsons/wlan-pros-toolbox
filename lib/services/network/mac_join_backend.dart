@@ -7,6 +7,7 @@
 import 'package:flutter/services.dart' show MethodChannel;
 
 import 'ap_scan_service.dart' show ApScanService, ApScanSnapshot, ScannedAp;
+import 'wifi_info_service.dart' show LocationAuthStatus;
 import 'join_backend.dart';
 import 'join_network_list.dart' show keyMgmtFromSecurityTokens;
 import 'pi_backend_client.dart' show PiJoinSecurity, PiScanInterface, PiScanNet;
@@ -15,12 +16,14 @@ import 'pi_backend_client.dart' show PiJoinSecurity, PiScanInterface, PiScanNet;
 class MacNativeJoinBackend implements JoinBackend {
   MacNativeJoinBackend({
     ApScanService? scanner,
-    MethodChannel channel = const MethodChannel('com.wlanpros.toolbox/ap_scan'),
-  }) : _scanner = scanner ?? ApScanService(),
-       _channel = channel;
+    this.channel = const MethodChannel('com.wlanpros.toolbox/ap_scan'),
+  }) : _scanner = scanner ?? ApScanService();
 
   final ApScanService _scanner;
-  final MethodChannel _channel;
+
+  /// The Swift side in `ApScanChannel.swift`. Injectable so a test can answer
+  /// without a real radio.
+  final MethodChannel channel;
 
   @override
   bool get joinsThisDevice => true;
@@ -32,6 +35,23 @@ class MacNativeJoinBackend implements JoinBackend {
 
   @override
   Future<List<PiScanNet>> scan({String? interface}) async {
+    // ASK FOR LOCATION HERE, rather than assuming another screen already did.
+    //
+    // Keith, testing the 1.10.0 build: "I first had to try the Test My
+    // Connection to trigger the Location. Just going straight to Join didn't
+    // trigger it." Going straight to Join gave an empty list and no
+    // explanation, because macOS withholds SSIDs from an unauthorized process
+    // and this screen never asked.
+    //
+    // Only when PROMPTABLE. A user who has already declined gets the system
+    // prompt suppressed by macOS anyway, so re-asking would be a no-op that
+    // looks like a hang; that case belongs to the deep-link path the AP Scan
+    // screen already owns.
+    final LocationAuthStatus status = await _scanner
+        .locationAuthorizationStatus();
+    if (status.isPromptable) {
+      await _scanner.requestLocationPermission();
+    }
     final ApScanSnapshot snap = await _scanner.scan();
     return <PiScanNet>[
       for (final ScannedAp ap in snap.accessPoints)
@@ -63,7 +83,7 @@ class MacNativeJoinBackend implements JoinBackend {
       );
     }
     try {
-      final Map<Object?, Object?>? r = await _channel
+      final Map<Object?, Object?>? r = await channel
           .invokeMapMethod<Object?, Object?>('join', <String, Object?>{
             'ssid': ssid,
             // OWE and open both send NOTHING. CoreWLAN associates and derives
@@ -94,7 +114,7 @@ class MacNativeJoinBackend implements JoinBackend {
   @override
   Future<JoinOutcome> disconnect({String? interface}) async {
     try {
-      await _channel.invokeMethod<Object?>('disconnect');
+      await channel.invokeMethod<Object?>('disconnect');
       return const JoinOutcome(connected: false, ssid: null);
     } on Object catch (e) {
       return JoinOutcome(
