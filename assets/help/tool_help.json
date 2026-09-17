@@ -3926,7 +3926,7 @@
     "nearby-ap-scan": {
       "name": "Nearby AP Scan",
       "category": "Networking Tools",
-      "purpose": "Lists the Wi-Fi access points a scan can see around you (SSID, BSSID, channel, band, and signal) and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Runs on Android today.",
+      "purpose": "Lists the Wi-Fi access points a scan can see around you (SSID, BSSID, channel, band, and signal) and draws a simple channel-occupancy bar per band so you can read how crowded each channel is at a glance. Runs on Android, macOS, and Windows.",
       "whyHere": "A fast read of who else is on the air. When you are picking a channel or chasing co-channel interference, seeing the nearby BSSIDs and where they sit across 2.4, 5, and 6 GHz tells you which channels are busy and which are clear, without carrying a separate analyzer.",
       "howToUse": [
         "Tap Scan to run a Wi-Fi scan. Results list each visible access point with its SSID, BSSID, channel, band, and signal (RSSI).",
@@ -3937,7 +3937,7 @@
       "algorithm": null,
       "example": "On a busy 2.4 GHz band the occupancy bars cluster on channels 1, 6, and 11; an access point sitting on channel 3 overlaps both 1 and 6, which the bars make visible at a glance.",
       "fieldNotes": [
-        "Runs on Android today. iOS and macOS block nearby-AP scanning at the operating-system level, so the tool is left out of the catalog there. Windows is capable of it and can list every visible network, but that path is not wired into this tool yet; the copy says so honestly rather than implying only Apple restricts it.",
+        "RUNS ON ANDROID, macOS, AND WINDOWS. iOS is the one that blocks nearby-AP scanning at the operating-system level, so the tool is left out of the catalog there. This note said macOS blocked it too, and said Windows was capable but not wired; both were true when it was written and neither is true now.",
         "Clean fields only. The Android scan exposes SSID, BSSID, channel, band, and RSSI for a scanned (non-connected) network. It does not expose a per-network noise floor, SNR, or data rate, so those columns do not exist here and are never shown.",
         "Android throttles Wi-Fi scans. Foreground apps get a limited number of scans per window; when throttled, a re-scan returns the last cached results and the screen notes it rather than faking a fresh scan.",
         "Location permission and Wi-Fi must both be on for the scan to return results; the screen shows an honest Wi-Fi-off or Location-needed card when either is missing."
@@ -4513,6 +4513,29 @@
         "Beacon byte sizes per amendment are ESTIMATES. Replace them with a real length from a capture whenever you have one."
       ],
       "source": "Ported with permission from the SSID Airtime Calculator by Jonathan Finney (MIT licensed). Computed entirely on your device."
+    },
+    "join-network": {
+      "name": "Join a Network",
+      "category": "Networking Tools",
+      "purpose": "Picks a Wi-Fi network from a scan and associates to it, then reports what you actually landed on. On macOS and Windows the join runs on this device's own radio. With a WLAN Pi attached, the Pi joins instead and reports its full link record.",
+      "whyHere": "Associating is the test. A scan tells you a network is on the air; only a join tells you whether the credentials work, whether the AP will take you, and which BSSID you ended up on when several advertise the same SSID. Doing it from the tool means you see the outcome rather than reading it back out of the OS afterwards.",
+      "howToUse": [
+        "Pick a radio if more than one is offered, then run a scan. Networks are listed with their SSID, BSSID, channel, signal, and the security they advertise.",
+        "Tap a network. If it needs a passphrase you are asked for one; open and OWE (Enhanced Open) networks need nothing, because neither takes credentials.",
+        "Read the result. A native join reports that you are connected and to which SSID. A WLAN Pi join reports its full link record, including the BSSID it landed on.",
+        "Disconnect from the same screen when you are done."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": "Two APs advertise the same SSID in a corridor. You join, and the result names the BSSID you associated with, which tells you which of the two actually took you, rather than leaving you to infer it from signal strength.",
+      "fieldNotes": [
+        "WHICH RADIO JOINS DEPENDS ON THE PLATFORM, and the screen says so rather than making you guess. macOS and Windows join with their own radio. iOS and Android do not: neither lets a third-party app associate to a network it chooses, so there the tool needs a WLAN Pi and says so.",
+        "JOINING CHANGES THE NETWORK THIS DEVICE IS ON. That is the point of the tool, but it also means a join can move you to a different subnet, and anything depending on the old one is dropped. On a native join you are moving the machine you are standing at.",
+        "OPEN AND OWE NEED NO PASSWORD. OWE, which the Wi-Fi Alliance calls Enhanced Open, encrypts without authenticating, so there is nothing to type. A network advertising OWE transition mode is a marker that BOTH an open and an OWE BSS exist, not a security scheme of its own.",
+        "A FAILED JOIN USUALLY TELLS YOU WHICH KIND OF FAILURE IT WAS. A network that never appears is a different problem from one that appears and then refuses the passphrase, and the two are worth separating before you change anything.",
+        "802.1X IS NOT SUPPORTED YET. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal."
+      ],
+      "source": "Associates using the operating system's own Wi-Fi interface on macOS and Windows, or the WLAN Pi's radio through the Pi's local API when one is attached."
     }
   }
 }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wi-Fi fan rising from the device: the network being associated to -->
+    <path d="M4.6 12.6 A7.6 7.6 0 0 1 15.4 12.6"/>
+    <path d="M6.6 14.6 A4.8 4.8 0 0 1 13.4 14.6"/>
+    <!-- the radio doing the joining -->
+    <circle cx="10" cy="18" r="1.2" fill="currentColor" stroke="none"/>
+    <!-- plus in its own clear lane: JOIN / add this network -->
+    <path d="M19.5 3.6 V9.4"/>
+    <path d="M16.6 6.5 H22.4"/>
+  </g>
+</svg>

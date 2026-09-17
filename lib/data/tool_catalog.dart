@@ -476,15 +476,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'join-network',
         title: 'Join a Network',
-        // Says WHOSE radio without assuming the reader has one. The old wording
-        // ("this WLAN Pi's own radio") was written for the Pi edition and read
-        // as nonsense on a Mac, where the tool was also being offered and could
-        // not run (Keith, 2026-09-04). The tile is now gated by kPiOnlyToolIds,
-        // so this line is only ever read ON a Pi -- but it no longer depends on
-        // that gate holding to make sense.
+        // NAMES NO RADIO AT ALL, and that is the fix. Every earlier wording
+        // named one: "this WLAN Pi's own radio" was written for the Pi edition
+        // and read as nonsense on a Mac (Keith, 2026-09-04); "a WLAN Pi radio"
+        // replaced it and was still wrong the moment 1.10.0 gave macOS and
+        // Windows a native join, because on those the Pi is not involved.
+        //
+        // The tile is no longer Pi-only: _deviceServesItself ungates it wherever
+        // deviceCanJoinNatively is true. So the description cannot assume WHICH
+        // radio joins, and this wording does not have to be revisited the next
+        // time a platform gains one.
         description:
-            'Pick an SSID and associate a WLAN Pi radio to it, then '
-            'see exactly which AP it landed on',
+            'Pick an SSID and associate to it, then see exactly which '
+            'AP you landed on',
         routeName: '/tools/join-network',
         isLive: true,
         subgroup: 'This Device',
