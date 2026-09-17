@@ -4,11 +4,14 @@
 // constructor call. It is separate from join_backend.dart so that file stays
 // free of any conditional import, and separate from the screen so the rule is
 // testable and stated once.
-import 'dart:io'
-    if (dart.library.html) 'wifi_info_service_web_stub.dart'
-    as platform_io;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+// defaultTargetPlatform, NOT dart:io. The web stub behind a conditional import
+// does not define Platform.isIOS / isAndroid / isMacOS, and guarding the call
+// with !kIsWeb is NOT enough: the compiler still needs the members to EXIST on
+// the web target. `flutter build web` failed outright on 2026-09-17 for exactly
+// that. defaultTargetPlatform is web-safe by construction and is already what
+// the rest of this codebase uses.
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 import 'join_backend.dart';
 import 'pi_backend_client.dart' show PiBackendClient;
@@ -38,7 +41,8 @@ import 'windows_join_backend_web_stub.dart'
 /// written and then deleted.
 bool get deviceCanJoinNatively {
   if (kIsWeb) return false;
-  return platform_io.Platform.isWindows || platform_io.Platform.isMacOS;
+  return defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 }
 
 /// The backend this device should use.
@@ -47,8 +51,10 @@ bool get deviceCanJoinNatively {
 /// which is what every platform did before native join existed.
 JoinBackend selectJoinBackend(PiBackendClient client) {
   if (kIsWeb) return PiJoinBackend(client);
-  if (platform_io.Platform.isWindows) return const WindowsNativeJoinBackend();
-  if (platform_io.Platform.isMacOS) return MacNativeJoinBackend();
+  if (defaultTargetPlatform == TargetPlatform.windows)
+    return const WindowsNativeJoinBackend();
+  if (defaultTargetPlatform == TargetPlatform.macOS)
+    return MacNativeJoinBackend();
   // iOS, Android and anything else: the WLAN Pi, which is what every platform
   // did before a native path existed.
   return PiJoinBackend(client);

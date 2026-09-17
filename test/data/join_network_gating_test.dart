@@ -5,11 +5,23 @@
 // gained a native path, which is exactly what it was written to do. Its
 // precondition test said so in as many words. This version asserts the new
 // truth rather than being edited until it went green.
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride, TargetPlatform;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/services/network/join_backend_selector.dart';
 
 void main() {
+  // DECLARE THE PLATFORM RATHER THAN INHERIT IT.
+  //
+  // These assertions are about macOS. They used to rely on dart:io reading the
+  // HOST machine, which happened to be a Mac -- so they would have asserted
+  // something different on a Windows dev box, silently. The production code now
+  // reads defaultTargetPlatform, which under flutter_test defaults to ANDROID
+  // regardless of host, so the platform has to be stated.
+  setUp(() => debugDefaultTargetPlatformOverride = TargetPlatform.macOS);
+  tearDown(() => debugDefaultTargetPlatformOverride = null);
+
   group('this host joins with its own radio', () {
     test('precondition: macOS is a native join platform', () {
       expect(

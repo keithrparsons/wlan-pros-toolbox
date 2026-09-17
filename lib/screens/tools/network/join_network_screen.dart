@@ -38,11 +38,14 @@
 // this round, and that ruling is what makes this a small screen instead of a
 // hotspot-plus-auto-revert dance.
 
-import 'dart:io'
-    if (dart.library.html) '../../../services/network/wifi_info_service_web_stub.dart'
-    as platform_io;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+// defaultTargetPlatform, NOT dart:io. The web stub behind a conditional import
+// does not define Platform.isIOS / isAndroid / isMacOS, and guarding the call
+// with !kIsWeb is NOT enough: the compiler still needs the members to EXIST on
+// the web target. `flutter build web` failed outright on 2026-09-17 for exactly
+// that. defaultTargetPlatform is web-safe by construction and is already what
+// the rest of this codebase uses.
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 
 import '../../../services/network/join_backend.dart';
@@ -110,14 +113,14 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
   String get _unavailableTitle => joinUnavailableTitle(
     isWeb: kIsWeb,
-    isIOS: !kIsWeb && platform_io.Platform.isIOS,
-    isAndroid: !kIsWeb && platform_io.Platform.isAndroid,
+    isIOS: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
+    isAndroid: !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
   );
 
   String get _unavailableBody => joinUnavailableBody(
     isWeb: kIsWeb,
-    isIOS: !kIsWeb && platform_io.Platform.isIOS,
-    isAndroid: !kIsWeb && platform_io.Platform.isAndroid,
+    isIOS: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
+    isAndroid: !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
   );
 
   Future<void> _bootstrap() async {
