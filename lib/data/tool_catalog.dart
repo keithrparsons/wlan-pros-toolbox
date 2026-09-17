@@ -868,15 +868,26 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Ham Radio',
       ),
-      // ── Learn / RF intuition (2026-06-28) ──
-      // Interactive teaching tools that build RF intuition you can sense, not
-      // just compute. First member: Hear the Frequency, a real-time tone
-      // generator that turns frequency into sound (pitch = frequency, octave =
-      // doubling, harmonics = integer multiples) and bridges to RF with the
-      // honest limits flagged (an octave is not a dB; RF harmonics are the
-      // unwanted kind). Audio synthesis via flutter_soloud behind the
-      // ToneEngine seam. SUBGROUP NAME 'Learn / RF intuition' flagged for
-      // Iris/Keith confirmation (build-spec 3.1).
+      // ── Hear the Frequency ──
+      // A real-time tone generator that turns frequency into sound (pitch =
+      // frequency, octave = doubling, harmonics = integer multiples) and
+      // bridges to RF with the honest limits flagged (an octave is not a dB;
+      // RF harmonics are the unwanted kind). Audio synthesis via
+      // flutter_soloud behind the ToneEngine seam.
+      //
+      // MOVED 2026-09-17 out of 'Learn / RF intuition', which it was the only
+      // member of. Keith ruled the runt subgroups dissolved and was explicit
+      // about what that means: "we don't want to LOSE the runts, just put them
+      // under a different category." The TOOL is untouched. Its id, route,
+      // title, keywords and help entry are all unchanged; only the shelf it
+      // sits on changed.
+      //
+      // Utilities & Generators is the right shelf rather than the near one: it
+      // already holds the DTMF Generator and Morse Code, which are the same
+      // species of thing. A tone generator filed beside two other tone
+      // generators is easier to find than one filed under a name nobody would
+      // search for. That subgroup name had carried "flagged for Iris/Keith
+      // confirmation" since 2026-06-28 and was never confirmed.
       ToolEntry(
         id: 'hear-frequency',
         title: 'Hear the Frequency',
@@ -885,7 +896,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'the 12 piano keys, harmonics, and the honest bridge to RF',
         routeName: '/tools/hear-frequency',
         isLive: true,
-        subgroup: 'Learn / RF intuition',
+        subgroup: 'Utilities & Generators',
       ),
       ToolEntry(
         id: 'downtilt',
@@ -1087,18 +1098,39 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'RF & Propagation',
       ),
-      // ── AEC & Documentation field-reference set (pilot, 2026-07-05). The one
-      // buildable tool in the Pax AEC brief: an architectural-scale converter.
-      // New "AEC & Documentation" subgroup (registered in tool_subgroups.dart);
-      // future plan-set / RCP reference screens hang off the same section.
+      // ── Architectural Scale, the one buildable tool in the Pax AEC brief.
       // Custom icon is a placeholder pending Charta/Iris. ──
+      //
+      // MOVED 2026-09-17 out of 'AEC & Documentation', which it was the only
+      // member of, under Keith's ruling that the runt subgroups dissolve. The
+      // tool is NOT lost and nothing about it changed but its shelf.
+      //
+      // Conversions is the honest home: this screen converts scale to ratio
+      // and measured-on-drawing to real-world, which is what every other tool
+      // in Conversions does. 'AEC & Documentation' was created in 2026-07-05
+      // as a pillar for plan-set literacy and the rest of that pillar never
+      // arrived, because the follow-on plan-set references landed in Quick
+      // Reference instead, exactly as that plan said they would.
+      //
+      // THE NAME 'AEC & Documentation' IS NOW RETIRED ENTIRELY, and checking
+      // that was worth the two minutes. A sibling comment in
+      // tool_subgroups.dart said the name was ALSO in use under
+      // quick-reference, so this move looked like it left one behind. It does
+      // not: the 2026-09-16 Quick Reference reorg absorbed that section, and
+      // quick-reference's thirteen subgroups no longer include it. That
+      // comment went stale on 09-16 and is corrected in the same commit.
+      //
+      // 'Ham Radio' IS genuinely shared, quick-reference and rf-calculators,
+      // and is untouched. Subgroups are scoped per category, which is why the
+      // 09-16 rewrite was confined to one block and this change is confined
+      // to the other.
       ToolEntry(
         id: 'architectural-scale',
         title: 'Architectural Scale',
         description: 'Scale to ratio, and measured-on-drawing to real-world',
         routeName: '/tools/architectural-scale',
         isLive: true,
-        subgroup: 'AEC & Documentation',
+        subgroup: 'Conversions',
       ),
     ],
   ),

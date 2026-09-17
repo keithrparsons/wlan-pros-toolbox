@@ -22,7 +22,17 @@ import '../widgets/centered_content.dart';
 import '../widgets/tool_row.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.initialQuery});
+
+  /// Seeds the field, so a search that started somewhere else arrives here
+  /// already run rather than asking the user to type it a second time.
+  ///
+  /// ADDED 2026-09-17 for the in-category fallback. Keith, 2026-08-25:
+  /// "searched inside a sub section for IPv4 and it only searched DOWN and
+  /// thus didn't find those in network tools." A category search that finds
+  /// nothing now offers the whole-app result, and handing that offer a screen
+  /// with an empty box would have made it a worse answer than no offer.
+  final String? initialQuery;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -32,6 +42,20 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final String seed = widget.initialQuery?.trim() ?? '';
+    if (seed.isNotEmpty) {
+      _controller.text = seed;
+      // Caret to the end, so the first keystroke EDITS the seeded query rather
+      // than landing in front of it. The field is autofocused, so a user who
+      // arrives here to refine the term is typing within the same second.
+      _controller.selection = TextSelection.collapsed(offset: seed.length);
+      _query = seed;
+    }
+  }
 
   @override
   void dispose() {

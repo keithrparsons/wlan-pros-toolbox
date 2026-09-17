@@ -44,10 +44,16 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // standard, getting on, the client, debugging it, the wire, the plant, the
     // power, the rules, the building -- then the adjacent and the incidental.
     //
-    // NOTE 'Ham Radio' and 'AEC & Documentation' are ALSO subgroup names under
-    // rf-calculators. They are scoped per category and the 2026-09-16 rewrite
-    // was confined to the quick-reference block for exactly that reason; a
-    // global rename would have silently rewritten a different category.
+    // NOTE 'Ham Radio' is ALSO a subgroup name under rf-calculators. Subgroups
+    // are scoped per category, and the 2026-09-16 rewrite was confined to this
+    // quick-reference block for exactly that reason; a global rename would
+    // have silently rewritten a different category.
+    //
+    // CORRECTED 2026-09-17: this said 'AEC & Documentation' was shared too. It
+    // stopped being true on 2026-09-16, when this very rewrite absorbed that
+    // section here, and the comment was not updated with the list beneath it.
+    // Caught by a test written for an unrelated change, which had trusted the
+    // comment and asserted the name still existed here. It does not.
     'Radio & Spectrum',
     'Wi-Fi Standards & Terminology',
     'Security & Auth',
@@ -83,20 +89,29 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // sizing). A dedicated section so the band-dependent ham tools coming next
     // have a home. First members: Antenna Length, Maidenhead Grid Square.
     'Ham Radio',
-    // Learn / RF intuition (2026-06-28): interactive teaching tools that build
-    // RF intuition by sense, not just computation. First member: Hear the
-    // Frequency (a real-time tone generator bridging audio pitch/octaves/
-    // harmonics to RF). Sits after the pure-math sections and before the
-    // standalone generators. SUBGROUP NAME flagged for Iris/Keith confirmation.
-    'Learn / RF intuition',
     // Batch 4b/4c: standalone field utilities that aren't unit conversions or
-    // RF math (QR Code Generator, DTMF Generator).
+    // RF math (QR Code Generator, DTMF Generator, Morse Code) plus, since
+    // 2026-09-17, Hear the Frequency.
     'Utilities & Generators',
-    // AEC & Documentation (2026-07-05): the built-environment / plan-set
-    // literacy set. Pilot member: Architectural Scale (scale↔ratio +
-    // drawn↔real). Sits last — a distinct pillar from the RF/ham math above.
-    // Future plan-set-reading references land in Quick Reference, not here.
-    'AEC & Documentation',
+    //
+    // TWO NAMES WERE REMOVED FROM THIS LIST ON 2026-09-17 AND NO TOOL WAS.
+    //
+    // 'Learn / RF intuition' and 'AEC & Documentation' each held exactly one
+    // tool, which fails the floor the Quick Reference guard enforces. Keith
+    // ruled them dissolved and said what that had to mean: "we don't want to
+    // LOSE the runts, just put them under a different category."
+    //
+    //   hear-frequency       -> 'Utilities & Generators'
+    //   architectural-scale  -> 'Conversions'
+    //
+    // Both ids and both routeNames are unchanged, so routes, tests, help
+    // entries and the keyword index are all untouched. This is a shelving
+    // change and nothing else.
+    //
+    // 'AEC & Documentation' still EXISTS under quick-reference and is a
+    // different subgroup that happens to share a name. Subgroups are scoped
+    // per category, which is why the 2026-09-16 rewrite was confined to the
+    // quick-reference block, and why this change is confined to this one.
   ],
   // Networking Tools (2026-09-13, Keith): 25 tools rendering FLAT was the one
   // real findability gap left in the app. Every other oversized category was

@@ -20,6 +20,7 @@ import '../data/tool_catalog.dart';
 import '../data/tool_ordering.dart';
 import '../data/tool_search.dart';
 import '../data/tool_subgroups.dart';
+import '../router/app_router.dart';
 import '../services/network/wifi_details_bridge.dart';
 import '../services/network/wifi_info_adapter.dart';
 import '../theme/app_color_scheme.dart';
@@ -178,7 +179,22 @@ class _CategoryScreenState extends State<CategoryScreen> {
         categoryId: widget.category.id,
       );
       if (hits.isEmpty) {
-        return <Widget>[_NoMatchState(query: _query.trim(), text: text)];
+        // THE FOURTH FINDABILITY DEFECT, fixed 2026-09-17. Keith, 2026-08-25:
+        // "searched inside a sub section for IPv4 and it only searched DOWN
+        // and thus didn't find those in network tools."
+        //
+        // A scoped search that finds nothing was reporting absence when what it
+        // meant was "not here". Those are two different sentences and only one
+        // of them is true (GL-005, two kinds of null). The same query is run
+        // once more without the category filter, so the state can say WHERE the
+        // tools are rather than that there are none.
+        return <Widget>[
+          _NoMatchState(
+            query: _query.trim(),
+            text: text,
+            elsewhere: searchTools(_query),
+          ),
+        ];
       }
       return _interleaveRows(hits.map((ToolSearchHit h) => h.tool).toList());
     }
@@ -468,15 +484,57 @@ class _SelectableFilterChipState extends State<_SelectableFilterChip> {
 }
 
 /// In-category no-results state when the live filter matches nothing.
+///
+/// It reports "not in this category" and, when the same query matches tools
+/// somewhere else, NAMES THE CATEGORIES rather than only counting them. Naming
+/// them is the part that teaches: the defect that produced this widget was a
+/// user who could not find three subnet calculators because they are filed
+/// under Networking Tools, and a bare "4 results elsewhere" would have sent him
+/// hunting a second time.
 class _NoMatchState extends StatelessWidget {
-  const _NoMatchState({required this.query, required this.text});
+  const _NoMatchState({
+    required this.query,
+    required this.text,
+    this.elsewhere = const <ToolSearchHit>[],
+  });
 
   final String query;
   final TextTheme text;
 
+  /// Hits for the SAME query across every category, including this one. This
+  /// category contributes nothing by construction, since we only render when
+  /// the scoped search came back empty.
+  final List<ToolSearchHit> elsewhere;
+
+  /// Category titles in first-seen order, deduplicated, with how many each one
+  /// holds. Order follows search relevance rather than the catalog, so the
+  /// category most likely to be the answer is read first.
+  List<MapEntry<String, int>> get _byCategory {
+    final Map<String, int> counts = <String, int>{};
+    for (final ToolSearchHit h in elsewhere) {
+      counts[h.categoryTitle] = (counts[h.categoryTitle] ?? 0) + 1;
+    }
+    return counts.entries.toList();
+  }
+
+  /// "in Networking Tools" / "in Networking Tools and Calculators & Tools" /
+  /// "across 3 other sections". Plain words at every count, and it never emits
+  /// a list long enough to stop being a sentence.
+  String get _whereLine {
+    final List<MapEntry<String, int>> groups = _byCategory;
+    final int n = elsewhere.length;
+    final String tools = n == 1 ? '1 tool' : '$n tools';
+    if (groups.length == 1) return '$tools in ${groups.first.key}';
+    if (groups.length == 2) {
+      return '$tools in ${groups[0].key} and ${groups[1].key}';
+    }
+    return '$tools across ${groups.length} other sections';
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final bool hasElsewhere = elsewhere.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
@@ -484,10 +542,29 @@ class _NoMatchState extends StatelessWidget {
           Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
           const SizedBox(height: AppSpacing.sm),
           Text(
+            // "here" is load-bearing and was already right. What was missing is
+            // the sentence under it.
             'No tools match "$query" here',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
+          if (hasElsewhere) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Found $_whereLine.',
+              style: text.bodyMedium?.copyWith(color: colors.textTertiary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed(
+                AppRouter.search,
+                arguments: query,
+              ),
+              icon: const Icon(Icons.search),
+              label: const Text('Search all tools'),
+            ),
+          ],
         ],
       ),
     );

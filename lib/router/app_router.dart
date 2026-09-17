@@ -666,7 +666,12 @@ class AppRouter {
     about: (_) => const AboutScreen(),
     helpBrowse: (_) => const HelpBrowseScreen(),
     educationalResources: (_) => const EducationalResourcesScreen(),
-    search: (_) => const SearchScreen(),
+    // The optional String argument is the seed query, pushed by the category
+    // screen's "search everywhere" fallback. Argument-less pushes still land
+    // on an empty field, so every existing caller is unaffected.
+    search: (ctx) => SearchScreen(
+      initialQuery: ModalRoute.of(ctx)?.settings.arguments as String?,
+    ),
     dbmWatt: (_) => const DbmWattConverterScreen(),
     channelFrequency: (_) => const ChannelFrequencyConverterScreen(),
     fspl: (_) => const FsplScreen(),

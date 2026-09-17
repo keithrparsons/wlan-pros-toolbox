@@ -1,0 +1,7 @@
+Fixed: some open networks appeared as OWE in Nearby AP Scan. A network advertising OWE transition or WPA3 transition mode was read as though the transition marker were a security scheme of its own. They now read as what they are.
+
+New: Shannon Capacity, and a VoIP over Wi-Fi card for the Wireshark filters.
+
+Quick Reference is reorganized: nineteen subgroups became thirteen.
+
+Fix Your Own Wi-Fi now ships the current manuscript, with five more figures.

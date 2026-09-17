@@ -227,7 +227,13 @@ class WiresharkFiltersScreen extends StatefulWidget {
       ),
     ]),
     // NET-NEW (2026-06-12): 802.11k/v/r roaming filters. From Keith's ECSE-T
-    // course sheet. wlan.tag.number == 55 is the Mobility Domain element (MDE).
+    // course sheet.
+    //
+    // CORRECTED 2026-09-17 (Vera F1): this comment said 55 was the Mobility
+    // Domain element. It is not. Per Wireshark 4.6.6's own registry, 54 is
+    // Mobility Domain and 55 is Fast BSS Transition. The FILTERS below are
+    // right, because an FT exchange genuinely carries the FTE; only the labels
+    // were wrong and they are fixed.
     FilterGroup('802.11k / v / r roaming (display)', <WiresharkFilter>[
       WiresharkFilter('wlan.fixed.action_code == 23', '802.11v DMS request'),
       WiresharkFilter('wlan.fixed.action_code == 24', '802.11v DMS response'),
@@ -245,7 +251,7 @@ class WiresharkFiltersScreen extends StatefulWidget {
       ),
       WiresharkFilter(
         '(wlan.fc.type_subtype == 1) && (wlan.tag.number == 55)',
-        '802.11r FT authentication response (Mobility Domain element)',
+        '802.11r FT authentication response (Fast BSS Transition element)',
       ),
       WiresharkFilter(
         '(wlan.fc.type_subtype == 2) && (wlan.tag.number == 55)',

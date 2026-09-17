@@ -265,8 +265,18 @@ class VoipWifiFiltersScreen extends StatefulWidget {
           'wlan.fc.type_subtype == 0x0c',
           'Deauthentication, a roam that was not the client\'s idea',
         ),
+        // CORRECTED 2026-09-17 (Vera F1). This read `== 55` and called it the
+        // Mobility Domain element. Wireshark's own registry, read out of the
+        // 4.6.6 binary: 54 is Mobility Domain, 55 is Fast BSS Transition. The
+        // filter COMPILED either way, which is why no verifier caught it.
+        //
+        // 54 is the right number for this row's question. The MDE is what a
+        // beacon, probe response and association request carry to advertise
+        // that FT is available; the FTE rides in the FT exchange itself. A pro
+        // asking "is 802.11r on this SSID" filters beacons, and with == 55 got
+        // zero hits and concluded FT was off.
         VoipFilter(
-          'wlan.tag.number == 55',
+          'wlan.tag.number == 54',
           'Mobility Domain element, present when 802.11r Fast Transition is in play',
         ),
         VoipFilter(

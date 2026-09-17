@@ -246,8 +246,14 @@ void main() {
         // Internet chip is the absolute tier of the measured internet rate.
         expect(v.internetStatus, AxisStatus.moderate);
         expect(v.headline, 'Couldn’t check everything');
-        expect(v.body, contains('[X] Mbps'));
-        expect(v.body, contains('[fine/slow]'));
+        // UPDATED 2026-09-17. These two lines asserted `[X] Mbps` and
+        // `[fine/slow]`, the spec's own placeholders, so the test was PINNING
+        // the defect: it would have failed the day someone substituted them.
+        // The object now builds its body through bodyForCouldntCheckWifi, the
+        // same builder the screen uses.
+        expect(v.body, contains('about 180 Mbps'));
+        expect(v.body, contains('looks fine'));
+        expect(v.body, isNot(contains('[')));
         expect(v.selfHelp, SelfHelpTopic.reconnect);
       },
     );
@@ -290,8 +296,14 @@ void main() {
         expect(v.outcome, ConsumerOutcome.couldntComplete);
         expect(v.wifiStatus, AxisStatus.unknown);
         expect(v.internetStatus, AxisStatus.unknown);
-        expect(v.headline, 'Couldn’t complete the check');
-        expect(v.body, "Make sure you're connected to Wi-Fi and try again.");
+        // UPDATED 2026-09-17. This asserted the exact ROUND 6 sentence Keith
+        // rejected on 2026-09-06. The screen stopped printing it that day; the
+        // object kept carrying it and this test kept holding it in place.
+        expect(v.headline, 'We could not finish the check.');
+        expect(v.body,
+            contains('could not read your Wi-Fi or your internet'));
+        expect(v.body.toLowerCase(),
+            isNot(contains("make sure you're connected to wi-fi")));
         expect(v.selfHelp, SelfHelpTopic.reconnect);
       },
     );
@@ -632,4 +644,69 @@ void main() {
       );
     });
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // THE COPY THAT NOTHING RENDERS IS STILL COPY. Guard added 2026-09-17.
+  //
+  // The ROUND 6 fix landed in the two static helpers and in the SCREEN, which
+  // is what ships. It did NOT land in the ConsumerVerdict object the mapper
+  // returns: its D2 body still read "Make sure you're connected to Wi-Fi and
+  // try again." and its D1 body still carried the literal spec placeholders
+  // `[X]` and `[fine/slow]`.
+  //
+  // Nothing renders those fields today, so this was not a live defect. It is a
+  // loaded gun: the first surface to render `verdict.body` reprints a sentence
+  // Keith has now rejected twice, and prints `[X] Mbps` at a user.
+  //
+  // These two tests make the object and the helpers one source of truth.
+  group('the ConsumerVerdict object carries the SAME copy the screen shows', () {
+    test('no verdict body or headline ever ships an unsubstituted placeholder',
+        () {
+      for (final WifiVsInternetVerdict v in WifiVsInternetVerdict.values) {
+        for (final double? net in <double?>[null, 42.0, 400.0]) {
+          for (final double? wifi in <double?>[null, 95.0]) {
+            final ConsumerVerdict cv = ConsumerVerdictMapper.map(
+              result(v, internetMbps: net, usableWifiMbps: wifi),
+            );
+            for (final String s in <String>[cv.headline, cv.body]) {
+              expect(s, isNot(contains('[')),
+                  reason: 'unsubstituted template reached a shipped string on '
+                      '$v (internet=$net, wifi=$wifi): "$s"');
+            }
+          }
+        }
+      }
+    });
+
+    test('D2 delegates to bodyForCouldntComplete rather than duplicating it',
+        () {
+      final ConsumerVerdict cv = ConsumerVerdictMapper.map(
+        result(WifiVsInternetVerdict.wifiUnknown,
+            internetMbps: null, usableWifiMbps: 95.0),
+      );
+      expect(cv.outcome, ConsumerOutcome.couldntComplete);
+
+      // The exact sentence Keith rejected, asserted absent from the OBJECT and
+      // not only from the helper.
+      expect(cv.body.toLowerCase(),
+          isNot(contains("make sure you're connected to wi-fi")));
+      expect(cv.headline, isNot(contains('Couldn\u2019t complete the check')));
+
+      expect(
+        cv.body,
+        ConsumerVerdictMapper.bodyForCouldntComplete(
+          notOnWifi: false,
+          usableWifiMbps: 95.0,
+        ),
+      );
+      expect(
+        cv.headline,
+        ConsumerVerdictMapper.headlineForCouldntComplete(
+          notOnWifi: false,
+          usableWifiMbps: 95.0,
+        ),
+      );
+    });
+  });
+
 }

@@ -1,11 +1,11 @@
-New: SSID Airtime. A network's speed is not what it costs the air around it. This calculator shows the airtime a given SSID consumes, so you can see why adding one more network makes everything slower. The model is Jonathan Finney's, ported with his numbers and checked against his own calculator.
+New: Shannon Capacity. The ceiling every Wi-Fi generation has been pushing against since 1948, and the reason more bandwidth stops helping long before you expect it to.
 
-New: Link Info. The wired side of your connection, reported the way the Wi-Fi side always has been: which links exist, which one holds the default route, and what each one is actually carrying. Where the platform allows it, you can choose which link the other tools test over instead of accepting whatever the system picked.
+New: a VoIP over Wi-Fi card for the Wireshark filter set.
 
-New: every Field Plate downloads as a PDF from the screen it belongs to. All fourteen, no hunting.
+Quick Reference is reorganized. Nineteen subgroups became thirteen, so the card you want sits where you would look for it rather than where it happened to land.
 
-Fixed: on a slow link, Test My Connection could tell you it had not managed to read your Wi-Fi while showing you a Wi-Fi speed on the same card. It now says which side it measured and which it did not, and offers no verdict when there is nothing to compare. Every result also names the connection it was taken over, which matters now that you can choose one.
+Updated: Fix Your Own Wi-Fi now ships the current manuscript. Five more figures, laid out at the size the figures were drawn for, and a smaller download than the stale copy it replaces.
 
-Fixed: a saved Wi-Fi reading is dated when it was taken, not when it was reopened.
+Fixed: a network advertising OWE transition or WPA3 transition mode was read as though the transition marker were a security scheme of its own. Some open networks were labeled OWE because of it. They now read as what they are, which matters when you are choosing a network through a WLAN Pi.
 
-The subnet calculators are findable, and searchable by name.
+Educational Resources is legible in light mode, and credits the people whose work it lists by name.

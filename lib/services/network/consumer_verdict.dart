@@ -532,13 +532,16 @@ class ConsumerVerdictMapper {
             headline: engineResult.notOnWifi
                 ? 'Not on Wi-Fi'
                 : 'Couldn’t check everything',
-            body: engineResult.notOnWifi
-                ? 'Your internet measured about [X] Mbps, which looks '
-                      '[fine/slow]. You’re not connected to Wi-Fi, so there was '
-                      'no Wi-Fi to check.'
-                : 'Your internet measured about [X] Mbps, which looks '
-                      '[fine/slow]. We couldn’t read your Wi-Fi details on this '
-                      'device.',
+            // DELEGATED 2026-09-17. These read `[X] Mbps` and `[fine/slow]`
+            // verbatim until today: the spec's placeholders, shipped as copy.
+            // Nothing rendered them, which is exactly why it survived. One
+            // builder now serves the object and the screen.
+            body: bodyForCouldntCheckWifi(
+              internetMbps: engineResult.internetMbps,
+              healthy: internetTier == AxisStatus.strong ||
+                  internetTier == AxisStatus.moderate,
+              notOnWifi: engineResult.notOnWifi,
+            ),
             selfHelp: SelfHelpTopic.reconnect,
           );
         }
@@ -547,13 +550,18 @@ class ConsumerVerdictMapper {
           outcome: ConsumerOutcome.couldntComplete,
           wifiStatus: wifiTier,
           internetStatus: internetTier,
-          headline: engineResult.notOnWifi
-              ? 'Not on Wi-Fi'
-              : 'Couldn’t complete the check',
-          body: engineResult.notOnWifi
-              ? "You're not connected to Wi-Fi. Join a Wi-Fi network and try "
-                    'again.'
-              : "Make sure you're connected to Wi-Fi and try again.",
+          // DELEGATED 2026-09-17. This branch still carried the ROUND 6
+          // sentence Keith rejected, "Make sure you're connected to Wi-Fi and
+          // try again.", months after the screen stopped printing it. The fix
+          // landed in the helpers and in the screen and never here.
+          headline: headlineForCouldntComplete(
+            notOnWifi: engineResult.notOnWifi,
+            usableWifiMbps: engineResult.usableWifiMbps,
+          ),
+          body: bodyForCouldntComplete(
+            notOnWifi: engineResult.notOnWifi,
+            usableWifiMbps: engineResult.usableWifiMbps,
+          ),
           selfHelp: SelfHelpTopic.reconnect,
         );
 
@@ -668,17 +676,27 @@ class ConsumerVerdictMapper {
   ///
   /// Returns the non-substituted template when [internetMbps] is null (a
   /// defensive guard: the D1 path only fires with a non-null figure).
+  ///
+  /// [notOnWifi] is the TWO KINDS OF NULL split (GL-005) and it is optional so
+  /// every existing caller is unaffected. Off Wi-Fi there is nothing to read,
+  /// so "we couldn't read your Wi-Fi details" is the wrong null and sends the
+  /// user chasing a read that cannot exist.
   static String bodyForCouldntCheckWifi({
     required double? internetMbps,
     required bool healthy,
+    bool notOnWifi = false,
   }) {
+    final String wifiClause = notOnWifi
+        ? 'You’re not connected to Wi-Fi, so there was no Wi-Fi to check.'
+        : 'We couldn’t read your Wi-Fi details on this device.';
     if (internetMbps == null) {
-      return 'Your internet measured, but we couldn’t read your Wi-Fi '
-          'details on this device.';
+      return 'Your internet measured, but $wifiClause'
+          .replaceFirst('but You', 'but you')
+          .replaceFirst('but We', 'but we');
     }
     final int mbps = internetMbps.round();
     final String quality = healthy ? 'fine' : 'slow';
     return 'Your internet measured about $mbps Mbps, which looks $quality. '
-        'We couldn’t read your Wi-Fi details on this device.';
+        '$wifiClause';
   }
 }
