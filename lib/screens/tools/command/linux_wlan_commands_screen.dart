@@ -80,8 +80,9 @@ class LinuxWlanCommandsScreen extends StatefulWidget {
     if (q.isEmpty) return g;
     if (g.label.toLowerCase().contains(q)) return g;
 
-    final List<WlanCommand> kept =
-        g.commands.where((WlanCommand c) => matchesCommand(c, q)).toList();
+    final List<WlanCommand> kept = g.commands
+        .where((WlanCommand c) => matchesCommand(c, q))
+        .toList();
     if (kept.isEmpty) return null;
     return WlanCommandGroup(g.label, kept);
   }
@@ -114,7 +115,10 @@ class LinuxWlanCommandsScreen extends StatefulWidget {
       WlanCommand('cat file', 'Print file contents'),
       WlanCommand('less file', 'View and paginate a file'),
       WlanCommand('tail -f file', 'Follow a file as it grows (live logs)'),
-      WlanCommand('grep -i pattern file', 'Case-insensitive search for pattern in file'),
+      WlanCommand(
+        'grep -i pattern file',
+        'Case-insensitive search for pattern in file',
+      ),
       WlanCommand('find /dir -name name', 'Find files named name under /dir'),
     ]),
     WlanCommandGroup('Directory', <WlanCommand>[
@@ -129,8 +133,14 @@ class LinuxWlanCommandsScreen extends StatefulWidget {
       WlanCommand('killall name', 'Terminate all processes matching name'),
     ]),
     WlanCommandGroup('Network', <WlanCommand>[
-      WlanCommand('ip addr', 'Show interface addresses (modern; replaces ifconfig)'),
-      WlanCommand('ip route', 'Show the routing table (modern; replaces route)'),
+      WlanCommand(
+        'ip addr',
+        'Show interface addresses (modern; replaces ifconfig)',
+      ),
+      WlanCommand(
+        'ip route',
+        'Show the routing table (modern; replaces route)',
+      ),
       WlanCommand('ip neigh', 'Show the ARP/neighbor table (replaces arp)'),
       WlanCommand('ifconfig', 'Show interface configuration (legacy)'),
       WlanCommand('ifconfig wlan0', 'Show configuration for interface wlan0'),
@@ -138,43 +148,109 @@ class LinuxWlanCommandsScreen extends StatefulWidget {
       WlanCommand('ifconfig wlan0 down', 'Bring interface wlan0 down'),
       WlanCommand('dig name', 'Query DNS for name'),
       WlanCommand('ping host', 'Test reachability to host via ICMP echo'),
-      WlanCommand('ss -tulpn', 'Show listening TCP/UDP sockets with PID (modern netstat)'),
+      WlanCommand(
+        'ss -tulpn',
+        'Show listening TCP/UDP sockets with PID (modern netstat)',
+      ),
     ]),
     WlanCommandGroup('Wireless', <WlanCommand>[
-      WlanCommand('iw dev', 'List wireless interfaces and their config (modern)'),
+      WlanCommand(
+        'iw dev',
+        'List wireless interfaces and their config (modern)',
+      ),
       WlanCommand('iw dev wlan0 info', 'Show wlan0 type, channel, and mode'),
-      WlanCommand('iw dev wlan0 link', 'Show current association: SSID, signal, rate'),
+      WlanCommand(
+        'iw dev wlan0 link',
+        'Show current association: SSID, signal, rate',
+      ),
       WlanCommand('iw dev wlan0 scan', 'Scan for nearby BSSs (needs sudo)'),
       WlanCommand('iw dev wlan0 set channel 6', 'Set wlan0 to channel 6'),
-      WlanCommand('iw phy', 'Show adapter PHY capabilities (bands, channels, modes)'),
-      WlanCommand('iwconfig', 'Show wireless config for all interfaces (legacy)'),
+      WlanCommand(
+        'iw phy',
+        'Show adapter PHY capabilities (bands, channels, modes)',
+      ),
+      WlanCommand(
+        'iwconfig',
+        'Show wireless config for all interfaces (legacy)',
+      ),
       WlanCommand('iwconfig wlan0', 'Show wireless config for wlan0 (legacy)'),
       WlanCommand('iwlist wlan0 scan', 'Scan for networks on wlan0 (legacy)'),
-      WlanCommand('iwlist wlan0 channel', 'List channels supported on wlan0 (legacy)'),
-      WlanCommand('rfkill list', 'Show wireless radio block status (Wi-Fi/Bluetooth)'),
+      WlanCommand(
+        'iwlist wlan0 channel',
+        'List channels supported on wlan0 (legacy)',
+      ),
+      WlanCommand(
+        'rfkill list',
+        'Show wireless radio block status (Wi-Fi/Bluetooth)',
+      ),
       WlanCommand('rfkill unblock wifi', 'Unblock the Wi-Fi radio'),
     ]),
     WlanCommandGroup('Monitor-mode', <WlanCommand>[
-      WlanCommand('sudo airmon-ng start wlan0', 'Put wlan0 into monitor mode (creates wlan0mon)'),
-      WlanCommand('sudo airmon-ng start wlan0 36', 'Start monitor mode on wlan0 and set channel 36'),
-      WlanCommand('sudo airmon-ng stop wlan0mon', 'Stop monitor mode and restore managed mode'),
-      WlanCommand('sudo airmon-ng check kill', 'Stop processes (NetworkManager) that interfere with monitor mode'),
-      WlanCommand('sudo ifconfig wlan0 down', 'Step 1: bring the interface down before mode change'),
-      WlanCommand('sudo iwconfig wlan0 mode monitor', 'Step 2: set wlan0 to monitor mode'),
-      WlanCommand('sudo ifconfig wlan0 up', 'Step 3: bring the interface back up'),
-      WlanCommand('sudo iw dev wlan0 set channel 36 HT40+', 'Set channel 36 with 40 MHz, secondary channel above'),
-      WlanCommand('sudo iw dev wlan0 set channel 40 HT40-', 'Set channel 40 with 40 MHz, secondary channel below'),
-      WlanCommand('sudo iwconfig wlan0 mode managed', 'Return wlan0 to managed (normal client) mode'),
+      WlanCommand(
+        'sudo airmon-ng start wlan0',
+        'Put wlan0 into monitor mode (creates wlan0mon)',
+      ),
+      WlanCommand(
+        'sudo airmon-ng start wlan0 36',
+        'Start monitor mode on wlan0 and set channel 36',
+      ),
+      WlanCommand(
+        'sudo airmon-ng stop wlan0mon',
+        'Stop monitor mode and restore managed mode',
+      ),
+      WlanCommand(
+        'sudo airmon-ng check kill',
+        'Stop processes (NetworkManager) that interfere with monitor mode',
+      ),
+      WlanCommand(
+        'sudo ifconfig wlan0 down',
+        'Step 1: bring the interface down before mode change',
+      ),
+      WlanCommand(
+        'sudo iwconfig wlan0 mode monitor',
+        'Step 2: set wlan0 to monitor mode',
+      ),
+      WlanCommand(
+        'sudo ifconfig wlan0 up',
+        'Step 3: bring the interface back up',
+      ),
+      WlanCommand(
+        'sudo iw dev wlan0 set channel 36 HT40+',
+        'Set channel 36 with 40 MHz, secondary channel above',
+      ),
+      WlanCommand(
+        'sudo iw dev wlan0 set channel 40 HT40-',
+        'Set channel 40 with 40 MHz, secondary channel below',
+      ),
+      WlanCommand(
+        'sudo iwconfig wlan0 mode managed',
+        'Return wlan0 to managed (normal client) mode',
+      ),
       WlanCommand('sudo iw dev wlan0 info', 'Verify current mode and channel'),
-      WlanCommand('lsusb', 'List USB devices (confirm a USB Wi-Fi adapter enumerated)'),
-      WlanCommand('sudo dmesg', 'Show kernel messages and loaded drivers (adapter debugging)'),
+      WlanCommand(
+        'lsusb',
+        'List USB devices (confirm a USB Wi-Fi adapter enumerated)',
+      ),
+      WlanCommand(
+        'sudo dmesg',
+        'Show kernel messages and loaded drivers (adapter debugging)',
+      ),
       WlanCommand('sudo ethtool -i wlan0', 'Show the driver bound to wlan0'),
       WlanCommand('lsmod', 'List loaded kernel modules (driver verification)'),
     ]),
     WlanCommandGroup('macOS capture', <WlanCommand>[
-      WlanCommand('sudo dseditgroup -o edit -a USERNAME -t user access_bpf', 'Add a user to the access_bpf group for non-root packet capture'),
-      WlanCommand('dscl . read /Groups/access_bpf', 'Verify membership of the access_bpf group'),
-      WlanCommand('sudo wdutil info', 'macOS 14+: print Wi-Fi link diagnostics'),
+      WlanCommand(
+        'sudo dseditgroup -o edit -a USERNAME -t user access_bpf',
+        'Add a user to the access_bpf group for non-root packet capture',
+      ),
+      WlanCommand(
+        'dscl . read /Groups/access_bpf',
+        'Verify membership of the access_bpf group',
+      ),
+      WlanCommand(
+        'sudo wdutil info',
+        'macOS 14+: print Wi-Fi link diagnostics',
+      ),
     ]),
   ];
 
@@ -209,7 +285,9 @@ class _LinuxWlanCommandsScreenState extends State<LinuxWlanCommandsScreen> {
     }
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching commands' : '$n matching command${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching commands'
+          : '$n matching command${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -317,9 +395,7 @@ class _LinuxWlanCommandsScreenState extends State<LinuxWlanCommandsScreen> {
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
           cursorColor: colors.textAccent,
-          decoration: const InputDecoration(
-            hintText: 'e.g. iw or monitor',
-          ),
+          decoration: const InputDecoration(hintText: 'e.g. iw or monitor'),
         ),
       ),
     );
@@ -486,9 +562,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

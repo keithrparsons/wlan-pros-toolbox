@@ -37,35 +37,40 @@ class BandDesignationsScreen extends StatelessWidget {
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln('Spectrum Band Designations (ITU)')
-      ..writeln(<String>[
-        'Band',
-        'Name',
-        'Frequency',
-        'Wavelength',
-        'Propagation',
-      ].join(tab));
+      ..writeln(
+        <String>[
+          'Band',
+          'Name',
+          'Frequency',
+          'Wavelength',
+          'Propagation',
+        ].join(tab),
+      );
     for (final ItuBandDesignation b in kItuBands) {
-      buf.writeln(<String>[
-        b.designation,
-        b.name,
-        b.frequency,
-        b.wavelength,
-        b.propagation,
-      ].join(tab));
+      buf.writeln(
+        <String>[
+          b.designation,
+          b.name,
+          b.frequency,
+          b.wavelength,
+          b.propagation,
+        ].join(tab),
+      );
     }
     buf
       ..writeln()
-      ..writeln('Each band is 10x the previous. Below HF: MF (300 kHz-3 MHz, '
-          'AM broadcast + 160/630 m) and LF (30-300 kHz, 2200 m). Above SHF: '
-          'EHF (30-300 GHz).')
+      ..writeln(
+        'Each band is 10x the previous. Below HF: MF (300 kHz-3 MHz, '
+        'AM broadcast + 160/630 m) and LF (30-300 kHz, 2200 m). Above SHF: '
+        'EHF (30-300 GHz).',
+      )
       ..writeln()
       ..writeln('Neighbors a Wi-Fi pro should recognize')
-      ..writeln(<String>['Service', 'Allocation', 'Mode', 'Why it matters']
-          .join(tab));
-    for (final SpectrumNeighbor n in kSpectrumNeighbors) {
-      buf.writeln(
-        <String>[n.service, n.allocation, n.mode, n.why].join(tab),
+      ..writeln(
+        <String>['Service', 'Allocation', 'Mode', 'Why it matters'].join(tab),
       );
+    for (final SpectrumNeighbor n in kSpectrumNeighbors) {
+      buf.writeln(<String>[n.service, n.allocation, n.mode, n.why].join(tab));
     }
     return buf.toString().trimRight();
   }
@@ -164,15 +169,15 @@ class BandDesignationsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ...kSpectrumNeighbors.asMap().entries.expand(
-            (MapEntry<int, SpectrumNeighbor> entry) {
-              return <Widget>[
-                if (entry.key > 0)
-                  Divider(color: colors.border, height: AppSpacing.md),
-                _NeighborRow(neighbor: entry.value),
-              ];
-            },
-          ),
+          ...kSpectrumNeighbors.asMap().entries.expand((
+            MapEntry<int, SpectrumNeighbor> entry,
+          ) {
+            return <Widget>[
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.md),
+              _NeighborRow(neighbor: entry.value),
+            ];
+          }),
         ],
       ),
     );
@@ -201,10 +206,11 @@ class _BandCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: ReferenceRowSemantics(
         merge: false,
-        label: rowLabel(
-          '${band.designation}, ${band.name}',
-          <String?>[band.frequency, band.wavelength, band.propagation],
-        ),
+        label: rowLabel('${band.designation}, ${band.name}', <String?>[
+          band.frequency,
+          band.wavelength,
+          band.propagation,
+        ]),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -233,9 +239,7 @@ class _BandCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxs),
             Row(
               children: <Widget>[
-                Expanded(
-                  child: Text(band.frequency, style: mono.robotoMono),
-                ),
+                Expanded(child: Text(band.frequency, style: mono.robotoMono)),
                 Expanded(
                   child: Text(
                     band.wavelength,

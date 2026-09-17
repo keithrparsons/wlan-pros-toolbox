@@ -1402,37 +1402,45 @@ class ChannelMapScreen extends StatefulWidget {
   /// (not stated as hard numbers). China is UNCERTAIN (conflicting reports).
   static const List<HalowRegion> halowRegions = <HalowRegion>[
     HalowRegion(
-        region: 'United States',
-        rangeMhz: '902-928',
-        note: '26 × 1 MHz channels (full US scheme)'),
+      region: 'United States',
+      rangeMhz: '902-928',
+      note: '26 × 1 MHz channels (full US scheme)',
+    ),
     HalowRegion(
-        region: 'Europe (EU)',
-        rangeMhz: '863-868.6',
-        note: 'Region-dependent; duty-cycle limited'),
+      region: 'Europe (EU)',
+      rangeMhz: '863-868.6',
+      note: 'Region-dependent; duty-cycle limited',
+    ),
     HalowRegion(
-        region: 'Japan',
-        rangeMhz: '916.5-927.5',
-        note: 'Region-dependent; grid shifted 0.5 MHz'),
+      region: 'Japan',
+      rangeMhz: '916.5-927.5',
+      note: 'Region-dependent; grid shifted 0.5 MHz',
+    ),
     HalowRegion(
-        region: 'South Korea',
-        rangeMhz: '917.5-923.5',
-        note: 'Region-dependent'),
+      region: 'South Korea',
+      rangeMhz: '917.5-923.5',
+      note: 'Region-dependent',
+    ),
     HalowRegion(
-        region: 'Australia / NZ',
-        rangeMhz: '915-928',
-        note: 'Region-dependent'),
+      region: 'Australia / NZ',
+      rangeMhz: '915-928',
+      note: 'Region-dependent',
+    ),
     HalowRegion(
-        region: 'Singapore',
-        rangeMhz: '866-869 and 920-925',
-        note: 'Two sub-bands; region-dependent'),
+      region: 'Singapore',
+      rangeMhz: '866-869 and 920-925',
+      note: 'Two sub-bands; region-dependent',
+    ),
     HalowRegion(
-        region: 'India',
-        rangeMhz: '865-867',
-        note: 'Region-dependent; narrow allocation'),
+      region: 'India',
+      rangeMhz: '865-867',
+      note: 'Region-dependent; narrow allocation',
+    ),
     HalowRegion(
-        region: 'China',
-        rangeMhz: 'varies (reported 755-787)',
-        note: 'UNCERTAIN: confirm with CMIIT'),
+      region: 'China',
+      rangeMhz: 'varies (reported 755-787)',
+      note: 'UNCERTAIN: confirm with CMIIT',
+    ),
   ];
 
   @override
@@ -1501,9 +1509,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
         // §8.16 — copy all three band maps as TSV. The maps are static const
         // data (the band toggle only picks which one renders, all are present),
         // so the affordance is always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -1560,9 +1566,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
       ..writeln()
       ..writeln('Wi-Fi HaLow (802.11ah): sub-1 GHz')
       ..writeln('US channel widths (902-928 MHz)')
-      ..writeln(
-        <String>['Width (MHz)', 'Channels', 'Numbering'].join(tab),
-      );
+      ..writeln(<String>['Width (MHz)', 'Channels', 'Numbering'].join(tab));
     for (final HalowWidthBlock w in ChannelMapScreen.halowUsWidths) {
       buf.writeln(
         <String>['${w.widthMhz}', '${w.count}', w.numbering].join(tab),
@@ -1573,9 +1577,7 @@ class _ChannelMapScreenState extends State<ChannelMapScreen> {
       ..writeln('Operating ranges by region')
       ..writeln(<String>['Region', 'Range (MHz)', 'Note'].join(tab));
     for (final HalowRegion r in ChannelMapScreen.halowRegions) {
-      buf.writeln(
-        <String>[r.region, r.rangeMhz, r.note].join(tab),
-      );
+      buf.writeln(<String>[r.region, r.rangeMhz, r.note].join(tab));
     }
 
     return buf.toString().trimRight();
@@ -1896,11 +1898,13 @@ class _HalowWidthsTable extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final TextStyle head = (text.labelMedium ?? const TextStyle())
-        .copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600);
+    final TextStyle head = (text.labelMedium ?? const TextStyle()).copyWith(
+      color: colors.textSecondary,
+      fontWeight: FontWeight.w600,
+    );
     final TextStyle cell = mono.inlineCode.copyWith(color: colors.textPrimary);
-    final TextStyle noteStyle =
-        (text.labelMedium ?? const TextStyle()).copyWith(color: colors.textSecondary);
+    final TextStyle noteStyle = (text.labelMedium ?? const TextStyle())
+        .copyWith(color: colors.textSecondary);
     return HorizontalScrollTable(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1918,7 +1922,10 @@ class _HalowWidthsTable extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 children: <Widget>[
-                  SizedBox(width: 88, child: Text('${w.widthMhz}', style: cell)),
+                  SizedBox(
+                    width: 88,
+                    child: Text('${w.widthMhz}', style: cell),
+                  ),
                   SizedBox(width: 80, child: Text('${w.count}', style: cell)),
                   SizedBox(
                     width: 220,
@@ -1942,14 +1949,17 @@ class _HalowRegionsTable extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final TextStyle head = (text.labelMedium ?? const TextStyle())
-        .copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600);
-    final TextStyle nameStyle =
-        (text.labelMedium ?? const TextStyle()).copyWith(color: colors.textPrimary);
-    final TextStyle rangeStyle =
-        mono.inlineCode.copyWith(color: colors.textPrimary);
-    final TextStyle noteStyle =
-        (text.labelMedium ?? const TextStyle()).copyWith(color: colors.textTertiary);
+    final TextStyle head = (text.labelMedium ?? const TextStyle()).copyWith(
+      color: colors.textSecondary,
+      fontWeight: FontWeight.w600,
+    );
+    final TextStyle nameStyle = (text.labelMedium ?? const TextStyle())
+        .copyWith(color: colors.textPrimary);
+    final TextStyle rangeStyle = mono.inlineCode.copyWith(
+      color: colors.textPrimary,
+    );
+    final TextStyle noteStyle = (text.labelMedium ?? const TextStyle())
+        .copyWith(color: colors.textTertiary);
     return HorizontalScrollTable(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1970,7 +1980,9 @@ class _HalowRegionsTable extends StatelessWidget {
                 children: <Widget>[
                   SizedBox(width: 130, child: Text(r.region, style: nameStyle)),
                   SizedBox(
-                      width: 120, child: Text(r.rangeMhz, style: rangeStyle)),
+                    width: 120,
+                    child: Text(r.rangeMhz, style: rangeStyle),
+                  ),
                   SizedBox(width: 230, child: Text(r.note, style: noteStyle)),
                 ],
               ),
@@ -2220,9 +2232,7 @@ class _Map24 extends StatelessWidget {
               Text(
                 '${c.channel}',
                 style: mono.inlineCode.copyWith(
-                  color: primary
-                      ? colors.textPrimary
-                      : colors.textTertiary,
+                  color: primary ? colors.textPrimary : colors.textTertiary,
                   fontWeight: primary ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
@@ -2447,9 +2457,7 @@ class _BandToggle extends StatelessWidget {
                   child: Text(
                     opt.$2,
                     style: text.labelLarge?.copyWith(
-                      color: selected
-                          ? colors.onPrimary
-                          : colors.textSecondary,
+                      color: selected ? colors.onPrimary : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

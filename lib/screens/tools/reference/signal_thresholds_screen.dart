@@ -295,9 +295,7 @@ class SignalThresholdsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Signal Thresholds'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -594,9 +592,7 @@ class _ThresholdRow extends StatelessWidget {
                   child: Text(
                     row.minRssi,
                     textAlign: TextAlign.right,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -605,9 +601,7 @@ class _ThresholdRow extends StatelessWidget {
                   child: Text(
                     row.minSnr,
                     textAlign: TextAlign.right,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textPrimary),
                   ),
                 ),
               ],

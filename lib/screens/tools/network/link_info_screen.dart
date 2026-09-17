@@ -22,7 +22,6 @@
 // `media: autoselect (none)` / `status: inactive`. So the copy says to check
 // both ends.
 
-
 import 'dart:io' show InternetAddress;
 
 import 'package:flutter/material.dart';
@@ -103,10 +102,9 @@ class _LinkInfoScreenState extends State<LinkInfoScreen> {
     }
 
     final LinkTable t = r.table!;
-    final List<LinkInfo> shown = t.links
-        .where((LinkInfo l) => l.kind != LinkKind.loopback)
-        .toList()
-      ..sort(_byInterest);
+    final List<LinkInfo> shown =
+        t.links.where((LinkInfo l) => l.kind != LinkKind.loopback).toList()
+          ..sort(_byInterest);
 
     final LinkInfo? carrying = selectDefaultLink(t.links);
 
@@ -145,6 +143,7 @@ class _LinkInfoScreenState extends State<LinkInfoScreen> {
       if (l.carrier == true) return 3;
       return 4;
     }
+
     final int r = rank(a).compareTo(rank(b));
     return r != 0 ? r : a.name.compareTo(b.name);
   }
@@ -307,7 +306,7 @@ class _ChooserState extends State<_Chooser> {
     try {
       result = await _probe.probe(
         sourceAddresses: <String, InternetAddress>{
-          link.name: InternetAddress(v4.address)
+          link.name: InternetAddress(v4.address),
         },
         host: 'cloudflare.com',
         port: 443,
@@ -343,7 +342,8 @@ class _ChooserState extends State<_Chooser> {
     // has to remember.
     final bool anyChoosable = rows.any((TransportOption o) => o.isChoosable);
     final bool anyProbable = rows.any(
-        (TransportOption o) => o.state == TransportState.presentUntested);
+      (TransportOption o) => o.state == TransportState.presentUntested,
+    );
     final bool interactive = _loaded && (anyChoosable || anyProbable);
 
     final ResolvedTransport resolved = resolveTransport(
@@ -362,31 +362,34 @@ class _ChooserState extends State<_Chooser> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(interactive ? 'Which path the tools use' : 'Which path a test would take',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: c.textPrimary)),
+          Text(
+            interactive
+                ? 'Which path the tools use'
+                : 'Which path a test would take',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: c.textPrimary,
+            ),
+          ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
             interactive
                 ? 'One choice. Every tool in the app honours it.'
                 : 'For a test that reaches the internet. A local-network test '
-                    'can sometimes be pinned where an internet test cannot.',
+                      'can sometimes be pinned where an internet test cannot.',
             style: TextStyle(fontSize: 13, color: c.textTertiary),
           ),
           if (resolved.isStale) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
-            _ChooserBanner(
-              tone: c.statusWarning,
-              text: _staleText(resolved),
-            ),
+            _ChooserBanner(tone: c.statusWarning, text: _staleText(resolved)),
           ],
           if (_writeFailed) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             _ChooserBanner(
               tone: c.statusDanger,
-              text: 'That choice could not be saved, so it has been put back. '
+              text:
+                  'That choice could not be saved, so it has been put back. '
                   'The tools are still following the system.',
             ),
           ],
@@ -440,7 +443,9 @@ class _ChooserState extends State<_Chooser> {
           'route.';
     }
     final TransportKind? kind = transportKindOf(active);
-    final String named = kind == null ? active.name : '${kind.label}, ${active.name}';
+    final String named = kind == null
+        ? active.name
+        : '${kind.label}, ${active.name}';
     return 'The routing table picks. Right now that is $named.';
   }
 
@@ -469,22 +474,22 @@ class _ChooserState extends State<_Chooser> {
 }
 
 String _badgeFor(TransportState s) => switch (s) {
-      TransportState.active => 'IN USE',
-      TransportState.selectable => 'AVAILABLE',
-      TransportState.presentUntested => 'NOT TESTED',
-      TransportState.presentNotSelectable => 'CANNOT PIN',
-      TransportState.presentNoLink => 'NO LINK',
-      TransportState.absent => 'NOT PRESENT',
-    };
+  TransportState.active => 'IN USE',
+  TransportState.selectable => 'AVAILABLE',
+  TransportState.presentUntested => 'NOT TESTED',
+  TransportState.presentNotSelectable => 'CANNOT PIN',
+  TransportState.presentNoLink => 'NO LINK',
+  TransportState.absent => 'NOT PRESENT',
+};
 
 Color _toneFor(TransportState s, AppColorScheme c) => switch (s) {
-      TransportState.active => c.statusSuccess,
-      TransportState.selectable => c.textPrimary,
-      TransportState.presentUntested => c.statusWarning,
-      TransportState.presentNotSelectable => c.textTertiary,
-      TransportState.presentNoLink => c.textTertiary,
-      TransportState.absent => c.textTertiary,
-    };
+  TransportState.active => c.statusSuccess,
+  TransportState.selectable => c.textPrimary,
+  TransportState.presentUntested => c.statusWarning,
+  TransportState.presentNotSelectable => c.textTertiary,
+  TransportState.presentNoLink => c.textTertiary,
+  TransportState.absent => c.textTertiary,
+};
 
 /// A selectable transport row.
 ///
@@ -532,8 +537,8 @@ class _PickRow extends StatelessWidget {
     final Color edge = selected
         ? c.primary
         : enabled
-            ? c.border
-            : c.borderStrong.withValues(alpha: 0.35);
+        ? c.border
+        : c.borderStrong.withValues(alpha: 0.35);
     // The long form is only worth offering when it says more than the short
     // one. Identical strings would give the user a control that does nothing.
     final bool hasMore = longReason != null && longReason != shortReason;
@@ -556,7 +561,9 @@ class _PickRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.control),
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs + 3, vertical: AppSpacing.xs + 2),
+                horizontal: AppSpacing.xs + 3,
+                vertical: AppSpacing.xs + 2,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -571,43 +578,51 @@ class _PickRow extends StatelessWidget {
                           runSpacing: AppSpacing.xxs,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: <Widget>[
-                            Text(label,
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: enabled
-                                        ? c.textPrimary
-                                        : c.textDisabled)),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: enabled ? c.textPrimary : c.textDisabled,
+                              ),
+                            ),
                             if (badge != null)
                               _Chip(
-                                  label: badge!,
-                                  tone: badgeTone ?? c.textTertiary),
+                                label: badge!,
+                                tone: badgeTone ?? c.textTertiary,
+                              ),
                           ],
                         ),
                         const SizedBox(height: 3),
                         Text(
                           expanded && hasMore ? longReason! : shortReason,
                           style: TextStyle(
-                              fontSize: 12.5,
-                              height: 1.45,
-                              color: enabled ? c.textSecondary : c.textTertiary),
+                            fontSize: 12.5,
+                            height: 1.45,
+                            color: enabled ? c.textSecondary : c.textTertiary,
+                          ),
                         ),
                         if (hasMore)
                           GestureDetector(
                             onTap: onToggleReason,
                             child: Padding(
                               padding: const EdgeInsets.only(top: 3),
-                              child: Text(expanded ? 'Less' : 'More',
-                                  style: TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: c.primary)),
+                              child: Text(
+                                expanded ? 'Less' : 'More',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: c.primary,
+                                ),
+                              ),
                             ),
                           ),
                         if (onProbe != null) ...<Widget>[
                           const SizedBox(height: AppSpacing.xs),
-                          _TryItNow(onPressed: probing ? null : onProbe,
-                              busy: probing),
+                          _TryItNow(
+                            onPressed: probing ? null : onProbe,
+                            busy: probing,
+                          ),
                         ],
                       ],
                     ),
@@ -646,8 +661,10 @@ class _TryItNow extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2, color: c.primary),
           ),
           const SizedBox(width: AppSpacing.xs),
-          Text('Trying one connection...',
-              style: TextStyle(fontSize: 12.5, color: c.textSecondary)),
+          Text(
+            'Trying one connection...',
+            style: TextStyle(fontSize: 12.5, color: c.textSecondary),
+          ),
         ],
       );
     }
@@ -657,14 +674,19 @@ class _TryItNow extends StatelessWidget {
         foregroundColor: c.primary,
         side: BorderSide(color: c.primary),
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         minimumSize: const Size(0, 36),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.control)),
+          borderRadius: BorderRadius.circular(AppRadius.control),
+        ),
       ),
-      child: const Text('Try it now',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+      child: const Text(
+        'Try it now',
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+      ),
     );
   }
 }
@@ -681,8 +703,8 @@ class _Radio extends StatelessWidget {
     final Color edge = selected
         ? c.primary
         : enabled
-            ? c.borderStrong
-            : c.textDisabled;
+        ? c.borderStrong
+        : c.textDisabled;
     return Container(
       width: 18,
       height: 18,
@@ -696,8 +718,10 @@ class _Radio extends StatelessWidget {
               child: Container(
                 width: 8,
                 height: 8,
-                decoration:
-                    BoxDecoration(shape: BoxShape.circle, color: c.primary),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: c.primary,
+                ),
               ),
             )
           : null,
@@ -717,14 +741,18 @@ class _ChooserBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs + 4, vertical: AppSpacing.xs + 2),
+        horizontal: AppSpacing.xs + 4,
+        vertical: AppSpacing.xs + 2,
+      ),
       decoration: BoxDecoration(
         color: c.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
         border: Border.all(color: tone),
       ),
-      child: Text(text,
-          style: TextStyle(fontSize: 13, height: 1.45, color: c.textSecondary)),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 13, height: 1.45, color: c.textSecondary),
+      ),
     );
   }
 }
@@ -755,19 +783,24 @@ class _ChooserRow extends StatelessWidget {
             children: <Widget>[
               SizedBox(
                 width: 92,
-                child: Text(option.kind.label,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: tone)),
+                child: Text(
+                  option.kind.label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: tone,
+                  ),
+                ),
               ),
               _Chip(label: badge, tone: tone),
             ],
           ),
           Padding(
             padding: const EdgeInsets.only(left: 92, top: 2),
-            child: Text(option.reason,
-                style: TextStyle(fontSize: 13, color: c.textSecondary)),
+            child: Text(
+              option.reason,
+              style: TextStyle(fontSize: 13, color: c.textSecondary),
+            ),
           ),
         ],
       ),
@@ -791,12 +824,12 @@ class _Verdict extends StatelessWidget {
         : '${_kindLabel(l.kind)} is carrying traffic';
     final String sub = l == null
         ? 'Nothing claims the default route, and more than one interface could '
-            'qualify. That is a real state, not an error, and the app will not '
-            'pick one for you.'
+              'qualify. That is a real state, not an error, and the app will not '
+              'pick one for you.'
         : '${l.name}'
-            '${l.speedMbps != null ? ' at ${_speed(l.speedMbps!)}' : ''}'
-            '${l.duplex != null ? ', ${l.duplex} duplex' : ''}'
-            '${table.defaultGatewayV4 != null ? ', via ${table.defaultGatewayV4}' : ''}';
+              '${l.speedMbps != null ? ' at ${_speed(l.speedMbps!)}' : ''}'
+              '${l.duplex != null ? ', ${l.duplex} duplex' : ''}'
+              '${table.defaultGatewayV4 != null ? ', via ${table.defaultGatewayV4}' : ''}';
 
     return Container(
       width: double.infinity,
@@ -843,8 +876,9 @@ class _LinkCard extends StatelessWidget {
     final List<LinkAddress> real = link.addresses
         .where((LinkAddress a) => !a.isLinkLocal)
         .toList(growable: false);
-    final bool apipa =
-        link.addresses.any((LinkAddress a) => a.isIPv4 && a.isLinkLocal);
+    final bool apipa = link.addresses.any(
+      (LinkAddress a) => a.isIPv4 && a.isLinkLocal,
+    );
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -887,11 +921,7 @@ class _LinkCard extends StatelessWidget {
           if (up && link.speedMbps != null)
             _Row(label: 'Speed', value: _speed(link.speedMbps!))
           else if (up)
-            _Row(
-              label: 'Speed',
-              value: 'not reported',
-              muted: true,
-            ),
+            _Row(label: 'Speed', value: 'not reported', muted: true),
           if (up && link.duplex != null)
             _Row(label: 'Duplex', value: link.duplex!),
           if (link.mac != null) _Row(label: 'MAC', value: link.mac!),
@@ -909,7 +939,8 @@ class _LinkCard extends StatelessWidget {
           // An APIPA address is a DIAGNOSIS, not an address.
           if (apipa)
             _Note(
-              text: 'This interface has a 169.254 address, which means the '
+              text:
+                  'This interface has a 169.254 address, which means the '
                   'link came up and DHCP never answered. That is a finding, '
                   'not an address.',
               tone: c.statusWarning,
@@ -919,16 +950,17 @@ class _LinkCard extends StatelessWidget {
             _Note(
               text: link.kind == LinkKind.wired
                   ? 'Present with no link. A cable into a dead switch looks '
-                      'exactly like no cable at all, so check both ends.'
+                        'exactly like no cable at all, so check both ends.'
                   : link.kind == LinkKind.wifi
-                      ? 'Present but not associated to a network.'
-                      : 'Present with no carrier.',
+                  ? 'Present but not associated to a network.'
+                  : 'Present with no carrier.',
               tone: c.textTertiary,
             ),
 
           if (up && real.isEmpty && !apipa)
             _Note(
-              text: 'The link is up but has no address, so nothing can be sent '
+              text:
+                  'The link is up but has no address, so nothing can be sent '
                   'over it yet.',
               tone: c.statusWarning,
             ),
@@ -954,8 +986,10 @@ class _Row extends StatelessWidget {
         children: <Widget>[
           SizedBox(
             width: 88,
-            child: Text(label,
-                style: TextStyle(fontSize: 14, color: c.textTertiary)),
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 14, color: c.textTertiary),
+            ),
           ),
           Expanded(
             child: Text(
@@ -989,7 +1023,11 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: tone),
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+          color: tone,
+        ),
       ),
     );
   }
@@ -1023,15 +1061,20 @@ class _Unavailable extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text('No link table here',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: c.textPrimary)),
+            Text(
+              'No link table here',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
             const SizedBox(height: AppSpacing.xs),
-            Text(reason,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: c.textSecondary)),
+            Text(
+              reason,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, color: c.textSecondary),
+            ),
             const SizedBox(height: AppSpacing.sm),
             FilledButton(onPressed: onRetry, child: const Text('Check again')),
           ],
@@ -1052,20 +1095,20 @@ class _Footnote extends StatelessWidget {
       source == null
           ? ''
           : 'Read from $source. Speed and duplex are shown only where the '
-              'system reports them for a link that is actually up.',
+                'system reports them for a link that is actually up.',
       style: TextStyle(fontSize: 12.5, color: c.textTertiary),
     );
   }
 }
 
 String _kindLabel(LinkKind k) => switch (k) {
-      LinkKind.wired => 'Ethernet',
-      LinkKind.wifi => 'Wi-Fi',
-      LinkKind.monitor => 'Monitor',
-      LinkKind.virtual => 'Virtual',
-      LinkKind.loopback => 'Loopback',
-      LinkKind.other => 'Other',
-    };
+  LinkKind.wired => 'Ethernet',
+  LinkKind.wifi => 'Wi-Fi',
+  LinkKind.monitor => 'Monitor',
+  LinkKind.virtual => 'Virtual',
+  LinkKind.loopback => 'Loopback',
+  LinkKind.other => 'Other',
+};
 
 String _speed(int mbps) =>
     mbps >= 1000 && mbps % 1000 == 0 ? '${mbps ~/ 1000} Gbps' : '$mbps Mbps';

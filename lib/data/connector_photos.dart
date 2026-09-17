@@ -62,8 +62,8 @@ class ConnectorPhotos {
   /// Deliverables/2026-06-05-antenna-connector-photos/manifest.json (Pax,
   /// licenses read off each Wikimedia Commons File: page). Only ids present here
   /// AND in the bundle render a photo.
-  static const Map<String, ConnectorPhotoMeta> _meta =
-      <String, ConnectorPhotoMeta>{
+  static const Map<String, ConnectorPhotoMeta>
+  _meta = <String, ConnectorPhotoMeta>{
     'rp-sma': ConnectorPhotoMeta(
       alt: 'Photo of an RP-SMA plug, a small threaded coaxial connector.',
       license: 'CC0 1.0',
@@ -83,21 +83,24 @@ class ConnectorPhotos {
       attributionRequired: false,
     ),
     'ufl': ConnectorPhotoMeta(
-      alt: 'Photo of a U.FL / I-PEX MHF1 board-level coaxial connector beside a '
+      alt:
+          'Photo of a U.FL / I-PEX MHF1 board-level coaxial connector beside a '
           'smaller MHF4.',
       license: 'CC0 1.0',
       credit: 'Mitja Stachowiak / Wikimedia Commons (CC0)',
       attributionRequired: false,
     ),
     'ipex-mhf1': ConnectorPhotoMeta(
-      alt: 'Photo of an I-PEX MHF1 (U.FL-equivalent) board-level connector '
+      alt:
+          'Photo of an I-PEX MHF1 (U.FL-equivalent) board-level connector '
           'beside a smaller MHF4.',
       license: 'CC0 1.0',
       credit: 'Mitja Stachowiak / Wikimedia Commons (CC0)',
       attributionRequired: false,
     ),
     'ipex-mhf4': ConnectorPhotoMeta(
-      alt: 'Photo of an I-PEX MHF4 (the smaller, left) connector beside a '
+      alt:
+          'Photo of an I-PEX MHF4 (the smaller, left) connector beside a '
           'U.FL/MHF1.',
       license: 'CC0 1.0',
       credit: 'Mitja Stachowiak / Wikimedia Commons (CC0)',
@@ -154,8 +157,9 @@ class ConnectorPhotos {
   static Future<void> ensureLoaded() async {
     if (_bundled != null) return;
     WidgetsFlutterBinding.ensureInitialized();
-    final AssetManifest manifest =
-        await AssetManifest.loadFromAssetBundle(rootBundle);
+    final AssetManifest manifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
     _bundled = manifest
         .listAssets()
         .where((String p) => p.startsWith('$_dir/'))

@@ -70,7 +70,8 @@ const List<HazClass> kHazClasses = <HazClass>[
   HazClass(
     cls: 'Class III',
     hazard: 'Ignitable fibers or flyings',
-    environments: 'Textile mills, cotton gins, woodworking, some paper operations',
+    environments:
+        'Textile mills, cotton gins, woodworking, some paper operations',
   ),
 ];
 
@@ -215,8 +216,7 @@ const List<HazConcept> kHazConcepts = <HazConcept>[
   ),
   HazConcept(
     concept: 'Increased safety (Ex e)',
-    how:
-        'Construction prevents arcs and hot surfaces in normal operation',
+    how: 'Construction prevents arcs and hot surfaces in normal operation',
     where: 'Zone 1',
   ),
   HazConcept(

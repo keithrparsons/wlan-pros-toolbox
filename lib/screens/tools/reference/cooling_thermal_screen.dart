@@ -208,9 +208,7 @@ class CoolingThermalScreen extends StatelessWidget {
         // §8.16 — copy the whole page as sectioned TSV: the watts/BTU/ton
         // conversion table, then the IT-load-to-cooling chain. Static data,
         // always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -229,24 +227,16 @@ class CoolingThermalScreen extends StatelessWidget {
       ..writeln(anchorNote)
       ..writeln()
       ..writeln('Watts / BTU per hour / tons')
-      ..writeln(
-        <String>['Watts', 'BTU/hr', 'Tons', 'Anchor'].join(tab),
-      );
+      ..writeln(<String>['Watts', 'BTU/hr', 'Tons', 'Anchor'].join(tab));
     for (final ThermalConversion c in conversions) {
-      buf.writeln(
-        <String>[c.watts, c.btuPerHour, c.tons, c.note].join(tab),
-      );
+      buf.writeln(<String>[c.watts, c.btuPerHour, c.tons, c.note].join(tab));
     }
     buf
       ..writeln()
       ..writeln('IT load to heat to cooling')
-      ..writeln(
-        <String>['Step', 'Relationship', 'Detail'].join(tab),
-      );
+      ..writeln(<String>['Step', 'Relationship', 'Detail'].join(tab));
     for (final HeatRelation h in heatChain) {
-      buf.writeln(
-        <String>[h.step, h.relationship, h.detail].join(tab),
-      );
+      buf.writeln(<String>[h.step, h.relationship, h.detail].join(tab));
     }
     buf
       ..writeln()
@@ -297,7 +287,10 @@ class CoolingThermalScreen extends StatelessWidget {
   }
 
   Widget _conversionCard(
-      AppColorScheme colors, TextTheme text, AppMonoText mono) {
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _TableCard(
       title: 'Watts / BTU per hour / tons',
       note: anchorNote,
@@ -312,11 +305,7 @@ class CoolingThermalScreen extends StatelessWidget {
       ),
       rows: conversions.map((ThermalConversion c) {
         return ReferenceRowSemantics(
-          label: rowLabel(c.watts, <String?>[
-            c.btuPerHour,
-            c.tons,
-            c.note,
-          ]),
+          label: rowLabel(c.watts, <String?>[c.btuPerHour, c.tons, c.note]),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
@@ -369,7 +358,10 @@ class CoolingThermalScreen extends StatelessWidget {
   }
 
   Widget _heatChainCard(
-      AppColorScheme colors, TextTheme text, AppMonoText mono) {
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _TableCard(
       title: 'IT load to heat to cooling',
       note: airflowNote,
@@ -382,10 +374,7 @@ class CoolingThermalScreen extends StatelessWidget {
       ),
       rows: heatChain.map((HeatRelation h) {
         return ReferenceRowSemantics(
-          label: rowLabel(h.step, <String?>[
-            h.relationship,
-            h.detail,
-          ]),
+          label: rowLabel(h.step, <String?>[h.relationship, h.detail]),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(

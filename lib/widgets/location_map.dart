@@ -60,8 +60,7 @@ const String kOsmAttribution = '© OpenStreetMap contributors';
 const String kOsmCopyrightUrl = 'https://www.openstreetmap.org/copyright';
 
 /// The OSM standard raster tile endpoint (HTTPS, online-only).
-const String kOsmTileUrl =
-    'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const String kOsmTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 /// The UNIQUE User-Agent identifier sent to the OSM tile server — the app's
 /// bundle id, so the request is attributable to this app per the OSMF policy.
@@ -162,7 +161,8 @@ class _LocationMapState extends State<LocationMap> {
               // Pan/zoom only — no rotation gesture (keeps the lightweight
               // preview predictable; the brief asks for basic pan/zoom only).
               interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.pinchZoom |
+                flags:
+                    InteractiveFlag.pinchZoom |
                     InteractiveFlag.drag |
                     InteractiveFlag.doubleTapZoom |
                     InteractiveFlag.scrollWheelZoom,
@@ -202,10 +202,7 @@ class _LocationMapState extends State<LocationMap> {
               // contributors" on a rgba(0,0,0,0.6) scrim chip, anchored to the
               // bottom edge, linking to the OSM copyright page. An always-on map
               // child — never a toggle, never a popup, never faded out.
-              _OsmAttributionChip(
-                text: text,
-                onTap: _openOsmCopyright,
-              ),
+              _OsmAttributionChip(text: text, onTap: _openOsmCopyright),
             ],
           ),
         ),

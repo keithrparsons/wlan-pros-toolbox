@@ -133,8 +133,10 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
   // accept a leading minus. Losses are non-negative in the PWA (min="0") but we
   // keep the formatter permissive and rely on the math; a stray sign just
   // shifts the budget, never crashes.
-  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      scientificDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -306,9 +308,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
         // required field is finite; copies the received signal, the link
         // margin, and the margin VERDICT WORD (healthy/marginal/negative) so the
         // §8.13 status hue is never the only carrier of the verdict.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -650,9 +650,7 @@ class _LinkBudgetScreenState extends State<LinkBudgetScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 unit,
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

@@ -173,7 +173,10 @@ class CliCommandsScreen extends StatefulWidget {
       linCmd: 'iw phy',
       description: 'Show adapter driver / radio capabilities',
       options: <CliOption>[
-        CliOption('show wirelesscapabilities', 'Windows: detailed capabilities'),
+        CliOption(
+          'show wirelesscapabilities',
+          'Windows: detailed capabilities',
+        ),
       ],
     ),
     CliCommand(
@@ -362,7 +365,10 @@ class CliCommandsScreen extends StatefulWidget {
           'Quick DNS name resolution (cross-platform). Append a server to '
           'query a specific resolver: nslookup name dns_server',
       options: <CliOption>[
-        CliOption('-type=MX', 'query a record type (A, AAAA, MX, NS, TXT, PTR)'),
+        CliOption(
+          '-type=MX',
+          'query a record type (A, AAAA, MX, NS, TXT, PTR)',
+        ),
         CliOption('server', 'append a server to query a specific resolver'),
       ],
     ),
@@ -441,10 +447,14 @@ class CliCommandsScreen extends StatefulWidget {
           'Scan hosts and ports: host discovery, open ports, and service / '
           'version detection. Install: brew / apt / choco install nmap',
       options: <CliOption>[
-        CliOption('nmap -sn 192.168.1.0/24',
-            'Ping-sweep a subnet to list live hosts (no port scan)'),
-        CliOption('nmap -sV -p 1-1000 host',
-            'Scan ports 1-1000 and probe each service and version'),
+        CliOption(
+          'nmap -sn 192.168.1.0/24',
+          'Ping-sweep a subnet to list live hosts (no port scan)',
+        ),
+        CliOption(
+          'nmap -sV -p 1-1000 host',
+          'Scan ports 1-1000 and probe each service and version',
+        ),
       ],
     ),
     CliCommand(
@@ -456,9 +466,14 @@ class CliCommandsScreen extends StatefulWidget {
           'one side, a client on the other. Install: brew / apt / choco install '
           'iperf3',
       options: <CliOption>[
-        CliOption('iperf3 -s', 'Run as a server, listening for throughput tests'),
-        CliOption('iperf3 -c host -u -b 100M',
-            'Client: UDP test to host at 100 Mbit/s'),
+        CliOption(
+          'iperf3 -s',
+          'Run as a server, listening for throughput tests',
+        ),
+        CliOption(
+          'iperf3 -c host -u -b 100M',
+          'Client: UDP test to host at 100 Mbit/s',
+        ),
       ],
     ),
     CliCommand(
@@ -469,10 +484,14 @@ class CliCommandsScreen extends StatefulWidget {
           'Capture and print packets from an interface (CLI packet capture). '
           'Windows has no native tcpdump; use tshark / dumpcap or WinDump',
       options: <CliOption>[
-        CliOption('sudo tcpdump -i en0 -n port 53',
-            'Capture DNS traffic on en0 without name resolution'),
-        CliOption('sudo tcpdump -i wlan0 -w cap.pcap',
-            'Write a capture to a pcap file for later analysis'),
+        CliOption(
+          'sudo tcpdump -i en0 -n port 53',
+          'Capture DNS traffic on en0 without name resolution',
+        ),
+        CliOption(
+          'sudo tcpdump -i wlan0 -w cap.pcap',
+          'Write a capture to a pcap file for later analysis',
+        ),
       ],
     ),
     CliCommand(
@@ -483,10 +502,14 @@ class CliCommandsScreen extends StatefulWidget {
           'Terminal Wireshark: capture with BPF filters or read a pcap and '
           'apply display filters. Ships with the Wireshark install',
       options: <CliOption>[
-        CliOption('tshark -i en0 -f "tcp port 443"',
-            'Capture live with a BPF capture filter'),
-        CliOption('tshark -r cap.pcap -Y "http.request"',
-            'Read a pcap and apply a Wireshark display filter'),
+        CliOption(
+          'tshark -i en0 -f "tcp port 443"',
+          'Capture live with a BPF capture filter',
+        ),
+        CliOption(
+          'tshark -r cap.pcap -Y "http.request"',
+          'Read a pcap and apply a Wireshark display filter',
+        ),
       ],
     ),
   ];
@@ -495,31 +518,43 @@ class CliCommandsScreen extends StatefulWidget {
   /// separate group because they have no Windows/macOS column. Public + static
   /// for tests.
   static const List<LinuxShellCommand> linuxShell = <LinuxShellCommand>[
-    LinuxShellCommand('ls -lah',
-        '-a all, -l long, -h human sizes, -t by mtime, -S by size, -r reverse'),
+    LinuxShellCommand(
+      'ls -lah',
+      '-a all, -l long, -h human sizes, -t by mtime, -S by size, -r reverse',
+    ),
     LinuxShellCommand('pwd', 'print the current working directory'),
     LinuxShellCommand('cd dir', 'change directory; cd .. up, cd ~ home'),
     LinuxShellCommand('mkdir dir', 'make a directory'),
     LinuxShellCommand('tail -f file', 'follow a log file as it grows'),
-    LinuxShellCommand('grep -i pattern file',
-        '-i case-insensitive, -r recursive, -v invert match'),
+    LinuxShellCommand(
+      'grep -i pattern file',
+      '-i case-insensitive, -r recursive, -v invert match',
+    ),
     LinuxShellCommand('command | grep pattern', 'filter command output (pipe)'),
-    LinuxShellCommand('find /dir -name "name*"',
-        'find files by name; also -user, -mmin'),
+    LinuxShellCommand(
+      'find /dir -name "name*"',
+      'find files by name; also -user, -mmin',
+    ),
     LinuxShellCommand('df -h', 'disk usage, human-readable'),
     LinuxShellCommand('du -sh dir', 'total size of a directory'),
-    LinuxShellCommand('uname -a',
-        'system + kernel; head -n1 /etc/issue shows the distro'),
+    LinuxShellCommand(
+      'uname -a',
+      'system + kernel; head -n1 /etc/issue shows the distro',
+    ),
     LinuxShellCommand('uptime', 'how long the system has been running'),
     LinuxShellCommand('ps aux', 'snapshot of running processes'),
     LinuxShellCommand('top', 'live process monitor; htop if installed'),
     LinuxShellCommand('kill PID', 'kill a process; pkill name / killall name'),
     LinuxShellCommand('sudo command', 'run a command with root privilege'),
-    LinuxShellCommand('screen',
-        'persistent session that survives SSH disconnect; screen -r resumes; '
-        'tmux is the modern alternative'),
-    LinuxShellCommand('chmod 755 file',
-        'change permissions; 4=r 2=w 1=x for owner/group/other'),
+    LinuxShellCommand(
+      'screen',
+      'persistent session that survives SSH disconnect; screen -r resumes; '
+          'tmux is the modern alternative',
+    ),
+    LinuxShellCommand(
+      'chmod 755 file',
+      'change permissions; 4=r 2=w 1=x for owner/group/other',
+    ),
     LinuxShellCommand('chown user:group file', 'change file owner and group'),
   ];
 
@@ -546,9 +581,11 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
     if ((c.macCmd ?? '').toLowerCase().contains(q)) return true;
     if ((c.linCmd ?? '').toLowerCase().contains(q)) return true;
     if (c.description.toLowerCase().contains(q)) return true;
-    return c.options.any((CliOption o) =>
-        o.flag.toLowerCase().contains(q) ||
-        o.meaning.toLowerCase().contains(q));
+    return c.options.any(
+      (CliOption o) =>
+          o.flag.toLowerCase().contains(q) ||
+          o.meaning.toLowerCase().contains(q),
+    );
   }
 
   bool _matchesLinux(LinuxShellCommand c, String q) {
@@ -577,7 +614,9 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
     final int n = _filtered(q).length + _filteredLinux(q).length;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching commands' : '$n matching command${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching commands'
+          : '$n matching command${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -590,9 +629,7 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
     final StringBuffer b = StringBuffer()
       ..writeln('Network CLI Commands')
       ..writeln()
-      ..writeln(
-        <String>['Task', 'Windows', 'macOS', 'Linux'].join(tab),
-      );
+      ..writeln(<String>['Task', 'Windows', 'macOS', 'Linux'].join(tab));
     for (final CliCommand c in CliCommandsScreen.commands) {
       b.writeln(
         <String>[
@@ -624,9 +661,7 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
       appBar: AppBar(
         title: const Text('Network CLI Commands'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -724,9 +759,7 @@ class _CliCommandsScreenState extends State<CliCommandsScreen> {
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
           cursorColor: colors.textAccent,
-          decoration: const InputDecoration(
-            hintText: 'e.g. ping or DNS',
-          ),
+          decoration: const InputDecoration(hintText: 'e.g. ping or DNS'),
         ),
       ),
     );
@@ -876,9 +909,7 @@ class _PlatformLine extends StatelessWidget {
                 ? SelectableText(
                     command!,
                     style: mono.inlineCode.copyWith(
-                      color: isLime
-                          ? colors.textAccent
-                          : colors.textSecondary,
+                      color: isLime ? colors.textAccent : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   )
@@ -924,18 +955,14 @@ class _OptionRow extends StatelessWidget {
               width: 152,
               child: Text(
                 option.flag,
-                style: mono.inlineCode.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
                 option.meaning,
-                style: text.labelSmall?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -1053,9 +1080,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

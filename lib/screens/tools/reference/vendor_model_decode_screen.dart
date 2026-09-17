@@ -263,10 +263,8 @@ class _VendorModelDecodeScreenState extends State<VendorModelDecodeScreen> {
 
   Widget _rowDivider() {
     return Builder(
-      builder: (BuildContext context) => Divider(
-        color: context.colors.border,
-        height: AppSpacing.md,
-      ),
+      builder: (BuildContext context) =>
+          Divider(color: context.colors.border, height: AppSpacing.md),
     );
   }
 

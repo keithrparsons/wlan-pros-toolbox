@@ -136,13 +136,14 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
     // change as they type, without focus leaving the field.
     final WifiToolsComparisonService? svc = _service;
     if (svc == null) return;
-    final int n = svc.search(value).fold<int>(
-          0,
-          (int sum, WifiToolActivity a) => sum + a.configs.length,
-        );
+    final int n = svc
+        .search(value)
+        .fold<int>(0, (int sum, WifiToolActivity a) => sum + a.configs.length);
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching tools' : '$n matching tool config${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching tools'
+          : '$n matching tool config${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -153,7 +154,8 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
       _showLaunchError(url);
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -170,7 +172,9 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
 
   void _showLaunchError(String url) {
     if (!mounted) return;
-    setState(() => _launchError = 'Could not open the browser. The link is $url');
+    setState(
+      () => _launchError = 'Could not open the browser. The link is $url',
+    );
     SemanticsService.sendAnnouncement(
       View.of(context),
       'Could not open the browser',
@@ -197,8 +201,12 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
         ..writeln()
         ..writeln('== ${a.title} ==');
       for (final WifiToolConfig c in a.configs) {
-        final String up = c.upFront == null ? '' : ' · Up front ${_money(c.upFront!, m.currency)}';
-        final String tco = c.tco3yr == null ? '' : ' · ${m.tcoLabel} ${_money(c.tco3yr!, m.currency)}';
+        final String up = c.upFront == null
+            ? ''
+            : ' · Up front ${_money(c.upFront!, m.currency)}';
+        final String tco = c.tco3yr == null
+            ? ''
+            : ' · ${m.tcoLabel} ${_money(c.tco3yr!, m.currency)}';
         b.writeln('${c.vendor}: ${c.product} (${c.costModel.label})$up$tco');
         if (c.notes.isNotEmpty) b.writeln('  ${c.notes}');
       }
@@ -208,8 +216,9 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
         ..writeln()
         ..writeln('== Typical professional toolkit (${m.tcoLabel}) ==');
       for (final WifiToolkit t in svc.toolkits) {
-        final String tco =
-            t.tco3yr == null ? '' : ' · ${_money(t.tco3yr!, m.currency)}';
+        final String tco = t.tco3yr == null
+            ? ''
+            : ' · ${_money(t.tco3yr!, m.currency)}';
         b.writeln('${t.vendor}: ${t.product}$tco');
         if (t.notes.isNotEmpty) b.writeln('  ${t.notes}');
       }
@@ -362,8 +371,7 @@ class _WifiToolsComparisonScreenState extends State<WifiToolsComparisonScreen> {
             _SectionIntro(text: WifiToolsComparisonScreen.vendorsIntro),
             const SizedBox(height: AppSpacing.xs),
             ...svc.vendors.map(
-              (WifiToolVendor v) =>
-                  _VendorCard(vendor: v, onOpen: _openUrl),
+              (WifiToolVendor v) => _VendorCard(vendor: v, onOpen: _openUrl),
             ),
           ],
         ],
@@ -482,7 +490,10 @@ class _ActivityBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          _SectionHeading(label: activity.title, count: activity.configs.length),
+          _SectionHeading(
+            label: activity.title,
+            count: activity.configs.length,
+          ),
           if (activity.intro.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             Text(
@@ -517,15 +528,17 @@ class _ConfigCard extends StatelessWidget {
     final String upFront = config.upFront == null
         ? '—'
         : _money(config.upFront!, meta.currency);
-    final String tco =
-        config.tco3yr == null ? '—' : _money(config.tco3yr!, meta.currency);
+    final String tco = config.tco3yr == null
+        ? '—'
+        : _money(config.tco3yr!, meta.currency);
 
-    final String spoken = rowLabel('${config.vendor}, ${config.product}', <String?>[
-      config.costModel.label,
-      'up front $upFront',
-      '${meta.tcoLabel} $tco',
-      config.notes,
-    ]);
+    final String spoken =
+        rowLabel('${config.vendor}, ${config.product}', <String?>[
+          config.costModel.label,
+          'up front $upFront',
+          '${meta.tcoLabel} $tco',
+          config.notes,
+        ]);
 
     return ReferenceRowSemantics(
       label: spoken,
@@ -645,8 +658,10 @@ class _CostModelChip extends StatelessWidget {
     return Semantics(
       label: '$label license',
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 2,
+        ),
         decoration: BoxDecoration(
           border: Border.all(color: colors.borderStrong, width: 1),
           borderRadius: BorderRadius.circular(999),
@@ -754,8 +769,9 @@ class _ToolkitRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    final String tco =
-        row.tco3yr == null ? '—' : _money(row.tco3yr!, meta.currency);
+    final String tco = row.tco3yr == null
+        ? '—'
+        : _money(row.tco3yr!, meta.currency);
 
     final String spoken = rowLabel(row.vendor, <String?>[
       row.product,
@@ -810,7 +826,7 @@ class _ToolkitRow extends StatelessWidget {
                     fontFamily: 'DM Mono',
                     fontWeight: FontWeight.w600,
                     fontFeatures: const <FontFeature>[
-                      FontFeature.tabularFigures()
+                      FontFeature.tabularFigures(),
                     ],
                   ),
                 ),

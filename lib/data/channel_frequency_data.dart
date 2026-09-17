@@ -25,11 +25,7 @@ import 'package:flutter/foundation.dart';
 /// channel->frequency because channel NUMBERS collide across 5 and 6 GHz
 /// (channel 36 exists in both); frequency->channel returns the band because
 /// the frequency RANGES are disjoint.
-enum WifiBand {
-  band24,
-  band5,
-  band6,
-}
+enum WifiBand { band24, band5, band6 }
 
 extension WifiBandInfo on WifiBand {
   /// Display label, e.g. `2.4 GHz`.
@@ -74,7 +70,20 @@ extension WifiBandInfo on WifiBand {
 
 /// 2.4 GHz: 1..14 (14 is the 2484 special case).
 const List<int> k24Channels = <int>[
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
 ];
 
 /// 5 GHz valid 20 MHz primaries (channel-plan.md sec 3.1). This is the EXACT
@@ -97,7 +106,21 @@ final List<int> k6Channels = <int>[
 /// 6 GHz Preferred Scanning Channels (channel-plan.md sec 4.3) — 15 channels,
 /// 80 MHz apart, starting at 5.
 const Set<int> k6Psc = <int>{
-  5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229,
+  5,
+  21,
+  37,
+  53,
+  69,
+  85,
+  101,
+  117,
+  133,
+  149,
+  165,
+  181,
+  197,
+  213,
+  229,
 };
 
 /// 5 GHz DFS channels (channel-plan.md sec 3.1) — radar-detection required;
@@ -125,16 +148,29 @@ final List<List<int>> k24Bond40 = <List<int>>[
 ];
 
 const List<List<int>> k5Bond40 = <List<int>>[
-  <int>[36, 40], <int>[44, 48], <int>[52, 56], <int>[60, 64],
-  <int>[100, 104], <int>[108, 112], <int>[116, 120], <int>[124, 128],
-  <int>[132, 136], <int>[140, 144], <int>[149, 153], <int>[157, 161],
-  <int>[165, 169], <int>[173, 177],
+  <int>[36, 40],
+  <int>[44, 48],
+  <int>[52, 56],
+  <int>[60, 64],
+  <int>[100, 104],
+  <int>[108, 112],
+  <int>[116, 120],
+  <int>[124, 128],
+  <int>[132, 136],
+  <int>[140, 144],
+  <int>[149, 153],
+  <int>[157, 161],
+  <int>[165, 169],
+  <int>[173, 177],
 ];
 
 const List<List<int>> k5Bond80 = <List<int>>[
-  <int>[36, 40, 44, 48], <int>[52, 56, 60, 64],
-  <int>[100, 104, 108, 112], <int>[116, 120, 124, 128],
-  <int>[132, 136, 140, 144], <int>[149, 153, 157, 161],
+  <int>[36, 40, 44, 48],
+  <int>[52, 56, 60, 64],
+  <int>[100, 104, 108, 112],
+  <int>[116, 120, 124, 128],
+  <int>[132, 136, 140, 144],
+  <int>[149, 153, 157, 161],
   <int>[165, 169, 173, 177],
 ];
 
@@ -155,23 +191,32 @@ List<List<int>> _build6Bond(Iterable<int> centers, int n) {
 }
 
 /// 6 GHz 40 MHz: centers 3, 11, ... 227 (step 8).
-final List<List<int>> k6Bond40 =
-    _build6Bond(<int>[for (int c = 3; c <= 227; c += 8) c], 2);
+final List<List<int>> k6Bond40 = _build6Bond(<int>[
+  for (int c = 3; c <= 227; c += 8) c,
+], 2);
 
 /// 6 GHz 80 MHz: centers 7, 23, ... 215 (step 16).
-final List<List<int>> k6Bond80 =
-    _build6Bond(<int>[for (int c = 7; c <= 215; c += 16) c], 4);
+final List<List<int>> k6Bond80 = _build6Bond(<int>[
+  for (int c = 7; c <= 215; c += 16) c,
+], 4);
 
 /// 6 GHz 160 MHz: centers 15, 47, ... 207 (step 32).
-final List<List<int>> k6Bond160 =
-    _build6Bond(<int>[for (int c = 15; c <= 207; c += 32) c], 8);
+final List<List<int>> k6Bond160 = _build6Bond(<int>[
+  for (int c = 15; c <= 207; c += 32) c,
+], 8);
 
 /// 6 GHz 320 MHz: centers 31, 63, 95, 127, 159, 191. These OVERLAP by design
 /// in 802.11be (an odd number of 160 MHz blocks), so a primary can land in two
 /// of them. Both placements are returned; the engine does NOT assert the
 /// unverified 320 MHz-1 / 320 MHz-2 scheme labels.
-final List<List<int>> k6Bond320 =
-    _build6Bond(<int>[31, 63, 95, 127, 159, 191], 16);
+final List<List<int>> k6Bond320 = _build6Bond(<int>[
+  31,
+  63,
+  95,
+  127,
+  159,
+  191,
+], 16);
 
 /// Returns the bonding groups for [band] at [widthMHz], or `const []` for a
 /// width with no bonding table (e.g. 20 MHz, or an out-of-band width).
@@ -386,7 +431,8 @@ List<BondedChannel> bondedChannels({
   required int primaryChannel,
   required int widthMHz,
 }) {
-  if (!isValid20MhzPrimary(band, primaryChannel)) return const <BondedChannel>[];
+  if (!isValid20MhzPrimary(band, primaryChannel))
+    return const <BondedChannel>[];
 
   // 20 MHz: the channel is its own only component.
   if (widthMHz == 20) {
@@ -428,8 +474,10 @@ List<BondedChannel> bondedChannels({
       ),
     );
   }
-  results.sort((BondedChannel a, BondedChannel b) =>
-      a.centerFreqMHz.compareTo(b.centerFreqMHz));
+  results.sort(
+    (BondedChannel a, BondedChannel b) =>
+        a.centerFreqMHz.compareTo(b.centerFreqMHz),
+  );
   return results;
 }
 

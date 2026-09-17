@@ -100,7 +100,8 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
   double? _bulgeM;
 
   // Unsigned-decimal only. Path lengths are always positive and hand-typed.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -151,9 +152,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // bulge is computed; copies the result as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -262,17 +261,13 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
         field: TextField(
           controller: _distCtrl,
           focusNode: _distFocus,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: _unsignedDecimal,
           onChanged: (_) => _recompute(),
           textInputAction: TextInputAction.done,
           autocorrect: false,
           enableSuggestions: false,
-          style: mono.outputLarge.copyWith(
-            fontSize: AppTextSize.fieldNumeric,
-          ),
+          style: mono.outputLarge.copyWith(fontSize: AppTextSize.fieldNumeric),
           cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: '20'),
         ),
@@ -361,9 +356,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'm',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -383,9 +376,7 @@ class _EarthCurvatureScreenState extends State<EarthCurvatureScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'ft',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

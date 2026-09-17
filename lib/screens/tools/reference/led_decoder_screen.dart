@@ -116,9 +116,9 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
   void _selectLine(LedModelLine l) => setState(() => _lineId = l.id);
 
   void _backToVendors() => setState(() {
-        _vendorId = null;
-        _lineId = null;
-      });
+    _vendorId = null;
+    _lineId = null;
+  });
 
   void _backToLines() => setState(() => _lineId = null);
 
@@ -187,8 +187,9 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
     // share) right on the comparison card at the top of the picker, via the same
     // seam the PDF reference cards use. Gated independently of the PNG so the
     // download degrades separately from the inline plate.
-    final bool hasComparisonPdf =
-        ReferencePdfs.isBundled(kLedComparisonPlateId);
+    final bool hasComparisonPdf = ReferencePdfs.isBundled(
+      kLedComparisonPlateId,
+    );
 
     return <Widget>[
       const ReferenceLead(kLedLead),
@@ -234,16 +235,16 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
       final String? trailing = v.honestNote != null
           ? 'Note only'
           : v.hasMultipleLines
-              ? '${v.lines.length} lines'
-              : null;
+          ? '${v.lines.length} lines'
+          : null;
       rows.add(
         ReferencePickerRow(
           title: v.name,
           subtitle: v.honestNote != null
               ? 'No standardized LED scheme'
               : v.hasMultipleLines
-                  ? 'Forks by management line'
-                  : null,
+              ? 'Forks by management line'
+              : null,
           trailingLabel: trailing,
           onTap: () => _selectVendor(v),
         ),
@@ -306,7 +307,10 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
     // Back target: a multi-line vendor returns to its line picker; a
     // single-line vendor returns to the vendor picker.
     final Widget back = vendor.hasMultipleLines
-        ? ReferenceBackButton(label: '${vendor.name} lines', onTap: _backToLines)
+        ? ReferenceBackButton(
+            label: '${vendor.name} lines',
+            onTap: _backToLines,
+          )
         : ReferenceBackButton(label: 'All vendors', onTap: _backToVendors);
 
     return <Widget>[
@@ -411,10 +415,8 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
 
   Widget _rowDivider() {
     return Builder(
-      builder: (BuildContext context) => Divider(
-        color: context.colors.border,
-        height: AppSpacing.md,
-      ),
+      builder: (BuildContext context) =>
+          Divider(color: context.colors.border, height: AppSpacing.md),
     );
   }
 
@@ -448,8 +450,10 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
     for (final LedVendor v in kLedVendors) {
       b
         ..writeln()
-        ..writeln('== ${v.name} '
-            '(${v.vendorClass == LedVendorClass.consumer ? 'consumer' : 'enterprise'}) ==');
+        ..writeln(
+          '== ${v.name} '
+          '(${v.vendorClass == LedVendorClass.consumer ? 'consumer' : 'enterprise'}) ==',
+        );
       if (v.honestNote != null) {
         b.writeln(v.honestNote);
         continue;
@@ -465,19 +469,23 @@ class _LedDecoderScreenState extends State<LedDecoderScreen> {
           ..writeln()
           ..writeln('- ${l.name}');
         if (l.blurb != null) b.writeln(l.blurb);
-        b.writeln(<String>[
-          'State',
-          'Signal',
-          'Meaning',
-          if (withConfidence) 'Confidence',
-        ].join(tab));
+        b.writeln(
+          <String>[
+            'State',
+            'Signal',
+            'Meaning',
+            if (withConfidence) 'Confidence',
+          ].join(tab),
+        );
         for (final LedStateRow r in l.rows) {
-          b.writeln(<String>[
-            r.state,
-            r.signal,
-            r.meaning,
-            if (withConfidence) _confidenceWord(r.confidence),
-          ].join(tab));
+          b.writeln(
+            <String>[
+              r.state,
+              r.signal,
+              r.meaning,
+              if (withConfidence) _confidenceWord(r.confidence),
+            ].join(tab),
+          );
         }
         if (l.extraNote != null) b.writeln(l.extraNote);
         if (l.source != null) b.writeln('Source: ${l.source}');
@@ -525,7 +533,7 @@ class _LedStateRowView extends StatelessWidget {
 
     final String semantics = showChip
         ? '${row.state}. ${row.signal}. ${row.meaning}. '
-            '${_confidenceWord(row.confidence)}.'
+              '${_confidenceWord(row.confidence)}.'
         : '${row.state}. ${row.signal}. ${row.meaning}.';
 
     return Semantics(
@@ -738,9 +746,10 @@ class _LedIndicatorClusterState extends State<_LedIndicatorCluster>
     _controller = AnimationController(vsync: this, duration: _kLedBlinkPeriod);
     // Never fully off — the dot stays perceivable; the pulse only reads as
     // "flashing". Dim floor 0.4 keeps the fill's hue legible mid-pulse.
-    _pulse = Tween<double>(begin: 1.0, end: 0.4).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _pulse = Tween<double>(
+      begin: 1.0,
+      end: 0.4,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -754,8 +763,9 @@ class _LedIndicatorClusterState extends State<_LedIndicatorCluster>
     final AppColorScheme colors = context.colors;
     final bool reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final bool anyFlashing = widget.indicators
-        .any((LedIndicator i) => i.blink == LedBlink.flashing);
+    final bool anyFlashing = widget.indicators.any(
+      (LedIndicator i) => i.blink == LedBlink.flashing,
+    );
 
     // A controller that never animates costs nothing per frame; run it only
     // when motion is allowed and something actually flashes.

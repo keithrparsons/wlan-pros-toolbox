@@ -72,22 +72,26 @@ class BodyLayerInfo {
   static const Map<BodyLayer, BodyLayerInfo> all = <BodyLayer, BodyLayerInfo>{
     BodyLayer.standards: BodyLayerInfo(
       title: 'Defines the radio',
-      gloss: 'Standards bodies. They define how the radio actually works: the '
+      gloss:
+          'Standards bodies. They define how the radio actually works: the '
           'PHY, the MAC, framing, and the protocols Wi-Fi carries.',
     ),
     BodyLayer.certification: BodyLayerInfo(
       title: 'Certifies and brands',
-      gloss: 'Certification bodies. They verify that products from different '
+      gloss:
+          'Certification bodies. They verify that products from different '
           'vendors interoperate, and they own the brands and the credentials.',
     ),
     BodyLayer.spectrum: BodyLayerInfo(
       title: 'Coordinates spectrum globally',
-      gloss: 'Sits above every national regulator. Its decisions cascade into '
+      gloss:
+          'Sits above every national regulator. Its decisions cascade into '
           'each country\'s legal channel and power rules.',
     ),
     BodyLayer.iotAdjacent: BodyLayerInfo(
       title: 'IoT / adjacent wireless',
-      gloss: 'Wireless standards beyond Wi-Fi that a WLAN pro increasingly '
+      gloss:
+          'Wireless standards beyond Wi-Fi that a WLAN pro increasingly '
           'meets - Matter rides IP straight over the WLAN.',
     ),
   };
@@ -169,10 +173,12 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'IEEE',
     layer: BodyLayer.standards,
     roleType: 'Standards development',
-    owns: 'The actual Wi-Fi standard. "IEEE Std 802.11, Part 11: Wireless LAN '
+    owns:
+        'The actual Wi-Fi standard. "IEEE Std 802.11, Part 11: Wireless LAN '
         'MAC and PHY Specifications" and every amendment (11n / ac / ax / be). '
         'The IEEE Standards Association ratifies and publishes it.',
-    whyCare: 'This is where Wi-Fi is genuinely defined. 802.11be is Wi-Fi 7, '
+    whyCare:
+        'This is where Wi-Fi is genuinely defined. 802.11be is Wi-Fi 7, '
         '802.11ax is Wi-Fi 6. The amendment letter is the real name; the '
         '"Wi-Fi 7" label is Wi-Fi Alliance marketing. Current generation = '
         'Wi-Fi 7 (802.11be) as of $kWifiBodiesSnapshotDate; Wi-Fi 8 (802.11bn) '
@@ -184,10 +190,12 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'ETSI',
     layer: BodyLayer.standards,
     roleType: 'Standards development (EU-recognized SDO)',
-    owns: 'Harmonised European Standards (EN 300 328 for 2.4 GHz, EN 301 893 '
+    owns:
+        'Harmonised European Standards (EN 300 328 for 2.4 GHz, EN 301 893 '
         'for 5 GHz, EN 303 687 for 6 GHz) that underpin RED / CE compliance. '
         'A 3GPP Organizational Partner.',
-    whyCare: 'Dual role. Here it is a standards developer. It is also the EU\'s '
+    whyCare:
+        'Dual role. Here it is a standards developer. It is also the EU\'s '
         'referenced harmonizer: comply with the EN and you get presumption of '
         'conformity for CE marking. ETSI shapes EU radio rules but is NOT the '
         'legal regulator; the national authority is. See Regulatory Domains for '
@@ -199,9 +207,11 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: '3GPP',
     layer: BodyLayer.standards,
     roleType: 'Standards development (cellular)',
-    owns: 'The cellular standards: GSM / UMTS / LTE / 5G NR / 5G-Advanced. A '
+    owns:
+        'The cellular standards: GSM / UMTS / LTE / 5G NR / 5G-Advanced. A '
         'partnership of seven SDOs (ARIB, ATIS, CCSA, ETSI, TSDSI, TTA, TTC).',
-    whyCare: 'Context and convergence. 3GPP specs define non-3GPP-access '
+    whyCare:
+        'Context and convergence. 3GPP specs define non-3GPP-access '
         'interworking: how Wi-Fi offload, Wi-Fi / cellular handoff, and '
         'OpenRoaming\'s cellular side actually work.',
     websiteUrl: 'https://www.3gpp.org',
@@ -211,10 +221,12 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'IETF',
     layer: BodyLayer.standards,
     roleType: 'Standards development (open, no formal membership)',
-    owns: 'The IP / transport / application protocols Wi-Fi carries: IP, TCP, '
+    owns:
+        'The IP / transport / application protocols Wi-Fi carries: IP, TCP, '
         'UDP, QUIC, TLS, DNS, DHCP, RADIUS - published as RFCs. Runs on "rough '
         'consensus and running code."',
-    whyCare: 'Wi-Fi is just the link layer. Everything above it - addressing, '
+    whyCare:
+        'Wi-Fi is just the link layer. Everything above it - addressing, '
         'DHCP, TLS, RADIUS auth for 802.1X enterprise Wi-Fi, captive portals, '
         'Passpoint auth - rides IETF protocols.',
     websiteUrl: 'https://www.ietf.org',
@@ -224,9 +236,11 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'Bluetooth SIG',
     layer: BodyLayer.standards,
     roleType: 'Standards development + certification + trade association',
-    owns: 'The Bluetooth core specification, the Bluetooth qualification '
+    owns:
+        'The Bluetooth core specification, the Bluetooth qualification '
         '(certification) program, and the Bluetooth trademark licensing.',
-    whyCare: 'Adjacent PAN tech sharing the 2.4 GHz band - a coexistence and '
+    whyCare:
+        'Adjacent PAN tech sharing the 2.4 GHz band - a coexistence and '
         'interference factor on every Wi-Fi deployment. Also an instructive '
         'parallel: one body that does BOTH the standard and the cert, unlike '
         'Wi-Fi\'s IEEE / Wi-Fi Alliance split.',
@@ -237,10 +251,12 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'Ecma',
     layer: BodyLayer.standards,
     roleType: 'Standards development (general ICT)',
-    owns: 'ECMAScript (JavaScript), Office Open XML, Dart - and, relevant here, '
+    owns:
+        'ECMAScript (JavaScript), Office Open XML, Dart - and, relevant here, '
         'NFC standards (with ETSI / ISO) and close-proximity data-transfer '
         'specs.',
-    whyCare: 'Context only - adjacent, NOT a Wi-Fi body. NFC is its single '
+    whyCare:
+        'Context only - adjacent, NOT a Wi-Fi body. NFC is its single '
         'wireless touchpoint. Shown to round out the ICT-standards landscape.',
     websiteUrl: 'https://ecma-international.org',
     contextOnly: true,
@@ -252,10 +268,12 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'WFA',
     layer: BodyLayer.certification,
     roleType: 'Certification + industry advocacy + branding',
-    owns: 'The Wi-Fi CERTIFIED interoperability program; the "Wi-Fi" '
+    owns:
+        'The Wi-Fi CERTIFIED interoperability program; the "Wi-Fi" '
         'trademark; the consumer generation names (Wi-Fi 4 / 5 / 6 / 6E / 7); '
         'programs like WPA3, Passpoint, and EasyMesh.',
-    whyCare: 'Owns the brand and the interop seal - it does NOT write 802.11. '
+    whyCare:
+        'Owns the brand and the interop seal - it does NOT write 802.11. '
         'The Wi-Fi 6 / 7 names you sell to clients come from here, not from '
         'IEEE. "Wi-Fi" is a Wi-Fi Alliance trademark, not an acronym, and does '
         'NOT stand for "Wireless Fidelity."',
@@ -266,10 +284,12 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'WBA',
     layer: BodyLayer.certification,
     roleType: 'Industry advocacy + guidelines + certification',
-    owns: 'OpenRoaming (the global secure Wi-Fi roaming federation) and the '
+    owns:
+        'OpenRoaming (the global secure Wi-Fi roaming federation) and the '
         'WRIX roaming-exchange standards; Wi-Fi industry trials, guidelines, '
         'and advocacy. Founded 2003.',
-    whyCare: 'OpenRoaming is the "connect once, roam everywhere" framework '
+    whyCare:
+        'OpenRoaming is the "connect once, roam everywhere" framework '
         'bridging Wi-Fi and cellular identities. The body driving carrier-grade '
         'public Wi-Fi.',
     websiteUrl: 'https://wballiance.com',
@@ -279,11 +299,13 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'CWNP',
     layer: BodyLayer.certification,
     roleType: 'Professional certification (vendor-neutral)',
-    owns: 'The vendor-neutral enterprise Wi-Fi certification track: CWNA, then '
+    owns:
+        'The vendor-neutral enterprise Wi-Fi certification track: CWNA, then '
         'CWAP / CWDP / CWSP / CWNT, up to CWNE (plus newer Wireless IoT '
         'credentials). Tracks as of 2026; CWNP periodically revises them. '
         'Founded 1999.',
-    whyCare: 'The credential that validates real 802.11 skill across any '
+    whyCare:
+        'The credential that validates real 802.11 skill across any '
         'vendor\'s gear. The professional, human-skills layer beneath all the '
         'org acronyms - it certifies people, not products.',
     websiteUrl: 'https://www.cwnp.com',
@@ -295,11 +317,13 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'ITU-R',
     layer: BodyLayer.spectrum,
     roleType: 'Global spectrum coordination (UN agency sector)',
-    owns: 'Global radio-spectrum allocation: the Radio Regulations, the World '
+    owns:
+        'Global radio-spectrum allocation: the Radio Regulations, the World '
         'Radiocommunication Conferences (WRC), and the IMT framework '
         '(IMT-2020 = 5G, IMT-2030 = 6G). Maintains the Master International '
         'Frequency Register.',
-    whyCare: 'Sits above every national regulator. WRC decisions - for example '
+    whyCare:
+        'Sits above every national regulator. WRC decisions - for example '
         'whether 6 GHz goes to Wi-Fi or to IMT / 5G - cascade into the FCC, '
         'Ofcom, and ETSI-aligned rules. See Regulatory Domains for how those '
         'land per country.',
@@ -317,11 +341,13 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'Wi-SUN',
     layer: BodyLayer.iotAdjacent,
     roleType: 'Industry alliance + certification',
-    owns: 'The Wi-SUN FAN (Field Area Network) specification and its '
+    owns:
+        'The Wi-SUN FAN (Field Area Network) specification and its '
         'certification program - an IPv6 sub-GHz wireless mesh built on '
         'IEEE 802.15.4g (PHY) / 802.15.4e (MAC), the IEEE 802.15.4-SUN family. '
         'Current spec FAN 1.1. Also issues cybersecurity certificates.',
-    whyCare: 'The dominant standard for utility-scale outdoor IoT mesh - smart '
+    whyCare:
+        'The dominant standard for utility-scale outdoor IoT mesh - smart '
         'metering (AMI), distribution automation, smart streetlighting, smart '
         'cities. The sub-GHz, long-range, many-hop counterpart to the Wi-Fi you '
         'design indoors.',
@@ -332,12 +358,14 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'CSA',
     layer: BodyLayer.iotAdjacent,
     roleType: 'Standards development + certification',
-    owns: 'Owns and maintains BOTH Zigbee (its founding 802.15.4-based mesh) '
+    owns:
+        'Owns and maintains BOTH Zigbee (its founding 802.15.4-based mesh) '
         'AND Matter (the IP-based, royalty-free smart-home interoperability '
         'standard, backed by Apple / Google / Amazon / Samsung). Runs the '
         'certification programs for both. Formerly the Zigbee Alliance, renamed '
         '11 May 2021.',
-    whyCare: 'The body behind most smart-home radios your clients already run. '
+    whyCare:
+        'The body behind most smart-home radios your clients already run. '
         'Matter rides IP over Wi-Fi and Thread, so it lands directly on the '
         'WLAN - Matter-over-Wi-Fi traffic is on your network whether you '
         'planned for it or not.',
@@ -348,11 +376,13 @@ const List<WifiBody> kWifiBodies = <WifiBody>[
     abbreviation: 'LoRa Alliance',
     layer: BodyLayer.iotAdjacent,
     roleType: 'Industry alliance + certification',
-    owns: 'Develops, maintains, and certifies the LoRaWAN standard - the open '
+    owns:
+        'Develops, maintains, and certifies the LoRaWAN standard - the open '
         'LPWAN MAC-layer / network protocol. LoRaWAN runs OVER the LoRa '
         'physical layer, which is the proprietary spread-spectrum PHY owned by '
         'Semtech (Semtech is a member, not the standards body).',
-    whyCare: 'The carrier-grade, kilometers-range, battery-decade LPWAN for '
+    whyCare:
+        'The carrier-grade, kilometers-range, battery-decade LPWAN for '
         'sensors - a different problem than Wi-Fi solves, often deployed '
         'alongside it. Know the split: LoRa = Semtech\'s PHY / chip; '
         'LoRaWAN = the LoRa Alliance\'s open standard.',

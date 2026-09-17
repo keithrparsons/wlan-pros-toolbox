@@ -90,7 +90,8 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
   double? _freqMHz;
 
   // Unsigned-decimal only. Frequency is always a positive value typed by hand.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -141,9 +142,7 @@ class _WavelengthScreenState extends State<WavelengthScreen> {
         // frequency is empty/invalid/≤0 (no wavelength); copies the five-unit
         // wavelength breakdown as a labeled text block. Copy leads; no help
         // icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,

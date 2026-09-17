@@ -34,7 +34,8 @@ import '../../../services/network/device_info_service.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/roam_detector.dart';
 import '../../../services/network/wifi_info_adapter.dart';
-import '../../../services/network/wifi_info_service.dart' show LocationAuthStatus;
+import '../../../services/network/wifi_info_service.dart'
+    show LocationAuthStatus;
 import '../../../services/network/wifi_signal_sampler.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -46,13 +47,14 @@ import 'network_unavailable_view.dart';
 /// The share/download seam this screen calls to export the formatted roam
 /// document. Matches the [shareBytes] signature so a test can inject a fake that
 /// never touches a platform channel.
-typedef RoamShareFn = Future<void> Function({
-  required List<int> bytes,
-  required String filename,
-  required String mimeType,
-  String? title,
-  ShareOrigin? shareOrigin,
-});
+typedef RoamShareFn =
+    Future<void> Function({
+      required List<int> bytes,
+      required String filename,
+      required String mimeType,
+      String? title,
+      ShareOrigin? shareOrigin,
+    });
 
 /// The Roaming Log screen — a foreground roam recorder built on the shared live
 /// sampler.
@@ -162,7 +164,8 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
       // Share the macOS Location adapter with the sampler so both read one
       // CoreWLAN/CLLocationManager instance. `_macAdapter` is null off macOS, in
       // which case the sampler builds its own default source, exactly as before.
-      _sampler = widget.sampler ??
+      _sampler =
+          widget.sampler ??
           WifiSignalSampler(source: _source, macAdapter: _macAdapter);
       _sessionStart = DateTime.now();
       // Read the device model + OS version once, on a supported (native) source
@@ -466,15 +469,15 @@ class _RoamingLogScreenState extends State<RoamingLogScreen>
     return Text(
       isIos
           ? 'Walk around with this open to record each time your device roams '
-              'from one access point to another on the same network. iOS records '
-              'roams while this screen is open and running. There is no '
-              'background Wi-Fi monitoring on iOS.'
+                'from one access point to another on the same network. iOS records '
+                'roams while this screen is open and running. There is no '
+                'background Wi-Fi monitoring on iOS.'
           // macOS / Android / Windows all auto-poll the link natively — keep the
           // copy platform-neutral so it stays true on each (it previously said
           // "macOS" for every non-iOS platform, wrong on Android and Windows).
           : 'Walk around with this open to record each time your device roams '
-              'from one access point to another on the same network. Your device '
-              'reads the link continuously while this screen is open.',
+                'from one access point to another on the same network. Your device '
+                'reads the link continuously while this screen is open.',
       style: text.bodyLarge?.copyWith(color: colors.textSecondary),
     );
   }
@@ -561,10 +564,10 @@ String bandChannelLabel(int? channel, String? band, {bool derived = false}) {
 /// True when any roam in the session carried a band that was derived app-side
 /// (iOS). Drives the "band derived" footnote so it appears only when relevant.
 bool _anyBandDerived(List<RoamEvent> events) => events.any(
-      (RoamEvent e) =>
-          (e.fromBandDerived && e.fromBand != null) ||
-          (e.toBandDerived && e.toBand != null),
-    );
+  (RoamEvent e) =>
+      (e.fromBandDerived && e.fromBand != null) ||
+      (e.toBandDerived && e.toBand != null),
+);
 
 /// The one-line derived-band caveat. Kept identical between the Copy report and
 /// the Share document so both read the same honest way.
@@ -578,7 +581,7 @@ const String _kDerivedBandNote =
 /// background Wi-Fi callbacks exist); the others state the plainer truth.
 String _foregroundNote(String capturePlatform) => capturePlatform == 'iOS'
     ? 'iOS records roams only while this screen is open and running. There is no '
-        'background Wi-Fi monitoring on iOS.'
+          'background Wi-Fi monitoring on iOS.'
     : 'Roams are recorded while this screen is open.';
 
 /// Builds the §8.16 copy payload: the recorded roam session as a clean,
@@ -646,10 +649,20 @@ String? buildRoamLogCopyText({
     rows.add(<String>[
       '${i + 1}',
       _RoamRow._formatTime(e.at),
-      _apCell(e.fromBssid, e.fromChannel, e.fromBand, e.fromBandDerived,
-          apName: e.resolvedFromApName()),
-      _apCell(e.toBssid, e.toChannel, e.toBand, e.toBandDerived,
-          apName: e.resolvedToApName()),
+      _apCell(
+        e.fromBssid,
+        e.fromChannel,
+        e.fromBand,
+        e.fromBandDerived,
+        apName: e.resolvedFromApName(),
+      ),
+      _apCell(
+        e.toBssid,
+        e.toChannel,
+        e.toBand,
+        e.toBandDerived,
+        apName: e.resolvedToApName(),
+      ),
       _signalCell(e),
       // The first roam has no prior roam to measure dwell from, so it is honestly
       // "n/a" rather than a guessed 0.
@@ -667,9 +680,7 @@ String? buildRoamLogCopyText({
 
   String pad(String cell, int col) {
     // Right-align the ordinal column, left-align the rest.
-    return col == 0
-        ? cell.padLeft(widths[col])
-        : cell.padRight(widths[col]);
+    return col == 0 ? cell.padLeft(widths[col]) : cell.padRight(widths[col]);
   }
 
   String line(List<String> cells) {
@@ -696,8 +707,13 @@ String? buildRoamLogCopyText({
 
 /// One from/to table cell: last-octet identifier, then the channel-first band
 /// descriptor (e.g. ":3a:10 ch 44 · 5 GHz").
-String _apCell(String bssid, int? channel, String? band, bool derived,
-    {String? apName}) {
+String _apCell(
+  String bssid,
+  int? channel,
+  String? band,
+  bool derived, {
+  String? apName,
+}) {
   final String tail = lastOctets(bssid);
   final String bc = bandChannelLabel(channel, band, derived: derived);
   final String core = bc.isEmpty ? tail : '$tail $bc';
@@ -731,16 +747,16 @@ String _signalCell(RoamEvent e) {
 /// RSSI (always the first roam, which has no prior AP) contributes nothing. It
 /// is never zeroed, because a 0 would read as a signal and drag the average.
 List<int> _preRoamRssi(List<RoamEvent> events) => <int>[
-      for (final RoamEvent e in events)
-        if (e.fromRssiDbm != null) e.fromRssiDbm!,
-    ];
+  for (final RoamEvent e in events)
+    if (e.fromRssiDbm != null) e.fromRssiDbm!,
+];
 
 /// The post-roam ("after") RSSI population: the reading on each AP the client
 /// JOINED. This is the roam DESTINATION level — what the client got in return.
 List<int> _postRoamRssi(List<RoamEvent> events) => <int>[
-      for (final RoamEvent e in events)
-        if (e.rssiDbm != null) e.rssiDbm!,
-    ];
+  for (final RoamEvent e in events)
+    if (e.rssiDbm != null) e.rssiDbm!,
+];
 
 /// Average / strongest / weakest over one RSSI population. RSSI is negative
 /// dBm, so the STRONGEST is the greatest value (closest to zero). Returns null
@@ -916,8 +932,9 @@ String? buildRoamLogShareHtml({
   final DateTime windowStart = sessionStart ?? events.first.at;
   final DateTime windowEnd = events.last.at;
   final String sessionLen = _formatDwell(windowEnd.difference(windowStart));
-  final String countLabel =
-      events.length == 1 ? '1 roam recorded' : '${events.length} roams recorded';
+  final String countLabel = events.length == 1
+      ? '1 roam recorded'
+      : '${events.length} roams recorded';
 
   // Element-content escaping (escapes & < >). The values below are inserted as
   // element text, never into attributes, so element mode is correct and keeps
@@ -934,11 +951,15 @@ String? buildRoamLogShareHtml({
       if (e.snrDb != null) e.snrDb!,
   ];
   final List<Duration> dwells = <Duration>[
-    for (int i = 1; i < events.length; i++) events[i].at.difference(events[i - 1].at),
+    for (int i = 1; i < events.length; i++)
+      events[i].at.difference(events[i - 1].at),
   ];
   final List<_PingPong> pingPongs = _detectPingPongs(events);
   final Set<int> flapRows = <int>{
-    for (final _PingPong p in pingPongs) ...<int>[p.firstIndex, p.firstIndex + 1],
+    for (final _PingPong p in pingPongs) ...<int>[
+      p.firstIndex,
+      p.firstIndex + 1,
+    ],
   };
 
   // ---- Stat tiles (omit a tile whose datum is absent) ----
@@ -963,14 +984,25 @@ String? buildRoamLogShareHtml({
       coverage.isEmpty ? base : '$base ($coverage)';
   if (before != null) {
     tiles
-      ..write(_statTile('${before.avg}', tileLabel('dBm avg before roam', preCoverage)))
+      ..write(
+        _statTile(
+          '${before.avg}',
+          tileLabel('dBm avg before roam', preCoverage),
+        ),
+      )
       // The number the designer sizes cell overlap from: how weak the client
       // let it get before it let go.
-      ..write(_statTile(
-          '${before.weakest}', tileLabel('dBm weakest before roam', preCoverage)));
+      ..write(
+        _statTile(
+          '${before.weakest}',
+          tileLabel('dBm weakest before roam', preCoverage),
+        ),
+      );
   }
   if (after != null) {
-    tiles.write(_statTile('${after.avg}', tileLabel('dBm avg after roam', postCoverage)));
+    tiles.write(
+      _statTile('${after.avg}', tileLabel('dBm avg after roam', postCoverage)),
+    );
   }
   // SNR carries a count for the same reason the RSSI tiles do, and it is this
   // change that made it necessary. Before the coverage notes existed, a bare
@@ -981,23 +1013,32 @@ String? buildRoamLogShareHtml({
   if (snr.isNotEmpty) {
     final int lo = snr.reduce((int a, int b) => a < b ? a : b);
     final int hi = snr.reduce((int a, int b) => a > b ? a : b);
-    tiles.write(_statTile(lo == hi ? '$lo' : '$lo-$hi',
-        tileLabel('dB SNR range', _coverageNote(snr.length, events.length))));
+    tiles.write(
+      _statTile(
+        lo == hi ? '$lo' : '$lo-$hi',
+        tileLabel('dB SNR range', _coverageNote(snr.length, events.length)),
+      ),
+    );
   }
   if (dwells.isNotEmpty) {
     final int avgDwell =
-        (dwells.map((Duration d) => d.inSeconds).reduce((int a, int b) => a + b) /
+        (dwells
+                    .map((Duration d) => d.inSeconds)
+                    .reduce((int a, int b) => a + b) /
                 dwells.length)
             .round();
-    tiles.write(_statTile(_formatDwell(Duration(seconds: avgDwell)), 'avg dwell per AP'));
+    tiles.write(
+      _statTile(_formatDwell(Duration(seconds: avgDwell)), 'avg dwell per AP'),
+    );
   }
 
   // ---- Roam-event rows (Signal and SNR split into their own columns) ----
   final StringBuffer rowsHtml = StringBuffer();
   for (int i = 0; i < events.length; i++) {
     final RoamEvent e = events[i];
-    final String dwell =
-        i == 0 ? 'n/a' : _formatDwell(e.at.difference(events[i - 1].at));
+    final String dwell = i == 0
+        ? 'n/a'
+        : _formatDwell(e.at.difference(events[i - 1].at));
     final String signal = _htmlSignalFromTo(e);
     final String snrCell = e.snrDb != null ? '${e.snrDb} dB' : 'not recorded';
     final String cls = flapRows.contains(i) ? ' class="flap"' : '';
@@ -1028,7 +1069,9 @@ String? buildRoamLogShareHtml({
 
   // ---- Honesty callout (same content as the plain notes, in a proper box) ----
   final StringBuffer callout = StringBuffer()
-    ..write('<div class="callout"><strong>Honesty notes on this capture.</strong> ');
+    ..write(
+      '<div class="callout"><strong>Honesty notes on this capture.</strong> ',
+    );
   if (_anyBandDerived(events)) {
     callout.write('${esc(_kDerivedBandNote)} ');
   }
@@ -1163,16 +1206,18 @@ List<_PingPong> _detectPingPongs(List<RoamEvent> events) {
   for (int i = 1; i < events.length; i++) {
     final RoamEvent a = events[i - 1];
     final RoamEvent b = events[i];
-    final bool returned = _bssidEq(b.toBssid, a.fromBssid) &&
-        _bssidEq(b.fromBssid, a.toBssid);
+    final bool returned =
+        _bssidEq(b.toBssid, a.fromBssid) && _bssidEq(b.fromBssid, a.toBssid);
     if (returned && b.at.difference(a.at) <= _kPingPongWindow) {
-      out.add(_PingPong(
-        firstIndex: i - 1,
-        firstAt: a.at,
-        secondAt: b.at,
-        bssidA: a.fromBssid,
-        bssidB: a.toBssid,
-      ));
+      out.add(
+        _PingPong(
+          firstIndex: i - 1,
+          firstAt: a.at,
+          secondAt: b.at,
+          bssidA: a.fromBssid,
+          bssidB: a.toBssid,
+        ),
+      );
     }
   }
   return out;
@@ -1249,23 +1294,29 @@ List<String> _sessionFacts(
   // trigger language, so it must be computed from the signal on the AP the
   // client was LEAVING. It previously read the post-roam value, which put a
   // trigger label on a destination number.
-  final (RoamEvent, RoamEvent)? fired = extremes((RoamEvent e) => e.fromRssiDbm);
+  final (RoamEvent, RoamEvent)? fired = extremes(
+    (RoamEvent e) => e.fromRssiDbm,
+  );
   if (fired != null) {
     final (RoamEvent strongest, RoamEvent weakest) = fired;
     final int n = _preRoamRssi(events).length;
     // "1 reported the signal they left" is a number/pronoun mismatch, and n == 1
     // is the common iOS shape, not a corner.
-    final String reported = n == 1 ? 'the signal it left' : 'the signal they left';
+    final String reported = n == 1
+        ? 'the signal it left'
+        : 'the signal they left';
     if (strongest.fromRssiDbm == weakest.fromRssiDbm) {
       facts.add(universal(n, reported, 'fired at', strongest.fromRssiDbm!));
     } else {
-      facts.add(scoped(
-        n,
-        'Roams fired between ${strongest.fromRssiDbm} dBm (strongest, at '
-        '${_RoamRow._formatTime(strongest.at)}) and ${weakest.fromRssiDbm} dBm '
-        '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
-        reported,
-      ));
+      facts.add(
+        scoped(
+          n,
+          'Roams fired between ${strongest.fromRssiDbm} dBm (strongest, at '
+          '${_RoamRow._formatTime(strongest.at)}) and ${weakest.fromRssiDbm} dBm '
+          '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+          reported,
+        ),
+      );
     }
   }
 
@@ -1275,18 +1326,21 @@ List<String> _sessionFacts(
   if (landed != null) {
     final (RoamEvent strongest, RoamEvent weakest) = landed;
     final int n = _postRoamRssi(events).length;
-    final String reported =
-        n == 1 ? 'the signal it landed on' : 'the signal they landed on';
+    final String reported = n == 1
+        ? 'the signal it landed on'
+        : 'the signal they landed on';
     if (strongest.rssiDbm == weakest.rssiDbm) {
       facts.add(universal(n, reported, 'landed on', strongest.rssiDbm!));
     } else {
-      facts.add(scoped(
-        n,
-        'Roams landed between ${strongest.rssiDbm} dBm (strongest, at '
-        '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
-        '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
-        reported,
-      ));
+      facts.add(
+        scoped(
+          n,
+          'Roams landed between ${strongest.rssiDbm} dBm (strongest, at '
+          '${_RoamRow._formatTime(strongest.at)}) and ${weakest.rssiDbm} dBm '
+          '(weakest, at ${_RoamRow._formatTime(weakest.at)}).',
+          reported,
+        ),
+      );
     }
   }
 
@@ -1295,9 +1349,12 @@ List<String> _sessionFacts(
     final List<int> secs = dwells.map((Duration d) => d.inSeconds).toList();
     final int lo = secs.reduce((int a, int b) => a < b ? a : b);
     final int hi = secs.reduce((int a, int b) => a > b ? a : b);
-    final int avg = (secs.reduce((int a, int b) => a + b) / secs.length).round();
+    final int avg = (secs.reduce((int a, int b) => a + b) / secs.length)
+        .round();
     if (lo == hi) {
-      facts.add('Dwell on the previous AP was ${_formatDwell(Duration(seconds: lo))}.');
+      facts.add(
+        'Dwell on the previous AP was ${_formatDwell(Duration(seconds: lo))}.',
+      );
     } else {
       facts.add(
         'Dwell on the previous AP ranged ${_formatDwell(Duration(seconds: lo))} '
@@ -1384,7 +1441,11 @@ String? currentChannelWidth(ConnectedAp ap) {
   if (channel == null) return null;
   final StringBuffer b = StringBuffer('ch $channel');
   if (ap.channelWidthAvailable && ap.channelWidthMhz != null) {
-    b.write(ap.channelWidthMhz == 8080 ? ' · 80+80 MHz' : ' · ${ap.channelWidthMhz} MHz');
+    b.write(
+      ap.channelWidthMhz == 8080
+          ? ' · 80+80 MHz'
+          : ' · ${ap.channelWidthMhz} MHz',
+    );
   }
   return b.toString();
 }
@@ -1395,8 +1456,9 @@ String? currentChannelWidth(ConnectedAp ap) {
 @visibleForTesting
 String? currentTxRate(double? mbps) {
   if (mbps == null) return null;
-  final String n =
-      mbps == mbps.roundToDouble() ? mbps.toStringAsFixed(0) : mbps.toStringAsFixed(1);
+  final String n = mbps == mbps.roundToDouble()
+      ? mbps.toStringAsFixed(0)
+      : mbps.toStringAsFixed(1);
   return '$n Mbps';
 }
 
@@ -1491,14 +1553,18 @@ class _ConnectionDetails extends StatelessWidget {
         ? '${ap.snrDb} dB${ap.snrDerived ? ' (derived)' : ''}'
         : null;
     final String? tx = currentTxRate(ap.txRateMbps);
-    final String? ssid =
-        (ap.ssid != null && ap.ssid!.trim().isNotEmpty) ? ap.ssid!.trim() : null;
+    final String? ssid = (ap.ssid != null && ap.ssid!.trim().isNotEmpty)
+        ? ap.ssid!.trim()
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         _FactRow(label: 'Network', value: ssid ?? '—'),
-        _FactRow(label: 'Access point', child: _ApValue(apName: ap.apName, bssid: ap.bssid)),
+        _FactRow(
+          label: 'Access point',
+          child: _ApValue(apName: ap.apName, bssid: ap.bssid),
+        ),
         if (bandStd != null) _FactRow(label: 'Band', value: bandStd),
         if (chWidth != null) _FactRow(label: 'Channel', value: chWidth),
         if (signal != null) _FactRow(label: 'Signal', value: signal),
@@ -1567,8 +1633,10 @@ class _ApValue extends StatelessWidget {
 /// tint, the value in the primary.
 class _FactRow extends StatelessWidget {
   const _FactRow({required this.label, this.value, this.child})
-      : assert(value != null || child != null,
-            'a _FactRow needs either a value string or a child widget');
+    : assert(
+        value != null || child != null,
+        'a _FactRow needs either a value string or a child widget',
+      );
 
   final String label;
   final String? value;
@@ -1592,7 +1660,8 @@ class _FactRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
-            child: child ??
+            child:
+                child ??
                 Text(
                   value!,
                   style: text.bodyMedium?.copyWith(
@@ -1631,10 +1700,9 @@ class _RoamLogCard extends StatelessWidget {
       return _Card(
         child: Text(
           _disabledMessage ?? 'Unavailable.',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: context.colors.textSecondary),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
         ),
       );
     }
@@ -1644,14 +1712,19 @@ class _RoamLogCard extends StatelessWidget {
         final TextTheme text = Theme.of(context).textTheme;
         final AppColorScheme colors = context.colors;
         final List<RoamEvent> events = s.roamEvents;
-        final Color liveColor =
-            colors.isLight ? colors.textAccent : colors.primary;
+        final Color liveColor = colors.isLight
+            ? colors.textAccent
+            : colors.primary;
 
         return _Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              _Header(sampler: s, liveColor: liveColor, roamCount: events.length),
+              _Header(
+                sampler: s,
+                liveColor: liveColor,
+                roamCount: events.length,
+              ),
               const SizedBox(height: AppSpacing.sm),
               if (s.isIos && s.triggerError)
                 _Note(
@@ -1678,18 +1751,15 @@ class _RoamLogCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     for (int i = events.length - 1; i >= 0; i--)
-                      _RoamRow(
-                        event: events[i],
-                        index: i + 1,
-                      ),
+                      _RoamRow(event: events[i], index: i + 1),
                   ],
                 ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 s.isIos
                     ? 'Foreground session only on iOS. Roams that happen with '
-                        'the app closed or your phone in your pocket are not '
-                        'recorded. No app can do that on iOS.'
+                          'the app closed or your phone in your pocket are not '
+                          'recorded. No app can do that on iOS.'
                     : 'Records roams while this screen is open.',
                 style: text.bodySmall?.copyWith(color: colors.textTertiary),
               ),
@@ -1718,8 +1788,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
-    final String countLabel =
-        roamCount == 1 ? '1 roam' : '$roamCount roams';
+    final String countLabel = roamCount == 1 ? '1 roam' : '$roamCount roams';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -1852,15 +1921,24 @@ class _RoamRow extends StatelessWidget {
     // The a11y label keeps the FULL BSSID (the visible row shows only the
     // identifying last octets) plus the channel-first band for each AP.
     final String fromSpoken = _spokenAp(
-      event.fromBssid, event.fromChannel, event.fromBand, event.fromBandDerived,
-      apName: event.resolvedFromApName());
+      event.fromBssid,
+      event.fromChannel,
+      event.fromBand,
+      event.fromBandDerived,
+      apName: event.resolvedFromApName(),
+    );
     final String toSpoken = _spokenAp(
-      event.toBssid, event.toChannel, event.toBand, event.toBandDerived,
-      apName: event.resolvedToApName());
+      event.toBssid,
+      event.toChannel,
+      event.toBand,
+      event.toBandDerived,
+      apName: event.resolvedToApName(),
+    );
 
     return Semantics(
       container: true,
-      label: 'Roam $index on $network at $time, from access point '
+      label:
+          'Roam $index on $network at $time, from access point '
           '$fromSpoken to access point $toSpoken, $spokenSignal.',
       child: ExcludeSemantics(
         child: Padding(
@@ -1871,11 +1949,7 @@ class _RoamRow extends StatelessWidget {
               // Time + network + ordinal.
               Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.swap_horiz,
-                    size: 16,
-                    color: colors.textAccent,
-                  ),
+                  Icon(Icons.swap_horiz, size: 16, color: colors.textAccent),
                   const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Text(
@@ -1996,8 +2070,13 @@ String _spokenSignal(RoamEvent e) {
 /// readers announce the whole address, not just the visible tail) plus the
 /// channel and band, with the honest "derived" note when the band was computed
 /// app-side.
-String _spokenAp(String bssid, int? channel, String? band, bool bandDerived,
-    {String? apName}) {
+String _spokenAp(
+  String bssid,
+  int? channel,
+  String? band,
+  bool bandDerived, {
+  String? apName,
+}) {
   final StringBuffer b = StringBuffer();
   if (apName != null && apName.trim().isNotEmpty) {
     b.write('${apName.trim()}, ');
@@ -2126,10 +2205,7 @@ class _ApBlock extends StatelessWidget {
 /// null when there is no roam to export, and the affordance then renders disabled
 /// and drops from focus traversal. Placed AFTER copy per the §8.16 order rule.
 class _RoamShareAction extends StatelessWidget {
-  const _RoamShareAction({
-    required this.htmlBuilder,
-    required this.shareFn,
-  });
+  const _RoamShareAction({required this.htmlBuilder, required this.shareFn});
 
   /// Returns the full HTML document to share, or null when there is nothing to
   /// export yet (→ disabled). Evaluated at tap time to serialize on demand, and

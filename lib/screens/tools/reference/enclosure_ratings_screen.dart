@@ -74,8 +74,9 @@ class EnclosureRatingsScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kEnclosureRatingsToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kEnclosureRatingsToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -93,8 +94,9 @@ class EnclosureRatingsScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kEnclosureRatingsToolId),
+                      assetPath: ReferenceImages.pathFor(
+                        kEnclosureRatingsToolId,
+                      ),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'IP and NEMA enclosure-rating decoder diagram',
@@ -106,10 +108,11 @@ class EnclosureRatingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kEnclosureRatingsToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kEnclosureRatingsToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
-                      assetPath:
-                          ReferencePdfs.pathFor(kEnclosureRatingsToolId),
+                      assetPath: ReferencePdfs.pathFor(kEnclosureRatingsToolId),
                       title: 'Enclosure Ratings',
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -300,10 +303,7 @@ class _Caption extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    return Text(
-      text,
-      style: t.bodySmall?.copyWith(color: colors.textTertiary),
-    );
+    return Text(text, style: t.bodySmall?.copyWith(color: colors.textTertiary));
   }
 }
 
@@ -347,11 +347,7 @@ class _Bullets extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(top: 2, right: AppSpacing.sm),
-                child: Icon(
-                  Icons.circle,
-                  size: 6,
-                  color: colors.textAccent,
-                ),
+                child: Icon(Icons.circle, size: 6, color: colors.textAccent),
               ),
               Expanded(
                 child: Text(

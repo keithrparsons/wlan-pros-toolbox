@@ -71,11 +71,7 @@ class SdCardDiagrams {
 
   /// All concept-graphic asset names for this page, in render order, for tests
   /// and iteration.
-  static const List<String> all = <String>[
-    cardFace,
-    contactRows,
-    twoAxis,
-  ];
+  static const List<String> all = <String>[cardFace, contactRows, twoAxis];
 
   /// Built diagram paths, populated once from the AssetManifest. `null` until
   /// the first [ensureLoaded] completes; treated as "nothing built" until then.
@@ -96,8 +92,9 @@ class SdCardDiagrams {
   static Future<void> ensureLoaded() async {
     if (_bundled != null) return;
     WidgetsFlutterBinding.ensureInitialized();
-    final AssetManifest manifest =
-        await AssetManifest.loadFromAssetBundle(rootBundle);
+    final AssetManifest manifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
     _bundled = manifest
         .listAssets()
         .where((String p) => p.startsWith('$_dir/'))

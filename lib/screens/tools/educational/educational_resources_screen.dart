@@ -80,7 +80,8 @@ class _EducationalResourcesScreenState
   /// Quick Reference category screen).
   String? _selectedSection;
 
-  late final List<ToolEntry> _cards = widget.cards ?? educationalReferenceCards();
+  late final List<ToolEntry> _cards =
+      widget.cards ?? educationalReferenceCards();
 
   @override
   void initState() {
@@ -100,8 +101,9 @@ class _EducationalResourcesScreenState
 
   Future<void> _loadAsset() async {
     try {
-      final String raw =
-          await rootBundle.loadString(kEducationalResourcesAsset);
+      final String raw = await rootBundle.loadString(
+        kEducationalResourcesAsset,
+      );
       final EducationalResourcesService svc =
           EducationalResourcesService.fromJson(raw);
       if (!mounted) return;
@@ -123,7 +125,9 @@ class _EducationalResourcesScreenState
     final int n = svc.search(value).length;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching resources' : '$n matching resource${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching resources'
+          : '$n matching resource${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -142,9 +146,7 @@ class _EducationalResourcesScreenState
             final double edge = constraints.maxWidth >= 720
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
-            return CenteredContent(
-              child: _body(edge),
-            );
+            return CenteredContent(child: _body(edge));
           },
         ),
       ),
@@ -194,10 +196,7 @@ class _EducationalResourcesScreenState
     final List<Widget> children = <Widget>[
       _IntroCard(total: total, attribution: svc.attribution),
       const SizedBox(height: AppSpacing.sm),
-      _SearchField(
-        controller: _queryCtrl,
-        onChanged: _onQueryChanged,
-      ),
+      _SearchField(controller: _queryCtrl, onChanged: _onQueryChanged),
     ];
 
     // Filter chips — only when not actively typing a free-text query (the two
@@ -207,11 +206,13 @@ class _EducationalResourcesScreenState
       if (sections.length > 1) {
         children
           ..add(const SizedBox(height: AppSpacing.sm))
-          ..add(_SectionFilterChips(
-            sections: sections,
-            selected: _selectedSection,
-            onSelect: (String? s) => setState(() => _selectedSection = s),
-          ));
+          ..add(
+            _SectionFilterChips(
+              sections: sections,
+              selected: _selectedSection,
+              onSelect: (String? s) => setState(() => _selectedSection = s),
+            ),
+          );
       }
     }
 
@@ -255,8 +256,8 @@ class _EducationalResourcesScreenState
       return _topicGroupWidgets(groups);
     }
 
-    final bool showCards = _selectedSection == null ||
-        _selectedSection == _kReferenceCardsSection;
+    final bool showCards =
+        _selectedSection == null || _selectedSection == _kReferenceCardsSection;
     final bool showTopics = _selectedSection != _kReferenceCardsSection;
 
     final List<Widget> out = <Widget>[];
@@ -314,9 +315,7 @@ class _EducationalResourcesScreenState
     return out;
   }
 
-  List<Widget> _topicGroupWidgets(
-    List<ResourceGroup> groups,
-  ) {
+  List<Widget> _topicGroupWidgets(List<ResourceGroup> groups) {
     final List<Widget> out = <Widget>[];
     for (int g = 0; g < groups.length; g++) {
       final ResourceGroup group = groups[g];
@@ -403,10 +402,9 @@ class _SearchField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         // 16px field text dodges iOS Safari auto-zoom (§8.4).
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -441,9 +439,7 @@ class _TopicHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 topic,
-                style: text.headlineSmall?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.headlineSmall?.copyWith(color: colors.textPrimary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -515,7 +511,8 @@ class _ResourceRowState extends State<_ResourceRow> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: '${r.title}. ${r.summary} '
+      label:
+          '${r.title}. ${r.summary} '
           '${r.cost.label}. ${r.level.label}.',
       child: Material(
         color: colors.surface1,
@@ -557,10 +554,7 @@ class _ResourceRowState extends State<_ResourceRow> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      ResourceMetaBadges(
-                        cost: r.cost,
-                        level: r.level,
-                      ),
+                      ResourceMetaBadges(cost: r.cost, level: r.level),
                     ],
                   ),
                 ),
@@ -735,7 +729,8 @@ class _FieldManualRowState extends State<_FieldManualRow> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: 'Field Manual. The in-depth technical manual for professionals, '
+      label:
+          'Field Manual. The in-depth technical manual for professionals, '
           'covering every tool. Opens the manual.',
       child: Material(
         color: colors.surface1,
@@ -824,9 +819,9 @@ class _SectionFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<({String? value, String label})> chips =
         <({String? value, String label})>[
-      (value: null, label: 'All'),
-      ...sections.map((String s) => (value: s, label: s)),
-    ];
+          (value: null, label: 'All'),
+          ...sections.map((String s) => (value: s, label: s)),
+        ];
 
     return Semantics(
       container: true,
@@ -939,11 +934,7 @@ class _NoMatch extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          Icon(
-            Icons.search_off_outlined,
-            size: 48,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
           const SizedBox(height: AppSpacing.sm),
           Text(
             query.isEmpty

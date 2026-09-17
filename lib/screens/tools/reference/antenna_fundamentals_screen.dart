@@ -126,13 +126,15 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                   bullets: const <_Bullet>[
                     _Bullet(
                       lead: 'Azimuth is the horizontal plane.',
-                      rest: ' Stand on the ceiling and look straight down on the '
+                      rest:
+                          ' Stand on the ceiling and look straight down on the '
                           'antenna. The width of coverage in that top-down view '
                           'is the horizontal beamwidth.',
                     ),
                     _Bullet(
                       lead: 'Elevation is the vertical plane.',
-                      rest: ' Step to the side and look at the antenna in '
+                      rest:
+                          ' Step to the side and look at the antenna in '
                           'profile. The height of coverage in that side view is '
                           'the vertical beamwidth.',
                     ),
@@ -166,7 +168,8 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                   ],
                   aside: const _Aside(
                     title: 'Read the spec, don’t derive it.',
-                    body: '“More gain means a narrower beam” is always '
+                    body:
+                        '“More gain means a narrower beam” is always '
                         'directionally true. The exact beamwidth that comes with '
                         'a given gain depends on the specific antenna’s '
                         'design, so it is a rule of thumb, not a formula you can '
@@ -234,13 +237,15 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                       ],
                       bullets: const <_Bullet>[
                         _Bullet(
-                          rest: 'The strongest energy now fires up into the floor '
+                          rest:
+                              'The strongest energy now fires up into the floor '
                               'above and down into the floor below. You are '
                               'covering exactly the two places you did not want '
                               'covered.',
                         ),
                         _Bullet(
-                          rest: 'You have rotated the antenna’s polarization '
+                          rest:
+                              'You have rotated the antenna’s polarization '
                               '90° relative to your upright clients, which '
                               'costs you roughly 6 dB right off the top.',
                         ),
@@ -250,7 +255,8 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                             'over: wrong coverage shape, and a polarization '
                             'mismatch on top of it.',
                       ],
-                      warning: 'Never mount an Access Point on a wall like a '
+                      warning:
+                          'Never mount an Access Point on a wall like a '
                           'clock.',
                     ),
                     _Subsection(
@@ -306,7 +312,8 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                   bullets: const <_Bullet>[
                     _Bullet(
                       lead: 'The rings are a dB scale, not distance.',
-                      rest: ' The outer edge is the antenna’s own peak. Each '
+                      rest:
+                          ' The outer edge is the antenna’s own peak. Each '
                           'ring inward is a step down in relative power. The '
                           'pattern line shows how strongly the antenna radiates '
                           'in each direction compared to its own strongest '
@@ -315,12 +322,14 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                     ),
                     _Bullet(
                       lead: 'Main lobe.',
-                      rest: ' The direction of strongest radiation. The biggest '
+                      rest:
+                          ' The direction of strongest radiation. The biggest '
                           'bulge in the pattern.',
                     ),
                     _Bullet(
                       lead: 'Beamwidth, read at the -3 dB points.',
-                      rest: ' Find where the main lobe crosses the -3 dB ring, '
+                      rest:
+                          ' Find where the main lobe crosses the -3 dB ring, '
                           'the half-power ring, on each side. The angle between '
                           'those two crossings is the beamwidth. That is the '
                           'honest measure of “how wide does this cover,” '
@@ -328,14 +337,16 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                     ),
                     _Bullet(
                       lead: 'Side lobes.',
-                      rest: ' The smaller bulges off the sides of the main lobe. '
+                      rest:
+                          ' The smaller bulges off the sides of the main lobe. '
                           'They radiate real energy in directions you may not have '
                           'wanted to cover. On the thesis, side lobes are coverage '
                           'you did not ask for.',
                     ),
                     _Bullet(
                       lead: 'Nulls.',
-                      rest: ' The pinched-in directions between lobes, where the '
+                      rest:
+                          ' The pinched-in directions between lobes, where the '
                           'antenna radiates almost nothing. Many ceiling antennas '
                           'have a null pointing straight down, which is why the '
                           'client right under the AP can read weaker than one a '
@@ -343,7 +354,8 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                     ),
                     _Bullet(
                       lead: 'Front-to-back ratio.',
-                      rest: ' For a directional antenna, the difference in dB '
+                      rest:
+                          ' For a directional antenna, the difference in dB '
                           'between the main lobe in front and the lobe pointing '
                           'backward. A high front-to-back ratio means the antenna '
                           'keeps energy out of the area behind it. This is the '
@@ -387,13 +399,16 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                   bullets: const <_Bullet>[
                     _Bullet(
                       lead: 'Open-plan even coverage.',
-                      rest: ' Omni. You want everything around you, equally '
+                      rest:
+                          ' Omni. You want everything around you, equally '
                           'weighted. The shape matches the intent.',
                     ),
                     _Bullet(
-                      lead: 'Aiming coverage into one area, and keeping it out of '
+                      lead:
+                          'Aiming coverage into one area, and keeping it out of '
                           'another.',
-                      rest: ' Patch or panel. Mount it on a wall and fire inward. '
+                      rest:
+                          ' Patch or panel. Mount it on a wall and fire inward. '
                           'Its front-to-back ratio shields the room next door and '
                           'the parking lot beyond it. This is the purest '
                           '“cover what you want, not what you don’t” '
@@ -401,7 +416,8 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                     ),
                     _Bullet(
                       lead: 'High-ceiling space.',
-                      rest: ' Directional, downtilted. Put the energy on the '
+                      rest:
+                          ' Directional, downtilted. Put the energy on the '
                           'floor where the clients are, not on the far wall 40 '
                           'feet up.',
                     ),
@@ -415,9 +431,11 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                         'reason you chose the antenna.',
                   ],
                   aside: const _Aside(
-                    title: 'Point-to-point needs real line-of-sight, not just a '
+                    title:
+                        'Point-to-point needs real line-of-sight, not just a '
                         'visible path.',
-                    body: 'The radio beam needs clearance around the straight '
+                    body:
+                        'The radio beam needs clearance around the straight '
                         'line between the two antennas, the Fresnel zone, not only '
                         'an unobstructed view. A link that looks clear to the eye '
                         'can still be choked by a rooftop or a tree line sitting '
@@ -425,7 +443,8 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                   ),
                   antiPattern: const _AntiPattern(
                     lead: 'The anti-pattern, said out loud:',
-                    body: ' choosing an antenna by its gain number alone. More '
+                    body:
+                        ' choosing an antenna by its gain number alone. More '
                         'dBi is not more coverage. It is narrower, differently '
                         'shaped coverage. A high-gain omni in a multi-story '
                         'building is the classic self-inflicted wound. It flattens '
@@ -915,7 +934,9 @@ class _SubsectionView extends StatelessWidget {
 
     if (s.leadingDiagram != null) {
       children
-        ..add(_AntennaDiagramBand(slug: s.leadingDiagram!, isDesktop: s.isDesktop))
+        ..add(
+          _AntennaDiagramBand(slug: s.leadingDiagram!, isDesktop: s.isDesktop),
+        )
         ..add(const SizedBox(height: AppSpacing.md));
     }
 
@@ -1187,7 +1208,8 @@ class _TypeTable extends StatelessWidget {
       beamwidth: '360° azimuth, narrow elevation',
       covers: 'everything around it, evenly',
       leavesOut: 'above and below, the donut hole',
-      reachWhen: 'open-plan even coverage, ceiling-mounting an office or '
+      reachWhen:
+          'open-plan even coverage, ceiling-mounting an office or '
           'warehouse floor',
     ),
     _TypeRow(
@@ -1195,7 +1217,8 @@ class _TypeTable extends StatelessWidget {
       beamwidth: '~30 to 120°',
       covers: 'a broad area in front',
       leavesOut: 'everything behind it',
-      reachWhen: 'firing into one room, covering one side of a space, keeping '
+      reachWhen:
+          'firing into one room, covering one side of a space, keeping '
           'energy out of the next room',
     ),
     _TypeRow(
@@ -1203,7 +1226,8 @@ class _TypeTable extends StatelessWidget {
       beamwidth: '~60 to 120°',
       covers: 'a defined slice of a large area',
       leavesOut: 'the other sectors',
-      reachWhen: 'large outdoor areas, stadium bowls, campus quads, splitting a '
+      reachWhen:
+          'large outdoor areas, stadium bowls, campus quads, splitting a '
           'big space into controlled wedges',
     ),
     _TypeRow(
@@ -1211,7 +1235,8 @@ class _TypeTable extends StatelessWidget {
       beamwidth: '~15 to 40°',
       covers: 'a focused corridor toward a target',
       leavesOut: 'nearly everything off-axis',
-      reachWhen: 'aiming down a long narrow space, short to medium '
+      reachWhen:
+          'aiming down a long narrow space, short to medium '
           'building-to-building links',
     ),
     _TypeRow(
@@ -1219,7 +1244,8 @@ class _TypeTable extends StatelessWidget {
       beamwidth: '~3 to 25°',
       covers: 'one distant target',
       leavesOut: 'everything else',
-      reachWhen: 'long point-to-point links, building-to-building backhaul over '
+      reachWhen:
+          'long point-to-point links, building-to-building backhaul over '
           'open line of sight',
     ),
   ];
@@ -1248,7 +1274,8 @@ class _TypeCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Semantics(
-      label: '${row.type}. Typical beamwidth ${row.beamwidth}. '
+      label:
+          '${row.type}. Typical beamwidth ${row.beamwidth}. '
           'Covers ${row.covers}. Leaves out ${row.leavesOut}. '
           'Reach for it when ${row.reachWhen}.',
       excludeSemantics: true,
@@ -1301,7 +1328,10 @@ class _BeamwidthChip extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: colors.borderStrong, width: 1),
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1380,13 +1410,16 @@ class _QuickMap extends StatelessWidget {
     ),
     _QuickMapRow(
       scenario: 'Warehouse, high flat ceiling, long aisles:',
-      recommendation: ' higher-gain omni or a downtilted directional. Reach the '
+      recommendation:
+          ' higher-gain omni or a downtilted directional. Reach the '
           'floor down the aisles.',
     ),
     _QuickMapRow(
-      scenario: 'Single room you want covered without bleeding into the next '
+      scenario:
+          'Single room you want covered without bleeding into the next '
           'room:',
-      recommendation: ' wall-mounted patch firing inward. The front-to-back '
+      recommendation:
+          ' wall-mounted patch firing inward. The front-to-back '
           'ratio does the shielding.',
     ),
     _QuickMapRow(
@@ -1395,12 +1428,14 @@ class _QuickMap extends StatelessWidget {
     ),
     _QuickMapRow(
       scenario: 'Long hallway or narrow corridor:',
-      recommendation: ' a patch or directional aimed down the axis. Never a '
+      recommendation:
+          ' a patch or directional aimed down the axis. Never a '
           'hallway omni that wastes half its pattern into the side walls.',
     ),
     _QuickMapRow(
       scenario: 'Building-to-building link:',
-      recommendation: ' Yagi for the shorter hop, dish for the longer one, both '
+      recommendation:
+          ' Yagi for the shorter hop, dish for the longer one, both '
           'aimed, both with real line-of-sight clearance through the Fresnel '
           'zone.',
     ),
@@ -1420,7 +1455,8 @@ class _QuickMap extends StatelessWidget {
         const _SectionHeader(number: '→', title: 'Deployment quick-map'),
         const SizedBox(height: AppSpacing.sm),
         _Para(
-          text: 'A fast lookup for the common cases. Each one is the thesis '
+          text:
+              'A fast lookup for the common cases. Each one is the thesis '
               'applied to a real space.',
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -1527,8 +1563,9 @@ class _AntennaDiagramBand extends StatelessWidget {
   Future<String> _loadSwappedSvg() async {
     final String cached = _lightSvgCache[slug] ?? '';
     if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(AntennaFundamentalsDiagrams.path(slug));
+    final String raw = await rootBundle.loadString(
+      AntennaFundamentalsDiagrams.path(slug),
+    );
     final String swapped = ConceptGraphicBand.applyLightSwap(raw);
     _lightSvgCache[slug] = swapped;
     return swapped;

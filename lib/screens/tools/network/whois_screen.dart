@@ -60,8 +60,7 @@ class _WhoisScreenState extends State<WhoisScreen> {
   @override
   void initState() {
     super.initState();
-    _piBacked =
-        kIsWeb && PiBackend.canServe('whois') && widget.service == null;
+    _piBacked = kIsWeb && PiBackend.canServe('whois') && widget.service == null;
     // On the Pi path the native WHOIS service is never constructed — the lookup
     // runs server-side on the Pi through PiBackendClient.
     if (!_piBacked) {
@@ -137,9 +136,7 @@ class _WhoisScreenState extends State<WhoisScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a record is
         // retrieved; copies the highlights, the consulted-server path, and the
         // raw record. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -486,9 +483,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

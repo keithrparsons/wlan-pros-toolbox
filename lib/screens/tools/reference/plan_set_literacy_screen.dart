@@ -66,8 +66,9 @@ class PlanSetLiteracyScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kPlanSetLiteracyToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kPlanSetLiteracyToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -85,8 +86,9 @@ class PlanSetLiteracyScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kPlanSetLiteracyToolId),
+                      assetPath: ReferenceImages.pathFor(
+                        kPlanSetLiteracyToolId,
+                      ),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'Sheet-number anatomy diagram: discipline letter, '
@@ -95,7 +97,9 @@ class PlanSetLiteracyScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kPlanSetLiteracyToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kPlanSetLiteracyToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
                       assetPath: ReferencePdfs.pathFor(kPlanSetLiteracyToolId),
                       title: 'Plan-Set Literacy',
@@ -253,10 +257,7 @@ class _Caption extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    return Text(
-      text,
-      style: t.bodySmall?.copyWith(color: colors.textTertiary),
-    );
+    return Text(text, style: t.bodySmall?.copyWith(color: colors.textTertiary));
   }
 }
 

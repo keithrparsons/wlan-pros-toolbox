@@ -22,12 +22,14 @@ import 'package:wlan_pros_toolbox/services/network/ap_scan_service.dart';
 void main() {
   group('native scan platform SSOT', () {
     test('catalog set agrees with the service set, member for member', () {
-      final Set<String> fromCatalog =
-          kNativeScanPlatforms.map(nativeScanPlatformKey).toSet();
+      final Set<String> fromCatalog = kNativeScanPlatforms
+          .map(nativeScanPlatformKey)
+          .toSet();
       expect(
         fromCatalog,
         ApScanService.wiredPlatforms,
-        reason: 'kNativeScanPlatforms must be derived from '
+        reason:
+            'kNativeScanPlatforms must be derived from '
             'ApScanService.wiredPlatforms, never copied beside it.',
       );
     });
@@ -36,12 +38,17 @@ void main() {
       // Guards the other direction: a typo'd or retired key in wiredPlatforms
       // would silently derive an EMPTY catalog set, dropping the tool
       // everywhere with no test failing.
-      final Set<String> known =
-          TargetPlatform.values.map(nativeScanPlatformKey).toSet();
+      final Set<String> known = TargetPlatform.values
+          .map(nativeScanPlatformKey)
+          .toSet();
       for (final String p in ApScanService.wiredPlatforms) {
-        expect(known, contains(p),
-            reason: '"$p" matches no TargetPlatform, so it can never derive '
-                'into the catalog.');
+        expect(
+          known,
+          contains(p),
+          reason:
+              '"$p" matches no TargetPlatform, so it can never derive '
+              'into the catalog.',
+        );
       }
     });
 
@@ -57,10 +64,11 @@ void main() {
       // This test earning its keep is why the edit was safe: it failed the
       // moment wiredPlatforms changed, so the decision could not drift in
       // silently. Changing this list is still a deliberate act.
-      expect(
-        ApScanService.wiredPlatforms,
-        <String>{'android', 'macos', 'windows'},
-      );
+      expect(ApScanService.wiredPlatforms, <String>{
+        'android',
+        'macos',
+        'windows',
+      });
       expect(kNativeScanPlatforms, <TargetPlatform>{
         TargetPlatform.android,
         TargetPlatform.macOS,
@@ -69,10 +77,14 @@ void main() {
     });
 
     test('the platform key mapping is total and unique', () {
-      final List<String> keys =
-          TargetPlatform.values.map(nativeScanPlatformKey).toList();
-      expect(keys.toSet().length, keys.length,
-          reason: 'two TargetPlatforms sharing a key would alias support.');
+      final List<String> keys = TargetPlatform.values
+          .map(nativeScanPlatformKey)
+          .toList();
+      expect(
+        keys.toSet().length,
+        keys.length,
+        reason: 'two TargetPlatforms sharing a key would alias support.',
+      );
     });
   });
 }

@@ -154,7 +154,8 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     } else if (NetworkSupport.interfaceInfoSupported) {
       _service = widget.service ?? InterfaceInfoService();
       _publicIpService = widget.publicIpService ?? PublicIpService();
-      _wifiSource = widget.wifiSourceOverride ?? WifiInfoSourceResolver.resolve();
+      _wifiSource =
+          widget.wifiSourceOverride ?? WifiInfoSourceResolver.resolve();
       // The on-demand Refresh Wi-Fi affordance is the iOS Shortcut path only;
       // macOS already re-reads the link directly via the AppBar Refresh.
       if (_wifiSource == WifiInfoSource.iosShortcuts) {
@@ -219,8 +220,9 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     final WiFiDetailsBridge? bridge = _iosBridge;
     if (bridge == null) return;
     setState(() => _refreshingWifi = true);
-    final bool opened =
-        await bridge.runShortcut(ShortcutsConfig.kCompanionShortcutName);
+    final bool opened = await bridge.runShortcut(
+      ShortcutsConfig.kCompanionShortcutName,
+    );
     if (!mounted) return;
     if (!opened) {
       // Could not open the Shortcut (missing / not installed). Drop the pending
@@ -270,12 +272,15 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
   void _loadWifiExtras() {
     final WiFiDetailsBridge? bridge = _iosBridge;
     if (bridge == null) return;
-    bridge.readLatest().then((WiFiDetails? extras) {
-      if (!mounted) return;
-      setState(() => _wifiExtras = extras);
-    }).catchError((Object _) {
-      // Honest floor: leave _wifiExtras null; never fabricate an address.
-    });
+    bridge
+        .readLatest()
+        .then((WiFiDetails? extras) {
+          if (!mounted) return;
+          setState(() => _wifiExtras = extras);
+        })
+        .catchError((Object _) {
+          // Honest floor: leave _wifiExtras null; never fabricate an address.
+        });
   }
 
   /// After a read that produced a BSSID but no AP name, await the service's
@@ -314,35 +319,38 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
       _publicIpStatus = _PublicIpStatus.loading;
       _publicIp = null;
     });
-    _publicIpService!.fetch().then((String? ip) {
-      if (!mounted) return;
-      setState(() {
-        _publicIp = ip;
-        _publicIpStatus = ip == null
-            ? _PublicIpStatus.unavailable
-            : _PublicIpStatus.loaded;
-      });
-      // WCAG 4.1.3 — an AT user who heard "Public IP, Looking up…" must hear
-      // the resolution, not silence. The loaded row (a ValueRow) and the
-      // unavailable row carry no live region of their own, so announce the
-      // transition explicitly here. The unavailable row is also wrapped in a
-      // liveRegion below for AT that re-reads on rebuild.
-      SemanticsService.sendAnnouncement(
-        View.of(context),
-        ip == null
-            ? 'Public IP unavailable, no internet or blocked.'
-            : 'Public IP $ip',
-        Directionality.of(context),
-      );
-    }).catchError((Object _) {
-      if (!mounted) return;
-      setState(() => _publicIpStatus = _PublicIpStatus.unavailable);
-      SemanticsService.sendAnnouncement(
-        View.of(context),
-        'Public IP unavailable, no internet or blocked.',
-        Directionality.of(context),
-      );
-    });
+    _publicIpService!
+        .fetch()
+        .then((String? ip) {
+          if (!mounted) return;
+          setState(() {
+            _publicIp = ip;
+            _publicIpStatus = ip == null
+                ? _PublicIpStatus.unavailable
+                : _PublicIpStatus.loaded;
+          });
+          // WCAG 4.1.3 — an AT user who heard "Public IP, Looking up…" must hear
+          // the resolution, not silence. The loaded row (a ValueRow) and the
+          // unavailable row carry no live region of their own, so announce the
+          // transition explicitly here. The unavailable row is also wrapped in a
+          // liveRegion below for AT that re-reads on rebuild.
+          SemanticsService.sendAnnouncement(
+            View.of(context),
+            ip == null
+                ? 'Public IP unavailable, no internet or blocked.'
+                : 'Public IP $ip',
+            Directionality.of(context),
+          );
+        })
+        .catchError((Object _) {
+          if (!mounted) return;
+          setState(() => _publicIpStatus = _PublicIpStatus.unavailable);
+          SemanticsService.sendAnnouncement(
+            View.of(context),
+            'Public IP unavailable, no internet or blocked.',
+            Directionality.of(context),
+          );
+        });
   }
 
   @override
@@ -442,10 +450,14 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
       // Mirror the on-screen Wi-Fi-Shortcut address rows (Orb-parity) so the
       // report never disagrees with the screen ([[feedback_screenshot_text_match]]).
       // Same non-duplicating rule the card uses.
-      line('IPv4 (Wi-Fi Shortcut)',
-          shortcutLocalAddress(_wifiExtras?.ipv4Local, w.wifiIPv4));
-      line('IPv6 (Wi-Fi Shortcut)',
-          shortcutLocalAddress(_wifiExtras?.ipv6Local, w.wifiIPv6));
+      line(
+        'IPv4 (Wi-Fi Shortcut)',
+        shortcutLocalAddress(_wifiExtras?.ipv4Local, w.wifiIPv4),
+      );
+      line(
+        'IPv6 (Wi-Fi Shortcut)',
+        shortcutLocalAddress(_wifiExtras?.ipv6Local, w.wifiIPv6),
+      );
       line('Subnet mask', w.subnetMask);
       line('Gateway', w.gatewayIP);
       line('Interface', w.interfaceName);
@@ -522,8 +534,9 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
               publicIp: _publicIp,
               // iOS-only on-demand Wi-Fi read. Null off the iOS Shortcut path so
               // the affordance never shows where the link is read directly.
-              onRefreshWifi:
-                  _wifiSource == WifiInfoSource.iosShortcuts ? _refreshWifi : null,
+              onRefreshWifi: _wifiSource == WifiInfoSource.iosShortcuts
+                  ? _refreshWifi
+                  : null,
               refreshingWifi: _refreshingWifi,
               macPlatform: _macPlatform,
               wifiExtras: _wifiExtras,
@@ -551,10 +564,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
           return _ErrorState(onRetry: _loadPi);
         }
         final List<PiInterface> ifaces = _piInterfaces ?? const <PiInterface>[];
-        return _PiInterfacesView(
-          interfaces: ifaces,
-          edge: edge,
-        );
+        return _PiInterfacesView(interfaces: ifaces, edge: edge);
       },
     );
   }
@@ -575,8 +585,10 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
     for (final PiInterface iface in ifaces) {
       buf
         ..writeln()
-        ..writeln('${iface.name}  ·  '
-            '${_Success._kindLabel(InterfaceInfoService.classifyInterface(iface.name))}');
+        ..writeln(
+          '${iface.name}  ·  '
+          '${_Success._kindLabel(InterfaceInfoService.classifyInterface(iface.name))}',
+        );
       if (iface.operState != null) buf.writeln('State: ${iface.operState}');
       if (iface.mac != null && iface.mac!.isNotEmpty) {
         buf.writeln('MAC: ${iface.mac}');
@@ -601,10 +613,7 @@ class _InterfaceInfoScreenState extends State<InterfaceInfoScreen>
 /// native `_Success` layout. This is the Pi's OWN interface table, clearly
 /// attributed — not the browser's device (a browser cannot read one).
 class _PiInterfacesView extends StatelessWidget {
-  const _PiInterfacesView({
-    required this.interfaces,
-    required this.edge,
-  });
+  const _PiInterfacesView({required this.interfaces, required this.edge});
 
   final List<PiInterface> interfaces;
   final double edge;
@@ -652,12 +661,14 @@ class _PiInterfacesView extends StatelessWidget {
                 _Card(
                   title: 'Interfaces',
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
                     child: Text(
                       'No interfaces reported by the Pi.',
-                      style:
-                          text.bodyLarge?.copyWith(color: colors.textTertiary),
+                      style: text.bodyLarge?.copyWith(
+                        color: colors.textTertiary,
+                      ),
                     ),
                   ),
                 )
@@ -690,8 +701,7 @@ class _PiInterfacesView extends StatelessWidget {
             ValueRow(label: 'MAC', value: iface.mac, identifier: true),
           if (iface.linkSpeedMbps != null)
             ValueRow(label: 'Link speed', value: '${iface.linkSpeedMbps} Mbps'),
-          if (iface.mtu != null)
-            ValueRow(label: 'MTU', value: '${iface.mtu}'),
+          if (iface.mtu != null) ValueRow(label: 'MTU', value: '${iface.mtu}'),
           for (final PiInterfaceAddress a in iface.addresses)
             ValueRow(
               label: a.isIPv4 ? 'IPv4' : 'IPv6',
@@ -903,7 +913,11 @@ class _Success extends StatelessWidget {
             ),
           ValueRow(label: 'Subnet mask', value: w.subnetMask, identifier: true),
           ValueRow(label: 'Gateway', value: w.gatewayIP, identifier: true),
-          ValueRow(label: 'Interface', value: w.interfaceName, identifier: true),
+          ValueRow(
+            label: 'Interface',
+            value: w.interfaceName,
+            identifier: true,
+          ),
           ValueRow(
             label: 'Hardware Address',
             value: w.hardwareAddress,
@@ -1142,18 +1156,15 @@ class _CacheAsOfLine extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
     final String clock = _Success._asOfClock(at);
-    final String message = 'Remembered reading, as of $clock. '
+    final String message =
+        'Remembered reading, as of $clock. '
         'Refresh to read the connected network live.';
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.history,
-            size: 14,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.history, size: 14, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
@@ -1235,10 +1246,7 @@ class _RefreshWifiPrompt extends StatelessWidget {
 /// unreadable (null, blank, or the iOS sentinel) — shows the honest
 /// platform-limitation note instead of a meaningless flag (GL-005).
 class _MacTypeRow extends StatelessWidget {
-  const _MacTypeRow({
-    required this.hardwareAddress,
-    required this.platform,
-  });
+  const _MacTypeRow({required this.hardwareAddress, required this.platform});
 
   final String? hardwareAddress;
 
@@ -1249,10 +1257,13 @@ class _MacTypeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final MacRandomization kind =
-        MacRandomizationClassifier.classify(hardwareAddress);
-    final String label =
-        MacRandomizationClassifier.label(hardwareAddress, platform: platform);
+    final MacRandomization kind = MacRandomizationClassifier.classify(
+      hardwareAddress,
+    );
+    final String label = MacRandomizationClassifier.label(
+      hardwareAddress,
+      platform: platform,
+    );
     final bool unreadable = kind == MacRandomization.unreadable;
 
     return Padding(
@@ -1268,8 +1279,7 @@ class _MacTypeRow extends StatelessWidget {
               width: ValueRow.labelColumnWidth,
               child: Text(
                 'MAC type',
-                style:
-                    text.labelMedium?.copyWith(color: colors.textSecondary),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -1278,9 +1288,7 @@ class _MacTypeRow extends StatelessWidget {
                 label,
                 textAlign: TextAlign.right,
                 style: (text.bodyMedium ?? const TextStyle()).copyWith(
-                  color: unreadable
-                      ? colors.textTertiary
-                      : colors.textPrimary,
+                  color: unreadable ? colors.textTertiary : colors.textPrimary,
                   fontStyle: unreadable ? FontStyle.italic : FontStyle.normal,
                 ),
               ),
@@ -1344,11 +1352,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colors.textTertiary,
-            ),
+            Icon(Icons.error_outline, size: 48, color: colors.textTertiary),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Could not read network state',

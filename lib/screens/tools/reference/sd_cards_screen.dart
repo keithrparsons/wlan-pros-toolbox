@@ -85,9 +85,7 @@ class SdCardsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // Section 8.16 — copy the whole page as sectioned TSV. Static data, so
         // the action is always enabled and the builder is always non-null.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -155,8 +153,12 @@ class SdCardsScreen extends StatelessWidget {
       );
     for (final SdAppPerformanceClass a in kSdAppClasses) {
       buf.writeln(
-        <String>[a.mark, a.randomRead, a.randomWrite, a.sustainedWrite]
-            .join(tab),
+        <String>[
+          a.mark,
+          a.randomRead,
+          a.randomWrite,
+          a.sustainedWrite,
+        ].join(tab),
       );
     }
     buf
@@ -171,13 +173,9 @@ class SdCardsScreen extends StatelessWidget {
     buf
       ..writeln()
       ..writeln('Selection by job')
-      ..writeln(
-        <String>['Job', 'What governs it', 'Read', 'Ignore'].join(tab),
-      );
+      ..writeln(<String>['Job', 'What governs it', 'Read', 'Ignore'].join(tab));
     for (final SdJobSelection j in kSdJobSelections) {
-      buf.writeln(
-        <String>[j.job, j.governs, j.read, j.ignore].join(tab),
-      );
+      buf.writeln(<String>[j.job, j.governs, j.read, j.ignore].join(tab));
     }
     buf
       ..writeln()
@@ -244,9 +242,7 @@ class SdCardsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // (b) Capacity standard = filesystem contract.
-                  const ReferenceSectionHeading(
-                    label: 'Capacity standard',
-                  ),
+                  const ReferenceSectionHeading(label: 'Capacity standard'),
                   const SizedBox(height: AppSpacing.sm),
                   _CapacityCard(),
                   const SizedBox(height: AppSpacing.sm),
@@ -512,8 +508,9 @@ class _CapacityCard extends StatelessWidget {
                     'filesystem ${c.filesystem}',
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -608,8 +605,9 @@ class _BusCard extends StatelessWidget {
                     'ceiling ${b.ceiling}',
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -704,8 +702,9 @@ class _SpeedClassCard extends StatelessWidget {
                     s.note,
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -803,8 +802,9 @@ class _AppClassCard extends StatelessWidget {
                     'sustained write ${a.sustainedWrite}',
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -927,7 +927,10 @@ class _JobSelectionCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Row(
                   children: <Widget>[
-                    ReferenceTableCell(width: _kJobW, child: Text('Job', style: header)),
+                    ReferenceTableCell(
+                      width: _kJobW,
+                      child: Text('Job', style: header),
+                    ),
                     ReferenceTableCell(
                       width: _kGovernsW,
                       child: Text('What governs it', style: header),
@@ -951,8 +954,9 @@ class _JobSelectionCard extends StatelessWidget {
                     'ignore ${j.ignore}',
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[

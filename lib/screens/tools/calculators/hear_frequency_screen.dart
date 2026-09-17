@@ -61,7 +61,7 @@ typedef _Preset = ({String label, double hz});
 
 class HearFrequencyScreen extends StatefulWidget {
   const HearFrequencyScreen({super.key, ToneEngine? engine})
-      : _injectedEngine = engine;
+    : _injectedEngine = engine;
 
   /// Test seam: inject a fake engine so widget tests need no audio device.
   final ToneEngine? _injectedEngine;
@@ -74,15 +74,14 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
     with WidgetsBindingObserver {
   late final ToneEngine _engine;
 
-  final TextEditingController _freqCtrl =
-      TextEditingController(text: '440');
+  final TextEditingController _freqCtrl = TextEditingController(text: '440');
   final FocusNode _freqFocus = FocusNode();
 
   // Interval / ratio explorer inputs (scale-free: log2 of a ratio).
-  final TextEditingController _intervalACtrl =
-      TextEditingController(text: '2.4');
-  final TextEditingController _intervalBCtrl =
-      TextEditingController(text: '5');
+  final TextEditingController _intervalACtrl = TextEditingController(
+    text: '2.4',
+  );
+  final TextEditingController _intervalBCtrl = TextEditingController(text: '5');
 
   ToneWave _wave = ToneWave.triangle;
   double _volume = 0.5;
@@ -91,7 +90,8 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
   int? _activeKeyNumber;
   bool _showKeyMath = false;
 
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   static const List<_Preset> _octaveLadder = <_Preset>[
     (label: 'A2', hz: 110),
@@ -112,7 +112,8 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
   @override
   void initState() {
     super.initState();
-    _engine = widget._injectedEngine ?? SoLoudToneEngine(initialVolume: _volume);
+    _engine =
+        widget._injectedEngine ?? SoLoudToneEngine(initialVolume: _volume);
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -185,12 +186,15 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
 
   /// Sine is forced above [_kHighPresetHz] to avoid aliasing; otherwise the
   /// user's selected waveform is honored.
-  ToneWave _waveFor(double hz) =>
-      hz > _kHighPresetHz ? ToneWave.sine : _wave;
+  ToneWave _waveFor(double hz) => hz > _kHighPresetHz ? ToneWave.sine : _wave;
 
   /// Set the frequency field, retuning live if a tone is sounding. [keyNumber]
   /// highlights a piano key when the source is a key tap.
-  Future<void> _setFrequency(double hz, {int? keyNumber, bool play = false}) async {
+  Future<void> _setFrequency(
+    double hz, {
+    int? keyNumber,
+    bool play = false,
+  }) async {
     final double clamped = hz.clamp(kMinAudibleHz, kMaxAudibleHz);
     _freqCtrl.text = _fmtHz(hz);
     setState(() => _activeKeyNumber = keyNumber);
@@ -223,7 +227,11 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
   }
 
   Future<void> _onKeyTap(Note note) async {
-    await _setFrequency(note.frequencyHz, keyNumber: note.keyNumber, play: true);
+    await _setFrequency(
+      note.frequencyHz,
+      keyNumber: note.keyNumber,
+      play: true,
+    );
   }
 
   Future<void> _onPreset(_Preset p) async {
@@ -261,22 +269,30 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
     final StringBuffer b = StringBuffer()
       ..writeln('Hear the Frequency')
       ..writeln('Frequency: ${_fmtHz(hz)} Hz')
-      ..writeln('Nearest note: ${n.note.label} '
-          '(${_signedCents(n.centsOffset)} cents)')
-      ..writeln('Octaves from A4 (440 Hz): '
-          '${_fmt(n.octavesFromA4, 3)}')
+      ..writeln(
+        'Nearest note: ${n.note.label} '
+        '(${_signedCents(n.centsOffset)} cents)',
+      )
+      ..writeln(
+        'Octaves from A4 (440 Hz): '
+        '${_fmt(n.octavesFromA4, 3)}',
+      )
       ..writeln('Harmonics (integer multiples):');
     for (final Harmonic h in harm) {
       b.writeln('  ${h.order}f = ${_fmtHz(h.frequencyHz)} Hz');
     }
     if (hz < kMinAudibleHz || hz > kMaxAudibleHz) {
-      b.writeln('(Outside ~20 Hz-20 kHz hearing range; shown for the RF '
-          'analogy, not played.)');
+      b.writeln(
+        '(Outside ~20 Hz-20 kHz hearing range; shown for the RF '
+        'analogy, not played.)',
+      );
     }
     b
       ..writeln()
-      ..writeln('An octave is a base-2 frequency ratio; a dB is a base-10 '
-          'power ratio. Both are logarithmic, not the same unit.');
+      ..writeln(
+        'An octave is a base-2 frequency ratio; a dB is a base-10 '
+        'power ratio. Both are logarithmic, not the same unit.',
+      );
     return b.toString().trimRight();
   }
 
@@ -323,11 +339,11 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
                       ),
                       if (ToolAssets.hasGraphic(kHearFrequencyToolId))
                         const SizedBox(height: AppSpacing.md),
-                      if (_engineStatus == ToneEngineStatus.unavailable)
-                        ...<Widget>[
-                          _audioUnavailableBanner(text, mono),
-                          const SizedBox(height: AppSpacing.md),
-                        ],
+                      if (_engineStatus ==
+                          ToneEngineStatus.unavailable) ...<Widget>[
+                        _audioUnavailableBanner(text, mono),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       _transportCard(text, mono),
                       const SizedBox(height: AppSpacing.md),
                       _octaveCard(text, mono),
@@ -373,8 +389,9 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
             field: TextField(
               controller: _freqCtrl,
               focusNode: _freqFocus,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) async {
                 setState(() => _activeKeyNumber = null);
@@ -387,17 +404,15 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge
-                  .copyWith(fontSize: AppTextSize.fieldNumeric),
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
+              ),
               cursorColor: colors.textAccent,
               decoration: const InputDecoration(hintText: '440'),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: _playButton(text),
-          ),
+          SizedBox(width: double.infinity, child: _playButton(text)),
           if (hz != null && !_inAudibleRange) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             _inlineNote(
@@ -406,9 +421,9 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
               tint: colors.statusWarning,
               message: hz < kMinAudibleHz
                   ? 'Below ~20 Hz, the low edge of hearing. Shown for the RF '
-                      'analogy, not played.'
+                        'analogy, not played.'
                   : 'Above ~20 kHz, the high edge of hearing (and it declines '
-                      'with age). Shown for the RF analogy, not played.',
+                        'with age). Shown for the RF analogy, not played.',
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
@@ -449,7 +464,8 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
         text,
         icon: Icons.graphic_eq,
         tint: colors.textTertiary,
-        message: 'Enter a frequency and press Play. Higher number, higher '
+        message:
+            'Enter a frequency and press Play. Higher number, higher '
             'pitch. Double the number to step up one octave.',
       );
     }
@@ -461,7 +477,8 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
         const SizedBox(height: AppSpacing.xxs),
         Semantics(
           excludeSemantics: true,
-          label: 'Nearest note ${n.note.label}, '
+          label:
+              'Nearest note ${n.note.label}, '
               '${_signedCents(n.centsOffset)} cents',
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -485,15 +502,21 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        _row(text, mono,
-            label: 'Octaves from A4',
-            value: '${_fmt(n.octavesFromA4, 3)} (440 Hz = 0)'),
+        _row(
+          text,
+          mono,
+          label: 'Octaves from A4',
+          value: '${_fmt(n.octavesFromA4, 3)} (440 Hz = 0)',
+        ),
         if (n.note.enharmonicName != null)
-          _row(text, mono,
-              label: 'Also written',
-              value:
-                  '${n.note.enharmonicName}${n.note.octave} (same pitch in '
-                  '12-TET)'),
+          _row(
+            text,
+            mono,
+            label: 'Also written',
+            value:
+                '${n.note.enharmonicName}${n.note.octave} (same pitch in '
+                '12-TET)',
+          ),
       ],
     );
   }
@@ -629,11 +652,11 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
           Text(
             forcedSine
                 ? 'Above 5 kHz the tool uses sine: square and triangle add '
-                    'high harmonics that alias (a false buzz) near the top of '
-                    'hearing.'
+                      'high harmonics that alias (a false buzz) near the top of '
+                      'hearing.'
                 : 'Same pitch, different timbre - like the difference between '
-                    'two instruments playing the same note. The extra edge is '
-                    'harmonics (more on those below).',
+                      'two instruments playing the same note. The extra edge is '
+                      'harmonics (more on those below).',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ],
@@ -725,8 +748,7 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
                     '${_fmtHz(p.hz)} Hz',
                     style: mono.inlineCode.copyWith(
                       fontSize: AppTextSize.caption,
-                      color:
-                          active ? colors.onPrimary : colors.textSecondary,
+                      color: active ? colors.onPrimary : colors.textSecondary,
                     ),
                   ),
               ],
@@ -744,8 +766,10 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
     final List<Note> notes = MusicTheory.chromaticC4toC5;
     final Note? active = _activeKeyNumber == null
         ? null
-        : notes.firstWhere((Note n) => n.keyNumber == _activeKeyNumber,
-            orElse: () => notes.first);
+        : notes.firstWhere(
+            (Note n) => n.keyNumber == _activeKeyNumber,
+            orElse: () => notes.first,
+          );
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -769,7 +793,8 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
           if (active != null)
             Semantics(
               excludeSemantics: true,
-              label: '${active.fullLabel}, '
+              label:
+                  '${active.fullLabel}, '
                   '${active.frequencyHz.toStringAsFixed(2)} hertz',
               child: Row(
                 children: <Widget>[
@@ -809,8 +834,9 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
               Expanded(
                 child: Text(
                   'Show the semitone math',
-                  style:
-                      text.labelMedium?.copyWith(color: colors.textSecondary),
+                  style: text.labelMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -906,9 +932,13 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: <Widget>[
-              Expanded(child: _intervalField('A', _intervalACtrl, mono, colors)),
+              Expanded(
+                child: _intervalField('A', _intervalACtrl, mono, colors),
+              ),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(child: _intervalField('B', _intervalBCtrl, mono, colors)),
+              Expanded(
+                child: _intervalField('B', _intervalBCtrl, mono, colors),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -932,16 +962,23 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
             )
           else ...<Widget>[
             _row(text, mono, label: 'Ratio', value: '${_fmt(r.ratio, 4)} : 1'),
-            _row(text, mono,
-                label: 'Octaves apart', value: _fmt(r.octaves, 4)),
-            _row(text, mono,
-                label: 'Semitones apart', value: _fmt(r.semitones, 2)),
-            _row(text, mono,
-                label: 'Nearest interval',
-                value: r.intervalName +
-                    (r.centsFromNearest.abs() < 0.05
-                        ? ' (exact)'
-                        : ' (${_signedCents(r.centsFromNearest)} cents)')),
+            _row(text, mono, label: 'Octaves apart', value: _fmt(r.octaves, 4)),
+            _row(
+              text,
+              mono,
+              label: 'Semitones apart',
+              value: _fmt(r.semitones, 2),
+            ),
+            _row(
+              text,
+              mono,
+              label: 'Nearest interval',
+              value:
+                  r.intervalName +
+                  (r.centsFromNearest.abs() < 0.05
+                      ? ' (exact)'
+                      : ' (${_signedCents(r.centsFromNearest)} cents)'),
+            ),
             const SizedBox(height: AppSpacing.sm),
             _honestyNote(
               text,
@@ -998,8 +1035,9 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
             setState(() {});
           },
           child: Container(
-            constraints:
-                const BoxConstraints(minHeight: AppSpacing.minTouchTarget),
+            constraints: const BoxConstraints(
+              minHeight: AppSpacing.minTouchTarget,
+            ),
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             decoration: BoxDecoration(
@@ -1047,7 +1085,8 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
             text,
             icon: Icons.volume_up_outlined,
             tint: colors.textTertiary,
-            message: 'No sound? Check your device is not muted and turn the '
+            message:
+                'No sound? Check your device is not muted and turn the '
                 'volume up. High-frequency tones at high volume are unpleasant '
                 'and, sustained, can tire your ears - keep it reasonable, '
                 'especially on headphones and above ~8 kHz.',
@@ -1073,32 +1112,44 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _para(text,
-              'RF frequencies are millions of times too high to hear, so build '
-              'the intuition with sound you can hear. The rules are the same.'),
-          _para(text,
-              'Frequency is pitch. Enter a number, hear the tone. Higher '
-              'number, higher pitch.'),
-          _para(text,
-              'An octave is a doubling. Double the frequency and you hear the '
-              'same note, higher: 440 to 880 to 1760. This doubling is the '
-              'single most important move, and it is exactly how we step '
-              'through RF in octaves.'),
-          _para(text,
-              'Why 12 keys? Seven white, five black, twelve semitones, each a '
-              'x1.05946 step. The piano is a logarithmic ruler for pitch. The '
-              'white keys spell C major (W-W-H-W-W-W-H); the two half-steps '
-              'E-F and B-C are the gaps with no black key, so the black keys '
-              'group 2 then 3.'),
-          _para(text,
-              'The math behind the keys: f(n) = 440 x 2^((n-49)/12). A4 = 440 '
-              'Hz is the world standard (ISO 16). Middle C = 261.63 Hz, its '
-              'octave C5 = 523.25 Hz.'),
-          _para(text,
-              'The RF bridge: octave thinking and dB thinking are the same '
-              'logarithmic instinct. The useful range is enormous, so we '
-              'compress it. 2.4 GHz to 4.8 GHz is one octave; 5 GHz and 6 GHz '
-              'sit in the next octave up.'),
+          _para(
+            text,
+            'RF frequencies are millions of times too high to hear, so build '
+            'the intuition with sound you can hear. The rules are the same.',
+          ),
+          _para(
+            text,
+            'Frequency is pitch. Enter a number, hear the tone. Higher '
+            'number, higher pitch.',
+          ),
+          _para(
+            text,
+            'An octave is a doubling. Double the frequency and you hear the '
+            'same note, higher: 440 to 880 to 1760. This doubling is the '
+            'single most important move, and it is exactly how we step '
+            'through RF in octaves.',
+          ),
+          _para(
+            text,
+            'Why 12 keys? Seven white, five black, twelve semitones, each a '
+            'x1.05946 step. The piano is a logarithmic ruler for pitch. The '
+            'white keys spell C major (W-W-H-W-W-W-H); the two half-steps '
+            'E-F and B-C are the gaps with no black key, so the black keys '
+            'group 2 then 3.',
+          ),
+          _para(
+            text,
+            'The math behind the keys: f(n) = 440 x 2^((n-49)/12). A4 = 440 '
+            'Hz is the world standard (ISO 16). Middle C = 261.63 Hz, its '
+            'octave C5 = 523.25 Hz.',
+          ),
+          _para(
+            text,
+            'The RF bridge: octave thinking and dB thinking are the same '
+            'logarithmic instinct. The useful range is enormous, so we '
+            'compress it. 2.4 GHz to 4.8 GHz is one octave; 5 GHz and 6 GHz '
+            'sit in the next octave up.',
+          ),
           const SizedBox(height: AppSpacing.xs),
           _honestyNote(
             text,
@@ -1128,7 +1179,11 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.volume_off_outlined, size: 18, color: colors.statusWarning),
+          Icon(
+            Icons.volume_off_outlined,
+            size: 18,
+            color: colors.statusWarning,
+          ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
@@ -1160,9 +1215,7 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
       decoration: BoxDecoration(
         color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border: Border(
-          left: BorderSide(color: colors.primary, width: 3),
-        ),
+        border: Border(left: BorderSide(color: colors.primary, width: 3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1194,7 +1247,9 @@ class _HearFrequencyScreenState extends State<HearFrequencyScreen>
         Expanded(
           child: Text(
             message,
-            style: text.bodySmall?.copyWith(color: context.colors.textSecondary),
+            style: text.bodySmall?.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
         ),
       ],

@@ -97,8 +97,10 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
   /// order Keith asked for (2026-06-09).
   List<RegulatoryDomain> get _sortedDomains =>
       <RegulatoryDomain>[...widget.domains]..sort(
-          (RegulatoryDomain a, RegulatoryDomain b) =>
-              a.jurisdiction.toLowerCase().compareTo(b.jurisdiction.toLowerCase()));
+        (RegulatoryDomain a, RegulatoryDomain b) => a.jurisdiction
+            .toLowerCase()
+            .compareTo(b.jurisdiction.toLowerCase()),
+      );
 
   List<RegulatoryDomain> get _filtered {
     final String q = _query.trim().toLowerCase();
@@ -164,9 +166,7 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
         toolbarHeight: 64,
         // §8.16 — copy all rows as TSV, led by the snapshot caveat. Static data,
         // always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(
         top: false,
@@ -197,18 +197,14 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
       children.add(_NoMatch(query: _query.trim()));
     } else {
       for (int i = 0; i < rows.length; i++) {
-        children.add(
-          _RegulatorRow(domain: rows[i], launcher: widget.launcher),
-        );
+        children.add(_RegulatorRow(domain: rows[i], launcher: widget.launcher));
         if (i < rows.length - 1) {
           children.add(const SizedBox(height: AppSpacing.xs));
         }
       }
     }
 
-    children.add(
-      ToolHelpFooter(toolId: RegulatoryDomainsScreen.toolId),
-    );
+    children.add(ToolHelpFooter(toolId: RegulatoryDomainsScreen.toolId));
 
     // A header line so AT users hear the total / filtered count.
     final String countLabel = filtering
@@ -216,7 +212,12 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
         : '${widget.domains.length} jurisdictions';
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(edge, AppSpacing.sm, edge, edge + AppSpacing.sm),
+      padding: EdgeInsets.fromLTRB(
+        edge,
+        AppSpacing.sm,
+        edge,
+        edge + AppSpacing.sm,
+      ),
       children: <Widget>[
         Semantics(
           header: true,
@@ -318,10 +319,9 @@ class _SearchField extends StatelessWidget {
         onChanged: onChanged,
         autocorrect: false,
         enableSuggestions: false,
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -362,7 +362,8 @@ class _RegulatorRowState extends State<_RegulatorRow> {
       _showLaunchError();
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -400,7 +401,8 @@ class _RegulatorRowState extends State<_RegulatorRow> {
 
     return Semantics(
       container: true,
-      label: '${d.jurisdiction}, ITU Region ${d.ituRegion}. '
+      label:
+          '${d.jurisdiction}, ITU Region ${d.ituRegion}. '
           '${d.regulatorName}, $_displayAbbrev. '
           'Governing documents: ${d.governingDocs}. '
           'Bands: ${d.bandNotes}',
@@ -464,10 +466,7 @@ class _RegulatorRowState extends State<_RegulatorRow> {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            _LabeledBlock(
-              label: 'Governing documents',
-              value: d.governingDocs,
-            ),
+            _LabeledBlock(label: 'Governing documents', value: d.governingDocs),
             const SizedBox(height: AppSpacing.xs),
             _LabeledBlock(
               // "Bands" not "Bands and power" (Wave-2 finding D / Keith's
@@ -519,9 +518,8 @@ class _RegulatorLogo extends StatelessWidget {
               height: _size,
               fit: BoxFit.contain,
               excludeFromSemantics: true,
-              placeholderBuilder: (_) => _AbbrevBadge(
-                abbreviation: domain.abbreviation,
-              ),
+              placeholderBuilder: (_) =>
+                  _AbbrevBadge(abbreviation: domain.abbreviation),
             )
           : Image.asset(
               logoPath,
@@ -676,9 +674,7 @@ class _WebsiteLink extends StatelessWidget {
                 Expanded(
                   child: Text(
                     url,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textAccent,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textAccent),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

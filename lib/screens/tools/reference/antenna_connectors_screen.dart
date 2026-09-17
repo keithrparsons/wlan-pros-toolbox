@@ -104,8 +104,7 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
   Future<void> _loadAsset() async {
     try {
       final String raw = await rootBundle.loadString(kAntennaConnectorsAsset);
-      final AntennaConnectorService svc =
-          AntennaConnectorService.fromJson(raw);
+      final AntennaConnectorService svc = AntennaConnectorService.fromJson(raw);
       if (!mounted) return;
       setState(() => _service = svc);
     } on Object catch (e) {
@@ -123,7 +122,9 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
     final int n = svc.search(value).length;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching connectors' : '$n matching connector${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching connectors'
+          : '$n matching connector${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -204,9 +205,7 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
       appBar: AppBar(
         title: const Text('Antenna Connectors'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -252,7 +251,7 @@ class _AntennaConnectorsScreenState extends State<AntennaConnectorsScreen> {
 
         final AppMonoText mono =
             Theme.of(context).extension<AppMonoText>() ??
-                AppMonoText.defaults();
+            AppMonoText.defaults();
         final List<AntennaConnector> filtered = svc.search(_query);
         final List<AntennaConnectorGroup> groups = svc.grouped(filtered);
         final bool unfiltered = _query.trim().isEmpty;
@@ -404,10 +403,9 @@ class _SearchField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         // 16px field text dodges iOS Safari auto-zoom (§8.4).
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -647,8 +645,9 @@ class _ConnectorDiagram extends StatelessWidget {
   Future<String> _loadSwappedSvg() async {
     final String cached = _lightSvgCache[connectorId] ?? '';
     if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(ConnectorDiagrams.path(connectorId));
+    final String raw = await rootBundle.loadString(
+      ConnectorDiagrams.path(connectorId),
+    );
     final String swapped = ConceptGraphicBand.applyLightSwap(raw);
     _lightSvgCache[connectorId] = swapped;
     return swapped;
@@ -664,10 +663,7 @@ class _ConnectorDiagram extends StatelessWidget {
     // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
     // + render via string so no raw lime stroke ever hits a light surface.
     final Widget svg = colors.isLight
-        ? _LightConnectorSvg(
-            future: _loadSwappedSvg(),
-            bandHeight: _bandHeight,
-          )
+        ? _LightConnectorSvg(future: _loadSwappedSvg(), bandHeight: _bandHeight)
         : SvgPicture.asset(
             ConnectorDiagrams.path(connectorId),
             fit: BoxFit.contain,
@@ -1153,8 +1149,9 @@ class _ComparisonTableSection extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 320),
                   child: Text(
                     c.typicalWifiUse.isEmpty ? '—' : c.typicalWifiUse,
-                    style:
-                        text.bodyMedium?.copyWith(color: colors.textSecondary),
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -1207,8 +1204,9 @@ class _SectionDiagram extends StatelessWidget {
   Future<String> _loadSwappedSvg() async {
     final String cached = _lightSvgCache[sectionKey] ?? '';
     if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(ConnectorSections.path(sectionKey));
+    final String raw = await rootBundle.loadString(
+      ConnectorSections.path(sectionKey),
+    );
     final String swapped = ConceptGraphicBand.applyLightSwap(raw);
     _lightSvgCache[sectionKey] = swapped;
     return swapped;
@@ -1222,10 +1220,7 @@ class _SectionDiagram extends StatelessWidget {
     final AppColorScheme colors = context.colors;
 
     final Widget svg = colors.isLight
-        ? _LightConnectorSvg(
-            future: _loadSwappedSvg(),
-            bandHeight: _bandHeight,
-          )
+        ? _LightConnectorSvg(future: _loadSwappedSvg(), bandHeight: _bandHeight)
         : SvgPicture.asset(
             ConnectorSections.path(sectionKey),
             fit: BoxFit.contain,

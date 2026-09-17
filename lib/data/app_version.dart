@@ -82,8 +82,9 @@ class AppVersion {
   static Future<AppVersionInfo> load() async {
     try {
       final PackageInfo info = await PackageInfo.fromPlatform();
-      final String version =
-          info.version.isNotEmpty ? info.version : fallbackVersion;
+      final String version = info.version.isNotEmpty
+          ? info.version
+          : fallbackVersion;
       return AppVersionInfo(version: version, buildNumber: info.buildNumber);
     } catch (_) {
       return fallback;

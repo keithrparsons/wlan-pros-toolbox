@@ -319,7 +319,8 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
 
   // Unsigned-decimal only. Frequency, rain rate, and path length are positive
   // values typed by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -389,9 +390,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
         // rain rate, and path length are all valid and > 0 (no attenuation);
         // copies the rain-fade breakdown as a labeled text block. Copy leads;
         // no help icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -640,9 +639,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -696,9 +693,7 @@ class _RainFadeScreenState extends State<RainFadeScreen> {
           SelectableText(
             value,
             style: mono.inlineCode.copyWith(
-              color: value == '—'
-                  ? colors.textTertiary
-                  : colors.textPrimary,
+              color: value == '—' ? colors.textTertiary : colors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),

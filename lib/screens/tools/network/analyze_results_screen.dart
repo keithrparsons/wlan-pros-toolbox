@@ -92,8 +92,9 @@ class _CategoryIcon {
 /// icon. It leads the band / capability findings, which are about the router/
 /// access point's own configuration. This is the single swap point for the
 /// router/access-point category icon.
-const _CategoryIcon _routerApIcon =
-    _CategoryIcon.asset('assets/tool-icons/ap-placement.svg');
+const _CategoryIcon _routerApIcon = _CategoryIcon.asset(
+  'assets/tool-icons/ap-placement.svg',
+);
 
 /// Resolves a [FindingCategory] to its §3 neutral category icon. The single
 /// mapping point: every category's icon is decided here. The router/access-point
@@ -160,9 +161,7 @@ class AnalyzeResultsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16: Copy is the single trailing AppBar action; help is the bottom
         // footer. This is the report's own Copy, saves the whole analysis.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: copyTextBuilder),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: copyTextBuilder)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -212,8 +211,9 @@ class AnalyzeResultsScreen extends StatelessWidget {
     // honesty rows go to the quiet §6 block at the bottom; everything else is a
     // §4 finding card, in the engine's order (security, then worst quality).
     final List<AnalysisFinding> all = report.findings;
-    final AnalysisFinding? hero =
-        all.isNotEmpty && all.first.isVerdict ? all.first : null;
+    final AnalysisFinding? hero = all.isNotEmpty && all.first.isVerdict
+        ? all.first
+        : null;
     final List<AnalysisFinding> cards = <AnalysisFinding>[];
     final List<AnalysisFinding> honesty = <AnalysisFinding>[];
     for (int i = 0; i < all.length; i++) {
@@ -271,9 +271,9 @@ class AnalyzeResultsScreen extends StatelessWidget {
     return Text(
       report.hasFindings
           ? "Here's what your connection check is telling you, in plain "
-              'language. The most important items are first.'
+                'language. The most important items are first.'
           : 'Run a connection check first, then come back to analyze the '
-              'result.',
+                'result.',
       style: text.bodyLarge?.copyWith(color: colors.textSecondary),
     );
   }
@@ -440,10 +440,7 @@ class _FindingCard extends StatelessWidget {
       // Inset the content past the 6px edge on light-accent cards so no text
       // ever sits on the bar (no-overlap, §0 rule 3).
       child: lightAccent
-          ? Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: content,
-            )
+          ? Padding(padding: const EdgeInsets.only(left: 6), child: content)
           : content,
     );
 
@@ -467,7 +464,8 @@ class _FindingCard extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '${finding.verdictWord}. ${finding.category.label}. '
+      label:
+          '${finding.verdictWord}. ${finding.category.label}. '
           '${finding.explanation}',
       child: ExcludeSemantics(child: card),
     );
@@ -524,10 +522,7 @@ class _InfoRow extends StatelessWidget {
             children: <Widget>[
               // §2 info chip: word + glyph + info hue (resolves dark-tint /
               // light-pill via StatusChip).
-              StatusChip(
-                kind: StatusChipKind.info,
-                word: finding.verdictWord,
-              ),
+              StatusChip(kind: StatusChipKind.info, word: finding.verdictWord),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 split.headline,
@@ -540,8 +535,7 @@ class _InfoRow extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   split.body!,
-                  style:
-                      text.bodyMedium?.copyWith(color: colors.textSecondary),
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ],
@@ -632,8 +626,11 @@ class _DraftNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.info_outline,
-              size: AppTextSize.body, color: colors.statusInfo),
+          Icon(
+            Icons.info_outline,
+            size: AppTextSize.body,
+            color: colors.statusInfo,
+          ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(

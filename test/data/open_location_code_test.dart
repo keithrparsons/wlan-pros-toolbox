@@ -11,13 +11,18 @@ void main() {
     // Vectors verified against the canonical Open Location Code reference
     // implementation (Apache-2.0).
     test('20.3700625,2.7821875 -> 7FG49QCJ+ (8-digit area code)', () {
-      expect(OpenLocationCode.encode(20.3700625, 2.7821875, codeLength: 8),
-          '7FG49QCJ+');
+      expect(
+        OpenLocationCode.encode(20.3700625, 2.7821875, codeLength: 8),
+        '7FG49QCJ+',
+      );
     });
 
     test('NYC 40.7128,-74.0060 -> 87G7PX7V+4JC (11-digit Plus Code)', () {
-      final String code =
-          OpenLocationCode.encode(40.7128, -74.0060, codeLength: 11);
+      final String code = OpenLocationCode.encode(
+        40.7128,
+        -74.0060,
+        codeLength: 11,
+      );
       expect(code, '87G7PX7V+4JC');
     });
 
@@ -55,12 +60,19 @@ void main() {
       final String code = OpenLocationCode.encode(34.05, -118.25);
       // 8 digits, '+', then 2 digits.
       expect(code.length, 11);
-      expect(code[OpenLocationCode.separatorPosition], OpenLocationCode.separator);
+      expect(
+        code[OpenLocationCode.separatorPosition],
+        OpenLocationCode.separator,
+      );
       expect(code.contains('+'), isTrue);
     });
 
     test('an 11-digit code adds exactly one grid digit', () {
-      final String code = OpenLocationCode.encode(34.05, -118.25, codeLength: 11);
+      final String code = OpenLocationCode.encode(
+        34.05,
+        -118.25,
+        codeLength: 11,
+      );
       // 8 digits, '+', then 3 digits.
       expect(code.length, 12);
     });
@@ -69,7 +81,11 @@ void main() {
       const String legal = '23456789CFGHJMPQRVWX+0';
       final String code = OpenLocationCode.encode(51.5074, -0.1278);
       for (final String ch in code.split('')) {
-        expect(legal.contains(ch), isTrue, reason: 'illegal char "$ch" in $code');
+        expect(
+          legal.contains(ch),
+          isTrue,
+          reason: 'illegal char "$ch" in $code',
+        );
       }
     });
   });

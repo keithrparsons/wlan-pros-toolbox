@@ -846,9 +846,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
       appBar: AppBar(
         title: const Text('MCS Index'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -971,7 +969,8 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
     final AppColorScheme colors = context.colors;
     return Semantics(
       container: true,
-      label: 'Rates not available above '
+      label:
+          'Rates not available above '
           '${McsIndexScreen.maxSourcedStreams} spatial streams. '
           '${McsIndexScreen.unsourcedStreamsNotice}',
       child: ExcludeSemantics(
@@ -1113,9 +1112,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
               ExcludeSemantics(
                 child: Text(
                   row.modulation,
-                  style: text.bodyMedium?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                 ),
               ),
             ),
@@ -1123,9 +1120,7 @@ class _McsIndexScreenState extends State<McsIndexScreen> {
               ExcludeSemantics(
                 child: Text(
                   row.codeRate,
-                  style: mono.inlineCode.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: mono.inlineCode.copyWith(color: colors.textSecondary),
                 ),
               ),
             ),

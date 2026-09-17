@@ -45,19 +45,18 @@ class Part15VsPart97Screen extends StatelessWidget {
       ..writeln('Part 15 vs Part 97 over 2.4 / 5 GHz')
       ..writeln()
       ..writeln('Overlapping amateur allocations, mapped to the Wi-Fi grid')
-      ..writeln(<String>[
-        'Wi-Fi band',
-        'Amateur band',
-        'Overlap',
-        'Wi-Fi channels inside',
-      ].join(tab));
+      ..writeln(
+        <String>[
+          'Wi-Fi band',
+          'Amateur band',
+          'Overlap',
+          'Wi-Fi channels inside',
+        ].join(tab),
+      );
     for (final WifiHamOverlap o in kWifiHamOverlaps) {
-      buf.writeln(<String>[
-        o.wifiBand,
-        o.hamBand,
-        o.overlap,
-        o.channelsInside,
-      ].join(tab));
+      buf.writeln(
+        <String>[o.wifiBand, o.hamBand, o.overlap, o.channelsInside].join(tab),
+      );
     }
     buf
       ..writeln()
@@ -168,48 +167,48 @@ class Part15VsPart97Screen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ...kWifiHamOverlaps.asMap().entries.expand(
-            (MapEntry<int, WifiHamOverlap> entry) {
-              final WifiHamOverlap o = entry.value;
-              return <Widget>[
-                if (entry.key > 0)
-                  Divider(color: colors.border, height: AppSpacing.md),
-                ReferenceRowSemantics(
-                  merge: false,
-                  label: rowLabel(o.wifiBand, <String?>[
-                    o.hamBand,
-                    o.overlap,
-                    o.channelsInside,
-                  ]),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(o.wifiBand, style: mono.robotoMono),
-                      const SizedBox(height: 2),
-                      Text(
-                        o.hamBand,
-                        style: mono.robotoMono.copyWith(
-                          color: colors.textAccent,
-                        ),
+          ...kWifiHamOverlaps.asMap().entries.expand((
+            MapEntry<int, WifiHamOverlap> entry,
+          ) {
+            final WifiHamOverlap o = entry.value;
+            return <Widget>[
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.md),
+              ReferenceRowSemantics(
+                merge: false,
+                label: rowLabel(o.wifiBand, <String?>[
+                  o.hamBand,
+                  o.overlap,
+                  o.channelsInside,
+                ]),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(o.wifiBand, style: mono.robotoMono),
+                    const SizedBox(height: 2),
+                    Text(
+                      o.hamBand,
+                      style: mono.robotoMono.copyWith(color: colors.textAccent),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      o.overlap,
+                      style: text.bodyMedium?.copyWith(
+                        color: colors.textPrimary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        o.overlap,
-                        style: text.bodyMedium
-                            ?.copyWith(color: colors.textPrimary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      o.channelsInside,
+                      style: text.labelMedium?.copyWith(
+                        color: colors.textSecondary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        o.channelsInside,
-                        style: text.labelMedium
-                            ?.copyWith(color: colors.textSecondary),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ];
-            },
-          ),
+              ),
+            ];
+          }),
         ],
       ),
     );
@@ -236,15 +235,15 @@ class Part15VsPart97Screen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ...kRuleDeltas.asMap().entries.expand(
-            (MapEntry<int, RuleDelta> entry) {
-              return <Widget>[
-                if (entry.key > 0)
-                  Divider(color: colors.border, height: AppSpacing.md),
-                _DeltaRow(delta: entry.value),
-              ];
-            },
-          ),
+          ...kRuleDeltas.asMap().entries.expand((
+            MapEntry<int, RuleDelta> entry,
+          ) {
+            return <Widget>[
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.md),
+              _DeltaRow(delta: entry.value),
+            ];
+          }),
         ],
       ),
     );
@@ -299,26 +298,26 @@ class _DeltaRow extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     Widget side(String tag, String body, Color tagColor) => Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xxs),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                tag,
-                style: text.labelSmall?.copyWith(
-                  color: tagColor,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                body,
-                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
-              ),
-            ],
+      padding: const EdgeInsets.only(top: AppSpacing.xxs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            tag,
+            style: text.labelSmall?.copyWith(
+              color: tagColor,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+            ),
           ),
-        );
+          const SizedBox(height: 1),
+          Text(
+            body,
+            style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+          ),
+        ],
+      ),
+    );
     return ReferenceRowSemantics(
       merge: false,
       label: rowLabel(delta.dimension, <String?>[

@@ -173,7 +173,8 @@ const String kNecCableLadderSectionTitle =
 /// six (matching the lead, the recap, and the plate's separate ladder band).
 const NecArticle kNecCableLadder = NecArticle(
   title: 'The communications-cable rating ladder (Article 800)',
-  body: 'This is a jacket fire-rating only. It says nothing about data '
+  body:
+      'This is a jacket fire-rating only. It says nothing about data '
       'performance.',
   bullets: <String>[
     'CMP: plenum. Highest, usable anywhere.',

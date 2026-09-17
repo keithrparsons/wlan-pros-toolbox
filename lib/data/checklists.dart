@@ -49,9 +49,7 @@ const Checklist kApInstallChecklist = Checklist(
     ),
     ChecklistPhase(
       label: 'Install Access Point',
-      items: <ChecklistItem>[
-        ChecklistItem('Install access point'),
-      ],
+      items: <ChecklistItem>[ChecklistItem('Install access point')],
     ),
     ChecklistPhase(
       label: 'After Installing Access Point',

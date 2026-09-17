@@ -267,9 +267,7 @@ class RoamingScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Roaming Parameters'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -643,9 +641,7 @@ class _ThresholdRow extends StatelessWidget {
               width: _kRuleW,
               child: Text(
                 row.designRule,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

@@ -50,7 +50,8 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
   // Signed decimal + scientific input. A temperature can be negative; an RF
   // power can be entered as a pasted scientific value; so accept digits, a dot,
   // a sign, and e/E. (The model guards non-finite results downstream.)
-  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      scientificDecimalFormatters;
 
   @override
   void initState() {
@@ -74,14 +75,14 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
 
   // ─── Category / unit selector items ─────────────────────────────────────────
 
-  static final List<AppSelectItem<UnitCategory>> _categoryItems =
-      UnitCategory.values
-          .map((UnitCategory c) => (c, categoryLabel(c)))
-          .toList();
-
-  List<AppSelectItem<Unit>> get _unitItems => UnitConversion.unitsFor(_category)
-      .map((Unit u) => (u, u.symbol))
+  static final List<AppSelectItem<UnitCategory>> _categoryItems = UnitCategory
+      .values
+      .map((UnitCategory c) => (c, categoryLabel(c)))
       .toList();
+
+  List<AppSelectItem<Unit>> get _unitItems => UnitConversion.unitsFor(
+    _category,
+  ).map((Unit u) => (u, u.symbol)).toList();
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -132,9 +133,7 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
         title: const Text('Unit Converter'),
         toolbarHeight: 64,
         // §8.16 — copy the conversion. Disabled until a valid result exists.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -316,18 +315,14 @@ class _UnitConverterScreenState extends State<UnitConverterScreen> {
                   _resultText(),
                   maxLines: 1,
                   style: mono.outputXL.copyWith(
-                    color: hasResult
-                        ? colors.textAccent
-                        : colors.textTertiary,
+                    color: hasResult ? colors.textAccent : colors.textTertiary,
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 _toUnit.symbol,
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

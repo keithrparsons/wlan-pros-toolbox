@@ -207,9 +207,7 @@ class PowerPhasingScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the whole page as sectioned TSV: the three topologies,
         // then the 208-vs-240 comparison. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -260,9 +258,7 @@ class PowerPhasingScreen extends StatelessWidget {
         ].join(tab),
       );
     for (final PhasingComparison c in comparison) {
-      buf.writeln(
-        <String>[c.attribute, c.split240, c.wye208].join(tab),
-      );
+      buf.writeln(<String>[c.attribute, c.split240, c.wye208].join(tab));
     }
     buf
       ..writeln()
@@ -323,7 +319,11 @@ class PowerPhasingScreen extends StatelessWidget {
     );
   }
 
-  Widget _comparisonCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+  Widget _comparisonCard(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _TableCard(
       title: '208V vs 240V',
       footnote: footnote,
@@ -433,16 +433,37 @@ class _TopologyCard extends StatelessWidget {
             spacing: AppSpacing.md,
             runSpacing: AppSpacing.xs,
             children: <Widget>[
-              _Spec(label: 'Hots', value: topology.hots, colors: colors,
-                  text: text, mono: mono),
-              _Spec(label: 'L-N', value: topology.lineToNeutral, colors: colors,
-                  text: text, mono: mono),
+              _Spec(
+                label: 'Hots',
+                value: topology.hots,
+                colors: colors,
+                text: text,
+                mono: mono,
+              ),
+              _Spec(
+                label: 'L-N',
+                value: topology.lineToNeutral,
+                colors: colors,
+                text: text,
+                mono: mono,
+              ),
               if (topology.lineToLine != '—')
-                _Spec(label: 'L-L', value: topology.lineToLine, colors: colors,
-                    text: text, mono: mono, accent: true),
+                _Spec(
+                  label: 'L-L',
+                  value: topology.lineToLine,
+                  colors: colors,
+                  text: text,
+                  mono: mono,
+                  accent: true,
+                ),
               if (topology.phaseAngle != '—')
-                _Spec(label: 'Phase', value: topology.phaseAngle, colors: colors,
-                    text: text, mono: mono),
+                _Spec(
+                  label: 'Phase',
+                  value: topology.phaseAngle,
+                  colors: colors,
+                  text: text,
+                  mono: mono,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -545,8 +566,9 @@ class _WaveformBand extends StatelessWidget {
   Future<String> _loadSwappedSvg() async {
     final String cached = _lightSvgCache[assetName] ?? '';
     if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(PowerPhasingDiagrams.path(assetName));
+    final String raw = await rootBundle.loadString(
+      PowerPhasingDiagrams.path(assetName),
+    );
     final String swapped = ConceptGraphicBand.applyLightSwap(raw);
     _lightSvgCache[assetName] = swapped;
     return swapped;
@@ -559,8 +581,9 @@ class _WaveformBand extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final AppColorScheme colors = context.colors;
-    final double bandHeight =
-        isDesktop ? _bandHeightDesktop : _bandHeightMobile;
+    final double bandHeight = isDesktop
+        ? _bandHeightDesktop
+        : _bandHeightMobile;
 
     // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
     // + render via string so no raw lime stroke ever hits a light surface.

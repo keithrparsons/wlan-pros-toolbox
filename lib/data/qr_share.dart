@@ -12,15 +12,13 @@
 import 'dart:typed_data';
 
 import 'qr_share_io.dart'
-    if (dart.library.js_interop) 'qr_share_web.dart' as impl;
+    if (dart.library.js_interop) 'qr_share_web.dart'
+    as impl;
 
 /// Shares (native) or downloads (web) the rendered QR [png] bytes. [label] is
 /// the encoded text — used only to derive a stable, human filename. Returns
 /// normally on success; throws on a write/share failure so the caller can
 /// surface the honest error path.
-Future<void> shareQrPng({
-  required Uint8List png,
-  required String label,
-}) {
+Future<void> shareQrPng({required Uint8List png, required String label}) {
   return impl.shareQrPngImpl(png: png, filename: 'WLAN-Pros-QR-Code.png');
 }

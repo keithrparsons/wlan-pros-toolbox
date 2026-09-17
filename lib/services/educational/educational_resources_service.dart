@@ -259,10 +259,10 @@ class EducationalResourcesService {
     this.title = 'Educational Resources',
     this.attribution = '',
     Set<String>? topicOrder,
-  })  : _entries = List<EducationalResource>.unmodifiable(entries),
-        _topicOrder = topicOrder == null
-            ? null
-            : List<String>.unmodifiable(topicOrder);
+  }) : _entries = List<EducationalResource>.unmodifiable(entries),
+       _topicOrder = topicOrder == null
+           ? null
+           : List<String>.unmodifiable(topicOrder);
 
   /// Build from the raw asset JSON string. Tolerant of malformed rows: bad
   /// entries are skipped, never thrown. Returns an empty-but-valid service if
@@ -364,8 +364,7 @@ class EducationalResourcesService {
         <String, List<EducationalResource>>{};
     final List<String> firstSeen = <String>[];
     for (final EducationalResource e in source) {
-      final List<EducationalResource> bucket =
-          buckets.putIfAbsent(e.topic, () {
+      final List<EducationalResource> bucket = buckets.putIfAbsent(e.topic, () {
         firstSeen.add(e.topic);
         return <EducationalResource>[];
       });

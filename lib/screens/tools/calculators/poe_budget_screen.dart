@@ -161,7 +161,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   PoeBudgetResult? _result;
 
   // Unsigned-decimal for watts/budget; unsigned-integer for quantity.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
   static final List<TextInputFormatter> _unsignedInteger = [
     FilteringTextInputFormatter.digitsOnly,
   ];
@@ -281,9 +282,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
         // budget is empty/invalid (no result block); copies the budget summary
         // as a labeled text block, carrying the §8.13 verdict WORD. Copy leads;
         // no help icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -600,9 +599,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             Expanded(
               child: Text(
                 label,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             SelectableText(

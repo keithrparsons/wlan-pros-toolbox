@@ -217,8 +217,9 @@ class _ApScanScreenState extends State<ApScanScreen> {
       _error = null;
     });
     try {
-      final ApScanSnapshot snap =
-          fresh ? await _service.scan() : await _service.lastResults();
+      final ApScanSnapshot snap = fresh
+          ? await _service.scan()
+          : await _service.lastResults();
       if (!mounted) return;
       setState(() {
         _snapshot = snap;
@@ -271,8 +272,8 @@ class _ApScanScreenState extends State<ApScanScreen> {
   /// Reads the tri-state authorization and stores it. Never throws; the service
   /// already falls back to `notDetermined` on a channel failure.
   Future<void> _refreshLocationStatus() async {
-    final LocationAuthStatus status =
-        await _service.locationAuthorizationStatus();
+    final LocationAuthStatus status = await _service
+        .locationAuthorizationStatus();
     if (!mounted) return;
     if (status == _locationStatus) return;
     setState(() => _locationStatus = status);
@@ -350,10 +351,12 @@ class _ApScanScreenState extends State<ApScanScreen> {
     final String manualPath;
     switch (_service.platformName) {
       case 'macOS':
-        manualPath = 'Open System Settings, then Privacy & Security, then '
+        manualPath =
+            'Open System Settings, then Privacy & Security, then '
             'Location Services, and enable this app.';
       case 'Android':
-        manualPath = 'Open Settings, then Apps, then this app, then '
+        manualPath =
+            'Open Settings, then Apps, then this app, then '
             'Permissions, and allow Location.';
       default:
         manualPath =
@@ -463,7 +466,9 @@ class _ApScanScreenState extends State<ApScanScreen> {
 
     final ApScanSnapshot? snap = _snapshot;
     if (snap == null) {
-      return <Widget>[_ErrorCard(error: null, onRetry: _loading ? null : _retry)];
+      return <Widget>[
+        _ErrorCard(error: null, onRetry: _loading ? null : _retry),
+      ];
     }
 
     final List<Widget> children = <Widget>[];
@@ -473,12 +478,14 @@ class _ApScanScreenState extends State<ApScanScreen> {
     // entirely when the Pi reports one radio (or none) so the UI stays clean.
     if (_scanInterfaces.length > 1 && _selectedInterface != null) {
       children
-        ..add(_RadioPickerCard(
-          interfaces: _scanInterfaces,
-          selected: _selectedInterface!,
-          enabled: !_loading,
-          onChanged: _onInterfaceChanged,
-        ))
+        ..add(
+          _RadioPickerCard(
+            interfaces: _scanInterfaces,
+            selected: _selectedInterface!,
+            enabled: !_loading,
+            onChanged: _onInterfaceChanged,
+          ),
+        )
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
@@ -519,10 +526,9 @@ class _ApScanScreenState extends State<ApScanScreen> {
         // window a scan is already running. Telling the user to tap a button
         // that is disabled underneath the sentence is a screen that does not do
         // what its copy says ([[feedback_screen_does_what_copy_says]]).
-        children.add(_NoScanYetCard(
-          scanning: _loading,
-          onScan: _loading ? null : _retry,
-        ));
+        children.add(
+          _NoScanYetCard(scanning: _loading, onScan: _loading ? null : _retry),
+        );
         return children;
 
       case ApScanVerdict.nothingInRange:
@@ -590,10 +596,12 @@ class _ApScanScreenState extends State<ApScanScreen> {
 
     // Sort control + AP list.
     children
-      ..add(_SortControl(
-        value: _sort,
-        onChanged: (ApSortOrder v) => setState(() => _sort = v),
-      ))
+      ..add(
+        _SortControl(
+          value: _sort,
+          onChanged: (ApSortOrder v) => setState(() => _sort = v),
+        ),
+      )
       ..add(const SizedBox(height: AppSpacing.sm))
       ..add(_ApListCard(aps: sortAps(aps, _sort), isWide: isWide));
 
@@ -610,8 +618,10 @@ class _ApScanScreenState extends State<ApScanScreen> {
     final List<ScannedAp> aps = sortAps(snap.accessPoints, _sort);
     final StringBuffer buf = StringBuffer()
       ..writeln('Nearby AP Scan')
-      ..writeln('${aps.length} access point${aps.length == 1 ? '' : 's'}'
-          '${snap.scanThrottled ? ' (last scan, fresh scan throttled)' : ''}');
+      ..writeln(
+        '${aps.length} access point${aps.length == 1 ? '' : 's'}'
+        '${snap.scanThrottled ? ' (last scan, fresh scan throttled)' : ''}',
+      );
     // THE EXPORT MUST CARRY THE DISCLOSURE THE SCREEN MAKES. This text is what
     // lands in a client report, detached from the screen that qualified it — so
     // an export claiming "3 access points" with no note is a completeness claim
@@ -824,10 +834,10 @@ class _ThrottledNote extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final String message = platformName == 'macOS'
         ? 'A fresh scan ran moments ago. Showing those results. A full scan '
-            'briefly takes the radio off channel, so scans are spaced out. Tap '
-            'Scan again in a moment for a new one.'
+              'briefly takes the radio off channel, so scans are spaced out. Tap '
+              'Scan again in a moment for a new one.'
         : '${platformName ?? 'The system'} throttled the fresh scan. Showing '
-            'the last scan. Tap Scan again in a moment for newer results.';
+              'the last scan. Tap Scan again in a moment for newer results.';
     return _Surface(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -870,17 +880,21 @@ class _UnreadableRowsNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.filter_alt_off_outlined, size: 20, color: colors.textTertiary),
+          Icon(
+            Icons.filter_alt_off_outlined,
+            size: 20,
+            color: colors.textTertiary,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               count == 1
                   ? 'The radio reported 1 more network this app could not '
-                      'read: its channel, band or signal reading was missing '
-                      'or not recognized. It is not counted below.'
+                        'read: its channel, band or signal reading was missing '
+                        'or not recognized. It is not counted below.'
                   : 'The radio reported $count more networks this app could '
-                      'not read: their channel, band or signal reading was '
-                      'missing or not recognized. They are not counted below.',
+                        'not read: their channel, band or signal reading was '
+                        'missing or not recognized. They are not counted below.',
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -938,11 +952,11 @@ class _NoScanYetCard extends StatelessWidget {
           Text(
             scanning
                 ? 'Nothing has been measured yet. This machine has no stored '
-                    'scan results, which is normal before the first scan. A '
-                    'scan is running now.'
+                      'scan results, which is normal before the first scan. A '
+                      'scan is running now.'
                 : 'Nothing has been measured yet. This machine has no stored '
-                    'scan results, which is normal before the first scan. Tap '
-                    'Scan to look at what is on the air.',
+                      'scan results, which is normal before the first scan. Tap '
+                      'Scan to look at what is on the air.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -951,10 +965,7 @@ class _NoScanYetCard extends StatelessWidget {
           if (!scanning)
             Align(
               alignment: Alignment.centerLeft,
-              child: FilledButton(
-                onPressed: onScan,
-                child: const Text('Scan'),
-              ),
+              child: FilledButton(onPressed: onScan, child: const Text('Scan')),
             ),
         ],
       ),
@@ -1018,14 +1029,14 @@ class _NoneReadableCard extends StatelessWidget {
           Text(
             count == 1
                 ? 'The radio reported 1 network, but its channel, band or '
-                    'signal reading was missing or not recognized, so this app '
-                    'cannot describe it. The air is not quiet. This scan could '
-                    'not read what is on it. Tap Scan again for another look.'
+                      'signal reading was missing or not recognized, so this app '
+                      'cannot describe it. The air is not quiet. This scan could '
+                      'not read what is on it. Tap Scan again for another look.'
                 : 'The radio reported $count networks, but their channel, band '
-                    'or signal readings were missing or not recognized, so this '
-                    'app cannot describe them. The air is not quiet. This scan '
-                    'could not read what is on it. Tap Scan again for another '
-                    'look.',
+                      'or signal readings were missing or not recognized, so this '
+                      'app cannot describe them. The air is not quiet. This scan '
+                      'could not read what is on it. Tap Scan again for another '
+                      'look.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
         ],
@@ -1168,8 +1179,7 @@ class _LocationCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   message,
-                  style:
-                      text.bodyMedium?.copyWith(color: colors.textSecondary),
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
               ),
             ],
@@ -1264,8 +1274,7 @@ class _ErrorCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   detail,
-                  style:
-                      text.bodyMedium?.copyWith(color: colors.textSecondary),
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
               ),
             ],
@@ -1421,13 +1430,13 @@ class _OccupancyBar extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final double fraction =
-        maxCount <= 0 ? 0 : occupancy.apCount / maxCount;
+    final double fraction = maxCount <= 0 ? 0 : occupancy.apCount / maxCount;
     final String countLabel =
         '${occupancy.apCount} AP${occupancy.apCount == 1 ? '' : 's'}';
     return Semantics(
       container: true,
-      label: 'Channel ${occupancy.channel}, $countLabel, strongest '
+      label:
+          'Channel ${occupancy.channel}, $countLabel, strongest '
           '${occupancy.strongestRssiDbm} dBm',
       excludeSemantics: true,
       child: Padding(
@@ -1490,10 +1499,7 @@ class _ApListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          if (isWide) ...<Widget>[
-            const _ApColumnHeader(),
-            const _RowDivider(),
-          ],
+          if (isWide) ...<Widget>[const _ApColumnHeader(), const _RowDivider()],
           for (int i = 0; i < aps.length; i++) ...<Widget>[
             if (i > 0) const _RowDivider(),
             _ApRow(ap: aps[i], isWide: isWide),
@@ -1594,7 +1600,8 @@ class _ApRow extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '$name, '
+      label:
+          '$name, '
           '${ap.bssid}, '
           'channel ${ap.channel}, ${ap.band}, ${ap.rssiDbm} dBm',
       excludeSemantics: true,

@@ -122,35 +122,36 @@ class Morse {
   /// ordinary text.
   static const List<MorseEntry> prosigns = <MorseEntry>[
     MorseEntry(
-        character: '<SOS>',
-        code: '...---...',
-        isProsign: true,
-        name: 'Distress signal'),
+      character: '<SOS>',
+      code: '...---...',
+      isProsign: true,
+      name: 'Distress signal',
+    ),
     MorseEntry(
-        character: '<AR>',
-        code: '.-.-.',
-        isProsign: true,
-        name: 'End of message'),
+      character: '<AR>',
+      code: '.-.-.',
+      isProsign: true,
+      name: 'End of message',
+    ),
+    MorseEntry(character: '<AS>', code: '.-...', isProsign: true, name: 'Wait'),
     MorseEntry(
-        character: '<AS>',
-        code: '.-...',
-        isProsign: true,
-        name: 'Wait'),
+      character: '<SK>',
+      code: '...-.-',
+      isProsign: true,
+      name: 'End of contact',
+    ),
     MorseEntry(
-        character: '<SK>',
-        code: '...-.-',
-        isProsign: true,
-        name: 'End of contact'),
+      character: '<KN>',
+      code: '-.--.',
+      isProsign: true,
+      name: 'Go ahead, specific station',
+    ),
     MorseEntry(
-        character: '<KN>',
-        code: '-.--.',
-        isProsign: true,
-        name: 'Go ahead, specific station'),
-    MorseEntry(
-        character: '<BT>',
-        code: '-...-',
-        isProsign: true,
-        name: 'New paragraph / break'),
+      character: '<BT>',
+      code: '-...-',
+      isProsign: true,
+      name: 'New paragraph / break',
+    ),
   ];
 
   /// All ordinary (non-prosign) entries in display order.
@@ -240,8 +241,7 @@ class Morse {
     final List<String> outWords = <String>[];
     for (final String word in words) {
       final StringBuffer letters = StringBuffer();
-      for (final String token
-          in word.trim().split(RegExp(r'\s+'))) {
+      for (final String token in word.trim().split(RegExp(r'\s+'))) {
         if (token.isEmpty) continue;
         letters.write(codeToChar[token] ?? '?');
       }
@@ -271,8 +271,7 @@ class Morse {
   // (PARIS = 50 units), so unitMs = 1200 / wpm.
 
   /// Milliseconds per dit unit at [wordsPerMinute] (PARIS standard).
-  static int unitMs(int wordsPerMinute) =>
-      (1200 / wordsPerMinute).round();
+  static int unitMs(int wordsPerMinute) => (1200 / wordsPerMinute).round();
 
   /// A single on/off segment of a Morse transmission.
   ///

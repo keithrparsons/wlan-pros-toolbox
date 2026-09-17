@@ -108,7 +108,8 @@ const List<SdCardMark> kSdCardMarks = <SdCardMark>[
   SdCardMark(
     number: 7,
     mark: 'Application Performance Class (A1, A2)',
-    measures: 'Random 4 KB IOPS, plus a 10 MB/s sustained sequential write '
+    measures:
+        'Random 4 KB IOPS, plus a 10 MB/s sustained sequential write '
         'floor. The only mark that guarantees both.',
   ),
 ];

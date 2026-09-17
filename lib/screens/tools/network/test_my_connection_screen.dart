@@ -513,7 +513,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// link it models. A failed read resolves to `unknown` (fail closed), never free.
   Future<void> _resolveScreenRisk() async {
     if (_sampler != null) return;
-    final bool phone = _source == WifiInfoSource.iosShortcuts ||
+    final bool phone =
+        _source == WifiInfoSource.iosShortcuts ||
         _source == WifiInfoSource.androidWifiManager;
     if (!phone) return;
     final WifiConnectionService svc =
@@ -738,7 +739,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // CoreWLAN beacon-IE scan so the vendor-advertised AP name can ride
         // alongside the BSSID in the identity rows — the same enrichment the
         // Wi-Fi Information tool and live sampler use. No new capture path.
-        _macAdapter = widget.macAdapter ?? MacWifiInfoAdapter(enrichApName: true);
+        _macAdapter =
+            widget.macAdapter ?? MacWifiInfoAdapter(enrichApName: true);
       case WifiInfoSource.androidWifiManager:
         _macAdapter = widget.macAdapter ?? AndroidWifiInfoAdapter();
       case WifiInfoSource.windowsNativeWifi:
@@ -778,7 +780,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
             _source == WifiInfoSource.androidWifiManager ||
             _source == WifiInfoSource.windowsNativeWifi ||
             _source == WifiInfoSource.iosShortcuts)) {
-      _sampler = widget.sampler ??
+      _sampler =
+          widget.sampler ??
           WifiSignalSampler(
             source: _source,
             macAdapter: _macAdapter,
@@ -789,9 +792,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       // definitive "on Wi-Fi" signal on the first connection probe (absence is
       // never read as "not on Wi-Fi"). The fetch is async; the load passes
       // whatever has resolved, and the resume path re-passes it later.
-      _fetchIosSecurity().then(
-        (_) => _sampler?.load(nativeSsid: _nativeSsid),
-      );
+      _fetchIosSecurity().then((_) => _sampler?.load(nativeSsid: _nativeSsid));
       // Keep the screen's own copy/technical/capture-affordance state in sync
       // with the live stream: [_effectiveAp] and [_iosRfCaptured] read the
       // sampler's latest reading, so when a late live sample lands AFTER the run
@@ -1033,7 +1034,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // (Keith device round 5: the hero Check produced no verdict, so the recovery,
     // which had only lived in the verdict-gated live-signal card, never showed).
     final WifiSignalSampler? s = _sampler;
-    final bool recovery = (s?.shortcutMissing ?? false) || (s?.triggerError ?? false);
+    final bool recovery =
+        (s?.shortcutMissing ?? false) || (s?.triggerError ?? false);
     // ...AND whenever the connection probe says we are off Wi-Fi, even with no
     // verdict yet (Keith, 2026-07-13). The PRE-RUN action card now depends on
     // [_notOnWifi]: it carries the cellular-data warning and the "check without
@@ -1273,8 +1275,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           // Snapshotted here so both the one-shot enrichment and the sampler merge
           // read the same value the backing payload was stored with.
           _iosPayloadReceivedAt = await bridge.payloadReceivedAt();
-          final ConnectedAp? rf =
-              details == null ? null : ConnectedAp.fromWifiDetails(details);
+          final ConnectedAp? rf = details == null
+              ? null
+              : ConnectedAp.fromWifiDetails(details);
           // Fold the native NEHotspotNetwork security + BSSID onto whatever the
           // Shortcut gave us. When no RF was captured, this still yields a
           // minimal link carrying just the native identity (security/BSSID), so
@@ -1456,8 +1459,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
       }
       return rf;
     }
-    final WifiSecurity? security =
-        WifiSecurityClassifier.classify(sec.securityToken);
+    final WifiSecurity? security = WifiSecurityClassifier.classify(
+      sec.securityToken,
+    );
     if (rf == null || !_shortcutMatchesNative(rf)) {
       // No RF captured, OR the Shortcut reading is for a DIFFERENT network than
       // the one we are on now (SSID disagrees with the live native read). Surface
@@ -1623,7 +1627,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     if (auth == null || auth.isAuthorized) return null;
     return _MacLocationHint(
       promptable: auth.isPromptable,
-      onAction: auth.isPromptable ? _promptMacLocation : _openMacLocationSettings,
+      onAction: auth.isPromptable
+          ? _promptMacLocation
+          : _openMacLocationSettings,
     );
   }
 
@@ -1903,112 +1909,112 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // for a user who DID tap.
     _sub = _quality
         .measure(
-      includeThroughput: spendData,
-      includeResponsiveness: !_needsConsent,
-    )
+          includeThroughput: spendData,
+          includeResponsiveness: !_needsConsent,
+        )
         .listen(
-      (QualityProgress p) {
-        if (!mounted) return;
-        setState(() {
-          _phase = p.phase;
-          _fraction = p.fraction;
-          _indeterminate = p.indeterminate;
-        });
-      },
-      onDone: () async {
-        final QualityResult? internet = _quality.lastResult;
-        // MEDIUM-2: the measurement is DONE and the link read may not be. Say that,
-        // rather than holding a dead 100% bar for up to 8 seconds. The card is gated
-        // on `_running`, which does not drop until after the await below — so
-        // WITHOUT this the last thing the user sees is a full bar and a stale phase
-        // caption, for longer than the upload stage took.
-        if (mounted) setState(() => _finishing = true);
-        final ConnectedAp? ap = await linkFuture.timeout(
-          const Duration(seconds: 8),
-          onTimeout: () => null,
+          (QualityProgress p) {
+            if (!mounted) return;
+            setState(() {
+              _phase = p.phase;
+              _fraction = p.fraction;
+              _indeterminate = p.indeterminate;
+            });
+          },
+          onDone: () async {
+            final QualityResult? internet = _quality.lastResult;
+            // MEDIUM-2: the measurement is DONE and the link read may not be. Say that,
+            // rather than holding a dead 100% bar for up to 8 seconds. The card is gated
+            // on `_running`, which does not drop until after the await below — so
+            // WITHOUT this the last thing the user sees is a full bar and a stale phase
+            // caption, for longer than the upload stage took.
+            if (mounted) setState(() => _finishing = true);
+            final ConnectedAp? ap = await linkFuture.timeout(
+              const Duration(seconds: 8),
+              onTimeout: () => null,
+            );
+            if (!mounted) return;
+            // ==================================================================
+            // THE GATE. Everything the result body says about Wi-Fi hangs off this
+            // one line (2026-07-13).
+            //
+            // `ap` above is the App Group's LAST STORED payload, which survives the
+            // phone leaving Wi-Fi. Feeding it in is what produced "It's your Wi-Fi" /
+            // "your Wi-Fi link 29 Mbps" / "boost the Wi-Fi signal" on a cellular-only
+            // iPhone. The probe was refreshed at run start and settles in ms, far
+            // inside the ~25-35s measurement, so it is authoritative by now.
+            //
+            // Read the probe ONCE, here, and STAMP it onto the result
+            // ([_resultNotOnWifi]) so the whole report is dated to its own run and a
+            // later resume cannot half-rewrite it (cold-eyes F4). Deleting this line
+            // renders the original bug in full — which is what
+            // test/screens/tools/network/test_my_connection_offwifi_e2e_test.dart is
+            // there to catch.
+            // ==================================================================
+            final bool notOnWifi = _notOnWifi;
+            // Stamp the consent decision onto the RESULT for the same reason the probe
+            // verdict is stamped: the report must be dated to its own run, and a later
+            // recompute must not re-derive it from whatever the screen looks like now.
+            final bool skipped = !spendData;
+            final ConnectedAp? linkAp = notOnWifi ? null : ap;
+            final WifiVsInternetResult engine = ConnectionCheck.compute(
+              linkAp,
+              internet,
+              // Fold in whatever evidence already landed; late-arriving evidence
+              // re-derives the verdict via [_recomputeVerdict] as it lands.
+              onlineEvidence: _onlineEvidence,
+              // The honest not-on-Wi-Fi probe, so the engine says "there is no Wi-Fi
+              // link" rather than "the Wi-Fi link could not be read" (GL-005).
+              notOnWifi: notOnWifi,
+              // ...and the honest "we never ran it" so the engine never says the speed
+              // test "did not complete" about a test that was never started.
+              speedTestSkipped: skipped,
+            );
+            setState(() {
+              _ap = ap;
+              _resultNotOnWifi = notOnWifi;
+              _resultSpeedTestSkipped = skipped;
+              // The RF snapshot for THIS result: the gated one-shot read folded with
+              // whatever the live stream has already delivered. Off Wi-Fi there is no
+              // link, so there is no reading (GL-005 — the second kind of null).
+              _resultAp = notOnWifi ? null : _mergeWithLive(ap);
+              _internet = internet;
+              _engine = engine;
+              _verdict = ConsumerVerdictMapper.map(
+                engine,
+                internetHealthy:
+                    ConnectionCheck.internetHealth(internet) ==
+                    InternetHealth.good,
+              );
+              _testedAt = (widget.nowOverride ?? DateTime.now)();
+              _running = false;
+              _finishing = false;
+            });
+            // THE RUN IS DONE — DISARM IT. The user has their result on screen; there is
+            // nothing left to restore. Leaving the arm standing would let a scene rebuild
+            // minutes later drag them back into a run that already finished.
+            _iosBridge?.clearLiveRun();
+            SemanticsService.sendAnnouncement(
+              View.of(context),
+              'Connection check complete',
+              TextDirection.ltr,
+            );
+          },
+          onError: (Object e) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _finishing = false;
+              _error =
+                  "Something went wrong and we couldn't finish the check. "
+                  'Please try again.';
+            });
+            // A FAILED run is still a FINISHED run. The screen is showing the honest
+            // error and the actionable retry; restoring this later would replay a
+            // failure the user has already seen and dismissed.
+            _iosBridge?.clearLiveRun();
+          },
         );
-        if (!mounted) return;
-        // ==================================================================
-        // THE GATE. Everything the result body says about Wi-Fi hangs off this
-        // one line (2026-07-13).
-        //
-        // `ap` above is the App Group's LAST STORED payload, which survives the
-        // phone leaving Wi-Fi. Feeding it in is what produced "It's your Wi-Fi" /
-        // "your Wi-Fi link 29 Mbps" / "boost the Wi-Fi signal" on a cellular-only
-        // iPhone. The probe was refreshed at run start and settles in ms, far
-        // inside the ~25-35s measurement, so it is authoritative by now.
-        //
-        // Read the probe ONCE, here, and STAMP it onto the result
-        // ([_resultNotOnWifi]) so the whole report is dated to its own run and a
-        // later resume cannot half-rewrite it (cold-eyes F4). Deleting this line
-        // renders the original bug in full — which is what
-        // test/screens/tools/network/test_my_connection_offwifi_e2e_test.dart is
-        // there to catch.
-        // ==================================================================
-        final bool notOnWifi = _notOnWifi;
-        // Stamp the consent decision onto the RESULT for the same reason the probe
-        // verdict is stamped: the report must be dated to its own run, and a later
-        // recompute must not re-derive it from whatever the screen looks like now.
-        final bool skipped = !spendData;
-        final ConnectedAp? linkAp = notOnWifi ? null : ap;
-        final WifiVsInternetResult engine = ConnectionCheck.compute(
-          linkAp,
-          internet,
-          // Fold in whatever evidence already landed; late-arriving evidence
-          // re-derives the verdict via [_recomputeVerdict] as it lands.
-          onlineEvidence: _onlineEvidence,
-          // The honest not-on-Wi-Fi probe, so the engine says "there is no Wi-Fi
-          // link" rather than "the Wi-Fi link could not be read" (GL-005).
-          notOnWifi: notOnWifi,
-          // ...and the honest "we never ran it" so the engine never says the speed
-          // test "did not complete" about a test that was never started.
-          speedTestSkipped: skipped,
-        );
-        setState(() {
-          _ap = ap;
-          _resultNotOnWifi = notOnWifi;
-          _resultSpeedTestSkipped = skipped;
-          // The RF snapshot for THIS result: the gated one-shot read folded with
-          // whatever the live stream has already delivered. Off Wi-Fi there is no
-          // link, so there is no reading (GL-005 — the second kind of null).
-          _resultAp = notOnWifi ? null : _mergeWithLive(ap);
-          _internet = internet;
-          _engine = engine;
-          _verdict = ConsumerVerdictMapper.map(
-            engine,
-            internetHealthy:
-                ConnectionCheck.internetHealth(internet) ==
-                InternetHealth.good,
-          );
-          _testedAt = (widget.nowOverride ?? DateTime.now)();
-          _running = false;
-          _finishing = false;
-        });
-        // THE RUN IS DONE — DISARM IT. The user has their result on screen; there is
-        // nothing left to restore. Leaving the arm standing would let a scene rebuild
-        // minutes later drag them back into a run that already finished.
-        _iosBridge?.clearLiveRun();
-        SemanticsService.sendAnnouncement(
-          View.of(context),
-          'Connection check complete',
-          TextDirection.ltr,
-        );
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          _finishing = false;
-          _error =
-              "Something went wrong and we couldn't finish the check. "
-              'Please try again.';
-        });
-        // A FAILED run is still a FINISHED run. The screen is showing the honest
-        // error and the actionable retry; restoring this later would replay a
-        // failure the user has already seen and dismissed.
-        _iosBridge?.clearLiveRun();
-      },
-    );
   }
 
   /// The out-of-band "you're online" evidence, read from the latest fetched
@@ -2034,26 +2040,26 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// late probe lands, [_recomputeVerdict] re-derives it, which is the machinery
   /// that makes waiting free.
   OnlineEvidence get _onlineEvidence => OnlineEvidence(
-        // null until the DNS probe reports. `isAvailable` is its settled answer.
-        // (`?.` is doing the tri-state work here: null result → null evidence.)
-        dnsResolved: _dnsResult?.isAvailable,
-        // The tri-state answered/answered-no/unanswered flag, set by [_fetchIspInfo]
-        // on BOTH a reported failure and a thrown error. Derived from [_publicIpObtained]
-        // rather than from [_ispInfo], because [_ispInfo] is stored ONLY on success —
-        // so a null there could not tell "the lookup failed" (answered-no → false)
-        // from "the lookup has not landed" (unanswered → null). That collapse was the
-        // whole bug: on a dead internet the lookup fails, `_ispInfo` stayed null, and
-        // `publicIpObtained` could never resolve to `false`, so `isOffline` never
-        // fired from the screen. See [_publicIpObtained].
-        publicIpObtained: _publicIpObtained,
-        // null until the cloud panel returns ANY row. An empty list is "the probe has
-        // not answered"; a full list where nothing is reachable is a definitive NO.
-        // The screen's own AnalyzeInput already drew exactly this line
-        // (`cloud.isEmpty ? null : …`) — the information was always here.
-        cloudReachable: _cloudResults.isEmpty
-            ? null
-            : _cloudResults.any((SiteReachability s) => s.reachable),
-      );
+    // null until the DNS probe reports. `isAvailable` is its settled answer.
+    // (`?.` is doing the tri-state work here: null result → null evidence.)
+    dnsResolved: _dnsResult?.isAvailable,
+    // The tri-state answered/answered-no/unanswered flag, set by [_fetchIspInfo]
+    // on BOTH a reported failure and a thrown error. Derived from [_publicIpObtained]
+    // rather than from [_ispInfo], because [_ispInfo] is stored ONLY on success —
+    // so a null there could not tell "the lookup failed" (answered-no → false)
+    // from "the lookup has not landed" (unanswered → null). That collapse was the
+    // whole bug: on a dead internet the lookup fails, `_ispInfo` stayed null, and
+    // `publicIpObtained` could never resolve to `false`, so `isOffline` never
+    // fired from the screen. See [_publicIpObtained].
+    publicIpObtained: _publicIpObtained,
+    // null until the cloud panel returns ANY row. An empty list is "the probe has
+    // not answered"; a full list where nothing is reachable is a definitive NO.
+    // The screen's own AnalyzeInput already drew exactly this line
+    // (`cloud.isEmpty ? null : …`) — the information was always here.
+    cloudReachable: _cloudResults.isEmpty
+        ? null
+        : _cloudResults.any((SiteReachability s) => s.reachable),
+  );
 
   /// Re-derives the engine verdict and the consumer verdict from the stored
   /// measurement plus the CURRENT online evidence, then rebuilds the UI.
@@ -2160,9 +2166,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// unavailable fields rather than a fabricated address (GL-005 / GL-008).
   Future<void> _fetchNetworkDetails() async {
     try {
-      final NetworkDetails details = await _netDetailsService
-          .read()
-          .timeout(const Duration(seconds: 8));
+      final NetworkDetails details = await _netDetailsService.read().timeout(
+        const Duration(seconds: 8),
+      );
       if (!mounted) return;
       setState(() => _networkDetails = details);
     } catch (_) {
@@ -2407,9 +2413,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // 'Run the test again' Semantics label, and the §8.3 44pt target (see
         // [_HeroRunAgainButton]). With copy alone the full title clears at every
         // iPhone width.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -2523,10 +2527,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         interfaceName: _resultAp?.interfaceName,
                         ssid: _resultAp?.ssid,
                       ),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: context.colors.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     // THE OPT-IN THE RESULT SCREEN NEVER HAD (round-4b, 2026-07-14).
@@ -2559,7 +2562,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                         !_running) ...<Widget>[
                       Semantics(
                         button: true,
-                        label: 'Run the speed test anyway, which uses cellular '
+                        label:
+                            'Run the speed test anyway, which uses cellular '
                             'data',
                         child: TextButton(
                           onPressed: () {
@@ -2640,7 +2644,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
                           // not a broken tool (GL-005 / GL-008). [_canOfferWifiCapture]
                           // keeps that offer away from a phone with no Wi-Fi link —
                           // no Shortcut can capture a link that does not exist (F2).
-                          needsWifiCapture: _canOfferWifiCapture && !_iosRfCaptured,
+                          needsWifiCapture:
+                              _canOfferWifiCapture && !_iosRfCaptured,
                           onCaptureWifi: _canOfferWifiCapture
                               ? _openShortcutSheet
                               : null,
@@ -2920,8 +2925,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // INDETERMINATE, because it genuinely is: we are waiting on a read that may take
     // a moment or may time out.
     final bool stillWorking = _indeterminate || _finishing;
-    final String caption =
-        _finishing ? 'Reading your Wi-Fi link' : _friendlyPhase(_phase);
+    final String caption = _finishing
+        ? 'Reading your Wi-Fi link'
+        : _friendlyPhase(_phase);
     // PACKET-FLOW LOADING (2026-06-13, Keith-picked concept): the percentage bar
     // is replaced by an animated [You] → [AP] → [Internet] path whose nodes light
     // lime as each phase of the SAME live test completes (Wi-Fi link → gateway →
@@ -2980,7 +2986,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
           Text(
             _showCostUi
                 ? 'This usually takes about 20 seconds. The responsiveness '
-                    'test is skipped to save data.'
+                      'test is skipped to save data.'
                 : 'This usually takes about half a minute.',
             style: text.bodyMedium?.copyWith(color: colors.textTertiary),
           ),
@@ -3184,9 +3190,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
         // read the user could retry into success (GL-005, two kinds of null).
         return (_engine?.notOnWifi ?? false)
             ? 'We measured your internet. You are not connected to Wi-Fi, so '
-                'there was no Wi-Fi link to measure.'
+                  'there was no Wi-Fi link to measure.'
             : 'We measured your internet, but could not read your Wi-Fi on '
-                'this device.';
+                  'this device.';
       case ConsumerOutcome.couldntComplete:
         return ConsumerVerdictMapper.bodyForCouldntComplete(
           notOnWifi: _engine?.notOnWifi ?? false,
@@ -3276,8 +3282,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
 
     final double? down = ConnectionCheck.metricValue(net, MetricIds.download);
     final double? up = ConnectionCheck.metricValue(net, MetricIds.upload);
-    final double? latency =
-        ConnectionCheck.metricValue(net, MetricIds.latency);
+    final double? latency = ConnectionCheck.metricValue(net, MetricIds.latency);
     final double? loss = ConnectionCheck.metricValue(net, MetricIds.loss);
 
     final String? wifiName = _consumerWifiName(ap);
@@ -3397,8 +3402,18 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   static String _formatTimestamp(DateTime? at) {
     if (at == null) return 'Not measured';
     const months = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final String month = months[at.month - 1];
     final int hour12 = at.hour % 12 == 0 ? 12 : at.hour % 12;
@@ -3446,8 +3461,7 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final QualityResult? net = _internet;
     final double? down = ConnectionCheck.metricValue(net, MetricIds.download);
     final double? up = ConnectionCheck.metricValue(net, MetricIds.upload);
-    final double? latency =
-        ConnectionCheck.metricValue(net, MetricIds.latency);
+    final double? latency = ConnectionCheck.metricValue(net, MetricIds.latency);
     final double? jitter = ConnectionCheck.metricValue(net, MetricIds.jitter);
     final double? loss = ConnectionCheck.metricValue(net, MetricIds.loss);
     // NOTE: Responsiveness deliberately does NOT go through metricValue(). That
@@ -3544,11 +3558,9 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     final DnsProbeResult? dns = _dnsResult;
     final String dnsValue = (dns != null && dns.isAvailable)
         ? '${dns.millis} ms'
-            '${dns.host != null ? ' (resolved ${dns.host})' : ''}'
+              '${dns.host != null ? ' (resolved ${dns.host})' : ''}'
         : 'Not available';
-    _copySection(buf, 'DNS', <_CopyRow>[
-      _CopyRow('Resolution time', dnsValue),
-    ]);
+    _copySection(buf, 'DNS', <_CopyRow>[_CopyRow('Resolution time', dnsValue)]);
 
     // ── Network ───────────────────────────────────────────────────────────
     // Local addressing (Keith #5): IP / subnet / gateway are obtainable and
@@ -3592,15 +3604,16 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
     // header line plus a per-service "reachable / unreachable (+rtt)" list.
     final List<SiteReachability> cloud = _cloudResults;
     if (cloud.isNotEmpty) {
-      final int reachable =
-          cloud.where((SiteReachability s) => s.reachable).length;
+      final int reachable = cloud
+          .where((SiteReachability s) => s.reachable)
+          .length;
       final List<_CopyRow> rows = <_CopyRow>[
         for (final SiteReachability s in cloud)
           _CopyRow(
             s.site.name,
             s.reachable
                 ? 'reachable'
-                    '${s.latencyMs != null ? ' (${s.latencyMs!.round()} ms)' : ''}'
+                      '${s.latencyMs != null ? ' (${s.latencyMs!.round()} ms)' : ''}'
                 : 'unreachable',
           ),
       ];
@@ -4026,10 +4039,7 @@ class _HeroVerdict extends StatelessWidget {
 /// target. Lime accent (theme-aware: brand lime in dark, darkened-lime via
 /// textAccent in light so it stays legible on the white card).
 class _HeroRunAgainButton extends StatelessWidget {
-  const _HeroRunAgainButton({
-    required this.onRunAgain,
-    this.usesData = false,
-  });
+  const _HeroRunAgainButton({required this.onRunAgain, this.usesData = false});
 
   final VoidCallback onRunAgain;
 
@@ -4135,10 +4145,7 @@ class _StatusAccentFrame extends StatelessWidget {
 /// second row at the smallest width. Each carries an aligned plain label + a
 /// status chip; the WORD always carries the verdict (never color alone).
 class _TwoAxisChips extends StatelessWidget {
-  const _TwoAxisChips({
-    required this.wifiStatus,
-    required this.internetStatus,
-  });
+  const _TwoAxisChips({required this.wifiStatus, required this.internetStatus});
 
   final AxisStatus wifiStatus;
   final AxisStatus internetStatus;
@@ -4347,8 +4354,9 @@ class _StatusChip extends StatelessWidget {
     // border. §8.13 (dark): surface2 fill, thin colored border, colored content.
     final Color fill = colors.isLight ? hue : colors.surface2;
     final Color content = colors.isLight ? const Color(0xFFFFFFFF) : hue;
-    final BoxBorder? border =
-        colors.isLight ? null : Border.all(color: hue, width: 1);
+    final BoxBorder? border = colors.isLight
+        ? null
+        : Border.all(color: hue, width: 1);
 
     return Container(
       decoration: BoxDecoration(
@@ -4527,15 +4535,15 @@ class _ComparisonCard extends StatelessWidget {
         if (result.notOnWifi) {
           return result.internetMbps == null
               ? 'You are not connected to Wi-Fi, so there is no Wi-Fi link to '
-                  'measure. Join a Wi-Fi network and check again.'
+                    'measure. Join a Wi-Fi network and check again.'
               : 'You are not connected to Wi-Fi, so there is no Wi-Fi link to '
-                  'compare against. Only the internet side is shown.';
+                    'compare against. Only the internet side is shown.';
         }
         return result.internetMbps == null
             ? 'We could not read your Wi-Fi link, so there is nothing to '
-                'compare the internet against yet.'
+                  'compare the internet against yet.'
             : 'We could not read your Wi-Fi link, so only the internet side is '
-                'shown.';
+                  'shown.';
       case WifiVsInternetVerdict.onlineUnmeasured:
         // The speed test stalled but reachability confirms the link is up;
         // lead with the reachable truth, never "could not read".
@@ -4635,8 +4643,9 @@ class _ComparisonCard extends StatelessWidget {
     final String wifiValue = result.notOnWifi
         ? 'Not connected'
         : (usable != null ? '${usable.round()} Mbps' : 'Unavailable');
-    final String internetValue =
-        internet != null ? '${internet.round()} Mbps' : 'Unavailable';
+    final String internetValue = internet != null
+        ? '${internet.round()} Mbps'
+        : 'Unavailable';
 
     final AppColorScheme colors = context.colors;
     return Semantics(
@@ -4679,9 +4688,7 @@ class _ComparisonCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 _readingLine(),
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -4725,7 +4732,9 @@ class _CompareBar extends StatelessWidget {
     // (internet) fill uses the gray canvas + borderStrong so it reads as a
     // bordered neutral bar, not an invisible one.
     final Color trackColor = colors.isLight ? colors.surface0 : colors.surface2;
-    final Color neutralFill = colors.isLight ? colors.surface0 : colors.surface3;
+    final Color neutralFill = colors.isLight
+        ? colors.surface0
+        : colors.surface3;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -4735,9 +4744,7 @@ class _CompareBar extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -4821,8 +4828,9 @@ class _LiveSignalCard extends StatelessWidget {
         final TextTheme text = Theme.of(context).textTheme;
         final AppColorScheme colors = context.colors;
         // LIVE label is a thin foreground → darkened-lime in light, lime in dark.
-        final Color liveColor =
-            colors.isLight ? colors.textAccent : colors.primary;
+        final Color liveColor = colors.isLight
+            ? colors.textAccent
+            : colors.primary;
 
         return Container(
           decoration: BoxDecoration(
@@ -4955,99 +4963,99 @@ class _LiveSignalCard extends StatelessWidget {
                       'link to read.',
                 ),
               ] else ...<Widget>[
-              // Walk-around tip (item #6) — invites the user to move while the
-              // live feed runs so they see the signal change spot to spot.
-              Text(
-                'Walk around while this runs to see how your Wi-Fi signal '
-                'changes from spot to spot.',
-                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              if (sampler.isIos &&
-                  (sampler.triggerError || sampler.shortcutMissing) &&
-                  !(sampler.isStreaming && !series.isEmpty)) ...<Widget>[
-                // BOTH error cases surface the same recovery note: the trigger
-                // could not open ([triggerError]) OR it opened but a deleted
-                // "WLAN Pros Live" Shortcut delivered nothing ([shortcutMissing],
-                // set asynchronously after the settle). In-context recovery for
-                // users who removed the Shortcut. CONTRADICTION GUARD (2026-06-26):
-                // suppressed while genuinely live with data, so the card never
-                // reads "could not start" and "LIVE" at once.
-                _LiveUnavailableNote(
-                  message:
-                      'Could not start the live Wi-Fi feed. The companion '
-                      '"WLAN Pros Live" Shortcut may not be installed. Install '
-                      'it, then tap Start Live Monitoring.',
+                // Walk-around tip (item #6) — invites the user to move while the
+                // live feed runs so they see the signal change spot to spot.
+                Text(
+                  'Walk around while this runs to see how your Wi-Fi signal '
+                  'changes from spot to spot.',
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
-              ] else if (series.isEmpty) ...<Widget>[
-                _LiveUnavailableNote(
-                  // iOS, NOT set up → the honest "set it up first" message paired
-                  //   with the header "Set up" button.
-                  // iOS, setup started but no payload yet (PRIMING) → the honest
-                  //   "tap Start Live Monitoring to finish; iOS asks permission the
-                  //   first time" step paired with the header "Start" button.
-                  // iOS, set up but not yet started → invite the deliberate Start.
-                  // iOS, started but the first sample has not landed yet → an
-                  //   HONEST "waiting" indicator (the Shortcut WAS fired; we are
-                  //   genuinely waiting on it, never a fake "LIVE" with nothing
-                  //   behind it). macOS auto-polls, so it is simply reading.
-                  message: sampler.isIos
-                      ? (!sampler.hasEverReceived
-                          ? (sampler.setupInitiated
-                              ? 'Almost set up. Tap Start Live Monitoring to '
-                                  'finish. The first time it runs, iOS asks to '
-                                  'allow the "WLAN Pros Live" Shortcut to share '
-                                  'your network details, so tap Always Allow. If '
-                                  'that first tap is interrupted, tap Start Live '
-                                  'Monitoring once more.'
-                              : 'Live Wi-Fi signal needs the one-time "WLAN Pros '
-                                  'Live" companion Shortcut. Tap Set up to add it, '
-                                  'then this card streams your signal.')
-                          : sampler.isStreaming
+                const SizedBox(height: AppSpacing.sm),
+                if (sampler.isIos &&
+                    (sampler.triggerError || sampler.shortcutMissing) &&
+                    !(sampler.isStreaming && !series.isEmpty)) ...<Widget>[
+                  // BOTH error cases surface the same recovery note: the trigger
+                  // could not open ([triggerError]) OR it opened but a deleted
+                  // "WLAN Pros Live" Shortcut delivered nothing ([shortcutMissing],
+                  // set asynchronously after the settle). In-context recovery for
+                  // users who removed the Shortcut. CONTRADICTION GUARD (2026-06-26):
+                  // suppressed while genuinely live with data, so the card never
+                  // reads "could not start" and "LIVE" at once.
+                  _LiveUnavailableNote(
+                    message:
+                        'Could not start the live Wi-Fi feed. The companion '
+                        '"WLAN Pros Live" Shortcut may not be installed. Install '
+                        'it, then tap Start Live Monitoring.',
+                  ),
+                ] else if (series.isEmpty) ...<Widget>[
+                  _LiveUnavailableNote(
+                    // iOS, NOT set up → the honest "set it up first" message paired
+                    //   with the header "Set up" button.
+                    // iOS, setup started but no payload yet (PRIMING) → the honest
+                    //   "tap Start Live Monitoring to finish; iOS asks permission the
+                    //   first time" step paired with the header "Start" button.
+                    // iOS, set up but not yet started → invite the deliberate Start.
+                    // iOS, started but the first sample has not landed yet → an
+                    //   HONEST "waiting" indicator (the Shortcut WAS fired; we are
+                    //   genuinely waiting on it, never a fake "LIVE" with nothing
+                    //   behind it). macOS auto-polls, so it is simply reading.
+                    message: sampler.isIos
+                        ? (!sampler.hasEverReceived
+                              ? (sampler.setupInitiated
+                                    ? 'Almost set up. Tap Start Live Monitoring to '
+                                          'finish. The first time it runs, iOS asks to '
+                                          'allow the "WLAN Pros Live" Shortcut to share '
+                                          'your network details, so tap Always Allow. If '
+                                          'that first tap is interrupted, tap Start Live '
+                                          'Monitoring once more.'
+                                    : 'Live Wi-Fi signal needs the one-time "WLAN Pros '
+                                          'Live" companion Shortcut. Tap Set up to add it, '
+                                          'then this card streams your signal.')
+                              : sampler.isStreaming
                               ? 'Starting the live Wi-Fi feed from the companion '
-                                  'Shortcut. The first reading should arrive in a '
-                                  'moment…'
+                                    'Shortcut. The first reading should arrive in a '
+                                    'moment…'
                               : 'Tap Start to begin live Wi-Fi signal readings '
-                                  'from the companion Shortcut.')
-                      : 'Reading the Wi-Fi link…',
-                ),
-              ] else ...<Widget>[
-                // Wi-Fi data rate (Tx — the rate macOS reliably exposes; iOS
-                // carries both). Trend arrow + lime sparkline (not graded).
-                _SignalRow(
-                  label: 'Wi-Fi data rate',
-                  unit: 'Mbps',
-                  value: _rate(latest?.txRateMbps),
-                  window: series.txRate,
-                  // Thin sparkline line → darkened-lime in light, lime in dark.
-                  lineColor: liveColor,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                // SNR — graded line color reinforces the trend (word still leads
-                // via the value; the line tint is reinforcement only).
-                _SignalRow(
-                  label: 'SNR',
-                  unit: 'dB',
-                  value: latest?.snrDb?.toString(),
-                  window: series.snr,
-                  lineColor: _gradeColor(
-                    colors,
-                    WifiGrading.gradeSnr(latest?.snrDb),
+                                    'from the companion Shortcut.')
+                        : 'Reading the Wi-Fi link…',
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                // RSSI.
-                _SignalRow(
-                  label: 'RSSI',
-                  unit: 'dBm',
-                  value: latest?.rssiDbm?.toString(),
-                  window: series.rssi,
-                  lineColor: _gradeColor(
-                    colors,
-                    WifiGrading.gradeRssi(latest?.rssiDbm),
+                ] else ...<Widget>[
+                  // Wi-Fi data rate (Tx — the rate macOS reliably exposes; iOS
+                  // carries both). Trend arrow + lime sparkline (not graded).
+                  _SignalRow(
+                    label: 'Wi-Fi data rate',
+                    unit: 'Mbps',
+                    value: _rate(latest?.txRateMbps),
+                    window: series.txRate,
+                    // Thin sparkline line → darkened-lime in light, lime in dark.
+                    lineColor: liveColor,
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.xs),
+                  // SNR — graded line color reinforces the trend (word still leads
+                  // via the value; the line tint is reinforcement only).
+                  _SignalRow(
+                    label: 'SNR',
+                    unit: 'dB',
+                    value: latest?.snrDb?.toString(),
+                    window: series.snr,
+                    lineColor: _gradeColor(
+                      colors,
+                      WifiGrading.gradeSnr(latest?.snrDb),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  // RSSI.
+                  _SignalRow(
+                    label: 'RSSI',
+                    unit: 'dBm',
+                    value: latest?.rssiDbm?.toString(),
+                    window: series.rssi,
+                    lineColor: _gradeColor(
+                      colors,
+                      WifiGrading.gradeRssi(latest?.rssiDbm),
+                    ),
+                  ),
+                ],
               ], // close the `else` (on-Wi-Fi) branch of the notOnWifi gate
             ],
           ),
@@ -5182,11 +5190,7 @@ class _SignalRow extends StatelessWidget {
                       ),
                       if (hasValue) ...<Widget>[
                         const SizedBox(width: AppSpacing.xxs),
-                        Icon(
-                          _trendIcon,
-                          size: 16,
-                          color: colors.textTertiary,
-                        ),
+                        Icon(_trendIcon, size: 16, color: colors.textTertiary),
                       ],
                     ],
                   ),
@@ -5225,10 +5229,7 @@ class _LiveDot extends StatelessWidget {
       child: Container(
         width: 10,
         height: 10,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
@@ -5346,9 +5347,7 @@ class _FactRow extends StatelessWidget {
               flex: 2,
               child: Text(
                 fact.label,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -5357,9 +5356,7 @@ class _FactRow extends StatelessWidget {
               child: Text(
                 fact.value,
                 textAlign: TextAlign.end,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
               ),
             ),
           ],
@@ -5412,11 +5409,7 @@ class _NetworkDetailsCard extends StatelessWidget {
       children: <Widget>[
         // DNS RESOLUTION TIME (Keith #3) — a real timed lookup through the
         // device resolver, labelled exactly as what it is.
-        _DataRow(
-          label: 'DNS resolution time',
-          value: _dnsValue(),
-          mono: true,
-        ),
+        _DataRow(label: 'DNS resolution time', value: _dnsValue(), mono: true),
         // Local IP / subnet / gateway — obtainable, sandbox-safe. A null shows
         // the _DataRow "Unavailable" treatment (honest, not fabricated).
         _DataRow(label: 'Local IP address', value: d?.localIp, mono: true),
@@ -5642,9 +5635,7 @@ class _ProVerdictCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               result.snrContext,
-              style: text.bodyMedium?.copyWith(
-                color: colors.textSecondary,
-              ),
+              style: text.bodyMedium?.copyWith(color: colors.textSecondary),
             ),
           ],
         ],
@@ -5716,8 +5707,7 @@ class _LocationNameHint extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     // PROMPTABLE → the native prompt can appear; DENIED/RESTRICTED → only the
     // System Settings deep-link will help. The button copy names which it is.
-    final String action =
-        hint.promptable ? 'Allow Location' : 'Open settings';
+    final String action = hint.promptable ? 'Allow Location' : 'Open settings';
     const String message = 'Wi-Fi network name hidden. Location access needed.';
 
     return Semantics(
@@ -5867,21 +5857,22 @@ class _WifiLinkSection extends StatelessWidget {
           ),
           // Show the natively-known identity rows when we have them, so the card
           // is never empty and the user sees what the app already read.
-          if (a?.ssid != null || a?.bssid != null || a?.securityType != null)
-            ...<Widget>[
-              const SizedBox(height: AppSpacing.sm),
-              // NOTE (AP name): this identity card is reached ONLY on iOS
-              // (needsWifiCapture ⇒ _canOfferWifiCapture ⇒ _isIos), and iOS never
-              // decodes a vendor AP name (platform ceiling). An on-screen AP-name
-              // row here would therefore be permanently dead. macOS — the one
-              // platform that CAN carry a name — shows no on-screen BSSID row in
-              // this consumer tool, so the AP name rides with the BSSID in the
-              // copy report instead (see _buildCopyText / the WI-FI section).
-              if (a?.bssid != null)
-                _DataRow(label: 'BSSID', value: a?.bssid, mono: true),
-              if (a?.securityType != null)
-                _DataRow(label: 'Security', value: a?.securityType?.label),
-            ],
+          if (a?.ssid != null ||
+              a?.bssid != null ||
+              a?.securityType != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            // NOTE (AP name): this identity card is reached ONLY on iOS
+            // (needsWifiCapture ⇒ _canOfferWifiCapture ⇒ _isIos), and iOS never
+            // decodes a vendor AP name (platform ceiling). An on-screen AP-name
+            // row here would therefore be permanently dead. macOS — the one
+            // platform that CAN carry a name — shows no on-screen BSSID row in
+            // this consumer tool, so the AP name rides with the BSSID in the
+            // copy report instead (see _buildCopyText / the WI-FI section).
+            if (a?.bssid != null)
+              _DataRow(label: 'BSSID', value: a?.bssid, mono: true),
+            if (a?.securityType != null)
+              _DataRow(label: 'Security', value: a?.securityType?.label),
+          ],
         ],
       );
     }
@@ -5951,7 +5942,11 @@ class _WifiLinkSection extends StatelessWidget {
           unit: 'dBm',
           mono: true,
         ),
-        _DataRow(label: 'Channel', value: _channelValue(a?.channel), mono: true),
+        _DataRow(
+          label: 'Channel',
+          value: _channelValue(a?.channel),
+          mono: true,
+        ),
         // Band grouped with Channel/Standard (RF grouping). On every platform
         // that reaches this branch (macOS / Android / Windows) the band is read
         // directly from the radio, so [bandDerived] is false and NO "(derived)"
@@ -6119,8 +6114,7 @@ class _GradeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
-    final (Color bg, Color? borderColor, Color fg) =
-        _colors(colors, grade);
+    final (Color bg, Color? borderColor, Color fg) = _colors(colors, grade);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -6134,8 +6128,9 @@ class _GradeChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(
           colors.isLight ? AppRadius.pill : AppRadius.control,
         ),
-        border:
-            borderColor == null ? null : Border.all(color: borderColor, width: 1),
+        border: borderColor == null
+            ? null
+            : Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -6272,10 +6267,11 @@ class _DataRow extends StatelessWidget {
     final String shown = useLines
         ? lines.join(', ')
         : (hasValue
-            ? (unit == null ? value! : '${value!} $unit')
-            : 'Unavailable');
-    final Color valueColor =
-        hasValue ? colors.textPrimary : colors.textSecondary;
+              ? (unit == null ? value! : '${value!} $unit')
+              : 'Unavailable');
+    final Color valueColor = hasValue
+        ? colors.textPrimary
+        : colors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
         ? monoText.robotoMono.copyWith(color: valueColor)
         : text.bodyMedium?.copyWith(color: valueColor);
@@ -6417,11 +6413,11 @@ class _ShortcutOfferCard extends StatelessWidget {
           Text(
             prominent
                 ? 'This check could not read your Wi-Fi signal because the '
-                    'one-time "WLAN Pros Live" companion Shortcut is not added '
-                    'yet. Set it up once and every live tool works. It takes '
-                    'about a minute.'
+                      'one-time "WLAN Pros Live" companion Shortcut is not added '
+                      'yet. Set it up once and every live tool works. It takes '
+                      'about a minute.'
                 : 'Add the companion Shortcut to let this app read your Wi-Fi '
-                    'details next time. Optional, and it only takes a minute.',
+                      'details next time. Optional, and it only takes a minute.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -6632,9 +6628,7 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
           ),
         ),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildPiCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildPiCopyText)],
       ),
       body: SafeArea(top: false, child: _content(context)),
     );
@@ -6812,17 +6806,20 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
 
     // WCAG 1.4.1 — outcome carried by icon shape AND a status word, never color.
     final IconData icon = reachable ? Icons.check_circle : Icons.cancel;
-    final Color iconColor =
-        reachable ? colors.statusSuccess : colors.statusDanger;
+    final Color iconColor = reachable
+        ? colors.statusSuccess
+        : colors.statusDanger;
     final String status = reachable ? 'reachable' : 'unreachable';
     final String rtt = reachable && latencyMs != null
         ? '${latencyMs.round()} ms'
         : '—';
-    final String lossSuffix =
-        lossPct == null ? '' : ', ${lossPct.round()}% loss';
+    final String lossSuffix = lossPct == null
+        ? ''
+        : ', ${lossPct.round()}% loss';
 
     return Semantics(
-      label: '$label, $status'
+      label:
+          '$label, $status'
           '${reachable && latencyMs != null ? ', ${latencyMs.round()} milliseconds' : ''}'
           '$lossSuffix',
       container: true,
@@ -6912,7 +6909,12 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
-          _throughputRow(context, 'Download', tp?.downloadMbps, tp?.downloadError),
+          _throughputRow(
+            context,
+            'Download',
+            tp?.downloadMbps,
+            tp?.downloadError,
+          ),
           _throughputRow(context, 'Upload', tp?.uploadMbps, tp?.uploadError),
         ],
       ),
@@ -6934,10 +6936,12 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool pending = mbps == null && _throughputRunning;
-    final String valueLabel =
-        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
-    final String? errText =
-        (error != null && error.trim().isNotEmpty) ? error.trim() : null;
+    final String valueLabel = mbps != null
+        ? '${mbps.toStringAsFixed(1)} Mbps'
+        : 'Unavailable';
+    final String? errText = (error != null && error.trim().isNotEmpty)
+        ? error.trim()
+        : null;
     final bool showErr = mbps == null && !pending && errText != null;
     return Semantics(
       label: '$label, ${pending ? 'measuring' : valueLabel}',
@@ -7050,8 +7054,9 @@ class _PiConnectionBodyState extends State<_PiConnectionBody> {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool pending = mbps == null && _deviceToPiRunning;
-    final String valueLabel =
-        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    final String valueLabel = mbps != null
+        ? '${mbps.toStringAsFixed(1)} Mbps'
+        : 'Unavailable';
     return Semantics(
       label: '$label, ${pending ? 'measuring' : valueLabel}',
       container: true,

@@ -46,8 +46,9 @@ void main() {
         'subnet calculator',
         'ip calc',
       ]) {
-        final Set<String> ids =
-            searchTools(q).map((ToolSearchHit h) => h.tool.id).toSet();
+        final Set<String> ids = searchTools(
+          q,
+        ).map((ToolSearchHit h) => h.tool.id).toSet();
         expect(
           ids,
           contains('ipv4-subnet'),
@@ -104,20 +105,22 @@ void main() {
       expect(fresnel.matchedKeyword, isNull);
     });
 
-    test('results are ordered title hits first, then description, then keyword',
-        () {
-      final List<ToolSearchHit> hits = searchTools('channel');
-      // Each tier's first index must not precede a stronger tier.
-      int lastTier = -1;
-      for (final ToolSearchHit h in hits) {
-        expect(
-          h.matchedOn.index,
-          greaterThanOrEqualTo(lastTier),
-          reason: 'hits must be grouped strongest-tier-first',
-        );
-        lastTier = h.matchedOn.index;
-      }
-    });
+    test(
+      'results are ordered title hits first, then description, then keyword',
+      () {
+        final List<ToolSearchHit> hits = searchTools('channel');
+        // Each tier's first index must not precede a stronger tier.
+        int lastTier = -1;
+        for (final ToolSearchHit h in hits) {
+          expect(
+            h.matchedOn.index,
+            greaterThanOrEqualTo(lastTier),
+            reason: 'hits must be grouped strongest-tier-first',
+          );
+          lastTier = h.matchedOn.index;
+        }
+      },
+    );
 
     test('within a tier, hits are alphabetical by title', () {
       final List<ToolSearchHit> hits = searchTools('channel');
@@ -159,7 +162,8 @@ void main() {
       expect(
         ids,
         isNot(contains('ipv4-subnet')),
-        reason: 'the single-subnet calculator cannot do VLSM; surfacing it '
+        reason:
+            'the single-subnet calculator cannot do VLSM; surfacing it '
             'for this term is the defect, not the fix',
       );
     });
@@ -191,19 +195,16 @@ void main() {
         final Set<String> ids = searchTools(
           term,
         ).map((ToolSearchHit h) => h.tool.id).toSet();
-        expect(
-          ids,
-          contains(toolId),
-          reason: '"$term" must reach $toolId',
-        );
+        expect(ids, contains(toolId), reason: '"$term" must reach $toolId');
       });
     });
 
     test('search reads the (web-gated) kToolCategories list', () {
       // Every hit's category must be one that is actually in kToolCategories —
       // proving the engine reads the gated UI list, not the raw catalog.
-      final Set<String> visibleCategoryIds =
-          kToolCategories.map((ToolCategory c) => c.id).toSet();
+      final Set<String> visibleCategoryIds = kToolCategories
+          .map((ToolCategory c) => c.id)
+          .toSet();
       for (final ToolSearchHit h in searchTools('ping')) {
         expect(visibleCategoryIds.contains(h.categoryId), isTrue);
       }

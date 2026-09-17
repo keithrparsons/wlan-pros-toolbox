@@ -205,9 +205,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
         // (so it stays disabled on the iOS / sandboxed-desktop unavailable
         // cards, which produce no hops). Copies a hop TSV with a status header.
         // Copy leads; no help icon on this screen.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -574,7 +572,9 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
   ) {
     final AppColorScheme colors = context.colors;
     final bool answered = h.reachable && h.target != null;
-    final String rttLabel = h.ms == null ? '*' : '${h.ms!.toStringAsFixed(1)} ms';
+    final String rttLabel = h.ms == null
+        ? '*'
+        : '${h.ms!.toStringAsFixed(1)} ms';
     final String addr = answered ? h.target! : 'no response';
     final String semantic = answered
         ? 'Hop ${h.hopNumber ?? ''}, ${h.target}, $rttLabel'
@@ -687,11 +687,7 @@ class _MobileTracerouteScreenState extends State<MobileTracerouteScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 16,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.info_outline, size: 16, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(

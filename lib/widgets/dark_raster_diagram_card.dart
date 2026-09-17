@@ -91,17 +91,24 @@ class DarkRasterDiagramCard extends StatelessWidget {
         barrierLabel: semanticLabel,
         transitionDuration: AppMotion.base,
         reverseTransitionDuration: AppMotion.fast,
-        pageBuilder: (BuildContext context, Animation<double> a,
-                Animation<double> b) =>
-            _DarkRasterZoomView(assetPath: assetPath),
-        transitionsBuilder: (BuildContext context, Animation<double> anim,
-            Animation<double> secondary, Widget child) {
-          return FadeTransition(
-            opacity:
-                CurvedAnimation(parent: anim, curve: AppMotion.standardEase),
-            child: child,
-          );
-        },
+        pageBuilder:
+            (BuildContext context, Animation<double> a, Animation<double> b) =>
+                _DarkRasterZoomView(assetPath: assetPath),
+        transitionsBuilder:
+            (
+              BuildContext context,
+              Animation<double> anim,
+              Animation<double> secondary,
+              Widget child,
+            ) {
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: anim,
+                  curve: AppMotion.standardEase,
+                ),
+                child: child,
+              );
+            },
       ),
     );
   }
@@ -138,8 +145,9 @@ class DarkRasterDiagramCard extends StatelessWidget {
                   // or if a platform reports no intrinsic image size, so the
                   // whole-graphic tap region is never zero-size.
                   child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(minHeight: AppSpacing.xxl),
+                    constraints: const BoxConstraints(
+                      minHeight: AppSpacing.xxl,
+                    ),
                     child: AspectRatio(
                       aspectRatio: aspectRatio,
                       child: Image.asset(

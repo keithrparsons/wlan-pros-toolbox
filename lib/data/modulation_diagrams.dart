@@ -51,19 +51,29 @@ class ModulationDiagrams {
     ModulationDiagram(slug: 'constellation-bpsk', title: 'BPSK constellation'),
     ModulationDiagram(slug: 'constellation-qpsk', title: 'QPSK constellation'),
     ModulationDiagram(
-        slug: 'constellation-16-qam', title: '16-QAM constellation'),
+      slug: 'constellation-16-qam',
+      title: '16-QAM constellation',
+    ),
     ModulationDiagram(
-        slug: 'constellation-64-qam', title: '64-QAM constellation'),
+      slug: 'constellation-64-qam',
+      title: '64-QAM constellation',
+    ),
     ModulationDiagram(
-        slug: 'constellation-256-qam', title: '256-QAM constellation'),
+      slug: 'constellation-256-qam',
+      title: '256-QAM constellation',
+    ),
     ModulationDiagram(
-        slug: 'constellation-1024-qam', title: '1024-QAM constellation'),
+      slug: 'constellation-1024-qam',
+      title: '1024-QAM constellation',
+    ),
     ModulationDiagram(
-        slug: 'evm-error-vector-magnitude',
-        title: 'Error Vector Magnitude explainer'),
+      slug: 'evm-error-vector-magnitude',
+      title: 'Error Vector Magnitude explainer',
+    ),
     ModulationDiagram(
-        slug: 'summary-order-bits-snr-evm',
-        title: 'Modulation order, bits per symbol, SNR and EVM summary'),
+      slug: 'summary-order-bits-snr-evm',
+      title: 'Modulation order, bits per symbol, SNR and EVM summary',
+    ),
   ];
 
   /// Conventional asset path for [slug]. No existence guarantee — gate on
@@ -86,8 +96,9 @@ class ModulationDiagrams {
   static Future<void> ensureLoaded() async {
     if (_bundled != null) return;
     WidgetsFlutterBinding.ensureInitialized();
-    final AssetManifest manifest =
-        await AssetManifest.loadFromAssetBundle(rootBundle);
+    final AssetManifest manifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
     _bundled = manifest
         .listAssets()
         .where((String p) => p.startsWith('$_dir/'))

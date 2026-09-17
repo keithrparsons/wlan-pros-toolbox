@@ -47,14 +47,18 @@ void main() {
 
     test('the extreme corners do not index past the last cell', () {
       // +90 / +180 must clamp one ulp inside, landing in field R, not S.
-      expect(Maidenhead.encode(90.0, 180.0, precision: 4).startsWith('RR'),
-          isTrue);
+      expect(
+        Maidenhead.encode(90.0, 180.0, precision: 4).startsWith('RR'),
+        isTrue,
+      );
       expect(Maidenhead.encode(-90.0, -180.0, precision: 4), 'AA00');
     });
 
     test('an unsupported precision throws', () {
-      expect(() => Maidenhead.encode(0, 0, precision: 5),
-          throwsA(isA<ArgumentError>()));
+      expect(
+        () => Maidenhead.encode(0, 0, precision: 5),
+        throwsA(isA<ArgumentError>()),
+      );
     });
 
     test('an out-of-range coordinate throws', () {

@@ -78,11 +78,7 @@ const List<HalowBand> kHalowBands = <HalowBand>[
     band: '863-868 MHz (narrow, duty-cycle limited)',
     confidence: 'High',
   ),
-  HalowBand(
-    region: 'Australia / NZ',
-    band: '915-928 MHz',
-    confidence: 'High',
-  ),
+  HalowBand(region: 'Australia / NZ', band: '915-928 MHz', confidence: 'High'),
   HalowBand(region: 'Japan', band: '916.5-927.5 MHz', confidence: 'Medium'),
   HalowBand(region: 'Korea', band: '917.5-923.5 MHz', confidence: 'Medium'),
   HalowBand(region: 'China', band: '755-787 MHz', confidence: 'Medium'),
@@ -130,11 +126,7 @@ const List<HalowChannel> kHalowChannels = <HalowChannel>[
     use: 'Long range, low rate',
     regions: 'Most regions',
   ),
-  HalowChannel(
-    width: '4 MHz',
-    use: 'Mid-range',
-    regions: 'US, AU/NZ (not EU)',
-  ),
+  HalowChannel(width: '4 MHz', use: 'Mid-range', regions: 'US, AU/NZ (not EU)'),
   HalowChannel(
     width: '8 MHz',
     use: 'Mid-range, higher rate (video, robotics)',
@@ -191,17 +183,105 @@ class HalowMcs {
 /// Single-stream MCS data-rate table (Mbps, LGI / SGI), from the WFA overview.
 /// The headline single-stream maximum lives at MCS 9, 16 MHz, SGI: 86.7 Mbps.
 const List<HalowMcs> kHalowMcs = <HalowMcs>[
-  HalowMcs(mcs: 0, modulation: 'BPSK', w1: '0.30 / 0.33', w2: '0.65 / 0.72', w4: '1.4 / 1.5', w8: '2.9 / 3.3', w16: '5.9 / 6.5'),
-  HalowMcs(mcs: 1, modulation: 'QPSK', w1: '0.60 / 0.67', w2: '1.3 / 1.4', w4: '2.7 / 3.0', w8: '5.9 / 6.5', w16: '11.7 / 13.0'),
-  HalowMcs(mcs: 2, modulation: 'QPSK', w1: '0.90 / 1.00', w2: '2.0 / 2.2', w4: '4.1 / 4.5', w8: '8.8 / 9.8', w16: '17.6 / 19.5'),
-  HalowMcs(mcs: 3, modulation: '16-QAM', w1: '1.2 / 1.3', w2: '2.6 / 2.9', w4: '5.4 / 6.0', w8: '17.6 / 19.5', w16: '35.1 / 39.0'),
-  HalowMcs(mcs: 4, modulation: '16-QAM', w1: '1.8 / 2.0', w2: '3.9 / 4.3', w4: '8.1 / 9.0', w8: '17.6 / 19.5', w16: '35.1 / 39.0'),
-  HalowMcs(mcs: 5, modulation: '64-QAM', w1: '2.4 / 2.7', w2: '5.2 / 5.8', w4: '10.8 / 12.0', w8: '22.3 / 23.6', w16: '48.6 / 52.0'),
-  HalowMcs(mcs: 6, modulation: '64-QAM', w1: '2.7 / 3.0', w2: '5.9 / 6.5', w4: '12.2 / 13.5', w8: '26.3 / 29.3', w16: '52.7 / 58.5'),
-  HalowMcs(mcs: 7, modulation: '64-QAM', w1: '3.0 / 3.3', w2: '6.5 / 7.2', w4: '13.5 / 15.0', w8: '29.3 / 32.5', w16: '58.5 / 65.0'),
-  HalowMcs(mcs: 8, modulation: '256-QAM', w1: '3.6 / 4.0', w2: '7.8 / 8.7', w4: '16.2 / 18.0', w8: '35.0 / 39.0', w16: '70.2 / 78.0'),
-  HalowMcs(mcs: 9, modulation: '256-QAM', w1: '4.0 / 4.4', w2: 'N/A', w4: '18.0 / 20.0', w8: '43.3 / 43.3', w16: '78.0 / 86.7'),
-  HalowMcs(mcs: 10, modulation: 'BPSK (2x rep)', w1: '0.15 / 0.17', w2: 'N/A', w4: 'N/A', w8: 'N/A', w16: 'N/A'),
+  HalowMcs(
+    mcs: 0,
+    modulation: 'BPSK',
+    w1: '0.30 / 0.33',
+    w2: '0.65 / 0.72',
+    w4: '1.4 / 1.5',
+    w8: '2.9 / 3.3',
+    w16: '5.9 / 6.5',
+  ),
+  HalowMcs(
+    mcs: 1,
+    modulation: 'QPSK',
+    w1: '0.60 / 0.67',
+    w2: '1.3 / 1.4',
+    w4: '2.7 / 3.0',
+    w8: '5.9 / 6.5',
+    w16: '11.7 / 13.0',
+  ),
+  HalowMcs(
+    mcs: 2,
+    modulation: 'QPSK',
+    w1: '0.90 / 1.00',
+    w2: '2.0 / 2.2',
+    w4: '4.1 / 4.5',
+    w8: '8.8 / 9.8',
+    w16: '17.6 / 19.5',
+  ),
+  HalowMcs(
+    mcs: 3,
+    modulation: '16-QAM',
+    w1: '1.2 / 1.3',
+    w2: '2.6 / 2.9',
+    w4: '5.4 / 6.0',
+    w8: '17.6 / 19.5',
+    w16: '35.1 / 39.0',
+  ),
+  HalowMcs(
+    mcs: 4,
+    modulation: '16-QAM',
+    w1: '1.8 / 2.0',
+    w2: '3.9 / 4.3',
+    w4: '8.1 / 9.0',
+    w8: '17.6 / 19.5',
+    w16: '35.1 / 39.0',
+  ),
+  HalowMcs(
+    mcs: 5,
+    modulation: '64-QAM',
+    w1: '2.4 / 2.7',
+    w2: '5.2 / 5.8',
+    w4: '10.8 / 12.0',
+    w8: '22.3 / 23.6',
+    w16: '48.6 / 52.0',
+  ),
+  HalowMcs(
+    mcs: 6,
+    modulation: '64-QAM',
+    w1: '2.7 / 3.0',
+    w2: '5.9 / 6.5',
+    w4: '12.2 / 13.5',
+    w8: '26.3 / 29.3',
+    w16: '52.7 / 58.5',
+  ),
+  HalowMcs(
+    mcs: 7,
+    modulation: '64-QAM',
+    w1: '3.0 / 3.3',
+    w2: '6.5 / 7.2',
+    w4: '13.5 / 15.0',
+    w8: '29.3 / 32.5',
+    w16: '58.5 / 65.0',
+  ),
+  HalowMcs(
+    mcs: 8,
+    modulation: '256-QAM',
+    w1: '3.6 / 4.0',
+    w2: '7.8 / 8.7',
+    w4: '16.2 / 18.0',
+    w8: '35.0 / 39.0',
+    w16: '70.2 / 78.0',
+  ),
+  HalowMcs(
+    mcs: 9,
+    modulation: '256-QAM',
+    w1: '4.0 / 4.4',
+    w2: 'N/A',
+    w4: '18.0 / 20.0',
+    w8: '43.3 / 43.3',
+    w16: '78.0 / 86.7',
+  ),
+  HalowMcs(
+    mcs: 10,
+    modulation: 'BPSK (2x rep)',
+    w1: '0.15 / 0.17',
+    w2: 'N/A',
+    w4: 'N/A',
+    w8: 'N/A',
+    w16: 'N/A',
+  ),
 ];
 
 /// One headline / summary figure (the lime-accented numbers).
@@ -222,13 +302,15 @@ const List<HalowHeadline> kHalowHeadlines = <HalowHeadline>[
   HalowHeadline(
     label: 'Range',
     value: 'about 1 km',
-    note: 'vs tens of meters indoors for 2.4/5 GHz Wi-Fi; about 20 dB link-'
+    note:
+        'vs tens of meters indoors for 2.4/5 GHz Wi-Fi; about 20 dB link-'
         'budget advantage, roughly 10x the range of 2.4 GHz Wi-Fi.',
   ),
   HalowHeadline(
     label: 'Max data rate (single stream)',
     value: '86.7 Mbps',
-    note: 'MCS 9, 256-QAM, 16 MHz, short guard interval. Far edge drops to '
+    note:
+        'MCS 9, 256-QAM, 16 MHz, short guard interval. Far edge drops to '
         '150 kbps. Future 4-stream MIMO reaches the low hundreds of Mbps.',
   ),
   HalowHeadline(
@@ -239,7 +321,8 @@ const List<HalowHeadline> kHalowHeadlines = <HalowHeadline>[
   HalowHeadline(
     label: 'Battery life',
     value: 'multi-year',
-    note: 'Target Wake Time schedules wake windows; comparable to BLE and '
+    note:
+        'Target Wake Time schedules wake windows; comparable to BLE and '
         'Zigbee. Exact years depend on duty cycle and battery.',
   ),
 ];
@@ -267,14 +350,8 @@ const List<HalowFact> kHalowPower = <HalowFact>[
     'Extended Max Idle',
     'A station may sleep more than 5 minutes without being disassociated',
   ),
-  HalowFact(
-    'Non-TIM mode',
-    'A station need not wake to monitor every beacon',
-  ),
-  HalowFact(
-    'Short MAC headers',
-    'Packet overhead drops about 40% to 32%',
-  ),
+  HalowFact('Non-TIM mode', 'A station need not wake to monitor every beacon'),
+  HalowFact('Short MAC headers', 'Packet overhead drops about 40% to 32%'),
 ];
 
 /// One PHY/MAC attribute.
@@ -283,7 +360,10 @@ const List<HalowFact> kHalowPhy = <HalowFact>[
   HalowFact('Derivation', '802.11ac PHY down-clocked 10x (1/10 clock rate)'),
   HalowFact('FEC', 'Strong forward error correction'),
   HalowFact('Subcarriers', '26+ per channel'),
-  HalowFact('Spatial streams', 'Up to 4 (4x4 MIMO); gen-1 silicon single-stream'),
+  HalowFact(
+    'Spatial streams',
+    'Up to 4 (4x4 MIMO); gen-1 silicon single-stream',
+  ),
   HalowFact(
     'MAC efficiency',
     'TWT, RAW, hierarchical TIM, short beacons, NDP frames, BSS coloring',
@@ -331,13 +411,56 @@ class HalowVersus {
 /// HaLow vs other IoT radios. Figures from the Wi-Fi Alliance comparison table
 /// (internally consistent, one methodology; the source is the HaLow vendor body).
 const List<HalowVersus> kHalowVersus = <HalowVersus>[
-  HalowVersus(tech: 'Wi-Fi HaLow', band: 'Sub-1 GHz', rate: '150 kbps - 86.7 Mbps', range: '> 1 km', ipNative: 'Yes', isHalow: true),
-  HalowVersus(tech: 'Bluetooth LE', band: '2.4 GHz', rate: '125 kbps - 2 Mbps', range: '< 100 m', ipNative: 'No'),
-  HalowVersus(tech: 'Zigbee', band: '2.4 / sub-1 GHz', rate: '250 kbps', range: '< 20 m', ipNative: 'No'),
-  HalowVersus(tech: 'Z-Wave', band: 'Sub-1 GHz', rate: '9.6 - 100 kbps', range: '< 30 m', ipNative: 'No'),
-  HalowVersus(tech: 'LoRaWAN', band: 'Sub-1 GHz', rate: '0.3 - 27 kbps', range: '< 10 km', ipNative: 'No'),
-  HalowVersus(tech: 'Sigfox', band: 'Sub-1 GHz', rate: '100 / 600 bps', range: '< 40 km', ipNative: 'No'),
-  HalowVersus(tech: 'NB-IoT', band: 'Licensed', rate: '20 - 127 kbps', range: '< 10 km', ipNative: 'No'),
+  HalowVersus(
+    tech: 'Wi-Fi HaLow',
+    band: 'Sub-1 GHz',
+    rate: '150 kbps - 86.7 Mbps',
+    range: '> 1 km',
+    ipNative: 'Yes',
+    isHalow: true,
+  ),
+  HalowVersus(
+    tech: 'Bluetooth LE',
+    band: '2.4 GHz',
+    rate: '125 kbps - 2 Mbps',
+    range: '< 100 m',
+    ipNative: 'No',
+  ),
+  HalowVersus(
+    tech: 'Zigbee',
+    band: '2.4 / sub-1 GHz',
+    rate: '250 kbps',
+    range: '< 20 m',
+    ipNative: 'No',
+  ),
+  HalowVersus(
+    tech: 'Z-Wave',
+    band: 'Sub-1 GHz',
+    rate: '9.6 - 100 kbps',
+    range: '< 30 m',
+    ipNative: 'No',
+  ),
+  HalowVersus(
+    tech: 'LoRaWAN',
+    band: 'Sub-1 GHz',
+    rate: '0.3 - 27 kbps',
+    range: '< 10 km',
+    ipNative: 'No',
+  ),
+  HalowVersus(
+    tech: 'Sigfox',
+    band: 'Sub-1 GHz',
+    rate: '100 / 600 bps',
+    range: '< 40 km',
+    ipNative: 'No',
+  ),
+  HalowVersus(
+    tech: 'NB-IoT',
+    band: 'Licensed',
+    rate: '20 - 127 kbps',
+    range: '< 10 km',
+    ipNative: 'No',
+  ),
 ];
 
 /// The fair "where it sits" read (not the vendor framing).

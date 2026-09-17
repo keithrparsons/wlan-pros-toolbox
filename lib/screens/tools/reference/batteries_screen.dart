@@ -91,9 +91,7 @@ class BatteriesScreen extends StatelessWidget {
         toolbarHeight: 64,
         // Section 8.16 — copy the whole page as sectioned TSV. Static data, so
         // the action is always enabled and the builder is always non-null.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -115,13 +113,15 @@ class BatteriesScreen extends StatelessWidget {
       ..writeln(kHeightGroupRule)
       ..writeln(kButtonCodeRule)
       ..writeln()
-      ..writeln(<String>[
-        'Code',
-        'Reads as',
-        'What the code says',
-        'What the part measures',
-        'Dimensional?',
-      ].join(tab));
+      ..writeln(
+        <String>[
+          'Code',
+          'Reads as',
+          'What the code says',
+          'What the part measures',
+          'Dimensional?',
+        ].join(tab),
+      );
     for (final CellCode c in kCellCodes) {
       buf.writeln(
         <String>[
@@ -138,8 +138,9 @@ class BatteriesScreen extends StatelessWidget {
       ..writeln('The size ladder')
       ..writeln(kSizeLadderRule)
       ..writeln()
-      ..writeln(<String>['Size', 'Dimensions', 'Where you meet it', 'Source']
-          .join(tab));
+      ..writeln(
+        <String>['Size', 'Dimensions', 'Where you meet it', 'Source'].join(tab),
+      );
     for (final BatterySizeRung r in kBatterySizeRungs) {
       buf.writeln(
         <String>[
@@ -158,7 +159,9 @@ class BatteriesScreen extends StatelessWidget {
       ..writeln(kTwoSensesOfB)
       ..writeln()
       ..writeln('The two naming systems')
-      ..writeln(<String>['System', 'Shape of the code', 'AA alkaline'].join(tab));
+      ..writeln(
+        <String>['System', 'Shape of the code', 'AA alkaline'].join(tab),
+      );
     for (final NamingSystem n in kNamingSystems) {
       buf.writeln(<String>[n.system, n.shape, n.aaAlkaline].join(tab));
     }
@@ -168,28 +171,27 @@ class BatteriesScreen extends StatelessWidget {
       ..writeln(kNineVoltNote)
       ..writeln()
       ..writeln('Chemistry letters (IEC 60086-1:2021, 4.1.4 Table 1)')
-      ..writeln(
-        <String>['Letter', 'System', 'Nominal', 'Max OCV'].join(tab),
-      );
+      ..writeln(<String>['Letter', 'System', 'Nominal', 'Max OCV'].join(tab));
     for (final ChemistryLetter c in kChemistryLetters) {
-      buf.writeln(
-        <String>[c.letter, c.system, c.nominal, c.maxOcv].join(tab),
-      );
+      buf.writeln(<String>[c.letter, c.system, c.nominal, c.maxOcv].join(tab));
     }
     buf
       ..writeln()
       ..writeln('Rechargeables (IEC 61951 / 61960)');
     for (final ChemistryLetter c in kRechargeableLetters) {
-      buf.writeln(
-        <String>[c.letter, c.system, c.nominal, c.maxOcv].join(tab),
-      );
+      buf.writeln(<String>[c.letter, c.system, c.nominal, c.maxOcv].join(tab));
     }
     buf
       ..writeln(kRechargeableNote)
       ..writeln()
       ..writeln('LR44 against SR44')
-      ..writeln(<String>['Property', 'LR44 (alkaline)', 'SR44 (silver oxide)']
-          .join(tab));
+      ..writeln(
+        <String>[
+          'Property',
+          'LR44 (alkaline)',
+          'SR44 (silver oxide)',
+        ].join(tab),
+      );
     for (final SubstitutionRow s in kLr44VsSr44) {
       buf.writeln(<String>[s.property, s.alkaline, s.silver].join(tab));
     }
@@ -282,7 +284,8 @@ class BatteriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   const ReferenceCallout(
                     tone: ReferenceCalloutTone.info,
-                    heading: 'Two digits of height is a coin, three is a cylinder',
+                    heading:
+                        'Two digits of height is a coin, three is a cylinder',
                     body: kHeightGroupRule,
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -360,9 +363,7 @@ class BatteriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // (e) LR44 against SR44 — the equivalence trap.
-                  const ReferenceSectionHeading(
-                    label: 'LR44 against SR44',
-                  ),
+                  const ReferenceSectionHeading(label: 'LR44 against SR44'),
                   const SizedBox(height: AppSpacing.sm),
                   const _SubstitutionCard(),
                   const SizedBox(height: AppSpacing.sm),
@@ -391,9 +392,7 @@ class BatteriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // (f) The 1.5 V against 1.2 V gotcha.
-                  const ReferenceSectionHeading(
-                    label: '1.5 V against 1.2 V',
-                  ),
+                  const ReferenceSectionHeading(label: '1.5 V against 1.2 V'),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: BatteryDiagrams.dischargeCurves,
@@ -516,7 +515,9 @@ class _CellCodeRow extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     return ReferenceRowSemantics(
       label: rowLabel(code.code, <String?>[
-        code.dimensional ? 'dimensional code' : 'catalog number, not dimensions',
+        code.dimensional
+            ? 'dimensional code'
+            : 'catalog number, not dimensions',
         'reads as ${code.reads}',
         'the code says ${code.meaning}',
         'the part measures: ${code.datasheet}',
@@ -532,9 +533,7 @@ class _CellCodeRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     code.code,
-                    style: mono.outputMedium.copyWith(
-                      color: colors.textAccent,
-                    ),
+                    style: mono.outputMedium.copyWith(color: colors.textAccent),
                   ),
                 ),
                 _Badge(
@@ -645,14 +644,20 @@ class _SizeRungCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Row(
                   children: <Widget>[
-                    ReferenceTableCell(width: _kSizeW, child: Text('Size', style: header)),
+                    ReferenceTableCell(
+                      width: _kSizeW,
+                      child: Text('Size', style: header),
+                    ),
                     ReferenceTableCell(
                       width: _kDimW,
                       child: Text('Dimensions', style: header),
                     ),
                     ReferenceTableCell(
                       width: _kStatusW,
-                      child: Text('Where you meet it, and the source', style: header),
+                      child: Text(
+                        'Where you meet it, and the source',
+                        style: header,
+                      ),
                     ),
                   ],
                 ),
@@ -665,8 +670,9 @@ class _SizeRungCard extends StatelessWidget {
                     r.pin,
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -895,8 +901,9 @@ class _ChemistryCard extends StatelessWidget {
                     'maximum open circuit ${c.maxOcv}',
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -976,7 +983,10 @@ class _SubstitutionCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Row(
                   children: <Widget>[
-                    ReferenceTableCell(width: _kPropW, child: Text('', style: header)),
+                    ReferenceTableCell(
+                      width: _kPropW,
+                      child: Text('', style: header),
+                    ),
                     ReferenceTableCell(
                       width: _kCellColW,
                       child: Text('LR44 (alkaline)', style: header),
@@ -995,8 +1005,9 @@ class _SubstitutionCard extends StatelessWidget {
                     'SR44 silver oxide ${s.silver}',
                   ]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -1218,8 +1229,14 @@ class _FieldUseCard extends StatelessWidget {
                       width: _kWhereW,
                       child: Text('Where', style: header),
                     ),
-                    ReferenceTableCell(width: _kCellW, child: Text('Cell', style: header)),
-                    ReferenceTableCell(width: _kWhyW, child: Text('Why', style: header)),
+                    ReferenceTableCell(
+                      width: _kCellW,
+                      child: Text('Cell', style: header),
+                    ),
+                    ReferenceTableCell(
+                      width: _kWhyW,
+                      child: Text('Why', style: header),
+                    ),
                   ],
                 ),
               ),
@@ -1227,8 +1244,9 @@ class _FieldUseCard extends StatelessWidget {
                 ReferenceRowSemantics(
                   label: rowLabel(f.where, <String?>[f.cell, f.why]),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[

@@ -127,7 +127,8 @@ class DataCentersWifiScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const ReferenceCard(
-                    title: 'What to do when asked for Wi-Fi in or around a '
+                    title:
+                        'What to do when asked for Wi-Fi in or around a '
                         'data center',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

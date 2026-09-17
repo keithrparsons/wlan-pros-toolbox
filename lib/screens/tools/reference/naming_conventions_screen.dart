@@ -129,8 +129,7 @@ class NamingConventionsScreen extends StatelessWidget {
     ),
     ConventionRule(
       name: 'Last character',
-      spec:
-          'Must be a letter or digit. A label may NOT end with a hyphen.',
+      spec: 'Must be a letter or digit. A label may NOT end with a hyphen.',
       source: 'RFC 952',
     ),
     ConventionRule(
@@ -281,9 +280,7 @@ class NamingConventionsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the whole page as sectioned TSV: hostname rules, MAC
         // format, U/L and I/G bits, then OUI/CID. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -312,13 +309,25 @@ class NamingConventionsScreen extends StatelessWidget {
       ..writeln()
       ..writeln('U/L and I/G bits (first octet)')
       ..writeln(
-        <String>['Bit', 'Position', 'Name', 'Value 0', 'Value 1', 'Source']
-            .join(tab),
+        <String>[
+          'Bit',
+          'Position',
+          'Name',
+          'Value 0',
+          'Value 1',
+          'Source',
+        ].join(tab),
       );
     for (final MacBit b in macBits) {
       buf.writeln(
-        <String>[b.bit, b.position, b.name, b.value0, b.value1, b.source]
-            .join(tab),
+        <String>[
+          b.bit,
+          b.position,
+          b.name,
+          b.value0,
+          b.value1,
+          b.source,
+        ].join(tab),
       );
     }
     buf
@@ -450,9 +459,7 @@ class NamingConventionsScreen extends StatelessWidget {
                   width: 440,
                   child: Text(
                     r.spec,
-                    style: text.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 SizedBox(
@@ -651,8 +658,9 @@ class _BitFieldBand extends StatelessWidget {
   Future<String> _loadSwappedSvg() async {
     final String cached = _lightSvgCache[assetName] ?? '';
     if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(MacBitFieldDiagram.path(assetName));
+    final String raw = await rootBundle.loadString(
+      MacBitFieldDiagram.path(assetName),
+    );
     final String swapped = ConceptGraphicBand.applyLightSwap(raw);
     _lightSvgCache[assetName] = swapped;
     return swapped;
@@ -665,8 +673,9 @@ class _BitFieldBand extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final AppColorScheme colors = context.colors;
-    final double bandHeight =
-        isDesktop ? _bandHeightDesktop : _bandHeightMobile;
+    final double bandHeight = isDesktop
+        ? _bandHeightDesktop
+        : _bandHeightMobile;
 
     // DARK: unmodified asset (dark render unchanged). LIGHT: load + §8.20.7 swap
     // + render via string so no raw lime stroke ever hits a light surface.

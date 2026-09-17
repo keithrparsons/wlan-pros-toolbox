@@ -23,6 +23,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
+import 'package:wlan_pros_toolbox/services/network/join_backend_selector.dart';
 
 void main() {
   group('web-unavailable contract', () {
@@ -36,7 +37,8 @@ void main() {
       // the set (they show with a web warning on web). So check membership
       // against the FULL id universe, not the native-filtered one.
       final Set<String> fullCatalogIds = <String>{
-        for (final ToolCategory c in kToolCategories) ...c.tools.map((t) => t.id),
+        for (final ToolCategory c in kToolCategories)
+          ...c.tools.map((t) => t.id),
         // nativeScanOnly tools are dropped on the native host; add the known one so
         // the set membership check is honest about what exists in the product.
         'nearby-ap-scan',
@@ -47,7 +49,8 @@ void main() {
       expect(
         orphans,
         isEmpty,
-        reason: 'web-unavailable ids with no catalog tool: ${orphans.join(", ")}',
+        reason:
+            'web-unavailable ids with no catalog tool: ${orphans.join(", ")}',
       );
     });
 
@@ -70,29 +73,30 @@ void main() {
       }
     });
 
-    test('every Calculator and Quick Reference tool works on web (no warning)',
-        () {
-      // Calculators (pure math) and Quick Reference (bundled tables) run
-      // identically in a browser; none of them may be flagged web-unavailable.
-      const Set<String> webSafeCategoryIds = <String>{
-        'rf-calculators',
-        'quick-reference',
-        'educational-resources',
-      };
-      for (final ToolCategory c in kToolCategories) {
-        if (!webSafeCategoryIds.contains(c.id)) continue;
-        for (final ToolEntry t in c.tools) {
-          expect(
-            kWebUnavailableToolIds.contains(t.id),
-            isFalse,
-            reason: '${c.id}/${t.id} is web-safe and must not be web-flagged',
-          );
+    test(
+      'every Calculator and Quick Reference tool works on web (no warning)',
+      () {
+        // Calculators (pure math) and Quick Reference (bundled tables) run
+        // identically in a browser; none of them may be flagged web-unavailable.
+        const Set<String> webSafeCategoryIds = <String>{
+          'rf-calculators',
+          'quick-reference',
+          'educational-resources',
+        };
+        for (final ToolCategory c in kToolCategories) {
+          if (!webSafeCategoryIds.contains(c.id)) continue;
+          for (final ToolEntry t in c.tools) {
+            expect(
+              kWebUnavailableToolIds.contains(t.id),
+              isFalse,
+              reason: '${c.id}/${t.id} is web-safe and must not be web-flagged',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
-    test('toolUnavailableOnWeb is false off web (native behavior unchanged)',
-        () {
+    test('toolUnavailableOnWeb is false off web (native behavior unchanged)', () {
       // This test host is the Dart VM (kIsWeb == false), so the gate must
       // short-circuit to false for EVERY id — including the network tools and
       // the Android-only scan. This is the guard that keeps native iOS/macOS/
@@ -124,16 +128,37 @@ void main() {
       expect(toolUnavailableOnWeb('not-a-real-id'), isFalse);
     });
 
-    test('a Pi-only tool IS flagged off a Pi, on every platform', () {
+    test('a Pi-only tool IS flagged off a Pi, unless the device serves it', () {
       // The other half of the contract above. This test host is the Dart VM
       // with no Pi backend, which is exactly the macOS case Keith hit.
-      expect(kPiOnlyToolIds, isNotEmpty,
-          reason: 'the set exists to name tools that only a Pi can run');
+      //
+      // AMENDED 2026-09-17, and the amendment is narrow on purpose. Native
+      // join landed for macOS and Windows, so join-network is no longer
+      // "only a Pi can run this" on those two. Every other Pi-only tool is
+      // unchanged, and join-network is still flagged on iOS, Android and web.
+      // The rule is not "Pi-only tools are always flagged"; it is "a tool is
+      // flagged unless something here can actually run it".
+      expect(
+        kPiOnlyToolIds,
+        isNotEmpty,
+        reason: 'the set exists to name tools that only a Pi can run',
+      );
       for (final String id in kPiOnlyToolIds) {
+        if (id == 'join-network' && deviceCanJoinNatively) {
+          expect(
+            toolUnavailableOnWeb(id),
+            isFalse,
+            reason:
+                'this host joins with its own radio, so offering the tool '
+                'is honest rather than a promise it cannot keep',
+          );
+          continue;
+        }
         expect(
           toolUnavailableOnWeb(id),
           isTrue,
-          reason: '$id runs only on a WLAN Pi and must not be offered as '
+          reason:
+              '$id runs only on a WLAN Pi and must not be offered as '
               'though it works here',
         );
       }
@@ -148,8 +173,11 @@ void main() {
           for (final ToolEntry t in c.tools) t.id,
       };
       for (final String id in kPiOnlyToolIds) {
-        expect(all, contains(id),
-            reason: '$id is in kPiOnlyToolIds but not in the catalog');
+        expect(
+          all,
+          contains(id),
+          reason: '$id is in kPiOnlyToolIds but not in the catalog',
+        );
       }
     });
 
@@ -163,7 +191,8 @@ void main() {
           expect(
             t.description.contains("this WLAN Pi's"),
             isFalse,
-            reason: '${t.id}: do not say "this WLAN Pi" to a reader who may be '
+            reason:
+                '${t.id}: do not say "this WLAN Pi" to a reader who may be '
                 'on a Mac; name the hardware without assuming they hold it',
           );
         }
@@ -173,15 +202,17 @@ void main() {
     test('the formerly-web-gated network categories are in the catalog', () {
       // The old kWebGatedCategoryIds removed these on web. They now appear in
       // the single catalog every platform reads.
-      final Set<String> categoryIds =
-          kToolCategories.map((ToolCategory c) => c.id).toSet();
+      final Set<String> categoryIds = kToolCategories
+          .map((ToolCategory c) => c.id)
+          .toSet();
       expect(categoryIds.contains('test-network'), isTrue);
       expect(categoryIds.contains('networking'), isTrue);
     });
 
     test('every Test Network tool is flagged web-unavailable', () {
-      final ToolCategory testNetwork = kToolCategories
-          .firstWhere((ToolCategory c) => c.id == 'test-network');
+      final ToolCategory testNetwork = kToolCategories.firstWhere(
+        (ToolCategory c) => c.id == 'test-network',
+      );
       for (final ToolEntry t in testNetwork.tools) {
         expect(
           kWebUnavailableToolIds.contains(t.id),
@@ -217,19 +248,23 @@ void main() {
         'my-current-location', // browser Geolocation API via geolocator
       };
 
-      final ToolCategory networking =
-          kToolCategories.firstWhere((ToolCategory c) => c.id == 'networking');
+      final ToolCategory networking = kToolCategories.firstWhere(
+        (ToolCategory c) => c.id == 'networking',
+      );
       final List<String> undecided = networking.tools
           .map((ToolEntry t) => t.id)
-          .where((String id) =>
-              !kWebUnavailableToolIds.contains(id) &&
-              !webSafeNetworkingIds.contains(id))
+          .where(
+            (String id) =>
+                !kWebUnavailableToolIds.contains(id) &&
+                !webSafeNetworkingIds.contains(id),
+          )
           .toList();
 
       expect(
         undecided,
         isEmpty,
-        reason: 'Networking tools with no web verdict: ${undecided.join(", ")}. '
+        reason:
+            'Networking tools with no web verdict: ${undecided.join(", ")}. '
             'Add each to kWebUnavailableToolIds (its screen refuses on web) or '
             'to webSafeNetworkingIds (it genuinely runs in a browser).',
       );

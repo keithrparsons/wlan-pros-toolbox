@@ -44,14 +44,22 @@ class HamBandWavelengthsScreen extends StatelessWidget {
     }
     buf
       ..writeln()
-      ..writeln('Formula: lambda(m) = 299.792458 / f(MHz); f(MHz) = '
-          '299.792458 / lambda(m). Working approximation: lambda ~ 300 / f.')
-      ..writeln('Name to frequency: "20 m" -> f ~ 300/20 = 15 MHz (actual '
-          'allocation 14.000-14.350 MHz).')
-      ..writeln('Frequency to name: 146 MHz -> lambda = 299.792458/146 = '
-          '2.05 m -> the "2 m" band.')
-      ..writeln('Wi-Fi crossover: 2442 MHz (Wi-Fi ch 7) -> 12.28 cm -> the '
-          '"13 cm" amateur band.');
+      ..writeln(
+        'Formula: lambda(m) = 299.792458 / f(MHz); f(MHz) = '
+        '299.792458 / lambda(m). Working approximation: lambda ~ 300 / f.',
+      )
+      ..writeln(
+        'Name to frequency: "20 m" -> f ~ 300/20 = 15 MHz (actual '
+        'allocation 14.000-14.350 MHz).',
+      )
+      ..writeln(
+        'Frequency to name: 146 MHz -> lambda = 299.792458/146 = '
+        '2.05 m -> the "2 m" band.',
+      )
+      ..writeln(
+        'Wi-Fi crossover: 2442 MHz (Wi-Fi ch 7) -> 12.28 cm -> the '
+        '"13 cm" amateur band.',
+      );
     return buf.toString().trimRight();
   }
 
@@ -216,15 +224,15 @@ class HamBandWavelengthsScreen extends StatelessWidget {
               ],
             ),
           ),
-          ...kBandBridge.asMap().entries.expand(
-            (MapEntry<int, BandBridgeRow> entry) {
-              return <Widget>[
-                if (entry.key > 0)
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                _BridgeRow(row: entry.value),
-              ];
-            },
-          ),
+          ...kBandBridge.asMap().entries.expand((
+            MapEntry<int, BandBridgeRow> entry,
+          ) {
+            return <Widget>[
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.sm),
+              _BridgeRow(row: entry.value),
+            ];
+          }),
         ],
       ),
     );
@@ -236,25 +244,25 @@ class HamBandWavelengthsScreen extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     Widget example(String title, String body) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                title,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                body,
-                style: mono.inlineCode.copyWith(color: colors.textPrimary),
-              ),
-            ],
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        );
+          const SizedBox(height: 2),
+          Text(
+            body,
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
+        ],
+      ),
+    );
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,

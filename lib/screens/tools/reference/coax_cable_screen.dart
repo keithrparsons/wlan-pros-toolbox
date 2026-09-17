@@ -207,9 +207,7 @@ class CoaxCableScreen extends StatelessWidget {
         title: const Text('Coax Cable'),
         toolbarHeight: 64,
         // §8.16 — copy the coax table as TSV. Static data, so always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -411,12 +409,8 @@ class _CoaxRow extends StatelessWidget {
     // 75Ω is impedance-mismatched for 50Ω Wi-Fi; the PWA dims it. Reuse the
     // muted text tier so it reads as "reference only" without a new token.
     final bool muted = cable.isMismatched;
-    final Color nameColor = muted
-        ? colors.textTertiary
-        : colors.textPrimary;
-    final Color specColor = muted
-        ? colors.textTertiary
-        : colors.textSecondary;
+    final Color nameColor = muted ? colors.textTertiary : colors.textPrimary;
+    final Color specColor = muted ? colors.textTertiary : colors.textSecondary;
 
     return ReferenceRowSemantics(
       label: rowLabel(cable.name, <String?>[
@@ -480,9 +474,7 @@ class _CoaxRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 cable.use,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

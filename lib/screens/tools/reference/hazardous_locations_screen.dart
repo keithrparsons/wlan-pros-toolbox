@@ -77,8 +77,9 @@ class HazardousLocationsScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kHazardousLocationsToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kHazardousLocationsToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -96,19 +97,25 @@ class HazardousLocationsScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kHazardousLocationsToolId),
+                      assetPath: ReferenceImages.pathFor(
+                        kHazardousLocationsToolId,
+                      ),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'Class, Division, and Zone hazardous-location decoder '
                           'diagram',
-                      caption: 'Decode Class, Division, and the IEC Zone system.',
+                      caption:
+                          'Decode Class, Division, and the IEC Zone system.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kHazardousLocationsToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kHazardousLocationsToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
-                      assetPath: ReferencePdfs.pathFor(kHazardousLocationsToolId),
+                      assetPath: ReferencePdfs.pathFor(
+                        kHazardousLocationsToolId,
+                      ),
                       title: 'Hazardous Locations',
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -280,10 +287,7 @@ class _Caption extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    return Text(
-      text,
-      style: t.bodySmall?.copyWith(color: colors.textTertiary),
-    );
+    return Text(text, style: t.bodySmall?.copyWith(color: colors.textTertiary));
   }
 }
 
@@ -327,7 +331,11 @@ class _Bullets extends StatelessWidget {
 /// [foot] line. Handles arbitrary-length leading text (Class/Zone/Concept names)
 /// without a fixed-width code chip. Whole row is one Semantics unit.
 class _LabeledRow extends StatelessWidget {
-  const _LabeledRow({required this.head, required this.mid, required this.foot});
+  const _LabeledRow({
+    required this.head,
+    required this.mid,
+    required this.foot,
+  });
 
   final String head;
   final String mid;
@@ -402,7 +410,11 @@ class _WarningBand extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.warning_amber_rounded, size: 20, color: colors.statusWarning),
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 20,
+            color: colors.statusWarning,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -559,10 +571,7 @@ class _FieldReadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _Card(
-      title: 'The field read',
-      child: _Bullets(kHazFieldRead),
-    );
+    return const _Card(title: 'The field read', child: _Bullets(kHazFieldRead));
   }
 }
 

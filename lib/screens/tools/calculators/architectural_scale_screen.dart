@@ -92,32 +92,152 @@ class ArchitecturalScaleScreen extends StatefulWidget {
 
   static const List<DrawingScale> scales = <DrawingScale>[
     // Architectural (fractional-inch) — ratio = 12 ÷ inches-per-foot.
-    DrawingScale(id: '3in-1ft', label: '3" = 1\'-0"', family: ScaleFamily.architectural, ratio: 4),
-    DrawingScale(id: '1-5in-1ft', label: '1-1/2" = 1\'-0"', family: ScaleFamily.architectural, ratio: 8),
-    DrawingScale(id: '1in-1ft', label: '1" = 1\'-0"', family: ScaleFamily.architectural, ratio: 12),
-    DrawingScale(id: '3-4in-1ft', label: '3/4" = 1\'-0"', family: ScaleFamily.architectural, ratio: 16),
-    DrawingScale(id: '1-2in-1ft', label: '1/2" = 1\'-0"', family: ScaleFamily.architectural, ratio: 24),
-    DrawingScale(id: '3-8in-1ft', label: '3/8" = 1\'-0"', family: ScaleFamily.architectural, ratio: 32),
-    DrawingScale(id: '1-4in-1ft', label: '1/4" = 1\'-0"', family: ScaleFamily.architectural, ratio: 48),
-    DrawingScale(id: '3-16in-1ft', label: '3/16" = 1\'-0"', family: ScaleFamily.architectural, ratio: 64),
-    DrawingScale(id: '1-8in-1ft', label: '1/8" = 1\'-0"', family: ScaleFamily.architectural, ratio: 96),
-    DrawingScale(id: '3-32in-1ft', label: '3/32" = 1\'-0"', family: ScaleFamily.architectural, ratio: 128),
-    DrawingScale(id: '1-16in-1ft', label: '1/16" = 1\'-0"', family: ScaleFamily.architectural, ratio: 192),
+    DrawingScale(
+      id: '3in-1ft',
+      label: '3" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 4,
+    ),
+    DrawingScale(
+      id: '1-5in-1ft',
+      label: '1-1/2" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 8,
+    ),
+    DrawingScale(
+      id: '1in-1ft',
+      label: '1" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 12,
+    ),
+    DrawingScale(
+      id: '3-4in-1ft',
+      label: '3/4" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 16,
+    ),
+    DrawingScale(
+      id: '1-2in-1ft',
+      label: '1/2" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 24,
+    ),
+    DrawingScale(
+      id: '3-8in-1ft',
+      label: '3/8" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 32,
+    ),
+    DrawingScale(
+      id: '1-4in-1ft',
+      label: '1/4" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 48,
+    ),
+    DrawingScale(
+      id: '3-16in-1ft',
+      label: '3/16" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 64,
+    ),
+    DrawingScale(
+      id: '1-8in-1ft',
+      label: '1/8" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 96,
+    ),
+    DrawingScale(
+      id: '3-32in-1ft',
+      label: '3/32" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 128,
+    ),
+    DrawingScale(
+      id: '1-16in-1ft',
+      label: '1/16" = 1\'-0"',
+      family: ScaleFamily.architectural,
+      ratio: 192,
+    ),
     // Engineer's (decimal) — ratio = feet-per-inch × 12.
-    DrawingScale(id: '1in-10ft', label: '1" = 10\'', family: ScaleFamily.engineering, ratio: 120),
-    DrawingScale(id: '1in-20ft', label: '1" = 20\'', family: ScaleFamily.engineering, ratio: 240),
-    DrawingScale(id: '1in-30ft', label: '1" = 30\'', family: ScaleFamily.engineering, ratio: 360),
-    DrawingScale(id: '1in-40ft', label: '1" = 40\'', family: ScaleFamily.engineering, ratio: 480),
-    DrawingScale(id: '1in-50ft', label: '1" = 50\'', family: ScaleFamily.engineering, ratio: 600),
-    DrawingScale(id: '1in-60ft', label: '1" = 60\'', family: ScaleFamily.engineering, ratio: 720),
-    DrawingScale(id: '1in-100ft', label: '1" = 100\'', family: ScaleFamily.engineering, ratio: 1200),
+    DrawingScale(
+      id: '1in-10ft',
+      label: '1" = 10\'',
+      family: ScaleFamily.engineering,
+      ratio: 120,
+    ),
+    DrawingScale(
+      id: '1in-20ft',
+      label: '1" = 20\'',
+      family: ScaleFamily.engineering,
+      ratio: 240,
+    ),
+    DrawingScale(
+      id: '1in-30ft',
+      label: '1" = 30\'',
+      family: ScaleFamily.engineering,
+      ratio: 360,
+    ),
+    DrawingScale(
+      id: '1in-40ft',
+      label: '1" = 40\'',
+      family: ScaleFamily.engineering,
+      ratio: 480,
+    ),
+    DrawingScale(
+      id: '1in-50ft',
+      label: '1" = 50\'',
+      family: ScaleFamily.engineering,
+      ratio: 600,
+    ),
+    DrawingScale(
+      id: '1in-60ft',
+      label: '1" = 60\'',
+      family: ScaleFamily.engineering,
+      ratio: 720,
+    ),
+    DrawingScale(
+      id: '1in-100ft',
+      label: '1" = 100\'',
+      family: ScaleFamily.engineering,
+      ratio: 1200,
+    ),
     // Metric — the ratio is the scale.
-    DrawingScale(id: 'metric-1-20', label: '1:20', family: ScaleFamily.metric, ratio: 20),
-    DrawingScale(id: 'metric-1-50', label: '1:50', family: ScaleFamily.metric, ratio: 50),
-    DrawingScale(id: 'metric-1-100', label: '1:100', family: ScaleFamily.metric, ratio: 100),
-    DrawingScale(id: 'metric-1-200', label: '1:200', family: ScaleFamily.metric, ratio: 200),
-    DrawingScale(id: 'metric-1-500', label: '1:500', family: ScaleFamily.metric, ratio: 500),
-    DrawingScale(id: 'metric-1-1000', label: '1:1000', family: ScaleFamily.metric, ratio: 1000),
+    DrawingScale(
+      id: 'metric-1-20',
+      label: '1:20',
+      family: ScaleFamily.metric,
+      ratio: 20,
+    ),
+    DrawingScale(
+      id: 'metric-1-50',
+      label: '1:50',
+      family: ScaleFamily.metric,
+      ratio: 50,
+    ),
+    DrawingScale(
+      id: 'metric-1-100',
+      label: '1:100',
+      family: ScaleFamily.metric,
+      ratio: 100,
+    ),
+    DrawingScale(
+      id: 'metric-1-200',
+      label: '1:200',
+      family: ScaleFamily.metric,
+      ratio: 200,
+    ),
+    DrawingScale(
+      id: 'metric-1-500',
+      label: '1:500',
+      family: ScaleFamily.metric,
+      ratio: 500,
+    ),
+    DrawingScale(
+      id: 'metric-1-1000',
+      label: '1:1000',
+      family: ScaleFamily.metric,
+      ratio: 1000,
+    ),
   ];
 
   /// The default working scale — 1/4" = 1'-0", the most common US floor-plan
@@ -305,9 +425,17 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
     final double ratio = _scale.ratio;
     final double out = _direction == MeasureDirection.drawnToReal
         ? ArchitecturalScaleScreen.drawnToReal(
-            value, _drawnUnit, ratio, _realUnit)
+            value,
+            _drawnUnit,
+            ratio,
+            _realUnit,
+          )
         : ArchitecturalScaleScreen.realToDrawn(
-            value, _realUnit, ratio, _drawnUnit);
+            value,
+            _realUnit,
+            ratio,
+            _drawnUnit,
+          );
     setState(() => _measureOut = out.isFinite ? out : null);
   }
 
@@ -380,9 +508,7 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Always enabled here (a scale
         // is always selected); copies the ratio plus any live measurement.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -442,7 +568,9 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
       ..writeln('Architectural Scale')
       ..writeln('Scale: ${s.label}')
       ..writeln('Ratio: ${s.ratioLabel}')
-      ..writeln('Scale factor: ${ArchitecturalScaleScreen.trimRatio(s.ratio)}×');
+      ..writeln(
+        'Scale factor: ${ArchitecturalScaleScreen.trimRatio(s.ratio)}×',
+      );
 
     final double? out = _measureOut;
     if (out != null) {
@@ -480,8 +608,9 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
   }
 
   Widget _scaleCard(TextTheme text, AppMonoText mono) {
-    final List<DrawingScale> familyScales =
-        ArchitecturalScaleScreen.scalesIn(_family);
+    final List<DrawingScale> familyScales = ArchitecturalScaleScreen.scalesIn(
+      _family,
+    );
     return _cardShell(
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -524,7 +653,8 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
     final DrawingScale s = _scale;
     return Semantics(
       label: 'Ratio',
-      value: '${s.ratioLabel}, scale factor '
+      value:
+          '${s.ratioLabel}, scale factor '
           '${ArchitecturalScaleScreen.trimRatio(s.ratio)}',
       excludeSemantics: true,
       child: Column(
@@ -557,12 +687,15 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
   Widget _measureCard(TextTheme text, AppMonoText mono) {
     final AppColorScheme colors = context.colors;
     final bool drawnToReal = _direction == MeasureDirection.drawnToReal;
-    final String inputUnit =
-        drawnToReal ? _drawnUnitLabel(_drawnUnit) : _realUnitLabel(_realUnit);
-    final String inputLabel =
-        drawnToReal ? 'Measured on the drawing' : 'Real-world distance';
-    final String resultLabel =
-        drawnToReal ? 'Real-world distance' : 'Drawn length';
+    final String inputUnit = drawnToReal
+        ? _drawnUnitLabel(_drawnUnit)
+        : _realUnitLabel(_realUnit);
+    final String inputLabel = drawnToReal
+        ? 'Measured on the drawing'
+        : 'Real-world distance';
+    final String resultLabel = drawnToReal
+        ? 'Real-world distance'
+        : 'Drawn length';
 
     return _cardShell(
       Column(
@@ -612,10 +745,7 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
             field: AppToggle<RealUnit>(
               value: _realUnit,
               semanticLabel: 'Real-world units',
-              items: const [
-                (RealUnit.feet, 'ft'),
-                (RealUnit.meters, 'm'),
-              ],
+              items: const [(RealUnit.feet, 'ft'), (RealUnit.meters, 'm')],
               onChanged: (RealUnit u) {
                 setState(() => _realUnit = u);
                 _recompute();
@@ -634,19 +764,19 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
             field: TextField(
               controller: _measureCtrl,
               focusNode: _measureFocus,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: _unsignedDecimal,
               onChanged: (_) => _recompute(),
               textInputAction: TextInputAction.done,
               autocorrect: false,
               enableSuggestions: false,
-              style: mono.outputLarge
-                  .copyWith(fontSize: AppTextSize.fieldNumeric),
-              cursorColor: colors.textAccent,
-              decoration: InputDecoration(
-                hintText: drawnToReal ? '3.5' : '45',
+              style: mono.outputLarge.copyWith(
+                fontSize: AppTextSize.fieldNumeric,
               ),
+              cursorColor: colors.textAccent,
+              decoration: InputDecoration(hintText: drawnToReal ? '3.5' : '45'),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -665,7 +795,7 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
       value: blank
           ? 'not calculated'
           : '${ArchitecturalScaleScreen.fmtLength(_measureOut)} $_outUnitLabel'
-              '${secondary == null ? '' : ', $secondary'}',
+                '${secondary == null ? '' : ', $secondary'}',
       excludeSemantics: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -780,16 +910,16 @@ class _ArchitecturalScaleScreenState extends State<ArchitecturalScaleScreen> {
           const SizedBox(height: AppSpacing.xs),
           ...rows.map((DrawingScale s) {
             return Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
                       s.label,
-                      style: mono.inlineCode
-                          .copyWith(color: colors.textSecondary),
+                      style: mono.inlineCode.copyWith(
+                        color: colors.textSecondary,
+                      ),
                     ),
                   ),
                   SizedBox(

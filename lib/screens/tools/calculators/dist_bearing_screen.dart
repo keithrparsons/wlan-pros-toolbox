@@ -113,7 +113,8 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
 
   // Latitude / longitude are signed decimals. Allow digits, dot, and a leading
   // minus; reject scientific notation since coordinates are typed by hand.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -205,9 +206,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // distance/bearing is computed; copies the result as a labeled text
         // block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -463,9 +462,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'km',
-                  style: text.labelLarge?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.labelLarge?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
@@ -517,9 +514,7 @@ class _DistBearingScreenState extends State<DistBearingScreen> {
               width: 120,
               child: Text(
                 label,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             Expanded(

@@ -37,18 +37,17 @@ void main() {
 
     test('a value with several specials escapes them all', () {
       // Worked example: SSID  Cafe; "Free":,\  →  Cafe\; \"Free\"\:\,\\
-      expect(
-        escapeWifiValue(r'Cafe; "Free":,\'),
-        r'Cafe\; \"Free\"\:\,\\',
-      );
+      expect(escapeWifiValue(r'Cafe; "Free":,\'), r'Cafe\; \"Free\"\:\,\\');
     });
 
-    test('backslash is escaped before the char it precedes (no double-count)',
-        () {
-      // A backslash already in the value becomes \\, and a following ; is its
-      // own \; — they do not merge.
-      expect(escapeWifiValue(r'\;'), r'\\\;');
-    });
+    test(
+      'backslash is escaped before the char it precedes (no double-count)',
+      () {
+        // A backslash already in the value becomes \\, and a following ; is its
+        // own \; — they do not merge.
+        expect(escapeWifiValue(r'\;'), r'\\\;');
+      },
+    );
 
     test('all-hex value is double-quoted so it is read verbatim', () {
       expect(escapeWifiValue('deadbeef'), '"deadbeef"');
@@ -119,18 +118,20 @@ void main() {
       );
     });
 
-    test('special characters in SSID and password are escaped in the payload',
-        () {
-      expect(
-        buildWifiQrPayload(
-          ssid: 'Cafe; Free',
-          auth: WifiAuthType.wpa,
-          password: r'p@ss;word\1',
-          hidden: false,
-        ),
-        r'WIFI:T:WPA;S:Cafe\; Free;P:p@ss\;word\\1;H:false;;',
-      );
-    });
+    test(
+      'special characters in SSID and password are escaped in the payload',
+      () {
+        expect(
+          buildWifiQrPayload(
+            ssid: 'Cafe; Free',
+            auth: WifiAuthType.wpa,
+            password: r'p@ss;word\1',
+            hidden: false,
+          ),
+          r'WIFI:T:WPA;S:Cafe\; Free;P:p@ss\;word\\1;H:false;;',
+        );
+      },
+    );
 
     test('payload always ends with the ;; record terminator', () {
       final String s = buildWifiQrPayload(

@@ -117,7 +117,9 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
   void initState() {
     super.initState();
     _piBacked =
-        kIsWeb && PiBackend.canServe('ping-plotter') && widget.controller == null;
+        kIsWeb &&
+        PiBackend.canServe('ping-plotter') &&
+        widget.controller == null;
     // The controller is constructed on both paths (it opens no socket until
     // start(), which the Pi path never calls) so dispose() stays uniform.
     _controller = widget.controller ?? PingPlotController();
@@ -230,8 +232,10 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       _state = PingPlotState.empty;
     });
     try {
-      final PingPlotState result =
-          await PiBackendClient().pingSeries(host: host, count: _piCount);
+      final PingPlotState result = await PiBackendClient().pingSeries(
+        host: host,
+        count: _piCount,
+      );
       if (!mounted) return;
       setState(() {
         _piLoading = false;
@@ -263,7 +267,8 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     final String avg = s.avgMs == null
         ? 'no replies yet'
         : 'average ${s.avgMs!.toStringAsFixed(0)}';
-    final String loss = '${(s.totalLossFraction * 100).toStringAsFixed(0)} '
+    final String loss =
+        '${(s.totalLossFraction * 100).toStringAsFixed(0)} '
         'percent loss';
     _announce('Plotting, $last, $avg, $loss');
   }
@@ -285,9 +290,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Disabled until a run has
         // produced samples; copies the summary stats + a per-sample TSV.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -431,12 +434,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
             children: _piCountPresets
-                .map((int c) => _choice(
-                      context,
-                      label: '$c',
-                      selected: _piCount == c,
-                      onSelected: () => setState(() => _piCount = c),
-                    ))
+                .map(
+                  (int c) => _choice(
+                    context,
+                    label: '$c',
+                    selected: _piCount == c,
+                    onSelected: () => setState(() => _piCount = c),
+                  ),
+                )
                 .toList(),
           ),
           Padding(
@@ -487,11 +492,9 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-    final String lossPct =
-        (_state.totalLossFraction * 100).toStringAsFixed(0);
+    final String lossPct = (_state.totalLossFraction * 100).toStringAsFixed(0);
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
-    final bool noReplies =
-        _state.totalSent > 0 && _state.totalReceived == 0;
+    final bool noReplies = _state.totalSent > 0 && _state.totalReceived == 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -521,7 +524,8 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Semantics(
-            label: 'Ping series from the WLAN Pi, ${_state.totalReceived} of '
+            label:
+                'Ping series from the WLAN Pi, ${_state.totalReceived} of '
                 '${_state.totalSent} replies, $lossPct percent loss, average '
                 '${ms(_state.avgMs)} milliseconds',
             child: Wrap(
@@ -592,12 +596,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
             children: PingService.commonPorts
-                .map((int p) => _choice(
-                      context,
-                      label: '$p',
-                      selected: _port == p,
-                      onSelected: () => setState(() => _port = p),
-                    ))
+                .map(
+                  (int p) => _choice(
+                    context,
+                    label: '$p',
+                    selected: _port == p,
+                    onSelected: () => setState(() => _port = p),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -607,12 +613,14 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
             children: _intervalPresets
-                .map((int ms) => _choice(
-                      context,
-                      label: _intervalLabel(ms),
-                      selected: _intervalMs == ms,
-                      onSelected: () => setState(() => _intervalMs = ms),
-                    ))
+                .map(
+                  (int ms) => _choice(
+                    context,
+                    label: _intervalLabel(ms),
+                    selected: _intervalMs == ms,
+                    onSelected: () => setState(() => _intervalMs = ms),
+                  ),
+                )
                 .toList(),
           ),
           Padding(
@@ -694,8 +702,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-    final String lossPct =
-        (_state.totalLossFraction * 100).toStringAsFixed(0);
+    final String lossPct = (_state.totalLossFraction * 100).toStringAsFixed(0);
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
 
     final bool finished = !_running && _state.totalSent > 0;
@@ -732,9 +739,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               ),
               Text(
                 '${_state.totalReceived} / ${_state.totalSent} · $lossPct% loss',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -842,9 +847,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
               ),
               Text(
                 'ms over time',
-                style: text.labelSmall?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -857,8 +860,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
                   samples.isEmpty
                       ? 'Waiting for the first reply…'
                       : 'No replies yet. Every probe so far was lost.',
-                  style:
-                      text.bodyLarge?.copyWith(color: colors.textTertiary),
+                  style: text.bodyLarge?.copyWith(color: colors.textTertiary),
                 ),
               ),
             )
@@ -921,15 +923,16 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     if (_state.totalSent == 0) return null;
 
     final String host = _hostCtrl.text.trim();
-    final String lossPct =
-        (_state.totalLossFraction * 100).toStringAsFixed(0);
+    final String lossPct = (_state.totalLossFraction * 100).toStringAsFixed(0);
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
 
     const String tab = '\t';
     final StringBuffer buf = StringBuffer()
       ..writeln('Ping Plotter: TCP RTT over time (not ICMP echo)')
-      ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}  port $_port  '
-          'interval ${_intervalLabel(_intervalMs)}')
+      ..writeln(
+        'Target: ${host.isEmpty ? '(unknown)' : host}  port $_port  '
+        'interval ${_intervalLabel(_intervalMs)}',
+      )
       ..writeln(
         'Summary: ${_state.totalReceived}/${_state.totalSent} replies, '
         '$lossPct% loss · min ${ms(_state.minMs)} ms / '
@@ -945,8 +948,10 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
         'real round trip, the same way tcping counts it). No answer at all '
         '(timeout / unreachable) counts as loss, with no time recorded.',
       )
-      ..writeln('Showing the most recent ${_state.samples.length} of '
-          '${_state.totalSent} samples.')
+      ..writeln(
+        'Showing the most recent ${_state.samples.length} of '
+        '${_state.totalSent} samples.',
+      )
       ..writeln()
       ..writeln(<String>['Seq', 't (s)', 'Result', 'RTT (ms)'].join(tab));
 
@@ -969,8 +974,7 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
     if (_state.totalSent == 0) return null;
 
     final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
-    final String lossPct =
-        (_state.totalLossFraction * 100).toStringAsFixed(0);
+    final String lossPct = (_state.totalLossFraction * 100).toStringAsFixed(0);
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
 
     const String tab = '\t';
@@ -978,8 +982,10 @@ class _PingPlotterScreenState extends State<PingPlotterScreen> {
       ..writeln(
         'Ping series: ICMP echo, measured on the WLAN Pi hosting this page',
       )
-      ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}  ·  '
-          '${_state.totalSent} samples')
+      ..writeln(
+        'Target: ${host.isEmpty ? '(unknown)' : host}  ·  '
+        '${_state.totalSent} samples',
+      )
       ..writeln(
         'Summary: ${_state.totalReceived}/${_state.totalSent} replies, '
         '$lossPct% loss · min ${ms(_state.minMs)} ms / '
@@ -1033,8 +1039,7 @@ class _LatencyChart extends StatelessWidget {
     final double yMax = _niceCeiling(maxRtt);
     final double xMax = maxX <= 0 ? 1 : maxX;
 
-    final TextStyle axisStyle =
-        (text.labelSmall ?? const TextStyle()).copyWith(
+    final TextStyle axisStyle = (text.labelSmall ?? const TextStyle()).copyWith(
       color: colors.textTertiary,
     );
 
@@ -1049,16 +1054,16 @@ class _LatencyChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: yMax / 4,
-          getDrawingHorizontalLine: (double _) => FlLine(
-            color: colors.border,
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (double _) =>
+              FlLine(color: colors.border, strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -1095,14 +1100,14 @@ class _LatencyChart extends StatelessWidget {
             barWidth: 2,
             dotData: FlDotData(
               show: line.length <= 40,
-              getDotPainter: (FlSpot spot, double _, LineChartBarData _,
-                      int _) =>
-                  FlDotCirclePainter(
-                radius: 2,
-                color: colors.textAccent,
-                strokeWidth: 0,
-                strokeColor: colors.textAccent,
-              ),
+              getDotPainter:
+                  (FlSpot spot, double _, LineChartBarData _, int _) =>
+                      FlDotCirclePainter(
+                        radius: 2,
+                        color: colors.textAccent,
+                        strokeWidth: 0,
+                        strokeColor: colors.textAccent,
+                      ),
             ),
           ),
           // Lost-probe markers pinned to the X axis.
@@ -1112,14 +1117,14 @@ class _LatencyChart extends StatelessWidget {
             barWidth: 0,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (FlSpot spot, double _, LineChartBarData _,
-                      int _) =>
-                  FlDotCirclePainter(
-                radius: 3,
-                color: colors.statusDanger,
-                strokeWidth: 0,
-                strokeColor: colors.statusDanger,
-              ),
+              getDotPainter:
+                  (FlSpot spot, double _, LineChartBarData _, int _) =>
+                      FlDotCirclePainter(
+                        radius: 3,
+                        color: colors.statusDanger,
+                        strokeWidth: 0,
+                        strokeColor: colors.statusDanger,
+                      ),
             ),
           ),
         ],

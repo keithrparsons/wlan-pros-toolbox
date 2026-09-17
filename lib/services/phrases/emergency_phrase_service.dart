@@ -98,8 +98,7 @@ class EmergencyPhrase {
   final Map<String, String> translations;
 
   /// Translation for [code], or `null` when absent. `en` returns [english].
-  String? forCode(String code) =>
-      code == 'en' ? english : translations[code];
+  String? forCode(String code) => code == 'en' ? english : translations[code];
 
   /// Build from a decoded JSON map against the dataset's [targetCodes]. Returns
   /// `null` when the row is malformed: missing id / category / English, or
@@ -117,7 +116,8 @@ class EmergencyPhrase {
     final Map<String, String> translations = <String, String>{};
     for (final String code in targetCodes) {
       final String value = _str(map[code]);
-      if (value.isEmpty) return null; // every target must be present + non-empty
+      if (value.isEmpty)
+        return null; // every target must be present + non-empty
       translations[code] = value;
     }
 

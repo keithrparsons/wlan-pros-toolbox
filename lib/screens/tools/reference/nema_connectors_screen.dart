@@ -385,9 +385,7 @@ class NemaConnectorsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the whole page as sectioned TSV: the decoder, then the
         // three device tables. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -420,7 +418,11 @@ class NemaConnectorsScreen extends StatelessWidget {
       ..writeln(splitVsThreePhaseNote)
       ..writeln();
     _writeDeviceSection(
-        buf, 'California Standard 3-phase', groupCalifornia, tab);
+      buf,
+      'California Standard 3-phase',
+      groupCalifornia,
+      tab,
+    );
     buf
       ..writeln()
       ..writeln(californiaNote)
@@ -503,7 +505,9 @@ class NemaConnectorsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _SectionHeading(label: 'California Standard 3-phase (Non-NEMA)'),
+                  _SectionHeading(
+                    label: 'California Standard 3-phase (Non-NEMA)',
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   ..._faceCards(groupCalifornia, isDesktop),
                   Text(
@@ -544,11 +548,7 @@ class NemaConnectorsScreen extends StatelessWidget {
             specs: <FaceSpec>[
               FaceSpec(label: 'Voltage', value: d.voltage),
               FaceSpec(label: 'Amps', value: '${d.amps}A', accent: true),
-              FaceSpec(
-                label: 'Phase',
-                value: d.phase,
-                accent: d.isThreePhase,
-              ),
+              FaceSpec(label: 'Phase', value: d.phase, accent: d.isThreePhase),
               FaceSpec(label: 'Wiring', value: d.wiring),
             ],
             assetName: d.assetName ?? '',

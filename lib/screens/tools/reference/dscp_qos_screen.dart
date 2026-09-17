@@ -318,9 +318,7 @@ class DscpQosScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy both tables + the trap note as a multi-section TSV.
         // Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -407,10 +405,7 @@ class DscpQosScreen extends StatelessWidget {
                 children: <Widget>[
                   // Multi-graphic resolver: requests dscp-qos-grid.svg and
                   // degrades to nothing when the asset is not bundled.
-                  ConceptGraphicBand(
-                    toolId: 'dscp-qos',
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: 'dscp-qos', isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic('dscp-qos'))
                     const SizedBox(height: AppSpacing.md),
                   _mappingCard(colors, text, mono),
@@ -505,9 +500,7 @@ class DscpQosScreen extends StatelessWidget {
                   width: 96,
                   child: Text(
                     m.dscpDecimal,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                 ),
               ],

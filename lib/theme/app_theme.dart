@@ -34,21 +34,21 @@ class AppTheme {
   /// light = 3px (the darkened-lime ring sits at 4.8:1, half the dark margin, so
   /// it needs the extra px to read at distance — 3px is the §8.20.3-B punch
   /// ceiling, never exceeded).
-  static double _focusRingWidth(Brightness b) =>
-      b == Brightness.light ? 3 : 2;
+  static double _focusRingWidth(Brightness b) => b == Brightness.light ? 3 : 2;
 
   static BorderSide _focusRingSide(Brightness b) => BorderSide(
-        color: b == Brightness.light ? _focusRingLight : _focusRingDark,
-        width: _focusRingWidth(b),
-      );
+    color: b == Brightness.light ? _focusRingLight : _focusRingDark,
+    width: _focusRingWidth(b),
+  );
 
   /// Shared chip border resolver, brightness-aware. Drops into a
   /// `ChoiceChip`/`FilterChip`'s `side:` so every chip carries the §8.3 / §8.20.3
   /// treatment: focused → the focus ring; disabled → disabledFill; selected →
   /// the primary/foreground-accent boundary; idle → borderStrong.
   static WidgetStateBorderSide chipSide([Brightness b = Brightness.dark]) {
-    final AppColorScheme c =
-        b == Brightness.light ? AppColorScheme.light() : AppColorScheme.dark();
+    final AppColorScheme c = b == Brightness.light
+        ? AppColorScheme.light()
+        : AppColorScheme.dark();
     final bool light = b == Brightness.light;
     return WidgetStateBorderSide.resolveWith((Set<WidgetState> states) {
       if (states.contains(WidgetState.focused)) return _focusRingSide(b);
@@ -79,8 +79,9 @@ class AppTheme {
   /// themes never drift.
   static ThemeData _build(Brightness brightness) {
     final bool light = brightness == Brightness.light;
-    final AppColorScheme c =
-        light ? AppColorScheme.light() : AppColorScheme.dark();
+    final AppColorScheme c = light
+        ? AppColorScheme.light()
+        : AppColorScheme.dark();
     final TextTheme textTheme = buildAppTextTheme(brightness);
     final AppMonoText monoExtension = AppMonoText.defaults(brightness);
 
@@ -172,11 +173,14 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: (light ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light)
-            .copyWith(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: light ? Brightness.dark : Brightness.light,
-        ),
+        systemOverlayStyle:
+            (light ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light)
+                .copyWith(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: light
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
         titleTextStyle: textTheme.headlineMedium,
         iconTheme: IconThemeData(
           color: c.textPrimary,
@@ -249,20 +253,28 @@ class AppTheme {
           }
           return base;
         }),
-        floatingLabelStyle: textTheme.labelMedium?.copyWith(color: c.textAccent),
+        floatingLabelStyle: textTheme.labelMedium?.copyWith(
+          color: c.textAccent,
+        ),
         hintStyle: textTheme.bodyLarge?.copyWith(color: c.textTertiary),
         helperStyle: textTheme.labelSmall,
         errorStyle: textTheme.labelSmall?.copyWith(color: c.statusDanger),
         border: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.control)),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(AppRadius.control),
+          ),
           borderSide: BorderSide(color: c.borderStrong, width: inputBorderW),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.control)),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(AppRadius.control),
+          ),
           borderSide: BorderSide(color: c.borderStrong, width: inputBorderW),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.control)),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(AppRadius.control),
+          ),
           // Light: darkened-lime #5A7A1C 2.5px; dark: brand lime 2px.
           borderSide: BorderSide(
             color: light ? c.textAccent : c.primary,
@@ -270,15 +282,21 @@ class AppTheme {
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.control)),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(AppRadius.control),
+          ),
           borderSide: BorderSide(color: c.statusDanger, width: inputFocusW),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.control)),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(AppRadius.control),
+          ),
           borderSide: BorderSide(color: c.statusDanger, width: inputFocusW),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.control)),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(AppRadius.control),
+          ),
           borderSide: BorderSide(color: c.borderStrong, width: inputBorderW),
         ),
       ),
@@ -487,11 +505,7 @@ class AppTheme {
       ),
 
       // Dividers — §8.1 / §8.20.3-B held thin (decorative; meant to recede).
-      dividerTheme: DividerThemeData(
-        color: c.border,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: c.border, thickness: 1, space: 1),
 
       iconTheme: IconThemeData(
         color: c.textPrimary,

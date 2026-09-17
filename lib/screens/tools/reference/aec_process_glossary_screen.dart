@@ -333,8 +333,9 @@ class _PhaseRowView extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    final String phaseLabel =
-        phase.abbr.isEmpty ? phase.phase : '${phase.abbr} (${phase.phase})';
+    final String phaseLabel = phase.abbr.isEmpty
+        ? phase.phase
+        : '${phase.abbr} (${phase.phase})';
     final TextStyle nameStyle = (t.bodyMedium ?? const TextStyle()).copyWith(
       color: colors.textPrimary,
       fontWeight: FontWeight.w700,
@@ -446,8 +447,8 @@ class _GlossaryRowView extends StatelessWidget {
     final String semanticsLead = term.abbr.isEmpty
         ? term.term
         : term.term.isEmpty
-            ? term.abbr
-            : '${term.abbr} (${term.term})';
+        ? term.abbr
+        : '${term.abbr} (${term.term})';
 
     return Semantics(
       container: true,

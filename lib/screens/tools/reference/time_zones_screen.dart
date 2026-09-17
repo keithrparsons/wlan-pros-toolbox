@@ -115,8 +115,9 @@ class TimeZonesScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasWorldMap =
-            ReferenceImages.isBundled(kTimeZonesWorldMapId);
+        final bool hasWorldMap = ReferenceImages.isBundled(
+          kTimeZonesWorldMapId,
+        );
         final bool hasUsMap = ReferenceImages.isBundled(kTimeZonesUsMapId);
         return Center(
           child: ConstrainedBox(

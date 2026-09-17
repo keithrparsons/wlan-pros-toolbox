@@ -157,9 +157,7 @@ List<ToolSection> groupedCategoryTools(ToolCategory category) {
           ..sort(byTitle);
     placed.addAll(inSection);
     if (inSection.isNotEmpty) {
-      sections.add(
-        (header: header, count: inSection.length, tools: inSection),
-      );
+      sections.add((header: header, count: inSection.length, tools: inSection));
     }
   }
 

@@ -96,7 +96,8 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
 
   // Unsigned-decimal only. Height and coverage are always positive values a
   // human types by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -149,9 +150,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // angle is computed; copies the result as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -286,9 +285,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
         field: TextField(
           controller: controller,
           focusNode: focusNode,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: _unsignedDecimal,
           onChanged: (_) => _recompute(),
           textInputAction: TextInputAction.done,
@@ -336,9 +333,7 @@ class _DowntiltScreenState extends State<DowntiltScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 '°',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

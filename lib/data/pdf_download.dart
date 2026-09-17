@@ -18,7 +18,8 @@
 //   * the `sharePdf` dispatch contract (delegated to the conditional body).
 
 import 'pdf_download_io.dart'
-    if (dart.library.js_interop) 'pdf_download_web.dart' as impl;
+    if (dart.library.js_interop) 'pdf_download_web.dart'
+    as impl;
 
 /// Builds a clean, human-readable download filename from a card title.
 ///

@@ -30,8 +30,11 @@ void main() {
 
     test('the code→char inverse is consistent with char→code', () {
       Morse.charToCode.forEach((String ch, String code) {
-        expect(Morse.codeToChar[code], ch,
-            reason: 'inverse mismatch for $ch / $code');
+        expect(
+          Morse.codeToChar[code],
+          ch,
+          reason: 'inverse mismatch for $ch / $code',
+        );
       });
     });
   });
@@ -128,8 +131,9 @@ void main() {
 
   group('prosigns', () {
     test('SOS prosign is the run-together form', () {
-      final MorseEntry sos =
-          Morse.prosigns.firstWhere((MorseEntry e) => e.character == '<SOS>');
+      final MorseEntry sos = Morse.prosigns.firstWhere(
+        (MorseEntry e) => e.character == '<SOS>',
+      );
       expect(sos.code, '...---...');
       expect(sos.isProsign, isTrue);
       expect(sos.name, isNotNull);
@@ -164,18 +168,25 @@ void main() {
     test('intra-character, letter, and word gaps are 1, 3, 7 units', () {
       // "EE" → dot, 3-unit letter gap, dot.
       final List<MorseSegment> ee = Morse.segments('EE');
-      expect(ee.map((MorseSegment s) => '${s.on}:${s.units}').toList(),
-          <String>['true:1', 'false:3', 'true:1']);
+      expect(
+        ee.map((MorseSegment s) => '${s.on}:${s.units}').toList(),
+        <String>['true:1', 'false:3', 'true:1'],
+      );
 
       // "E E" → dot, 7-unit word gap, dot.
       final List<MorseSegment> wordGap = Morse.segments('E E');
-      expect(wordGap.map((MorseSegment s) => '${s.on}:${s.units}').toList(),
-          <String>['true:1', 'false:7', 'true:1']);
+      expect(
+        wordGap.map((MorseSegment s) => '${s.on}:${s.units}').toList(),
+        <String>['true:1', 'false:7', 'true:1'],
+      );
 
       // "A" = dot dash → dot, 1-unit intra gap, dash.
       final List<MorseSegment> a = Morse.segments('A');
-      expect(a.map((MorseSegment s) => '${s.on}:${s.units}').toList(),
-          <String>['true:1', 'false:1', 'true:3']);
+      expect(a.map((MorseSegment s) => '${s.on}:${s.units}').toList(), <String>[
+        'true:1',
+        'false:1',
+        'true:3',
+      ]);
     });
 
     test('empty input yields no segments', () {

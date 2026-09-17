@@ -78,10 +78,15 @@ void main() {
     }
 
     test('5180 -> (5 GHz, 36)', () => expectRev(5180, WifiBand.band5, 36));
-    test('5935 -> (6 GHz, 2) SPECIAL', () => expectRev(5935, WifiBand.band6, 2));
+    test(
+      '5935 -> (6 GHz, 2) SPECIAL',
+      () => expectRev(5935, WifiBand.band6, 2),
+    );
     test('5955 -> (6 GHz, 1)', () => expectRev(5955, WifiBand.band6, 1));
-    test('2484 -> (2.4 GHz, 14) SPECIAL',
-        () => expectRev(2484, WifiBand.band24, 14));
+    test(
+      '2484 -> (2.4 GHz, 14) SPECIAL',
+      () => expectRev(2484, WifiBand.band24, 14),
+    );
     test('2412 -> (2.4 GHz, 1)', () => expectRev(2412, WifiBand.band24, 1));
 
     test('+/-1 MHz snap tolerance (sec 6.5)', () {
@@ -197,10 +202,14 @@ void main() {
       );
       expect(all.length, 2);
       // Centers 31 (6105) and 63 (6265) both contain primary 33.
-      expect(all.map((BondedChannel b) => b.centerChannel).toSet(),
-          <int>{31, 63});
-      expect(all.map((BondedChannel b) => b.centerFreqMHz).toSet(),
-          <int>{6105, 6265});
+      expect(all.map((BondedChannel b) => b.centerChannel).toSet(), <int>{
+        31,
+        63,
+      });
+      expect(all.map((BondedChannel b) => b.centerFreqMHz).toSet(), <int>{
+        6105,
+        6265,
+      });
     });
 
     test('bonded width returns empty for an invalid primary', () {
@@ -210,26 +219,42 @@ void main() {
       );
     });
 
-    test('320 MHz centers/edges match sec 5.3 (non-overlapping {31,95,159})',
-        () {
-      // Primary 1 sits only in the center-31 320 MHz channel.
-      final List<BondedChannel> all = bondedChannels(
-        band: WifiBand.band6,
-        primaryChannel: 1,
-        widthMHz: 320,
-      );
-      expect(all.length, 1);
-      expect(all.single.centerChannel, 31);
-      expect(all.single.centerFreqMHz, 6105);
-      expect(all.single.lowEdgeMHz, 5945);
-      expect(all.single.highEdgeMHz, 6265);
-    });
+    test(
+      '320 MHz centers/edges match sec 5.3 (non-overlapping {31,95,159})',
+      () {
+        // Primary 1 sits only in the center-31 320 MHz channel.
+        final List<BondedChannel> all = bondedChannels(
+          band: WifiBand.band6,
+          primaryChannel: 1,
+          widthMHz: 320,
+        );
+        expect(all.length, 1);
+        expect(all.single.centerChannel, 31);
+        expect(all.single.centerFreqMHz, 6105);
+        expect(all.single.lowEdgeMHz, 5945);
+        expect(all.single.highEdgeMHz, 6265);
+      },
+    );
   });
 
   group('classification metadata', () {
     test('PSC list is the 15 channels from sec 4.3', () {
       expect(k6Psc, <int>{
-        5, 21, 37, 53, 69, 85, 101, 117, 133, 149, 165, 181, 197, 213, 229,
+        5,
+        21,
+        37,
+        53,
+        69,
+        85,
+        101,
+        117,
+        133,
+        149,
+        165,
+        181,
+        197,
+        213,
+        229,
       });
     });
     test('UNII sub-band lookup (sec 3.1 / 4.1 boundaries)', () {
@@ -250,8 +275,13 @@ void main() {
     });
     test('6 GHz PSC + special-channel flags', () {
       expect(channelFlags(WifiBand.band6, 5).contains('PSC'), isTrue);
-      expect(channelFlags(WifiBand.band6, 2).any((String f) => f.contains('Special')),
-          isTrue);
+      expect(
+        channelFlags(
+          WifiBand.band6,
+          2,
+        ).any((String f) => f.contains('Special')),
+        isTrue,
+      );
     });
   });
 
@@ -272,8 +302,7 @@ void main() {
   // ── Center-frequency DISPLAY engine (band+channel → MHz, ungated) ──────────
 
   group('centerFrequencyMHzForBand — the display engine', () {
-    test('THE ambiguity case: channel 53 is 5265 MHz on 5 GHz, 6215 on 6 GHz',
-        () {
+    test('THE ambiguity case: channel 53 is 5265 MHz on 5 GHz, 6215 on 6 GHz', () {
       // The whole point: the bare channel number is ambiguous across bands, but
       // band + center-MHz is unmistakable. 53 is NOT a valid 5 GHz primary, so
       // the validity-gated channelToFrequency returns null there — the display
@@ -294,8 +323,11 @@ void main() {
         (6, 37),
       ]) {
         final WifiBand b = band(g);
-        expect(centerFrequencyMHzForBand(b, ch), channelToFrequency(b, ch),
-            reason: 'band $g ch $ch');
+        expect(
+          centerFrequencyMHzForBand(b, ch),
+          channelToFrequency(b, ch),
+          reason: 'band $g ch $ch',
+        );
       }
     });
 

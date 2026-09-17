@@ -219,10 +219,7 @@ bool canTurnPdfPage({
 /// control as disabled — a worse lie than the one being fixed, because it hides
 /// function rather than overpromising it. Flagged in the handoff, not silently
 /// dropped.
-bool canZoomPdfPage({
-  required bool documentReady,
-  required double? baseScale,
-}) {
+bool canZoomPdfPage({required bool documentReady, required double? baseScale}) {
   if (!documentReady) return false;
   return baseScale != null && baseScale > 0;
 }
@@ -268,13 +265,13 @@ class PdfViewerControlState {
     required double? baseScale,
   }) {
     bool turn({required bool forward}) => canTurnPdfPage(
-          turning: false,
-          pagerAttached: pagerAttached,
-          documentReady: documentReady,
-          currentPage: currentPage,
-          pageCount: pageCount,
-          forward: forward,
-        );
+      turning: false,
+      pagerAttached: pagerAttached,
+      documentReady: documentReady,
+      currentPage: currentPage,
+      pageCount: pageCount,
+      forward: forward,
+    );
     return PdfViewerControlState(
       canPrevious: turn(forward: false),
       canNext: turn(forward: true),
@@ -307,7 +304,8 @@ class PdfViewerControlState {
   int get hashCode => Object.hash(canPrevious, canNext, canZoom);
 
   @override
-  String toString() => 'PdfViewerControlState(canPrevious: $canPrevious, '
+  String toString() =>
+      'PdfViewerControlState(canPrevious: $canPrevious, '
       'canNext: $canNext, canZoom: $canZoom)';
 }
 
@@ -341,14 +339,14 @@ class PdfViewerScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => const <PointerDeviceKind>{
-        PointerDeviceKind.touch,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.invertedStylus,
-        PointerDeviceKind.trackpad,
-        // The one that fixes Peter's report.
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.unknown,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+    PointerDeviceKind.trackpad,
+    // The one that fixes Peter's report.
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.unknown,
+  };
 }
 
 /// Turn one page. [forward] follows reading order, so `true` is the next page.
@@ -370,13 +368,13 @@ class _TurnPageIntent extends Intent {
 /// 720px width breakpoint. Whether a pointer exists is a platform question, not
 /// a window-size question: a narrow window on Windows still has only a mouse.
 bool get _isPointerPlatform => switch (defaultTargetPlatform) {
-      TargetPlatform.macOS ||
-      TargetPlatform.windows ||
-      TargetPlatform.linux =>
-        true,
-      TargetPlatform.iOS || TargetPlatform.android || TargetPlatform.fuchsia =>
-        false,
-    };
+  TargetPlatform.macOS ||
+  TargetPlatform.windows ||
+  TargetPlatform.linux => true,
+  TargetPlatform.iOS ||
+  TargetPlatform.android ||
+  TargetPlatform.fuchsia => false,
+};
 
 /// Renders one PDF page to a PNG raster for the pinch-viewer.
 ///
@@ -402,11 +400,11 @@ bool get _isPointerPlatform => switch (defaultTargetPlatform) {
 /// [pdfLetterboxColor], which is dark-`surface1` on dark and `borderStrong` on
 /// light; see that function for the measurements.
 Future<PdfPageImage?> renderReferencePage(PdfPage page) => page.render(
-      width: page.width * 2.5,
-      height: page.height * 2.5,
-      format: PdfPageImageFormat.png,
-      backgroundColor: '#ffffff',
-    );
+  width: page.width * 2.5,
+  height: page.height * 2.5,
+  format: PdfPageImageFormat.png,
+  backgroundColor: '#ffffff',
+);
 
 /// The exact white the pages are rendered on ([renderReferencePage]'s
 /// `backgroundColor`). Public so the contrast test measures the SHIPPED page
@@ -613,23 +611,20 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
     // surface through its own error builder; swallowing here only means the
     // zoom buttons stay inert for a page that never rendered anyway.
     unawaited(
-      pageImage.then<void>(
-        (PdfPageImage image) {
-          final int? w = image.width;
-          final int? h = image.height;
-          if (w == null || h == null || w <= 0 || h <= 0) return;
-          final Size size = Size(w.toDouble(), h.toDouble());
-          // Rebuild only on a CHANGE. Recording the size is what flips the zoom
-          // controls from disabled to enabled (via [_canZoom]), so it has to
-          // trigger a rebuild — but this callback re-runs for every rebuilt
-          // page, and an unconditional rebuild here would feed itself forever.
-          // Equal-size early-return is what breaks the loop.
-          if (_pageRasterSizes[index] == size) return;
-          _pageRasterSizes[index] = size;
-          _scheduleRebuild();
-        },
-        onError: (Object _) {},
-      ),
+      pageImage.then<void>((PdfPageImage image) {
+        final int? w = image.width;
+        final int? h = image.height;
+        if (w == null || h == null || w <= 0 || h <= 0) return;
+        final Size size = Size(w.toDouble(), h.toDouble());
+        // Rebuild only on a CHANGE. Recording the size is what flips the zoom
+        // controls from disabled to enabled (via [_canZoom]), so it has to
+        // trigger a rebuild — but this callback re-runs for every rebuilt
+        // page, and an unconditional rebuild here would feed itself forever.
+        // Equal-size early-return is what breaks the loop.
+        if (_pageRasterSizes[index] == size) return;
+        _pageRasterSizes[index] = size;
+        _scheduleRebuild();
+      }, onError: (Object _) {}),
     );
 
     return PhotoViewGalleryPageOptions(
@@ -689,12 +684,12 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   /// `baseScale` is the CURRENT page's fit-to-viewport scale, which is the exact
   /// precondition [_zoomBy] and [_resetZoom] check before doing anything.
   PdfViewerControlState get _controlState => PdfViewerControlState.from(
-        documentReady: _documentReady,
-        pagerAttached: _pagerAttached,
-        currentPage: _currentPage,
-        pageCount: _pageCount,
-        baseScale: _baseScaleFor(_currentPage - 1),
-      );
+    documentReady: _documentReady,
+    pagerAttached: _pagerAttached,
+    currentPage: _currentPage,
+    pageCount: _pageCount,
+    baseScale: _baseScaleFor(_currentPage - 1),
+  );
 
   /// Rebuilds after the current frame.
   ///
@@ -747,8 +742,10 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
     final PhotoViewController controller = _photoControllerFor(index);
     // A null controller scale means "still at the initial/contained scale".
     final double current = controller.scale ?? base;
-    controller.scale =
-        (current * factor).clamp(base * _minZoomFactor, base * _maxZoomFactor);
+    controller.scale = (current * factor).clamp(
+      base * _minZoomFactor,
+      base * _maxZoomFactor,
+    );
     // Crossing the fit-scale threshold flips which widget owns drag gestures
     // (see [_pageOwnsDragGesture]), so the gallery has to rebuild.
     if (mounted) setState(() {});
@@ -776,12 +773,13 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
       PointerSignalEvent resolved,
     ) {
       final PointerScrollEvent scroll = resolved as PointerScrollEvent;
-      final bool zoomModifier = HardwareKeyboard.instance.isMetaPressed ||
+      final bool zoomModifier =
+          HardwareKeyboard.instance.isMetaPressed ||
           HardwareKeyboard.instance.isControlPressed;
       // A mouse wheel reports on dy; a horizontal wheel or a tilted one reports
       // on dx. Take whichever axis actually moved.
-      final double delta = scroll.scrollDelta.dy.abs() >=
-              scroll.scrollDelta.dx.abs()
+      final double delta =
+          scroll.scrollDelta.dy.abs() >= scroll.scrollDelta.dx.abs()
           ? scroll.scrollDelta.dy
           : scroll.scrollDelta.dx;
       if (delta == 0) return;
@@ -798,15 +796,11 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   /// Returns null if the button hasn't been laid out yet (the platform then
   /// falls back to a default anchor).
   ShareOrigin? _shareButtonOrigin() {
-    final RenderObject? box = _shareButtonKey.currentContext?.findRenderObject();
+    final RenderObject? box = _shareButtonKey.currentContext
+        ?.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return null;
     final Offset topLeft = box.localToGlobal(Offset.zero);
-    return ShareOrigin(
-      topLeft.dx,
-      topLeft.dy,
-      box.size.width,
-      box.size.height,
-    );
+    return ShareOrigin(topLeft.dx, topLeft.dy, box.size.width, box.size.height);
   }
 
   Future<void> _handleShare() async {
@@ -832,8 +826,9 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
   @override
   void initState() {
     super.initState();
-    final Future<PdfDocument> documentFuture =
-        PdfDocument.openAsset(widget.assetPath);
+    final Future<PdfDocument> documentFuture = PdfDocument.openAsset(
+      widget.assetPath,
+    );
     _controller = PdfController(document: documentFuture);
 
     // Defensive open-failure handling (GL-005 honest degradation). pdfx's
@@ -846,12 +841,7 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
     // instead of a quiet, honest error state. Observing the future here
     // guarantees it is always handled and drives the same error UI, so the
     // screen degrades gracefully rather than crashing on any platform.
-    unawaited(
-      documentFuture.then<void>(
-        (_) {},
-        onError: _onError,
-      ),
-    );
+    unawaited(documentFuture.then<void>((_) {}, onError: _onError));
   }
 
   @override
@@ -939,12 +929,15 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
                       _TurnPageIntent(forward: false),
                   SingleActivator(LogicalKeyboardKey.arrowDown):
                       _TurnPageIntent(forward: true),
-                  SingleActivator(LogicalKeyboardKey.arrowUp):
-                      _TurnPageIntent(forward: false),
-                  SingleActivator(LogicalKeyboardKey.pageDown):
-                      _TurnPageIntent(forward: true),
-                  SingleActivator(LogicalKeyboardKey.pageUp):
-                      _TurnPageIntent(forward: false),
+                  SingleActivator(LogicalKeyboardKey.arrowUp): _TurnPageIntent(
+                    forward: false,
+                  ),
+                  SingleActivator(LogicalKeyboardKey.pageDown): _TurnPageIntent(
+                    forward: true,
+                  ),
+                  SingleActivator(LogicalKeyboardKey.pageUp): _TurnPageIntent(
+                    forward: false,
+                  ),
                 },
                 child: Actions(
                   actions: <Type, Action<Intent>>{
@@ -1033,17 +1026,16 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
       }
       // Command on macOS, Control on Windows and Linux, matching the modifier
       // each platform's users already expect for zoom.
-      final String zoomModifier =
-          defaultTargetPlatform == TargetPlatform.macOS ? 'Command' : 'Control';
+      final String zoomModifier = defaultTargetPlatform == TargetPlatform.macOS
+          ? 'Command'
+          : 'Control';
       label.write(
         ' Use the zoom controls, or hold $zoomModifier and scroll, to zoom.',
       );
       return label.toString();
     }
     if (_pageCount > 1) {
-      label.write(
-        ' Page $_currentPage of $_pageCount. Swipe to change page.',
-      );
+      label.write(' Page $_currentPage of $_pageCount. Swipe to change page.');
     }
     label.write(' Pinch to zoom.');
     return label.toString();
@@ -1106,8 +1098,9 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
                 // Token-based backdrop for the letterbox around each page.
                 // pdfx's own default is a light gray that clashes with App Mode
                 // (GL-003 §8.1), so this has always been overridden.
-                backgroundDecoration:
-                    BoxDecoration(color: pdfLetterboxColor(colors)),
+                backgroundDecoration: BoxDecoration(
+                  color: pdfLetterboxColor(colors),
+                ),
                 builders: PdfViewBuilders<DefaultBuilderOptions>(
                   options: const DefaultBuilderOptions(),
                   documentLoaderBuilder: (_) => _LoadingState(),
@@ -1238,9 +1231,7 @@ class PdfViewerControlBar extends StatelessWidget {
               ),
             if (multiPage)
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 child: Semantics(
                   // Read as a sentence rather than "1 slash 64".
                   label: 'Page $currentPage of $pageCount',
@@ -1267,10 +1258,7 @@ class PdfViewerControlBar extends StatelessWidget {
                   ),
                   child: SizedBox(
                     height: AppSpacing.sm,
-                    child: VerticalDivider(
-                      width: 1,
-                      color: colors.border,
-                    ),
+                    child: VerticalDivider(width: 1, color: colors.border),
                   ),
                 ),
               _ControlButton(
@@ -1389,7 +1377,8 @@ class _ErrorState extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Semantics(
-            label: 'This reference card could not be opened. '
+            label:
+                'This reference card could not be opened. '
                 'The bundled PDF failed to load on this device.',
             liveRegion: true,
             child: Column(
@@ -1404,17 +1393,13 @@ class _ErrorState extends StatelessWidget {
                 Text(
                   'This reference card could not be opened.',
                   textAlign: TextAlign.center,
-                  style: text.titleMedium?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: text.titleMedium?.copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'The bundled PDF failed to load on this device.',
                   textAlign: TextAlign.center,
-                  style: text.bodyMedium?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),

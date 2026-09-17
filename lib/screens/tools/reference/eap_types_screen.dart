@@ -113,7 +113,8 @@ class EapTypesScreen extends StatelessWidget {
       serverCert: 'Yes',
       clientCert: 'Yes',
       mutual: 'Yes',
-      use: 'Strongest, certificate-only. No password to phish or replay. '
+      use:
+          'Strongest, certificate-only. No password to phish or replay. '
           'Requires full PKI and per-device/user cert enrollment. Gold '
           'standard for enterprise and IoT-at-scale where PKI exists.',
     ),
@@ -123,19 +124,22 @@ class EapTypesScreen extends StatelessWidget {
       serverCert: 'Yes',
       clientCert: 'No',
       mutual: 'Yes',
-      use: 'Most common Microsoft-ecosystem deployment. Server cert builds the '
+      use:
+          'Most common Microsoft-ecosystem deployment. Server cert builds the '
           'tunnel; MSCHAPv2 carries the password inside it. Clients that do '
           'not validate the server cert are exposed to evil-twin credential '
           'theft. Enforce server-cert validation.',
     ),
     EapMethod(
       method: 'EAP-TTLS',
-      credential: 'Username + password or legacy inner methods (PAP/CHAP/'
+      credential:
+          'Username + password or legacy inner methods (PAP/CHAP/'
           'MSCHAPv2), inside TLS tunnel',
       serverCert: 'Yes',
       clientCert: 'No (optional)',
       mutual: 'Yes',
-      use: 'Like PEAP but vendor-neutral, supporting a wider range of inner '
+      use:
+          'Like PEAP but vendor-neutral, supporting a wider range of inner '
           'authentication methods including non-EAP legacy protocols (PAP). '
           'Common in mixed/non-Microsoft estates.',
     ),
@@ -147,7 +151,8 @@ class EapTypesScreen extends StatelessWidget {
       mutual: 'Yes',
       // TEAP is RFC 9930 in the current IANA EAP Method Types registry (value
       // 55). RFC 7170 is superseded — citing it cites a dead document.
-      use: 'Cisco-originated alternative to PEAP that avoids mandatory PKI by '
+      use:
+          'Cisco-originated alternative to PEAP that avoids mandatory PKI by '
           'using a PAC. PAC provisioning (anonymous in-band Phase 0) is the '
           'weak point. Largely superseded by TEAP (RFC 9930).',
     ),
@@ -157,7 +162,8 @@ class EapTypesScreen extends StatelessWidget {
       serverCert: 'No',
       clientCert: 'No',
       mutual: 'Yes',
-      use: 'Password-authenticated key exchange (dragonfly/SAE-family). '
+      use:
+          'Password-authenticated key exchange (dragonfly/SAE-family). '
           'Resists offline dictionary attack without any PKI. Niche adoption; '
           'useful where certificates are impractical.',
     ),
@@ -167,7 +173,8 @@ class EapTypesScreen extends StatelessWidget {
       serverCert: 'No',
       clientCert: 'No (SIM is the credential)',
       mutual: 'Yes',
-      use: 'Carrier Wi-Fi / hotspot offload using the GSM SIM. Authenticates '
+      use:
+          'Carrier Wi-Fi / hotspot offload using the GSM SIM. Authenticates '
           'against the operator HLR/AuC. Legacy 2G/3G; weaker than AKA.',
     ),
     EapMethod(
@@ -178,7 +185,8 @@ class EapTypesScreen extends StatelessWidget {
       mutual: 'Yes',
       // EAP-AKA' is RFC 9048 in the IANA registry (value 50). RFC 9048
       // obsoletes RFC 5448.
-      use: "Carrier Wi-Fi offload using the USIM. AKA' (RFC 9048) hardens AKA "
+      use:
+          "Carrier Wi-Fi offload using the USIM. AKA' (RFC 9048) hardens AKA "
           'with SHA-256 key derivation and network-name binding for 3GPP to '
           'non-3GPP interworking (Wi-Fi calling, Passpoint). Current '
           'carrier-offload method.',
@@ -201,9 +209,7 @@ class EapTypesScreen extends StatelessWidget {
         title: const Text('802.1X / EAP Types'),
         toolbarHeight: 64,
         // §8.16 — copy the matrix as TSV. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -281,10 +287,7 @@ class EapTypesScreen extends StatelessWidget {
                   // §8.6.2 concept graphic, resolved under the explicit
                   // `eap-8021x-flow` id (asset name differs from the catalog
                   // id). Degrades to SizedBox.shrink() when not yet bundled.
-                  ConceptGraphicBand(
-                    toolId: graphicId,
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: graphicId, isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic(graphicId))
                     const SizedBox(height: AppSpacing.md),
                   const _ServerCertCaution(),
@@ -370,9 +373,7 @@ class EapTypesScreen extends StatelessWidget {
                   width: 56,
                   child: Text(
                     m.mutual,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                 ),
                 SizedBox(

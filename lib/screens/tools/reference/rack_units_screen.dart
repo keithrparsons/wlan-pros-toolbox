@@ -134,7 +134,12 @@ class RackUnitsScreen extends StatelessWidget {
     RackUnitRow(u: '2U', inches: '3.50', mm: '88.90'),
     RackUnitRow(u: '3U', inches: '5.25', mm: '133.35'),
     RackUnitRow(u: '4U', inches: '7.00', mm: '177.80'),
-    RackUnitRow(u: '6U', inches: '10.50', mm: '266.70', note: 'small wall-mount'),
+    RackUnitRow(
+      u: '6U',
+      inches: '10.50',
+      mm: '266.70',
+      note: 'small wall-mount',
+    ),
     RackUnitRow(u: '8U', inches: '14.00', mm: '355.60'),
     RackUnitRow(
       u: '12U',
@@ -248,7 +253,8 @@ class RackUnitsScreen extends StatelessWidget {
       thread: 'M6',
       diameter: '~6 mm',
       pitch: '1.0 mm',
-      seenOn: 'Commonly HP/Compaq gear and modern square-hole + cage-nut setups',
+      seenOn:
+          'Commonly HP/Compaq gear and modern square-hole + cage-nut setups',
     ),
   ];
 
@@ -319,9 +325,7 @@ class RackUnitsScreen extends StatelessWidget {
         // §8.16 — copy the whole page as sectioned TSV: U conversions, rack
         // widths, hole pattern, thread types, rail types, and the anti-patterns.
         // Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -364,9 +368,7 @@ class RackUnitsScreen extends StatelessWidget {
         <String>['Thread', 'Diameter', 'Pitch', 'Commonly seen on'].join(tab),
       );
     for (final RackThread t in threads) {
-      buf.writeln(
-        <String>[t.thread, t.diameter, t.pitch, t.seenOn].join(tab),
-      );
+      buf.writeln(<String>[t.thread, t.diameter, t.pitch, t.seenOn].join(tab));
     }
     buf
       ..writeln()
@@ -501,11 +503,7 @@ class RackUnitsScreen extends StatelessWidget {
 
   /// (b) Rack widths — headline insight, then the three width facts, then the
   /// telecom aside.
-  Widget _widthsCard(
-    AppColorScheme colors,
-    TextTheme text,
-    AppMonoText mono,
-  ) {
+  Widget _widthsCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _Card(
       heading: 'Rack widths',
       headingText: text,
@@ -569,11 +567,7 @@ class RackUnitsScreen extends StatelessWidget {
   }
 
   /// (d) Thread types — the incompatibility gotcha up front, then the table.
-  Widget _threadCard(
-    AppColorScheme colors,
-    TextTheme text,
-    AppMonoText mono,
-  ) {
+  Widget _threadCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
     return _Card(
       heading: 'Thread types',
       headingText: text,
@@ -776,10 +770,22 @@ class _ConversionHeaderRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: <Widget>[
-          SizedBox(width: _kUW, child: Text('U', style: style)),
-          SizedBox(width: _kInchW, child: Text('Inches', style: style)),
-          SizedBox(width: _kMmW, child: Text('mm', style: style)),
-          SizedBox(width: _kNoteW, child: Text('Note', style: style)),
+          SizedBox(
+            width: _kUW,
+            child: Text('U', style: style),
+          ),
+          SizedBox(
+            width: _kInchW,
+            child: Text('Inches', style: style),
+          ),
+          SizedBox(
+            width: _kMmW,
+            child: Text('mm', style: style),
+          ),
+          SizedBox(
+            width: _kNoteW,
+            child: Text('Note', style: style),
+          ),
         ],
       ),
     );
@@ -868,9 +874,18 @@ class _WidthHeaderRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: <Widget>[
-          SizedBox(width: _kNoteW, child: Text('Dimension', style: style)),
-          SizedBox(width: _kInchW, child: Text('Inches', style: style)),
-          SizedBox(width: _kMmW, child: Text('mm', style: style)),
+          SizedBox(
+            width: _kNoteW,
+            child: Text('Dimension', style: style),
+          ),
+          SizedBox(
+            width: _kInchW,
+            child: Text('Inches', style: style),
+          ),
+          SizedBox(
+            width: _kMmW,
+            child: Text('mm', style: style),
+          ),
         ],
       ),
     );
@@ -880,11 +895,7 @@ class _WidthHeaderRow extends StatelessWidget {
 /// One rack-width fact row. The label wraps in body text; the dimensions render
 /// in DM Mono. The per-fact note wraps full-width beneath.
 class _WidthRow extends StatelessWidget {
-  const _WidthRow({
-    required this.row,
-    required this.text,
-    required this.mono,
-  });
+  const _WidthRow({required this.row, required this.text, required this.mono});
 
   final RackUnitRow row;
   final TextTheme text;
@@ -972,10 +983,22 @@ class _ThreadHeaderRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: <Widget>[
-          SizedBox(width: _kThreadW, child: Text('Thread', style: style)),
-          SizedBox(width: _kDiaW, child: Text('Diameter', style: style)),
-          SizedBox(width: _kPitchW, child: Text('Pitch', style: style)),
-          SizedBox(width: _kSeenW, child: Text('Commonly seen on', style: style)),
+          SizedBox(
+            width: _kThreadW,
+            child: Text('Thread', style: style),
+          ),
+          SizedBox(
+            width: _kDiaW,
+            child: Text('Diameter', style: style),
+          ),
+          SizedBox(
+            width: _kPitchW,
+            child: Text('Pitch', style: style),
+          ),
+          SizedBox(
+            width: _kSeenW,
+            child: Text('Commonly seen on', style: style),
+          ),
         ],
       ),
     );

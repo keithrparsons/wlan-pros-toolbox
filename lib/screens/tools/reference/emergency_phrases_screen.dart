@@ -122,8 +122,7 @@ class _EmergencyPhrasesScreenState extends State<EmergencyPhrasesScreen> {
   Future<void> _loadAsset() async {
     try {
       final String raw = await rootBundle.loadString(widget.assetPath);
-      final EmergencyPhraseService svc =
-          EmergencyPhraseService.fromJson(raw);
+      final EmergencyPhraseService svc = EmergencyPhraseService.fromJson(raw);
       if (!mounted) return;
       setState(() {
         _service = svc;
@@ -153,7 +152,10 @@ class _EmergencyPhrasesScreenState extends State<EmergencyPhrasesScreen> {
   /// chosen target (one-language mode) or every target (all-languages mode).
   List<String> _visibleCodes(EmergencyPhraseService svc) {
     if (_mode == PhraseDisplayMode.all) {
-      return <String>['en', for (final PhraseLanguage l in svc.targetLanguages) l.code];
+      return <String>[
+        'en',
+        for (final PhraseLanguage l in svc.targetLanguages) l.code,
+      ];
     }
     return <String>['en', if (_targetCode.isNotEmpty) _targetCode];
   }
@@ -285,8 +287,7 @@ class _EmergencyPhrasesScreenState extends State<EmergencyPhrasesScreen> {
                 edge + AppSpacing.sm,
               ),
               children: <Widget>[
-                if (svc.isDraft)
-                  _DraftBanner(note: svc.translationNote),
+                if (svc.isDraft) _DraftBanner(note: svc.translationNote),
                 if (svc.isDraft) const SizedBox(height: AppSpacing.sm),
                 _IntroCard(total: svc.count, categories: svc.categoryCount),
                 const SizedBox(height: AppSpacing.sm),
@@ -366,8 +367,8 @@ class _DraftBanner extends StatelessWidget {
     final String body = note.isNotEmpty
         ? note
         : 'These are draft machine translations and have not yet been reviewed '
-            'by a native or professional translator. Verify any critical phrase '
-            'locally before relying on it.';
+              'by a native or professional translator. Verify any critical phrase '
+              'locally before relying on it.';
     return Semantics(
       container: true,
       label: 'Draft translations notice. $body',
@@ -530,10 +531,9 @@ class _SearchField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         // 16px field text dodges iOS Safari auto-zoom (§8.4).
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -567,9 +567,7 @@ class _CategoryHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 category,
-                style: text.headlineSmall?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.headlineSmall?.copyWith(color: colors.textPrimary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -742,16 +740,10 @@ class _NoMatch extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          Icon(
-            Icons.search_off_outlined,
-            size: 48,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            query.isEmpty
-                ? 'No phrases loaded.'
-                : 'No phrases match "$query".',
+            query.isEmpty ? 'No phrases loaded.' : 'No phrases match "$query".',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),

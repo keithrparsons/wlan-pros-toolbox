@@ -270,10 +270,9 @@ class _SectionHeading extends StatelessWidget {
       header: true,
       child: Text(
         text,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(color: context.colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: context.colors.textPrimary),
       ),
     );
   }
@@ -297,9 +296,9 @@ class _LeadHeading extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: context.colors.textTertiary,
-              letterSpacing: 0.4,
-            ),
+          color: context.colors.textTertiary,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
@@ -315,10 +314,9 @@ class _Paragraph extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context)
-          .textTheme
-          .bodyLarge
-          ?.copyWith(color: context.colors.textSecondary),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: context.colors.textSecondary),
     );
   }
 }
@@ -361,8 +359,9 @@ class _NumberedSteps extends StatelessWidget {
                 Expanded(
                   child: Text(
                     steps[i],
-                    style: text.bodyLarge
-                        ?.copyWith(color: colors.textSecondary),
+                    style: text.bodyLarge?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -520,8 +519,7 @@ class _BulletedNotes extends StatelessWidget {
               Expanded(
                 child: Text(
                   notes[i],
-                  style: text.bodyLarge
-                      ?.copyWith(color: colors.textSecondary),
+                  style: text.bodyLarge?.copyWith(color: colors.textSecondary),
                 ),
               ),
             ],

@@ -110,8 +110,10 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       _piError = null;
     });
     try {
-      final PiHop hop =
-          await PiBackendClient().ping(host: host, count: _count == 0 ? 20 : _count);
+      final PiHop hop = await PiBackendClient().ping(
+        host: host,
+        count: _count == 0 ? 20 : _count,
+      );
       if (!mounted) return;
       setState(() {
         _piLoading = false;
@@ -223,9 +225,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         // produced replies (and so always disabled on the sandboxed-desktop
         // state, which never reaches `_stats.sent > 0`). Copies the summary
         // line + a reply TSV. Copy leads; no help icon on this screen.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -280,10 +280,13 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
     if (_piLoading || h == null) return null;
     final String host = _hostCtrl.text.trim();
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
-    final String lossPct =
-        h.lossPct == null ? '—' : h.lossPct!.toStringAsFixed(0);
+    final String lossPct = h.lossPct == null
+        ? '—'
+        : h.lossPct!.toStringAsFixed(0);
     return (StringBuffer()
-          ..writeln('Ping: ICMP echo, measured on the WLAN Pi hosting this page')
+          ..writeln(
+            'Ping: ICMP echo, measured on the WLAN Pi hosting this page',
+          )
           ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
           ..writeln(
             'Summary: ${h.received ?? 0}/${h.sent ?? 0} replies, $lossPct% loss · '
@@ -533,9 +536,11 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
             runSpacing: AppSpacing.xs,
             // The Pi endpoint is bounded (1..20 echoes), so the "until stopped"
             // option is not offered on this path.
-            children: const <int>[5, 10, 20]
-                .map((int c) => _countChip(context, c))
-                .toList(),
+            children: const <int>[
+              5,
+              10,
+              20,
+            ].map((int c) => _countChip(context, c)).toList(),
           ),
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -579,8 +584,9 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final int sent = hop.sent ?? 0;
     final int received = hop.received ?? 0;
-    final String lossPct =
-        hop.lossPct == null ? '—' : hop.lossPct!.toStringAsFixed(0);
+    final String lossPct = hop.lossPct == null
+        ? '—'
+        : hop.lossPct!.toStringAsFixed(0);
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
 
     return Container(
@@ -611,7 +617,8 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Semantics(
-            label: 'ICMP ping complete, $received of $sent replies, '
+            label:
+                'ICMP ping complete, $received of $sent replies, '
                 '$lossPct percent loss, average ${ms(hop.avgMs)} milliseconds',
             child: Row(
               children: <Widget>[
@@ -718,11 +725,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 16,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.info_outline, size: 16, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
@@ -808,9 +811,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               ),
               Text(
                 '${_stats.received} / ${_stats.sent} · $lossPct% loss',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -860,9 +861,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
               if (value != '—')
                 Text(
                   'ms',
-                  style: text.labelSmall?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelSmall?.copyWith(color: colors.textTertiary),
                 ),
             ],
           ),
@@ -958,9 +957,7 @@ class _IcmpPingScreenState extends State<IcmpPingScreen> {
                 width: 40,
                 child: Text(
                   '#${r.sequence}',
-                  style: mono.inlineCode.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: mono.inlineCode.copyWith(color: colors.textTertiary),
                 ),
               ),
               Expanded(

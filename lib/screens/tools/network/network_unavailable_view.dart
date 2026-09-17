@@ -72,30 +72,33 @@ class NetworkUnavailableView extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
-    final (IconData defaultIcon, String defaultHeadline, String defaultBody) =
-        switch (reason) {
+    final (
+      IconData defaultIcon,
+      String defaultHeadline,
+      String defaultBody,
+    ) = switch (reason) {
       NetworkUnavailableReason.web => (
-          Icons.download_outlined,
-          'Available in the native app',
-          '$toolName needs direct network access that browsers do not '
-              'allow. Download the WLAN Pros Toolbox for macOS, Windows, '
-              'Android, or iOS to use the active network tools.',
-        ),
+        Icons.download_outlined,
+        'Available in the native app',
+        '$toolName needs direct network access that browsers do not '
+            'allow. Download the WLAN Pros Toolbox for macOS, Windows, '
+            'Android, or iOS to use the active network tools.',
+      ),
       NetworkUnavailableReason.platformApiMissing => (
-          Icons.info_outline,
-          'Not available on this platform',
-          '$toolName relies on a system API this platform does not expose to '
-              'apps. The rest of the toolbox works normally here.',
-        ),
+        Icons.info_outline,
+        'Not available on this platform',
+        '$toolName relies on a system API this platform does not expose to '
+            'apps. The rest of the toolbox works normally here.',
+      ),
       NetworkUnavailableReason.macosLocationDenied => (
-          Icons.location_off_outlined,
-          'Location access needed',
-          'macOS requires Location access to read Wi-Fi details like the network '
-              'name and the access point each connection uses, so $toolName has '
-              'nothing to record without it. Turn it on for WLAN Pros Toolbox in '
-              'System Settings, under Privacy & Security, then Location '
-              'Services. The button below opens that settings pane.',
-        ),
+        Icons.location_off_outlined,
+        'Location access needed',
+        'macOS requires Location access to read Wi-Fi details like the network '
+            'name and the access point each connection uses, so $toolName has '
+            'nothing to record without it. Turn it on for WLAN Pros Toolbox in '
+            'System Settings, under Privacy & Security, then Location '
+            'Services. The button below opens that settings pane.',
+      ),
     };
 
     final IconData resolvedIcon = icon ?? defaultIcon;
@@ -114,9 +117,7 @@ class NetworkUnavailableView extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 resolvedHeadline,
-                style: text.headlineSmall?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.headlineSmall?.copyWith(color: colors.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -127,10 +128,7 @@ class NetworkUnavailableView extends StatelessWidget {
               ),
               if (actionLabel != null && onAction != null) ...<Widget>[
                 const SizedBox(height: AppSpacing.md),
-                OutlinedButton(
-                  onPressed: onAction,
-                  child: Text(actionLabel!),
-                ),
+                OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),
               ],
             ],
           ),

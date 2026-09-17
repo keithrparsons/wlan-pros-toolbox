@@ -52,9 +52,7 @@ class RfBandsScreen extends StatelessWidget {
       b
         ..writeln()
         ..writeln('${g.title} -- ${g.subtitle}')
-        ..writeln(
-          <String>['Band', 'Technology', 'Use', 'Note'].join(tab),
-        );
+        ..writeln(<String>['Band', 'Technology', 'Use', 'Note'].join(tab));
       for (final RfBandRow r in g.rows) {
         b.writeln(<String>[r.band, r.tech, r.use, r.note].join(tab));
       }
@@ -279,11 +277,7 @@ class _RegionFlagsCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(
-                Icons.public,
-                size: 16,
-                color: colors.statusWarning,
-              ),
+              Icon(Icons.public, size: 16, color: colors.statusWarning),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(

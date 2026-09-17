@@ -73,44 +73,45 @@ class SparklineDomain {
   /// Per-metric domains from the spec §3 table. Returns null for an unknown id.
   static SparklineDomain? forMetric(String id) => _domains[id];
 
-  static const Map<String, SparklineDomain> _domains = <String, SparklineDomain>{
-    MetricIds.latency: SparklineDomain(
-      min: 0,
-      max: 150,
-      edges: <double>[20, 50, 100],
-      betterWhen: BetterWhen.lower,
-    ),
-    MetricIds.jitter: SparklineDomain(
-      min: 0,
-      max: 40,
-      edges: <double>[5, 15, 30],
-      betterWhen: BetterWhen.lower,
-    ),
-    MetricIds.loss: SparklineDomain(
-      min: 0,
-      max: 5,
-      edges: <double>[0, 1, 2.5],
-      betterWhen: BetterWhen.lower,
-    ),
-    MetricIds.responsiveness: SparklineDomain(
-      min: 0,
-      max: 1200,
-      edges: <double>[100, 500, 1000],
-      betterWhen: BetterWhen.higher,
-    ),
-    MetricIds.download: SparklineDomain(
-      min: 0,
-      max: 120,
-      edges: <double>[5, 25, 100],
-      betterWhen: BetterWhen.higher,
-    ),
-    MetricIds.upload: SparklineDomain(
-      min: 0,
-      max: 25,
-      edges: <double>[1, 5, 20],
-      betterWhen: BetterWhen.higher,
-    ),
-  };
+  static const Map<String, SparklineDomain> _domains =
+      <String, SparklineDomain>{
+        MetricIds.latency: SparklineDomain(
+          min: 0,
+          max: 150,
+          edges: <double>[20, 50, 100],
+          betterWhen: BetterWhen.lower,
+        ),
+        MetricIds.jitter: SparklineDomain(
+          min: 0,
+          max: 40,
+          edges: <double>[5, 15, 30],
+          betterWhen: BetterWhen.lower,
+        ),
+        MetricIds.loss: SparklineDomain(
+          min: 0,
+          max: 5,
+          edges: <double>[0, 1, 2.5],
+          betterWhen: BetterWhen.lower,
+        ),
+        MetricIds.responsiveness: SparklineDomain(
+          min: 0,
+          max: 1200,
+          edges: <double>[100, 500, 1000],
+          betterWhen: BetterWhen.higher,
+        ),
+        MetricIds.download: SparklineDomain(
+          min: 0,
+          max: 120,
+          edges: <double>[5, 25, 100],
+          betterWhen: BetterWhen.higher,
+        ),
+        MetricIds.upload: SparklineDomain(
+          min: 0,
+          max: 25,
+          edges: <double>[1, 5, 20],
+          betterWhen: BetterWhen.higher,
+        ),
+      };
 }
 
 /// A small token-only sparkline of a metric's live history on a plain

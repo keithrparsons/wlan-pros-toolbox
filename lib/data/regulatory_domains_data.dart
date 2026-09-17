@@ -136,7 +136,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'FCC',
     websiteUrl: 'https://www.fcc.gov',
     governingDocs: '47 CFR 15.247 (2.4 / 5.8 ISM); 15.407 (UNII incl. 6 GHz)',
-    bandNotes: '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125): LPI + VLP unlicensed, SP via AFC. Defines the '
         'FCC-aligned reference family.',
   ),
@@ -147,7 +148,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'ISED',
     websiteUrl: 'https://ised-isde.canada.ca',
     governingDocs: 'RSS-247 (2.4 / 5 GHz LE-LAN); RSS-248 Issue 3 (6 GHz RLAN)',
-    bandNotes: '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125): LPI + VLP, SP via AFC. RSS-248 Issue 3 '
         '(2024-10-11) supersedes Issue 2.',
   ),
@@ -157,9 +159,11 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     regulatorName: 'European Telecommunications Standards Institute',
     abbreviation: 'ETSI',
     websiteUrl: 'https://www.etsi.org',
-    governingDocs: 'EN 300 328; EN 301 893; EN 303 687; ECC Dec (20)01; '
+    governingDocs:
+        'EN 300 328; EN 301 893; EN 303 687; ECC Dec (20)01; '
         'CID (EU) 2021/1067',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz 5.15-5.35 + 5.47-5.725 (DFS). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz 5.15-5.35 + 5.47-5.725 (DFS). '
         '6 GHz LOWER (5945-6425): LPI + VLP; upper band under study. Each '
         'member-state NRA is the legal authority. Defines the ETSI-aligned '
         'family.',
@@ -170,9 +174,11 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     regulatorName: 'Office of Communications',
     abbreviation: 'Ofcom',
     websiteUrl: 'https://www.ofcom.org.uk',
-    governingDocs: 'IR 2030 (UK Interface Requirements); 6 GHz statements '
+    governingDocs:
+        'IR 2030 (UK Interface Requirements); 6 GHz statements '
         '2024-2026',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz as EU (DFS). 6 GHz LOWER expanding: '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz as EU (DFS). 6 GHz LOWER expanding: '
         'LPI (250 mW) + VLP (25 mW); 2026 Ofcom authorizing SP via AFC + upper '
         '6 GHz sharing. UK moving ahead of the EU; verify in-force date.',
   ),
@@ -182,9 +188,11 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     regulatorName: 'Australian Communications and Media Authority',
     abbreviation: 'ACMA',
     websiteUrl: 'https://www.acma.gov.au',
-    governingDocs: 'Radiocommunications (Low Interference Potential Devices) '
+    governingDocs:
+        'Radiocommunications (Low Interference Potential Devices) '
         'Class Licence 2015 (LIPD)',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425): LPI (250 mW) + VLP (25 mW); upper band AFC '
         'under consideration (contested with IMT).',
   ),
@@ -195,18 +203,21 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'RSM',
     websiteUrl: 'https://www.rsm.govt.nz',
     governingDocs: 'General User Radio Licence (GURL) for Short Range Devices',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425): LPI + VLP.',
   ),
   RegulatoryDomain(
     jurisdiction: 'Japan',
     ituRegion: '3',
-    regulatorName: 'Ministry of Internal Affairs and Communications '
+    regulatorName:
+        'Ministry of Internal Affairs and Communications '
         '(conformity via TELEC; standards via ARIB)',
     abbreviation: 'MIC',
     websiteUrl: 'https://www.tele.soumu.go.jp/e/',
     governingDocs: 'ARIB STD-T66 (2.4 GHz); STD-T71 (5 GHz); STD-T109 (6 GHz)',
-    bandNotes: '2.4 GHz ch 1-13 + ch 14 (DSSS / 802.11b legacy only, '
+    bandNotes:
+        '2.4 GHz ch 1-13 + ch 14 (DSSS / 802.11b legacy only, '
         '2471-2497). 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). 6 GHz LOWER '
         '(5925-6425): LPI + VLP. Ch 14 is Japan-only.',
   ),
@@ -217,30 +228,35 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'KCC',
     websiteUrl: 'https://eng.kcc.go.kr',
     governingDocs: 'KC certification; RRA radio equipment notifications',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125). One of the few full-band markets in Asia.',
   ),
   RegulatoryDomain(
     jurisdiction: 'China (mainland)',
     ituRegion: '3',
-    regulatorName: 'Ministry of Industry and Information Technology '
+    regulatorName:
+        'Ministry of Industry and Information Technology '
         '(type-approval via SRRC)',
     abbreviation: 'MIIT',
     websiteUrl: 'https://www.miit.gov.cn',
     governingDocs: 'SRRC type approval; MIIT radio regulations',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz narrower (5.15-5.35, 5.725-5.85). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz narrower (5.15-5.35, 5.725-5.85). '
         '6 GHz NOT PERMITTED for Wi-Fi (5925-7125 designated for IMT, 2023); '
         'China-specific firmware required.',
   ),
   RegulatoryDomain(
     jurisdiction: 'India',
     ituRegion: '3',
-    regulatorName: 'Department of Telecommunications '
+    regulatorName:
+        'Department of Telecommunications '
         '(spectrum via WPC; conformity via TEC)',
     abbreviation: 'DoT',
     websiteUrl: 'https://dot.gov.in',
     governingDocs: 'WPC ETA / ETA-SD; 6 GHz delicensing rules (2026)',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425) delicensed for indoor Wi-Fi 2026-01; upper '
         'band reserved for IMT. Verify indoor-only conditions.',
   ),
@@ -251,7 +267,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'IMDA',
     websiteUrl: 'https://www.imda.gov.sg',
     governingDocs: 'IMDA equipment registration; technical specs (TS SRD)',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -261,7 +278,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'OFCA',
     websiteUrl: 'https://www.ofca.gov.hk',
     governingDocs: 'OFCA HKCA specifications',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -273,7 +291,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     logoKeySuffix: 'tw',
     websiteUrl: 'https://www.ncc.gov.tw',
     governingDocs: 'NCC type approval; LP0002 low-power device regs',
-    bandNotes: '2.4 GHz ch 1-11 (FCC-leaning). 5 GHz UNII-1/2A/2C/3 (DFS on '
+    bandNotes:
+        '2.4 GHz ch 1-11 (FCC-leaning). 5 GHz UNII-1/2A/2C/3 (DFS on '
         '2A/2C). 6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -282,9 +301,11 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     regulatorName: 'Agencia Nacional de Telecomunicacoes',
     abbreviation: 'ANATEL',
     websiteUrl: 'https://www.gov.br/anatel',
-    governingDocs: 'Ato / Resolucao on restricted-radiation equipment; '
+    governingDocs:
+        'Ato / Resolucao on restricted-radiation equipment; '
         '6 GHz acts',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125) in force; a 2025 consultation may narrow toward '
         'the EU model. Verify.',
   ),
@@ -295,7 +316,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'IFT',
     websiteUrl: 'https://www.ift.org.mx',
     governingDocs: 'IFT Disposicion Tecnica (homologacion)',
-    bandNotes: '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425); full band under consideration.',
   ),
   RegulatoryDomain(
@@ -305,18 +327,21 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'CST',
     websiteUrl: 'https://www.cst.gov.sa',
     governingDocs: 'CST technical specifications / RLAN regulations',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125). Early and aggressive full-band adopter.',
   ),
   RegulatoryDomain(
     jurisdiction: 'United Arab Emirates',
     ituRegion: '1',
-    regulatorName: 'Telecommunications and Digital Government Regulatory '
+    regulatorName:
+        'Telecommunications and Digital Government Regulatory '
         'Authority',
     abbreviation: 'TDRA',
     websiteUrl: 'https://tdra.gov.ae',
     governingDocs: 'TDRA equipment type approval; SRD regs',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425). (Formerly TRA UAE.)',
   ),
   RegulatoryDomain(
@@ -327,7 +352,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviationCollides: true,
     websiteUrl: 'https://www.cra.gov.qa',
     governingDocs: 'CRA SRD / type-approval regs',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425); upper band under consideration.',
   ),
   RegulatoryDomain(
@@ -337,7 +363,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'ICASA',
     websiteUrl: 'https://www.icasa.org.za',
     governingDocs: 'Radio Frequency Spectrum Regulations; type approval',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -345,10 +372,10 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     ituRegion: '1',
     regulatorName: 'Ministry of Communications',
     abbreviation: 'MoC',
-    websiteUrl:
-        'https://www.gov.il/en/departments/ministry_of_communications',
+    websiteUrl: 'https://www.gov.il/en/departments/ministry_of_communications',
     governingDocs: 'MoC frequency allocation / type approval',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -361,7 +388,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'BAKOM',
     websiteUrl: 'https://www.bakom.admin.ch',
     governingDocs: 'RIR (Radio Interface Regulations); follows CEPT/ETSI',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
         '(5945-6425). Non-EU but CEPT/ETSI-harmonized.',
   ),
   RegulatoryDomain(
@@ -371,29 +399,34 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'Nkom',
     websiteUrl: 'https://www.nkom.no',
     governingDocs: 'Follows CEPT/ETSI; national frequency plan',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
         '(5945-6425). EEA/CEPT-harmonized.',
   ),
   RegulatoryDomain(
     jurisdiction: 'Iceland',
     ituRegion: '1',
-    regulatorName: 'Electronic Communications Office of Iceland '
+    regulatorName:
+        'Electronic Communications Office of Iceland '
         '(Fjarskiptastofa)',
     abbreviation: 'ECOI',
     websiteUrl: 'https://www.fjarskiptastofa.is',
     governingDocs: 'Follows CEPT/ETSI',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
         '(5945-6425). EEA/CEPT-harmonized.',
   ),
   RegulatoryDomain(
     jurisdiction: 'Russian Federation',
     ituRegion: '1',
-    regulatorName: 'Federal Service for Supervision of Communications '
+    regulatorName:
+        'Federal Service for Supervision of Communications '
         '(spectrum via SCRF / GKRCh)',
     abbreviation: 'Roskomnadzor',
     websiteUrl: 'https://rkn.gov.ru',
     governingDocs: 'GKRCh decisions; national frequency table',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz national allocation (narrower; verify). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz national allocation (narrower; verify). '
         '6 GHz LOWER (5925-6425) per WFA list. Low confidence on enforcement; '
         'sanctions complicate device availability. Verify.',
   ),
@@ -404,7 +437,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'BTK',
     websiteUrl: 'https://www.btk.gov.tr',
     governingDocs: 'Follows CEPT/ETSI broadly',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz EN 301 893 (DFS as EU). 6 GHz LOWER '
         '(5925-6425) adopted / in progress. Verify.',
   ),
   RegulatoryDomain(
@@ -414,7 +448,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'MCMC',
     websiteUrl: 'https://www.mcmc.gov.my',
     governingDocs: 'MCMC class assignment / SRD specs',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -424,7 +459,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'NBTC',
     websiteUrl: 'https://www.nbtc.go.th',
     governingDocs: 'NBTC SRD regulations',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -434,7 +470,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'Komdigi',
     websiteUrl: 'https://www.komdigi.go.id',
     governingDocs: 'SDPPI type approval; national frequency plan',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425). Ministry renamed 2024 (formerly Kominfo); '
         'verify current domain.',
   ),
@@ -447,7 +484,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     logoKeySuffix: 'ph',
     websiteUrl: 'https://ntc.gov.ph',
     governingDocs: 'NTC SRD memorandum circulars',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -457,7 +495,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'ARFM',
     websiteUrl: 'https://www.mic.gov.vn',
     governingDocs: 'National frequency plan; type approval',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -467,7 +506,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'ENACOM',
     websiteUrl: 'https://www.enacom.gob.ar',
     governingDocs: 'ENACOM Resolucion on RLAN / SRD',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125) per WFA; verify scope.',
   ),
   RegulatoryDomain(
@@ -477,7 +517,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'SUBTEL',
     websiteUrl: 'https://www.subtel.gob.cl',
     governingDocs: 'SUBTEL Resolucion on RLAN',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -487,7 +528,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'ANE',
     websiteUrl: 'https://www.ane.gov.co',
     governingDocs: 'ANE / MinTIC spectrum resolutions',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125) per WFA.',
   ),
   RegulatoryDomain(
@@ -497,7 +539,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'MTC',
     websiteUrl: 'https://www.gob.pe/mtc',
     governingDocs: 'MTC spectrum / homologacion regs',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz FULL (5925-7125).',
   ),
   RegulatoryDomain(
@@ -507,7 +550,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'NTRA',
     websiteUrl: 'https://www.tra.gov.eg',
     governingDocs: 'NTRA type approval / SRD',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425) / considering. Verify.',
   ),
   RegulatoryDomain(
@@ -517,7 +561,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'CA',
     websiteUrl: 'https://www.ca.go.ke',
     governingDocs: 'CA type approval / SRD',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -529,29 +574,34 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     logoKeySuffix: 'ng',
     websiteUrl: 'https://www.ncc.gov.ng',
     governingDocs: 'NCC type approval / national frequency plan',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425). Shares the NCC abbreviation with Taiwan.',
   ),
   RegulatoryDomain(
     jurisdiction: 'Morocco',
     ituRegion: '1',
-    regulatorName: 'Agence Nationale de Reglementation des '
+    regulatorName:
+        'Agence Nationale de Reglementation des '
         'Telecommunications',
     abbreviation: 'ANRT',
     websiteUrl: 'https://www.anrt.ma',
     governingDocs: 'ANRT type approval / SRD',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
     jurisdiction: 'Kazakhstan',
     ituRegion: '3',
-    regulatorName: 'Ministry of Digital Development (MDDIAI) / spectrum '
+    regulatorName:
+        'Ministry of Digital Development (MDDIAI) / spectrum '
         'authority',
     abbreviation: 'MDDIAI',
     websiteUrl: 'https://www.gov.kz/memleket/entities/mdai',
     governingDocs: 'National frequency plan',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz national allocation. 6 GHz FULL '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz national allocation. 6 GHz FULL '
         '(5925-7125) per WFA. Verify regulator entity name (machinery-of-'
         'government changes).',
   ),
@@ -562,7 +612,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     abbreviation: 'TRC',
     websiteUrl: 'https://trc.gov.jo',
     governingDocs: 'TRC SRD / type approval',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
   RegulatoryDomain(
@@ -574,7 +625,8 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     logoKeySuffix: 'om',
     websiteUrl: 'https://tra.gov.om',
     governingDocs: 'TRA type approval / SRD',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425) / considering. Shares the TRA abbreviation '
         'with Bahrain.',
   ),
@@ -587,18 +639,21 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     logoKeySuffix: 'bh',
     websiteUrl: 'https://www.tra.org.bh',
     governingDocs: 'TRA type approval / SRD',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425). Shares the TRA abbreviation with Oman.',
   ),
   RegulatoryDomain(
     jurisdiction: 'Kuwait',
     ituRegion: '1',
-    regulatorName: 'Communication and Information Technology Regulatory '
+    regulatorName:
+        'Communication and Information Technology Regulatory '
         'Authority',
     abbreviation: 'CITRA',
     websiteUrl: 'https://www.citra.gov.kw',
     governingDocs: 'CITRA SRD / type approval',
-    bandNotes: '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
+    bandNotes:
+        '2.4 GHz ch 1-13. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
         '6 GHz LOWER (5925-6425).',
   ),
 ];

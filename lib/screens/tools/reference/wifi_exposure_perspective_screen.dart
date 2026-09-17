@@ -185,7 +185,9 @@ class WifiExposurePerspectiveScreen extends StatelessWidget {
             : AppSpacing.screenEdgeMobile;
         return Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSpacing.contentMaxWidth),
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.contentMaxWidth,
+            ),
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 edge,
@@ -202,7 +204,9 @@ class WifiExposurePerspectiveScreen extends StatelessWidget {
                     toolId: kWifiExposurePerspectiveToolId,
                     isDesktop: isDesktop,
                   ),
-                  if (ToolAssets.hasGraphic(kWifiExposurePerspectiveToolId)) ...<Widget>[
+                  if (ToolAssets.hasGraphic(
+                    kWifiExposurePerspectiveToolId,
+                  )) ...<Widget>[
                     const SizedBox(height: AppSpacing.xs),
                     _Caption(text: _graphicCaption),
                     const SizedBox(height: AppSpacing.md),
@@ -402,10 +406,10 @@ class _ParityHeaderRow extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     TextStyle head() => (t.labelSmall ?? const TextStyle()).copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.6,
-          fontWeight: FontWeight.w600,
-        );
+      color: colors.textTertiary,
+      letterSpacing: 0.6,
+      fontWeight: FontWeight.w600,
+    );
     return Semantics(
       header: true,
       child: Container(
@@ -419,10 +423,7 @@ class _ParityHeaderRow extends StatelessWidget {
         ),
         child: Row(
           children: <Widget>[
-            Expanded(
-              flex: 5,
-              child: Text('TIME IN MIDDAY SUN', style: head()),
-            ),
+            Expanded(flex: 5, child: Text('TIME IN MIDDAY SUN', style: head())),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               flex: 6,
@@ -577,9 +578,7 @@ class _AssumptionsCard extends StatelessWidget {
           ...List<Widget>.generate(rows.length, (int i) {
             final _AssumptionRow r = rows[i];
             return Padding(
-              padding: EdgeInsets.only(
-                top: i == 0 ? 0 : AppSpacing.xs,
-              ),
+              padding: EdgeInsets.only(top: i == 0 ? 0 : AppSpacing.xs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -588,7 +587,9 @@ class _AssumptionsCard extends StatelessWidget {
                     child: Text(
                       r.key,
                       style: (t.bodySmall ?? const TextStyle()).copyWith(
-                        color: r.isResult ? colors.textAccent : colors.textPrimary,
+                        color: r.isResult
+                            ? colors.textAccent
+                            : colors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

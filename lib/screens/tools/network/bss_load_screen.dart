@@ -315,7 +315,8 @@ class _BssLoadScreenState extends State<BssLoadScreen> {
     if (!NetworkSupport.bssLoadSupported) {
       return NetworkUnavailableView(
         toolName: 'BSS Load',
-        reason: NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
+        reason:
+            NetworkSupport.unavailableReason ?? NetworkUnavailableReason.web,
       );
     }
     return LayoutBuilder(
@@ -350,7 +351,8 @@ class _BssLoadScreenState extends State<BssLoadScreen> {
   List<Widget> _children(BuildContext context, bool isDesktop) {
     return <Widget>[
       ConceptGraphicBand(toolId: 'bss-load', isDesktop: isDesktop),
-      if (ToolAssets.hasGraphic('bss-load')) const SizedBox(height: AppSpacing.md),
+      if (ToolAssets.hasGraphic('bss-load'))
+        const SizedBox(height: AppSpacing.md),
       _whatThisIsCard(context),
       const SizedBox(height: AppSpacing.sm),
       _controlCard(context),

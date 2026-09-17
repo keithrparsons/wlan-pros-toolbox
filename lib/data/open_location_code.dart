@@ -70,12 +70,15 @@ abstract final class OpenLocationCode {
   static const int _gridCodeLength = maxCodeLength - _pairCodeLength; // 5
 
   /// Integer cells the pair section resolves (base^3 per the reference form).
-  static const int _pairPrecision = _encodingBase * _encodingBase * _encodingBase; // 8000
+  static const int _pairPrecision =
+      _encodingBase * _encodingBase * _encodingBase; // 8000
 
   /// Finest integer precision (cells per degree) for latitude and longitude:
   /// the pair precision times the full grid refinement.
-  static final int _finalLatPrecision = _pairPrecision * _pow(_gridRows, _gridCodeLength);
-  static final int _finalLngPrecision = _pairPrecision * _pow(_gridColumns, _gridCodeLength);
+  static final int _finalLatPrecision =
+      _pairPrecision * _pow(_gridRows, _gridCodeLength);
+  static final int _finalLngPrecision =
+      _pairPrecision * _pow(_gridColumns, _gridCodeLength);
 
   /// Encodes a WGS-84 [latitude]/[longitude] to a Plus Code string.
   ///
@@ -138,7 +141,8 @@ abstract final class OpenLocationCode {
     }
 
     // ── Insert the separator and trim/pad to the requested length. ───────────
-    code = code.substring(0, separatorPosition) +
+    code =
+        code.substring(0, separatorPosition) +
         separator +
         code.substring(separatorPosition);
     if (length >= separatorPosition) {

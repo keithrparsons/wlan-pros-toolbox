@@ -111,17 +111,25 @@ class ZoomableGraphic extends StatelessWidget {
         barrierLabel: 'Zoomed graphic',
         transitionDuration: AppMotion.base,
         reverseTransitionDuration: AppMotion.fast,
-        pageBuilder: (BuildContext context, Animation<double> a,
-                Animation<double> b) =>
-            _ZoomView(svgBuilder: svgBuilder),
-        transitionsBuilder: (BuildContext context, Animation<double> anim,
-            Animation<double> secondary, Widget child) {
-          // Gentle fade-in on the standard ease — matches §8.8 motion.
-          return FadeTransition(
-            opacity: CurvedAnimation(parent: anim, curve: AppMotion.standardEase),
-            child: child,
-          );
-        },
+        pageBuilder:
+            (BuildContext context, Animation<double> a, Animation<double> b) =>
+                _ZoomView(svgBuilder: svgBuilder),
+        transitionsBuilder:
+            (
+              BuildContext context,
+              Animation<double> anim,
+              Animation<double> secondary,
+              Widget child,
+            ) {
+              // Gentle fade-in on the standard ease — matches §8.8 motion.
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: anim,
+                  curve: AppMotion.standardEase,
+                ),
+                child: child,
+              );
+            },
       ),
     );
   }
@@ -159,9 +167,7 @@ class ZoomableGraphic extends StatelessWidget {
           Positioned(
             right: AppSpacing.xs,
             bottom: AppSpacing.xs,
-            child: ExcludeSemantics(
-              child: _ZoomBadge(colors: colors),
-            ),
+            child: ExcludeSemantics(child: _ZoomBadge(colors: colors)),
           ),
         ],
       ),
@@ -280,9 +286,7 @@ class _ZoomView extends StatelessWidget {
                     // Let a panned graphic travel a little past the edges at
                     // high zoom so corners are reachable.
                     boundaryMargin: const EdgeInsets.all(AppSpacing.xxl),
-                    child: ExcludeSemantics(
-                      child: svgBuilder(context, canvas),
-                    ),
+                    child: ExcludeSemantics(child: svgBuilder(context, canvas)),
                   ),
                 );
               },

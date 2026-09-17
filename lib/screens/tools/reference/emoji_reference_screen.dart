@@ -289,9 +289,7 @@ class EmojiReferenceScreen extends StatelessWidget {
         title: const Text('Top 30 Emoji'),
         toolbarHeight: 64,
         // §8.16 — copy the ranked table as TSV. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

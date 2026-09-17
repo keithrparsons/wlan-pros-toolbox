@@ -297,9 +297,7 @@ class _SpectrumScreenState extends State<SpectrumScreen> {
       ..writeln('Regulatory domains by geography')
       ..writeln(<String>['Geography', 'Regulator', 'Acronym'].join(tab));
     for (final RegulatoryDomain d in SpectrumScreen.regulatoryDomains) {
-      buf.writeln(
-        <String>[d.geography, d.regulator, d.acronym].join(tab),
-      );
+      buf.writeln(<String>[d.geography, d.regulator, d.acronym].join(tab));
     }
     buf
       ..writeln()
@@ -683,9 +681,7 @@ class _BandToggle extends StatelessWidget {
                   child: Text(
                     opt.$2,
                     style: text.labelLarge?.copyWith(
-                      color: selected
-                          ? colors.onPrimary
-                          : colors.textSecondary,
+                      color: selected ? colors.onPrimary : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

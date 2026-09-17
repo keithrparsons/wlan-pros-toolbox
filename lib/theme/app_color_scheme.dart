@@ -192,7 +192,9 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       textPrimary: Color(0xFF1A1A1A), // 17.4:1 white / 16.6:1 canvas
       textSecondary: Color(0xFF4A4A4A), // 9.0:1 / 8.6:1
       textTertiary: Color(0xFF646464), // 5.7:1 / 5.5:1
-      textDisabled: Color(0xFF6E6E6E), // 4.29:1 on disabledFill #ECEBEC (GL-003 §8.3, §8.20.1)
+      textDisabled: Color(
+        0xFF6E6E6E,
+      ), // 4.29:1 on disabledFill #ECEBEC (GL-003 §8.3, §8.20.1)
       // Foreground lime substitute — darkened lime, 4.8:1 white / 4.6:1 canvas.
       textAccent: Color(0xFF5A7A1C),
       primary: Color(0xFFA2CC3A), // brand lime, FILL ONLY on light
@@ -301,12 +303,21 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       statusWarning: Color.lerp(statusWarning, other.statusWarning, t)!,
       statusDanger: Color.lerp(statusDanger, other.statusDanger, t)!,
       statusInfo: Color.lerp(statusInfo, other.statusInfo, t)!,
-      statusSuccessFill:
-          Color.lerp(statusSuccessFill, other.statusSuccessFill, t)!,
-      statusWarningFill:
-          Color.lerp(statusWarningFill, other.statusWarningFill, t)!,
-      statusDangerFill:
-          Color.lerp(statusDangerFill, other.statusDangerFill, t)!,
+      statusSuccessFill: Color.lerp(
+        statusSuccessFill,
+        other.statusSuccessFill,
+        t,
+      )!,
+      statusWarningFill: Color.lerp(
+        statusWarningFill,
+        other.statusWarningFill,
+        t,
+      )!,
+      statusDangerFill: Color.lerp(
+        statusDangerFill,
+        other.statusDangerFill,
+        t,
+      )!,
       statusInfoFill: Color.lerp(statusInfoFill, other.statusInfoFill, t)!,
     );
   }

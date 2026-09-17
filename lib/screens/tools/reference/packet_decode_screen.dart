@@ -151,7 +151,12 @@ class HandshakeStep {
 /// deprecated.
 @immutable
 class IcmpTypeRow {
-  const IcmpTypeRow(this.type, this.name, this.codes, {this.deprecated = false});
+  const IcmpTypeRow(
+    this.type,
+    this.name,
+    this.codes, {
+    this.deprecated = false,
+  });
 
   final int type;
   final String name;
@@ -225,47 +230,99 @@ class PacketDecodeScreen extends StatelessWidget {
 
   static const List<PacketField> ipv4Header = <PacketField>[
     PacketField('Version', '0', '4', 'IP version; always 4 here'),
-    PacketField('IHL', '4', '4',
-        'Header length in 32-bit words; minimum 5 (= 20 bytes)'),
-    PacketField('Type of Service / DiffServ', '8', '8',
-        'QoS octet: DSCP (6 bits) + ECN (2 bits), per RFC 2474 / RFC 3168. See '
-        'the split below'),
-    PacketField('Total Length', '16', '16',
-        'Whole datagram length in octets (header + data)'),
-    PacketField('Identification', '32', '16',
-        'Sender ID used to group fragments of one datagram'),
+    PacketField(
+      'IHL',
+      '4',
+      '4',
+      'Header length in 32-bit words; minimum 5 (= 20 bytes)',
+    ),
+    PacketField(
+      'Type of Service / DiffServ',
+      '8',
+      '8',
+      'QoS octet: DSCP (6 bits) + ECN (2 bits), per RFC 2474 / RFC 3168. See '
+          'the split below',
+    ),
+    PacketField(
+      'Total Length',
+      '16',
+      '16',
+      'Whole datagram length in octets (header + data)',
+    ),
+    PacketField(
+      'Identification',
+      '32',
+      '16',
+      'Sender ID used to group fragments of one datagram',
+    ),
     PacketField('Flags', '48', '3', 'Fragmentation control bits (see below)'),
-    PacketField('Fragment Offset', '51', '13',
-        "This fragment's position in the original, in 8-octet units"),
-    PacketField('Time to Live', '64', '8',
-        'Max remaining hops; decremented per router, discard at 0'),
-    PacketField('Protocol', '72', '8',
-        'Encapsulated next-layer protocol (IP protocol numbers below; e.g. '
-        '6 = TCP, 17 = UDP, 1 = ICMP)'),
-    PacketField('Header Checksum', '80', '16',
-        'Ones-complement checksum over the header only'),
+    PacketField(
+      'Fragment Offset',
+      '51',
+      '13',
+      "This fragment's position in the original, in 8-octet units",
+    ),
+    PacketField(
+      'Time to Live',
+      '64',
+      '8',
+      'Max remaining hops; decremented per router, discard at 0',
+    ),
+    PacketField(
+      'Protocol',
+      '72',
+      '8',
+      'Encapsulated next-layer protocol (IP protocol numbers below; e.g. '
+          '6 = TCP, 17 = UDP, 1 = ICMP)',
+    ),
+    PacketField(
+      'Header Checksum',
+      '80',
+      '16',
+      'Ones-complement checksum over the header only',
+    ),
     PacketField('Source Address', '96', '32', 'Sender IPv4 address'),
     PacketField('Destination Address', '128', '32', 'Recipient IPv4 address'),
-    PacketField('Options', '160', 'variable',
-        'Optional controls; present only when IHL > 5'),
-    PacketField('Padding', 'variable', 'variable',
-        'Zero-fill so the header ends on a 32-bit boundary'),
+    PacketField(
+      'Options',
+      '160',
+      'variable',
+      'Optional controls; present only when IHL > 5',
+    ),
+    PacketField(
+      'Padding',
+      'variable',
+      'variable',
+      'Zero-fill so the header ends on a 32-bit boundary',
+    ),
   ];
 
   static const List<BitFieldRow> ipv4Flags = <BitFieldRow>[
     BitFieldRow('48', 'Reserved', 'Must be 0'),
-    BitFieldRow("49", "DF (Don't Fragment)",
-        '1 = router must not fragment; drop instead'),
-    BitFieldRow('50', 'MF (More Fragments)',
-        '1 = more fragments follow; 0 = last fragment'),
+    BitFieldRow(
+      "49",
+      "DF (Don't Fragment)",
+      '1 = router must not fragment; drop instead',
+    ),
+    BitFieldRow(
+      '50',
+      'MF (More Fragments)',
+      '1 = more fragments follow; 0 = last fragment',
+    ),
   ];
 
   static const List<BitFieldRow> ipv4ToS = <BitFieldRow>[
-    BitFieldRow('8-13', 'DSCP',
-        'Differentiated Services Codepoint (per-hop QoS class), 6 bits'),
-    BitFieldRow('14-15', 'ECN',
-        'Explicit Congestion Notification, 2 bits: 00 = Not-ECT, 01 = ECT(1), '
-        '10 = ECT(0), 11 = CE (Congestion Experienced)'),
+    BitFieldRow(
+      '8-13',
+      'DSCP',
+      'Differentiated Services Codepoint (per-hop QoS class), 6 bits',
+    ),
+    BitFieldRow(
+      '14-15',
+      'ECN',
+      'Explicit Congestion Notification, 2 bits: 00 = Not-ECT, 01 = ECT(1), '
+          '10 = ECT(0), 11 = CE (Congestion Experienced)',
+    ),
   ];
 
   static const String ipv4ToSNote =
@@ -278,19 +335,39 @@ class PacketDecodeScreen extends StatelessWidget {
 
   static const List<PacketField> ipv6Header = <PacketField>[
     PacketField('Version', '0', '4', 'IP version; always 6'),
-    PacketField('Traffic Class', '4', '8',
-        'QoS octet: DSCP (6 bits) + ECN (2 bits), as in IPv4 DiffServ'),
-    PacketField('Flow Label', '12', '20',
-        'Labels a packet flow for special handling by routers'),
-    PacketField('Payload Length', '32', '16',
-        'Length in octets of everything after this 40-byte header (extension '
-        'headers + upper-layer data)'),
-    PacketField('Next Header', '48', '8',
-        'Type of the header immediately following (IP protocol numbers, or an '
-        'extension-header type)'),
-    PacketField('Hop Limit', '56', '8',
-        'Max remaining hops; decremented per node, discard at 0 (IPv6 '
-        'equivalent of TTL)'),
+    PacketField(
+      'Traffic Class',
+      '4',
+      '8',
+      'QoS octet: DSCP (6 bits) + ECN (2 bits), as in IPv4 DiffServ',
+    ),
+    PacketField(
+      'Flow Label',
+      '12',
+      '20',
+      'Labels a packet flow for special handling by routers',
+    ),
+    PacketField(
+      'Payload Length',
+      '32',
+      '16',
+      'Length in octets of everything after this 40-byte header (extension '
+          'headers + upper-layer data)',
+    ),
+    PacketField(
+      'Next Header',
+      '48',
+      '8',
+      'Type of the header immediately following (IP protocol numbers, or an '
+          'extension-header type)',
+    ),
+    PacketField(
+      'Hop Limit',
+      '56',
+      '8',
+      'Max remaining hops; decremented per node, discard at 0 (IPv6 '
+          'equivalent of TTL)',
+    ),
     PacketField('Source Address', '64', '128', 'Sender IPv6 address'),
     PacketField('Destination Address', '192', '128', 'Recipient IPv6 address'),
   ];
@@ -320,52 +397,107 @@ class PacketDecodeScreen extends StatelessWidget {
   static const List<PacketField> tcpHeader = <PacketField>[
     PacketField('Source Port', '0', '16', 'Sending port'),
     PacketField('Destination Port', '16', '16', 'Receiving port'),
-    PacketField('Sequence Number', '32', '32',
-        'Sequence number of first data octet in this segment; if SYN set, this '
-        'is the ISN'),
-    PacketField('Acknowledgment Number', '64', '32',
-        'Next sequence number the sender expects (valid only when ACK set)'),
-    PacketField('Data Offset', '96', '4',
-        'TCP header length in 32-bit words; minimum 5 (= 20 bytes). Locates '
-        'where data begins'),
-    PacketField('Reserved', '100', '4',
-        'Must be 0 in sent segments, ignored on receipt (see the flag history '
-        'below)'),
-    PacketField('Control Bits', '104', '8', 'The 8 flags (see TCP flags below)'),
-    PacketField('Window', '112', '16',
-        'Receive-window size the sender is currently offering, in octets'),
-    PacketField('Checksum', '128', '16',
-        'Ones-complement checksum over pseudo-header + TCP header + data'),
-    PacketField('Urgent Pointer', '144', '16',
-        'Offset to the last urgent-data octet (valid only when URG set)'),
-    PacketField('Options', '160', 'variable',
-        'Present when Data Offset > 5 (e.g. MSS, window scale, SACK, '
-        'timestamps)'),
+    PacketField(
+      'Sequence Number',
+      '32',
+      '32',
+      'Sequence number of first data octet in this segment; if SYN set, this '
+          'is the ISN',
+    ),
+    PacketField(
+      'Acknowledgment Number',
+      '64',
+      '32',
+      'Next sequence number the sender expects (valid only when ACK set)',
+    ),
+    PacketField(
+      'Data Offset',
+      '96',
+      '4',
+      'TCP header length in 32-bit words; minimum 5 (= 20 bytes). Locates '
+          'where data begins',
+    ),
+    PacketField(
+      'Reserved',
+      '100',
+      '4',
+      'Must be 0 in sent segments, ignored on receipt (see the flag history '
+          'below)',
+    ),
+    PacketField(
+      'Control Bits',
+      '104',
+      '8',
+      'The 8 flags (see TCP flags below)',
+    ),
+    PacketField(
+      'Window',
+      '112',
+      '16',
+      'Receive-window size the sender is currently offering, in octets',
+    ),
+    PacketField(
+      'Checksum',
+      '128',
+      '16',
+      'Ones-complement checksum over pseudo-header + TCP header + data',
+    ),
+    PacketField(
+      'Urgent Pointer',
+      '144',
+      '16',
+      'Offset to the last urgent-data octet (valid only when URG set)',
+    ),
+    PacketField(
+      'Options',
+      '160',
+      'variable',
+      'Present when Data Offset > 5 (e.g. MSS, window scale, SACK, '
+          'timestamps)',
+    ),
     PacketField('Data', 'variable', 'variable', 'Upper-layer payload'),
   ];
 
   /// TCP control bits, MSB -> LSB. The historic bit 103 leads, flagged in text;
   /// then the 8 canonical RFC 9293 control bits (CWR through FIN).
   static const List<TcpFlagRow> tcpFlags = <TcpFlagRow>[
-    TcpFlagRow('Reserved (was NS)', 103,
-        'Reserved in RFC 9293. Historically NS (Nonce Sum, RFC 3540, made '
-        'Historic by RFC 8311); reassigned as AE (Accurate ECN) by RFC 9768. '
-        'Wireshark may still label this bit NS',
-        historic: true),
-    TcpFlagRow('CWR', 104,
-        'Congestion Window Reduced: sender shrank its window after ECN feedback'),
-    TcpFlagRow('ECE', 105,
-        'ECN-Echo: receiver reflects that a Congestion-Experienced mark arrived'),
-    TcpFlagRow('URG', 106,
-        'Urgent Pointer field is meaningful: expedited data present'),
+    TcpFlagRow(
+      'Reserved (was NS)',
+      103,
+      'Reserved in RFC 9293. Historically NS (Nonce Sum, RFC 3540, made '
+          'Historic by RFC 8311); reassigned as AE (Accurate ECN) by RFC 9768. '
+          'Wireshark may still label this bit NS',
+      historic: true,
+    ),
+    TcpFlagRow(
+      'CWR',
+      104,
+      'Congestion Window Reduced: sender shrank its window after ECN feedback',
+    ),
+    TcpFlagRow(
+      'ECE',
+      105,
+      'ECN-Echo: receiver reflects that a Congestion-Experienced mark arrived',
+    ),
+    TcpFlagRow(
+      'URG',
+      106,
+      'Urgent Pointer field is meaningful: expedited data present',
+    ),
     TcpFlagRow('ACK', 107, 'Acknowledgment Number field is meaningful'),
-    TcpFlagRow('PSH', 108,
-        "Deliver buffered data to the application immediately, don't wait to "
-        'fill a segment'),
+    TcpFlagRow(
+      'PSH',
+      108,
+      "Deliver buffered data to the application immediately, don't wait to "
+          'fill a segment',
+    ),
     TcpFlagRow('RST', 109, 'Abort the connection immediately (reset)'),
     TcpFlagRow('SYN', 110, 'Synchronize sequence numbers: opens a connection'),
-    TcpFlagRow('FIN', 111,
-        'Sender has finished sending: begins a graceful close'),
+    TcpFlagRow(
+      'FIN',
+      111,
+      'Sender has finished sending: begins a graceful close',
+    ),
   ];
 
   static const String tcpFlagsNote =
@@ -376,14 +508,26 @@ class PacketDecodeScreen extends StatelessWidget {
   // ── UDP ──
 
   static const List<PacketField> udpHeader = <PacketField>[
-    PacketField('Source Port', '0', '16',
-        'Sending port; optional (may be 0 if no reply expected)'),
+    PacketField(
+      'Source Port',
+      '0',
+      '16',
+      'Sending port; optional (may be 0 if no reply expected)',
+    ),
     PacketField('Destination Port', '16', '16', 'Receiving port'),
-    PacketField('Length', '32', '16',
-        'Length in octets of this header + data (minimum 8)'),
-    PacketField('Checksum', '48', '16',
-        'Ones-complement checksum over pseudo-header + header + data; '
-        '0 = not computed (IPv4 only)'),
+    PacketField(
+      'Length',
+      '32',
+      '16',
+      'Length in octets of this header + data (minimum 8)',
+    ),
+    PacketField(
+      'Checksum',
+      '48',
+      '16',
+      'Ones-complement checksum over pseudo-header + header + data; '
+          '0 = not computed (IPv4 only)',
+    ),
   ];
 
   static const String udpNote =
@@ -396,43 +540,67 @@ class PacketDecodeScreen extends StatelessWidget {
     TcpState('CLOSED', 'No connection exists (the notional start / end state)'),
     TcpState('LISTEN', 'Server waiting for an inbound connection request'),
     TcpState('SYN-SENT', "Client has sent SYN, waiting for the peer's SYN-ACK"),
-    TcpState('SYN-RECEIVED',
-        'SYN received and SYN-ACK sent; waiting for the final ACK'),
-    TcpState('ESTABLISHED',
-        'Connection open; normal bidirectional data transfer'),
-    TcpState('FIN-WAIT-1',
-        "Local side sent FIN; waiting for its ACK or the peer's FIN"),
+    TcpState(
+      'SYN-RECEIVED',
+      'SYN received and SYN-ACK sent; waiting for the final ACK',
+    ),
+    TcpState(
+      'ESTABLISHED',
+      'Connection open; normal bidirectional data transfer',
+    ),
+    TcpState(
+      'FIN-WAIT-1',
+      "Local side sent FIN; waiting for its ACK or the peer's FIN",
+    ),
     TcpState('FIN-WAIT-2', "Local FIN acked; waiting for the peer's FIN"),
-    TcpState('CLOSE-WAIT',
-        'Peer sent FIN; waiting for the local application to close'),
-    TcpState('CLOSING',
-        'Both sides sent FIN simultaneously; waiting for the ACK of ours'),
-    TcpState('LAST-ACK',
-        'Local side sent its FIN after CLOSE-WAIT; waiting for the final ACK'),
-    TcpState('TIME-WAIT',
-        'Local close complete; waiting twice the MSL to absorb stray / '
-        'duplicate segments before CLOSED'),
+    TcpState(
+      'CLOSE-WAIT',
+      'Peer sent FIN; waiting for the local application to close',
+    ),
+    TcpState(
+      'CLOSING',
+      'Both sides sent FIN simultaneously; waiting for the ACK of ours',
+    ),
+    TcpState(
+      'LAST-ACK',
+      'Local side sent its FIN after CLOSE-WAIT; waiting for the final ACK',
+    ),
+    TcpState(
+      'TIME-WAIT',
+      'Local close complete; waiting twice the MSL to absorb stray / '
+          'duplicate segments before CLOSED',
+    ),
   ];
 
   static const List<HandshakeStep> handshake = <HandshakeStep>[
     HandshakeStep(1, 'Client -> Server: SYN (client ISN). Client: SYN-SENT.'),
-    HandshakeStep(2,
-        'Server -> Client: SYN, ACK (server ISN, acks client ISN). '
-        'Server: SYN-RECEIVED.'),
-    HandshakeStep(3,
-        'Client -> Server: ACK (acks server ISN). Both: ESTABLISHED.'),
+    HandshakeStep(
+      2,
+      'Server -> Client: SYN, ACK (server ISN, acks client ISN). '
+      'Server: SYN-RECEIVED.',
+    ),
+    HandshakeStep(
+      3,
+      'Client -> Server: ACK (acks server ISN). Both: ESTABLISHED.',
+    ),
   ];
 
   static const List<HandshakeStep> teardown = <HandshakeStep>[
     HandshakeStep(1, 'Initiator -> Peer: FIN. Initiator: FIN-WAIT-1.'),
-    HandshakeStep(2,
-        'Peer -> Initiator: ACK of the FIN. Initiator: FIN-WAIT-2; '
-        'Peer: CLOSE-WAIT.'),
-    HandshakeStep(3,
-        'Peer -> Initiator: FIN (once its app closes). Peer: LAST-ACK.'),
-    HandshakeStep(4,
-        'Initiator -> Peer: ACK of that FIN. Initiator: TIME-WAIT (waits twice '
-        'the MSL) -> CLOSED; Peer: CLOSED on receipt.'),
+    HandshakeStep(
+      2,
+      'Peer -> Initiator: ACK of the FIN. Initiator: FIN-WAIT-2; '
+      'Peer: CLOSE-WAIT.',
+    ),
+    HandshakeStep(
+      3,
+      'Peer -> Initiator: FIN (once its app closes). Peer: LAST-ACK.',
+    ),
+    HandshakeStep(
+      4,
+      'Initiator -> Peer: ACK of that FIN. Initiator: TIME-WAIT (waits twice '
+      'the MSL) -> CLOSED; Peer: CLOSED on receipt.',
+    ),
   ];
 
   static const String teardownNote =
@@ -444,25 +612,42 @@ class PacketDecodeScreen extends StatelessWidget {
   static const List<PacketField> icmpHeader = <PacketField>[
     PacketField('Type', '0', '8', 'Message type'),
     PacketField('Code', '8', '8', 'Subtype within a type'),
-    PacketField('Checksum', '16', '16',
-        'Ones-complement checksum over the ICMP message'),
-    PacketField('Rest of Header', '32', '32',
-        'Type-specific (Identifier + Sequence for echo; gateway address for '
-        'redirect; pointer for parameter problem)'),
+    PacketField(
+      'Checksum',
+      '16',
+      '16',
+      'Ones-complement checksum over the ICMP message',
+    ),
+    PacketField(
+      'Rest of Header',
+      '32',
+      '32',
+      'Type-specific (Identifier + Sequence for echo; gateway address for '
+          'redirect; pointer for parameter problem)',
+    ),
   ];
 
   static const List<IcmpTypeRow> icmpTypes = <IcmpTypeRow>[
     IcmpTypeRow(0, 'Echo Reply', '0'),
     IcmpTypeRow(3, 'Destination Unreachable', 'see the code table below'),
     IcmpTypeRow(4, 'Source Quench', '0', deprecated: true),
-    IcmpTypeRow(5, 'Redirect',
-        '0 = network, 1 = host, 2 = ToS + network, 3 = ToS + host'),
+    IcmpTypeRow(
+      5,
+      'Redirect',
+      '0 = network, 1 = host, 2 = ToS + network, 3 = ToS + host',
+    ),
     IcmpTypeRow(8, 'Echo Request', '0'),
-    IcmpTypeRow(11, 'Time Exceeded',
-        '0 = TTL exceeded in transit, 1 = fragment-reassembly time exceeded'),
-    IcmpTypeRow(12, 'Parameter Problem',
-        '0 = pointer indicates error, 1 = missing required option, '
-        '2 = bad length'),
+    IcmpTypeRow(
+      11,
+      'Time Exceeded',
+      '0 = TTL exceeded in transit, 1 = fragment-reassembly time exceeded',
+    ),
+    IcmpTypeRow(
+      12,
+      'Parameter Problem',
+      '0 = pointer indicates error, 1 = missing required option, '
+          '2 = bad length',
+    ),
     IcmpTypeRow(13, 'Timestamp', '0'),
     IcmpTypeRow(14, 'Timestamp Reply', '0'),
   ];
@@ -489,31 +674,51 @@ class PacketDecodeScreen extends StatelessWidget {
   // ── ICMPv6 ──
 
   static const List<PacketField> icmpv6Header = <PacketField>[
-    PacketField('Type', '0', '8',
-        'Message type; high bit 0 = error (0-127), high bit 1 = informational '
-        '(128-255)'),
+    PacketField(
+      'Type',
+      '0',
+      '8',
+      'Message type; high bit 0 = error (0-127), high bit 1 = informational '
+          '(128-255)',
+    ),
     PacketField('Code', '8', '8', 'Subtype within a type'),
-    PacketField('Checksum', '16', '16',
-        'Checksum over the ICMPv6 message + the IPv6 pseudo-header (mandatory, '
-        'unlike UDP over IPv4)'),
+    PacketField(
+      'Checksum',
+      '16',
+      '16',
+      'Checksum over the ICMPv6 message + the IPv6 pseudo-header (mandatory, '
+          'unlike UDP over IPv4)',
+    ),
     PacketField('Message Body', '32', 'variable', 'Type-specific'),
   ];
 
   static const List<IcmpTypeRow> icmpv6Types = <IcmpTypeRow>[
-    IcmpTypeRow(1, 'Destination Unreachable',
-        '0 = no route, 1 = admin prohibited, 2 = beyond scope of source '
-        'address, 3 = address unreachable, 4 = port unreachable, 5 = source '
-        'address failed ingress / egress policy, 6 = reject route to '
-        'destination'),
-    IcmpTypeRow(2, 'Packet Too Big',
-        '0 (carries the MTU; the IPv6 path-MTU mechanism, no in-transit '
-        'fragmentation)'),
-    IcmpTypeRow(3, 'Time Exceeded',
-        '0 = hop limit exceeded in transit, 1 = fragment-reassembly time '
-        'exceeded'),
-    IcmpTypeRow(4, 'Parameter Problem',
-        '0 = erroneous header field, 1 = unrecognized Next Header type, '
-        '2 = unrecognized IPv6 option'),
+    IcmpTypeRow(
+      1,
+      'Destination Unreachable',
+      '0 = no route, 1 = admin prohibited, 2 = beyond scope of source '
+          'address, 3 = address unreachable, 4 = port unreachable, 5 = source '
+          'address failed ingress / egress policy, 6 = reject route to '
+          'destination',
+    ),
+    IcmpTypeRow(
+      2,
+      'Packet Too Big',
+      '0 (carries the MTU; the IPv6 path-MTU mechanism, no in-transit '
+          'fragmentation)',
+    ),
+    IcmpTypeRow(
+      3,
+      'Time Exceeded',
+      '0 = hop limit exceeded in transit, 1 = fragment-reassembly time '
+          'exceeded',
+    ),
+    IcmpTypeRow(
+      4,
+      'Parameter Problem',
+      '0 = erroneous header field, 1 = unrecognized Next Header type, '
+          '2 = unrecognized IPv6 option',
+    ),
     IcmpTypeRow(128, 'Echo Request', '0'),
     IcmpTypeRow(129, 'Echo Reply', '0'),
   ];
@@ -521,17 +726,32 @@ class PacketDecodeScreen extends StatelessWidget {
   /// NDP messages (RFC 4861), all Code 0. Reuses [IcmpTypeRow] with the purpose
   /// carried in the codes column.
   static const List<IcmpTypeRow> icmpv6Ndp = <IcmpTypeRow>[
-    IcmpTypeRow(133, 'Router Solicitation',
-        'Host asks routers to send a Router Advertisement now'),
-    IcmpTypeRow(134, 'Router Advertisement',
-        'Router announces its presence, prefixes, and link parameters'),
-    IcmpTypeRow(135, 'Neighbor Solicitation',
-        "Resolve a neighbor's link-layer address / confirm reachability "
-        "(IPv6's ARP)"),
-    IcmpTypeRow(136, 'Neighbor Advertisement',
-        'Reply to a solicitation, or unsolicited link-layer-address update'),
-    IcmpTypeRow(137, 'Redirect',
-        'Router tells a host of a better first hop for a destination'),
+    IcmpTypeRow(
+      133,
+      'Router Solicitation',
+      'Host asks routers to send a Router Advertisement now',
+    ),
+    IcmpTypeRow(
+      134,
+      'Router Advertisement',
+      'Router announces its presence, prefixes, and link parameters',
+    ),
+    IcmpTypeRow(
+      135,
+      'Neighbor Solicitation',
+      "Resolve a neighbor's link-layer address / confirm reachability "
+          "(IPv6's ARP)",
+    ),
+    IcmpTypeRow(
+      136,
+      'Neighbor Advertisement',
+      'Reply to a solicitation, or unsolicited link-layer-address update',
+    ),
+    IcmpTypeRow(
+      137,
+      'Redirect',
+      'Router tells a host of a better first hop for a destination',
+    ),
   ];
 
   @override
@@ -542,9 +762,7 @@ class PacketDecodeScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy every table as a multi-section TSV. Static data, always
         // enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -584,7 +802,12 @@ class PacketDecodeScreen extends StatelessWidget {
                   // Header anatomy.
                   _fieldTable(context, 'IPv4 header', ipv4Header, ipv4Citation),
                   const SizedBox(height: AppSpacing.sm),
-                  _bitTable(context, 'IPv4 Flags (bits 48-50)', ipv4Flags, null),
+                  _bitTable(
+                    context,
+                    'IPv4 Flags (bits 48-50)',
+                    ipv4Flags,
+                    null,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   _bitTable(
                     context,
@@ -594,8 +817,13 @@ class PacketDecodeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
 
-                  _fieldTable(context, 'IPv6 header', ipv6Header, ipv6Citation,
-                      note: ipv6Note),
+                  _fieldTable(
+                    context,
+                    'IPv6 header',
+                    ipv6Header,
+                    ipv6Citation,
+                    note: ipv6Note,
+                  ),
                   const SizedBox(height: AppSpacing.md),
 
                   _protocolNumberTable(context),
@@ -606,8 +834,13 @@ class PacketDecodeScreen extends StatelessWidget {
                   _tcpFlagsTable(context),
                   const SizedBox(height: AppSpacing.md),
 
-                  _fieldTable(context, 'UDP header', udpHeader, udpCitation,
-                      note: udpNote),
+                  _fieldTable(
+                    context,
+                    'UDP header',
+                    udpHeader,
+                    udpCitation,
+                    note: udpNote,
+                  ),
                   const SizedBox(height: AppSpacing.md),
 
                   // TCP connection states + sequences.
@@ -646,12 +879,7 @@ class PacketDecodeScreen extends StatelessWidget {
                     icmpv6Citation,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  _icmpTypeTable(
-                    context,
-                    'ICMPv6 types',
-                    icmpv6Types,
-                    null,
-                  ),
+                  _icmpTypeTable(context, 'ICMPv6 types', icmpv6Types, null),
                   const SizedBox(height: AppSpacing.sm),
                   _icmpTypeTable(
                     context,
@@ -710,12 +938,14 @@ class PacketDecodeScreen extends StatelessWidget {
         ],
       ),
       rows: fields
-          .map((PacketField f) => _dataRow(context, mono, <_Cell>[
-                _Cell(f.field, 168, _CellKind.key),
-                _Cell(f.offset, 72, _CellKind.mono),
-                _Cell(f.length, 64, _CellKind.mono),
-                _Cell(f.meaning, 360, _CellKind.prose),
-              ]))
+          .map(
+            (PacketField f) => _dataRow(context, mono, <_Cell>[
+              _Cell(f.field, 168, _CellKind.key),
+              _Cell(f.offset, 72, _CellKind.mono),
+              _Cell(f.length, 64, _CellKind.mono),
+              _Cell(f.meaning, 360, _CellKind.prose),
+            ]),
+          )
           .toList(),
     );
   }
@@ -739,11 +969,13 @@ class PacketDecodeScreen extends StatelessWidget {
         ],
       ),
       rows: bits
-          .map((BitFieldRow b) => _dataRow(context, mono, <_Cell>[
-                _Cell(b.bits, 72, _CellKind.mono),
-                _Cell(b.name, 168, _CellKind.key),
-                _Cell(b.meaning, 360, _CellKind.prose),
-              ]))
+          .map(
+            (BitFieldRow b) => _dataRow(context, mono, <_Cell>[
+              _Cell(b.bits, 72, _CellKind.mono),
+              _Cell(b.name, 168, _CellKind.key),
+              _Cell(b.meaning, 360, _CellKind.prose),
+            ]),
+          )
           .toList(),
     );
   }
@@ -762,11 +994,13 @@ class PacketDecodeScreen extends StatelessWidget {
         ],
       ),
       rows: protocolNumbers
-          .map((ProtocolNumber p) => _dataRow(context, mono, <_Cell>[
-                _Cell('${p.number}', 56, _CellKind.key),
-                _Cell(p.name, 96, _CellKind.mono),
-                _Cell(p.meaning, 300, _CellKind.prose),
-              ]))
+          .map(
+            (ProtocolNumber p) => _dataRow(context, mono, <_Cell>[
+              _Cell('${p.number}', 56, _CellKind.key),
+              _Cell(p.name, 96, _CellKind.mono),
+              _Cell(p.meaning, 300, _CellKind.prose),
+            ]),
+          )
           .toList(),
     );
   }
@@ -787,17 +1021,12 @@ class PacketDecodeScreen extends StatelessWidget {
       rows: tcpFlags.map((TcpFlagRow f) {
         // The historic bit's status is spoken via its meaning text and shown in
         // textTertiary; color is never the sole signal (SC 1.4.1).
-        final String flagLabel =
-            f.historic ? '${f.flag} (historic)' : f.flag;
-        return _dataRow(
-          context,
-          mono,
-          <_Cell>[
-            _Cell(flagLabel, 140, f.historic ? _CellKind.mono : _CellKind.key),
-            _Cell('${f.bit}', 48, _CellKind.mono),
-            _Cell(f.meaning, 372, _CellKind.prose),
-          ],
-        );
+        final String flagLabel = f.historic ? '${f.flag} (historic)' : f.flag;
+        return _dataRow(context, mono, <_Cell>[
+          _Cell(flagLabel, 140, f.historic ? _CellKind.mono : _CellKind.key),
+          _Cell('${f.bit}', 48, _CellKind.mono),
+          _Cell(f.meaning, 372, _CellKind.prose),
+        ]);
       }).toList(),
     );
   }
@@ -815,10 +1044,12 @@ class PacketDecodeScreen extends StatelessWidget {
         ],
       ),
       rows: tcpStates
-          .map((TcpState s) => _dataRow(context, mono, <_Cell>[
-                _Cell(s.state, 148, _CellKind.key),
-                _Cell(s.meaning, 372, _CellKind.prose),
-              ]))
+          .map(
+            (TcpState s) => _dataRow(context, mono, <_Cell>[
+              _Cell(s.state, 148, _CellKind.key),
+              _Cell(s.meaning, 372, _CellKind.prose),
+            ]),
+          )
           .toList(),
     );
   }
@@ -843,8 +1074,7 @@ class PacketDecodeScreen extends StatelessWidget {
         ],
       ),
       rows: types.map((IcmpTypeRow t) {
-        final String name =
-            t.deprecated ? '${t.name} (deprecated)' : t.name;
+        final String name = t.deprecated ? '${t.name} (deprecated)' : t.name;
         return _dataRow(context, mono, <_Cell>[
           _Cell('${t.type}', 56, _CellKind.key),
           _Cell(name, 180, _CellKind.mono),
@@ -867,10 +1097,12 @@ class PacketDecodeScreen extends StatelessWidget {
         ],
       ),
       rows: icmpType3Codes
-          .map((IcmpCodeRow c) => _dataRow(context, mono, <_Cell>[
-                _Cell('${c.code}', 56, _CellKind.key),
-                _Cell(c.meaning, 372, _CellKind.prose),
-              ]))
+          .map(
+            (IcmpCodeRow c) => _dataRow(context, mono, <_Cell>[
+              _Cell('${c.code}', 56, _CellKind.key),
+              _Cell(c.meaning, 372, _CellKind.prose),
+            ]),
+          )
           .toList(),
     );
   }
@@ -891,8 +1123,9 @@ class PacketDecodeScreen extends StatelessWidget {
         case _CellKind.mono:
           return mono.inlineCode.copyWith(color: colors.textSecondary);
         case _CellKind.prose:
-          return (text.labelMedium ?? const TextStyle())
-              .copyWith(color: colors.textTertiary);
+          return (text.labelMedium ?? const TextStyle()).copyWith(
+            color: colors.textTertiary,
+          );
       }
     }
 
@@ -906,10 +1139,12 @@ class PacketDecodeScreen extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: cells
-              .map((_Cell c) => SizedBox(
-                    width: c.width,
-                    child: Text(c.text, style: styleFor(c)),
-                  ))
+              .map(
+                (_Cell c) => SizedBox(
+                  width: c.width,
+                  child: Text(c.text, style: styleFor(c)),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -1000,7 +1235,11 @@ class PacketDecodeScreen extends StatelessWidget {
 
     fieldSection('ICMP common header (IPv4)', icmpHeader, icmpCitation);
 
-    void typeSection(String title, List<IcmpTypeRow> types, String codesHeader) {
+    void typeSection(
+      String title,
+      List<IcmpTypeRow> types,
+      String codesHeader,
+    ) {
       b
         ..writeln()
         ..writeln(title)
@@ -1023,8 +1262,11 @@ class PacketDecodeScreen extends StatelessWidget {
 
     fieldSection('ICMPv6 common header', icmpv6Header, icmpv6Citation);
     typeSection('ICMPv6 types', icmpv6Types, 'Codes');
-    typeSection('ICMPv6 Neighbor Discovery (NDP, all Code 0)', icmpv6Ndp,
-        'Purpose');
+    typeSection(
+      'ICMPv6 Neighbor Discovery (NDP, all Code 0)',
+      icmpv6Ndp,
+      'Purpose',
+    );
 
     return b.toString().trimRight();
   }
@@ -1171,10 +1413,13 @@ class _StepCard extends StatelessWidget {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: colors.surface2,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.control),
-                          border:
-                              Border.all(color: colors.borderStrong, width: 1),
+                          borderRadius: BorderRadius.circular(
+                            AppRadius.control,
+                          ),
+                          border: Border.all(
+                            color: colors.borderStrong,
+                            width: 1,
+                          ),
                         ),
                         child: Text(
                           '${s.n}',
@@ -1189,8 +1434,9 @@ class _StepCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         s.detail,
-                        style: text.labelMedium
-                            ?.copyWith(color: colors.textSecondary),
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ),
                   ],

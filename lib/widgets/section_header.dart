@@ -42,8 +42,9 @@ class SectionHeader extends StatelessWidget {
                 // underline (lime is only 1.7:1 on canvas, §8.20.3-C).
                 style: text.headlineSmall?.copyWith(
                   color: colors.textSecondary,
-                  fontWeight:
-                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                  fontWeight: colors.isLight
+                      ? FontWeight.w700
+                      : FontWeight.w600,
                 ),
               ),
             ),

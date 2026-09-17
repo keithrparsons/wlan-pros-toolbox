@@ -90,7 +90,9 @@ class _PlmnReferenceScreenState extends State<PlmnReferenceScreen> {
     final int n = svc.search(value).length;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching PLMN codes' : '$n matching PLMN code${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching PLMN codes'
+          : '$n matching PLMN code${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -114,10 +116,9 @@ class _PlmnReferenceScreenState extends State<PlmnReferenceScreen> {
         ..writeln()
         ..writeln('MCC ${g.mcc}');
       for (final PlmnEntry e in g.entries) {
-        final String parent =
-            e.operator.isEmpty || e.operator == e.carrier
-                ? ''
-                : ': ${e.operator}';
+        final String parent = e.operator.isEmpty || e.operator == e.carrier
+            ? ''
+            : ': ${e.operator}';
         buf.writeln(
           '${e.plmnId}\t${e.mccMncLabel}\t${e.carrier}$parent\t${e.status.label}',
         );
@@ -134,9 +135,7 @@ class _PlmnReferenceScreenState extends State<PlmnReferenceScreen> {
         toolbarHeight: 64,
         // §8.16 — copy the current (grouped) view as plain text. Disabled until
         // results exist; null payload drops it from focus traversal.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -285,10 +284,9 @@ class _SearchField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         // 16px field text dodges iOS Safari auto-zoom (§8.4).
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -461,7 +459,10 @@ class _RegionTag extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 1,
+      ),
       decoration: BoxDecoration(
         color: colors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.pill),

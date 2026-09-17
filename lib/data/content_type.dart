@@ -66,9 +66,7 @@ const Set<String> _cliSheetIds = <String>{
 /// The how-to / guide tool ids (the "Guides & How-To" subgroup). A guide is a
 /// step-by-step walkthrough that may bundle a companion file — distinct from a
 /// reference table, card, CLI sheet, or checklist.
-const Set<String> _guideIds = <String>{
-  'freeradius-wlanpi',
-};
+const Set<String> _guideIds = <String>{'freeradius-wlanpi'};
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.
 ///

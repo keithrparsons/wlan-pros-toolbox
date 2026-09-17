@@ -72,7 +72,9 @@ class CloudToolTrustScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram = ReferenceImages.isBundled(kCloudToolTrustToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kCloudToolTrustToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -90,8 +92,7 @@ class CloudToolTrustScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kCloudToolTrustToolId),
+                      assetPath: ReferenceImages.pathFor(kCloudToolTrustToolId),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'Cloud tool trust: certificate vs attestation, the '
@@ -101,7 +102,9 @@ class CloudToolTrustScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kCloudToolTrustToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kCloudToolTrustToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
                       assetPath: ReferencePdfs.pathFor(kCloudToolTrustToolId),
                       title: 'Cloud Tool Trust',
@@ -111,7 +114,8 @@ class CloudToolTrustScreen extends StatelessWidget {
                   const ReferenceLead(kCloudTrustLead),
                   const SizedBox(height: AppSpacing.md),
                   ReferenceCard(
-                    title: 'ISO/IEC 27001: a certified management system, '
+                    title:
+                        'ISO/IEC 27001: a certified management system, '
                         'not a product',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +130,8 @@ class CloudToolTrustScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   ReferenceCard(
-                    title: 'SOC 2: an attestation report, and "certified" is '
+                    title:
+                        'SOC 2: an attestation report, and "certified" is '
                         'the wrong word',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,8 +239,10 @@ class CloudToolTrustScreen extends StatelessWidget {
       ..writeln(kCloudIso27001Proves)
       ..writeln(kCloudIso27001Trap)
       ..writeln()
-      ..writeln('SOC 2: an attestation report, and "certified" is the wrong '
-          'word')
+      ..writeln(
+        'SOC 2: an attestation report, and "certified" is the wrong '
+        'word',
+      )
       ..writeln(kCloudSoc2Intro)
       ..writeln(kCloudSoc2TypeIntro);
     for (final String s in kCloudSoc2TypeItems) {

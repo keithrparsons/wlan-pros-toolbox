@@ -103,7 +103,8 @@
 // Build: Felix 2026-08-02. First non-test consumer of the decoder's contract.
 
 import '../../../services/network/bss_load_decoder.dart';
-import '../../../services/network/wifi_info_service.dart' show LocationAuthStatus;
+import '../../../services/network/wifi_info_service.dart'
+    show LocationAuthStatus;
 
 /// Whose side an unavailable reading is on.
 ///

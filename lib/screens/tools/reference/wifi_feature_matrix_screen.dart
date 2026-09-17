@@ -222,9 +222,7 @@ class WifiFeatureMatrixScreen extends StatelessWidget {
         title: const Text('802.11 Feature Matrix'),
         toolbarHeight: 64,
         // §8.16 — copy the matrix as TSV. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -286,10 +284,7 @@ class WifiFeatureMatrixScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ConceptGraphicBand(
-                    toolId: toolId,
-                    isDesktop: isDesktop,
-                  ),
+                  ConceptGraphicBand(toolId: toolId, isDesktop: isDesktop),
                   if (ToolAssets.hasGraphic(toolId))
                     const SizedBox(height: AppSpacing.md),
                   _matrixCard(colors, text, mono),
@@ -317,7 +312,9 @@ class WifiFeatureMatrixScreen extends StatelessWidget {
         ],
       ),
       rows: rows.map((WifiFeatureRow r) {
-        final String ceilingClause = r.isCeiling ? ' (theoretical ceiling)' : '';
+        final String ceilingClause = r.isCeiling
+            ? ' (theoretical ceiling)'
+            : '';
         return ReferenceRowSemantics(
           label: rowLabel('${r.feature}$ceilingClause', <String?>[
             'Wi-Fi 5 ${r.wifi5}',

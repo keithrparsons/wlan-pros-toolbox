@@ -159,8 +159,9 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
   String? _buildCopyText() {
     final GlossaryService? svc = _service;
     if (svc == null) return null;
-    final List<GlossaryGroup> groups =
-        svc.grouped(svc.search(_query, lang: _lang));
+    final List<GlossaryGroup> groups = svc.grouped(
+      svc.search(_query, lang: _lang),
+    );
     if (groups.isEmpty) return null;
 
     final StringBuffer buf = StringBuffer()..writeln(svc.title);
@@ -180,8 +181,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
         ..writeln()
         ..writeln(g.category);
       for (final GlossaryTerm t in g.terms) {
-        final String head =
-            t.abbr == null ? t.term : '${t.term} (${t.abbr})';
+        final String head = t.abbr == null ? t.term : '${t.term} (${t.abbr})';
         // The term/abbr head stays English; the definition follows the language.
         buf.writeln('$head: ${t.definitionFor(_lang)}');
       }
@@ -197,9 +197,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
         toolbarHeight: 64,
         // §8.16 — copy the current (grouped) view as plain text. Disabled until
         // results exist; null payload drops it from focus traversal.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -245,7 +243,7 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
 
         final AppMonoText mono =
             Theme.of(context).extension<AppMonoText>() ??
-                AppMonoText.defaults();
+            AppMonoText.defaults();
         final List<GlossaryTerm> filtered = svc.search(_query, lang: _lang);
         final List<GlossaryGroup> groups = svc.grouped(filtered);
         final bool translated = _lang != GlossaryLanguage.en;
@@ -380,8 +378,8 @@ class _LanguagePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<AppSelectItem<GlossaryLanguage>> items =
         <AppSelectItem<GlossaryLanguage>>[
-      for (final GlossaryLanguage l in languages) (l, l.label),
-    ];
+          for (final GlossaryLanguage l in languages) (l, l.label),
+        ];
     return LabeledField(
       label: 'Definition language',
       semanticLabel: 'Definition language',
@@ -449,8 +447,9 @@ class _BetaTranslationNote extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     body,
-                    style:
-                        text.labelMedium?.copyWith(color: colors.textSecondary),
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -486,10 +485,9 @@ class _SearchField extends StatelessWidget {
         autocorrect: false,
         enableSuggestions: false,
         // 16px field text dodges iOS Safari auto-zoom (§8.4).
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -524,9 +522,7 @@ class _CategoryHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 category,
-                style: text.headlineSmall?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.headlineSmall?.copyWith(color: colors.textPrimary),
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -559,11 +555,7 @@ class _CategoryHeader extends StatelessWidget {
 /// and the definition. Read-only — no tap target, so no focus ring; the row is
 /// announced as one coherent screen-reader node via ReferenceRowSemantics.
 class _TermRow extends StatelessWidget {
-  const _TermRow({
-    required this.term,
-    required this.mono,
-    required this.lang,
-  });
+  const _TermRow({required this.term, required this.mono, required this.lang});
 
   final GlossaryTerm term;
   final AppMonoText mono;
@@ -644,10 +636,7 @@ class _TermLine extends StatelessWidget {
         ),
         if (a != null)
           if (_abbrIsIdentifier(a))
-            Text(
-              a,
-              style: mono.robotoMono.copyWith(color: colors.textTertiary),
-            )
+            Text(a, style: mono.robotoMono.copyWith(color: colors.textTertiary))
           else
             Text(
               a,
@@ -672,16 +661,10 @@ class _NoMatch extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          Icon(
-            Icons.search_off_outlined,
-            size: 48,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            query.isEmpty
-                ? 'No terms loaded.'
-                : 'No terms match "$query".',
+            query.isEmpty ? 'No terms loaded.' : 'No terms match "$query".',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),

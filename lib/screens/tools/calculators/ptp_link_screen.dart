@@ -284,11 +284,13 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
 
   // Unsigned decimal for positive-only fields (freq, dist, gains, losses, rain,
   // required margin).
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   // Signed decimal for dBm fields (Tx power can be set low, Rx sensitivity is
   // typically negative). Leading '-' allowed.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -402,9 +404,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
         // required field is valid (no link budget); copies the link budget as a
         // labeled text block, carrying the §8.13 PASS / MARGINAL / FAIL verdict
         // WORD. Copy leads; no help icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -811,9 +811,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'dB',
-                  style: text.labelLarge?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.labelLarge?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
@@ -883,9 +881,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -959,9 +955,7 @@ class _PtpLinkScreenState extends State<PtpLinkScreen> {
           SelectableText(
             value,
             style: mono.inlineCode.copyWith(
-              color: value == '—'
-                  ? colors.textTertiary
-                  : colors.textPrimary,
+              color: value == '—' ? colors.textTertiary : colors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),

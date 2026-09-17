@@ -152,18 +152,24 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
   }
 
   SsidAirtimeShared get _shared => SsidAirtimeShared(
-        countContention: _contention,
-        countProbes: _probes,
-        amendment: _amendment,
-      );
+    countContention: _contention,
+    countProbes: _probes,
+    amendment: _amendment,
+  );
 
   /// Compute one band, or null when any shared input is unusable.
   SsidAirtimeResult? _resultFor(_Band band) {
     final int? ssids = _readInt(_ssidsCtrl, 1, 64, (e) => _ssidsError = e);
     final int? co = _readInt(_coCtrl, 1, 40, (e) => _coError = e);
     final int? tu = _readInt(_tuCtrl, 20, 1000, (e) => _tuError = e);
-    final int? beacon = _readInt(_beaconCtrl, 60, 2300, (e) => _beaconError = e);
-    if (ssids == null || co == null || tu == null || beacon == null) return null;
+    final int? beacon = _readInt(
+      _beaconCtrl,
+      60,
+      2300,
+      (e) => _beaconError = e,
+    );
+    if (ssids == null || co == null || tu == null || beacon == null)
+      return null;
 
     return SsidAirtimeCalculator(_shared).compute(
       SsidAirtimeBand(
@@ -179,8 +185,7 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
     );
   }
 
-  bool get _hasAnyResult =>
-      _Band.values.any((b) => _resultFor(b) != null);
+  bool get _hasAnyResult => _Band.values.any((b) => _resultFor(b) != null);
 
   /// Null disables the copy affordance, which is the SOP-007 "disabled" state.
   String? _copyTextOrNull() => _hasAnyResult ? _buildCopyText() : null;
@@ -188,11 +193,19 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
   String _buildCopyText() {
     final StringBuffer sb = StringBuffer()
       ..writeln('SSID Airtime')
-      ..writeln('SSIDs per AP: ${_ssidsCtrl.text}   MBSSID: ${_mbssid ? "on" : "off"}')
-      ..writeln('Co-channel APs: ${_coCtrl.text}   Beacon interval: ${_tuCtrl.text} TU')
-      ..writeln('Beacon length: ${_beaconCtrl.text} bytes (incl. FCS)   ${_amendment.label}')
-      ..writeln('Contention: ${_contention ? "counted" : "occupancy only"}   '
-          'Probes: ${_probes ? "counted" : "not counted"}')
+      ..writeln(
+        'SSIDs per AP: ${_ssidsCtrl.text}   MBSSID: ${_mbssid ? "on" : "off"}',
+      )
+      ..writeln(
+        'Co-channel APs: ${_coCtrl.text}   Beacon interval: ${_tuCtrl.text} TU',
+      )
+      ..writeln(
+        'Beacon length: ${_beaconCtrl.text} bytes (incl. FCS)   ${_amendment.label}',
+      )
+      ..writeln(
+        'Contention: ${_contention ? "counted" : "occupancy only"}   '
+        'Probes: ${_probes ? "counted" : "not counted"}',
+      )
       ..writeln();
     for (final _Band b in _Band.values) {
       final SsidAirtimeResult? r = _resultFor(b);
@@ -202,14 +215,24 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
       }
       sb
         ..writeln('${b.label} at ${_rateLabel(_rates[b]!)}')
-        ..writeln('  next SSID costs   ${r.marginalPercent.toStringAsFixed(2)} points')
-        ..writeln('  management total  ${r.total.toStringAsFixed(2)} % of channel')
-        ..writeln('  longest TXOP      ${(r.longestTxopUs / 1000).toStringAsFixed(3)} ms');
+        ..writeln(
+          '  next SSID costs   ${r.marginalPercent.toStringAsFixed(2)} points',
+        )
+        ..writeln(
+          '  management total  ${r.total.toStringAsFixed(2)} % of channel',
+        )
+        ..writeln(
+          '  longest TXOP      ${(r.longestTxopUs / 1000).toStringAsFixed(3)} ms',
+        );
     }
     sb
       ..writeln()
-      ..writeln('Management airtime only: no data frames, no RTS/CTS, no retries.')
-      ..writeln('Model ported from Jonathan Finney\'s SSID Airtime Calculator (MIT).');
+      ..writeln(
+        'Management airtime only: no data frames, no RTS/CTS, no retries.',
+      )
+      ..writeln(
+        'Model ported from Jonathan Finney\'s SSID Airtime Calculator (MIT).',
+      );
     return sb.toString();
   }
 
@@ -226,9 +249,7 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
       appBar: AppBar(
         title: const Text('SSID Airtime'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyTextOrNull),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyTextOrNull)],
       ),
       body: SafeArea(
         top: false,
@@ -304,8 +325,9 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
                 textInputAction: TextInputAction.next,
                 autocorrect: false,
                 enableSuggestions: false,
-                style: mono.outputLarge
-                    .copyWith(fontSize: AppTextSize.fieldNumeric),
+                style: mono.outputLarge.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
                 cursorColor: colors.textAccent,
                 decoration: InputDecoration(
                   hintText: '4',
@@ -317,7 +339,8 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
             LabeledField(
               label: 'Audible co-channel APs',
               hint: '(including this one)',
-              semanticLabel: 'Audible co-channel access points including this one',
+              semanticLabel:
+                  'Audible co-channel access points including this one',
               field: TextField(
                 controller: _coCtrl,
                 focusNode: _coFocus,
@@ -327,11 +350,11 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
                 textInputAction: TextInputAction.next,
                 autocorrect: false,
                 enableSuggestions: false,
-                style: mono.outputLarge
-                    .copyWith(fontSize: AppTextSize.fieldNumeric),
+                style: mono.outputLarge.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
                 cursorColor: colors.textAccent,
-                decoration:
-                    InputDecoration(hintText: '3', errorText: _coError),
+                decoration: InputDecoration(hintText: '3', errorText: _coError),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -377,11 +400,14 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
                 textInputAction: TextInputAction.next,
                 autocorrect: false,
                 enableSuggestions: false,
-                style: mono.outputLarge
-                    .copyWith(fontSize: AppTextSize.fieldNumeric),
+                style: mono.outputLarge.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
                 cursorColor: colors.textAccent,
-                decoration:
-                    InputDecoration(hintText: '331', errorText: _beaconError),
+                decoration: InputDecoration(
+                  hintText: '331',
+                  errorText: _beaconError,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -398,11 +424,14 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
                 textInputAction: TextInputAction.done,
                 autocorrect: false,
                 enableSuggestions: false,
-                style: mono.outputLarge
-                    .copyWith(fontSize: AppTextSize.fieldNumeric),
+                style: mono.outputLarge.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
                 cursorColor: colors.textAccent,
-                decoration:
-                    InputDecoration(hintText: '100', errorText: _tuError),
+                decoration: InputDecoration(
+                  hintText: '100',
+                  errorText: _tuError,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -491,19 +520,33 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'points of channel time',
-                  style:
-                      text.bodySmall?.copyWith(color: colors.textSecondary),
+                  style: text.bodySmall?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
-            _row(text, mono, colors, 'Management total',
-                r == null ? '-' : '${r.total.toStringAsFixed(2)} %'),
-            _row(text, mono, colors, 'Beacons',
-                r == null ? '-' : '${r.beaconPercent.toStringAsFixed(2)} %'),
+            _row(
+              text,
+              mono,
+              colors,
+              'Management total',
+              r == null ? '-' : '${r.total.toStringAsFixed(2)} %',
+            ),
+            _row(
+              text,
+              mono,
+              colors,
+              'Beacons',
+              r == null ? '-' : '${r.beaconPercent.toStringAsFixed(2)} %',
+            ),
             if (_probes)
-              _row(text, mono, colors, 'Probe exchanges',
-                  r == null ? '-' : '${r.probePercent.toStringAsFixed(2)} %'),
+              _row(
+                text,
+                mono,
+                colors,
+                'Probe exchanges',
+                r == null ? '-' : '${r.probePercent.toStringAsFixed(2)} %',
+              ),
             _row(
               text,
               mono,
@@ -566,11 +609,11 @@ class _SsidAirtimeScreenState extends State<SsidAirtimeScreen> {
             Text(
               _contention
                   ? 'Contention is counted: this includes DIFS plus average '
-                      'backoff, so it is the channel time an AP consumes to win '
-                      'the medium.'
+                        'backoff, so it is the channel time an AP consumes to win '
+                        'the medium.'
                   : 'Occupancy only: the time the frames themselves are on the '
-                      'air. No assumption is made about contention, which is '
-                      'what makes this figure hard to argue with.',
+                        'air. No assumption is made about contention, which is '
+                        'what makes this figure hard to argue with.',
               style: text.bodySmall?.copyWith(color: colors.textSecondary),
             ),
           ],

@@ -48,7 +48,20 @@ import 'dart:math' as math;
 const List<double> kDsssRates = <double>[1, 2, 5.5, 11];
 
 /// Basic-rate choices offered by the UI. Includes 48, which upstream omits.
-const List<double> kBasicRates = <double>[1, 2, 5.5, 6, 9, 11, 12, 18, 24, 36, 48, 54];
+const List<double> kBasicRates = <double>[
+  1,
+  2,
+  5.5,
+  6,
+  9,
+  11,
+  12,
+  18,
+  24,
+  36,
+  48,
+  54,
+];
 
 /// Amendment presets. Beacon sizes are estimates; replace them from a capture.
 ///
@@ -59,7 +72,12 @@ enum WifiAmendment {
   ax('802.11ax (HE)', 400, 320, 60),
   be('802.11be (EHT)', 480, 400, 70);
 
-  const WifiAmendment(this.label, this.beaconBytes, this.commonBytes, this.profileBytes);
+  const WifiAmendment(
+    this.label,
+    this.beaconBytes,
+    this.commonBytes,
+    this.profileBytes,
+  );
 
   final String label;
 
@@ -87,12 +105,20 @@ class PhyTiming {
   final double slotUs;
   final double cwMin;
 
-  static const PhyTiming ofdm =
-      PhyTiming(preambleUs: 20, sifsUs: 16, slotUs: 9, cwMin: 15);
+  static const PhyTiming ofdm = PhyTiming(
+    preambleUs: 20,
+    sifsUs: 16,
+    slotUs: 9,
+    cwMin: 15,
+  );
 
   /// Long preamble and long slot: the honest 802.11b numbers.
-  static const PhyTiming dsss =
-      PhyTiming(preambleUs: 192, sifsUs: 10, slotUs: 20, cwMin: 31);
+  static const PhyTiming dsss = PhyTiming(
+    preambleUs: 192,
+    sifsUs: 10,
+    slotUs: 20,
+    cwMin: 31,
+  );
 }
 
 /// Settings shared across all three band columns.
@@ -363,7 +389,10 @@ class SsidAirtimeCalculator {
     final double req = frameUs(b.probeRequestBytes, r) + accessUs(r);
     // Response, then SIFS, then the client's ACK (14 bytes).
     final double resp =
-        accessUs(r) + frameUs(b.probeResponseBytes, r) + _sifsUs(r) + frameUs(14, r);
+        accessUs(r) +
+        frameUs(b.probeResponseBytes, r) +
+        _sifsUs(r) +
+        frameUs(14, r);
     final double w = (shared.wildcardPercent / 100).clamp(0.0, 1.0);
     // A wildcard request is answered by every BSS; a directed one by exactly one.
     final double perReq = w * n + (1 - w) * 1;
@@ -372,7 +401,8 @@ class SsidAirtimeCalculator {
 
   SsidAirtimeResult compute(SsidAirtimeBand b) {
     final int n = math.max(1, b.ssids);
-    final double intervalUs = b.beaconIntervalTu * 1024; // 1 TU = 1024 us, not 1000.
+    final double intervalUs =
+        b.beaconIntervalTu * 1024; // 1 TU = 1024 us, not 1000.
     final ({double us, double size}) beacon = beaconAp(b, n);
     final double probe = probeApPerSec(b, n);
 
@@ -381,7 +411,8 @@ class SsidAirtimeCalculator {
 
     final double beacon2 = beaconAp(b, n + 1).us;
     final double probe2 = probeApPerSec(b, n + 1);
-    final double marginal = 100 * (beacon2 - beacon.us) * b.coChannelAps / intervalUs +
+    final double marginal =
+        100 * (beacon2 - beacon.us) * b.coChannelAps / intervalUs +
         100 * (probe2 - probe) * b.coChannelAps / 1e6;
 
     final double r = b.effectiveRate(shared);

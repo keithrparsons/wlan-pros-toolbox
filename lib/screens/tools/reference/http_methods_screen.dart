@@ -132,8 +132,7 @@ class HttpMethodsScreen extends StatelessWidget {
       method: 'OPTIONS',
       safe: true,
       idempotent: true,
-      purpose:
-          'Ask which methods/options the resource or server supports.',
+      purpose: 'Ask which methods/options the resource or server supports.',
     ),
     HttpMethod(
       method: 'TRACE',
@@ -199,8 +198,7 @@ class HttpMethodsScreen extends StatelessWidget {
     ),
     HttpHeader(
       name: 'Cache-Control',
-      purpose:
-          'Caching directives for the response (max-age, no-store, etc.).',
+      purpose: 'Caching directives for the response (max-age, no-store, etc.).',
     ),
     HttpHeader(
       name: 'ETag',
@@ -244,9 +242,7 @@ class HttpMethodsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy all three tables as a three-section TSV. Static data,
         // always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

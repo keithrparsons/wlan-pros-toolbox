@@ -103,7 +103,9 @@ class _WifiStandardsBodiesScreenState extends State<WifiStandardsBodiesScreen> {
     final int n = _filtered.length;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching bodies' : '$n matching ${n == 1 ? 'body' : 'bodies'}',
+      n == 0
+          ? 'No matching bodies'
+          : '$n matching ${n == 1 ? 'body' : 'bodies'}',
       TextDirection.ltr,
     );
   }
@@ -126,12 +128,19 @@ class _WifiStandardsBodiesScreenState extends State<WifiStandardsBodiesScreen> {
       )
       ..writeln()
       ..writeln(
-        <String>['Body', 'Abbreviation', 'Role', 'What they own', 'Why a Wi-Fi pro cares', 'Website']
-            .join(tab),
+        <String>[
+          'Body',
+          'Abbreviation',
+          'Role',
+          'What they own',
+          'Why a Wi-Fi pro cares',
+          'Website',
+        ].join(tab),
       );
     for (final BodyLayer layer in BodyLayer.values) {
-      final List<WifiBody> inLayer =
-          widget.bodies.where((WifiBody b) => b.layer == layer).toList();
+      final List<WifiBody> inLayer = widget.bodies
+          .where((WifiBody b) => b.layer == layer)
+          .toList();
       if (inLayer.isEmpty) continue;
       buf
         ..writeln()
@@ -167,9 +176,7 @@ class _WifiStandardsBodiesScreenState extends State<WifiStandardsBodiesScreen> {
         toolbarHeight: 64,
         // §8.16 — copy the teaching frame + every body as TSV. Static data,
         // always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(
         top: false,
@@ -203,14 +210,13 @@ class _WifiStandardsBodiesScreenState extends State<WifiStandardsBodiesScreen> {
     } else {
       // Group BY LAYER (not alphabetically) — the brief's teaching requirement.
       for (final BodyLayer layer in BodyLayer.values) {
-        final List<WifiBody> inLayer =
-            rows.where((WifiBody b) => b.layer == layer).toList(growable: false);
+        final List<WifiBody> inLayer = rows
+            .where((WifiBody b) => b.layer == layer)
+            .toList(growable: false);
         if (inLayer.isEmpty) continue;
         children.add(_LayerHeader(layer: layer));
         for (int i = 0; i < inLayer.length; i++) {
-          children.add(
-            _BodyCard(body: inLayer[i], launcher: widget.launcher),
-          );
+          children.add(_BodyCard(body: inLayer[i], launcher: widget.launcher));
           if (i < inLayer.length - 1) {
             children.add(const SizedBox(height: AppSpacing.xs));
           }
@@ -218,22 +224,22 @@ class _WifiStandardsBodiesScreenState extends State<WifiStandardsBodiesScreen> {
         children.add(const SizedBox(height: AppSpacing.sm));
       }
       // The regulator layer is a cross-link, not restated data (SSOT).
-      children.add(
-        _RegulatorCrossLink(onOpen: widget.onOpenRegulatoryDomains),
-      );
+      children.add(_RegulatorCrossLink(onOpen: widget.onOpenRegulatoryDomains));
     }
 
-    children.add(
-      ToolHelpFooter(toolId: WifiStandardsBodiesScreen.toolId),
-    );
+    children.add(ToolHelpFooter(toolId: WifiStandardsBodiesScreen.toolId));
 
     final String countLabel = filtering
         ? '${rows.length} of ${widget.bodies.length} bodies'
         : '${widget.bodies.length} bodies';
 
     return ListView(
-      padding:
-          EdgeInsets.fromLTRB(edge, AppSpacing.sm, edge, edge + AppSpacing.sm),
+      padding: EdgeInsets.fromLTRB(
+        edge,
+        AppSpacing.sm,
+        edge,
+        edge + AppSpacing.sm,
+      ),
       children: <Widget>[
         Semantics(
           header: true,
@@ -251,21 +257,24 @@ class _WifiStandardsBodiesScreenState extends State<WifiStandardsBodiesScreen> {
 class _ThreeLayerCallout extends StatelessWidget {
   const _ThreeLayerCallout();
 
-  static const List<({String label, String gloss})> _layers =
-      <({String label, String gloss})>[
+  static const List<({String label, String gloss})>
+  _layers = <({String label, String gloss})>[
     (
       label: 'Standards body',
-      gloss: 'Defines HOW the radio works: the PHY, MAC, framing. (IEEE 802.11)'
+      gloss:
+          'Defines HOW the radio works: the PHY, MAC, framing. (IEEE 802.11)',
     ),
     (
       label: 'Certification body',
-      gloss: 'Verifies products from different vendors INTEROPERATE, and brands '
-          'them. (Wi-Fi Alliance)'
+      gloss:
+          'Verifies products from different vendors INTEROPERATE, and brands '
+          'them. (Wi-Fi Alliance)',
     ),
     (
       label: 'Regulator',
-      gloss: 'Sets what is LEGAL here: transmit power, channels, indoor / '
-          'outdoor, per country. (FCC, Ofcom, the ETSI-aligned EU bloc)'
+      gloss:
+          'Sets what is LEGAL here: transmit power, channels, indoor / '
+          'outdoor, per country. (FCC, Ofcom, the ETSI-aligned EU bloc)',
     ),
   ];
 
@@ -277,7 +286,8 @@ class _ThreeLayerCallout extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'Three layers. A standards body defines how the radio works. A '
+      label:
+          'Three layers. A standards body defines how the radio works. A '
           'certification body verifies products interoperate. A regulator sets '
           'the legal channel and power rules per country.',
       excludeSemantics: true,
@@ -314,8 +324,9 @@ class _ThreeLayerCallout extends StatelessWidget {
               if (i > 0) const SizedBox(height: AppSpacing.xs),
               RichText(
                 text: TextSpan(
-                  style: (text.bodyMedium ?? const TextStyle())
-                      .copyWith(color: colors.textSecondary),
+                  style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                    color: colors.textSecondary,
+                  ),
                   children: <InlineSpan>[
                     TextSpan(
                       text: '${_layers[i].label}: ',
@@ -348,7 +359,8 @@ class _TrademarkCallout extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'IEEE writes the 802.11 standard. The Wi-Fi Alliance certifies and '
+      label:
+          'IEEE writes the 802.11 standard. The Wi-Fi Alliance certifies and '
           'brands it. They are not the same body. "Wi-Fi" is a Wi-Fi Alliance '
           'trademark, not an acronym, and does not stand for "Wireless '
           'Fidelity."',
@@ -365,8 +377,11 @@ class _TrademarkCallout extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Icon(Icons.lightbulb_outline,
-                    size: 20, color: colors.textAccent),
+                Icon(
+                  Icons.lightbulb_outline,
+                  size: 20,
+                  color: colors.textAccent,
+                ),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
@@ -385,15 +400,17 @@ class _TrademarkCallout extends StatelessWidget {
               'IEEE writes 802.11. The Wi-Fi Alliance certifies that products '
               'built to it interoperate, and it owns the consumer names '
               '(Wi-Fi 6, Wi-Fi 7). Two organizations, two jobs.',
-              style: (text.bodyMedium ?? const TextStyle())
-                  .copyWith(color: colors.textSecondary),
+              style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                color: colors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               '"Wi-Fi" is a Wi-Fi Alliance trademark. Not an acronym, and not '
               'short for "Wireless Fidelity."',
-              style: (text.bodyMedium ?? const TextStyle())
-                  .copyWith(color: colors.textSecondary),
+              style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                color: colors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -415,16 +432,16 @@ class _SearchField extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     return Semantics(
       textField: true,
-      label: 'Search standards and industry bodies by name, role, or what they own',
+      label:
+          'Search standards and industry bodies by name, role, or what they own',
       child: TextField(
         controller: controller,
         onChanged: onChanged,
         autocorrect: false,
         enableSuggestions: false,
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(color: colors.textPrimary),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
         cursorColor: colors.textAccent,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
@@ -501,7 +518,8 @@ class _BodyCardState extends State<_BodyCard> {
       _showLaunchError();
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -539,7 +557,8 @@ class _BodyCardState extends State<_BodyCard> {
 
     return Semantics(
       container: true,
-      label: '${b.name}, ${b.abbreviation}. '
+      label:
+          '${b.name}, ${b.abbreviation}. '
           '${b.contextOnly ? 'Context only, not a Wi-Fi body. ' : ''}'
           'Role: ${b.roleType}. '
           'What they own: ${b.owns}. '
@@ -727,8 +746,9 @@ class _AbbrevBadge extends StatelessWidget {
     // First whitespace-delimited token, capped at 5 chars, so a long
     // abbreviation ("Bluetooth SIG") still fits the square as "Bluet".
     final String firstToken = abbreviation.split(' ').first;
-    final String badge =
-        firstToken.length > 5 ? firstToken.substring(0, 5) : firstToken;
+    final String badge = firstToken.length > 5
+        ? firstToken.substring(0, 5)
+        : firstToken;
     return Container(
       width: _size,
       height: _size,
@@ -888,7 +908,9 @@ class _RegulatorCrossLink extends StatelessWidget {
                   'channel and power rules live on the Regulatory Domains '
                   'reference (FCC, Ofcom, the ETSI-aligned EU bloc, and more) '
                   'so they stay in one place.',
-                  style: text.labelMedium?.copyWith(color: colors.textSecondary),
+                  style: text.labelMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
                 if (tappable) ...<Widget>[
                   const SizedBox(height: AppSpacing.xs),
@@ -902,8 +924,11 @@ class _RegulatorCrossLink extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xxs),
-                      Icon(Icons.arrow_forward,
-                          size: 16, color: colors.textAccent),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: colors.textAccent,
+                      ),
                     ],
                   ),
                 ],
@@ -917,7 +942,8 @@ class _RegulatorCrossLink extends StatelessWidget {
     if (!tappable) {
       return Semantics(
         container: true,
-        label: 'Regulates per country. The per-country regulator rules live on '
+        label:
+            'Regulates per country. The per-country regulator rules live on '
             'the Regulatory Domains reference.',
         excludeSemantics: true,
         child: content,
@@ -989,9 +1015,7 @@ class _NoMatch extends StatelessWidget {
           Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            query.isEmpty
-                ? 'No bodies loaded.'
-                : 'No bodies match "$query".',
+            query.isEmpty ? 'No bodies loaded.' : 'No bodies match "$query".',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),

@@ -125,7 +125,8 @@ const List<HamBand> kHamBandPlan = <HamBand>[
     freqRange: '472-479 kHz',
     region: HamRegion.hf,
     allClasses: 'All modes (CW, RTTY/data, phone, image)',
-    power: '5 W EIRP (1 W EIRP in parts of AK near Russia); prior UTC '
+    power:
+        '5 W EIRP (1 W EIRP in parts of AK near Russia); prior UTC '
         'notification',
   ),
   HamBand(
@@ -155,7 +156,8 @@ const List<HamBand> kHamBandPlan = <HamBand>[
     freqRange: '4 channels + segment, ~5.332-5.405 MHz',
     region: HamRegion.hf,
     tech: null,
-    general: '4 channels (USB/CW/digital) plus the 5351.5-5366.5 kHz segment '
+    general:
+        '4 channels (USB/CW/digital) plus the 5351.5-5366.5 kHz segment '
         '(all modes, 2.8 kHz max)',
     extra: 'Same as General',
     modes: 'Channelized band; see the 60 m channel detail below',
@@ -256,7 +258,8 @@ const List<HamBand> kHamBandPlan = <HamBand>[
     freqRange: '420-450 MHz',
     region: HamRegion.uhf,
     allClasses: 'All modes',
-    modes: 'Secondary; Line A restriction near the Canadian border; 435-438 '
+    modes:
+        'Secondary; Line A restriction near the Canadian border; 435-438 '
         'satellite subband; 5 MHz repeater split',
     power: '1500 W PEP',
   ),
@@ -281,7 +284,8 @@ const List<HamBand> kHamBandPlan = <HamBand>[
     freqRange: '2300-2310 and 2390-2450 MHz',
     region: HamRegion.uhf,
     allClasses: 'All modes',
-    modes: '2310-2390 withdrawn (satellite radio); 2390-2450 overlaps 2.4 GHz '
+    modes:
+        '2310-2390 withdrawn (satellite radio); 2390-2450 overlaps 2.4 GHz '
         'Wi-Fi',
     power: '1500 W PEP',
   ),
@@ -382,7 +386,8 @@ const List<Ham60mChannel> kHam60mChannels = <Ham60mChannel>[
     center: '5351.5-5366.5 kHz (15 kHz wide)',
     dial: 'n/a',
     power: '9.15 W ERP (= 15 W EIRP)',
-    notes: 'All modes, 2.8 kHz max. New 13 Feb 2026; absorbs the retired '
+    notes:
+        'All modes, 2.8 kHz max. New 13 Feb 2026; absorbs the retired '
         'channel (old center 5358.5 / dial 5357.0).',
   ),
 ];
@@ -442,12 +447,16 @@ const List<BandBridgeRow> kBandBridge = <BandBridgeRow>[
   BandBridgeRow(bandName: '2200 m', freqRange: '135.7-137.8 kHz', region: 'LF'),
   BandBridgeRow(bandName: '630 m', freqRange: '472-479 kHz', region: 'MF'),
   BandBridgeRow(
-      bandName: '160 m', freqRange: '1.800-2.000 MHz', region: 'MF/HF'),
+    bandName: '160 m',
+    freqRange: '1.800-2.000 MHz',
+    region: 'MF/HF',
+  ),
   BandBridgeRow(bandName: '80 m', freqRange: '3.500-4.000 MHz', region: 'HF'),
   BandBridgeRow(
-      bandName: '60 m',
-      freqRange: '~5.332-5.405 MHz (4 ch + segment)',
-      region: 'HF'),
+    bandName: '60 m',
+    freqRange: '~5.332-5.405 MHz (4 ch + segment)',
+    region: 'HF',
+  ),
   BandBridgeRow(bandName: '40 m', freqRange: '7.000-7.300 MHz', region: 'HF'),
   BandBridgeRow(bandName: '30 m', freqRange: '10.100-10.150 MHz', region: 'HF'),
   BandBridgeRow(bandName: '20 m', freqRange: '14.000-14.350 MHz', region: 'HF'),
@@ -462,14 +471,16 @@ const List<BandBridgeRow> kBandBridge = <BandBridgeRow>[
   BandBridgeRow(bandName: '33 cm', freqRange: '902-928 MHz', region: 'UHF'),
   BandBridgeRow(bandName: '23 cm', freqRange: '1240-1300 MHz', region: 'UHF'),
   BandBridgeRow(
-      bandName: '13 cm',
-      freqRange: '2300-2310 / 2390-2450 MHz',
-      region: 'UHF'),
+    bandName: '13 cm',
+    freqRange: '2300-2310 / 2390-2450 MHz',
+    region: 'UHF',
+  ),
   BandBridgeRow(
-      bandName: '9 cm',
-      freqRange: '3300-3500 MHz (sunset / out)',
-      region: 'SHF',
-      sunset: true),
+    bandName: '9 cm',
+    freqRange: '3300-3500 MHz (sunset / out)',
+    region: 'SHF',
+    sunset: true,
+  ),
   BandBridgeRow(bandName: '5 cm', freqRange: '5650-5925 MHz', region: 'SHF'),
   BandBridgeRow(bandName: '3 cm', freqRange: '10.0-10.5 GHz', region: 'SHF'),
 ];
@@ -513,7 +524,8 @@ const List<ItuBandDesignation> kItuBands = <ItuBandDesignation>[
     name: 'High Frequency',
     frequency: '3-30 MHz',
     wavelength: '100-10 m',
-    propagation: 'Sky-wave / ionospheric skip: worldwide DX by bouncing off '
+    propagation:
+        'Sky-wave / ionospheric skip: worldwide DX by bouncing off '
         'the F-layer. Day/night and solar-cycle dependent. The "talk around '
         'the world" bands.',
   ),
@@ -522,7 +534,8 @@ const List<ItuBandDesignation> kItuBands = <ItuBandDesignation>[
     name: 'Very High Frequency',
     frequency: '30-300 MHz',
     wavelength: '10-1 m',
-    propagation: 'Mostly line-of-sight plus a little beyond the horizon. '
+    propagation:
+        'Mostly line-of-sight plus a little beyond the horizon. '
         'Sporadic-E and tropo openings. FM voice, repeaters, 2 m / 6 m.',
   ),
   ItuBandDesignation(
@@ -530,7 +543,8 @@ const List<ItuBandDesignation> kItuBands = <ItuBandDesignation>[
     name: 'Ultra High Frequency',
     frequency: '300 MHz-3 GHz',
     wavelength: '1 m-10 cm',
-    propagation: 'Line-of-sight with building-penetration trade-offs. '
+    propagation:
+        'Line-of-sight with building-penetration trade-offs. '
         'Wi-Fi 2.4 GHz lives here, along with repeaters, 70 cm, and satellites.',
   ),
   ItuBandDesignation(
@@ -538,7 +552,8 @@ const List<ItuBandDesignation> kItuBands = <ItuBandDesignation>[
     name: 'Super High Frequency',
     frequency: '3-30 GHz',
     wavelength: '10 cm-1 cm',
-    propagation: 'Strict line-of-sight; rain fade begins. Wi-Fi 5/6 GHz lives '
+    propagation:
+        'Strict line-of-sight; rain fade begins. Wi-Fi 5/6 GHz lives '
         'here, along with microwave and point-to-point links.',
   ),
 ];
@@ -565,14 +580,16 @@ const List<SpectrumNeighbor> kSpectrumNeighbors = <SpectrumNeighbor>[
     service: 'VHF aviation airband',
     allocation: '108-137 MHz, AM',
     mode: 'Navigation 108-117.975 MHz (VOR/ILS); voice 117.975-136.975 MHz',
-    why: 'AM voice and nav. 121.5 MHz is the civil emergency "Guard." '
+    why:
+        'AM voice and nav. 121.5 MHz is the civil emergency "Guard." '
         '8.33 / 25 kHz channel spacing. Sits just below the 2 m ham band.',
   ),
   SpectrumNeighbor(
     service: 'Military UHF airband',
     allocation: '225-400 MHz, AM',
     mode: 'Tactical air voice (HAVE QUICK / SATURN frequency-hopping)',
-    why: '243.0 MHz is the military "Guard." 380-400 MHz shares US military '
+    why:
+        '243.0 MHz is the military "Guard." 380-400 MHz shares US military '
         'land-mobile. Brackets the 70 cm ham band (420-450 MHz).',
   ),
   SpectrumNeighbor(
@@ -624,14 +641,16 @@ const List<WifiHamOverlap> kWifiHamOverlaps = <WifiHamOverlap>[
     // SEGMENT width (2390-2450); the part that overlaps the Wi-Fi band
     // (2400-2483.5) is 2400-2450 = 50 MHz. Wave-2 finding F.
     overlap: 'Amateur covers the lower ~50 MHz of the Wi-Fi band (2400-2450).',
-    channelsInside: 'Channels 1-6 fully inside; ch 7 partially (center 2442 '
+    channelsInside:
+        'Channels 1-6 fully inside; ch 7 partially (center 2442 '
         'OK, upper skirt past 2450).',
   ),
   WifiHamOverlap(
     wifiBand: '5 GHz U-NII (5150-5895 MHz)',
     hamBand: '5 cm: 5650-5925 MHz',
     overlap: 'Amateur covers from mid-U-NII-2C up through U-NII-4.',
-    channelsInside: 'Upper U-NII-2C (ch 132/136/140/144), all of U-NII-3 '
+    channelsInside:
+        'Upper U-NII-2C (ch 132/136/140/144), all of U-NII-3 '
         '(149-165), and U-NII-4 (169-177).',
   ),
   WifiHamOverlap(
@@ -664,7 +683,8 @@ const List<RuleDelta> kRuleDeltas = <RuleDelta>[
   RuleDelta(
     dimension: 'License',
     part15: 'None',
-    part97: 'Required: the control operator must be licensed (Technician or '
+    part97:
+        'Required: the control operator must be licensed (Technician or '
         'higher on these bands).',
   ),
   RuleDelta(
@@ -678,41 +698,49 @@ const List<RuleDelta> kRuleDeltas = <RuleDelta>[
     // no interference protection. "Secondary" is a specific allocation term and
     // is wrong for Part 15 (Wave-2 finding F). Part 97's "Secondary" IS correct
     // (amateur is secondary on 13cm / 5cm / 33cm) and stays.
-    part15: 'Unlicensed (no allocation status, no protection); must accept '
+    part15:
+        'Unlicensed (no allocation status, no protection); must accept '
         'interference and must not cause harmful interference.',
-    part97: 'Secondary on these bands; coordinate; the same "do not interfere" '
+    part97:
+        'Secondary on these bands; coordinate; the same "do not interfere" '
         'ethic.',
   ),
   RuleDelta(
     dimension: 'Power (2.4 GHz)',
-    part15: '1 W (30 dBm) conducted; 4 W (36 dBm) EIRP at up to 6 dBi. '
+    part15:
+        '1 W (30 dBm) conducted; 4 W (36 dBm) EIRP at up to 6 dBi. '
         'Point-to-point may use higher-gain antennas, reducing conducted '
         '1 dB per 3 dB over 6 dBi.',
-    part97: 'Up to the 1500 W PEP ceiling (real-world far less), plus '
+    part97:
+        'Up to the 1500 W PEP ceiling (real-world far less), plus '
         'amateur-grade gain antennas.',
   ),
   RuleDelta(
     dimension: 'Power (5 GHz, U-NII-3)',
-    part15: '1 W conducted, 4 W EIRP; fixed point-to-point may use '
+    part15:
+        '1 W conducted, 4 W EIRP; fixed point-to-point may use '
         'higher-gain antennas without power reduction.',
     part97: 'Up to the 1500 W PEP ceiling.',
   ),
   RuleDelta(
     dimension: 'Station ID',
     part15: 'None',
-    part97: 'Callsign every 10 minutes and at the end of a contact, including '
+    part97:
+        'Callsign every 10 minutes and at the end of a contact, including '
         'digital and mesh links.',
   ),
   RuleDelta(
     dimension: 'Encryption',
     part15: 'Allowed (WPA2 / WPA3).',
-    part97: 'Prohibited: no codes or ciphers meant to obscure the meaning of a '
+    part97:
+        'Prohibited: no codes or ciphers meant to obscure the meaning of a '
         'message. Mesh traffic must be in the clear.',
   ),
   RuleDelta(
     dimension: 'Business use',
     part15: 'Allowed',
-    part97: 'Prohibited: no business communications, no broadcasting, no '
+    part97:
+        'Prohibited: no business communications, no broadcasting, no '
         'pecuniary interest.',
   ),
   RuleDelta(
@@ -784,10 +812,12 @@ const List<HamStudyResource> kHamStudyResources = <HamStudyResource>[
     title: 'hamstudy.org',
     forWhat: 'Practice tests, flashcards, and study mode.',
     classes: 'Technician / General / Extra (plus commercial)',
-    authority: 'Current: pools shown with live expiration dates; tracks the '
+    authority:
+        'Current: pools shown with live expiration dates; tracks the '
         '1 Jul 2026 Technician pool.',
     credit: 'hamstudy.org (Signal Stuff)',
-    vetNote: 'The strongest external pointer. Free, current, all three '
+    vetNote:
+        'The strongest external pointer. Free, current, all three '
         'classes. Use the study platform, not its links page.',
     url: 'https://hamstudy.org',
   ),
@@ -797,7 +827,8 @@ const List<HamStudyResource> kHamStudyResources = <HamStudyResource>[
     classes: 'Technician / General / Extra',
     authority: 'New editions track each question pool.',
     credit: 'ARRL, The National Association for Amateur Radio',
-    vetNote: 'The authority reference. Cite and link it; the Toolbox renders '
+    vetNote:
+        'The authority reference. Cite and link it; the Toolbox renders '
         'its own band plan from FCC data rather than reproducing ARRL\'s '
         'copyrighted chart.',
     url: 'https://www.arrl.org',
@@ -808,7 +839,8 @@ const List<HamStudyResource> kHamStudyResources = <HamStudyResource>[
     classes: 'All',
     authority: 'Primary regulator, live (eCFR).',
     credit: '47 CFR Part 97 / FCC',
-    vetNote: 'The source of truth for the band data in this app. Cite it as '
+    vetNote:
+        'The source of truth for the band data in this app. Cite it as '
         'the law.',
     url: 'https://www.ecfr.gov/current/title-47/chapter-I/subchapter-D/part-97',
   ),
@@ -818,7 +850,8 @@ const List<HamStudyResource> kHamStudyResources = <HamStudyResource>[
     classes: 'Technician / General / Extra',
     authority: 'Active project, current.',
     credit: 'AREDN Project',
-    vetNote: 'The explicit Wi-Fi tie-in: commodity 802.11 hardware run under '
+    vetNote:
+        'The explicit Wi-Fi tie-in: commodity 802.11 hardware run under '
         'Part 97. See the Part 15 vs Part 97 reference.',
     url: 'https://www.arednmesh.org',
   ),

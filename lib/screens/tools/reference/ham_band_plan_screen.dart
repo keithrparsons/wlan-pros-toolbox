@@ -112,7 +112,9 @@ class _HamBandPlanScreenState extends State<HamBandPlanScreen> {
       final String t = b.isAllClasses
           ? 'All license classes'
           : (b.tech ?? 'No Technician privileges');
-      final String g = b.isAllClasses ? (b.allClasses ?? '') : (b.general ?? '');
+      final String g = b.isAllClasses
+          ? (b.allClasses ?? '')
+          : (b.general ?? '');
       final String e = b.isAllClasses ? (b.allClasses ?? '') : (b.extra ?? '');
       buf.writeln(
         <String>[
@@ -128,10 +130,13 @@ class _HamBandPlanScreenState extends State<HamBandPlanScreen> {
     }
     buf
       ..writeln()
-      ..writeln('60 m channel detail (canonical = center; dial = USB 1.5 kHz '
-          'below center)')
-      ..writeln(<String>['Channel', 'Center', 'Dial', 'Power', 'Notes']
-          .join(tab));
+      ..writeln(
+        '60 m channel detail (canonical = center; dial = USB 1.5 kHz '
+        'below center)',
+      )
+      ..writeln(
+        <String>['Channel', 'Center', 'Dial', 'Power', 'Notes'].join(tab),
+      );
     for (final Ham60mChannel c in kHam60mChannels) {
       buf.writeln(
         <String>[c.label, c.center, c.dial, c.power, c.notes ?? ''].join(tab),
@@ -240,15 +245,18 @@ class _HamBandPlanScreenState extends State<HamBandPlanScreen> {
     }
     final List<Widget> out = <Widget>[];
     for (final HamRegion region in HamRegion.values) {
-      final List<HamBand> inRegion =
-          filtered.where((HamBand b) => b.region == region).toList();
+      final List<HamBand> inRegion = filtered
+          .where((HamBand b) => b.region == region)
+          .toList();
       if (inRegion.isEmpty) continue;
       out.add(SectionHeader(title: region.label, count: inRegion.length));
       for (final HamBand b in inRegion) {
-        out.add(Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: _BandCard(band: b),
-        ));
+        out.add(
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: _BandCard(band: b),
+          ),
+        );
       }
     }
     return out;
@@ -283,78 +291,79 @@ class _HamBandPlanScreenState extends State<HamBandPlanScreen> {
             style: text.labelMedium?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ...kHam60mChannels.asMap().entries.expand(
-            (MapEntry<int, Ham60mChannel> entry) {
-              final Ham60mChannel c = entry.value;
-              return <Widget>[
-                if (entry.key > 0)
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                ReferenceRowSemantics(
-                  label: rowLabel(c.label, <String?>[
-                    'center ${c.center}',
-                    c.dial == 'n/a' ? null : 'dial ${c.dial}',
-                    c.power,
-                    c.notes,
-                  ]),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            SizedBox(
-                              width: 88,
-                              child: Text(
-                                c.label,
-                                style: text.labelMedium?.copyWith(
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(c.center, style: mono.robotoMono),
-                                  if (c.dial != 'n/a')
-                                    Text(
-                                      'dial ${c.dial}',
-                                      style: mono.robotoMono.copyWith(
-                                        color: colors.textTertiary,
-                                        fontSize: AppTextSize.caption,
-                                      ),
-                                    ),
-                                  Text(
-                                    c.power,
-                                    style: mono.robotoMono.copyWith(
-                                      color: colors.textAccent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (c.notes != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
+          ...kHam60mChannels.asMap().entries.expand((
+            MapEntry<int, Ham60mChannel> entry,
+          ) {
+            final Ham60mChannel c = entry.value;
+            return <Widget>[
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.sm),
+              ReferenceRowSemantics(
+                label: rowLabel(c.label, <String?>[
+                  'center ${c.center}',
+                  c.dial == 'n/a' ? null : 'dial ${c.dial}',
+                  c.power,
+                  c.notes,
+                ]),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          SizedBox(
+                            width: 88,
                             child: Text(
-                              c.notes!,
-                              style: text.labelSmall
-                                  ?.copyWith(color: colors.textTertiary),
+                              c.label,
+                              style: text.labelMedium?.copyWith(
+                                color: colors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                      ],
-                    ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(c.center, style: mono.robotoMono),
+                                if (c.dial != 'n/a')
+                                  Text(
+                                    'dial ${c.dial}',
+                                    style: mono.robotoMono.copyWith(
+                                      color: colors.textTertiary,
+                                      fontSize: AppTextSize.caption,
+                                    ),
+                                  ),
+                                Text(
+                                  c.power,
+                                  style: mono.robotoMono.copyWith(
+                                    color: colors.textAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (c.notes != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            c.notes!,
+                            style: text.labelSmall?.copyWith(
+                              color: colors.textTertiary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              ];
-            },
-          ),
+              ),
+            ];
+          }),
         ],
       ),
     );
@@ -364,26 +373,26 @@ class _HamBandPlanScreenState extends State<HamBandPlanScreen> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     Widget note(String label, String body) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                label,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                body,
-                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
-              ),
-            ],
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: text.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
           ),
-        );
+          const SizedBox(height: 2),
+          Text(
+            body,
+            style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+          ),
+        ],
+      ),
+    );
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -473,10 +482,7 @@ class _BandCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Divider(color: colors.border, height: AppSpacing.sm),
           if (band.isAllClasses)
-            _PrivilegeRow(
-              label: 'All license classes',
-              value: band.allClasses!,
-            )
+            _PrivilegeRow(label: 'All license classes', value: band.allClasses!)
           else ...<Widget>[
             _PrivilegeRow(
               label: 'Technician',

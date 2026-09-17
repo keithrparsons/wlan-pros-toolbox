@@ -135,7 +135,11 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
     try {
       return await PiBackendClient().sslInspect(host: host, port: port);
     } on PiBackendException catch (e) {
-      return SslInspectResult.failure(host: host, port: port, message: e.message);
+      return SslInspectResult.failure(
+        host: host,
+        port: port,
+        message: e.message,
+      );
     }
   }
 
@@ -148,9 +152,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a successful
         // inspection has produced a certificate; copies the cert as a labeled
         // text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -1055,17 +1057,13 @@ class _ChainNoteCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   SslInspectResult.chainNote,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'TLS protocol version and cipher suite are not exposed by '
                   'the platform TLS API and are therefore not shown.',
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),
@@ -1174,9 +1172,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

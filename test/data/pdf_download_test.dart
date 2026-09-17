@@ -46,8 +46,10 @@ void main() {
       expect(name, endsWith('.pdf'));
       // Strip the fixed prefix and the .pdf suffix; the slug body must contain
       // no leading/trailing hyphen and no doubled hyphen.
-      final String slug = name
-          .substring('WLAN-Pros-'.length, name.length - '.pdf'.length);
+      final String slug = name.substring(
+        'WLAN-Pros-'.length,
+        name.length - '.pdf'.length,
+      );
       expect(slug.startsWith('-'), isFalse);
       expect(slug.endsWith('-'), isFalse);
       expect(slug.contains('--'), isFalse);

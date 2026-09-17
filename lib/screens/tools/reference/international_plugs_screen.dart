@@ -295,7 +295,8 @@ class InternationalPlugsScreen extends StatefulWidget {
       designation: 'CEE 7/7',
       type: 'E/F',
       current: '16A',
-      note: 'Hybrid plug designed to fit both French (E) and Schuko (F) sockets',
+      note:
+          'Hybrid plug designed to fit both French (E) and Schuko (F) sockets',
     ),
   ];
 
@@ -362,13 +363,9 @@ class InternationalPlugsScreen extends StatefulWidget {
     buf
       ..writeln()
       ..writeln('CEE 7 European family')
-      ..writeln(
-        <String>['Designation', 'Type', 'Current', 'Note'].join(tab),
-      );
+      ..writeln(<String>['Designation', 'Type', 'Current', 'Note'].join(tab));
     for (final Cee7Member m in cee7Family) {
-      buf.writeln(
-        <String>[m.designation, m.type, m.current, m.note].join(tab),
-      );
+      buf.writeln(<String>[m.designation, m.type, m.current, m.note].join(tab));
     }
     buf
       ..writeln()
@@ -403,8 +400,8 @@ class _InternationalPlugsScreenState extends State<InternationalPlugsScreen> {
       trimmed.isEmpty
           ? 'Type a country to look up its plug type'
           : n == 0
-              ? 'No country matches $trimmed'
-              : '$n matching countr${n == 1 ? 'y' : 'ies'}',
+          ? 'No country matches $trimmed'
+          : '$n matching countr${n == 1 ? 'y' : 'ies'}',
       TextDirection.ltr,
     );
   }
@@ -527,9 +524,7 @@ class _InternationalPlugsScreenState extends State<InternationalPlugsScreen> {
           textCapitalization: TextCapitalization.words,
           onChanged: _onQueryChanged,
           cursorColor: colors.textAccent,
-          decoration: const InputDecoration(
-            hintText: 'e.g. Germany, USA, UK',
-          ),
+          decoration: const InputDecoration(hintText: 'e.g. Germany, USA, UK'),
         ),
       ),
     );
@@ -654,7 +649,8 @@ class _CountryResults extends StatelessWidget {
       return _ResultMessageCard(
         icon: Icons.public,
         title: 'Look up a country',
-        body: 'Type a country name to see its plug type and voltage. Common '
+        body:
+            'Type a country name to see its plug type and voltage. Common '
             'names work too, such as USA, UK, or Holland.',
       );
     }
@@ -664,7 +660,8 @@ class _CountryResults extends StatelessWidget {
       return _ResultMessageCard(
         icon: Icons.search_off,
         title: 'No match',
-        body: 'No country matches "$trimmed". Try the full name or a common '
+        body:
+            'No country matches "$trimmed". Try the full name or a common '
             'spelling.',
       );
     }
@@ -680,9 +677,7 @@ class _CountryResults extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            results.length == 1
-                ? '1 match'
-                : '${results.length} matches',
+            results.length == 1 ? '1 match' : '${results.length} matches',
             style: text.labelMedium?.copyWith(
               color: colors.textSecondary,
               letterSpacing: 0.4,
@@ -743,9 +738,7 @@ class _CountryRow extends StatelessWidget {
                   ),
                   Text(
                     '  ·  ',
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                   Text(
                     entry.powerLabel,
@@ -806,9 +799,7 @@ class _ResultMessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

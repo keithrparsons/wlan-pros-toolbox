@@ -101,7 +101,8 @@ class FreeradiusWlanpiScreen extends StatefulWidget {
   /// code (error 90035); the real script bytes are recovered at runtime via
   /// `base64.decode`. The download still hands the user a file named
   /// `install_freeradius.sh` via [scriptFilename].
-  static const String scriptAsset = 'assets/downloads/install_freeradius.sh.b64';
+  static const String scriptAsset =
+      'assets/downloads/install_freeradius.sh.b64';
 
   /// The clean filename the download/share offers (the script's real name).
   static const String scriptFilename = 'install_freeradius.sh';
@@ -172,16 +173,11 @@ class _FreeradiusWlanpiScreenState extends State<FreeradiusWlanpiScreen> {
   /// Returns null if the button hasn't been laid out yet (the platform then
   /// falls back to a default anchor).
   ShareOrigin? _downloadButtonOrigin() {
-    final RenderObject? box =
-        _downloadButtonKey.currentContext?.findRenderObject();
+    final RenderObject? box = _downloadButtonKey.currentContext
+        ?.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return null;
     final Offset topLeft = box.localToGlobal(Offset.zero);
-    return ShareOrigin(
-      topLeft.dx,
-      topLeft.dy,
-      box.size.width,
-      box.size.height,
-    );
+    return ShareOrigin(topLeft.dx, topLeft.dy, box.size.width, box.size.height);
   }
 
   Future<void> _handleDownload() async {
@@ -479,7 +475,8 @@ class _Steps extends StatelessWidget {
           number: 3,
           label: 'Run it',
           command: './install_freeradius.sh',
-          note: 'Installs and configures FreeRADIUS with PEAP/MSCHAPv2, adds '
+          note:
+              'Installs and configures FreeRADIUS with PEAP/MSCHAPv2, adds '
               '10 student test accounts, opens UDP 1812, and runs a radtest.',
         ),
       ],
@@ -752,80 +749,83 @@ class _ScriptBlockState extends State<_ScriptBlock> {
             height: 240,
             child: switch (state) {
               _ScriptState.loading => Center(
-                  child: Semantics(
-                    label: 'Loading install script',
-                    liveRegion: true,
-                    child: SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(colors.textAccent),
+                child: Semantics(
+                  label: 'Loading install script',
+                  liveRegion: true,
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colors.textAccent,
                       ),
                     ),
                   ),
                 ),
+              ),
               _ScriptState.error => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Semantics(
-                      liveRegion: true,
-                      label: 'The install script could not be loaded on this '
-                          'device. You can still download it with the button '
-                          'above.',
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Icon(
-                            Icons.description_outlined,
-                            size: 40,
-                            color: colors.textTertiary,
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'The script could not be displayed here.',
-                            textAlign: TextAlign.center,
-                            style: (text.bodyLarge ?? const TextStyle())
-                                .copyWith(color: colors.textPrimary),
-                          ),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            'You can still download it with the button above.',
-                            textAlign: TextAlign.center,
-                            style: (text.bodyMedium ?? const TextStyle())
-                                .copyWith(color: colors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              _ScriptState.ready => Scrollbar(
-                  controller: _vScroll,
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    controller: _vScroll,
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.sm,
-                      AppSpacing.sm,
-                      AppSpacing.sm,
-                      AppSpacing.sm,
-                    ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SelectableText(
-                        script,
-                        style: TextStyle(
-                          fontFamily: 'DM Mono',
-                          fontSize: AppTextSize.caption,
-                          height: 1.55,
-                          color: colors.textSecondary,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Semantics(
+                    liveRegion: true,
+                    label:
+                        'The install script could not be loaded on this '
+                        'device. You can still download it with the button '
+                        'above.',
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.description_outlined,
+                          size: 40,
+                          color: colors.textTertiary,
                         ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'The script could not be displayed here.',
+                          textAlign: TextAlign.center,
+                          style: (text.bodyLarge ?? const TextStyle()).copyWith(
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xxs),
+                        Text(
+                          'You can still download it with the button above.',
+                          textAlign: TextAlign.center,
+                          style: (text.bodyMedium ?? const TextStyle())
+                              .copyWith(color: colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              _ScriptState.ready => Scrollbar(
+                controller: _vScroll,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _vScroll,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SelectableText(
+                      script,
+                      style: TextStyle(
+                        fontFamily: 'DM Mono',
+                        fontSize: AppTextSize.caption,
+                        height: 1.55,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
                 ),
+              ),
             },
           ),
         ],
@@ -848,7 +848,8 @@ class _Customize extends StatelessWidget {
           lead: 'Change the shared secret and add your own networks.',
           rest: ' Edit both in ',
           path: '/etc/freeradius/3.0/clients.conf',
-          tail: '. Change the shared secret, then add a client block for '
+          tail:
+              '. Change the shared secret, then add a client block for '
               'each network (your APs or controllers) that will send '
               'authentication requests.',
         ),

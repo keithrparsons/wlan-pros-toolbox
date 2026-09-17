@@ -19,15 +19,19 @@ import 'package:wlan_pros_toolbox/data/app_version.dart';
 void main() {
   test('AppVersion fallback constants mirror pubspec version+build', () {
     final File pubspec = File('pubspec.yaml');
-    expect(pubspec.existsSync(), isTrue,
-        reason: 'pubspec.yaml must be readable from the test cwd (repo root)');
+    expect(
+      pubspec.existsSync(),
+      isTrue,
+      reason: 'pubspec.yaml must be readable from the test cwd (repo root)',
+    );
 
     // Match e.g. `version: 1.5.9+44` (build part optional). Anchored to a
     // line-start `version:` key so a `version:` inside a dependency block can't
     // match.
-    final RegExp versionLine =
-        RegExp(r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+(\S+))?\s*$',
-            multiLine: true);
+    final RegExp versionLine = RegExp(
+      r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+(\S+))?\s*$',
+      multiLine: true,
+    );
     final Match? m = versionLine.firstMatch(pubspec.readAsStringSync());
     expect(m, isNotNull, reason: 'pubspec.yaml must declare a `version:` line');
 
@@ -37,13 +41,15 @@ void main() {
     expect(
       AppVersion.fallbackVersion,
       pubspecVersion,
-      reason: 'AppVersion.fallbackVersion drifted from pubspec version — update '
+      reason:
+          'AppVersion.fallbackVersion drifted from pubspec version — update '
           'the constant in lib/data/app_version.dart to $pubspecVersion',
     );
     expect(
       AppVersion.fallbackBuildNumber,
       pubspecBuild,
-      reason: 'AppVersion.fallbackBuildNumber drifted from pubspec build — '
+      reason:
+          'AppVersion.fallbackBuildNumber drifted from pubspec build — '
           'update the constant in lib/data/app_version.dart to $pubspecBuild',
     );
 

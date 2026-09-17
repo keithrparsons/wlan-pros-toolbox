@@ -65,8 +65,10 @@ class MacosMenubarWifiScreen extends StatelessWidget {
       ..writeln('A. Option-click Wi-Fi menu fields')
       ..writeln(kMenuBarOptionClickIntro);
     for (final RfField f in kMenuBarOptionClickFields) {
-      b.writeln('  ${f.field}: ${f.meaning}'
-          '${f.proNote != null ? ' (${f.proNote})' : ''}');
+      b.writeln(
+        '  ${f.field}: ${f.meaning}'
+        '${f.proNote != null ? ' (${f.proNote})' : ''}',
+      );
     }
     b
       ..writeln(kMenuBarOptionClickNote)
@@ -100,9 +102,7 @@ class MacosMenubarWifiScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('macOS Menu-Bar Wi-Fi'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -226,8 +226,9 @@ class _IntroCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         kMenuBarIntro,
-        style: (t.bodyMedium ?? const TextStyle())
-            .copyWith(color: colors.textSecondary),
+        style: (t.bodyMedium ?? const TextStyle()).copyWith(
+          color: colors.textSecondary,
+        ),
       ),
     );
   }
@@ -270,8 +271,9 @@ class _SectionCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               intro,
-              style: (t.bodySmall ?? const TextStyle())
-                  .copyWith(color: colors.textSecondary),
+              style: (t.bodySmall ?? const TextStyle()).copyWith(
+                color: colors.textSecondary,
+              ),
             ),
           ],
           if (children.isNotEmpty) const SizedBox(height: AppSpacing.sm),
@@ -341,7 +343,8 @@ class _FieldRow extends StatelessWidget {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '${field.field}. ${field.meaning}.'
+      label:
+          '${field.field}. ${field.meaning}.'
           '${field.proNote != null ? ' ${field.proNote}' : ''}',
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),

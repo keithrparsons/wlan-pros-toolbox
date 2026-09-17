@@ -198,9 +198,11 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'Ookla Speedtest',
     operator: 'Ookla, LLC (Ziff Davis)',
     url: 'https://www.speedtest.net',
-    what: 'Download, upload, idle latency, jitter, packet loss; loaded latency '
+    what:
+        'Download, upload, idle latency, jitter, packet loss; loaded latency '
         'in newer clients.',
-    how: 'Multi-stream TCP, scaling up to 8 connections at higher round-trip '
+    how:
+        'Multi-stream TCP, scaling up to 8 connections at higher round-trip '
         'time. Samples throughput across time slices and discards outliers. '
         'Picks a nearby server by default; distant servers selectable. The '
         'current slice math is not public.',
@@ -215,18 +217,22 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'Fast.com',
     operator: 'Netflix',
     url: 'https://fast.com',
-    what: 'Download headline; upload plus unloaded and loaded latency under '
+    what:
+        'Download headline; upload plus unloaded and loaded latency under '
         '"Show more info".',
-    how: 'Runs against Netflix Open Connect appliances, the same CDN that '
+    how:
+        'Runs against Netflix Open Connect appliances, the same CDN that '
         'streams Netflix video. Opens several connections, varies the count by '
         'conditions, and ends the test adaptively once results are stable.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.cdnEdge,
-    dataPerTest: 'Adaptive; depends on link speed and run length (no fixed '
+    dataPerTest:
+        'Adaptive; depends on link speed and run length (no fixed '
         'figure)',
     dataConfidence: DataConfidence.estimate,
     openSource: 'No',
-    backendNote: 'Runs on Netflix\'s own production CDN (Open Connect), the '
+    backendNote:
+        'Runs on Netflix\'s own production CDN (Open Connect), the '
         'cleanest example of measuring the CDN next door. Netflix states it is '
         'not for enterprise or third-party certification.',
   ),
@@ -235,9 +241,11 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'Cloudflare Speed Test',
     operator: 'Cloudflare',
     url: 'https://speed.cloudflare.com',
-    what: 'Download, upload, idle and loaded latency, idle and loaded jitter, '
+    what:
+        'Download, upload, idle and loaded latency, idle and loaded jitter, '
         'packet loss, plus AIM scores for streaming / gaming / video-chat.',
-    how: 'Runs on Cloudflare Workers at the edge nearest you. Sends '
+    how:
+        'Runs on Cloudflare Workers at the edge nearest you. Sends '
         'progressively larger payloads to mimic real loading rather than only '
         'saturating the pipe, and reports the 90th percentile, not peak. '
         'Interleaves empty requests to measure loaded latency.',
@@ -245,7 +253,8 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     proximity: ServerProximity.cdnEdge,
     dataPerTest: 'Up to ~200 MB (caps near there; varies with measured speed)',
     dataConfidence: DataConfidence.estimate,
-    openSource: 'Client component open-source (cloudflare/speedtest); edge '
+    openSource:
+        'Client component open-source (cloudflare/speedtest); edge '
         'backend is Cloudflare\'s, not self-hostable',
   ),
   SpeedtestService(
@@ -253,19 +262,23 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'M-Lab NDT (Google "speed test")',
     operator: 'Measurement Lab (M-Lab) consortium; surfaced by Google Search',
     url: 'https://speed.measurementlab.net',
-    what: 'Download, upload, minimum round-trip latency, loss rate, plus '
+    what:
+        'Download, upload, minimum round-trip latency, loss rate, plus '
         'fine-grained transport metrics.',
-    how: 'Single-stream TCP over a WebSocket, about 10 seconds each direction; '
+    how:
+        'Single-stream TCP over a WebSocket, about 10 seconds each direction; '
         'current ndt7 uses TCP BBR. Single stream is a deliberate choice to '
         'diagnose path problems, and it hits a fixed M-Lab research server, not '
         'a hyper-local edge, so numbers read lower by design.',
     streamModel: StreamModel.single,
     proximity: ServerProximity.distantServer,
-    dataPerTest: 'Bounded by the ~10 s x 2 transfers; scales with link, shorter '
+    dataPerTest:
+        'Bounded by the ~10 s x 2 transfers; scales with link, shorter '
         'than saturating tests',
     dataConfidence: DataConfidence.low,
     openSource: 'Yes (Go server; JS / Swift / Kotlin / Java clients on GitHub)',
-    backendNote: 'M-Lab is the measurement platform; Google merely surfaces it '
+    backendNote:
+        'M-Lab is the measurement platform; Google merely surfaces it '
         'in search. Credit Measurement Lab (M-Lab), not Google, as the service.',
   ),
   SpeedtestService(
@@ -273,15 +286,18 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'nPerf',
     operator: 'nPerf SAS (Lyon, France)',
     url: 'https://www.nperf.com',
-    what: 'Download, upload, latency, plus a browsing test (web-page load) and '
+    what:
+        'Download, upload, latency, plus a browsing test (web-page load) and '
         'a streaming test (360p / 720p / 1080p video buffering).',
-    how: 'Proprietary algorithm against a worldwide dedicated server network '
+    how:
+        'Proprietary algorithm against a worldwide dedicated server network '
         'sized to saturate the link; server auto- or manually selected. '
         'Distinctive for combining raw speed with browse and stream quality in '
         'one run. Methodology is largely vendor-stated.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.selectable,
-    dataPerTest: 'Saturating run plus a 10 s video at three resolutions; more '
+    dataPerTest:
+        'Saturating run plus a 10 s video at three resolutions; more '
         'than a speed-only test (no published figure)',
     dataConfidence: DataConfidence.low,
     openSource: 'No',
@@ -291,19 +307,23 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'Waveform Bufferbloat Test',
     operator: 'Waveform',
     url: 'https://www.waveform.com/tools/bufferbloat',
-    what: 'Download, upload, and the headline bufferbloat grade (A+ to F) = '
+    what:
+        'Download, upload, and the headline bufferbloat grade (A+ to F) = '
         'latency increase under load, across unloaded / downlink-saturated / '
         'uplink-saturated stages.',
-    how: 'Adds a bufferbloat grading layer on top of Cloudflare\'s test '
+    how:
+        'Adds a bufferbloat grading layer on top of Cloudflare\'s test '
         'backend. Measures latency during the saturated phases and compares it '
         'to idle.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.cdnEdge,
-    dataPerTest: 'Comparable to a Cloudflare run (~up to ~200 MB), scales with '
+    dataPerTest:
+        'Comparable to a Cloudflare run (~up to ~200 MB), scales with '
         'link',
     dataConfidence: DataConfidence.low,
     openSource: 'No (front-end tool; backend is Cloudflare\'s)',
-    backendNote: 'Built on Cloudflare\'s test backend. Best example that '
+    backendNote:
+        'Built on Cloudflare\'s test backend. Best example that '
         'the same bytes can be graded for latency-under-load, and that two '
         '"different" tests can share one backend.',
   ),
@@ -312,17 +332,21 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'LibreSpeed',
     operator: 'Open-source project',
     url: 'https://librespeed.org',
-    what: 'Download, upload, ping (latency), jitter, packet loss; optional '
+    what:
+        'Download, upload, ping (latency), jitter, packet loss; optional '
         'IP / ISP.',
-    how: 'Lightweight vanilla JavaScript using XHR and Web Workers (no Flash, '
+    how:
+        'Lightweight vanilla JavaScript using XHR and Web Workers (no Flash, '
         'Java, or WebSocket). Multi-stream; the server generates garbage chunks '
         'on the fly and discards them.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.selfHosted,
-    dataPerTest: 'No metered cost when self-hosted (your own client to your own '
+    dataPerTest:
+        'No metered cost when self-hosted (your own client to your own '
         'server); scales with link over WAN',
     dataConfidence: DataConfidence.high,
-    openSource: 'Yes, LGPLv3 (PHP, Go, Rust, Node backends; Docker images), '
+    openSource:
+        'Yes, LGPLv3 (PHP, Go, Rust, Node backends; Docker images), '
         'the standout self-hostable option',
   ),
   SpeedtestService(
@@ -331,13 +355,15 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     operator: 'SpeedOf.Me, LLC',
     url: 'https://speedof.me',
     what: 'Download, upload, latency, jitter.',
-    how: 'Pure HTML5 / JavaScript. Single connection. Downloads progressively '
+    how:
+        'Pure HTML5 / JavaScript. Single connection. Downloads progressively '
         'larger samples (128 KB up to 128 MB) and accepts the last sample that '
         'took over 8 seconds. Positioned as closer to real single-file browsing '
         'than multi-thread tests.',
     streamModel: StreamModel.single,
     proximity: ServerProximity.distantServer,
-    dataPerTest: 'Bounded by the sample ladder; up to ~128 MB on a fast link, '
+    dataPerTest:
+        'Bounded by the sample ladder; up to ~128 MB on a fast link, '
         'far less on a slow one',
     dataConfidence: DataConfidence.estimate,
     openSource: 'No',
@@ -348,19 +374,23 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     operator: 'Orb (from the original creators of Speedtest and Downdetector)',
     url: 'https://orb.net',
     isMonitor: true,
-    what: 'Continuous monitoring, not a one-shot test. An Orb Score (0 to 100) '
+    what:
+        'Continuous monitoring, not a one-shot test. An Orb Score (0 to 100) '
         'built from Responsiveness, Reliability, and Speed.',
-    how: 'A lightweight always-on agent on hardware you own. Responsiveness is '
+    how:
+        'A lightweight always-on agent on hardware you own. Responsiveness is '
         'sampled twice per second; reliability tracks drops, recovery, and '
         'outage duration; speed uses a small ~10 MB file on a cadence (default '
         'hourly). It answers "how is my connection over time", catching '
         'dropouts a one-shot test misses.',
     streamModel: StreamModel.sampled,
     proximity: ServerProximity.distantServer,
-    dataPerTest: 'Speed sampling is light (~10 MB file) but runs repeatedly; '
+    dataPerTest:
+        'Speed sampling is light (~10 MB file) but runs repeatedly; '
         'cumulative-per-day is the relevant figure, not per-test',
     dataConfidence: DataConfidence.estimate,
-    openSource: 'Agent free-tier installable (Pi / Docker); Cloud API paid; not '
+    openSource:
+        'Agent free-tier installable (Pi / Docker); Cloud API paid; not '
         'open-source',
   ),
   SpeedtestService(
@@ -369,7 +399,8 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     operator: 'Open-source project',
     url: 'https://openspeedtest.com',
     what: 'Download, upload, ping, jitter.',
-    how: 'Open-source HTML5 test that needs no server-side language; runs in '
+    how:
+        'Open-source HTML5 test that needs no server-side language; runs in '
         'the browser with a Node or Docker server. A direct LibreSpeed '
         'alternative and a second self-host option for testing a LAN.',
     streamModel: StreamModel.multi,
@@ -383,15 +414,18 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     name: 'Speedtest CLI / iperf3',
     operator: 'Ookla (CLI) / open-source (iperf3)',
     url: 'https://iperf.fr',
-    what: 'Command-line throughput. iperf3 measures true point-to-point '
+    what:
+        'Command-line throughput. iperf3 measures true point-to-point '
         'throughput with no CDN in the path at all.',
-    how: 'Not a website. Professionals run Ookla\'s CLI for scripted '
+    how:
+        'Not a website. Professionals run Ookla\'s CLI for scripted '
         'speedtests and iperf3 for point-to-point throughput between two hosts '
         'you control, which removes server choice and CDN proximity from the '
         'result entirely.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.selfHosted,
-    dataPerTest: 'You set it (duration / parallel streams); iperf3 traffic is '
+    dataPerTest:
+        'You set it (duration / parallel streams); iperf3 traffic is '
         'between your own two hosts',
     dataConfidence: DataConfidence.high,
     openSource: 'iperf3 is open-source (BSD); Ookla CLI is proprietary',
@@ -402,16 +436,19 @@ const List<SpeedtestService> kSpeedtestServices = <SpeedtestService>[
     operator: 'Individual ISPs',
     url: 'https://speedtest.net',
     what: 'Download, upload, latency on the ISP\'s own test page.',
-    how: 'Most are a skinned Ookla or M-Lab / SamKnows backend. An ISP\'s '
+    how:
+        'Most are a skinned Ookla or M-Lab / SamKnows backend. An ISP\'s '
         'own test measures to the ISP\'s own well-placed server, the '
         'friendliest possible path, so treat the result with that bias in mind.',
     streamModel: StreamModel.multi,
     proximity: ServerProximity.cdnEdge,
-    dataPerTest: 'Inherits the underlying backend\'s cost (often Ookla, so '
+    dataPerTest:
+        'Inherits the underlying backend\'s cost (often Ookla, so '
         'scales with link)',
     dataConfidence: DataConfidence.low,
     openSource: 'No (the visible page; the backend is usually a third party)',
-    backendNote: 'Usually skinned Ookla or M-Lab / SamKnows, not the ISP\'s '
+    backendNote:
+        'Usually skinned Ookla or M-Lab / SamKnows, not the ISP\'s '
         'own measurement infrastructure. The test points at the ISP\'s own '
         'server, the friendliest path.',
   ),
@@ -454,25 +491,28 @@ const String kSpeedtestBackendNote =
     'independent results.';
 
 /// The three teaching callouts (brief\'s suggested cards).
-const List<({String title, String body})> kSpeedtestCallouts =
-    <({String title, String body})>[
+const List<({String title, String body})>
+kSpeedtestCallouts = <({String title, String body})>[
   (
     title: 'The CDN next door vs. the real internet',
-    body: 'Many "gigabit" results are proximity to a well-provisioned CDN edge. '
+    body:
+        'Many "gigabit" results are proximity to a well-provisioned CDN edge. '
         'Fast.com, Cloudflare, Waveform, and ISP tests all hit a nearby edge. '
         'M-Lab NDT and a distant Ookla server expose the real path and read '
         'lower, by design, not because they are wrong.',
   ),
   (
     title: 'Why bufferbloat beats peak speed',
-    body: 'Latency under load predicts felt quality, not peak download. A line '
+    body:
+        'Latency under load predicts felt quality, not peak download. A line '
         'that benchmarks at 900 Mbps but jumps to 300 ms under load feels worse '
         'on a video call than a 100 Mbps line that holds 20 ms. Cloudflare AIM, '
         'the Waveform grade, and Orb Responsiveness all target this.',
   ),
   (
     title: 'Single-stream vs. multi-stream',
-    body: 'Multi-stream inflates the headline by filling the pipe like a '
+    body:
+        'Multi-stream inflates the headline by filling the pipe like a '
         'browser. Single-stream reads lower and is more diagnostic of a real '
         'path bottleneck. Same connection, different number, both honest.',
   ),

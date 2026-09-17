@@ -127,8 +127,11 @@ class ByVerticalIndexScreen extends StatelessWidget {
       ..writeln()
       ..writeln('The map')
       ..writeln(
-        <String>['Vertical', 'What it tends to trigger', 'Read first']
-            .join(tab),
+        <String>[
+          'Vertical',
+          'What it tends to trigger',
+          'Read first',
+        ].join(tab),
       );
     for (final VerticalRow v in kVerticals) {
       b.writeln(<String>[v.vertical, v.triggers, v.readFirst].join(tab));

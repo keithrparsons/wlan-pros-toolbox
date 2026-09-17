@@ -41,7 +41,10 @@ import '../../../widgets/tool_help_footer.dart';
 import 'value_row.dart';
 
 class MyCurrentLocationScreen extends StatefulWidget {
-  const MyCurrentLocationScreen({super.key, this.location = const DeviceLocation()});
+  const MyCurrentLocationScreen({
+    super.key,
+    this.location = const DeviceLocation(),
+  });
 
   /// The live-location seam. Defaults to the production geolocator-backed
   /// implementation; tests inject a fake.
@@ -103,9 +106,7 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
         if (userInitiated) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(content: Text('Location updated')),
-            );
+            ..showSnackBar(const SnackBar(content: Text('Location updated')));
         }
       case LocationNeedsPermission():
         setState(() {
@@ -186,9 +187,9 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
       ok = false;
     }
     if (ok || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open a maps app.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Could not open a maps app.')));
   }
 
   /// §8.16 copy payload — the full readout as labeled text, or null when there is
@@ -207,7 +208,9 @@ class _MyCurrentLocationScreenState extends State<MyCurrentLocationScreen> {
     buf.writeln('Altitude: ${alt ?? 'Not reported'}');
     buf.writeln('Horizontal accuracy: ${acc ?? 'Not reported'}');
     if (f.isApproximate) {
-      buf.writeln('Source: approximate, from your public IP (city-level, not GPS)');
+      buf.writeln(
+        'Source: approximate, from your public IP (city-level, not GPS)',
+      );
     }
     return buf.toString().trimRight();
   }
@@ -447,11 +450,7 @@ class _ResultCard extends StatelessWidget {
           // per GL-003 §8.5. Computed offline from lat/long; null only when the
           // coordinate is not finite (then the row shows the honest unavailable
           // treatment rather than a fabricated code).
-          ValueRow(
-            label: 'Plus Code',
-            value: plusCode,
-            identifier: true,
-          ),
+          ValueRow(label: 'Plus Code', value: plusCode, identifier: true),
           if (plusCode != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             _PlusCodeNote(),
@@ -474,8 +473,9 @@ class _ResultCard extends StatelessWidget {
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(colors.surface0),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colors.surface0,
+                      ),
                     ),
                   )
                 : const Icon(Icons.my_location),
@@ -539,7 +539,7 @@ class _ApproxNote extends StatelessWidget {
     final String msg = approximate
         ? 'Approximate, from your public IP (city-level, not a GPS reading).'
         : 'Coarse fix. Likely Wi-Fi-derived rather than GPS (large accuracy '
-            'radius).';
+              'radius).';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -635,9 +635,9 @@ class _BlockedCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final String body = serviceDisabled
         ? 'Location Services are turned off for this device. Turn them on in '
-            'Settings, then try again.'
+              'Settings, then try again.'
         : 'Location permission is off for this app. Enable it in Settings, then '
-            'try again.';
+              'try again.';
     return _CardShell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

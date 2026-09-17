@@ -93,7 +93,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '6P2C',
       positions: 6,
       conductors: 2,
-      typicalUse: 'Single analog phone line (one pair). The common home '
+      typicalUse:
+          'Single analog phone line (one pair). The common home '
           'telephone / DSL jack.',
       diagramId: 'rj11',
     ),
@@ -102,7 +103,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '6P4C',
       positions: 6,
       conductors: 4,
-      typicalUse: 'Two phone lines (two pairs) in the same 6-position body as '
+      typicalUse:
+          'Two phone lines (two pairs) in the same 6-position body as '
           'RJ11.',
       diagramId: 'rj14',
     ),
@@ -111,7 +113,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '6P6C',
       positions: 6,
       conductors: 6,
-      typicalUse: 'Three phone lines (three pairs), fully populated '
+      typicalUse:
+          'Three phone lines (three pairs), fully populated '
           '6-position body. Sometimes loosely called RJ12.',
       diagramId: 'rj25',
     ),
@@ -120,7 +123,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '8P8C',
       positions: 8,
       conductors: 8,
-      typicalUse: 'Ethernet (10/100/1000/2.5G/5G/10GBASE-T) over twisted pair. '
+      typicalUse:
+          'Ethernet (10/100/1000/2.5G/5G/10GBASE-T) over twisted pair. '
           '"RJ45" is the colloquial name for the 8P8C modular connector.',
       diagramId: 'rj45-8p8c',
     ),
@@ -129,7 +133,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '8P8C',
       positions: 8,
       conductors: 8,
-      typicalUse: 'T1 / E1 / ISDN / DDS over twisted pair. Same 8P8C body as '
+      typicalUse:
+          'T1 / E1 / ISDN / DDS over twisted pair. Same 8P8C body as '
           'RJ45 but a different pin assignment (and often shielded).',
       diagramId: 'rj48',
     ),
@@ -138,7 +143,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '8P8C',
       positions: 8,
       conductors: 8,
-      typicalUse: 'T1 on a standard wall jack; the most common RJ48 variant. '
+      typicalUse:
+          'T1 on a standard wall jack; the most common RJ48 variant. '
           'Uses pins 1/2 (Rx) and 4/5 (Tx).',
       diagramId: 'rj48c',
     ),
@@ -147,7 +153,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '8P8C',
       positions: 8,
       conductors: 8,
-      typicalUse: 'T1 with a shorting bar that loops the line when the plug is '
+      typicalUse:
+          'T1 with a shorting bar that loops the line when the plug is '
           'removed, for loopback testing.',
       diagramId: 'rj48x',
     ),
@@ -156,7 +163,8 @@ class RjConnectorsScreen extends StatelessWidget {
       modular: '4P4C',
       positions: 4,
       conductors: 4,
-      typicalUse: 'Telephone handset-to-base coil cord (4P4C). Not a wall jack.',
+      typicalUse:
+          'Telephone handset-to-base coil cord (4P4C). Not a wall jack.',
       diagramId: 'rj9-rj22',
     ),
   ];
@@ -210,9 +218,7 @@ class RjConnectorsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('RJ Connectors'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -285,12 +291,12 @@ class RjConnectorsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.sm),
       child: Semantics(
         button: true,
-        label: 'Open Ethernet Cable and Connector tool for T568A and T568B '
+        label:
+            'Open Ethernet Cable and Connector tool for T568A and T568B '
             'wiring',
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.card),
-          onTap: () => Navigator.of(context)
-              .pushNamed(AppRouter.ethernetCable),
+          onTap: () => Navigator.of(context).pushNamed(AppRouter.ethernetCable),
           child: Container(
             decoration: BoxDecoration(
               color: colors.surface1,
@@ -300,11 +306,7 @@ class RjConnectorsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Row(
               children: <Widget>[
-                Icon(
-                  Icons.cable_outlined,
-                  size: 20,
-                  color: colors.textAccent,
-                ),
+                Icon(Icons.cable_outlined, size: 20, color: colors.textAccent),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Column(
@@ -329,11 +331,7 @@ class RjConnectorsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                Icon(
-                  Icons.chevron_right,
-                  size: 20,
-                  color: colors.textTertiary,
-                ),
+                Icon(Icons.chevron_right, size: 20, color: colors.textTertiary),
               ],
             ),
           ),
@@ -472,8 +470,9 @@ class _RjConnectorDiagram extends StatelessWidget {
   Future<String> _loadSwappedSvg() async {
     final String cached = _lightSvgCache[diagramId] ?? '';
     if (cached.isNotEmpty) return cached;
-    final String raw =
-        await rootBundle.loadString(ConnectorDiagrams.path(diagramId));
+    final String raw = await rootBundle.loadString(
+      ConnectorDiagrams.path(diagramId),
+    );
     final String swapped = ConceptGraphicBand.applyLightSwap(raw);
     _lightSvgCache[diagramId] = swapped;
     return swapped;

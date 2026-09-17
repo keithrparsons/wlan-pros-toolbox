@@ -18,7 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// `MaterialApp(themeMode:)` and listen so the app re-themes on change.
 class ThemeController extends ChangeNotifier {
   ThemeController({ThemeMode initialMode = ThemeMode.system})
-      : _mode = initialMode;
+    : _mode = initialMode;
 
   /// The shared_preferences key for the persisted appearance pick.
   static const String prefsKey = 'app_theme_mode';

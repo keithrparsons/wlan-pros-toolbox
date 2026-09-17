@@ -49,10 +49,10 @@ extension ReferenceCalloutToneColor on ReferenceCalloutTone {
   /// The status hue for this tone in [colors]. Both App Modes are covered,
   /// because the lookup goes through the theme extension rather than a literal.
   Color color(AppColorScheme colors) => switch (this) {
-        ReferenceCalloutTone.danger => colors.statusDanger,
-        ReferenceCalloutTone.warning => colors.statusWarning,
-        ReferenceCalloutTone.info => colors.statusInfo,
-      };
+    ReferenceCalloutTone.danger => colors.statusDanger,
+    ReferenceCalloutTone.warning => colors.statusWarning,
+    ReferenceCalloutTone.info => colors.statusInfo,
+  };
 }
 
 /// A bordered callout that pulls one load-bearing rule out of the body text.

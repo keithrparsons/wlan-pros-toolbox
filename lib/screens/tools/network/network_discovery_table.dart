@@ -128,7 +128,10 @@ List<DiscoverySortColumn> visibleDiscoveryColumns({
 DiscoverySort effectiveDiscoverySort(
   DiscoverySort sort, {
   required bool showMacColumns,
-}) => visibleDiscoveryColumns(showMacColumns: showMacColumns).contains(sort.column)
+}) =>
+    visibleDiscoveryColumns(
+      showMacColumns: showMacColumns,
+    ).contains(sort.column)
     ? sort
     : const DiscoverySort();
 
@@ -193,8 +196,9 @@ int _number(int? a, int? b, bool ascending) {
   return ascending ? cmp : -cmp;
 }
 
-int? _lowestPort(LanHost host) =>
-    host.openPorts.isEmpty ? null : host.openPorts.reduce((int a, int b) => a < b ? a : b);
+int? _lowestPort(LanHost host) => host.openPorts.isEmpty
+    ? null
+    : host.openPorts.reduce((int a, int b) => a < b ? a : b);
 
 String _servicesOf(LanHost host) =>
     (host.mdnsServices.toList()..sort()).join(', ');

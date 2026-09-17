@@ -148,7 +148,8 @@ class DatetimeStandardsScreen extends StatelessWidget {
       concept: 'Time with fraction',
       format: 'hh:mm:ss.sss',
       example: '14:30:00.250',
-      note: 'Comma also permitted as decimal sign; period is the common profile',
+      note:
+          'Comma also permitted as decimal sign; period is the common profile',
     ),
     IsoFormat(
       concept: 'Combined date-time',
@@ -178,7 +179,8 @@ class DatetimeStandardsScreen extends StatelessWidget {
       concept: 'Duration',
       format: 'PnYnMnDTnHnMnS',
       example: 'P3Y6M4DT12H30M5S',
-      note: '3 yr, 6 mo, 4 d, 12 h, 30 min, 5 s. T separates date from time part',
+      note:
+          '3 yr, 6 mo, 4 d, 12 h, 30 min, 5 s. T separates date from time part',
     ),
     IsoFormat(
       concept: 'Duration (weeks)',
@@ -245,12 +247,14 @@ class DatetimeStandardsScreen extends StatelessWidget {
     ),
     EpochFact(
       item: 'Failure mode',
-      value: 'At +1 s the counter overflows to -2,147,483,648 = '
+      value:
+          'At +1 s the counter overflows to -2,147,483,648 = '
           '1901-12-13T20:45:52Z',
     ),
     EpochFact(
       item: 'Fix',
-      value: '64-bit signed time_t; range extends ~292 billion years past '
+      value:
+          '64-bit signed time_t; range extends ~292 billion years past '
           'the epoch',
     ),
   ];
@@ -259,23 +263,27 @@ class DatetimeStandardsScreen extends StatelessWidget {
   static const List<TimescaleTerm> timescales = <TimescaleTerm>[
     TimescaleTerm(
       term: 'TAI',
-      definition: 'International Atomic Time. Continuous, no leap seconds. '
+      definition:
+          'International Atomic Time. Continuous, no leap seconds. '
           'The pure atomic timescale.',
     ),
     TimescaleTerm(
       term: 'UTC',
-      definition: 'Coordinated Universal Time. Atomic rate, kept within '
+      definition:
+          'Coordinated Universal Time. Atomic rate, kept within '
           '0.9 s of astronomical UT1 by inserting leap seconds.',
     ),
     TimescaleTerm(
       term: 'Leap second',
-      definition: 'An extra second (23:59:60Z) inserted at end of June or '
+      definition:
+          'An extra second (23:59:60Z) inserted at end of June or '
           'December when needed. Always positive in practice; a negative leap '
           'second is defined but has never occurred.',
     ),
     TimescaleTerm(
       term: 'GPS time',
-      definition: 'A third scale: continuous like TAI, offset from TAI by a '
+      definition:
+          'A third scale: continuous like TAI, offset from TAI by a '
           'fixed -19 s (GPS = TAI - 19 s); thus GPS is ahead of UTC by the '
           'leap-second count minus 19.',
     ),
@@ -298,7 +306,8 @@ class DatetimeStandardsScreen extends StatelessWidget {
   static const List<NtpStratum> strata = <NtpStratum>[
     NtpStratum(
       stratum: '0',
-      meaning: 'Reference clock (not networked): atomic clock, GPS receiver, '
+      meaning:
+          'Reference clock (not networked): atomic clock, GPS receiver, '
           'radio clock. Not directly reachable over NTP.',
     ),
     NtpStratum(
@@ -307,7 +316,8 @@ class DatetimeStandardsScreen extends StatelessWidget {
     ),
     NtpStratum(
       stratum: '2',
-      meaning: 'Secondary server: synced to a stratum-1 server over the network.',
+      meaning:
+          'Secondary server: synced to a stratum-1 server over the network.',
     ),
     NtpStratum(stratum: '3', meaning: 'Synced to a stratum-2 server.'),
     NtpStratum(
@@ -316,7 +326,8 @@ class DatetimeStandardsScreen extends StatelessWidget {
     ),
     NtpStratum(
       stratum: '16',
-      meaning: '"Unsynchronized" - the sentinel value meaning the clock '
+      meaning:
+          '"Unsynchronized" - the sentinel value meaning the clock '
           'is not synchronized.',
     ),
   ];
@@ -337,9 +348,7 @@ class DatetimeStandardsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Date & Time Standards'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -357,9 +366,7 @@ class DatetimeStandardsScreen extends StatelessWidget {
       ..writeln('ISO 8601 core formats')
       ..writeln(<String>['Concept', 'Format', 'Example', 'Note'].join(tab));
     for (final IsoFormat f in isoFormats) {
-      buf.writeln(
-        <String>[f.concept, f.format, f.example, f.note].join(tab),
-      );
+      buf.writeln(<String>[f.concept, f.format, f.example, f.note].join(tab));
     }
     buf
       ..writeln()
@@ -533,7 +540,10 @@ class DatetimeStandardsScreen extends StatelessWidget {
       ),
       rows: offsets.map((OffsetNotation o) {
         return ReferenceRowSemantics(
-          label: rowLabel(o.notation, <String?>[o.meaning, 'example ${o.example}']),
+          label: rowLabel(o.notation, <String?>[
+            o.meaning,
+            'example ${o.example}',
+          ]),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
@@ -562,9 +572,7 @@ class DatetimeStandardsScreen extends StatelessWidget {
                   width: 230,
                   child: Text(
                     o.example,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                 ),
               ],

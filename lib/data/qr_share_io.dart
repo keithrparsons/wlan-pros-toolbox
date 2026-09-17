@@ -23,7 +23,5 @@ Future<void> shareQrPngImpl({
   final File tmpFile = File('${tmpDir.path}/$filename');
   await tmpFile.writeAsBytes(png, flush: true);
 
-  await Share.shareXFiles(
-    <XFile>[XFile(tmpFile.path, mimeType: 'image/png')],
-  );
+  await Share.shareXFiles(<XFile>[XFile(tmpFile.path, mimeType: 'image/png')]);
 }

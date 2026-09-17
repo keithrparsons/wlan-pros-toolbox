@@ -142,7 +142,8 @@ class _FresnelScreenState extends State<FresnelScreen> {
 
   // Unsigned decimal only — frequency and distances are never negative and are
   // typed by humans, not pasted from instruments (no scientific notation here).
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   FresnelResult? _result;
 
@@ -228,9 +229,7 @@ class _FresnelScreenState extends State<FresnelScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until frequency
         // and total distance yield a valid midpoint radius; copies the inputs
         // and the midpoint (and at-point, when present) radii as a labeled block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -429,15 +428,11 @@ class _FresnelScreenState extends State<FresnelScreen> {
               children: [
                 Text(
                   '${_fmtMeters(meters)} m',
-                  style: mono.outputMedium.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: mono.outputMedium.copyWith(color: colors.textPrimary),
                 ),
                 Text(
                   '${_fmtFeet(meters)} ft',
-                  style: mono.inlineCode.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: mono.inlineCode.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

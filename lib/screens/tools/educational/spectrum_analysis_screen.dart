@@ -123,10 +123,7 @@ class SpectrumAnalysisScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Spectrum Analysis'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Spectrum Analysis'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -197,9 +194,9 @@ class _TopicCard extends StatelessWidget {
   final _Topic topic;
 
   void _open(BuildContext context) {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: topic.builder),
-    );
+    Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute<void>(builder: topic.builder));
   }
 
   @override
@@ -401,10 +398,7 @@ class _Lead extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Container(
-                width: colors.isLight ? 4 : 3,
-                color: colors.primary,
-              ),
+              Container(width: colors.isLight ? 4 : 3, color: colors.primary),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),
@@ -683,8 +677,11 @@ class _GlossaryLink extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: Row(
               children: <Widget>[
-                Icon(Icons.menu_book_outlined,
-                    size: 20, color: colors.textAccent),
+                Icon(
+                  Icons.menu_book_outlined,
+                  size: 20,
+                  color: colors.textAccent,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -696,8 +693,11 @@ class _GlossaryLink extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                Icon(Icons.chevron_right,
-                    color: colors.textTertiary, size: AppSpacing.md),
+                Icon(
+                  Icons.chevron_right,
+                  color: colors.textTertiary,
+                  size: AppSpacing.md,
+                ),
               ],
             ),
           ),
@@ -854,43 +854,50 @@ class _KnobsScreen extends StatelessWidget {
         _Bullets(<_Bullet>[
           _Bullet(
             lead: 'Span. ',
-            rest: 'The frequency range displayed, between a start and stop. Wide '
+            rest:
+                'The frequency range displayed, between a start and stop. Wide '
                 'span gives a whole-band overview; narrow span zooms in on one '
                 'signal.',
           ),
           _Bullet(
             lead: 'RBW (resolution bandwidth). ',
-            rest: 'The narrowest frequency difference the analyzer can separate. '
+            rest:
+                'The narrowest frequency difference the analyzer can separate. '
                 'A narrower RBW separates closely spaced signals and lowers the '
                 'noise floor, revealing weaker signals, but it slows the sweep.',
           ),
           _Bullet(
             lead: 'VBW (video bandwidth). ',
-            rest: 'A post-detection filter that smooths the displayed trace so a '
+            rest:
+                'A post-detection filter that smooths the displayed trace so a '
                 'noisy signal is easier to read. It changes only the displayed '
                 'trace, not the underlying signal.',
           ),
           _Bullet(
             lead: 'Reference level. ',
-            rest: 'The amplitude at the top of the display. It sets the '
+            rest:
+                'The amplitude at the top of the display. It sets the '
                 'analyzer’s gain and attenuation so strong signals are not '
                 'clipped and weak ones are not buried.',
           ),
           _Bullet(
             lead: 'Amplitude scale (dBm). ',
-            rest: 'The vertical axis, a logarithmic power scale in decibels '
+            rest:
+                'The vertical axis, a logarithmic power scale in decibels '
                 'relative to one milliwatt. More negative means weaker.',
           ),
           _Bullet(
             lead: 'Detectors. ',
-            rest: 'How each displayed point is derived from the many samples '
+            rest:
+                'How each displayed point is derived from the many samples '
                 'behind it. Peak catches bursts; average or RMS gives true power '
                 'for noise-like signals; sample takes one instantaneous value. '
                 'The detector changes what the trace means.',
           ),
           _Bullet(
             lead: 'Max-hold and averaging. ',
-            rest: 'Trace-processing modes. Max-hold keeps the highest value ever '
+            rest:
+                'Trace-processing modes. Max-hold keeps the highest value ever '
                 'seen at each frequency; averaging smooths toward the mean. More '
                 'on these under Comparing captures.',
           ),
@@ -980,8 +987,7 @@ class _Signature {
   final String band;
   final String fingerprint;
 
-  String get assetPath =>
-      'assets/tool-diagrams/spectrum-signatures/$slug.png';
+  String get assetPath => 'assets/tool-diagrams/spectrum-signatures/$slug.png';
 }
 
 const List<_Signature> _kSignatures = <_Signature>[
@@ -1166,25 +1172,29 @@ class _ComparingScreen extends StatelessWidget {
         _Bullets(<_Bullet>[
           _Bullet(
             lead: 'Max-hold. ',
-            rest: 'The trace keeps the highest amplitude ever seen at each '
+            rest:
+                'The trace keeps the highest amplitude ever seen at each '
                 'frequency. Run it for a while and every transient leaves a '
                 'permanent peak, ideal for catching a hopping or bursty '
                 'interferer the live trace shows for only an instant.',
           ),
           _Bullet(
             lead: 'Averaging. ',
-            rest: 'Smooths toward the mean, pulling steady signals out of the '
+            rest:
+                'Smooths toward the mean, pulling steady signals out of the '
                 'noise and de-emphasizing rare spikes. Use it to characterize a '
                 'continuous interferer’s true level.',
           ),
           _Bullet(
             lead: 'Overlays. ',
-            rest: 'Show live, max-hold, and average at once to read '
+            rest:
+                'Show live, max-hold, and average at once to read '
                 'instantaneous, worst case, and typical together.',
           ),
           _Bullet(
             lead: 'Before and after, with a baseline. ',
-            rest: 'Record a baseline capture, make one change (remove a '
+            rest:
+                'Record a baseline capture, make one change (remove a '
                 'suspected source, change a channel, add an access point), then '
                 'capture again and compare.',
           ),
@@ -1303,50 +1313,52 @@ class _MitigationScreen extends StatelessWidget {
           'instead of solving it.',
         ),
         _gapMd,
-        _Bullets(
-          ordered: true,
-          <_Bullet>[
-            _Bullet(
-              lead: 'Identify and remove the source. ',
-              rest: 'Fingerprint it in the waterfall, then physically locate it '
-                  'with a directional antenna and a signal-strength hunt, or by '
-                  'walking the density reading up as you get closer. Replace a '
-                  'failing microwave oven, retire a 2.4 GHz analog cordless '
-                  'phone or wireless camera, or power down a rogue bridge.',
-            ),
-            _Bullet(
-              lead: 'Relocate the source or the access point. ',
-              rest: 'If you cannot remove it, add physical separation or move '
-                  'the access point. Distance and walls attenuate the '
-                  'interferer.',
-            ),
-            _Bullet(
-              lead: 'Shield it. ',
-              rest: 'Sometimes practical for a fixed, localized emitter, but '
-                  'usually a last resort and rarely a clean fix in real '
-                  'buildings.',
-            ),
-            _Bullet(
-              lead: 'Plan channels around it (1, 6, 11). ',
-              rest: 'Steer Wi-Fi off the occupied frequencies. In 2.4 GHz there '
-                  'are only three non-overlapping 20 MHz channels, 1, 6, and 11, '
-                  'so a wideband interferer that hits the upper channels can be '
-                  'dodged by favoring channel 1. Automatic channel assignment '
-                  'can do this, but verify it is reacting to the interferer, not '
-                  'just to co-channel Wi-Fi.',
-            ),
-            _Bullet(
-              lead: 'Move critical traffic from 2.4 to 5 to 6 GHz. ',
-              rest: 'The single most effective strategic mitigation. Most classic '
-                  'interferers (microwaves, old cordless phones, ZigBee, '
-                  'Bluetooth, analog cameras) live in 2.4 GHz. The 5 GHz band '
-                  'has more channels and fewer of these sources, and 6 GHz is '
-                  'currently the cleanest band because few legacy interferers '
-                  'live there today. Reserve 2.4 GHz for devices that can only '
-                  'use it.',
-            ),
-          ],
-        ),
+        _Bullets(ordered: true, <_Bullet>[
+          _Bullet(
+            lead: 'Identify and remove the source. ',
+            rest:
+                'Fingerprint it in the waterfall, then physically locate it '
+                'with a directional antenna and a signal-strength hunt, or by '
+                'walking the density reading up as you get closer. Replace a '
+                'failing microwave oven, retire a 2.4 GHz analog cordless '
+                'phone or wireless camera, or power down a rogue bridge.',
+          ),
+          _Bullet(
+            lead: 'Relocate the source or the access point. ',
+            rest:
+                'If you cannot remove it, add physical separation or move '
+                'the access point. Distance and walls attenuate the '
+                'interferer.',
+          ),
+          _Bullet(
+            lead: 'Shield it. ',
+            rest:
+                'Sometimes practical for a fixed, localized emitter, but '
+                'usually a last resort and rarely a clean fix in real '
+                'buildings.',
+          ),
+          _Bullet(
+            lead: 'Plan channels around it (1, 6, 11). ',
+            rest:
+                'Steer Wi-Fi off the occupied frequencies. In 2.4 GHz there '
+                'are only three non-overlapping 20 MHz channels, 1, 6, and 11, '
+                'so a wideband interferer that hits the upper channels can be '
+                'dodged by favoring channel 1. Automatic channel assignment '
+                'can do this, but verify it is reacting to the interferer, not '
+                'just to co-channel Wi-Fi.',
+          ),
+          _Bullet(
+            lead: 'Move critical traffic from 2.4 to 5 to 6 GHz. ',
+            rest:
+                'The single most effective strategic mitigation. Most classic '
+                'interferers (microwaves, old cordless phones, ZigBee, '
+                'Bluetooth, analog cameras) live in 2.4 GHz. The 5 GHz band '
+                'has more channels and fewer of these sources, and 6 GHz is '
+                'currently the cleanest band because few legacy interferers '
+                'live there today. Reserve 2.4 GHz for devices that can only '
+                'use it.',
+          ),
+        ]),
         _gapMd,
         _Note(
           'Only the first three steps remove the interferer; the last two route '

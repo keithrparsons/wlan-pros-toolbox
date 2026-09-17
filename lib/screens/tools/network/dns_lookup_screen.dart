@@ -60,8 +60,9 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
   // BF5-7: pre-populate with WLANPros.com (a real, resolvable WLAN Pros name)
   // instead of leaving the field blank with an "example.com" hint — gives the
   // user a one-tap working query on open.
-  final TextEditingController _hostCtrl =
-      TextEditingController(text: 'WLANPros.com');
+  final TextEditingController _hostCtrl = TextEditingController(
+    text: 'WLANPros.com',
+  );
   final FocusNode _hostFocus = FocusNode();
 
   // Query mode. `_digMode` true → dig-style sweep of all common types.
@@ -84,7 +85,16 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
   /// Pi record types (the Pi's supported set — note CNAME, which the native DoH
   /// enum does not carry, and no SPF, which the native path derives from TXT).
   static const List<String> _piTypes = <String>[
-    'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA', 'PTR', 'SRV', 'CAA',
+    'A',
+    'AAAA',
+    'CNAME',
+    'MX',
+    'NS',
+    'TXT',
+    'SOA',
+    'PTR',
+    'SRV',
+    'CAA',
   ];
   String _piType = 'A';
   bool _piLoading = false;
@@ -181,17 +191,21 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
       _piError = null;
     });
     try {
-      final PiDns dns = await PiBackendClient()
-          .dnsLookup(host: _hostCtrl.text.trim(), type: _piType);
+      final PiDns dns = await PiBackendClient().dnsLookup(
+        host: _hostCtrl.text.trim(),
+        type: _piType,
+      );
       if (!mounted) return;
       setState(() {
         _piLoading = false;
         _piResult = dns;
       });
       final int n = dns.answers.length;
-      _announce(n == 0
-          ? 'No $_piType records found'
-          : '$n $_piType record${n == 1 ? '' : 's'} found');
+      _announce(
+        n == 0
+            ? 'No $_piType records found'
+            : '$n $_piType record${n == 1 ? '' : 's'} found',
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -231,7 +245,8 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     if (dig.isAllEmpty) return 'No records found for ${dig.queriedName}';
     final int n = dig.recordCount;
     final int types = dig.nonEmptySections.length;
-    final String found = '$n record${n == 1 ? '' : 's'} across $types '
+    final String found =
+        '$n record${n == 1 ? '' : 's'} across $types '
         'record type${types == 1 ? '' : 's'} found';
     // Disclose any per-type failures in the same announcement so the spoken
     // count never overstates completeness (GL-005).
@@ -271,9 +286,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a lookup has
         // resolved at least one record; copies the record list as TSV (Type,
         // Name, Value, TTL — one row per record). Copy leads; no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -296,11 +309,11 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     const List<String> cols = <String>['Type', 'Name', 'Value', 'TTL'];
 
     String row(DnsRecord rec) => <String>[
-          rec.type,
-          rec.name,
-          _displayData(rec),
-          rec.ttl == null ? '' : '${rec.ttl}',
-        ].join(tab);
+      rec.type,
+      rec.name,
+      _displayData(rec),
+      rec.ttl == null ? '' : '${rec.ttl}',
+    ].join(tab);
 
     // Dig-style sweep: copy every non-empty section's records as TSV.
     final DnsDigResult? dig = _digResult;
@@ -418,7 +431,10 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ConceptGraphicBand(toolId: 'dns-lookup', isDesktop: isDesktop),
+                  ConceptGraphicBand(
+                    toolId: 'dns-lookup',
+                    isDesktop: isDesktop,
+                  ),
                   if (ToolAssets.hasGraphic('dns-lookup'))
                     const SizedBox(height: AppSpacing.md),
                   _piQueryCard(context),
@@ -501,7 +517,8 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
       return const _MessageCard(
         icon: Icons.error_outline,
         title: 'Lookup failed',
-        body: 'The WLAN Pi could not resolve that name. Check the hostname and '
+        body:
+            'The WLAN Pi could not resolve that name. Check the hostname and '
             'try again.',
       );
     }
@@ -511,7 +528,8 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
       return _MessageCard(
         icon: Icons.search_off,
         title: 'No records',
-        body: 'No $_piType records found for ${r.host ?? _hostCtrl.text.trim()}.',
+        body:
+            'No $_piType records found for ${r.host ?? _hostCtrl.text.trim()}.',
       );
     }
     return _PiDnsCard(result: r, type: _piType);
@@ -584,10 +602,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           // Query mode: dig-style all-records sweep vs single record type.
-          Text(
-            'Query',
-            style: _fieldLabelStyle(text, colors),
-          ),
+          Text('Query', style: _fieldLabelStyle(text, colors)),
           const SizedBox(height: AppSpacing.xs),
           Wrap(
             spacing: AppSpacing.xs,
@@ -610,10 +625,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
           // Record-type selector only in single-type mode.
           if (!_digMode) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Record type',
-              style: _fieldLabelStyle(text, colors),
-            ),
+            Text('Record type', style: _fieldLabelStyle(text, colors)),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.xs,
@@ -629,10 +641,7 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Resolver',
-            style: _fieldLabelStyle(text, colors),
-          ),
+          Text('Resolver', style: _fieldLabelStyle(text, colors)),
           const SizedBox(height: AppSpacing.xs),
           Wrap(
             spacing: AppSpacing.xs,
@@ -668,11 +677,9 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     );
   }
 
-  TextStyle? _fieldLabelStyle(TextTheme text, AppColorScheme colors) =>
-      text.labelMedium?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w500,
-      );
+  TextStyle? _fieldLabelStyle(TextTheme text, AppColorScheme colors) => text
+      .labelMedium
+      ?.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w500);
 
   /// A mode chip (All records / Single type). Same visual resolver as the
   /// type/resolver chips; factored so the three selectors stay identical.
@@ -681,13 +688,12 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
     required String label,
     required bool selected,
     required VoidCallback onSelected,
-  }) =>
-      _selectChip(
-        context,
-        label: label,
-        selected: selected,
-        onSelected: onSelected,
-      );
+  }) => _selectChip(
+    context,
+    label: label,
+    selected: selected,
+    onSelected: onSelected,
+  );
 
   Widget _selectChip(
     BuildContext context, {
@@ -738,7 +744,8 @@ class _DnsLookupScreenState extends State<DnsLookupScreen> {
         return _MessageCard(
           icon: Icons.error_outline,
           title: 'Lookup failed',
-          body: 'No record type resolved for ${dig.queriedName}. '
+          body:
+              'No record type resolved for ${dig.queriedName}. '
               'Every query failed:',
           failedTypes: dig.erroredSections,
         );
@@ -789,10 +796,7 @@ class _ButtonSpinner extends StatelessWidget {
       // The button is disabled while loading; the screen sends a one-shot
       // SemanticsService announcement when results land (no liveRegion here, to
       // avoid double-speaking on the spinner appear/disappear).
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        color: colors.onPrimary,
-      ),
+      child: CircularProgressIndicator(strokeWidth: 2, color: colors.onPrimary),
     );
   }
 }
@@ -983,9 +987,7 @@ class _DigFailedRow extends StatelessWidget {
               // Lead with the plain-language failure so it is not color-only,
               // then add the resolver's message when it carries detail.
               _failureText(section),
-              style: text.labelMedium?.copyWith(
-                color: colors.statusDanger,
-              ),
+              style: text.labelMedium?.copyWith(color: colors.statusDanger),
             ),
           ),
         ],
@@ -1036,9 +1038,7 @@ class _RecordRow extends StatelessWidget {
               // Record DATA is the resolved address/identifier (IP for A/AAAA,
               // hostname for CNAME/MX/NS) → Roboto Mono (GL-003 §8.5). The type
               // token (left) stays DM Mono.
-              style: mono.robotoMono.copyWith(
-                color: colors.textPrimary,
-              ),
+              style: mono.robotoMono.copyWith(color: colors.textPrimary),
             ),
           ),
           if (rec.ttl != null)
@@ -1046,9 +1046,7 @@ class _RecordRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: AppSpacing.xs),
               child: Text(
                 '${rec.ttl}s',
-                style: text.labelSmall?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ),
         ],
@@ -1073,8 +1071,9 @@ class _PiDnsCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final int n = result.answers.length;
-    final String timing =
-        result.queryMs == null ? '' : ' · ${result.queryMs!.round()} ms';
+    final String timing = result.queryMs == null
+        ? ''
+        : ' · ${result.queryMs!.round()} ms';
 
     return Container(
       decoration: BoxDecoration(
@@ -1170,9 +1169,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
                 if (failedTypes.isNotEmpty) ...<Widget>[
                   const SizedBox(height: AppSpacing.xs),

@@ -65,9 +65,8 @@ class _MorseCodeScreenState extends State<MorseCodeScreen> {
 
   /// The result string for the active direction (what the bottom card shows and
   /// what Copy / Play act on). Empty when there is nothing to show.
-  String get _result => _direction == _Direction.textToMorse
-      ? _encodedMorse
-      : _decodedText;
+  String get _result =>
+      _direction == _Direction.textToMorse ? _encodedMorse : _decodedText;
 
   bool get _hasInput => _inputCtrl.text.trim().isNotEmpty;
   bool get _hasResult => _result.isNotEmpty;
@@ -87,10 +86,12 @@ class _MorseCodeScreenState extends State<MorseCodeScreen> {
 
   String? _buildCopyText() {
     if (!_hasResult) return null;
-    final String fromLabel =
-        _direction == _Direction.textToMorse ? 'Text' : 'Morse';
-    final String toLabel =
-        _direction == _Direction.textToMorse ? 'Morse' : 'Text';
+    final String fromLabel = _direction == _Direction.textToMorse
+        ? 'Text'
+        : 'Morse';
+    final String toLabel = _direction == _Direction.textToMorse
+        ? 'Morse'
+        : 'Text';
     return '$fromLabel: ${_inputCtrl.text.trim()}\n$toLabel: $_result';
   }
 
@@ -105,8 +106,9 @@ class _MorseCodeScreenState extends State<MorseCodeScreen> {
     setState(() {
       _inputCtrl.text = _result;
       _direction = d;
-      _inputCtrl.selection =
-          TextSelection.collapsed(offset: _inputCtrl.text.length);
+      _inputCtrl.selection = TextSelection.collapsed(
+        offset: _inputCtrl.text.length,
+      );
     });
   }
 
@@ -137,9 +139,7 @@ class _MorseCodeScreenState extends State<MorseCodeScreen> {
         title: const Text('Morse Code'),
         toolbarHeight: 64,
         // §8.16 — copy the active conversion; disabled until a result exists.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -386,9 +386,7 @@ class _MorseCodeScreenState extends State<MorseCodeScreen> {
                       ),
                     ),
                     Icon(
-                      _showProsigns
-                          ? Icons.expand_less
-                          : Icons.expand_more,
+                      _showProsigns ? Icons.expand_less : Icons.expand_more,
                       color: colors.textTertiary,
                       size: 24,
                     ),
@@ -422,14 +420,16 @@ class _MorseCodeScreenState extends State<MorseCodeScreen> {
                         children: <Widget>[
                           Text(
                             e.code,
-                            style: mono.robotoMono
-                                .copyWith(color: colors.textPrimary),
+                            style: mono.robotoMono.copyWith(
+                              color: colors.textPrimary,
+                            ),
                           ),
                           if (e.name != null)
                             Text(
                               e.name!,
-                              style: text.bodySmall
-                                  ?.copyWith(color: colors.textTertiary),
+                              style: text.bodySmall?.copyWith(
+                                color: colors.textTertiary,
+                              ),
                             ),
                         ],
                       ),
@@ -474,8 +474,7 @@ class _DirectionButton extends StatelessWidget {
           backgroundColor: selected
               ? colors.textAccent.withValues(alpha: 0.08)
               : Colors.transparent,
-          foregroundColor:
-              selected ? colors.textAccent : colors.textSecondary,
+          foregroundColor: selected ? colors.textAccent : colors.textSecondary,
           side: BorderSide(
             color: selected ? colors.textAccent : colors.borderStrong,
             width: selected ? 2 : 1,
@@ -541,8 +540,11 @@ class _PlayButton extends StatelessWidget {
           minimumSize: const Size(0, AppSpacing.minTouchTarget),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         ),
-        icon: Icon(playing ? Icons.stop : Icons.volume_up_outlined,
-            size: 20, color: fg),
+        icon: Icon(
+          playing ? Icons.stop : Icons.volume_up_outlined,
+          size: 20,
+          color: fg,
+        ),
         label: Text(
           playing ? 'Stop' : 'Play',
           style: text.labelLarge?.copyWith(color: fg),
@@ -609,9 +611,7 @@ class _LetterGlyphs extends StatelessWidget {
       children: <Widget>[
         for (int i = 0; i < symbols.length; i++) ...<Widget>[
           if (i > 0) const SizedBox(width: AppSpacing.xxs),
-          symbols[i] == '-'
-              ? _Dash(color: color)
-              : _Dot(color: color),
+          symbols[i] == '-' ? _Dash(color: color) : _Dot(color: color),
         ],
       ],
     );
@@ -657,8 +657,10 @@ class _WordGap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
-    return Text('/',
-        style: text.titleMedium?.copyWith(color: color) ??
-            TextStyle(color: color));
+    return Text(
+      '/',
+      style:
+          text.titleMedium?.copyWith(color: color) ?? TextStyle(color: color),
+    );
   }
 }

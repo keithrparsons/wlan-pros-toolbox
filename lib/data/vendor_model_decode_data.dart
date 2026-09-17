@@ -288,8 +288,7 @@ const List<DecodeVendor> kDecodeVendors = <DecodeVendor>[
         meaning: 'Carried in the ordering suffix, not in AP-635 itself',
       ),
     ],
-    readBack:
-        'Aruba Wi-Fi 6E access point, mid stream-tier, internal antenna.',
+    readBack: 'Aruba Wi-Fi 6E access point, mid stream-tier, internal antenna.',
     confidenceNote:
         'Confidence: High. The even/odd antenna rule is confirmed back to the '
         'Wi-Fi 5 (802.11ac Wave 2) 300 series: AP-314 = four RP-SMA '
@@ -341,7 +340,10 @@ const List<DecodeVendor> kDecodeVendors = <DecodeVendor>[
     exampleSteps: <DecodeStep>[
       DecodeStep(segment: 'U7', meaning: 'Wi-Fi 7 generation'),
       DecodeStep(segment: 'Pro', meaning: 'Higher performance tier'),
-      DecodeStep(segment: '(name)', meaning: 'No regulatory letter in the name'),
+      DecodeStep(
+        segment: '(name)',
+        meaning: 'No regulatory letter in the name',
+      ),
     ],
     readBack: 'UniFi Wi-Fi 7, Pro tier.',
     confidenceNote:
@@ -444,10 +446,7 @@ const List<DecodeVendor> kDecodeVendors = <DecodeVendor>[
         segment: '4 (first digit)',
         meaning: 'Mid tier (above the value AP3000, below the premium AP5010)',
       ),
-      DecodeStep(
-        segment: '000',
-        meaning: 'Model label, not a further code',
-      ),
+      DecodeStep(segment: '000', meaning: 'Model label, not a further code'),
       DecodeStep(
         segment: 'Wi-Fi gen / streams / antenna',
         meaning: 'Come from the AP4000 datasheet, not from the name',

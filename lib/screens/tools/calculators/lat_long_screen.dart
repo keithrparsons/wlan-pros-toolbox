@@ -177,7 +177,8 @@ class _LatLongScreenState extends State<LatLongScreen> {
 
   // Signed decimal: degrees can be negative for S/W. No scientific notation —
   // coordinates are typed by hand, not pasted from instruments.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
 
   @override
   void initState() {
@@ -358,9 +359,9 @@ class _LatLongScreenState extends State<LatLongScreen> {
     final String link = 'https://www.google.com/maps/search/?api=1&query=$q';
     await Clipboard.setData(ClipboardData(text: link));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Map link copied')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Map link copied')));
   }
 
   /// Shared launcher with an honest failure path: if no app/browser can open
@@ -373,9 +374,9 @@ class _LatLongScreenState extends State<LatLongScreen> {
       ok = false;
     }
     if (ok || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open a maps app.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Could not open a maps app.')));
   }
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -466,9 +467,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until at least one
         // coordinate is valid and in range; copies each present coordinate in
         // all three formats (DD / DDM / DMS) as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -587,11 +586,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            Icons.location_on_outlined,
-            size: 20,
-            color: colors.textAccent,
-          ),
+          Icon(Icons.location_on_outlined, size: 20, color: colors.textAccent),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -671,9 +666,9 @@ class _LatLongScreenState extends State<LatLongScreen> {
           liveRegion: true,
           child: Text(
             'Reading your location…',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
           ),
         ),
       ];
@@ -764,9 +759,7 @@ class _LatLongScreenState extends State<LatLongScreen> {
               reported ? value : 'Not reported',
               // Identifier values → Roboto Mono per §8.5 (NOT DM Mono).
               style: mono.robotoMono.copyWith(
-                color: reported
-                    ? colors.textPrimary
-                    : colors.textTertiary,
+                color: reported ? colors.textPrimary : colors.textTertiary,
               ),
             ),
           ),

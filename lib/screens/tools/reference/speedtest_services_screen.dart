@@ -115,7 +115,8 @@ class _SpeedtestServicesScreenState extends State<SpeedtestServicesScreen> {
       _showLaunchError(url);
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -199,9 +200,7 @@ class _SpeedtestServicesScreenState extends State<SpeedtestServicesScreen> {
       appBar: AppBar(
         title: const Text('Speed Test Services'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -355,11 +354,7 @@ class _CaveatBand extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(
-              icon,
-              size: 16,
-              color: warnTone ? warn : colors.textTertiary,
-            ),
+            Icon(icon, size: 16, color: warnTone ? warn : colors.textTertiary),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
@@ -376,7 +371,8 @@ class _CaveatBand extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'How to read this page. $kSpeedtestDataCaveat '
+      label:
+          'How to read this page. $kSpeedtestDataCaveat '
           '$kSpeedtestBackendNote $kSpeedtestOrbNote',
       excludeSemantics: true,
       child: Container(
@@ -407,8 +403,11 @@ class _CaveatBand extends StatelessWidget {
                 letterSpacing: 0.6,
               ),
             ),
-            line(Icons.calculate_outlined, kSpeedtestDataCaveat,
-                warnTone: true),
+            line(
+              Icons.calculate_outlined,
+              kSpeedtestDataCaveat,
+              warnTone: true,
+            ),
             line(Icons.account_tree_outlined, kSpeedtestBackendNote),
             line(Icons.monitor_heart_outlined, kSpeedtestOrbNote),
           ],
@@ -685,8 +684,9 @@ class _LogoFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    final String initial =
-        name.trim().isEmpty ? '?' : name.trim().characters.first.toUpperCase();
+    final String initial = name.trim().isEmpty
+        ? '?'
+        : name.trim().characters.first.toUpperCase();
     return Container(
       width: 40,
       height: 40,
@@ -719,8 +719,10 @@ class _MonitorBadge extends StatelessWidget {
     return Semantics(
       label: 'Continuous monitor, not a one-shot test',
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 4,
+        ),
         decoration: BoxDecoration(
           border: Border.all(color: colors.statusInfo, width: 1),
           borderRadius: BorderRadius.circular(999),
@@ -728,8 +730,11 @@ class _MonitorBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(Icons.monitor_heart_outlined,
-                size: 14, color: colors.statusInfo),
+            Icon(
+              Icons.monitor_heart_outlined,
+              size: 14,
+              color: colors.statusInfo,
+            ),
             const SizedBox(width: AppSpacing.xxs),
             Text(
               'Monitor, not a one-shot test',
@@ -759,8 +764,10 @@ class _AxisChip extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: colors.borderStrong, width: 1),
         borderRadius: BorderRadius.circular(999),
@@ -886,8 +893,7 @@ class _BackendNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.account_tree_outlined,
-              size: 14, color: colors.statusInfo),
+          Icon(Icons.account_tree_outlined, size: 14, color: colors.statusInfo),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: RichText(
@@ -1078,17 +1084,24 @@ class ThroughputWhereDiagramCard extends StatelessWidget {
         barrierLabel: 'Zoomed throughput-testing diagram',
         transitionDuration: AppMotion.base,
         reverseTransitionDuration: AppMotion.fast,
-        pageBuilder: (BuildContext context, Animation<double> a,
-                Animation<double> b) =>
-            const _ThroughputWhereZoomView(),
-        transitionsBuilder: (BuildContext context, Animation<double> anim,
-            Animation<double> secondary, Widget child) {
-          return FadeTransition(
-            opacity:
-                CurvedAnimation(parent: anim, curve: AppMotion.standardEase),
-            child: child,
-          );
-        },
+        pageBuilder:
+            (BuildContext context, Animation<double> a, Animation<double> b) =>
+                const _ThroughputWhereZoomView(),
+        transitionsBuilder:
+            (
+              BuildContext context,
+              Animation<double> anim,
+              Animation<double> secondary,
+              Widget child,
+            ) {
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: anim,
+                  curve: AppMotion.standardEase,
+                ),
+                child: child,
+              );
+            },
       ),
     );
   }
@@ -1125,7 +1138,9 @@ class ThroughputWhereDiagramCard extends StatelessWidget {
                   // or if a platform reports no intrinsic image size, so the
                   // whole-graphic tap region is never zero-size.
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: AppSpacing.xxl),
+                    constraints: const BoxConstraints(
+                      minHeight: AppSpacing.xxl,
+                    ),
                     child: AspectRatio(
                       aspectRatio: _aspectRatio,
                       child: Image.asset(
@@ -1173,10 +1188,7 @@ class ThroughputWhereDiagramCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          _caption,
-          style: t.bodySmall?.copyWith(color: live.textTertiary),
-        ),
+        Text(_caption, style: t.bodySmall?.copyWith(color: live.textTertiary)),
       ],
     );
   }

@@ -93,8 +93,9 @@ class BatteryDiagrams {
   static Future<void> ensureLoaded() async {
     if (_bundled != null) return;
     WidgetsFlutterBinding.ensureInitialized();
-    final AssetManifest manifest =
-        await AssetManifest.loadFromAssetBundle(rootBundle);
+    final AssetManifest manifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
     _bundled = manifest
         .listAssets()
         .where((String p) => p.startsWith('$_dir/'))

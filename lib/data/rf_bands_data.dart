@@ -166,7 +166,8 @@ const List<RfBandGroup> kRfBandGroups = <RfBandGroup>[
         band: 'about 450 MHz - 5.9 GHz',
         tech: '4G LTE (all bands)',
         use: 'Mainstream mobile broadband',
-        note: 'Low-band coverage, mid-band capacity, up to U-NII-4 about 5.9 GHz',
+        note:
+            'Low-band coverage, mid-band capacity, up to U-NII-4 about 5.9 GHz',
       ),
       RfBandRow(
         band: '410 MHz - 7.125 GHz',

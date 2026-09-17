@@ -58,9 +58,7 @@ class ModulationScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the teaching summary as TSV. The content is a bundled
         // const, so the affordance is always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -121,8 +119,9 @@ class ModulationScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     representativeCaveat,
-                    style:
-                        text.labelMedium?.copyWith(color: colors.textTertiary),
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textTertiary,
+                    ),
                   ),
                   // The SNR/EVM facts, ON SCREEN. They used to exist only in the
                   // clipboard and inside the raster diagrams, while the help

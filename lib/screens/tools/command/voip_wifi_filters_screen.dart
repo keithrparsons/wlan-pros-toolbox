@@ -127,55 +127,119 @@ class VoipWifiFiltersScreen extends StatefulWidget {
   /// Wireshark 4.6.6 (see the file header). Public + static so tests can assert
   /// known rows and pin the four fields that must never appear.
   static const List<VoipFilterGroup> groups = <VoipFilterGroup>[
-    VoipFilterGroup(
-      'Find the call: signaling (display)',
-      <VoipFilter>[
-        VoipFilter('sip', 'All SIP signaling'),
-        VoipFilter('sip.Method == "INVITE"', 'Call setup attempts'),
-        VoipFilter('sip.Method == "BYE"', 'Call teardown, the normal end of a call'),
-        VoipFilter('sip.Status-Code >= 400', 'Failed setup, and the code says why'),
-        VoipFilter('sip.Status-Code == 486', 'Busy Here: the callee declined or was already on a call'),
-        VoipFilter('sip.Call-ID', 'Present on every message of one dialog; match on it to follow a single call'),
-        VoipFilter('sip.resend == 1', 'Retransmitted SIP messages, which on Wi-Fi often means the first copy never made it off the air'),
-        VoipFilter('sdp', 'The media negotiation, including the codec actually chosen'),
-        VoipFilter('sdp.media.format', 'The payload formats offered and answered'),
-        VoipFilter('udp.port == 5060', 'SIP over UDP on the default port'),
-        VoipFilter('tcp.port == 5060', 'SIP over TCP on the default port'),
-      ],
-    ),
-    VoipFilterGroup(
-      'Find the media: RTP (display)',
-      <VoipFilter>[
-        VoipFilter('rtp', 'The media stream itself'),
-        VoipFilter('rtcp', 'The control stream, which carries the endpoint\'s own loss and jitter report'),
-        VoipFilter('rtp.ssrc == 0x12345678', 'One stream, by its synchronization source. Substitute the SSRC from your own capture'),
-        VoipFilter('rtp.seq', 'Sequence number; the gap either side of a break is what you measure'),
-        VoipFilter('rtp.timestamp', 'Sampling instant of the first octet, for checking packet spacing'),
-        VoipFilter('rtp.marker == 1', 'Talkspurt starts, for spotting a restart after a gap'),
-        VoipFilter('rtp.p_type', 'Payload type: which codec is actually in use'),
-        VoipFilter('rtp.p_type == 0', 'G.711 PCMU (mu-law)'),
-        VoipFilter('rtp.p_type == 8', 'G.711 PCMA (A-law)'),
-        VoipFilter('rtp.p_type == 9', 'G.722'),
-        VoipFilter('rtp.p_type == 18', 'G.729'),
-        VoipFilter('rtp.setup-frame', 'Wireshark\'s link back to the SDP frame that set this stream up'),
-      ],
-    ),
+    VoipFilterGroup('Find the call: signaling (display)', <VoipFilter>[
+      VoipFilter('sip', 'All SIP signaling'),
+      VoipFilter('sip.Method == "INVITE"', 'Call setup attempts'),
+      VoipFilter(
+        'sip.Method == "BYE"',
+        'Call teardown, the normal end of a call',
+      ),
+      VoipFilter(
+        'sip.Status-Code >= 400',
+        'Failed setup, and the code says why',
+      ),
+      VoipFilter(
+        'sip.Status-Code == 486',
+        'Busy Here: the callee declined or was already on a call',
+      ),
+      VoipFilter(
+        'sip.Call-ID',
+        'Present on every message of one dialog; match on it to follow a single call',
+      ),
+      VoipFilter(
+        'sip.resend == 1',
+        'Retransmitted SIP messages, which on Wi-Fi often means the first copy never made it off the air',
+      ),
+      VoipFilter(
+        'sdp',
+        'The media negotiation, including the codec actually chosen',
+      ),
+      VoipFilter(
+        'sdp.media.format',
+        'The payload formats offered and answered',
+      ),
+      VoipFilter('udp.port == 5060', 'SIP over UDP on the default port'),
+      VoipFilter('tcp.port == 5060', 'SIP over TCP on the default port'),
+    ]),
+    VoipFilterGroup('Find the media: RTP (display)', <VoipFilter>[
+      VoipFilter('rtp', 'The media stream itself'),
+      VoipFilter(
+        'rtcp',
+        'The control stream, which carries the endpoint\'s own loss and jitter report',
+      ),
+      VoipFilter(
+        'rtp.ssrc == 0x12345678',
+        'One stream, by its synchronization source. Substitute the SSRC from your own capture',
+      ),
+      VoipFilter(
+        'rtp.seq',
+        'Sequence number; the gap either side of a break is what you measure',
+      ),
+      VoipFilter(
+        'rtp.timestamp',
+        'Sampling instant of the first octet, for checking packet spacing',
+      ),
+      VoipFilter(
+        'rtp.marker == 1',
+        'Talkspurt starts, for spotting a restart after a gap',
+      ),
+      VoipFilter('rtp.p_type', 'Payload type: which codec is actually in use'),
+      VoipFilter('rtp.p_type == 0', 'G.711 PCMU (mu-law)'),
+      VoipFilter('rtp.p_type == 8', 'G.711 PCMA (A-law)'),
+      VoipFilter('rtp.p_type == 9', 'G.722'),
+      VoipFilter('rtp.p_type == 18', 'G.729'),
+      VoipFilter(
+        'rtp.setup-frame',
+        'Wireshark\'s link back to the SDP frame that set this stream up',
+      ),
+    ]),
     // THE SECTION THAT JUSTIFIES THE CARD.
     VoipFilterGroup(
       'Did the QoS marking survive? (display)',
       <VoipFilter>[
-        VoipFilter('ip.dsfield.dscp == 46', 'EF, what voice should be marked on the wire'),
-        VoipFilter('wlan.qos.priority == 6', 'User Priority 6, the Voice access category on the air'),
-        VoipFilter('ip.dsfield.dscp == 46 && wlan.qos.priority != 6', 'THE BUG: marked EF on the wire, not Voice on the air'),
-        VoipFilter('ip.dsfield.dscp == 46 && wlan.qos.priority == 5', 'The classic signature: EF landed in UP 5, which is the Video access category'),
-        VoipFilter('rtp && wlan.qos.priority == 0', 'Media riding Best Effort, the same fault seen from the other end'),
-        VoipFilter('ip.dsfield.dscp == 0 && rtp', 'Media that arrived carrying no marking at all'),
-        VoipFilter('sip && ip.dsfield.dscp == 0', 'Signaling that arrived unmarked'),
-        VoipFilter('ip.dsfield.dscp == 40', 'CS5, the signaling class in the RFC 4594 service model'),
-        VoipFilter('ip.dsfield.dscp == 34', 'AF41, the usual interactive-video marking'),
-        VoipFilter('wlan.qos.priority', 'Every QoS data frame that carries a User Priority at all'),
+        VoipFilter(
+          'ip.dsfield.dscp == 46',
+          'EF, what voice should be marked on the wire',
+        ),
+        VoipFilter(
+          'wlan.qos.priority == 6',
+          'User Priority 6, the Voice access category on the air',
+        ),
+        VoipFilter(
+          'ip.dsfield.dscp == 46 && wlan.qos.priority != 6',
+          'THE BUG: marked EF on the wire, not Voice on the air',
+        ),
+        VoipFilter(
+          'ip.dsfield.dscp == 46 && wlan.qos.priority == 5',
+          'The classic signature: EF landed in UP 5, which is the Video access category',
+        ),
+        VoipFilter(
+          'rtp && wlan.qos.priority == 0',
+          'Media riding Best Effort, the same fault seen from the other end',
+        ),
+        VoipFilter(
+          'ip.dsfield.dscp == 0 && rtp',
+          'Media that arrived carrying no marking at all',
+        ),
+        VoipFilter(
+          'sip && ip.dsfield.dscp == 0',
+          'Signaling that arrived unmarked',
+        ),
+        VoipFilter(
+          'ip.dsfield.dscp == 40',
+          'CS5, the signaling class in the RFC 4594 service model',
+        ),
+        VoipFilter(
+          'ip.dsfield.dscp == 34',
+          'AF41, the usual interactive-video marking',
+        ),
+        VoipFilter(
+          'wlan.qos.priority',
+          'Every QoS data frame that carries a User Priority at all',
+        ),
       ],
-      note: 'DSCP lives in the IP header and User Priority lives in the 802.11 '
+      note:
+          'DSCP lives in the IP header and User Priority lives in the 802.11 '
           'header, so something has to map one to the other. When that mapping '
           'is missing, wrong, or stripped by a tunnel, the call competes with '
           'everything else on the channel and the wire still looks perfect. '
@@ -188,14 +252,30 @@ class VoipWifiFiltersScreen extends StatefulWidget {
     VoipFilterGroup(
       'Did it break at a roam? (display)',
       <VoipFilter>[
-        VoipFilter('wlan.fc.type_subtype == 0x02', 'Reassociation request, the roam itself'),
+        VoipFilter(
+          'wlan.fc.type_subtype == 0x02',
+          'Reassociation request, the roam itself',
+        ),
         VoipFilter('wlan.fc.type_subtype == 0x03', 'Reassociation response'),
-        VoipFilter('wlan.fc.type_subtype == 0x0b', 'Authentication, the frame before the reassociation'),
-        VoipFilter('wlan.fc.type_subtype == 0x0c', 'Deauthentication, a roam that was not the client\'s idea'),
-        VoipFilter('wlan.tag.number == 55', 'Mobility Domain element, present when 802.11r Fast Transition is in play'),
-        VoipFilter('rtp.ssrc == 0x12345678 && wlan.fc.retry == 1', 'Retries on the one stream you are following'),
+        VoipFilter(
+          'wlan.fc.type_subtype == 0x0b',
+          'Authentication, the frame before the reassociation',
+        ),
+        VoipFilter(
+          'wlan.fc.type_subtype == 0x0c',
+          'Deauthentication, a roam that was not the client\'s idea',
+        ),
+        VoipFilter(
+          'wlan.tag.number == 55',
+          'Mobility Domain element, present when 802.11r Fast Transition is in play',
+        ),
+        VoipFilter(
+          'rtp.ssrc == 0x12345678 && wlan.fc.retry == 1',
+          'Retries on the one stream you are following',
+        ),
       ],
-      note: 'The method is the part worth writing down. Filter to one rtp.ssrc, '
+      note:
+          'The method is the part worth writing down. Filter to one rtp.ssrc, '
           'note the sequence numbers either side of the gap, then look at what '
           'the client did in between. A roam that costs 300 ms is audible. A '
           'roam that costs 50 ms is not. An RTP gap that lines up with a '
@@ -204,13 +284,29 @@ class VoipWifiFiltersScreen extends StatefulWidget {
     VoipFilterGroup(
       'Is power save eating it? (display)',
       <VoipFilter>[
-        VoipFilter('wlan.fc.pwrmgt == 1', 'Client telling the AP it is going to sleep'),
-        VoipFilter('wlan.fc.pwrmgt == 1 && rtp', 'A voice client sleeping mid-call'),
-        VoipFilter('wlan.fc.type_subtype == 0x2c', 'QoS Null, how a client usually announces the state change'),
-        VoipFilter('wlan.fc.type_subtype == 0x1a', 'PS-Poll, the legacy way a client retrieves one buffered frame'),
-        VoipFilter('wlan.qos.eosp == 1', 'End of service period, the AP closing a U-APSD burst'),
+        VoipFilter(
+          'wlan.fc.pwrmgt == 1',
+          'Client telling the AP it is going to sleep',
+        ),
+        VoipFilter(
+          'wlan.fc.pwrmgt == 1 && rtp',
+          'A voice client sleeping mid-call',
+        ),
+        VoipFilter(
+          'wlan.fc.type_subtype == 0x2c',
+          'QoS Null, how a client usually announces the state change',
+        ),
+        VoipFilter(
+          'wlan.fc.type_subtype == 0x1a',
+          'PS-Poll, the legacy way a client retrieves one buffered frame',
+        ),
+        VoipFilter(
+          'wlan.qos.eosp == 1',
+          'End of service period, the AP closing a U-APSD burst',
+        ),
       ],
-      note: 'A voice client that sleeps between packets sounds exactly like a '
+      note:
+          'A voice client that sleeps between packets sounds exactly like a '
           'network with loss, and the far end\'s own report will call it loss. '
           'The Power Management bit rides in the frame control field of every '
           'frame, so watch for where it flips rather than looking for a single '
@@ -220,16 +316,29 @@ class VoipWifiFiltersScreen extends StatefulWidget {
       'What the endpoint itself says: RTCP (display)',
       <VoipFilter>[
         VoipFilter('rtcp.pt == 200', 'Sender Report'),
-        VoipFilter('rtcp.pt == 201', 'Receiver Report, which carries the numbers below'),
-        VoipFilter('rtcp.ssrc.fraction', 'Fraction lost, Wireshark\'s own label for the field'),
+        VoipFilter(
+          'rtcp.pt == 201',
+          'Receiver Report, which carries the numbers below',
+        ),
+        VoipFilter(
+          'rtcp.ssrc.fraction',
+          'Fraction lost, Wireshark\'s own label for the field',
+        ),
         VoipFilter('rtcp.ssrc.fraction > 0', 'Any report that admits to loss'),
         VoipFilter('rtcp.ssrc.cum_nr', 'Cumulative number of packets lost'),
         VoipFilter('rtcp.ssrc.high_seq', 'Highest sequence number received'),
         VoipFilter('rtcp.ssrc.jitter', 'Interarrival jitter'),
-        VoipFilter('rtcp.ssrc.jitter > 30', 'Jitter above 30 timestamp units; at an 8 kHz clock one unit is 125 microseconds'),
-        VoipFilter('rtcp.senderssrc', 'The SSRC of the sender the report is about'),
+        VoipFilter(
+          'rtcp.ssrc.jitter > 30',
+          'Jitter above 30 timestamp units; at an 8 kHz clock one unit is 125 microseconds',
+        ),
+        VoipFilter(
+          'rtcp.senderssrc',
+          'The SSRC of the sender the report is about',
+        ),
       ],
-      note: 'An RTCP receiver report is a measurement rather than an inference: '
+      note:
+          'An RTCP receiver report is a measurement rather than an inference: '
           'it is the far endpoint stating what it actually received. That makes '
           'it the honest answer to a question this app deliberately does not '
           'compute for you.',
@@ -238,12 +347,25 @@ class VoipWifiFiltersScreen extends StatefulWidget {
     VoipFilterGroup(
       'Loss and jitter: two sources, and the disagreement is the finding',
       <VoipFilter>[
-        VoipFilter('tshark -q -z rtp,streams -r capture.pcapng', 'Per-stream loss and jitter as THIS capture saw it'),
-        VoipFilter('tshark -q -z sip,stat -r capture.pcapng', 'SIP method and response-code counts across the capture'),
-        VoipFilter('tshark -q -z follow,sip -r capture.pcapng', 'Follow one SIP dialog end to end'),
-        VoipFilter('Telephony > RTP > RTP Streams', 'The same per-stream figures in the Wireshark GUI'),
+        VoipFilter(
+          'tshark -q -z rtp,streams -r capture.pcapng',
+          'Per-stream loss and jitter as THIS capture saw it',
+        ),
+        VoipFilter(
+          'tshark -q -z sip,stat -r capture.pcapng',
+          'SIP method and response-code counts across the capture',
+        ),
+        VoipFilter(
+          'tshark -q -z follow,sip -r capture.pcapng',
+          'Follow one SIP dialog end to end',
+        ),
+        VoipFilter(
+          'Telephony > RTP > RTP Streams',
+          'The same per-stream figures in the Wireshark GUI',
+        ),
       ],
-      note: 'These are tshark statistics taps and GUI menu paths, NOT display '
+      note:
+          'These are tshark statistics taps and GUI menu paths, NOT display '
           'filters - do not type them into the filter bar. Wireshark computes '
           'per-stream loss and jitter as a statistic, and there is no '
           'rtp.analysis field to filter on. So there are two sources for loss '
@@ -282,8 +404,9 @@ class _VoipWifiFiltersScreenState extends State<VoipWifiFiltersScreen> {
   VoipFilterGroup? _filterGroup(VoipFilterGroup g, String q) {
     if (q.isEmpty) return g;
     if (g.label.toLowerCase().contains(q)) return g;
-    final List<VoipFilter> kept =
-        g.filters.where((VoipFilter f) => _matches(f, q)).toList();
+    final List<VoipFilter> kept = g.filters
+        .where((VoipFilter f) => _matches(f, q))
+        .toList();
     if (kept.isEmpty) return null;
     return VoipFilterGroup(g.label, kept, note: g.note);
   }
@@ -334,9 +457,7 @@ class _VoipWifiFiltersScreenState extends State<VoipWifiFiltersScreen> {
       appBar: AppBar(
         title: const Text('VoIP over Wi-Fi Filters'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -455,9 +576,7 @@ class _VoipWifiFiltersScreenState extends State<VoipWifiFiltersScreen> {
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
           cursorColor: colors.textAccent,
-          decoration: const InputDecoration(
-            hintText: 'e.g. roam or dscp',
-          ),
+          decoration: const InputDecoration(hintText: 'e.g. roam or dscp'),
         ),
       ),
     );
@@ -632,9 +751,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

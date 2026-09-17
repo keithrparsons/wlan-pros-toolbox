@@ -137,8 +137,7 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
       // Test seam: fill placeholders synchronously with the const fallback
       // version so widget tests exercise the same substituted output the
       // production path renders, without binding the PackageInfo channel.
-      _markdown =
-          applyGuidePlaceholders(override, AppVersion.fallback.version);
+      _markdown = applyGuidePlaceholders(override, AppVersion.fallback.version);
       _scheduleInitialJump();
     } else {
       _load();
@@ -160,8 +159,7 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
       // user is running. Never a hand-typed literal that can drift.
       final AppVersionInfo version = await AppVersion.load();
       if (!mounted) return;
-      setState(() =>
-          _markdown = applyGuidePlaceholders(raw, version.version));
+      setState(() => _markdown = applyGuidePlaceholders(raw, version.version));
       _scheduleInitialJump();
     } on Object catch (e) {
       if (!mounted) return;
@@ -242,10 +240,7 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: _body(),
-      ),
+      body: SafeArea(top: false, child: _body()),
     );
   }
 
@@ -321,7 +316,9 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
       barrierColor: colors.scrim,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
       builder: (BuildContext sheetContext) {
         return SafeArea(

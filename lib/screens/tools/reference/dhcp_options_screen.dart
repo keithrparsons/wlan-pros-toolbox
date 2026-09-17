@@ -122,8 +122,7 @@ class DhcpOptionsScreen extends StatelessWidget {
     DhcpOption(
       code: 15,
       name: 'Domain Name',
-      purpose:
-          'The domain name the client should use to resolve hostnames.',
+      purpose: 'The domain name the client should use to resolve hostnames.',
       rfc: 'RFC 2132',
     ),
     DhcpOption(
@@ -163,8 +162,7 @@ class DhcpOptionsScreen extends StatelessWidget {
     DhcpOption(
       code: 53,
       name: 'DHCP Message Type',
-      purpose:
-          'Identifies the DHCP message (see message-type table below).',
+      purpose: 'Identifies the DHCP message (see message-type table below).',
       rfc: 'RFC 2132',
     ),
     DhcpOption(
@@ -178,8 +176,7 @@ class DhcpOptionsScreen extends StatelessWidget {
     DhcpOption(
       code: 55,
       name: 'Parameter Request List',
-      purpose:
-          "Client's list of option codes it wants the server to return.",
+      purpose: "Client's list of option codes it wants the server to return.",
       rfc: 'RFC 2132',
     ),
     DhcpOption(
@@ -280,9 +277,7 @@ class DhcpOptionsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy both tables as a two-section TSV. Static data, always
         // enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -299,18 +294,14 @@ class DhcpOptionsScreen extends StatelessWidget {
       ..writeln('DHCPv4 options')
       ..writeln(<String>['Code', 'Name', 'Purpose', 'RFC'].join(tab));
     for (final DhcpOption o in options) {
-      buf.writeln(
-        <String>['${o.code}', o.name, o.purpose, o.rfc].join(tab),
-      );
+      buf.writeln(<String>['${o.code}', o.name, o.purpose, o.rfc].join(tab));
     }
     buf
       ..writeln()
       ..writeln('Option 53: DHCP message types')
       ..writeln(<String>['Value', 'Message', 'Role'].join(tab));
     for (final DhcpMessageType m in messageTypes) {
-      buf.writeln(
-        <String>['${m.value}', m.message, m.role].join(tab),
-      );
+      buf.writeln(<String>['${m.value}', m.message, m.role].join(tab));
     }
     return buf.toString().trimRight();
   }
@@ -451,10 +442,7 @@ class DhcpOptionsScreen extends StatelessWidget {
       ),
       rows: messageTypes.map((DhcpMessageType m) {
         return ReferenceRowSemantics(
-          label: rowLabel('Value ${m.value}', <String?>[
-            m.message,
-            m.role,
-          ]),
+          label: rowLabel('Value ${m.value}', <String?>[m.message, m.role]),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(

@@ -38,18 +38,18 @@ class DisciplineDesignator {
 /// second-letter rule are carried in the section captions.
 const List<DisciplineDesignator> kDisciplineDesignators =
     <DisciplineDesignator>[
-  DisciplineDesignator(letter: 'G', discipline: 'General'),
-  DisciplineDesignator(letter: 'C', discipline: 'Civil'),
-  DisciplineDesignator(letter: 'L', discipline: 'Landscape'),
-  DisciplineDesignator(letter: 'S', discipline: 'Structural'),
-  DisciplineDesignator(letter: 'A', discipline: 'Architectural'),
-  DisciplineDesignator(letter: 'I', discipline: 'Interiors'),
-  DisciplineDesignator(letter: 'F', discipline: 'Fire Protection'),
-  DisciplineDesignator(letter: 'P', discipline: 'Plumbing'),
-  DisciplineDesignator(letter: 'M', discipline: 'Mechanical'),
-  DisciplineDesignator(letter: 'E', discipline: 'Electrical'),
-  DisciplineDesignator(letter: 'T', discipline: 'Telecommunications'),
-];
+      DisciplineDesignator(letter: 'G', discipline: 'General'),
+      DisciplineDesignator(letter: 'C', discipline: 'Civil'),
+      DisciplineDesignator(letter: 'L', discipline: 'Landscape'),
+      DisciplineDesignator(letter: 'S', discipline: 'Structural'),
+      DisciplineDesignator(letter: 'A', discipline: 'Architectural'),
+      DisciplineDesignator(letter: 'I', discipline: 'Interiors'),
+      DisciplineDesignator(letter: 'F', discipline: 'Fire Protection'),
+      DisciplineDesignator(letter: 'P', discipline: 'Plumbing'),
+      DisciplineDesignator(letter: 'M', discipline: 'Mechanical'),
+      DisciplineDesignator(letter: 'E', discipline: 'Electrical'),
+      DisciplineDesignator(letter: 'T', discipline: 'Telecommunications'),
+    ];
 
 /// One sheet-type digit: the digit that follows the discipline letter and the
 /// kind of drawing it names. [digit] is the code (e.g. `1`); [meaning] is the

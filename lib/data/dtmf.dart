@@ -143,11 +143,11 @@ class Dtmf {
     final BytesBuilder b = BytesBuilder();
     void writeString(String s) => b.add(s.codeUnits);
     void writeUint32(int v) => b.add(<int>[
-          v & 0xFF,
-          (v >> 8) & 0xFF,
-          (v >> 16) & 0xFF,
-          (v >> 24) & 0xFF,
-        ]);
+      v & 0xFF,
+      (v >> 8) & 0xFF,
+      (v >> 16) & 0xFF,
+      (v >> 24) & 0xFF,
+    ]);
     void writeUint16(int v) => b.add(<int>[v & 0xFF, (v >> 8) & 0xFF]);
 
     // RIFF header.

@@ -214,13 +214,13 @@ class SignalingTones {
 
   /// Build a two-frequency MF signal with the standard 100 ms burst.
   static SignalingTone _mf(String label, double a, double b) => SignalingTone(
-        label: label,
-        family: SignalingFamily.blueBox,
-        lowHz: a,
-        highHz: b,
-        burstMs: SignalingTones.mfBurstMs,
-        description: 'MF routing digit $label ($a + $b Hz).',
-      );
+    label: label,
+    family: SignalingFamily.blueBox,
+    lowHz: a,
+    highHz: b,
+    burstMs: SignalingTones.mfBurstMs,
+    description: 'MF routing digit $label ($a + $b Hz).',
+  );
 
   /// Synthesize the raw 16-bit signed little-endian mono PCM for [tone]: each
   /// burst is [tone.burstMs] of the (one- or two-) sine sum with a 5 ms
@@ -232,15 +232,15 @@ class SignalingTones {
   }) {
     final int burstSamples = (sampleRate * tone.burstMs / 1000).round();
     final int gapSamples = (sampleRate * tone.gapMs / 1000).round();
-    final int total = tone.bursts * burstSamples +
+    final int total =
+        tone.bursts * burstSamples +
         (tone.bursts - 1).clamp(0, tone.bursts) * gapSamples;
 
     final Int16List out = Int16List(total);
 
     final double twoPiLow = 2 * math.pi * tone.lowHz / sampleRate;
     final double? high = tone.highHz;
-    final double twoPiHigh =
-        high == null ? 0 : 2 * math.pi * high / sampleRate;
+    final double twoPiHigh = high == null ? 0 : 2 * math.pi * high / sampleRate;
     // Single tone uses full 0.95 amplitude; a two-tone sum uses 0.5 + 0.5 so
     // the sum never clips — same headroom rule as the DTMF synth.
     final double amp = tone.isSingleFrequency ? 0.95 : 0.5;

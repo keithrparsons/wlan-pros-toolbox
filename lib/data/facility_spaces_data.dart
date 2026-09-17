@@ -85,7 +85,8 @@ const List<TelecomSpaceRow> kTelecomSpaces = <TelecomSpaceRow>[
   ),
   TelecomSpaceRow(
     term: 'Data closet',
-    whatItIs: 'Informal catch-all for any TR or IDF. Not a standard term at all.',
+    whatItIs:
+        'Informal catch-all for any TR or IDF. Not a standard term at all.',
     standardOrField: 'Slang',
   ),
 ];

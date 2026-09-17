@@ -335,9 +335,7 @@ class CableBendRadiusScreen extends StatelessWidget {
         // §8.16 — copy the whole page as sectioned TSV: bend radius (copper +
         // fiber), pull tension, and related install limits. Static data, always
         // enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -355,9 +353,7 @@ class CableBendRadiusScreen extends StatelessWidget {
       ..writeln(leadNote)
       ..writeln()
       ..writeln('Minimum bend radius: copper UTP')
-      ..writeln(
-        <String>['Condition', 'Limit', 'Basis'].join(tab),
-      );
+      ..writeln(<String>['Condition', 'Limit', 'Basis'].join(tab));
     for (final BendLimit b in copperBend) {
       buf.writeln(<String>[b.condition, b.limit, b.source].join(tab));
     }
@@ -366,9 +362,7 @@ class CableBendRadiusScreen extends StatelessWidget {
       ..writeln(kinkNote)
       ..writeln()
       ..writeln('Minimum bend radius: fiber')
-      ..writeln(
-        <String>['Condition', 'Limit', 'Basis'].join(tab),
-      );
+      ..writeln(<String>['Condition', 'Limit', 'Basis'].join(tab));
     for (final BendLimit b in fiberBend) {
       buf.writeln(<String>[b.condition, b.limit, b.source].join(tab));
     }
@@ -377,9 +371,7 @@ class CableBendRadiusScreen extends StatelessWidget {
       ..writeln(fiberDatasheetNote)
       ..writeln()
       ..writeln('Maximum pull tension')
-      ..writeln(
-        <String>['Cable', 'Max pull tension', 'Basis'].join(tab),
-      );
+      ..writeln(<String>['Cable', 'Max pull tension', 'Basis'].join(tab));
     for (final InstallLimit l in pullTension) {
       buf.writeln(<String>[l.name, l.value, l.source].join(tab));
     }
@@ -390,9 +382,7 @@ class CableBendRadiusScreen extends StatelessWidget {
       ..writeln(pullFiberNote)
       ..writeln()
       ..writeln('Related install limits')
-      ..writeln(
-        <String>['Limit', 'Value', 'Basis'].join(tab),
-      );
+      ..writeln(<String>['Limit', 'Value', 'Basis'].join(tab));
     for (final InstallLimit l in installLimits) {
       buf.writeln(<String>[l.name, l.value, l.source].join(tab));
     }
@@ -453,8 +443,7 @@ class CableBendRadiusScreen extends StatelessWidget {
                   _LimitCard(
                     heading: 'Copper UTP',
                     rows: <Widget>[
-                      for (final BendLimit b in copperBend)
-                        _BendRow(limit: b),
+                      for (final BendLimit b in copperBend) _BendRow(limit: b),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -649,9 +638,7 @@ class _BendRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     limit.condition,
-                    style: text.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -722,9 +709,7 @@ class _InstallRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     limit.name,
-                    style: text.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -736,7 +721,9 @@ class _InstallRow extends StatelessWidget {
                       // The TIA pull-tension number is the page's headline value;
                       // accent it. Practice rows read at primary ink so the accent
                       // stays reserved for the standards.
-                      color: isStandard ? colors.textAccent : colors.textPrimary,
+                      color: isStandard
+                          ? colors.textAccent
+                          : colors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -805,11 +792,7 @@ class _CaveatText extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            Icons.info_outline,
-            size: 24,
-            color: colors.textAccent,
-          ),
+          Icon(Icons.info_outline, size: 24, color: colors.textAccent),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(

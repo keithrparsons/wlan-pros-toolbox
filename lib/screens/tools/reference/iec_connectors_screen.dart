@@ -185,11 +185,7 @@ class IecConnectorsScreen extends StatelessWidget {
   /// IEC 60309 industrial connectors, keyed by color = voltage band, in render
   /// order. Verified against the research brief (Topic 3).
   static const List<IecIndustrial> industrial = <IecIndustrial>[
-    IecIndustrial(
-      color: 'Violet',
-      voltage: '20-25V',
-      use: '24V circuits',
-    ),
+    IecIndustrial(color: 'Violet', voltage: '20-25V', use: '24V circuits'),
     IecIndustrial(
       color: 'White',
       voltage: '40-50V',
@@ -263,9 +259,7 @@ class IecConnectorsScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the whole page as sectioned TSV: the IEC 60320 couplers,
         // then the IEC 60309 industrial bands. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -293,13 +287,7 @@ class IecConnectorsScreen extends StatelessWidget {
       );
     for (final IecCoupler c in couplers) {
       buf.writeln(
-        <String>[
-          c.pair,
-          c.current,
-          c.maxTemp,
-          c.nickname,
-          c.use,
-        ].join(tab),
+        <String>[c.pair, c.current, c.maxTemp, c.nickname, c.use].join(tab),
       );
     }
     buf
@@ -309,13 +297,9 @@ class IecConnectorsScreen extends StatelessWidget {
       ..writeln(couplerFootnote)
       ..writeln()
       ..writeln('IEC 60309 industrial connectors')
-      ..writeln(
-        <String>['Color', 'Voltage', 'Typical use'].join(tab),
-      );
+      ..writeln(<String>['Color', 'Voltage', 'Typical use'].join(tab));
     for (final IecIndustrial i in industrial) {
-      buf.writeln(
-        <String>[i.color, i.voltage, i.use].join(tab),
-      );
+      buf.writeln(<String>[i.color, i.voltage, i.use].join(tab));
     }
     buf
       ..writeln()
@@ -364,7 +348,11 @@ class IecConnectorsScreen extends StatelessWidget {
                       title: c.pair,
                       subtitle: c.nickname == '-' ? null : c.nickname,
                       specs: <FaceSpec>[
-                        FaceSpec(label: 'Current', value: c.current, accent: true),
+                        FaceSpec(
+                          label: 'Current',
+                          value: c.current,
+                          accent: true,
+                        ),
                         FaceSpec(
                           label: 'Max temp',
                           value: c.maxTemp,

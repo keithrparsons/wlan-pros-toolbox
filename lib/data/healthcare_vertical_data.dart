@@ -80,7 +80,8 @@ const List<HealthcareAuthority> kHealthcareAuthorities = <HealthcareAuthority>[
   ),
   HealthcareAuthority(
     authority: 'Clinical and biomedical engineering (in-house)',
-    governs: 'The medical devices, their EMC posture, and the telemetry systems',
+    governs:
+        'The medical devices, their EMC posture, and the telemetry systems',
     yourMove:
         'The single most important handoff: coordinate with biomed before '
         'touching a clinical RF environment',

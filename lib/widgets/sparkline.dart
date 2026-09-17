@@ -71,8 +71,7 @@ class Sparkline extends StatelessWidget {
           height: height,
           width: double.infinity,
           child: CustomPaint(
-            painter:
-                _SparklinePainter(values: values, lineColor: resolvedLine),
+            painter: _SparklinePainter(values: values, lineColor: resolvedLine),
           ),
         ),
       ),

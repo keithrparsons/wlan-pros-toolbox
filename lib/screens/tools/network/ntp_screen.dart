@@ -43,8 +43,9 @@ class NtpScreen extends StatefulWidget {
 
 class _NtpScreenState extends State<NtpScreen> {
   late final NtpService _service;
-  final TextEditingController _serverCtrl =
-      TextEditingController(text: kDefaultNtpServer);
+  final TextEditingController _serverCtrl = TextEditingController(
+    text: kDefaultNtpServer,
+  );
   final FocusNode _serverFocus = FocusNode();
 
   bool _loading = false;
@@ -113,9 +114,7 @@ class _NtpScreenState extends State<NtpScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a reading
         // resolves; copies a plain-text report including the offset verdict WORD
         // (the on-screen color is the carrier on screen; the word in the text).
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -142,7 +141,8 @@ class _NtpScreenState extends State<NtpScreen> {
       ..writeln('Server time (local): ${_fmtLocal(r.serverUtc.toLocal())}')
       ..writeln('Your device time: ${_fmtLocal(r.deviceTime.toLocal())}')
       ..writeln(
-          'Clock offset: ${_signedMs(r.offsetMs)} (${_offsetVerdict(r.offsetMs).word})')
+        'Clock offset: ${_signedMs(r.offsetMs)} (${_offsetVerdict(r.offsetMs).word})',
+      )
       ..writeln('Round-trip delay: ${r.delayMs} ms');
     return buf.toString().trimRight();
   }
@@ -215,17 +215,13 @@ class _NtpScreenState extends State<NtpScreen> {
               onSubmitted: (_) => _run(),
               onChanged: (_) => setState(() {}),
               cursorColor: colors.textAccent,
-              decoration: const InputDecoration(
-                hintText: kDefaultNtpServer,
-              ),
+              decoration: const InputDecoration(hintText: kDefaultNtpServer),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: _loading ? null : _run,
-            child: _loading
-                ? const _ButtonSpinner()
-                : const Text('Check time'),
+            child: _loading ? const _ButtonSpinner() : const Text('Check time'),
           ),
           // One-tap switch to the documented public fallback. Hidden once the
           // field already holds it.
@@ -274,8 +270,9 @@ class _NtpScreenState extends State<NtpScreen> {
     // Behind/ahead wording + heads-up vs issue by magnitude. >2 s is a real
     // problem (TLS, Kerberos, 802.1X EAP can all break); <=2 s is a heads-up.
     final String dir = offsetMs > 0 ? 'behind' : 'ahead';
-    final StatusChipKind kind =
-        mag > 2000 ? StatusChipKind.issue : StatusChipKind.headsUp;
+    final StatusChipKind kind = mag > 2000
+        ? StatusChipKind.issue
+        : StatusChipKind.headsUp;
     return _OffsetVerdict(
       kind: kind,
       word: 'Your clock is ${_humanMs(mag)} $dir',
@@ -339,10 +336,7 @@ class _ButtonSpinner extends StatelessWidget {
     return SizedBox(
       width: 20,
       height: 20,
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        color: colors.onPrimary,
-      ),
+      child: CircularProgressIndicator(strokeWidth: 2, color: colors.onPrimary),
     );
   }
 }
@@ -408,10 +402,7 @@ class _ReadingCard extends StatelessWidget {
             signed: _NtpScreenState._signedMs(r.offsetMs),
             verdict: verdict,
           ),
-          _NumericRow(
-            label: 'Round-trip delay',
-            value: '${r.delayMs} ms',
-          ),
+          _NumericRow(label: 'Round-trip delay', value: '${r.delayMs} ms'),
         ],
       ),
     );
@@ -560,8 +551,7 @@ class _OffsetRow extends StatelessWidget {
               width: 140,
               child: Text(
                 'Clock offset',
-                style:
-                    text.labelMedium?.copyWith(color: colors.textSecondary),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             Expanded(
@@ -628,9 +618,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

@@ -92,11 +92,10 @@ class ToolHelpFooter extends StatelessWidget {
     // §8.16.1 label style: --text-body (16px) / IBM Plex Sans 500 / leading 1.45
     // / --app-text-secondary. §8.20.3-A bumps labels/captions one step in light
     // for projector legibility (500 → 600).
-    final TextStyle labelStyle =
-        (text.bodyLarge ?? const TextStyle()).copyWith(
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-          color: colors.textSecondary,
-        );
+    final TextStyle labelStyle = (text.bodyLarge ?? const TextStyle()).copyWith(
+      fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
+      color: colors.textSecondary,
+    );
 
     return Padding(
       // §8.16.1 "Spacing above": --space-lg (32px) between the last content
@@ -116,10 +115,7 @@ class ToolHelpFooter extends StatelessWidget {
           // children are excluded so the row reads as a single control.
           button: true,
           label: 'About this tool',
-          child: _FooterButton(
-            onTap: onActivate,
-            labelStyle: labelStyle,
-          ),
+          child: _FooterButton(onTap: onActivate, labelStyle: labelStyle),
         ),
       ),
     );
@@ -206,27 +202,16 @@ class _FooterButtonState extends State<_FooterButton> {
               // §8.16.1 leading icon: Icons.help_outline, 24px (--app-icon-nav),
               // --app-text-secondary — the same glyph + idle treatment it carried
               // in the AppBar, so it reads as a sibling to the copy glyph.
-              Icon(
-                Icons.help_outline,
-                size: 24,
-                color: colors.textSecondary,
-              ),
+              Icon(Icons.help_outline, size: 24, color: colors.textSecondary),
               // §8.16.1 icon → label gap: --space-xs (8px).
               const SizedBox(width: AppSpacing.xs),
               Expanded(
-                child: Text(
-                  'About this tool',
-                  style: widget.labelStyle,
-                ),
+                child: Text('About this tool', style: widget.labelStyle),
               ),
               // §8.16.1 optional trailing chevron: Icons.chevron_right, 24px,
               // --app-text-tertiary. Included as the disclosure cue because the
               // footer opens a bottom sheet (help is not expanded in place).
-              Icon(
-                Icons.chevron_right,
-                size: 24,
-                color: colors.textTertiary,
-              ),
+              Icon(Icons.chevron_right, size: 24, color: colors.textTertiary),
             ],
           ),
         ),

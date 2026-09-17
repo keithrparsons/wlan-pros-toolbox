@@ -64,6 +64,15 @@ final class ApScanChannel: NSObject {
   /// second CoreWLAN scans on top of each other.
   private let scanQueue = DispatchQueue(label: "com.wlanpros.toolbox.apscan")
 
+  /// Joins run on their OWN queue, not the scan queue.
+  ///
+  /// A join blocks for roughly as long as a scan does: measured on this bench
+  /// 2026-09-17, `networksetup` took 19 s out and 16 s back between two real
+  /// SSIDs. Sharing the scan queue would make a join wait behind a scan that
+  /// the user cannot see and did not ask for, and the screen would look frozen
+  /// for the sum of the two rather than either.
+  private let joinQueue = DispatchQueue(label: "com.wlanpros.toolbox.apjoin")
+
   /// When the last FRESH scan completed. Drives the self-imposed rate limit.
   /// Read and written on the main thread only.
   private var lastFreshScanAt: Date?
@@ -104,11 +113,99 @@ final class ApScanChannel: NSObject {
       result(cachedSnapshot(scanThrottled: false))
     case "isLocationAuthorized":
       result(isLocationAuthorized())
+    case "join":
+      let args = call.arguments as? [String: Any]
+      join(ssid: args?["ssid"] as? String,
+           password: args?["password"] as? String,
+           result: result)
+    case "disconnect":
+      disconnect(result: result)
     default:
       // Permission GRANT and the Settings deep link live on the wifi_info
       // channel (see the class note); the Dart service routes them there on
       // macOS rather than duplicating the flow here.
       result(FlutterMethodNotImplemented)
+    }
+  }
+
+  // MARK: - Joining
+
+  /// Associates THIS Mac to `ssid`, blocking off the main thread.
+  ///
+  /// MEASURED, NOT ASSUMED: macOS does NOT prompt for an administrator password
+  /// for this. Keith watched a `networksetup` join on 2026-09-17 and saw no
+  /// dialog in either direction. An earlier note in the Dart layer claimed it
+  /// "may demand an administrator password"; that was wrong and copy warning
+  /// users about a prompt was written and then deleted on the strength of this
+  /// test. CoreWLAN from a SANDBOXED app is a different path from the CLI, so
+  /// if a prompt ever does appear, it appears HERE and this note is the place
+  /// to record it.
+  ///
+  /// THREADING is the same rule the scan documents: `associate` blocks for
+  /// seconds, so it runs on `joinQueue` and the FlutterResult is delivered back
+  /// on the main thread. The handler returns immediately.
+  ///
+  /// RETURNS whether the Mac ended up associated, NOT whether the call
+  /// returned. `associate` throwing is a clear failure, but a silent return is
+  /// not by itself proof of success, so the SSID is read back afterwards. The
+  /// Windows side learned this the hard way: WlanConnect returns success for a
+  /// network that does not exist.
+  private func join(ssid: String?, password: String?, result: @escaping FlutterResult) {
+    guard let ssid = ssid, !ssid.isEmpty else {
+      result(FlutterError(code: "no_ssid",
+                          message: "A network name is required.",
+                          details: nil))
+      return
+    }
+    joinQueue.async {
+      guard let iface = CWWiFiClient.shared().interface() else {
+        DispatchQueue.main.async {
+          result(FlutterError(code: "no_interface",
+                              message: "This Mac has no Wi-Fi interface.",
+                              details: nil))
+        }
+        return
+      }
+      do {
+        // Find the BSS by name first. `associate` needs a CWNetwork, and
+        // scanning by name is narrower and faster than a full scan.
+        let found = try iface.scanForNetworks(withName: ssid)
+        guard let network = found.first else {
+          DispatchQueue.main.async {
+            result(["connected": false,
+                    "ssid": ssid,
+                    "reason": "That network was not found nearby."])
+          }
+          return
+        }
+        try iface.associate(to: network, password: password)
+        // Read back rather than trust the call. An empty or different SSID here
+        // means the association did not take, whatever associate() returned.
+        let now = CWWiFiClient.shared().interface()?.ssid()
+        let ok = (now == ssid)
+        DispatchQueue.main.async {
+          result(["connected": ok,
+                  "ssid": ssid,
+                  "reason": ok ? nil
+                               : "The join did not complete. The usual cause is a wrong password."])
+        }
+      } catch {
+        DispatchQueue.main.async {
+          result(["connected": false,
+                  "ssid": ssid,
+                  "reason": error.localizedDescription])
+        }
+      }
+    }
+  }
+
+  /// Leaves the current network. Returns immediately; disassociation is local.
+  private func disconnect(result: @escaping FlutterResult) {
+    joinQueue.async {
+      CWWiFiClient.shared().interface()?.disassociate()
+      DispatchQueue.main.async {
+        result(["connected": false, "ssid": nil, "reason": nil])
+      }
     }
   }
 

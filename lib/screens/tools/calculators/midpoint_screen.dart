@@ -108,7 +108,8 @@ class _MidpointScreenState extends State<MidpointScreen> {
 
   // Signed decimal — coordinates carry a sign (S / W are negative). No
   // scientific notation; humans type plain decimal degrees by hand.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -163,9 +164,7 @@ class _MidpointScreenState extends State<MidpointScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until all four
         // coordinates are valid (no midpoint); copies the great-circle midpoint
         // as a labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,

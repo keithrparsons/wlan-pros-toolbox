@@ -133,8 +133,9 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       _piError = null;
     });
     try {
-      final BgpAsnResult result =
-          await PiBackendClient().bgpAsn(query: _queryCtrl.text.trim());
+      final BgpAsnResult result = await PiBackendClient().bgpAsn(
+        query: _queryCtrl.text.trim(),
+      );
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -173,9 +174,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until routing data
         // is retrieved; copies the ASN/holder/prefix/registry fields as a
         // labeled text block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -503,16 +502,8 @@ class _ResultCard extends StatelessWidget {
             identifier: true,
             absentLabel: _absent,
           ),
-          ValueRow(
-            label: 'Registry',
-            value: r.registry,
-            absentLabel: _absent,
-          ),
-          ValueRow(
-            label: 'AS type',
-            value: r.asnType,
-            absentLabel: _absent,
-          ),
+          ValueRow(label: 'Registry', value: r.registry, absentLabel: _absent),
+          ValueRow(label: 'AS type', value: r.asnType, absentLabel: _absent),
           ValueRow(
             label: 'In routing table',
             value: r.isAnnounced == null
@@ -593,9 +584,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

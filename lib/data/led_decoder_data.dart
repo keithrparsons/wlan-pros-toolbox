@@ -375,8 +375,7 @@ const List<LedVendor> kLedVendors = <LedVendor>[
         extraNote:
             'Bonus: blinking green = site-survey mode; "run dark" mode = LED '
             'off (dashboard-configurable).',
-        source:
-            'MR46 Installation Guide and the Meraki factory-reset doc.',
+        source: 'MR46 Installation Guide and the Meraki factory-reset doc.',
         rows: <LedStateRow>[
           LedStateRow(
             state: 'Booting',
@@ -445,7 +444,8 @@ const List<LedVendor> kLedVendors = <LedVendor>[
             indicators: <LedIndicator>[
               LedIndicator(LedColor.none, LedBlink.flashing),
             ],
-            signal: 'Dashboard "blink LED" action; no distinct documented color',
+            signal:
+                'Dashboard "blink LED" action; no distinct documented color',
             meaning: 'Locate mode',
             confidence: LedConfidence.confirmed,
           ),
@@ -652,7 +652,8 @@ const List<LedVendor> kLedVendors = <LedVendor>[
             indicators: <LedIndicator>[
               LedIndicator(LedColor.red, LedBlink.solid),
             ],
-            signal: 'Red = system error condition, immediate attention required',
+            signal:
+                'Red = system error condition, immediate attention required',
             meaning: 'Fault',
             confidence: LedConfidence.confirmed,
           ),
@@ -795,7 +796,8 @@ const List<LedVendor> kLedVendors = <LedVendor>[
               LedIndicator(LedColor.amber, LedBlink.solid),
             ],
             signal: 'Solid amber',
-            meaning: 'Booting, or running without a CAPWAP connection to Cloud IQ',
+            meaning:
+                'Booting, or running without a CAPWAP connection to Cloud IQ',
             confidence: LedConfidence.confirmed,
           ),
           LedStateRow(
@@ -949,8 +951,7 @@ const List<LedVendor> kLedVendors = <LedVendor>[
         blurb:
             'Single scheme, standardized white and blue across the UniFi line. '
             'Anchored to the official Help Center.',
-        source:
-            'help.ui.com "Understanding Device LED Status Indicators".',
+        source: 'help.ui.com "Understanding Device LED Status Indicators".',
         rows: <LedStateRow>[
           LedStateRow(
             state: 'Booting / init',

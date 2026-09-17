@@ -138,10 +138,7 @@ class _ToolRowState extends State<ToolRow> {
                 Expanded(child: _content(text, live)),
                 if (live)
                   Padding(
-                    padding: const EdgeInsets.only(
-                      left: AppSpacing.xs,
-                      top: 2,
-                    ),
+                    padding: const EdgeInsets.only(left: AppSpacing.xs, top: 2),
                     child: Icon(
                       Icons.chevron_right,
                       color: colors.textTertiary,
@@ -290,10 +287,7 @@ class _ToolRowState extends State<ToolRow> {
         spans.add(TextSpan(text: source.substring(start, idx), style: base));
       }
       spans.add(
-        TextSpan(
-          text: source.substring(idx, idx + query.length),
-          style: hit,
-        ),
+        TextSpan(text: source.substring(idx, idx + query.length), style: hit),
       );
       start = idx + query.length;
     }
@@ -306,9 +300,11 @@ class _ToolRowState extends State<ToolRow> {
     b.write('. ');
     if (!_live) b.write('Coming soon. ');
     if (_live && _webUnavailable) {
-      b.write(_unavailableReason == ToolUnavailableReason.needsWlanPi
-          ? 'Needs a WLAN Pi. '
-          : 'Not available on the web. ');
+      b.write(
+        _unavailableReason == ToolUnavailableReason.needsWlanPi
+            ? 'Needs a WLAN Pi. '
+            : 'Not available on the web. ',
+      );
     }
     if (widget.categorySourceLabel != null) {
       b.write('In ${widget.categorySourceLabel}. ');
@@ -345,15 +341,17 @@ class _LeadingIcon extends StatelessWidget {
     // LIGHT live row → lime knockout chip (vivid lime fill + charcoal glyph).
     // DARK (or non-live) → the original surface-2 tile + foreground tint, byte
     // for byte unchanged.
-    final Color tileFill =
-        (light && live) ? colors.primary : colors.surface2;
-    final double tileRadius =
-        (light && live) ? AppRadius.card : AppRadius.control;
+    final Color tileFill = (light && live) ? colors.primary : colors.surface2;
+    final double tileRadius = (light && live)
+        ? AppRadius.card
+        : AppRadius.control;
     // Glyph tint: charcoal #30302F knocked out of the lime chip on light;
     // brand-lime #A1CC3A foreground on the dark surface-2 tile (textAccent
     // resolves to lime in dark, darkened-lime in light — but on light the live
     // glyph rides the lime fill as onPrimary, so it never uses the olive).
-    final Color iconTint = (light && live) ? colors.onPrimary : colors.textAccent;
+    final Color iconTint = (light && live)
+        ? colors.onPrimary
+        : colors.textAccent;
 
     return Container(
       width: 40,
@@ -374,10 +372,7 @@ class _LeadingIcon extends StatelessWidget {
               ToolAssets.iconPath(tool.id),
               width: 20,
               height: 20,
-              colorFilter: ColorFilter.mode(
-                iconTint,
-                BlendMode.srcIn,
-              ),
+              colorFilter: ColorFilter.mode(iconTint, BlendMode.srcIn),
               excludeFromSemantics: true,
               placeholderBuilder: (_) => const SizedBox.shrink(),
             )

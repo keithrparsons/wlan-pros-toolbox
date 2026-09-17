@@ -57,12 +57,13 @@ class GraphicPdfDownload extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton.icon(
-        onPressed: () => onShare(
-          assetPath: assetPath,
-          title: title,
-          shareOrigin: null,
+        onPressed: () =>
+            onShare(assetPath: assetPath, title: title, shareOrigin: null),
+        icon: Icon(
+          Icons.download_outlined,
+          size: 20,
+          color: colors.textSecondary,
         ),
-        icon: Icon(Icons.download_outlined, size: 20, color: colors.textSecondary),
         label: Text(
           'Download PDF',
           style: TextStyle(color: colors.textSecondary),

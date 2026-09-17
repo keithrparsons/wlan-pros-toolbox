@@ -102,8 +102,7 @@ class DnsRecordTypesScreen extends StatelessWidget {
     DnsRecordType(
       type: 'TXT',
       code: 16,
-      purpose:
-          'Holds arbitrary text; carries SPF, DKIM, domain verification.',
+      purpose: 'Holds arbitrary text; carries SPF, DKIM, domain verification.',
       rfc: 'RFC 1035',
     ),
     DnsRecordType(
@@ -199,9 +198,7 @@ class DnsRecordTypesScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the reference as one-section TSV. Static data, always
         // enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -217,9 +214,7 @@ class DnsRecordTypesScreen extends StatelessWidget {
       ..writeln()
       ..writeln(<String>['Type', 'Code', 'Purpose', 'RFC'].join(tab));
     for (final DnsRecordType r in records) {
-      buf.writeln(
-        <String>['${r.code}', r.type, r.purpose, r.rfc].join(tab),
-      );
+      buf.writeln(<String>['${r.code}', r.type, r.purpose, r.rfc].join(tab));
     }
     return buf.toString().trimRight();
   }

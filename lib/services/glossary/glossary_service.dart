@@ -91,11 +91,11 @@ class GlossaryTerm {
     required this.definition,
     Map<String, String>? definitions,
   }) : definitions = Map<String, String>.unmodifiable(<String, String>{
-          // English is always present and authoritative; a `definitions.en`
-          // override is ignored in favor of the canonical `definition` field.
-          ...?definitions,
-          GlossaryLanguage.en.code: definition,
-        });
+         // English is always present and authoritative; a `definitions.en`
+         // override is ignored in favor of the canonical `definition` field.
+         ...?definitions,
+         GlossaryLanguage.en.code: definition,
+       });
 
   /// Stable identifier (kebab-case). Never renamed — backs tests.
   final String id;
@@ -142,16 +142,14 @@ class GlossaryTerm {
     final String term = _str(map['term']);
     final String category = _str(map['category']);
     final String definition = _str(map['definition']);
-    if (id.isEmpty ||
-        term.isEmpty ||
-        category.isEmpty ||
-        definition.isEmpty) {
+    if (id.isEmpty || term.isEmpty || category.isEmpty || definition.isEmpty) {
       return null;
     }
     // abbr is optional: a non-empty string, else null.
     final Object? rawAbbr = map['abbr'];
-    final String? abbr =
-        (rawAbbr is String && rawAbbr.trim().isNotEmpty) ? rawAbbr.trim() : null;
+    final String? abbr = (rawAbbr is String && rawAbbr.trim().isNotEmpty)
+        ? rawAbbr.trim()
+        : null;
 
     // definitions is optional: a map of {lang-code: text}. Only non-empty string
     // values for the four translated languages are kept; English is sourced from
@@ -220,11 +218,7 @@ class GlossaryService {
     if (t.isNotEmpty) title = t;
     final String source = GlossaryTerm._str(decoded['source']);
 
-    return GlossaryService.fromEntries(
-      entries,
-      title: title,
-      source: source,
-    );
+    return GlossaryService.fromEntries(entries, title: title, source: source);
   }
 
   final List<GlossaryTerm> _entries;
@@ -259,17 +253,17 @@ class GlossaryService {
   /// The Wi-Fi Authentication Glossary (English-only) returns `false`, so it
   /// renders without a picker that would otherwise promise translations it lacks.
   bool get hasTranslations => _entries.any(
-        (GlossaryTerm e) => GlossaryLanguage.translated.any(e.hasTranslation),
-      );
+    (GlossaryTerm e) => GlossaryLanguage.translated.any(e.hasTranslation),
+  );
 
   /// The languages this glossary can actually render: English plus any
   /// translated language for which at least one term carries text. Always leads
   /// with English. An English-only dataset returns just `[en]`.
   List<GlossaryLanguage> get availableLanguages => <GlossaryLanguage>[
-        GlossaryLanguage.en,
-        for (final GlossaryLanguage l in GlossaryLanguage.translated)
-          if (_entries.any((GlossaryTerm e) => e.hasTranslation(l))) l,
-      ];
+    GlossaryLanguage.en,
+    for (final GlossaryLanguage l in GlossaryLanguage.translated)
+      if (_entries.any((GlossaryTerm e) => e.hasTranslation(l))) l,
+  ];
 
   /// Parse the decoded asset document into a list of terms. Static + pure so the
   /// parse is unit-testable without constructing a service.

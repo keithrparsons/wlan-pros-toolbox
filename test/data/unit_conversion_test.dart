@@ -18,7 +18,10 @@ double _conv(UnitCategory cat, String from, String to, double v) =>
 void main() {
   group('Data transfer rate (decimal SI; networking convention)', () {
     test('1 Mbps = 1,000,000 bps (powers of 1000, not 1024)', () {
-      expect(_conv(UnitCategory.dataRate, 'mbps', 'bps', 1), closeTo(1e6, 1e-6));
+      expect(
+        _conv(UnitCategory.dataRate, 'mbps', 'bps', 1),
+        closeTo(1e6, 1e-6),
+      );
     });
     test('1 Gbps = 1000 Mbps', () {
       expect(
@@ -27,10 +30,7 @@ void main() {
       );
     });
     test('1 MB/s = 8 Mbps (byte-rate ×8)', () {
-      expect(
-        _conv(UnitCategory.dataRate, 'mBps', 'mbps', 1),
-        closeTo(8, 1e-9),
-      );
+      expect(_conv(UnitCategory.dataRate, 'mBps', 'mbps', 1), closeTo(8, 1e-9));
     });
     test('Ethernet preset 1000BASE-T = 1000 Mbps', () {
       expect(
@@ -96,16 +96,10 @@ void main() {
 
   group('Length (matches the metric-conversion factors)', () {
     test('1 mi = 1609.344 m', () {
-      expect(
-        _conv(UnitCategory.length, 'mi', 'm', 1),
-        closeTo(1609.344, 1e-9),
-      );
+      expect(_conv(UnitCategory.length, 'mi', 'm', 1), closeTo(1609.344, 1e-9));
     });
     test('1 ft = 0.3048 m', () {
-      expect(
-        _conv(UnitCategory.length, 'ft', 'm', 1),
-        closeTo(0.3048, 1e-12),
-      );
+      expect(_conv(UnitCategory.length, 'ft', 'm', 1), closeTo(0.3048, 1e-12));
     });
     test('1 nmi = 1852 m', () {
       expect(_conv(UnitCategory.length, 'nmi', 'm', 1), closeTo(1852, 1e-9));

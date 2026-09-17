@@ -194,9 +194,7 @@ class DbReferenceScreen extends StatelessWidget {
         title: const Text('dB Reference'),
         toolbarHeight: 64,
         // §8.16 — copy both reference tables as TSV. Static data, always on.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -441,9 +439,7 @@ class _RatioRow extends StatelessWidget {
                   width: 80,
                   child: Text(
                     ratio.powerRatio,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 Expanded(
@@ -460,9 +456,7 @@ class _RatioRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 ratio.note,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -517,9 +511,7 @@ class _DbmRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 ref.context,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

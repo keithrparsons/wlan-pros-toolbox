@@ -21,8 +21,11 @@ void main() {
     test('80 / 40 / 15 / 10 m General run 1500 W PEP, not 200 W', () {
       for (final String name in <String>['80 m', '40 m', '15 m', '10 m']) {
         final HamBand b = bandNamed(name);
-        expect(b.power, '1500 W PEP (Technician: 200 W)',
-            reason: '$name must be 1500 W PEP for General (Technician 200 W)');
+        expect(
+          b.power,
+          '1500 W PEP (Technician: 200 W)',
+          reason: '$name must be 1500 W PEP for General (Technician 200 W)',
+        );
       }
     });
 
@@ -74,8 +77,7 @@ void main() {
 
   group('Band membership: 2200/630 in, 9 cm out, no baud', () {
     test('2200 m and 630 m are present', () {
-      final Set<String> names =
-          kHamBandPlan.map((HamBand b) => b.band).toSet();
+      final Set<String> names = kHamBandPlan.map((HamBand b) => b.band).toSet();
       expect(names, containsAll(<String>['2200 m', '630 m']));
     });
 
@@ -83,11 +85,13 @@ void main() {
       expect(kHamBandPlan.any((HamBand b) => b.band == '9 cm'), isFalse);
     });
 
-    test('the 9 cm sunset note is conservative (no residual-usability claim)',
-        () {
-      expect(kHam9cmSunsetNote, contains('omitted'));
-      expect(kHam9cmSunsetNote, contains('does not overlap'));
-    });
+    test(
+      'the 9 cm sunset note is conservative (no residual-usability claim)',
+      () {
+        expect(kHam9cmSunsetNote, contains('omitted'));
+        expect(kHam9cmSunsetNote, contains('does not overlap'));
+      },
+    );
 
     test('the SHF bands cover 5 cm (Wi-Fi 5 GHz overlap) at 1500 W PEP', () {
       final HamBand b = bandNamed('5 cm');
@@ -145,8 +149,12 @@ void main() {
         kItuBands.firstWhere((ItuBandDesignation b) => b.designation == d);
 
     test('covers HF / VHF / UHF / SHF with the correct decade boundaries', () {
-      expect(kItuBands.map((ItuBandDesignation b) => b.designation),
-          <String>['HF', 'VHF', 'UHF', 'SHF']);
+      expect(kItuBands.map((ItuBandDesignation b) => b.designation), <String>[
+        'HF',
+        'VHF',
+        'UHF',
+        'SHF',
+      ]);
       expect(des('HF').frequency, '3-30 MHz');
       expect(des('VHF').frequency, '30-300 MHz');
       expect(des('UHF').frequency, '300 MHz-3 GHz');
@@ -156,11 +164,13 @@ void main() {
 
   group('Spectrum neighbors', () {
     test('include the VHF aviation airband and military UHF airband', () {
-      final SpectrumNeighbor air = kSpectrumNeighbors
-          .firstWhere((SpectrumNeighbor n) => n.service.contains('aviation'));
+      final SpectrumNeighbor air = kSpectrumNeighbors.firstWhere(
+        (SpectrumNeighbor n) => n.service.contains('aviation'),
+      );
       expect(air.allocation, contains('108-137 MHz'));
-      final SpectrumNeighbor mil = kSpectrumNeighbors
-          .firstWhere((SpectrumNeighbor n) => n.service.contains('Military'));
+      final SpectrumNeighbor mil = kSpectrumNeighbors.firstWhere(
+        (SpectrumNeighbor n) => n.service.contains('Military'),
+      );
       expect(mil.allocation, contains('225-400 MHz'));
     });
   });
@@ -208,12 +218,24 @@ void main() {
 
     test('features hamstudy.org, ARRL, FCC Part 97, and AREDN', () {
       expect(res('hamstudy.org').url, 'https://hamstudy.org');
-      expect(kHamStudyResources.any((HamStudyResource r) =>
-          r.title.contains('ARRL')), isTrue);
-      expect(kHamStudyResources.any((HamStudyResource r) =>
-          r.title.contains('Part 97')), isTrue);
-      expect(kHamStudyResources.any((HamStudyResource r) =>
-          r.title.contains('AREDN')), isTrue);
+      expect(
+        kHamStudyResources.any(
+          (HamStudyResource r) => r.title.contains('ARRL'),
+        ),
+        isTrue,
+      );
+      expect(
+        kHamStudyResources.any(
+          (HamStudyResource r) => r.title.contains('Part 97'),
+        ),
+        isTrue,
+      );
+      expect(
+        kHamStudyResources.any(
+          (HamStudyResource r) => r.title.contains('AREDN'),
+        ),
+        isTrue,
+      );
     });
 
     test('every resource with a link uses HTTPS (GL-008 browser hand-off)', () {
@@ -225,24 +247,28 @@ void main() {
     });
 
     test('exam structure: Technician 35/26, General 35/26, Extra 50/37', () {
-      final HamExamFact tech = kHamExamStructure
-          .firstWhere((HamExamFact f) => f.element.startsWith('Technician'));
+      final HamExamFact tech = kHamExamStructure.firstWhere(
+        (HamExamFact f) => f.element.startsWith('Technician'),
+      );
       expect(tech.questions, '35 questions');
       expect(tech.toPass, '26 correct to pass');
-      final HamExamFact extra = kHamExamStructure
-          .firstWhere((HamExamFact f) => f.element.startsWith('Amateur Extra'));
+      final HamExamFact extra = kHamExamStructure.firstWhere(
+        (HamExamFact f) => f.element.startsWith('Amateur Extra'),
+      );
       expect(extra.questions, '50 questions');
       expect(extra.toPass, '37 correct to pass');
     });
 
-    test('the pool caveat gives the stable structure but no hard pool count',
-        () {
-      expect(kHamPoolCaveat, contains('35 questions'));
-      expect(kHamPoolCaveat, contains('26 to pass'));
-      expect(kHamPoolCaveat.toLowerCase(), contains('rotate'));
-      // The 2026-2030 pool size (409) must never be hard-coded into the copy.
-      expect(kHamPoolCaveat, isNot(contains('409')));
-    });
+    test(
+      'the pool caveat gives the stable structure but no hard pool count',
+      () {
+        expect(kHamPoolCaveat, contains('35 questions'));
+        expect(kHamPoolCaveat, contains('26 to pass'));
+        expect(kHamPoolCaveat.toLowerCase(), contains('rotate'));
+        // The 2026-2030 pool size (409) must never be hard-coded into the copy.
+        expect(kHamPoolCaveat, isNot(contains('409')));
+      },
+    );
 
     test('the 60 m caveat names the 13 Feb 2026 change', () {
       expect(kHam60mCaveat, contains('13 Feb 2026'));

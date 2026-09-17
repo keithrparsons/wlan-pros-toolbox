@@ -111,7 +111,8 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
   final TextEditingController _vfCtrl = TextEditingController(text: '0.95');
   final FocusNode _vfFocus = FocusNode();
 
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -131,8 +132,7 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
     if (v == null || v <= 0) return null;
     switch (_mode) {
       case _InputMode.frequency:
-        final double mhz =
-            _freqUnit == AntennaFreqUnit.ghz ? v * 1000.0 : v;
+        final double mhz = _freqUnit == AntennaFreqUnit.ghz ? v * 1000.0 : v;
         return mhz > 0 ? mhz : null;
       case _InputMode.wavelength:
         // v is wavelength in meters; invert to frequency.
@@ -165,8 +165,10 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
     final StringBuffer b = StringBuffer()
       ..writeln('Antenna Length')
       ..writeln('Frequency: ${_fmt(f, 4)} MHz')
-      ..writeln('Wavelength (lambda): ${_fmt(lambda, 4)} m '
-          '(${_fmt(AntennaLengthScreen.metersToFeet(lambda), 3)} ft)');
+      ..writeln(
+        'Wavelength (lambda): ${_fmt(lambda, 4)} m '
+        '(${_fmt(AntennaLengthScreen.metersToFeet(lambda), 3)} ft)',
+      );
 
     if (vf == null) {
       b.writeln('Velocity factor: invalid (must be > 0 and <= 1)');
@@ -179,23 +181,35 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
     final double vertRuleFt = AntennaLengthScreen.quarterRuleOfThumbFeet(f);
 
     b
-      ..writeln('Velocity factor (VF): ${_fmt(vf, 3)} '
-          '(physical = electrical x VF)')
+      ..writeln(
+        'Velocity factor (VF): ${_fmt(vf, 3)} '
+        '(physical = electrical x VF)',
+      )
       ..writeln('Half-wave dipole (1/2 lambda):')
-      ..writeln('  Physical: ${_fmt(dipoleM, 4)} m / '
-          '${_fmt(AntennaLengthScreen.metersToFeet(dipoleM), 3)} ft / '
-          '${_fmt(AntennaLengthScreen.metersToInches(dipoleM), 2)} in')
-      ..writeln('  Rule of thumb 468/f: ${_fmt(dipoleRuleFt, 3)} ft '
-          '(${_fmt(AntennaLengthScreen.feetToMeters(dipoleRuleFt), 4)} m)')
+      ..writeln(
+        '  Physical: ${_fmt(dipoleM, 4)} m / '
+        '${_fmt(AntennaLengthScreen.metersToFeet(dipoleM), 3)} ft / '
+        '${_fmt(AntennaLengthScreen.metersToInches(dipoleM), 2)} in',
+      )
+      ..writeln(
+        '  Rule of thumb 468/f: ${_fmt(dipoleRuleFt, 3)} ft '
+        '(${_fmt(AntennaLengthScreen.feetToMeters(dipoleRuleFt), 4)} m)',
+      )
       ..writeln('Quarter-wave vertical (1/4 lambda):')
-      ..writeln('  Physical: ${_fmt(vertM, 4)} m / '
-          '${_fmt(AntennaLengthScreen.metersToFeet(vertM), 3)} ft / '
-          '${_fmt(AntennaLengthScreen.metersToInches(vertM), 2)} in')
-      ..writeln('  Rule of thumb 234/f: ${_fmt(vertRuleFt, 3)} ft '
-          '(${_fmt(AntennaLengthScreen.feetToMeters(vertRuleFt), 4)} m)')
+      ..writeln(
+        '  Physical: ${_fmt(vertM, 4)} m / '
+        '${_fmt(AntennaLengthScreen.metersToFeet(vertM), 3)} ft / '
+        '${_fmt(AntennaLengthScreen.metersToInches(vertM), 2)} in',
+      )
+      ..writeln(
+        '  Rule of thumb 234/f: ${_fmt(vertRuleFt, 3)} ft '
+        '(${_fmt(AntennaLengthScreen.feetToMeters(vertRuleFt), 4)} m)',
+      )
       ..writeln()
-      ..writeln('c = 299.792458 (exact). Physical length = electrical '
-          'length x velocity factor.');
+      ..writeln(
+        'c = 299.792458 (exact). Physical length = electrical '
+        'length x velocity factor.',
+      );
     return b.toString().trimRight();
   }
 
@@ -304,8 +318,7 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
                   (AntennaFreqUnit.mhz, 'MHz'),
                   (AntennaFreqUnit.ghz, 'GHz'),
                 ],
-                onChanged: (AntennaFreqUnit u) =>
-                    setState(() => _freqUnit = u),
+                onChanged: (AntennaFreqUnit u) => setState(() => _freqUnit = u),
               ),
             )
           else
@@ -379,9 +392,9 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
           child: Text(
             _mode == _InputMode.frequency
                 ? 'Enter a frequency to get the wavelength and the half-wave '
-                    'and quarter-wave antenna lengths.'
+                      'and quarter-wave antenna lengths.'
                 : 'Enter a wavelength in meters to get the frequency and the '
-                    'half-wave and quarter-wave antenna lengths.',
+                      'half-wave and quarter-wave antenna lengths.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ),
@@ -403,8 +416,9 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
                 'Velocity factor out of range',
                 style: text.labelMedium?.copyWith(
                   color: colors.statusWarning,
-                  fontWeight:
-                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                  fontWeight: colors.isLight
+                      ? FontWeight.w700
+                      : FontWeight.w600,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -412,8 +426,7 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
               Text(
                 'Enter a velocity factor greater than 0 and at most 1 '
                 '(0.95 for thin bare wire) to size the antenna elements.',
-                style:
-                    text.bodySmall?.copyWith(color: colors.textSecondary),
+                style: text.bodySmall?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -424,8 +437,7 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
           mono,
           title: 'Half-wave dipole',
           fraction: '1/2 lambda',
-          physicalM:
-              AntennaLengthScreen.halfWaveDipoleMeters(lambda, vf),
+          physicalM: AntennaLengthScreen.halfWaveDipoleMeters(lambda, vf),
           ruleFeet: AntennaLengthScreen.dipoleRuleOfThumbFeet(f),
           ruleLabel: '468 / f',
           vf: vf,
@@ -473,19 +485,24 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'm',
-                  style: text.labelLarge?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.labelLarge?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _row(text, mono,
-              label: 'Wavelength',
-              value: '${_fmt(AntennaLengthScreen.metersToFeet(lambdaM), 3)} ft'),
-          _row(text, mono,
-              label: 'Frequency', value: '${_fmt(freqMHz, 4)} MHz'),
+          _row(
+            text,
+            mono,
+            label: 'Wavelength',
+            value: '${_fmt(AntennaLengthScreen.metersToFeet(lambdaM), 3)} ft',
+          ),
+          _row(
+            text,
+            mono,
+            label: 'Frequency',
+            value: '${_fmt(freqMHz, 4)} MHz',
+          ),
         ],
       ),
     );
@@ -533,7 +550,8 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
           const SizedBox(height: AppSpacing.xxs),
           Semantics(
             label: '$title physical length',
-            value: '${_fmt(physicalM, 4)} meters, '
+            value:
+                '${_fmt(physicalM, 4)} meters, '
                 '${_fmt(physFt, 3)} feet, ${_fmt(physIn, 2)} inches',
             excludeSemantics: true,
             child: Column(
@@ -545,8 +563,9 @@ class _AntennaLengthScreenState extends State<AntennaLengthScreen> {
                   children: <Widget>[
                     SelectableText(
                       _fmt(physicalM, 4),
-                      style:
-                          mono.outputLarge.copyWith(color: colors.textAccent),
+                      style: mono.outputLarge.copyWith(
+                        color: colors.textAccent,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.xxs),
                     Text(

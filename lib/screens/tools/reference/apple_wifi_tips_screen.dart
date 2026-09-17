@@ -70,7 +70,8 @@ class _AppleWifiTipsScreenState extends State<AppleWifiTipsScreen> {
       _showLaunchError(url);
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -87,7 +88,9 @@ class _AppleWifiTipsScreenState extends State<AppleWifiTipsScreen> {
 
   void _showLaunchError(String url) {
     if (!mounted) return;
-    setState(() => _launchError = 'Could not open the browser. The link is $url');
+    setState(
+      () => _launchError = 'Could not open the browser. The link is $url',
+    );
     SemanticsService.sendAnnouncement(
       View.of(context),
       'Could not open the browser',
@@ -153,9 +156,7 @@ class _AppleWifiTipsScreenState extends State<AppleWifiTipsScreen> {
       appBar: AppBar(
         title: const Text('Apple Wi-Fi Support Tips'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -328,8 +329,9 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    final AppleSource? source =
-        sourceId == null ? null : kAppleSources[sourceId];
+    final AppleSource? source = sourceId == null
+        ? null
+        : kAppleSources[sourceId];
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -350,8 +352,9 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             intro,
-            style: (t.bodySmall ?? const TextStyle())
-                .copyWith(color: colors.textSecondary),
+            style: (t.bodySmall ?? const TextStyle()).copyWith(
+              color: colors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           ...children,

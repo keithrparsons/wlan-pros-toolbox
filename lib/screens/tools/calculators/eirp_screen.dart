@@ -98,7 +98,8 @@ class _EirpScreenState extends State<EirpScreen> {
   // Power/gain accept a sign (dBm and dBi can be negative); loss accepts a
   // sign too so a negative-loss paste fails cleanly rather than being coerced.
   // `e/E/+` ride along so a scientific paste like "1e2" parses or fails whole.
-  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      scientificDecimalFormatters;
 
   @override
   void dispose() {
@@ -168,9 +169,7 @@ class _EirpScreenState extends State<EirpScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // EIRP is computed; copies the result as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -382,9 +381,7 @@ class _EirpScreenState extends State<EirpScreen> {
                 SelectableText(
                   dbmText,
                   style: mono.outputXL.copyWith(
-                    color: hasResult
-                        ? colors.textAccent
-                        : colors.textTertiary,
+                    color: hasResult ? colors.textAccent : colors.textTertiary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -403,9 +400,7 @@ class _EirpScreenState extends State<EirpScreen> {
             SelectableText(
               powerText,
               style: mono.outputMedium.copyWith(
-                color: hasResult
-                    ? colors.textSecondary
-                    : colors.textTertiary,
+                color: hasResult ? colors.textSecondary : colors.textTertiary,
               ),
             ),
           ],

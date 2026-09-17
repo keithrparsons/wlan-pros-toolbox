@@ -152,8 +152,7 @@ class ShannonCapacityScreen extends StatefulWidget {
 
 class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
   final TextEditingController _snrCtrl = TextEditingController(text: '25');
-  final TextEditingController _targetCtrl =
-      TextEditingController(text: '1000');
+  final TextEditingController _targetCtrl = TextEditingController(text: '1000');
 
   final FocusNode _snrFocus = FocusNode();
   final FocusNode _targetFocus = FocusNode();
@@ -178,7 +177,8 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
 
   // SNR is SIGNED: negative SNR is legal here and must compute. The target
   // capacity is unsigned — a negative rate has no meaning.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
   static final List<TextInputFormatter> _unsignedDecimal =
       unsignedDecimalFormatters;
 
@@ -215,8 +215,10 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
           return;
         }
         _capacityMbps = ShannonCapacityScreen.capacityMbps(bwMhz, snr, _nss);
-        _perStreamMbps =
-            ShannonCapacityScreen.perStreamCapacityMbps(bwMhz, snr);
+        _perStreamMbps = ShannonCapacityScreen.perStreamCapacityMbps(
+          bwMhz,
+          snr,
+        );
         _bitsPerHz = ShannonCapacityScreen.spectralEfficiency(snr);
         _snrLinear = ShannonCapacityScreen.snrLinear(snr);
       });
@@ -229,16 +231,19 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
       if (target == null || target <= 0) {
         _requiredSnrDb = null;
         _requiredBitsPerHz = null;
-        _targetError =
-            raw.isEmpty ? null : 'Target capacity must be greater than zero.';
+        _targetError = raw.isEmpty
+            ? null
+            : 'Target capacity must be greater than zero.';
         return;
       }
       _targetError = null;
       // An impossible ask is NOT an error. It computes, and it prints.
-      _requiredSnrDb =
-          ShannonCapacityScreen.requiredSnrDb(bwMhz, target, _nss);
-      _requiredBitsPerHz =
-          ShannonCapacityScreen.requiredBitsPerHz(bwMhz, target, _nss);
+      _requiredSnrDb = ShannonCapacityScreen.requiredSnrDb(bwMhz, target, _nss);
+      _requiredBitsPerHz = ShannonCapacityScreen.requiredBitsPerHz(
+        bwMhz,
+        target,
+        _nss,
+      );
     });
   }
 
@@ -271,9 +276,7 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
       appBar: AppBar(
         title: const Text('Shannon Capacity'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -563,9 +566,7 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
     // One SR node per result, not value/unit/label as separate fragments.
     return Semantics(
       label: label,
-      value: blank
-          ? 'not calculated'
-          : (unit.isEmpty ? value : '$value $unit'),
+      value: blank ? 'not calculated' : (unit.isEmpty ? value : '$value $unit'),
       excludeSemantics: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -596,9 +597,7 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   unit,
-                  style: text.labelLarge?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.labelLarge?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ],
@@ -696,9 +695,7 @@ class _ShannonCapacityScreenState extends State<ShannonCapacityScreen> {
                   Expanded(
                     child: Text(
                       row[1],
-                      style: mono.inlineCode.copyWith(
-                        color: colors.textAccent,
-                      ),
+                      style: mono.inlineCode.copyWith(color: colors.textAccent),
                     ),
                   ),
                 ],

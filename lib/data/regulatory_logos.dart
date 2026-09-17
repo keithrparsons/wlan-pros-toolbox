@@ -48,8 +48,9 @@ class RegulatoryLogos {
 
   /// Conventional candidate paths for [key], in preference order (svg, png). No
   /// existence guarantee — use [has] / [path] which gate on the manifest.
-  static List<String> candidatePaths(String key) =>
-      <String>[for (final String ext in _exts) '$_dir/$key.$ext'];
+  static List<String> candidatePaths(String key) => <String>[
+    for (final String ext in _exts) '$_dir/$key.$ext',
+  ];
 
   /// `true` only when the build actually bundled a logo (any supported
   /// extension) for [key].
@@ -86,8 +87,9 @@ class RegulatoryLogos {
   static Future<void> ensureLoaded() async {
     if (_bundled != null) return;
     WidgetsFlutterBinding.ensureInitialized();
-    final AssetManifest manifest =
-        await AssetManifest.loadFromAssetBundle(rootBundle);
+    final AssetManifest manifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
     _bundled = manifest
         .listAssets()
         .where((String p) => p.startsWith('$_dir/'))

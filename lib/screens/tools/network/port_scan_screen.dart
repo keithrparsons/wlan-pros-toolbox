@@ -239,8 +239,10 @@ class _PortScanScreenState extends State<PortScanScreen> {
     });
 
     try {
-      final List<PortResult> results = await PiBackendClient()
-          .portScan(host: host, ports: ports.join(','));
+      final List<PortResult> results = await PiBackendClient().portScan(
+        host: host,
+        ports: ports.join(','),
+      );
       if (!mounted) return;
       setState(() {
         _scanning = false;
@@ -249,8 +251,9 @@ class _PortScanScreenState extends State<PortScanScreen> {
           ..clear()
           ..addAll(results);
       });
-      final int openCount =
-          results.where((PortResult r) => r.status == PortStatus.open).length;
+      final int openCount = results
+          .where((PortResult r) => r.status == PortStatus.open)
+          .length;
       SemanticsService.sendAnnouncement(
         View.of(context),
         'Scan complete, $openCount open port${openCount == 1 ? '' : 's'}',
@@ -275,9 +278,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a scan has
         // started. Copies a TSV of every probed port with its state + service.
         // Copy leads; no help icon on this screen.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -700,9 +701,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
               ),
               Text(
                 '$_completed / $_total · $openCount open',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -721,9 +720,7 @@ class _PortScanScreenState extends State<PortScanScreen> {
                 value: _scanning ? fraction : 1.0,
                 minHeight: 6,
                 backgroundColor: colors.surface2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  colors.textAccent,
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(colors.textAccent),
               ),
             ),
           ),

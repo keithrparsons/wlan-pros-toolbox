@@ -139,37 +139,43 @@ class NonWifiChannelsScreen extends StatelessWidget {
     LoraWanPlan(
       plan: 'EU868',
       rangeMhz: '863-870',
-      channels: '3 default join channels 868.1 / 868.3 / 868.5 MHz (125 kHz); '
+      channels:
+          '3 default join channels 868.1 / 868.3 / 868.5 MHz (125 kHz); '
           'up to ~16, duty-cycle limited',
     ),
     LoraWanPlan(
       plan: 'US915',
       rangeMhz: '902-928',
-      channels: '64 × 125 kHz uplink (ch 0-63) + 8 × 500 kHz uplink (ch 64-71) '
+      channels:
+          '64 × 125 kHz uplink (ch 0-63) + 8 × 500 kHz uplink (ch 64-71) '
           '+ 8 × 500 kHz downlink',
     ),
     LoraWanPlan(
       plan: 'AU915',
       rangeMhz: '915-928',
-      channels: '72 channels: 64 × 125 kHz + 8 × 500 kHz, 8 sub-bands '
+      channels:
+          '72 channels: 64 × 125 kHz + 8 × 500 kHz, 8 sub-bands '
           '(same structure as US915)',
     ),
     LoraWanPlan(
       plan: 'AS923',
       rangeMhz: '~915-928',
-      channels: '2 default channels 923.2 / 923.4 MHz (AS923-1); up to 16; '
+      channels:
+          '2 default channels 923.2 / 923.4 MHz (AS923-1); up to 16; '
           'four offset variants (AS923-1..4)',
     ),
     LoraWanPlan(
       plan: 'IN865',
       rangeMhz: '865-867',
-      channels: '3 default channels 865.0625 / 865.4025 / 865.985 MHz '
+      channels:
+          '3 default channels 865.0625 / 865.4025 / 865.985 MHz '
           '(125 kHz)',
     ),
     LoraWanPlan(
       plan: 'KR920',
       rangeMhz: '917-923.5',
-      channels: 'Default channels in 922.1-923.3 MHz; listen-before-talk '
+      channels:
+          'Default channels in 922.1-923.3 MHz; listen-before-talk '
           'required',
     ),
     LoraWanPlan(
@@ -181,7 +187,8 @@ class NonWifiChannelsScreen extends StatelessWidget {
     LoraWanPlan(
       plan: 'CN779',
       rangeMhz: '779-787',
-      channels: '3 default channels 779.5 / 779.7 / 779.9 MHz; '
+      channels:
+          '3 default channels 779.5 / 779.7 / 779.9 MHz; '
           'deprecated/limited',
       verify: true,
     ),
@@ -333,12 +340,21 @@ class NonWifiChannelsScreen extends StatelessWidget {
       'the IEEE 802.15.4 PHY. It does not define its own channels.';
 
   static const List<(String, String)> zigbeeFacts = [
-    ('2.4 GHz band', '802.15.4 ch 11-26 (2405-2480 MHz, 5 MHz spacing). '
-        '16 channels, worldwide'),
-    ('Sub-GHz', '868 MHz (ch 0, Europe) and 902-928 MHz (ch 1-10, Americas). '
-        'lower rate, region-restricted'),
-    ('Common 2.4 GHz picks', '11, 15, 20, 25, 26 (convention, not a mandate). '
-        'chosen to avoid the busiest Wi-Fi channels'),
+    (
+      '2.4 GHz band',
+      '802.15.4 ch 11-26 (2405-2480 MHz, 5 MHz spacing). '
+          '16 channels, worldwide',
+    ),
+    (
+      'Sub-GHz',
+      '868 MHz (ch 0, Europe) and 902-928 MHz (ch 1-10, Americas). '
+          'lower rate, region-restricted',
+    ),
+    (
+      'Common 2.4 GHz picks',
+      '11, 15, 20, 25, 26 (convention, not a mandate). '
+          'chosen to avoid the busiest Wi-Fi channels',
+    ),
   ];
 
   static const String zigbeeFootnote =
@@ -355,9 +371,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Non-Wi-Fi Wireless Channels'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -535,10 +549,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
                       _HeaderCell('Channel plan', width: 280),
                     ],
                   ),
-                  Divider(
-                    color: colors.border,
-                    height: AppSpacing.sm,
-                  ),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   for (final LoraWanPlan p in loraWanPlans)
                     _loraWanRow(colors, text, mono, p),
                 ],
@@ -555,7 +566,12 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _loraWanRow(AppColorScheme colors, TextTheme text, AppMonoText mono, LoraWanPlan p) {
+  Widget _loraWanRow(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+    LoraWanPlan p,
+  ) {
     return ReferenceRowSemantics(
       label: rowLabel(p.plan, <String?>[
         p.verify ? 'verify: region-dependent or version-dependent' : null,
@@ -581,10 +597,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
                   ),
                   if (p.verify) ...[
                     const SizedBox(height: 2),
-                    _Chip(
-                      'verify',
-                      color: colors.statusWarning,
-                    ),
+                    _Chip('verify', color: colors.statusWarning),
                   ],
                 ],
               ),
@@ -593,18 +606,14 @@ class NonWifiChannelsScreen extends StatelessWidget {
               width: 104,
               child: Text(
                 p.rangeMhz,
-                style: mono.inlineCode.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(
               width: 280,
               child: Text(
                 p.channels,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -613,7 +622,11 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _ieee802154Card(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+  Widget _ieee802154Card(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _Card(
       heading: 'IEEE 802.15.4',
       headingText: text,
@@ -636,10 +649,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
                       _HeaderCell('Region', width: 160),
                     ],
                   ),
-                  Divider(
-                    color: colors.border,
-                    height: AppSpacing.sm,
-                  ),
+                  Divider(color: colors.border, height: AppSpacing.sm),
                   for (final Ieee802154Band b in ieee802154Bands)
                     _ieee802154Row(colors, text, mono, b),
                 ],
@@ -656,7 +666,12 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _ieee802154Row(AppColorScheme colors, TextTheme text, AppMonoText mono, Ieee802154Band b) {
+  Widget _ieee802154Row(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+    Ieee802154Band b,
+  ) {
     return ReferenceRowSemantics(
       label: rowLabel('${b.band} band', <String?>[
         'channels ${b.channels}',
@@ -690,27 +705,21 @@ class NonWifiChannelsScreen extends StatelessWidget {
               width: 72,
               child: Text(
                 b.spacing,
-                style: mono.inlineCode.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: mono.inlineCode.copyWith(color: colors.textTertiary),
               ),
             ),
             SizedBox(
               width: 120,
               child: Text(
                 b.centers,
-                style: mono.inlineCode.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(
               width: 160,
               child: Text(
                 b.region,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -740,11 +749,9 @@ class NonWifiChannelsScreen extends StatelessWidget {
                       _HeaderCell('Kind', width: 120),
                     ],
                   ),
-                  Divider(
-                    color: colors.border,
-                    height: AppSpacing.sm,
-                  ),
-                  for (final BleChannel c in bleChannels) _bleRow(colors, text, mono, c),
+                  Divider(color: colors.border, height: AppSpacing.sm),
+                  for (final BleChannel c in bleChannels)
+                    _bleRow(colors, text, mono, c),
                 ],
               ),
             ),
@@ -759,7 +766,12 @@ class NonWifiChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _bleRow(AppColorScheme colors, TextTheme text, AppMonoText mono, BleChannel c) {
+  Widget _bleRow(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+    BleChannel c,
+  ) {
     final bool adv = c.kind == 'Advertising';
     return ReferenceRowSemantics(
       label: rowLabel('Index ${c.index}', <String?>[
@@ -785,9 +797,7 @@ class NonWifiChannelsScreen extends StatelessWidget {
               width: 88,
               child: Text(
                 '${c.freqMhz}',
-                style: mono.inlineCode.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: mono.inlineCode.copyWith(color: colors.textSecondary),
               ),
             ),
             SizedBox(

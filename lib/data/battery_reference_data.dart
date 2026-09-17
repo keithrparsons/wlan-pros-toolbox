@@ -184,7 +184,8 @@ const List<CellCode> kCellCodes = <CellCode>[
   CellCode(
     code: 'CR2032',
     reads: '20 + 32',
-    meaning: 'Diameter at least 20 mm, height 3.2 mm exactly. Lithium '
+    meaning:
+        'Diameter at least 20 mm, height 3.2 mm exactly. Lithium '
         'manganese dioxide, 3.0 V.',
     datasheet: 'Can measures 20.00 mm by 3.20 mm (Energizer, Form 2032NA0618).',
     dimensional: true,
@@ -192,18 +193,22 @@ const List<CellCode> kCellCodes = <CellCode>[
   CellCode(
     code: 'CR2450',
     reads: '24 + 50',
-    meaning: 'Diameter at least 24 mm, height 5.0 mm exactly. Four digits, '
+    meaning:
+        'Diameter at least 24 mm, height 5.0 mm exactly. Four digits, '
         'read two and two.',
-    datasheet: 'Can measures 24.50 mm by 5.00 mm (Energizer 2450NA0521; '
+    datasheet:
+        'Can measures 24.50 mm by 5.00 mm (Energizer 2450NA0521; '
         'Panasonic).',
     dimensional: true,
   ),
   CellCode(
     code: 'LR1154',
     reads: '11 + 54',
-    meaning: 'Diameter at least 11 mm, height 5.4 mm exactly. This is the same '
+    meaning:
+        'Diameter at least 11 mm, height 5.4 mm exactly. This is the same '
         'cell LR44 names by catalog number.',
-    datasheet: 'Can measures 11.60 mm by 5.40 mm (Energizer A76, Form '
+    datasheet:
+        'Can measures 11.60 mm by 5.40 mm (Energizer A76, Form '
         'EBC-4407F). 11.60 rounds to 12 and the code says 11, so the rule is '
         'truncation.',
     dimensional: true,
@@ -211,9 +216,11 @@ const List<CellCode> kCellCodes = <CellCode>[
   CellCode(
     code: 'CR15H270',
     reads: '15 + 270',
-    meaning: 'Diameter at least 15 mm, height 27.0 mm exactly. This is the '
+    meaning:
+        'Diameter at least 15 mm, height 27.0 mm exactly. This is the '
         'CR2. The interior H is part of the code and is not decoded here.',
-    datasheet: 'Can measures 15.60 mm by 27.00 mm (Energizer 1CR2, Form '
+    datasheet:
+        'Can measures 15.60 mm by 27.00 mm (Energizer 1CR2, Form '
         '1CR2GL1018). Second witness for truncation: 15.60 rounds to 16.',
     dimensional: true,
   ),
@@ -225,28 +232,34 @@ const List<CellCode> kCellCodes = <CellCode>[
     // wrote a C here, which names a chemistry this cell does not have. The
     // retraction guard bans that string from shipped copy, so the correction
     // is stated positively rather than by naming the wrong code.
-    meaning: 'Diameter at least 14 mm, height 50.5 mm exactly. Three-digit '
+    meaning:
+        'Diameter at least 14 mm, height 50.5 mm exactly. Three-digit '
         'height group, so a cylinder. F is the chemistry letter for lithium '
         'iron disulfide, which is what makes this the lithium AA.',
-    datasheet: 'Can measures 14.50 mm by 50.50 mm (Energizer L91, Form '
+    datasheet:
+        'Can measures 14.50 mm by 50.50 mm (Energizer L91, Form '
         'L91GL1222).',
     dimensional: true,
   ),
   CellCode(
     code: 'CR17345',
     reads: '17 + 345',
-    meaning: 'Diameter at least 17 mm, height 34.5 mm exactly. This is the '
+    meaning:
+        'Diameter at least 17 mm, height 34.5 mm exactly. This is the '
         'CR123A, and the same rule reads it with no modification.',
-    datasheet: 'Can measures 17.00 mm by 34.50 mm (Energizer 123, Form '
+    datasheet:
+        'Can measures 17.00 mm by 34.50 mm (Energizer 123, Form '
         '123GL1018; GP doc 20190912; Panasonic CR17345).',
     dimensional: true,
   ),
   CellCode(
     code: 'LR44',
     reads: 'entry 44',
-    meaning: 'A catalog number, not a measurement. It says nothing about size. '
+    meaning:
+        'A catalog number, not a measurement. It says nothing about size. '
         'Alkaline, 1.5 V.',
-    datasheet: 'Can measures 11.60 mm by 5.40 mm, the same can LR1154 names '
+    datasheet:
+        'Can measures 11.60 mm by 5.40 mm, the same can LR1154 names '
         'dimensionally (Energizer A76, Form EBC-4407F).',
     dimensional: false,
   ),
@@ -308,7 +321,8 @@ const List<BatterySizeRung> kBatterySizeRungs = <BatterySizeRung>[
   BatterySizeRung(
     size: 'AA',
     dimensions: '14.50 mm x 50.50 mm',
-    status: 'On every shelf. The lithium AA also carries the dimensional code '
+    status:
+        'On every shelf. The lithium AA also carries the dimensional code '
         'FR14505, whose 14 and 505 groups agree with the datasheet: at least 14 '
         'mm across, 50.5 mm tall.',
     pin: 'Energizer L91, Form L91GL1222.',
@@ -339,7 +353,8 @@ const List<BatterySizeRung> kBatterySizeRungs = <BatterySizeRung>[
         'Survives only inside the 3R12 and 3LR12 flat 4.5 V battery. There is no '
         'retail single B cell, and no standalone B datasheet exists because '
         'nobody sells one.',
-    pin: 'No datasheet found. The dimensions in general circulation trace to '
+    pin:
+        'No datasheet found. The dimensions in general circulation trace to '
         'battery-equivalence sites, which is not a source this page prints '
         'from.',
   ),
@@ -655,7 +670,7 @@ const List<VoltageGotcha> kVoltageGotchas = <VoltageGotcha>[
         'A device with a 5.0 V brownout threshold runs happily on four '
         'alkalines at 6.0 V and refuses to start on four fully charged NiMH '
         'cells at 4.8 V. Nothing is wrong with the pack.',
-    ),
+  ),
   VoltageGotcha(
     heading: 'The failure is abrupt',
     detail:

@@ -321,9 +321,7 @@ class _StandardsScreenState extends State<StandardsScreen> {
       appBar: AppBar(
         title: const Text('802.11 Standards'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -447,9 +445,7 @@ class _StandardsScreenState extends State<StandardsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'No 802.11 standard operates in this band.',
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

@@ -194,8 +194,9 @@ class _ToggleTrackState<T> extends State<_ToggleTrack<T>> {
     // NOT exempt). Track fill drops to disabledFill when disabled.
     final Color trackBorder = colors.borderStrong;
     final double trackBorderW = colors.isLight ? 1.5 : 1; // §8.20.3-B
-    final Color trackFill =
-        widget.enabled ? colors.inputFill : colors.disabledFill;
+    final Color trackFill = widget.enabled
+        ? colors.inputFill
+        : colors.disabledFill;
 
     final List<Widget> segments = <Widget>[];
     for (int i = 0; i < widget.items.length; i++) {
@@ -321,7 +322,8 @@ class _SegmentState extends State<_Segment> {
     if (!widget.enabled) {
       textColor = colors.textDisabled;
     } else if (widget.selected) {
-      textColor = colors.onPrimary; // dark text on the lime fill, like a button.
+      textColor =
+          colors.onPrimary; // dark text on the lime fill, like a button.
     } else {
       textColor = colors.textSecondary; // live target, not placeholder.
     }

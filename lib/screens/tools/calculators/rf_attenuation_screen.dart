@@ -236,9 +236,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until at least one
         // material is added (no total); copies the per-material breakdown plus
         // total as a labeled text block. Copy leads; no help icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -403,9 +401,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
           },
           autocorrect: false,
           enableSuggestions: false,
-          style: mono.outputLarge.copyWith(
-            fontSize: AppTextSize.fieldNumeric,
-          ),
+          style: mono.outputLarge.copyWith(fontSize: AppTextSize.fieldNumeric),
           cursorColor: colors.textAccent,
           decoration: InputDecoration(hintText: '1', errorText: _qtyError),
         ),
@@ -463,9 +459,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'dB',
-                  style: text.labelLarge?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.labelLarge?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
@@ -501,9 +495,7 @@ class _RfAttenuationScreenState extends State<RfAttenuationScreen> {
                 child: Text(
                   // PWA breakdown line: "${qty}× ${name}: ${loss} dB".
                   '${e.value}× ${e.key.name}: $loss dB',
-                  style: mono.inlineCode.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: mono.inlineCode.copyWith(color: colors.textSecondary),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),

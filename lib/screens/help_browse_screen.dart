@@ -110,12 +110,16 @@ class HelpBrowseScreen extends StatelessWidget {
                     'Open any tool for what it does, how to use it, the inputs '
                     'it takes, and the honest field notes. Tap a tool to read '
                     'its help.',
-                    style: text.bodyLarge
-                        ?.copyWith(color: colors.textSecondary),
+                    style: text.bodyLarge?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   for (final HelpGroup group in groups) ...<Widget>[
-                    _GroupHeading(title: group.title, count: group.entries.length),
+                    _GroupHeading(
+                      title: group.title,
+                      count: group.entries.length,
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     for (final HelpRow row in group.entries) ...<Widget>[
                       _HelpToolRow(row: row),
@@ -155,9 +159,7 @@ class _GroupHeading extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: <Widget>[
-          Expanded(
-            child: Text(title, style: text.headlineSmall),
-          ),
+          Expanded(child: Text(title, style: text.headlineSmall)),
           const SizedBox(width: AppSpacing.sm),
           Text(
             '$count $plural',

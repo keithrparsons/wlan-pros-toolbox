@@ -309,9 +309,7 @@ class _HexAsciiScreenState extends State<HexAsciiScreen> {
         // conversion: all three representations (decimal/hex/binary) plus the
         // ASCII character when the value is a single printable code point.
         // Disabled when no field holds a valid value (all mirrors blank).
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -575,9 +573,7 @@ class _AsciiTableRow extends StatelessWidget {
               // column without wrapping/truncating.
               child: Text(
                 row.name,
-                style: text.labelSmall?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelSmall?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],

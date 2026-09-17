@@ -207,9 +207,7 @@ class DataUnitsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Data Units & Prefixes'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -346,9 +344,7 @@ class DataUnitsScreen extends StatelessWidget {
                   width: 60,
                   child: Text(
                     r.siPower,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                 ),
                 SizedBox(
@@ -374,9 +370,7 @@ class DataUnitsScreen extends StatelessWidget {
                   width: 60,
                   child: Text(
                     r.iecPower,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textTertiary),
                   ),
                 ),
                 SizedBox(

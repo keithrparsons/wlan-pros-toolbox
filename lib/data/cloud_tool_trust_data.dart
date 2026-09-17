@@ -33,8 +33,8 @@ class TrustServicesCriterion {
 
 /// The five Trust Services Criteria, verbatim from the copy. Security is always
 /// present (the "common criteria"); the other four are optional.
-const List<TrustServicesCriterion> kTrustServicesCriteria =
-    <TrustServicesCriterion>[
+const List<TrustServicesCriterion>
+kTrustServicesCriteria = <TrustServicesCriterion>[
   TrustServicesCriterion(
     criterion: 'Security (the "common criteria")',
     covers: 'Protection against unauthorized access. Always present.',
@@ -84,7 +84,8 @@ const List<AdjacentBadge> kAdjacentBadges = <AdjacentBadge>[
   AdjacentBadge(
     badge: 'ISO/IEC 27017',
     whatItIs: 'Cloud-security extension of 27001/27002',
-    buyerRead: 'A cloud-maturity add-on to 27001; a good sign, not standalone '
+    buyerRead:
+        'A cloud-maturity add-on to 27001; a good sign, not standalone '
         'proof.',
   ),
   AdjacentBadge(

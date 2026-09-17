@@ -59,17 +59,30 @@ const String kMenuBarIntro =
     'one gives you.';
 
 const List<MenuBarPath> kMenuBarPaths = <MenuBarPath>[
-  MenuBarPath('Option-click Wi-Fi menu',
-      'Hold Option, click the Wi-Fi menu-bar icon',
-      'Live RF of the current association, inline', 'No'),
-  MenuBarPath('wdutil info', 'Apple supported Wireless Diagnostics CLI',
-      'Full Wi-Fi block plus network / BT / power', 'Yes, for unmasked RF'),
-  MenuBarPath('Wireless Diagnostics app',
-      'Option-click menu, then Open Wireless Diagnostics',
-      'Scan, Performance graphs, Sniffer, Logs', 'Admin for some panes'),
-  MenuBarPath('Shortcuts "Get Network Details"',
-      'Shortcuts action, also on iOS', 'RF fields apps cannot otherwise read',
-      'No'),
+  MenuBarPath(
+    'Option-click Wi-Fi menu',
+    'Hold Option, click the Wi-Fi menu-bar icon',
+    'Live RF of the current association, inline',
+    'No',
+  ),
+  MenuBarPath(
+    'wdutil info',
+    'Apple supported Wireless Diagnostics CLI',
+    'Full Wi-Fi block plus network / BT / power',
+    'Yes, for unmasked RF',
+  ),
+  MenuBarPath(
+    'Wireless Diagnostics app',
+    'Option-click menu, then Open Wireless Diagnostics',
+    'Scan, Performance graphs, Sniffer, Logs',
+    'Admin for some panes',
+  ),
+  MenuBarPath(
+    'Shortcuts "Get Network Details"',
+    'Shortcuts action, also on iOS',
+    'RF fields apps cannot otherwise read',
+    'No',
+  ),
 ];
 
 // ── Section A — Option-click Wi-Fi menu fields ──
@@ -79,26 +92,56 @@ const String kMenuBarOptionClickIntro =
     'prints the live association detail.';
 
 const List<RfField> kMenuBarOptionClickFields = <RfField>[
-  RfField('IP Address', 'The Mac IPv4 address on this network',
-      proNote: 'Confirms DHCP succeeded; spots APIPA (169.254.x.x)'),
-  RfField('Router', 'Default-gateway IP',
-      proNote: 'Confirms the gateway the Mac is using'),
-  RfField('BSSID', 'MAC address of the AP radio you are joined to',
-      proNote: 'Identifies which AP/radio you are on; track roaming'),
-  RfField('Channel', 'Operating channel + band',
-      proNote: 'Confirms band (2.4 / 5 / 6 GHz) and channel plan'),
-  RfField('Channel width', '20 / 40 / 80 / 160 MHz',
-      proNote: 'Width vs interference trade-off; spec compliance'),
-  RfField('Country Code', 'Regulatory domain the AP advertises',
-      proNote: 'Wrong code means wrong channels/power allowed'),
-  RfField('RSSI', 'Received signal strength, dBm (closer to 0 is stronger)',
-      proNote: 'Primary coverage metric'),
-  RfField('Noise', 'Noise floor, dBm',
-      proNote: 'RSSI minus noise is SNR, the real link-quality number'),
-  RfField('Tx Rate', 'Current transmit data rate, Mbps',
-      proNote: 'The negotiated PHY rate, not throughput'),
-  RfField('PHY Mode', '802.11 generation in use (a/n/ac/ax/be)',
-      proNote: 'Confirms the client negotiated the expected standard'),
+  RfField(
+    'IP Address',
+    'The Mac IPv4 address on this network',
+    proNote: 'Confirms DHCP succeeded; spots APIPA (169.254.x.x)',
+  ),
+  RfField(
+    'Router',
+    'Default-gateway IP',
+    proNote: 'Confirms the gateway the Mac is using',
+  ),
+  RfField(
+    'BSSID',
+    'MAC address of the AP radio you are joined to',
+    proNote: 'Identifies which AP/radio you are on; track roaming',
+  ),
+  RfField(
+    'Channel',
+    'Operating channel + band',
+    proNote: 'Confirms band (2.4 / 5 / 6 GHz) and channel plan',
+  ),
+  RfField(
+    'Channel width',
+    '20 / 40 / 80 / 160 MHz',
+    proNote: 'Width vs interference trade-off; spec compliance',
+  ),
+  RfField(
+    'Country Code',
+    'Regulatory domain the AP advertises',
+    proNote: 'Wrong code means wrong channels/power allowed',
+  ),
+  RfField(
+    'RSSI',
+    'Received signal strength, dBm (closer to 0 is stronger)',
+    proNote: 'Primary coverage metric',
+  ),
+  RfField(
+    'Noise',
+    'Noise floor, dBm',
+    proNote: 'RSSI minus noise is SNR, the real link-quality number',
+  ),
+  RfField(
+    'Tx Rate',
+    'Current transmit data rate, Mbps',
+    proNote: 'The negotiated PHY rate, not throughput',
+  ),
+  RfField(
+    'PHY Mode',
+    '802.11 generation in use (a/n/ac/ax/be)',
+    proNote: 'Confirms the client negotiated the expected standard',
+  ),
 ];
 
 const String kMenuBarOptionClickNote =
@@ -158,11 +201,17 @@ const String kMenuBarDiagIntro =
     'not change network settings. The Window menu exposes the pro tools.';
 
 const List<WdUtility> kMenuBarDiagUtilities = <WdUtility>[
-  WdUtility('Scan', 'Nearby BSSIDs with RSSI, noise, channel, width, band, PHY mode'),
+  WdUtility(
+    'Scan',
+    'Nearby BSSIDs with RSSI, noise, channel, width, band, PHY mode',
+  ),
   WdUtility('Info', 'Snapshot of the current association'),
   WdUtility('Logs', 'Enable detailed Wi-Fi logging'),
   WdUtility('Performance', 'Live graphs of RSSI, noise, and Tx rate over time'),
-  WdUtility('Sniffer', 'Capture a chosen channel/width to a .pcap for Wireshark'),
+  WdUtility(
+    'Sniffer',
+    'Capture a chosen channel/width to a .pcap for Wireshark',
+  ),
 ];
 
 const String kMenuBarDiagNote =

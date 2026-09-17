@@ -203,12 +203,14 @@ class _InstallShortcutSheetState extends State<InstallShortcutSheet> {
         const _Step(number: 1, text: 'Tap Add the Shortcut below.'),
         const _Step(
           number: 2,
-          text: 'Tap Add Shortcut, then return to WLAN Pros. The Shortcuts app '
+          text:
+              'Tap Add Shortcut, then return to WLAN Pros. The Shortcuts app '
               'leaves you on its list, so tap WLAN Pros to come back.',
         ),
         const _Step(
           number: 3,
-          text: 'Tap Get reading. The first time it runs, iOS asks to allow it '
+          text:
+              'Tap Get reading. The first time it runs, iOS asks to allow it '
               'to share your network details, so tap Always Allow.',
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -329,18 +331,11 @@ class _Step extends StatelessWidget {
             ),
             child: Text(
               '$number',
-              style: textTheme.labelMedium?.copyWith(
-                color: colors.textPrimary,
-              ),
+              style: textTheme.labelMedium?.copyWith(color: colors.textPrimary),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              text,
-              style: textTheme.bodyLarge,
-            ),
-          ),
+          Expanded(child: Text(text, style: textTheme.bodyLarge)),
         ],
       ),
     );

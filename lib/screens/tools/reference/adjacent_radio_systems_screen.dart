@@ -53,8 +53,9 @@ class AdjacentRadioSystemsScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kAdjacentRadioSystemsToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kAdjacentRadioSystemsToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -84,9 +85,13 @@ class AdjacentRadioSystemsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kAdjacentRadioSystemsToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kAdjacentRadioSystemsToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
-                      assetPath: ReferencePdfs.pathFor(kAdjacentRadioSystemsToolId),
+                      assetPath: ReferencePdfs.pathFor(
+                        kAdjacentRadioSystemsToolId,
+                      ),
                       title: 'Adjacent Radio Systems',
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -198,13 +203,23 @@ class AdjacentRadioSystemsScreen extends StatelessWidget {
       ..writeln('The other radios, and which share your air')
       ..writeln(kSubGhzIntro)
       ..writeln(
-        <String>['System', 'Band', 'Range', 'Data rate', 'Shares 2.4 GHz?']
-            .join(tab),
+        <String>[
+          'System',
+          'Band',
+          'Range',
+          'Data rate',
+          'Shares 2.4 GHz?',
+        ].join(tab),
       );
     for (final RadioSystemRow r in kRadioSystems) {
       b.writeln(
-        <String>[r.system, r.band, r.range, r.dataRate, r.sharesTwoFour]
-            .join(tab),
+        <String>[
+          r.system,
+          r.band,
+          r.range,
+          r.dataRate,
+          r.sharesTwoFour,
+        ].join(tab),
       );
     }
     b

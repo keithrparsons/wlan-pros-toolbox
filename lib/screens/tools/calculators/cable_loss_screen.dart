@@ -147,12 +147,12 @@ class CableLossScreen extends StatefulWidget {
   /// p.29, LMR-900 p.33. Each is tabulated by Times out to 5800 MHz.
   static const Map<String, (double k1, double k2)> cableCoefficients =
       <String, (double, double)>{
-    'LMR-100A': (0.709140, 0.001740),
-    'LMR-200': (0.320900, 0.000330),
-    'LMR-400': (0.122290, 0.000260),
-    'LMR-600': (0.075550, 0.000260),
-    'LMR-900': (0.051770, 0.000160),
-  };
+        'LMR-100A': (0.709140, 0.001740),
+        'LMR-200': (0.320900, 0.000330),
+        'LMR-400': (0.122290, 0.000260),
+        'LMR-600': (0.075550, 0.000260),
+        'LMR-900': (0.051770, 0.000160),
+      };
 
   /// The honest note shown on-screen explaining why no RG type is offered.
   static const String rgOmissionNote =
@@ -278,7 +278,8 @@ class _CableLossScreenState extends State<CableLossScreen> {
 
   // Unsigned-decimal only. Frequency and length are always positive values a
   // human types by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -352,9 +353,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // total loss is computed; copies the run as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -525,9 +524,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
         field: TextField(
           controller: controller,
           focusNode: focusNode,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: _unsignedDecimal,
           onChanged: (_) => _recompute(),
           textInputAction: TextInputAction.done,
@@ -581,9 +578,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -596,9 +591,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
             children: [
               Text(
                 'Loss per 100 ft',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
               const SizedBox(width: AppSpacing.xs),
               SelectableText(
@@ -612,9 +605,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
               const SizedBox(width: 4),
               Text(
                 'dB',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -702,11 +693,7 @@ class _CableLossScreenState extends State<CableLossScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.info_outline,
-                size: 18,
-                color: colors.textSecondary,
-              ),
+              Icon(Icons.info_outline, size: 18, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(

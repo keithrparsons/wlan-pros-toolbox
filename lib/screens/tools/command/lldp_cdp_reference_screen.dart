@@ -142,36 +142,57 @@ class LldpCdpReferenceScreen extends StatelessWidget {
       'Run in privileged EXEC (enable). Where you see the AP and its port '
           'directly, with no host tooling. Cisco syntax shown.',
       <LldpCommand>[
-        LldpCommand('show lldp neighbors',
-            'Every LLDP neighbor with local and remote port'),
-        LldpCommand('show lldp neighbors detail',
-            'Adds management IP, system description, capabilities'),
-        LldpCommand('show cdp neighbors',
-            'Every CDP neighbor (CDP is on by default on Cisco)'),
-        LldpCommand('show cdp neighbors detail',
-            'Adds neighbor IP, platform, IOS version, native VLAN'),
-        LldpCommand('show interfaces status',
-            'Link up or down, speed, duplex, VLAN (documented plural form)'),
-        LldpCommand('show power inline',
-            'Whether the port delivers PoE and how much'),
-        LldpCommand('lldp run',
-            'Global config: enable LLDP (off by default on Cisco IOS)'),
+        LldpCommand(
+          'show lldp neighbors',
+          'Every LLDP neighbor with local and remote port',
+        ),
+        LldpCommand(
+          'show lldp neighbors detail',
+          'Adds management IP, system description, capabilities',
+        ),
+        LldpCommand(
+          'show cdp neighbors',
+          'Every CDP neighbor (CDP is on by default on Cisco)',
+        ),
+        LldpCommand(
+          'show cdp neighbors detail',
+          'Adds neighbor IP, platform, IOS version, native VLAN',
+        ),
+        LldpCommand(
+          'show interfaces status',
+          'Link up or down, speed, duplex, VLAN (documented plural form)',
+        ),
+        LldpCommand(
+          'show power inline',
+          'Whether the port delivers PoE and how much',
+        ),
+        LldpCommand(
+          'lldp run',
+          'Global config: enable LLDP (off by default on Cisco IOS)',
+        ),
       ],
     ),
     LldpCommandGroup(
       'Linux (built in, cleanest)',
       'The lldpd daemon prints a parsed neighbor table. No capture needed.',
       <LldpCommand>[
-        LldpCommand('lldpcli show neighbors',
-            'The parsed neighbor table'),
-        LldpCommand('lldpcli show neighbors summary',
-            'Remote name and port description (note: summary, not "detail")'),
-        LldpCommand('lldpcli show neighbors details',
-            'Everything: name, port ID and description, mgmt address, VLAN'),
-        LldpCommand('sudo apt install lldpd',
-            'Install the daemon (Debian/Ubuntu). Fedora: sudo dnf install lldpd'),
-        LldpCommand('sudo systemctl enable --now lldpd',
-            'Start it and enable on boot, then query with lldpcli'),
+        LldpCommand('lldpcli show neighbors', 'The parsed neighbor table'),
+        LldpCommand(
+          'lldpcli show neighbors summary',
+          'Remote name and port description (note: summary, not "detail")',
+        ),
+        LldpCommand(
+          'lldpcli show neighbors details',
+          'Everything: name, port ID and description, mgmt address, VLAN',
+        ),
+        LldpCommand(
+          'sudo apt install lldpd',
+          'Install the daemon (Debian/Ubuntu). Fedora: sudo dnf install lldpd',
+        ),
+        LldpCommand(
+          'sudo systemctl enable --now lldpd',
+          'Start it and enable on boot, then query with lldpcli',
+        ),
       ],
     ),
     LldpCommandGroup(
@@ -180,15 +201,20 @@ class LldpCdpReferenceScreen extends StatelessWidget {
           'interface. en5 is a PLACEHOLDER for your USB/Thunderbolt adapter '
           '(often en5 or en7).',
       <LldpCommand>[
-        LldpCommand("sudo tcpdump -nn -v -i en5 'ether proto 0x88cc'",
-            'LLDP: decode the TLVs (switch name, port, VLAN, mgmt IP). -v '
-                'required to decode'),
-        LldpCommand('sudo tcpdump -nn -v -i en5 ether host 01:00:0c:cc:cc:cc',
-            'CDP: match the CDP MAC (CDP has no EtherType)'),
         LldpCommand(
-            'sudo tcpdump -nn -v -i en5 ether proto 0x88cc or ether host '
-                '01:00:0c:cc:cc:cc',
-            'Both LLDP and CDP in one capture'),
+          "sudo tcpdump -nn -v -i en5 'ether proto 0x88cc'",
+          'LLDP: decode the TLVs (switch name, port, VLAN, mgmt IP). -v '
+              'required to decode',
+        ),
+        LldpCommand(
+          'sudo tcpdump -nn -v -i en5 ether host 01:00:0c:cc:cc:cc',
+          'CDP: match the CDP MAC (CDP has no EtherType)',
+        ),
+        LldpCommand(
+          'sudo tcpdump -nn -v -i en5 ether proto 0x88cc or ether host '
+              '01:00:0c:cc:cc:cc',
+          'Both LLDP and CDP in one capture',
+        ),
       ],
     ),
     LldpCommandGroup(
@@ -196,18 +222,28 @@ class LldpCdpReferenceScreen extends StatelessWidget {
       'pktmon is in-box on Windows 10 / Server 2019 build 1809 and later, and '
           'Windows 11. Run in an elevated (Administrator) prompt.',
       <LldpCommand>[
-        LldpCommand('pktmon filter add LLDP --ethertype 0x88CC',
-            'Add the LLDP filter by EtherType (numeric form, Microsoft-documented)'),
-        LldpCommand('pktmon filter add CDP -m 01-00-0C-CC-CC-CC',
-            'Add the CDP filter by MAC (hyphen or colon delimiter both work)'),
-        LldpCommand('pktmon start -c --comp nics --pkt-size 0 -f lldp-cdp.etl',
-            'Capture full frames on the NICs to a file (pkt-size 0 avoids '
-                'truncating LLDP TLVs)'),
-        LldpCommand('pktmon stop',
-            'Stop after LLDP/CDP has had time to re-advertise (up to ~60s)'),
-        LldpCommand('pktmon etl2txt lldp-cdp.etl -o lldp-cdp.txt -v 3',
-            'Convert the log to readable text (verbose is REQUIRED to decode the '
-                'TLVs)'),
+        LldpCommand(
+          'pktmon filter add LLDP --ethertype 0x88CC',
+          'Add the LLDP filter by EtherType (numeric form, Microsoft-documented)',
+        ),
+        LldpCommand(
+          'pktmon filter add CDP -m 01-00-0C-CC-CC-CC',
+          'Add the CDP filter by MAC (hyphen or colon delimiter both work)',
+        ),
+        LldpCommand(
+          'pktmon start -c --comp nics --pkt-size 0 -f lldp-cdp.etl',
+          'Capture full frames on the NICs to a file (pkt-size 0 avoids '
+              'truncating LLDP TLVs)',
+        ),
+        LldpCommand(
+          'pktmon stop',
+          'Stop after LLDP/CDP has had time to re-advertise (up to ~60s)',
+        ),
+        LldpCommand(
+          'pktmon etl2txt lldp-cdp.etl -o lldp-cdp.txt -v 3',
+          'Convert the log to readable text (verbose is REQUIRED to decode the '
+              'TLVs)',
+        ),
       ],
     ),
   ];
@@ -252,18 +288,30 @@ class LldpCdpReferenceScreen extends StatelessWidget {
 
   /// Common mistakes this reference prevents.
   static const List<LldpMistake> mistakes = <LldpMistake>[
-    LldpMistake('Get-NetLldpAgent shows the switch and port',
-        'It shows local agent config only. Use pktmon to read the neighbor.'),
-    LldpMistake('LLDP works over Wi-Fi',
-        'It is wired only. A Wi-Fi laptop sees nothing.'),
-    LldpMistake("Your laptop's LLDP is the AP's port",
-        'It is your port. Read the AP or the switch for the AP\'s port.'),
-    LldpMistake('Filter CDP by an EtherType',
-        'CDP has none. Match MAC 01:00:0C:CC:CC:CC or SNAP ID 0x2000.'),
-    LldpMistake('LLDP is on',
-        'Cisco ships it off (CDP on); many vendors ship it off too.'),
-    LldpMistake('Wireshark is the only option',
-        'Windows (pktmon) and macOS (tcpdump) both have a built-in path.'),
+    LldpMistake(
+      'Get-NetLldpAgent shows the switch and port',
+      'It shows local agent config only. Use pktmon to read the neighbor.',
+    ),
+    LldpMistake(
+      'LLDP works over Wi-Fi',
+      'It is wired only. A Wi-Fi laptop sees nothing.',
+    ),
+    LldpMistake(
+      "Your laptop's LLDP is the AP's port",
+      'It is your port. Read the AP or the switch for the AP\'s port.',
+    ),
+    LldpMistake(
+      'Filter CDP by an EtherType',
+      'CDP has none. Match MAC 01:00:0C:CC:CC:CC or SNAP ID 0x2000.',
+    ),
+    LldpMistake(
+      'LLDP is on',
+      'Cisco ships it off (CDP on); many vendors ship it off too.',
+    ),
+    LldpMistake(
+      'Wireshark is the only option',
+      'Windows (pktmon) and macOS (tcpdump) both have a built-in path.',
+    ),
   ];
 
   static const String footnote =
@@ -400,7 +448,8 @@ class LldpCdpReferenceScreen extends StatelessWidget {
 
                     // 5. The AP-port workflow.
                     const _SectionHeading(
-                        'The AP is dark: which switch port is it on?'),
+                      'The AP is dark: which switch port is it on?',
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     const _NumberedList(apPortWorkflow),
                     const SizedBox(height: AppSpacing.lg),
@@ -413,7 +462,8 @@ class LldpCdpReferenceScreen extends StatelessWidget {
 
                     // Common mistakes.
                     const _SectionHeading(
-                        'Common mistakes this reference prevents'),
+                      'Common mistakes this reference prevents',
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     const _MistakesCard(),
                     const SizedBox(height: AppSpacing.lg),
@@ -443,8 +493,9 @@ class _Summary extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       LldpCdpReferenceScreen.screenSummary,
-      style: (text.bodyLarge ?? const TextStyle())
-          .copyWith(color: colors.textSecondary),
+      style: (text.bodyLarge ?? const TextStyle()).copyWith(
+        color: colors.textSecondary,
+      ),
     );
   }
 }
@@ -501,8 +552,9 @@ class _ReferenceOnlyBanner extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     LldpCdpReferenceScreen.referenceOnlyBanner,
-                    style: (text.bodyMedium ?? const TextStyle())
-                        .copyWith(color: colors.textSecondary),
+                    style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -564,8 +616,10 @@ class _Prose extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       body,
-      style: (text.bodyMedium ?? const TextStyle())
-          .copyWith(color: colors.textSecondary, height: 1.5),
+      style: (text.bodyMedium ?? const TextStyle()).copyWith(
+        color: colors.textSecondary,
+        height: 1.5,
+      ),
     );
   }
 }
@@ -588,7 +642,10 @@ class _NumberedList extends StatelessWidget {
         rows.add(const SizedBox(height: AppSpacing.sm));
       }
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
   }
 }
 
@@ -631,8 +688,10 @@ class _NumberedRow extends StatelessWidget {
           Expanded(
             child: Text(
               body,
-              style: (text.bodyMedium ?? const TextStyle())
-                  .copyWith(color: colors.textSecondary, height: 1.5),
+              style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                color: colors.textSecondary,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -678,8 +737,10 @@ class _CommandGroupCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             group.subtitle,
-            style: (text.labelSmall ?? const TextStyle())
-                .copyWith(color: colors.textTertiary, height: 1.4),
+            style: (text.labelSmall ?? const TextStyle()).copyWith(
+              color: colors.textTertiary,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           ...group.commands.map(
@@ -725,8 +786,10 @@ class _CommandRow extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               command.note,
-              style: (text.labelMedium ?? const TextStyle())
-                  .copyWith(color: colors.textTertiary, height: 1.4),
+              style: (text.labelMedium ?? const TextStyle()).copyWith(
+                color: colors.textTertiary,
+                height: 1.4,
+              ),
             ),
           ],
         ),
@@ -755,7 +818,11 @@ class _MistakesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          for (int i = 0; i < LldpCdpReferenceScreen.mistakes.length; i++) ...<Widget>[
+          for (
+            int i = 0;
+            i < LldpCdpReferenceScreen.mistakes.length;
+            i++
+          ) ...<Widget>[
             if (i != 0) const SizedBox(height: AppSpacing.sm),
             Semantics(
               container: true,
@@ -766,14 +833,19 @@ class _MistakesCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Icon(Icons.close_rounded,
-                      size: 18, color: colors.statusWarning),
+                  Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: colors.statusWarning,
+                  ),
                   const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Text.rich(
                       TextSpan(
-                        style: (text.bodyMedium ?? const TextStyle())
-                            .copyWith(color: colors.textSecondary, height: 1.5),
+                        style: (text.bodyMedium ?? const TextStyle()).copyWith(
+                          color: colors.textSecondary,
+                          height: 1.5,
+                        ),
                         children: <InlineSpan>[
                           TextSpan(
                             text: LldpCdpReferenceScreen.mistakes[i].wrong,
@@ -784,7 +856,8 @@ class _MistakesCard extends StatelessWidget {
                           ),
                           const TextSpan(text: '  '),
                           TextSpan(
-                              text: LldpCdpReferenceScreen.mistakes[i].right),
+                            text: LldpCdpReferenceScreen.mistakes[i].right,
+                          ),
                         ],
                       ),
                     ),
@@ -810,8 +883,10 @@ class _Footnote extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       LldpCdpReferenceScreen.footnote,
-      style: (text.labelSmall ?? const TextStyle())
-          .copyWith(color: colors.textTertiary, height: 1.4),
+      style: (text.labelSmall ?? const TextStyle()).copyWith(
+        color: colors.textTertiary,
+        height: 1.4,
+      ),
     );
   }
 }

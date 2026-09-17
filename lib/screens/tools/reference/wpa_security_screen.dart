@@ -279,9 +279,7 @@ class WpaSecurityScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('WPA Security'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -372,9 +370,7 @@ class _SectionCard extends StatelessWidget {
     final List<Widget> rows = <Widget>[];
     for (int i = 0; i < children.length; i++) {
       if (i > 0) {
-        rows.add(
-          Divider(height: 1, thickness: 1, color: colors.border),
-        );
+        rows.add(Divider(height: 1, thickness: 1, color: colors.border));
       }
       rows.add(children[i]);
     }

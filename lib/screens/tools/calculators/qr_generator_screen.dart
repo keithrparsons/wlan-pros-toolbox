@@ -171,20 +171,20 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   /// Rasterize the white QR tile to a PNG via its RepaintBoundary. Returns null
   /// if the boundary is not yet laid out.
   Future<Uint8List?> _capturePng() async {
-    final RenderObject? obj =
-        _qrBoundaryKey.currentContext?.findRenderObject();
+    final RenderObject? obj = _qrBoundaryKey.currentContext?.findRenderObject();
     if (obj is! RenderRepaintBoundary) return null;
     // 3× pixel ratio so the shared PNG is crisp at scan resolution.
     final ui.Image image = await obj.toImage(pixelRatio: 3.0);
-    final ByteData? bytes =
-        await image.toByteData(format: ui.ImageByteFormat.png);
+    final ByteData? bytes = await image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
     return bytes?.buffer.asUint8List();
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -198,9 +198,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
         title: const Text('QR Code Generator'),
         toolbarHeight: 64,
         // §8.16 / §8.19 — copy the encoded text.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -307,9 +305,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           enableSuggestions: false,
           cursorColor: colors.textAccent,
           style: text.bodyLarge,
-          decoration: const InputDecoration(
-            hintText: 'https://wlanpros.com',
-          ),
+          decoration: const InputDecoration(hintText: 'https://wlanpros.com'),
         ),
       ),
     );
@@ -337,9 +333,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
               enableSuggestions: false,
               cursorColor: colors.textAccent,
               style: text.bodyLarge,
-              decoration: const InputDecoration(
-                hintText: 'WLAN-Pros-Guest',
-              ),
+              decoration: const InputDecoration(hintText: 'WLAN-Pros-Guest'),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -385,7 +379,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                   suffixIcon: Semantics(
                     button: true,
                     enabled: true,
-                    label: _passwordObscured ? 'Show password' : 'Hide password',
+                    label: _passwordObscured
+                        ? 'Show password'
+                        : 'Hide password',
                     child: IconButton(
                       onPressed: () => setState(
                         () => _passwordObscured = !_passwordObscured,
@@ -425,16 +421,12 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
               children: <Widget>[
                 Text(
                   'Hidden network',
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: text.bodyLarge?.copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
                   'Turn on if this network does not broadcast its name.',
-                  style: text.bodySmall?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),
@@ -493,7 +485,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     switch (shape) {
       case QrModuleShape.square:
         return const PrettyQrSmoothSymbol(
-          color: Color(0xFF30302F), // §8.19 QR modules: charcoal, never inverted
+          color: Color(
+            0xFF30302F,
+          ), // §8.19 QR modules: charcoal, never inverted
           roundFactor: 0,
         );
       case QrModuleShape.rounded:
@@ -502,9 +496,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           roundFactor: 1,
         );
       case QrModuleShape.dots:
-        return const PrettyQrDotsSymbol(
-          color: Color(0xFF30302F),
-        );
+        return const PrettyQrDotsSymbol(color: Color(0xFF30302F));
     }
   }
 
@@ -538,7 +530,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
               // §8.19: white --color-neutral-0 tile, card radius. The dark
               // modules need this light background to scan.
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF), // §8.19 QR tile: white, never theme-flipped
+                color: const Color(
+                  0xFFFFFFFF,
+                ), // §8.19 QR tile: white, never theme-flipped
                 borderRadius: BorderRadius.circular(AppRadius.card),
               ),
               // Inner white padding = the same-white margin around the QR. This
@@ -559,7 +553,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                     shape: _symbolFor(_shape),
                     // Explicit white background so the modules always sit on
                     // --color-neutral-0, independent of the enclosing tile.
-                    background: const Color(0xFFFFFFFF), // §8.19 QR background: white, never inverted
+                    background: const Color(
+                      0xFFFFFFFF,
+                    ), // §8.19 QR background: white, never inverted
                     // §8.19: mandatory ≥4-module quiet zone of the same white,
                     // never cropped to the module edge.
                     quietZone: const PrettyQrQuietZone.modules(4),
@@ -603,18 +599,12 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: <Widget>[
-          Icon(
-            Icons.qr_code_2,
-            size: 24,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.qr_code_2, size: 24, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
               message,
-              style: text.bodyMedium?.copyWith(
-                color: colors.textTertiary,
-              ),
+              style: text.bodyMedium?.copyWith(color: colors.textTertiary),
             ),
           ),
         ],

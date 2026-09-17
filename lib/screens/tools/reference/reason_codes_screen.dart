@@ -90,10 +90,7 @@ class ReasonCodesScreen extends StatefulWidget {
       CodeEntry(2, 'Previous auth no longer valid (expired)'),
       CodeEntry(3, 'Deauth: STA leaving BSS (or IBSS)'),
       CodeEntry(4, 'Disassoc: inactivity timer expired'),
-      CodeEntry(
-        5,
-        'Disassoc: AP cannot handle all associated STAs (capacity)',
-      ),
+      CodeEntry(5, 'Disassoc: AP cannot handle all associated STAs (capacity)'),
       CodeEntry(6, 'Class 2 frame received from non-auth STA'),
       CodeEntry(7, 'Class 3 frame received from non-assoc STA'),
       CodeEntry(8, 'Disassoc: STA leaving BSS'),
@@ -126,11 +123,17 @@ class ReasonCodesScreen extends StatefulWidget {
       CodeEntry(32, 'Disassoc: unspecified QoS-related reason'),
       CodeEntry(33, 'Disassoc: QoS AP lacks sufficient bandwidth for this STA'),
       CodeEntry(34, 'Disassoc: excessive frames not acked (poor link / AP tx)'),
-      CodeEntry(35, 'Disassoc: STA transmitting outside the limits of its TXOPs'),
+      CodeEntry(
+        35,
+        'Disassoc: STA transmitting outside the limits of its TXOPs',
+      ),
       CodeEntry(36, 'Requesting STA is leaving the BSS (or resetting)'),
       CodeEntry(37, 'Requesting STA no longer using the stream or session'),
-      CodeEntry(38, 'Requesting STA received frames using a mechanism with no '
-          'completed setup'),
+      CodeEntry(
+        38,
+        'Requesting STA received frames using a mechanism with no '
+        'completed setup',
+      ),
       CodeEntry(39, 'Requested from peer STA due to timeout'),
     ]),
     // Table 9-49, the FT block. 802.11-2020 prints "40–45  Reserved" as a single
@@ -175,13 +178,19 @@ class ReasonCodesScreen extends StatefulWidget {
     CodeEntry(10, 'Cannot support all requested capabilities'),
     CodeEntry(11, 'Reassociation denied: cannot confirm association exists'),
     CodeEntry(12, 'Association denied: reason outside the scope of 802.11'),
-    CodeEntry(13, 'Responding STA does not support the specified auth algorithm'),
+    CodeEntry(
+      13,
+      'Responding STA does not support the specified auth algorithm',
+    ),
     CodeEntry(14, 'Auth transaction sequence number out of expected sequence'),
     CodeEntry(15, 'Auth rejected: challenge failure'),
     CodeEntry(16, 'Auth rejected: timeout waiting for next frame in sequence'),
     CodeEntry(17, 'Assoc denied: AP cannot handle additional associated STAs'),
-    CodeEntry(18, 'Association denied: basic rates (BSSBasicRateSet) not '
-        'supported'),
+    CodeEntry(
+      18,
+      'Association denied: basic rates (BSSBasicRateSet) not '
+      'supported',
+    ),
     CodeEntry(19, 'Association denied: short preamble not supported'),
     // 23/24/25 previously carried the QoS meanings that belong to 32/33/34.
     CodeEntry(23, 'Assoc rejected: Power Capability element unacceptable'),
@@ -193,11 +202,17 @@ class ReasonCodesScreen extends StatefulWidget {
     CodeEntry(31, 'Robust management frame policy violation (MFP)'),
     CodeEntry(32, 'Unspecified, QoS-related failure'),
     CodeEntry(33, 'Assoc denied: QoS AP or PCP has insufficient bandwidth'),
-    CodeEntry(34, 'Assoc denied: excessive frame loss or poor channel '
-        'conditions'),
+    CodeEntry(
+      34,
+      'Assoc denied: excessive frame loss or poor channel '
+      'conditions',
+    ),
     CodeEntry(37, 'The request has been declined'),
-    CodeEntry(38, 'Request unsuccessful: one or more parameters have invalid '
-        'values'),
+    CodeEntry(
+      38,
+      'Request unsuccessful: one or more parameters have invalid '
+      'values',
+    ),
     CodeEntry(72, 'Invalid contents of RSNE'),
     CodeEntry(73, 'U-APSD coexistence is not supported'),
     // 76 and 104 used to be swapped in meaning. 76 is SAE; 104 is VHT.
@@ -270,9 +285,7 @@ class _ReasonCodesScreenState extends State<ReasonCodesScreen> {
         // group. Reflects the active filter when it matches anything; falls
         // back to the full reference when the filter matches nothing (so the
         // action is never empty). Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -588,9 +601,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

@@ -14,14 +14,19 @@ import 'package:wlan_pros_toolbox/data/signaling_tones.dart';
 
 void main() {
   group('Blue Box — R1 MF table (ITU-T / Wikipedia canonical)', () {
-    SignalingTone byLabel(String label) =>
-        SignalingTones.blueBox.firstWhere((SignalingTone t) => t.label == label);
+    SignalingTone byLabel(String label) => SignalingTones.blueBox.firstWhere(
+      (SignalingTone t) => t.label == label,
+    );
 
     test('the six MF frequencies are 700/900/1100/1300/1500/1700', () {
-      expect(
-        SignalingTones.mfFrequencies,
-        <double>[700, 900, 1100, 1300, 1500, 1700],
-      );
+      expect(SignalingTones.mfFrequencies, <double>[
+        700,
+        900,
+        1100,
+        1300,
+        1500,
+        1700,
+      ]);
     });
 
     test('canonical digit pairs (not the repo ordering)', () {
@@ -114,16 +119,18 @@ void main() {
 
   group('PCM synthesis', () {
     test('single-burst sample count matches duration × sample rate', () {
-      final SignalingTone nickel = SignalingTones.redBox
-          .firstWhere((SignalingTone t) => t.label == 'Nickel');
+      final SignalingTone nickel = SignalingTones.redBox.firstWhere(
+        (SignalingTone t) => t.label == 'Nickel',
+      );
       final Int16List s = SignalingTones.synthesize(nickel, sampleRate: 8000);
       // 66 ms × 8000 Hz = 528 samples, one burst, no gap.
       expect(s.length, (8000 * 66 / 1000).round());
     });
 
     test('multi-burst sample count includes the inter-burst gaps', () {
-      final SignalingTone quarter = SignalingTones.redBox
-          .firstWhere((SignalingTone t) => t.label == 'Quarter');
+      final SignalingTone quarter = SignalingTones.redBox.firstWhere(
+        (SignalingTone t) => t.label == 'Quarter',
+      );
       final Int16List s = SignalingTones.synthesize(quarter, sampleRate: 8000);
       final int burst = (8000 * 33 / 1000).round();
       final int gap = (8000 * 33 / 1000).round();
@@ -138,15 +145,19 @@ void main() {
       ]) {
         final Int16List s = SignalingTones.synthesize(t);
         for (final int v in s) {
-          expect(v, inInclusiveRange(-32768, 32767),
-              reason: 'tone ${t.label} sample out of range');
+          expect(
+            v,
+            inInclusiveRange(-32768, 32767),
+            reason: 'tone ${t.label} sample out of range',
+          );
         }
       }
     });
 
     test('a tone has non-trivial amplitude in its first burst body', () {
-      final SignalingTone t = SignalingTones.blueBox
-          .firstWhere((SignalingTone t) => t.label == '5');
+      final SignalingTone t = SignalingTones.blueBox.firstWhere(
+        (SignalingTone t) => t.label == '5',
+      );
       final Int16List s = SignalingTones.synthesize(t);
       int peak = 0;
       for (int i = s.length ~/ 4; i < s.length * 3 ~/ 4; i++) {
@@ -156,8 +167,9 @@ void main() {
     });
 
     test('the single-tone 2600 burst is non-silent', () {
-      final SignalingTone t = SignalingTones.blueBox
-          .firstWhere((SignalingTone t) => t.label == '2600');
+      final SignalingTone t = SignalingTones.blueBox.firstWhere(
+        (SignalingTone t) => t.label == '2600',
+      );
       final Int16List s = SignalingTones.synthesize(t);
       int peak = 0;
       for (int i = s.length ~/ 4; i < s.length * 3 ~/ 4; i++) {
@@ -169,16 +181,18 @@ void main() {
 
   group('WAV wrapping (reuses the DTMF WAV header)', () {
     test('produces a 44-byte header + PCM data of the right size', () {
-      final SignalingTone t = SignalingTones.redBox
-          .firstWhere((SignalingTone t) => t.label == 'Dime');
+      final SignalingTone t = SignalingTones.redBox.firstWhere(
+        (SignalingTone t) => t.label == 'Dime',
+      );
       final Int16List pcm = SignalingTones.synthesize(t, sampleRate: 8000);
       final Uint8List wav = SignalingTones.wavForTone(t, sampleRate: 8000);
       expect(wav.length, 44 + pcm.length * 2);
     });
 
     test('starts with the RIFF/WAVE/fmt/data chunk markers', () {
-      final SignalingTone t = SignalingTones.blueBox
-          .firstWhere((SignalingTone t) => t.label == 'KP');
+      final SignalingTone t = SignalingTones.blueBox.firstWhere(
+        (SignalingTone t) => t.label == 'KP',
+      );
       final Uint8List wav = SignalingTones.wavForTone(t);
       String at(int i, int n) => String.fromCharCodes(wav.sublist(i, i + n));
       expect(at(0, 4), 'RIFF');
@@ -192,17 +206,20 @@ void main() {
     test('frequency label renders one or two components', () {
       final SignalingTone two = SignalingTones.redBox.first;
       expect(two.frequencyLabel, '1700 Hz + 2200 Hz');
-      final SignalingTone one = SignalingTones.blueBox
-          .firstWhere((SignalingTone t) => t.label == '2600');
+      final SignalingTone one = SignalingTones.blueBox.firstWhere(
+        (SignalingTone t) => t.label == '2600',
+      );
       expect(one.frequencyLabel, '2600 Hz');
     });
 
     test('timing label renders single vs multi-burst', () {
-      final SignalingTone nickel = SignalingTones.redBox
-          .firstWhere((SignalingTone t) => t.label == 'Nickel');
+      final SignalingTone nickel = SignalingTones.redBox.firstWhere(
+        (SignalingTone t) => t.label == 'Nickel',
+      );
       expect(nickel.timingLabel, '66 ms');
-      final SignalingTone quarter = SignalingTones.redBox
-          .firstWhere((SignalingTone t) => t.label == 'Quarter');
+      final SignalingTone quarter = SignalingTones.redBox.firstWhere(
+        (SignalingTone t) => t.label == 'Quarter',
+      );
       expect(quarter.timingLabel, '5 × 33 ms, 33 ms apart');
     });
   });

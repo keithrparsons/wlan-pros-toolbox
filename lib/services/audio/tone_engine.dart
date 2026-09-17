@@ -86,7 +86,7 @@ abstract class ToneEngine {
 /// flutter_soloud.
 class SoLoudToneEngine implements ToneEngine {
   SoLoudToneEngine({double initialVolume = 0.5})
-      : _volume = initialVolume.clamp(0.0, 1.0);
+    : _volume = initialVolume.clamp(0.0, 1.0);
 
   final soloud.SoLoud _soloud = soloud.SoLoud.instance;
 
@@ -127,8 +127,9 @@ class SoLoudToneEngine implements ToneEngine {
       if (!_soloud.isInitialized) {
         await _soloud.init();
       }
-      _status =
-          _soloud.isInitialized ? ToneEngineStatus.ready : ToneEngineStatus.unavailable;
+      _status = _soloud.isInitialized
+          ? ToneEngineStatus.ready
+          : ToneEngineStatus.unavailable;
     } catch (e) {
       // No output device, blocked AudioContext, etc. - honest unavailable, no
       // crash, no faked playback (GL-008 honesty corollary).
@@ -154,8 +155,11 @@ class SoLoudToneEngine implements ToneEngine {
 
       // Stop any prior voice cleanly, then start silent and fade up (no click).
       await _stopHandle();
-      final soloud.SoundHandle h =
-          _soloud.play(src, volume: 0.0, looping: true);
+      final soloud.SoundHandle h = _soloud.play(
+        src,
+        volume: 0.0,
+        looping: true,
+      );
       _handle = h;
       _soloud.fadeVolume(h, _volume, _attack);
     } catch (e) {
@@ -211,9 +215,7 @@ class SoLoudToneEngine implements ToneEngine {
     try {
       if (fadeOut) {
         _soloud.fadeVolume(h, 0.0, _release);
-        await Future<void>.delayed(
-          _release + const Duration(milliseconds: 10),
-        );
+        await Future<void>.delayed(_release + const Duration(milliseconds: 10));
       }
       await _soloud.stop(h);
     } catch (e) {

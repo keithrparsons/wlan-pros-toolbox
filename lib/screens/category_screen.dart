@@ -103,9 +103,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       edge + AppSpacing.sm,
                     ),
                     sliver: SliverList(
-                      delegate: SliverChildListDelegate(
-                        _bodyChildren(text),
-                      ),
+                      delegate: SliverChildListDelegate(_bodyChildren(text)),
                     ),
                   ),
                 ],
@@ -153,11 +151,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
       if (sections.length > 1) {
         children
           ..add(const SizedBox(height: AppSpacing.sm))
-          ..add(_SectionFilterChips(
-            sections: sections,
-            selected: _selectedSection,
-            onSelect: (String? s) => setState(() => _selectedSection = s),
-          ));
+          ..add(
+            _SectionFilterChips(
+              sections: sections,
+              selected: _selectedSection,
+              onSelect: (String? s) => setState(() => _selectedSection = s),
+            ),
+          );
       }
     }
 
@@ -180,9 +180,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       if (hits.isEmpty) {
         return <Widget>[_NoMatchState(query: _query.trim(), text: text)];
       }
-      return _interleaveRows(
-        hits.map((ToolSearchHit h) => h.tool).toList(),
-      );
+      return _interleaveRows(hits.map((ToolSearchHit h) => h.tool).toList());
     }
 
     // FLAT CATEGORY (no subgroup map): a single unnamed section, no headers.
@@ -236,9 +234,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return ToolRow(
       key: ValueKey<String>(tool.id),
       tool: tool,
-      contentType: _grouped
-          ? contentTypeFor(tool, widget.category.id)
-          : null,
+      contentType: _grouped ? contentTypeFor(tool, widget.category.id) : null,
     );
   }
 }
@@ -345,10 +341,9 @@ class _InCategorySearchField extends StatelessWidget {
       controller: controller,
       onChanged: onChanged,
       // 16px field text dodges iOS Safari auto-zoom (§8.4).
-      style: Theme.of(context)
-          .textTheme
-          .bodyLarge
-          ?.copyWith(color: colors.textPrimary),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary),
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.search, color: colors.textTertiary),
         hintText: hint,
@@ -375,9 +370,9 @@ class _SectionFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<({String? value, String label})> chips =
         <({String? value, String label})>[
-      (value: null, label: 'All'),
-      ...sections.map((String s) => (value: s, label: s)),
-    ];
+          (value: null, label: 'All'),
+          ...sections.map((String s) => (value: s, label: s)),
+        ];
 
     return Semantics(
       container: true,
@@ -486,11 +481,7 @@ class _NoMatchState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
       child: Column(
         children: <Widget>[
-          Icon(
-            Icons.search_off_outlined,
-            size: 48,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.search_off_outlined, size: 48, color: colors.textTertiary),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'No tools match "$query" here',

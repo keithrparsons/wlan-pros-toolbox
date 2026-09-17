@@ -184,14 +184,18 @@ class _PacketFlowProgressState extends State<PacketFlowProgress>
     // has stopped knowing, this says so in words rather than showing a frozen
     // number. Reduced-motion users get the same honest text — they are the ones
     // who most need it, because for them the animation is not there to reassure.
-    final String progressLabel = widget.indeterminate ? 'Still working' : '$pct%';
+    final String progressLabel = widget.indeterminate
+        ? 'Still working'
+        : '$pct%';
 
     // Lime is a sanctioned FILL in both themes (§8.20.2). The node fill, the dot
     // and the completed-segment all read as lime AREAS, not thin foreground
     // strokes, so brand lime holds on white. The pending track/ring uses a
     // theme-aware low-contrast tone.
     final Color litColor = colors.primary;
-    final Color pendingColor = colors.isLight ? colors.surface0 : colors.surface2;
+    final Color pendingColor = colors.isLight
+        ? colors.surface0
+        : colors.surface2;
     final Color trackInk = colors.borderStrong;
     final Color labelInk = colors.textSecondary;
 
@@ -202,7 +206,8 @@ class _PacketFlowProgressState extends State<PacketFlowProgress>
         // Wrapped in one live region so a screen reader hears each advance.
         Semantics(
           liveRegion: true,
-          label: widget.semanticsLabelBuilder?.call() ??
+          label:
+              widget.semanticsLabelBuilder?.call() ??
               (widget.indeterminate
                   ? '${widget.caption}, still working'
                   : '${widget.caption}, $pct percent complete'),
@@ -216,8 +221,9 @@ class _PacketFlowProgressState extends State<PacketFlowProgress>
                     style: text.labelMedium?.copyWith(
                       color: labelInk,
                       letterSpacing: 0.4,
-                      fontWeight:
-                          colors.isLight ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: colors.isLight
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -335,11 +341,7 @@ class _PacketFlowPainter extends CustomPainter {
     // not clip.
     final double left = r;
     final double right = size.width - r;
-    final List<double> cx = <double>[
-      left,
-      (left + right) / 2,
-      right,
-    ];
+    final List<double> cx = <double>[left, (left + right) / 2, right];
 
     final int lit = stage.litNodes;
 
@@ -368,7 +370,11 @@ class _PacketFlowPainter extends CustomPainter {
       final Offset b = Offset(cx[seg + 1] - r, cy);
       final Offset dot = Offset.lerp(a, b, dotProgress)!;
       // A soft lime halo + a solid lime core — a packet in flight.
-      canvas.drawCircle(dot, 7, Paint()..color = litColor.withValues(alpha: 0.25));
+      canvas.drawCircle(
+        dot,
+        7,
+        Paint()..color = litColor.withValues(alpha: 0.25),
+      );
       canvas.drawCircle(dot, 4, Paint()..color = litColor);
     }
 
@@ -388,8 +394,7 @@ class _PacketFlowPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = inFlight ? 2.5 : 1.5
           ..color = inFlight
-              ? Color.lerp(nodeOutline, ringAccent,
-                  0.5 + 0.5 * (dotProgress))!
+              ? Color.lerp(nodeOutline, ringAccent, 0.5 + 0.5 * (dotProgress))!
               : nodeOutline;
         canvas.drawCircle(center, r - 1, ring);
       }
@@ -434,10 +439,7 @@ class _PacketFlowPainter extends CustomPainter {
         ),
       ),
     )..layout();
-    tp.paint(
-      canvas,
-      center - Offset(tp.width / 2, tp.height / 2),
-    );
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   void _paintLabel(Canvas canvas, String label, Offset top, Color color) {

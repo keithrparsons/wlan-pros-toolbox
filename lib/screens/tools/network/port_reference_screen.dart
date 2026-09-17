@@ -95,10 +95,7 @@ class _PortReferenceScreenState extends State<PortReferenceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Well-Known Ports'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Well-Known Ports'), toolbarHeight: 64),
       body: SafeArea(top: false, child: _body()),
     );
   }
@@ -287,9 +284,7 @@ class _PortRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2, bottom: 2),
               child: Text(
                 entry.description,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
         ],
@@ -339,9 +334,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

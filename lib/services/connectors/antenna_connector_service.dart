@@ -106,20 +106,20 @@ class AntennaConnector {
 
   /// All text fields concatenated lower-case, for substring search.
   String get _searchBlob => <String>[
-        connector,
-        fullName,
-        group,
-        reversePolarity,
-        typicalWifiUse,
-        indoorOutdoor,
-        coupling,
-        size,
-        rfPath,
-        impedance,
-        frequency,
-        mating,
-        notes,
-      ].join(' ').toLowerCase();
+    connector,
+    fullName,
+    group,
+    reversePolarity,
+    typicalWifiUse,
+    indoorOutdoor,
+    coupling,
+    size,
+    rfPath,
+    impedance,
+    frequency,
+    mating,
+    notes,
+  ].join(' ').toLowerCase();
 
   /// Build from a decoded JSON map. Returns `null` when the row is malformed
   /// (missing id or connector name) so a bad asset row is dropped rather than
@@ -229,9 +229,9 @@ class AntennaConnectorService {
       connectors: <TopConnector>[],
       coverageNote: '',
     ),
-  })  : _connectors = List<AntennaConnector>.unmodifiable(connectors),
-        vendorTrends = List<VendorTrend>.unmodifiable(vendorTrends),
-        sizeOrder = List<String>.unmodifiable(sizeOrder);
+  }) : _connectors = List<AntennaConnector>.unmodifiable(connectors),
+       vendorTrends = List<VendorTrend>.unmodifiable(vendorTrends),
+       sizeOrder = List<String>.unmodifiable(sizeOrder);
 
   /// Build from the raw asset JSON string. Tolerant of malformed rows: bad
   /// entries are skipped, never thrown. Returns an empty-but-valid service if
@@ -256,8 +256,7 @@ class AntennaConnectorService {
       vendorTrends: _parseVendorTrends(decoded['vendor_trends']),
       sizeOrder: _parseStringList(decoded['size_order_largest_to_smallest']),
       sizeOrderNote: AntennaConnector._str(decoded['size_order_note']),
-      troubleshootingTop6:
-          _parseTop6(decoded['troubleshooting_class_top_6']),
+      troubleshootingTop6: _parseTop6(decoded['troubleshooting_class_top_6']),
     );
   }
 

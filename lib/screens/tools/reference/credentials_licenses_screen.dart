@@ -59,8 +59,9 @@ class CredentialsLicensesScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kCredentialsLicensesToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kCredentialsLicensesToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -86,14 +87,19 @@ class CredentialsLicensesScreen extends StatelessWidget {
                           'Credential lead-time chart: TWIC, CAC, DBIDS, SIDA, '
                           'HAZWOPER, and background checks, and how long each '
                           'takes to obtain',
-                      caption: 'The credential you do not hold is the schedule '
+                      caption:
+                          'The credential you do not hold is the schedule '
                           'you cannot keep.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kCredentialsLicensesToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kCredentialsLicensesToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
-                      assetPath: ReferencePdfs.pathFor(kCredentialsLicensesToolId),
+                      assetPath: ReferencePdfs.pathFor(
+                        kCredentialsLicensesToolId,
+                      ),
                       title: 'Credentials & Licenses',
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -149,8 +155,11 @@ class CredentialsLicensesScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        for (int i = 0; i < kCredentialNotes.length; i++) ...<
-                            Widget>[
+                        for (
+                          int i = 0;
+                          i < kCredentialNotes.length;
+                          i++
+                        ) ...<Widget>[
                           if (i > 0) const SizedBox(height: AppSpacing.md),
                           ReferenceBody(kCredentialNotes[i]),
                         ],
@@ -212,8 +221,13 @@ class CredentialsLicensesScreen extends StatelessWidget {
       );
     for (final CredentialRow c in kCredentials) {
       b.writeln(
-        <String>[c.credential, c.authority, c.gatesYou, c.leadTime, c.validity]
-            .join(tab),
+        <String>[
+          c.credential,
+          c.authority,
+          c.gatesYou,
+          c.leadTime,
+          c.validity,
+        ].join(tab),
       );
     }
     for (final String s in kCredentialNotes) {

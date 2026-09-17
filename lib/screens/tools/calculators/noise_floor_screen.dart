@@ -119,8 +119,10 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
 
   // Noise figure: unsigned decimal (PWA min=0). Temperature: signed decimal so
   // negative °C is allowed (PWA min=-40).
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
 
   @override
   void initState() {
@@ -193,9 +195,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled while the noise
         // figure is empty/invalid (no computed floor); copies the noise-floor
         // breakdown as a labeled text block. Copy leads; no help icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -419,9 +419,7 @@ class _NoiseFloorScreenState extends State<NoiseFloorScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dBm',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

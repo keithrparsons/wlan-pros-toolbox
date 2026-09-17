@@ -93,14 +93,14 @@ class Maidenhead {
   /// an out-of-range coordinate or an unsupported precision.
   static String encode(double lat, double lon, {int precision = 6}) {
     if (precision != 4 && precision != 6 && precision != 8) {
-      throw ArgumentError.value(
-        precision,
-        'precision',
-        'must be 4, 6, or 8',
-      );
+      throw ArgumentError.value(precision, 'precision', 'must be 4, 6, or 8');
     }
-    if (!lat.isFinite || !lon.isFinite || lat < -90 || lat > 90 ||
-        lon < -180 || lon > 180) {
+    if (!lat.isFinite ||
+        !lon.isFinite ||
+        lat < -90 ||
+        lat > 90 ||
+        lon < -180 ||
+        lon > 180) {
       throw ArgumentError('latitude must be -90..90 and longitude -180..180');
     }
 
@@ -184,14 +184,18 @@ class Maidenhead {
     final double dPhi = _rad(lat2 - lat1);
     final double dLambda = _rad(lon2 - lon1);
 
-    final double a = math.sin(dPhi / 2) * math.sin(dPhi / 2) +
-        math.cos(phi1) * math.cos(phi2) *
-            math.sin(dLambda / 2) * math.sin(dLambda / 2);
+    final double a =
+        math.sin(dPhi / 2) * math.sin(dPhi / 2) +
+        math.cos(phi1) *
+            math.cos(phi2) *
+            math.sin(dLambda / 2) *
+            math.sin(dLambda / 2);
     final double km =
         earthRadiusKm * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
 
     final double y = math.sin(dLambda) * math.cos(phi2);
-    final double x = math.cos(phi1) * math.sin(phi2) -
+    final double x =
+        math.cos(phi1) * math.sin(phi2) -
         math.sin(phi1) * math.cos(phi2) * math.cos(dLambda);
     final double bearing = (_deg(math.atan2(y, x)) + 360.0) % 360.0;
 

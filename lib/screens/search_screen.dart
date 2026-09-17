@@ -78,9 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       },
                     ),
                   ),
-                  Expanded(
-                    child: _body(text, edge, q, hits),
-                  ),
+                  Expanded(child: _body(text, edge, q, hits)),
                 ],
               ),
             );
@@ -213,10 +211,7 @@ class _SearchField extends StatelessWidget {
                 child: IconButton(
                   onPressed: onClear,
                   tooltip: 'Clear search',
-                  icon: Icon(
-                    Icons.cancel_outlined,
-                    color: colors.textTertiary,
-                  ),
+                  icon: Icon(Icons.cancel_outlined, color: colors.textTertiary),
                 ),
               ),
       ),

@@ -33,8 +33,10 @@ Future<void> shareAssetImpl({
 }) async {
   // Read the bundled bytes (throws on a missing/corrupt asset), then share them.
   final ByteData data = await rootBundle.load(assetPath);
-  final Uint8List bytes =
-      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+  final Uint8List bytes = data.buffer.asUint8List(
+    data.offsetInBytes,
+    data.lengthInBytes,
+  );
   await _writeTempAndShare(
     bytes: bytes,
     filename: filename,

@@ -59,8 +59,9 @@ class FacilitySpacesScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kFacilitySpacesToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kFacilitySpacesToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -78,19 +79,21 @@ class FacilitySpacesScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kFacilitySpacesToolId),
+                      assetPath: ReferenceImages.pathFor(kFacilitySpacesToolId),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'Telecom spaces topology: the Entrance Facility, MDF '
                           'or Equipment Room, and the IDF or Telecommunications '
                           'Room hierarchy in a star',
-                      caption: 'MDF, IDF, TR, and "data closet" are often one '
+                      caption:
+                          'MDF, IDF, TR, and "data closet" are often one '
                           'room.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kFacilitySpacesToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kFacilitySpacesToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
                       assetPath: ReferencePdfs.pathFor(kFacilitySpacesToolId),
                       title: 'Telecom Spaces',
@@ -172,13 +175,9 @@ class FacilitySpacesScreen extends StatelessWidget {
       ..writeln(kFacilitySameRoom)
       ..writeln()
       ..writeln('The terms, decoded')
-      ..writeln(
-        <String>['Term', 'What it is', 'Standard or field'].join(tab),
-      );
+      ..writeln(<String>['Term', 'What it is', 'Standard or field'].join(tab));
     for (final TelecomSpaceRow s in kTelecomSpaces) {
-      b.writeln(
-        <String>[s.term, s.whatItIs, s.standardOrField].join(tab),
-      );
+      b.writeln(<String>[s.term, s.whatItIs, s.standardOrField].join(tab));
     }
     b
       ..writeln()

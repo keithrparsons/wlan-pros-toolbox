@@ -143,9 +143,7 @@ class _IpGeoScreenState extends State<IpGeoScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a successful
         // lookup exists; copies the location/coordinates as a labeled text
         // block. Copy leads; this screen has no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );

@@ -77,7 +77,8 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
   final FocusNode _gridBFocus = FocusNode();
 
   // Signed decimal for coordinates; locator chars for grids (cap 8).
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
   static final List<TextInputFormatter> _locatorChars = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
     LengthLimitingTextInputFormatter(8),
@@ -131,15 +132,23 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
         final MaidenheadCell cell = Maidenhead.decode(grid)!;
         return (StringBuffer()
               ..writeln('Maidenhead locator')
-              ..writeln('Latitude: ${_fmtDeg(_lat!)}  '
-                  'Longitude: ${_fmtDeg(_lon!)}')
+              ..writeln(
+                'Latitude: ${_fmtDeg(_lat!)}  '
+                'Longitude: ${_fmtDeg(_lon!)}',
+              )
               ..writeln('Locator ($_precision-char): $grid')
-              ..writeln('Square center: ${_fmtDeg(cell.centerLat)}, '
-                  '${_fmtDeg(cell.centerLon)}')
-              ..writeln('SW corner: ${_fmtDeg(cell.swLat)}, '
-                  '${_fmtDeg(cell.swLon)}')
-              ..writeln('NE corner: ${_fmtDeg(cell.neLat)}, '
-                  '${_fmtDeg(cell.neLon)}'))
+              ..writeln(
+                'Square center: ${_fmtDeg(cell.centerLat)}, '
+                '${_fmtDeg(cell.centerLon)}',
+              )
+              ..writeln(
+                'SW corner: ${_fmtDeg(cell.swLat)}, '
+                '${_fmtDeg(cell.swLon)}',
+              )
+              ..writeln(
+                'NE corner: ${_fmtDeg(cell.neLat)}, '
+                '${_fmtDeg(cell.neLon)}',
+              ))
             .toString()
             .trimRight();
       case _GridMode.toLatLon:
@@ -148,14 +157,22 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
         return (StringBuffer()
               ..writeln('Maidenhead locator -> position')
               ..writeln('Locator: ${_gridCtrl.text.trim().toUpperCase()}')
-              ..writeln('Center: ${_fmtDeg(cell.centerLat)}, '
-                  '${_fmtDeg(cell.centerLon)}')
-              ..writeln('SW corner: ${_fmtDeg(cell.swLat)}, '
-                  '${_fmtDeg(cell.swLon)}')
-              ..writeln('NE corner: ${_fmtDeg(cell.neLat)}, '
-                  '${_fmtDeg(cell.neLon)}')
-              ..writeln('Size: ${_fmtDeg(cell.lonWidth)} lon x '
-                  '${_fmtDeg(cell.latHeight)} lat'))
+              ..writeln(
+                'Center: ${_fmtDeg(cell.centerLat)}, '
+                '${_fmtDeg(cell.centerLon)}',
+              )
+              ..writeln(
+                'SW corner: ${_fmtDeg(cell.swLat)}, '
+                '${_fmtDeg(cell.swLon)}',
+              )
+              ..writeln(
+                'NE corner: ${_fmtDeg(cell.neLat)}, '
+                '${_fmtDeg(cell.neLon)}',
+              )
+              ..writeln(
+                'Size: ${_fmtDeg(cell.lonWidth)} lon x '
+                '${_fmtDeg(cell.latHeight)} lat',
+              ))
             .toString()
             .trimRight();
       case _GridMode.distance:
@@ -166,13 +183,19 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
         if (leg == null) return null;
         return (StringBuffer()
               ..writeln('Maidenhead grid distance')
-              ..writeln('From: ${_gridACtrl.text.trim().toUpperCase()}  '
-                  'To: ${_gridBCtrl.text.trim().toUpperCase()}')
-              ..writeln('Distance: ${leg.km.toStringAsFixed(1)} km '
-                  '(${leg.miles.toStringAsFixed(1)} mi)')
-              ..writeln('Initial bearing: '
-                  '${leg.bearingDeg.toStringAsFixed(1)} deg '
-                  '(${_cardinal(leg.bearingDeg)})'))
+              ..writeln(
+                'From: ${_gridACtrl.text.trim().toUpperCase()}  '
+                'To: ${_gridBCtrl.text.trim().toUpperCase()}',
+              )
+              ..writeln(
+                'Distance: ${leg.km.toStringAsFixed(1)} km '
+                '(${leg.miles.toStringAsFixed(1)} mi)',
+              )
+              ..writeln(
+                'Initial bearing: '
+                '${leg.bearingDeg.toStringAsFixed(1)} deg '
+                '(${_cardinal(leg.bearingDeg)})',
+              ))
             .toString()
             .trimRight();
     }
@@ -183,8 +206,22 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
   /// 16-point compass label for a bearing in degrees.
   static String _cardinal(double deg) {
     const List<String> points = <String>[
-      'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
-      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW',
+      'N',
+      'NNE',
+      'NE',
+      'ENE',
+      'E',
+      'ESE',
+      'SE',
+      'SSE',
+      'S',
+      'SSW',
+      'SW',
+      'WSW',
+      'W',
+      'WNW',
+      'NW',
+      'NNW',
     ];
     final int idx = ((deg % 360) / 22.5).round() % 16;
     return points[idx];
@@ -375,18 +412,27 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _row(text, mono,
-              label: 'Square center',
-              value: '${_fmtDeg(cell.centerLat)}, ${_fmtDeg(cell.centerLon)}',
-              identifier: true),
-          _row(text, mono,
-              label: 'SW corner',
-              value: '${_fmtDeg(cell.swLat)}, ${_fmtDeg(cell.swLon)}',
-              identifier: true),
-          _row(text, mono,
-              label: 'NE corner',
-              value: '${_fmtDeg(cell.neLat)}, ${_fmtDeg(cell.neLon)}',
-              identifier: true),
+          _row(
+            text,
+            mono,
+            label: 'Square center',
+            value: '${_fmtDeg(cell.centerLat)}, ${_fmtDeg(cell.centerLon)}',
+            identifier: true,
+          ),
+          _row(
+            text,
+            mono,
+            label: 'SW corner',
+            value: '${_fmtDeg(cell.swLat)}, ${_fmtDeg(cell.swLon)}',
+            identifier: true,
+          ),
+          _row(
+            text,
+            mono,
+            label: 'NE corner',
+            value: '${_fmtDeg(cell.neLat)}, ${_fmtDeg(cell.neLon)}',
+            identifier: true,
+          ),
         ],
       ),
     );
@@ -450,19 +496,29 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _row(text, mono,
-              label: 'SW corner',
-              value: '${_fmtDeg(cell.swLat)}, ${_fmtDeg(cell.swLon)}',
-              identifier: true),
-          _row(text, mono,
-              label: 'NE corner',
-              value: '${_fmtDeg(cell.neLat)}, ${_fmtDeg(cell.neLon)}',
-              identifier: true),
-          _row(text, mono,
-              label: 'Cell size',
-              value: '${_fmtDeg(cell.lonWidth)} lon x '
-                  '${_fmtDeg(cell.latHeight)} lat',
-              identifier: true),
+          _row(
+            text,
+            mono,
+            label: 'SW corner',
+            value: '${_fmtDeg(cell.swLat)}, ${_fmtDeg(cell.swLon)}',
+            identifier: true,
+          ),
+          _row(
+            text,
+            mono,
+            label: 'NE corner',
+            value: '${_fmtDeg(cell.neLat)}, ${_fmtDeg(cell.neLon)}',
+            identifier: true,
+          ),
+          _row(
+            text,
+            mono,
+            label: 'Cell size',
+            value:
+                '${_fmtDeg(cell.lonWidth)} lon x '
+                '${_fmtDeg(cell.latHeight)} lat',
+            identifier: true,
+          ),
         ],
       ),
     );
@@ -526,7 +582,8 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
       return _errorCard(
         text,
         title: 'Not a valid locator',
-        message: '${bad.join(' and ')} '
+        message:
+            '${bad.join(' and ')} '
             '${bad.length > 1 ? 'are' : 'is'} not a valid 4/6/8-char locator.',
       );
     }
@@ -552,13 +609,20 @@ class _MaidenheadScreenState extends State<MaidenheadScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          _row(text, mono,
-              label: 'Distance',
-              value: '${leg.miles.toStringAsFixed(1)} mi'),
-          _row(text, mono,
-              label: 'Initial bearing',
-              value: '${leg.bearingDeg.toStringAsFixed(1)} deg '
-                  '(${_cardinal(leg.bearingDeg)})'),
+          _row(
+            text,
+            mono,
+            label: 'Distance',
+            value: '${leg.miles.toStringAsFixed(1)} mi',
+          ),
+          _row(
+            text,
+            mono,
+            label: 'Initial bearing',
+            value:
+                '${leg.bearingDeg.toStringAsFixed(1)} deg '
+                '(${_cardinal(leg.bearingDeg)})',
+          ),
         ],
       ),
     );

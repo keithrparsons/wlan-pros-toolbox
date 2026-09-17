@@ -149,11 +149,14 @@ class MorsePlayer {
 
     final int total =
         segs.fold<int>(0, (int sum, MorseSegment s) => sum + s.units) *
-            unitSamples;
+        unitSamples;
     final Int16List out = Int16List(total);
 
     final double twoPiF = 2 * math.pi * toneHz / sampleRate;
-    final int ramp = math.min((sampleRate * 5 / 1000).round(), unitSamples ~/ 2);
+    final int ramp = math.min(
+      (sampleRate * 5 / 1000).round(),
+      unitSamples ~/ 2,
+    );
 
     int cursor = 0;
     for (final MorseSegment seg in segs) {
@@ -192,11 +195,11 @@ class MorsePlayer {
     final BytesBuilder b = BytesBuilder();
     void writeString(String s) => b.add(s.codeUnits);
     void writeUint32(int v) => b.add(<int>[
-          v & 0xFF,
-          (v >> 8) & 0xFF,
-          (v >> 16) & 0xFF,
-          (v >> 24) & 0xFF,
-        ]);
+      v & 0xFF,
+      (v >> 8) & 0xFF,
+      (v >> 16) & 0xFF,
+      (v >> 24) & 0xFF,
+    ]);
     void writeUint16(int v) => b.add(<int>[v & 0xFF, (v >> 8) & 0xFF]);
 
     writeString('RIFF');

@@ -200,7 +200,10 @@ class WifiLiveTrend extends StatelessWidget {
 
   /// RSSI axis: pad 3 dBm beyond the present min/max, floored to a sane window
   /// so a flat strong link does not render as a jittery full-height line.
-  static ({double min, double max}) _rssiBounds(double dataMin, double dataMax) {
+  static ({double min, double max}) _rssiBounds(
+    double dataMin,
+    double dataMax,
+  ) {
     double lo = (dataMin - 3).floorToDouble();
     double hi = (dataMax + 3).ceilToDouble();
     if (hi - lo < 6) {
@@ -213,7 +216,10 @@ class WifiLiveTrend extends StatelessWidget {
   }
 
   /// Rate axis: 0-based with a friendly ceiling rounded up past the max.
-  static ({double min, double max}) _rateBounds(double dataMin, double dataMax) {
+  static ({double min, double max}) _rateBounds(
+    double dataMin,
+    double dataMax,
+  ) {
     return (min: 0, max: _niceCeiling(dataMax));
   }
 
@@ -251,7 +257,7 @@ class _TrendChartRow extends StatelessWidget {
 
   /// Maps the present-sample (min, max) to a friendly axis (min, max).
   final ({double min, double max}) Function(double dataMin, double dataMax)
-      niceBounds;
+  niceBounds;
 
   /// When non-null, the platform cannot report this field — show the reason in
   /// place of a chart (graceful degradation, never a fake line).
@@ -276,7 +282,8 @@ class _TrendChartRow extends StatelessWidget {
     } else if (!stats.hasData) {
       summary = '$label, waiting for the first reading';
     } else {
-      summary = '$label trend over ${stats.sampleCount} samples, '
+      summary =
+          '$label trend over ${stats.sampleCount} samples, '
           'current ${fmt(stats.current)} $unit, '
           'minimum ${fmt(stats.min)} $unit, '
           'average ${fmt(stats.avg)} $unit, '
@@ -310,16 +317,18 @@ class _TrendChartRow extends StatelessWidget {
             if (unavailableReason != null)
               _ReasonPanel(text: unavailableReason!)
             else if (!stats.hasData)
-              _ReasonPanel(
-                text: 'Waiting for the first reading…',
-              )
+              _ReasonPanel(text: 'Waiting for the first reading…')
             else ...<Widget>[
               // current / min / avg / max — the text summary beside the chart.
               Wrap(
                 spacing: AppSpacing.lg,
                 runSpacing: AppSpacing.xs,
                 children: <Widget>[
-                  _Stat(mono: mono, label: 'current', value: fmt(stats.current)),
+                  _Stat(
+                    mono: mono,
+                    label: 'current',
+                    value: fmt(stats.current),
+                  ),
                   _Stat(mono: mono, label: 'min', value: fmt(stats.min)),
                   _Stat(mono: mono, label: 'avg', value: fmt(stats.avg)),
                   _Stat(mono: mono, label: 'max', value: fmt(stats.max)),
@@ -414,7 +423,7 @@ class _TrendLineChart extends StatelessWidget {
 
   final List<double?> window;
   final ({double min, double max}) Function(double dataMin, double dataMax)
-      bounds;
+  bounds;
   final int decimals;
 
   @override
@@ -458,8 +467,7 @@ class _TrendLineChart extends StatelessWidget {
     }
     if (current.isNotEmpty) segments.add(current);
 
-    final TextStyle axisStyle =
-        (text.labelSmall ?? const TextStyle()).copyWith(
+    final TextStyle axisStyle = (text.labelSmall ?? const TextStyle()).copyWith(
       color: colors.textTertiary,
     );
 
@@ -481,12 +489,15 @@ class _TrendLineChart extends StatelessWidget {
               FlLine(color: colors.border, strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -494,10 +505,7 @@ class _TrendLineChart extends StatelessWidget {
               interval: yInterval <= 0 ? 1 : yInterval,
               getTitlesWidget: (double value, TitleMeta meta) => Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.xxs),
-                child: Text(
-                  value.toStringAsFixed(decimals),
-                  style: axisStyle,
-                ),
+                child: Text(value.toStringAsFixed(decimals), style: axisStyle),
               ),
             ),
           ),
@@ -518,11 +526,11 @@ class _TrendLineChart extends StatelessWidget {
                 getDotPainter:
                     (FlSpot spot, double _, LineChartBarData _, int _) =>
                         FlDotCirclePainter(
-                  radius: 2.5,
-                  color: colors.textAccent,
-                  strokeWidth: 0,
-                  strokeColor: colors.textAccent,
-                ),
+                          radius: 2.5,
+                          color: colors.textAccent,
+                          strokeWidth: 0,
+                          strokeColor: colors.textAccent,
+                        ),
               ),
             ),
         ],

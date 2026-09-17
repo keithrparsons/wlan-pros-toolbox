@@ -214,7 +214,8 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
   @override
   void initState() {
     super.initState();
-    _piBacked = kIsWeb &&
+    _piBacked =
+        kIsWeb &&
         PiBackend.canServe('network-discovery') &&
         widget.engineFactory == null;
     if (widget.service != null) {
@@ -374,9 +375,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         // host). Copy leads; this screen has no help icon, so copy is the only
         // action (it still lands in the same trailing slot the order rule
         // reserves for it).
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -636,8 +635,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
                 child: LinearProgressIndicator(
                   minHeight: 6,
                   backgroundColor: colors.surface2,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(colors.textAccent),
+                  valueColor: AlwaysStoppedAnimation<Color>(colors.textAccent),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -715,8 +713,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           _summaryRow(context, 'Subnet', r.subnetLabel, mono),
-          if (r.selfIp != null)
-            _summaryRow(context, 'The Pi', r.selfIp!, mono),
+          if (r.selfIp != null) _summaryRow(context, 'The Pi', r.selfIp!, mono),
           if (r.gateway != null)
             _summaryRow(context, 'Gateway', r.gateway!, mono),
           const SizedBox(height: AppSpacing.xs),
@@ -1022,8 +1019,9 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
     final bool arpRead = r.arp?.available ?? false;
     final String probed =
         'Nothing answered on the probed ports across ${r.subnetLabel}';
-    final String sources =
-        arpRead ? '$probed, and nothing appeared in the ARP cache' : probed;
+    final String sources = arpRead
+        ? '$probed, and nothing appeared in the ARP cache'
+        : probed;
     return '$sources. Devices may be firewalled, asleep, or the subnet may be '
         'empty.';
   }
@@ -1129,8 +1127,7 @@ class _NetworkDiscoveryScreenState extends State<NetworkDiscoveryScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           for (int i = 0; i < hosts.length; i++) ...<Widget>[
-            if (i > 0)
-              Divider(height: 1, thickness: 1, color: colors.border),
+            if (i > 0) Divider(height: 1, thickness: 1, color: colors.border),
             _HostRow(host: hosts[i]),
           ],
         ],
@@ -1334,9 +1331,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

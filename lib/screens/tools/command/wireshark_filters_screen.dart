@@ -150,53 +150,119 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('wlan.fc.type_subtype == 44', 'QoS Null (no data)'),
     ]),
     FilterGroup('Address (display)', <WiresharkFilter>[
-      WiresharkFilter('wlan.addr == aa:bb:cc:dd:ee:ff', 'Any address field equals this MAC (TA, RA, SA, or DA)'),
+      WiresharkFilter(
+        'wlan.addr == aa:bb:cc:dd:ee:ff',
+        'Any address field equals this MAC (TA, RA, SA, or DA)',
+      ),
       WiresharkFilter('wlan.ta == aa:bb:cc:dd:ee:ff', 'Transmitter address'),
       WiresharkFilter('wlan.ra == aa:bb:cc:dd:ee:ff', 'Receiver address'),
       WiresharkFilter('wlan.sa == aa:bb:cc:dd:ee:ff', 'Source address'),
       WiresharkFilter('wlan.da == aa:bb:cc:dd:ee:ff', 'Destination address'),
     ]),
     FilterGroup('BSSID/SSID (display)', <WiresharkFilter>[
-      WiresharkFilter('wlan.bssid == aa:bb:cc:dd:ee:ff', 'Frames for a specific BSSID'),
-      WiresharkFilter('wlan.ssid == "MyNetwork"', 'Frames carrying this SSID (beacons, probes)'),
-      WiresharkFilter('wlan.ssid contains "Guest"', 'SSID contains a substring'),
+      WiresharkFilter(
+        'wlan.bssid == aa:bb:cc:dd:ee:ff',
+        'Frames for a specific BSSID',
+      ),
+      WiresharkFilter(
+        'wlan.ssid == "MyNetwork"',
+        'Frames carrying this SSID (beacons, probes)',
+      ),
+      WiresharkFilter(
+        'wlan.ssid contains "Guest"',
+        'SSID contains a substring',
+      ),
     ]),
     FilterGroup('RadioTap (display)', <WiresharkFilter>[
-      WiresharkFilter('radiotap.channel.freq == 2412', 'Captured on this channel center frequency (MHz)'),
-      WiresharkFilter('radiotap.datarate >= 6', 'PHY data rate at least 6 Mb/s'),
-      WiresharkFilter('radiotap.dbm_antsignal > -70', 'RSSI stronger than -70 dBm'),
-      WiresharkFilter('radiotap.dbm_antnoise < -90', 'Noise floor below -90 dBm'),
+      WiresharkFilter(
+        'radiotap.channel.freq == 2412',
+        'Captured on this channel center frequency (MHz)',
+      ),
+      WiresharkFilter(
+        'radiotap.datarate >= 6',
+        'PHY data rate at least 6 Mb/s',
+      ),
+      WiresharkFilter(
+        'radiotap.dbm_antsignal > -70',
+        'RSSI stronger than -70 dBm',
+      ),
+      WiresharkFilter(
+        'radiotap.dbm_antnoise < -90',
+        'Noise floor below -90 dBm',
+      ),
       // SAFE FALLBACK (Pax flag): freq-range band filters instead of the
       // unverified radiotap.channel.flags.5ghz child-token. freq is a
       // documented dfref field.
-      WiresharkFilter('radiotap.channel.freq >= 2400 && radiotap.channel.freq < 2500', 'Captured in the 2.4 GHz band (frequency range)'),
-      WiresharkFilter('radiotap.channel.freq >= 5000 && radiotap.channel.freq < 5900', 'Captured in the 5 GHz band (frequency range)'),
-      WiresharkFilter('radiotap.channel.freq >= 5925 && radiotap.channel.freq <= 7125', 'Captured in the 6 GHz band (frequency range)'),
-      WiresharkFilter('wlan_radio.signal_dbm < -75', 'Weak signal (uses the generic wlan_radio layer, not radiotap)'),
+      WiresharkFilter(
+        'radiotap.channel.freq >= 2400 && radiotap.channel.freq < 2500',
+        'Captured in the 2.4 GHz band (frequency range)',
+      ),
+      WiresharkFilter(
+        'radiotap.channel.freq >= 5000 && radiotap.channel.freq < 5900',
+        'Captured in the 5 GHz band (frequency range)',
+      ),
+      WiresharkFilter(
+        'radiotap.channel.freq >= 5925 && radiotap.channel.freq <= 7125',
+        'Captured in the 6 GHz band (frequency range)',
+      ),
+      WiresharkFilter(
+        'wlan_radio.signal_dbm < -75',
+        'Weak signal (uses the generic wlan_radio layer, not radiotap)',
+      ),
     ]),
     // NET-NEW (2026-06-12): retries, QoS, and weak-signal display filters.
     FilterGroup('Retries / QoS / weak signal (display)', <WiresharkFilter>[
       WiresharkFilter('wlan.fc.retry == 1', 'Retried frames (retransmissions)'),
-      WiresharkFilter('wlan.fc.type_subtype == 5 && wlan_radio.signal_dbm < -75', 'Weak probe responses'),
-      WiresharkFilter('wlan.fc.type_subtype == 4 && wlan_radio.signal_dbm < -75', 'Weak probe requests'),
-      WiresharkFilter('wlan.qos.priority == 6', 'QoS priority / TID = 6 (voice access category)'),
+      WiresharkFilter(
+        'wlan.fc.type_subtype == 5 && wlan_radio.signal_dbm < -75',
+        'Weak probe responses',
+      ),
+      WiresharkFilter(
+        'wlan.fc.type_subtype == 4 && wlan_radio.signal_dbm < -75',
+        'Weak probe requests',
+      ),
+      WiresharkFilter(
+        'wlan.qos.priority == 6',
+        'QoS priority / TID = 6 (voice access category)',
+      ),
     ]),
     // NET-NEW (2026-06-12): 802.11k/v/r roaming filters. From Keith's ECSE-T
     // course sheet. wlan.tag.number == 55 is the Mobility Domain element (MDE).
     FilterGroup('802.11k / v / r roaming (display)', <WiresharkFilter>[
       WiresharkFilter('wlan.fixed.action_code == 23', '802.11v DMS request'),
       WiresharkFilter('wlan.fixed.action_code == 24', '802.11v DMS response'),
-      WiresharkFilter('wlan.rm.action_code == 4', '802.11k Neighbor report request'),
-      WiresharkFilter('wlan.rm.action_code == 5', '802.11k Neighbor report response'),
-      WiresharkFilter('(wlan.fc.type_subtype == 0) && (wlan.rsn.akms.type == 3)', '802.11r FT authentication request (FT over 802.1X)'),
-      WiresharkFilter('(wlan.fc.type_subtype == 1) && (wlan.tag.number == 55)', '802.11r FT authentication response (Mobility Domain element)'),
-      WiresharkFilter('(wlan.fc.type_subtype == 2) && (wlan.tag.number == 55)', '802.11r FT reassociation request'),
-      WiresharkFilter('(wlan.fc.type_subtype == 3) && (wlan.tag.number == 55)', '802.11r FT reassociation response'),
+      WiresharkFilter(
+        'wlan.rm.action_code == 4',
+        '802.11k Neighbor report request',
+      ),
+      WiresharkFilter(
+        'wlan.rm.action_code == 5',
+        '802.11k Neighbor report response',
+      ),
+      WiresharkFilter(
+        '(wlan.fc.type_subtype == 0) && (wlan.rsn.akms.type == 3)',
+        '802.11r FT authentication request (FT over 802.1X)',
+      ),
+      WiresharkFilter(
+        '(wlan.fc.type_subtype == 1) && (wlan.tag.number == 55)',
+        '802.11r FT authentication response (Mobility Domain element)',
+      ),
+      WiresharkFilter(
+        '(wlan.fc.type_subtype == 2) && (wlan.tag.number == 55)',
+        '802.11r FT reassociation request',
+      ),
+      WiresharkFilter(
+        '(wlan.fc.type_subtype == 3) && (wlan.tag.number == 55)',
+        '802.11r FT reassociation response',
+      ),
     ]),
     // NET-NEW (2026-06-12): EAPOL / 4-way-handshake display filters.
     FilterGroup('Security / EAPOL (display)', <WiresharkFilter>[
       WiresharkFilter('eapol', 'All EAPOL key frames'),
-      WiresharkFilter('wlan.addr == aa:bb:cc:dd:ee:ff && eapol', 'The 4-way handshake for one client'),
+      WiresharkFilter(
+        'wlan.addr == aa:bb:cc:dd:ee:ff && eapol',
+        'The 4-way handshake for one client',
+      ),
     ]),
     FilterGroup('Capture filter (BPF)', <WiresharkFilter>[
       WiresharkFilter('type mgt', 'Only management frames'),
@@ -205,35 +271,68 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('type mgt subtype beacon', 'Beacons only'),
       WiresharkFilter('type mgt subtype probe-req', 'Probe requests only'),
       WiresharkFilter('type mgt subtype probe-resp', 'Probe responses only'),
-      WiresharkFilter('type mgt subtype assoc-req', 'Association requests only'),
-      WiresharkFilter('type mgt subtype assoc-resp', 'Association responses only'),
+      WiresharkFilter(
+        'type mgt subtype assoc-req',
+        'Association requests only',
+      ),
+      WiresharkFilter(
+        'type mgt subtype assoc-resp',
+        'Association responses only',
+      ),
       WiresharkFilter('type mgt subtype auth', 'Authentication frames only'),
-      WiresharkFilter('type mgt subtype deauth', 'Deauthentication frames only'),
+      WiresharkFilter(
+        'type mgt subtype deauth',
+        'Deauthentication frames only',
+      ),
       WiresharkFilter('type mgt subtype disassoc', 'Disassociations only'),
       WiresharkFilter('type ctl subtype rts', 'RTS frames only'),
-      WiresharkFilter('type ctl subtype rts || subtype cts', 'RTS/CTS frames only'),
+      WiresharkFilter(
+        'type ctl subtype rts || subtype cts',
+        'RTS/CTS frames only',
+      ),
       WiresharkFilter('type ctl subtype ack', 'Acknowledgement frames only'),
       WiresharkFilter('type ctl subtype ps-poll', 'PS-Poll frames only'),
       WiresharkFilter('type data subtype null', 'Null data frames only'),
       WiresharkFilter('type data subtype qos-data', 'QoS data frames only'),
-      WiresharkFilter('wlan host aa:bb:cc:dd:ee:ff', 'Frames to/from this L2 address'),
-      WiresharkFilter('ether host aa:bb:cc:dd:ee:ff', 'Frames to/from this L2 address (ether-host form)'),
+      WiresharkFilter(
+        'wlan host aa:bb:cc:dd:ee:ff',
+        'Frames to/from this L2 address',
+      ),
+      WiresharkFilter(
+        'ether host aa:bb:cc:dd:ee:ff',
+        'Frames to/from this L2 address (ether-host form)',
+      ),
       WiresharkFilter('not broadcast', 'Drop broadcast frames'),
       WiresharkFilter('not multicast', 'Drop multicast frames'),
     ]),
     // CORRECTED per Pax: cipher-suite selectors are pcs/gcs.type (Table 9-149),
     // NOT akms.type. The source card mislabeled these as AKM.
     FilterGroup('RSN cipher (display)', <WiresharkFilter>[
-      WiresharkFilter('wlan.rsn.pcs.type == 4', 'Pairwise cipher = CCMP-128 (00-0F-AC:4)'),
-      WiresharkFilter('wlan.rsn.pcs.type == 8', 'Pairwise cipher = GCMP-128 (00-0F-AC:8)'),
-      WiresharkFilter('wlan.rsn.pcs.type == 9', 'Pairwise cipher = GCMP-256 (00-0F-AC:9)'),
-      WiresharkFilter('wlan.rsn.gcs.type == 2', 'Group cipher = TKIP (00-0F-AC:2)'),
+      WiresharkFilter(
+        'wlan.rsn.pcs.type == 4',
+        'Pairwise cipher = CCMP-128 (00-0F-AC:4)',
+      ),
+      WiresharkFilter(
+        'wlan.rsn.pcs.type == 8',
+        'Pairwise cipher = GCMP-128 (00-0F-AC:8)',
+      ),
+      WiresharkFilter(
+        'wlan.rsn.pcs.type == 9',
+        'Pairwise cipher = GCMP-256 (00-0F-AC:9)',
+      ),
+      WiresharkFilter(
+        'wlan.rsn.gcs.type == 2',
+        'Group cipher = TKIP (00-0F-AC:2)',
+      ),
     ]),
     // CORRECTED per Pax: AKM selectors are akms.type (Table 9-151).
     FilterGroup('RSN AKM (display)', <WiresharkFilter>[
       WiresharkFilter('wlan.rsn.akms.type == 1', 'AKM = 802.1X (00-0F-AC:1)'),
       WiresharkFilter('wlan.rsn.akms.type == 2', 'AKM = PSK (00-0F-AC:2)'),
-      WiresharkFilter('wlan.rsn.akms.type == 8', 'AKM = SAE / WPA3-Personal (00-0F-AC:8)'),
+      WiresharkFilter(
+        'wlan.rsn.akms.type == 8',
+        'AKM = SAE / WPA3-Personal (00-0F-AC:8)',
+      ),
       WiresharkFilter('wlan.rsn.akms.type == 18', 'AKM = OWE (00-0F-AC:18)'),
     ]),
     // NET-NEW (2026-06-12): display-filter operators reference. Both the symbol
@@ -254,28 +353,61 @@ class WiresharkFiltersScreen extends StatefulWidget {
     // tls). These decode the L3-4 headers that ride below 802.11 and are the
     // filters an analyst reaches for once past the radio layer.
     FilterGroup('IP addressing (TCP/IP display)', <WiresharkFilter>[
-      WiresharkFilter('ip.addr == 10.0.0.5', 'IPv4 source OR destination equals this address'),
+      WiresharkFilter(
+        'ip.addr == 10.0.0.5',
+        'IPv4 source OR destination equals this address',
+      ),
       WiresharkFilter('ip.src == 10.0.0.5', 'IPv4 source address'),
       WiresharkFilter('ip.dst == 10.0.0.5', 'IPv4 destination address'),
-      WiresharkFilter('ip.addr == 192.168.1.0/24', 'Any IPv4 address in this subnet (CIDR)'),
-      WiresharkFilter('!(ip.addr == 10.0.0.5)', 'Exclude all traffic to/from an address'),
-      WiresharkFilter('ipv6.addr == 2001:db8::1', 'IPv6 source OR destination address'),
+      WiresharkFilter(
+        'ip.addr == 192.168.1.0/24',
+        'Any IPv4 address in this subnet (CIDR)',
+      ),
+      WiresharkFilter(
+        '!(ip.addr == 10.0.0.5)',
+        'Exclude all traffic to/from an address',
+      ),
+      WiresharkFilter(
+        'ipv6.addr == 2001:db8::1',
+        'IPv6 source OR destination address',
+      ),
       WiresharkFilter('ipv6.src == 2001:db8::1', 'IPv6 source address'),
       WiresharkFilter('ipv6.dst == 2001:db8::1', 'IPv6 destination address'),
-      WiresharkFilter('ip.ttl < 5', 'Low IPv4 TTL (near a routing loop or a traceroute)'),
+      WiresharkFilter(
+        'ip.ttl < 5',
+        'Low IPv4 TTL (near a routing loop or a traceroute)',
+      ),
     ]),
     FilterGroup('TCP / UDP (TCP/IP display)', <WiresharkFilter>[
       WiresharkFilter('tcp.port == 443', 'TCP source OR destination port'),
       WiresharkFilter('tcp.dstport == 22', 'TCP destination port only'),
       WiresharkFilter('udp.port == 53', 'UDP source OR destination port'),
-      WiresharkFilter('tcp.flags.syn == 1 && tcp.flags.ack == 0', 'SYN without ACK (connection attempts)'),
+      WiresharkFilter(
+        'tcp.flags.syn == 1 && tcp.flags.ack == 0',
+        'SYN without ACK (connection attempts)',
+      ),
       WiresharkFilter('tcp.flags.reset == 1', 'TCP resets (RST)'),
       WiresharkFilter('tcp.flags.fin == 1', 'TCP FINs (graceful close)'),
-      WiresharkFilter('tcp.analysis.retransmission', 'Retransmitted TCP segments'),
-      WiresharkFilter('tcp.analysis.zero_window', 'Zero-window (receiver told the sender to stop)'),
-      WiresharkFilter('tcp.analysis.flags', 'All of Wireshark\'s TCP expert findings'),
-      WiresharkFilter('tcp.stream eq 0', 'Every packet of one TCP conversation (stream index)'),
-      WiresharkFilter('tcp.len > 0', 'TCP segments that carry payload (exclude pure ACKs)'),
+      WiresharkFilter(
+        'tcp.analysis.retransmission',
+        'Retransmitted TCP segments',
+      ),
+      WiresharkFilter(
+        'tcp.analysis.zero_window',
+        'Zero-window (receiver told the sender to stop)',
+      ),
+      WiresharkFilter(
+        'tcp.analysis.flags',
+        'All of Wireshark\'s TCP expert findings',
+      ),
+      WiresharkFilter(
+        'tcp.stream eq 0',
+        'Every packet of one TCP conversation (stream index)',
+      ),
+      WiresharkFilter(
+        'tcp.len > 0',
+        'TCP segments that carry payload (exclude pure ACKs)',
+      ),
     ]),
     FilterGroup('Higher-layer protocols (TCP/IP display)', <WiresharkFilter>[
       WiresharkFilter('icmp', 'All ICMP (IPv4)'),
@@ -285,9 +417,15 @@ class WiresharkFiltersScreen extends StatefulWidget {
       WiresharkFilter('dns.flags.response == 1', 'DNS responses only'),
       WiresharkFilter('http', 'All HTTP'),
       WiresharkFilter('http.request', 'HTTP requests only'),
-      WiresharkFilter('http.response.code == 404', 'HTTP responses with a given status code'),
+      WiresharkFilter(
+        'http.response.code == 404',
+        'HTTP responses with a given status code',
+      ),
       WiresharkFilter('tls', 'All TLS records'),
-      WiresharkFilter('tls.handshake.type == 1', 'TLS Client Hello (handshake type 1)'),
+      WiresharkFilter(
+        'tls.handshake.type == 1',
+        'TLS Client Hello (handshake type 1)',
+      ),
       WiresharkFilter('dhcp', 'All DHCP (was bootp in older Wireshark)'),
     ]),
   ];
@@ -306,7 +444,10 @@ class WiresharkFiltersScreen extends StatefulWidget {
         StatusReasonCode(11, 'Inability to confirm association'),
         StatusReasonCode(12, 'Outside the scope of the standard'),
         StatusReasonCode(13, 'STA does not support the auth algorithm'),
-        StatusReasonCode(17, 'AP unable to support additional associations (cell full)'),
+        StatusReasonCode(
+          17,
+          'AP unable to support additional associations (cell full)',
+        ),
         StatusReasonCode(18, 'Refused - basic rates mismatch'),
         StatusReasonCode(27, 'Requesting STA has no HT support'),
         StatusReasonCode(41, 'Invalid group cipher'),
@@ -314,23 +455,22 @@ class WiresharkFiltersScreen extends StatefulWidget {
         StatusReasonCode(104, 'Requesting STA does not support VHT features'),
       ],
     ),
-    CodeTable(
-      'Reason codes (Deauth/Disassoc, no longer connected)',
-      <StatusReasonCode>[
-        StatusReasonCode(1, 'Unspecified reason'),
-        StatusReasonCode(2, 'Previous authentication no longer valid'),
-        StatusReasonCode(3, 'Deauthenticated - sending STA is leaving/has left'),
-        StatusReasonCode(4, 'Disassociated due to inactivity'),
-        StatusReasonCode(5, 'AP unable to handle all currently associated STAs'),
-        StatusReasonCode(6, 'Class 2 frame from a non-authenticated STA'),
-        StatusReasonCode(7, 'Class 3 frame from a non-associated STA'),
-        StatusReasonCode(14, 'Message integrity code (MIC) failure'),
-        StatusReasonCode(15, '4-way handshake timeout'),
-        StatusReasonCode(16, 'Group key handshake timeout'),
-        StatusReasonCode(23, 'IEEE 802.1X authentication failed'),
-        StatusReasonCode(49, 'Invalid pairwise master key identifier (PMKID)'),
-      ],
-    ),
+    CodeTable('Reason codes (Deauth/Disassoc, no longer connected)', <
+      StatusReasonCode
+    >[
+      StatusReasonCode(1, 'Unspecified reason'),
+      StatusReasonCode(2, 'Previous authentication no longer valid'),
+      StatusReasonCode(3, 'Deauthenticated - sending STA is leaving/has left'),
+      StatusReasonCode(4, 'Disassociated due to inactivity'),
+      StatusReasonCode(5, 'AP unable to handle all currently associated STAs'),
+      StatusReasonCode(6, 'Class 2 frame from a non-authenticated STA'),
+      StatusReasonCode(7, 'Class 3 frame from a non-associated STA'),
+      StatusReasonCode(14, 'Message integrity code (MIC) failure'),
+      StatusReasonCode(15, '4-way handshake timeout'),
+      StatusReasonCode(16, 'Group key handshake timeout'),
+      StatusReasonCode(23, 'IEEE 802.1X authentication failed'),
+      StatusReasonCode(49, 'Invalid pairwise master key identifier (PMKID)'),
+    ]),
   ];
 
   @override
@@ -359,8 +499,9 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
   FilterGroup? _filterGroup(FilterGroup g, String q) {
     if (q.isEmpty) return g;
     if (g.label.toLowerCase().contains(q)) return g;
-    final List<WiresharkFilter> kept =
-        g.filters.where((WiresharkFilter f) => _matches(f, q)).toList();
+    final List<WiresharkFilter> kept = g.filters
+        .where((WiresharkFilter f) => _matches(f, q))
+        .toList();
     if (kept.isEmpty) return null;
     return FilterGroup(g.label, kept);
   }
@@ -373,8 +514,9 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
   CodeTable? _filterCodeTable(CodeTable t, String q) {
     if (q.isEmpty) return t;
     if (t.label.toLowerCase().contains(q)) return t;
-    final List<StatusReasonCode> kept =
-        t.codes.where((StatusReasonCode c) => _matchesCode(c, q)).toList();
+    final List<StatusReasonCode> kept = t.codes
+        .where((StatusReasonCode c) => _matchesCode(c, q))
+        .toList();
     if (kept.isEmpty) return null;
     return CodeTable(t.label, kept);
   }
@@ -429,9 +571,7 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
       appBar: AppBar(
         title: const Text('Wireshark 802.11 Filters'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -529,9 +669,7 @@ class _WiresharkFiltersScreenState extends State<WiresharkFiltersScreen> {
           textInputAction: TextInputAction.search,
           onChanged: _onQueryChanged,
           cursorColor: colors.textAccent,
-          decoration: const InputDecoration(
-            hintText: 'e.g. beacon or rsn',
-          ),
+          decoration: const InputDecoration(hintText: 'e.g. beacon or rsn'),
         ),
       ),
     );
@@ -720,8 +858,9 @@ class _CodeTableCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         c.meaning,
-                        style: text.labelMedium
-                            ?.copyWith(color: colors.textTertiary),
+                        style: text.labelMedium?.copyWith(
+                          color: colors.textTertiary,
+                        ),
                       ),
                     ),
                   ],
@@ -777,9 +916,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

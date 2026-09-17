@@ -149,9 +149,7 @@ class _FrameExchangeScreenState extends State<FrameExchangeScreen> {
         toolbarHeight: 64,
         // §8.16 — copy the selected scenario's frame sequence as TSV, one
         // section per phase. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -862,7 +860,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             dir: 'AP → STA',
             label: 'EAPOL Key (Msg 1/4)',
             type: FxType.eap,
-            note: 'AP sends ANonce. Identical handshake to WPA2/WPA3, but the '
+            note:
+                'AP sends ANonce. Identical handshake to WPA2/WPA3, but the '
                 'PMK came from the DH exchange above.',
           ),
           FxFrame(

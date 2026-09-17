@@ -132,31 +132,20 @@ class RegexCheatsheetScreen extends StatelessWidget {
       matches: r'Digit [0-9] (Unicode digits if Unicode mode)',
       dialect: r'PCRE2/ECMAScript/Python. POSIX uses [[:digit:]]',
     ),
-    RegexToken(
-      token: r'\D',
-      matches: 'Non-digit',
-      dialect: 'Same',
-    ),
+    RegexToken(token: r'\D', matches: 'Non-digit', dialect: 'Same'),
     RegexToken(
       token: r'\w',
       matches: r'Word char [A-Za-z0-9_]',
-      dialect: r'PCRE2/ECMAScript/Python. POSIX uses [[:alnum:]] (no underscore)',
+      dialect:
+          r'PCRE2/ECMAScript/Python. POSIX uses [[:alnum:]] (no underscore)',
     ),
-    RegexToken(
-      token: r'\W',
-      matches: 'Non-word char',
-      dialect: 'Same',
-    ),
+    RegexToken(token: r'\W', matches: 'Non-word char', dialect: 'Same'),
     RegexToken(
       token: r'\s',
       matches: 'Whitespace (space, tab, newline, etc.)',
       dialect: r'PCRE2/ECMAScript/Python. POSIX uses [[:space:]]',
     ),
-    RegexToken(
-      token: r'\S',
-      matches: 'Non-whitespace',
-      dialect: 'Same',
-    ),
+    RegexToken(token: r'\S', matches: 'Non-whitespace', dialect: 'Same'),
     RegexToken(
       token: '[abc]',
       matches: 'Any one of a, b, c',
@@ -252,7 +241,8 @@ class RegexCheatsheetScreen extends StatelessWidget {
     RegexToken(
       token: '(?<name>...)',
       matches: 'Named capturing group',
-      dialect: 'PCRE2/ECMAScript(2018+); Python uses (?P<name>...). Syntax varies',
+      dialect:
+          'PCRE2/ECMAScript(2018+); Python uses (?P<name>...). Syntax varies',
     ),
     RegexToken(
       token: r'\1, \2 ...',
@@ -335,7 +325,8 @@ class RegexCheatsheetScreen extends StatelessWidget {
       // marked Universal. Source: PCRE2 pcre2pattern. Wave-2 finding C.
       token: r'\v',
       matches: 'Vertical whitespace class (LF, VT, FF, CR, NEL, U+2028/2029)',
-      dialect: 'PCRE2 (here) / vertical tab only in JS, Python, .NET, Ruby, RE2',
+      dialect:
+          'PCRE2 (here) / vertical tab only in JS, Python, .NET, Ruby, RE2',
     ),
     RegexToken(
       token: r'\xHH',
@@ -369,9 +360,7 @@ class RegexCheatsheetScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Regex Cheat Sheet'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -603,7 +592,10 @@ class _DialectBadge extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.control),

@@ -176,35 +176,42 @@ class ScrewDrivesScreen extends StatelessWidget {
   static const List<SecurityDrive> securityDrives = <SecurityDrive>[
     SecurityDrive(
       name: 'Security Torx (pin-in Torx, TR)',
-      looksLike: 'A normal Torx star with a small post (pin) in the center; a '
+      looksLike:
+          'A normal Torx star with a small post (pin) in the center; a '
           'solid Torx bit will not seat.',
-      tool: 'Torx security bit with a hole bored down the center to clear the '
+      tool:
+          'Torx security bit with a hole bored down the center to clear the '
           'pin (sized T10H-T40H). The most common tamper spec on commercial '
           'enclosures.',
     ),
     SecurityDrive(
       name: 'Pin-in hex (security hex)',
       looksLike: 'A normal Allen hex socket with a pin in the center.',
-      tool: 'Hex security bit with a matching center hole. Common on panels and '
+      tool:
+          'Hex security bit with a matching center hole. Common on panels and '
           'public enclosures.',
     ),
     SecurityDrive(
       name: 'One-way (clutch)',
-      looksLike: 'A slotted-looking head with curved ramps; it turns to tighten '
+      looksLike:
+          'A slotted-looking head with curved ramps; it turns to tighten '
           'and slips when you try to loosen.',
-      tool: 'Installs with a flat blade; removal needs extraction (drill or '
+      tool:
+          'Installs with a flat blade; removal needs extraction (drill or '
           'specialty tool). A near-permanent fastener.',
     ),
     SecurityDrive(
       name: 'Tri-wing',
       looksLike: 'A three-bladed pinwheel / triangular recess.',
-      tool: 'Tri-wing bit. Common on consumer electronics and commercial '
+      tool:
+          'Tri-wing bit. Common on consumer electronics and commercial '
           'enclosures.',
     ),
     SecurityDrive(
       name: 'Spanner (snake-eye)',
       looksLike: 'Two round holes ("snake eyes") on the face.',
-      tool: 'Spanner / pin-spanner bit with two matching pins. The lowest-'
+      tool:
+          'Spanner / pin-spanner bit with two matching pins. The lowest-'
           'security deterrent; serviceable by maintenance crews.',
     ),
   ];
@@ -258,9 +265,7 @@ class ScrewDrivesScreen extends StatelessWidget {
         // §8.16 — copy the whole page as sectioned TSV: the common-drive "which
         // bit" table, the Phillips-vs-Pozidriv rule, then the security drives.
         // Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -299,11 +304,11 @@ class ScrewDrivesScreen extends StatelessWidget {
       ..writeln(distinguisher)
       ..writeln()
       ..writeln('Security / tamper drives (outdoor AP enclosures)')
-      ..writeln(<String>['Drive', 'What it looks like', 'Tool needed'].join(tab));
-    for (final SecurityDrive s in securityDrives) {
-      buf.writeln(
-        <String>[s.name, s.looksLike, s.tool].join(tab),
+      ..writeln(
+        <String>['Drive', 'What it looks like', 'Tool needed'].join(tab),
       );
+    for (final SecurityDrive s in securityDrives) {
+      buf.writeln(<String>[s.name, s.looksLike, s.tool].join(tab));
     }
     buf
       ..writeln()
@@ -361,9 +366,7 @@ class ScrewDrivesScreen extends StatelessWidget {
 
                   // (b) Phillips vs Pozidriv — the distinguisher graphic + the
                   // "not interchangeable" warning.
-                  const _SectionHeading(
-                    label: 'Phillips vs Pozidriv',
-                  ),
+                  const _SectionHeading(label: 'Phillips vs Pozidriv'),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: ScrewDrivesDiagrams.phillipsVsPozidriv,
@@ -383,9 +386,7 @@ class ScrewDrivesScreen extends StatelessWidget {
 
                   // (c) Security / tamper drives — the security faces graphic +
                   // the table + the "pack the tamper bits" takeaway.
-                  const _SectionHeading(
-                    label: 'Security / tamper drives',
-                  ),
+                  const _SectionHeading(label: 'Security / tamper drives'),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: ScrewDrivesDiagrams.security,
@@ -536,11 +537,26 @@ class _CommonHeaderRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: <Widget>[
-          SizedBox(width: _kDriveW, child: Text('Drive', style: style)),
-          SizedBox(width: _kCodeW, child: Text('Size', style: style)),
-          SizedBox(width: _kBitW, child: Text('Bit', style: style)),
-          SizedBox(width: _kWhereW, child: Text('Where on gear', style: style)),
-          SizedBox(width: _kStdW, child: Text('Standard', style: style)),
+          SizedBox(
+            width: _kDriveW,
+            child: Text('Drive', style: style),
+          ),
+          SizedBox(
+            width: _kCodeW,
+            child: Text('Size', style: style),
+          ),
+          SizedBox(
+            width: _kBitW,
+            child: Text('Bit', style: style),
+          ),
+          SizedBox(
+            width: _kWhereW,
+            child: Text('Where on gear', style: style),
+          ),
+          SizedBox(
+            width: _kStdW,
+            child: Text('Standard', style: style),
+          ),
         ],
       ),
     );

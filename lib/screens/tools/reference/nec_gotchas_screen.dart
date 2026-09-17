@@ -302,7 +302,11 @@ class _StopBand extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.warning_amber_rounded, size: 20, color: colors.statusWarning),
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 20,
+            color: colors.statusWarning,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(

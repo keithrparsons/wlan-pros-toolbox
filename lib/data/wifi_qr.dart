@@ -67,11 +67,7 @@ String escapeWifiValue(String value) {
   final StringBuffer out = StringBuffer();
   for (final int rune in value.runes) {
     final String ch = String.fromCharCode(rune);
-    if (ch == '\\' ||
-        ch == ';' ||
-        ch == ',' ||
-        ch == ':' ||
-        ch == '"') {
+    if (ch == '\\' || ch == ';' || ch == ',' || ch == ':' || ch == '"') {
       out.write('\\');
     }
     out.write(ch);
@@ -92,8 +88,7 @@ String escapeWifiValue(String value) {
 /// non-empty and either all hex digits or has a leading/trailing space.
 bool _needsQuoting(String value) {
   if (value.isEmpty) return false;
-  final bool padded =
-      value.startsWith(' ') || value.endsWith(' ');
+  final bool padded = value.startsWith(' ') || value.endsWith(' ');
   if (padded) return true;
   return _isAllHex(value);
 }

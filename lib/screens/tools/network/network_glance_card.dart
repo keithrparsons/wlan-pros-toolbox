@@ -73,7 +73,13 @@ import 'get_reading_icon.dart';
 ///     reading has been captured yet this session (cold cache). This is neither a
 ///     platform ceiling nor a failure — it is an idle state the user resolves by
 ///     tapping "Get a live reading". Never rendered as a value.
-enum GlanceFieldState { loading, value, notReported, unavailable, awaitingLiveRead }
+enum GlanceFieldState {
+  loading,
+  value,
+  notReported,
+  unavailable,
+  awaitingLiveRead,
+}
 
 /// How long a cached iOS reading stays presentable as "current" before it is
 /// treated as cold. Mirrors the Interface Info staleness gate
@@ -88,14 +94,13 @@ class GlanceField {
   const GlanceField._(this.state, this.text);
 
   const GlanceField.loading() : this._(GlanceFieldState.loading, 'Reading…');
-  const GlanceField.value(String text)
-      : this._(GlanceFieldState.value, text);
+  const GlanceField.value(String text) : this._(GlanceFieldState.value, text);
   const GlanceField.notReported(String reason)
-      : this._(GlanceFieldState.notReported, reason);
+    : this._(GlanceFieldState.notReported, reason);
   const GlanceField.unavailable(String reason)
-      : this._(GlanceFieldState.unavailable, reason);
+    : this._(GlanceFieldState.unavailable, reason);
   const GlanceField.awaitingLiveRead()
-      : this._(GlanceFieldState.awaitingLiveRead, 'Not read yet');
+    : this._(GlanceFieldState.awaitingLiveRead, 'Not read yet');
 
   final GlanceFieldState state;
 
@@ -121,13 +126,13 @@ class GlanceSnapshot {
 
   /// Everything loading — the initial mount state.
   const GlanceSnapshot.loading()
-      : ssid = const GlanceField.loading(),
-        signal = const GlanceField.loading(),
-        localIp = const GlanceField.loading(),
-        gateway = const GlanceField.loading(),
-        subnet = const GlanceField.loading(),
-        publicIp = const GlanceField.loading(),
-        isp = const GlanceField.loading();
+    : ssid = const GlanceField.loading(),
+      signal = const GlanceField.loading(),
+      localIp = const GlanceField.loading(),
+      gateway = const GlanceField.loading(),
+      subnet = const GlanceField.loading(),
+      publicIp = const GlanceField.loading(),
+      isp = const GlanceField.loading();
 
   final GlanceField ssid;
   final GlanceField signal;
@@ -363,10 +368,12 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
         // honestly, per-field, instead of a blank that implies "no Wi-Fi".
         final String reason = 'Not reported on $_platformLabel';
         if (!mounted) return;
-        setState(() => _snapshot = _snapshot.copyWith(
-              ssid: GlanceField.notReported(reason),
-              signal: GlanceField.notReported(reason),
-            ));
+        setState(
+          () => _snapshot = _snapshot.copyWith(
+            ssid: GlanceField.notReported(reason),
+            signal: GlanceField.notReported(reason),
+          ),
+        );
         return;
     }
   }
@@ -394,21 +401,21 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
         if (!mounted) return;
         ssidField = GlanceField.unavailable(reason);
       }
-      setState(() => _snapshot = _snapshot.copyWith(
-            ssid: ssidField,
-            signal: ap.rssiDbm != null
-                ? GlanceField.value('${ap.rssiDbm} dBm')
-                : const GlanceField.unavailable('No signal reading'),
-          ));
+      setState(
+        () => _snapshot = _snapshot.copyWith(
+          ssid: ssidField,
+          signal: ap.rssiDbm != null
+              ? GlanceField.value('${ap.rssiDbm} dBm')
+              : const GlanceField.unavailable('No signal reading'),
+        ),
+      );
     } on WifiInfoUnavailable {
       if (!mounted) return;
-      const GlanceField gone =
-          GlanceField.unavailable('No Wi-Fi reading');
+      const GlanceField gone = GlanceField.unavailable('No Wi-Fi reading');
       setState(() => _snapshot = _snapshot.copyWith(ssid: gone, signal: gone));
     } on Object {
       if (!mounted) return;
-      const GlanceField gone =
-          GlanceField.unavailable('No Wi-Fi reading');
+      const GlanceField gone = GlanceField.unavailable('No Wi-Fi reading');
       setState(() => _snapshot = _snapshot.copyWith(ssid: gone, signal: gone));
     }
   }
@@ -462,7 +469,8 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
       // source from. Letting it fall back to the ambient `defaultTargetPlatform`
       // made the card think "iOS" while the probe thought "host", which is how a
       // platform-conditional verdict silently disagrees with the UI it drives.
-      final WifiConnectionService probe = widget.connectionService ??
+      final WifiConnectionService probe =
+          widget.connectionService ??
           WifiConnectionService(platformOverride: widget.platformOverride);
       return await probe.status() == WifiConnectionStatus.notOnWifi;
     } on Object {
@@ -512,8 +520,7 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
     final ConnectedAp? cached = _apCache.latest;
     final DateTime? at = _apCache.updatedAt;
     if (cached == null || !cached.hasAnyData || at == null) return null;
-    final bool fresh =
-        DateTime.now().difference(at) < _kIosCacheStaleThreshold;
+    final bool fresh = DateTime.now().difference(at) < _kIosCacheStaleThreshold;
     return fresh ? cached : null;
   }
 
@@ -595,33 +602,38 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
           widget.seedDeriver ?? SubnetSeedDeriver();
       final SubnetSeed seed = await deriver.derive();
       if (!mounted) return;
-      setState(() => _snapshot = _snapshot.copyWith(
-            localIp: seed.selfIp != null
-                ? GlanceField.value(seed.selfIp!)
-                : const GlanceField.unavailable('No local IPv4'),
-            gateway: seed.gateway != null
-                ? GlanceField.value(seed.gateway!)
-                : const GlanceField.notReported('Not reported by the OS'),
-            subnet: seed.label.isNotEmpty
-                ? GlanceField.value(seed.label)
-                : const GlanceField.unavailable('Could not derive subnet'),
-          ));
+      setState(
+        () => _snapshot = _snapshot.copyWith(
+          localIp: seed.selfIp != null
+              ? GlanceField.value(seed.selfIp!)
+              : const GlanceField.unavailable('No local IPv4'),
+          gateway: seed.gateway != null
+              ? GlanceField.value(seed.gateway!)
+              : const GlanceField.notReported('Not reported by the OS'),
+          subnet: seed.label.isNotEmpty
+              ? GlanceField.value(seed.label)
+              : const GlanceField.unavailable('Could not derive subnet'),
+        ),
+      );
     } on Object {
       if (!mounted) return;
       const GlanceField gone = GlanceField.unavailable('Could not read');
-      setState(() => _snapshot = _snapshot.copyWith(
-            localIp: gone,
-            gateway: gone,
-            subnet: gone,
-          ));
+      setState(
+        () => _snapshot = _snapshot.copyWith(
+          localIp: gone,
+          gateway: gone,
+          subnet: gone,
+        ),
+      );
     }
   }
 
   /// Lane 3 — public IP + ISP from the shared public-IP fetcher + geo service.
   Future<void> _loadPublic() async {
     if (kIsWeb) {
-      const GlanceField gone =
-          GlanceField.notReported('Not reported on the web');
+      const GlanceField gone = GlanceField.notReported(
+        'Not reported on the web',
+      );
       if (!mounted) return;
       setState(() => _snapshot = _snapshot.copyWith(publicIp: gone, isp: gone));
       return;
@@ -631,22 +643,26 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
           widget.publicIpService ?? PublicIpService();
       final String? ip = await ipService.fetch();
       if (!mounted) return;
-      setState(() => _snapshot = _snapshot.copyWith(
-            publicIp: ip != null
-                ? GlanceField.value(ip)
-                : const GlanceField.unavailable('Unavailable (offline?)'),
-          ));
+      setState(
+        () => _snapshot = _snapshot.copyWith(
+          publicIp: ip != null
+              ? GlanceField.value(ip)
+              : const GlanceField.unavailable('Unavailable (offline?)'),
+        ),
+      );
 
       // ISP comes from the geo lookup on the egress IP. A null/failed lookup
       // leaves the ISP row honestly "Unavailable" — never a guessed carrier.
       final IpGeoService geo = widget.ipGeoService ?? IpGeoService();
       final IpGeoResult result = await geo.lookup(rawQuery: '');
       if (!mounted) return;
-      setState(() => _snapshot = _snapshot.copyWith(
-            isp: (!result.isError && result.isp != null)
-                ? GlanceField.value(result.isp!)
-                : const GlanceField.unavailable('Unavailable'),
-          ));
+      setState(
+        () => _snapshot = _snapshot.copyWith(
+          isp: (!result.isError && result.isp != null)
+              ? GlanceField.value(result.isp!)
+              : const GlanceField.unavailable('Unavailable'),
+        ),
+      );
     } on Object {
       if (!mounted) return;
       const GlanceField gone = GlanceField.unavailable('Unavailable');
@@ -665,9 +681,9 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
       // iOS/unsupported/web never reach here (gated in [_loadWifi] by the
       // resolved source), but be defensive: read as an honest unavailable.
       _ => throw const WifiInfoUnavailable(
-          WifiInfoUnavailableReason.channelError,
-          'No auto-readable Wi-Fi source on this platform.',
-        ),
+        WifiInfoUnavailableReason.channelError,
+        'No auto-readable Wi-Fi source on this platform.',
+      ),
     };
     return adapter.fetch();
   }
@@ -725,7 +741,8 @@ class _NetworkGlanceCardState extends State<NetworkGlanceCard> {
           // iOS-only: when no fresh live reading is cached, offer to get one
           // (an explicit tap → the Wi-Fi Information tool's Shortcut flow),
           // instead of the false "Not reported on iOS".
-          if (_iosNeedsLiveReading && !_iosLiveReadInFlight) _getReadingAction(),
+          if (_iosNeedsLiveReading && !_iosLiveReadInFlight)
+            _getReadingAction(),
           _row(context, 'Local IP', _snapshot.localIp, identifier: true),
           _row(context, 'Gateway', _snapshot.gateway, identifier: true),
           _row(context, 'Subnet', _snapshot.subnet, identifier: true),

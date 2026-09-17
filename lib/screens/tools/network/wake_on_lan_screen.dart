@@ -123,7 +123,8 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
     final String? mac = WakeOnLanService.normalizeMac(_macCtrl.text);
     if (mac == null) {
       return WakeOnLanResult.failure(
-        message: 'Enter a valid MAC address: 6 bytes, e.g. '
+        message:
+            'Enter a valid MAC address: 6 bytes, e.g. '
             'AA:BB:CC:DD:EE:FF (colons, hyphens, or no separators all work).',
       );
     }
@@ -155,9 +156,7 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
         // §8.16 — shared "Copy results" affordance. No help icon on this
         // screen, so copy is the only action. Disabled until a send has
         // produced a result (sent OR failed).
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -331,9 +330,7 @@ class _WakeOnLanScreenState extends State<WakeOnLanScreen> {
                 selected: selected,
                 showCheckmark: false,
                 labelStyle: text.labelMedium?.copyWith(
-                  color: selected
-                      ? colors.onPrimary
-                      : colors.textSecondary,
+                  color: selected ? colors.onPrimary : colors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 selectedColor: colors.primary,
@@ -421,11 +418,7 @@ class _SentCard extends StatelessWidget {
             children: [
               // §8.4 status colors are v1.1-deferred — neutral icon + text, no
               // color-only meaning.
-              Icon(
-                Icons.send_outlined,
-                size: 24,
-                color: colors.textSecondary,
-              ),
+              Icon(Icons.send_outlined, size: 24, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
@@ -576,9 +569,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

@@ -208,9 +208,7 @@ class HashLengthsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Hash & Crypto Output Lengths'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );

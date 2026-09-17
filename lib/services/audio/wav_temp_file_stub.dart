@@ -16,8 +16,8 @@ class WavTempFile {
   bool get hasFile => false;
 
   Future<Uri> write(Uint8List wav) async => throw UnsupportedError(
-        'WavTempFile is native-only; the web build uses StreamAudioSource.',
-      );
+    'WavTempFile is native-only; the web build uses StreamAudioSource.',
+  );
 
   Future<void> cleanup() async {}
 }

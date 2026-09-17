@@ -72,7 +72,8 @@ class _EducationalResourceDetailScreenState
       _showLaunchError();
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -110,9 +111,7 @@ class _EducationalResourceDetailScreenState
         toolbarHeight: 64,
         // §8.16: copy leads the actions slot. Always enabled — a resource detail
         // always has content to copy.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _copyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
       ),
       body: SafeArea(
         top: false,
@@ -135,8 +134,8 @@ class _EducationalResourceDetailScreenState
                   Text(
                     r.title,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: colors.textPrimary,
-                        ),
+                      color: colors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   ResourceMetaBadges(cost: r.cost, level: r.level),
@@ -147,10 +146,7 @@ class _EducationalResourceDetailScreenState
                     _TagsSection(tags: r.tags),
                   ],
                   const SizedBox(height: AppSpacing.lg),
-                  _OpenWebsiteButton(
-                    title: r.title,
-                    onPressed: _openWebsite,
-                  ),
+                  _OpenWebsiteButton(title: r.title, onPressed: _openWebsite),
                   if (_launchError != null) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
                     _LaunchError(message: _launchError!),
@@ -177,11 +173,7 @@ class _TopicLine extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     return Row(
       children: <Widget>[
-        Icon(
-          Icons.folder_outlined,
-          size: 16,
-          color: colors.textTertiary,
-        ),
+        Icon(Icons.folder_outlined, size: 16, color: colors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
@@ -320,18 +312,12 @@ class _LaunchError extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            Icons.error_outline,
-            size: 20,
-            color: colors.statusDanger,
-          ),
+          Icon(Icons.error_outline, size: 20, color: colors.statusDanger),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: text.labelMedium?.copyWith(
-                color: colors.textPrimary,
-              ),
+              style: text.labelMedium?.copyWith(color: colors.textPrimary),
             ),
           ),
         ],
@@ -339,4 +325,3 @@ class _LaunchError extends StatelessWidget {
     );
   }
 }
-

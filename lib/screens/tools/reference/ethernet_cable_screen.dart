@@ -1368,9 +1368,7 @@ class _PinRow extends StatelessWidget {
                 width: 120,
                 child: Text(
                   pin.function,
-                  style: mono.inlineCode.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: mono.inlineCode.copyWith(color: colors.textSecondary),
                 ),
               ),
             ],
@@ -1473,9 +1471,7 @@ class _StandardToggle extends StatelessWidget {
                   child: Text(
                     opt.$2,
                     style: text.labelLarge?.copyWith(
-                      color: selected
-                          ? colors.onPrimary
-                          : colors.textSecondary,
+                      color: selected ? colors.onPrimary : colors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

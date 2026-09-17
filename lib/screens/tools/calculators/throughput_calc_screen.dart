@@ -117,14 +117,13 @@ class ThroughputCalcScreen extends StatefulWidget {
     required int mcs,
     required int streams,
     required String giKey,
-  }) =>
-      WifiPhyRateService.phyRateMbps(
-        std: std,
-        bandwidthMHz: bandwidthMHz,
-        mcs: mcs,
-        streams: streams,
-        giKey: giKey,
-      );
+  }) => WifiPhyRateService.phyRateMbps(
+    std: std,
+    bandwidthMHz: bandwidthMHz,
+    mcs: mcs,
+    streams: streams,
+    giKey: giKey,
+  );
 
   /// Estimated real throughput in Mbps — phyRate · efficiency(std). Null when
   /// the PHY rate is null (same invalid-combination guard).
@@ -134,14 +133,13 @@ class ThroughputCalcScreen extends StatefulWidget {
     required int mcs,
     required int streams,
     required String giKey,
-  }) =>
-      WifiPhyRateService.realRateMbps(
-        std: std,
-        bandwidthMHz: bandwidthMHz,
-        mcs: mcs,
-        streams: streams,
-        giKey: giKey,
-      );
+  }) => WifiPhyRateService.realRateMbps(
+    std: std,
+    bandwidthMHz: bandwidthMHz,
+    mcs: mcs,
+    streams: streams,
+    giKey: giKey,
+  );
 
   @override
   State<ThroughputCalcScreen> createState() => _ThroughputCalcScreenState();
@@ -236,9 +234,7 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
         // disabled only on an invalid bandwidth/GI/MCS combination (no rate).
         // Copies the throughput breakdown as a labeled text block. Copy leads;
         // no help icon here.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -478,17 +474,13 @@ class _ThroughputCalcScreenState extends State<ThroughputCalcScreen> {
               SelectableText(
                 _formatRate(real),
                 style: mono.outputXL.copyWith(
-                  color: real == null
-                      ? colors.textTertiary
-                      : colors.textAccent,
+                  color: real == null ? colors.textTertiary : colors.textAccent,
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'Mbps',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

@@ -79,8 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: IconButton(
               icon: const Icon(Icons.info_outline),
               tooltip: 'About',
-              onPressed: () =>
-                  Navigator.of(context).pushNamed(AppRouter.about),
+              onPressed: () => Navigator.of(context).pushNamed(AppRouter.about),
             ),
           ),
         ],
@@ -106,10 +105,13 @@ class _HomeScreenState extends State<HomeScreen> {
             final double edge = isDesktop
                 ? AppSpacing.screenEdgeDesktop
                 : AppSpacing.screenEdgeMobile;
-            final int crossAxisCount =
-                AppSpacing.gridCrossAxisCountFor(gridWidth);
-            final double tileHeight =
-                _tileHeightFor(gridWidth, light: context.colors.isLight);
+            final int crossAxisCount = AppSpacing.gridCrossAxisCountFor(
+              gridWidth,
+            );
+            final double tileHeight = _tileHeightFor(
+              gridWidth,
+              light: context.colors.isLight,
+            );
 
             // The grid uses the wide gridMaxWidth column. Long-form reading and
             // single-column surfaces (the hero, the guide entry, the search
@@ -234,8 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.md),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
                         // Cross-axis stays at sm (16px) so side-by-side tiles
                         // read as separate; main-axis tightens to xs (8px) to
@@ -250,16 +251,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         // IA-redesign density gate.
                         mainAxisExtent: tileHeight,
                       ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final ToolCategory cat = kToolCategories[index];
-                          return _CategoryTile(
-                            category: cat,
-                            onTap: () => _openCategory(cat),
-                          );
-                        },
-                        childCount: kToolCategories.length,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final ToolCategory cat = kToolCategories[index];
+                        return _CategoryTile(
+                          category: cat,
+                          onTap: () => _openCategory(cat),
+                        );
+                      }, childCount: kToolCategories.length),
                     ),
                   ),
                 ],
@@ -344,8 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // gate measures IBM Plex Sans shorter than iOS renders it. The Flexible
     // examples line guarantees no overflow regardless; this keeps the 2-line
     // examples fully visible in the common case rather than ellipsizing early.
-    final double base =
-        width < AppSpacing.gridTwoColBreakpoint ? 150 : 178;
+    final double base = width < AppSpacing.gridTwoColBreakpoint ? 150 : 178;
     return light ? base + 12 : base;
   }
 }
@@ -407,9 +404,7 @@ class _HomeSearchFieldState extends State<_HomeSearchField> {
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Search all tools…',
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.bodyLarge?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),
@@ -473,7 +468,8 @@ class _UserGuideEntryState extends State<_UserGuideEntry> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: 'How this app works. A 5-minute tour of the app. '
+      label:
+          'How this app works. A 5-minute tour of the app. '
           'Opens the guide.',
       child: Material(
         color: colors.surface1,
@@ -595,7 +591,8 @@ class _BookEntryState extends State<_BookEntry> {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: 'Fix Your Own Wi-Fi. Learn and fix your Wi-Fi. The free book. '
+      label:
+          'Fix Your Own Wi-Fi. Learn and fix your Wi-Fi. The free book. '
           'Opens the book.',
       child: Material(
         color: colors.surface1,
@@ -622,11 +619,7 @@ class _BookEntryState extends State<_BookEntry> {
               ),
               child: Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.menu_book,
-                    color: colors.textAccent,
-                    size: 24,
-                  ),
+                  Icon(Icons.menu_book, color: colors.textAccent, size: 24),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
@@ -801,8 +794,9 @@ class _CategoryIcon extends StatelessWidget {
     // Glyph tint: charcoal #30302F (onPrimary) knocked out of the lime chip on
     // light; otherwise the original foreground tint (brand lime on the dark
     // tile via textAccent, or tertiary gray for a placeholder in either theme).
-    final Color color =
-        limeChip ? colors.onPrimary : (isPlaceholder ? colors.textTertiary : colors.textAccent);
+    final Color color = limeChip
+        ? colors.onPrimary
+        : (isPlaceholder ? colors.textTertiary : colors.textAccent);
 
     final String? asset = category.iconAsset;
     final Widget glyph = asset != null
@@ -849,10 +843,9 @@ class _CategoryTileState extends State<_CategoryTile> {
   String _examplesLine() {
     final List<String> titles = widget.category.exampleToolTitles.isNotEmpty
         ? widget.category.exampleToolTitles
-        : orderedCategoryTools(widget.category)
-              .take(3)
-              .map((ToolEntry t) => t.title)
-              .toList();
+        : orderedCategoryTools(
+            widget.category,
+          ).take(3).map((ToolEntry t) => t.title).toList();
     return titles.join(' · ');
   }
 
@@ -890,7 +883,8 @@ class _CategoryTileState extends State<_CategoryTile> {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '${cat.title}. '
+      label:
+          '${cat.title}. '
           '${isPlaceholder ? "Coming soon. " : ""}'
           '${_badgeSemanticLabel()}'
           '${_examplesLine()}',
@@ -940,8 +934,9 @@ class _CategoryTileState extends State<_CategoryTile> {
                           ? colors.textSecondary
                           : colors.textPrimary,
                       // §8.20.3-A home grid category labels bump 600 → 700.
-                      fontWeight:
-                          colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                      fontWeight: colors.isLight
+                          ? FontWeight.w700
+                          : FontWeight.w600,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -998,8 +993,7 @@ class _CategoryTileState extends State<_CategoryTile> {
       );
     }
     final String label =
-        widget.category.countLabelOverride ??
-        '${_liveCount(widget.category)}';
+        widget.category.countLabelOverride ?? '${_liveCount(widget.category)}';
     return _pillBadge(
       text,
       label,
@@ -1042,12 +1036,12 @@ class _CategoryTileState extends State<_CategoryTile> {
     if (!widget.category.hasLiveTool) return '';
     if (widget.category.isNew) return 'New. ';
     final String count =
-        widget.category.countLabelOverride ??
-        '${_liveCount(widget.category)}';
+        widget.category.countLabelOverride ?? '${_liveCount(widget.category)}';
     return '$count tools. ';
   }
 
   /// Number of LIVE tools in a category (the badge counts shippable tools, not
   /// coming-soon placeholders).
-  int _liveCount(ToolCategory c) => c.tools.where((ToolEntry t) => t.isLive).length;
+  int _liveCount(ToolCategory c) =>
+      c.tools.where((ToolEntry t) => t.isLive).length;
 }

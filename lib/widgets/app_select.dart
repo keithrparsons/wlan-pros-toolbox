@@ -285,8 +285,9 @@ class _SelectControlState<T> extends State<_SelectControl<T>> {
     final Color effectiveBorder = active
         ? widget.accentColor
         : widget.borderColor;
-    final double effectiveWidth =
-        active ? (widget.isLight ? 2.5 : 2) : widget.borderWidth;
+    final double effectiveWidth = active
+        ? (widget.isLight ? 2.5 : 2)
+        : widget.borderWidth;
 
     return Container(
       constraints: BoxConstraints(

@@ -51,8 +51,10 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   // pre-fix formatter silently stripped the `e` and coerced `1e2` to `12`
   // (Vera F-07). mW stays unsigned-decimal — no scientific notation, no sign,
   // because mW values are entered by humans, not pasted from instruments.
-  static final List<TextInputFormatter> _signedDecimal = scientificDecimalFormatters;
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      scientificDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -68,9 +70,11 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
   // ─── Math (pure) ──────────────────────────────────────────────────────────
   // Mirrors app.js: dBmToWatts, wattsTodBm, dBmToMilliwatts.
 
-  static double _dbmToWatts(double dbm) => math.pow(10, dbm / 10).toDouble() / 1000.0;
+  static double _dbmToWatts(double dbm) =>
+      math.pow(10, dbm / 10).toDouble() / 1000.0;
   static double _wattsTodBm(double w) => 10 * (math.log(w * 1000) / math.ln10);
-  static double _dbmToMilliwatts(double dbm) => math.pow(10, dbm / 10).toDouble();
+  static double _dbmToMilliwatts(double dbm) =>
+      math.pow(10, dbm / 10).toDouble();
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -154,8 +158,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
         title: const Text('dBm / Watt'),
         toolbarHeight: 64,
         // This converter has no AppCopyAction, so help is the only action.
-        actions: const <Widget>[
-        ],
+        actions: const <Widget>[],
       ),
       body: SafeArea(
         top: false,
@@ -208,7 +211,11 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
     );
   }
 
-  Widget _converterCard(TextTheme text, AppMonoText mono, AppColorScheme colors) {
+  Widget _converterCard(
+    TextTheme text,
+    AppMonoText mono,
+    AppColorScheme colors,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -246,9 +253,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
             formatters: _signedDecimal,
             onChanged: _onWattsChanged,
             monoStyle: mono.outputLarge,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: AppSpacing.sm),
           _ConverterField(
@@ -259,9 +264,7 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
             formatters: _unsignedDecimal,
             onChanged: _onMwChanged,
             monoStyle: mono.outputLarge,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ],
       ),
@@ -306,7 +309,11 @@ class _DbmWattConverterScreenState extends State<DbmWattConverterScreen> {
     );
   }
 
-  Widget _referenceCard(TextTheme text, AppMonoText mono, AppColorScheme colors) {
+  Widget _referenceCard(
+    TextTheme text,
+    AppMonoText mono,
+    AppColorScheme colors,
+  ) {
     // Compact, high-signal anchor values pulled from the PWA DBM_REFS list.
     // Kept short here — the full table belongs in a dedicated Reference tool.
     // Vera F-08 — standardize on ASCII hyphen-minus (U+002D) here so the
@@ -433,9 +440,7 @@ class _ConverterField extends StatelessWidget {
         // Foreground lime → darkened-lime in light (§8.20.2): the caret is a
         // thin foreground, so brand lime would vanish on white.
         cursorColor: context.colors.textAccent,
-        decoration: InputDecoration(
-          hintText: _hintFor(label),
-        ),
+        decoration: InputDecoration(hintText: _hintFor(label)),
       ),
     );
   }

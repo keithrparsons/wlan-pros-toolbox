@@ -174,7 +174,8 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
   // Signed-decimal: a length delta can be negative, and the PWA only guards
   // isFinite, so allow a leading minus. No scientific notation — these are
   // hand-typed lengths.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
 
   @override
   void dispose() {
@@ -239,9 +240,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a value is
         // entered; copies the from-value and unit and the converted to-value
         // and unit as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -418,9 +417,7 @@ class _MetricConversionScreenState extends State<MetricConversionScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 MetricConversionScreen.symbolFor(_toUnit),
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),

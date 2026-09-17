@@ -40,13 +40,7 @@ import 'reference_row_semantics.dart';
 
 /// The classification of a top-level domain, used both as the section grouping
 /// and as the filter dimension. Order here is the on-screen section order.
-enum TldType {
-  generic,
-  countryCode,
-  sponsored,
-  infrastructure,
-  newGtld,
-}
+enum TldType { generic, countryCode, sponsored, infrastructure, newGtld }
 
 extension TldTypeLabel on TldType {
   /// Section header / filter label.
@@ -85,11 +79,7 @@ extension TldTypeLabel on TldType {
 /// One curated top-level-domain reference entry.
 @immutable
 class TldEntry {
-  const TldEntry({
-    required this.tld,
-    required this.type,
-    required this.note,
-  });
+  const TldEntry({required this.tld, required this.type, required this.note});
 
   /// The TLD label including the leading dot, e.g. `.com`.
   final String tld;
@@ -155,7 +145,8 @@ class TopLevelDomainsScreen extends StatefulWidget {
     TldEntry(
       tld: '.uk',
       type: TldType.countryCode,
-      note: 'United Kingdom. Nominet registry (.co.uk is the common 2nd level).',
+      note:
+          'United Kingdom. Nominet registry (.co.uk is the common 2nd level).',
     ),
     TldEntry(
       tld: '.ca',
@@ -239,7 +230,8 @@ class TopLevelDomainsScreen extends StatefulWidget {
     TldEntry(
       tld: '.arpa',
       type: TldType.infrastructure,
-      note: 'Address and Routing Parameter Area: reverse DNS (in-addr.arpa, '
+      note:
+          'Address and Routing Parameter Area: reverse DNS (in-addr.arpa, '
           'ip6.arpa). IETF/IANA managed; no public registration.',
     ),
 
@@ -252,7 +244,8 @@ class TopLevelDomainsScreen extends StatefulWidget {
     TldEntry(
       tld: '.dev',
       type: TldType.newGtld,
-      note: 'Developers / development (Google Registry). HTTPS-only HSTS preload.',
+      note:
+          'Developers / development (Google Registry). HTTPS-only HSTS preload.',
     ),
     TldEntry(
       tld: '.xyz',
@@ -262,19 +255,22 @@ class TopLevelDomainsScreen extends StatefulWidget {
     TldEntry(
       tld: '.io',
       type: TldType.newGtld,
-      note: 'Technically a ccTLD (British Indian Ocean Territory); marketed '
+      note:
+          'Technically a ccTLD (British Indian Ocean Territory); marketed '
           'generically by tech / startups. Not a true gTLD.',
     ),
     TldEntry(
       tld: '.ai',
       type: TldType.newGtld,
-      note: 'Technically a ccTLD (Anguilla); used generically for AI products. '
+      note:
+          'Technically a ccTLD (Anguilla); used generically for AI products. '
           'Not a true gTLD.',
     ),
     TldEntry(
       tld: '.co',
       type: TldType.newGtld,
-      note: 'Technically a ccTLD (Colombia); marketed generically as a .com '
+      note:
+          'Technically a ccTLD (Colombia); marketed generically as a .com '
           'alternative. Not a true gTLD.',
     ),
     TldEntry(
@@ -335,7 +331,9 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
     final int n = _sections.fold<int>(0, (int a, s) => a + s.entries.length);
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No domains in this type' : '$n domain${n == 1 ? '' : 's'} shown',
+      n == 0
+          ? 'No domains in this type'
+          : '$n domain${n == 1 ? '' : 's'} shown',
       TextDirection.ltr,
     );
   }
@@ -367,9 +365,7 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
       appBar: AppBar(
         title: const Text('Top-Level Domains'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -487,9 +483,7 @@ class _TopLevelDomainsScreenState extends State<TopLevelDomainsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'No domains in this type.',
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),
@@ -570,9 +564,7 @@ class _TldRow extends StatelessWidget {
             Expanded(
               child: Text(
                 entry.note,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
           ],

@@ -22,7 +22,11 @@ const String kEnclosureRatingsToolId = 'enclosure-ratings';
 /// = water). [code] is the digit as printed (`0`..`6`, `0`..`9K`); [label] is
 /// the short protection name; [detail] is the plain meaning / test gate.
 class IpDigit {
-  const IpDigit({required this.code, required this.label, required this.detail});
+  const IpDigit({
+    required this.code,
+    required this.label,
+    required this.detail,
+  });
 
   /// The digit as printed in the code, e.g. `6` or `9K`.
   final String code;
@@ -43,11 +47,7 @@ const List<IpDigit> kIpSolidsDigits = <IpDigit>[
     label: 'Large body part',
     detail: 'Objects 50 mm and larger (back of the hand)',
   ),
-  IpDigit(
-    code: '2',
-    label: 'Fingers',
-    detail: 'Objects 12.5 mm and larger',
-  ),
+  IpDigit(code: '2', label: 'Fingers', detail: 'Objects 12.5 mm and larger'),
   IpDigit(
     code: '3',
     label: 'Tools, thick wires',
@@ -70,7 +70,11 @@ const List<IpDigit> kIpSolidsDigits = <IpDigit>[
 /// manufacturer-defined depth, and 9K is pressure-washing, not immersion.
 const List<IpDigit> kIpWaterDigits = <IpDigit>[
   IpDigit(code: '0', label: 'None', detail: '-'),
-  IpDigit(code: '1', label: 'Vertical drips', detail: 'Light dripping straight down'),
+  IpDigit(
+    code: '1',
+    label: 'Vertical drips',
+    detail: 'Light dripping straight down',
+  ),
   IpDigit(
     code: '2',
     label: 'Tilted drips',
@@ -82,7 +86,11 @@ const List<IpDigit> kIpWaterDigits = <IpDigit>[
     detail: 'Sprayed water up to 60 degrees from vertical',
   ),
   IpDigit(code: '4', label: 'Splash', detail: 'Splashed from any direction'),
-  IpDigit(code: '5', label: 'Jets', detail: 'Low-pressure jets from any direction'),
+  IpDigit(
+    code: '5',
+    label: 'Jets',
+    detail: 'Low-pressure jets from any direction',
+  ),
   IpDigit(
     code: '6',
     label: 'Powerful jets',

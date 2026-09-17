@@ -139,11 +139,7 @@ class _ReferencePickerRowState extends State<ReferencePickerRow> {
                   ),
                 ],
                 const SizedBox(width: AppSpacing.xxs),
-                Icon(
-                  Icons.chevron_right,
-                  color: colors.textTertiary,
-                  size: 20,
-                ),
+                Icon(Icons.chevron_right, color: colors.textTertiary, size: 20),
               ],
             ),
           ),
@@ -182,14 +178,16 @@ class _ReferenceBackButtonState extends State<ReferenceBackButton> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
 
-    final Color ringColor =
-        colors.isLight ? colors.textAccent : colors.primary;
+    final Color ringColor = colors.isLight ? colors.textAccent : colors.primary;
     final BoxDecoration decoration = BoxDecoration(
       color: _hovered ? colors.surface2 : Colors.transparent,
       borderRadius: BorderRadius.circular(AppRadius.control),
       border: _focused
           ? Border.all(color: ringColor, width: colors.isLight ? 3 : 2)
-          : Border.all(color: Colors.transparent, width: colors.isLight ? 3 : 2),
+          : Border.all(
+              color: Colors.transparent,
+              width: colors.isLight ? 3 : 2,
+            ),
     );
 
     return Semantics(
@@ -227,11 +225,7 @@ class _ReferenceBackButtonState extends State<ReferenceBackButton> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(
-                  Icons.arrow_back,
-                  size: 20,
-                  color: colors.textAccent,
-                ),
+                Icon(Icons.arrow_back, size: 20, color: colors.textAccent),
                 const SizedBox(width: AppSpacing.xs),
                 Flexible(
                   child: Text(

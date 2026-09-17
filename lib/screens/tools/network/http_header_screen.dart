@@ -141,9 +141,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a successful
         // request has produced a final hop; copies the status line, redirect
         // chain, and response headers as labeled text. Copy leads; no help icon.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -314,9 +312,7 @@ class _HttpHeaderScreenState extends State<HttpHeaderScreen> {
                   selected: selected,
                   showCheckmark: false,
                   labelStyle: text.labelMedium?.copyWith(
-                    color: selected
-                        ? colors.onPrimary
-                        : colors.textSecondary,
+                    color: selected ? colors.onPrimary : colors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                   selectedColor: colors.primary,
@@ -445,9 +441,7 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: SelectableText(
                   last?.statusLine ?? '—',
-                  style: mono.outputMedium.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: mono.outputMedium.copyWith(color: colors.textPrimary),
                 ),
               ),
             ],
@@ -736,9 +730,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

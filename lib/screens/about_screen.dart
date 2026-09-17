@@ -108,9 +108,10 @@ class _AboutScreenState extends State<AboutScreen> {
   /// throws, so there is no error path to handle here and nothing to show the
   /// user when it cannot answer beyond the honest "could not check" line.
   Future<void> _checkForUpdate(String currentVersion) async {
-    final AppUpdateResult result = await (widget.updateService ??
-            AppUpdateService())
-        .check(currentVersion: currentVersion);
+    final AppUpdateResult result =
+        await (widget.updateService ?? AppUpdateService()).check(
+          currentVersion: currentVersion,
+        );
     if (!mounted) return;
     setState(() => _update = result);
   }
@@ -267,10 +268,7 @@ class _AboutScreenState extends State<AboutScreen> {
                           'the #WLPC Weekly newsletter.',
                     ],
                     links: <_SectionLink>[
-                      _SectionLink(
-                        label: 'The conference',
-                        url: _kWlpcUrl,
-                      ),
+                      _SectionLink(label: 'The conference', url: _kWlpcUrl),
                       _SectionLink(
                         label: '#WLPC Weekly signup',
                         url: _kWlpcWeeklyUrl,
@@ -463,8 +461,9 @@ class _AppearanceSection extends StatelessWidget {
                 style: text.headlineSmall?.copyWith(
                   color: colors.textPrimary,
                   // §8.20.3-A section heading bumps to 700 in light.
-                  fontWeight:
-                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                  fontWeight: colors.isLight
+                      ? FontWeight.w700
+                      : FontWeight.w600,
                 ),
               ),
             ),
@@ -522,8 +521,7 @@ class _LiveSetupAboutSectionState extends State<_LiveSetupAboutSection> {
   @override
   void initState() {
     super.initState();
-    _isIos =
-        WifiInfoSourceResolver.resolve() == WifiInfoSource.iosShortcuts;
+    _isIos = WifiInfoSourceResolver.resolve() == WifiInfoSource.iosShortcuts;
     // Only construct the native bridge on the iOS path — its channels have no
     // handler elsewhere, and off-iOS this widget renders nothing anyway.
     if (_isIos) {
@@ -574,8 +572,9 @@ class _LiveSetupAboutSectionState extends State<_LiveSetupAboutSection> {
                 'Set up live Wi-Fi',
                 style: text.headlineSmall?.copyWith(
                   // §8.20.3-A section heading bumps to 700 in light.
-                  fontWeight:
-                      colors.isLight ? FontWeight.w700 : FontWeight.w600,
+                  fontWeight: colors.isLight
+                      ? FontWeight.w700
+                      : FontWeight.w600,
                 ),
               ),
             ),
@@ -724,17 +723,12 @@ class _Section extends StatelessWidget {
               if (i > 0) const SizedBox(height: AppSpacing.sm),
               Text(
                 paragraphs[i],
-                style:
-                    text.bodyLarge?.copyWith(color: colors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
             for (final _SectionLink l in links) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
-              _ExternalLinkButton(
-                label: l.label,
-                url: l.url,
-                leadIn: l.leadIn,
-              ),
+              _ExternalLinkButton(label: l.label, url: l.url, leadIn: l.leadIn),
             ],
           ],
         ),
@@ -780,9 +774,7 @@ class _ExternalLinkButton extends StatelessWidget {
       ok = false;
     }
     if (!ok) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Could not open $url')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Could not open $url')));
     }
   }
 
@@ -882,10 +874,7 @@ class _HelpDocsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
-            _ExternalLinkButton(
-              label: 'Send feedback',
-              url: _kFeedbackUrl,
-            ),
+            _ExternalLinkButton(label: 'Send feedback', url: _kFeedbackUrl),
           ],
         ),
       ),
@@ -944,8 +933,9 @@ class _BuildBadge extends StatelessWidget {
                     display,
                     style: text.bodyLarge?.copyWith(
                       fontFamily: 'DM Mono',
-                      color:
-                          resolved ? colors.textPrimary : colors.textTertiary,
+                      color: resolved
+                          ? colors.textPrimary
+                          : colors.textTertiary,
                     ),
                   ),
                 ),
@@ -1016,8 +1006,7 @@ class _VersionSection extends StatelessWidget {
                 resolved ? display : 'Version…',
                 style: text.bodyLarge?.copyWith(
                   fontFamily: 'DM Mono',
-                  color:
-                      resolved ? colors.textPrimary : colors.textTertiary,
+                  color: resolved ? colors.textPrimary : colors.textTertiary,
                 ),
               ),
             ),
@@ -1034,10 +1023,7 @@ class _VersionSection extends StatelessWidget {
               style: text.bodyLarge?.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.sm),
-            _ExternalLinkButton(
-              label: 'Send feedback',
-              url: _kFeedbackUrl,
-            ),
+            _ExternalLinkButton(label: 'Send feedback', url: _kFeedbackUrl),
           ],
         ),
       ),
@@ -1081,10 +1067,7 @@ class _UpdateLine extends StatelessWidget {
     // an update exists, because nothing announces the insertion (WCAG 2.2
     // SC 4.1.3). One region wraps every state so the announcement fires for
     // "could not check" too, not only the good news.
-    return Semantics(
-      liveRegion: true,
-      child: _line(colors, text, r),
-    );
+    return Semantics(liveRegion: true, child: _line(colors, text, r));
   }
 
   Widget _line(AppColorScheme colors, TextTheme text, AppUpdateResult r) {

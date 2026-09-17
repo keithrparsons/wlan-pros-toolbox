@@ -58,24 +58,26 @@ void main() {
       expect(d.enharmonicName, isNull);
     });
 
-    test('the two half-steps E-F and B-C are the white-white gaps with no black',
-        () {
-      // White keys C(40) D(42) E(44) F(45) G(47) A(49) B(51) C(52). The only
-      // adjacent white pairs one semitone apart (gap of 1 key) are E-F and B-C.
-      final List<Note> whites = MusicTheory.whiteKeysC4toC5;
-      final List<int> gaps = <int>[
-        for (int i = 1; i < whites.length; i++)
-          whites[i].keyNumber - whites[i - 1].keyNumber,
-      ];
-      // E->F is whites index 1->2 ... actually compute which gaps == 1.
-      final List<String> halfStepPairs = <String>[
-        for (int i = 1; i < whites.length; i++)
-          if (whites[i].keyNumber - whites[i - 1].keyNumber == 1)
-            '${whites[i - 1].name}-${whites[i].name}',
-      ];
-      expect(halfStepPairs, <String>['E-F', 'B-C']);
-      expect(gaps.where((int g) => g == 1).length, 2);
-    });
+    test(
+      'the two half-steps E-F and B-C are the white-white gaps with no black',
+      () {
+        // White keys C(40) D(42) E(44) F(45) G(47) A(49) B(51) C(52). The only
+        // adjacent white pairs one semitone apart (gap of 1 key) are E-F and B-C.
+        final List<Note> whites = MusicTheory.whiteKeysC4toC5;
+        final List<int> gaps = <int>[
+          for (int i = 1; i < whites.length; i++)
+            whites[i].keyNumber - whites[i - 1].keyNumber,
+        ];
+        // E->F is whites index 1->2 ... actually compute which gaps == 1.
+        final List<String> halfStepPairs = <String>[
+          for (int i = 1; i < whites.length; i++)
+            if (whites[i].keyNumber - whites[i - 1].keyNumber == 1)
+              '${whites[i - 1].name}-${whites[i].name}',
+        ];
+        expect(halfStepPairs, <String>['E-F', 'B-C']);
+        expect(gaps.where((int g) => g == 1).length, 2);
+      },
+    );
   });
 
   group('Octave moves (the core doubling demo)', () {
@@ -127,7 +129,10 @@ void main() {
     });
 
     test('interval name folds octaves: 19 semitones = fifth + 1 octave', () {
-      expect(MusicTheory.intervalNameForSemitones(19), 'perfect fifth + 1 octave');
+      expect(
+        MusicTheory.intervalNameForSemitones(19),
+        'perfect fifth + 1 octave',
+      );
       expect(MusicTheory.intervalNameForSemitones(12), 'octave');
       expect(MusicTheory.intervalNameForSemitones(0), 'unison');
     });
@@ -146,10 +151,12 @@ void main() {
       expect(MusicTheory.octavesBetween(2.4, 6), closeTo(1.3219, 1e-3));
     });
 
-    test('60 GHz is ~4.64 octaves above 2.4 GHz (the spec closing question)',
-        () {
-      expect(MusicTheory.octavesBetween(2.4, 60), closeTo(4.6439, 1e-3));
-    });
+    test(
+      '60 GHz is ~4.64 octaves above 2.4 GHz (the spec closing question)',
+      () {
+        expect(MusicTheory.octavesBetween(2.4, 60), closeTo(4.6439, 1e-3));
+      },
+    );
   });
 
   group('Harmonics (integer multiples)', () {

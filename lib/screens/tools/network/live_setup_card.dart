@@ -74,11 +74,11 @@ class LiveSetupCard extends StatelessWidget {
     // the one-time step up front so a brand-new user understands the wall.
     final String body = isError
         ? 'Live readings could not start. iOS needs the "WLAN Pros Live" '
-            'companion Shortcut, which may not be added yet. Set it up once, '
-            'then tap Start again.'
+              'companion Shortcut, which may not be added yet. Set it up once, '
+              'then tap Start again.'
         : 'iOS reads live data through a one-time companion Shortcut, "WLAN '
-            'Pros Live". Add it once and every live tool works. Until then, '
-            'this tool has nothing to read.';
+              'Pros Live". Add it once and every live tool works. Until then, '
+              'this tool has nothing to read.';
 
     return Container(
       decoration: BoxDecoration(

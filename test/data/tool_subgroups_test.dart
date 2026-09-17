@@ -17,18 +17,25 @@ void main() {
     for (final String id in kCategorySubgroupOrder.keys) {
       test('$id: sections appear in kCategorySubgroupOrder', () {
         final List<ToolSection> sections = groupedCategoryTools(cat(id));
-        final List<String> headers =
-            sections.map((ToolSection s) => s.header).toList();
+        final List<String> headers = sections
+            .map((ToolSection s) => s.header)
+            .toList();
         // Headers present must be a subsequence of the editorial order (empty
         // sections are dropped), and there must be no trailing "Other".
-        expect(headers.contains('Other'), isFalse,
-            reason: '$id orphaned a tool into "Other"');
+        expect(
+          headers.contains('Other'),
+          isFalse,
+          reason: '$id orphaned a tool into "Other"',
+        );
         final List<String> order = kCategorySubgroupOrder[id]!;
         int lastIdx = -1;
         for (final String h in headers) {
           final int idx = order.indexOf(h);
-          expect(idx, greaterThan(lastIdx),
-              reason: '$id section "$h" out of editorial order');
+          expect(
+            idx,
+            greaterThan(lastIdx),
+            reason: '$id section "$h" out of editorial order',
+          );
           lastIdx = idx;
         }
       });
@@ -45,28 +52,42 @@ void main() {
           for (final ToolSection s in sections)
             for (final ToolEntry t in s.tools) t.id,
         ];
-        final List<String> catIds =
-            cat(id).tools.map((ToolEntry t) => t.id).toList();
-        expect(placedIds.toSet().length, placedIds.length,
-            reason: '$id placed a tool in two sections');
-        expect(placedIds.toSet(), catIds.toSet(),
-            reason: '$id dropped or added a tool');
+        final List<String> catIds = cat(
+          id,
+        ).tools.map((ToolEntry t) => t.id).toList();
+        expect(
+          placedIds.toSet().length,
+          placedIds.length,
+          reason: '$id placed a tool in two sections',
+        );
+        expect(
+          placedIds.toSet(),
+          catIds.toSet(),
+          reason: '$id dropped or added a tool',
+        );
       });
 
       test('$id: every tool has a subgroup that is a known header', () {
         final Set<String> known = kCategorySubgroupOrder[id]!.toSet();
         for (final ToolEntry t in cat(id).tools) {
-          expect(t.subgroup, isNotNull,
-              reason: '$id tool "${t.id}" has no subgroup');
-          expect(known.contains(t.subgroup), isTrue,
-              reason: '$id tool "${t.id}" subgroup "${t.subgroup}" is unknown');
+          expect(
+            t.subgroup,
+            isNotNull,
+            reason: '$id tool "${t.id}" has no subgroup',
+          );
+          expect(
+            known.contains(t.subgroup),
+            isTrue,
+            reason: '$id tool "${t.id}" subgroup "${t.subgroup}" is unknown',
+          );
         }
       });
 
       test('$id: each section is alphabetized by title', () {
         for (final ToolSection s in groupedCategoryTools(cat(id))) {
-          final List<String> titles =
-              s.tools.map((ToolEntry t) => t.title.toLowerCase()).toList();
+          final List<String> titles = s.tools
+              .map((ToolEntry t) => t.title.toLowerCase())
+              .toList();
           final List<String> sorted = <String>[...titles]..sort();
           expect(titles, sorted, reason: '$id section "${s.header}" not A-Z');
         }
@@ -94,13 +115,14 @@ void main() {
   group('subgroup floor — a section of one is not a section', () {
     for (final String id in kFloorEnforced) {
       test('$id: no section holds fewer than $kMinSectionSize tools', () {
-        final List<ToolSection> tooSmall = groupedCategoryTools(cat(id))
-            .where((ToolSection s) => s.count < kMinSectionSize)
-            .toList();
+        final List<ToolSection> tooSmall = groupedCategoryTools(
+          cat(id),
+        ).where((ToolSection s) => s.count < kMinSectionSize).toList();
         expect(
           tooSmall.map((ToolSection s) => '${s.header} (${s.count})').toList(),
           isEmpty,
-          reason: '$id has sections below the floor. Do not shrink the floor to '
+          reason:
+              '$id has sections below the floor. Do not shrink the floor to '
               'make this pass -- dissolve the runt into its nearest survivor, '
               'which is the rule Keith set on 2026-06-01.',
         );
@@ -110,23 +132,31 @@ void main() {
         // The other half of the same disease. Wi-Fi & RF held 24 of 102 before
         // the reorg; a third is a generous ceiling that still catches a giant.
         final List<ToolSection> sections = groupedCategoryTools(cat(id));
-        final int total =
-            sections.fold<int>(0, (int n, ToolSection s) => n + s.count);
+        final int total = sections.fold<int>(
+          0,
+          (int n, ToolSection s) => n + s.count,
+        );
         final int ceiling = (total / 3).ceil();
         final List<String> tooBig = sections
             .where((ToolSection s) => s.count > ceiling)
             .map((ToolSection s) => '${s.header} (${s.count} of $total)')
             .toList();
-        expect(tooBig, isEmpty,
-            reason: '$id has a section above $ceiling. Split it by the JOB a '
-                'reader was doing, not by topic.');
+        expect(
+          tooBig,
+          isEmpty,
+          reason:
+              '$id has a section above $ceiling. Split it by the JOB a '
+              'reader was doing, not by topic.',
+        );
       });
     }
   });
 
   group('groupedCategoryTools — flat categories', () {
     test('test-network returns a single unnamed section in pinned order', () {
-      final List<ToolSection> sections = groupedCategoryTools(cat('test-network'));
+      final List<ToolSection> sections = groupedCategoryTools(
+        cat('test-network'),
+      );
       expect(sections, hasLength(1));
       expect(sections.single.header, isEmpty);
       // The flat path preserves the pin order. Wave 4 (2026-06-04): the merged
@@ -139,32 +169,31 @@ void main() {
     // above, which loops kCategorySubgroupOrder.keys. Educational Resources
     // takes its place as the flat case so this branch keeps a real subject.
     test('educational-resources returns a single unnamed section', () {
-      final List<ToolSection> sections =
-          groupedCategoryTools(cat('educational-resources'));
+      final List<ToolSection> sections = groupedCategoryTools(
+        cat('educational-resources'),
+      );
       expect(sections, hasLength(1));
       expect(sections.single.header, isEmpty);
-      expect(
-        sections.single.count,
-        cat('educational-resources').tools.length,
-      );
+      expect(sections.single.count, cat('educational-resources').tools.length);
     });
 
     test('networking is no longer flat, and is sectioned five ways', () {
-      final List<ToolSection> sections = groupedCategoryTools(cat('networking'));
-      expect(sections, hasLength(5));
-      expect(
-        sections.map((ToolSection s) => s.header).toList(),
-        <String>[
-          'This Device',
-          'Reachability & Path',
-          'Discovery & Scanning',
-          'Names & Ownership',
-          'Services & Protocols',
-        ],
+      final List<ToolSection> sections = groupedCategoryTools(
+        cat('networking'),
       );
+      expect(sections, hasLength(5));
+      expect(sections.map((ToolSection s) => s.header).toList(), <String>[
+        'This Device',
+        'Reachability & Path',
+        'Discovery & Scanning',
+        'Names & Ownership',
+        'Services & Protocols',
+      ]);
       // Every tool placed, none orphaned into "Other", none duplicated.
-      final int placed =
-          sections.fold<int>(0, (int n, ToolSection s) => n + s.count);
+      final int placed = sections.fold<int>(
+        0,
+        (int n, ToolSection s) => n + s.count,
+      );
       expect(placed, cat('networking').tools.length);
     });
   });

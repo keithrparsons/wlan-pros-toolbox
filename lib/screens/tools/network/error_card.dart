@@ -159,8 +159,9 @@ class LookupErrorCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       message,
-                      style: text.labelMedium
-                          ?.copyWith(color: colors.textTertiary),
+                      style: text.labelMedium?.copyWith(
+                        color: colors.textTertiary,
+                      ),
                     ),
                   ],
                 ),

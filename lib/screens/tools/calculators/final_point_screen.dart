@@ -126,9 +126,11 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
   String? _rangeNote;
 
   // Lat/lon/bearing can be negative; allow a leading minus and decimal point.
-  static final List<TextInputFormatter> _signedDecimal = signedDecimalFormatters;
+  static final List<TextInputFormatter> _signedDecimal =
+      signedDecimalFormatters;
   // Distance is always positive — unsigned decimal only.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -244,9 +246,7 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // destination is computed; copies the start point, bearing, distance,
         // and the destination lat/long as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -403,17 +403,13 @@ class _FinalPointScreenState extends State<FinalPointScreen> {
         field: TextField(
           controller: _distCtrl,
           focusNode: _distFocus,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: _unsignedDecimal,
           onChanged: (_) => _recompute(),
           textInputAction: TextInputAction.done,
           autocorrect: false,
           enableSuggestions: false,
-          style: mono.outputLarge.copyWith(
-            fontSize: AppTextSize.fieldNumeric,
-          ),
+          style: mono.outputLarge.copyWith(fontSize: AppTextSize.fieldNumeric),
           cursorColor: colors.textAccent,
           decoration: const InputDecoration(hintText: '10'),
         ),

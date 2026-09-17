@@ -105,7 +105,10 @@ class LodLevel {
 
 /// The six LOD rungs, verbatim from the copy.
 const List<LodLevel> kLodLevels = <LodLevel>[
-  LodLevel(level: 'LOD 100', meaning: 'conceptual. A symbol or mass, existence only.'),
+  LodLevel(
+    level: 'LOD 100',
+    meaning: 'conceptual. A symbol or mass, existence only.',
+  ),
   LodLevel(level: 'LOD 200', meaning: 'approximate geometry.'),
   LodLevel(
     level: 'LOD 300',

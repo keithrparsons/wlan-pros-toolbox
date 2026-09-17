@@ -204,10 +204,7 @@ class WifiHalowScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   const _OneLinerCard(),
                   const SizedBox(height: AppSpacing.md),
-                  _FactsCard(
-                    title: 'What it is',
-                    facts: kHalowWhatItIs,
-                  ),
+                  _FactsCard(title: 'What it is', facts: kHalowWhatItIs),
                   const SizedBox(height: AppSpacing.md),
                   const _HeadlinesCard(),
                   const SizedBox(height: AppSpacing.md),
@@ -457,9 +454,7 @@ class _HeadlinesCard extends StatelessWidget {
                     ),
                     Text(
                       h.value,
-                      style: mono.outputMedium.copyWith(
-                        color: colors.primary,
-                      ),
+                      style: mono.outputMedium.copyWith(color: colors.primary),
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -755,10 +750,12 @@ class _VersusCard extends StatelessWidget {
             DataColumn(label: Text('IP-native')),
           ],
           rows: kHalowVersus.map((HalowVersus v) {
-            final Color nameColor =
-                v.isHalow ? colors.primary : colors.textPrimary;
-            final FontWeight weight =
-                v.isHalow ? FontWeight.w700 : FontWeight.w600;
+            final Color nameColor = v.isHalow
+                ? colors.primary
+                : colors.textPrimary;
+            final FontWeight weight = v.isHalow
+                ? FontWeight.w700
+                : FontWeight.w600;
             return DataRow(
               cells: <DataCell>[
                 DataCell(
@@ -801,8 +798,9 @@ class _VersusCard extends StatelessWidget {
                       color: v.ipNative == 'Yes'
                           ? colors.primary
                           : colors.textSecondary,
-                      fontWeight:
-                          v.ipNative == 'Yes' ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: v.ipNative == 'Yes'
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                     ),
                   ),
                 ),

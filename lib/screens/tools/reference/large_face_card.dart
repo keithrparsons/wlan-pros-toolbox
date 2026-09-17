@@ -173,8 +173,10 @@ class LargeGraphic extends StatelessWidget {
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
         // The width the graphic actually paints into, inside the well padding.
-        final double innerWidth =
-            (outerWidth - AppSpacing.md * 2).clamp(1.0, double.infinity);
+        final double innerWidth = (outerWidth - AppSpacing.md * 2).clamp(
+          1.0,
+          double.infinity,
+        );
         return FutureBuilder<double>(
           future: _loadAspect(),
           builder: (BuildContext context, AsyncSnapshot<double> snap) {
@@ -184,8 +186,10 @@ class LargeGraphic extends StatelessWidget {
             // it never collapses (minHeight) or dominates a wide card
             // (maxHeight); at the cap a small horizontal — never vertical —
             // margin remains.
-            final double graphicHeight =
-                (innerWidth / aspect).clamp(minHeight, maxHeight);
+            final double graphicHeight = (innerWidth / aspect).clamp(
+              minHeight,
+              maxHeight,
+            );
 
             // DARK: unmodified asset. LIGHT: load + §8.20.7 swap + render via
             // string so no raw lime stroke hits a light surface. Both wrap in

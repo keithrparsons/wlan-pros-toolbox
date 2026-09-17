@@ -66,7 +66,8 @@ class _HamStudyResourcesScreenState extends State<HamStudyResourcesScreen> {
       _showLaunchError(r.title, url);
       return;
     }
-    final Future<bool> Function(Uri) launch = widget.launcher ??
+    final Future<bool> Function(Uri) launch =
+        widget.launcher ??
         (Uri u) => launchUrl(u, mode: LaunchMode.externalApplication);
     try {
       final bool ok = await launch(uri);
@@ -194,21 +195,21 @@ class _HamStudyResourcesScreenState extends State<HamStudyResourcesScreen> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     Widget caveat(String body) => Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Icon(Icons.info_outline, size: 18, color: colors.textSecondary),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  body,
-                  style: text.bodyMedium?.copyWith(color: colors.textPrimary),
-                ),
-              ),
-            ],
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.info_outline, size: 18, color: colors.textSecondary),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              body,
+              style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+            ),
           ),
-        );
+        ],
+      ),
+    );
     return Container(
       decoration: BoxDecoration(
         color: colors.surface1,
@@ -254,46 +255,44 @@ class _HamStudyResourcesScreenState extends State<HamStudyResourcesScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          ...kHamExamStructure.asMap().entries.expand(
-            (MapEntry<int, HamExamFact> entry) {
-              final HamExamFact f = entry.value;
-              return <Widget>[
-                if (entry.key > 0)
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                ReferenceRowSemantics(
-                  label: rowLabel(
-                    f.element,
-                    <String?>[f.questions, f.toPass],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            f.element,
-                            style: text.bodyMedium?.copyWith(
-                              color: colors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
+          ...kHamExamStructure.asMap().entries.expand((
+            MapEntry<int, HamExamFact> entry,
+          ) {
+            final HamExamFact f = entry.value;
+            return <Widget>[
+              if (entry.key > 0)
+                Divider(color: colors.border, height: AppSpacing.sm),
+              ReferenceRowSemantics(
+                label: rowLabel(f.element, <String?>[f.questions, f.toPass]),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          f.element,
+                          style: text.bodyMedium?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            '${f.questions}, ${f.toPass}',
-                            style: text.bodyMedium
-                                ?.copyWith(color: colors.textSecondary),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          '${f.questions}, ${f.toPass}',
+                          style: text.bodyMedium?.copyWith(
+                            color: colors.textSecondary,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ];
-            },
-          ),
+              ),
+            ];
+          }),
           const SizedBox(height: AppSpacing.xs),
           Text(
             kHamExamNoMorse,
@@ -327,30 +326,30 @@ class _ResourceCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
 
     Widget fact(String label, String value) => Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                width: 72,
-                child: Text(
-                  label,
-                  style: text.labelSmall?.copyWith(
-                    color: colors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: text.labelSmall?.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  value,
-                  style: text.labelMedium?.copyWith(color: colors.textPrimary),
-                ),
-              ),
-            ],
+            ),
           ),
-        );
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              value,
+              style: text.labelMedium?.copyWith(color: colors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -399,14 +398,14 @@ class _ResourceCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Icon(Icons.error_outline,
-                    size: 18, color: colors.statusDanger),
+                Icon(Icons.error_outline, size: 18, color: colors.statusDanger),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
                     'Could not open the browser. The link is $errorUrl',
-                    style: text.labelMedium
-                        ?.copyWith(color: colors.textSecondary),
+                    style: text.labelMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ),
               ],

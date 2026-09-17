@@ -246,8 +246,7 @@ class ConceptGraphicBand extends StatelessWidget {
   /// its well to the graphic's aspect ratio, so this is public (not test-only).
   static double parseAspectRatio(String svg) {
     // viewBox="minX minY width height" — the authoritative intrinsic shape.
-    final RegExpMatch? vb =
-        RegExp(r'viewBox\s*=\s*"([^"]+)"').firstMatch(svg);
+    final RegExpMatch? vb = RegExp(r'viewBox\s*=\s*"([^"]+)"').firstMatch(svg);
     if (vb != null) {
       final List<String> parts = vb
           .group(1)!
@@ -269,8 +268,7 @@ class ConceptGraphicBand extends StatelessWidget {
   }
 
   static double? _attr(String svg, String name) {
-    final RegExpMatch? m =
-        RegExp('$name\\s*=\\s*"([0-9.]+)').firstMatch(svg);
+    final RegExpMatch? m = RegExp('$name\\s*=\\s*"([0-9.]+)').firstMatch(svg);
     return m == null ? null : double.tryParse(m.group(1)!);
   }
 
@@ -284,8 +282,9 @@ class ConceptGraphicBand extends StatelessWidget {
     return _swappedFutures.putIfAbsent(toolId, () async {
       final String cached = _lightSvgCache[toolId] ?? '';
       if (cached.isNotEmpty) return cached;
-      final String raw =
-          await rootBundle.loadString(ToolAssets.graphicPath(toolId));
+      final String raw = await rootBundle.loadString(
+        ToolAssets.graphicPath(toolId),
+      );
       _aspectCache[toolId] ??= parseAspectRatio(raw);
       // Replace on the literal token only. The hex KEYS in the SVGs are
       // uppercase 6-digit; the wash uses the exact authored rgba() string. §1d
@@ -303,8 +302,9 @@ class ConceptGraphicBand extends StatelessWidget {
     final double? cached = _aspectCache[toolId];
     if (cached != null) return Future<double>.value(cached);
     return _aspectFutures.putIfAbsent(toolId, () async {
-      final String raw =
-          await rootBundle.loadString(ToolAssets.graphicPath(toolId));
+      final String raw = await rootBundle.loadString(
+        ToolAssets.graphicPath(toolId),
+      );
       final double aspect = parseAspectRatio(raw);
       _aspectCache[toolId] = aspect;
       return aspect;
@@ -322,12 +322,16 @@ class ConceptGraphicBand extends StatelessWidget {
     required double viewportHeight,
     required bool isDesktop,
   }) {
-    final double maxAbsolute =
-        isDesktop ? _maxBandHeightDesktop : _maxBandHeightMobile;
-    final double ceiling =
-        (viewportHeight * _heightFraction).clamp(_minBandHeight, maxAbsolute);
-    final double natural =
-        aspectRatio > 0 ? availableWidth / aspectRatio : availableWidth;
+    final double maxAbsolute = isDesktop
+        ? _maxBandHeightDesktop
+        : _maxBandHeightMobile;
+    final double ceiling = (viewportHeight * _heightFraction).clamp(
+      _minBandHeight,
+      maxAbsolute,
+    );
+    final double natural = aspectRatio > 0
+        ? availableWidth / aspectRatio
+        : availableWidth;
     return natural.clamp(_minBandHeight, ceiling);
   }
 
@@ -429,7 +433,10 @@ class _ConceptSvg extends StatelessWidget {
 
         final Widget svg;
         if (isLight) {
-          svg = _LightConceptSvg(future: swappedFuture!, bandHeight: bandHeight);
+          svg = _LightConceptSvg(
+            future: swappedFuture!,
+            bandHeight: bandHeight,
+          );
         } else {
           // Dark: the in-page render is the unmodified asset (dark goldens
           // unaffected). Wrap it in ZoomableGraphic so a tap opens the §8.6.2
@@ -475,10 +482,7 @@ class _ConceptSvg extends StatelessWidget {
 /// parse failure — same graceful-degradation contract as the dark asset path,
 /// so no broken-image box or layout jump ever appears.
 class _LightConceptSvg extends StatelessWidget {
-  const _LightConceptSvg({
-    required this.future,
-    required this.bandHeight,
-  });
+  const _LightConceptSvg({required this.future, required this.bandHeight});
 
   final Future<String> future;
   final double bandHeight;

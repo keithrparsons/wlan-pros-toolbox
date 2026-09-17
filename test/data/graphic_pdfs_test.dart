@@ -19,25 +19,35 @@ void main() {
         final String? path = GraphicPdfs.path(name);
         expect(path, isNotNull, reason: '$name has no path');
         final ByteData data = await rootBundle.load(path!);
-        expect(data.lengthInBytes, greaterThan(1024),
-            reason: '$path is suspiciously small');
+        expect(
+          data.lengthInBytes,
+          greaterThan(1024),
+          reason: '$path is suspiciously small',
+        );
         // %PDF- magic. A missing asset would throw above; a wrong-format file
         // would not, and would fail only in the user's hands.
         final String magic = String.fromCharCodes(
-            data.buffer.asUint8List(data.offsetInBytes, 5));
+          data.buffer.asUint8List(data.offsetInBytes, 5),
+        );
         expect(magic, '%PDF-', reason: '$path is not a PDF');
       }
     });
 
-    test('every declared PDF has a matching SVG, so the stems cannot drift',
-        () async {
-      for (final String name in GraphicPdfs.assetNames) {
-        final ByteData svg =
-            await rootBundle.load('assets/tool-graphics/$name.svg');
-        expect(svg.lengthInBytes, greaterThan(0),
-            reason: 'no SVG for declared PDF $name');
-      }
-    });
+    test(
+      'every declared PDF has a matching SVG, so the stems cannot drift',
+      () async {
+        for (final String name in GraphicPdfs.assetNames) {
+          final ByteData svg = await rootBundle.load(
+            'assets/tool-graphics/$name.svg',
+          );
+          expect(
+            svg.lengthInBytes,
+            greaterThan(0),
+            reason: 'no SVG for declared PDF $name',
+          );
+        }
+      },
+    );
 
     test('has() and title() agree with path()', () {
       for (final String name in GraphicPdfs.assetNames) {

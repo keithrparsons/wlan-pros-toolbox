@@ -68,7 +68,8 @@ class MarkdownCheatsheetData {
   /// Scope banner label + note, pinned above the tables (mirrors the regex
   /// page's dialect banner). States the CommonMark + GFM scope so a reader knows
   /// flagged rows may not work in a plain-CommonMark renderer.
-  static const String scopeLabel = 'Flavor: CommonMark + GitHub Flavored Markdown';
+  static const String scopeLabel =
+      'Flavor: CommonMark + GitHub Flavored Markdown';
   static const String scopeNote =
       'CommonMark is the core spec; rows marked GFM are GitHub Flavored Markdown '
       'extensions (strikethrough, task lists, tables, autolinks). A plain '
@@ -82,42 +83,41 @@ class MarkdownCheatsheetData {
       'CommonMark core.';
 
   /// Text-emphasis and inline elements.
-  static const MarkdownSection textAndEmphasis = MarkdownSection(
-    'Text and emphasis',
-    <MarkdownRow>[
-      MarkdownRow(
-        element: 'Heading 1 to 6',
-        youType: '# H1   ## H2   ### H3 ... ###### H6',
-        rendersAs: 'Headings, largest (H1) to smallest (H6). One space after the #.',
-      ),
-      MarkdownRow(
-        element: 'Bold',
-        youType: '**bold**',
-        rendersAs: 'bold text (also __bold__)',
-      ),
-      MarkdownRow(
-        element: 'Italic',
-        youType: '*italic*',
-        rendersAs: 'italic text (also _italic_)',
-      ),
-      MarkdownRow(
-        element: 'Bold + italic',
-        youType: '***bold italic***',
-        rendersAs: 'bold and italic together',
-      ),
-      MarkdownRow(
-        element: 'Strikethrough',
-        youType: '~~struck~~',
-        rendersAs: 'struck-through text',
-        gfm: true,
-      ),
-      MarkdownRow(
-        element: 'Inline code',
-        youType: '`code`',
-        rendersAs: 'monospaced code, special chars taken literally',
-      ),
-    ],
-  );
+  static const MarkdownSection textAndEmphasis =
+      MarkdownSection('Text and emphasis', <MarkdownRow>[
+        MarkdownRow(
+          element: 'Heading 1 to 6',
+          youType: '# H1   ## H2   ### H3 ... ###### H6',
+          rendersAs:
+              'Headings, largest (H1) to smallest (H6). One space after the #.',
+        ),
+        MarkdownRow(
+          element: 'Bold',
+          youType: '**bold**',
+          rendersAs: 'bold text (also __bold__)',
+        ),
+        MarkdownRow(
+          element: 'Italic',
+          youType: '*italic*',
+          rendersAs: 'italic text (also _italic_)',
+        ),
+        MarkdownRow(
+          element: 'Bold + italic',
+          youType: '***bold italic***',
+          rendersAs: 'bold and italic together',
+        ),
+        MarkdownRow(
+          element: 'Strikethrough',
+          youType: '~~struck~~',
+          rendersAs: 'struck-through text',
+          gfm: true,
+        ),
+        MarkdownRow(
+          element: 'Inline code',
+          youType: '`code`',
+          rendersAs: 'monospaced code, special chars taken literally',
+        ),
+      ]);
 
   /// Links and images.
   static const MarkdownSection linksAndImages = MarkdownSection(
@@ -145,43 +145,42 @@ class MarkdownCheatsheetData {
         gfm: true,
       ),
     ],
-    footnote: 'An image is a link with a leading ! and the same bracket/paren '
+    footnote:
+        'An image is a link with a leading ! and the same bracket/paren '
         'shape.',
   );
 
   /// Lists, including nesting and task lists.
-  static const MarkdownSection lists = MarkdownSection(
-    'Lists',
-    <MarkdownRow>[
-      MarkdownRow(
-        element: 'Unordered',
-        youType: '- item   (or * item, or + item)',
-        rendersAs: 'a bulleted list',
-      ),
-      MarkdownRow(
-        element: 'Ordered',
-        youType: '1. first   2. second',
-        rendersAs: 'a numbered list (the renderer renumbers from the first value)',
-      ),
-      MarkdownRow(
-        element: 'Nested',
-        youType: '- parent\n  - child   (indent 2 spaces)',
-        rendersAs: 'a child list nested under its parent item',
-      ),
-      MarkdownRow(
-        element: 'Task list (unchecked)',
-        youType: '- [ ] to do',
-        rendersAs: 'an unchecked checkbox item',
-        gfm: true,
-      ),
-      MarkdownRow(
-        element: 'Task list (checked)',
-        youType: '- [x] done',
-        rendersAs: 'a checked checkbox item',
-        gfm: true,
-      ),
-    ],
-  );
+  static const MarkdownSection lists = MarkdownSection('Lists', <MarkdownRow>[
+    MarkdownRow(
+      element: 'Unordered',
+      youType: '- item   (or * item, or + item)',
+      rendersAs: 'a bulleted list',
+    ),
+    MarkdownRow(
+      element: 'Ordered',
+      youType: '1. first   2. second',
+      rendersAs:
+          'a numbered list (the renderer renumbers from the first value)',
+    ),
+    MarkdownRow(
+      element: 'Nested',
+      youType: '- parent\n  - child   (indent 2 spaces)',
+      rendersAs: 'a child list nested under its parent item',
+    ),
+    MarkdownRow(
+      element: 'Task list (unchecked)',
+      youType: '- [ ] to do',
+      rendersAs: 'an unchecked checkbox item',
+      gfm: true,
+    ),
+    MarkdownRow(
+      element: 'Task list (checked)',
+      youType: '- [x] done',
+      rendersAs: 'a checked checkbox item',
+      gfm: true,
+    ),
+  ]);
 
   /// Block-level elements: quotes, rules, breaks, code blocks.
   static const MarkdownSection blocks = MarkdownSection(
@@ -200,7 +199,8 @@ class MarkdownCheatsheetData {
       MarkdownRow(
         element: 'Line break',
         youType: 'line one(two trailing spaces)\\nline two',
-        rendersAs: 'a soft break within one paragraph (end the line with 2 spaces)',
+        rendersAs:
+            'a soft break within one paragraph (end the line with 2 spaces)',
       ),
       MarkdownRow(
         element: 'Paragraph break',
@@ -218,7 +218,8 @@ class MarkdownCheatsheetData {
         rendersAs: 'a code block with no language hint',
       ),
     ],
-    footnote: 'Fenced blocks are clearer than indented ones and carry a language '
+    footnote:
+        'Fenced blocks are clearer than indented ones and carry a language '
         'tag for highlighting. Use three backticks, or three tildes (~~~).',
   );
 
@@ -251,7 +252,8 @@ class MarkdownCheatsheetData {
         gfm: true,
       ),
     ],
-    footnote: 'The separator row sets alignment; the colon positions decide left, '
+    footnote:
+        'The separator row sets alignment; the colon positions decide left, '
         'center, or right. Outer pipes are optional but read more clearly.',
   );
 

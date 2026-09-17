@@ -201,8 +201,7 @@ const List<GlossaryTerm> kAecGlossary = <GlossaryTerm>[
   GlossaryTerm(
     abbr: 'BOD / OPR',
     term: 'Basis of Design / Owner\'s Project Requirements',
-    definition:
-        'the intent documents your RF requirements should land in.',
+    definition: 'the intent documents your RF requirements should land in.',
   ),
   GlossaryTerm(
     abbr: '',

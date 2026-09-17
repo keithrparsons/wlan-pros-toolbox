@@ -130,8 +130,9 @@ class _LiveErrorNavGateState extends State<LiveErrorNavGate>
     final String? origin = await _bridge.consumeLiveErrorNav();
     if (origin != null) {
       if (!mounted) return;
-      final String target =
-          _liveRoutes.contains(origin) ? origin : AppRouter.testMyConnection;
+      final String target = _liveRoutes.contains(origin)
+          ? origin
+          : AppRouter.testMyConnection;
       // The tool's own load() consumes the missing-Shortcut marker and renders
       // "Shortcut not found — re-run setup".
       _routeTo(target);

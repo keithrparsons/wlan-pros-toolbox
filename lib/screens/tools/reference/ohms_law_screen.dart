@@ -219,9 +219,7 @@ class OhmsLawScreen extends StatelessWidget {
         // §8.16 — copy the whole page as sectioned TSV: core relationships, the
         // 12-form wheel, then single-phase vs three-phase power. Static data,
         // always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -239,22 +237,16 @@ class OhmsLawScreen extends StatelessWidget {
       ..writeln("Ohm's Law & Power Wheel")
       ..writeln()
       ..writeln('Core relationships')
-      ..writeln(
-        <String>['Relationship', 'Formula', 'Solves for'].join(tab),
-      );
+      ..writeln(<String>['Relationship', 'Formula', 'Solves for'].join(tab));
     for (final OhmsRelation r in relations) {
       buf.writeln(<String>[r.name, r.formula, r.solvesFor].join(tab));
     }
     buf
       ..writeln()
       ..writeln('Power wheel (12 forms)')
-      ..writeln(
-        <String>['Quantity', 'Form 1', 'Form 2', 'Form 3'].join(tab),
-      );
+      ..writeln(<String>['Quantity', 'Form 1', 'Form 2', 'Form 3'].join(tab));
     for (final WheelRow w in wheel) {
-      buf.writeln(
-        <String>[w.quantity, w.formA, w.formB, w.formC].join(tab),
-      );
+      buf.writeln(<String>[w.quantity, w.formA, w.formB, w.formC].join(tab));
     }
     buf
       ..writeln()
@@ -332,7 +324,11 @@ class OhmsLawScreen extends StatelessWidget {
     );
   }
 
-  Widget _relationsCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+  Widget _relationsCard(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _TableCard(
       title: 'Core relationships',
       footnote: relationsFootnote,
@@ -377,9 +373,7 @@ class OhmsLawScreen extends StatelessWidget {
                   width: 120,
                   child: Text(
                     r.solvesFor,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textPrimary),
                   ),
                 ),
               ],
@@ -404,11 +398,7 @@ class OhmsLawScreen extends StatelessWidget {
       ),
       rows: wheel.map((WheelRow w) {
         return ReferenceRowSemantics(
-          label: rowLabel(w.quantity, <String?>[
-            w.formA,
-            w.formB,
-            w.formC,
-          ]),
+          label: rowLabel(w.quantity, <String?>[w.formA, w.formB, w.formC]),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
@@ -494,9 +484,7 @@ class OhmsLawScreen extends StatelessWidget {
                   width: 184,
                   child: Text(
                     p.apparent,
-                    style: mono.inlineCode.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: mono.inlineCode.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 SizedBox(

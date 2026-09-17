@@ -73,11 +73,7 @@ enum AppUpdateStatus {
 /// A typed, immutable check outcome.
 @immutable
 class AppUpdateResult {
-  const AppUpdateResult._(
-    this.status, {
-    this.latestVersion,
-    this.releaseUrl,
-  });
+  const AppUpdateResult._(this.status, {this.latestVersion, this.releaseUrl});
 
   const AppUpdateResult.upToDate() : this._(AppUpdateStatus.upToDate);
 
@@ -89,10 +85,10 @@ class AppUpdateResult {
     required String latestVersion,
     required String releaseUrl,
   }) : this._(
-          AppUpdateStatus.updateAvailable,
-          latestVersion: latestVersion,
-          releaseUrl: releaseUrl,
-        );
+         AppUpdateStatus.updateAvailable,
+         latestVersion: latestVersion,
+         releaseUrl: releaseUrl,
+       );
 
   final AppUpdateStatus status;
 
@@ -200,11 +196,11 @@ class ReleaseVersion implements Comparable<ReleaseVersion> {
 
   @override
   int get hashCode => Object.hash(
-        components.isNotEmpty ? components[0] : 0,
-        components.length > 1 ? components[1] : 0,
-        components.length > 2 ? components[2] : 0,
-        preRelease,
-      );
+    components.isNotEmpty ? components[0] : 0,
+    components.length > 1 ? components[1] : 0,
+    components.length > 2 ? components[2] : 0,
+    preRelease,
+  );
 
   @override
   String toString() {
@@ -215,7 +211,8 @@ class ReleaseVersion implements Comparable<ReleaseVersion> {
 
 /// Fetches the raw release JSON. The injectable network seam: tests script
 /// every failure mode against it without touching the network.
-typedef ReleaseFetcher = Future<Map<String, dynamic>> Function(Duration timeout);
+typedef ReleaseFetcher =
+    Future<Map<String, dynamic>> Function(Duration timeout);
 
 /// Resolves which update channel the running build is on. Injectable so tests
 /// can exercise the store branches on a host that is none of those platforms.
@@ -228,10 +225,10 @@ class AppUpdateService {
     ChannelResolver? resolveChannel,
     Future<SharedPreferences> Function()? getStore,
     DateTime Function()? clock,
-  })  : _fetch = fetcher ?? fetchLatestRelease,
-        _resolveChannel = resolveChannel ?? resolveUpdateChannel,
-        _getStore = getStore ?? SharedPreferences.getInstance,
-        _now = clock ?? DateTime.now;
+  }) : _fetch = fetcher ?? fetchLatestRelease,
+       _resolveChannel = resolveChannel ?? resolveUpdateChannel,
+       _getStore = getStore ?? SharedPreferences.getInstance,
+       _now = clock ?? DateTime.now;
 
   final ReleaseFetcher _fetch;
   final ChannelResolver _resolveChannel;
@@ -344,10 +341,7 @@ class AppUpdateService {
       final SharedPreferences prefs = await _getStore();
       await prefs.setString(_kCachedTagKey, tag);
       await prefs.setString(_kCachedUrlKey, url);
-      await prefs.setInt(
-        _kCachedAtKey,
-        _now().millisecondsSinceEpoch,
-      );
+      await prefs.setInt(_kCachedAtKey, _now().millisecondsSinceEpoch);
     } catch (_) {
       // Caching is an optimization; failing to persist is not a check failure.
     }

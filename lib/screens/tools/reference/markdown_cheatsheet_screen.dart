@@ -46,9 +46,7 @@ class MarkdownCheatsheetScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Markdown Cheatsheet'),
         toolbarHeight: 64,
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -66,7 +64,9 @@ class MarkdownCheatsheetScreen extends StatelessWidget {
     for (final MarkdownSection section in MarkdownCheatsheetData.sections) {
       buf
         ..writeln(section.title)
-        ..writeln(<String>['Element', 'You type', 'Renders as', 'Flavor'].join(tab));
+        ..writeln(
+          <String>['Element', 'You type', 'Renders as', 'Flavor'].join(tab),
+        );
       for (final MarkdownRow r in section.rows) {
         final String flavor = r.gfm ? 'GFM' : 'CommonMark';
         buf.writeln(
@@ -88,7 +88,9 @@ class MarkdownCheatsheetScreen extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final bool hasGraphic = MarkdownDiagrams.has(MarkdownDiagrams.renderExample);
+    final bool hasGraphic = MarkdownDiagrams.has(
+      MarkdownDiagrams.renderExample,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -126,9 +128,11 @@ class MarkdownCheatsheetScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   _IntroText(text: MarkdownCheatsheetData.intro),
                   const SizedBox(height: AppSpacing.sm),
-                  for (int i = 0;
-                      i < MarkdownCheatsheetData.sections.length;
-                      i++) ...<Widget>[
+                  for (
+                    int i = 0;
+                    i < MarkdownCheatsheetData.sections.length;
+                    i++
+                  ) ...<Widget>[
                     _sectionCard(
                       MarkdownCheatsheetData.sections[i],
                       colors,
@@ -299,8 +303,10 @@ class _GfmBadge extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.control),
@@ -372,13 +378,16 @@ class _GotchasCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     '- ',
-                    style: text.bodyMedium?.copyWith(color: colors.textTertiary),
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textTertiary,
+                    ),
                   ),
                   Expanded(
                     child: Text(
                       g,
-                      style:
-                          text.bodyMedium?.copyWith(color: colors.textSecondary),
+                      style: text.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
                     ),
                   ),
                 ],

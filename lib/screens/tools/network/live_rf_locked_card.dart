@@ -129,11 +129,7 @@ class _LockedFieldRow extends StatelessWidget {
         excludeSemantics: true,
         child: Row(
           children: <Widget>[
-            Icon(
-              Icons.lock_outline,
-              size: 18,
-              color: colors.textTertiary,
-            ),
+            Icon(Icons.lock_outline, size: 18, color: colors.textTertiary),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(

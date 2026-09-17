@@ -387,9 +387,7 @@ class FiberOpticScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy both sub-tables as TSV (distance-by-rate + jacket color
         // & notes), each its own section. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -840,9 +838,7 @@ class _JacketRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     fiber.jacketName,
-                    style: text.bodyLarge?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyLarge?.copyWith(color: colors.textPrimary),
                   ),
                 ),
               ],
@@ -851,9 +847,7 @@ class _JacketRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 fiber.notes,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -928,13 +922,8 @@ class _ConnectorsAndPolishState extends State<_ConnectorsAndPolish> {
             ),
             const SizedBox(height: AppSpacing.sm),
           ],
-          for (final FiberConnector c
-              in FiberOpticScreen.CONNECTOR_DATA)
-            _ConnectorRow(
-              connector: c,
-              text: widget.text,
-              mono: widget.mono,
-            ),
+          for (final FiberConnector c in FiberOpticScreen.CONNECTOR_DATA)
+            _ConnectorRow(connector: c, text: widget.text, mono: widget.mono),
         ],
       ),
     );
@@ -1076,9 +1065,7 @@ class _ConnectorRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: AppSpacing.xxs),
               child: Text(
                 connector.use,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -1146,9 +1133,7 @@ class _PolishRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     polish.fullName,
-                    style: text.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                   ),
                 ),
               ],
@@ -1247,9 +1232,7 @@ class _RuleCallout extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface2,
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border(
-            left: BorderSide(color: colors.textAccent, width: 3),
-          ),
+          border: Border(left: BorderSide(color: colors.textAccent, width: 3)),
         ),
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Text(

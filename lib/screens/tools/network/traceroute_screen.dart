@@ -148,7 +148,9 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     // clean. Empty after stripping → an inline hint, never a spawn.
     final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
     if (host.isEmpty) {
-      setState(() => _error = 'Enter a host or IP, e.g. example.com or 1.1.1.1');
+      setState(
+        () => _error = 'Enter a host or IP, e.g. example.com or 1.1.1.1',
+      );
       return;
     }
 
@@ -220,7 +222,9 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
     // of choking on it and returning a raw PiBackendException.
     final String host = NetworkTarget.hostFromUserInput(_hostCtrl.text);
     if (host.isEmpty) {
-      setState(() => _error = 'Enter a host or IP, e.g. example.com or 1.1.1.1');
+      setState(
+        () => _error = 'Enter a host or IP, e.g. example.com or 1.1.1.1',
+      );
       return;
     }
     _hostFocus.unfocus();
@@ -237,12 +241,14 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
         _running = false;
         for (int i = 0; i < piHops.length; i++) {
           final PiHop h = piHops[i];
-          _hops.add(TracerouteHop(
-            ttl: h.hopNumber ?? i + 1,
-            ip: h.target,
-            rttsMs: h.ms != null ? <double>[h.ms!] : const <double>[],
-            timedOut: h.target == null,
-          ));
+          _hops.add(
+            TracerouteHop(
+              ttl: h.hopNumber ?? i + 1,
+              ip: h.target,
+              rttsMs: h.ms != null ? <double>[h.ms!] : const <double>[],
+              timedOut: h.target == null,
+            ),
+          );
         }
       });
       SemanticsService.sendAnnouncement(
@@ -269,9 +275,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
         // (so it stays disabled in the capability-probe, mobile-notice, and
         // unavailable states, which produce no hops). Copies a hop TSV with a
         // status header. Copy leads; no help icon on this screen.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -307,9 +311,9 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       ..writeln(
         _piBacked
             ? 'Traceroute: path from the WLAN Pi hosting this page to '
-                '${host.isEmpty ? '(unknown)' : host}'
+                  '${host.isEmpty ? '(unknown)' : host}'
             : 'Traceroute (system): path to '
-                '${host.isEmpty ? '(unknown)' : host}',
+                  '${host.isEmpty ? '(unknown)' : host}',
       )
       ..writeln('Status: $status')
       ..writeln()
@@ -395,7 +399,10 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  ConceptGraphicBand(toolId: 'traceroute', isDesktop: isDesktop),
+                  ConceptGraphicBand(
+                    toolId: 'traceroute',
+                    isDesktop: isDesktop,
+                  ),
                   if (ToolAssets.hasGraphic('traceroute'))
                     const SizedBox(height: AppSpacing.md),
                   _piFormCard(context),
@@ -558,11 +565,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.route_outlined,
-                size: 24,
-                color: colors.textSecondary,
-              ),
+              Icon(Icons.route_outlined, size: 24, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
@@ -777,11 +780,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 20,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.info_outline, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -797,9 +796,7 @@ class _TracerouteScreenState extends State<TracerouteScreen> {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

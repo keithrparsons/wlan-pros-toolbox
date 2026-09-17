@@ -34,16 +34,16 @@ bool showInterfaceConceptGraphic(bool piBacked) => !piBacked;
 /// Wi-Fi RF. Off the Pi, the full native blurb stands unchanged.
 String netQualityBlurb(bool piBacked) => piBacked
     ? 'Measures latency, packet loss, and DNS resolution time from '
-        'the WLAN Pi hosting this page, plus two throughput numbers: '
-        'the Pi uplink to the internet, and the local hop between '
-        'this device and the Pi. Your own Wi-Fi RF is not visible to '
-        'the Pi. Each dimension is graded on its own; there is no '
-        'single score.'
+          'the WLAN Pi hosting this page, plus two throughput numbers: '
+          'the Pi uplink to the internet, and the local hop between '
+          'this device and the Pi. Your own Wi-Fi RF is not visible to '
+          'the Pi. Each dimension is graded on its own; there is no '
+          'single score.'
     : 'Measures latency, jitter, loss, download, upload, and '
-        'responsiveness over a TCP-connect probe and HTTPS '
-        'transfers, then checks whether your device can reach a set '
-        'of popular cloud apps right now. Each dimension is graded '
-        'on its own; there is no single score.';
+          'responsiveness over a TCP-connect probe and HTTPS '
+          'transfers, then checks whether your device can reach a set '
+          'of popular cloud apps right now. Each dimension is graded '
+          'on its own; there is no single score.';
 
 /// The §8.16 copy payload for the Pi front door (Test My Connection), built from
 /// the Pi conntest reading. Same TSV shape as the three sibling Pi tools: a
@@ -81,32 +81,37 @@ String piConntestCopyText(
   String loss(double? pct) => pct == null ? '' : '${pct.round()}%';
   String named(String base, String? id) =>
       (id == null || id.isEmpty) ? base : '$base ($id)';
-  String mbps(double? v) => v != null ? '${v.toStringAsFixed(1)} Mbps' : 'Unavailable';
+  String mbps(double? v) =>
+      v != null ? '${v.toStringAsFixed(1)} Mbps' : 'Unavailable';
 
   final bool dnsResolved = ct.dns.ms != null;
   final StringBuffer buf = StringBuffer()
-    ..writeln(
-      'Connection test: measured on the WLAN Pi hosting this page',
-    )
+    ..writeln('Connection test: measured on the WLAN Pi hosting this page')
     ..writeln(<String>['Hop', 'Reachability', 'Latency', 'Loss'].join(tab))
-    ..writeln(<String>[
-      named('Gateway', ct.gateway.target),
-      status(ct.gateway.reachable),
-      rtt(ct.gateway.reachable, ct.gateway.avgMs),
-      '',
-    ].join(tab))
-    ..writeln(<String>[
-      named('Internet', ct.internet.target),
-      status(ct.internet.reachable),
-      rtt(ct.internet.reachable, ct.internet.avgMs),
-      loss(ct.internet.lossPct),
-    ].join(tab))
-    ..writeln(<String>[
-      named('DNS resolve', ct.dns.host),
-      status(dnsResolved),
-      rtt(dnsResolved, ct.dns.ms),
-      '',
-    ].join(tab));
+    ..writeln(
+      <String>[
+        named('Gateway', ct.gateway.target),
+        status(ct.gateway.reachable),
+        rtt(ct.gateway.reachable, ct.gateway.avgMs),
+        '',
+      ].join(tab),
+    )
+    ..writeln(
+      <String>[
+        named('Internet', ct.internet.target),
+        status(ct.internet.reachable),
+        rtt(ct.internet.reachable, ct.internet.avgMs),
+        loss(ct.internet.lossPct),
+      ].join(tab),
+    )
+    ..writeln(
+      <String>[
+        named('DNS resolve', ct.dns.host),
+        status(dnsResolved),
+        rtt(dnsResolved, ct.dns.ms),
+        '',
+      ].join(tab),
+    );
 
   // Pi uplink throughput (Pi -> internet) — only when a probe landed. A leg with
   // an error copies "Unavailable", never a fabricated 0 (GL-005).

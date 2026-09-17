@@ -132,8 +132,7 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
       // Record this as the origin tool so a missing-Shortcut x-error routes the
       // user back HERE (and the recovery card) instead of the home strand.
       _iosBridge!.setLiveOriginRoute(AppRouter.cellularInfo);
-      _onboardingService =
-          widget.onboardingService ?? LiveOnboardingService();
+      _onboardingService = widget.onboardingService ?? LiveOnboardingService();
       _liveController = CellularMonitorController(bridge: _iosBridge!);
       _series = CellularTimeSeries();
       _liveController!.addListener(_captureSample);
@@ -316,9 +315,7 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
     if (_source != CellularInfoSource.iosShortcuts) {
       return const <Widget>[];
     }
-    return <Widget>[
-      AppCopyAction(textBuilder: _buildCopyText),
-    ];
+    return <Widget>[AppCopyAction(textBuilder: _buildCopyText)];
   }
 
   /// §8.16 copy payload — the cellular reading as a labeled plain-text block,
@@ -417,7 +414,6 @@ class _CellularInfoScreenState extends State<CellularInfoScreen>
   }
 }
 
-
 // ===========================================================================
 // Signal bars — rendered as a 0-to-4 bar meter, NEVER as dBm / RSRP / RSRQ.
 // ===========================================================================
@@ -453,9 +449,7 @@ class _SignalBarsRow extends StatelessWidget {
               flex: 2,
               child: Text(
                 'Signal Bars',
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -561,7 +555,6 @@ class _SignalFootnote extends StatelessWidget {
   }
 }
 
-
 // ===========================================================================
 // Shared presentation widgets (mirror wifi_info_screen)
 // ===========================================================================
@@ -631,8 +624,9 @@ class _MetricRow extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final bool hasValue = value != null && value!.trim().isNotEmpty;
     final String shown = hasValue ? value! : 'Unavailable';
-    final Color valueColor =
-        hasValue ? colors.textPrimary : colors.textSecondary;
+    final Color valueColor = hasValue
+        ? colors.textPrimary
+        : colors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
@@ -647,9 +641,7 @@ class _MetricRow extends StatelessWidget {
               flex: 2,
               child: Text(
                 label,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -718,8 +710,7 @@ class _LiveBody extends StatelessWidget {
             // CONTRADICTION GUARD (2026-06-26): never show "could not start"
             // while the feed is genuinely live with data — keep ONE coherent
             // state. Mirrors the Wi-Fi tool.
-            final bool liveWithData =
-                controller.isStreaming && !series.isEmpty;
+            final bool liveWithData = controller.isStreaming && !series.isEmpty;
             final bool showSetupError =
                 (triggerError || controller.shortcutMissing) && !liveWithData;
             return SingleChildScrollView(
@@ -740,8 +731,7 @@ class _LiveBody extends StatelessWidget {
                     _MonitorControlBar(
                       streaming: controller.isStreaming,
                       lastUpdated: controller.lastUpdated,
-                      onStart:
-                          controller.hasEverReceived ? onStart : onSetUp,
+                      onStart: controller.hasEverReceived ? onStart : onSetUp,
                       onStop: onStop,
                       setUpMode: !controller.hasEverReceived,
                     ),
@@ -776,7 +766,8 @@ class _LiveBody extends StatelessWidget {
                     // LivePrimingCard above), never a "Set up" button absent during
                     // priming (Vera H2).
                     _LiveStartHint(
-                      setUpMode: !controller.hasEverReceived &&
+                      setUpMode:
+                          !controller.hasEverReceived &&
                           !controller.setupInitiated,
                     )
                   else if (info == null)
@@ -844,7 +835,10 @@ class _LiveCards extends StatelessWidget {
           verticalPadding: AppSpacing.xs,
           child: Column(
             children: [
-              _MetricRow(label: 'Radio Technology', value: info.radioTechnology),
+              _MetricRow(
+                label: 'Radio Technology',
+                value: info.radioTechnology,
+              ),
             ],
           ),
         ),
@@ -913,12 +907,12 @@ class _LiveStartHint extends StatelessWidget {
       child: Text(
         setUpMode
             ? 'Cellular details come from the one-time "WLAN Pros Live" '
-                'companion Shortcut. Tap Set up live readings to add it, then '
-                'your carrier, radio technology, signal bars, country code, and '
-                'roaming status fill in.'
+                  'companion Shortcut. Tap Set up live readings to add it, then '
+                  'your carrier, radio technology, signal bars, country code, and '
+                  'roaming status fill in.'
             : 'Tap Start Live Monitoring above to begin. Your carrier, radio '
-                'technology, signal bars, country code, and roaming status fill '
-                'in; tap Stop to end.',
+                  'technology, signal bars, country code, and roaming status fill '
+                  'in; tap Stop to end.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
@@ -987,8 +981,8 @@ class _MonitorControlBar extends StatelessWidget {
           final Widget primaryAction = streaming
               ? _StopButton(onStop: onStop)
               : setUpMode
-                  ? _SetUpLiveButton(onSetUp: onStart)
-                  : _StartMonitoringButton(onStart: onStart);
+              ? _SetUpLiveButton(onSetUp: onStart)
+              : _StartMonitoringButton(onStart: onStart);
 
           final Widget header = narrow
               ? Column(
@@ -1069,9 +1063,7 @@ class _StatusBlock extends StatelessWidget {
                 Text(
                   label,
                   style: text.labelLarge?.copyWith(
-                    color: streaming
-                        ? colors.textAccent
-                        : colors.textSecondary,
+                    color: streaming ? colors.textAccent : colors.textSecondary,
                   ),
                 ),
                 if (lastUpdated != null)

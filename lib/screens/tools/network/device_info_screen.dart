@@ -240,11 +240,7 @@ class _Success extends StatelessWidget {
       title: 'Device',
       child: Column(
         children: [
-          ValueRow(
-            label: 'Model',
-            value: data.modelName,
-            emphasize: true,
-          ),
+          ValueRow(label: 'Model', value: data.modelName, emphasize: true),
           // The raw identifier (e.g. iPhone16,2 / Mac15,3) sits beneath the
           // marketing name as the precise machine string. `identifier` register
           // (Roboto Mono) per GL-003 §8.5 — it is a scanned machine token.
@@ -270,11 +266,7 @@ class _Success extends StatelessWidget {
             value: data.totalMemoryLabel,
             mono: true,
           ),
-          ValueRow(
-            label: 'Uptime',
-            value: data.uptimeLabel,
-            mono: true,
-          ),
+          ValueRow(label: 'Uptime', value: data.uptimeLabel, mono: true),
         ],
       ),
     );
@@ -426,11 +418,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colors.textTertiary,
-            ),
+            Icon(Icons.error_outline, size: 48, color: colors.textTertiary),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Could not read device info',

@@ -152,7 +152,8 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
 
   // Unsigned-decimal only. Height, tilt, and beamwidth are positive values a
   // human types by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -205,9 +206,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a valid
         // coverage geometry is computed; copies the result as a labeled text
         // block (the beam-above-horizon verdict copies as its word).
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -364,9 +363,7 @@ class _DowntiltCoverageScreenState extends State<DowntiltCoverageScreen> {
         field: TextField(
           controller: controller,
           focusNode: focusNode,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: _unsignedDecimal,
           onChanged: (_) => _recompute(),
           textInputAction: TextInputAction.done,

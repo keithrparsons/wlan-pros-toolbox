@@ -38,6 +38,11 @@
 // this round, and that ruling is what makes this a small screen instead of a
 // hotspot-plus-auto-revert dance.
 
+import 'dart:io'
+    if (dart.library.html) '../../../services/network/wifi_info_service_web_stub.dart'
+    as platform_io;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../../services/network/join_backend.dart';
@@ -102,6 +107,18 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     _scroll.dispose();
     super.dispose();
   }
+
+  String get _unavailableTitle => joinUnavailableTitle(
+    isWeb: kIsWeb,
+    isIOS: !kIsWeb && platform_io.Platform.isIOS,
+    isAndroid: !kIsWeb && platform_io.Platform.isAndroid,
+  );
+
+  String get _unavailableBody => joinUnavailableBody(
+    isWeb: kIsWeb,
+    isIOS: !kIsWeb && platform_io.Platform.isIOS,
+    isAndroid: !kIsWeb && platform_io.Platform.isAndroid,
+  );
 
   Future<void> _bootstrap() async {
     try {
@@ -250,18 +267,12 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Coming to this device',
+                  _unavailableTitle,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Join a Network points a radio at a Wi-Fi network. Today only '
-                  'the WLAN Pi edition has it wired up, and there it joins the '
-                  'Pi\'s own radio rather than this one.\n\n'
-                  'Joining THIS device, picked straight from the nearby-network '
-                  'scan, is being built. Until then, open the Toolbox from a '
-                  'WLAN Pi in your browser and the tool works there. Every '
-                  'other tool works normally here.',
+                  _unavailableBody,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ],

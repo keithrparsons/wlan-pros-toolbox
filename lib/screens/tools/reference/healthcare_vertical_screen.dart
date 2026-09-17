@@ -60,8 +60,9 @@ class HealthcareVerticalScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kHealthcareVerticalToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kHealthcareVerticalToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -87,14 +88,19 @@ class HealthcareVerticalScreen extends StatelessWidget {
                           'Healthcare Wi-Fi demands: the WMTS telemetry band, '
                           'medical-device EMC, roaming and RTLS grades, and the '
                           'four authorities',
-                      caption: 'Coordinate with biomed before you touch the '
+                      caption:
+                          'Coordinate with biomed before you touch the '
                           'RF environment.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kHealthcareVerticalToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kHealthcareVerticalToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
-                      assetPath: ReferencePdfs.pathFor(kHealthcareVerticalToolId),
+                      assetPath: ReferencePdfs.pathFor(
+                        kHealthcareVerticalToolId,
+                      ),
                       title: 'Healthcare Wi-Fi',
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -111,7 +117,8 @@ class HealthcareVerticalScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const ReferenceCard(
-                    title: 'The protected telemetry band most Wi-Fi pros have '
+                    title:
+                        'The protected telemetry band most Wi-Fi pros have '
                         'never heard of',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +174,8 @@ class HealthcareVerticalScreen extends StatelessWidget {
                   const ReferenceWarnBand(kHealthcareBuildingWarning),
                   const SizedBox(height: AppSpacing.md),
                   ReferenceCard(
-                    title: 'The four authorities, and the one handoff that '
+                    title:
+                        'The four authorities, and the one handoff that '
                         'matters most',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,8 +233,10 @@ class HealthcareVerticalScreen extends StatelessWidget {
       ..writeln('Why it is not an office')
       ..writeln(kHealthcareNotOffice)
       ..writeln()
-      ..writeln('The protected telemetry band most Wi-Fi pros have never '
-          'heard of')
+      ..writeln(
+        'The protected telemetry band most Wi-Fi pros have never '
+        'heard of',
+      )
       ..writeln(kWmtsIntro);
     for (final String s in kWmtsBands) {
       b.writeln('- $s');

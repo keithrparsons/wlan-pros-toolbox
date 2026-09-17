@@ -53,10 +53,7 @@ class CapacityPlannerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Capacity Planner'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('Capacity Planner'), toolbarHeight: 64),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(

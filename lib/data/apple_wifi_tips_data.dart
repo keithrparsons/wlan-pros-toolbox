@@ -32,7 +32,11 @@ class AppleSource {
 
 /// One recommended-setting row (Section A): the setting and Apple's call.
 class AppleSettingRow {
-  const AppleSettingRow(this.setting, this.recommendation, {this.sourceId = 'settings'});
+  const AppleSettingRow(
+    this.setting,
+    this.recommendation, {
+    this.sourceId = 'settings',
+  });
 
   final String setting;
   final String recommendation;
@@ -82,27 +86,53 @@ const String kAppleSettingsIntro =
     'Apple devices.';
 
 const List<AppleSettingRow> kAppleSettings = <AppleSettingRow>[
-  AppleSettingRow('Security',
-      'Set to WPA3 Personal for better security, or WPA2/WPA3 Transitional for compatibility with older devices. Avoid WEP, TKIP, and WPA/WPA2 mixed modes.'),
-  AppleSettingRow('Network name (SSID)',
-      'Set to a single, unique, case-sensitive name for all bands. Use the identical name on 2.4 GHz, 5 GHz, and 6 GHz so devices roam and band-steer reliably.'),
-  AppleSettingRow('Hidden network',
-      'Set to Disabled. Hiding the SSID provides no security benefit and can expose privacy information.'),
-  AppleSettingRow('MAC address filtering',
-      'Set to Disabled. It cannot prevent network monitoring, and MAC addresses are easily spoofed.'),
+  AppleSettingRow(
+    'Security',
+    'Set to WPA3 Personal for better security, or WPA2/WPA3 Transitional for compatibility with older devices. Avoid WEP, TKIP, and WPA/WPA2 mixed modes.',
+  ),
+  AppleSettingRow(
+    'Network name (SSID)',
+    'Set to a single, unique, case-sensitive name for all bands. Use the identical name on 2.4 GHz, 5 GHz, and 6 GHz so devices roam and band-steer reliably.',
+  ),
+  AppleSettingRow(
+    'Hidden network',
+    'Set to Disabled. Hiding the SSID provides no security benefit and can expose privacy information.',
+  ),
+  AppleSettingRow(
+    'MAC address filtering',
+    'Set to Disabled. It cannot prevent network monitoring, and MAC addresses are easily spoofed.',
+  ),
   AppleSettingRow('Automatic firmware updates', 'Set to Enabled.'),
-  AppleSettingRow('Radio mode', 'Set to All (preferred), or Wi-Fi 2 through Wi-Fi 6 or later.'),
+  AppleSettingRow(
+    'Radio mode',
+    'Set to All (preferred), or Wi-Fi 2 through Wi-Fi 6 or later.',
+  ),
   AppleSettingRow('Bands', 'Enable all bands supported by your router.'),
-  AppleSettingRow('Channel',
-      'Set to Auto. If Auto is unavailable, manually select the best-performing channel for the environment.'),
-  AppleSettingRow('Channel width',
-      'Set to 20 MHz for the 2.4 GHz band. Set to Auto or all widths for the 5 GHz and 6 GHz bands.'),
-  AppleSettingRow('DHCP', 'Set to Enabled if your router is the only DHCP server on the network.'),
-  AppleSettingRow('DHCP lease time',
-      'Set to 8 hours for home or office networks. Set to 1 hour for hotspots or guest networks.'),
-  AppleSettingRow('NAT', 'Set to Enabled if your router is the only device providing NAT on the network.'),
+  AppleSettingRow(
+    'Channel',
+    'Set to Auto. If Auto is unavailable, manually select the best-performing channel for the environment.',
+  ),
+  AppleSettingRow(
+    'Channel width',
+    'Set to 20 MHz for the 2.4 GHz band. Set to Auto or all widths for the 5 GHz and 6 GHz bands.',
+  ),
+  AppleSettingRow(
+    'DHCP',
+    'Set to Enabled if your router is the only DHCP server on the network.',
+  ),
+  AppleSettingRow(
+    'DHCP lease time',
+    'Set to 8 hours for home or office networks. Set to 1 hour for hotspots or guest networks.',
+  ),
+  AppleSettingRow(
+    'NAT',
+    'Set to Enabled if your router is the only device providing NAT on the network.',
+  ),
   AppleSettingRow('WMM (Wi-Fi Multimedia)', 'Set to Enabled.'),
-  AppleSettingRow('DNS server', 'Continue with ISP defaults, or specify an alternative server.'),
+  AppleSettingRow(
+    'DNS server',
+    'Continue with ISP defaults, or specify an alternative server.',
+  ),
 ];
 
 /// Where Apple is silent. Stated rather than filled (GL-005).
@@ -125,11 +155,26 @@ const String kAppleDiagIntro =
     'network settings.';
 
 const List<AppleStep> kAppleDiagSteps = <AppleStep>[
-  AppleStep('Quit all open apps and join (or stay on) the Wi-Fi network you are troubleshooting.', sourceId: 'diag'),
-  AppleStep('Press and hold the Option key, click the Wi-Fi status menu in the menu bar, then choose Open Wireless Diagnostics.', sourceId: 'diag'),
-  AppleStep('Follow the onscreen prompts to analyze the connection.', sourceId: 'diag'),
-  AppleStep('After the analysis is complete, click the Info buttons in the Summary pane to learn more about each item.', sourceId: 'diag'),
-  AppleStep('A compressed report is saved to /var/tmp, with a filename starting WirelessDiagnostics and ending .tar.gz. Find it via Finder, Go, Go to Folder, then /var/tmp.', sourceId: 'diag'),
+  AppleStep(
+    'Quit all open apps and join (or stay on) the Wi-Fi network you are troubleshooting.',
+    sourceId: 'diag',
+  ),
+  AppleStep(
+    'Press and hold the Option key, click the Wi-Fi status menu in the menu bar, then choose Open Wireless Diagnostics.',
+    sourceId: 'diag',
+  ),
+  AppleStep(
+    'Follow the onscreen prompts to analyze the connection.',
+    sourceId: 'diag',
+  ),
+  AppleStep(
+    'After the analysis is complete, click the Info buttons in the Summary pane to learn more about each item.',
+    sourceId: 'diag',
+  ),
+  AppleStep(
+    'A compressed report is saved to /var/tmp, with a filename starting WirelessDiagnostics and ending .tar.gz. Find it via Finder, Go, Go to Folder, then /var/tmp.',
+    sourceId: 'diag',
+  ),
 ];
 
 const String kAppleDiagWindowIntro =
@@ -164,16 +209,40 @@ const String kAppleIosIntro =
     "Apple's canonical iPhone and iPad Wi-Fi troubleshooting steps, in order.";
 
 const List<AppleStep> kAppleIosSteps = <AppleStep>[
-  AppleStep('Open the Settings app, tap Wi-Fi, and turn on Wi-Fi if necessary.', sourceId: 'ios'),
-  AppleStep('Confirm you are connected: look for a blue checkmark next to the network.', sourceId: 'ios'),
+  AppleStep(
+    'Open the Settings app, tap Wi-Fi, and turn on Wi-Fi if necessary.',
+    sourceId: 'ios',
+  ),
+  AppleStep(
+    'Confirm you are connected: look for a blue checkmark next to the network.',
+    sourceId: 'ios',
+  ),
   AppleStep('Make sure Airplane Mode is off.', sourceId: 'ios'),
-  AppleStep('In Cellular settings, make sure Wi-Fi Assist is off.', sourceId: 'ios'),
-  AppleStep('If the Wi-Fi setting is dimmed (grayed out), restart the device.', sourceId: 'ios'),
-  AppleStep('Confirm the router is powered on and in range; check whether other devices connect.', sourceId: 'ios'),
+  AppleStep(
+    'In Cellular settings, make sure Wi-Fi Assist is off.',
+    sourceId: 'ios',
+  ),
+  AppleStep(
+    'If the Wi-Fi setting is dimmed (grayed out), restart the device.',
+    sourceId: 'ios',
+  ),
+  AppleStep(
+    'Confirm the router is powered on and in range; check whether other devices connect.',
+    sourceId: 'ios',
+  ),
   AppleStep('Make sure the router has the latest firmware.', sourceId: 'ios'),
-  AppleStep('If the router supports separate frequencies, try joining another frequency, for example 5 GHz instead of 2.4 GHz.', sourceId: 'ios'),
-  AppleStep('Restart your router and cable modem by unplugging the devices and then plugging them back in.', sourceId: 'ios'),
-  AppleStep('Last resort: Settings, General, Transfer or Reset, Reset Network Settings (clears all saved Wi-Fi networks, passwords, cellular, VPN, and APN settings).', sourceId: 'ios'),
+  AppleStep(
+    'If the router supports separate frequencies, try joining another frequency, for example 5 GHz instead of 2.4 GHz.',
+    sourceId: 'ios',
+  ),
+  AppleStep(
+    'Restart your router and cable modem by unplugging the devices and then plugging them back in.',
+    sourceId: 'ios',
+  ),
+  AppleStep(
+    'Last resort: Settings, General, Transfer or Reset, Reset Network Settings (clears all saved Wi-Fi networks, passwords, cellular, VPN, and APN settings).',
+    sourceId: 'ios',
+  ),
 ];
 
 /// Single-source honesty flag carried on-screen (GL-005).

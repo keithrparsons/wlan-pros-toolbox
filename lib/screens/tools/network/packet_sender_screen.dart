@@ -200,9 +200,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
         toolbarHeight: 64,
         // §8.16 — shared "Copy results" affordance. No help icon here, so copy
         // is the only action. Disabled until a send produces a result.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -315,9 +313,8 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
                       Text(
                         'Sent from the WLAN Pi hosting this page, not from this '
                         'browser.',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: context.colors.textSecondary,
-                        ),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: context.colors.textSecondary),
                       ),
                     ],
                   ],
@@ -434,9 +431,7 @@ class _PacketSenderScreenState extends State<PacketSenderScreen> {
               liveRegion: true,
               child: Text(
                 _inputError!,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ),
           ],
@@ -745,9 +740,7 @@ class _MessageCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: text.labelMedium?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),

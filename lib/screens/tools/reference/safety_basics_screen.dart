@@ -69,8 +69,7 @@ class SafetyBasicsScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram =
-            ReferenceImages.isBundled(kSafetyBasicsToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(kSafetyBasicsToolId);
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -88,8 +87,7 @@ class SafetyBasicsScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kSafetyBasicsToolId),
+                      assetPath: ReferenceImages.pathFor(kSafetyBasicsToolId),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'PPE standards reference diagram: hard hat, '
@@ -240,10 +238,7 @@ class _Caption extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
-    return Text(
-      text,
-      style: t.bodySmall?.copyWith(color: colors.textTertiary),
-    );
+    return Text(text, style: t.bodySmall?.copyWith(color: colors.textTertiary));
   }
 }
 

@@ -102,8 +102,9 @@ class LiveQualityMonitor extends ChangeNotifier {
     LatencyProbe? latencyProbe,
     String host = 'one.one.one.one',
     this.interval = const Duration(seconds: 30),
-  }) : _sampler = sampler ??
-            _probeSampler(latencyProbe ?? LatencyProbe(host: host, samples: 5));
+  }) : _sampler =
+           sampler ??
+           _probeSampler(latencyProbe ?? LatencyProbe(host: host, samples: 5));
 
   /// Builds the default sampler: a single [LatencyProbe.measure] per tick.
   static LatencySampler _probeSampler(LatencyProbe probe) => probe.measure;
@@ -115,7 +116,9 @@ class LiveQualityMonitor extends ChangeNotifier {
   /// Read-only view of one metric's history (oldest first). Returns an empty
   /// list for an unknown id.
   List<MetricSample> historyFor(String metricId) =>
-      List<MetricSample>.unmodifiable(_history[metricId] ?? const <MetricSample>[]);
+      List<MetricSample>.unmodifiable(
+        _history[metricId] ?? const <MetricSample>[],
+      );
 
   /// Starts the cheap latency loop. Fires one sample IMMEDIATELY so the UI is
   /// not blank for the first interval (spec §2), then every [interval]. A

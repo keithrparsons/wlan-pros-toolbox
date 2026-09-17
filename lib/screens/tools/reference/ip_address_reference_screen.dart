@@ -276,21 +276,13 @@ class IpAddressReferenceScreen extends StatelessWidget {
       purpose: 'AS112-v6',
       rfc: 'RFC 7535',
     ),
-    SpecialUseBlock(
-      cidr: '2001:20::/28',
-      purpose: 'ORCHIDv2',
-      rfc: 'RFC 7343',
-    ),
+    SpecialUseBlock(cidr: '2001:20::/28', purpose: 'ORCHIDv2', rfc: 'RFC 7343'),
     SpecialUseBlock(
       cidr: '2001:db8::/32',
       purpose: 'Documentation',
       rfc: 'RFC 3849',
     ),
-    SpecialUseBlock(
-      cidr: '2002::/16',
-      purpose: '6to4',
-      rfc: 'RFC 3056',
-    ),
+    SpecialUseBlock(cidr: '2002::/16', purpose: '6to4', rfc: 'RFC 3056'),
     SpecialUseBlock(
       cidr: '2620:4f:8000::/48',
       purpose: 'Direct Delegation AS112 Service',
@@ -394,9 +386,7 @@ class IpAddressReferenceScreen extends StatelessWidget {
         toolbarHeight: 64,
         // §8.16 — copy the whole page as sectioned TSV: IPv4 blocks, IPv6
         // blocks, then the IPv6 notation rules. Static data, always enabled.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body(context)),
     );
@@ -531,13 +521,11 @@ class IpAddressReferenceScreen extends StatelessWidget {
       rows: blocks.map((SpecialUseBlock b) {
         // The multicast rows append " [*]" to the purpose to flag the
         // separate-registry sourcing explained in the card footnote.
-        final String purposeText =
-            b.multicastRegistry ? '${b.purpose} [*]' : b.purpose;
+        final String purposeText = b.multicastRegistry
+            ? '${b.purpose} [*]'
+            : b.purpose;
         return ReferenceRowSemantics(
-          label: rowLabel(b.cidr, <String?>[
-            purposeText,
-            b.rfc,
-          ]),
+          label: rowLabel(b.cidr, <String?>[purposeText, b.rfc]),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
@@ -557,9 +545,7 @@ class IpAddressReferenceScreen extends StatelessWidget {
                   width: 320,
                   child: Text(
                     purposeText,
-                    style: text.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 SizedBox(
@@ -579,10 +565,15 @@ class IpAddressReferenceScreen extends StatelessWidget {
     );
   }
 
-  Widget _notationCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
+  Widget _notationCard(
+    AppColorScheme colors,
+    TextTheme text,
+    AppMonoText mono,
+  ) {
     return _TableCard(
       title: 'IPv6 notation rules',
-      footnote: 'Source: RFC 4291 §2.2-2.3 (IPv6 Addressing Architecture); '
+      footnote:
+          'Source: RFC 4291 §2.2-2.3 (IPv6 Addressing Architecture); '
           'RFC 5952 §4 (canonical text representation).',
       header: const Row(
         children: <Widget>[
@@ -613,9 +604,7 @@ class IpAddressReferenceScreen extends StatelessWidget {
                   width: 420,
                   child: Text(
                     r.definition,
-                    style: text.bodyMedium?.copyWith(
-                      color: colors.textPrimary,
-                    ),
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
                   ),
                 ),
                 SizedBox(

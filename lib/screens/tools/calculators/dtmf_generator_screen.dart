@@ -203,10 +203,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
     final TextTheme text = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('DTMF Generator'),
-        toolbarHeight: 64,
-      ),
+      appBar: AppBar(title: const Text('DTMF Generator'), toolbarHeight: 64),
       body: _player == null
           // Defensive only: every shipping platform now has an audio backend, so
           // this branch is not reached in practice. If a future platform ever
@@ -232,31 +229,31 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
 
   Widget _buildPlayable(TextTheme text) {
     return SafeArea(
-        top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSpacing.contentMaxWidth,
+      top: false,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppSpacing.contentMaxWidth,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.sm + AppSpacing.sm,
             ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
-                AppSpacing.sm,
-                AppSpacing.sm,
-                AppSpacing.sm + AppSpacing.sm,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  _modeSelector(),
-                  const SizedBox(height: AppSpacing.md),
-                  ..._modeBody(text),
-                  ToolHelpFooter(toolId: _helpIdForMode),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _modeSelector(),
+                const SizedBox(height: AppSpacing.md),
+                ..._modeBody(text),
+                ToolHelpFooter(toolId: _helpIdForMode),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -467,9 +464,7 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
             cursorColor: colors.textAccent,
             style: mono.robotoMono.copyWith(color: colors.textPrimary),
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              hintText: '8675309',
-            ),
+            decoration: const InputDecoration(hintText: '8675309'),
           ),
           const SizedBox(height: AppSpacing.sm),
           FilledButton.icon(
@@ -481,8 +476,8 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
               _playingSeq
                   ? 'Stop'
                   : hasDigits
-                      ? 'Play sequence ($count)'
-                      : 'Play sequence',
+                  ? 'Play sequence ($count)'
+                  : 'Play sequence',
             ),
           ),
         ],
@@ -600,14 +595,16 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
                     children: <Widget>[
                       Text(
                         '${tone.frequencyLabel}  ·  ${tone.timingLabel}',
-                        style: mono.robotoMono
-                            .copyWith(color: colors.textPrimary),
+                        style: mono.robotoMono.copyWith(
+                          color: colors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
                         tone.description,
-                        style: text.bodySmall
-                            ?.copyWith(color: colors.textTertiary),
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textTertiary,
+                        ),
                       ),
                     ],
                   ),
@@ -660,7 +657,8 @@ class _DtmfGeneratorScreenState extends State<DtmfGeneratorScreen> {
                 child: _ToneKeyButton(
                   label: tone.label,
                   semanticLabel: '${tone.label} signal',
-                  selected: identical(_lastSignal, tone) ||
+                  selected:
+                      identical(_lastSignal, tone) ||
                       (_lastSignal?.label == tone.label &&
                           _lastSignal?.family == tone.family),
                   onTap: () => _onSignalTap(tone),
@@ -701,8 +699,9 @@ class _ToneKeyButton extends StatelessWidget {
     final bool reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
-    final Color borderColor =
-        selected ? colors.textAccent : colors.borderStrong;
+    final Color borderColor = selected
+        ? colors.textAccent
+        : colors.borderStrong;
     final double borderWidth = selected ? 2 : 1;
 
     return Semantics(
@@ -737,10 +736,7 @@ class _ToneKeyButton extends StatelessWidget {
           // type; multi-character word labels (Nickel / Quarter, "2600") step
           // down so they fit a narrower key without truncating.
           style: (label.length <= 2 ? text.headlineSmall : text.titleMedium)
-              ?.copyWith(
-            color: colors.textAccent,
-            fontWeight: FontWeight.w600,
-          ),
+              ?.copyWith(color: colors.textAccent, fontWeight: FontWeight.w600),
         ),
       ),
     );

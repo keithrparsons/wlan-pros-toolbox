@@ -31,7 +31,8 @@ class NotOnWifiCard extends StatelessWidget {
     super.key,
     required this.onRetry,
     this.title = "You're not connected to Wi-Fi",
-    this.message = 'You may be on cellular, Wi-Fi may be turned off, or you '
+    this.message =
+        'You may be on cellular, Wi-Fi may be turned off, or you '
         'joined a network that has not finished connecting. Connect to a Wi-Fi '
         'network to see live Wi-Fi data.',
   });

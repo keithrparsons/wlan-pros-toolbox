@@ -84,8 +84,9 @@ List<ToolSearchHit> searchTools(String query, {String? categoryId}) {
           categoryId: category.id,
           categoryTitle: category.title,
           matchedOn: matchedOn,
-          matchedKeyword:
-              matchedOn == ToolMatchField.keyword ? keywordHit : null,
+          matchedKeyword: matchedOn == ToolMatchField.keyword
+              ? keywordHit
+              : null,
         ),
       );
     }

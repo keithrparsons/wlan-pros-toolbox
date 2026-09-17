@@ -68,7 +68,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:net_quality/net_quality.dart' show QualityGrade, QualityGradeLabel;
+import 'package:net_quality/net_quality.dart'
+    show QualityGrade, QualityGradeLabel;
 
 import '../../../data/channel_frequency_data.dart'
     show WifiBand, centerFrequencyMHzForBand, wifiBandFromLabel;
@@ -81,7 +82,8 @@ import '../../../services/network/mac_oui_service.dart';
 import '../../../services/network/mac_randomization.dart';
 import '../../../services/network/network_support.dart';
 import '../../../services/network/link_table_service.dart';
-import '../../../services/network/transport_chooser.dart' show selectDefaultLink;
+import '../../../services/network/transport_chooser.dart'
+    show selectDefaultLink;
 import '../../../services/network/wifi_absence.dart';
 import '../../../services/network/wifi_connection_service.dart';
 import '../../../services/network/wifi_details.dart';
@@ -350,7 +352,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // THE PI JOINS THIS GROUP RATHER THAN GETTING A BODY OF ITS OWN. It is
         // a pull-only snapshot like the other three, so a separate path would
         // have been a second copy of the same screen to keep in sync.
-        _macAdapter = widget.macAdapter ??
+        _macAdapter =
+            widget.macAdapter ??
             switch (_source) {
               WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
@@ -377,7 +380,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         _series = WifiTimeSeries();
         _liveController!.addListener(_captureSample);
         _securityService = widget.securityService ?? WifiSecurityService();
-        _onboardingService = widget.onboardingService ?? LiveOnboardingService();
+        _onboardingService =
+            widget.onboardingService ?? LiveOnboardingService();
         WidgetsBinding.instance.addObserver(this);
         // Resolve install-state on entry. NO auto-fire (2026-06-26, Keith device
         // round 5): with Get reading removed, the single live action is the
@@ -387,15 +391,15 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // Read the native security type + BSSID once on open. Re-read on resume
         // (lifecycle) so a Location grant in Settings lands without a relaunch.
         _fetchIosSecurity();
-        // NATIVE-FIRST (2026-06-23, Keith): opening Wi-Fi Information must NOT
-        // auto-pop the companion-Shortcut setup sheet. The native identity
-        // (SSID / BSSID / security via NEHotspotNetwork) renders immediately and
-        // the rich RF fields are offered through the inline, non-modal
-        // LiveRfLockedCard / LiveSetupCard (and the About-row recovery). The
-        // former auto-fire of [_maybeShowFirstRunOnboarding] was the forced modal
-        // gate; it is removed here. The gate method stays intact (reachable via
-        // the inline opt-in) so the one-time semantics and the 1.5.5 double-prompt
-        // fix are preserved — only the AUTO-FIRE is removed.
+      // NATIVE-FIRST (2026-06-23, Keith): opening Wi-Fi Information must NOT
+      // auto-pop the companion-Shortcut setup sheet. The native identity
+      // (SSID / BSSID / security via NEHotspotNetwork) renders immediately and
+      // the rich RF fields are offered through the inline, non-modal
+      // LiveRfLockedCard / LiveSetupCard (and the About-row recovery). The
+      // former auto-fire of [_maybeShowFirstRunOnboarding] was the forced modal
+      // gate; it is removed here. The gate method stays intact (reachable via
+      // the inline opt-in) so the one-time semantics and the 1.5.5 double-prompt
+      // fix are preserved — only the AUTO-FIRE is removed.
       // piBackend is NOT listed here: it is handled with the snapshot sources
       // above, which is where it belongs. It was listed in both places, so this
       // one was dead and the analyzer said so.
@@ -447,11 +451,11 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
   /// 26 fields and none of them is a security/key-management value, verified
   /// live 2026-09-04. **The absence is real; only the attribution was wrong.**
   String get _snapshotPlatformLabel => switch (_source) {
-        WifiInfoSource.androidWifiManager => 'Android',
-        WifiInfoSource.windowsNativeWifi => 'Windows',
-        WifiInfoSource.piBackend => 'the WLAN Pi',
-        _ => 'macOS CoreWLAN',
-      };
+    WifiInfoSource.androidWifiManager => 'Android',
+    WifiInfoSource.windowsNativeWifi => 'Windows',
+    WifiInfoSource.piBackend => 'the WLAN Pi',
+    _ => 'macOS CoreWLAN',
+  };
 
   /// The platform that owns an unreadable-MAC reason note, so the "MAC type"
   /// note names the RIGHT OS limit (the S24 bug was the iOS "Apple does not
@@ -732,7 +736,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       return;
     }
     try {
-      final String raw = await rootBundle.loadString('assets/oui/oui_table.tsv');
+      final String raw = await rootBundle.loadString(
+        'assets/oui/oui_table.tsv',
+      );
       final Map<String, String> table = MacOuiService.parseTable(raw);
       if (!mounted) return;
       setState(() => _ouiService = MacOuiService.fromTable(table));
@@ -901,7 +907,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final WifiTimeSeries? series = _macSeries;
     if (series == null) return;
     final ConnectedAp? last = _macLastCharted;
-    final bool unchanged = last != null &&
+    final bool unchanged =
+        last != null &&
         info.rssiDbm == last.rssiDbm &&
         info.snrDb == last.snrDb &&
         info.txRateMbps == last.txRateMbps &&
@@ -1023,7 +1030,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           AppCopyAction(textBuilder: _buildCopyText),
           _macLoading
               ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   child: Center(
                     child: SizedBox(
                       width: 18,
@@ -1054,9 +1063,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       case WifiInfoSource.iosShortcuts:
         // §8.16: copy is the only app-bar action on iOS. Disabled
         // (textBuilder → null) until at least one live reading exists.
-        return <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ];
+        return <Widget>[AppCopyAction(textBuilder: _buildCopyText)];
       case WifiInfoSource.unsupported:
       case WifiInfoSource.piBackend:
       case WifiInfoSource.web:
@@ -1144,7 +1151,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final String snrCopy = isAndroid && info.snrDb == null
         ? 'Needs the noise floor, which $platformLabel does not expose'
         : '${_copyVal(info.snrDb?.toString(), 'dB')}'
-            '${info.snrDerived ? ' (derived)' : ''}';
+              '${info.snrDerived ? ' (derived)' : ''}';
     buf
       ..writeln()
       ..writeln('Signal')
@@ -1157,10 +1164,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final String rxCopy = !info.rxRateAvailable
         ? 'Not exposed by $platformLabel'
         : (info.rxRateMbps == null
-            ? (isAndroid
-                ? "Not reported by this device's $platformLabel link"
-                : 'Not in this reading')
-            : _copyVal(_formatRate(info.rxRateMbps), 'Mbps'));
+              ? (isAndroid
+                    ? "Not reported by this device's $platformLabel link"
+                    : 'Not in this reading')
+              : _copyVal(_formatRate(info.rxRateMbps), 'Mbps'));
     buf
       ..writeln()
       ..writeln('Rate')
@@ -1190,7 +1197,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       ..writeln('  Country: ${_copyVal(info.countryCode, null)}')
       ..writeln('  Interface: ${_copyVal(info.interfaceName, null)}')
       ..writeln('  Hardware Address: ${_copyVal(info.hardwareAddress, null)}')
-      ..writeln('  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress, platform: _macPlatform)}');
+      ..writeln(
+        '  MAC type: ${MacRandomizationClassifier.label(info.hardwareAddress, platform: _macPlatform)}',
+      );
 
     buf
       ..writeln()
@@ -1317,11 +1326,13 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final WifiTimeSeries? series = _macSeries;
     if (series != null && !series.isEmpty) {
       children
-        ..add(_LiveCharts(
-          series: series,
-          latest: info,
-          platformLabel: _snapshotPlatformLabel,
-        ))
+        ..add(
+          _LiveCharts(
+            series: series,
+            latest: info,
+            platformLabel: _snapshotPlatformLabel,
+          ),
+        )
         ..add(const SizedBox(height: AppSpacing.sm));
     }
 
@@ -1354,7 +1365,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     // not-authorized status keeps the card, since a gated name is the dominant
     // cause of a missing name on these sources. The post-grant informational
     // path (below) still owns the just-granted case.
-    if (_nameAuth == LocationAuthStatus.authorized && !_locationGrantAttempted) {
+    if (_nameAuth == LocationAuthStatus.authorized &&
+        !_locationGrantAttempted) {
       return null;
     }
 
@@ -1374,7 +1386,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     // `notDetermined` to match [LocationAuthStatus.fromToken]'s documented
     // fallback: offer the harmless prompt rather than a dead deep-link when the
     // truth is not yet known.
-    final LocationAuthStatus auth = _nameAuth ?? LocationAuthStatus.notDetermined;
+    final LocationAuthStatus auth =
+        _nameAuth ?? LocationAuthStatus.notDetermined;
     final bool promptable = auth.isPromptable;
     final String settingsName = isAndroid ? 'Settings' : 'System Settings';
 
@@ -1391,16 +1404,16 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
       return _LocationCard(
         message: isAndroid
             ? (promptable
-                ? 'If you allowed Location, the network name appears on the '
-                    'next refresh. If it is still blank, tap Grant Location '
-                    'again. Signal, rate, and channel details work without it.'
-                : 'The Location permission was denied, and this app cannot ask '
-                    'again. Enable Location for this app in Settings, then tap '
-                    'Refresh. Signal, rate, and channel details work without '
-                    'it.')
+                  ? 'If you allowed Location, the network name appears on the '
+                        'next refresh. If it is still blank, tap Grant Location '
+                        'again. Signal, rate, and channel details work without it.'
+                  : 'The Location permission was denied, and this app cannot ask '
+                        'again. Enable Location for this app in Settings, then tap '
+                        'Refresh. Signal, rate, and channel details work without '
+                        'it.')
             : 'Permission granted. macOS may need an app relaunch before the '
-                'network name appears. The signal and channel details below are '
-                'unaffected.',
+                  'network name appears. The signal and channel details below are '
+                  'unaffected.',
         promptable: promptable,
         onGrant: isAndroid ? (_macLoading ? null : _grantLocation) : null,
         onOpenSettings: isAndroid ? _openLocationSettings : null,
@@ -1418,9 +1431,9 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           : 'macOS requires it to read the name.';
       final String needs = isAndroid
           ? 'The network name (SSID and BSSID) needs the Location permission '
-              'on Android.'
+                'on Android.'
           : 'The network name (SSID and BSSID) needs Location Services for '
-              'this app.';
+                'this app.';
       const String unaffected =
           'Signal, rate, and channel details already work without it.';
       final String message;
@@ -1428,7 +1441,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         case LocationAuthStatus.denied:
         case LocationAuthStatus.restricted:
           // NOT promptable. No in-app grant is offered and none is described.
-          message = '$needs $why Location is turned off for this app, and this '
+          message =
+              '$needs $why Location is turned off for this app, and this '
               'app cannot ask again. That switch only exists in $settingsName. '
               'Turn it on there, then tap Refresh. $unaffected';
         case LocationAuthStatus.notDetermined:
@@ -1437,7 +1451,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           // Defensive: the authorized-and-not-yet-attempted case returns null
           // above, so this is not normally reachable. If it ever is, the card
           // must not claim a grant is missing when the app holds it.
-          message = 'Location is granted for this app, but the network name '
+          message =
+              'Location is granted for this app, but the network name '
               'still did not resolve in this reading. Tap Refresh to try '
               'again. $unaffected';
       }
@@ -1477,9 +1492,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     // identity card shows the REAL network name (not just BSSID + security)
     // before the first Shortcut RF sample. _enrichIos then folds the coarse
     // security token and BSSID onto it.
-    return _enrichIos(
-      ConnectedAp(ssid: sec.ssid, securityAvailable: true),
-    );
+    return _enrichIos(ConnectedAp(ssid: sec.ssid, securityAvailable: true));
   }
 
   // ---- iOS body (Live streaming only) ----
@@ -1599,8 +1612,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     final bool ok = d.reachOk!;
     final int? ms = d.reachMs;
     final String verdict = ok ? 'Reachable' : 'Not reachable';
-    final String value =
-        (ok && ms != null) ? '$verdict ($ms ms)' : verdict;
+    final String value = (ok && ms != null) ? '$verdict ($ms ms)' : verdict;
     final String? url = d.reachUrl;
     return _Card(
       title: 'Internet',
@@ -1610,9 +1622,7 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             label: 'Reachability',
             value: value,
             valueTone: ok ? StatusTone.success : StatusTone.danger,
-            note: (url != null && url.trim().isNotEmpty)
-                ? 'Tested $url'
-                : null,
+            note: (url != null && url.trim().isNotEmpty) ? 'Tested $url' : null,
           ),
         ],
       ),
@@ -1822,9 +1832,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
     // own tri-state and the affordance is driven by it.
     // See [[feedback_ui_rendered_a_decision_it_lacked]].
     final WifiSecurityInfo? sec = isIos ? _iosSecurity : null;
-    final bool iosNeedsLocation = sec != null &&
-        !sec.available &&
-        !sec.locationAuth.isAuthorized;
+    final bool iosNeedsLocation =
+        sec != null && !sec.available && !sec.locationAuth.isAuthorized;
     final LocationAuthStatus securityAuth =
         sec?.locationAuth ?? LocationAuthStatus.notDetermined;
 
@@ -1840,7 +1849,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
         // needed", which is true but reads as though this app could ask for it.
         // It cannot. Say so, and name where the switch actually lives — the
         // prose equivalent of not rendering a dead button.
-        note = 'Location is turned off for this app, and this app cannot ask '
+        note =
+            'Location is turned off for this app, and this app cannot ask '
             'again. Turn it on in Settings > Privacy & Security > Location '
             'Services > WLAN Pros Toolbox, then tap Refresh';
       } else {
@@ -1852,7 +1862,8 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
             : 'Not in this reading';
       }
     } else if (security.isPersonalCoarse || security.isEnterpriseCoarse) {
-      note = 'iOS reports only Open / Personal / Enterprise. It cannot '
+      note =
+          'iOS reports only Open / Personal / Enterprise. It cannot '
           'distinguish WPA2 from WPA3';
     }
 
@@ -1960,10 +1971,10 @@ class _WifiInfoScreenState extends State<WifiInfoScreen>
           note: !info.rxRateAvailable
               ? 'Not exposed by $platformLabel'
               : (info.rxRateMbps == null
-                  ? (_source == WifiInfoSource.androidWifiManager
-                      ? "Not reported by this device's $platformLabel link"
-                      : 'Not in this reading')
-                  : null),
+                    ? (_source == WifiInfoSource.androidWifiManager
+                          ? "Not reported by this device's $platformLabel link"
+                          : 'Not in this reading')
+                    : null),
         ),
       ],
     ),
@@ -2226,9 +2237,7 @@ class _PlatformComingSoon extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Coming in a later update',
-                style: text.headlineSmall?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.headlineSmall?.copyWith(color: colors.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -2280,9 +2289,7 @@ class _LoadingCard extends StatelessWidget {
               liveRegion: true,
               child: Text(
                 'Reading Wi-Fi link state…',
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
           ),
@@ -2291,7 +2298,6 @@ class _LoadingCard extends StatelessWidget {
     );
   }
 }
-
 
 // ---- Snapshot-source location card (macOS Location Services / Android
 // ACCESS_FINE_LOCATION) ----
@@ -2433,9 +2439,7 @@ class _LocationCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   message,
-                  style: text.bodyMedium?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
               ),
             ],
@@ -2465,13 +2469,13 @@ class _LocationCard extends StatelessWidget {
                     button: true,
                     label: settingsIsPrimary
                         ? (platformIsAndroid
-                            ? 'Open app Location settings to enable Location '
-                                'for this app'
-                            : 'Open macOS Location Services settings to enable '
-                                'Location for this app')
+                              ? 'Open app Location settings to enable Location '
+                                    'for this app'
+                              : 'Open macOS Location Services settings to enable '
+                                    'Location for this app')
                         : (platformIsAndroid
-                            ? 'Open app Location settings'
-                            : 'Open macOS Location Services settings'),
+                              ? 'Open app Location settings'
+                              : 'Open macOS Location Services settings'),
                     // Primary weight when it is the only action that can work,
                     // so the one usable route is not the quiet one.
                     child: settingsIsPrimary
@@ -2533,16 +2537,13 @@ class _LocationSteps extends StatelessWidget {
     final TextStyle? style = text.bodySmall?.copyWith(
       color: colors.textTertiary,
     );
-    final List<String> steps =
-        platformIsAndroid ? _androidSteps : _macSteps;
+    final List<String> steps = platformIsAndroid ? _androidSteps : _macSteps;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         for (int i = 0; i < steps.length; i++)
           Padding(
-            padding: EdgeInsets.only(
-              top: i == 0 ? 0 : AppSpacing.xxs,
-            ),
+            padding: EdgeInsets.only(top: i == 0 ? 0 : AppSpacing.xxs),
             child: Text('${i + 1}. ${steps[i]}', style: style),
           ),
       ],
@@ -2577,17 +2578,13 @@ class _WifiOffCard extends StatelessWidget {
               children: [
                 Text(
                   'Wi-Fi is off',
-                  style: text.titleMedium?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: text.titleMedium?.copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Turn Wi-Fi on to read live link details. Any values still '
                   'reported by the system are shown below.',
-                  style: text.bodyMedium?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
@@ -2624,11 +2621,7 @@ class _ErrorCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.info_outline,
-                size: 20,
-                color: colors.textTertiary,
-              ),
+              Icon(Icons.info_outline, size: 20, color: colors.textTertiary),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
@@ -2797,8 +2790,8 @@ class _MetricRow extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final Color valueColor = hasValue
         ? (valueTone != null
-            ? colors.statusToneColor(valueTone!)
-            : colors.textPrimary)
+              ? colors.statusToneColor(valueTone!)
+              : colors.textPrimary)
         : colors.textSecondary;
     final TextStyle? valueStyle = (mono && hasValue)
         ? monoText.robotoMono.copyWith(color: valueColor)
@@ -2961,8 +2954,7 @@ class _LiveBody extends StatelessWidget {
             // stale error flag lingered behind a streaming session. Suppressing the
             // error card whenever we are actually streaming with samples keeps the
             // live state to ONE coherent reading.
-            final bool liveWithData =
-                controller.isStreaming && !series.isEmpty;
+            final bool liveWithData = controller.isStreaming && !series.isEmpty;
             final bool showSetupError =
                 (triggerError || controller.shortcutMissing) && !liveWithData;
 
@@ -3030,8 +3022,7 @@ class _LiveBody extends StatelessWidget {
                     _MonitorControlBar(
                       streaming: controller.isStreaming,
                       lastUpdated: controller.lastUpdated,
-                      onStart:
-                          controller.hasEverReceived ? onStart : onSetUp,
+                      onStart: controller.hasEverReceived ? onStart : onSetUp,
                       onStop: onStop,
                       setUpMode: !controller.hasEverReceived,
                     ),
@@ -3065,7 +3056,8 @@ class _LiveBody extends StatelessWidget {
                   // defect class as H1/H2). Charts still render if data exists.
                   if (showSetupError && series.isEmpty)
                     const SizedBox.shrink()
-                  else if (!controller.isStreaming && series.isEmpty) ...<Widget>[
+                  else if (!controller.isStreaming &&
+                      series.isEmpty) ...<Widget>[
                     // NATIVE-FIRST pre-payload state (Pax anti-pattern #1 fix):
                     // never open to dead/zeroed RF fields. Show the real
                     // connected-network basics the app reads natively
@@ -3097,7 +3089,8 @@ class _LiveBody extends StatelessWidget {
                     // it matches the LivePrimingCard above (Vera H2) instead of
                     // naming a "Set up" button not on screen during priming.
                     _LiveStartHint(
-                      setUpMode: !controller.hasEverReceived &&
+                      setUpMode:
+                          !controller.hasEverReceived &&
                           !controller.setupInitiated,
                     ),
                   ] else if (series.isEmpty)
@@ -3173,11 +3166,11 @@ class _LiveStartHint extends StatelessWidget {
       child: Text(
         setUpMode
             ? 'Live Wi-Fi signal comes from the one-time "WLAN Pros Live" '
-                'companion Shortcut. Tap Set up live Wi-Fi to add it, then your '
-                'live signal streams here.'
+                  'companion Shortcut. Tap Set up live Wi-Fi to add it, then your '
+                  'live signal streams here.'
             : 'Tap Start Live Monitoring above to begin your live Wi-Fi signal. '
-                'The companion Shortcut streams readings and the values fill in; '
-                'tap Stop to end.',
+                  'The companion Shortcut streams readings and the values fill in; '
+                  'tap Stop to end.',
         style: text.bodyLarge?.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
@@ -3262,8 +3255,7 @@ class _LiveCharts extends StatelessWidget {
         _TrendMetricChart(
           label: 'Rx Rate',
           unit: 'Mbps',
-          currentValue:
-              rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
+          currentValue: rxAvail ? _WifiInfoScreenState._formatRate(rx) : null,
           window: series.rxRate,
           // Distinguish a permanent platform limit (macOS never exposes Rx →
           // rxRateAvailable false) from the Android device-link sentinel and a
@@ -3272,12 +3264,12 @@ class _LiveCharts extends StatelessWidget {
           unavailableNote: latest == null
               ? null
               : !rxAvail
-                  ? 'Not exposed by $platformLabel'
-                  : (rx == null
-                      ? (platformLabel == 'Android'
+              ? 'Not exposed by $platformLabel'
+              : (rx == null
+                    ? (platformLabel == 'Android'
                           ? "Not reported by this device's Android link"
                           : 'Not in this reading')
-                      : null),
+                    : null),
         ),
       ],
     );
@@ -3422,9 +3414,7 @@ class _TrendMetricChart extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
                   unavailableNote!,
-                  style: text.bodySmall?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
                 ),
               ],
               const SizedBox(height: AppSpacing.xxs),
@@ -3496,7 +3486,9 @@ class _GradeChip extends StatelessWidget {
   /// its Material glyph. The label + glyph render in WHITE on the fill.
   /// Unavailable has no status hue, so it fills with neutral textSecondary.
   static (Color fill, IconData? glyph) _lightParts(
-      QualityGrade grade, AppColorScheme c) {
+    QualityGrade grade,
+    AppColorScheme c,
+  ) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
@@ -3572,12 +3564,14 @@ class _GradeChip extends StatelessWidget {
         grade.label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: text.labelSmall?.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style: text.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 }
-
 
 /// iOS control bar (2026-06-23): the DEFAULT one-shot "Get reading" plus the
 /// opt-in "Start live monitoring", with a live indicator + last-updated stamp.
@@ -3639,8 +3633,8 @@ class _MonitorControlBar extends StatelessWidget {
           final Widget primaryAction = streaming
               ? _StopButton(onStop: onStop)
               : setUpMode
-                  ? _SetUpLiveButton(onSetUp: onStart)
-                  : _StartMonitoringButton(onStart: onStart);
+              ? _SetUpLiveButton(onSetUp: onStart)
+              : _StartMonitoringButton(onStart: onStart);
 
           final Widget header = narrow
               ? Column(
@@ -3725,9 +3719,7 @@ class _StatusBlock extends StatelessWidget {
                   style: text.labelLarge?.copyWith(
                     // "Live" label is a foreground accent → darkened-lime in
                     // light (§8.20.2); the word carries the meaning regardless.
-                    color: streaming
-                        ? colors.textAccent
-                        : colors.textSecondary,
+                    color: streaming ? colors.textAccent : colors.textSecondary,
                   ),
                 ),
                 if (lastUpdated != null)

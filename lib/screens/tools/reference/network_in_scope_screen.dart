@@ -60,7 +60,9 @@ class NetworkInScopeScreen extends StatelessWidget {
         final double edge = isDesktop
             ? AppSpacing.screenEdgeDesktop
             : AppSpacing.screenEdgeMobile;
-        final bool hasDiagram = ReferenceImages.isBundled(kNetworkInScopeToolId);
+        final bool hasDiagram = ReferenceImages.isBundled(
+          kNetworkInScopeToolId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -78,19 +80,21 @@ class NetworkInScopeScreen extends StatelessWidget {
                 children: <Widget>[
                   if (hasDiagram) ...<Widget>[
                     DarkRasterDiagramCard(
-                      assetPath:
-                          ReferenceImages.pathFor(kNetworkInScopeToolId),
+                      assetPath: ReferenceImages.pathFor(kNetworkInScopeToolId),
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'Compliance scope matrix: PCI DSS, HIPAA, SOX, and '
                           'GDPR, the trigger for each, and what it asks of the '
                           'network',
-                      caption: 'Recognize the framework; never certify it '
+                      caption:
+                          'Recognize the framework; never certify it '
                           'yourself.',
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  if (ReferencePdfs.isBundled(kNetworkInScopeToolId)) ...<Widget>[
+                  if (ReferencePdfs.isBundled(
+                    kNetworkInScopeToolId,
+                  )) ...<Widget>[
                     ReferencePdfDownloadCard(
                       assetPath: ReferencePdfs.pathFor(kNetworkInScopeToolId),
                       title: 'Network in Scope',

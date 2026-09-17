@@ -50,15 +50,47 @@ final double kSemitoneRatio = math.pow(2.0, 1.0 / 12.0).toDouble();
 /// primary spelling; flats are the enharmonic equivalent (true ONLY in equal
 /// temperament - analogy-limit 3).
 const List<String> _pitchClassSharp = <String>[
-  'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B',
 ];
 const List<String> _pitchClassFlat = <String>[
-  'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B',
+  'C',
+  'Db',
+  'D',
+  'Eb',
+  'E',
+  'F',
+  'Gb',
+  'G',
+  'Ab',
+  'A',
+  'Bb',
+  'B',
 ];
 
 /// Whether a pitch class (0..11 from C) is a black key on the piano.
 const List<bool> _isBlackPitchClass = <bool>[
-  false, true, false, true, false, false, true, false, true, false, true,
+  false,
+  true,
+  false,
+  true,
+  false,
+  false,
+  true,
+  false,
+  true,
+  false,
+  true,
   false,
 ];
 
@@ -189,8 +221,8 @@ class MusicTheory {
 
   /// The 13 notes C4 -> C5 inclusive that drive the on-screen keyboard.
   static List<Note> get chromaticC4toC5 => <Note>[
-        for (int k = kC4KeyNumber; k <= kC5KeyNumber; k++) noteForKey(k),
-      ];
+    for (int k = kC4KeyNumber; k <= kC5KeyNumber; k++) noteForKey(k),
+  ];
 
   /// The seven WHITE-key notes of C4 -> C5 (the C-major scale C D E F G A B C).
   static List<Note> get whiteKeysC4toC5 =>

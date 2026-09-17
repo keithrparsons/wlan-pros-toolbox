@@ -122,7 +122,8 @@ class _CloudAppsPanelState extends State<CloudAppsPanel> {
   }
 
   /// Number of services that answered, for the honest summary line.
-  int get _reachableCount => _results.where((SiteReachability s) => s.reachable).length;
+  int get _reachableCount =>
+      _results.where((SiteReachability s) => s.reachable).length;
 
   @override
   Widget build(BuildContext context) {
@@ -182,10 +183,7 @@ class _CloudAppsPanelState extends State<CloudAppsPanel> {
           children: <Widget>[
             // Summary line — how many of N answered. Lives above the rows so the
             // user reads the verdict first.
-            _SummaryLine(
-              reachable: _reachableCount,
-              total: _results.length,
-            ),
+            _SummaryLine(reachable: _reachableCount, total: _results.length),
             const SizedBox(height: AppSpacing.xs),
             for (final SiteReachability s in _results) _CloudAppRow(result: s),
             const SizedBox(height: AppSpacing.xs),
@@ -215,8 +213,8 @@ class _SummaryLine extends StatelessWidget {
     final String line = noneOk
         ? "Couldn't reach any of these services. Your connection may be down."
         : allOk
-            ? 'All $total services are reachable.'
-            : '$reachable of $total services are reachable.';
+        ? 'All $total services are reachable.'
+        : '$reachable of $total services are reachable.';
     return Text(
       line,
       style: text.bodyMedium?.copyWith(
@@ -253,7 +251,8 @@ class _CloudAppRow extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '${result.site.name}, $status'
+      label:
+          '${result.site.name}, $status'
           '${ok && result.latencyMs != null ? ', ${result.latencyMs!.round()} milliseconds' : ''}',
       child: ExcludeSemantics(
         child: Padding(
@@ -289,7 +288,9 @@ class _CloudAppRow extends StatelessWidget {
                   status,
                   softWrap: true,
                   textAlign: TextAlign.right,
-                  style: text.labelMedium?.copyWith(color: colors.textSecondary),
+                  style: text.labelMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -340,8 +341,9 @@ class _LoadingRows extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             for (final PopularSite s in sites)
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: AppSpacing.rowPadding),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.rowPadding,
+                ),
                 child: Row(
                   children: <Widget>[
                     Icon(

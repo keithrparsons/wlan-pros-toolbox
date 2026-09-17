@@ -84,11 +84,7 @@ class ChecklistPhase {
 /// A flat checklist is a single phase with `label == null`.
 @immutable
 class Checklist {
-  const Checklist({
-    required this.title,
-    this.intro,
-    required this.phases,
-  });
+  const Checklist({required this.title, this.intro, required this.phases});
 
   /// AppBar title and the screen's semantic heading.
   final String title;
@@ -144,11 +140,7 @@ class Checklist {
 /// Pass a [checklist] definition (Pax's data, or [Checklist.smokeTest]). The
 /// screen owns the per-item checked state and never persists it (v1).
 class ChecklistScreen extends StatefulWidget {
-  const ChecklistScreen({
-    super.key,
-    required this.checklist,
-    this.toolId,
-  });
+  const ChecklistScreen({super.key, required this.checklist, this.toolId});
 
   /// The checklist content to render. Title, intro, phases, and items all come
   /// from here so one screen type serves every checklist.
@@ -185,9 +177,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     final int total = _totalCount;
     SemanticsService.sendAnnouncement(
       View.of(context),
-      done == total
-          ? 'All $total items done'
-          : '$done of $total done',
+      done == total ? 'All $total items done' : '$done of $total done',
       TextDirection.ltr,
     );
   }
@@ -341,9 +331,7 @@ class _ProgressCard extends StatelessWidget {
                 Text(
                   '$done / $total done',
                   style: mono.inlineCode.copyWith(
-                    color: complete
-                        ? colors.statusSuccess
-                        : colors.textPrimary,
+                    color: complete ? colors.statusSuccess : colors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -541,8 +529,7 @@ class _ChecklistRowState extends State<_ChecklistRow> {
                           color: done
                               ? colors.textTertiary
                               : colors.textPrimary,
-                          decoration:
-                              done ? TextDecoration.lineThrough : null,
+                          decoration: done ? TextDecoration.lineThrough : null,
                           decorationColor: colors.textTertiary,
                         ),
                       ),
@@ -586,11 +573,7 @@ class _EmptyCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.checklist_outlined,
-            size: 20,
-            color: colors.textTertiary,
-          ),
+          Icon(Icons.checklist_outlined, size: 20, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(

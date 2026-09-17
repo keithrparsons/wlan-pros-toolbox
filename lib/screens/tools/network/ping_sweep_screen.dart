@@ -153,12 +153,12 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
   Future<void> _prefillFromCurrentNetwork() async {
     final NetworkSuggestion s = await _network.suggest();
     if (!mounted || _userTouched) return;
-    if (s.cidr == null) return; // NONE — keep the generic default, no fabrication.
+    if (s.cidr == null)
+      return; // NONE — keep the generic default, no fabrication.
 
     _applyingPrefill = true;
     _subnetCtrl.text = s.cidr!;
-    _subnetCtrl.selection =
-        TextSelection.collapsed(offset: s.cidr!.length);
+    _subnetCtrl.selection = TextSelection.collapsed(offset: s.cidr!.length);
     _applyingPrefill = false;
 
     setState(() => _maskAssumed = s.isAssumedPrefix);
@@ -264,8 +264,10 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     });
 
     try {
-      final List<SweepHostResult> hosts =
-          await PiBackendClient().pingSweep(cidr: cidr, ports: '$_port');
+      final List<SweepHostResult> hosts = await PiBackendClient().pingSweep(
+        cidr: cidr,
+        ports: '$_port',
+      );
       if (!mounted) return;
       setState(() {
         _sweeping = false;
@@ -299,9 +301,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until a sweep has
         // started (a range is in flight). Copies the tally summary + a TSV of
         // the responsive hosts. Copy leads; no help icon on this screen.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -334,8 +334,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             _ipKey(a.host).compareTo(_ipKey(b.host)),
       );
 
-    final int refusedCount =
-        sorted.where((SweepHostResult r) => r.refused).length;
+    final int refusedCount = sorted
+        .where((SweepHostResult r) => r.refused)
+        .length;
     final int handshakeCount = sorted.length - refusedCount;
 
     const String tab = '\t';
@@ -363,8 +364,9 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
 
     for (final SweepHostResult r in sorted) {
       final String time = r.rttMs == null ? '' : r.rttMs!.toStringAsFixed(1);
-      final String state =
-          r.refused ? 'answered (refused)' : 'answered (handshake)';
+      final String state = r.refused
+          ? 'answered (refused)'
+          : 'answered (handshake)';
       buf.writeln(<String>[r.host, state, time].join(tab));
     }
 
@@ -591,9 +593,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                     _rangeLabel,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
-                    style: mono.robotoMono.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.robotoMono.copyWith(color: colors.textTertiary),
                   ),
                 ),
             ],
@@ -670,11 +670,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: colors.textTertiary,
-                ),
+                Icon(Icons.info_outline, size: 14, color: colors.textTertiary),
                 const SizedBox(width: AppSpacing.xxs),
                 Expanded(
                   child: Text(
@@ -784,9 +780,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
               ),
               Text(
                 '$_completed / $_total · $_live live',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -805,9 +799,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                 value: _sweeping ? fraction : 1.0,
                 minHeight: 6,
                 backgroundColor: colors.surface2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  colors.textAccent,
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(colors.textAccent),
               ),
             ),
           ),
@@ -860,9 +852,7 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
                     // Address-range label is an identifier → Roboto Mono (§8.5).
-                    style: mono.robotoMono.copyWith(
-                      color: colors.textTertiary,
-                    ),
+                    style: mono.robotoMono.copyWith(color: colors.textTertiary),
                   ),
                 ),
             ],
@@ -923,7 +913,8 @@ class _PingSweepScreenState extends State<PingSweepScreen> {
     // WCAG 1.4.1 — outcome carried by text + icon SHAPE, never color alone.
     // The whole row is one semantic node so AT reads the full outcome.
     return Semantics(
-      label: 'Host ${r.host} answered on TCP $_port by '
+      label:
+          'Host ${r.host} answered on TCP $_port by '
           '${refused ? 'actively refusing (port closed, host is there)' : 'completing the handshake'}'
           '${r.rttMs == null ? '' : ', ${r.rttMs!.toStringAsFixed(1)} milliseconds'}',
       container: true,

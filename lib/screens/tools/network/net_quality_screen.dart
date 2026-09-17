@@ -179,7 +179,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     _piClient = _piBacked ? PiBackendQualityClient() : null;
     // Injection seam: real engine + real reachability in production, fakes in
     // tests. Default target is Cloudflare's one.one.one.one on port 443.
-    _client = widget.client ??
+    _client =
+        widget.client ??
         _piClient ??
         OwnEngineQualityClient.forHost('one.one.one.one');
     _reachability = widget.reachabilityProbe ?? ReachabilityProbe();
@@ -330,49 +331,49 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // lie even for a user who tapped).
     _sub = _client
         .measure(
-      includeThroughput: spendData,
-      includeResponsiveness: !_needsConsent,
-    )
+          includeThroughput: spendData,
+          includeResponsiveness: !_needsConsent,
+        )
         .listen(
-      (QualityProgress p) {
-        if (!mounted) return;
-        setState(() {
-          _phase = p.phase;
-          _fraction = p.fraction;
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        final QualityResult? result = _client.lastResult;
-        final PiConntestResult? ct = _piClient?.lastConntest;
-        setState(() {
-          _running = false;
-          _result = result;
-          // Pi-hosted: show gateway / internet / DNS as the reachability rows,
-          // built from the same conntest the transport metrics came from.
-          if (_piBacked && ct != null) _sites = _hopsFromConntest(ct);
-        });
-        // Feed all six metric values into the live history. The expensive trio
-        // (download/upload/responsiveness) gets points ONLY here, which is why
-        // those sparklines are sparse by design (spec §2). Native only — the
-        // live sparklines are driven by the socket sampler, which does not run
-        // on Pi-hosted web, so there is no live history to feed there.
-        if (!_piBacked && result != null) _monitor.addFullResult(result);
-        // WCAG 4.1.3 — announce completion to assistive tech.
-        SemanticsService.sendAnnouncement(
-          View.of(context),
-          'Network quality test complete',
-          TextDirection.ltr,
+          (QualityProgress p) {
+            if (!mounted) return;
+            setState(() {
+              _phase = p.phase;
+              _fraction = p.fraction;
+            });
+          },
+          onDone: () {
+            if (!mounted) return;
+            final QualityResult? result = _client.lastResult;
+            final PiConntestResult? ct = _piClient?.lastConntest;
+            setState(() {
+              _running = false;
+              _result = result;
+              // Pi-hosted: show gateway / internet / DNS as the reachability rows,
+              // built from the same conntest the transport metrics came from.
+              if (_piBacked && ct != null) _sites = _hopsFromConntest(ct);
+            });
+            // Feed all six metric values into the live history. The expensive trio
+            // (download/upload/responsiveness) gets points ONLY here, which is why
+            // those sparklines are sparse by design (spec §2). Native only — the
+            // live sparklines are driven by the socket sampler, which does not run
+            // on Pi-hosted web, so there is no live history to feed there.
+            if (!_piBacked && result != null) _monitor.addFullResult(result);
+            // WCAG 4.1.3 — announce completion to assistive tech.
+            SemanticsService.sendAnnouncement(
+              View.of(context),
+              'Network quality test complete',
+              TextDirection.ltr,
+            );
+          },
+          onError: (Object e) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _error = 'Network quality test error: $e';
+            });
+          },
         );
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _running = false;
-          _error = 'Network quality test error: $e';
-        });
-      },
-    );
   }
 
   /// LibreSpeed-style local-hop timing: download then upload against the Pi's
@@ -415,9 +416,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
         // preserved unchanged while the affordance reads identically to every
         // other tool screen. Copy stays here; it is disabled until a one-shot
         // run has produced a result.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -471,7 +470,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     buf
       ..writeln()
       ..writeln(
-          _piBacked ? 'Connection hops (via the Pi)' : 'Cloud apps reachable?');
+        _piBacked ? 'Connection hops (via the Pi)' : 'Cloud apps reachable?',
+      );
     if (_sites.isEmpty) {
       buf.writeln('  No reachability results.');
     } else {
@@ -523,13 +523,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
       ..writeln(
         _piBacked
             ? 'Measured on the WLAN Pi hosting this page, not from this browser '
-                'and not a third-party score. Two throughput numbers are '
-                'reported: the Pi uplink to the internet, and the local hop '
-                'between this device and the Pi. Your own Wi-Fi RF is not '
-                'visible to the Pi.'
+                  'and not a third-party score. Two throughput numbers are '
+                  'reported: the Pi uplink to the internet, and the local hop '
+                  'between this device and the Pi. Your own Wi-Fi RF is not '
+                  'visible to the Pi.'
             : "These are this app's own measurements, not a third-party score. "
-                'The Responsiveness grade is an indicative figure inspired by '
-                'RFC 9097, not the full standard.',
+                  'The Responsiveness grade is an indicative figure inspired by '
+                  'RFC 9097, not the full standard.',
       );
 
     return buf.toString().trimRight();
@@ -834,9 +834,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               ),
               Text(
                 '$pct%',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -991,9 +989,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     final String caption = running
         ? 'Live · sampling latency every 30s'
         : 'Paused';
-    final Color dotColor = running
-        ? colors.statusSuccess
-        : colors.textTertiary;
+    final Color dotColor = running ? colors.statusSuccess : colors.textTertiary;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -1316,7 +1312,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   /// its matching Material status glyph. Label + glyph render in WHITE on the
   /// fill. Unavailable has no status hue, so it fills with neutral textSecondary.
   static (Color fill, IconData? glyph) _lightGradeParts(
-      QualityGrade grade, AppColorScheme c) {
+    QualityGrade grade,
+    AppColorScheme c,
+  ) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
@@ -1339,7 +1337,10 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
   ///   poor             → statusDanger  (#F26E6E), dark text (5.99:1)
   ///   unavailable      → neutral surface2 + textSecondary (11.39:1, no verdict)
   /// Every pairing clears WCAG 2.2 AA for normal text (see app_tokens.dart).
-  static (Color, Color) _gradeColors(QualityGrade grade, AppColorScheme colors) {
+  static (Color, Color) _gradeColors(
+    QualityGrade grade,
+    AppColorScheme colors,
+  ) {
     switch (grade) {
       case QualityGrade.excellent:
       case QualityGrade.good:
@@ -1402,7 +1403,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           Semantics(
             header: true,
             child: Text(
-              _piBacked ? 'Connection hops (via the Pi)' : 'Cloud apps reachable?',
+              _piBacked
+                  ? 'Connection hops (via the Pi)'
+                  : 'Cloud apps reachable?',
               style: text.labelMedium?.copyWith(
                 color: colors.textSecondary,
                 letterSpacing: 0.4,
@@ -1417,9 +1420,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
           Text(
             _piBacked
                 ? 'Gateway, internet, and DNS reachability measured on the '
-                    'WLAN Pi hosting this page, not from this browser.'
+                      'WLAN Pi hosting this page, not from this browser.'
                 : 'Reachability and latency to each service edge. Not a measure '
-                    'of in-app call or stream quality.',
+                      'of in-app call or stream quality.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -1449,9 +1452,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     // WCAG 1.4.1 — outcome carried by icon shape AND a text status word, never
     // color alone.
     final IconData icon = ok ? Icons.check_circle : Icons.cancel;
-    final Color iconColor = ok
-        ? colors.statusSuccess
-        : colors.statusDanger;
+    final Color iconColor = ok ? colors.statusSuccess : colors.statusDanger;
     final String status = ok ? 'reachable' : 'unreachable';
     final String rtt = ok && s.latencyMs != null
         ? '${s.latencyMs!.round()} ms'
@@ -1477,9 +1478,7 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
               ),
               Text(
                 status,
-                style: text.labelMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(width: AppSpacing.sm),
               SizedBox(
@@ -1556,8 +1555,9 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final bool pending = mbps == null && _deviceToPiRunning;
-    final String valueLabel =
-        mbps != null ? '${mbps.toStringAsFixed(1)} Mbps' : 'Unavailable';
+    final String valueLabel = mbps != null
+        ? '${mbps.toStringAsFixed(1)} Mbps'
+        : 'Unavailable';
     return Semantics(
       label: '$label, ${pending ? 'measuring' : valueLabel}',
       container: true,
@@ -1612,13 +1612,13 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
     return Text(
       _piBacked
           ? 'Measured on the WLAN Pi hosting this page, not from this browser '
-              'and not a third-party score. Two throughput numbers are '
-              'reported: the Pi uplink to the internet, and the local hop '
-              'between this device and the Pi. Your own Wi-Fi RF is not visible '
-              'to the Pi.'
+                'and not a third-party score. Two throughput numbers are '
+                'reported: the Pi uplink to the internet, and the local hop '
+                'between this device and the Pi. Your own Wi-Fi RF is not visible '
+                'to the Pi.'
           : 'These are this app\'s own measurements, not a third-party score. '
-              'The Responsiveness grade is an indicative figure inspired by '
-              'RFC 9097, not the full standard.',
+                'The Responsiveness grade is an indicative figure inspired by '
+                'RFC 9097, not the full standard.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }

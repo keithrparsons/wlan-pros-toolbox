@@ -82,8 +82,9 @@ class LabeledField extends StatelessWidget {
                   // §8.20.3-A: field labels bump 500 → 600 in light.
                   style: text.labelMedium?.copyWith(
                     color: colors.textSecondary,
-                    fontWeight:
-                        colors.isLight ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: colors.isLight
+                        ? FontWeight.w600
+                        : FontWeight.w500,
                   ),
                 ),
               ),
@@ -109,11 +110,7 @@ class LabeledField extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         // Programmatic label↔field association: the field announces its purpose
         // ("<label>, text field") on focus under VoiceOver / TalkBack.
-        Semantics(
-          label: semanticLabel ?? label,
-          textField: true,
-          child: field,
-        ),
+        Semantics(label: semanticLabel ?? label, textField: true, child: field),
       ],
     );
   }

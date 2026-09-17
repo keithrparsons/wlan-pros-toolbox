@@ -76,7 +76,8 @@ class _ChannelFrequencyConverterScreenState
   final TextEditingController _freqCtrl = TextEditingController();
   final FocusNode _freqFocus = FocusNode();
 
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -98,17 +99,14 @@ class _ChannelFrequencyConverterScreenState
   }
 
   /// The wide-channel placements for the current Channel-mode selection.
-  List<BondedChannel> get _placements => bondedChannels(
-        band: _band,
-        primaryChannel: _channel,
-        widthMHz: _width,
-      );
+  List<BondedChannel> get _placements =>
+      bondedChannels(band: _band, primaryChannel: _channel, widthMHz: _width);
 
   /// The reverse-lookup result for the current Frequency-mode input, plus the
   /// parse state. `parsed` false means the field is empty/blank (empty state);
   /// `parsed` true with a null `match` means a real off-grid reject (error).
   ({bool parsed, double? mhz, ({WifiBand band, int channel})? match})
-      get _freqState {
+  get _freqState {
     final String raw = _freqCtrl.text.trim();
     if (raw.isEmpty) return (parsed: false, mhz: null, match: null);
     final double? mhz = tryParseFlexibleDouble(raw);
@@ -124,9 +122,7 @@ class _ChannelFrequencyConverterScreenState
       if (placements.isEmpty) return null;
       final StringBuffer b = StringBuffer()
         ..writeln('Channel -> Frequency')
-        ..writeln(
-          'Band ${_band.label}, channel $_channel, $_width MHz',
-        );
+        ..writeln('Band ${_band.label}, channel $_channel, $_width MHz');
       final List<String> flags = channelFlags(_band, _channel);
       final String? unii = uniiSubBand(_band, _channel);
       if (unii != null) b.writeln('Primary UNII sub-band: $unii');
@@ -137,9 +133,7 @@ class _ChannelFrequencyConverterScreenState
         b
           ..writeln('  Center frequency: ${p.centerFreqMHz} MHz')
           ..writeln('  Center channel designator: ${p.centerChannel}')
-          ..writeln(
-            '  Component 20 MHz channels: ${p.components.join(', ')}',
-          )
+          ..writeln('  Component 20 MHz channels: ${p.components.join(', ')}')
           ..writeln('  Band edges: ${p.lowEdgeMHz} - ${p.highEdgeMHz} MHz');
       }
       final String? caveat = regulatoryCaveat(_band, _channel);
@@ -361,9 +355,9 @@ class _ChannelFrequencyConverterScreenState
     final AppColorScheme colors = context.colors;
     final String reason = _width == 320
         ? '802.11be defines overlapping 320 MHz channels, so this primary falls '
-            'in $count of them.'
+              'in $count of them.'
         : 'This primary can bond on either side, giving $count placements at '
-            '$_width MHz.';
+              '$_width MHz.';
     return _infoCard(
       icon: Icons.info_outline,
       tint: colors.statusInfo,
@@ -440,7 +434,8 @@ class _ChannelFrequencyConverterScreenState
             text,
             mono,
             label: 'Center channel',
-            value: '${p.centerChannel}'
+            value:
+                '${p.centerChannel}'
                 '${p.widthMHz == 20 ? '' : ' (designator only)'}',
           ),
           _resultRow(

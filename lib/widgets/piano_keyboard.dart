@@ -60,10 +60,12 @@ class PianoKeyboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Note> whites =
-        notes.where((Note n) => !n.isBlack).toList(growable: false);
-    final List<Note> blacks =
-        notes.where((Note n) => n.isBlack).toList(growable: false);
+    final List<Note> whites = notes
+        .where((Note n) => !n.isBlack)
+        .toList(growable: false);
+    final List<Note> blacks = notes
+        .where((Note n) => n.isBlack)
+        .toList(growable: false);
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
@@ -146,8 +148,9 @@ class _Key extends StatelessWidget {
     final Color base = isBlack ? _kBlackKey : _kWhiteKey;
     final Color fill = active ? colors.primary : base;
     // Letter ink: dark on white / lime-pressed keys, light on black keys.
-    final Color ink =
-        isBlack ? (active ? AppColors.secondary : Colors.white) : _kWhiteKeyInk;
+    final Color ink = isBlack
+        ? (active ? AppColors.secondary : Colors.white)
+        : _kWhiteKeyInk;
 
     final BorderRadius radius = BorderRadius.vertical(
       bottom: Radius.circular(isBlack ? AppRadius.control : AppRadius.card),

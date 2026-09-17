@@ -138,13 +138,28 @@ class NetQualityHelpSheet extends StatelessWidget {
 
   // ---- Grade bands (label + the four thresholds), per the approved table. ----
   static const List<_GradeBand> _bands = <_GradeBand>[
-    _GradeBand('Latency', 'under 20 ms', 'under 50 ms', 'under 100 ms',
-        '100 ms or more'),
-    _GradeBand('Jitter', 'under 5 ms', 'under 15 ms', 'under 30 ms',
-        '30 ms or more'),
+    _GradeBand(
+      'Latency',
+      'under 20 ms',
+      'under 50 ms',
+      'under 100 ms',
+      '100 ms or more',
+    ),
+    _GradeBand(
+      'Jitter',
+      'under 5 ms',
+      'under 15 ms',
+      'under 30 ms',
+      '30 ms or more',
+    ),
     _GradeBand('Loss', '0%', 'under 1%', 'under 2.5%', '2.5% or more'),
-    _GradeBand('Responsiveness', '1000+ RPM', '500+ RPM', '100+ RPM',
-        'under 100 RPM'),
+    _GradeBand(
+      'Responsiveness',
+      '1000+ RPM',
+      '500+ RPM',
+      '100+ RPM',
+      'under 100 RPM',
+    ),
     _GradeBand('Download', '100+ Mbps', '25+ Mbps', '5+ Mbps', 'under 5 Mbps'),
     _GradeBand('Upload', '20+ Mbps', '5+ Mbps', '1+ Mbps', 'under 1 Mbps'),
   ];
@@ -171,10 +186,7 @@ class NetQualityHelpSheet extends StatelessWidget {
               // Title is the sheet's heading node for screen readers.
               Semantics(
                 header: true,
-                child: Text(
-                  'About Network Quality',
-                  style: text.headlineSmall,
-                ),
+                child: Text('About Network Quality', style: text.headlineSmall),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
@@ -183,16 +195,14 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'on purpose: a connection can be great for video calls and poor '
                 'for large uploads at the same time, and one headline number '
                 'would hide that. Each metric below stands alone.',
-                style:
-                    text.bodyLarge?.copyWith(color: colors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Anything the device or operating system will not let us '
                 'measure is shown as Unavailable. We never fill that gap with a '
                 'guess.',
-                style:
-                    text.bodyLarge?.copyWith(color: colors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -210,8 +220,7 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'Each metric is rated Excellent, Good, Fair, or Poor against the '
                 'bands below. Where an industry standard exists, it guides the '
                 'direction; the exact cut points are ours.',
-                style:
-                    text.bodyLarge?.copyWith(color: colors.textSecondary),
+                style: text.bodyLarge?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               for (final _GradeBand b in _bands) ...<Widget>[
@@ -224,8 +233,7 @@ class NetQualityHelpSheet extends StatelessWidget {
                 'and common VoIP practice). The download and upload thresholds '
                 'are our own practical bands, mapped to common broadband tiers '
                 'and everyday needs, not a published standard.',
-                style:
-                    text.bodyMedium?.copyWith(color: colors.textTertiary),
+                style: text.bodyMedium?.copyWith(color: colors.textTertiary),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -263,9 +271,9 @@ class _SectionHeading extends StatelessWidget {
       header: true,
       child: Text(
         text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colors.textPrimary,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: colors.textPrimary),
       ),
     );
   }
@@ -300,10 +308,7 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           _LabeledBlock(label: 'What it is', body: metric.whatItIs),
           const SizedBox(height: AppSpacing.xs),
-          _LabeledBlock(
-            label: 'How we measure it',
-            body: metric.howWeMeasure,
-          ),
+          _LabeledBlock(label: 'How we measure it', body: metric.howWeMeasure),
           if (metric.note != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             Text(
@@ -413,9 +418,7 @@ class _BandRow extends StatelessWidget {
               flex: 2,
               child: Text(
                 grade,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -424,9 +427,7 @@ class _BandRow extends StatelessWidget {
               child: Text(
                 threshold,
                 textAlign: TextAlign.end,
-                style: text.bodyMedium?.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
               ),
             ),
           ],
@@ -460,18 +461,12 @@ class _HonestyCard extends StatelessWidget {
             children: <Widget>[
               // Reassurance/information, not a computed verdict -> textSecondary
               // (§8.13 rule 6: status hues are verdict-only, never decorative).
-              Icon(
-                Icons.info_outline,
-                size: 20,
-                color: colors.textSecondary,
-              ),
+              Icon(Icons.info_outline, size: 20, color: colors.textSecondary),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'How to read these results',
-                  style: text.titleSmall?.copyWith(
-                    color: colors.textPrimary,
-                  ),
+                  style: text.titleSmall?.copyWith(color: colors.textPrimary),
                 ),
               ),
             ],

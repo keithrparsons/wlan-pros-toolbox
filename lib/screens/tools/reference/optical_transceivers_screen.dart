@@ -40,7 +40,8 @@ const String kOpticalTransceiversToolId = 'optical-transceivers';
 
 /// Asset path for the bundled optical-transceiver table. Overridable in tests so
 /// a fixture string can stand in for the bundled asset.
-const String kOpticalTransceiversAsset = 'assets/data/optical_transceivers.json';
+const String kOpticalTransceiversAsset =
+    'assets/data/optical_transceivers.json';
 
 class OpticalTransceiversScreen extends StatefulWidget {
   const OpticalTransceiversScreen({super.key, this.service});
@@ -81,8 +82,9 @@ class _OpticalTransceiversScreenState extends State<OpticalTransceiversScreen> {
   Future<void> _loadAsset() async {
     try {
       final String raw = await rootBundle.loadString(kOpticalTransceiversAsset);
-      final OpticalTransceiverService svc =
-          OpticalTransceiverService.fromJson(raw);
+      final OpticalTransceiverService svc = OpticalTransceiverService.fromJson(
+        raw,
+      );
       if (!mounted) return;
       setState(() => _service = svc);
     } on Object catch (e) {
@@ -104,7 +106,9 @@ class _OpticalTransceiversScreenState extends State<OpticalTransceiversScreen> {
         .fold<int>(0, (int sum, OpticalTier t) => sum + t.entries.length);
     SemanticsService.sendAnnouncement(
       View.of(context),
-      n == 0 ? 'No matching transceivers' : '$n matching transceiver${n == 1 ? '' : 's'}',
+      n == 0
+          ? 'No matching transceivers'
+          : '$n matching transceiver${n == 1 ? '' : 's'}',
       TextDirection.ltr,
     );
   }
@@ -408,7 +412,10 @@ class _LeadFlag extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: colors.textAccent, width: 1),
         borderRadius: BorderRadius.circular(999),
@@ -617,7 +624,10 @@ class _ReachChip extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: colors.textAccent, width: 1),
         borderRadius: BorderRadius.circular(4),
@@ -646,7 +656,10 @@ class _IeeeChip extends StatelessWidget {
     return Semantics(
       label: 'IEEE ratified',
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 2,
+        ),
         decoration: BoxDecoration(
           border: Border.all(color: colors.borderStrong, width: 1),
           borderRadius: BorderRadius.circular(999),
@@ -677,7 +690,10 @@ class _VendorChip extends StatelessWidget {
     return Semantics(
       label: 'Vendor variant, not IEEE ratified',
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 2,
+        ),
         decoration: BoxDecoration(
           border: Border.all(color: colors.statusWarning, width: 1),
           borderRadius: BorderRadius.circular(999),
@@ -708,7 +724,10 @@ class _FiberChip extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: colors.borderStrong, width: 1),
         borderRadius: BorderRadius.circular(5),
@@ -739,7 +758,10 @@ class _ConnectorChip extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     final bool mpo = kind == OpticalConnectorKind.mpo;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: colors.borderStrong, width: 1),
         borderRadius: BorderRadius.circular(5),
@@ -816,10 +838,7 @@ class _FormFactorTable extends StatelessWidget {
         children: <Widget>[
           _FormFactorRow.header(),
           ...List<Widget>.generate(rows.length, (int i) {
-            return _FormFactorRow(
-              row: rows[i],
-              isLast: i == rows.length - 1,
-            );
+            return _FormFactorRow(row: rows[i], isLast: i == rows.length - 1);
           }),
         ],
       ),
@@ -829,12 +848,9 @@ class _FormFactorTable extends StatelessWidget {
 
 class _FormFactorRow extends StatelessWidget {
   const _FormFactorRow({required this.row, required this.isLast})
-      : isHeader = false;
+    : isHeader = false;
 
-  const _FormFactorRow.header()
-      : row = null,
-        isLast = false,
-        isHeader = true;
+  const _FormFactorRow.header() : row = null, isLast = false, isHeader = true;
 
   final OpticalFormFactor? row;
   final bool isLast;
@@ -845,8 +861,13 @@ class _FormFactorRow extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme t = Theme.of(context).textTheme;
 
-    Widget cell(String text, int flex,
-        {bool mono = false, bool name = false, bool head = false}) {
+    Widget cell(
+      String text,
+      int flex, {
+      bool mono = false,
+      bool name = false,
+      bool head = false,
+    }) {
       final TextStyle base = head
           ? (t.labelSmall ?? const TextStyle()).copyWith(
               color: colors.textTertiary,
@@ -854,14 +875,14 @@ class _FormFactorRow extends StatelessWidget {
               fontWeight: FontWeight.w600,
             )
           : name
-              ? (t.bodySmall ?? const TextStyle()).copyWith(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                )
-              : (t.bodySmall ?? const TextStyle()).copyWith(
-                  color: colors.textSecondary,
-                  fontFamily: mono ? 'DM Mono' : null,
-                );
+          ? (t.bodySmall ?? const TextStyle()).copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w600,
+            )
+          : (t.bodySmall ?? const TextStyle()).copyWith(
+              color: colors.textSecondary,
+              fontFamily: mono ? 'DM Mono' : null,
+            );
       return Expanded(
         flex: flex,
         // maxLines + ellipsis keeps each flex cell inside its allotted box so a

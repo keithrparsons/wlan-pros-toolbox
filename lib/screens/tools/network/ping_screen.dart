@@ -181,8 +181,9 @@ class _PingScreenState extends State<PingScreen> {
               // A name that could not be resolved gets the honest "couldn't
               // resolve" line, NOT a 100%-loss summary. No probe was sent, so
               // _stats.sent stays 0 and no summary/replies card renders.
-              _error =
-                  e is PingUnresolvedHostException ? e.message : 'Ping error: $e';
+              _error = e is PingUnresolvedHostException
+                  ? e.message
+                  : 'Ping error: $e';
             });
           },
         );
@@ -212,7 +213,10 @@ class _PingScreenState extends State<PingScreen> {
       _stats = PingStats.empty;
     });
     try {
-      final PiHop hop = await PiBackendClient().ping(host: host, count: _piCount);
+      final PiHop hop = await PiBackendClient().ping(
+        host: host,
+        count: _piCount,
+      );
       if (!mounted) return;
       setState(() {
         _running = false;
@@ -252,9 +256,7 @@ class _PingScreenState extends State<PingScreen> {
         // produced replies; copies the summary stats line + a TSV of replies.
         // Copy leads; this screen has no help icon, so copy is the only action
         // (it still lands in the trailing slot the order rule reserves for it).
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(top: false, child: _body()),
     );
@@ -320,7 +322,9 @@ class _PingScreenState extends State<PingScreen> {
     final String lossPct = (_stats.lossFraction * 100).toStringAsFixed(0);
     String ms(double? v) => v == null ? '—' : v.toStringAsFixed(1);
     return (StringBuffer()
-          ..writeln('Ping: ICMP echo, measured on the WLAN Pi hosting this page')
+          ..writeln(
+            'Ping: ICMP echo, measured on the WLAN Pi hosting this page',
+          )
           ..writeln('Target: ${host.isEmpty ? '(unknown)' : host}')
           ..writeln(
             'Summary: ${_stats.received}/${_stats.sent} replies, $lossPct% '
@@ -469,9 +473,11 @@ class _PingScreenState extends State<PingScreen> {
           Wrap(
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
-            children: const <int>[5, 10, 20]
-                .map((int c) => _piCountChip(context, c))
-                .toList(),
+            children: const <int>[
+              5,
+              10,
+              20,
+            ].map((int c) => _piCountChip(context, c)).toList(),
           ),
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -716,9 +722,7 @@ class _PingScreenState extends State<PingScreen> {
               ),
               Text(
                 '${_stats.received} / ${_stats.sent} · $lossPct% loss',
-                style: text.labelMedium?.copyWith(
-                  color: colors.textTertiary,
-                ),
+                style: text.labelMedium?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -774,9 +778,7 @@ class _PingScreenState extends State<PingScreen> {
               if (value != '—')
                 Text(
                   'ms',
-                  style: text.labelSmall?.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: text.labelSmall?.copyWith(color: colors.textTertiary),
                 ),
             ],
           ),
@@ -873,9 +875,7 @@ class _PingScreenState extends State<PingScreen> {
                 width: 40,
                 child: Text(
                   '#${r.sequence}',
-                  style: mono.inlineCode.copyWith(
-                    color: colors.textTertiary,
-                  ),
+                  style: mono.inlineCode.copyWith(color: colors.textTertiary),
                 ),
               ),
               Expanded(

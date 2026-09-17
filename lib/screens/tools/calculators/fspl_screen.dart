@@ -96,7 +96,8 @@ class _FsplScreenState extends State<FsplScreen> {
 
   // Unsigned-decimal only. Frequency and distance are always positive humans
   // type by hand, so no sign and no scientific notation here.
-  static final List<TextInputFormatter> _unsignedDecimal = unsignedDecimalFormatters;
+  static final List<TextInputFormatter> _unsignedDecimal =
+      unsignedDecimalFormatters;
 
   @override
   void dispose() {
@@ -170,9 +171,7 @@ class _FsplScreenState extends State<FsplScreen> {
         // §8.16 — shared "Copy results" affordance. Disabled until frequency
         // and distance yield a finite loss; copies the inputs with their
         // selected units and the path loss in dB as a labeled text block.
-        actions: <Widget>[
-          AppCopyAction(textBuilder: _buildCopyText),
-        ],
+        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
       ),
       body: SafeArea(
         top: false,
@@ -284,9 +283,7 @@ class _FsplScreenState extends State<FsplScreen> {
         field: TextField(
           controller: controller,
           focusNode: focusNode,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: _unsignedDecimal,
           onChanged: (_) => _recompute(),
           textInputAction: TextInputAction.done,
@@ -335,9 +332,7 @@ class _FsplScreenState extends State<FsplScreen> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'dB',
-                style: text.labelLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
+                style: text.labelLarge?.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
