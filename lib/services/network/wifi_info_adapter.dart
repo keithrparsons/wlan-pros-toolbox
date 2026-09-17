@@ -198,21 +198,21 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
     Duration apNameRescanFloor = const Duration(seconds: 30),
     DateTime Function()? now,
     ApNameCache? apNameCache,
-  })  : _service = service ?? WifiInfoService(),
-        // Kept in the initializer list alongside `_service` (which needs the
-        // `?? WifiInfoService()` fallback) rather than split into formals.
-        // ignore: prefer_initializing_formals
-        _permissionTimeout = permissionTimeout,
-        // ignore: prefer_initializing_formals
-        _fetchTimeout = fetchTimeout,
-        // ignore: prefer_initializing_formals
-        _enrichApName = enrichApName,
-        // ignore: prefer_initializing_formals
-        _apNameRescanFloor = apNameRescanFloor,
-        _now = now ?? DateTime.now,
-        // Defaults to the app-wide shared cache so a name decoded on ANY screen
-        // shows instantly on all. Injectable so a test can isolate a cache.
-        _apNameCache = apNameCache ?? ApNameCache.instance;
+  }) : _service = service ?? WifiInfoService(),
+       // Kept in the initializer list alongside `_service` (which needs the
+       // `?? WifiInfoService()` fallback) rather than split into formals.
+       // ignore: prefer_initializing_formals
+       _permissionTimeout = permissionTimeout,
+       // ignore: prefer_initializing_formals
+       _fetchTimeout = fetchTimeout,
+       // ignore: prefer_initializing_formals
+       _enrichApName = enrichApName,
+       // ignore: prefer_initializing_formals
+       _apNameRescanFloor = apNameRescanFloor,
+       _now = now ?? DateTime.now,
+       // Defaults to the app-wide shared cache so a name decoded on ANY screen
+       // shows instantly on all. Injectable so a test can isolate a cache.
+       _apNameCache = apNameCache ?? ApNameCache.instance;
 
   final WifiInfoService _service;
   final Duration _permissionTimeout;
@@ -364,13 +364,13 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   Future<void> _scanAndCacheApName(String bssid) async {
     try {
       final ApIeBlob blob = await _service.connectedApIeBlob().timeout(
-            _fetchTimeout,
-            onTimeout: () => const ApIeBlob(
-              ieBytes: null,
-              bssid: null,
-              locationAuthorized: false,
-            ),
-          );
+        _fetchTimeout,
+        onTimeout: () => const ApIeBlob(
+          ieBytes: null,
+          bssid: null,
+          locationAuthorized: false,
+        ),
+      );
       final Uint8List? bytes = blob.ieBytes;
       if (bytes == null || bytes.isEmpty) return;
       // Guard a stale-scan mismatch: only trust bytes whose scanned BSS matches
@@ -418,9 +418,11 @@ class MacWifiInfoAdapter implements WifiInfoAdapter {
   /// [fetchTimeout] as a hang-safety; on timeout it resolves to
   /// [LocationAuthStatus.notDetermined] (the safe, promptable default).
   @override
-  Future<LocationAuthStatus> nameAuthorizationStatus() => _service
-      .locationAuthorizationStatus()
-      .timeout(_fetchTimeout, onTimeout: () => LocationAuthStatus.notDetermined);
+  Future<LocationAuthStatus> nameAuthorizationStatus() =>
+      _service.locationAuthorizationStatus().timeout(
+        _fetchTimeout,
+        onTimeout: () => LocationAuthStatus.notDetermined,
+      );
 
   /// Opens the macOS Location Services privacy pane so the user can enable this
   /// app's Location access manually. macOS cannot toggle its own Location
@@ -473,11 +475,11 @@ class AndroidWifiInfoAdapter implements WifiInfoAdapter {
     WifiInfoService? service,
     Duration permissionTimeout = const Duration(seconds: 60),
     Duration fetchTimeout = const Duration(seconds: 5),
-  })  : _service = service ?? WifiInfoService(),
-        // ignore: prefer_initializing_formals
-        _permissionTimeout = permissionTimeout,
-        // ignore: prefer_initializing_formals
-        _fetchTimeout = fetchTimeout;
+  }) : _service = service ?? WifiInfoService(),
+       // ignore: prefer_initializing_formals
+       _permissionTimeout = permissionTimeout,
+       // ignore: prefer_initializing_formals
+       _fetchTimeout = fetchTimeout;
 
   final WifiInfoService _service;
   final Duration _permissionTimeout;
@@ -528,9 +530,11 @@ class AndroidWifiInfoAdapter implements WifiInfoAdapter {
   /// deep-links to App Settings). Bounded by [fetchTimeout]; on timeout resolves
   /// to [LocationAuthStatus.notDetermined].
   @override
-  Future<LocationAuthStatus> nameAuthorizationStatus() => _service
-      .locationAuthorizationStatus()
-      .timeout(_fetchTimeout, onTimeout: () => LocationAuthStatus.notDetermined);
+  Future<LocationAuthStatus> nameAuthorizationStatus() =>
+      _service.locationAuthorizationStatus().timeout(
+        _fetchTimeout,
+        onTimeout: () => LocationAuthStatus.notDetermined,
+      );
 
   /// Opens the app's system Settings page so the user can enable Location
   /// manually after a permanent denial ("Don't ask again"). Android cannot
@@ -572,9 +576,9 @@ class WindowsWifiInfoAdapter implements WifiInfoAdapter {
   WindowsWifiInfoAdapter({
     WindowsWifiReader? reader,
     Duration fetchTimeout = const Duration(seconds: 5),
-  })  : _reader = reader ?? WindowsWifiReader(),
-        // ignore: prefer_initializing_formals
-        _fetchTimeout = fetchTimeout;
+  }) : _reader = reader ?? WindowsWifiReader(),
+       // ignore: prefer_initializing_formals
+       _fetchTimeout = fetchTimeout;
 
   final WindowsWifiReader _reader;
   final Duration _fetchTimeout;
@@ -621,7 +625,6 @@ class WindowsWifiInfoAdapter implements WifiInfoAdapter {
   Future<bool> openNamePermissionSettings() async => false;
 }
 
-
 /// Reads the WLAN Pi's own radio through `/toolboxapi/wifi`.
 ///
 /// The browser cannot see Wi-Fi state; the Pi serving the page can, completely.
@@ -635,7 +638,7 @@ class WindowsWifiInfoAdapter implements WifiInfoAdapter {
 /// truthful no-op rather than a stub.
 class PiWifiInfoAdapter implements WifiInfoAdapter {
   PiWifiInfoAdapter({PiBackendClient? client, this.interface})
-      : _client = client ?? PiBackendClient();
+    : _client = client ?? PiBackendClient();
 
   final PiBackendClient _client;
 

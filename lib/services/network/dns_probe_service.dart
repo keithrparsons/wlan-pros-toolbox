@@ -38,10 +38,7 @@ class DnsProbeResult {
   const DnsProbeResult._({this.host, this.millis});
 
   /// A successful probe: [host] resolved in [millis] milliseconds.
-  factory DnsProbeResult.success({
-    required String host,
-    required int millis,
-  }) =>
+  factory DnsProbeResult.success({required String host, required int millis}) =>
       DnsProbeResult._(host: host, millis: millis);
 
   /// The honest unavailable state — no probed host resolved (offline, blocked,
@@ -66,9 +63,9 @@ class DnsProbeService {
     List<String>? hosts,
     Future<List<InternetAddress>> Function(String host)? resolver,
     Duration? timeout,
-  })  : _hosts = hosts ?? _defaultHosts,
-        _lookup = resolver ?? InternetAddress.lookup,
-        _timeout = timeout ?? const Duration(seconds: 5);
+  }) : _hosts = hosts ?? _defaultHosts,
+       _lookup = resolver ?? InternetAddress.lookup,
+       _timeout = timeout ?? const Duration(seconds: 5);
 
   /// The hostnames probed, in order. Stable, widely-resolvable names so a real
   /// failure means the resolver path is genuinely broken, not that one name is
@@ -90,8 +87,9 @@ class DnsProbeService {
     for (final String host in _hosts) {
       final Stopwatch sw = Stopwatch()..start();
       try {
-        final List<InternetAddress> addrs =
-            await _lookup(host).timeout(_timeout);
+        final List<InternetAddress> addrs = await _lookup(
+          host,
+        ).timeout(_timeout);
         sw.stop();
         if (addrs.isNotEmpty) {
           return DnsProbeResult.success(

@@ -163,7 +163,6 @@ class IcmpHop {
 
   /// True when every probe at this TTL timed out (`* * *`).
   final bool timedOut;
-
 }
 
 /// Running aggregate over ICMP replies — mirrors the TCP PingStats shape so the
@@ -236,7 +235,11 @@ class IcmpProgress {
 /// A streamed traceroute event: a hop landed, or the run reached a terminal
 /// state.
 class IcmpTraceEvent {
-  const IcmpTraceEvent._({this.hop, this.done = false, this.reachedTarget = false});
+  const IcmpTraceEvent._({
+    this.hop,
+    this.done = false,
+    this.reachedTarget = false,
+  });
 
   final IcmpHop? hop;
   final bool done;
@@ -304,10 +307,10 @@ class IcmpService {
     String? platformOverride,
     bool? isWebOverride,
     IcmpHostResolver? resolver,
-  })  : _backend = backend, // ignore: prefer_initializing_formals
-        _platform = platformOverride,
-        _isWeb = isWebOverride ?? kIsWeb,
-        _resolver = resolver ?? _defaultResolver;
+  }) : _backend = backend, // ignore: prefer_initializing_formals
+       _platform = platformOverride,
+       _isWeb = isWebOverride ?? kIsWeb,
+       _resolver = resolver ?? _defaultResolver;
 
   final IcmpBackend? _backend;
 
@@ -431,26 +434,26 @@ class IcmpService {
       if (cancelled || controller.isClosed) return;
       sub = backend
           .echo(
-        host: host,
-        count: count,
-        interval: interval,
-        timeout: timeout,
-        cancel: cancel,
-      )
+            host: host,
+            count: count,
+            interval: interval,
+            timeout: timeout,
+            cancel: cancel,
+          )
           .listen(
-        (IcmpReply reply) {
-          stats = stats.accumulate(reply);
-          if (!controller.isClosed) {
-            controller.add(IcmpProgress(reply: reply, stats: stats));
-          }
-        },
-        onError: (Object e, StackTrace st) {
-          if (!controller.isClosed) controller.addError(e, st);
-        },
-        onDone: () {
-          if (!controller.isClosed) controller.close();
-        },
-      );
+            (IcmpReply reply) {
+              stats = stats.accumulate(reply);
+              if (!controller.isClosed) {
+                controller.add(IcmpProgress(reply: reply, stats: stats));
+              }
+            },
+            onError: (Object e, StackTrace st) {
+              if (!controller.isClosed) controller.addError(e, st);
+            },
+            onDone: () {
+              if (!controller.isClosed) controller.close();
+            },
+          );
     }
 
     controller.onListen = start;

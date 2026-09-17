@@ -37,21 +37,26 @@ class NoopMulticastLock implements MulticastLock {
 class AndroidMulticastLock implements MulticastLock {
   const AndroidMulticastLock();
 
-  static const MethodChannel _channel =
-      MethodChannel('lan_discovery/multicast');
+  static const MethodChannel _channel = MethodChannel(
+    'lan_discovery/multicast',
+  );
 
   @override
   Future<void> acquire() async {
     try {
       await _channel.invokeMethod<void>('acquire');
-    } catch (_) {/* non-fatal */}
+    } catch (_) {
+      /* non-fatal */
+    }
   }
 
   @override
   Future<void> release() async {
     try {
       await _channel.invokeMethod<void>('release');
-    } catch (_) {/* non-fatal */}
+    } catch (_) {
+      /* non-fatal */
+    }
   }
 }
 

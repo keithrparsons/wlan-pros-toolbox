@@ -184,10 +184,7 @@ class PiDns {
   final double? queryMs;
 
   factory PiDns.fromJson(Map<String, dynamic> json) {
-    return PiDns(
-      host: json['host'] as String?,
-      ms: _toDouble(json['ms']),
-    );
+    return PiDns(host: json['host'] as String?, ms: _toDouble(json['ms']));
   }
 
   /// Parses a `dns` lookup:
@@ -490,14 +487,16 @@ class PiInterface {
     final List<PiInterfaceAddress> addrs = rawAddrs
         .whereType<Map<dynamic, dynamic>>()
         .map((Map<dynamic, dynamic> a) {
-      final String? local = a['local'] as String?;
-      if (local == null || local.isEmpty) return null;
-      return PiInterfaceAddress(
-        local: local,
-        prefixLen: (a['prefixlen'] as num?)?.toInt(),
-        isIPv4: (a['family'] as String?) == 'inet',
-      );
-    }).whereType<PiInterfaceAddress>().toList(growable: false);
+          final String? local = a['local'] as String?;
+          if (local == null || local.isEmpty) return null;
+          return PiInterfaceAddress(
+            local: local,
+            prefixLen: (a['prefixlen'] as num?)?.toInt(),
+            isIPv4: (a['family'] as String?) == 'inet',
+          );
+        })
+        .whereType<PiInterfaceAddress>()
+        .toList(growable: false);
 
     return PiInterface(
       name: name,
@@ -651,21 +650,19 @@ class PiJoinResult {
   /// re-states it client-side so a UI can never render a bare `associated` as
   /// success.
   bool get joinedRequested =>
-      link.associated &&
-      requestedSsid != null &&
-      link.ssid == requestedSsid;
+      link.associated && requestedSsid != null && link.ssid == requestedSsid;
 
   static PiJoinResult fromJson(Map<String, dynamic> json) => PiJoinResult(
-        link: PiWifiLink.fromJson(json),
-        requestedSsid: json['requested_ssid'] as String?,
-        secureTransport: json['secure_transport'] == true,
-      );
+    link: PiWifiLink.fromJson(json),
+    requestedSsid: json['requested_ssid'] as String?,
+    secureTransport: json['secure_transport'] == true,
+  );
 }
 
 class PiBackendClient {
   PiBackendClient({http.Client? httpClient, Uri? base})
-      : _http = httpClient ?? http.Client(),
-        _base = base ?? Uri.base;
+    : _http = httpClient ?? http.Client(),
+      _base = base ?? Uri.base;
 
   final http.Client _http;
   final Uri _base;
@@ -690,16 +687,19 @@ class PiBackendClient {
   /// Pi-hosted probe: any 200 means a Pi backend is answering. Kept fast so the
   /// startup gate never stalls; callers apply their own outer timeout too.
   Future<bool> health() async {
-    final http.Response resp =
-        await _http.get(_endpoint('health')).timeout(const Duration(seconds: 5));
+    final http.Response resp = await _http
+        .get(_endpoint('health'))
+        .timeout(const Duration(seconds: 5));
     return resp.statusCode == 200;
   }
 
   /// One-shot connection test run ON the Pi: gateway + internet latency/loss and
   /// DNS-resolution timing.
   Future<PiConntestResult> conntest() async {
-    final Map<String, dynamic> json =
-        await _getJsonObject('conntest', timeout: const Duration(seconds: 15));
+    final Map<String, dynamic> json = await _getJsonObject(
+      'conntest',
+      timeout: const Duration(seconds: 15),
+    );
     return PiConntestResult.fromJson(json);
   }
 
@@ -715,8 +715,10 @@ class PiBackendClient {
         (json['nets'] as List<dynamic>?) ?? const <dynamic>[];
     return nets
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> m) =>
-            PiScanNet.fromJson(m.cast<String, dynamic>()))
+        .map(
+          (Map<dynamic, dynamic> m) =>
+              PiScanNet.fromJson(m.cast<String, dynamic>()),
+        )
         .whereType<PiScanNet>()
         .toList(growable: false);
   }
@@ -733,8 +735,10 @@ class PiBackendClient {
         (json['interfaces'] as List<dynamic>?) ?? const <dynamic>[];
     return list
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> m) =>
-            PiScanInterface.fromJson(m.cast<String, dynamic>()))
+        .map(
+          (Map<dynamic, dynamic> m) =>
+              PiScanInterface.fromJson(m.cast<String, dynamic>()),
+        )
         .whereType<PiScanInterface>()
         .toList(growable: false);
   }
@@ -745,7 +749,9 @@ class PiBackendClient {
   Future<PiWifiLink> wifi({String? interface}) async {
     final Map<String, dynamic> json = await _getJsonObject(
       'wifi',
-      query: interface == null ? null : <String, String>{'interface': interface},
+      query: interface == null
+          ? null
+          : <String, String>{'interface': interface},
       timeout: const Duration(seconds: 10),
     );
     return PiWifiLink.fromJson(json);
@@ -753,8 +759,10 @@ class PiBackendClient {
 
   /// The Pi's interface table (`ip -j addr`-shaped: a map of ifname -> [detail]).
   Future<List<PiInterface>> interfaces() async {
-    final Map<String, dynamic> json =
-        await _getJsonObject('interfaces', timeout: const Duration(seconds: 10));
+    final Map<String, dynamic> json = await _getJsonObject(
+      'interfaces',
+      timeout: const Duration(seconds: 10),
+    );
     final List<PiInterface> out = <PiInterface>[];
     for (final MapEntry<String, dynamic> entry in json.entries) {
       final List<dynamic>? detail = entry.value as List<dynamic>?;
@@ -799,8 +807,10 @@ class PiBackendClient {
         (json['hops'] as List<dynamic>?) ?? const <dynamic>[];
     return hops
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> h) =>
-            PiHop.fromTracerouteJson(h.cast<String, dynamic>()))
+        .map(
+          (Map<dynamic, dynamic> h) =>
+              PiHop.fromTracerouteJson(h.cast<String, dynamic>()),
+        )
         .toList(growable: false);
   }
 
@@ -812,10 +822,7 @@ class PiBackendClient {
   /// but the PROXY ROUTE is `/toolboxapi/dns`. So this method hits the `dns`
   /// path even though the tool is `dns-lookup`. Do not "fix" one to match the
   /// other — they are intentionally different names.
-  Future<PiDns> dnsLookup({
-    required String host,
-    required String type,
-  }) async {
+  Future<PiDns> dnsLookup({required String host, required String type}) async {
     final Map<String, dynamic> json = await _getJsonObject(
       'dns', // catalog id is `dns-lookup`; the proxy route is `dns`.
       query: <String, String>{'host': host, 'type': type},
@@ -843,8 +850,8 @@ class PiBackendClient {
     );
     final String h = (json['host'] as String?) ?? host;
     final int p = _toInt(json['port']) ?? port;
-    final Map<String, dynamic>? cert =
-        (json['certificate'] as Map?)?.cast<String, dynamic>();
+    final Map<String, dynamic>? cert = (json['certificate'] as Map?)
+        ?.cast<String, dynamic>();
     if (cert == null) {
       final Object? err = json['error'];
       return SslInspectResult.failure(
@@ -917,27 +924,30 @@ class PiBackendClient {
     final List<HttpHop> hops = hopsJson
         .whereType<Map<dynamic, dynamic>>()
         .map((Map<dynamic, dynamic> raw) {
-      final Map<String, dynamic> h = raw.cast<String, dynamic>();
-      final List<dynamic> hdrs =
-          (h['headers'] as List<dynamic>?) ?? const <dynamic>[];
-      return HttpHop(
-        method: (h['method'] as String?)?.toUpperCase() == 'GET'
-            ? HttpMethod.get
-            : HttpMethod.head,
-        url: (h['url'] as String?) ?? requested,
-        statusCode: _toInt(h['status']) ?? 0,
-        reasonPhrase: (h['reason'] as String?) ?? '',
-        location: _blankNull(h['location'] as String?),
-        headers: hdrs
-            .whereType<Map<dynamic, dynamic>>()
-            .map((Map<dynamic, dynamic> e) => HeaderEntry(
-                  name: (e['name'] as String?) ?? '',
-                  value: (e['value'] as String?) ?? '',
-                ))
-            .toList(growable: false),
-        elapsedMs: _toDouble(h['elapsed_ms'])?.round() ?? 0,
-      );
-    }).toList(growable: false);
+          final Map<String, dynamic> h = raw.cast<String, dynamic>();
+          final List<dynamic> hdrs =
+              (h['headers'] as List<dynamic>?) ?? const <dynamic>[];
+          return HttpHop(
+            method: (h['method'] as String?)?.toUpperCase() == 'GET'
+                ? HttpMethod.get
+                : HttpMethod.head,
+            url: (h['url'] as String?) ?? requested,
+            statusCode: _toInt(h['status']) ?? 0,
+            reasonPhrase: (h['reason'] as String?) ?? '',
+            location: _blankNull(h['location'] as String?),
+            headers: hdrs
+                .whereType<Map<dynamic, dynamic>>()
+                .map(
+                  (Map<dynamic, dynamic> e) => HeaderEntry(
+                    name: (e['name'] as String?) ?? '',
+                    value: (e['value'] as String?) ?? '',
+                  ),
+                )
+                .toList(growable: false),
+            elapsedMs: _toDouble(h['elapsed_ms'])?.round() ?? 0,
+          );
+        })
+        .toList(growable: false);
     if (hops.isEmpty) {
       return HttpHeaderResult.failure(
         requestedUrl: requested,
@@ -978,10 +988,12 @@ class PiBackendClient {
       rawRecord: (json['raw'] as String?)?.trim() ?? '',
       highlights: hl
           .whereType<Map<dynamic, dynamic>>()
-          .map((Map<dynamic, dynamic> e) => WhoisHighlight(
-                label: (e['label'] as String?) ?? '',
-                value: (e['value'] as String?) ?? '',
-              ))
+          .map(
+            (Map<dynamic, dynamic> e) => WhoisHighlight(
+              label: (e['label'] as String?) ?? '',
+              value: (e['value'] as String?) ?? '',
+            ),
+          )
           .where((WhoisHighlight w) => w.label.isNotEmpty && w.value.isNotEmpty)
           .toList(growable: false),
       serversQueried: servers,
@@ -1037,8 +1049,9 @@ class PiBackendClient {
       timeout: const Duration(seconds: 15),
     );
     final String q = (json['query'] as String?) ?? query;
-    final BgpQueryKind kind =
-        (json['kind'] as String?) == 'asn' ? BgpQueryKind.asn : BgpQueryKind.ip;
+    final BgpQueryKind kind = (json['kind'] as String?) == 'asn'
+        ? BgpQueryKind.asn
+        : BgpQueryKind.ip;
     final Object? err = json['error'];
     if (err is String && err.isNotEmpty) {
       return BgpAsnResult.failure(query: q, kind: kind, message: err);
@@ -1148,9 +1161,7 @@ class PiBackendClient {
   Future<PiJoinResult> wifiDisconnect({String? interface}) async {
     final Map<String, dynamic> json = await _postJsonObject(
       'wifi-disconnect',
-      body: <String, dynamic>{
-        'interface': ?interface,
-      },
+      body: <String, dynamic>{'interface': ?interface},
       timeout: const Duration(seconds: 20),
     );
     return PiJoinResult.fromJson(json);
@@ -1181,8 +1192,7 @@ class PiBackendClient {
             status: _portStatus(r['status'] as String?),
             serviceName: _blankNull(r['service'] as String?),
             elapsed: Duration(
-              microseconds:
-                  ((_toDouble(r['elapsed_ms']) ?? 0) * 1000).round(),
+              microseconds: ((_toDouble(r['elapsed_ms']) ?? 0) * 1000).round(),
             ),
           );
         })
@@ -1291,16 +1301,19 @@ class PiBackendClient {
       final bool lost = (s['lost'] as bool?) ?? false;
       final double? rttMs = lost ? null : _toDouble(s['rtt_ms']);
       if (!lost && rttMs != null) lastLanded = rttMs;
-      samples.add(PingSample(
-        sequence: seq,
-        elapsed: Duration(seconds: seq),
-        rttMs: rttMs,
-        lost: lost,
-        errorLabel: lost ? 'no reply' : null,
-      ));
+      samples.add(
+        PingSample(
+          sequence: seq,
+          elapsed: Duration(seconds: seq),
+          rttMs: rttMs,
+          lost: lost,
+          errorLabel: lost ? 'no reply' : null,
+        ),
+      );
     }
     final int sent = _toInt(json['sent']) ?? samples.length;
-    final int received = _toInt(json['received']) ??
+    final int received =
+        _toInt(json['received']) ??
         samples.where((PingSample s) => !s.lost).length;
     return PingPlotState(
       samples: List<PingSample>.unmodifiable(samples),
@@ -1339,11 +1352,7 @@ class PiBackendClient {
   }) async {
     final Map<String, dynamic> json = await _postJsonObject(
       'wol',
-      body: <String, dynamic>{
-        'mac': mac,
-        'broadcast': broadcast,
-        'port': port,
-      },
+      body: <String, dynamic>{'mac': mac, 'broadcast': broadcast, 'port': port},
       timeout: const Duration(seconds: 12),
     );
     final String normMac = (json['mac'] as String?) ?? mac;
@@ -1386,8 +1395,9 @@ class PiBackendClient {
       },
       timeout: const Duration(seconds: 15),
     );
-    final Duration elapsed =
-        Duration(milliseconds: _toInt(json['elapsed_ms']) ?? 0);
+    final Duration elapsed = Duration(
+      milliseconds: _toInt(json['elapsed_ms']) ?? 0,
+    );
     final Object? err = json['error'];
     if (err is String && err.isNotEmpty) {
       return PacketResult.failure(
@@ -1418,10 +1428,14 @@ class PiBackendClient {
   /// same-origin in the browser — clearly distinct from the Pi→internet
   /// [throughput] figure. Never conflated (Keith decision).
   Future<double> deviceToPiDownloadMbps({int bytes = 8 * 1024 * 1024}) async {
-    final Uri uri = _endpoint('garbage', query: <String, String>{'size': '$bytes'});
+    final Uri uri = _endpoint(
+      'garbage',
+      query: <String, String>{'size': '$bytes'},
+    );
     final Stopwatch sw = Stopwatch()..start();
-    final http.Response resp =
-        await _http.get(uri).timeout(const Duration(seconds: 30));
+    final http.Response resp = await _http
+        .get(uri)
+        .timeout(const Duration(seconds: 30));
     sw.stop();
     if (resp.statusCode != 200) {
       throw PiBackendException('garbage returned HTTP ${resp.statusCode}');
@@ -1462,8 +1476,9 @@ class PiBackendClient {
     Map<String, String>? query,
     required Duration timeout,
   }) async {
-    final http.Response resp =
-        await _http.get(_endpoint(path, query: query)).timeout(timeout);
+    final http.Response resp = await _http
+        .get(_endpoint(path, query: query))
+        .timeout(timeout);
     return _decodeOrThrow(path, resp);
   }
 
@@ -1519,7 +1534,8 @@ class PiBackendClient {
 
 // ── Phase C bridging helpers (pure; shared by the model-mapping methods) ──────
 
-String? _blankNull(String? s) => (s == null || s.trim().isEmpty) ? null : s.trim();
+String? _blankNull(String? s) =>
+    (s == null || s.trim().isEmpty) ? null : s.trim();
 
 List<String> _strList(Object? v) {
   if (v is! List) return const <String>[];
@@ -1532,9 +1548,9 @@ List<String> _strList(Object? v) {
 /// Build the ordered CN/O field list the SSL detail view renders, from the two
 /// values the Pi provides (it does not send a full DN map).
 List<DnField> _dnFields(String? cn, String? org) => <DnField>[
-      if (cn != null && cn.isNotEmpty) DnField(label: 'CN', value: cn),
-      if (org != null && org.isNotEmpty) DnField(label: 'O', value: org),
-    ];
+  if (cn != null && cn.isNotEmpty) DnField(label: 'CN', value: cn),
+  if (org != null && org.isNotEmpty) DnField(label: 'O', value: org),
+];
 
 /// Uppercase colon-grouped hex (e.g. "6A:70:41:…"), matching the native cert
 /// fingerprint/serial rendering. Accepts the Pi's lowercase, un-grouped hex.

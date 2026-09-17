@@ -320,7 +320,8 @@ class LinkVerdict {
   final MeteredRisk meteredRisk;
 
   @override
-  String toString() => 'LinkVerdict(status: $status, meteredRisk: $meteredRisk)';
+  String toString() =>
+      'LinkVerdict(status: $status, meteredRisk: $meteredRisk)';
 }
 
 /// The one-line consent rule, so no caller can spell it wrong.
@@ -376,11 +377,11 @@ class WifiConnectionService {
     TargetPlatform? platformOverride,
     WifiPathProbe? pathProbe,
     NetworkTransportProbe? transportProbe,
-  })  : _networkInfo = networkInfo ?? NetworkInfo(),
-        _platform = platformOverride ?? defaultTargetPlatform,
-        _pathProbe = pathProbe ?? const MethodChannelWifiPathProbe(),
-        _transportProbe =
-            transportProbe ?? const MethodChannelNetworkTransportProbe();
+  }) : _networkInfo = networkInfo ?? NetworkInfo(),
+       _platform = platformOverride ?? defaultTargetPlatform,
+       _pathProbe = pathProbe ?? const MethodChannelWifiPathProbe(),
+       _transportProbe =
+           transportProbe ?? const MethodChannelNetworkTransportProbe();
 
   final NetworkInfo _networkInfo;
   final TargetPlatform _platform;
@@ -431,8 +432,9 @@ class WifiConnectionService {
     // On a desktop the default is `none` and nothing can raise it — see
     // [isMeteredCapable].
     // ========================================================================
-    MeteredRisk risk =
-        isMeteredCapable ? MeteredRisk.unknown : MeteredRisk.none;
+    MeteredRisk risk = isMeteredCapable
+        ? MeteredRisk.unknown
+        : MeteredRisk.none;
 
     // ========================================================================
     // iOS WI-FI ASSIST — THE OS's OWN ROUTING ANSWER, HELD FOR THE MONEY AXIS.
@@ -470,8 +472,9 @@ class WifiConnectionService {
     // not an optimization, it is the removal of a round-trip that cannot succeed.
     // (When macOS gains a path channel, widen this gate — and delete this note.)
     // ========================================================================
-    final WifiPathFacts? path =
-        _platform == TargetPlatform.iOS ? await _pathProbe.read() : null;
+    final WifiPathFacts? path = _platform == TargetPlatform.iOS
+        ? await _pathProbe.read()
+        : null;
     if (path != null) {
       // The default route runs over Wi-Fi, or a Wi-Fi-required path has a usable
       // route. Either is a definitive association — a device cannot route over a

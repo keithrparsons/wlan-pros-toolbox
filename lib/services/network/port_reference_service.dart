@@ -77,8 +77,7 @@ class PortEntry {
   final String description;
 
   /// `TCP/UDP` style protocol label for display.
-  String get protocolLabel =>
-      protocols.map((p) => p.label).join('/');
+  String get protocolLabel => protocols.map((p) => p.label).join('/');
 
   /// Build from a decoded JSON map. Returns null when the row is malformed
   /// (missing/non-int port, no usable protocols, empty name) so a bad asset row
@@ -96,8 +95,9 @@ class PortEntry {
     final List<PortProtocol> protocols = <PortProtocol>[];
     if (rawProtos is List) {
       for (final Object? p in rawProtos) {
-        final PortProtocol? parsed =
-            p is String ? PortProtocolLabel.tryParse(p) : null;
+        final PortProtocol? parsed = p is String
+            ? PortProtocolLabel.tryParse(p)
+            : null;
         if (parsed != null && !protocols.contains(parsed)) {
           protocols.add(parsed);
         }
@@ -122,7 +122,7 @@ class PortReferenceService {
   /// Build directly from parsed entries (used by tests and by [fromJson]).
   /// Builds a port→entries index once so numeric lookups are O(1).
   PortReferenceService.fromEntries(List<PortEntry> entries)
-      : _entries = List<PortEntry>.unmodifiable(entries) {
+    : _entries = List<PortEntry>.unmodifiable(entries) {
     for (final PortEntry e in _entries) {
       _byPort.putIfAbsent(e.port, () => <PortEntry>[]).add(e);
     }
@@ -188,9 +188,11 @@ class PortReferenceService {
     // Otherwise substring match on name + description (case-insensitive).
     final String needle = q.toLowerCase();
     final List<PortEntry> hits = _entries
-        .where((PortEntry e) =>
-            e.name.toLowerCase().contains(needle) ||
-            e.description.toLowerCase().contains(needle))
+        .where(
+          (PortEntry e) =>
+              e.name.toLowerCase().contains(needle) ||
+              e.description.toLowerCase().contains(needle),
+        )
         .toList();
     return _sortedByPort(hits);
   }

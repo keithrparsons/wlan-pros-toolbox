@@ -18,15 +18,28 @@
 import 'dart:io';
 
 /// Opens a connection, or reports why it could not.
-typedef BindConnector = Future<bool> Function(
-    InternetAddress source, String host, int port, Duration timeout);
+typedef BindConnector =
+    Future<bool> Function(
+      InternetAddress source,
+      String host,
+      int port,
+      Duration timeout,
+    );
 
 Future<bool> _connect(
-    InternetAddress source, String host, int port, Duration timeout) async {
+  InternetAddress source,
+  String host,
+  int port,
+  Duration timeout,
+) async {
   Socket? s;
   try {
-    s = await Socket.connect(host, port,
-        sourceAddress: source, timeout: timeout);
+    s = await Socket.connect(
+      host,
+      port,
+      sourceAddress: source,
+      timeout: timeout,
+    );
     return true;
   } on Object {
     // Two failures land here and they are NOT the same thing, which is why the
@@ -50,8 +63,7 @@ Future<bool> _connect(
 /// for the internet scope. Probing the wrong scope answers a different question
 /// than the one the UI is about to ask.
 class LinkBindProbe {
-  LinkBindProbe({BindConnector? connector})
-      : _connect_ = connector ?? _connect;
+  LinkBindProbe({BindConnector? connector}) : _connect_ = connector ?? _connect;
 
   final BindConnector _connect_;
 

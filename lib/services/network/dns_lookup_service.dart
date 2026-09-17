@@ -111,8 +111,11 @@ class SrvData {
   /// four-field form. The target's trailing root dot is preserved as the
   /// resolver returns it (callers can trim for display).
   static SrvData? parse(String data) {
-    final List<String> parts =
-        data.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final List<String> parts = data
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.length != 4) return null;
     final int? priority = int.tryParse(parts[0]);
     final int? weight = int.tryParse(parts[1]);
@@ -133,11 +136,7 @@ class SrvData {
 /// Parsed fields of a CAA record (RFC 8659). Wire form in the resolver's
 /// `data` is `<flags> <tag> "<value>"`, e.g. `0 issue "letsencrypt.org"`.
 class CaaData {
-  const CaaData({
-    required this.flags,
-    required this.tag,
-    required this.value,
-  });
+  const CaaData({required this.flags, required this.tag, required this.value});
 
   final int flags;
   final String tag;
@@ -151,11 +150,7 @@ class CaaData {
     if (m == null) return null;
     final int? flags = int.tryParse(m.group(1)!);
     if (flags == null) return null;
-    return CaaData(
-      flags: flags,
-      tag: m.group(2)!,
-      value: m.group(3)!,
-    );
+    return CaaData(flags: flags, tag: m.group(2)!, value: m.group(3)!);
   }
 
   /// Compact one-line display: `tag "value"  (flags F)`.
@@ -255,27 +250,25 @@ class DnsLookupResult {
     required String queriedName,
     required DnsRecordType type,
     required DohResolver resolver,
-  }) =>
-      DnsLookupResult._(
-        records: records,
-        queriedName: queriedName,
-        type: type,
-        resolver: resolver,
-      );
+  }) => DnsLookupResult._(
+    records: records,
+    queriedName: queriedName,
+    type: type,
+    resolver: resolver,
+  );
 
   factory DnsLookupResult.failure({
     required String queriedName,
     required DnsRecordType type,
     required DohResolver resolver,
     required String message,
-  }) =>
-      DnsLookupResult._(
-        records: const <DnsRecord>[],
-        queriedName: queriedName,
-        type: type,
-        resolver: resolver,
-        errorMessage: message,
-      );
+  }) => DnsLookupResult._(
+    records: const <DnsRecord>[],
+    queriedName: queriedName,
+    type: type,
+    resolver: resolver,
+    errorMessage: message,
+  );
 
   final List<DnsRecord> records;
   final String queriedName;
@@ -371,7 +364,8 @@ class DnsLookupService {
       String name,
       RRecordType type, {
       required DohResolver resolver,
-    })? resolver,
+    })?
+    resolver,
   }) : _resolve = resolver ?? _defaultResolve;
 
   // The injected seam routes by the app's own [DohResolver] (not the package's
@@ -382,7 +376,8 @@ class DnsLookupService {
     String name,
     RRecordType type, {
     required DohResolver resolver,
-  }) _resolve;
+  })
+  _resolve;
 
   static Future<List<RRecord>?> _defaultResolve(
     String name,
@@ -562,11 +557,8 @@ class DnsLookupService {
 
     final List<DnsLookupResult> results = await Future.wait(
       digTypeOrder.map(
-        (DnsRecordType t) => lookup(
-          rawQuery: trimmed,
-          type: t,
-          resolver: resolver,
-        ),
+        (DnsRecordType t) =>
+            lookup(rawQuery: trimmed, type: t, resolver: resolver),
       ),
     );
 

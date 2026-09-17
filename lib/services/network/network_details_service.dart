@@ -141,11 +141,11 @@ class NetworkDetailsService {
     Future<List<NetworkInterface>> Function()? interfaceLister,
     bool? isAndroid,
     Future<Map<Object?, Object?>?> Function()? androidAddressingReader,
-  })  : _networkInfo = networkInfo ?? NetworkInfo(),
-        _interfaceLister = interfaceLister ?? _defaultLister,
-        _isAndroid = isAndroid ?? Platform.isAndroid,
-        _androidAddressingReader =
-            androidAddressingReader ?? _defaultAndroidAddressingReader;
+  }) : _networkInfo = networkInfo ?? NetworkInfo(),
+       _interfaceLister = interfaceLister ?? _defaultLister,
+       _isAndroid = isAndroid ?? Platform.isAndroid,
+       _androidAddressingReader =
+           androidAddressingReader ?? _defaultAndroidAddressingReader;
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
@@ -156,8 +156,9 @@ class NetworkDetailsService {
   /// and the resolver list. Has NO handler on iOS/macOS/web — a call there
   /// throws MissingPluginException, which [read] swallows to the honest
   /// unavailable state. Mirrors the app's other native channels.
-  static const MethodChannel _androidChannel =
-      MethodChannel('com.wlanpros.toolbox/network_addressing');
+  static const MethodChannel _androidChannel = MethodChannel(
+    'com.wlanpros.toolbox/network_addressing',
+  );
 
   static Future<List<NetworkInterface>> _defaultLister() {
     return NetworkInterface.list(
@@ -168,8 +169,9 @@ class NetworkDetailsService {
   }
 
   static Future<Map<Object?, Object?>?> _defaultAndroidAddressingReader() {
-    return _androidChannel
-        .invokeMethod<Map<Object?, Object?>>('getNetworkAddressing');
+    return _androidChannel.invokeMethod<Map<Object?, Object?>>(
+      'getNetworkAddressing',
+    );
   }
 
   /// Take a snapshot of the obtainable local addressing. Each sub-read is
@@ -179,8 +181,9 @@ class NetworkDetailsService {
   Future<NetworkDetails> read() async {
     final String? wifiIp = await _tryStr(() => _networkInfo.getWifiIP());
     final String? submask = await _tryStr(() => _networkInfo.getWifiSubmask());
-    final String? gateway =
-        await _tryStr(() => _networkInfo.getWifiGatewayIP());
+    final String? gateway = await _tryStr(
+      () => _networkInfo.getWifiGatewayIP(),
+    );
 
     // Local-IP fallback: when the Wi-Fi plugin returns null (e.g. wired, or a
     // platform that does not report the Wi-Fi IP), use the first non-loopback
@@ -334,10 +337,12 @@ List<int>? _parseIpv6Groups(String s) {
   if (s.contains('::')) {
     final List<String> halves = s.split('::');
     if (halves.length != 2) return null; // more than one "::" is illegal
-    final List<String> head =
-        halves[0].isEmpty ? <String>[] : halves[0].split(':');
-    final List<String> tail =
-        halves[1].isEmpty ? <String>[] : halves[1].split(':');
+    final List<String> head = halves[0].isEmpty
+        ? <String>[]
+        : halves[0].split(':');
+    final List<String> tail = halves[1].isEmpty
+        ? <String>[]
+        : halves[1].split(':');
     final int fill = 8 - head.length - tail.length;
     if (fill < 0) return null;
     return _hextetsToInts(<String>[

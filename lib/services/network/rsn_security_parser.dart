@@ -168,9 +168,9 @@ const List<String> _tokenOrder = <String>[
 ];
 
 List<String> _canonical(Set<String> tokens) => <String>[
-      for (final String t in _tokenOrder)
-        if (tokens.contains(t)) t,
-    ];
+  for (final String t in _tokenOrder)
+    if (tokens.contains(t)) t,
+];
 
 /// Decodes AKM selectors out of an RSN-shaped body.
 ///

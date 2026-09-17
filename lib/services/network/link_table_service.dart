@@ -24,11 +24,11 @@ import 'pi_backend_client.dart';
 /// What came back, or why nothing did.
 class LinkTableResult {
   const LinkTableResult.ok(this.table)
-      : unavailableReason = null,
-        source = null;
+    : unavailableReason = null,
+      source = null;
 
   const LinkTableResult.unavailable(this.unavailableReason, {this.source})
-      : table = null;
+    : table = null;
 
   final LinkTable? table;
 
@@ -65,12 +65,12 @@ class LinkTableService {
     bool? piAvailable,
     bool? isMacOS,
     bool? isWeb,
-  })  : _pi = pi,
-        _routeProbe = routeProbe,
-        _run = runner ?? _runProcess,
-        _piAvailable = piAvailable ?? PiBackend.available,
-        _isMacOS = isMacOS ?? (!kIsWeb && Platform.isMacOS),
-        _isWeb = isWeb ?? kIsWeb;
+  }) : _pi = pi,
+       _routeProbe = routeProbe,
+       _run = runner ?? _runProcess,
+       _piAvailable = piAvailable ?? PiBackend.available,
+       _isMacOS = isMacOS ?? (!kIsWeb && Platform.isMacOS),
+       _isWeb = isWeb ?? kIsWeb;
 
   final PiBackendClient? _pi;
   final DefaultRouteProbe? _routeProbe;
@@ -109,8 +109,9 @@ class LinkTableService {
 
     // 3. macOS: reconstruct it.
     if (_isMacOS) {
-      final String? ports =
-          await _run('networksetup', <String>['-listallhardwareports']);
+      final String? ports = await _run('networksetup', <String>[
+        '-listallhardwareports',
+      ]);
       final String? ifc = await _run('ifconfig', <String>['-a']);
       if (ifc == null) {
         return const LinkTableResult.unavailable(
@@ -119,14 +120,16 @@ class LinkTableService {
           source: 'macos',
         );
       }
-      final DefaultRoute? route =
-          await (_routeProbe ?? DefaultRouteProbe()).readV4();
-      return LinkTableResult.ok(parseMacosLinkTable(
-        hardwarePorts: ports ?? '',
-        ifconfigAll: ifc,
-        defaultRouteInterface: route?.interfaceName,
-        defaultGateway: route?.gateway,
-      ));
+      final DefaultRoute? route = await (_routeProbe ?? DefaultRouteProbe())
+          .readV4();
+      return LinkTableResult.ok(
+        parseMacosLinkTable(
+          hardwarePorts: ports ?? '',
+          ifconfigAll: ifc,
+          defaultRouteInterface: route?.interfaceName,
+          defaultGateway: route?.gateway,
+        ),
+      );
     }
 
     // 4. Everything else, named rather than lumped together.

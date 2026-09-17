@@ -61,20 +61,18 @@ class SweepSpec {
   factory SweepSpec.valid({
     required List<String> hosts,
     required String label,
-  }) =>
-      SweepSpec._(hosts: hosts, label: label, requestedCount: hosts.length);
+  }) => SweepSpec._(hosts: hosts, label: label, requestedCount: hosts.length);
 
   factory SweepSpec.invalid(
     SweepSpecError error, {
     String label = '',
     int requestedCount = 0,
-  }) =>
-      SweepSpec._(
-        hosts: const <String>[],
-        label: label,
-        error: error,
-        requestedCount: requestedCount,
-      );
+  }) => SweepSpec._(
+    hosts: const <String>[],
+    label: label,
+    error: error,
+    requestedCount: requestedCount,
+  );
 
   /// The concrete IPv4 addresses to probe, in ascending order.
   final List<String> hosts;
@@ -160,11 +158,15 @@ class SweepProgress {
 class PingSweepService {
   PingSweepService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
-        connector,
+    connector,
   }) : _connect = connector ?? _defaultConnect;
 
-  final Future<Socket> Function(String host, int port,
-      {required Duration timeout}) _connect;
+  final Future<Socket> Function(
+    String host,
+    int port, {
+    required Duration timeout,
+  })
+  _connect;
 
   static Future<Socket> _defaultConnect(
     String host,
@@ -221,8 +223,9 @@ class PingSweepService {
     // Total addresses in the block.
     final int blockSize = prefix == 0 ? (1 << 32) : (1 << (32 - prefix));
     // Network address (mask off host bits).
-    final int mask =
-        prefix == 0 ? 0 : ((0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF);
+    final int mask = prefix == 0
+        ? 0
+        : ((0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF);
     final int network = base & mask;
 
     // Usable host range. For /31 and /32 there is no network/broadcast split,
@@ -336,8 +339,9 @@ class PingSweepService {
         StreamController<SweepProgress>();
 
     final List<String> queue = List<String>.of(spec.hosts);
-    final List<int> probePorts =
-        ports.isEmpty ? const <int>[defaultPort] : ports;
+    final List<int> probePorts = ports.isEmpty
+        ? const <int>[defaultPort]
+        : ports;
     final int total = queue.length;
     int completed = 0;
     int live = 0;

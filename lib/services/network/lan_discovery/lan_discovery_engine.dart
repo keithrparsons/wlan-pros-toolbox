@@ -571,7 +571,6 @@ class LanDiscoveryEngine {
       return null;
     }
   }
-
 }
 
 /// Test seam type: replaces the connect-scan pass wholesale.

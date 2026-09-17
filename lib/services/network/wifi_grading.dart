@@ -224,8 +224,9 @@ class WifiGrading {
   /// [WifiGradingBands.rateSteadyEpsilonMbps] is Steady. Fewer than two present
   /// samples is [WifiRateTrend.unavailable].
   static WifiRateTrend rateTrend(List<double?> window) {
-    final List<double> present =
-        window.whereType<double>().toList(growable: false);
+    final List<double> present = window.whereType<double>().toList(
+      growable: false,
+    );
     if (present.length < 2) return WifiRateTrend.unavailable;
     final double delta = present.last - present.first;
     if (delta.abs() <= WifiGradingBands.rateSteadyEpsilonMbps) {

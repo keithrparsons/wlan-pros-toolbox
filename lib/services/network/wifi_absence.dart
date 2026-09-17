@@ -59,8 +59,9 @@ enum WifiAbsence {
 WifiAbsence classifyWifiAbsence(LinkTable? table) {
   if (table == null) return WifiAbsence.unknown;
 
-  final List<LinkInfo> wifi =
-      table.links.where((LinkInfo l) => l.kind == LinkKind.wifi).toList();
+  final List<LinkInfo> wifi = table.links
+      .where((LinkInfo l) => l.kind == LinkKind.wifi)
+      .toList();
 
   if (wifi.isEmpty) {
     // Only assert "no radio" when we actually enumerated something. An empty
@@ -68,16 +69,16 @@ WifiAbsence classifyWifiAbsence(LinkTable? table) {
     return table.links.isEmpty ? WifiAbsence.unknown : WifiAbsence.noRadio;
   }
 
-  final bool anyAssociated = wifi.any((LinkInfo l) =>
-      l.carrier == true &&
-      l.addresses.any((LinkAddress a) => !a.isLinkLocal));
+  final bool anyAssociated = wifi.any(
+    (LinkInfo l) =>
+        l.carrier == true && l.addresses.any((LinkAddress a) => !a.isLinkLocal),
+  );
   if (anyAssociated) return WifiAbsence.associated;
 
   // Carrier must be a real false, not a null. A driver that did not report
   // carrier tells us nothing, and inferring "off" from silence is the mistake
   // this file exists to avoid.
-  final bool allKnownDown =
-      wifi.every((LinkInfo l) => l.carrier == false);
+  final bool allKnownDown = wifi.every((LinkInfo l) => l.carrier == false);
   if (!allKnownDown) return WifiAbsence.unknown;
 
   final LinkInfo? carrying = selectDefaultLink(table.links);
@@ -105,7 +106,8 @@ WifiAbsence classifyWifiAbsence(LinkTable? table) {
     case WifiAbsence.noRadio:
       return (
         title: 'This machine has no Wi-Fi radio',
-        message: '$what come from a live 802.11 association: signal, noise, '
+        message:
+            '$what come from a live 802.11 association: signal, noise, '
             'channel, BSSID. There is no radio here to read them from. The '
             'wired tools all work normally, and Link Info will show you what '
             'this machine does have.',
@@ -113,7 +115,8 @@ WifiAbsence classifyWifiAbsence(LinkTable? table) {
     case WifiAbsence.onWiredInstead:
       return (
         title: "You're on Ethernet, not Wi-Fi",
-        message: 'Your traffic is going out '
+        message:
+            'Your traffic is going out '
             '${wiredInterfaceName ?? 'the wired link'}, and the Wi-Fi radio is '
             'not joined to anything. $what need a Wi-Fi association to exist, '
             'so there is nothing here to measure. Everything that runs over '
@@ -123,7 +126,8 @@ WifiAbsence classifyWifiAbsence(LinkTable? table) {
     case WifiAbsence.notAssociated:
       return (
         title: 'Wi-Fi is not connected',
-        message: 'The radio is present and not joined to a network. Join one '
+        message:
+            'The radio is present and not joined to a network. Join one '
             'and check again. $what come from a live association and cannot be '
             'read without one.',
       );

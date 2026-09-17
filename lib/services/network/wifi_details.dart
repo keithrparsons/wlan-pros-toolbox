@@ -355,15 +355,21 @@ class WiFiDetails {
       channel: pickInt(<String>['Channel', 'Channel Number', 'channelNumber']),
       rssi: pickDbm(<String>['RSSI']),
       noise: pickDbm(<String>['Noise']),
-      standard: pickString(<String>['Standard', 'Wi-Fi Standard', 'wifiStandard']),
+      standard: pickString(<String>[
+        'Standard',
+        'Wi-Fi Standard',
+        'wifiStandard',
+      ]),
       rxRate: pickInt(<String>['RX Rate', 'rxRate', 'RX']),
       txRate: pickInt(<String>['TX Rate', 'txRate', 'TX']),
       ipv4Local: pickString(<String>['IPv4 Local', 'ipv4_local']),
       ipv6Local: pickString(<String>['IPv6 Local', 'ipv6_local']),
-      cellCarrier:
-          pickString(<String>['Cell Carrier', 'cell_carrier_name', 'Carrier']),
-      cellRat:
-          pickString(<String>['Cell RAT', 'cell_rat', 'radioTechnology']),
+      cellCarrier: pickString(<String>[
+        'Cell Carrier',
+        'cell_carrier_name',
+        'Carrier',
+      ]),
+      cellRat: pickString(<String>['Cell RAT', 'cell_rat', 'radioTechnology']),
       cellSignalBars: bars,
       payloadVersion: pickString(<String>['Payload Version', 'version']),
       reachUrl: pickString(<String>['Reachability URL', 'reach_url']),
@@ -395,24 +401,24 @@ class WiFiDetails {
 
   @override
   int get hashCode => Object.hashAll(<Object?>[
-        ssid,
-        bssid,
-        channel,
-        rssi,
-        noise,
-        standard,
-        rxRate,
-        txRate,
-        ipv4Local,
-        ipv6Local,
-        cellCarrier,
-        cellRat,
-        cellSignalBars,
-        payloadVersion,
-        reachUrl,
-        reachOk,
-        reachMs,
-      ]);
+    ssid,
+    bssid,
+    channel,
+    rssi,
+    noise,
+    standard,
+    rxRate,
+    txRate,
+    ipv4Local,
+    ipv6Local,
+    cellCarrier,
+    cellRat,
+    cellSignalBars,
+    payloadVersion,
+    reachUrl,
+    reachOk,
+    reachMs,
+  ]);
 
   @override
   String toString() =>

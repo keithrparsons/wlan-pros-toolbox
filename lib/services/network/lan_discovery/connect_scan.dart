@@ -134,8 +134,9 @@ Future<List<HostPorts>> runConnectScan(
     while (active < request.concurrency && index < work.length) {
       final ({String host, int port}) job = work[index++];
       active++;
-      _probe(connect, job.host, job.port, request.timeout)
-          .then((ProbeOutcome outcome) {
+      _probe(connect, job.host, job.port, request.timeout).then((
+        ProbeOutcome outcome,
+      ) {
         active--;
         completed++;
         switch (outcome) {
@@ -181,8 +182,7 @@ Future<ProbeOutcome> _probe(
   String host,
   int port,
   Duration timeout,
-) =>
-    probeTcp(connect, host, port, timeout);
+) => probeTcp(connect, host, port, timeout);
 
 Future<Socket> _defaultConnect(String host, int port, Duration timeout) {
   return Socket.connect(host, port, timeout: timeout);

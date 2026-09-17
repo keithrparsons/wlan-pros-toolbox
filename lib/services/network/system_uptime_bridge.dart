@@ -21,8 +21,9 @@ import 'package:flutter/services.dart';
 /// device last booted, or null where the platform does not answer.
 class SystemUptimeBridge {
   SystemUptimeBridge({MethodChannel? methodChannel})
-      : _method = methodChannel ??
-            const MethodChannel('com.wlanpros.toolbox/system_info');
+    : _method =
+          methodChannel ??
+          const MethodChannel('com.wlanpros.toolbox/system_info');
 
   final MethodChannel _method;
 
@@ -31,8 +32,9 @@ class SystemUptimeBridge {
   /// a value that is not a finite, non-negative number. Never throws.
   Future<double?> read() async {
     try {
-      final double? seconds =
-          await _method.invokeMethod<double>('systemUptime');
+      final double? seconds = await _method.invokeMethod<double>(
+        'systemUptime',
+      );
       if (seconds == null || !seconds.isFinite || seconds < 0) return null;
       return seconds;
     } on MissingPluginException {

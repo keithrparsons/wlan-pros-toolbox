@@ -99,23 +99,21 @@ class HttpHeaderResult {
     required List<HttpHop> hops,
     required bool headFellBackToGet,
     required bool redirectLimitHit,
-  }) =>
-      HttpHeaderResult._(
-        requestedUrl: requestedUrl,
-        hops: hops,
-        headFellBackToGet: headFellBackToGet,
-        redirectLimitHit: redirectLimitHit,
-      );
+  }) => HttpHeaderResult._(
+    requestedUrl: requestedUrl,
+    hops: hops,
+    headFellBackToGet: headFellBackToGet,
+    redirectLimitHit: redirectLimitHit,
+  );
 
   factory HttpHeaderResult.failure({
     required String requestedUrl,
     required String message,
-  }) =>
-      HttpHeaderResult._(
-        requestedUrl: requestedUrl,
-        hops: const <HttpHop>[],
-        errorMessage: message,
-      );
+  }) => HttpHeaderResult._(
+    requestedUrl: requestedUrl,
+    hops: const <HttpHop>[],
+    errorMessage: message,
+  );
 
   final String requestedUrl;
 
@@ -137,7 +135,8 @@ class HttpHeaderResult {
   HttpHop? get finalHop => hops.isEmpty ? null : hops.last;
 
   /// Total wall time across all hops, in milliseconds.
-  int get totalMs => hops.fold<int>(0, (int sum, HttpHop h) => sum + h.elapsedMs);
+  int get totalMs =>
+      hops.fold<int>(0, (int sum, HttpHop h) => sum + h.elapsedMs);
 }
 
 /// Issues the request(s) and assembles the chain. The [opener] seam abstracts
@@ -232,9 +231,7 @@ class HttpHeaderService {
           sw2.stop();
           hops.add(_hop(HttpMethod.get, current, raw, sw2.elapsedMilliseconds));
         } else {
-          hops.add(
-            _hop(currentMethod, current, raw, sw.elapsedMilliseconds),
-          );
+          hops.add(_hop(currentMethod, current, raw, sw.elapsedMilliseconds));
         }
 
         final HttpHop last = hops.last;
@@ -345,7 +342,10 @@ class HttpHeaderService {
   static String _titleCase(String headerName) {
     return headerName
         .split('-')
-        .map((String p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}')
+        .map(
+          (String p) =>
+              p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1)}',
+        )
         .join('-');
   }
 
@@ -381,8 +381,9 @@ class RawHttpResponse {
 }
 
 /// The injectable network seam: issue one request, return one response.
-typedef HttpProbe = Future<RawHttpResponse> Function(
-  HttpMethod method,
-  Uri url,
-  Duration timeout,
-);
+typedef HttpProbe =
+    Future<RawHttpResponse> Function(
+      HttpMethod method,
+      Uri url,
+      Duration timeout,
+    );

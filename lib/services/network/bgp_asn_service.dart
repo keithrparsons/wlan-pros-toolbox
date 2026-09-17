@@ -65,35 +65,33 @@ class BgpAsnResult {
     int? peerCount,
     int? downstreamCount,
     List<String> relatedAsns = const <String>[],
-  }) =>
-      BgpAsnResult._(
-        query: query,
-        kind: kind,
-        asn: asn,
-        holder: holder,
-        announcedPrefix: announcedPrefix,
-        country: country,
-        registry: registry,
-        asnType: asnType,
-        isAnnounced: isAnnounced,
-        upstreamCount: upstreamCount,
-        peerCount: peerCount,
-        downstreamCount: downstreamCount,
-        relatedAsns: relatedAsns,
-      );
+  }) => BgpAsnResult._(
+    query: query,
+    kind: kind,
+    asn: asn,
+    holder: holder,
+    announcedPrefix: announcedPrefix,
+    country: country,
+    registry: registry,
+    asnType: asnType,
+    isAnnounced: isAnnounced,
+    upstreamCount: upstreamCount,
+    peerCount: peerCount,
+    downstreamCount: downstreamCount,
+    relatedAsns: relatedAsns,
+  );
 
   factory BgpAsnResult.failure({
     required String query,
     required BgpQueryKind kind,
     required String message,
     JsonHttpErrorKind? errorKind,
-  }) =>
-      BgpAsnResult._(
-        query: query,
-        kind: kind,
-        errorMessage: message,
-        errorKind: errorKind,
-      );
+  }) => BgpAsnResult._(
+    query: query,
+    kind: kind,
+    errorMessage: message,
+    errorKind: errorKind,
+  );
 
   final String query;
   final BgpQueryKind kind;
@@ -130,7 +128,7 @@ class BgpAsnResult {
 
 class BgpAsnService {
   BgpAsnService({JsonHttpClient? client})
-      : _client = client ?? JsonHttpClient();
+    : _client = client ?? JsonHttpClient();
 
   final JsonHttpClient _client;
 
@@ -227,8 +225,9 @@ class BgpAsnService {
       registry: registry,
       asnType: asnType,
       isAnnounced: announced,
-      relatedAsns:
-          asns.length > 1 ? asns.skip(1).map(_asnLabel).toList() : const [],
+      relatedAsns: asns.length > 1
+          ? asns.skip(1).map(_asnLabel).toList()
+          : const [],
     );
   }
 
@@ -284,8 +283,7 @@ class BgpAsnService {
   /// Fetch + parse as-overview for a bare ASN string. Returns a partial result
   /// carrying only the overview fields (the callers merge them).
   Future<BgpAsnResult> _asOverview(String asnNumber) async {
-    final Map<String, dynamic> ov =
-        await _get('as-overview', 'AS$asnNumber');
+    final Map<String, dynamic> ov = await _get('as-overview', 'AS$asnNumber');
     final Map<String, dynamic> data = _dataOf(ov);
     return BgpAsnResult.success(
       query: asnNumber,

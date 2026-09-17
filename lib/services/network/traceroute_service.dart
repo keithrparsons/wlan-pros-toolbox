@@ -126,8 +126,7 @@ class TracerouteEvent {
   /// Terminal result, or null when this event carries a [hop].
   final TracerouteResult? result;
 
-  factory TracerouteEvent.hop(TracerouteHop hop) =>
-      TracerouteEvent._(hop: hop);
+  factory TracerouteEvent.hop(TracerouteHop hop) => TracerouteEvent._(hop: hop);
   factory TracerouteEvent.done(TracerouteResult result) =>
       TracerouteEvent._(result: result);
 }
@@ -138,10 +137,10 @@ class TracerouteEvent {
 class TracerouteService {
   TracerouteService({
     Future<Process> Function(String executable, List<String> args)?
-        processStarter,
+    processStarter,
     String? platformOverride,
-  })  : _start = processStarter ?? Process.start,
-        _platform = platformOverride ?? _hostOperatingSystem();
+  }) : _start = processStarter ?? Process.start,
+       _platform = platformOverride ?? _hostOperatingSystem();
 
   final Future<Process> Function(String executable, List<String> args) _start;
   final String _platform;
@@ -189,8 +188,10 @@ class TracerouteService {
     try {
       // Use the same start seam as a real run so tests can drive this without
       // a real subprocess. We only care that the launch did not throw.
-      final Process process = await _start(binary, const <String>[])
-          .timeout(const Duration(seconds: 3));
+      final Process process = await _start(
+        binary,
+        const <String>[],
+      ).timeout(const Duration(seconds: 3));
       // Drain and reap so we never leave a zombie or an unread pipe.
       unawaited(process.stdout.drain<void>());
       unawaited(process.stderr.drain<void>());
@@ -301,23 +302,27 @@ class TracerouteService {
       // tool reported "target not reached" on a trace that plainly succeeded.
       // Only IP literals worked.
       String? resolvedTargetIp =
-          NetworkTarget.isIpv4(validatedHost) || NetworkTarget.isIpv6(validatedHost)
-              ? validatedHost
-              : null;
+          NetworkTarget.isIpv4(validatedHost) ||
+              NetworkTarget.isIpv6(validatedHost)
+          ? validatedHost
+          : null;
 
       await for (final String line in lines) {
         if (cancelled) break;
 
         // Header lines are not hops, but they carry the resolution we need.
-        final String? headerIp =
-            _parseResolvedTargetIp(line, windows: _isWindows);
+        final String? headerIp = _parseResolvedTargetIp(
+          line,
+          windows: _isWindows,
+        );
         if (headerIp != null) {
           resolvedTargetIp = headerIp;
           continue;
         }
 
-        final TracerouteHop? hop =
-            _isWindows ? _parseWindowsLine(line) : _parseUnixLine(line);
+        final TracerouteHop? hop = _isWindows
+            ? _parseWindowsLine(line)
+            : _parseUnixLine(line);
         if (hop != null) {
           if (_isTarget(hop, validatedHost, resolvedTargetIp)) {
             reachedTarget = true;
@@ -433,10 +438,14 @@ class TracerouteService {
     if (RegExp(r'^\d').hasMatch(line)) return null;
 
     final RegExp re = windows
-        ? RegExp(r'^Tracing route to\s+\S+\s+\[([0-9a-fA-F:.]+)\]',
-            caseSensitive: false)
-        : RegExp(r'^traceroute6?\s+to\s+\S+\s+\(([0-9a-fA-F:.]+)\)',
-            caseSensitive: false);
+        ? RegExp(
+            r'^Tracing route to\s+\S+\s+\[([0-9a-fA-F:.]+)\]',
+            caseSensitive: false,
+          )
+        : RegExp(
+            r'^traceroute6?\s+to\s+\S+\s+\(([0-9a-fA-F:.]+)\)',
+            caseSensitive: false,
+          );
 
     final RegExpMatch? m = re.firstMatch(line);
     final String? candidate = m?.group(1);
@@ -468,14 +477,16 @@ class TracerouteService {
     String? host;
     String? ip;
     // `name (ip)` or bare `ip`.
-    final RegExpMatch? named =
-        RegExp(r'([^\s()]+)\s+\(([0-9a-fA-F:.]+)\)').firstMatch(rest);
+    final RegExpMatch? named = RegExp(
+      r'([^\s()]+)\s+\(([0-9a-fA-F:.]+)\)',
+    ).firstMatch(rest);
     if (named != null) {
       host = named.group(1);
       ip = named.group(2);
     } else {
-      final RegExpMatch? bare =
-          RegExp(r'(\d{1,3}(?:\.\d{1,3}){3}|[0-9a-fA-F:]{2,})').firstMatch(rest);
+      final RegExpMatch? bare = RegExp(
+        r'(\d{1,3}(?:\.\d{1,3}){3}|[0-9a-fA-F:]{2,})',
+      ).firstMatch(rest);
       ip = bare?.group(1);
     }
 
@@ -518,9 +529,9 @@ class TracerouteService {
         .whereType<double>()
         .toList();
 
-    final RegExpMatch? ipMatch =
-        RegExp(r'(\d{1,3}(?:\.\d{1,3}){3}|[0-9a-fA-F:]{2,}:[0-9a-fA-F:]+)')
-            .firstMatch(rest);
+    final RegExpMatch? ipMatch = RegExp(
+      r'(\d{1,3}(?:\.\d{1,3}){3}|[0-9a-fA-F:]{2,}:[0-9a-fA-F:]+)',
+    ).firstMatch(rest);
     final String? ip = ipMatch?.group(1);
 
     if (ip == null && rtts.isEmpty) return null;
@@ -558,8 +569,7 @@ class TracerouteServiceTestHook {
     TracerouteHop hop,
     String requestedHost,
     String? resolvedTargetIp,
-  ) =>
-      TracerouteService._isTarget(hop, requestedHost, resolvedTargetIp);
+  ) => TracerouteService._isTarget(hop, requestedHost, resolvedTargetIp);
 }
 
 /// Minimal stream merge so we can read stdout+stderr as one ordered line

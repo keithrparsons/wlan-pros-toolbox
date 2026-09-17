@@ -722,8 +722,7 @@ bool _goodSpeedBadQuality(AnalyzeInput i) {
   final double? d = i.downloadMbps;
   if (d == null) return false;
   final QualityGrade dg = QualityScoring.gradeDownloadMbps(d);
-  final bool speedOk =
-      dg == QualityGrade.good || dg == QualityGrade.excellent;
+  final bool speedOk = dg == QualityGrade.good || dg == QualityGrade.excellent;
   return speedOk && (_lossPoor(i) || _latencyPoor(i) || _jitterPoor(i));
 }
 
@@ -753,8 +752,8 @@ bool _cloudMixed(AnalyzeInput i) =>
 
 // I. Honesty.
 bool _widthNotCaptured(AnalyzeInput i) =>
-    !i.channelWidthAvailable &&
-    (i.band != null || i.standard != null);
+    !i.channelWidthAvailable && (i.band != null || i.standard != null);
+
 /// R-31 fires ONLY when a capture is actually possible: on iOS, with no RF block,
 /// AND with a Wi-Fi link that exists to be captured. A cellular-only phone has no
 /// link, so "tap Capture Wi-Fi details" is advice the user cannot act on and would

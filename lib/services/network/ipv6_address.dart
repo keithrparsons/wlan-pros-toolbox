@@ -60,11 +60,7 @@ enum Ipv6ZoneReading {
 
 /// A parsed zone index and the reading it rests on.
 class Ipv6Zone {
-  const Ipv6Zone({
-    required this.value,
-    required this.reading,
-    this.alternate,
-  });
+  const Ipv6Zone({required this.value, required this.reading, this.alternate});
 
   /// The zone as this parser reads it. Display-only: a zone is not part of the
   /// 128 bits, so no computed value depends on which reading is right.

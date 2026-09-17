@@ -95,37 +95,32 @@ class IpGeoResult {
     String? org,
     String? asn,
     String? asnName,
-  }) =>
-      IpGeoResult._(
-        query: query,
-        provider: provider,
-        ip: ip,
-        ipVersion: ipVersion,
-        country: country,
-        countryCode: countryCode,
-        region: region,
-        city: city,
-        postal: postal,
-        latitude: latitude,
-        longitude: longitude,
-        timezone: timezone,
-        utcOffset: utcOffset,
-        isp: isp,
-        org: org,
-        asn: asn,
-        asnName: asnName,
-      );
+  }) => IpGeoResult._(
+    query: query,
+    provider: provider,
+    ip: ip,
+    ipVersion: ipVersion,
+    country: country,
+    countryCode: countryCode,
+    region: region,
+    city: city,
+    postal: postal,
+    latitude: latitude,
+    longitude: longitude,
+    timezone: timezone,
+    utcOffset: utcOffset,
+    isp: isp,
+    org: org,
+    asn: asn,
+    asnName: asnName,
+  );
 
   factory IpGeoResult.failure({
     required String query,
     required String message,
     JsonHttpErrorKind? errorKind,
   }) =>
-      IpGeoResult._(
-        query: query,
-        errorMessage: message,
-        errorKind: errorKind,
-      );
+      IpGeoResult._(query: query, errorMessage: message, errorKind: errorKind);
 
   final String query;
 
@@ -169,11 +164,7 @@ class IpGeoResult {
 
   /// A one-line "City, Region, Country" summary, omitting missing parts.
   String? get locationLine {
-    final List<String> parts = <String>[
-      ?city,
-      ?region,
-      ?country,
-    ];
+    final List<String> parts = <String>[?city, ?region, ?country];
     return parts.isEmpty ? null : parts.join(', ');
   }
 }
@@ -202,7 +193,8 @@ class IpGeoService {
     if (query.isNotEmpty && !_looksLikeIpOrHost(query)) {
       return IpGeoResult.failure(
         query: query,
-        message: 'That does not look like an IP address or hostname. '
+        message:
+            'That does not look like an IP address or hostname. '
             'Enter something like 8.8.8.8, 2001:4860:4860::8888, or '
             'example.com, or leave it blank to locate your own IP.',
         // null kind == client-side input rejection.
@@ -297,7 +289,8 @@ class IpGeoService {
       final String? message = _str(em['message']);
       return IpGeoResult.failure(
         query: query,
-        message: 'The address "$query" could not be located'
+        message:
+            'The address "$query" could not be located'
             '${title != null ? ' ($title)' : ''}'
             '${message != null ? ': $message' : ''}. '
             'Check that it is a valid IP address or hostname and try again.',
@@ -373,7 +366,8 @@ class IpGeoService {
   /// a wasted round-trip on obvious junk (spaces, "????", "my computer"), NOT a
   /// strict validator — the providers remain the authority on resolvability.
   /// Exposed for unit tests.
-  static bool isPlausibleQuery(String query) => _looksLikeIpOrHost(query.trim());
+  static bool isPlausibleQuery(String query) =>
+      _looksLikeIpOrHost(query.trim());
 
   // ─── Parsing helpers ──────────────────────────────────────────────────────
 
@@ -394,8 +388,10 @@ class IpGeoService {
   /// null. Returns (null, null) when the field is absent.
   static (String?, String?) _splitOrg(String? org) {
     if (org == null) return (null, null);
-    final RegExpMatch? m =
-        RegExp(r'^(AS\d+)\s+(.*)$', caseSensitive: false).firstMatch(org);
+    final RegExpMatch? m = RegExp(
+      r'^(AS\d+)\s+(.*)$',
+      caseSensitive: false,
+    ).firstMatch(org);
     if (m == null) {
       // No leading AS number — the whole field is the org/ISP name.
       return (null, org);
@@ -421,7 +417,8 @@ class IpGeoService {
     if (RegExp(r'\s').hasMatch(q)) return false;
     if (_isIpv4(q)) return true;
     // IPv6: hex groups and colons (optionally a zone/scope id). Loose by design.
-    if (q.contains(':') && RegExp(r'^[0-9a-fA-F:]+(%[0-9a-zA-Z]+)?$').hasMatch(q)) {
+    if (q.contains(':') &&
+        RegExp(r'^[0-9a-fA-F:]+(%[0-9a-zA-Z]+)?$').hasMatch(q)) {
       return true;
     }
     // Hostname: dot-separated labels, alphanumerics + hyphen, must contain a dot

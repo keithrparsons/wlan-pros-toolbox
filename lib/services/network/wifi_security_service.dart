@@ -75,10 +75,10 @@ class WifiSecurityInfo {
   /// observed; the off-platform paths (no channel at all) pass
   /// [LocationAuthStatus.notDetermined] as the documented safe default.
   const WifiSecurityInfo.unavailable(this.reason, {required this.locationAuth})
-      : available = false,
-        securityToken = null,
-        bssid = null,
-        ssid = null;
+    : available = false,
+      securityToken = null,
+      bssid = null,
+      ssid = null;
 
   /// Builds from the native channel payload. Tolerant of a null map.
   factory WifiSecurityInfo.fromMap(Map<dynamic, dynamic>? map) {
@@ -116,8 +116,9 @@ class WifiSecurityService {
     Future<Object?> Function(String method, [dynamic args])? invoke,
   }) : _invoke = invoke ?? _defaultInvoke;
 
-  static const MethodChannel _channel =
-      MethodChannel('com.wlanpros.toolbox/wifi_security');
+  static const MethodChannel _channel = MethodChannel(
+    'com.wlanpros.toolbox/wifi_security',
+  );
 
   static Future<Object?> _defaultInvoke(String method, [dynamic args]) =>
       _channel.invokeMethod<Object?>(method, args);

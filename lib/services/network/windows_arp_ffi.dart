@@ -86,23 +86,15 @@ class WindowsArpReadException implements Exception {
 // never at import time. ──────────────────────────────────────────────────────
 
 /// `DWORD GetIpNetTable(PMIB_IPNETTABLE, PULONG SizePointer, BOOL Order);`
-typedef _GetIpNetTableC = Uint32 Function(
-  Pointer<Uint8> table,
-  Pointer<Uint32> size,
-  Int32 order,
-);
-typedef _GetIpNetTableDart = int Function(
-  Pointer<Uint8> table,
-  Pointer<Uint32> size,
-  int order,
-);
+typedef _GetIpNetTableC =
+    Uint32 Function(Pointer<Uint8> table, Pointer<Uint32> size, Int32 order);
+typedef _GetIpNetTableDart =
+    int Function(Pointer<Uint8> table, Pointer<Uint32> size, int order);
 
 final DynamicLibrary _iphlpapi = DynamicLibrary.open('iphlpapi.dll');
 
-final _GetIpNetTableDart _getIpNetTable =
-    _iphlpapi.lookupFunction<_GetIpNetTableC, _GetIpNetTableDart>(
-  'GetIpNetTable',
-);
+final _GetIpNetTableDart _getIpNetTable = _iphlpapi
+    .lookupFunction<_GetIpNetTableC, _GetIpNetTableDart>('GetIpNetTable');
 
 /// One ARP row: MIB_IPNETROW (winternl/iphlpapi.h).
 ///
@@ -174,8 +166,9 @@ List<MapEntry<String, String>> readArpTableViaIpHlpApi() {
 
     // 3. Walk dwNumEntries rows (first DWORD of MIB_IPNETTABLE, rows at +4).
     final int numEntries = table.cast<Uint32>().value;
-    final Pointer<_MibIpNetRow> rows =
-        Pointer<_MibIpNetRow>.fromAddress(table.address + _kRowsOffset);
+    final Pointer<_MibIpNetRow> rows = Pointer<_MibIpNetRow>.fromAddress(
+      table.address + _kRowsOffset,
+    );
 
     final List<MapEntry<String, String>> out = <MapEntry<String, String>>[];
     for (int i = 0; i < numEntries; i++) {
@@ -221,7 +214,8 @@ String ipv4FromNetworkOrder(int dword) {
 String? formatPhysAddr(List<int> bytes) {
   if (bytes.length < 6) return null;
   final List<String> parts = <String>[
-    for (int i = 0; i < 6; i++) (bytes[i] & 0xff).toRadixString(16).padLeft(2, '0'),
+    for (int i = 0; i < 6; i++)
+      (bytes[i] & 0xff).toRadixString(16).padLeft(2, '0'),
   ];
   final String joined = parts.join(':');
   return joined == '00:00:00:00:00:00' ? null : joined;

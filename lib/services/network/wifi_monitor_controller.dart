@@ -46,10 +46,10 @@ class WifiMonitorController extends ChangeNotifier {
     WifiConnectionService? connectionService,
     Duration missingShortcutSettle = const Duration(seconds: 4),
     Duration notOnWifiConfirmSettle = const Duration(milliseconds: 1200),
-  })  : _bridge = bridge,
-        _connection = connectionService ?? WifiConnectionService(),
-        _missingShortcutSettle = missingShortcutSettle,
-        _notOnWifiConfirmSettle = notOnWifiConfirmSettle;
+  }) : _bridge = bridge,
+       _connection = connectionService ?? WifiConnectionService(),
+       _missingShortcutSettle = missingShortcutSettle,
+       _notOnWifiConfirmSettle = notOnWifiConfirmSettle;
 
   final WiFiDetailsBridge _bridge;
 
@@ -701,7 +701,9 @@ class WifiMonitorController extends ChangeNotifier {
           final WiFiDetails? latest = await _bridge.readLatest();
           if (_disposed) return;
           if (latest != null && latest.hasAnyData) {
-            _onPayload(latest); // clears _shortcutMissing, sets _sampleSinceStart
+            _onPayload(
+              latest,
+            ); // clears _shortcutMissing, sets _sampleSinceStart
             return;
           }
         }

@@ -32,9 +32,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// itself is platform-agnostic and fully unit-testable via the injected store.
 class LiveOnboardingService {
   /// [getStore] defaults to the real [SharedPreferences]; tests inject a fake.
-  LiveOnboardingService({
-    Future<SharedPreferences> Function()? getStore,
-  }) : _getStore = getStore ?? SharedPreferences.getInstance;
+  LiveOnboardingService({Future<SharedPreferences> Function()? getStore})
+    : _getStore = getStore ?? SharedPreferences.getInstance;
 
   /// The shared_preferences key for the persisted first-run-seen flag.
   static const String prefsKey = 'live_onboarding_seen_v1';

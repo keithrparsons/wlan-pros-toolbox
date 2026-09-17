@@ -198,13 +198,17 @@ class ArpScanProgress {
 class ArpNdpService {
   ArpNdpService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
-        connector,
+    connector,
     ArpReader? arpReader,
-  })  : _connect = connector ?? _defaultConnect,
-        _arpReader = arpReader ?? platformArpReader();
+  }) : _connect = connector ?? _defaultConnect,
+       _arpReader = arpReader ?? platformArpReader();
 
-  final Future<Socket> Function(String host, int port,
-      {required Duration timeout}) _connect;
+  final Future<Socket> Function(
+    String host,
+    int port, {
+    required Duration timeout,
+  })
+  _connect;
 
   /// The platform neighbor-table reader — the SAME seam Network Discovery
   /// uses, so both tools read one ARP cache through one dispatch. Injectable
@@ -216,8 +220,7 @@ class ArpNdpService {
     String host,
     int port, {
     required Duration timeout,
-  }) =>
-      Socket.connect(host, port, timeout: timeout);
+  }) => Socket.connect(host, port, timeout: timeout);
 
   /// Ports a typical LAN host answers — used only as a reachability signal for
   /// discovery (a refused connection still proves the host is up). Curated to
@@ -267,7 +270,9 @@ class ArpNdpService {
     }
     final int? base = _ipToInt(ipv4);
     if (base == null) return const <String>[];
-    final int mask = prefixLength == 0 ? 0 : (0xFFFFFFFF << (32 - prefixLength)) & 0xFFFFFFFF;
+    final int mask = prefixLength == 0
+        ? 0
+        : (0xFFFFFFFF << (32 - prefixLength)) & 0xFFFFFFFF;
     final int network = base & mask;
     final int broadcast = network | (~mask & 0xFFFFFFFF);
     final List<String> hosts = <String>[];
@@ -361,8 +366,9 @@ class ArpNdpService {
                   : (r.available ? MacReadOutcome.ok : MacReadOutcome.failed);
               arpCache = r.available ? r.byIp : <String, String>{};
             }
-            final String? mac =
-                cap == ArpCapability.sweepWithMac ? arpCache[host] : null;
+            final String? mac = cap == ArpCapability.sweepWithMac
+                ? arpCache[host]
+                : null;
             found++;
             n = Neighbor(
               ip: host,
@@ -375,13 +381,15 @@ class ArpNdpService {
           active--;
           probed++;
           if (!closed) {
-            controller.add(ArpScanProgress(
-              probed: probed,
-              total: total,
-              found: found,
-              lastFound: n,
-              macRead: macRead,
-            ));
+            controller.add(
+              ArpScanProgress(
+                probed: probed,
+                total: total,
+                found: found,
+                lastFound: n,
+                macRead: macRead,
+              ),
+            );
           }
           if (!cancelled) pump();
           finishIfDone();

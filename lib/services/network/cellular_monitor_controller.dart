@@ -26,12 +26,7 @@ import 'cellular_info.dart';
 import 'cellular_info_bridge.dart';
 
 /// Lifecycle phases of the Cellular Information Live mode.
-enum CellularMonitorPhase {
-  loading,
-  needsInstall,
-  idleWithData,
-  streaming,
-}
+enum CellularMonitorPhase { loading, needsInstall, idleWithData, streaming }
 
 /// State machine for the Cellular Information Live mode, over a
 /// [CellularInfoBridge].
@@ -42,8 +37,8 @@ class CellularMonitorController extends ChangeNotifier {
   CellularMonitorController({
     required CellularInfoBridge bridge,
     Duration missingShortcutSettle = const Duration(seconds: 4),
-  })  : _bridge = bridge,
-        _missingShortcutSettle = missingShortcutSettle;
+  }) : _bridge = bridge,
+       _missingShortcutSettle = missingShortcutSettle;
 
   final CellularInfoBridge _bridge;
 

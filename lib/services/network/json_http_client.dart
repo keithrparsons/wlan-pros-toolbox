@@ -63,18 +63,21 @@ class JsonHttpException implements Exception {
 
 /// The injectable network seam: issue one GET, return the decoded JSON map.
 /// Throwing a [JsonHttpException] lets tests script every error branch.
-typedef JsonFetcher = Future<Map<String, dynamic>> Function(
-  Uri url,
-  Duration timeout,
-);
+typedef JsonFetcher =
+    Future<Map<String, dynamic>> Function(Uri url, Duration timeout);
 
 /// HTTPS-GET → JSON map helper with a precise error taxonomy.
 class JsonHttpClient {
   JsonHttpClient({JsonFetcher? fetcher, String? userAgent})
-      : userAgent = userAgent ?? defaultUserAgent,
-        _fetch = fetcher ??
-            ((Uri url, Duration timeout) =>
-                _runFetch(url, timeout, userAgent ?? defaultUserAgent, maxBodyBytes));
+    : userAgent = userAgent ?? defaultUserAgent,
+      _fetch =
+          fetcher ??
+          ((Uri url, Duration timeout) => _runFetch(
+            url,
+            timeout,
+            userAgent ?? defaultUserAgent,
+            maxBodyBytes,
+          ));
 
   final JsonFetcher _fetch;
 
@@ -136,7 +139,7 @@ class JsonHttpClient {
         throw const JsonHttpException(
           JsonHttpErrorKind.rateLimited,
           'The lookup API is rate-limiting requests right now. '
-              'Wait a minute and try again.',
+          'Wait a minute and try again.',
           statusCode: 429,
         );
       }

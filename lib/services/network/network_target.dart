@@ -184,14 +184,14 @@ abstract final class NetworkTarget {
   }
 
   static InvalidNetworkTarget _malformed() => const InvalidNetworkTarget(
-        reason: NetworkTargetRejection.malformedSyntax,
-        message: 'Not a valid host or IP address.',
-      );
+    reason: NetworkTargetRejection.malformedSyntax,
+    message: 'Not a valid host or IP address.',
+  );
 
   static InvalidNetworkTarget _internal() => const InvalidNetworkTarget(
-        reason: NetworkTargetRejection.privateOrInternal,
-        message: 'Refusing to follow a referral to an internal address.',
-      );
+    reason: NetworkTargetRejection.privateOrInternal,
+    message: 'Refusing to follow a referral to an internal address.',
+  );
 
   static bool _hasWhitespace(String s) => RegExp(r'\s').hasMatch(s);
 
@@ -266,7 +266,9 @@ abstract final class NetworkTarget {
       if (q.isEmpty) return false;
     }
     final List<String> labels = q.split('.');
-    final RegExp label = RegExp(r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$');
+    final RegExp label = RegExp(
+      r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$',
+    );
     for (final String l in labels) {
       if (!label.hasMatch(l)) return false;
     }

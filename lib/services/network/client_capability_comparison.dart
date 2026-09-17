@@ -127,7 +127,8 @@ class ThroughputComparison {
         position: null,
         percentOfCeiling: null,
         headline: 'You measured ${_mbps(measuredMbps)}.',
-        detail: 'There is nothing to compare it against yet. '
+        detail:
+            'There is nothing to compare it against yet. '
             '${_whyThereIsNoCeiling(ceiling)} The measurement stands on its '
             'own.',
         normalReasons: const <String>[],
@@ -143,8 +144,9 @@ class ThroughputComparison {
     // existed. A null here removes that position from the ladder instead.
     final double? favorable =
         capabilities.favorableThroughputEstimateMbps.valueOrNull;
-    final double? favorableFraction =
-        favorable == null ? null : favorable / ceilingMbps;
+    final double? favorableFraction = favorable == null
+        ? null
+        : favorable / ceilingMbps;
 
     final ThroughputPosition position;
     if (fraction < kPublishedRealThroughputLow) {
@@ -166,11 +168,11 @@ class ThroughputComparison {
       ceiling: ceiling,
       position: position,
       percentOfCeiling: fraction * 100,
-      headline: 'You measured ${_mbps(measuredMbps)}. This device tops out at '
+      headline:
+          'You measured ${_mbps(measuredMbps)}. This device tops out at '
           '${_mbps(ceilingMbps)} in theory.',
       detail: _detailFor(position, fraction),
-      normalReasons:
-          thereIsAGap ? kNormalReasonsForAGap : const <String>[],
+      normalReasons: thereIsAGap ? kNormalReasonsForAGap : const <String>[],
       caveat: _kCaveat,
     );
   }
@@ -209,11 +211,11 @@ class ThroughputComparison {
   /// Every user-facing string this comparison produces, so a wording check can
   /// see all of them in one place rather than sampling.
   List<String> get allCopy => <String>[
-        headline,
-        detail,
-        caveat,
-        ...normalReasons,
-      ];
+    headline,
+    detail,
+    caveat,
+    ...normalReasons,
+  ];
 
   static const String _kCaveat =
       'The theoretical figure assumes the widest channel, every spatial '

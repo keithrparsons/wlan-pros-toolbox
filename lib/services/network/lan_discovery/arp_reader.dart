@@ -66,19 +66,19 @@ class ArpReadResult {
   /// (iOS, Android, web). This is the ONLY result that licenses a "this
   /// platform cannot" claim in the UI.
   const ArpReadResult.unsupported(String reason)
-      : available = false,
-        entries = const <ArpEntry>[],
-        error = reason,
-        platformSupported = false;
+    : available = false,
+      entries = const <ArpEntry>[],
+      error = reason,
+      platformSupported = false;
 
   /// The read was ATTEMPTED on a platform that implements it, and it failed.
   /// The capability is real; this attempt did not work. UI must say "could
   /// not read", never "this platform cannot".
   const ArpReadResult.failed(String reason)
-      : available = false,
-        entries = const <ArpEntry>[],
-        error = reason,
-        platformSupported = true;
+    : available = false,
+      entries = const <ArpEntry>[],
+      error = reason,
+      platformSupported = true;
 
   /// Whether this platform HAS a neighbor-table reader, independent of whether
   /// this particular read succeeded.
@@ -114,8 +114,8 @@ class ArpReadResult {
 
   /// Convenience IP → MAC map for folding onto host records.
   Map<String, String> get byIp => <String, String>{
-        for (final ArpEntry e in entries) e.ip: e.mac,
-      };
+    for (final ArpEntry e in entries) e.ip: e.mac,
+  };
 }
 
 /// Reads the platform ARP cache. Injectable so tests supply a fake.
@@ -160,8 +160,9 @@ class UnavailableArpReader implements ArpReader {
 class MethodChannelArpReader implements ArpReader {
   const MethodChannelArpReader();
 
-  static const MethodChannel _channel =
-      MethodChannel('com.wlanpros.toolbox/arp_table');
+  static const MethodChannel _channel = MethodChannel(
+    'com.wlanpros.toolbox/arp_table',
+  );
 
   /// macOS reads the neighbor table for real, via the Swift sysctl channel.
   @override
@@ -208,13 +209,20 @@ class MethodChannelArpReader implements ArpReader {
         if (item is Map) {
           final Object? ip = item['ip'];
           final Object? mac = item['mac'];
-          if (ip is String && mac is String && ip.isNotEmpty && mac.isNotEmpty) {
+          if (ip is String &&
+              mac is String &&
+              ip.isNotEmpty &&
+              mac.isNotEmpty) {
             entries.add(ArpEntry(ip: ip, mac: mac.toLowerCase()));
           }
         }
       }
     }
-    return ArpReadResult(available: true, platformSupported: true, entries: entries);
+    return ArpReadResult(
+      available: true,
+      platformSupported: true,
+      entries: entries,
+    );
   }
 }
 
@@ -258,7 +266,11 @@ class WindowsIpNetTableArpReader implements ArpReader {
           if (e.key.isNotEmpty && e.value.isNotEmpty)
             ArpEntry(ip: e.key, mac: e.value.toLowerCase()),
       ];
-      return ArpReadResult(available: true, platformSupported: true, entries: entries);
+      return ArpReadResult(
+        available: true,
+        platformSupported: true,
+        entries: entries,
+      );
     } on WindowsArpReadException catch (e) {
       return ArpReadResult.failed('Windows ARP read failed: ${e.message}');
     } catch (e) {

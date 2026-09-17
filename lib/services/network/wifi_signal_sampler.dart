@@ -55,12 +55,12 @@ class WifiSignalSampler extends ChangeNotifier {
     WifiConnectionService? connectionService,
     Duration macPollInterval = const Duration(seconds: 2),
     Duration window = const Duration(seconds: 30),
-  })  // The public params are named without the underscore (clean API); the
-      // private fields mirror them, so the initializing-formal lint does not
-      // apply here.
-      // ignore_for_file: prefer_initializing_formals
-      : _macPollInterval = macPollInterval,
-        _window = window {
+  }) // The public params are named without the underscore (clean API); the
+    // private fields mirror them, so the initializing-formal lint does not
+    // apply here.
+    // ignore_for_file: prefer_initializing_formals
+    : _macPollInterval = macPollInterval,
+       _window = window {
     switch (source) {
       case WifiInfoSource.macosCoreWlan:
       case WifiInfoSource.androidWifiManager:
@@ -71,7 +71,8 @@ class WifiSignalSampler extends ChangeNotifier {
         // three do: `/toolboxapi/wifi` is a cheap read (four `iw` calls, no
         // radio dwell), so polling it yields a real RSSI series rather than a
         // single frozen reading.
-        _macAdapter = macAdapter ??
+        _macAdapter =
+            macAdapter ??
             switch (source) {
               WifiInfoSource.androidWifiManager => AndroidWifiInfoAdapter(),
               WifiInfoSource.windowsNativeWifi => WindowsWifiInfoAdapter(),
@@ -118,8 +119,9 @@ class WifiSignalSampler extends ChangeNotifier {
           connectionService: connectionService,
         );
         // 30s window at the ~1s companion-Shortcut cadence → ~30 samples.
-        _series =
-            WifiTimeSeries(capacity: _capacityFor(const Duration(seconds: 1)));
+        _series = WifiTimeSeries(
+          capacity: _capacityFor(const Duration(seconds: 1)),
+        );
         _controller!.addListener(_onControllerChanged);
       case WifiInfoSource.unsupported:
       case WifiInfoSource.web:
@@ -658,7 +660,8 @@ class WifiSignalSampler extends ChangeNotifier {
 
   void _appendMacSample(ConnectedAp info) {
     final ConnectedAp? last = _macLastCharted;
-    final bool unchanged = last != null &&
+    final bool unchanged =
+        last != null &&
         info.rssiDbm == last.rssiDbm &&
         info.snrDb == last.snrDb &&
         info.txRateMbps == last.txRateMbps &&

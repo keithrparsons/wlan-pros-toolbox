@@ -95,10 +95,10 @@ enum OuiRegistry {
 extension OuiRegistryLabel on OuiRegistry {
   /// Human label for the UI, e.g. "MA-L (/24)".
   String get label => switch (this) {
-        OuiRegistry.maL => 'MA-L (/24)',
-        OuiRegistry.maM => 'MA-M (/28)',
-        OuiRegistry.maS => 'MA-S (/36)',
-      };
+    OuiRegistry.maL => 'MA-L (/24)',
+    OuiRegistry.maM => 'MA-M (/28)',
+    OuiRegistry.maS => 'MA-S (/36)',
+  };
 }
 
 /// Pure-Dart MAC → vendor resolver over a bundled IEEE registry table.
@@ -177,20 +177,24 @@ class MacOuiService {
         isMulticast: false,
         matched: false,
         registry: null,
-        errorMessage: 'Enter a valid MAC address. 6 Hex bytes, e.g. '
+        errorMessage:
+            'Enter a valid MAC address. 6 Hex bytes, e.g. '
             'B8:27:EB:01:23:45 (colons, hyphens, dots, or no separators all '
             'work).',
       );
     }
 
-    final List<int> octets =
-        norm.split(':').map((String b) => int.parse(b, radix: 16)).toList();
+    final List<int> octets = norm
+        .split(':')
+        .map((String b) => int.parse(b, radix: 16))
+        .toList();
     final int first = octets[0];
     final bool isLocal = (first & _ulBit) != 0;
     final bool isMulticast = (first & _igBit) != 0;
 
-    final String hex12 =
-        octets.map((int o) => o.toRadixString(16).padLeft(2, '0')).join();
+    final String hex12 = octets
+        .map((int o) => o.toRadixString(16).padLeft(2, '0'))
+        .join();
     final String oui24 = hex12.substring(0, 6).toUpperCase();
 
     // Locally-administered or multicast addresses are not issued from an IEEE

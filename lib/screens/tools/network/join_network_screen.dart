@@ -40,6 +40,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../services/network/join_backend.dart';
+import '../../../services/network/join_backend_selector.dart';
 import '../../../services/network/join_network_list.dart';
 import '../../../services/network/pi_backend.dart';
 import '../../../services/network/pi_backend_client.dart';
@@ -49,9 +51,13 @@ import '../../../widgets/app_select.dart';
 import '../labeled_field.dart';
 
 class JoinNetworkScreen extends StatefulWidget {
-  const JoinNetworkScreen({super.key, this.client});
+  const JoinNetworkScreen({super.key, this.client, this.backend});
 
   final PiBackendClient? client;
+
+  /// Overrides backend selection. Tests inject; production leaves it null and
+  /// [selectJoinBackend] decides from the platform.
+  final JoinBackend? backend;
 
   @override
   State<JoinNetworkScreen> createState() => _JoinNetworkScreenState();
@@ -59,6 +65,15 @@ class JoinNetworkScreen extends StatefulWidget {
 
 class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
   late final PiBackendClient _client = widget.client ?? PiBackendClient();
+
+  /// WHICH RADIO THIS SCREEN DRIVES. An injected backend wins so tests can pin
+  /// either path; an injected `client` still means the Pi, which keeps every
+  /// existing test working unchanged.
+  late final JoinBackend _backend =
+      widget.backend ??
+      (widget.client != null
+          ? PiJoinBackend(_client)
+          : selectJoinBackend(_client));
   final TextEditingController _psk = TextEditingController();
   final ScrollController _scroll = ScrollController();
   final GlobalKey _resultKey = GlobalKey();
@@ -72,7 +87,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
   JoinCandidate? _selected;
 
   bool _busy = false;
-  PiJoinResult? _result;
+  JoinOutcome? _result;
   String? _actionError;
 
   @override
@@ -90,7 +105,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
   Future<void> _bootstrap() async {
     try {
-      final List<PiScanInterface> radios = await _client.scanInterfaces();
+      final List<PiScanInterface> radios = await _backend.radios();
       if (!mounted) return;
       setState(() {
         _radios = radios;
@@ -108,8 +123,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       _scanError = null;
     });
     try {
-      final List<PiScanNet> nets =
-          await _client.scan(interface: _radio ?? 'wlan0');
+      final List<PiScanNet> nets = await _backend.scan(interface: _radio);
       if (!mounted) return;
       final List<JoinCandidate> rows = buildJoinCandidates(nets);
       setState(() {
@@ -120,15 +134,21 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         // makes the refresh button hostile.
         final JoinCandidate? keep = _selected == null
             ? null
-            : rows.where((JoinCandidate c) =>
-                c.ssid == _selected!.ssid && c.band == _selected!.band).firstOrNull;
+            : rows
+                  .where(
+                    (JoinCandidate c) =>
+                        c.ssid == _selected!.ssid && c.band == _selected!.band,
+                  )
+                  .firstOrNull;
         _selected = keep;
       });
     } on Object catch (e) {
       if (!mounted) return;
       setState(() {
         _scanning = false;
-        _scanError = e is PiBackendException ? e.toString() : 'The scan failed.';
+        _scanError = e is PiBackendException
+            ? e.toString()
+            : 'The scan failed.';
       });
     }
   }
@@ -142,7 +162,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       _result = null;
     });
     try {
-      final PiJoinResult r = await _client.wifiConnect(
+      final JoinOutcome r = await _backend.join(
         ssid: c.ssid!,
         security: c.security,
         psk: c.security == PiJoinSecurity.open ? null : _psk.text,
@@ -160,6 +180,8 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
         _busy = false;
         _actionError = e is PiBackendException
             ? e.toString().replaceFirst('PiBackendException: ', '')
+            : _backend.joinsThisDevice
+            ? 'The join could not be started on this computer.'
             : 'The join could not be sent to the Pi.';
       });
       _scrollToResult();
@@ -172,7 +194,7 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
       _actionError = null;
     });
     try {
-      final PiJoinResult r = await _client.wifiDisconnect(interface: _radio);
+      final JoinOutcome r = await _backend.disconnect(interface: _radio);
       if (!mounted) return;
       setState(() {
         _result = r;
@@ -194,10 +216,12 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final BuildContext? ctx = _resultKey.currentContext;
       if (ctx == null) return;
-      Scrollable.ensureVisible(ctx,
-          duration: const Duration(milliseconds: 250),
-          alignment: 0.1,
-          curve: Curves.easeOut);
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 250),
+        alignment: 0.1,
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -288,7 +312,10 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
 
             if (_result != null) ...<Widget>[
               const SizedBox(height: AppSpacing.xs),
-              _ResultCard(key: _resultKey, result: _result!),
+              if (_result!.detail != null)
+                _ResultCard(key: _resultKey, result: _result!.detail!)
+              else
+                _NativeResultCard(key: _resultKey, outcome: _result!),
             ],
 
             const SizedBox(height: AppSpacing.sm),
@@ -301,22 +328,24 @@ class _JoinNetworkScreenState extends State<JoinNetworkScreen> {
             for (final JoinCandidate c in _candidates)
               _NetworkRow(
                 candidate: c,
-                selected: identical(c, _selected) ||
+                selected:
+                    identical(c, _selected) ||
                     (_selected != null &&
                         c.ssid == _selected!.ssid &&
                         c.band == _selected!.band),
                 onTap: _busy
                     ? null
                     : () => setState(() {
-                          _selected = c;
-                          _psk.clear();
-                          _result = null;
-                          _actionError = null;
-                        }),
+                        _selected = c;
+                        _psk.clear();
+                        _result = null;
+                        _actionError = null;
+                      }),
               ),
             if (!_scanning && _candidates.isEmpty && _scanError == null)
               const _Banner(
-                text: 'The scan finished and found no networks. That is a real '
+                text:
+                    'The scan finished and found no networks. That is a real '
                     'answer, not an error: check the radio is not in monitor '
                     'mode and that there is something on the air here.',
               ),
@@ -372,8 +401,7 @@ class _RadioPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme c = context.colors;
-    final bool asSegments =
-        radios.length > 1 && radios.length <= _maxSegments;
+    final bool asSegments = radios.length > 1 && radios.length <= _maxSegments;
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,11 +412,13 @@ class _RadioPicker extends StatelessWidget {
             field: asSegments
                 ? SegmentedButton<String>(
                     segments: radios
-                        .map((PiScanInterface i) => ButtonSegment<String>(
-                              value: i.name,
-                              label: Text(i.name),
-                              tooltip: i.label,
-                            ))
+                        .map(
+                          (PiScanInterface i) => ButtonSegment<String>(
+                            value: i.name,
+                            label: Text(i.name),
+                            tooltip: i.label,
+                          ),
+                        )
                         .toList(growable: false),
                     selected: <String>{selected},
                     showSelectedIcon: false,
@@ -411,11 +441,11 @@ class _RadioPicker extends StatelessWidget {
             radios.length > 1
                 // Name the count, so a two-radio Pi never again reads as one.
                 ? 'This Pi has ${radios.length} radios. The one you pick does '
-                    'both the scanning and the joining; the other stays free '
-                    'for scanning or capture, which is usually what you want.'
+                      'both the scanning and the joining; the other stays free '
+                      'for scanning or capture, which is usually what you want.'
                 : 'This radio does both. On a two-radio Pi the other one stays '
-                    'free for scanning or capture, which is usually what you '
-                    'want.',
+                      'free for scanning or capture, which is usually what you '
+                      'want.',
             style: TextStyle(fontSize: 13, color: c.textTertiary),
           ),
         ],
@@ -451,11 +481,14 @@ class _ActionPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Pick a network below',
-                style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: c.textPrimary)),
+            Text(
+              'Pick a network below',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
             const SizedBox(height: 3),
             Text(
               'Everything you need to join it appears here, above the list, so '
@@ -467,9 +500,11 @@ class _ActionPanel extends StatelessWidget {
       );
     }
 
-    final bool needsPsk = s.security == PiJoinSecurity.wpa2Psk ||
+    final bool needsPsk =
+        s.security == PiJoinSecurity.wpa2Psk ||
         s.security == PiJoinSecurity.wpa3Psk;
-    final bool canJoin = !busy &&
+    final bool canJoin =
+        !busy &&
         s.ssid != null &&
         s.security != PiJoinSecurity.unsupported &&
         (!needsPsk || psk.text.isNotEmpty);
@@ -478,19 +513,24 @@ class _ActionPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(s.ssid ?? 'Hidden network',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: c.textPrimary)),
+          Text(
+            s.ssid ?? 'Hidden network',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: c.textPrimary,
+            ),
+          ),
           Text(
             '${s.bandLabel} · ${_securityLabel(s.security)}'
             '${s.bssCount > 1 ? " · ${s.bssCount} access points" : ""}',
             style: TextStyle(fontSize: 13.5, color: c.textSecondary),
           ),
           if (s.bssid != null)
-            Text('Strongest: ${s.bssid}  ${s.signalDbm} dBm',
-                style: TextStyle(fontSize: 13, color: c.textTertiary)),
+            Text(
+              'Strongest: ${s.bssid}  ${s.signalDbm} dBm',
+              style: TextStyle(fontSize: 13, color: c.textTertiary),
+            ),
           const SizedBox(height: AppSpacing.xs),
 
           if (needsPsk)
@@ -504,7 +544,8 @@ class _ActionPanel extends StatelessWidget {
                 autocorrect: false,
                 enableSuggestions: false,
                 decoration: const InputDecoration(
-                    hintText: '8 to 63 characters, or a 64-character hex key'),
+                  hintText: '8 to 63 characters, or a 64-character hex key',
+                ),
                 onChanged: (_) => (context as Element).markNeedsBuild(),
               ),
             )
@@ -518,7 +559,8 @@ class _ActionPanel extends StatelessWidget {
 
           if (s.ssid == null)
             const _Banner(
-              text: 'This network does not broadcast its name, so it cannot be '
+              text:
+                  'This network does not broadcast its name, so it cannot be '
                   'joined by picking it from a list. Nothing here can be sent '
                   'without an SSID to send.',
               danger: true,
@@ -561,6 +603,65 @@ class _ActionPanel extends StatelessWidget {
 
 /// REQUIREMENT 3 and 4: the verdict is the biggest thing on screen, and SSID
 /// and BSSID lead above any detail.
+/// The result of a join this DEVICE performed, which knows far less than a Pi.
+///
+/// DELIBERATELY SPARSE. A native join can report whether the radio ended up
+/// associated and to which SSID, and nothing else. The Pi's card shows RSSI,
+/// noise, MCS, NSS and phy mode because a Pi measures them; this one shows none
+/// of that because Windows does not hand it to us. Padding this card out to
+/// look like the other one would mean inventing five numbers, which is the
+/// failure the whole backend split exists to prevent.
+class _NativeResultCard extends StatelessWidget {
+  const _NativeResultCard({super.key, required this.outcome});
+
+  final JoinOutcome outcome;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme c = context.colors;
+    final bool ok = outcome.connected;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: c.surface2,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: ok ? c.statusSuccess : c.statusDanger),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            ok ? 'Connected' : 'Not connected',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: ok ? c.statusSuccess : c.statusDanger,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (outcome.ssid != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              ok
+                  ? 'This computer joined ${outcome.ssid}.'
+                  : 'This computer did not join ${outcome.ssid}.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+          if (outcome.failureNote != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              outcome.failureNote!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: c.textSecondary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _ResultCard extends StatelessWidget {
   const _ResultCard({super.key, required this.result});
 
@@ -579,7 +680,9 @@ class _ResultCard extends StatelessWidget {
         color: c.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-            color: ok ? c.statusSuccess : c.statusDanger, width: 1.5),
+          color: ok ? c.statusSuccess : c.statusDanger,
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,24 +700,30 @@ class _ResultCard extends StatelessWidget {
 
           // SSID and BSSID lead. On a multi-AP network the BSSID is the answer.
           if (l.ssid != null)
-            Text(l.ssid!,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: c.textPrimary)),
+            Text(
+              l.ssid!,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
           if (l.bssid != null)
-            Text(l.bssid!,
-                style: TextStyle(
-                    fontSize: 15,
-                    fontFeatures: const <FontFeature>[
-                      FontFeature.tabularFigures()
-                    ],
-                    color: c.textSecondary)),
+            Text(
+              l.bssid!,
+              style: TextStyle(
+                fontSize: 15,
+                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+                color: c.textSecondary,
+              ),
+            ),
 
           if (!ok && l.reason != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
-            Text(l.reason!,
-                style: TextStyle(fontSize: 14.5, color: c.textSecondary)),
+            Text(
+              l.reason!,
+              style: TextStyle(fontSize: 14.5, color: c.textSecondary),
+            ),
           ],
 
           if (ok) ...<Widget>[
@@ -622,9 +731,11 @@ class _ResultCard extends StatelessWidget {
             _Detail(label: 'Interface', value: l.interface),
             if (l.freqMhz != null)
               _Detail(
-                  label: 'Channel',
-                  value: '${l.channel ?? "?"}  (${l.freqMhz} MHz'
-                      '${l.widthMhz != null ? ", ${l.widthMhz} MHz wide" : ""})'),
+                label: 'Channel',
+                value:
+                    '${l.channel ?? "?"}  (${l.freqMhz} MHz'
+                    '${l.widthMhz != null ? ", ${l.widthMhz} MHz wide" : ""})',
+              ),
             if (l.signalDbm != null)
               _Detail(label: 'Signal', value: '${l.signalDbm} dBm'),
             if (l.phyMode != null) _Detail(label: 'Mode', value: l.phyMode!),
@@ -640,11 +751,12 @@ class _ResultCard extends StatelessWidget {
             result.secureTransport
                 ? 'The passphrase reached the Pi over TLS.'
                 : 'The passphrase was sent over plain HTTP. That is the normal '
-                    'bench default and it is fine on your own bench. On a '
-                    'client network, use the hardened image build.',
+                      'bench default and it is fine on your own bench. On a '
+                      'client network, use the hardened image build.',
             style: TextStyle(
-                fontSize: 12.5,
-                color: result.secureTransport ? c.textTertiary : c.statusWarning),
+              fontSize: 12.5,
+              color: result.secureTransport ? c.textTertiary : c.statusWarning,
+            ),
           ),
         ],
       ),
@@ -679,12 +791,15 @@ class _NetworkRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.card),
           child: Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm, vertical: 11),
+              horizontal: AppSpacing.sm,
+              vertical: 11,
+            ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(
-                  color: selected ? c.primary : c.border,
-                  width: selected ? 1.5 : 1),
+                color: selected ? c.primary : c.border,
+                width: selected ? 1.5 : 1,
+              ),
             ),
             child: Row(
               children: <Widget>[
@@ -697,16 +812,19 @@ class _NetworkRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: FontWeight.w600,
-                          fontStyle:
-                              x.isHidden ? FontStyle.italic : FontStyle.normal,
+                          fontStyle: x.isHidden
+                              ? FontStyle.italic
+                              : FontStyle.normal,
                           color: blocked ? c.textTertiary : c.textPrimary,
                         ),
                       ),
                       Text(
                         '${x.bandLabel} · ${_securityLabel(x.security)}'
                         '${x.bssCount > 1 ? " · ${x.bssCount} APs" : ""}',
-                        style:
-                            TextStyle(fontSize: 12.5, color: c.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: c.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -716,7 +834,7 @@ class _NetworkRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontFeatures: const <FontFeature>[
-                      FontFeature.tabularFigures()
+                      FontFeature.tabularFigures(),
                     ],
                     color: c.textSecondary,
                   ),
@@ -731,8 +849,11 @@ class _NetworkRow extends StatelessWidget {
 }
 
 class _ListHeader extends StatelessWidget {
-  const _ListHeader(
-      {required this.count, required this.scanning, required this.radio});
+  const _ListHeader({
+    required this.count,
+    required this.scanning,
+    required this.radio,
+  });
   final int count;
   final bool scanning;
   final String? radio;
@@ -748,19 +869,21 @@ class _ListHeader extends StatelessWidget {
             scanning
                 ? 'Scanning...'
                 : '$count network${count == 1 ? "" : "s"}'
-                    '${radio == null ? "" : " on $radio"}',
+                      '${radio == null ? "" : " on $radio"}',
             style: TextStyle(
-                fontSize: 12.5,
-                letterSpacing: 0.9,
-                fontWeight: FontWeight.w700,
-                color: c.textTertiary),
+              fontSize: 12.5,
+              letterSpacing: 0.9,
+              fontWeight: FontWeight.w700,
+              color: c.textTertiary,
+            ),
           ),
           if (scanning) ...<Widget>[
             const SizedBox(width: AppSpacing.xs),
             const SizedBox(
-                width: 13,
-                height: 13,
-                child: CircularProgressIndicator(strokeWidth: 2)),
+              width: 13,
+              height: 13,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ],
         ],
       ),
@@ -782,12 +905,18 @@ class _Detail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(
-              width: 84,
-              child: Text(label,
-                  style: TextStyle(fontSize: 13.5, color: c.textTertiary))),
+            width: 84,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13.5, color: c.textTertiary),
+            ),
+          ),
           Expanded(
-              child: Text(value,
-                  style: TextStyle(fontSize: 13.5, color: c.textPrimary))),
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 13.5, color: c.textPrimary),
+            ),
+          ),
         ],
       ),
     );
@@ -806,17 +935,21 @@ class _Banner extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(top: AppSpacing.xxs),
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs + 2, vertical: 10),
+        horizontal: AppSpacing.xs + 2,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: danger ? c.statusDangerFill : c.surface2,
         borderRadius: BorderRadius.circular(AppRadius.control),
-        border:
-            Border.all(color: danger ? c.statusDanger : c.border),
+        border: Border.all(color: danger ? c.statusDanger : c.border),
       ),
-      child: Text(text,
-          style: TextStyle(
-              fontSize: 13.5,
-              color: danger ? c.textPrimary : c.textSecondary)),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 13.5,
+          color: danger ? c.textPrimary : c.textSecondary,
+        ),
+      ),
     );
   }
 }
@@ -842,8 +975,8 @@ class _Card extends StatelessWidget {
 }
 
 String _securityLabel(PiJoinSecurity s) => switch (s) {
-      PiJoinSecurity.open => 'Open',
-      PiJoinSecurity.wpa2Psk => 'WPA2-PSK',
-      PiJoinSecurity.wpa3Psk => 'WPA3-SAE',
-      PiJoinSecurity.unsupported => '802.1X / OWE',
-    };
+  PiJoinSecurity.open => 'Open',
+  PiJoinSecurity.wpa2Psk => 'WPA2-PSK',
+  PiJoinSecurity.wpa3Psk => 'WPA3-SAE',
+  PiJoinSecurity.unsupported => '802.1X / OWE',
+};

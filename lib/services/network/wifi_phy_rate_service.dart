@@ -112,11 +112,11 @@ class WifiPhyRateService {
   /// TPUT_SYM).
   static const Map<WifiStd, Map<String, double>> sym =
       <WifiStd, Map<String, double>>{
-    WifiStd.ht: <String, double>{'0.4': 3.6, '0.8': 4.0},
-    WifiStd.vht: <String, double>{'0.4': 3.6, '0.8': 4.0},
-    WifiStd.he: <String, double>{'0.8': 13.6, '1.6': 14.4, '3.2': 16.0},
-    WifiStd.eht: <String, double>{'0.8': 13.6, '1.6': 14.4, '3.2': 16.0},
-  };
+        WifiStd.ht: <String, double>{'0.4': 3.6, '0.8': 4.0},
+        WifiStd.vht: <String, double>{'0.4': 3.6, '0.8': 4.0},
+        WifiStd.he: <String, double>{'0.8': 13.6, '1.6': 14.4, '3.2': 16.0},
+        WifiStd.eht: <String, double>{'0.8': 13.6, '1.6': 14.4, '3.2': 16.0},
+      };
 
   /// Highest valid MCS index per standard (PWA TPUT_MAX_MCS).
   static const Map<WifiStd, int> maxMcs = <WifiStd, int>{

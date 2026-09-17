@@ -29,8 +29,7 @@ import 'dart:io';
 /// Fetches the device's public IP as a bare string. Injectable [fetcher] seam so
 /// unit tests script responses without touching the network.
 class PublicIpService {
-  PublicIpService({PlainTextFetcher? fetcher})
-      : _fetch = fetcher ?? _runFetch;
+  PublicIpService({PlainTextFetcher? fetcher}) : _fetch = fetcher ?? _runFetch;
 
   final PlainTextFetcher _fetch;
 
@@ -43,14 +42,11 @@ class PublicIpService {
 
   /// Public APIs ask callers to identify themselves; a stable UA keeps us off
   /// anonymous-client rate buckets and mirrors [JsonHttpClient].
-  static const String userAgent =
-      'WLANProsToolbox/1.0 (+https://wlanpros.com)';
+  static const String userAgent = 'WLANProsToolbox/1.0 (+https://wlanpros.com)';
 
   /// Returns the device's public IP (IPv4 or IPv6), or null when neither
   /// endpoint could be reached / parsed. Never throws.
-  Future<String?> fetch({
-    Duration timeout = const Duration(seconds: 8),
-  }) async {
+  Future<String?> fetch({Duration timeout = const Duration(seconds: 8)}) async {
     for (final String endpoint in endpoints) {
       try {
         final String body = await _fetch(endpoint, timeout);
@@ -100,7 +96,9 @@ class PublicIpService {
   static Future<String> _runFetch(String rawUrl, Duration timeout) async {
     final Uri? uri = Uri.tryParse(rawUrl.trim());
     if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
-      throw const FormatException('Public IP endpoint must be a valid https URL.');
+      throw const FormatException(
+        'Public IP endpoint must be a valid https URL.',
+      );
     }
     final HttpClient client = HttpClient();
     client.connectionTimeout = timeout;
@@ -111,13 +109,16 @@ class PublicIpService {
       final HttpClientResponse resp = await req.close().timeout(timeout);
       if (resp.statusCode < 200 || resp.statusCode >= 300) {
         await resp.drain<void>();
-        throw HttpException('Public IP lookup returned HTTP ${resp.statusCode}.');
+        throw HttpException(
+          'Public IP lookup returned HTTP ${resp.statusCode}.',
+        );
       }
       // The body is a few bytes; read it bounded for safety.
       final List<int> bytes = <int>[];
       await for (final List<int> chunk in resp.timeout(timeout)) {
         bytes.addAll(chunk);
-        if (bytes.length > 4096) break; // a public IP is < 50 bytes; guard runaway
+        if (bytes.length > 4096)
+          break; // a public IP is < 50 bytes; guard runaway
       }
       return String.fromCharCodes(bytes);
     } finally {
@@ -127,4 +128,5 @@ class PublicIpService {
 }
 
 /// The injectable network seam: issue one GET, return the bare body text.
-typedef PlainTextFetcher = Future<String> Function(String url, Duration timeout);
+typedef PlainTextFetcher =
+    Future<String> Function(String url, Duration timeout);

@@ -94,11 +94,15 @@ Future<String?> _runProcess(String exe, List<String> args) async {
 /// ANSWER meaning "we could not tell", never "there is no route". The caller
 /// must not treat it as absence (GL-005).
 class DefaultRouteProbe {
-  DefaultRouteProbe({ShellRunner? runner, bool? isMacOS, bool? isLinux, bool? isWindows})
-      : _run = runner ?? _runProcess,
-        _isMacOS = isMacOS ?? Platform.isMacOS,
-        _isLinux = isLinux ?? Platform.isLinux,
-        _isWindows = isWindows ?? Platform.isWindows;
+  DefaultRouteProbe({
+    ShellRunner? runner,
+    bool? isMacOS,
+    bool? isLinux,
+    bool? isWindows,
+  }) : _run = runner ?? _runProcess,
+       _isMacOS = isMacOS ?? Platform.isMacOS,
+       _isLinux = isLinux ?? Platform.isLinux,
+       _isWindows = isWindows ?? Platform.isWindows;
 
   final ShellRunner _run;
   final bool _isMacOS;
@@ -141,7 +145,8 @@ class DefaultRouteProbe {
     final String? out = await _run('ifconfig', <String>[iface]);
     if (out == null) return (ip: null, prefix: null);
     final RegExp re = RegExp(
-        r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+(0x[0-9a-fA-F]{8}|\d+\.\d+\.\d+\.\d+)');
+      r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+(0x[0-9a-fA-F]{8}|\d+\.\d+\.\d+\.\d+)',
+    );
     final RegExpMatch? m = re.firstMatch(out);
     if (m == null) return (ip: null, prefix: null);
     return (ip: m.group(1), prefix: parseNetmask(m.group(2)!));
@@ -158,20 +163,33 @@ class DefaultRouteProbe {
   // `/toolboxapi/links` already hands over `is_default_route_v4` as a typed
   // field. That is the better source and should be preferred wherever it exists.
   Future<DefaultRoute?> _linux() async {
-    final String? route =
-        await _run('ip', <String>['-o', '-4', 'route', 'show', 'default']);
+    final String? route = await _run('ip', <String>[
+      '-o',
+      '-4',
+      'route',
+      'show',
+      'default',
+    ]);
     if (route == null) return null;
-    final RegExpMatch? m =
-        RegExp(r'default\s+via\s+(\S+)\s+dev\s+(\S+)').firstMatch(route);
+    final RegExpMatch? m = RegExp(
+      r'default\s+via\s+(\S+)\s+dev\s+(\S+)',
+    ).firstMatch(route);
     if (m == null) return null;
     final String iface = m.group(2)!;
-    final String? addrOut =
-        await _run('ip', <String>['-o', '-4', 'addr', 'show', 'dev', iface]);
+    final String? addrOut = await _run('ip', <String>[
+      '-o',
+      '-4',
+      'addr',
+      'show',
+      'dev',
+      iface,
+    ]);
     String? ip;
     int? prefix;
     if (addrOut != null) {
-      final RegExpMatch? a =
-          RegExp(r'inet\s+(\d+\.\d+\.\d+\.\d+)/(\d+)').firstMatch(addrOut);
+      final RegExpMatch? a = RegExp(
+        r'inet\s+(\d+\.\d+\.\d+\.\d+)/(\d+)',
+      ).firstMatch(addrOut);
       ip = a?.group(1);
       prefix = a == null ? null : int.tryParse(a.group(2)!);
     }

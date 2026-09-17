@@ -449,7 +449,8 @@ class ConnectedAp {
       noiseDbm: mergedNoise,
       // Prefer a directly-reported SNR from either side; only fall back to a
       // derived value if both sides lack one but the inputs are now present.
-      snrDb: snrDb ??
+      snrDb:
+          snrDb ??
           other.snrDb ??
           ((mergedRssi != null && mergedNoise != null)
               ? mergedRssi - mergedNoise
@@ -475,9 +476,9 @@ class ConnectedAp {
       snrDerived: snrDb != null
           ? snrDerived
           : (other.snrDb != null
-              ? other.snrDerived
-              // We synthesized SNR from merged rssi/noise above → it is derived.
-              : true),
+                ? other.snrDerived
+                // We synthesized SNR from merged rssi/noise above → it is derived.
+                : true),
       securityAvailable: securityAvailable || other.securityAvailable,
     );
   }

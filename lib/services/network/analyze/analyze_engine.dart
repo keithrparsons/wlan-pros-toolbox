@@ -45,8 +45,7 @@ class AnalysisReport {
 
   /// The single headline finding (the first in order, the verdict when one
   /// fired), or null when nothing fired.
-  AnalysisFinding? get headline =>
-      findings.isEmpty ? null : findings.first;
+  AnalysisFinding? get headline => findings.isEmpty ? null : findings.first;
 
   /// The highest-priority [FindingSeverity] present, or null when empty. The
   /// report view tints its hero marker with this.
@@ -91,8 +90,7 @@ class AnalyzeEngine {
 
     // 2. Context-only suppression: drop "no problem here" notes unless a real
     //    (non-context-only) finding also fired.
-    final bool hasSubstantive =
-        fired.any((_Fired f) => !f.rule.contextOnly);
+    final bool hasSubstantive = fired.any((_Fired f) => !f.rule.contextOnly);
     final List<_Fired> kept = hasSubstantive
         ? fired
         : fired.where((_Fired f) => !f.rule.contextOnly).toList();
@@ -101,11 +99,13 @@ class AnalyzeEngine {
     //    (verdict → security → worst measured-quality → the rest), then the
     //    rule library's declaration order as the final stable tiebreak.
     kept.sort((_Fired a, _Fired b) {
-      final int bySeverity =
-          a.rule.severity.rank.compareTo(b.rule.severity.rank);
+      final int bySeverity = a.rule.severity.rank.compareTo(
+        b.rule.severity.rank,
+      );
       if (bySeverity != 0) return bySeverity;
-      final int byCategory =
-          a.rule.category.rank.compareTo(b.rule.category.rank);
+      final int byCategory = a.rule.category.rank.compareTo(
+        b.rule.category.rank,
+      );
       if (byCategory != 0) return byCategory;
       return a.index.compareTo(b.index);
     });
@@ -117,16 +117,18 @@ class AnalyzeEngine {
     }
 
     final List<AnalysisFinding> findings = out
-        .map((_Fired f) => AnalysisFinding(
-              ruleId: f.rule.id,
-              category: f.rule.category,
-              severity: f.rule.severity,
-              explanation: f.rule.responseDraft,
-              // The engine's "no problem here" reassurance rules (contextOnly)
-              // surface to the screen as the §2 "Good" chip, not an advisory.
-              isReassurance: f.rule.contextOnly,
-              pendingRatification: f.rule.pendingRatification,
-            ))
+        .map(
+          (_Fired f) => AnalysisFinding(
+            ruleId: f.rule.id,
+            category: f.rule.category,
+            severity: f.rule.severity,
+            explanation: f.rule.responseDraft,
+            // The engine's "no problem here" reassurance rules (contextOnly)
+            // surface to the screen as the §2 "Good" chip, not an advisory.
+            isReassurance: f.rule.contextOnly,
+            pendingRatification: f.rule.pendingRatification,
+          ),
+        )
         .toList(growable: false);
 
     return AnalysisReport(findings);

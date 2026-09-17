@@ -174,13 +174,17 @@ class PingProgress {
 class PingService {
   PingService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
-        connector,
+    connector,
     Future<String?> Function(String host)? resolver,
-  })  : _connect = connector ?? _defaultConnect,
-        _resolve = resolver ?? _defaultResolve;
+  }) : _connect = connector ?? _defaultConnect,
+       _resolve = resolver ?? _defaultResolve;
 
-  final Future<Socket> Function(String host, int port,
-      {required Duration timeout}) _connect;
+  final Future<Socket> Function(
+    String host,
+    int port, {
+    required Duration timeout,
+  })
+  _connect;
 
   /// How a hostname becomes an IP for the pre-probe resolvability gate.
   /// Injected in tests so the resolve-failure path is exercised with zero DNS
@@ -273,8 +277,9 @@ class PingService {
         // Space probes by `interval`, minus the time the probe already took,
         // so the cadence stays close to the requested interval under latency.
         final Duration spent = reply.rtt ?? timeout;
-        final Duration wait =
-            interval > spent ? interval - spent : Duration.zero;
+        final Duration wait = interval > spent
+            ? interval - spent
+            : Duration.zero;
         if (wait > Duration.zero) {
           await Future<void>.delayed(wait);
         }
@@ -328,11 +333,11 @@ class PingService {
   /// Short, precise reason for the per-reply line. Never "refused" — a refusal
   /// is a success here, not a failure.
   static String _labelFor(TcpFailureReason reason) => switch (reason) {
-        TcpFailureReason.timedOut => 'timeout',
-        TcpFailureReason.unreachable => 'unreachable',
-        TcpFailureReason.lookupFailure => 'lookup failed',
-        TcpFailureReason.unknown => 'error',
-        // Unreachable in practice: a refusal never reaches this method.
-        TcpFailureReason.refused => 'refused',
-      };
+    TcpFailureReason.timedOut => 'timeout',
+    TcpFailureReason.unreachable => 'unreachable',
+    TcpFailureReason.lookupFailure => 'lookup failed',
+    TcpFailureReason.unknown => 'error',
+    // Unreachable in practice: a refusal never reaches this method.
+    TcpFailureReason.refused => 'refused',
+  };
 }

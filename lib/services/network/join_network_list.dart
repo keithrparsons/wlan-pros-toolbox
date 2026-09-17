@@ -87,8 +87,9 @@ List<JoinCandidate> buildJoinCandidates(List<PiScanNet> nets) {
 
   for (int i = 0; i < nets.length; i++) {
     final PiScanNet n = nets[i];
-    final ({WifiBand band, int channel})? c =
-        frequencyToChannel(n.freqMhz.toDouble());
+    final ({WifiBand band, int channel})? c = frequencyToChannel(
+      n.freqMhz.toDouble(),
+    );
     // A hidden BSS gets a key unique to itself, so two hidden networks on one
     // band stay two rows.
     final String key = n.ssid == null
@@ -104,14 +105,16 @@ List<JoinCandidate> buildJoinCandidates(List<PiScanNet> nets) {
     final List<PiScanNet> members = e.value
       ..sort((PiScanNet a, PiScanNet b) => b.signalDbm.compareTo(a.signalDbm));
     final PiScanNet best = members.first;
-    out.add(JoinCandidate(
-      ssid: best.ssid,
-      band: groupBand[e.key],
-      channel: groupChannel[e.key],
-      security: _groupSecurity(members),
-      strongest: best,
-      bssCount: members.length,
-    ));
+    out.add(
+      JoinCandidate(
+        ssid: best.ssid,
+        band: groupBand[e.key],
+        channel: groupChannel[e.key],
+        security: _groupSecurity(members),
+        strongest: best,
+        bssCount: members.length,
+      ),
+    );
   }
 
   out.sort((JoinCandidate a, JoinCandidate b) {
@@ -220,7 +223,10 @@ String keyMgmtFromSecurityTokens(List<String> tokens) {
         parts.add('wpa-psk');
       case 'wpa3personal' || 'wpa3transition':
         parts.add('sae');
-      case 'wpaenterprise' || 'wpa2enterprise' || 'wpa3enterprise' || 'enterprise':
+      case 'wpaenterprise' ||
+          'wpa2enterprise' ||
+          'wpa3enterprise' ||
+          'enterprise':
         parts.add('wpa-eap');
       case 'owe' || 'owetransition':
         parts.add('owe');
@@ -243,7 +249,16 @@ String keyMgmtFromSecurityTokens(List<String> tokens) {
 /// [rows] are `ScannedAp`-shaped maps as the platform channels deliver them,
 /// which keeps this layer free of a dependency on the scan service.
 List<JoinCandidate> joinCandidatesFromNativeRows(
-  List<({String? ssid, String bssid, int rssiDbm, int frequencyMhz, List<String> security})> rows,
+  List<
+    ({
+      String? ssid,
+      String bssid,
+      int rssiDbm,
+      int frequencyMhz,
+      List<String> security,
+    })
+  >
+  rows,
 ) {
   return buildJoinCandidates(<PiScanNet>[
     for (final r in rows)

@@ -191,21 +191,19 @@ class SslInspectResult {
     required InspectedCertificate certificate,
     required String? alpn,
     required int handshakeMs,
-  }) =>
-      SslInspectResult._(
-        host: host,
-        port: port,
-        certificate: certificate,
-        alpn: alpn,
-        handshakeMs: handshakeMs,
-      );
+  }) => SslInspectResult._(
+    host: host,
+    port: port,
+    certificate: certificate,
+    alpn: alpn,
+    handshakeMs: handshakeMs,
+  );
 
   factory SslInspectResult.failure({
     required String host,
     required int port,
     required String message,
-  }) =>
-      SslInspectResult._(host: host, port: port, errorMessage: message);
+  }) => SslInspectResult._(host: host, port: port, errorMessage: message);
 
   final String host;
   final int port;
@@ -240,14 +238,16 @@ class SslInspectService {
       String host,
       int port, {
       required Duration timeout,
-    })? connector,
+    })?
+    connector,
   }) : _connect = connector ?? _defaultConnect;
 
   final Future<SecureSocket> Function(
     String host,
     int port, {
     required Duration timeout,
-  }) _connect;
+  })
+  _connect;
 
   static const int defaultPort = 443;
 
@@ -423,7 +423,8 @@ class SslInspectService {
       final BigInt? sn = tbs?.serialNumber;
       if (sn != null) serial = _formatSerial(sn);
 
-      sigAlg = tbs?.signatureAlgorithmReadableName ??
+      sigAlg =
+          tbs?.signatureAlgorithmReadableName ??
           tbs?.signatureAlgorithm ??
           data.signatureAlgorithmReadableName ??
           data.signatureAlgorithm;
@@ -499,8 +500,9 @@ class SslInspectService {
     // Split only on a comma that introduces a new `KEY=` attribute (optionally
     // preceded by whitespace), so a value that itself contains a comma (e.g.
     // "O=Example, Inc") stays intact.
-    final List<String> parts =
-        dn.split(RegExp(r',(?=\s*[A-Za-z][A-Za-z0-9.]*=)'));
+    final List<String> parts = dn.split(
+      RegExp(r',(?=\s*[A-Za-z][A-Za-z0-9.]*=)'),
+    );
     for (final String partRaw in parts) {
       final String part = partRaw.trim();
       final int eq = part.indexOf('=');
@@ -593,8 +595,9 @@ class SslInspectService {
   /// spaces) to uppercase colon-grouped hex. Returns null for null input.
   static String? _normalizeFingerprint(String? raw) {
     if (raw == null) return null;
-    final String hex =
-        raw.replaceAll(RegExp(r'[^0-9a-fA-F]'), '').toUpperCase();
+    final String hex = raw
+        .replaceAll(RegExp(r'[^0-9a-fA-F]'), '')
+        .toUpperCase();
     if (hex.isEmpty) return null;
     return _groupHex(hex);
   }

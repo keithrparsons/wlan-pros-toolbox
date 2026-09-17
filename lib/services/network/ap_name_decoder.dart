@@ -128,29 +128,47 @@ int _ouiKey(int a, int b, int c) => (a << 16) | (b << 8) | c;
 final Map<int, _Tag221Spec> _tag221Specs = <int, _Tag221Spec>{
   // Cisco Aironet / CCX — 00:40:96 (OUI_CISCOWL). IOS-XE 17.18.2+ vendor form,
   // ≤32 chars. Offset UNVERIFIED — needs a 17.18.2+ capture / the mrn-cciew PCAP.
-  _ouiKey(0x00, 0x40, 0x96):
-      const _Tag221Spec(ApNameVendor.ciscoAironet, nameOffset: null, maxNameChars: 32),
+  _ouiKey(0x00, 0x40, 0x96): const _Tag221Spec(
+    ApNameVendor.ciscoAironet,
+    nameOffset: null,
+    maxNameChars: 32,
+  ),
   // Aruba / HPE — 00:0B:86 (OUI_ARUBA), ≤30 chars. Offset UNVERIFIED — read
   // `wlan.aruba.type` dissector / one capture.
-  _ouiKey(0x00, 0x0B, 0x86):
-      const _Tag221Spec(ApNameVendor.aruba, nameOffset: null, maxNameChars: 30),
+  _ouiKey(0x00, 0x0B, 0x86): const _Tag221Spec(
+    ApNameVendor.aruba,
+    nameOffset: null,
+    maxNameChars: 30,
+  ),
   // Mist / Juniper — 5C:5B:35 (OUI_MIST), ≤32 chars. Offset UNVERIFIED — the
   // dissector + PCAP in Wireshark GitLab issue #15415 pin it; read before wiring.
-  _ouiKey(0x5C, 0x5B, 0x35):
-      const _Tag221Spec(ApNameVendor.mist, nameOffset: null, maxNameChars: 32),
+  _ouiKey(0x5C, 0x5B, 0x35): const _Tag221Spec(
+    ApNameVendor.mist,
+    nameOffset: null,
+    maxNameChars: 32,
+  ),
   // Ruckus / CommScope — 00:13:92 (OUI_RUCKUS), ≤64 chars (RFC 1034). Offset
   // UNVERIFIED — directly readable from the named `wlan.vs.ruckus.apname`
   // dissector branch (Adrian Granados). Highest-confidence Tag 221 candidate.
-  _ouiKey(0x00, 0x13, 0x92):
-      const _Tag221Spec(ApNameVendor.ruckus, nameOffset: null, maxNameChars: 64),
+  _ouiKey(0x00, 0x13, 0x92): const _Tag221Spec(
+    ApNameVendor.ruckus,
+    nameOffset: null,
+    maxNameChars: 64,
+  ),
   // Aerohive — 00:19:77 (OUI_AEROHIVE), ≤32 chars, no spaces. Offset UNVERIFIED
   // — read the named `wlan.vs.aerohive.hostname` dissector branch.
-  _ouiKey(0x00, 0x19, 0x77):
-      const _Tag221Spec(ApNameVendor.aerohive, nameOffset: null, maxNameChars: 32),
+  _ouiKey(0x00, 0x19, 0x77): const _Tag221Spec(
+    ApNameVendor.aerohive,
+    nameOffset: null,
+    maxNameChars: 32,
+  ),
   // Extreme — 00:E0:2B (OUI_EXTREME), ≤32 chars. Offset UNVERIFIED. Confirm
   // whether current firmware emits under 00:19:77 (Aerohive) or 00:E0:2B.
-  _ouiKey(0x00, 0xE0, 0x2B):
-      const _Tag221Spec(ApNameVendor.extreme, nameOffset: null, maxNameChars: 32),
+  _ouiKey(0x00, 0xE0, 0x2B): const _Tag221Spec(
+    ApNameVendor.extreme,
+    nameOffset: null,
+    maxNameChars: 32,
+  ),
   // Ubiquiti / UniFi — 00:15:6D (OUI_UBIQUITI). UniFi Network 10.1.67+, per-SSID
   // "Show AP Name in Beacon". PINNED from the Wireshark master dissector
   // (HIGH, dissector-pinned): the element value is `OUI(3) | vendor_type(1) |
@@ -220,10 +238,11 @@ String? decodeApNameFromElements(Iterable<InformationElement> elements) {
 ApNameVendor? tag221VendorForOui(List<int> tag221Value) {
   if (tag221Value.length < 3) return null;
   return _tag221Specs[_ouiKey(
-    tag221Value[0] & 0xff,
-    tag221Value[1] & 0xff,
-    tag221Value[2] & 0xff,
-  )]?.vendor;
+        tag221Value[0] & 0xff,
+        tag221Value[1] & 0xff,
+        tag221Value[2] & 0xff,
+      )]
+      ?.vendor;
 }
 
 /// Whether this build can currently decode a name for [vendor]'s Tag-221 form
@@ -244,7 +263,8 @@ bool tag221OffsetVerified(ApNameVendor vendor) {
 /// not clean printable ASCII.
 String? _decodeAironetName(Uint8List value) {
   const int end = _kAironetNameOffset + _kAironetNameLen;
-  if (value.length < end) return null; // truncated field — honest null, no throw
+  if (value.length < end)
+    return null; // truncated field — honest null, no throw
   return _decodeAsciiName(
     value.sublist(_kAironetNameOffset, end),
     maxChars: _kAironetNameLen,
@@ -265,7 +285,8 @@ String? _decodeTag221Name(Uint8List value) {
     return null;
   }
   final int? offset = spec.nameOffset;
-  if (offset == null) return null; // recognized, but offset UNVERIFIED → honest null
+  if (offset == null)
+    return null; // recognized, but offset UNVERIFIED → honest null
   if (value.length <= offset) return null; // payload too short for the name
   return _decodeAsciiName(value.sublist(offset), maxChars: spec.maxNameChars);
 }
@@ -286,7 +307,8 @@ String? _decodeAsciiName(List<int> raw, {int? maxChars}) {
     slice = slice.sublist(0, maxChars);
   }
   for (final int b in slice) {
-    if (b < 0x20 || b > 0x7e) return null; // non-printable → reject, never mojibake
+    if (b < 0x20 || b > 0x7e)
+      return null; // non-printable → reject, never mojibake
   }
   final String name = String.fromCharCodes(slice).trim();
   return name.isEmpty ? null : name;

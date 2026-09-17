@@ -147,15 +147,15 @@ class NetworkSuggestion {
     return switch (t.resolution) {
       TransportResolution.chosenUnavailable =>
         'You chose $kind, and it has no usable link right now, so these '
-        'numbers are for the link the system is actually using.$tail',
+            'numbers are for the link the system is actually using.$tail',
       TransportResolution.chosenNotSelectable =>
         'You chose $kind, and this platform will not let the app send this '
-        'kind of traffic over it. These numbers are for the link the system '
-        'is actually using.$tail',
+            'kind of traffic over it. These numbers are for the link the system '
+            'is actually using.$tail',
       TransportResolution.chosenUntested =>
         'You chose $kind, and whether traffic can be pinned to it has not '
-        'been established on this machine. These numbers are for the link '
-        'the system is actually using.$tail',
+            'been established on this machine. These numbers are for the link '
+            'the system is actually using.$tail',
       _ => null,
     };
   }
@@ -212,8 +212,8 @@ class NetworkSuggestion {
 
 /// Reads the device's current IPv4, subnet mask, and gateway. Injectable so the
 /// pure derivation is testable with no device (same seam as subnet_seed).
-typedef CurrentNetworkReader
-    = Future<({String? ip, String? mask, String? gateway})> Function();
+typedef CurrentNetworkReader =
+    Future<({String? ip, String? mask, String? gateway})> Function();
 
 /// Derives a [NetworkSuggestion] from the device's current network.
 class CurrentNetwork {
@@ -221,11 +221,11 @@ class CurrentNetwork {
     CurrentNetworkReader? reader,
     TransportPreference? preference,
     LinkTableService? linkTable,
-  })  : _reader = reader ?? _defaultReader,
-        // ignore: prefer_initializing_formals
-        _preference = preference,
-        // ignore: prefer_initializing_formals
-        _linkTable = linkTable;
+  }) : _reader = reader ?? _defaultReader,
+       // ignore: prefer_initializing_formals
+       _preference = preference,
+       // ignore: prefer_initializing_formals
+       _linkTable = linkTable;
 
   final CurrentNetworkReader _reader;
 
@@ -260,7 +260,7 @@ class CurrentNetwork {
   /// wired NIC to confuse the read, which is exactly why the plugin's
   /// assumption holds there and fails on a desktop.
   static Future<({String? ip, String? mask, String? gateway})>
-      _defaultReader() async {
+  _defaultReader() async {
     try {
       final DefaultRoute? route = await DefaultRouteProbe().readV4();
       if (route != null && route.address != null) {
@@ -285,13 +285,19 @@ class CurrentNetwork {
     String? gateway;
     try {
       ip = await info.getWifiIP();
-    } catch (_) {/* leave null - honest NONE, not a fabricated address */}
+    } catch (_) {
+      /* leave null - honest NONE, not a fabricated address */
+    }
     try {
       mask = await info.getWifiSubmask();
-    } catch (_) {/* leave null - mask often unreadable on wired/cell/web */}
+    } catch (_) {
+      /* leave null - mask often unreadable on wired/cell/web */
+    }
     try {
       gateway = await info.getWifiGatewayIP();
-    } catch (_) {/* leave null */}
+    } catch (_) {
+      /* leave null */
+    }
     return (ip: ip, mask: mask, gateway: gateway);
   }
 
@@ -359,8 +365,7 @@ class CurrentNetwork {
   /// Dotted-quad mask for a prefix length, so the Pi path can reuse
   /// [suggestFrom] unchanged rather than growing a second derivation.
   static String _maskFromPrefix(int prefix) {
-    final int m =
-        prefix == 0 ? 0 : (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
+    final int m = prefix == 0 ? 0 : (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
     return '${(m >> 24) & 0xFF}.${(m >> 16) & 0xFF}.'
         '${(m >> 8) & 0xFF}.${m & 0xFF}';
   }
@@ -368,8 +373,11 @@ class CurrentNetwork {
   /// Reads the network and derives the suggestion.
   Future<NetworkSuggestion> suggest() async {
     final ({String? ip, String? mask, String? gateway}) net = await _reader();
-    final NetworkSuggestion base =
-        suggestFrom(ip: net.ip, mask: net.mask, gateway: net.gateway);
+    final NetworkSuggestion base = suggestFrom(
+      ip: net.ip,
+      mask: net.mask,
+      gateway: net.gateway,
+    );
 
     // STAMP WHERE IT CAME FROM. `_lastSource` is set by `_defaultReader`; an
     // injected reader (every test, and the Pi path) leaves it null and the
@@ -420,8 +428,8 @@ class CurrentNetwork {
     if (pref == null) return null;
     try {
       final TransportKind? chosen = await pref.read();
-      final LinkTableResult result =
-          await (_linkTable ?? LinkTableService()).read();
+      final LinkTableResult result = await (_linkTable ?? LinkTableService())
+          .read();
       final LinkTable? table = result.table;
       // No link table means nothing to resolve a choice against. Honest null:
       // the routing table's answer stands and no screen claims a choice was
@@ -461,8 +469,9 @@ class CurrentNetwork {
       }
     }
     if (v4 == null) return base;
-    final String? mask =
-        v4.prefixLength != null ? _maskFromPrefix(v4.prefixLength!) : null;
+    final String? mask = v4.prefixLength != null
+        ? _maskFromPrefix(v4.prefixLength!)
+        : null;
     return suggestFrom(
       ip: v4.address,
       mask: mask,
@@ -493,8 +502,10 @@ class CurrentNetwork {
       );
       int usable = 0;
       for (final NetworkInterface ni in ifs) {
-        final bool hasGlobal = ni.addresses.any((InternetAddress a) =>
-            !a.address.startsWith('169.254.') && a.address != '0.0.0.0');
+        final bool hasGlobal = ni.addresses.any(
+          (InternetAddress a) =>
+              !a.address.startsWith('169.254.') && a.address != '0.0.0.0',
+        );
         if (hasGlobal) usable++;
       }
       return usable > 1;
@@ -538,8 +549,9 @@ class CurrentNetwork {
     if (prefix != null) {
       // BEST — a real, contiguous mask. Surface the TRUE CIDR at the TRUE
       // prefix (no /24 clamp). This is a measured claim, so no "assumed" hint.
-      final int maskBits =
-          prefix == 0 ? 0 : (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
+      final int maskBits = prefix == 0
+          ? 0
+          : (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
       final int network = ipInt & maskBits;
       return NetworkSuggestion(
         cidr: '${SubnetSeedDeriver.intToIp(network)}/$prefix',

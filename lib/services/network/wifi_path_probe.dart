@@ -71,7 +71,8 @@ class WifiPathFacts {
   final bool wiredSatisfied;
 
   @override
-  String toString() => 'WifiPathFacts(usesWifi: $usesWifi, '
+  String toString() =>
+      'WifiPathFacts(usesWifi: $usesWifi, '
       'wifiSatisfied: $wifiSatisfied, '
       'wifiInterfacePresent: $wifiInterfacePresent, '
       'usesWired: $usesWired, '
@@ -93,13 +94,14 @@ abstract class WifiPathProbe {
 /// registers. Fails to null on ANY error, never throws.
 class MethodChannelWifiPathProbe implements WifiPathProbe {
   const MethodChannelWifiPathProbe({MethodChannel? channel})
-      : _channel = channel ?? _defaultChannel;
+    : _channel = channel ?? _defaultChannel;
 
   /// The SAME channel name `WifiSecurityChannel.swift` registers. It exists only
   /// on iOS: every other platform throws [MissingPluginException] here, which is
   /// caught and returned as null (→ the address-probe fallback).
-  static const MethodChannel _defaultChannel =
-      MethodChannel('com.wlanpros.toolbox/wifi_security');
+  static const MethodChannel _defaultChannel = MethodChannel(
+    'com.wlanpros.toolbox/wifi_security',
+  );
 
   final MethodChannel _channel;
 

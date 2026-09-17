@@ -595,7 +595,8 @@ class BssLoad {
       Object.hash(stationCount, rawChannelUtilization, rawAdmissionCapacity);
 
   @override
-  String toString() => 'BssLoad(stationCount: $stationCount, '
+  String toString() =>
+      'BssLoad(stationCount: $stationCount, '
       'rawChannelUtilization: $rawChannelUtilization, '
       'rawAdmissionCapacity: $rawAdmissionCapacity)';
 }
@@ -692,7 +693,8 @@ class BssLoadUnavailable extends BssLoadReading {
   int get hashCode => Object.hash(reason, valueLength, availableLength);
 
   @override
-  String toString() => 'BssLoadUnavailable(${reason.name}, '
+  String toString() =>
+      'BssLoadUnavailable(${reason.name}, '
       'valueLength: $valueLength, availableLength: $availableLength)';
 }
 
@@ -968,7 +970,7 @@ BssLoadUnavailable? _clippedElement11AtTail(InformationElementWalkTail tail) {
   final int declared = clipped.declaredLength;
   final bool declaredLengthIsOneElement11MayHave =
       declared == kBssLoadStandardValueLength ||
-          declared == kBssLoadCiscoV1ValueLength;
+      declared == kBssLoadCiscoV1ValueLength;
 
   return BssLoadUnavailable(
     declaredLengthIsOneElement11MayHave

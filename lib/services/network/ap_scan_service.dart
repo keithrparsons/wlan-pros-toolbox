@@ -1,7 +1,8 @@
 import 'dart:async';
 // Conditional import: dart:io provides Platform on native targets and is stubbed
 // out on web, mirroring wifi_info_service.dart. Platform is only read off web.
-import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
+import 'dart:io'
+    if (dart.library.html) 'wifi_info_service_web_stub.dart'
     as platform_io;
 
 import 'package:flutter/foundation.dart';
@@ -185,7 +186,10 @@ class ScannedAp {
     // security claim.
     final Object? rawSecurity = map['security'];
     final List<String> security = rawSecurity is List
-        ? rawSecurity.whereType<String>().where((String t) => t.isNotEmpty).toList()
+        ? rawSecurity
+              .whereType<String>()
+              .where((String t) => t.isNotEmpty)
+              .toList()
         : const <String>[];
     return ScannedAp(
       ssid: map['ssid'] as String?,
@@ -199,7 +203,8 @@ class ScannedAp {
   }
 
   @override
-  String toString() => 'ScannedAp(ssid: $ssid, bssid: $bssid, '
+  String toString() =>
+      'ScannedAp(ssid: $ssid, bssid: $bssid, '
       'rssiDbm: $rssiDbm, channel: $channel, band: $band, '
       'frequencyMhz: $frequencyMhz, security: $security)';
 }
@@ -263,11 +268,11 @@ class ApScanSnapshot {
     this.unreadableCount = 0,
     this.scanPerformed = true,
   }) : assert(
-          locationAuthorized || accessPoints.length == 0,
-          'A snapshot cannot carry access points while locationAuthorized is '
-          'false: the gate card says the scan could not run, so a list beside '
-          'it contradicts it. Drop the rows or fix the flag.',
-        );
+         locationAuthorized || accessPoints.length == 0,
+         'A snapshot cannot carry access points while locationAuthorized is '
+         'false: the gate card says the scan could not run, so a list beside '
+         'it contradicts it. Drop the rows or fix the flag.',
+       );
 
   /// The visible access points. Empty when Wi-Fi is off, Location is not
   /// granted, or no BSS is in range.
@@ -362,8 +367,9 @@ class ApScanSnapshot {
   }) {
     final List<dynamic> rawAps =
         (map['accessPoints'] as List<dynamic>?) ?? const <dynamic>[];
-    final List<Map<dynamic, dynamic>> rows =
-        rawAps.whereType<Map<dynamic, dynamic>>().toList();
+    final List<Map<dynamic, dynamic>> rows = rawAps
+        .whereType<Map<dynamic, dynamic>>()
+        .toList();
 
     // A WITHHELD IDENTITY IS EVIDENCE THE GRANT IS COMPROMISED — so it gates
     // the snapshot; it does not quietly delete the row.
@@ -374,8 +380,9 @@ class ApScanSnapshot {
     // identity for a false COUNT, which is the same lie wearing a different hat.
     // The radio saw those APs. What we lost was permission to name them, and
     // "we lost permission" is the Location card, not a discard.
-    final bool identityWithheld = rows.any((Map<dynamic, dynamic> r) =>
-        classifyBssid(r) == BssidIdentity.withheld);
+    final bool identityWithheld = rows.any(
+      (Map<dynamic, dynamic> r) => classifyBssid(r) == BssidIdentity.withheld,
+    );
 
     final List<ScannedAp> aps = rows
         .map(ScannedAp.fromMap)
@@ -412,7 +419,8 @@ class ApScanSnapshot {
   }
 
   @override
-  String toString() => 'ApScanSnapshot(accessPoints: ${accessPoints.length}, '
+  String toString() =>
+      'ApScanSnapshot(accessPoints: ${accessPoints.length}, '
       'poweredOn: $poweredOn, locationAuthorized: $locationAuthorized, '
       'scanThrottled: $scanThrottled)';
 }
@@ -498,11 +506,11 @@ class ApScanService {
     PiBackendClient? piClient,
     String piInterface = 'wlan0',
     Future<List<Map<String, Object?>>> Function()? windowsScan,
-  })  : _invoke = invoke ?? _defaultInvoke,
-        _windowsScan = windowsScan ?? _defaultWindowsScan,
-        _invokeWifiInfo = invokeWifiInfo ?? invoke ?? _defaultWifiInfoInvoke,
-        _platform = platformOverride ?? _hostOperatingSystem(),
-        _piBacked = piBackedOverride ?? (kIsWeb && PiBackend.available) {
+  }) : _invoke = invoke ?? _defaultInvoke,
+       _windowsScan = windowsScan ?? _defaultWindowsScan,
+       _invokeWifiInfo = invokeWifiInfo ?? invoke ?? _defaultWifiInfoInvoke,
+       _platform = platformOverride ?? _hostOperatingSystem(),
+       _piBacked = piBackedOverride ?? (kIsWeb && PiBackend.available) {
     _piClient = piClient;
     _piInterface = piInterface;
   }
@@ -513,23 +521,26 @@ class ApScanService {
     return platform_io.Platform.operatingSystem;
   }
 
-  static const MethodChannel _channel =
-      MethodChannel('com.wlanpros.toolbox/ap_scan');
+  static const MethodChannel _channel = MethodChannel(
+    'com.wlanpros.toolbox/ap_scan',
+  );
 
   /// The Wi-Fi Information channel. On macOS it already owns the shipped
   /// Location-authorization flow (grant prompt, the "Location Services is off
   /// system-wide" guard, and the Privacy-pane deep link), so the macOS AP-scan
   /// channel does not reimplement any of it and this service routes the
   /// permission calls there instead.
-  static const MethodChannel _wifiInfoChannel =
-      MethodChannel('com.wlanpros.toolbox/wifi_info');
+  static const MethodChannel _wifiInfoChannel = MethodChannel(
+    'com.wlanpros.toolbox/wifi_info',
+  );
 
   static Future<Object?> _defaultInvoke(String method, [dynamic args]) =>
       _channel.invokeMethod<Object?>(method, args);
 
-  static Future<Object?> _defaultWifiInfoInvoke(String method,
-          [dynamic args]) =>
-      _wifiInfoChannel.invokeMethod<Object?>(method, args);
+  static Future<Object?> _defaultWifiInfoInvoke(
+    String method, [
+    dynamic args,
+  ]) => _wifiInfoChannel.invokeMethod<Object?>(method, args);
 
   /// The platforms whose native nearby-AP scan is wired into this tool.
   ///
@@ -582,8 +593,7 @@ class ApScanService {
       WindowsWifiReader().scanNearbyBss();
 
   final Future<Object?> Function(String method, [dynamic args]) _invoke;
-  final Future<Object?> Function(String method, [dynamic args])
-      _invokeWifiInfo;
+  final Future<Object?> Function(String method, [dynamic args]) _invokeWifiInfo;
   final String _platform;
 
   /// True when the scan is served by the Pi hosting backend (web only).
@@ -686,8 +696,7 @@ class ApScanService {
     // same channelError the native path uses.
     if (_piBacked) {
       try {
-        final List<PiScanNet> nets =
-            await _pi.scan(interface: _piInterface);
+        final List<PiScanNet> nets = await _pi.scan(interface: _piInterface);
         return ApScanSnapshot(
           accessPoints: nets
               .map(_scannedApFromPi)
@@ -718,15 +727,12 @@ class ApScanService {
     if (_platform == 'windows') {
       try {
         final List<Map<String, Object?>> rows = await _windowsScan();
-        return ApScanSnapshot.fromMap(
-          <String, Object?>{
-            'accessPoints': rows,
-            'poweredOn': true,
-            'locationAuthorized': true,
-            'scanThrottled': false,
-          },
-          scanPerformed: scanPerformed,
-        );
+        return ApScanSnapshot.fromMap(<String, Object?>{
+          'accessPoints': rows,
+          'poweredOn': true,
+          'locationAuthorized': true,
+          'scanThrottled': false,
+        }, scanPerformed: scanPerformed);
       } on WifiInfoUnavailable catch (e) {
         throw ApScanUnavailable(
           ApScanUnavailableReason.channelError,
@@ -826,8 +832,9 @@ class ApScanService {
     // is the exact defect fromMap's null test exists to prevent.
     final String? bssid = net.bssid;
     if (bssid == null || bssid.isEmpty) return null;
-    final ({WifiBand band, int channel})? match =
-        frequencyToChannel(net.freqMhz.toDouble());
+    final ({WifiBand band, int channel})? match = frequencyToChannel(
+      net.freqMhz.toDouble(),
+    );
     final int channel;
     final String band;
     if (match != null) {
@@ -933,10 +940,7 @@ class ChannelOccupancy {
 /// Builds the per-channel occupancy buckets for one band, sorted by channel.
 /// Pure and unit-testable. [bandLabel] selects which APs feed it (e.g.
 /// "2.4 GHz" or "5 GHz") so the UI can render one chart per band.
-List<ChannelOccupancy> channelOccupancy(
-  List<ScannedAp> aps,
-  String bandLabel,
-) {
+List<ChannelOccupancy> channelOccupancy(List<ScannedAp> aps, String bandLabel) {
   final Map<int, List<ScannedAp>> byChannel = <int, List<ScannedAp>>{};
   for (final ScannedAp ap in aps) {
     if (ap.band != bandLabel) continue;
@@ -951,7 +955,6 @@ List<ChannelOccupancy> channelOccupancy(
       apCount: entry.value.length,
       strongestRssiDbm: strongest,
     );
-  }).toList()
-    ..sort((a, b) => a.channel.compareTo(b.channel));
+  }).toList()..sort((a, b) => a.channel.compareTo(b.channel));
   return out;
 }

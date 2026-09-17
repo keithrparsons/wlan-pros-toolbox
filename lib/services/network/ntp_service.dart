@@ -108,24 +108,18 @@ class NtpResult {
     required String server,
     required String? resolvedIp,
     required NtpReading reading,
-  }) =>
-      NtpResult._(
-        server: server,
-        resolvedIp: resolvedIp,
-        reading: reading,
-      );
+  }) => NtpResult._(server: server, resolvedIp: resolvedIp, reading: reading);
 
   factory NtpResult.failure({
     required String server,
     required String message,
     String? resolvedIp,
-  }) =>
-      NtpResult._(
-        server: server,
-        resolvedIp: resolvedIp,
-        reading: null,
-        errorMessage: message,
-      );
+  }) => NtpResult._(
+    server: server,
+    resolvedIp: resolvedIp,
+    reading: null,
+    errorMessage: message,
+  );
 
   /// The server hostname (or IP) that was queried.
   final String server;
@@ -147,11 +141,12 @@ class NtpResult {
 /// reply bytes plus the client send (t1) and receive (t4) instants. Abstracting
 /// the socket here keeps [NtpService.query]'s validation and the parse math
 /// unit-testable without touching the network.
-typedef SntpExchange = Future<SntpExchangeResult> Function(
-  String host,
-  int port,
-  Duration timeout,
-);
+typedef SntpExchange =
+    Future<SntpExchangeResult> Function(
+      String host,
+      int port,
+      Duration timeout,
+    );
 
 /// Raw output of one [SntpExchange]: the reply bytes and the two client-side
 /// instants the SNTP formula needs. [resolvedIp] is the address the host
@@ -175,7 +170,7 @@ class SntpExchangeResult {
 /// crafted packet and no real network.
 class NtpService {
   NtpService({SntpExchange? exchange})
-      : _exchange = exchange ?? _defaultExchange;
+    : _exchange = exchange ?? _defaultExchange;
 
   final SntpExchange _exchange;
 
@@ -216,7 +211,8 @@ class NtpService {
         return NtpResult.failure(
           server: host,
           resolvedIp: ex.resolvedIp,
-          message: 'The server replied with ${ex.reply.length} bytes. An SNTP '
+          message:
+              'The server replied with ${ex.reply.length} bytes. An SNTP '
               'reply is 48 bytes. The endpoint may not be an NTP server.',
         );
       }
@@ -230,7 +226,8 @@ class NtpService {
         return NtpResult.failure(
           server: host,
           resolvedIp: ex.resolvedIp,
-          message: 'The server returned stratum 0 (a "kiss-o\'-death" / '
+          message:
+              'The server returned stratum 0 (a "kiss-o\'-death" / '
               'unspecified response). It is not offering a usable time sync. '
               'try $kFallbackNtpServer.',
         );
@@ -244,7 +241,8 @@ class NtpService {
     } on TimeoutException {
       return NtpResult.failure(
         server: host,
-        message: 'No reply within ${timeout.inSeconds}s. The server may be '
+        message:
+            'No reply within ${timeout.inSeconds}s. The server may be '
             'unreachable or UDP/123 may be blocked. Try $kFallbackNtpServer.',
       );
     } on SocketException catch (e) {
@@ -254,7 +252,7 @@ class NtpService {
         server: host,
         message: detail.isEmpty
             ? 'Could not reach the server (check the hostname and your '
-                'connection).'
+                  'connection).'
             : 'Could not reach the server: $detail.',
       );
     } on Object catch (e) {
@@ -356,8 +354,7 @@ class NtpService {
     // Resolve the host so we can both target a concrete address and report the
     // resolved IP to the user. A DNS failure throws SocketException here, which
     // query() maps to an honest "could not reach" message.
-    final List<InternetAddress> addresses =
-        await InternetAddress.lookup(host);
+    final List<InternetAddress> addresses = await InternetAddress.lookup(host);
     if (addresses.isEmpty) {
       throw const SocketException('No address found for the server');
     }

@@ -39,27 +39,25 @@ class WakeOnLanResult {
     required String broadcast,
     required int port,
     required int bytesSent,
-  }) =>
-      WakeOnLanResult._(
-        normalizedMac: normalizedMac,
-        broadcast: broadcast,
-        port: port,
-        bytesSent: bytesSent,
-      );
+  }) => WakeOnLanResult._(
+    normalizedMac: normalizedMac,
+    broadcast: broadcast,
+    port: port,
+    bytesSent: bytesSent,
+  );
 
   factory WakeOnLanResult.failure({
     required String message,
     String normalizedMac = '',
     String broadcast = '',
     int port = 0,
-  }) =>
-      WakeOnLanResult._(
-        normalizedMac: normalizedMac,
-        broadcast: broadcast,
-        port: port,
-        bytesSent: 0,
-        errorMessage: message,
-      );
+  }) => WakeOnLanResult._(
+    normalizedMac: normalizedMac,
+    broadcast: broadcast,
+    port: port,
+    bytesSent: 0,
+    errorMessage: message,
+  );
 
   /// The target MAC in canonical aa:bb:cc:dd:ee:ff form.
   final String normalizedMac;
@@ -123,19 +121,22 @@ class WakeOnLanService {
     final String? mac = normalizeMac(rawMac);
     if (mac == null) {
       return WakeOnLanResult.failure(
-        message: 'Enter a valid MAC address. 6 Bytes, e.g. '
+        message:
+            'Enter a valid MAC address. 6 Bytes, e.g. '
             'AA:BB:CC:DD:EE:FF (colons, hyphens, or no separators all work).',
       );
     }
 
-    final String broadcast = (rawBroadcast == null || rawBroadcast.trim().isEmpty)
+    final String broadcast =
+        (rawBroadcast == null || rawBroadcast.trim().isEmpty)
         ? defaultBroadcast
         : rawBroadcast.trim();
 
     if (!_isValidIpv4(broadcast)) {
       return WakeOnLanResult.failure(
         normalizedMac: mac,
-        message: 'Broadcast address must be a valid IPv4 address, '
+        message:
+            'Broadcast address must be a valid IPv4 address, '
             'e.g. 255.255.255.255 or 192.168.1.255.',
       );
     }
@@ -158,7 +159,8 @@ class WakeOnLanService {
           normalizedMac: mac,
           broadcast: broadcast,
           port: port,
-          message: 'The socket reported 0 bytes sent. The broadcast may be '
+          message:
+              'The socket reported 0 bytes sent. The broadcast may be '
               'blocked by the OS or interface. Try a subnet-directed '
               'broadcast (e.g. 192.168.1.255).',
         );
@@ -194,8 +196,7 @@ class WakeOnLanService {
   /// Exposed (static) for unit tests — multi-format parsing is regression-prone.
   static String? normalizeMac(String raw) {
     // Strip every non-hex character, then require exactly 12 hex digits.
-    final String hex =
-        raw.toLowerCase().replaceAll(RegExp(r'[^0-9a-f]'), '');
+    final String hex = raw.toLowerCase().replaceAll(RegExp(r'[^0-9a-f]'), '');
     if (hex.length != 12) return null;
     final List<String> bytes = <String>[];
     for (int i = 0; i < 12; i += 2) {
@@ -260,8 +261,9 @@ class WakeOnLanService {
 }
 
 /// The injectable send seam: dispatch one datagram, return bytes sent.
-typedef WolSender = Future<int> Function(
-  List<int> packet,
-  InternetAddress destination,
-  int port,
-);
+typedef WolSender =
+    Future<int> Function(
+      List<int> packet,
+      InternetAddress destination,
+      int port,
+    );

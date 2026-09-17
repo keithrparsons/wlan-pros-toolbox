@@ -113,9 +113,9 @@ class PingPlotState {
 
   /// Landed RTTs in window order — feeds the chart line.
   List<double> get landedRttsMs => <double>[
-        for (final PingSample s in samples)
-          if (!s.lost && s.rttMs != null) s.rttMs!,
-      ];
+    for (final PingSample s in samples)
+      if (!s.lost && s.rttMs != null) s.rttMs!,
+  ];
 
   static const PingPlotState empty = PingPlotState(
     samples: <PingSample>[],
@@ -155,13 +155,15 @@ class PingPlotController {
       required Duration interval,
       required Duration timeout,
       Future<void>? cancel,
-    })? pingStreamFactory,
-  })  : assert(windowSize > 0, 'windowSize must be positive'),
-        _windowSize = windowSize,
-        _service = service ?? PingService(),
-        // Keep the public param name clean (`pingStreamFactory`) rather than
-        // leaking the private field name into the constructor signature.
-        _pingStreamFactory = pingStreamFactory; // ignore: prefer_initializing_formals
+    })?
+    pingStreamFactory,
+  }) : assert(windowSize > 0, 'windowSize must be positive'),
+       _windowSize = windowSize,
+       _service = service ?? PingService(),
+       // Keep the public param name clean (`pingStreamFactory`) rather than
+       // leaking the private field name into the constructor signature.
+       _pingStreamFactory =
+           pingStreamFactory; // ignore: prefer_initializing_formals
 
   final PingService _service;
   final int _windowSize;
@@ -171,7 +173,8 @@ class PingPlotController {
     required Duration interval,
     required Duration timeout,
     Future<void>? cancel,
-  })? _pingStreamFactory;
+  })?
+  _pingStreamFactory;
 
   final StreamController<PingPlotState> _states =
       StreamController<PingPlotState>.broadcast();
@@ -229,7 +232,8 @@ class PingPlotController {
       required Duration interval,
       required Duration timeout,
       Future<void>? cancel,
-    })? factory = _pingStreamFactory;
+    })?
+    factory = _pingStreamFactory;
     final Stream<PingProgress> stream = factory != null
         ? factory(
             host: host,
@@ -276,17 +280,18 @@ class PingPlotController {
     _totalSent++;
 
     final bool lost = !(r.success && r.rtt != null);
-    final double? rttMs =
-        lost ? null : r.rtt!.inMicroseconds / 1000.0;
+    final double? rttMs = lost ? null : r.rtt!.inMicroseconds / 1000.0;
     if (!lost) _totalReceived++;
 
-    _window.add(PingSample(
-      sequence: _seq,
-      elapsed: _clock.elapsed,
-      rttMs: rttMs,
-      lost: lost,
-      errorLabel: lost ? (r.errorLabel ?? 'no reply') : null,
-    ));
+    _window.add(
+      PingSample(
+        sequence: _seq,
+        elapsed: _clock.elapsed,
+        rttMs: rttMs,
+        lost: lost,
+        errorLabel: lost ? (r.errorLabel ?? 'no reply') : null,
+      ),
+    );
     // Bound the retained window — drop the oldest as it overflows so memory and
     // the chart stay fixed-size on a long run.
     while (_window.length > _windowSize) {
@@ -334,8 +339,7 @@ class PingPlotController {
 
     // "last" reflects the literal most-recent sample: null if it was a loss.
     final PingSample? tail = _window.isEmpty ? null : _window.last;
-    final double? lastMs =
-        (tail != null && !tail.lost) ? tail.rttMs : null;
+    final double? lastMs = (tail != null && !tail.lost) ? tail.rttMs : null;
 
     return PingPlotState(
       samples: List<PingSample>.unmodifiable(_window),

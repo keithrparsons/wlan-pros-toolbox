@@ -88,7 +88,8 @@ const int _kGaaFlagSkipUnicast = 0x0001;
 const int _kGaaFlagSkipAnycast = 0x0002;
 const int _kGaaFlagSkipMulticast = 0x0004;
 const int _kGaaFlagSkipDnsServer = 0x0008;
-const int _kGaaFlags = _kGaaFlagSkipUnicast |
+const int _kGaaFlags =
+    _kGaaFlagSkipUnicast |
     _kGaaFlagSkipAnycast |
     _kGaaFlagSkipMulticast |
     _kGaaFlagSkipDnsServer;
@@ -179,8 +180,7 @@ WifiInfo readConnectedApFromNativeWifi() {
       final Pointer<Pointer<WLAN_INTERFACE_INFO_LIST>> ppIfList =
           calloc<Pointer<WLAN_INTERFACE_INFO_LIST>>();
       try {
-        final int enumResult =
-            WlanEnumInterfaces(handle, nullptr, ppIfList);
+        final int enumResult = WlanEnumInterfaces(handle, nullptr, ppIfList);
         if (enumResult != _kErrorSuccess) {
           throw WifiInfoUnavailable(
             WifiInfoUnavailableReason.channelError,
@@ -214,8 +214,10 @@ WifiInfo readConnectedApFromNativeWifi() {
 
       try {
         // 3. Query the current connection attributes.
-        final _ConnectionSnapshot conn =
-            _queryCurrentConnection(handle, guidPtr);
+        final _ConnectionSnapshot conn = _queryCurrentConnection(
+          handle,
+          guidPtr,
+        );
 
         // 4. Read the BSS list to get the real dBm RSSI + center frequency for
         // the connected BSSID, plus the operating channel width + country code
@@ -318,10 +320,7 @@ class _ConnectionSnapshot {
 }
 
 /// Queries WLAN_CONNECTION_ATTRIBUTES for the connected interface.
-_ConnectionSnapshot _queryCurrentConnection(
-  int handle,
-  Pointer<GUID> guidPtr,
-) {
+_ConnectionSnapshot _queryCurrentConnection(int handle, Pointer<GUID> guidPtr) {
   final Pointer<Uint32> pDataSize = calloc<Uint32>();
   final Pointer<Pointer> ppData = calloc<Pointer>();
   Pointer<WLAN_CONNECTION_ATTRIBUTES> pConn = nullptr;
@@ -342,7 +341,8 @@ _ConnectionSnapshot _queryCurrentConnection(
       );
     }
     pConn = ppData.value.cast<WLAN_CONNECTION_ATTRIBUTES>();
-    final WLAN_ASSOCIATION_ATTRIBUTES assoc = pConn.ref.wlanAssociationAttributes;
+    final WLAN_ASSOCIATION_ATTRIBUTES assoc =
+        pConn.ref.wlanAssociationAttributes;
 
     // SSID: DOT11_SSID is a length-prefixed (NOT null-terminated) byte array.
     final String? ssid = _decodeSsid(assoc.dot11Ssid);
@@ -516,8 +516,10 @@ WifiBssCandidate? _selectLink(
     }
   }
   final List<WifiBssCandidate> sorted = List<WifiBssCandidate>.of(list)
-    ..sort((WifiBssCandidate a, WifiBssCandidate b) =>
-        b.rssiDbm.compareTo(a.rssiDbm));
+    ..sort(
+      (WifiBssCandidate a, WifiBssCandidate b) =>
+          b.rssiDbm.compareTo(a.rssiDbm),
+    );
   return sorted.first;
 }
 
@@ -695,7 +697,9 @@ List<Map<String, Object?>> enumerateNearbyBssFromNativeWifi() {
       // wireless interface rather than the first CONNECTED one.
       final Pointer<GUID> guidPtr = calloc<GUID>();
       try {
-        guidPtr.ref.setGUID(pIfList.ref.InterfaceInfo[0].InterfaceGuid.toString());
+        guidPtr.ref.setGUID(
+          pIfList.ref.InterfaceInfo[0].InterfaceGuid.toString(),
+        );
 
         final Pointer<Pointer<WLAN_BSS_LIST>> ppBssList =
             calloc<Pointer<WLAN_BSS_LIST>>();
@@ -720,8 +724,8 @@ List<Map<String, Object?>> enumerateNearbyBssFromNativeWifi() {
           final int n = pBssList.ref.dwNumberOfItems;
           final Pointer<WLAN_BSS_ENTRY> entriesBase =
               Pointer<WLAN_BSS_ENTRY>.fromAddress(
-            pBssList.address + _kBssEntriesOffset,
-          );
+                pBssList.address + _kBssEntriesOffset,
+              );
           return scannedApRowsFromBssCandidates(
             _decodeBssCandidates(pBssList, n, entriesBase),
           );
@@ -762,14 +766,16 @@ List<WifiBssCandidate> _decodeBssCandidates(
     final WLAN_BSS_ENTRY entry = pBssList.ref.wlanBssEntries[i];
     final String? bssid = _decodeBssid(entry.dot11Bssid);
     if (bssid == null) continue;
-    candidates.add(WifiBssCandidate(
-      bssid: bssid.toLowerCase(),
-      ssid: _decodeSsid(entry.dot11Ssid),
-      rssiDbm: entry.lRssi,
-      centerFreqKhz: entry.ulChCenterFrequency,
-      informationElements: _readIeBlob(entriesBase + i),
-      capabilityInformation: entry.usCapabilityInformation,
-    ));
+    candidates.add(
+      WifiBssCandidate(
+        bssid: bssid.toLowerCase(),
+        ssid: _decodeSsid(entry.dot11Ssid),
+        rssiDbm: entry.lRssi,
+        centerFreqKhz: entry.ulChCenterFrequency,
+        informationElements: _readIeBlob(entriesBase + i),
+        capabilityInformation: entry.usCapabilityInformation,
+      ),
+    );
   }
   return candidates;
 }
@@ -808,11 +814,14 @@ _BssSnapshot? _queryConnectedBss(
     // cannot regress them). See [_kBssEntriesOffset].
     final Pointer<WLAN_BSS_ENTRY> entriesBase =
         Pointer<WLAN_BSS_ENTRY>.fromAddress(
-      pBssList.address + _kBssEntriesOffset,
-    );
+          pBssList.address + _kBssEntriesOffset,
+        );
 
-    final List<WifiBssCandidate> candidates =
-        _decodeBssCandidates(pBssList, n, entriesBase);
+    final List<WifiBssCandidate> candidates = _decodeBssCandidates(
+      pBssList,
+      n,
+      entriesBase,
+    );
     if (candidates.isEmpty) return null;
 
     final int? operatingChannel = _queryOperatingChannel(handle, guidPtr);
@@ -915,13 +924,7 @@ String? _queryHardwareAddress(Pointer<GUID> guidPtr) {
     if (pSize.value == 0) return null;
 
     buf = calloc<Uint8>(pSize.value).cast<IP_ADAPTER_ADDRESSES_LH>();
-    result = GetAdaptersAddresses(
-      _kAfUnspec,
-      _kGaaFlags,
-      nullptr,
-      buf,
-      pSize,
-    );
+    result = GetAdaptersAddresses(_kAfUnspec, _kGaaFlags, nullptr, buf, pSize);
     if (result != _kErrorSuccess) return null;
 
     for (
@@ -967,17 +970,17 @@ WifiInfo _composeWifiInfo(
   required String? interfaceName,
   required String? hardwareAddress,
 }) {
-  final int? channel =
-      bss == null ? null : _frequencyKhzToChannel(bss.centerFreqKhz);
-  final String? band =
-      bss == null ? null : _frequencyKhzToBand(bss.centerFreqKhz);
+  final int? channel = bss == null
+      ? null
+      : _frequencyKhzToChannel(bss.centerFreqKhz);
+  final String? band = bss == null
+      ? null
+      : _frequencyKhzToBand(bss.centerFreqKhz);
 
   // ulTxRate / ulRxRate are in units of Kbps. Mbps = Kbps / 1000. A 0 value
   // means "not reported" → null, never a fabricated 0 Mbps.
-  final double? txMbps =
-      conn.txRateKbps > 0 ? conn.txRateKbps / 1000.0 : null;
-  final double? rxMbps =
-      conn.rxRateKbps > 0 ? conn.rxRateKbps / 1000.0 : null;
+  final double? txMbps = conn.txRateKbps > 0 ? conn.txRateKbps / 1000.0 : null;
+  final double? rxMbps = conn.rxRateKbps > 0 ? conn.rxRateKbps / 1000.0 : null;
 
   return WifiInfo(
     // The friendly adapter description from WLAN_INTERFACE_INFO (e.g. "Intel(R)
@@ -1120,7 +1123,8 @@ String _utf8OrLatin1(List<int> bytes) {
 String? formatMacBytes(List<int> bytes) {
   if (bytes.length < 6) return null;
   final List<String> parts = <String>[
-    for (int i = 0; i < 6; i++) (bytes[i] & 0xff).toRadixString(16).padLeft(2, '0'),
+    for (int i = 0; i < 6; i++)
+      (bytes[i] & 0xff).toRadixString(16).padLeft(2, '0'),
   ];
   final String joined = parts.join(':');
   return joined == '00:00:00:00:00:00' ? null : joined;
@@ -1280,8 +1284,7 @@ int? _ehtWidth(Uint8List d) {
 String? countryCodeFromIes(Uint8List ies) {
   final Uint8List? country = findInformationElement(ies, _kEidCountry);
   if (country == null || country.length < 2) return null;
-  bool isAlpha(int c) =>
-      (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+  bool isAlpha(int c) => (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
   if (!isAlpha(country[0]) || !isAlpha(country[1])) return null;
   return String.fromCharCodes(<int>[country[0], country[1]]).toUpperCase();
 }

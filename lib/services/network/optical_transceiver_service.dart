@@ -142,16 +142,16 @@ class OpticalVariant {
   /// the tier label (injected by the tier) so "100g", "lr4", "850 nm", "mpo",
   /// "om4", and "reach"-style numeric tokens all match.
   String searchHaystack(String tierLabel) => <String>[
-        designation,
-        rate,
-        reach,
-        fiber,
-        wavelength,
-        connector,
-        notes,
-        tierLabel,
-        vendor ? 'vendor' : 'ieee',
-      ].join(' ').toLowerCase();
+    designation,
+    rate,
+    reach,
+    fiber,
+    wavelength,
+    connector,
+    notes,
+    tierLabel,
+    vendor ? 'vendor' : 'ieee',
+  ].join(' ').toLowerCase();
 }
 
 /// A speed tier (e.g. 10G / SFP+) holding its ordered variants. `lead` marks the
@@ -262,8 +262,8 @@ class OpticalTransceiverService {
   OpticalTransceiverService.fromParts({
     required List<OpticalTier> tiers,
     required List<OpticalFormFactor> formFactors,
-  })  : _tiers = List<OpticalTier>.unmodifiable(tiers),
-        _formFactors = List<OpticalFormFactor>.unmodifiable(formFactors);
+  }) : _tiers = List<OpticalTier>.unmodifiable(tiers),
+       _formFactors = List<OpticalFormFactor>.unmodifiable(formFactors);
 
   /// Build from the raw asset JSON string. Tolerant of malformed rows: bad
   /// entries are skipped, never thrown. Returns an empty-but-valid service if

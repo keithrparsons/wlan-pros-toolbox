@@ -76,16 +76,15 @@ class PacketResult {
     required List<int> received,
     required Duration elapsed,
     required bool timedOut,
-  }) =>
-      PacketResult._(
-        transport: transport,
-        host: host,
-        port: port,
-        bytesSent: bytesSent,
-        received: List<int>.unmodifiable(received),
-        elapsed: elapsed,
-        timedOut: timedOut,
-      );
+  }) => PacketResult._(
+    transport: transport,
+    host: host,
+    port: port,
+    bytesSent: bytesSent,
+    received: List<int>.unmodifiable(received),
+    elapsed: elapsed,
+    timedOut: timedOut,
+  );
 
   /// A failed outcome with a typed [kind] and a user-facing [message].
   factory PacketResult.failure({
@@ -96,18 +95,17 @@ class PacketResult {
     required String message,
     int bytesSent = 0,
     Duration elapsed = Duration.zero,
-  }) =>
-      PacketResult._(
-        transport: transport,
-        host: host,
-        port: port,
-        bytesSent: bytesSent,
-        received: const <int>[],
-        elapsed: elapsed,
-        timedOut: kind == PacketErrorKind.timeout,
-        errorKind: kind,
-        errorMessage: message,
-      );
+  }) => PacketResult._(
+    transport: transport,
+    host: host,
+    port: port,
+    bytesSent: bytesSent,
+    received: const <int>[],
+    elapsed: elapsed,
+    timedOut: kind == PacketErrorKind.timeout,
+    errorKind: kind,
+    errorMessage: message,
+  );
 
   final PacketTransport transport;
   final String host;
@@ -141,13 +139,17 @@ class PacketResult {
 class PacketSenderService {
   PacketSenderService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
-        tcpConnector,
+    tcpConnector,
     Future<RawDatagramSocket> Function()? udpBinder,
-  })  : _tcpConnect = tcpConnector ?? _defaultTcpConnect,
-        _udpBind = udpBinder ?? _defaultUdpBind;
+  }) : _tcpConnect = tcpConnector ?? _defaultTcpConnect,
+       _udpBind = udpBinder ?? _defaultUdpBind;
 
-  final Future<Socket> Function(String host, int port,
-      {required Duration timeout}) _tcpConnect;
+  final Future<Socket> Function(
+    String host,
+    int port, {
+    required Duration timeout,
+  })
+  _tcpConnect;
   final Future<RawDatagramSocket> Function() _udpBind;
 
   static const Duration defaultTimeout = Duration(seconds: 4);
@@ -156,8 +158,7 @@ class PacketSenderService {
     String host,
     int port, {
     required Duration timeout,
-  }) =>
-      Socket.connect(host, port, timeout: timeout);
+  }) => Socket.connect(host, port, timeout: timeout);
 
   static Future<RawDatagramSocket> _defaultUdpBind() =>
       RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -393,7 +394,8 @@ class PacketSenderService {
     switch (failure.reason) {
       case TcpFailureReason.timedOut:
         kind = PacketErrorKind.timeout;
-        message = 'Timed out connecting to $host:$port. No response before '
+        message =
+            'Timed out connecting to $host:$port. No response before '
             'the deadline (a firewall may be dropping the connection).';
       case TcpFailureReason.refused:
         kind = PacketErrorKind.refused;
@@ -465,7 +467,9 @@ class PacketSenderService {
       final List<int> received = <int>[];
       final Completer<void> gotReply = Completer<void>();
 
-      final StreamSubscription<RawSocketEvent> sub = s.listen((RawSocketEvent ev) {
+      final StreamSubscription<RawSocketEvent> sub = s.listen((
+        RawSocketEvent ev,
+      ) {
         if (ev == RawSocketEvent.read) {
           final Datagram? dg = s.receive();
           if (dg != null) {

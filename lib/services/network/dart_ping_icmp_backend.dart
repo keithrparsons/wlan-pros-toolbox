@@ -91,7 +91,8 @@ class DartPingIcmpBackend implements IcmpBackend {
     int? ttl,
     Future<void>? cancel,
   }) {
-    final StreamController<IcmpReply> controller = StreamController<IcmpReply>();
+    final StreamController<IcmpReply> controller =
+        StreamController<IcmpReply>();
 
     // dart_ping takes interval/timeout in WHOLE SECONDS (ints), count==null for
     // "until stopped", and an outbound ttl (255 default; a low value drives the

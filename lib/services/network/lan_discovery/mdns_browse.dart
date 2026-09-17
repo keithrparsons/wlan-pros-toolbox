@@ -58,7 +58,7 @@ import 'package:flutter/services.dart';
 /// One mDNS-discovered host: its addresses and the service types it advertised.
 class MdnsRecord {
   MdnsRecord({required this.ip, this.name, Set<String>? services})
-      : services = services ?? <String>{};
+    : services = services ?? <String>{};
 
   /// IPv4 address resolved for the instance (from the resolved host addresses).
   final String ip;
@@ -212,7 +212,12 @@ class _MdnsBrowseTransport {
     StreamController<MdnsDiscoveryEvent> controller,
     List<String> allServiceTypes,
   ) {
-    _sinks.putIfAbsent(serviceType, () => <StreamController<MdnsDiscoveryEvent>>{}).add(controller);
+    _sinks
+        .putIfAbsent(
+          serviceType,
+          () => <StreamController<MdnsDiscoveryEvent>>{},
+        )
+        .add(controller);
     _refs++;
     if (_sub == null) {
       // First listener of this browse: open the ONE native stream. Pass the full
@@ -220,7 +225,12 @@ class _MdnsBrowseTransport {
       try {
         _sub = _channel
             .receiveBroadcastStream(allServiceTypes)
-            .listen(_onNativeEvent, onError: (Object _) {/* non-fatal */});
+            .listen(
+              _onNativeEvent,
+              onError: (Object _) {
+                /* non-fatal */
+              },
+            );
       } catch (_) {
         // Synchronous failure (e.g. missing channel): no stream, listeners stay
         // silent. Leave _sub null so a later browse can retry.
@@ -248,7 +258,9 @@ class _MdnsBrowseTransport {
       _sinks.clear();
       try {
         await sub?.cancel();
-      } catch (_) {/* ignore */}
+      } catch (_) {
+        /* ignore */
+      }
     }
   }
 
@@ -258,8 +270,10 @@ class _MdnsBrowseTransport {
     if (rawType is! String) return;
     final Set<StreamController<MdnsDiscoveryEvent>>? set = _sinks[rawType];
     if (set == null || set.isEmpty) return;
-    final MdnsDiscoveryEvent? ev =
-        NWBrowserMdnsDiscovery.parseNativeEvent(rawType, event);
+    final MdnsDiscoveryEvent? ev = NWBrowserMdnsDiscovery.parseNativeEvent(
+      rawType,
+      event,
+    );
     if (ev == null) return;
     for (final StreamController<MdnsDiscoveryEvent> c in set) {
       if (!c.isClosed) c.add(ev);
@@ -290,11 +304,9 @@ class _MdnsBrowseTransport {
 /// platform where Android NsdManager is deferred) surfaces as an empty stream,
 /// never a throw. mDNS enrichment is non-fatal by contract.
 class NWBrowserMdnsDiscovery implements MdnsDiscovery {
-  NWBrowserMdnsDiscovery(
-    this.serviceType, {
-    List<String>? allServiceTypes,
-  })  : _allServiceTypes = allServiceTypes ?? <String>[serviceType],
-        _transport = _MdnsBrowseTransport.instance;
+  NWBrowserMdnsDiscovery(this.serviceType, {List<String>? allServiceTypes})
+    : _allServiceTypes = allServiceTypes ?? <String>[serviceType],
+      _transport = _MdnsBrowseTransport.instance;
 
   @override
   final String serviceType;
@@ -359,7 +371,9 @@ class NWBrowserMdnsDiscovery implements MdnsDiscovery {
     }
     try {
       if (!_out.isClosed) await _out.close();
-    } catch (_) {/* ignore */}
+    } catch (_) {
+      /* ignore */
+    }
   }
 }
 
@@ -375,7 +389,8 @@ class UnavailableMdnsDiscovery implements MdnsDiscovery {
   final String serviceType;
 
   @override
-  Stream<MdnsDiscoveryEvent> start() => const Stream<MdnsDiscoveryEvent>.empty();
+  Stream<MdnsDiscoveryEvent> start() =>
+      const Stream<MdnsDiscoveryEvent>.empty();
 
   @override
   Future<void> dispose() async {}
@@ -385,10 +400,8 @@ class UnavailableMdnsDiscovery implements MdnsDiscovery {
 /// [allServiceTypes]. Injectable so tests supply a fake (no native plugin, no
 /// multicast). The production factory passes [allServiceTypes] through to the
 /// native side as the single stream's listen argument.
-typedef MdnsDiscoveryFactoryFull = MdnsDiscovery Function(
-  String serviceType,
-  List<String> allServiceTypes,
-);
+typedef MdnsDiscoveryFactoryFull =
+    MdnsDiscovery Function(String serviceType, List<String> allServiceTypes);
 
 /// Picks the discovery for the current platform: the native NetServiceBrowser
 /// channel on iOS + macOS (the only platforms whose Runner registers the channel
@@ -423,7 +436,8 @@ class MdnsBrowser {
     MdnsDiscoveryFactory? discoveryFactory,
     // Public-named so callers in other libraries (tests) can supply it; an
     // initializing formal would force the param name to start with `_`.
-  }) : _discoveryFactory = discoveryFactory; // ignore: prefer_initializing_formals
+  }) : _discoveryFactory =
+           discoveryFactory; // ignore: prefer_initializing_formals
 
   final List<String> serviceTypes;
   final Duration timeout;
@@ -459,7 +473,10 @@ class MdnsBrowser {
     void fold(MdnsDiscoveryEvent ev) {
       for (final String addr in ev.hostAddresses) {
         if (!_looksIpv4(addr)) continue; // keep the record keyed by IPv4
-        final MdnsRecord rec = byIp.putIfAbsent(addr, () => MdnsRecord(ip: addr));
+        final MdnsRecord rec = byIp.putIfAbsent(
+          addr,
+          () => MdnsRecord(ip: addr),
+        );
         if (ev.name.isNotEmpty) rec.name ??= ev.name;
         rec.services.add(ev.serviceType);
       }
@@ -469,7 +486,14 @@ class MdnsBrowser {
       for (final String service in serviceTypes) {
         final MdnsDiscovery disc = _buildDiscovery(service, serviceTypes);
         discoveries.add(disc);
-        subs.add(disc.start().listen(fold, onError: (_) {/* non-fatal */}));
+        subs.add(
+          disc.start().listen(
+            fold,
+            onError: (_) {
+              /* non-fatal */
+            },
+          ),
+        );
       }
       // ONE shared discovery window held open for the whole [timeout] (the dwell
       // mDNS needs to hear devices announce). All per-type discoveries ride the
@@ -483,10 +507,13 @@ class MdnsBrowser {
       for (final StreamSubscription<MdnsDiscoveryEvent> s in subs) {
         try {
           await s.cancel();
-        } catch (_) {/* ignore */}
+        } catch (_) {
+          /* ignore */
+        }
       }
       for (final MdnsDiscovery d in discoveries) {
-        await d.dispose(); // NetServiceBrowser + resolving NetServices MUST stop.
+        await d
+            .dispose(); // NetServiceBrowser + resolving NetServices MUST stop.
       }
     }
     return byIp;

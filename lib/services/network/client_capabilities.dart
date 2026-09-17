@@ -87,8 +87,8 @@ enum CapabilityBound {
   /// floor produces a floor.
   static CapabilityBound weakest(CapabilityBound a, CapabilityBound b) =>
       (a == CapabilityBound.atLeast || b == CapabilityBound.atLeast)
-          ? CapabilityBound.atLeast
-          : CapabilityBound.exact;
+      ? CapabilityBound.atLeast
+      : CapabilityBound.exact;
 }
 
 /// Why a capability is not known.
@@ -328,7 +328,8 @@ final class UnknownCapability<T extends Object> extends Capability<T> {
   int get hashCode => Object.hash(reason, detail);
 
   @override
-  String toString() => 'UnknownCapability(${reason.name}'
+  String toString() =>
+      'UnknownCapability(${reason.name}'
       '${detail == null ? '' : ', detail: $detail'})';
 }
 
@@ -366,13 +367,15 @@ class ClientCapabilities {
     this.deviceName,
     this.tableVersion,
     this.notes = const <String>[],
-  })  : bands = UnknownCapability<Set<WiFiBand>>(reason, detail: detail),
-        standards = UnknownCapability<Set<WifiStd>>(reason, detail: detail),
-        maxChannelWidthMhz = UnknownCapability<int>(reason, detail: detail),
-        spatialStreams = UnknownCapability<int>(reason, detail: detail),
-        maxMcsIndex = UnknownCapability<int>(reason, detail: detail),
-        osReportedMaxPhyRateMbps =
-            UnknownCapability<int>(reason, detail: detail);
+  }) : bands = UnknownCapability<Set<WiFiBand>>(reason, detail: detail),
+       standards = UnknownCapability<Set<WifiStd>>(reason, detail: detail),
+       maxChannelWidthMhz = UnknownCapability<int>(reason, detail: detail),
+       spatialStreams = UnknownCapability<int>(reason, detail: detail),
+       maxMcsIndex = UnknownCapability<int>(reason, detail: detail),
+       osReportedMaxPhyRateMbps = UnknownCapability<int>(
+         reason,
+         detail: detail,
+       );
 
   /// Frequency bands the radio supports.
   final Capability<Set<WiFiBand>> bands;
@@ -431,16 +434,14 @@ class ClientCapabilities {
   /// [CapabilityUnknownReason.notComputable] on an empty standard set: knowing
   /// the set is empty is not the same as knowing which standard is highest.
   Capability<WifiStd> get highestStandard => Capability.derive<WifiStd>(
-        inputs: <String, Capability<Object>>{'supported standards': standards},
-        pin: 'highest member of the supported-standard set',
-        compute: () {
-          final Set<WifiStd>? set = standards.valueOrNull;
-          if (set == null || set.isEmpty) return null;
-          return set.reduce(
-            (WifiStd a, WifiStd b) => a.index >= b.index ? a : b,
-          );
-        },
-      );
+    inputs: <String, Capability<Object>>{'supported standards': standards},
+    pin: 'highest member of the supported-standard set',
+    compute: () {
+      final Set<WifiStd>? set = standards.valueOrNull;
+      if (set == null || set.isEmpty) return null;
+      return set.reduce((WifiStd a, WifiStd b) => a.index >= b.index ? a : b);
+    },
+  );
 
   /// The guard interval a theoretical ceiling should assume for [std]: the
   /// SHORTEST symbol time the standard defines, which is the fastest the
@@ -496,7 +497,8 @@ class ClientCapabilities {
       // GI support it never claimed. Every row seeded today is HE or EHT, so no
       // over-claim is reachable yet, and this pin is what keeps it visible when
       // one is.
-      pin: 'WifiPhyRateService.phyRateMbps over the highest known standard, '
+      pin:
+          'WifiPhyRateService.phyRateMbps over the highest known standard, '
           'widest channel, all spatial streams and highest MCS, ASSUMING the '
           'shortest guard interval that standard defines. The guard interval '
           'is assumed, not reported: it is mandatory for Wi-Fi 6 and Wi-Fi 7, '
@@ -542,7 +544,8 @@ class ClientCapabilities {
         'theoretical maximum PHY rate': phy,
         'supported standards': std,
       },
-      pin: 'theoretical maximum PHY rate multiplied by '
+      pin:
+          'theoretical maximum PHY rate multiplied by '
           'WifiPhyRateService.eff, which is an optimistic factor',
       compute: () {
         final double? rate = phy.valueOrNull;
@@ -576,13 +579,13 @@ class ClientCapabilities {
   /// The six READ fields, labelled. Derived values are not included: they are
   /// computed from these, so counting them would double-count provenance.
   Map<String, Capability<Object>> get allFields => <String, Capability<Object>>{
-        'Bands': bands,
-        'Wi-Fi generations': standards,
-        'Maximum channel width': maxChannelWidthMhz,
-        'Spatial streams': spatialStreams,
-        'Maximum MCS index': maxMcsIndex,
-        'Maximum rate reported by the OS': osReportedMaxPhyRateMbps,
-      };
+    'Bands': bands,
+    'Wi-Fi generations': standards,
+    'Maximum channel width': maxChannelWidthMhz,
+    'Spatial streams': spatialStreams,
+    'Maximum MCS index': maxMcsIndex,
+    'Maximum rate reported by the OS': osReportedMaxPhyRateMbps,
+  };
 
   /// Returns a copy with any field this set does not know filled in from
   /// [other], each field keeping ITS OWN tier and pin.
@@ -597,8 +600,9 @@ class ClientCapabilities {
         maxChannelWidthMhz: maxChannelWidthMhz.isKnown
             ? maxChannelWidthMhz
             : other.maxChannelWidthMhz,
-        spatialStreams:
-            spatialStreams.isKnown ? spatialStreams : other.spatialStreams,
+        spatialStreams: spatialStreams.isKnown
+            ? spatialStreams
+            : other.spatialStreams,
         maxMcsIndex: maxMcsIndex.isKnown ? maxMcsIndex : other.maxMcsIndex,
         osReportedMaxPhyRateMbps: osReportedMaxPhyRateMbps.isKnown
             ? osReportedMaxPhyRateMbps
@@ -610,7 +614,8 @@ class ClientCapabilities {
       );
 
   @override
-  String toString() => 'ClientCapabilities(device: $deviceIdentifier, '
+  String toString() =>
+      'ClientCapabilities(device: $deviceIdentifier, '
       'bands: $bands, standards: $standards, '
       'maxChannelWidthMhz: $maxChannelWidthMhz, '
       'spatialStreams: $spatialStreams, maxMcsIndex: $maxMcsIndex)';

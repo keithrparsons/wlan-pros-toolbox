@@ -87,11 +87,15 @@ class PortPreset {
 class PortScanService {
   PortScanService({
     Future<Socket> Function(String host, int port, {required Duration timeout})?
-        connector,
+    connector,
   }) : _connect = connector ?? _defaultConnect;
 
-  final Future<Socket> Function(String host, int port,
-      {required Duration timeout}) _connect;
+  final Future<Socket> Function(
+    String host,
+    int port, {
+    required Duration timeout,
+  })
+  _connect;
 
   static Future<Socket> _defaultConnect(
     String host,
@@ -107,10 +111,50 @@ class PortScanService {
   static const PortPreset commonPorts = PortPreset(
     label: 'Common ports',
     ports: <int>[
-      20, 21, 22, 23, 25, 53, 67, 80, 110, 123, 135, 139, 143, 161, 389,
-      443, 445, 465, 514, 587, 631, 636, 993, 995, 1080, 1433, 1521, 1723,
-      2049, 3128, 3306, 3389, 5060, 5201, 5353, 5432, 5900, 6379, 8000,
-      8080, 8443, 8888, 9100, 27017,
+      20,
+      21,
+      22,
+      23,
+      25,
+      53,
+      67,
+      80,
+      110,
+      123,
+      135,
+      139,
+      143,
+      161,
+      389,
+      443,
+      445,
+      465,
+      514,
+      587,
+      631,
+      636,
+      993,
+      995,
+      1080,
+      1433,
+      1521,
+      1723,
+      2049,
+      3128,
+      3306,
+      3389,
+      5060,
+      5201,
+      5353,
+      5432,
+      5900,
+      6379,
+      8000,
+      8080,
+      8443,
+      8888,
+      9100,
+      27017,
     ],
   );
 

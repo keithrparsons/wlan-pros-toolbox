@@ -34,14 +34,15 @@ import 'cellular_info.dart';
 /// Bridges the native iOS Shortcuts cellular handoff to Dart, typed to
 /// [CellularInfo].
 class CellularInfoBridge {
-  CellularInfoBridge({
-    MethodChannel? methodChannel,
-    EventChannel? eventChannel,
-  })  : _method = methodChannel ??
-            const MethodChannel('com.wlanpros.toolbox/shortcuts_bridge'),
-        _events = eventChannel ??
-            const EventChannel(
-                'com.wlanpros.toolbox/shortcuts_bridge/cellular_events');
+  CellularInfoBridge({MethodChannel? methodChannel, EventChannel? eventChannel})
+    : _method =
+          methodChannel ??
+          const MethodChannel('com.wlanpros.toolbox/shortcuts_bridge'),
+      _events =
+          eventChannel ??
+          const EventChannel(
+            'com.wlanpros.toolbox/shortcuts_bridge/cellular_events',
+          );
 
   final MethodChannel _method;
   final EventChannel _events;
@@ -64,8 +65,9 @@ class CellularInfoBridge {
   /// false.
   Future<bool> hasEverReceivedPayload() async {
     try {
-      return await _method
-              .invokeMethod<bool>('hasEverReceivedCellularPayload') ??
+      return await _method.invokeMethod<bool>(
+            'hasEverReceivedCellularPayload',
+          ) ??
           false;
     } on MissingPluginException {
       return false;
@@ -85,7 +87,8 @@ class CellularInfoBridge {
   /// setup" recovery once, then the marker is cleared. False off-iOS.
   Future<bool> consumeShortcutMissing() async {
     try {
-      return await _method.invokeMethod<bool>('consumeShortcutMissing') ?? false;
+      return await _method.invokeMethod<bool>('consumeShortcutMissing') ??
+          false;
     } on MissingPluginException {
       return false;
     } on PlatformException catch (e) {
@@ -126,7 +129,8 @@ class CellularInfoBridge {
   /// off-iOS so non-iOS onboarding is never falsely blocked.
   Future<bool> isShortcutsAppInstalled() async {
     try {
-      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ?? true;
+      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ??
+          true;
     } on MissingPluginException {
       return true;
     } on PlatformException catch (e) {
@@ -219,10 +223,9 @@ class CellularInfoBridge {
   /// opened the URL, not that the Shortcut finished (it never does, by design).
   Future<bool> runShortcut(String name) async {
     try {
-      return await _method.invokeMethod<bool>(
-            'runShortcut',
-            <String, String>{'name': name},
-          ) ??
+      return await _method.invokeMethod<bool>('runShortcut', <String, String>{
+            'name': name,
+          }) ??
           false;
     } on MissingPluginException {
       return false;

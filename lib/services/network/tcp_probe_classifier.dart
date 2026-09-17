@@ -241,8 +241,9 @@ TcpProbeFailure classifyTcpFailure(Object error) {
 
   // 2. Message fallback. Order matters: a timeout / unreachable / host-down
   //    message is NEVER read as a refusal, no matter what else it contains.
-  final String haystack =
-      '${error.message} ${os?.message ?? ''}'.toLowerCase().trim();
+  final String haystack = '${error.message} ${os?.message ?? ''}'
+      .toLowerCase()
+      .trim();
 
   if (haystack.contains('timed out') || haystack.contains('timeout')) {
     return TcpProbeFailure(
@@ -299,11 +300,8 @@ bool tcpErrorProvesHostAlive(Object error) =>
 
 /// Connector seam: returns an open socket or throws. Injectable for tests, so
 /// no probe in this repo needs a real network to be tested.
-typedef TcpConnector = Future<Socket> Function(
-  String host,
-  int port,
-  Duration timeout,
-);
+typedef TcpConnector =
+    Future<Socket> Function(String host, int port, Duration timeout);
 
 /// Run one TCP connect probe against (host, port) and classify it into the
 /// three honest outcomes. The one place a probe outcome is decided.

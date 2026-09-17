@@ -96,7 +96,8 @@ class NetworkTransportFacts {
   final bool vpn;
 
   @override
-  String toString() => 'NetworkTransportFacts(cellular: $cellular, '
+  String toString() =>
+      'NetworkTransportFacts(cellular: $cellular, '
       'wifi: $wifi, ethernet: $ethernet, vpn: $vpn)';
 }
 
@@ -117,13 +118,14 @@ abstract class NetworkTransportProbe {
 /// Fails to null on ANY error, never throws.
 class MethodChannelNetworkTransportProbe implements NetworkTransportProbe {
   const MethodChannelNetworkTransportProbe({MethodChannel? channel})
-      : _channel = channel ?? _defaultChannel;
+    : _channel = channel ?? _defaultChannel;
 
   /// The SAME channel name `MainActivity.kt` registers. It exists only on Android:
   /// every other platform throws [MissingPluginException] here, which is caught and
   /// returned as null (→ the caller's fallback).
-  static const MethodChannel _defaultChannel =
-      MethodChannel('com.wlanpros.toolbox/network_transport');
+  static const MethodChannel _defaultChannel = MethodChannel(
+    'com.wlanpros.toolbox/network_transport',
+  );
 
   final MethodChannel _channel;
 

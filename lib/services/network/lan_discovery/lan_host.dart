@@ -48,8 +48,8 @@ class LanHost {
     this.deviceType = DeviceType.unknown,
     this.mac,
     this.vendor,
-  })  : openPorts = openPorts ?? <int>{},
-        mdnsServices = mdnsServices ?? <String>{};
+  }) : openPorts = openPorts ?? <int>{},
+       mdnsServices = mdnsServices ?? <String>{};
 
   /// IPv4 address (dotted-quad). The stable key for a host across passes.
   final String ip;
@@ -85,18 +85,19 @@ class LanHost {
   /// only — not a UI string contract (the screen renders each field directly)
   /// and not the export shape (CSV/JSON export is W5).
   Map<String, Object?> toDebugMap() => <String, Object?>{
-        'ip': ip,
-        'hostname': hostname,
-        'mdnsName': mdnsName,
-        'openPorts': (openPorts.toList()..sort()),
-        'mdnsServices': (mdnsServices.toList()..sort()),
-        'deviceType': deviceType.label,
-        'mac': mac,
-        'vendor': vendor,
-      };
+    'ip': ip,
+    'hostname': hostname,
+    'mdnsName': mdnsName,
+    'openPorts': (openPorts.toList()..sort()),
+    'mdnsServices': (mdnsServices.toList()..sort()),
+    'deviceType': deviceType.label,
+    'mac': mac,
+    'vendor': vendor,
+  };
 
   @override
-  String toString() => 'LanHost($ip, ports=${openPorts.toList()..sort()}, '
+  String toString() =>
+      'LanHost($ip, ports=${openPorts.toList()..sort()}, '
       'host=$hostname, mdns=$mdnsName, type=${deviceType.label}, '
       'mac=$mac, vendor=$vendor)';
 }

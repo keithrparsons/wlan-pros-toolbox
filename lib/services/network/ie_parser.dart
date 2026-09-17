@@ -117,7 +117,8 @@ class TruncatedInformationElement {
   int get hashCode => Object.hash(id, declaredLength, availableLength);
 
   @override
-  String toString() => 'TruncatedInformationElement(id: $id, '
+  String toString() =>
+      'TruncatedInformationElement(id: $id, '
       'declaredLength: $declaredLength, availableLength: $availableLength)';
 }
 
@@ -166,7 +167,8 @@ class InformationElementWalkTail {
   int get hashCode => Object.hash(unconsumedOctets, truncatedElement);
 
   @override
-  String toString() => 'InformationElementWalkTail('
+  String toString() =>
+      'InformationElementWalkTail('
       'unconsumedOctets: $unconsumedOctets, '
       'truncatedElement: $truncatedElement)';
 }

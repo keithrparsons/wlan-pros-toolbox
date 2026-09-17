@@ -3,7 +3,8 @@ import 'dart:async';
 // stubbed out on web, mirroring how the rest of the network layer guards
 // against the missing dart:io on web (see network_support.dart, which gates on
 // kIsWeb). Platform is only read when not on web.
-import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
+import 'dart:io'
+    if (dart.library.html) 'wifi_info_service_web_stub.dart'
     as platform_io;
 
 import 'package:flutter/foundation.dart';
@@ -264,8 +265,7 @@ class WifiInfoUnavailable implements Exception {
   final String? detail;
 
   @override
-  String toString() =>
-      'WifiInfoUnavailable(reason: $reason, detail: $detail)';
+  String toString() => 'WifiInfoUnavailable(reason: $reason, detail: $detail)';
 }
 
 /// Reads live Wi-Fi metrics through a native platform bridge.
@@ -281,8 +281,8 @@ class WifiInfoService {
   WifiInfoService({
     Future<Object?> Function(String method, [dynamic args])? invoke,
     String? platformOverride,
-  })  : _invoke = invoke ?? _defaultInvoke,
-        _platform = platformOverride ?? _hostOperatingSystem();
+  }) : _invoke = invoke ?? _defaultInvoke,
+       _platform = platformOverride ?? _hostOperatingSystem();
 
   /// Returns the host OS name, or an empty string on web where there is no
   /// dart:io Platform. Never throws.
@@ -291,8 +291,9 @@ class WifiInfoService {
     return platform_io.Platform.operatingSystem;
   }
 
-  static const MethodChannel _channel =
-      MethodChannel('com.wlanpros.toolbox/wifi_info');
+  static const MethodChannel _channel = MethodChannel(
+    'com.wlanpros.toolbox/wifi_info',
+  );
 
   static Future<Object?> _defaultInvoke(String method, [dynamic args]) =>
       _channel.invokeMethod<Object?>(method, args);

@@ -95,13 +95,13 @@ class PendingLiveRun {
 /// Bridges the native iOS Shortcuts Wi-Fi handoff to Dart, typed to
 /// [WiFiDetails].
 class WiFiDetailsBridge {
-  WiFiDetailsBridge({
-    MethodChannel? methodChannel,
-    EventChannel? eventChannel,
-  })  : _method = methodChannel ??
-            const MethodChannel('com.wlanpros.toolbox/shortcuts_bridge'),
-        _events = eventChannel ??
-            const EventChannel('com.wlanpros.toolbox/shortcuts_bridge/events');
+  WiFiDetailsBridge({MethodChannel? methodChannel, EventChannel? eventChannel})
+    : _method =
+          methodChannel ??
+          const MethodChannel('com.wlanpros.toolbox/shortcuts_bridge'),
+      _events =
+          eventChannel ??
+          const EventChannel('com.wlanpros.toolbox/shortcuts_bridge/events');
 
   final MethodChannel _method;
   final EventChannel _events;
@@ -159,7 +159,8 @@ class WiFiDetailsBridge {
   /// this returns false.
   Future<bool> hasEverReceivedPayload() async {
     try {
-      return await _method.invokeMethod<bool>('hasEverReceivedPayload') ?? false;
+      return await _method.invokeMethod<bool>('hasEverReceivedPayload') ??
+          false;
     } on MissingPluginException {
       return false;
     } on PlatformException catch (e) {
@@ -180,7 +181,8 @@ class WiFiDetailsBridge {
   /// to the normal one-time setup prompt. False off-iOS (no handler).
   Future<bool> consumeShortcutMissing() async {
     try {
-      return await _method.invokeMethod<bool>('consumeShortcutMissing') ?? false;
+      return await _method.invokeMethod<bool>('consumeShortcutMissing') ??
+          false;
     } on MissingPluginException {
       return false;
     } on PlatformException catch (e) {
@@ -227,7 +229,8 @@ class WiFiDetailsBridge {
   /// only nudge, applied only where this returns an explicit false.
   Future<bool> isShortcutsAppInstalled() async {
     try {
-      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ?? true;
+      return await _method.invokeMethod<bool>('isShortcutsAppInstalled') ??
+          true;
     } on MissingPluginException {
       return true;
     } on PlatformException catch (e) {
@@ -286,8 +289,8 @@ class WiFiDetailsBridge {
   /// an arm we cannot bound is one we refuse to act on rather than one we trust.
   Future<PendingLiveRun?> pendingLiveRun() async {
     try {
-      final Map<Object?, Object?>? raw =
-          await _method.invokeMethod<Map<Object?, Object?>>('pendingLiveRun');
+      final Map<Object?, Object?>? raw = await _method
+          .invokeMethod<Map<Object?, Object?>>('pendingLiveRun');
       if (raw == null) return null;
       final Object? route = raw['route'];
       final Object? atMs = raw['atMs'];
@@ -394,10 +397,9 @@ class WiFiDetailsBridge {
   /// not that the Shortcut finished (it never does, by design).
   Future<bool> runShortcut(String name) async {
     try {
-      return await _method.invokeMethod<bool>(
-            'runShortcut',
-            <String, String>{'name': name},
-          ) ??
+      return await _method.invokeMethod<bool>('runShortcut', <String, String>{
+            'name': name,
+          }) ??
           false;
     } on MissingPluginException {
       return false;

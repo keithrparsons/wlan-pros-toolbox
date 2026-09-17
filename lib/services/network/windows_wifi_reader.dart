@@ -54,7 +54,8 @@
 
 // Guard dart:io for web exactly like wifi_info_service.dart does: Platform is
 // only ever read on a native target, never on web.
-import 'dart:io' if (dart.library.html) 'wifi_info_service_web_stub.dart'
+import 'dart:io'
+    if (dart.library.html) 'wifi_info_service_web_stub.dart'
     as platform_io;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -94,7 +95,7 @@ class WindowsWifiReader {
   /// [isWindowsOverride] lets tests assert the off-Windows guard without a real
   /// platform. Defaults to the host OS check.
   WindowsWifiReader({bool? isWindowsOverride})
-      : _isWindows = isWindowsOverride ?? _hostIsWindows();
+    : _isWindows = isWindowsOverride ?? _hostIsWindows();
 
   final bool _isWindows;
 

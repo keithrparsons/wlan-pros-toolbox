@@ -219,12 +219,12 @@ class WifiToolConfig {
   /// Lowercased haystack for substring search across every human-facing field
   /// plus the activity title (injected by the activity).
   String searchHaystack(String activityTitle) => <String>[
-        vendor,
-        product,
-        notes,
-        activityTitle,
-        costModel.label,
-      ].join(' ').toLowerCase();
+    vendor,
+    product,
+    notes,
+    activityTitle,
+    costModel.label,
+  ].join(' ').toLowerCase();
 }
 
 /// One activity grouping (Design / Validation / Spectrum / Troubleshooting)
@@ -373,9 +373,9 @@ class WifiToolsComparisonService {
     required List<WifiToolActivity> activities,
     required List<WifiToolkit> toolkits,
     required List<WifiToolVendor> vendors,
-  })  : _activities = List<WifiToolActivity>.unmodifiable(activities),
-        _toolkits = List<WifiToolkit>.unmodifiable(toolkits),
-        _vendors = List<WifiToolVendor>.unmodifiable(vendors);
+  }) : _activities = List<WifiToolActivity>.unmodifiable(activities),
+       _toolkits = List<WifiToolkit>.unmodifiable(toolkits),
+       _vendors = List<WifiToolVendor>.unmodifiable(vendors);
 
   /// Build from the raw asset JSON string. Tolerant of malformed rows: bad
   /// entries are skipped, never thrown. Returns an empty-but-valid service when
@@ -463,8 +463,10 @@ class WifiToolsComparisonService {
   List<WifiToolVendor> get vendors => _vendors;
 
   /// Total number of configs across all activities.
-  int get configCount =>
-      _activities.fold<int>(0, (int n, WifiToolActivity a) => n + a.configs.length);
+  int get configCount => _activities.fold<int>(
+    0,
+    (int n, WifiToolActivity a) => n + a.configs.length,
+  );
 
   /// Number of distinct vendors carried in the per-vendor list.
   int get vendorCount => _vendors.length;
@@ -484,7 +486,9 @@ class WifiToolsComparisonService {
     final List<WifiToolActivity> out = <WifiToolActivity>[];
     for (final WifiToolActivity activity in _activities) {
       final List<WifiToolConfig> matched = activity.configs
-          .where((WifiToolConfig c) => c.searchHaystack(activity.title).contains(q))
+          .where(
+            (WifiToolConfig c) => c.searchHaystack(activity.title).contains(q),
+          )
           .toList();
       final WifiToolActivity? narrowed = activity.withConfigs(matched);
       if (narrowed != null) out.add(narrowed);

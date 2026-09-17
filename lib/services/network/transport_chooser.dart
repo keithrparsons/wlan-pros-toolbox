@@ -43,10 +43,10 @@ enum TransportKind { wifi, ethernet, cellular }
 
 extension TransportKindLabel on TransportKind {
   String get label => switch (this) {
-        TransportKind.wifi => 'Wi-Fi',
-        TransportKind.ethernet => 'Ethernet',
-        TransportKind.cellular => 'Cellular',
-      };
+    TransportKind.wifi => 'Wi-Fi',
+    TransportKind.ethernet => 'Ethernet',
+    TransportKind.cellular => 'Cellular',
+  };
 }
 
 /// What a test is trying to reach, because the answer to "can I choose the
@@ -255,8 +255,8 @@ TransportPlatform currentTransportPlatform({String? tableSource}) {
 /// subnet behind one gateway, an internet connection bound to the non-default
 /// interface connected fine. Across two gateways it very likely would not, and
 /// that case is untested. The machine, not the platform, holds the answer.
-const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
-    <TransportPlatform, TransportCapability>{
+const Map<TransportPlatform, TransportCapability>
+kTransportCapabilities = <TransportPlatform, TransportCapability>{
   // The Pi serves its own API and every endpoint already takes an `interface`
   // parameter, so selection here is not a socket trick: we ask the Pi to use a
   // named interface and it does. This is why the radio picker on Nearby AP Scan
@@ -266,7 +266,8 @@ const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
     canSelectLocal: SelectSupport.yes,
     canSelectInternet: SelectSupport.yes,
     hasCellular: false,
-    mechanism: 'The Pi runs the test itself and takes the interface as a '
+    mechanism:
+        'The Pi runs the test itself and takes the interface as a '
         'parameter, so the choice is honored end to end.',
   ),
   // ConnectivityManager.bindProcessToNetwork / Network.bindSocket is the
@@ -280,7 +281,8 @@ const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
     canSelectLocal: SelectSupport.yes,
     canSelectInternet: SelectSupport.yes,
     hasCellular: true,
-    mechanism: 'Android lets an app bind its sockets to a chosen network, so '
+    mechanism:
+        'Android lets an app bind its sockets to a chosen network, so '
         'both local and internet tests can be pinned to one path.',
   ),
   TransportPlatform.macos: TransportCapability(
@@ -288,7 +290,8 @@ const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
     canSelectLocal: SelectSupport.yes,
     canSelectInternet: SelectSupport.mustProbe,
     hasCellular: false,
-    mechanism: 'Local tests are sent from the chosen interface. Whether an '
+    mechanism:
+        'Local tests are sent from the chosen interface. Whether an '
         'internet test can be pinned to it depends on how this machine is '
         'wired, so the app tries it once and tells you what happened.',
   ),
@@ -300,7 +303,8 @@ const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
     canSelectLocal: SelectSupport.yes,
     canSelectInternet: SelectSupport.mustProbe,
     hasCellular: true,
-    mechanism: 'Local tests are sent from the chosen interface. Whether an '
+    mechanism:
+        'Local tests are sent from the chosen interface. Whether an '
         'internet test can be pinned to it depends on how this machine is '
         'wired, so the app tries it once and tells you what happened.',
   ),
@@ -309,7 +313,8 @@ const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
     canSelectLocal: SelectSupport.yes,
     canSelectInternet: SelectSupport.mustProbe,
     hasCellular: false,
-    mechanism: 'Local tests are sent from the chosen interface. Whether an '
+    mechanism:
+        'Local tests are sent from the chosen interface. Whether an '
         'internet test can be pinned to it depends on how this machine is '
         'wired, so the app tries it once and tells you what happened.',
   ),
@@ -327,7 +332,8 @@ const Map<TransportPlatform, TransportCapability> kTransportCapabilities =
     canSelectLocal: SelectSupport.no,
     canSelectInternet: SelectSupport.no,
     hasCellular: true,
-    mechanism: 'iOS decides which path each connection takes. The app can show '
+    mechanism:
+        'iOS decides which path each connection takes. The app can show '
         'you which one is carrying the test, but cannot move it.',
   ),
   TransportPlatform.web: TransportCapability(
@@ -377,10 +383,10 @@ bool _isUserLink(LinkInfo l) {
 /// device), so the caller passes cellular links in explicitly rather than
 /// having this guess from a name - guessing from a name is the whole defect.
 TransportKind? transportKindOf(LinkInfo l) => switch (l.kind) {
-      LinkKind.wired => TransportKind.ethernet,
-      LinkKind.wifi => TransportKind.wifi,
-      _ => null,
-    };
+  LinkKind.wired => TransportKind.ethernet,
+  LinkKind.wifi => TransportKind.wifi,
+  _ => null,
+};
 
 /// Build the chooser rows for one platform, one scope, and one link table.
 ///
@@ -400,12 +406,14 @@ List<TransportOption> buildTransportOptions({
 
   if (!cap.canEnumerate) {
     return TransportKind.values
-        .map((TransportKind k) => TransportOption(
-              kind: k,
-              state: TransportState.absent,
-              reason: cap.mechanism,
-              shortReason: 'Not available on this platform.',
-            ))
+        .map(
+          (TransportKind k) => TransportOption(
+            kind: k,
+            state: TransportState.absent,
+            reason: cap.mechanism,
+            shortReason: 'Not available on this platform.',
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -418,59 +426,68 @@ List<TransportOption> buildTransportOptions({
 
   for (final TransportKind kind in TransportKind.values) {
     if (kind == TransportKind.cellular) {
-      out.add(_cellularOption(cap, cellularLink, support, scope, active, probed));
+      out.add(
+        _cellularOption(cap, cellularLink, support, scope, active, probed),
+      );
       continue;
     }
 
-    final List<LinkInfo> ofKind =
-        links.where((LinkInfo l) => transportKindOf(l) == kind).toList();
+    final List<LinkInfo> ofKind = links
+        .where((LinkInfo l) => transportKindOf(l) == kind)
+        .toList();
 
     if (ofKind.isEmpty) {
-      out.add(TransportOption(
-        kind: kind,
-        state: TransportState.absent,
-        reason: kind == TransportKind.ethernet
-            ? 'No wired interface is present. Plug in an adapter or a cable '
-                'and check again.'
-            : 'No Wi-Fi interface is present on this device.',
-        shortReason: kind == TransportKind.ethernet
-            ? 'No wired interface on this device.'
-            : 'No Wi-Fi interface on this device.',
-      ));
+      out.add(
+        TransportOption(
+          kind: kind,
+          state: TransportState.absent,
+          reason: kind == TransportKind.ethernet
+              ? 'No wired interface is present. Plug in an adapter or a cable '
+                    'and check again.'
+              : 'No Wi-Fi interface is present on this device.',
+          shortReason: kind == TransportKind.ethernet
+              ? 'No wired interface on this device.'
+              : 'No Wi-Fi interface on this device.',
+        ),
+      );
       continue;
     }
 
     final LinkInfo? up = ofKind.where(_isUserLink).firstOrNull;
     if (up == null) {
       final LinkInfo first = ofKind.first;
-      out.add(TransportOption(
-        kind: kind,
-        state: TransportState.presentNoLink,
-        link: first,
-        reason: first.carrier == true
-            ? '${first.name} is up but has no address, so nothing can be sent '
-                'over it yet.'
-            : kind == TransportKind.ethernet
-                ? '${first.name} is present with no link. A cable into a dead '
+      out.add(
+        TransportOption(
+          kind: kind,
+          state: TransportState.presentNoLink,
+          link: first,
+          reason: first.carrier == true
+              ? '${first.name} is up but has no address, so nothing can be sent '
+                    'over it yet.'
+              : kind == TransportKind.ethernet
+              ? '${first.name} is present with no link. A cable into a dead '
                     'switch looks exactly like no cable at all, so check both.'
-                : '${first.name} is present but not associated to a network.',
-        shortReason: first.carrier == true
-            ? '${first.name} is up but has no address.'
-            : kind == TransportKind.ethernet
-                ? '${first.name} has no link. Check both ends.'
-                : '${first.name} is not associated to a network.',
-      ));
+              : '${first.name} is present but not associated to a network.',
+          shortReason: first.carrier == true
+              ? '${first.name} is up but has no address.'
+              : kind == TransportKind.ethernet
+              ? '${first.name} has no link. Check both ends.'
+              : '${first.name} is not associated to a network.',
+        ),
+      );
       continue;
     }
 
     if (identical(up, active) || (active != null && up.name == active.name)) {
-      out.add(TransportOption(
-        kind: kind,
-        state: TransportState.active,
-        link: up,
-        reason: 'Carrying traffic now. ${up.name} holds the default route.',
-        shortReason: 'Carrying traffic now.',
-      ));
+      out.add(
+        TransportOption(
+          kind: kind,
+          state: TransportState.active,
+          link: up,
+          reason: 'Carrying traffic now. ${up.name} holds the default route.',
+          shortReason: 'Carrying traffic now.',
+        ),
+      );
       continue;
     }
 
@@ -499,7 +516,8 @@ TransportOption _cellularOption(
     return const TransportOption(
       kind: TransportKind.cellular,
       state: TransportState.absent,
-      reason: 'No cellular connection. The radio may be off, in airplane '
+      reason:
+          'No cellular connection. The radio may be off, in airplane '
           'mode, or without service.',
       shortReason: 'No cellular connection.',
     );
@@ -509,7 +527,8 @@ TransportOption _cellularOption(
       kind: TransportKind.cellular,
       state: TransportState.active,
       link: cellularLink,
-      reason: 'Carrying traffic now. This is a metered path, so a throughput '
+      reason:
+          'Carrying traffic now. This is a metered path, so a throughput '
           'test spends your data.',
       // The metered warning stays in the SHORT form. It is the one fact here
       // that costs the user money if they miss it, and a cost warning that
@@ -518,9 +537,15 @@ TransportOption _cellularOption(
     );
   }
   return _supportRow(
-      TransportKind.cellular, support, cellularLink, cap, scope, probed,
-      extra: ' Testing over cellular spends your data allowance.',
-      shortExtra: ' Metered.');
+    TransportKind.cellular,
+    support,
+    cellularLink,
+    cap,
+    scope,
+    probed,
+    extra: ' Testing over cellular spends your data allowance.',
+    shortExtra: ' Metered.',
+  );
 }
 
 /// Turn a [SelectSupport] into the row a user reads.
@@ -552,7 +577,8 @@ TransportOption _supportRow(
         kind: kind,
         state: TransportState.presentNotSelectable,
         link: link,
-        reason: '${link.name} is up and carrying its own traffic, but this '
+        reason:
+            '${link.name} is up and carrying its own traffic, but this '
             'test cannot be moved onto it. ${cap.mechanism}',
         shortReason: '${link.name} is up, but tests cannot be moved onto it.',
       );
@@ -563,7 +589,8 @@ TransportOption _supportRow(
           kind: kind,
           state: TransportState.selectable,
           link: link,
-          reason: 'Tested on this machine: a connection sent from '
+          reason:
+              'Tested on this machine: a connection sent from '
               '${link.name} succeeded.$extra',
           shortReason: 'Tested on this machine: it worked.$shortExtra',
         );
@@ -573,7 +600,8 @@ TransportOption _supportRow(
           kind: kind,
           state: TransportState.presentNotSelectable,
           link: link,
-          reason: '${link.name} is up, but a test connection sent from it did '
+          reason:
+              '${link.name} is up, but a test connection sent from it did '
               'not get through. That usually means this machine routes to the '
               'internet through a different gateway.',
           shortReason: 'Tested: the connection did not get through.',
@@ -583,7 +611,8 @@ TransportOption _supportRow(
         kind: kind,
         state: TransportState.presentUntested,
         link: link,
-        reason: '${link.name} is up. Whether a test can be pinned to it '
+        reason:
+            '${link.name} is up. Whether a test can be pinned to it '
             'depends on how this machine is wired, and that has not been '
             'checked yet.$extra',
         shortReason: 'Not checked on this machine yet.$shortExtra',

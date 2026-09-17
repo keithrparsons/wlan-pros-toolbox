@@ -69,26 +69,24 @@ class WhoisResult {
     required String rawRecord,
     required List<WhoisHighlight> highlights,
     required List<String> serversQueried,
-  }) =>
-      WhoisResult._(
-        query: query,
-        rawRecord: rawRecord,
-        highlights: highlights,
-        serversQueried: serversQueried,
-      );
+  }) => WhoisResult._(
+    query: query,
+    rawRecord: rawRecord,
+    highlights: highlights,
+    serversQueried: serversQueried,
+  );
 
   factory WhoisResult.failure({
     required String query,
     required String message,
     List<String> serversQueried = const <String>[],
-  }) =>
-      WhoisResult._(
-        query: query,
-        rawRecord: '',
-        highlights: const <WhoisHighlight>[],
-        serversQueried: serversQueried,
-        errorMessage: message,
-      );
+  }) => WhoisResult._(
+    query: query,
+    rawRecord: '',
+    highlights: const <WhoisHighlight>[],
+    serversQueried: serversQueried,
+    errorMessage: message,
+  );
 
   /// The normalized query that was sent.
   final String query;
@@ -137,7 +135,7 @@ class WhoisResult {
 /// logic and parsing unit-testable without opening real sockets.
 class WhoisService {
   WhoisService({WhoisConnector? connector})
-      : _connect = connector ?? _defaultConnect;
+    : _connect = connector ?? _defaultConnect;
 
   final WhoisConnector _connect;
 
@@ -193,8 +191,11 @@ class WhoisService {
     try {
       // Hop 1: ask IANA who is authoritative for this object.
       serversQueried.add(kIanaWhoisServer);
-      final String ianaRecord =
-          await _connect(kIanaWhoisServer, query, timeout: timeout);
+      final String ianaRecord = await _connect(
+        kIanaWhoisServer,
+        query,
+        timeout: timeout,
+      );
 
       final String? referral = parseReferralServer(ianaRecord);
 
@@ -232,8 +233,11 @@ class WhoisService {
           // untrusted response.
           NetworkTarget.validateReferralTarget(registrarServer).isValid) {
         try {
-          final String deep =
-              await _connect(registrarServer, query, timeout: timeout);
+          final String deep = await _connect(
+            registrarServer,
+            query,
+            timeout: timeout,
+          );
           if (deep.trim().length > record.trim().length) {
             serversQueried.add(registrarServer);
             record = deep;
@@ -299,7 +303,10 @@ class WhoisService {
       if (value.isEmpty) continue;
       // Strip a scheme and any trailing port — we want a bare hostname for
       // Socket.connect.
-      value = value.replaceFirst(RegExp(r'^https?://', caseSensitive: false), '');
+      value = value.replaceFirst(
+        RegExp(r'^https?://', caseSensitive: false),
+        '',
+      );
       final int slash = value.indexOf('/');
       if (slash >= 0) value = value.substring(0, slash);
       final int port = value.indexOf(':');
@@ -315,24 +322,32 @@ class WhoisService {
   /// the record wins (registries vary in casing/wording).
   static const List<(String, List<String>)> _highlightSpec =
       <(String, List<String>)>[
-    ('Registrar', <String>['registrar']),
-    (
-      'Created',
-      <String>['creation date', 'created', 'registered on', 'domain_dateregistered'],
-    ),
-    (
-      'Updated',
-      <String>['updated date', 'last updated', 'last modified', 'changed'],
-    ),
-    (
-      'Expires',
-      <String>['registry expiry date', 'expiry date', 'expiration date', 'expires', 'paid-till'],
-    ),
-    (
-      'Status',
-      <String>['domain status', 'status'],
-    ),
-  ];
+        ('Registrar', <String>['registrar']),
+        (
+          'Created',
+          <String>[
+            'creation date',
+            'created',
+            'registered on',
+            'domain_dateregistered',
+          ],
+        ),
+        (
+          'Updated',
+          <String>['updated date', 'last updated', 'last modified', 'changed'],
+        ),
+        (
+          'Expires',
+          <String>[
+            'registry expiry date',
+            'expiry date',
+            'expiration date',
+            'expires',
+            'paid-till',
+          ],
+        ),
+        ('Status', <String>['domain status', 'status']),
+      ];
 
   /// Extract a small set of reliably-parseable highlights from the raw record.
   /// Name servers are collected separately (a record lists several). Anything
@@ -349,18 +364,18 @@ class WhoisService {
     }
 
     // Name servers — there can be several; collect, de-dupe, join.
-    final List<String> ns = _allValuesForKeys(
-      lines,
-      <String>['name server', 'nserver', 'nameservers', 'name servers'],
-    );
+    final List<String> ns = _allValuesForKeys(lines, <String>[
+      'name server',
+      'nserver',
+      'nameservers',
+      'name servers',
+    ]);
     if (ns.isNotEmpty) {
       final List<String> unique = ns
           .map((String s) => s.toLowerCase())
           .toSet()
           .toList(growable: false);
-      out.add(
-        WhoisHighlight(label: 'Name servers', value: unique.join('\n')),
-      );
+      out.add(WhoisHighlight(label: 'Name servers', value: unique.join('\n')));
     }
     return out;
   }
@@ -388,7 +403,11 @@ class WhoisService {
       if (!wanted.contains(key)) continue;
       // A name-server line can carry "ns1.example.com 192.0.2.1" — keep just
       // the host token.
-      final String value = line.substring(colon + 1).trim().split(RegExp(r'\s+')).first;
+      final String value = line
+          .substring(colon + 1)
+          .trim()
+          .split(RegExp(r'\s+'))
+          .first;
       if (value.isNotEmpty) out.add(value);
     }
     return out;
@@ -401,8 +420,9 @@ class WhoisService {
 }
 
 /// The injectable network seam: one WHOIS round-trip, returns the raw record.
-typedef WhoisConnector = Future<String> Function(
-  String server,
-  String query, {
-  required Duration timeout,
-});
+typedef WhoisConnector =
+    Future<String> Function(
+      String server,
+      String query, {
+      required Duration timeout,
+    });

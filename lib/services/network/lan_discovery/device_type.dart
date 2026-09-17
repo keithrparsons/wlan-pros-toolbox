@@ -163,7 +163,8 @@ DeviceType inferDeviceType({
   // On mobile there is no vendor, so vendorOrHostHas(...) is always false here
   // and a host with only 22/80/443 open still falls through to the weak
   // port rules below — the documented ceiling, unchanged.
-  final bool networkingVendor = vendorOrHostHas('ubiquiti') ||
+  final bool networkingVendor =
+      vendorOrHostHas('ubiquiti') ||
       vendorOrHostHas('mikrotik') ||
       vendorOrHostHas('aruba') ||
       vendorOrHostHas('ruckus') ||

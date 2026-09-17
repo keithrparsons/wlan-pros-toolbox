@@ -61,7 +61,8 @@ class ApNameCache {
   /// a non-polling screen re-reads immediately against a still-empty cache and
   /// then never re-reads again — the name never appears. Entries are removed the
   /// moment the scan settles, so this map only ever holds genuinely-running work.
-  final Map<String, Future<void>> _inFlightScanByBssid = <String, Future<void>>{};
+  final Map<String, Future<void>> _inFlightScanByBssid =
+      <String, Future<void>>{};
 
   /// Normalizes a BSSID into THE cache key: trimmed and lowercased, or null when
   /// it carries no usable value (null or blank).

@@ -16,7 +16,7 @@ import 'cellular_info.dart';
 /// A fixed-capacity rolling window of the signal-bars reading (0..4).
 class CellularTimeSeries {
   CellularTimeSeries({this.capacity = defaultCapacity})
-      : assert(capacity > 0, 'capacity must be positive');
+    : assert(capacity > 0, 'capacity must be positive');
 
   /// Default rolling-window length. ~60 samples at the recursive Shortcut's
   /// ~1s cadence, matching [WifiTimeSeries.defaultCapacity].

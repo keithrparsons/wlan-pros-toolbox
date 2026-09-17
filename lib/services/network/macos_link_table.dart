@@ -69,8 +69,10 @@ MediaReading parseMediaString(String raw) {
   }
 
   // "2500Base-T", "1000baseT", "10Gbase-T". The optional G multiplies by 1000.
-  final RegExpMatch? m =
-      RegExp(r'(\d+)\s*(g?)base', caseSensitive: false).firstMatch(lower);
+  final RegExpMatch? m = RegExp(
+    r'(\d+)\s*(g?)base',
+    caseSensitive: false,
+  ).firstMatch(lower);
   int? speed;
   if (m != null) {
     final int? n = int.tryParse(m.group(1)!);
@@ -80,7 +82,11 @@ MediaReading parseMediaString(String raw) {
   // A bare "autoselect" with no media type is what an associated Wi-Fi radio
   // reports. It says nothing about link, so it returns null rather than false:
   // `status:` is the authority and the caller has it.
-  return MediaReading(speedMbps: speed, duplex: duplex, hasLink: speed != null ? true : null);
+  return MediaReading(
+    speedMbps: speed,
+    duplex: duplex,
+    hasLink: speed != null ? true : null,
+  );
 }
 
 /// Classify a device from the hardware-port label macOS gives it.
@@ -122,8 +128,9 @@ LinkTable parseMacosLinkTable({
   final List<LinkInfo> links = <LinkInfo>[];
 
   for (final _RawInterface raw in _splitIfconfig(ifconfigAll)) {
-    final MediaReading media =
-        raw.media == null ? const MediaReading() : parseMediaString(raw.media!);
+    final MediaReading media = raw.media == null
+        ? const MediaReading()
+        : parseMediaString(raw.media!);
 
     // CARRIER IS `status: active` AND NOTHING ELSE. Not IFF_RUNNING, which is
     // set on an adapter with nothing plugged in.
@@ -131,22 +138,24 @@ LinkTable parseMacosLinkTable({
         ? (raw.name.startsWith('lo') ? true : null)
         : raw.status!.toLowerCase() == 'active';
 
-    links.add(LinkInfo(
-      name: raw.name,
-      kind: kindFromHardwarePort(portOf[raw.name], raw.name),
-      operState: raw.flagsUp ? 'UP' : 'DOWN',
-      carrier: carrier,
-      // Only report a speed on a link that is actually up. A negotiated rate
-      // printed beside a dead port is the kind of true-but-misplaced fact that
-      // has caused every problem this project has had.
-      speedMbps: carrier == true ? media.speedMbps : null,
-      duplex: carrier == true ? media.duplex : null,
-      mtu: raw.mtu,
-      mac: raw.mac,
-      isDefaultRouteV4: defaultRouteInterface != null &&
-          raw.name == defaultRouteInterface,
-      addresses: raw.addresses,
-    ));
+    links.add(
+      LinkInfo(
+        name: raw.name,
+        kind: kindFromHardwarePort(portOf[raw.name], raw.name),
+        operState: raw.flagsUp ? 'UP' : 'DOWN',
+        carrier: carrier,
+        // Only report a speed on a link that is actually up. A negotiated rate
+        // printed beside a dead port is the kind of true-but-misplaced fact that
+        // has caused every problem this project has had.
+        speedMbps: carrier == true ? media.speedMbps : null,
+        duplex: carrier == true ? media.duplex : null,
+        mtu: raw.mtu,
+        mac: raw.mac,
+        isDefaultRouteV4:
+            defaultRouteInterface != null && raw.name == defaultRouteInterface,
+        addresses: raw.addresses,
+      ),
+    );
   }
 
   return LinkTable(
@@ -189,9 +198,9 @@ List<_RawInterface> _splitIfconfig(String text) {
   _RawInterface? cur;
 
   for (final String line in text.split('\n')) {
-    final RegExpMatch? head =
-        RegExp(r'^([a-zA-Z0-9_.]+):\s+flags=(\d+)<([^>]*)>(?:.*mtu\s+(\d+))?')
-            .firstMatch(line);
+    final RegExpMatch? head = RegExp(
+      r'^([a-zA-Z0-9_.]+):\s+flags=(\d+)<([^>]*)>(?:.*mtu\s+(\d+))?',
+    ).firstMatch(line);
     if (head != null) {
       cur = _RawInterface(head.group(1)!);
       cur.flagsUp = head.group(3)!.split(',').contains('UP');
@@ -210,29 +219,33 @@ List<_RawInterface> _splitIfconfig(String text) {
       cur.status = t.substring(7).trim();
     } else if (t.startsWith('inet ')) {
       final RegExpMatch? m = RegExp(
-              r'inet\s+(\d+\.\d+\.\d+\.\d+)(?:\s+netmask\s+(0x[0-9a-fA-F]+|\d+\.\d+\.\d+\.\d+))?')
-          .firstMatch(t);
+        r'inet\s+(\d+\.\d+\.\d+\.\d+)(?:\s+netmask\s+(0x[0-9a-fA-F]+|\d+\.\d+\.\d+\.\d+))?',
+      ).firstMatch(t);
       if (m != null) {
         final String ip = m.group(1)!;
-        cur.addresses.add(LinkAddress(
-          address: ip,
-          isIPv4: true,
-          prefixLength: m.group(2) == null ? null : _mask(m.group(2)!),
-          isLinkLocal: ip.startsWith('169.254.'),
-        ));
+        cur.addresses.add(
+          LinkAddress(
+            address: ip,
+            isIPv4: true,
+            prefixLength: m.group(2) == null ? null : _mask(m.group(2)!),
+            isLinkLocal: ip.startsWith('169.254.'),
+          ),
+        );
       }
     } else if (t.startsWith('inet6 ')) {
-      final RegExpMatch? m =
-          RegExp(r'inet6\s+([0-9a-fA-F:]+)(?:%\w+)?(?:\s+prefixlen\s+(\d+))?')
-              .firstMatch(t);
+      final RegExpMatch? m = RegExp(
+        r'inet6\s+([0-9a-fA-F:]+)(?:%\w+)?(?:\s+prefixlen\s+(\d+))?',
+      ).firstMatch(t);
       if (m != null) {
         final String ip = m.group(1)!;
-        cur.addresses.add(LinkAddress(
-          address: ip,
-          isIPv4: false,
-          prefixLength: int.tryParse(m.group(2) ?? ''),
-          isLinkLocal: ip.toLowerCase().startsWith('fe80'),
-        ));
+        cur.addresses.add(
+          LinkAddress(
+            address: ip,
+            isIPv4: false,
+            prefixLength: int.tryParse(m.group(2) ?? ''),
+            isLinkLocal: ip.toLowerCase().startsWith('fe80'),
+          ),
+        );
       }
     }
   }

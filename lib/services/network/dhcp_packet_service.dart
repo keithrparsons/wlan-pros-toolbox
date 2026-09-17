@@ -134,8 +134,7 @@ enum DhcpPacketUnavailable {
 
 /// Result of a read: either a packet, or a reason there is none.
 class DhcpPacketResult {
-  const DhcpPacketResult.success(this.packet)
-      : unavailable = null;
+  const DhcpPacketResult.success(this.packet) : unavailable = null;
   const DhcpPacketResult.unavailable(this.unavailable) : packet = null;
 
   final DhcpPacket? packet;
@@ -154,17 +153,16 @@ class DhcpPacketService {
   DhcpPacketService({
     Future<ProcessResult> Function(String, List<String>)? runProcess,
     bool? isMacOsOverride,
-  })  : _run = runProcess ?? Process.run,
-        // ignore: prefer_initializing_formals
-        _isMacOsOverride = isMacOsOverride;
+  }) : _run = runProcess ?? Process.run,
+       // ignore: prefer_initializing_formals
+       _isMacOsOverride = isMacOsOverride;
 
   final Future<ProcessResult> Function(String, List<String>) _run;
 
   /// Test seam: forces the platform answer so gating is testable off macOS.
   final bool? _isMacOsOverride;
 
-  bool get _isMacOs =>
-      _isMacOsOverride ?? (!kIsWeb && Platform.isMacOS);
+  bool get _isMacOs => _isMacOsOverride ?? (!kIsWeb && Platform.isMacOS);
 
   /// Whether this platform could ever serve this data by this mechanism.
   /// Answers the coarse question; [isAvailable] answers the sharp one.
@@ -179,8 +177,9 @@ class DhcpPacketService {
   Future<bool> isAvailable() async {
     if (!_isMacOs) return false;
     try {
-      await _run('ipconfig', const <String>['getiflist'])
-          .timeout(const Duration(seconds: 3));
+      await _run('ipconfig', const <String>[
+        'getiflist',
+      ]).timeout(const Duration(seconds: 3));
       return true;
     } on Object {
       // ProcessException (sandbox denial / missing binary) or a timeout.
@@ -204,17 +203,17 @@ class DhcpPacketService {
 
     final ProcessResult result;
     try {
-      result = await _run('ipconfig', <String>['getpacket', iface])
-          .timeout(const Duration(seconds: 5));
+      result = await _run('ipconfig', <String>[
+        'getpacket',
+        iface,
+      ]).timeout(const Duration(seconds: 5));
     } on Object {
       return const DhcpPacketResult.unavailable(
         DhcpPacketUnavailable.sandboxed,
       );
     }
 
-    final String out = (result.stdout is String)
-        ? result.stdout as String
-        : '';
+    final String out = (result.stdout is String) ? result.stdout as String : '';
 
     // `ipconfig getpacket` on an interface with no lease prints nothing (or a
     // bare "not found"-ish line) and exits non-zero.
@@ -236,10 +235,11 @@ class DhcpPacketService {
   /// [DhcpPacketUnavailable.noLease] rather than guessing `en0`.
   Future<String?> _defaultInterface() async {
     try {
-      final ProcessResult r = await _run(
-        'route',
-        const <String>['-n', 'get', 'default'],
-      ).timeout(const Duration(seconds: 3));
+      final ProcessResult r = await _run('route', const <String>[
+        '-n',
+        'get',
+        'default',
+      ]).timeout(const Duration(seconds: 3));
       final String out = (r.stdout is String) ? r.stdout as String : '';
       for (final String line in out.split('\n')) {
         final String t = line.trim();
@@ -273,7 +273,10 @@ class DhcpPacketService {
   /// end (none):
   /// ```
   @visibleForTesting
-  static DhcpPacket? parsePacket(String output, {required String interfaceName}) {
+  static DhcpPacket? parsePacket(
+    String output, {
+    required String interfaceName,
+  }) {
     final List<String> lines = output.split('\n');
     String? yiaddr;
     String? chaddr;

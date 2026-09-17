@@ -108,15 +108,18 @@ String measurementAttribution({
 }) {
   final String? iface =
       (interfaceName != null && interfaceName.trim().isNotEmpty)
-          ? interfaceName.trim()
-          : null;
+      ? interfaceName.trim()
+      : null;
   if (notOnWifi) {
     return iface == null
         ? 'Measured over your wired or cellular connection, not Wi-Fi.'
         : 'Measured over $iface, not Wi-Fi.';
   }
-  final String? name = (ssid != null && ssid.trim().isNotEmpty) ? ssid.trim() : null;
-  if (name != null && iface != null) return 'Measured over Wi-Fi: $name ($iface).';
+  final String? name = (ssid != null && ssid.trim().isNotEmpty)
+      ? ssid.trim()
+      : null;
+  if (name != null && iface != null)
+    return 'Measured over Wi-Fi: $name ($iface).';
   if (name != null) return 'Measured over Wi-Fi: $name.';
   if (iface != null) return 'Measured over Wi-Fi ($iface).';
   return 'Measured over Wi-Fi.';
@@ -130,7 +133,7 @@ String measurementAttribution({
 /// fault must never stop a tool running; it may only lose a preference.
 class TransportPreference {
   TransportPreference({Future<SharedPreferences> Function()? getStore})
-      : _getStore = getStore ?? SharedPreferences.getInstance;
+    : _getStore = getStore ?? SharedPreferences.getInstance;
 
   final Future<SharedPreferences> Function() _getStore;
 

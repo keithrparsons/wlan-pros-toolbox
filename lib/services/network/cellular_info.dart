@@ -147,11 +147,9 @@ class CellularInfo {
 
     return CellularInfo(
       carrier: pickString(<String>['carrier', 'Carrier', 'Carrier Name']),
-      radioTechnology: normalizeRadioTechnology(pickString(<String>[
-        'radioTechnology',
-        'Radio Technology',
-        'radio',
-      ])),
+      radioTechnology: normalizeRadioTechnology(
+        pickString(<String>['radioTechnology', 'Radio Technology', 'radio']),
+      ),
       signalBars: pickBars(<String>[
         'signalBars',
         'Signal Bars',

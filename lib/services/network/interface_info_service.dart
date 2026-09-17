@@ -69,10 +69,10 @@ bool isGeneralHostAddressV4(String ip) {
     if (v == null || v < 0 || v > 255) return false;
     o.add(v);
   }
-  if (o[0] == 127) return false;                          // loopback
-  if (o[0] == 169 && o[1] == 254) return false;           // RFC 3927 link-local
+  if (o[0] == 127) return false; // loopback
+  if (o[0] == 169 && o[1] == 254) return false; // RFC 3927 link-local
   if (o[0] == 192 && o[1] == 0 && o[2] == 0 && o[3] < 8) {
-    return false;                                         // RFC 7335 192.0.0.0/29
+    return false; // RFC 7335 192.0.0.0/29
   }
   return true;
 }
@@ -253,10 +253,7 @@ class InterfaceInfoSnapshot {
         ]) ??
         // Then anything else that is at least a general host address. A VPN
         // address IS the device's address when the VPN is all it has.
-        firstIn(const <InterfaceKind>[
-          InterfaceKind.vpn,
-          InterfaceKind.other,
-        ]);
+        firstIn(const <InterfaceKind>[InterfaceKind.vpn, InterfaceKind.other]);
   }
 }
 
@@ -268,8 +265,8 @@ class InterfaceInfoSnapshot {
 /// [authorized] reports the CURRENT macOS Location authorization (no prompt), so
 /// the caller can distinguish "name absent because Location is off" from "name
 /// absent for some other reason" and show the honest hint.
-typedef ConnectedApRead = Future<({ConnectedAp? ap, bool authorized})>
-    Function();
+typedef ConnectedApRead =
+    Future<({ConnectedAp? ap, bool authorized})> Function();
 
 /// Reads local interface + Wi-Fi state. Pure I/O, no UI — unit-testable by
 /// injecting a fake [NetworkInfo], a fake interface lister, and a fake
@@ -283,14 +280,15 @@ class InterfaceInfoService {
     ConnectedApCache? connectedApCache,
     DateTime Function()? now,
     WifiConnectionService? connectionService,
-  })  : _networkInfo = networkInfo ?? NetworkInfo(),
-        _interfaceLister = interfaceLister ?? _defaultLister,
-        _cache = connectedApCache ?? ConnectedApCache.instance,
-        _injectedReader = connectedApReader,
-        _injectedAdapter = wifiInfoAdapter,
-        _now = now ?? DateTime.now,
-        _connection = connectionService ??
-            WifiConnectionService(networkInfo: networkInfo ?? NetworkInfo());
+  }) : _networkInfo = networkInfo ?? NetworkInfo(),
+       _interfaceLister = interfaceLister ?? _defaultLister,
+       _cache = connectedApCache ?? ConnectedApCache.instance,
+       _injectedReader = connectedApReader,
+       _injectedAdapter = wifiInfoAdapter,
+       _now = now ?? DateTime.now,
+       _connection =
+           connectionService ??
+           WifiConnectionService(networkInfo: networkInfo ?? NetworkInfo());
 
   final NetworkInfo _networkInfo;
   final Future<List<NetworkInterface>> Function() _interfaceLister;
@@ -380,10 +378,9 @@ class InterfaceInfoService {
     if (adapter != null) {
       try {
         final ConnectedAp ap = await adapter.fetch().timeout(
-              const Duration(seconds: 5),
-              onTimeout: () =>
-                  throw TimeoutException('Wi-Fi link read timed out'),
-            );
+          const Duration(seconds: 5),
+          onTimeout: () => throw TimeoutException('Wi-Fi link read timed out'),
+        );
         final bool authorized = await adapter.currentNameAuthorization();
         return (ap: ap, authorized: authorized);
       } catch (_) {
@@ -392,7 +389,9 @@ class InterfaceInfoService {
         bool authorized = false;
         try {
           authorized = await adapter.currentNameAuthorization();
-        } catch (_) {/* leave false */}
+        } catch (_) {
+          /* leave false */
+        }
         return (ap: null, authorized: authorized);
       }
     }
@@ -441,8 +440,8 @@ class InterfaceInfoService {
       WifiInfoSource.macosCoreWlan => MacWifiInfoAdapter(enrichApName: true),
       WifiInfoSource.iosShortcuts ||
       WifiInfoSource.unsupported ||
-      WifiInfoSource.piBackend || WifiInfoSource.web =>
-        null,
+      WifiInfoSource.piBackend ||
+      WifiInfoSource.web => null,
     };
   }
 
@@ -479,21 +478,23 @@ class InterfaceInfoService {
       return const <NetworkInterfaceInfo>[];
     }
 
-    return raw.map((NetworkInterface iface) {
-      final List<InterfaceAddress> addrs = iface.addresses
-          .map(
-            (InternetAddress a) => InterfaceAddress(
-              ip: a.address,
-              isIPv4: a.type == InternetAddressType.IPv4,
-            ),
-          )
-          .toList(growable: false);
-      return NetworkInterfaceInfo(
-        name: iface.name,
-        kind: classifyInterface(iface.name),
-        addresses: addrs,
-      );
-    }).toList(growable: false);
+    return raw
+        .map((NetworkInterface iface) {
+          final List<InterfaceAddress> addrs = iface.addresses
+              .map(
+                (InternetAddress a) => InterfaceAddress(
+                  ip: a.address,
+                  isIPv4: a.type == InternetAddressType.IPv4,
+                ),
+              )
+              .toList(growable: false);
+          return NetworkInterfaceInfo(
+            name: iface.name,
+            kind: classifyInterface(iface.name),
+            addresses: addrs,
+          );
+        })
+        .toList(growable: false);
   }
 
   Future<WifiLinkInfo> _readWifi() async {
@@ -522,10 +523,10 @@ class InterfaceInfoService {
     // ADDRESSING from network_info_plus (the native AP subsystem is identity/RF
     // only). Each call is wrapped: a denied permission or unsupported platform
     // throws a PlatformException; we swallow it to null rather than fail.
-    final String? gateway =
-        await _tryStr(() => _networkInfo.getWifiGatewayIP());
-    final String? submask =
-        await _tryStr(() => _networkInfo.getWifiSubmask());
+    final String? gateway = await _tryStr(
+      () => _networkInfo.getWifiGatewayIP(),
+    );
+    final String? submask = await _tryStr(() => _networkInfo.getWifiSubmask());
     final String? ipv4 = await _tryStr(() => _networkInfo.getWifiIP());
     final String? ipv6 = await _tryStr(() => _networkInfo.getWifiIPv6());
 
@@ -554,7 +555,8 @@ class InterfaceInfoService {
     DateTime? cachedAt;
     final ConnectedAp? cached = _cache.latest;
     final DateTime? cacheTime = _cache.updatedAt;
-    final bool cacheFresh = cached != null &&
+    final bool cacheFresh =
+        cached != null &&
         cached.hasAnyData &&
         cacheTime != null &&
         _now().difference(cacheTime) < cacheStaleThreshold;
@@ -575,7 +577,7 @@ class InterfaceInfoService {
     // limitation. (iOS reports authorized=true, so this never trips there.)
     final bool nameMissing =
         (ap?.ssid == null || ap!.ssid!.trim().isEmpty) &&
-            (ap?.bssid == null || ap!.bssid!.trim().isEmpty);
+        (ap?.bssid == null || ap!.bssid!.trim().isEmpty);
     final bool locationNeeded = nameMissing && !read.authorized;
 
     return WifiLinkInfo(

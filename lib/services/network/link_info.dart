@@ -52,13 +52,13 @@ enum LinkKind {
 }
 
 LinkKind linkKindFromString(String? raw) => switch (raw?.toLowerCase()) {
-      'wired' => LinkKind.wired,
-      'wifi' => LinkKind.wifi,
-      'monitor' => LinkKind.monitor,
-      'virtual' => LinkKind.virtual,
-      'loopback' => LinkKind.loopback,
-      _ => LinkKind.other,
-    };
+  'wired' => LinkKind.wired,
+  'wifi' => LinkKind.wifi,
+  'monitor' => LinkKind.monitor,
+  'virtual' => LinkKind.virtual,
+  'loopback' => LinkKind.loopback,
+  _ => LinkKind.other,
+};
 
 /// One address bound to a link.
 class LinkAddress {
@@ -162,7 +162,9 @@ class LinkInfo {
   /// This is the honest name for "the cable is in and DHCP did not answer", and
   /// it is a state the app currently cannot express at all.
   bool get hasOnlyLinkLocalIPv4 {
-    final Iterable<LinkAddress> v4 = addresses.where((LinkAddress a) => a.isIPv4);
+    final Iterable<LinkAddress> v4 = addresses.where(
+      (LinkAddress a) => a.isIPv4,
+    );
     return v4.isNotEmpty && v4.every((LinkAddress a) => a.isLinkLocal);
   }
 
@@ -170,7 +172,8 @@ class LinkInfo {
     final String name = (j['name'] as String?) ?? '';
     if (name.isEmpty) return null;
     int? speed = (j['speed_mbps'] as num?)?.toInt();
-    if (speed != null && speed <= 0) speed = null; // sentinel, not a measurement
+    if (speed != null && speed <= 0)
+      speed = null; // sentinel, not a measurement
     final String? duplex = _blank(j['duplex'] as String?);
     return LinkInfo(
       name: name,
@@ -186,9 +189,11 @@ class LinkInfo {
       isDefaultRouteV4: j['is_default_route_v4'] == true,
       isDefaultRouteV6: j['is_default_route_v6'] == true,
       addresses: <LinkAddress>[
-        for (final dynamic raw in (j['addresses'] as List<dynamic>? ?? const <dynamic>[]))
+        for (final dynamic raw
+            in (j['addresses'] as List<dynamic>? ?? const <dynamic>[]))
           if (raw is Map<dynamic, dynamic>)
-            if (_address(raw.cast<String, dynamic>()) case final LinkAddress a) a,
+            if (_address(raw.cast<String, dynamic>()) case final LinkAddress a)
+              a,
       ],
     );
   }
@@ -253,15 +258,19 @@ class LinkTable {
 
   static LinkTable fromJson(Map<String, dynamic> j) {
     final Map<String, dynamic> route =
-        (j['default_route'] as Map<dynamic, dynamic>?)?.cast<String, dynamic>() ??
-            const <String, dynamic>{};
+        (j['default_route'] as Map<dynamic, dynamic>?)
+            ?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
     Map<String, dynamic>? fam(String k) =>
         (route[k] as Map<dynamic, dynamic>?)?.cast<String, dynamic>();
     return LinkTable(
       links: <LinkInfo>[
-        for (final dynamic raw in (j['links'] as List<dynamic>? ?? const <dynamic>[]))
+        for (final dynamic raw
+            in (j['links'] as List<dynamic>? ?? const <dynamic>[]))
           if (raw is Map<dynamic, dynamic>)
-            if (LinkInfo.fromJson(raw.cast<String, dynamic>()) case final LinkInfo l) l,
+            if (LinkInfo.fromJson(raw.cast<String, dynamic>())
+                case final LinkInfo l)
+              l,
       ],
       defaultRouteInterfaceV4: fam('inet')?['dev'] as String?,
       defaultGatewayV4: fam('inet')?['gateway'] as String?,

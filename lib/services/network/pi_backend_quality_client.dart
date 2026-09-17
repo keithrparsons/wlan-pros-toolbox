@@ -27,7 +27,7 @@ import 'pi_backend_client.dart';
 
 class PiBackendQualityClient implements QualityClient {
   PiBackendQualityClient({PiBackendClient? client})
-      : _client = client ?? PiBackendClient();
+    : _client = client ?? PiBackendClient();
 
   final PiBackendClient _client;
 
@@ -112,39 +112,47 @@ class PiBackendQualityClient implements QualityClient {
     // as the native engine.
     final double? avg = ct.internet.avgMs;
     if (ct.internet.reachable && avg != null) {
-      metrics.add(QualityMetric(
-        id: MetricIds.latency,
-        label: 'Latency',
-        value: avg,
-        unit: 'ms',
-        grade: QualityScoring.gradeLatencyMs(avg),
-      ));
+      metrics.add(
+        QualityMetric(
+          id: MetricIds.latency,
+          label: 'Latency',
+          value: avg,
+          unit: 'ms',
+          grade: QualityScoring.gradeLatencyMs(avg),
+        ),
+      );
     } else {
-      metrics.add(const QualityMetric.unavailable(
-        id: MetricIds.latency,
-        label: 'Latency',
-        unit: 'ms',
-        note: 'The Pi could not reach the internet target.',
-      ));
+      metrics.add(
+        const QualityMetric.unavailable(
+          id: MetricIds.latency,
+          label: 'Latency',
+          unit: 'ms',
+          note: 'The Pi could not reach the internet target.',
+        ),
+      );
     }
 
     // Loss — the Pi's internet-target loss percentage.
     final double? loss = ct.internet.lossPct;
     if (loss != null) {
-      metrics.add(QualityMetric(
-        id: MetricIds.loss,
-        label: 'Loss',
-        value: loss,
-        unit: '%',
-        grade: QualityScoring.gradeLossPct(loss),
-      ));
+      metrics.add(
+        QualityMetric(
+          id: MetricIds.loss,
+          label: 'Loss',
+          value: loss,
+          unit: '%',
+          grade: QualityScoring.gradeLossPct(loss),
+        ),
+      );
     } else {
-      metrics.add(const QualityMetric.unavailable(
-        id: MetricIds.loss,
-        label: 'Loss',
-        unit: '%',
-        note: _notMeasured,
-      ));
+      metrics.add(
+        const QualityMetric.unavailable(
+          id: MetricIds.loss,
+          label: 'Loss',
+          unit: '%',
+          note: _notMeasured,
+        ),
+      );
     }
 
     // Jitter — the Pi's internet-target jitter (JSON `internet.jitter_ms`),
@@ -154,20 +162,24 @@ class PiBackendQualityClient implements QualityClient {
     // with the honest note, never faked or zero-filled (GL-005).
     final double? jitter = ct.internet.jitterMs;
     if (jitter != null) {
-      metrics.add(QualityMetric(
-        id: MetricIds.jitter,
-        label: 'Jitter',
-        value: jitter,
-        unit: 'ms',
-        grade: QualityScoring.gradeJitterMs(jitter),
-      ));
+      metrics.add(
+        QualityMetric(
+          id: MetricIds.jitter,
+          label: 'Jitter',
+          value: jitter,
+          unit: 'ms',
+          grade: QualityScoring.gradeJitterMs(jitter),
+        ),
+      );
     } else {
-      metrics.add(const QualityMetric.unavailable(
-        id: MetricIds.jitter,
-        label: 'Jitter',
-        unit: 'ms',
-        note: _notMeasured,
-      ));
+      metrics.add(
+        const QualityMetric.unavailable(
+          id: MetricIds.jitter,
+          label: 'Jitter',
+          unit: 'ms',
+          note: _notMeasured,
+        ),
+      );
     }
     // Download / Upload — the Pi's OWN uplink to the internet (Pi → internet),
     // measured by the Pi against a vendor-neutral public endpoint. This is
@@ -176,48 +188,58 @@ class PiBackendQualityClient implements QualityClient {
     // honest-null with the Pi's own error note, never a fabricated 0 (GL-005).
     final double? down = tp?.downloadMbps;
     if (down != null) {
-      metrics.add(QualityMetric(
-        id: MetricIds.download,
-        label: 'Download',
-        value: down,
-        unit: 'Mbps',
-        grade: QualityScoring.gradeDownloadMbps(down),
-      ));
+      metrics.add(
+        QualityMetric(
+          id: MetricIds.download,
+          label: 'Download',
+          value: down,
+          unit: 'Mbps',
+          grade: QualityScoring.gradeDownloadMbps(down),
+        ),
+      );
     } else {
-      metrics.add(QualityMetric.unavailable(
-        id: MetricIds.download,
-        label: 'Download',
-        unit: 'Mbps',
-        note: includeThroughput
-            ? (_blank(tp?.downloadError) ?? _notMeasured)
-            : _skippedThroughput,
-      ));
+      metrics.add(
+        QualityMetric.unavailable(
+          id: MetricIds.download,
+          label: 'Download',
+          unit: 'Mbps',
+          note: includeThroughput
+              ? (_blank(tp?.downloadError) ?? _notMeasured)
+              : _skippedThroughput,
+        ),
+      );
     }
     final double? up = tp?.uploadMbps;
     if (up != null) {
-      metrics.add(QualityMetric(
-        id: MetricIds.upload,
-        label: 'Upload',
-        value: up,
-        unit: 'Mbps',
-        grade: QualityScoring.gradeUploadMbps(up),
-      ));
+      metrics.add(
+        QualityMetric(
+          id: MetricIds.upload,
+          label: 'Upload',
+          value: up,
+          unit: 'Mbps',
+          grade: QualityScoring.gradeUploadMbps(up),
+        ),
+      );
     } else {
-      metrics.add(QualityMetric.unavailable(
-        id: MetricIds.upload,
-        label: 'Upload',
-        unit: 'Mbps',
-        note: includeThroughput
-            ? (_blank(tp?.uploadError) ?? _notMeasured)
-            : _skippedThroughput,
-      ));
+      metrics.add(
+        QualityMetric.unavailable(
+          id: MetricIds.upload,
+          label: 'Upload',
+          unit: 'Mbps',
+          note: includeThroughput
+              ? (_blank(tp?.uploadError) ?? _notMeasured)
+              : _skippedThroughput,
+        ),
+      );
     }
-    metrics.add(QualityMetric.unavailable(
-      id: MetricIds.responsiveness,
-      label: 'Responsiveness',
-      unit: 'RPM',
-      note: includeResponsiveness ? _notMeasured : _skippedResponsiveness,
-    ));
+    metrics.add(
+      QualityMetric.unavailable(
+        id: MetricIds.responsiveness,
+        label: 'Responsiveness',
+        unit: 'RPM',
+        note: includeResponsiveness ? _notMeasured : _skippedResponsiveness,
+      ),
+    );
 
     return QualityResult(
       metrics: metrics,

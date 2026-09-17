@@ -15,7 +15,7 @@ import 'connected_ap.dart';
 /// A fixed-capacity rolling window of the four charted RF fields.
 class WifiTimeSeries {
   WifiTimeSeries({this.capacity = defaultCapacity})
-      : assert(capacity > 0, 'capacity must be positive');
+    : assert(capacity > 0, 'capacity must be positive');
 
   /// Default rolling-window length. ~60 samples ≈ one minute at the looping
   /// Shortcut's ~1s cadence (TICKET-01 spike target ~1–2s).

@@ -162,18 +162,27 @@ class AnalyzeInput {
     bool notOnWifi = false,
     bool speedTestSkipped = false,
   }) {
-    final double? down =
-        ConnectionCheck.metricValue(internet, MetricIds.download);
+    final double? down = ConnectionCheck.metricValue(
+      internet,
+      MetricIds.download,
+    );
     final double? up = ConnectionCheck.metricValue(internet, MetricIds.upload);
-    final double? latency =
-        ConnectionCheck.metricValue(internet, MetricIds.latency);
-    final double? jitter =
-        ConnectionCheck.metricValue(internet, MetricIds.jitter);
+    final double? latency = ConnectionCheck.metricValue(
+      internet,
+      MetricIds.latency,
+    );
+    final double? jitter = ConnectionCheck.metricValue(
+      internet,
+      MetricIds.jitter,
+    );
     final double? loss = ConnectionCheck.metricValue(internet, MetricIds.loss);
-    final double? rpm =
-        ConnectionCheck.metricValue(internet, MetricIds.responsiveness);
+    final double? rpm = ConnectionCheck.metricValue(
+      internet,
+      MetricIds.responsiveness,
+    );
 
-    final bool internetMeasured = down != null ||
+    final bool internetMeasured =
+        down != null ||
         up != null ||
         latency != null ||
         loss != null ||

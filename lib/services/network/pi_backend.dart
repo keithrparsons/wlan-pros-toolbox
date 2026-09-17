@@ -100,9 +100,9 @@ class PiBackend {
   static Future<void> probe({PiBackendClient? client}) async {
     if (!kIsWeb) return;
     try {
-      final bool ok = await (client ?? PiBackendClient())
-          .health()
-          .timeout(const Duration(seconds: 5));
+      final bool ok = await (client ?? PiBackendClient()).health().timeout(
+        const Duration(seconds: 5),
+      );
       _available = ok;
     } catch (_) {
       _available = false;

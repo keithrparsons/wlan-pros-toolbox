@@ -122,9 +122,9 @@ class DeviceInfoService {
     DeviceInfoPlugin? deviceInfo,
     SystemUptimeBridge? uptimeBridge,
     Future<List<NetworkInterface>> Function()? interfaceLister,
-  })  : _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
-        _uptimeBridge = uptimeBridge ?? SystemUptimeBridge(),
-        _interfaceLister = interfaceLister ?? _defaultLister;
+  }) : _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
+       _uptimeBridge = uptimeBridge ?? SystemUptimeBridge(),
+       _interfaceLister = interfaceLister ?? _defaultLister;
 
   final DeviceInfoPlugin _deviceInfo;
   final SystemUptimeBridge _uptimeBridge;
@@ -145,13 +145,10 @@ class DeviceInfoService {
   /// whole screen — that field comes back null and the rest still render.
   Future<DeviceInfoSnapshot> read() async {
     final ({String? name, String? id, int? memoryBytes, String? osVersion})
-        model = await _readModelAndMemory();
+    model = await _readModelAndMemory();
     final double? uptime = await _readUptime();
-    final ({
-      String? name,
-      List<CellularAddress> addrs,
-      bool present
-    }) cellular = await _readCellular();
+    final ({String? name, List<CellularAddress> addrs, bool present}) cellular =
+        await _readCellular();
 
     return DeviceInfoSnapshot(
       modelName: model.name,
@@ -168,7 +165,7 @@ class DeviceInfoService {
   /// Reads model + total memory + OS version from device_info_plus, dispatched
   /// per platform. Any failure yields all-null rather than throwing.
   Future<({String? name, String? id, int? memoryBytes, String? osVersion})>
-      _readModelAndMemory() async {
+  _readModelAndMemory() async {
     try {
       if (Platform.isIOS) {
         final IosDeviceInfo i = await _deviceInfo.iosInfo;
@@ -190,7 +187,10 @@ class DeviceInfoService {
           // The NSProcessInfo product version (e.g. "26.1"), NOT the Darwin
           // kernel string — see [formatMacOsVersion].
           osVersion: formatMacOsVersion(
-              m.majorVersion, m.minorVersion, m.patchVersion),
+            m.majorVersion,
+            m.minorVersion,
+            m.patchVersion,
+          ),
         );
       }
       if (Platform.isAndroid) {
@@ -258,7 +258,7 @@ class DeviceInfoService {
   /// Absent interface → present:false, empty addresses (the honest "no cellular
   /// interface" state, expected on Wi-Fi-only / airplane-mode / macOS).
   Future<({String? name, List<CellularAddress> addrs, bool present})>
-      _readCellular() async {
+  _readCellular() async {
     final List<NetworkInterface> raw;
     try {
       raw = await _interfaceLister();
@@ -273,7 +273,7 @@ class DeviceInfoService {
   /// list without touching `dart:io`'s real enumeration. Matches the cellular
   /// interface by exact name [kCellularInterfaceName] (the iOS convention).
   static ({String? name, List<CellularAddress> addrs, bool present})
-      parseCellular(List<NetworkInterface> interfaces) {
+  parseCellular(List<NetworkInterface> interfaces) {
     for (final NetworkInterface iface in interfaces) {
       if (iface.name != kCellularInterfaceName) continue;
       final List<CellularAddress> addrs = iface.addresses

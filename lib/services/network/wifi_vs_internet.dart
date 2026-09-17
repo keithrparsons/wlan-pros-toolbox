@@ -192,9 +192,7 @@ class OnlineEvidence {
   /// All three ANSWERED and all three said YES: the device is clearly online, so a
   /// missing throughput number is a stalled speed test, not an offline link.
   bool get isOnline =>
-      dnsResolved == true &&
-      publicIpObtained == true &&
-      cloudReachable == true;
+      dnsResolved == true && publicIpObtained == true && cloudReachable == true;
 
   /// All three ANSWERED and all three said NO: the internet is DEFINITIVELY NOT
   /// REACHABLE. This is a MEASUREMENT, not a failure to measure.
@@ -557,7 +555,9 @@ class WifiVsInternetEngine {
       }
       return WifiVsInternetResult(
         verdict: WifiVsInternetVerdict.wifiUnknown,
-        headline: notOnWifi ? 'Not connected to Wi-Fi' : 'Wi-Fi link not measured',
+        headline: notOnWifi
+            ? 'Not connected to Wi-Fi'
+            : 'Wi-Fi link not measured',
         explanation: explanation,
         snrContext: '',
         rateBasis: basis,

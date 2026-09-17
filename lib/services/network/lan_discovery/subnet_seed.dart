@@ -53,13 +53,13 @@ class SubnetSeed {
 
 /// Reads the device's own IPv4, subnet mask, and gateway. Injectable so the
 /// deriver is testable without a device.
-typedef WifiNetworkReader = Future<({String? ip, String? mask, String? gateway})>
-    Function();
+typedef WifiNetworkReader =
+    Future<({String? ip, String? mask, String? gateway})> Function();
 
 /// Derives a [SubnetSeed] for the local subnet.
 class SubnetSeedDeriver {
   SubnetSeedDeriver({WifiNetworkReader? reader})
-      : _reader = reader ?? _defaultReader;
+    : _reader = reader ?? _defaultReader;
 
   final WifiNetworkReader _reader;
 
@@ -75,15 +75,11 @@ class SubnetSeedDeriver {
   /// Measured on Keith's M5, 2026-08-31: default route `en5` at 192.168.8.233,
   /// `getWifiIP()` returning `en0` at 192.168.8.134.
   static Future<({String? ip, String? mask, String? gateway})>
-      _defaultReader() async {
+  _defaultReader() async {
     try {
       final DefaultRoute? route = await DefaultRouteProbe().readV4();
       if (route != null && route.address != null) {
-        return (
-          ip: route.address,
-          mask: route.netmask,
-          gateway: route.gateway,
-        );
+        return (ip: route.address, mask: route.netmask, gateway: route.gateway);
       }
     } on Object {
       // A platform we cannot shell. Fall through to the plugin, whose
@@ -96,13 +92,19 @@ class SubnetSeedDeriver {
     String? gateway;
     try {
       ip = await info.getWifiIP();
-    } catch (_) {/* leave null */}
+    } catch (_) {
+      /* leave null */
+    }
     try {
       mask = await info.getWifiSubmask();
-    } catch (_) {/* leave null */}
+    } catch (_) {
+      /* leave null */
+    }
     try {
       gateway = await info.getWifiGatewayIP();
-    } catch (_) {/* leave null */}
+    } catch (_) {
+      /* leave null */
+    }
     return (ip: ip, mask: mask, gateway: gateway);
   }
 
@@ -144,16 +146,17 @@ class SubnetSeedDeriver {
     final int lastHost = network + blockSize - 2;
 
     final List<String> hosts = <String>[
-      for (int a = firstHost; a <= lastHost && (a - firstHost) < kMaxScanHosts;
-          a++)
+      for (
+        int a = firstHost;
+        a <= lastHost && (a - firstHost) < kMaxScanHosts;
+        a++
+      )
         intToIp(a),
     ];
 
     return SubnetSeed(
       hosts: hosts,
-      label: hosts.isEmpty
-          ? ''
-          : '${intToIp(firstHost)}–${intToIp(lastHost)}',
+      label: hosts.isEmpty ? '' : '${intToIp(firstHost)}–${intToIp(lastHost)}',
       selfIp: ip,
       gateway: gateway,
     );

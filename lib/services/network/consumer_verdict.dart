@@ -453,8 +453,7 @@ class ConsumerVerdictMapper {
             // are not on the internet. Same chip as a dead internet; the HEADLINE is
             // what tells them the fix is a browser tap rather than a call to the ISP.
             WifiVsInternetVerdict.internetUnreachable ||
-            WifiVsInternetVerdict.captivePortal =>
-              AxisStatus.unreachable,
+            WifiVsInternetVerdict.captivePortal => AxisStatus.unreachable,
             _ => AxisStatusThresholds.tierFor(engineResult.internetMbps),
           };
 

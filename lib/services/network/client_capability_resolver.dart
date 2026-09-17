@@ -90,9 +90,8 @@ WifiStd? wifiStdFromLabel(String? label) {
 /// modes supported. A device running 802.11ax certainly supports 802.11n and
 /// 802.11ac, so the negotiated mode is a floor on capability, and the caller
 /// marks the result [CapabilityBound.atLeast] to say so.
-Set<WifiStd> standardsUpToAndIncluding(WifiStd top) => WifiStd.values
-    .where((WifiStd s) => s.index <= top.index)
-    .toSet();
+Set<WifiStd> standardsUpToAndIncluding(WifiStd top) =>
+    WifiStd.values.where((WifiStd s) => s.index <= top.index).toSet();
 
 /// Maps a band label to [WiFiBand]. Returns null for anything unrecognised.
 WiFiBand? wifiBandFromLabel(String? label) {
@@ -152,10 +151,11 @@ WiFiBand? wifiBandFromLabel(String? label) {
 class MacOsCapabilityReader implements CapabilityReader {
   /// Creates the reader. [invoke] defaults to the real method channel.
   MacOsCapabilityReader({Future<Object?> Function(String method)? invoke})
-      : _invoke = invoke ?? _defaultInvoke;
+    : _invoke = invoke ?? _defaultInvoke;
 
-  static const MethodChannel _channel =
-      MethodChannel('com.wlanpros.toolbox/wifi_info');
+  static const MethodChannel _channel = MethodChannel(
+    'com.wlanpros.toolbox/wifi_info',
+  );
 
   static Future<Object?> _defaultInvoke(String method) =>
       _channel.invokeMethod<Object?>(method);
@@ -229,12 +229,13 @@ class MacOsCapabilityReader implements CapabilityReader {
             detail: locationAuthorized
                 ? 'CoreWLAN listed no supported channels'
                 : 'Location Services must be on for macOS to list Wi-Fi '
-                    'channels',
+                      'channels',
           )
         : Capability<Set<WiFiBand>>.known(
             bands,
             tier: CapabilityTier.livePlatformQuery,
-            pin: 'macOS CoreWLAN CWInterface.supportedWLANChannels(), '
+            pin:
+                'macOS CoreWLAN CWInterface.supportedWLANChannels(), '
                 'channelBand of every supported channel. Apple scopes that '
                 'list to the active country code, so it is a floor on the '
                 'radio, not an exact reading of it',
@@ -256,7 +257,8 @@ class MacOsCapabilityReader implements CapabilityReader {
         : Capability<int>.known(
             width,
             tier: CapabilityTier.livePlatformQuery,
-            pin: 'macOS CoreWLAN CWInterface.supportedWLANChannels(), widest '
+            pin:
+                'macOS CoreWLAN CWInterface.supportedWLANChannels(), widest '
                 'channelWidth of any supported channel. Apple scopes that list '
                 'to the active country code, so it is a floor on the radio, '
                 'not an exact reading of it',
@@ -268,17 +270,21 @@ class MacOsCapabilityReader implements CapabilityReader {
           );
 
     // Wi-Fi generations, from the negotiated mode, as a floor.
-    final WifiStd? active = wifiStdFromLabel(payload['activePhyMode'] as String?);
+    final WifiStd? active = wifiStdFromLabel(
+      payload['activePhyMode'] as String?,
+    );
     final Capability<Set<WifiStd>> standardsCapability = active == null
         ? const Capability<Set<WifiStd>>.unknown(
             CapabilityUnknownReason.platformDoesNotExpose,
-            detail: 'macOS reports the mode in use, and right now that is not '
+            detail:
+                'macOS reports the mode in use, and right now that is not '
                 'one the rate tables cover',
           )
         : Capability<Set<WifiStd>>.known(
             standardsUpToAndIncluding(active),
             tier: CapabilityTier.livePlatformQuery,
-            pin: 'macOS CoreWLAN CWInterface.activePHYMode(), which reports '
+            pin:
+                'macOS CoreWLAN CWInterface.activePHYMode(), which reports '
                 'the mode in use on this link, not the modes the radio '
                 'supports',
             bound: CapabilityBound.atLeast,
@@ -342,10 +348,11 @@ class MacOsCapabilityReader implements CapabilityReader {
 class AndroidCapabilityReader implements CapabilityReader {
   /// Creates the reader. [invoke] defaults to the real method channel.
   AndroidCapabilityReader({Future<Object?> Function(String method)? invoke})
-      : _invoke = invoke ?? _defaultInvoke;
+    : _invoke = invoke ?? _defaultInvoke;
 
-  static const MethodChannel _channel =
-      MethodChannel('com.wlanpros.toolbox/wifi_info');
+  static const MethodChannel _channel = MethodChannel(
+    'com.wlanpros.toolbox/wifi_info',
+  );
 
   static Future<Object?> _defaultInvoke(String method) =>
       _channel.invokeMethod<Object?>(method);
@@ -405,18 +412,19 @@ class AndroidCapabilityReader implements CapabilityReader {
     };
     final Capability<Set<WiFiBand>> bandsCapability =
         (band5 == null && band6 == null)
-            ? const Capability<Set<WiFiBand>>.unknown(
-                CapabilityUnknownReason.platformDoesNotExpose,
-                detail: 'This Android version has no band-support query',
-              )
-            : Capability<Set<WiFiBand>>.known(
-                bands,
-                tier: CapabilityTier.livePlatformQuery,
-                pin: 'Android WifiManager.is5GHzBandSupported() and '
-                    'is6GHzBandSupported(). There is no 2.4 GHz equivalent, so '
-                    'this list is a floor',
-                bound: CapabilityBound.atLeast,
-              );
+        ? const Capability<Set<WiFiBand>>.unknown(
+            CapabilityUnknownReason.platformDoesNotExpose,
+            detail: 'This Android version has no band-support query',
+          )
+        : Capability<Set<WiFiBand>>.known(
+            bands,
+            tier: CapabilityTier.livePlatformQuery,
+            pin:
+                'Android WifiManager.is5GHzBandSupported() and '
+                'is6GHzBandSupported(). There is no 2.4 GHz equivalent, so '
+                'this list is a floor',
+            bound: CapabilityBound.atLeast,
+          );
 
     // Wi-Fi generations. A real capability query, so exact when every one of
     // the four answered, and a floor when some could not be asked.
@@ -430,10 +438,8 @@ class AndroidCapabilityReader implements CapabilityReader {
         .where((MapEntry<WifiStd, bool?> e) => e.value == true)
         .map((MapEntry<WifiStd, bool?> e) => e.key)
         .toSet();
-    final bool anyAnswered =
-        answers.values.any((bool? v) => v != null);
-    final bool allAnswered =
-        answers.values.every((bool? v) => v != null);
+    final bool anyAnswered = answers.values.any((bool? v) => v != null);
+    final bool allAnswered = answers.values.every((bool? v) => v != null);
     final Capability<Set<WifiStd>> standardsCapability = !anyAnswered
         ? const Capability<Set<WifiStd>>.unknown(
             CapabilityUnknownReason.platformDoesNotExpose,
@@ -442,17 +448,20 @@ class AndroidCapabilityReader implements CapabilityReader {
         : Capability<Set<WifiStd>>.known(
             supported,
             tier: CapabilityTier.livePlatformQuery,
-            pin: 'Android WifiManager.isWifiStandardSupported(), asked once '
+            pin:
+                'Android WifiManager.isWifiStandardSupported(), asked once '
                 'per generation',
-            bound:
-                allAnswered ? CapabilityBound.exact : CapabilityBound.atLeast,
+            bound: allAnswered
+                ? CapabilityBound.exact
+                : CapabilityBound.atLeast,
           );
 
     final int? maxTx = _asInt(payload['maxSupportedTxLinkSpeedMbps']);
     final Capability<int> osRate = (maxTx == null || maxTx <= 0)
         ? const Capability<int>.unknown(
             CapabilityUnknownReason.queryFailed,
-            detail: 'Android returned no maximum supported transmit rate. It '
+            detail:
+                'Android returned no maximum supported transmit rate. It '
                 'is only reported while connected to Wi-Fi',
           )
         : Capability<int>.known(
@@ -525,12 +534,11 @@ class PublishedTableCapabilityReader implements CapabilityReader {
   PublishedTableCapabilityReader({
     required this.deviceModelName,
     required Future<String> Function() loadJson,
-  })  :
-        // The field is private, so an initializing formal would name the
-        // parameter `_loadJson` at every call site. The lint's fix is worse
-        // than the lint.
-        // ignore: prefer_initializing_formals
-        _loadJson = loadJson;
+  }) : // The field is private, so an initializing formal would name the
+       // parameter `_loadJson` at every call site. The lint's fix is worse
+       // than the lint.
+       // ignore: prefer_initializing_formals
+       _loadJson = loadJson;
 
   /// The MARKETING model name to look up, e.g. `iPhone 16 Pro` — not the
   /// machine identifier. Null when the device could not be identified at all.
@@ -594,8 +602,9 @@ class PublishedTableCapabilityReader implements CapabilityReader {
     }
 
     final Object? meta = root['_meta'];
-    final String? tableVersion =
-        meta is Map ? meta['last_updated']?.toString() : null;
+    final String? tableVersion = meta is Map
+        ? meta['last_updated']?.toString()
+        : null;
 
     // Apple's table is keyed by MARKETING NAME ("iPhone 16 Pro"), so that is
     // what we match on. Keying by the machine identifier ("iPhone17,1") would
@@ -624,8 +633,7 @@ class PublishedTableCapabilityReader implements CapabilityReader {
         for (final Object? entry in rows) {
           if (entry is! Map) continue;
           final Map<String, Object?> candidate = entry.cast<String, Object?>();
-          final String? hit =
-              _matchingName(candidate['familyNames'], target);
+          final String? hit = _matchingName(candidate['familyNames'], target);
           if (hit != null) {
             row = candidate;
             matchedName = hit;
@@ -656,7 +664,8 @@ class PublishedTableCapabilityReader implements CapabilityReader {
       // the device is then simply not in the table.
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.deviceNotInTable,
-        detail: '$deviceModelName has a row with no source, so it is not '
+        detail:
+            '$deviceModelName has a row with no source, so it is not '
             'trusted',
         deviceName: name ?? deviceModelName,
         tableVersion: tableVersion,
@@ -668,7 +677,7 @@ class PublishedTableCapabilityReader implements CapabilityReader {
     // the screen is entitled to know which one they are looking at.
     final String pin = matchedThroughOurExpansion
         ? '$source (row matched for $deviceModelName through our expansion of '
-            "Apple's model-family wording, not a verbatim Apple name)"
+              "Apple's model-family wording, not a verbatim Apple name)"
         : '$source (row: $deviceModelName)';
 
     Capability<int> intField(String key) {
@@ -764,12 +773,12 @@ class ClientCapabilityService {
     TargetPlatform? platformOverride,
     List<CapabilityReader>? readersOverride,
     bool? isWebOverride,
-  })  : _platform = platformOverride ?? defaultTargetPlatform,
-        // Same reason as above: the field is private and an initializing
-        // formal would force `_readersOverride:` on every caller.
-        // ignore: prefer_initializing_formals
-        _readersOverride = readersOverride,
-        _isWeb = isWebOverride ?? kIsWeb;
+  }) : _platform = platformOverride ?? defaultTargetPlatform,
+       // Same reason as above: the field is private and an initializing
+       // formal would force `_readersOverride:` on every caller.
+       // ignore: prefer_initializing_formals
+       _readersOverride = readersOverride,
+       _isWeb = isWebOverride ?? kIsWeb;
 
   final TargetPlatform _platform;
   final List<CapabilityReader>? _readersOverride;
@@ -823,8 +832,9 @@ class ClientCapabilityService {
     String? deviceIdentifier,
     String? deviceName,
   }) async {
-    final List<CapabilityReader> readers =
-        readersFor(deviceModelName: deviceName);
+    final List<CapabilityReader> readers = readersFor(
+      deviceModelName: deviceName,
+    );
     if (readers.isEmpty) {
       return ClientCapabilities.allUnknown(
         CapabilityUnknownReason.noReaderForPlatform,

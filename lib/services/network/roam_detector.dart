@@ -169,20 +169,14 @@ class RoamEvent {
   /// The AP name to RENDER for the AP the device left — the captured
   /// [fromApName] when one was captured, else the shared cache's decoded name
   /// for [fromBssid]. See [resolveApName].
-  String? resolvedFromApName({ApNameCache? cache}) => resolveApName(
-        capturedName: fromApName,
-        bssid: fromBssid,
-        cache: cache,
-      );
+  String? resolvedFromApName({ApNameCache? cache}) =>
+      resolveApName(capturedName: fromApName, bssid: fromBssid, cache: cache);
 
   /// The AP name to RENDER for the AP the device joined — the captured
   /// [toApName] when one was captured, else the shared cache's decoded name for
   /// [toBssid]. See [resolveApName].
-  String? resolvedToApName({ApNameCache? cache}) => resolveApName(
-        capturedName: toApName,
-        bssid: toBssid,
-        cache: cache,
-      );
+  String? resolvedToApName({ApNameCache? cache}) =>
+      resolveApName(capturedName: toApName, bssid: toBssid, cache: cache);
 
   @override
   String toString() =>

@@ -167,7 +167,7 @@ class PlmnReferenceService {
   /// Build directly from parsed entries (used by tests and by [fromJson]).
   /// Builds a plmnId→entry index once so exact PLMN lookups are O(1).
   PlmnReferenceService.fromEntries(List<PlmnEntry> entries)
-      : _entries = List<PlmnEntry>.unmodifiable(_sortedByPlmnId(entries)) {
+    : _entries = List<PlmnEntry>.unmodifiable(_sortedByPlmnId(entries)) {
     for (final PlmnEntry e in _entries) {
       _byPlmnId.putIfAbsent(e.plmnId, () => e);
     }
@@ -230,19 +230,21 @@ class PlmnReferenceService {
     // Pure-digit query → substring across the three code fields.
     if (RegExp(r'^\d+$').hasMatch(q)) {
       return _entries
-          .where((PlmnEntry e) =>
-              e.plmnId.contains(q) ||
-              e.mnc.contains(q) ||
-              e.mcc.contains(q))
+          .where(
+            (PlmnEntry e) =>
+                e.plmnId.contains(q) || e.mnc.contains(q) || e.mcc.contains(q),
+          )
           .toList();
     }
 
     // Otherwise case-insensitive substring on carrier + operator.
     final String needle = q.toLowerCase();
     return _entries
-        .where((PlmnEntry e) =>
-            e.carrier.toLowerCase().contains(needle) ||
-            e.operator.toLowerCase().contains(needle))
+        .where(
+          (PlmnEntry e) =>
+              e.carrier.toLowerCase().contains(needle) ||
+              e.operator.toLowerCase().contains(needle),
+        )
         .toList();
   }
 
@@ -257,8 +259,7 @@ class PlmnReferenceService {
     }
     final List<String> mccs = byMcc.keys.toList()..sort();
     return <PlmnGroup>[
-      for (final String mcc in mccs)
-        PlmnGroup(mcc: mcc, entries: byMcc[mcc]!),
+      for (final String mcc in mccs) PlmnGroup(mcc: mcc, entries: byMcc[mcc]!),
     ];
   }
 

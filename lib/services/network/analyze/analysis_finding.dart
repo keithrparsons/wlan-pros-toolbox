@@ -222,7 +222,6 @@ class AnalysisFinding {
     }
   }
 
-
   @override
   String toString() =>
       'AnalysisFinding($ruleId, ${severity.name}, ${category.name})';
