@@ -781,6 +781,26 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'IP & Addressing',
       ),
+      // MTU / MSS (2026-09-17). Filed beside the subnet calculators rather
+      // than in Networking Tools for the reason Keith established on
+      // 2026-08-25: he went looking for a subnet calculator in Calculators &
+      // Tools, did not find one, and reasonably concluded the app only had
+      // reference tables. A tool with "calculator" in its job belongs where a
+      // person looks for calculators.
+      //
+      // NOT Path MTU Discovery. That is a different, unbuilt tool that probes a
+      // real path over dart:ffi and is gated on a spike nobody has run
+      // (Deliverables/2026-07-08-vpn-network-tools-buildprep/spec-3-path-mtu.md).
+      // This one is arithmetic and runs everywhere including web.
+      ToolEntry(
+        id: 'mtu-mss',
+        title: 'MTU & MSS Calculator',
+        description:
+            'What MSS survives a tunnel, and what MTU an observed MSS implies',
+        routeName: '/tools/mtu-mss',
+        isLive: true,
+        subgroup: 'IP & Addressing',
+      ),
       ToolEntry(
         id: 'dbm-watt-converter',
         title: 'dBm / Watt Converter',

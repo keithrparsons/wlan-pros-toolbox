@@ -88,6 +88,70 @@ class Ipv6Address {
   /// The low 64 bits set.
   static final BigInt mask64 = (BigInt.one << 64) - BigInt.one;
 
+  /// The low 24 bits set, which is the slice a solicited-node address copies.
+  static final BigInt mask24 = (BigInt.one << 24) - BigInt.one;
+
+  /// The solicited-node multicast address for [literal], per RFC 4291 s2.7.1.
+  ///
+  /// `FF02:0:0:0:0:1:FFXX:XXXX`, where `XX:XXXX` are the LOW-ORDER 24 BITS of
+  /// the address, appended to the prefix `FF02::1:FF00:0/104`.
+  ///
+  /// WHAT THIS IS FOR, because it is easy to file as trivia. Every IPv6 node
+  /// joins the solicited-node group for each of its unicast addresses, and
+  /// neighbour discovery sends the Neighbour Solicitation there rather than to
+  /// the all-nodes group. That is how IPv6 avoids waking every device on the
+  /// link the way ARP broadcast does. When address resolution is failing, the
+  /// question "is the node actually joined to the right group" needs this
+  /// address to answer, and deriving it by hand at a whiteboard is where the
+  /// mistakes happen.
+  ///
+  /// Returns null when [literal] will not parse. Deliberately does NOT refuse a
+  /// multicast or otherwise non-unicast input: the mapping is defined on the
+  /// low 24 bits alone, and a tool that silently declined some inputs would be
+  /// harder to trust than one that computes what was asked.
+  static String? solicitedNodeMulticast(String literal) {
+    final BigInt? n = _tryToBigInt(literal);
+    if (n == null) return null;
+    final BigInt base = toBigInt(expand('ff02::1:ff00:0'));
+    return compress(fromBigInt(base | (n & mask24)));
+  }
+
+  /// The reverse-DNS name for [literal], per RFC 3596 s2.5.
+  ///
+  /// The 128 bits as 32 nibbles, LOWEST nibble first, dot-separated, with the
+  /// suffix `ip6.arpa`. No trailing dot: callers that need a fully-qualified
+  /// name add it, and printing one in a UI reads like a typo.
+  ///
+  /// THE CANONICAL COPY. `dns_lookup_service.dart` grew its own private
+  /// `_ipv6ToArpa` before this existed, which is two definitions of one rule
+  /// and exactly the shape the subnet parser already refused to have. That one
+  /// now delegates here.
+  static String? toIp6Arpa(String literal) {
+    final BigInt? n = _tryToBigInt(literal);
+    if (n == null) return null;
+    final String hex = n.toRadixString(16).padLeft(32, '0');
+    final StringBuffer out = StringBuffer();
+    for (int i = hex.length - 1; i >= 0; i--) {
+      out
+        ..write(hex[i])
+        ..write('.');
+    }
+    return (out..write('ip6.arpa')).toString();
+  }
+
+  /// [toBigInt] over a literal in any accepted form, null instead of throwing.
+  static BigInt? _tryToBigInt(String literal) {
+    try {
+      final String full = expand(literal);
+      if (!RegExp(r'^[0-9a-fA-F]{4}(:[0-9a-fA-F]{4}){7}$').hasMatch(full)) {
+        return null;
+      }
+      return toBigInt(full);
+    } on FormatException {
+      return null;
+    }
+  }
+
   /// Expand an IPv6 literal to its full 8-group, 4-hex-digit form.
   ///
   /// Accepts the RFC 4291 §2.2 form-3 literal with a trailing dotted quad

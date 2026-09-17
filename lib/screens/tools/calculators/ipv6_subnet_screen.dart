@@ -779,6 +779,35 @@ class _Ipv6SubnetScreenState extends State<Ipv6SubnetScreen> {
             ValueRow(label: 'Addresses', value: r.hosts, mono: true),
           ),
           _semanticRow('Type', r.type, ValueRow(label: 'Type', value: r.type)),
+          // DERIVED FORMS, added 2026-09-17. Both are computed from the address
+          // the user already typed, so they cost no extra input and answer two
+          // questions this screen was previously silent on.
+          //
+          // SOLICITED-NODE (RFC 4291 s2.7.1) is the group neighbour discovery
+          // actually sends to, which is how IPv6 avoids waking every device on
+          // the link the way ARP broadcast does. When address resolution is
+          // failing, "is the node joined to the right group" needs this value,
+          // and deriving it by hand at a whiteboard is where it goes wrong.
+          //
+          // IP6.ARPA (RFC 3596 s2.5) is 32 nibbles in reverse order, which is
+          // tedious and error-prone to write out and trivial to compute.
+          if (Ipv6Address.solicitedNodeMulticast(r.compressed) case final String
+              solicited)
+            _semanticRow(
+              'Solicited-node multicast',
+              solicited,
+              ValueRow(
+                label: 'Solicited-node',
+                value: solicited,
+                mono: true,
+              ),
+            ),
+          if (Ipv6Address.toIp6Arpa(r.compressed) case final String arpa)
+            _semanticRow(
+              'Reverse DNS name',
+              arpa,
+              ValueRow(label: 'Reverse DNS', value: arpa, mono: true),
+            ),
           // Only when the user typed one. A zone index names a LOCAL
           // interface, so it is stripped before the math — but it is shown
           // back, because a value that disappears with no acknowledgement

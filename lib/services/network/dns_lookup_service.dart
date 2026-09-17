@@ -27,6 +27,7 @@
 // per the §15 native-only product decision. Nothing here imports `dart:io`.
 
 import 'package:basic_utils/basic_utils.dart';
+import 'ipv6_address.dart';
 
 /// DNS record types this tool can query. Mirrors the HE.NET match target
 /// (brief §4): SOA, NS, A, AAAA, MX, TXT, plus PTR (rDNS). Extended for the
@@ -649,57 +650,12 @@ class DnsLookupService {
     return '${parts.reversed.join('.')}.in-addr.arpa';
   }
 
-  static String? _ipv6ToArpa(String ip) {
-    final List<int>? bytes = _parseIPv6(ip);
-    if (bytes == null) return null;
-    final StringBuffer hex = StringBuffer();
-    for (final int b in bytes) {
-      hex.write(b.toRadixString(16).padLeft(2, '0'));
-    }
-    final String nibbles = hex.toString();
-    final StringBuffer out = StringBuffer();
-    for (int i = nibbles.length - 1; i >= 0; i--) {
-      out.write(nibbles[i]);
-      out.write('.');
-    }
-    out.write('ip6.arpa');
-    return out.toString();
-  }
+  /// DELEGATED 2026-09-17. This carried its own nibble-reversal, which is a
+  /// second definition of RFC 3596 s2.5 living in a service that is not about
+  /// addresses. `Ipv6Address.toIp6Arpa` is now the only copy, for the same
+  /// reason the subnet parser is public and shared: two definitions of one rule
+  /// drift, and the drift shows up as a lookup that quietly queries the wrong
+  /// name. Output is identical, trailing dot included (there is none).
+  static String? _ipv6ToArpa(String ip) => Ipv6Address.toIp6Arpa(ip);
 
-  /// Minimal IPv6 literal parser → 16 bytes. Handles `::` compression. Returns
-  /// null on malformed input.
-  static List<int>? _parseIPv6(String ip) {
-    final String s = ip.trim();
-    if (!s.contains(':')) return null;
-
-    final List<String> halves = s.split('::');
-    if (halves.length > 2) return null;
-
-    List<int> bytesFromGroups(String segment) {
-      if (segment.isEmpty) return <int>[];
-      final List<String> groups = segment.split(':');
-      final List<int> out = <int>[];
-      for (final String g in groups) {
-        if (g.isEmpty) return <int>[-1]; // signal malformed
-        final int? v = int.tryParse(g, radix: 16);
-        if (v == null || v < 0 || v > 0xFFFF) return <int>[-1];
-        out.add((v >> 8) & 0xFF);
-        out.add(v & 0xFF);
-      }
-      return out;
-    }
-
-    if (halves.length == 2) {
-      final List<int> head = bytesFromGroups(halves[0]);
-      final List<int> tail = bytesFromGroups(halves[1]);
-      if (head.contains(-1) || tail.contains(-1)) return null;
-      final int fill = 16 - head.length - tail.length;
-      if (fill < 0) return null;
-      return <int>[...head, ...List<int>.filled(fill, 0), ...tail];
-    } else {
-      final List<int> all = bytesFromGroups(s);
-      if (all.contains(-1) || all.length != 16) return null;
-      return all;
-    }
-  }
 }

@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 186;
+const int _expectedEntryCount = 190;
 
 const String _fixture = '''
 {
@@ -425,6 +425,63 @@ void main() {
           reason: 'help id "${h.id}" has no matching catalog tool id',
         );
       }
+    });
+
+    // THE MISSING DIRECTION, added 2026-09-17.
+    //
+    // The test above checks help -> catalog: no help entry points at a tool
+    // that does not exist. Nothing checked catalog -> help, so a LIVE TOOL
+    // COULD SHIP WITH NO HELP AT ALL and the suite stayed green. That is not
+    // hypothetical: `join-network` did exactly that until 2026-09-17, when
+    // ungating it for macOS and Windows made the absence visible, and the
+    // mtu-mss tool added the same day passed every guard here before its help
+    // entry was written.
+    //
+    // A guard that checks one direction of a two-way rule reports success on
+    // half the rule. The standing rule is that every live tool ships help, so
+    // this is the half that was actually load-bearing.
+    test('every LIVE catalog tool has a help entry', () {
+      final Set<String> helpIds = <String>{
+        for (final ToolHelp h in store.all) h.id,
+      };
+      final List<String> missing = <String>[
+        for (final ToolCategory c in kToolCategories)
+          for (final ToolEntry t in c.tools)
+            if (t.isLive && !helpIds.contains(t.id)) '${c.id}/${t.id}',
+      ];
+      expect(
+        missing,
+        isEmpty,
+        reason: 'live tools shipping with no help entry: ${missing.join(', ')}',
+      );
+    });
+
+    // SHAPE, NOT JUST PRESENCE. Added 2026-09-17 after four entries written
+    // that day gave `fieldNotes` a STRING where the schema is a list of
+    // strings. Nothing failed. `strList` returns an empty list for anything
+    // that is not a List, so the notes did not render at all and no test
+    // noticed, because every existing check asked whether a field was present
+    // rather than whether it was the right shape.
+    //
+    // The content lost that way was the whole reason one of those tools was
+    // built. A silent empty is the worst failure mode available here: the help
+    // sheet still opens, still looks complete, and quietly omits a section.
+    test('every list-shaped field is actually a list in the asset', () async {
+      final Map<String, dynamic> raw =
+          json.decode(await rootBundle.loadString(kToolHelpAsset))
+              as Map<String, dynamic>;
+      final Map<String, dynamic> tools = raw['tools'] as Map<String, dynamic>;
+      const List<String> listFields = <String>['howToUse', 'inputs', 'fieldNotes'];
+      final List<String> wrong = <String>[];
+      tools.forEach((String id, dynamic entry) {
+        final Map<String, dynamic> m = entry as Map<String, dynamic>;
+        for (final String f in listFields) {
+          if (m.containsKey(f) && m[f] is! List) {
+            wrong.add('$id.$f is ${m[f].runtimeType}, expected List');
+          }
+        }
+      });
+      expect(wrong, isEmpty, reason: wrong.join('; '));
     });
 
     test('every entry carries a non-empty name, purpose, and source', () {

@@ -93,6 +93,10 @@ class SubnetCalcService {
   SubnetResult calculate({required String address, int? prefix, String? mask}) {
     final int? addr = _parseIpv4(address);
     if (addr == null) {
+      // Name the leading-zero case specifically. It is the one rejection where
+      // the input looks entirely valid to the person who typed it.
+      final String? octal = leadingZeroReason(address);
+      if (octal != null) return SubnetResult.invalid(octal);
       return const SubnetResult.invalid(
         'Enter a valid IPv4 address, e.g. 10.20.0.0. Four octets, each 0–255.',
       );
@@ -199,11 +203,60 @@ class SubnetCalcService {
     for (final String part in parts) {
       if (part.isEmpty || part.length > 3) return null;
       if (!RegExp(r'^\d+$').hasMatch(part)) return null;
+      if (hasLeadingZeroOctet(part)) return null;
       final int octet = int.parse(part);
       if (octet < 0 || octet > 255) return null;
       value = (value << 8) | octet;
     }
     return value & 0xFFFFFFFF;
+  }
+
+  /// True when [octet] carries a leading zero, e.g. `01` or `010`, but not for
+  /// a bare `0`.
+  ///
+  /// WHY THIS IS A REFUSAL AND NOT A READING (Keith, 2026-09-17: "refuse the
+  /// leading zero"). `inet_aton` reads a leading zero as OCTAL, and macOS was
+  /// measured doing exactly that:
+  ///
+  ///     this calculator, before today   192.0.2.010/32  ->  192.0.2.10
+  ///     inet_aton and ping              192.0.2.010     ->  192.0.2.8
+  ///
+  /// THE PART THAT MAKES IT OURS RATHER THAN A CURIOSITY: our own Ping tool
+  /// resolves through `InternetAddress.lookup` (ping_service.dart:206), which
+  /// goes to the OS. So one app answered one string two ways, and the user had
+  /// no way to see it. That is the self-consistency failure this codebase
+  /// already treats as a trust breach.
+  ///
+  /// Neither reading can be chosen safely. Octal matches the OS and astonishes
+  /// everyone who typed `010` meaning ten; decimal is what we did and silently
+  /// disagrees with every other tool on the machine. Refusing is the only
+  /// answer that cannot be wrong, and it matches what this parser ALREADY does
+  /// with three-octet shorthand: `192.0.2` is refused rather than guessed at,
+  /// on the same principle.
+  ///
+  /// Public so callers can tell this rejection apart from a generic one and
+  /// explain it, which is the whole point: a bare "invalid address" on a string
+  /// that looks obviously valid teaches nothing.
+  static bool hasLeadingZeroOctet(String octet) =>
+      octet.length > 1 && octet.startsWith('0');
+
+  /// The leading-zero reason for [address], or null when that is not why it
+  /// failed. Lets [calculate] name the real problem instead of the generic
+  /// four-octets message.
+  static String? leadingZeroReason(String address) {
+    final List<String> parts = address.trim().split('.');
+    if (parts.length != 4) return null;
+    for (final String part in parts) {
+      if (!RegExp(r'^\d+$').hasMatch(part)) return null;
+      if (hasLeadingZeroOctet(part)) {
+        final String trimmed = part.replaceFirst(RegExp(r'^0+'), '');
+        final String meant = trimmed.isEmpty ? '0' : trimmed;
+        return 'Drop the leading zero from "$part". Some tools read a leading '
+            'zero as octal, so "$part" can mean $meant here and something '
+            'else in ping. Write it as $meant.';
+      }
+    }
+    return null;
   }
 
   /// Public IPv4 validator for callers/tests.

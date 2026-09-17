@@ -1312,7 +1312,8 @@
         "Enter the prefix length (default 32). A link-local address pasted straight off ifconfig or ip -6 addr works as-is, zone index and all: fe80::1%en0 is accepted, and the zone comes back on its own row.",
         "Read the expanded form, compressed form, network and prefix, first and last address, host count, and address type.",
         "Read the transition section at the bottom. It decodes the same address you typed above and names the format, the embedded IPv4, and what that IPv4 actually is.",
-        "The IPv4 field in that section runs the other direction: type an IPv4 address and read it as IPv4-mapped, NAT64, a 6to4 prefix, and the deprecated IPv4-compatible form."
+        "The IPv4 field in that section runs the other direction: type an IPv4 address and read it as IPv4-mapped, NAT64, a 6to4 prefix, and the deprecated IPv4-compatible form.",
+        "Read the solicited-node multicast address and the reverse DNS name at the bottom. Both are derived from the address you already typed."
       ],
       "inputs": [
         {
@@ -1349,7 +1350,10 @@
         "An address with no IPv4 inside is reported as having none. The screen never invents an embedded address to fill the row.",
         "IPv4-compatible (::a.b.c.d) is deprecated. It is decoded so you can recognize one in an old configuration, and labeled so you do not build on it.",
         "The 6to4 output is a PREFIX for a whole site (a /48), not a host address.",
-        "A zone index (the %en0 on fe80::1%en0) names the local interface the scope belongs to, so it sits outside the 128 bits and is set aside before the math runs. The Zone row shows it back, because a character you typed that vanishes with no acknowledgement looks like an input the tool failed to read. A half-typed zone such as fe80::1% is reported as an invalid address."
+        "A zone index (the %en0 on fe80::1%en0) names the local interface the scope belongs to, so it sits outside the 128 bits and is set aside before the math runs. The Zone row shows it back, because a character you typed that vanishes with no acknowledgement looks like an input the tool failed to read. A half-typed zone such as fe80::1% is reported as an invalid address.",
+        "The solicited-node multicast address (RFC 4291 section 2.7.1) is FF02::1:FF plus the low-order 24 bits of the address. IPv6 neighbour discovery sends its solicitation to that group rather than to all nodes, which is how it avoids waking every device on the link the way ARP broadcast does. When address resolution is failing, whether the node joined the right group is the question, and working the address out by hand is where it goes wrong.",
+        "Only the low 24 bits are used, so two addresses in completely different prefixes can share a solicited-node group. It is a useful filter, not a unique identifier.",
+        "The reverse DNS name (RFC 3596 section 2.5) is all 32 nibbles in reverse order with the ip6.arpa suffix. No trailing dot is shown, because this is a screen rather than a zone file; add one if you are pasting it somewhere that needs a fully qualified name."
       ],
       "source": "The result is calculated on your device."
     },
@@ -4536,6 +4540,137 @@
         "802.1X IS NOT SUPPORTED YET. Enterprise networks need a credential exchange this tool does not carry; it handles open, OWE, WPA2 Personal, and WPA3 Personal."
       ],
       "source": "Associates using the operating system's own Wi-Fi interface on macOS and Windows, or the WLAN Pi's radio through the Pi's local API when one is attached."
+    },
+    "mtu-mss": {
+      "name": "MTU & MSS Calculator",
+      "category": "Calculators & Tools",
+      "purpose": "Works out the TCP maximum segment size that survives a given link MTU once IP, TCP and any tunnel headers are paid, and in reverse works out what MTU a path really has from an MSS you have seen working.",
+      "whyHere": "This is the tool for the fault where a tunnel comes up, small things work, and big transfers stall. Something in the path is taking bytes the endpoints never accounted for, and the arithmetic here names how many. The reverse direction is the one that earns its place: a packet capture shows you the MSS and never tells you what ate the difference, and a gap of 8 bytes is PPPoE, 24 is GRE, and 60 is WireGuard.",
+      "howToUse": [
+        "Choose whether to go from an MTU to an MSS, or from an observed MSS back to the MTU it implies.",
+        "Enter the number in bytes.",
+        "Pick IPv4 or IPv6, because the IP header is 20 bytes on one and 40 on the other.",
+        "Turn on TCP timestamps if the connection uses them, which costs another 12 bytes and is the overhead people most often forget.",
+        "Tap any encapsulation that sits in the path. They stack.",
+        "Read the result, and in reverse mode read how many bytes are still unaccounted for against a standard 1500-byte Ethernet MTU."
+      ],
+      "inputs": [
+        {
+          "name": "Link MTU",
+          "unit": "bytes",
+          "range": "Any whole number. 1500 is standard Ethernet, 1492 is typical of PPPoE, 9000 is a jumbo frame"
+        },
+        {
+          "name": "Observed MSS",
+          "unit": "bytes",
+          "range": "Any whole number, taken from a capture or from the SYN"
+        },
+        {
+          "name": "IP version",
+          "unit": "",
+          "range": "IPv4 for a 20-byte header, IPv6 for 40"
+        },
+        {
+          "name": "TCP timestamps",
+          "unit": "bytes",
+          "range": "Off, or on for 12 more bytes"
+        },
+        {
+          "name": "Encapsulation",
+          "unit": "bytes",
+          "range": "Any combination of PPPoE, GRE, WireGuard, VXLAN, IPsec ESP, L2TP, or an 802.1Q tag"
+        }
+      ],
+      "algorithm": "MSS equals the link MTU minus the tunnel overhead, minus the IP header, minus the TCP header, minus the TCP timestamp option if it is in use. Going the other way, the path MTU equals the observed MSS plus all of the same. The IP header is 20 bytes for IPv4 and 40 for IPv6, the TCP header is 20, and the timestamp option costs 12 once padding is counted. Where an overhead is genuinely variable, as IPsec ESP is, the calculator sizes to the high end of the range rather than inventing a single number, because sizing to the low end produces a figure that works until the day the cipher or the padding changes.",
+      "example": "A standard 1500-byte Ethernet link over IPv4 leaves an MSS of 1460, which is the number most people already know. The same link over IPv6 leaves 1440. Add PPPoE and it becomes 1452, which is why so many DSL connections run a 1492 MTU. Add WireGuard over IPv4 and it becomes 1400. Going the other way, an MSS of 1452 seen working on a link you believed was standard Ethernet implies a path MTU of 1492, and the 8 missing bytes are the signature of PPPoE.",
+      "fieldNotes": [
+        "The 802.11 header is NOT subtracted from MTU, and this is the mistake a Wi-Fi engineer is most likely to make precisely because they know that header well. Wi-Fi's MAC header is larger than Ethernet's, but it sits below the IP layer, so it does not come out of the 1500-byte IP MTU. An 802.11 MSDU is 2304 bytes exactly so a 1500-byte IP packet fits with room over. Wi-Fi does not shrink your MTU; a tunnel running over it does.",
+        "An 802.1Q VLAN tag is on the list for the same reason and also costs nothing: the tag extends the Ethernet header rather than the payload, and compliant switches carry a 1522-byte frame so the MTU stays 1500. It only bites on hardware that cannot handle baby giants.",
+        "Where an overhead is genuinely variable, as IPsec ESP is, the calculator sizes to the high end of its range rather than inventing a single number. Sizing to the low end produces a figure that works until the day the cipher or the padding changes.",
+        "This is arithmetic, not a measurement. It tells you what a stack you describe would cost; it does not probe the path. If several layers could account for the same byte count, the tool names them as candidates and stops short of choosing one, because a capture cannot tell them apart by size alone."
+      ],
+      "source": "RFC 791 section 3.1 for the IPv4 header, RFC 8200 section 3 for IPv6, RFC 9293 section 3.1 for TCP, RFC 7323 section 3 for timestamps, RFC 2516 section 4 for PPPoE, RFC 2784 section 2.1 for GRE, RFC 7348 section 5 for VXLAN, RFC 4303 section 2 for IPsec ESP, RFC 2661 section 3 for L2TPv2, and IEEE 802.1Q for the VLAN tag."
+    },
+    "link-info": {
+      "name": "Link Info",
+      "category": "Networking Tools",
+      "purpose": "Shows every network interface on this device by what it actually is: whether it has carrier, what speed and duplex it negotiated, its MAC, its driver, its MTU, and which one is carrying your traffic right now.",
+      "whyHere": "Most tools tell you about the network. This one tells you about the machine you are standing at, and that is where a surprising number of faults live. A laptop on Ethernet with the Wi-Fi radio still associated will happily report Wi-Fi details that have nothing to do with where its traffic is going. The interface holding the default route is marked, so the question of which link is actually in use is answered rather than assumed.",
+      "howToUse": [
+        "Open it and read the list. Every interface the device exposes appears, including ones with no carrier.",
+        "Find the row marked DEFAULT ROUTE. That is the interface carrying your traffic.",
+        "Read the negotiated speed and duplex. A gigabit port that negotiated 100 Mbps half duplex is a cabling fault, and it looks fine until you look here.",
+        "Use the transport rows underneath to see which paths this device could use, and why any of them is unavailable.",
+        "Where a transport is untested, tap Try it now to find out rather than guess."
+      ],
+      "inputs": [
+        {
+          "name": "None",
+          "unit": "",
+          "range": "Read-only. The screen reports what the operating system says about the hardware"
+        }
+      ],
+      "algorithm": "Interfaces are read from the operating system's own interface table. The default route is resolved by asking the routing table which interface holds it rather than by inferring it from an address, because a device can hold several addresses at once and the one that looks primary is often not the one in use. Speed and duplex are the negotiated values reported by the driver, not the port's rated capability. Where a value is not reported, the screen says so instead of printing a zero.",
+      "example": "A Mac plugged into Ethernet while still associated to Wi-Fi shows both interfaces with carrier, and the DEFAULT ROUTE badge sits on the Ethernet one. That is the difference between a machine that is on Ethernet and a machine that merely has a cable in it.",
+      "fieldNotes": [
+        "Not reported is a real answer and is shown as one. Some drivers, some virtual interfaces and some platforms do not expose speed or duplex at all, and printing a zero there would be a fabricated number.",
+        "On a sandboxed Mac App Store build the routing table cannot be read by shelling out, so the default-route badge may be absent. The direct-download build has no such limit.",
+        "A speed figure here is what the link negotiated, which is a ceiling rather than a measurement of throughput. Use Test My Connection for that."
+      ],
+      "source": "Values are read from the operating system's interface and routing tables on each platform."
+    },
+    "throughput-testing-where": {
+      "name": "Throughput Testing: Where You Test",
+      "category": "Quick Reference",
+      "purpose": "A reference plate showing how the placement of a test server decides what a throughput number actually measures: the Wi-Fi link, the local network, or the path out to the Internet.",
+      "whyHere": "Almost every argument about a disappointing speed test is really an argument about where the test server was. A number taken across the Internet includes the WAN, the provider and the far end, none of which are Wi-Fi, and it gets quoted as a Wi-Fi result anyway. Putting the test server in the right place is the difference between measuring the thing you are being asked to fix and measuring everything else.",
+      "howToUse": [
+        "Decide what you are actually trying to prove before you test.",
+        "To measure the Wi-Fi link, put the server on the wired side of the same AP, so the radio is the only variable.",
+        "To measure the local network, put it across the switch fabric on the far side of the routing you care about.",
+        "To measure the Internet path, use a public server and accept that the result includes everything in between.",
+        "Say which of the three you measured when you report the number."
+      ],
+      "inputs": [
+        {
+          "name": "None",
+          "unit": "",
+          "range": "Reference plate, read-only"
+        }
+      ],
+      "algorithm": "No calculation. The plate lays out the three common server placements against what each one includes and excludes.",
+      "example": "A client associated at a 1,200 Mbps PHY rate tests at 94 Mbps against a public server and the Wi-Fi gets blamed. The same client against a server on the AP's own switch returns 700 Mbps. The Wi-Fi was never the limit; the 100 Mbps uplink was.",
+      "fieldNotes": [
+        "A wired test server needs enough headroom not to become the bottleneck itself, which in practice means the wired path should have roughly an order of magnitude more capacity than the radio can use.",
+        "Test in both directions. Uplink and downlink fail differently and for different reasons.",
+        "A single number from a single spot is a data point, not a survey."
+      ],
+      "source": "WLAN Pros field plate."
+    },
+    "how-devices-access-the-internet": {
+      "name": "How Your Devices Access the Internet",
+      "category": "Quick Reference",
+      "purpose": "A reference plate drawing every hop between a device and the Internet, in order and to scale, so it is visible that Wi-Fi is only the first one.",
+      "whyHere": "This is the plate for the conversation that starts with the Wi-Fi is down. Wi-Fi is one hop of several, and most of what gets called a Wi-Fi problem happens somewhere past it: the router, the modem, the provider, or the service at the far end. Showing the whole chain in one picture settles the argument faster than explaining it does.",
+      "howToUse": [
+        "Use it to locate a fault rather than to fix one. Work along the chain and ask which hop the evidence actually points at.",
+        "Show it to someone who believes Wi-Fi and the Internet are the same thing. That is what it is for.",
+        "Read the destination row at the bottom: every service shown there sits on the far side of the Internet, not on your Wi-Fi."
+      ],
+      "inputs": [
+        {
+          "name": "None",
+          "unit": "",
+          "range": "Reference plate, read-only"
+        }
+      ],
+      "algorithm": "No calculation. The plate is a drawing of the path, in connection order, with the local network and the Internet marked as separate things.",
+      "example": "A device shows full signal and nothing loads. Full signal means the first hop is healthy, which rules out the hop most people blame and points at everything after it.",
+      "fieldNotes": [
+        "The single most useful idea on the plate is that the local network is not the Internet. A device can be perfectly associated, with a strong signal and a valid address, and still reach nothing, because association and Internet access are different achievements.",
+        "Wi-Fi Information and Test My Connection answer those two halves separately."
+      ],
+      "source": "WLAN Pros field plate."
     }
   }
 }

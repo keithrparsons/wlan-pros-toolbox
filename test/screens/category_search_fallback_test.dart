@@ -73,8 +73,18 @@ void main() {
 
     testWidgets('a plural within one category still names that category',
         (tester) async {
+      // DERIVED, NOT HARDCODED, and it was hardcoded until 2026-09-17.
+      //
+      // This read "7 tools in Calculators & Tools" and went red the moment the
+      // MTU & MSS Calculator was added, because that title contains the word
+      // "calculator" and the count became 8. The feature under test is that
+      // the sentence NAMES the category and agrees with the search; the
+      // literal number is incidental to it and pinning one guarantees a false
+      // failure every time the catalog grows.
+      final int expected = searchTools('calculator').length;
+      expect(expected, greaterThan(1), reason: 'fixture needs a plural');
       await _searchIn(tester, 'networking', 'calculator');
-      expect(find.textContaining('7 tools in Calculators & Tools'),
+      expect(find.textContaining('$expected tools in Calculators & Tools'),
           findsOneWidget);
     });
 
