@@ -640,11 +640,28 @@ class _ApScanScreenState extends State<ApScanScreen> {
       buf.writeln(
         '${ap.ssid ?? '(hidden network)'}  '
         '${ap.bssid}  '
-        'ch ${ap.channel} (${ap.band})  ${ap.rssiDbm} dBm',
+        'ch ${ap.channel} (${ap.band})  ${ap.rssiDbm} dBm  '
+        '${_securityForExport(ap)}',
       );
     }
     return buf.toString().trimRight();
   }
+
+  /// The security this BSS advertises, as the RAW tokens the platform reported.
+  ///
+  /// RAW ON PURPOSE, TWICE OVER. A WLAN engineer pasting a scan into a report
+  /// wants what the radio actually said, not our interpretation of it; and when
+  /// a security reading is DISPUTED, a translated label hides the very thing
+  /// under dispute. Keith, 2026-09-17, on two of his own networks: "RACHEL is
+  /// NOT OWE... it is OPEN." A column saying `owe` versus one saying `none` is
+  /// the difference between diagnosing that and arguing about it.
+  ///
+  /// AN EMPTY LIST IS REPORTED AS "not reported", NEVER as open. The platform
+  /// naming no scheme is not the platform saying there is none, and a scan that
+  /// prints "open" for a BSS it could not read is the exact failure the security
+  /// model exists to prevent.
+  static String _securityForExport(ScannedAp ap) =>
+      ap.security.isEmpty ? 'security not reported' : ap.security.join(' ');
 }
 
 // ---------------------------------------------------------------------------
