@@ -14,7 +14,7 @@ typedef Row = ({
   String bssid,
   int rssiDbm,
   int frequencyMhz,
-  List<String> security
+  List<String> security,
 });
 
 Row _row(String? ssid, String bssid, int rssi, int mhz, List<String> sec) =>
@@ -49,26 +49,32 @@ void main() {
     });
 
     test('an unknown token does not silently vanish into open', () {
-      expect(keyMgmtFromSecurityTokens(<String>['someFutureScheme']),
-          'unresolved');
+      expect(
+        keyMgmtFromSecurityTokens(<String>['someFutureScheme']),
+        'unresolved',
+      );
     });
 
     test('none alongside a real scheme drops the none', () {
       // Contradictory source data. Offering an open join for a BSS that also
       // advertises encryption is the failure that matters, so the scheme wins.
-      expect(keyMgmtFromSecurityTokens(<String>['none', 'wpa3Personal']), 'sae');
+      expect(
+        keyMgmtFromSecurityTokens(<String>['none', 'wpa3Personal']),
+        'sae',
+      );
     });
   });
 
   group('the resolver still decides, and still decides correctly', () {
-    PiJoinSecurity resolve(List<String> tokens) =>
-        joinCandidatesFromNativeRows(<Row>[
-          _row('N', 'aa:bb:cc:dd:ee:01', -40, 5745, tokens),
-        ]).single.security;
+    PiJoinSecurity resolve(List<String> tokens) => joinCandidatesFromNativeRows(
+      <Row>[_row('N', 'aa:bb:cc:dd:ee:01', -40, 5745, tokens)],
+    ).single.security;
 
     test('transition joins as WPA3, not WPA2', () {
-      expect(resolve(<String>['wpa2Personal', 'wpa3Personal']),
-          PiJoinSecurity.wpa3Psk);
+      expect(
+        resolve(<String>['wpa2Personal', 'wpa3Personal']),
+        PiJoinSecurity.wpa3Psk,
+      );
     });
 
     test('enterprise is unsupported, never a passphrase box', () {
@@ -79,16 +85,32 @@ void main() {
       expect(resolve(<String>['owe']), PiJoinSecurity.owe);
     });
 
-    test('an OWE TRANSITION BSS keeps OWE rather than collapsing to open', () {
-      // macOS answers yes to BOTH `none` and `owe` for a transition BSS, which
-      // is how Keith's RACHEL-SLOW and Keith Guest were being mislabelled.
+    test('an explicit owe token means OWE, even beside none', () {
+      // CORRECTED 2026-09-17. The previous version of this test asserted that
+      // `oweTransition` ALONE also meant OWE, and its comment claimed macOS
+      // answers yes to both `none` and `owe` for a transition BSS. BOTH were
+      // wrong, and they were written from the vocabulary rather than from any
+      // measurement. A scan export from Keith's own network settled it:
+      //
+      //   Keith Guest 2.4 and 5 GHz: none oweTransition   -> OPEN
+      //   Keith Guest 6 GHz:         owe  oweTransition   -> OWE
+      //   RACHEL-SLOW:               none oweTransition   -> OPEN
+      //
+      // macOS never emits `none owe`. It emits a marker plus a scheme, and the
+      // MARKER is not the scheme. This test kept the half that was right.
       expect(resolve(<String>['none', 'owe']), PiJoinSecurity.owe);
-      expect(resolve(<String>['oweTransition']), PiJoinSecurity.owe);
+      expect(resolve(<String>['owe', 'oweTransition']), PiJoinSecurity.owe);
+    });
+
+    test('oweTransition WITHOUT owe is the OPEN half, and resolves open', () {
+      expect(resolve(<String>['none', 'oweTransition']), PiJoinSecurity.open);
     });
 
     test('an enterprise BSS with a PSK fallback is NOT downgraded', () {
-      expect(resolve(<String>['wpa2Enterprise', 'wpa2Personal']),
-          PiJoinSecurity.unsupported);
+      expect(
+        resolve(<String>['wpa2Enterprise', 'wpa2Personal']),
+        PiJoinSecurity.unsupported,
+      );
     });
 
     test('empty security resolves to unsupported, not open', () {
@@ -110,23 +132,31 @@ void main() {
       // grouping keyed on SSID alone drops the 5 GHz row and with it the fact
       // that the bands run different security.
       final List<JoinCandidate> out = joinCandidatesFromNativeRows(<Row>[
-        _row('MUDI', '86:8f:31:56:df:b9', -35, 5745,
-            <String>['wpa2Personal', 'wpa3Personal']),
+        _row('MUDI', '86:8f:31:56:df:b9', -35, 5745, <String>[
+          'wpa2Personal',
+          'wpa3Personal',
+        ]),
         _row('MUDI', 'e6:4b:3c:67:80:89', -24, 2437, <String>['wpa2Personal']),
       ]);
       expect(out.length, 2);
-      final JoinCandidate five =
-          out.firstWhere((JoinCandidate c) => c.channel == 149);
-      final JoinCandidate two =
-          out.firstWhere((JoinCandidate c) => c.channel == 6);
+      final JoinCandidate five = out.firstWhere(
+        (JoinCandidate c) => c.channel == 149,
+      );
+      final JoinCandidate two = out.firstWhere(
+        (JoinCandidate c) => c.channel == 6,
+      );
       expect(five.security, PiJoinSecurity.wpa3Psk);
       expect(two.security, PiJoinSecurity.wpa2Psk);
     });
 
     test('two BSSs on ONE band collapse, and are counted', () {
       final List<JoinCandidate> out = joinCandidatesFromNativeRows(<Row>[
-        _row('Office', 'aa:aa:aa:aa:aa:01', -70, 5745, <String>['wpa2Personal']),
-        _row('Office', 'aa:aa:aa:aa:aa:02', -41, 5745, <String>['wpa2Personal']),
+        _row('Office', 'aa:aa:aa:aa:aa:01', -70, 5745, <String>[
+          'wpa2Personal',
+        ]),
+        _row('Office', 'aa:aa:aa:aa:aa:02', -41, 5745, <String>[
+          'wpa2Personal',
+        ]),
       ]);
       expect(out.length, 1);
       expect(out.single.bssCount, 2);

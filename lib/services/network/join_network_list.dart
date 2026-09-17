@@ -233,17 +233,39 @@ String keyMgmtFromSecurityTokens(List<String> tokens) {
         // unsupported, NOT on open, so it is passed through as a token the
         // resolver does not recognise.
         parts.add('wep');
-      case 'wpapersonal' || 'wpa2personal' || 'personal':
+      // wpaPersonalMixed is WPA/WPA2 mixed mode and was MISSING, so it fell to
+      // `default` and added `unresolved`. Measured on Keith's network
+      // 2026-09-17: Keith-IoT reports `wpaPersonalMixed wpa2Personal personal
+      // wpa3Transition`, so every WPA2 network on his site was carrying an
+      // unresolved token it did not deserve.
+      case 'wpapersonal' || 'wpapersonalmixed' || 'wpa2personal' || 'personal':
         parts.add('wpa-psk');
-      case 'wpa3personal' || 'wpa3transition':
+      case 'wpa3personal':
         parts.add('sae');
+      case 'wpa3transition':
+        // A TRANSITION MARKER IS NOT A SCHEME. Measured on Keith's network:
+        //   Keith     (WPA3 in the controller): personal wpa3Personal wpa3Transition
+        //   Keith-IoT (WPA2 in the controller): wpaPersonalMixed wpa2Personal personal wpa3Transition
+        // BOTH carry wpa3Transition, so it cannot be the discriminator.
+        // `wpa3Personal` is. Mapping this to SAE labelled a WPA2 network WPA3.
+        break;
       case 'wpaenterprise' ||
           'wpa2enterprise' ||
           'wpa3enterprise' ||
           'enterprise':
         parts.add('wpa-eap');
-      case 'owe' || 'owetransition':
+      case 'owe':
         parts.add('owe');
+      case 'owetransition':
+        // THE SAME MISTAKE, AND THE ONE KEITH CAUGHT. This marks a BSS as one
+        // HALF of a transition pair and does not say which half. Measured:
+        //   Keith Guest 2.4 and 5 GHz: none oweTransition  -> OPEN
+        //   Keith Guest 6 GHz:         owe  oweTransition  -> OWE
+        //   RACHEL-SLOW:               none oweTransition  -> OPEN
+        // Reading it as OWE, then dropping `none` because two schemes were
+        // present, turned every open half into an unjoinable OWE network.
+        // His words: "RACHEL is NOT OWE... it is OPEN."
+        break;
       default:
         // An unknown token is NOT nothing. Dropping it would leave an empty
         // string, which reads as open.
