@@ -590,7 +590,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'site-access': <String>[
     'site access',
     'know before you go',
-    'mobilization',
+    'lead time',
     'credential',
     'background check',
     'orientation',
@@ -803,7 +803,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'tsa',
     'dod',
     'lead time',
-    'mobilization',
     'federal id',
     'operator license',
     'amateur license',

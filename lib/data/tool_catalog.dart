@@ -1434,7 +1434,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Radio & Spectrum',
       ),
-      // Codes & Safety: portable credentials and the mobilization lead-time
+      // Codes & Safety: portable credentials and the credential lead-time
       // landmine (pairs with Site Access, which stays in Codes & Safety).
       ToolEntry(
         id: 'credentials-licenses',

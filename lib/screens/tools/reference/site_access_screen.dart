@@ -88,7 +88,7 @@ class SiteAccessScreen extends StatelessWidget {
                       aspectRatio: _diagramAspect,
                       semanticLabel:
                           'Site-access matrix: environment, what may gate you, '
-                          'and what to ask about before you mobilize',
+                          'and what to ask about before you go to site',
                       caption: 'Scope the credential before you quote.',
                     ),
                     const SizedBox(height: AppSpacing.md),

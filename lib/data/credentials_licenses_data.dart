@@ -145,7 +145,7 @@ const List<String> kLeadTimeClusters = <String>[
 /// The italic lead.
 const String kCredentialsLead =
     'The portable IDs and licenses a WLAN pro carries from job to job, and the '
-    'mobilization landmine hiding in them. Two things to get straight. You '
+    'lead-time landmine hiding in them. Two things to get straight. You '
     'almost never need an FCC operator license to do Wi-Fi work, even licensed '
     'microwave backhaul. And the federal and background-check credentials that '
     'gate restricted sites carry weeks to months of lead time you cannot '
@@ -218,5 +218,5 @@ const String kCredentialsDeferNote =
     'Reference only. The issuing authority (the FCC, TSA, the DoD or '
     'installation, the airport authority, an OSHA-trained employer, the state '
     'or district) sets and grants every credential above. Confirm what your '
-    'specific job requires before you quote and before you mobilize. The '
+    'specific job requires before you quote and before you go to site. The '
     'Toolbox certifies nothing and clears no one.';

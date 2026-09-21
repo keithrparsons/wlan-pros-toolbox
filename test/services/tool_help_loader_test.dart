@@ -274,7 +274,7 @@ void main() {
       // (safety-basics) PPE + ESD + recognize-and-STOP hazards; Plan-Set
       // Literacy (plan-set-literacy) sheet-number anatomy + the RCP as the AP
       // sheet (placement flagged for Keith, defaulted to Codes & Safety); Site
-      // Access (site-access) the "Know Before You Go" pre-mobilization
+      // Access (site-access) the "Know Before You Go" before-you-go
       // checklist. 159 + 3 = 162.
       // 165 = + the last 3 Field & Trade Reference screens (2026-07-05), all
       // read-only text-reference (no decoder plate) in Quick Reference ("Codes &

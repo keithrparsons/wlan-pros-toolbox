@@ -576,13 +576,13 @@
     "site-access": {
       "name": "Site Access",
       "category": "Quick Reference",
-      "purpose": "A 'Know Before You Go' pre-mobilization checklist: eight site types (aerial and man-lifts, rail, hospitals, maritime, warehouse and distribution, schools, data centers, correctional) and the credential, screening, orientation, or escort that can gate you from reaching the work before it even starts.",
+      "purpose": "A 'Know Before You Go' checklist: eight site types (aerial and man-lifts, rail, hospitals, maritime, warehouse and distribution, schools, data centers, correctional) and the credential, screening, orientation, or escort that can gate you from reaching the work before it even starts.",
       "whyHere": "On many sites you cannot reach the work area without a specific credential, background check, orientation, or escort. That is a quoting and scheduling factor, not just a safety one. Rail screening, a hospital ICRA permit, or lift-operator proof can each add days or weeks between winning a job and touching a cable.",
       "howToUse": [
         "Before you quote, scan the checklist for the site type you are bidding and read what may gate you.",
         "Use the 'ask about' column as the questions to put to the GC, site owner, or authority: screening programs, orientations, escorts, flagman, PFD and TWIC, ICRA and ILSM, tool control.",
         "Budget the lead time (rail screening and hospital ICRA in particular run long) into the schedule you promise.",
-        "Confirm each requirement with the site, general contractor, and authority before you mobilize; the Toolbox certifies nothing and clears no one."
+        "Confirm each requirement with the site, general contractor, and authority before you go to site; the Toolbox certifies nothing and clears no one."
       ],
       "inputs": [],
       "algorithm": null,
@@ -591,9 +591,9 @@
         "The pattern across every item: the requirement is set by someone other than you, must be satisfied before work starts, and carries real lead time and cost.",
         "Maritime and over-water work adds PFD and drowning-hazard rules plus heavy salt corrosion, so spec NEMA 4X or high-IP with explicit corrosion resistance.",
         "There is no OSHA-issued 'lift license'; the employer trains and certifies lift operators, and GCs demand documented proof.",
-        "This is a field reference, not code or design guidance. The site, general contractor, and authority set every requirement; confirm each one with them before you mobilize."
+        "This is a field reference, not code or design guidance. The site, general contractor, and authority set every requirement; confirm each one with them before you go to site."
       ],
-      "source": "Access requirements are set by the site, GC, and authority having jurisdiction; confirm each before mobilizing."
+      "source": "Access requirements are set by the site, GC, and authority having jurisdiction; confirm each before going to site."
     },
     "cad-bim-formats": {
       "name": "CAD & BIM Formats",
@@ -2704,7 +2704,7 @@
       "fieldNotes": [
         "Good to know: DSCP lives in the IP header and User Priority lives in the 802.11 header, so something has to map one to the other. When that mapping is missing, wrong, or stripped by a tunnel, the call competes with everything else on the channel and the wired capture still looks perfect.",
         "A bit more detail: most equipment, with no explicit policy applied, derives User Priority from the top three bits of the DSCP value. EF is 46, which is 101110 in binary, and the top three bits are 101, which is 5. So EF lands in User Priority 5, the Video access category, rather than User Priority 6, which is Voice. That is why the ip.dsfield.dscp == 46 && wlan.qos.priority != 6 filter usually turns up UP 5 rather than nothing. The DSCP / QoS Markings tool has the full mapping table and the RFC 8325 fix for exactly this.",
-        "Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where the 802.11 header is not there to filter on.",
+        "Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where the 802.11 header is not there to filter on. Wireshark also does not label a UDP stream as RTP unless it saw the SIP or SDP exchange that set the call up. A monitor-mode capture started mid-call usually has not, so every rtp filter here will match nothing until you right-click one of the media packets, choose Decode As, and set it to RTP. The rtcp filters are unaffected.",
         "Worth flagging (intentional, not a defect): Wireshark has no rtp.analysis display filter of any kind. Its per-stream loss and jitter is a statistic, not a filterable field, so there is no field name to type into the filter bar no matter how plausible one sounds. That is why the card ships a tshark statistics group instead. Four names that look right and do not exist are rtp.analysis.lost, rtp.analysis.jitter, rtp.analysis.delta, and rtp.analysis.out_of_seq.",
         "The finding worth chasing: there are two sources for loss and jitter and they measure different things. The RTCP fields are what the far endpoint reported about what it received. The tshark rtp,streams tap is what this capture actually saw. When the two disagree, that is the result, not an error: the capture point and the endpoint did not experience the same stream, which on Wi-Fi usually means the loss happened between them.",
         "Reading a roam: filter to one rtp.ssrc, note the sequence numbers either side of the gap, then look at what the client did in between. A roam that costs 300 ms is audible. A roam that costs 50 ms is not. An RTP gap that lines up with a reassociation is a roaming problem wearing a VoIP costume.",
@@ -4228,13 +4228,13 @@
     "credentials-licenses": {
       "name": "Credentials & Licenses",
       "category": "Quick Reference",
-      "purpose": "The portable IDs and licenses a WLAN pro carries from job to job, and the mobilization landmine in them: why you almost never need an FCC operator license (even for licensed microwave backhaul), and the federal and background-check credentials (TWIC, CAC, DBIDS, SIDA, HAZWOPER-40, background checks) that gate restricted sites with weeks-to-months lead time.",
+      "purpose": "The portable IDs and licenses a WLAN pro carries from job to job, and the lead-time landmine in them: why you almost never need an FCC operator license (even for licensed microwave backhaul), and the federal and background-check credentials (TWIC, CAC, DBIDS, SIDA, HAZWOPER-40, background checks) that gate restricted sites with weeks-to-months lead time.",
       "whyHere": "The credential you do not already hold is the schedule you cannot keep. A TWIC, a base credential, or a SIDA badge can each add weeks between the award and touching a cable, so scope the credential before you quote, not after you win. Companion to the Site Access entry.",
       "howToUse": [
         "Settle the license question first: unlicensed Wi-Fi (Part 15) and licensed point-to-point microwave (Part 101) both require no FCC operator license (GROL).",
         "For a restricted site, read the credential table for the ID, issuing authority, lead time, and validity you will need.",
         "Bucket the lead time: fast and you control it (GROL exam, school check), weeks (SIDA, TWIC, DBIDS), or weeks-to-months (CAC).",
-        "Confirm what your specific job requires with the issuing authority before you quote and before you mobilize."
+        "Confirm what your specific job requires with the issuing authority before you quote and before you go to site."
       ],
       "inputs": [],
       "algorithm": null,

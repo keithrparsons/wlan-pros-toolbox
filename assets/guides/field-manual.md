@@ -2926,7 +2926,7 @@ Wireshark display filters for analyzing voice calls carried over Wi-Fi: the SIP 
 - Reading a roam: filter to one rtp.ssrc, note the sequence numbers either side of the gap, then look at what the client did in between. A roam that costs 300 ms is audible. A roam that costs 50 ms is not. An RTP gap that lines up with a reassociation is a roaming problem wearing a VoIP costume.
 - Reading power save: a voice client that sleeps between packets sounds exactly like a network with loss, and the far end's own report will call it loss. The Power Management bit rides in the frame control field of every frame, so watch for where it flips rather than looking for a single announcement.
 - There are two sources for loss and jitter and they measure different things. The RTCP fields are what the far endpoint reported about what it received. The tshark rtp,streams tap is what this capture actually saw. When the two disagree, that is the result rather than an error: the capture point and the endpoint did not experience the same stream, which on Wi-Fi usually means the loss happened between them.
-- Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where there is no 802.11 header to filter on.
+- Caveat: the filters that combine an IP field with an 802.11 field need both headers visible in the same frame. That means a monitor-mode capture of an open or decrypted network, not a capture taken on the client's own interface, where there is no 802.11 header to filter on. Wireshark also does not label a UDP stream as RTP unless it saw the SIP or SDP exchange that set the call up. A monitor-mode capture started mid-call usually has not, so every rtp filter here will match nothing until you right-click one of the media packets, choose Decode As, and set it to RTP. The rtcp filters are unaffected.
 - Worth flagging (intentional, not a defect): Wireshark has no `rtp.analysis` display filter of any kind. Its per-stream loss and jitter is a statistic, not a filterable field, so there is no field name to type into the filter bar however plausible one sounds. Four names that look right and do not exist are rtp.analysis.lost, rtp.analysis.jitter, rtp.analysis.delta, and rtp.analysis.out_of_seq. All four were compile-tested against Wireshark and rejected before this card shipped.
 - Frame type and subtype values are shown in hexadecimal on this card (0x02 is Reassociation request, 0x0c is Deauthentication). The Wireshark 802.11 Filters card shows the same values in decimal. Wireshark accepts either form.
 - The RTCP jitter figure is in RTP timestamp units, not milliseconds. At an 8 kHz sampling clock, one unit is 125 microseconds.
@@ -3635,7 +3635,7 @@ A field-awareness reference for the personal protective equipment a general cont
 
 ### Site Access
 
-A "Know Before You Go" pre-mobilization checklist: eight site types (aerial and man-lifts, rail, hospitals, maritime, warehouse and distribution, schools, data centers, correctional) and the credential, screening, orientation, or escort that can gate you from reaching the work before it even starts.
+A "Know Before You Go" checklist: eight site types (aerial and man-lifts, rail, hospitals, maritime, warehouse and distribution, schools, data centers, correctional) and the credential, screening, orientation, or escort that can gate you from reaching the work before it even starts.
 
 **Why it's here.** On many sites you cannot reach the work area without a specific credential, background check, orientation, or escort. That is a quoting and scheduling factor, not just a safety one. Rail screening, a hospital ICRA permit, or lift-operator proof can each add days or weeks between winning a job and touching a cable.
 
@@ -3643,7 +3643,7 @@ A "Know Before You Go" pre-mobilization checklist: eight site types (aerial and 
 1. Before you quote, scan the checklist for the site type you are bidding and read what may gate you.
 2. Use the "ask about" column as the questions to put to the GC, site owner, or authority: screening programs, orientations, escorts, flagman, PFD and TWIC, ICRA and ILSM, tool control.
 3. Budget the lead time (rail screening and hospital ICRA in particular run long) into the schedule you promise.
-4. Confirm each requirement with the site, general contractor, and authority before you mobilize.
+4. Confirm each requirement with the site, general contractor, and authority before you go to site.
 
 **Field notes**
 - The pattern across every item: the requirement is set by someone other than you, must be satisfied before work starts, and carries real lead time and cost.
@@ -3654,7 +3654,7 @@ A "Know Before You Go" pre-mobilization checklist: eight site types (aerial and 
 
 ### Credentials & Licenses
 
-The portable IDs and licenses a WLAN pro carries from job to job, and the mobilization landmine in them: why you almost never need an FCC operator license (even for licensed microwave backhaul), and the federal and background-check credentials (TWIC, CAC, DBIDS, SIDA, HAZWOPER-40, background checks) that gate restricted sites with weeks-to-months lead time.
+The portable IDs and licenses a WLAN pro carries from job to job, and the lead-time landmine in them: why you almost never need an FCC operator license (even for licensed microwave backhaul), and the federal and background-check credentials (TWIC, CAC, DBIDS, SIDA, HAZWOPER-40, background checks) that gate restricted sites with weeks-to-months lead time.
 
 **Why it's here.** The credential you do not already hold is the schedule you cannot keep. A TWIC, a base credential, or a SIDA badge can each add weeks between the award and touching a cable, so scope the credential before you quote, not after you win. Companion to the Site Access entry.
 
@@ -3662,7 +3662,7 @@ The portable IDs and licenses a WLAN pro carries from job to job, and the mobili
 1. Settle the license question first: unlicensed Wi-Fi (Part 15) and licensed point-to-point microwave (Part 101) both require no FCC operator license (GROL).
 2. For a restricted site, read the credential table for the ID, issuing authority, lead time, and validity you will need.
 3. Bucket the lead time: fast and you control it (GROL exam, school check), weeks (SIDA, TWIC, DBIDS), or weeks-to-months (CAC).
-4. Confirm what your specific job requires with the issuing authority before you quote and before you mobilize.
+4. Confirm what your specific job requires with the issuing authority before you quote and before you go to site.
 
 **Field notes**
 - You would only need a GROL if the work crossed into servicing aviation or marine radios, which is outside a normal WLAN scope of work.

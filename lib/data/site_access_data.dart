@@ -3,7 +3,7 @@
 //
 // Every string is rendered VERBATIM from Penn's voice-gated copy
 // (Deliverables/2026-07-05-field-trade-reference/content/06-site-access.md,
-// SOP-020 PASS): the pre-mobilization checklist (environment / what may gate
+// SOP-020 PASS): the before-you-go checklist (environment / what may gate
 // you / ask about) and the framing prose. No copy is rewritten here - the
 // screen only lays it out.
 //
@@ -35,11 +35,11 @@ class SiteAccessRow {
   /// What may gate you before you reach the work.
   final String gate;
 
-  /// The short "ask about" list to confirm before quoting and mobilizing.
+  /// The short "ask about" list to confirm before quoting and going to site.
   final String askAbout;
 }
 
-/// The eight-environment pre-mobilization checklist, verbatim from the copy.
+/// The eight-environment before-you-go checklist, verbatim from the copy.
 const List<SiteAccessRow> kSiteAccessRows = <SiteAccessRow>[
   SiteAccessRow(
     environment: 'Aerial and man-lifts (boom, scissor)',
@@ -120,11 +120,11 @@ const List<SiteAccessRow> kSiteAccessRows = <SiteAccessRow>[
 
 /// The italic lead: what this checklist is and why it is a scheduling factor.
 const String kSiteAccessLead =
-    'A pre-mobilization checklist. On many sites you cannot even reach the work '
+    'A before-you-go checklist. On many sites you cannot even reach the work '
     'area without a specific credential, background check, orientation, or '
     'escort. That is a quoting and scheduling factor, not just a safety one. '
-    'Underestimating it is how a one-day install becomes a three-week '
-    'mobilization.';
+    'Underestimating it is how a one-day install becomes three weeks of '
+    'extended effort.';
 
 /// The shared pattern across every checklist item, verbatim.
 const String kSiteAccessPattern =
@@ -132,7 +132,7 @@ const String kSiteAccessPattern =
     'than you (the general contractor, site owner, rail or transit authority, '
     'or accreditation body), it must be satisfied before work starts, and it '
     'carries real lead time and cost. Confirm each one before you quote and '
-    'before you mobilize.';
+    'before you go to site.';
 
 /// "Why a WLAN pro cares" paragraph, verbatim.
 const String kSiteAccessWlanCares =
@@ -146,5 +146,5 @@ const String kSiteAccessWlanCares =
 const String kSiteAccessDeferNote =
     'This is a field reference, not code or design guidance. The site, general '
     'contractor, and authority set every requirement above. Confirm each one '
-    'with them before you mobilize. The Toolbox certifies nothing and clears '
+    'with them before you go to site. The Toolbox certifies nothing and clears '
     'no one.';
