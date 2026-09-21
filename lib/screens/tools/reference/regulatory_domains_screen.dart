@@ -7,7 +7,7 @@
 // abbreviation badge when the logo asset is not bundled), the jurisdiction, the
 // regulator's full name + abbreviation, a tappable official-website link
 // (url_launcher, system browser), the governing regulation / standard, and the
-// 2.4 / 5 / 6 GHz band + power note.
+// 2.4 / 5 / 6 GHz band note. Not power: see the label comment below.
 //
 // SNAPSHOT BANNER (binding, per the brief): ONE prominent banner at the top
 // states the data is a dated snapshot and that regulations change, so the user
@@ -139,7 +139,7 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
           'Abbreviation',
           'Website',
           'Governing docs',
-          'Band / power notes',
+          'Bands',
         ].join(tab),
       );
     for (final RegulatoryDomain d in _sortedDomains) {
@@ -284,7 +284,7 @@ class _SnapshotBanner extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Regulations change; confirm against the regulator before '
-                    'relying on a value. Band and power notes are a snapshot, '
+                    'relying on a value. Band notes are a snapshot, '
                     'not a settled constant.',
                     style: (text.bodyMedium ?? const TextStyle()).copyWith(
                       color: colors.textSecondary,
@@ -334,7 +334,7 @@ class _SearchField extends StatelessWidget {
 }
 
 /// One jurisdiction card: logo (or abbreviation badge) + jurisdiction + regulator
-/// name + abbreviation chip, the governing docs, the band / power note, and a
+/// name + abbreviation chip, the governing docs, the band note, and a
 /// tappable official-website link. Stateful only to carry the per-row launch
 /// error state.
 class _RegulatorRow extends StatefulWidget {

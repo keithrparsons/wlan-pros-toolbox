@@ -89,7 +89,9 @@ class RegulatoryDomain {
   /// `47 CFR 15.247; 15.407`. Stable.
   final String governingDocs;
 
-  /// The 2.4 / 5 / 6 GHz band + power note. VOLATILE — a snapshot to verify
+  /// The 2.4 / 5 / 6 GHz band note. Surfaced as "Bands", never "Bands and
+  /// power": only 2 of 43 rows carry a numeric power figure (Keith, 2026-09-19).
+  /// VOLATILE — a snapshot to verify
   /// against the regulator, never a settled constant (see file header).
   final String bandNotes;
 
