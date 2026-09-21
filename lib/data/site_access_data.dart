@@ -136,10 +136,9 @@ const String kSiteAccessPattern =
 
 /// "Why a WLAN pro cares" paragraph, verbatim.
 const String kSiteAccessWlanCares =
-    'The credential you do not have is the schedule you cannot keep. Rail '
-    'screening, an ICRA permit, or lift-operator proof can each add days or '
-    'weeks between winning the job and touching a cable. Scope these before you '
-    'quote so the timeline you promise is the timeline you can hit.';
+    'Rail screening, an ICRA permit, or lift-operator proof can each add days '
+    'or weeks between winning the job and touching a cable. Scope these before '
+    'you quote so the timeline you agreed to is the timeline you can meet.';
 
 /// The defer footer (rendered as an info band). Verbatim - note this one differs
 /// from the standard AHJ/electrician footer.

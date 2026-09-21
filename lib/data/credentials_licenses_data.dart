@@ -206,8 +206,7 @@ const List<String> kCredentialNotes = <String>[
 
 /// "Why a WLAN pro cares" paragraph, verbatim.
 const String kCredentialsWlanCares =
-    'Same failure as an unscoped site orientation, one layer up: the '
-    'credential you do not already carry is the schedule you cannot keep. A '
+    'Same failure as an unscoped site orientation, one layer up. A '
     'TWIC, a base credential, or a SIDA badge can each add weeks between the '
     'award and touching a cable. Scope the credential before you quote, not '
     'after you win. And do not chase a license you do not need, because pure '
