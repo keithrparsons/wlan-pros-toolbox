@@ -137,7 +137,7 @@ class _RegulatoryDomainsScreenState extends State<RegulatoryDomainsScreen> {
           'Abbreviation',
           'Website',
           'Governing docs',
-          'Band / power notes',
+          'Bands',
         ].join(tab),
       );
     for (final RegulatoryDomain d in _sortedDomains) {
@@ -283,7 +283,7 @@ class _SnapshotBanner extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Regulations change; confirm against the regulator before '
-                    'relying on a value. Band and power notes are a snapshot, '
+                    'relying on a value. Band notes are a snapshot, '
                     'not a settled constant.',
                     style: (text.bodyMedium ?? const TextStyle()).copyWith(
                       color: colors.textSecondary,
