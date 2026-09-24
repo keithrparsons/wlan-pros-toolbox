@@ -666,8 +666,7 @@
         "reference",
         "divergent dynamics"
       ],
-      "approval": "approved",
-      "notes": "Devin Akin (Divergent Dynamics) approved adding his Wi-Fi Design Flowchart 2026-06-12, pointing to divdyn.com. Approval explicitly GRANTED by the owner. Corrected 2026-08-09 from 'not_required' to 'approved': the earlier value was a workaround recorded in this note, which said the enum offered only (not_required | pending_outreach) and used not_required to mean 'cleared for publish'. The enum gained 'approved' on 2026-08-09, so the granted approval is now recordable as itself. This row was outside the sweep that moved the other 27, because the sweep matched on 'pending_outreach'."
+      "approval": "approved"
     },
     {
       "id": "dest-wireshark-wifi-wiki",
@@ -720,8 +719,7 @@
         "security",
         "reference"
       ],
-      "approval": "approved",
-      "notes": "Jonathan Davis publicly released this 2026-06-12 at Wi-Co NC and invited the community to share it; Keith's description, added 2026-06-12. Note corrected 2026-08-09. The VALUE was already right and the NOTE was stale: the closing sentence used to report approval as still awaiting owner contact, which contradicted the 'approved' value this row moved to on 2026-08-09 when Keith confirmed every owner had been contacted and had responded positively. (Paraphrased rather than quoted, because the guard test that caught this reads note prose by substring and a verbatim quote of the wrong sentence re-trips it.) Jonathan Davis is separately on record as approving frames.bitbucketlabs.com on 2026-06-05, so the approval predates that sweep."
+      "approval": "approved"
     },
     {
       "id": "dest-mackenziewifi",
@@ -776,8 +774,7 @@
         "attenuation",
         "predictive"
       ],
-      "approval": "approved",
-      "notes": "Added 2026-08-09. Approval explicitly granted by the owner the same day: Robin Decloedt answered Keith's listing request with 'It would be an honour to be referenced by you and your app', and mentioned he already has the Toolbox installed. Every object in the library's own data file carries CC BY 4.0; the WordPress plugin behind the page is separately GPL-2.0-or-later, which is a different grant over different work. NO object count appears in the description on purpose: the page footer is rendered client-side from a JSON file that grows as objects are submitted, so any number baked in here goes stale. The description credits a 'companion object editor on the same site' because the page links its own Hamina Attenuation Object Editor, verified against the live page 2026-08-09; that editor is listed separately as 'robinwifi-hamina-object-editor'."
+      "approval": "approved"
     },
     {
       "id": "robinwifi-hamina-object-editor",
@@ -795,8 +792,7 @@
         "attenuation",
         "editor"
       ],
-      "approval": "approved",
-      "notes": "Added 2026-08-09. Approval explicitly granted by the owner the same day, unprompted, in the same reply that cleared the object library: 'You're free to include that one as well if you like it.' NO license statement appears anywhere on this page. Fetched 2026-08-09: zero matches for 'licen', 'creative commons', 'cc by' or 'gpl' in 92 KB of HTML, and the only 'all rights reserved' is the site-wide WordPress footer that also sits under the library page, which nonetheless grants CC BY 4.0. So this entry states NO terms at all, and the library's CC BY 4.0 was deliberately NOT carried across: that grant is about the objects. 'cost: free' rests on the page's own meta description ('Free Hamina object editor ...') plus the absence of any sign-in, account, or pricing text. The 'still being worked on' line comes from Decloedt's 2026-08-09 reply to Keith rather than from the page; his words were that the tools are 'still a bit of work in progress'. The page itself was published 2026-08-08 and last modified 2026-08-09, so it is new. The page also credits Joel Crane's clipboard tool as prior art. That credit is Decloedt's to give on his own page and is deliberately absent from this description, because repeating it in a directory would assert a relationship between two separate listings that is not ours to assert."
+      "approval": "approved"
     },
     {
       "id": "teigenrf-ai-tools",
@@ -815,8 +811,7 @@
         "attenuation",
         "generator"
       ],
-      "approval": "approved",
-      "notes": "Added 2026-08-09. Approval explicitly granted by the owner the same day: Kjetil Teigen Hansen answered Keith's listing request with 'Share it! Yes!'. He also asked that the listing use tools.teigenrf.org rather than the longer ai-tools.teigenrf.org, and the two addresses served byte-identical pages when both were fetched 2026-08-09, so his preferred address is the one carried here. 'cost: free' rests on his own words to Keith, 'all is and will forever be free', and on both Pro tool pages carrying no pricing, purchase, or subscription text. His 'forever' is his promise and is deliberately not repeated as a guarantee in the description. NO license statement exists on the tools site or in the linked GitHub repository, whose API reports no license, so the work is all rights reserved by default: listing the URL needs no permission, but nothing here may be mirrored, rehosted, or republished. The description names NO platform for the NXT-2000 desktop app on purpose: the tools page offers a Windows download while the GitHub repository ships three macOS builds alongside the Windows installer, so any single-platform wording would be false."
+      "approval": "approved"
     },
     {
       "id": "potatofi-hamina-clipboard",
@@ -834,8 +829,7 @@
         "clipboard",
         "attenuation"
       ],
-      "approval": "pending_outreach",
-      "notes": "Added 2026-08-09. Joel Crane approved the sibling listing 'potatofi-spectrum' on 2026-06-05, but that approval covered the spectrum chart and not this tool, so this row starts at 'pending_outreach' rather than inheriting it: Keith emailed him 2026-08-09 and had no reply when this was written. Flip to 'approved' on reply. NO license statement appears on the clipboard tool page. It is a different subdomain from the spectrum chart and does not carry the spectrum chart's note about linking rather than rehosting, so this description states no terms at all. The page also carries no author byline; attribution comes from the shared potatofi.com domain and the existing approved listing, not from the page. Feature list verified against the live page 2026-08-09."
+      "approval": "pending_outreach"
     },
     {
       "id": "finney-ssid-airtime",
@@ -874,8 +868,7 @@
         "community",
         "vendor-neutral"
       ],
-      "approval": "approved",
-      "notes": "Added 2026-09-15. Creator: Victor Gatuna. He gave explicit permission for the listing in his own words, direct to Keith, on 2026-09-15, and was told in the same exchange that Keith intends to build a similar index over his own content. The site carries no about, contact or credits page, which is why the creator is not discoverable from the site itself and why the name was mis-sourced before he confirmed it. Mechanism: a client-side page that queries YouTube playlists live, so a 'Loading WLPC videos... 0 talks found' state is the site working rather than failing. Nothing is mirrored or rehosted; this is link-out only."
+      "approval": "approved"
     },
     {
       "id": "bufferbloat-net",
