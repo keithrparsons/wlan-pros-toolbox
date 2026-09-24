@@ -12,7 +12,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('no educational resource ships a notes field or an unknown field', () {
+  test('no educational resource or _meta key ships a note or an unknown field', () {
     final Map<String, dynamic> decoded = jsonDecode(
       File('assets/data/educational_resources.json').readAsStringSync(),
     ) as Map<String, dynamic>;
@@ -22,6 +22,18 @@ void main() {
       'id', 'title', 'summary', 'description', 'url', 'topic', 'cost',
       'level', 'tags', 'approval',
     };
+
+    // The _meta block ships too. Only the keys the service reads may be in it.
+    const Set<String> allowedMeta = <String>{
+      'title', 'attribution', 'last_updated', 'count', 'topics',
+    };
+    final Set<String> extraMeta = (decoded['_meta'] as Map<String, dynamic>)
+        .keys
+        .toSet()
+        .difference(allowedMeta);
+    expect(extraMeta, isEmpty,
+        reason: '_meta ships field(s) $extraMeta. Internal notes never ship; '
+            'keep them outside the app repo.');
 
     for (final dynamic r in resources) {
       final Map<String, dynamic> entry = r as Map<String, dynamic>;

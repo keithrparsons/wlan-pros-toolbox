@@ -285,9 +285,9 @@ class EducationalResourcesService {
     if (meta is Map<String, dynamic>) {
       final String t = EducationalResource._str(meta['title']);
       if (t.isNotEmpty) title = t;
-      // `_meta.attribution` is the DISPLAY credit and nothing else. The
-      // provenance behind it lives in `_meta.attribution_note`, which is
-      // deliberately NOT read here: internal process never renders.
+      // `_meta.attribution` is the DISPLAY credit and nothing else. Its
+      // provenance lives outside the app repo: this asset ships in every
+      // build, so internal notes never go in it, displayed or not.
       attribution = EducationalResource._str(meta['attribution']);
       final Object? rawTopics = meta['topics'];
       if (rawTopics is List) {

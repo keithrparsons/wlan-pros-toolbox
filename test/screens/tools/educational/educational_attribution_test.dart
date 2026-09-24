@@ -51,7 +51,7 @@ void main() {
 
     expect(RegExp(r'\d{4}-\d{2}-\d{2}').hasMatch(shown), isFalse,
         reason: 'a date in the credit line means provenance leaked into the '
-            'display string; provenance belongs in _meta.attribution_note');
+            'display string; provenance lives outside the app repo');
     for (final String banned in <String>[
       'shipped',
       'specified',
@@ -64,23 +64,20 @@ void main() {
     ]) {
       expect(shown.toLowerCase(), isNot(contains(banned.toLowerCase())),
           reason: 'the credit line names the creator and the site, nothing '
-              'else. "$banned" is internal and must stay in attribution_note.');
+              'else. "$banned" is internal and lives outside the app repo.');
     }
     expect(shown.length, lessThan(90),
         reason: 'the credit is one short line under the intro, not a paragraph');
   });
 
-  test('attribution_note is internal and is NOT read by the service', () async {
-    final String raw =
-        await rootBundle.loadString('assets/data/educational_resources.json');
+  test('no provenance note ships beside the credit', () async {
+    // It used to: `_meta.attribution_note` sat in this asset from 2026-09-15
+    // to 2026-09-24. The asset ships in every build, so a field no screen
+    // shows is still readable by anyone who unpacks the app. Keith,
+    // 2026-09-24: "Internal notes should NEVER ship!"
     final Map<String, dynamic> meta = await loadMeta();
-    expect(meta['attribution_note'], isA<String>(),
-        reason: 'the provenance is kept, just not displayed');
-
-    final EducationalResourcesService svc =
-        EducationalResourcesService.fromJson(raw);
-    expect(svc.attribution, isNot(contains('attribution_note')));
-    expect(svc.attribution, isNot(equals(meta['attribution_note'])));
+    expect(meta.containsKey('attribution_note'), isFalse,
+        reason: 'provenance for the credit lives outside the app repo');
   });
 
   // The RENDER assertion lives in educational_resources_screen_test.dart,
