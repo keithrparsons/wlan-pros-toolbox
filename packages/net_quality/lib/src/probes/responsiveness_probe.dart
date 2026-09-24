@@ -39,8 +39,9 @@ class ResponsivenessStats {
 /// Measures responsiveness under load.
 ///
 /// IMPORTANT: this is a SIMPLIFIED, single-flow loaded-latency RPM. It is
-/// INSPIRED BY RFC 9097 and Apple's networkQuality tool, but it is NOT the full
-/// multi-flow RPM standard. The standard ramps up many parallel flows until the
+/// INSPIRED BY the IETF responsiveness draft (draft-ietf-ippm-responsiveness,
+/// an Internet-Draft, not an RFC) and Apple's networkQuality tool, but it is
+/// NOT the full multi-flow RPM method. The draft's method ramps up many parallel flows until the
 /// link saturates and measures latency across multiple protocol layers. We run
 /// a single load flow and one latency stream, so the RPM here is a directional
 /// indicator, not a standards-conformant RPM value. Do not present it as one.

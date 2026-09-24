@@ -692,7 +692,8 @@ class OwnEngineQualityClient implements QualityClient {
           value: r.rpm,
           unit: 'RPM',
           grade: QualityScoring.gradeResponsivenessRpm(r.rpm),
-          note: 'Simplified single-flow estimate inspired by RFC 9097',
+          note: 'Simplified single-flow estimate inspired by the IETF '
+              'responsiveness draft (draft-ietf-ippm-responsiveness)',
         ));
       } catch (_) {
         metrics.add(_failed(

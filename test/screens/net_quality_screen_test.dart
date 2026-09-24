@@ -325,9 +325,12 @@ void main() {
         find.textContaining('not a third-party score'),
         findsOneWidget,
       );
-      // The RFC 9097 single-stream Responsiveness caveat is present (it appears
-      // both in the metric card note and the honesty card).
-      expect(find.textContaining('RFC 9097'), findsWidgets);
+      // The single-stream Responsiveness caveat is present and cites the IETF
+      // responsiveness draft, not RFC 9097 (which is One-Way IP Capacity). It
+      // appears both in the metric card note and the honesty card.
+      expect(find.textContaining('draft-ietf-ippm-responsiveness'),
+          findsWidgets);
+      expect(find.textContaining('RFC 9097'), findsNothing);
       // The "no single composite score" intent survives.
       expect(find.textContaining('no single overall score'), findsOneWidget);
     });

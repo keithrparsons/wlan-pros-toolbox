@@ -12,8 +12,9 @@
 // measurements (not a third-party score), that there is no single composite
 // score on purpose, that latency/loss stand in over a port-443 TCP connect
 // because the iOS/macOS security model forbids raw pings, and that
-// Responsiveness is a simplified single-stream figure inspired by RFC 9097 /
-// Apple networkQuality, not the full multi-flow standard. The copy below is the
+// Responsiveness is a simplified single-stream figure inspired by the IETF
+// responsiveness draft (draft-ietf-ippm-responsiveness, not an RFC) / Apple
+// networkQuality, not the full multi-flow method. The copy below is the
 // approved wording; it must not gain new claims.
 //
 // Styling is GL-003: surface2 sheet, surface1 cards with a §8.2 hairline border,
@@ -100,8 +101,9 @@ class NetQualityHelpSheet extends StatelessWidget {
           'down when busy scores low.',
       note:
           'This is a simplified, single-stream estimate inspired by Apple\'s '
-          'networkQuality tool and the industry RPM work (RFC 9097). The full '
-          'standard pushes many streams at once across several layers. Ours '
+          'networkQuality tool and the industry RPM work (the IETF '
+          'responsiveness draft, draft-ietf-ippm-responsiveness). The full '
+          'method pushes many streams at once across several layers. Ours '
           'uses one. Treat the RPM here as a reliable direction, not a '
           'lab-grade figure.',
     ),
@@ -478,8 +480,9 @@ class _HonestyCard extends StatelessWidget {
             'graded on its own. Latency and loss use a timed connection on port '
             '443 rather than a raw ping, because sandboxed iPhone and Mac apps '
             'cannot send one. The Responsiveness grade is a simplified '
-            'single-stream figure inspired by RFC 9097 and Apple\'s '
-            'networkQuality tool, not the full multi-stream standard.',
+            'single-stream figure inspired by the IETF responsiveness draft '
+            '(draft-ietf-ippm-responsiveness) and Apple\'s networkQuality '
+            'tool, not the full multi-stream method.',
             style: text.bodyMedium?.copyWith(color: colors.textSecondary),
           ),
         ],

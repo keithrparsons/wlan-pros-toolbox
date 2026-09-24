@@ -51,7 +51,8 @@ class QualityScoring {
   /// Grades responsiveness in round-trips per minute (RPM).
   ///
   /// Excellent >= 1000, good >= 500, fair >= 100, poor < 100.
-  /// Grounded in RFC 9097 and Apple's networkQuality, which use RPM with
+  /// Grounded in the IETF responsiveness draft (draft-ietf-ippm-responsiveness,
+  /// not an RFC) and Apple's networkQuality, which use RPM with
   /// roughly this order of magnitude for good interactive responsiveness.
   /// These are OUR bands derived from that work. Note also that the RPM value
   /// fed in is our simplified single-flow estimate, not a full multi-flow RPM.

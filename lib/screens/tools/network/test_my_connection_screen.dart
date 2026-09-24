@@ -3383,7 +3383,8 @@ class _TestMyConnectionScreenState extends State<TestMyConnectionScreen>
   /// the reason on the metric — and the UI discarded it. So read the METRIC, not
   /// the value, and print what the engine actually said.
   ///
-  /// It also carries the RFC 9097 caveat onto the MEASURED value. The probe's own
+  /// It also carries the responsiveness-draft caveat
+  /// (draft-ietf-ippm-responsiveness) onto the MEASURED value. The probe's own
   /// docstring says this is "a directional indicator, not a standards-conformant
   /// RPM value. Do not present it as one." — and this row was presenting a bare
   /// "1234 RPM", which is exactly presenting it as one.

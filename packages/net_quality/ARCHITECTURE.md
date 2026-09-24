@@ -71,8 +71,9 @@ unit-testable with no real network.
 - Jitter is RFC 3550-style mean deviation between consecutive successful
   samples.
 - Responsiveness RPM is a SIMPLIFIED single-flow loaded-latency estimate
-  inspired by RFC 9097 and Apple's networkQuality. It is NOT the full
-  multi-flow RPM standard and is not presented as one.
+  inspired by the IETF responsiveness draft (draft-ietf-ippm-responsiveness,
+  an Internet-Draft, not an RFC) and Apple's networkQuality. It is NOT the
+  full multi-flow RPM method and is not presented as one.
 
 ## Scoring
 
@@ -82,7 +83,8 @@ whether its bands are standard-grounded or our own heuristic (GL-005):
 - Latency: bands derived from ITU-T G.114.
 - Jitter: bands informed by VoIP jitter-buffer guidance (~30 ms).
 - Loss: bands informed by ITU/Cisco VoIP guidance (>1% degrades VoIP).
-- Responsiveness: bands derived from RFC 9097 / Apple networkQuality.
+- Responsiveness: bands derived from the IETF responsiveness draft
+  (draft-ietf-ippm-responsiveness) / Apple networkQuality.
 - Download and upload: EXPLICITLY heuristics, not standards.
 
 The exact cut points are always our own choice; where a standard exists it

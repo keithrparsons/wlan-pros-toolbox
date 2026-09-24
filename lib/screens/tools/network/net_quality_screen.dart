@@ -8,8 +8,9 @@
 // HONESTY (GL-005 + ARCHITECTURE.md): these are this app's OWN measurements,
 // not a third-party score, and there is deliberately no single composite
 // "score" — each dimension is graded on its own. The Responsiveness grade is a
-// simplified single-flow figure inspired by RFC 9097 / Apple networkQuality,
-// not the full multi-flow RPM standard. Latency and reachability use a
+// simplified single-flow figure inspired by the IETF responsiveness draft
+// (draft-ietf-ippm-responsiveness, an Internet-Draft, not an RFC) / Apple
+// networkQuality, not the full multi-flow RPM method. Latency and reachability use a
 // TCP-connect RTT, not ICMP, because sandboxed macOS and iOS apps cannot open
 // raw sockets (GL-008). A dimension that cannot be measured is shown as
 // "Unavailable" with its note, never faked.
@@ -529,7 +530,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                   'visible to the Pi.'
             : "These are this app's own measurements, not a third-party score. "
                   'The Responsiveness grade is an indicative figure inspired by '
-                  'RFC 9097, not the full standard.',
+                  'the IETF responsiveness draft '
+                  '(draft-ietf-ippm-responsiveness), not the full method.',
       );
 
     return buf.toString().trimRight();
@@ -1618,7 +1620,8 @@ class _NetQualityScreenState extends State<NetQualityScreen> {
                 'to the Pi.'
           : 'These are this app\'s own measurements, not a third-party score. '
                 'The Responsiveness grade is an indicative figure inspired by '
-                'RFC 9097, not the full standard.',
+                'the IETF responsiveness draft '
+                '(draft-ietf-ippm-responsiveness), not the full method.',
       style: text.labelMedium?.copyWith(color: colors.textSecondary),
     );
   }
