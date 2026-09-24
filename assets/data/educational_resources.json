@@ -4,8 +4,8 @@
     "note": "Educational Resources for the WLAN Pros Toolbox: independent-author and community materials only. Megavendor and product documentation are intentionally excluded. The dataset keeps community tools and utilities, independent blogs and experts, podcasts, conference and talk archives, YouTube channels, and training and certification paths. Descriptions are in Keith Parsons's voice.",
     "attribution": "Inspired by wlan-talks.net by Victor Gatuna",
     "attribution_note": "Provenance for the line above, NOT for display. Specified 2026-06-03 in the destinations source file and dropped when that set was merged in, so the feature shipped for three months with no credit. The name read 'Victor Njoroge' until 2026-09-15, sourced circularly from Keith's own 2026-04-10 WLAN Pros Weekly article, which he ruled wrong. Victor Gatuna gave explicit permission on LinkedIn 2026-09-15: 'Happy to help in any way and I am okay for you to use the link as you wish.' Keep the display string short and free of dates and internal process.",
-    "last_updated": "2026-09-15",
-    "count": 48,
+    "last_updated": "2026-09-24",
+    "count": 51,
     "topics": [
       "Tools and utilities",
       "Conference and talk archives",
@@ -876,6 +876,59 @@
       ],
       "approval": "approved",
       "notes": "Added 2026-09-15. Creator: Victor Gatuna. He gave explicit permission for the listing in his own words, direct to Keith, on 2026-09-15, and was told in the same exchange that Keith intends to build a similar index over his own content. The site carries no about, contact or credits page, which is why the creator is not discoverable from the site itself and why the name was mis-sourced before he confirmed it. Mechanism: a client-side page that queries YouTube playlists live, so a 'Loading WLPC videos... 0 talks found' state is the site working rather than failing. Nothing is mirrored or rehosted; this is link-out only."
+    },
+    {
+      "id": "bufferbloat-net",
+      "title": "Bufferbloat: Latency Under Load (bufferbloat.net)",
+      "summary": "The latency-under-load problem a fast speed test hides, and the Active Queue Management fix that solves it.",
+      "description": "Run a speed test, watch it post a great number, then watch your video call fall apart the moment someone else on the network starts a big upload. That is bufferbloat, and it is a latency problem, not a bandwidth problem. Buying a fatter internet plan does not fix it and can hide it. The cause is a buffer somewhere in the path holding far more data than it should. Load the link and that buffer fills into a standing queue, so every packet behind it waits its turn. Throughput stays high while responsiveness falls apart. The number that matters is how far your latency climbs once the link is busy.\n\nThe fix is Active Queue Management, fq_codel or CAKE, placed at the real bottleneck and set to shape below your measured line rate. That last part is the crux most people skip. The queue forms at the slowest hop, usually the ISP uplink or the modem, not the Access Point, so you deliberately make a device you control the bottleneck and let AQM manage the queue where it forms. Turn it on in the wrong place, or without shaping below line rate, and nothing changes. CAKE builds the shaper in and attaches to a Linux interface with a single tc command, which is why it shows up on so many OpenWrt routers.\n\nWi-Fi is its own hop with its own bloat. Aggregation, retries, and shared airtime create queueing that shaping the WAN never touches. Toke Høiland-Jørgensen, Michal Kazior, Dave Täht and their colleagues showed the fix for the air: fq_codel inside the Wi-Fi stack plus an AP-side airtime-fairness scheduler that needs no client changes ('Ending the Anomaly', USENIX ATC '17). Airtime fairness still arrives driver by driver, and most commercial APs run their vendor's own firmware, so ask your AP vendor what theirs does. Fixing your uplink and fixing the air are two separate jobs.\n\nMeasure it the only way that means anything, latency under load. Test idle, then saturate the link one direction at a time and watch how far latency climbs. The LibreQoS Bufferbloat Test and the Waveform Bufferbloat Test both grade A+ to F on that increase, and LibreQoS publishes its scale: A+ under 5 ms of added latency, A under 30, B under 60, C under 200, D under 400, and F beyond that. For the practitioner-grade view, run flent with the RRUL test and it charts throughput and latency together so you watch the queue fill in real time.\n\nTo go further, start with this page, then the CAKE paper ('Piece of CAKE', arXiv 1804.07617) and RFC 8290 for fq_codel. If your WAN speed moves around, as it does on LTE, 5G, or satellite, look at cake-autorate, which retunes CAKE's shaper continuously. Free, community-run, and the reference every serious answer to this problem points back to.",
+      "url": "https://www.bufferbloat.net/projects/bloat/wiki/What_can_I_do_about_Bufferbloat/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "reference",
+        "latency",
+        "aqm",
+        "bufferbloat",
+        "troubleshooting"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "libreqos-bufferbloat-test",
+      "title": "LibreQoS Bufferbloat Test",
+      "summary": "A free browser test that grades how far your latency climbs when the link is busy, one direction at a time.",
+      "description": "Most speed tests measure how fast your link is. This one measures what happens to latency while it is full, which is what your users actually feel. The LibreQoS Bufferbloat Test takes an idle baseline, loads the download, then the upload, then both at once, and watches how quickly latency recovers afterward. Each loaded phase gets a grade from A+ to F on how far latency rose above idle, and the scale is published on the test itself: A+ under 5 ms of added latency, down to F at 400 ms or more.\n\nThe advanced page is where it earns a place in your kit. It shows latency percentiles for every phase and breaks delay into three parts following the Broadband Forum's Quality Attenuation work: the fixed delay of the path, the delay that grows with packet size, and the variable delay that is the queue itself. It sends probes at several packet sizes to get there. The Virtual Household page runs four simulated users at once, gaming, a video call, HD streaming, and a big background download, and grades the household on its worst interactive result. That is the argument you need when a customer says their internet is fine because the speed test says so.\n\nRun it wired first, then over Wi-Fi from the same spot, and compare. There is also a command-line version for Linux. Built by the LibreQoS team, free, in your browser.",
+      "url": "https://test.libreqos.com/",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "intermediate",
+      "tags": [
+        "tool",
+        "latency",
+        "bufferbloat",
+        "speed-test",
+        "troubleshooting"
+      ],
+      "approval": "not_required"
+    },
+    {
+      "id": "waveform-bufferbloat-test",
+      "title": "Waveform Bufferbloat Test",
+      "summary": "The quickest way to show someone what bufferbloat looks like: one letter grade for download and one for upload.",
+      "description": "When you need to show a non-technical person why their calls stutter on a fast connection, this is the test to hand them. The Waveform Bufferbloat Test measures latency at idle, then again while it saturates the download and the upload, and grades each direction A+ to F on how much latency increased. It scores download and upload separately. One screen, two letters, and a person who has never heard the word bufferbloat understands the problem. Free, in your browser, no account.",
+      "url": "https://www.waveform.com/tools/bufferbloat",
+      "topic": "Tools and utilities",
+      "cost": "free",
+      "level": "beginner",
+      "tags": [
+        "tool",
+        "latency",
+        "bufferbloat",
+        "speed-test"
+      ],
+      "approval": "not_required"
     }
   ]
 }

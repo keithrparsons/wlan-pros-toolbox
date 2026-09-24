@@ -2419,7 +2419,10 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // anywhere, and Keith's "They made this site" means he knows who they are.
     // 62 = 46 -> 47. Jonathan Finney's SSID Airtime Calculator, listing granted
     // by him on 2026-08-21 and merged 2026-08-29 on Keith's go.
-    countLabelOverride: '63',
+    // 66 = 48 -> 51. Three bufferbloat entries added 2026-09-24 under Tools and
+    // utilities: bufferbloat.net, the LibreQoS Bufferbloat Test, and the
+    // Waveform Bufferbloat Test. All three are 'not_required'.
+    countLabelOverride: '66',
     tools: <ToolEntry>[
       // The 6 PDF reference cards.
       ToolEntry(

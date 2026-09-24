@@ -199,7 +199,7 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses the 47 curated entries into the 7 topic groups', () {
+    test('parses the 51 curated entries into the 7 topic groups', () {
       // Load the actual bundled JSON from disk (not via rootBundle, so no
       // Flutter binding is needed) and prove the production dataset is healthy.
       // Curated 2026-06-04: independent-author/community materials only; the
@@ -238,7 +238,10 @@ void main() {
       // (46 -> 47), approved by him 2026-08-21; still within the existing 7
       // topics, so the group count is unchanged. 2026-09-15: added WLAN Talks
       // (wlan-talks.net), Victor Gatuna's talk archive, under an existing topic
-      // (47 -> 48). Victor gave explicit permission the same day.
+      // (47 -> 48). Victor gave explicit permission the same day. 2026-09-24:
+      // added three bufferbloat entries under the existing "Tools and
+      // utilities" topic (48 -> 51): bufferbloat.net, the LibreQoS Bufferbloat
+      // Test, and the Waveform Bufferbloat Test.
       //
       // THIS ASSERTION WENT RED ON 2026-09-15 AND NOBODY SAW IT. The entry
       // landed, the count moved to 48, and this test still said 47 -- but
@@ -252,7 +255,7 @@ void main() {
 
       final EducationalResourcesService real =
           EducationalResourcesService.fromJson(raw);
-      expect(real.count, 48);
+      expect(real.count, 51);
 
       final List<ResourceGroup> groups = real.grouped();
       expect(groups.length, 7);
@@ -276,15 +279,15 @@ void main() {
         reason: 'megavendor/product docs were removed per Keith 2026-06-04',
       );
 
-      // Every entry lands in exactly one group; counts sum to 48.
+      // Every entry lands in exactly one group; counts sum to 51.
       final int sum = groups.fold<int>(
           0, (int acc, ResourceGroup g) => acc + g.count);
-      expect(sum, 48);
+      expect(sum, 51);
 
       // _meta.count agrees with the parsed entry count (data-integrity guard).
       final Map<String, dynamic> decoded =
           jsonDecode(raw) as Map<String, dynamic>;
-      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 48);
+      expect((decoded['_meta'] as Map<String, dynamic>)['count'], 51);
     });
 
     // 2026-08-09, part one: outreach was complete for everything shipped
@@ -352,7 +355,9 @@ void main() {
             .where((EducationalResource e) =>
                 e.approval == ResourceApproval.notRequired)
             .length,
-        14,
+        // 17 = 14 + the three bufferbloat entries of 2026-09-24, none of
+        // which needed permission.
+        17,
       );
     });
 
