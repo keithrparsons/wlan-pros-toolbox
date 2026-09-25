@@ -1136,6 +1136,28 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'half duplex',
     'simulation',
   ],
+  // Wi-Fi Lab (2026-09-25). What the simulator shows, in the words a student
+  // would search with.
+  'airtime-fairness': <String>[
+    'airtime fairness',
+    'atf',
+    'performance anomaly',
+    'slow client',
+    'legacy client',
+    'sticky client',
+    'throughput',
+    'airtime',
+    'packet fairness',
+    'dcf',
+    'aggregation',
+    'a-mpdu',
+    'block ack',
+    'phy rate',
+    'data rate',
+    'overhead',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[

@@ -945,6 +945,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'airtime-fairness',
+        title: 'Airtime Fairness',
+        description:
+            'See why one slow client drags every fast one down, and how '
+            'sharing time instead of turns lifts throughput',
+        routeName: '/tools/airtime-fairness',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
