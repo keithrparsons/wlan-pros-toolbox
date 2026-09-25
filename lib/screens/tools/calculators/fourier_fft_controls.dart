@@ -8,6 +8,10 @@
 //   FourierControls:     Waves -> sound, preset, sine rows, explainer.
 //                        FFT   -> lesson, analyzer settings, readouts, and the
 //                                 Wi-Fi closing card.
+//                        Race  -> FourierRaceControls
+//                                 (fourier_fft_race_controls.dart).
+//                        OFDM  -> FourierOfdmControls
+//                                 (fourier_fft_ofdm_controls.dart).
 
 import 'package:flutter/material.dart';
 
@@ -19,7 +23,9 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../labeled_field.dart';
 import 'fourier_fft_model.dart';
+import 'fourier_fft_ofdm_controls.dart';
 import 'fourier_fft_parts.dart';
+import 'fourier_fft_race_controls.dart';
 
 class FourierModeSelector extends StatelessWidget {
   const FourierModeSelector({super.key, required this.model});
@@ -32,6 +38,14 @@ class FourierModeSelector extends StatelessWidget {
     FourierMode.fft =>
       'Sample the same signal and compute its spectrum the way an analyzer '
           'does: N samples at Fs, a window, and an FFT.',
+    FourierMode.race =>
+      'Two analyzers watch the same busy 2.4 GHz band. The swept one looks '
+          'at one slice at a time; the FFT one sees the whole span at once. '
+          'Count what each catches.',
+    FourierMode.ofdm =>
+      'A Wi-Fi transmitter builds each symbol with an inverse FFT, one '
+          'constellation point per subcarrier. The receiver undoes it with an '
+          'FFT.',
   };
 
   @override
@@ -107,6 +121,8 @@ class FourierControls extends StatelessWidget {
             gap,
             const _WifiBridgeCard(),
           ],
+          FourierMode.race => <Widget>[FourierRaceControls(model: model)],
+          FourierMode.ofdm => <Widget>[FourierOfdmControls(model: model)],
         };
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

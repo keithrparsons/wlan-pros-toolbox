@@ -1,4 +1,4 @@
-// Fourier and FFT: Wi-Fi Lab tool (fourier-fft), part 1.
+// Fourier and FFT: Wi-Fi Lab tool (fourier-fft), parts 1 and 2.
 //
 // Mode 1, Waves: up to five sines, each with amplitude, frequency and phase.
 // The time trace and the ideal line spectrum are the same signal seen two
@@ -10,10 +10,20 @@
 // set up leakage, scalloping and the N trade-off; a closing card shows that a
 // Wi-Fi receiver is an FFT analyzer with 312.5 kHz bins.
 //
+// Mode 3, Swept vs FFT race: one synthetic 2.4 GHz scene watched by a swept
+// analyzer (sweep time k x Span / RBW^2) and a gapless FFT analyzer, drawn as
+// two waterfalls in the GL-003 §8.22 analyzer rainbow with a dBm legend, and
+// a count of Bluetooth hops and microwave pulses each caught.
+//
+// Mode 4, OFDM is an inverse FFT: toggle subcarriers, see the IFFT's symbol,
+// the cyclic prefix, each subcarrier's sinc (orthogonality), and the
+// receiver's FFT recovering the points; switch legacy / HE numerology.
+//
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA Deliverables/2026-09-25-wifi-lab-
-// cleanroom/specs/11-fourier-part1.md and the research brief §4 and §5. All
-// math lives in FourierDsp (lib/services/wifi_lab/fourier_dsp.dart). No
-// third-party Fourier tool's code or visuals were consulted.
+// cleanroom/specs/11-fourier-part1.md, 11-fourier-part2.md and the research
+// brief §4 and §5. All math lives in lib/services/wifi_lab/ (fourier_dsp,
+// fourier_race, fourier_ofdm). No third-party Fourier tool's code or visuals
+// were consulted.
 //
 // STRUCTURE (Keith, 2026-09-25): stage and controls are separate widgets.
 //   fourier_fft_model.dart     FourierLabModel (state), FourierSound (audio)
@@ -25,9 +35,14 @@
 // and desktop. A presenter layout can place FourierStage beside the
 // controls with no change to either.
 //
-// GROWTH: later parts (swept vs FFT race, OFDM as an inverse FFT) add a
-// FourierMode value and a case in the stage and the controls. At 4+ modes the
-// selector turns itself from a toggle into a dropdown (GL-003 §8.14).
+// GROWTH: a mode is a FourierMode value plus a case in the stage and the
+// controls. At 4+ modes the selector is a dropdown (GL-003 §8.14); part 2
+// took it there. Mode 3 and 4 keep their state in FourierLabModel.race and
+// .ofdm and their widgets in fourier_fft_race_* and fourier_fft_ofdm_*.
+//
+// PLAYBACK (mode 3): the race opens finished. Run the race replays it over
+// four seconds, driven by this screen's ticker writing race.progress; with
+// reduced motion on it jumps straight to the end.
 //
 // AUDIO: through the hear-frequency ToneEngine seam, unmodified; one engine
 // per sine because the seam is one voice per engine. Starts on the Play tap
@@ -38,8 +53,8 @@
 // measured quantity. No categorical palette (§8.15). Status hue only on the
 // audio-unavailable verdict, paired with words. ASCII copy, no em dashes.
 //
-// MOTION (§8.8): nothing animates. Plots redraw only when an input changes,
-// so reduced motion needs no special path.
+// MOTION (§8.8): only the race playback animates, and only when asked;
+// reduced motion skips it. Everything else redraws on input only.
 //
 // States (SOP-007 §5):
 //   - loading     -> none: every number is computed synchronously on-device
@@ -57,12 +72,15 @@ import 'package:flutter/material.dart';
 
 import '../../../services/audio/tone_engine.dart';
 import '../../../services/wifi_lab/fourier_dsp.dart';
+import '../../../services/wifi_lab/fourier_ofdm.dart';
+import '../../../services/wifi_lab/fourier_race.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'fourier_fft_controls.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_parts.dart';
+import 'fourier_fft_race_state.dart';
 import 'fourier_fft_stage.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
@@ -86,7 +104,7 @@ class FourierFftScreen extends StatefulWidget {
 }
 
 class _FourierFftScreenState extends State<FourierFftScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late final FourierLabModel _model = FourierLabModel(
     initialMode: widget.initialMode,
   );
@@ -95,18 +113,47 @@ class _FourierFftScreenState extends State<FourierFftScreen>
     engineFactory: widget.toneEngineFactory,
   );
 
+  late final AnimationController _race;
+  int _raceToken = 0;
+
   @override
   void initState() {
     super.initState();
+    // Created here, not lazily: a first touch in dispose() would ask a
+    // deactivated context for its TickerMode.
+    _race = AnimationController(vsync: this, duration: kRacePlayback)
+      ..addListener(_onRaceTick);
     WidgetsBinding.instance.addObserver(this);
+    _model.addListener(_onModel);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _model.removeListener(_onModel);
+    _race.dispose();
     _sound.dispose();
     _model.dispose();
     super.dispose();
+  }
+
+  void _onRaceTick() => _model.race.setProgress(_race.value);
+
+  /// Starts or stops the race playback to match the model.
+  void _onModel() {
+    final FourierRaceState r = _model.race;
+    if (r.animating && r.runToken != _raceToken) {
+      _raceToken = r.runToken;
+      final bool reduce =
+          MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+      if (reduce) {
+        r.setProgress(1);
+      } else {
+        _race.forward(from: 0);
+      }
+    } else if (!r.animating && _race.isAnimating) {
+      _race.stop();
+    }
   }
 
   @override
@@ -116,7 +163,13 @@ class _FourierFftScreenState extends State<FourierFftScreen>
   }
 
   // Copy payload (GL-003 §8.16).
-  String _buildCopyText() {
+  String _buildCopyText() => switch (_model.mode) {
+    FourierMode.waves || FourierMode.fft => _signalCopy(),
+    FourierMode.race => _raceCopy(),
+    FourierMode.ofdm => _ofdmCopy(),
+  };
+
+  String _signalCopy() {
     final StringBuffer b = StringBuffer()..writeln('Fourier and FFT');
     final List<SineComponent> parts = _model.parts;
     for (int i = 0; i < parts.length; i++) {
@@ -139,6 +192,39 @@ class _FourierFftScreenState extends State<FourierFftScreen>
         ..writeln('RBW: ${fmtHz(a.rbwHz)}');
     }
     return b.toString().trimRight();
+  }
+
+  String _raceCopy() {
+    final FourierRaceState r = _model.race;
+    final RaceRun run = r.run;
+    final RaceTally bt = run.tally(RaceSource.bluetooth);
+    final RaceTally mw = run.tally(RaceSource.microwave);
+    return <String>[
+      'Fourier and FFT: swept vs FFT race (synthetic scene)',
+      'Span: ${fmtMhz(r.spanMhz)}, RBW: ${fmtHz(r.rbwHz)}, run: '
+          '${fmtTime(run.runSeconds)}',
+      'Sweep time (k x Span / RBW^2, k = ${SweptAnalyzer.kSweepK}): '
+          '${fmtTime(run.swept.sweepSeconds)}',
+      'Bluetooth hops caught: swept ${bt.sweptCaught} of ${bt.total}, '
+          'FFT ${bt.fftCaught} of ${bt.total}',
+      'Microwave pulses caught: swept ${mw.sweptCaught} of ${mw.total}, '
+          'FFT ${mw.fftCaught} of ${mw.total}',
+    ].join('\n');
+  }
+
+  String _ofdmCopy() {
+    final OfdmSymbol s = _model.ofdm.symbol;
+    return <String>[
+      'Fourier and FFT: OFDM is an inverse FFT',
+      '${s.numerology.label}: spacing ${fmtHz(s.spacingHz)}, useful symbol '
+          '${fmtTime(s.usefulSeconds)}, GI ${fmtTime(s.guardSeconds)}, total '
+          '${fmtTime(s.totalSeconds)}',
+      'N = ${s.n}, sample rate ${fmtHz(s.sampleRateHz)}, cyclic prefix '
+          '${s.cpSamples} samples, ${s.points.length} subcarriers on, '
+          '${_model.ofdm.modulation.label}',
+      'Largest error, sent vs recovered by the FFT: '
+          '${_model.ofdm.maxRecoveryError.toStringAsExponential(1)}',
+    ].join('\n');
   }
 
   @override

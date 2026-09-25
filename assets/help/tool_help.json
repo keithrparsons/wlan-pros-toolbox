@@ -512,12 +512,14 @@
     "fourier-fft": {
       "name": "Fourier and FFT",
       "category": "Calculators & Tools",
-      "purpose": "Shows that any signal is a sum of sines, and how a spectrum analyzer measures which sines are in it. Waves mode builds a signal from up to five sines and draws it over time and as a spectrum. FFT mode samples that signal, applies a window and runs an FFT, with the bin spacing, capture time, ENBW and RBW worked out on screen.",
-      "whyHere": "A Wi-Fi receiver runs an FFT on every symbol, and many spectrum analyzers compute their display the same way. Knowing what the bins, the window and the FFT size do explains why a weak signal can hide next to a strong one, why a peak can read a few dB low, and why legacy subcarriers are exactly 312.5 kHz apart.",
+      "purpose": "Shows that any signal is a sum of sines, and how a spectrum analyzer and a Wi-Fi radio use the FFT. Waves mode builds a signal from up to five sines and draws it over time and as a spectrum. FFT mode samples that signal, applies a window and runs an FFT, with the bin spacing, capture time, ENBW and RBW worked out on screen. Swept vs FFT race puts a swept analyzer and a real-time FFT analyzer on the same simulated 2.4 GHz band and counts the Bluetooth hops and microwave pulses each one catches. OFDM is an inverse FFT builds a Wi-Fi symbol from subcarriers and shows the receiver's FFT getting every constellation point back.",
+      "whyHere": "A Wi-Fi receiver runs an FFT on every symbol, and many spectrum analyzers compute their display the same way. Knowing what the bins, the window and the FFT size do explains why a weak signal can hide next to a strong one, why a peak can read a few dB low, why a swept analyzer misses hopping and bursty interferers that a real-time analyzer shows, and why legacy subcarriers are exactly 312.5 kHz apart.",
       "howToUse": [
         "In Waves, move a sine's frequency, amplitude and phase sliders and watch the time trace and the spectrum change together. Add up to five sines, or start from a preset: one sine, a square wave built from odd harmonics, two close tones, or a tone with a weak neighbor 40 dB down. Play sound to hear the sum.",
         "In FFT, the same signal is sampled at Fs with N points. Pick the window, the sample rate and N, or use Halve N and Double N, and read the bin spacing, capture time, ENBW, RBW and the level of the strongest bin against the true level.",
-        "Pick a lesson to set everything up: a weak neighbor that the rectangular window hides and Blackman-Harris reveals, a tone between bins that reads low until you switch to flat top, and two close tones that merge when you halve N."
+        "Pick a lesson to set everything up: a weak neighbor that the rectangular window hides and Blackman-Harris reveals, a tone between bins that reads low until you switch to flat top, and two close tones that merge when you halve N.",
+        "In Swept vs FFT race, pick the span, the RBW and the run length and read the sweep time. Both waterfalls show the same simulated scene with time running up; the swept analyzer only sees the cells along its lime diagonal. Compare how many Bluetooth hops and microwave pulses each analyzer caught. Run the race replays the run slowed down. The Scene settings change the mains frequency, how far the microwave oven sweeps and how wide the video camera is, and New scene draws new hops.",
+        "In OFDM is an inverse FFT, tap subcarriers on and off and pick the modulation. Watch the time-domain symbol with its cyclic prefix, each subcarrier's sinc with zeros at every other subcarrier's center, and the constellation the receiver recovers. Switch Legacy and HE to see the subcarriers move 4 times closer together and the symbol last 4 times longer, and switch to Real Wi-Fi for a full 20 MHz channel."
       ],
       "inputs": [
         {
@@ -554,17 +556,66 @@
           "name": "Window",
           "unit": "type",
           "range": "Rectangular, Hann, Hamming, Blackman-Harris (4-term), Flat top"
+        },
+        {
+          "name": "Span (race)",
+          "unit": "MHz",
+          "range": "20, 50 or 100, centered on 2450"
+        },
+        {
+          "name": "RBW (race)",
+          "unit": "Hz",
+          "range": "3 MHz, 1 MHz, 300 kHz, 100 kHz, 30 kHz or 10 kHz"
+        },
+        {
+          "name": "Run length (race)",
+          "unit": "ms",
+          "range": "50, 200 or 1,000"
+        },
+        {
+          "name": "Mains frequency (race)",
+          "unit": "Hz",
+          "range": "60 or 50"
+        },
+        {
+          "name": "Microwave sweep width (race)",
+          "unit": "MHz",
+          "range": "near CW, 10, 20 or 40"
+        },
+        {
+          "name": "Video camera bandwidth (race)",
+          "unit": "MHz",
+          "range": "4, 8 or 18"
+        },
+        {
+          "name": "Subcarriers (OFDM)",
+          "unit": "index",
+          "range": "-8 to +7 in the teaching view; 52 (legacy) or 242 (HE) in Real Wi-Fi"
+        },
+        {
+          "name": "Numerology (OFDM)",
+          "unit": "type",
+          "range": "Legacy 312.5 kHz, 3.2 µs, GI 0.8 µs; HE 78.125 kHz, 12.8 µs, GI 0.8, 1.6 or 3.2 µs"
+        },
+        {
+          "name": "Modulation (OFDM)",
+          "unit": "type",
+          "range": "BPSK, QPSK, 16-QAM, 64-QAM, 256-QAM, 1024-QAM"
         }
       ],
-      "algorithm": "The signal is x(t) = sum of A cos(2 pi f t + phase). FFT mode takes N samples x[n] = x(n / Fs), multiplies them by the window w[n], and computes the DFT X[k] = sum of x[n] w[n] e^(-j 2 pi k n / N) with a radix-2 FFT. Bin spacing = Fs / N and capture time = N / Fs, so their product is always 1. ENBW is computed from the window itself as N x sum(w^2) / (sum w)^2, in bins, and RBW = ENBW x Fs / N. Levels are dB full scale, scaled so a sine of amplitude 1 exactly on a bin reads 0 dB with any window. The highest-sidelobe figure shown for each window is the published one, with the value measured from this window at the current N beside it.",
-      "example": "At Fs = 25.6 kHz and N = 256 the bins are 100 Hz apart and the capture lasts 10 ms. A Hann window has an ENBW of 1.50 bins, so the RBW is 150 Hz. A 20 MHz Wi-Fi receiver sampling at 20 MS/s with N = 64 gets bins exactly 312.5 kHz apart and a 3.2 µs frame; HE uses N = 256 for 78.125 kHz and 12.8 µs.",
+      "algorithm": "The signal is x(t) = sum of A cos(2 pi f t + phase). FFT mode takes N samples x[n] = x(n / Fs), multiplies them by the window w[n], and computes the DFT X[k] = sum of x[n] w[n] e^(-j 2 pi k n / N) with a radix-2 FFT. Bin spacing = Fs / N and capture time = N / Fs, so their product is always 1. ENBW is computed from the window itself as N x sum(w^2) / (sum w)^2, in bins, and RBW = ENBW x Fs / N. Levels are dB full scale, scaled so a sine of amplitude 1 exactly on a bin reads 0 dB with any window. The highest-sidelobe figure shown for each window is the published one, with the value measured from this window at the current N beside it. Swept vs FFT race: the swept analyzer's sweep time is ST = k x Span / RBW^2 with k = 2.5 (the classic analog figure is 2 to 3). Its tuned frequency climbs across the span once per sweep, and it catches a signal only if, at some instant, the signal is within half an RBW of where it is tuned; the tool solves that exactly for every hop and pulse. The FFT analyzer is ideal and gapless: it transforms the whole span every frame of about 1/RBW, so it catches everything at least one frame long. OFDM is an inverse FFT: each active subcarrier k carries a constellation point X_k, and the symbol is s(t) = sum of X_k e^(j 2 pi k df t) for one useful symbol time T = 1/df. The transmitter makes N samples of it with an N-point inverse FFT, copies the last GI to the front as the cyclic prefix, and the receiver drops the prefix and runs an N-point FFT to get X_k back. Each subcarrier's spectrum over T is a sinc, sin(pi x) / (pi x) with x = (f - k df) / df, which is zero at every other subcarrier's center.",
+      "example": "At Fs = 25.6 kHz and N = 256 the bins are 100 Hz apart and the capture lasts 10 ms. A Hann window has an ENBW of 1.50 bins, so the RBW is 150 Hz. A 20 MHz Wi-Fi receiver sampling at 20 MS/s with N = 64 gets bins exactly 312.5 kHz apart and a 3.2 µs frame; HE uses N = 256 for 78.125 kHz and 12.8 µs. With k = 2.5 and a 100 MHz span, a swept analyzer takes 0.25 ms per sweep at 1 MHz RBW, 25 ms at 100 kHz and 2.5 s at 10 kHz. At 100 kHz over 200 ms, the swept analyzer in the default scene catches 14 of 320 Bluetooth hops and the FFT analyzer catches all 320.",
       "fieldNotes": [
         "The windows use the periodic form used for spectral analysis. That is why Hann's ENBW comes out exactly 1.50 bins.",
         "Flat top's published highest sidelobe is -88 dB. The flat top used here measures about -88 dB at N = 64 and about -93 dB from N = 256 up, and the screen shows both.",
         "Frequencies are real audio frequencies, so the sound plays what the plots show. The sound does not follow the phase sliders.",
-        "Every tone stays below half the lowest sample rate, so nothing aliases in this tool."
+        "Every tone stays below half the lowest sample rate, so nothing aliases in this tool.",
+        "The race scene is simulated from published timings, not captured. The microwave oven is on for half of each mains cycle (8.3 of 16.7 ms at 60 Hz, 10 of 20 ms at 50 Hz); sources disagree on how far it sweeps, so that is a setting. Bluetooth hops are drawn uniformly at random; the real sequence is pseudo-random. Wi-Fi uses 1500-byte frames at 54 Mbps (244 µs) with DIFS and a random backoff between them.",
+        "Real analyzers with digital RBW filters, or FFT-assisted sweeps, sweep faster than the formula. A real FFT analyzer also has a real-time bandwidth limit; the one here covers the whole span with no gaps.",
+        "The waterfalls use the analyzer color scale from dark blue at the noise floor (-95 dBm) through green, yellow and red to white at -30 dBm, with the scale drawn under them.",
+        "In the OFDM teaching view the same 16 subcarriers are kept when you switch to HE, so they span a quarter of the width. Real HE fills the same 20 MHz channel with 4 times as many subcarriers. The carrier frequency never changes."
       ],
-      "source": "Textbook DSP: the DFT, bin spacing and RBW as set out in the Tektronix real-time spectrum analyzer primer, and the window figures published by Harris (1978). Wi-Fi numbers from the 802.11 OFDM parameters. Everything is computed on your device."
+      "source": "Textbook DSP: the DFT, bin spacing and RBW as set out in the Tektronix real-time spectrum analyzer primer, and the window figures published by Harris (1978). Swept sweep time from Keysight Application Note 150. Interferer timings from published measurements and the Bluetooth and BLE channel plans. Wi-Fi numbers from the 802.11 OFDM and HE parameters. Everything is computed on your device."
     },
     "wifi-through-a-wall": {
       "name": "Wi-Fi Through a Wall",

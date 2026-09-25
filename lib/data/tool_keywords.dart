@@ -1261,6 +1261,18 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'subcarrier spacing',
     '312.5 khz',
     'ofdm',
+    // Part 2 (2026-09-25): swept vs FFT race, OFDM as an inverse FFT.
+    'swept',
+    'swept analyzer',
+    'sweep time',
+    'real-time spectrum analyzer',
+    'rtsa',
+    'waterfall',
+    'ifft',
+    'inverse fft',
+    'cyclic prefix',
+    'subcarrier',
+    'orthogonality',
   ],
   // Wi-Fi Lab (2026-09-25). What the wall simulator shows, in the words a
   // student would search with.

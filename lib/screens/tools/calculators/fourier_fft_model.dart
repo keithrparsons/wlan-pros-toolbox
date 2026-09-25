@@ -9,6 +9,10 @@
 //   - FourierSound: the optional audio, one hear-frequency ToneEngine voice
 //     per sine. It follows the model and stops itself when the model leaves
 //     the Waves mode.
+//   - Part 2: FourierLabModel.race (mode 3, fourier_fft_race_state.dart) and
+//     FourierLabModel.ofdm (mode 4, fourier_fft_ofdm_state.dart). Both are
+//     owned here and notify through this model, so it stays the one shared
+//     state object the stage and the controls read.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -17,12 +21,16 @@ import 'package:flutter/foundation.dart';
 
 import '../../../services/audio/tone_engine.dart';
 import '../../../services/wifi_lab/fourier_dsp.dart';
+import 'fourier_fft_ofdm_state.dart';
+import 'fourier_fft_race_state.dart';
 
-/// The tool's modes, in selector order. Later parts add values here (swept
-/// vs FFT race, OFDM as an inverse FFT) and a case in the stage and controls.
+/// The tool's modes, in selector order. At four modes the selector is a
+/// dropdown (GL-003 §8.14).
 enum FourierMode {
   waves('Waves'),
-  fft('FFT');
+  fft('FFT'),
+  race('Swept vs FFT race'),
+  ofdm('OFDM is an inverse FFT');
 
   const FourierMode(this.label);
   final String label;
@@ -90,6 +98,12 @@ class FourierLabModel extends ChangeNotifier {
   SpectrumAnalysis? _analysis;
   int _analysisRevision = -1;
 
+  /// Mode 3: swept vs FFT race.
+  late final FourierRaceState race = FourierRaceState(_changed);
+
+  /// Mode 4: OFDM is an inverse FFT.
+  late final FourierOfdmState ofdm = FourierOfdmState(_changed);
+
   FourierMode get mode => _mode;
   List<SineComponent> get parts => _parts;
   WavePreset get preset => _preset;
@@ -150,6 +164,8 @@ class FourierLabModel extends ChangeNotifier {
   void setMode(FourierMode m) {
     if (m == _mode) return;
     _mode = m;
+    // Leaving the race mid-playback shows the finished run on return.
+    if (race.animating) race.setProgress(1);
     _changed();
   }
 
