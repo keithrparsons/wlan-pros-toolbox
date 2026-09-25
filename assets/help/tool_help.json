@@ -695,13 +695,14 @@
     "spatial-reuse": {
       "name": "Spatial Reuse",
       "category": "Calculators & Tools",
-      "purpose": "Two BSSs share one channel along a line: AP A with client A, AP B with client B. AP A is already sending, and AP B has a frame ready. The tool shows whether AP B waits or sends at the same time, which rule decided it, how much transmit power AP B gives up when it reuses the air, each client's SINR, and how much airtime the pair uses.",
+      "purpose": "Two BSSs share one channel along a line: AP A with client A, AP B with client B. AP A is already sending, and AP B has a frame ready. The tool shows whether AP B waits or sends at the same time, which rule decided it, how much transmit power AP B gives up when it reuses the air, each client's SINR, the highest MCS that SINR supports, whether each link still holds the MCS you pick, and how much airtime the pair uses.",
       "whyHere": "A radio waits for any Wi-Fi frame it hears at -82 dBm or more, so two APs on one channel take turns even when they barely bother each other's clients. 802.11ax adds a BSS color to every frame so a radio can tell a neighbor from its own BSS, and lets it ignore a neighbor below a higher threshold, OBSS_PD, if it turns its own power down by the same amount. This shows the trade: spatial reuse buys concurrency with range.",
       "howToUse": [
         "Start with the default: AP B hears AP A at about -77.7 dBm, above -82, so it waits and the pair needs two frame-times.",
-        "Raise OBSS_PD. Once it passes the level AP B hears, AP B ignores the neighbor, both frames go at once, and AP B's power drops 1 dB for every 1 dB you raised the threshold. Watch client B's SINR fall.",
+        "Raise OBSS_PD. Once it passes the level AP B hears, AP B ignores the neighbor, both frames go at once, and AP B's power drops 1 dB for every 1 dB you raised the threshold. Watch each client's SINR and MCS fall.",
         "Give both BSSs the same color number. AP B can no longer tell AP A's frame from its own BSS, so -82 dBm applies again whatever OBSS_PD is. Turn BSS coloring off to see legacy radios.",
         "Drag a radio along the line, or use the position sliders. Move the APs closer until energy detect (-62 dBm) fires, which no color or threshold gets past.",
+        "Pick the MCS each link must hold (default MCS 7). Each link card says whether it still holds that MCS, and the highest MCS its SINR supports.",
         "Change the channel width, AP power, TX_PWRref class and path-loss exponent to see how each moves the numbers. Copy puts the whole scenario on the clipboard."
       ],
       "inputs": [
@@ -726,6 +727,11 @@
           "range": "21 (client, or AP with 1 or 2 streams) or 25 (AP with 3 or more)"
         },
         {
+          "name": "MCS each link must hold",
+          "unit": "MCS index",
+          "range": "0 to 13, default 7 for both links"
+        },
+        {
           "name": "Channel width",
           "unit": "MHz",
           "range": "20, 40, 80 or 160, default 20"
@@ -746,17 +752,17 @@
           "range": "0 to 60 on a line; defaults AP A 5, client A 15, client B 45, AP B 55"
         }
       ],
-      "algorithm": "Received level = AP power - (free-space loss at 1 m + 10 n log10(d)) at 5180 MHz with 0 dBi antennas, then minus 10 log10(width / 20) to get the level in each 20 MHz, which is what the thresholds are defined against. AP B decides in this order: energy at or above -62 dBm defers (energy detect); below -82 dBm nothing is detected; with coloring off any Wi-Fi preamble at or above -82 defers; with the same color on both BSSs the frame is intra-BSS and -82 applies; with a neighbor's color AP B defers at or above OBSS_PD, and below it AP B sends with its power capped at TX_PWRmax = TX_PWRref - (OBSS_PD - (-82)). A whole wide frame is compared with thresholds raised 3 dB per doubling of width, which is the same test. SINR at each client = signal - (other AP's level power-summed with thermal noise, -174 + 10 log10(20 MHz) = -101.0 dBm). Airtime counts one frame each: 1 frame-time together, 2 in turn.",
-      "example": "Defaults: the APs are 50 m apart at n = 3, so AP B hears AP A at -77.7 dBm and waits (OBSS_PD at -82). Raise OBSS_PD to -72: AP B sends at once, capped at 21 - 10 = 11 dBm. Client A's SINR drops from 44.3 to 27.0 dB, client B's from 44.3 to 9.1 dB, and the pair needs 1 frame-time instead of 2. At -62 AP B is down to 1 dBm and client B's SINR is -0.9 dB: the neighbor is louder than its own AP.",
+      "algorithm": "Received level = AP power - (free-space loss at 1 m + 10 n log10(d)) at 5180 MHz with 0 dBi antennas, then minus 10 log10(width / 20) to get the level in each 20 MHz, which is what the thresholds are defined against. AP B decides in this order: energy at or above -62 dBm defers (energy detect); below -82 dBm nothing is detected; with coloring off any Wi-Fi preamble at or above -82 defers; with the same color on both BSSs the frame is intra-BSS and -82 applies; with a neighbor's color AP B defers at or above OBSS_PD, and below it AP B sends with its power capped at TX_PWRmax = TX_PWRref - (OBSS_PD - (-82)). A whole wide frame is compared with thresholds raised 3 dB per doubling of width, which is the same test. SINR at each client = signal - (other AP's level power-summed with the noise floor, -174 + 10 log10(20 MHz) + a 7 dB noise figure = -94.0 dBm). The SNR an MCS needs is its minimum sensitivity at the channel width minus the noise floor at that width, the way Rate vs Range reads SNR: about 12.0 dB for MCS 0 and 30.0 dB for MCS 7. A link holds an MCS when its SINR is at least that; the highest such MCS is the one its SINR supports. Airtime counts one frame each: 1 frame-time together, 2 in turn.",
+      "example": "Defaults: the APs are 50 m apart at n = 3, so AP B hears AP A at -77.7 dBm and waits (OBSS_PD at -82). Each link has 37.3 dB SINR, enough for MCS 9, so both hold MCS 7, one after the other. Raise OBSS_PD to -72: AP B sends at once, capped at 21 - 10 = 11 dBm, and the pair needs 1 frame-time instead of 2. Client A's SINR drops to 26.7 dB, which supports MCS 4, not 7. Client B's drops to 9.0 dB, short of the 12.0 dB MCS 0 needs. At -62 AP B is down to 1 dBm and client B's SINR is -1.0 dB: the neighbor is louder than its own AP.",
       "fieldNotes": [
         "TX_PWRref (21 or 25 dBm) and the 3 dB per doubling of width each come from one secondary source. The -82, -62 and OBSS_PD range have two.",
         "SRG (spatial reuse group) thresholds and parameterized spatial reuse (PSR) are out of scope.",
-        "Noise is thermal only, with no receiver noise figure, so SINR reads high when the neighbor is quiet. The tool reports SINR, not which MCS a link can hold.",
+        "The MCS sensitivities are 802.11 minimum-sensitivity conformance floors (10% packet error rate, 4096-byte frames). Real radios beat them by several dB, so a link that fails here may still work; read the verdicts as the worst case the standard allows. The 7 dB noise figure is the Rate vs Range default.",
         "Only AP B decides. AP A already holds the air, and uplink frames and clients' own deferral are left out.",
         "Airtime ignores backoff, ACKs and rate changes; it counts one equal-length frame per BSS.",
         "The -82 and -62 dBm thresholds and the per-20 MHz comparison match the Channel Planner, so the two tools agree."
       ],
-      "source": "OBSS_PD rule and TX_PWRmax from IEEE 802.11ax as described by Wilhelmi et al., Spatial Reuse in IEEE 802.11ax WLANs (Computer Communications; arXiv 1907.04141), and SageAxe. TX_PWRref from Hitchhiker's Guide to Learning (OBSS PD). Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. Computed on your device."
+      "source": "OBSS_PD rule and TX_PWRmax from IEEE 802.11ax as described by Wilhelmi et al., Spatial Reuse in IEEE 802.11ax WLANs (Computer Communications; arXiv 1907.04141), and SageAxe. TX_PWRref from Hitchhiker's Guide to Learning (OBSS PD). Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. MCS sensitivities from the Rohde & Schwarz 802.11be white paper and RF Wireless World, as used by Rate vs Range. Computed on your device."
     },
     "ofdma-simulator": {
       "name": "OFDMA Resource Units",

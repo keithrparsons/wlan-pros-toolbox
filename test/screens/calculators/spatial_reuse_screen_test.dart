@@ -165,6 +165,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('MCS pickers and per-link verdicts', (WidgetTester tester) async {
+    await _pump(tester, size: const Size(1280, 900));
+    expect(find.text('Link A MCS'), findsOneWidget);
+    expect(find.text('Link B MCS'), findsOneWidget);
+    // Default: both links hold MCS 7 in turn.
+    expect(find.textContaining('Holds MCS 7: SINR 37.3 dB'), findsNWidgets(2));
+    expect(find.textContaining('conformance floors'), findsOneWidget);
+    final SpatialReuseState s = _stateOf(tester);
+    s.setObssPd(-72);
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Does not hold MCS 7: SINR 26.7 dB'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Best it supports: MCS 4 (16-QAM 3/4)'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Best it supports: not even MCS 0'),
+      findsOneWidget,
+    );
+    s.setMcsA(4);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Holds MCS 4: SINR 26.7 dB'), findsOneWidget);
+    expect(s.copyText(), contains('holds MCS 4'));
+    s.setObssPd(-62);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('SINR -1.0 dB, needs'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('coloring off disables OBSS_PD and says why', (
     WidgetTester tester,
   ) async {

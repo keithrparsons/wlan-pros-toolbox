@@ -5,6 +5,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/channel_planner_model.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/fspl_math.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/rate_vs_range_math.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/spatial_reuse_model.dart';
 
 ReuseDecision _decide(
@@ -201,6 +202,83 @@ void main() {
 
     test('APs closer than 1 m use the 1 m loss', () {
       expect(reusePathLossDb(0, 3), reusePathLossDb(1, 3));
+    });
+  });
+
+  group('MCS per link (Rate vs Range sensitivity, NF 7 dB)', () {
+    test('noise floor is thermal plus 7 dB, about -94.0 dBm per 20 MHz', () {
+      expect(kReuseNoiseFigureDb, RateVsRangeMath.defaultNoiseFigureDb);
+      expect(reuseNoiseFloorDbm(), closeTo(-93.99, 0.01));
+    });
+
+    test('required SNR is sensitivity minus the noise floor at that width', () {
+      for (final int w in kReuseWidths) {
+        for (int m = 0; m <= kReuseMaxMcs; m++) {
+          expect(
+            mcsRequiredSnrDb(m, w),
+            RateVsRangeMath.sensitivityDbm(m, w) -
+                RateVsRangeMath.noiseFloorDbm(w, 7),
+          );
+        }
+      }
+      expect(mcsRequiredSnrDb(0, 20), closeTo(11.99, 0.01));
+      expect(mcsRequiredSnrDb(7, 20), closeTo(29.99, 0.01));
+      // The table and the noise floor both rise about 3 dB per doubling.
+      expect(mcsRequiredSnrDb(7, 80), closeTo(29.97, 0.01));
+    });
+
+    test('highest MCS for a SINR, and none below MCS 0', () {
+      expect(highestMcsForSinr(11.9, 20), isNull);
+      expect(highestMcsForSinr(12.0, 20), 0);
+      expect(highestMcsForSinr(30.0, 20), 7);
+      expect(highestMcsForSinr(60, 20), 13);
+      expect(mcsLabel(7), 'MCS 7 (64-QAM 5/6)');
+    });
+
+    test('default layout, OBSS_PD -82: both links hold MCS 9 in turn', () {
+      final ReuseAnalysis a = ReuseAnalysis.of(const ReuseScenario());
+      for (final ReuseLink k in <ReuseLink>[a.linkA, a.linkB]) {
+        expect(k.sinrDb, closeTo(37.26, 0.01));
+        expect(k.bestMcs, 9);
+        expect(k.targetMcs, 7);
+        expect(k.holds, isTrue);
+      }
+    });
+
+    test('OBSS_PD -72: link A drops to MCS 4, link B holds none', () {
+      final ReuseAnalysis a = ReuseAnalysis.of(
+        const ReuseScenario(obssPdDbm: -72),
+      );
+      expect(a.linkA.sinrDb, closeTo(26.67, 0.01));
+      expect(a.linkA.bestMcs, 4);
+      expect(a.linkA.bestMcsAlone, 9);
+      expect(a.linkA.holds, isFalse);
+      expect(a.linkB.sinrDb, closeTo(9.01, 0.01));
+      expect(a.linkB.bestMcs, isNull);
+      expect(a.linkB.bestMcsAlone, 5);
+      expect(a.linkB.holds, isFalse);
+      // Link A still holds MCS 4 when that is the pick.
+      final ReuseAnalysis four = ReuseAnalysis.of(
+        const ReuseScenario(obssPdDbm: -72, mcsA: 4),
+      );
+      expect(four.linkA.holds, isTrue);
+      expect(four.linkA.requiredSnrDb, closeTo(23.99, 0.01));
+    });
+
+    test('OBSS_PD -62: client B SINR -1.0 dB holds no MCS', () {
+      final ReuseAnalysis a = ReuseAnalysis.of(
+        const ReuseScenario(obssPdDbm: -62),
+      );
+      expect(a.linkB.sinrDb, closeTo(-0.99, 0.01));
+      expect(a.linkB.bestMcs, isNull);
+      expect(
+        ReuseAnalysis.of(
+          const ReuseScenario(obssPdDbm: -62, mcsB: 0),
+        ).linkB.holds,
+        isFalse,
+      );
+      expect(a.linkA.bestMcs, 7);
+      expect(a.linkA.holds, isTrue);
     });
   });
 }
