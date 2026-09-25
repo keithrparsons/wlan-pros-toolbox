@@ -64,6 +64,39 @@ void main() {
       expect(frames.last.type, FxType.eap);
     });
 
+    // Regression (2026-09-25): the dot1x scenario said the Controlled Port
+    // opens at EAP-Success and that RADIUS "optionally" delivers the key
+    // material. In an 802.11 RSNA the port stays blocked for data until the
+    // 4-Way Handshake completes, and the AP cannot run that handshake
+    // without the key material from the Access-Accept (RFC 2548).
+    test('802.1X: port opens after the 4-Way Handshake; keys not optional', () {
+      final List<FxFrame> frames = FrameExchangeScreen.scenarios
+          .firstWhere((FxScenario s) => s.key == 'dot1x')
+          .phases
+          .expand((FxPhase p) => p.frames)
+          .toList();
+      final FxFrame accept = frames.firstWhere(
+        (FxFrame f) => f.label == 'RADIUS Access-Accept',
+      );
+      final FxFrame success = frames.firstWhere(
+        (FxFrame f) => f.label == 'EAP-Success',
+      );
+      final FxFrame msg4 = frames.last;
+      // The key material is required; only the VLAN assignment is optional.
+      expect(accept.note, isNot(contains('optionally delivers')));
+      expect(accept.note, contains('the AP needs it'));
+      expect(accept.note, contains('RFC 2548'));
+      expect(accept.note, contains('4-Way Handshake'));
+      expect(success.note.toLowerCase(), isNot(contains('port opens')));
+      expect(success.note, contains('blocked'));
+      expect(msg4.label, 'EAPOL Key (Msg 4/4)');
+      expect(msg4.note, contains('Controlled Port opens'));
+      for (final FxFrame f in frames) {
+        expect(f.note.contains('\u2014'), isFalse);
+        expect(f.note.contains('802.1x'), isFalse);
+      }
+    });
+
     test('Passpoint shows the pre-association GAS/ANQP query', () {
       final FxScenario pp = FrameExchangeScreen.scenarios
           .firstWhere((FxScenario s) => s.key == 'passpoint');

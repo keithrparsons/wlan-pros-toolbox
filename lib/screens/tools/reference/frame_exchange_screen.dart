@@ -1091,15 +1091,19 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'RADIUS Access-Accept',
             type: FxType.wired,
             note:
-                'Auth succeeded. RADIUS optionally delivers MSK (Master '
-                'Session Key) and VLAN assignment',
+                'Auth succeeded. RADIUS delivers the key material from the '
+                'MSK (Master Session Key) in MS-MPPE key attributes (RFC '
+                '2548); the AP needs it to run the 4-Way Handshake. VLAN '
+                'assignment is optional',
           ),
           FxFrame(
             n: 12,
             dir: 'AP → STA',
             label: 'EAP-Success',
             type: FxType.eap,
-            note: 'AP notifies STA. Controlled Port opens',
+            note:
+                'AP notifies STA. Port stays blocked for data until the '
+                '4-Way Handshake completes',
           ),
         ],
       ),
@@ -1131,7 +1135,8 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'EAPOL Key (Msg 4/4)',
             type: FxType.eap,
             note:
-                'PTK/GTK installed. Data can now flow. '
+                'PTK/GTK installed. Controlled Port opens; data can now '
+                'flow. '
                 'eduroam note: eduroam uses this EXACT air sequence. The '
                 "difference is backend RADIUS proxying that routes auth to the "
                 "user's home institution by the realm in the outer identity "
