@@ -1723,7 +1723,7 @@ A visual channel-bonding map showing, per band, how 20/40/80/160/320 MHz channel
 **Field notes**
 - What it shows: a three-option band toggle. 2.4 GHz: the 11 US channels as 20 MHz blocks, with 1/6/11 emphasized (non-overlapping) and the rest faint. 5 GHz: rows for 20/40/80/160 MHz bonded widths, each block labelled with its primary/center channel and tinted by DFS class. 6 GHz: rows for 20/40/80/160/320 MHz across the full US band, UNII-5 through UNII-8 (the 59 20 MHz primaries ch 1,5,9,…,233), with the PSC channels (5,21,37,…,229) marked.
 - US-default. The full US 6 GHz plan (5925 to 7125 MHz) is drawn end to end. An earlier build truncated the map at ch 93, restored to the complete band per a beta report. 6 GHz needs no DFS; indoors it runs low-power (LPI) with no AFC, while standard-power use is AFC-coordinated.
-- Reference basis: the US (FCC) channel plan. 5 GHz DFS: No DFS = UNII-1 (36 to 48) and UNII-3 (149 to 165); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
+- Reference basis: the US (FCC) channel plan. 5 GHz DFS: No DFS = UNII-1 (36 to 48), UNII-3 (149 to 165), and UNII-4 (169 to 177); DFS = UNII-2A/2C. Colors are for readability; the meaning (DFS/PSC/mixed) is what matters.
 
 
 ### dB Reference
