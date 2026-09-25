@@ -1476,6 +1476,35 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'simulator',
   ],
+  // Wi-Fi Lab (2026-09-25). The DFS and radar simulator: what a student types
+  // when an AP went quiet for a minute, jumped channel, or will not use 120.
+  'dfs-simulator': <String>[
+    'dfs',
+    'dynamic frequency selection',
+    'radar',
+    'radar detection',
+    'cac',
+    'channel availability check',
+    'non-occupancy',
+    'nop',
+    'channel move',
+    'channel switch',
+    'csa',
+    'channel switch announcement',
+    '5600-5650',
+    'u-nii-2',
+    'unii-2',
+    'u-nii-2c',
+    'unii-2c',
+    'etsi',
+    'en 301 893',
+    'fcc',
+    '15.407',
+    'channel 144',
+    'outage',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[

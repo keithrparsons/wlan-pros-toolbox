@@ -692,6 +692,65 @@
       ],
       "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005). No manufacturer file is included. Computed on your device."
     },
+    "dfs-simulator": {
+      "name": "DFS and Radar",
+      "category": "Calculators & Tools",
+      "purpose": "Runs one access point on a simulated one-hour clock and shows what Dynamic Frequency Selection (DFS) costs. On a DFS channel the AP must listen for radar before it transmits (the channel availability check, or CAC). When radar appears it stops its traffic, leaves the channel within 10 seconds and may not return for 30 minutes. You press Radar now and watch the outage.",
+      "whyHere": "DFS is why an AP can go quiet for a minute after a reboot, why clients sometimes lose an AP for no visible reason, and why some channels sit unused on a busy plan. The listening time, the move and the 30-minute block are fixed by regulation, so the only real choice is what the AP does next: a non-DFS channel is available at once, another DFS channel means another CAC, and in the EU channels 120, 124 and 128 need 10 minutes.",
+      "howToUse": [
+        "Pick a region, a width and a starting channel. The channel list says which are DFS and how long each CAC takes.",
+        "Press Play, or use Step and the clock slider. The channel strip shows every 20 MHz channel: in use, listening (CAC), blocked after radar with its countdown, or not in the plan. A bar under a channel marks it as DFS.",
+        "Press Radar now while the AP is on a DFS channel. The timeline shows the AP and three clients: CAC, service, the radar, the move and any gap with no service, plus a row for blocked channels. Switch the timeline to 3 minutes to see a short move.",
+        "Choose what the AP does after radar: prefer a non-DFS channel, or take another DFS channel and pay its CAC. Add random radar to see repeated moves."
+      ],
+      "inputs": [
+        {
+          "name": "Region",
+          "unit": "US or EU",
+          "range": "US (FCC 47 CFR 15.407): 36 to 165, DFS 52 to 64 and 100 to 144. EU (ETSI EN 301 893): 36 to 64 and 100 to 140, DFS 52 to 64 and 100 to 140. Default US"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80 or 160; default 20"
+        },
+        {
+          "name": "Starting channel",
+          "unit": "channel",
+          "range": "any channel of the plan at that width; default 100"
+        },
+        {
+          "name": "After radar",
+          "unit": "policy",
+          "range": "prefer non-DFS (default) or another DFS channel"
+        },
+        {
+          "name": "Random radar",
+          "unit": "events per hour",
+          "range": "off (default), 2, 6 or 12"
+        },
+        {
+          "name": "Clock speed",
+          "unit": "x",
+          "range": "1, 10 (default), 60 or 300 times real time"
+        },
+        {
+          "name": "AP EIRP",
+          "unit": "dBm",
+          "range": "17, 20, 23 (default), 27 or 30; for the detection threshold readout only"
+        }
+      ],
+      "algorithm": "CAC: 60 s on a DFS channel; in the EU, 600 s for any channel partly or fully in 5600 to 5650 MHz (20 MHz channels 120, 124 and 128). A wide channel is DFS if any of its 20 MHz channels is. On radar while serving, normal traffic stops within the closing time (US 200 ms, EU 1 s of transmissions in aggregate) and the AP leaves 1 s after the radar, inside the 10 s move time. On radar during a CAC it leaves at once. Every 20 MHz channel it was using is blocked for 30 minutes. The new channel follows the policy; if no channel is free at the width, the AP narrows. Clients follow the AP straight to a non-DFS channel; if the AP must run a CAC first, they drop and rejoin 1 to 2.5 s after it returns. Outage is radar to resumed service. Detection threshold: FCC -64 dBm at 200 mW EIRP or more, -62 dBm below; ETSI -62 + 10 - PSD + G dBm with a floor of -64 dBm, G = 0 dBi here.",
+      "example": "US, channel 100 at 20 MHz: the AP listens for 60 s and first transmits at 1:00. Radar at 5:00: it moves to channel 36, which is not DFS, so the outage is 1.0 s and channel 100 is blocked until 35:00. With Another DFS it moves to 104 instead and waits a 60 s CAC, a 61.0 s outage. In the EU, the same move from 116 lands on 120 and waits 10 minutes, a 10 min 1 s outage.",
+      "fieldNotes": [
+        "The 60 ms of control signals the FCC allows after the 200 ms closing time comes from one secondhand source, a test lab's transcription of FCC KDB 905462 D02; the FCC document itself was not read.",
+        "The 10-minute CAC is ETSI only. Under the FCC every DFS channel takes 60 seconds.",
+        "Channel 144 is DFS in the US and is not in the EU plan: it crosses the 5725 MHz edge.",
+        "The AP's 1 s move and the clients' rejoin delays are illustrative. Real APs differ, and some block only the part of a wide channel that saw the radar.",
+        "Not modeled: off-channel CAC in the EU, a second radio that listens while the first serves, and radar signal levels. The detection threshold is shown for context only."
+      ],
+      "source": "47 CFR 15.407(h)(2) (eCFR, read directly); FCC KDB 905462 D02 as transcribed in an ICC test report (2018), secondhand; ETSI EN 301 893 V2.1.1 (2017) Tables D.1 and D.2, read directly. Channel numbers and edges from the Toolbox channel plan. Computed on your device."
+    },
     "ofdma-simulator": {
       "name": "OFDMA Resource Units",
       "category": "Calculators & Tools",
