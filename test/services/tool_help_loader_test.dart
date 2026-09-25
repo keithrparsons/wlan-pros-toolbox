@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 192;
+const int _expectedEntryCount = 193;
 
 const String _fixture = '''
 {
@@ -386,6 +386,10 @@ void main() {
       // medium-access-simulator. 190 + 2 = 192. Counted off the file after the
       // merge, not derived. The chain above stops at 185 while the constant was
       // already 190; the gap is in this prose, not in the file.
+      //
+      // 2026-09-25: airtime-anatomy (Wi-Fi Lab) added ONE entry. 192 + 1 =
+      // 193. Counted off the file, not derived: `len(json[...]['tools'])`
+      // returned 193 and the id appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
 

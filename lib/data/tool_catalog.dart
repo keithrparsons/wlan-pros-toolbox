@@ -945,6 +945,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'airtime-anatomy',
+        title: 'Airtime Anatomy',
+        description:
+            'One transmit opportunity drawn to scale: wait, preamble, data, '
+            'SIFS and ACK, and how much of the air carries your data',
+        routeName: '/tools/airtime-anatomy',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',

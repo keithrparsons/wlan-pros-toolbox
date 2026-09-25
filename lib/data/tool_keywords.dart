@@ -1136,6 +1136,35 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'half duplex',
     'simulation',
   ],
+  // Wi-Fi Lab (2026-09-25). What the tool computes and draws: one TXOP's
+  // airtime, segment by segment (GL-005).
+  'airtime-anatomy': <String>[
+    'airtime',
+    'airtime calculator',
+    'txop',
+    'txtime',
+    'frame duration',
+    'preamble',
+    'aggregation',
+    'a-mpdu',
+    'ampdu',
+    'block ack',
+    'ack',
+    'sifs',
+    'aifs',
+    'backoff',
+    'guard interval',
+    'mcs',
+    'phy rate',
+    'throughput',
+    'efficiency',
+    'overhead',
+    'rts/cts',
+    'packet extension',
+    '802.11ax',
+    '802.11ac',
+    'wi-fi lab',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[
