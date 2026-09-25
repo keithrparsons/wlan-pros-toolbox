@@ -30,10 +30,15 @@
 //   - TX_PWRref is 21 dBm for a client or an AP with at most 2 spatial
 //     streams and 25 dBm for an AP with more (brief §5, S1: one secondary
 //     source). The screen labels it single-source.
-//   - SINR at each client with the other AP as interference, against thermal
-//     noise per 20 MHz (kT at 290 K, -174 dBm/Hz, brief §10) with no receiver
-//     noise figure. SINR alone: this model does not judge a per-MCS pass or
-//     fail.
+//   - SINR at each client with the other AP as interference, against the
+//     receiver noise floor per 20 MHz: thermal noise (kT at 290 K, -174
+//     dBm/Hz, brief §10) plus a 7 dB noise figure, the Rate vs Range default.
+//   - Which MCS a link holds, read the way Rate vs Range reads SNR: the SNR
+//     an MCS needs is its minimum sensitivity (brief §10, via
+//     rate_vs_range_math.dart, not copied) minus the noise floor at that
+//     width with the same 7 dB noise figure. A link holds an MCS when its
+//     SINR is at or above that. The sensitivities are conformance floors:
+//     real radios beat them, so this is the worst case the standard allows.
 //   - OUT OF SCOPE: SRG (spatial reuse group) thresholds and parameterized
 //     spatial reuse (PSR). The SRG offset arithmetic is not verified from a
 //     primary source (brief §5).
@@ -44,6 +49,7 @@ import 'dart:math' as math;
 
 import 'channel_planner_model.dart' show CcaRule;
 import 'fspl_math.dart';
+import 'rate_vs_range_math.dart';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -210,6 +216,41 @@ ReuseDecision decideDeferral({
 double thermalNoiseDbm(double bandwidthMHz) =>
     kThermalNoiseDbmPerHz + 10 * FsplMath.log10(bandwidthMHz * 1e6);
 
+/// Receiver noise figure, dB: the Rate vs Range default, so the two tools
+/// read SNR the same way.
+const double kReuseNoiseFigureDb = RateVsRangeMath.defaultNoiseFigureDb;
+
+/// Receiver noise floor per 20 MHz, dBm: thermal noise plus the noise
+/// figure. About -94.0 dBm.
+double reuseNoiseFloorDbm() =>
+    RateVsRangeMath.noiseFloorDbm(20, kReuseNoiseFigureDb);
+
+/// Highest MCS in the sensitivity table.
+const int kReuseMaxMcs = RateVsRangeMath.maxMcs;
+
+/// SNR [mcs] needs at [widthMHz], dB: its minimum sensitivity minus the
+/// noise floor at that width (7 dB noise figure). Width-independent to
+/// within 0.03 dB, since both rise about 3 dB per doubling.
+double mcsRequiredSnrDb(int mcs, int widthMHz) =>
+    RateVsRangeMath.sensitivityDbm(mcs, widthMHz) -
+    RateVsRangeMath.noiseFloorDbm(widthMHz, kReuseNoiseFigureDb);
+
+/// Highest MCS whose required SNR [sinrDb] meets, or null when even MCS 0
+/// is out of reach.
+int? highestMcsForSinr(double sinrDb, int widthMHz) {
+  int? best;
+  for (int m = 0; m <= kReuseMaxMcs; m++) {
+    if (sinrDb >= mcsRequiredSnrDb(m, widthMHz)) best = m;
+  }
+  return best;
+}
+
+/// `MCS 7 (64-QAM 5/6)`.
+String mcsLabel(int mcs) {
+  final RvrMcsInfo i = RateVsRangeMath.mcsInfo[mcs];
+  return 'MCS $mcs (${i.modulation} ${i.codeRate})';
+}
+
 /// Power sum of two levels in dBm.
 double powerSumDbm(double aDbm, double bDbm) =>
     10 *
@@ -258,6 +299,8 @@ class ReuseScenario {
     this.colorA = 6,
     this.colorB = 26,
     this.obssPdDbm = -82,
+    this.mcsA = 7,
+    this.mcsB = 7,
   });
 
   final ReuseLayout layout;
@@ -280,6 +323,10 @@ class ReuseScenario {
   /// AP B's OBSS_PD threshold, dBm per 20 MHz.
   final double obssPdDbm;
 
+  /// The MCS each link must hold, 0 to 13.
+  final int mcsA;
+  final int mcsB;
+
   ReuseScenario copyWith({
     ReuseLayout? layout,
     double? exponent,
@@ -290,6 +337,8 @@ class ReuseScenario {
     int? colorA,
     int? colorB,
     double? obssPdDbm,
+    int? mcsA,
+    int? mcsB,
   }) => ReuseScenario(
     layout: layout ?? this.layout,
     exponent: exponent ?? this.exponent,
@@ -300,6 +349,8 @@ class ReuseScenario {
     colorA: colorA ?? this.colorA,
     colorB: colorB ?? this.colorB,
     obssPdDbm: obssPdDbm ?? this.obssPdDbm,
+    mcsA: mcsA ?? this.mcsA,
+    mcsB: mcsB ?? this.mcsB,
   );
 }
 
@@ -309,6 +360,8 @@ class ReuseLink {
     required this.signalDbm,
     required this.interferenceDbm,
     required this.noiseDbm,
+    required this.widthMHz,
+    required this.targetMcs,
   });
 
   /// Wanted signal at the client, dBm per 20 MHz.
@@ -317,8 +370,14 @@ class ReuseLink {
   /// The other AP at this client, dBm per 20 MHz; null when it is silent.
   final double? interferenceDbm;
 
-  /// Thermal noise per 20 MHz.
+  /// Receiver noise floor per 20 MHz (thermal plus the noise figure).
   final double noiseDbm;
+
+  /// Channel width, for the MCS table column.
+  final int widthMHz;
+
+  /// The MCS the student asked this link to hold.
+  final int targetMcs;
 
   /// Signal over noise alone.
   double get snrDb => signalDbm - noiseDbm;
@@ -330,6 +389,18 @@ class ReuseLink {
 
   /// dB the neighbor costs this link.
   double get costDb => snrDb - sinrDb;
+
+  /// Highest MCS the SINR supports; null when not even MCS 0.
+  int? get bestMcs => highestMcsForSinr(sinrDb, widthMHz);
+
+  /// Highest MCS the link would support with the neighbor silent.
+  int? get bestMcsAlone => highestMcsForSinr(snrDb, widthMHz);
+
+  /// SNR [targetMcs] needs at this width.
+  double get requiredSnrDb => mcsRequiredSnrDb(targetMcs, widthMHz);
+
+  /// The link still holds [targetMcs].
+  bool get holds => sinrDb >= requiredSnrDb;
 }
 
 /// Path loss over [distanceM] metres (at least 1 m) at 5180 MHz.
@@ -350,7 +421,7 @@ class ReuseAnalysis {
   factory ReuseAnalysis.of(ReuseScenario s) {
     final ReuseLayout l = s.layout;
     final int w = s.widthMHz;
-    final double noise = thermalNoiseDbm(20);
+    final double noise = reuseNoiseFloorDbm();
     double rx(double txDbm, double a, double b) =>
         per20Level(txDbm - reusePathLossDb((a - b).abs(), s.exponent), w);
 
@@ -375,11 +446,15 @@ class ReuseAnalysis {
         signalDbm: rx(s.apPowerDbm, l.apA, l.clientA),
         interferenceDbm: together ? rx(txB, l.apB, l.clientA) : null,
         noiseDbm: noise,
+        widthMHz: w,
+        targetMcs: s.mcsA,
       ),
       linkB: ReuseLink(
         signalDbm: rx(txB, l.apB, l.clientB),
         interferenceDbm: together ? rx(s.apPowerDbm, l.apA, l.clientB) : null,
         noiseDbm: noise,
+        widthMHz: w,
+        targetMcs: s.mcsB,
       ),
     );
   }

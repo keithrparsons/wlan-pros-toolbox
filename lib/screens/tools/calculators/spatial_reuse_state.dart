@@ -89,6 +89,8 @@ class SpatialReuseState extends ChangeNotifier {
   void setApPower(double v) => _set(_s.copyWith(apPowerDbm: v.roundToDouble()));
   void setExponent(double v) =>
       _set(_s.copyWith(exponent: (v * 10).round() / 10));
+  void setMcsA(int v) => _set(_s.copyWith(mcsA: v.clamp(0, kReuseMaxMcs)));
+  void setMcsB(int v) => _set(_s.copyWith(mcsB: v.clamp(0, kReuseMaxMcs)));
   void reset() => _set(const ReuseScenario());
 
   /// Plain-text summary for the Copy action.
@@ -99,7 +101,10 @@ class SpatialReuseState extends ChangeNotifier {
     String link(String name, ReuseLink k) =>
         '$name: signal ${db(k.signalDbm)} dBm, '
         '${k.interferenceDbm == null ? 'no interference' : 'interference ${db(k.interferenceDbm!)} dBm'}, '
-        'SINR ${db(k.sinrDb)} dB (SNR alone ${db(k.snrDb)} dB)';
+        'SINR ${db(k.sinrDb)} dB (SNR alone ${db(k.snrDb)} dB), '
+        'best ${k.bestMcs == null ? 'no MCS' : mcsLabel(k.bestMcs!)}, '
+        '${k.holds ? 'holds' : 'does not hold'} MCS ${k.targetMcs} '
+        '(needs ${db(k.requiredSnrDb)} dB)';
     return <String>[
       'Spatial Reuse (Wi-Fi Lab)',
       'AP A ${db(s.layout.apA)} m, client A ${db(s.layout.clientA)} m, '
@@ -119,6 +124,8 @@ class SpatialReuseState extends ChangeNotifier {
       link('Link B', a.linkB),
       'Airtime for one frame each: ${a.frameTimes} frame-time'
           '${a.frameTimes == 1 ? '' : 's'}',
+      'MCS: SNR each MCS needs = minimum sensitivity (conformance floor) '
+          'minus the noise floor with a 7 dB noise figure.',
       'SRG and parameterized spatial reuse are out of scope.',
     ].join('\n');
   }

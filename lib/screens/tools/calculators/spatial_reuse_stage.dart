@@ -3,7 +3,7 @@
 // Three stacked drawings over one SpatialReuseState:
 //   1. The line: AP A, client A, client B and AP B at their distances, each
 //      BSS in its own hue with its BSS color number, AP transmit power above
-//      each AP and each client's SINR below it. Drag a radio to move it.
+//      each AP and each client's SINR and best MCS below it. Drag a radio to move it.
 //   2. The meter: the level AP B hears from AP A on a dBm scale, against
 //      -82 (preamble detect), -62 (energy detect) and the OBSS_PD threshold.
 //   3. The timeline: do the two frames go one after the other, or together?
@@ -181,8 +181,11 @@ class SpatialReuseStage extends StatelessWidget {
         '${s.coloring ? 'BSS A color ${s.colorA}, BSS B color ${s.colorB}. ' : 'BSS coloring off. '}'
         'AP B hears AP A at ${db(a.heardByBDbm)} dBm. '
         '${a.together ? 'AP B sends at the same time at ${db(a.txPowerBDbm)} dBm.' : 'AP B waits its turn.'} '
-        'Client A SINR ${db(a.linkA.sinrDb)} dB, client B SINR '
-        '${db(a.linkB.sinrDb)} dB. '
+        'Client A SINR ${db(a.linkA.sinrDb)} dB, '
+        '${a.linkA.bestMcs == null ? 'no MCS' : 'up to MCS ${a.linkA.bestMcs}'}; '
+        'client B SINR '
+        '${db(a.linkB.sinrDb)} dB, '
+        '${a.linkB.bestMcs == null ? 'no MCS' : 'up to MCS ${a.linkB.bestMcs}'}. '
         '${a.frameTimes} frame-time${a.frameTimes == 1 ? '' : 's'} for both frames.';
   }
 }
@@ -385,13 +388,18 @@ class _LinePainter extends CustomPainter {
       (xb, '${lookB.tag}, AP ${tx.toStringAsFixed(0)} dBm', style.strong),
     ];
     _row(canvas, top, 0, w);
-    final List<(double, String, TextStyle)>
-    bottom = <(double, String, TextStyle)>[
-      (xca, 'SINR ${analysis.linkA.sinrDb.toStringAsFixed(1)}', style.label),
-      (xcb, 'SINR ${analysis.linkB.sinrDb.toStringAsFixed(1)}', style.label),
-    ];
+    final List<(double, String, TextStyle)> bottom =
+        <(double, String, TextStyle)>[
+          (xca, _clientLabel(analysis.linkA), style.label),
+          (xcb, _clientLabel(analysis.linkB), style.label),
+        ];
     _row(canvas, bottom, clientY + 14, w);
   }
+
+  /// `SINR 26.7, MCS 4`, or `SINR 9.0, no MCS`.
+  static String _clientLabel(ReuseLink k) =>
+      'SINR ${k.sinrDb.toStringAsFixed(1)}, '
+      '${k.bestMcs == null ? 'no MCS' : 'MCS ${k.bestMcs}'}';
 
   /// Paint labels at [y], left to right. A label that would overlap the one
   /// before it drops to a second line.
@@ -418,7 +426,7 @@ class _LinePainter extends CustomPainter {
         0.0,
         math.max(0.0, w - tp.width),
       );
-      final int line = left >= right[0] + AppSpacing.xxs ? 0 : 1;
+      final int line = left >= right[0] + AppSpacing.sm ? 0 : 1;
       tp.paint(canvas, Offset(left, y + line * (tp.height + 1)));
       right[line] = left + tp.width;
     }

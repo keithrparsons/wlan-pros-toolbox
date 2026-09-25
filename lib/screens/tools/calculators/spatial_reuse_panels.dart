@@ -8,10 +8,12 @@
 // rules with their sources and what is out of scope.
 // Each takes a SpatialReuseState and neither knows about the stage.
 //
-// THEME: context.colors only. No status hues: waiting or sending together is
-// a consequence of the settings, not a pass or fail, and this tool gives no
-// per-MCS verdict (§8.13 rule 6). Lime marks OBSS_PD and the airtime result,
-// the quantities the tool is about.
+// THEME: context.colors only. Waiting or sending together is a consequence
+// of the settings, not a pass or fail, so the decision carries no status hue
+// (§8.13 rule 6). The one verdict is whether a link still holds the MCS the
+// student picked: success or danger, always with an icon and the words
+// (§8.13 case 2). Lime marks OBSS_PD and the airtime result, the quantities
+// the tool is about.
 // ASCII copy, no em dashes (GL-004).
 
 import 'package:flutter/material.dart';
@@ -170,6 +172,31 @@ class SpatialReuseControls extends StatelessWidget {
       Text(
         '${s.txPwrRef.short}: ${s.txPwrRef.label}. Both values come from one '
         'secondary source.',
+        style: small(),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      const _SectionLabel('MCS each link must hold'),
+      const SizedBox(height: AppSpacing.xs),
+      for (final (String name, int mcs, ValueChanged<int> set)
+          in <(String, int, ValueChanged<int>)>[
+            ('Link A MCS', s.mcsA, st.setMcsA),
+            ('Link B MCS', s.mcsB, st.setMcsB),
+          ]) ...<Widget>[
+        LabeledField(
+          label: name,
+          field: AppSelect<int>(
+            value: mcs,
+            semanticLabel: name,
+            items: <AppSelectItem<int>>[
+              for (int m = 0; m <= kReuseMaxMcs; m++) (m, mcsLabel(m)),
+            ],
+            onChanged: set,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+      ],
+      Text(
+        'MCS 10 and up need Wi-Fi 6 or 7 (1024- and 4096-QAM).',
         style: small(),
       ),
       const SizedBox(height: AppSpacing.md),
@@ -498,8 +525,15 @@ class SpatialReuseReadouts extends StatelessWidget {
               ),
               _stat(context, 'SINR', '${_db(k.sinrDb)} dB'),
               _stat(context, 'SNR alone', '${_db(k.snrDb)} dB'),
+              _stat(
+                context,
+                'Highest MCS this SINR supports',
+                k.bestMcs == null ? 'none' : 'MCS ${k.bestMcs}',
+              ),
             ],
           ),
+          const SizedBox(height: AppSpacing.xs),
+          _verdict(context, k),
           if (k.interferenceDbm != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(
@@ -522,10 +556,44 @@ class SpatialReuseReadouts extends StatelessWidget {
           link('Link B: AP B to client B', a.linkB),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Noise is thermal only, ${_db(thermalNoiseDbm(20))} dBm per 20 '
-            'MHz (kT at 290 K), with no receiver noise figure. This tool '
-            'reports SINR; it does not say which MCS a link can hold.',
+            'Noise floor ${_db(reuseNoiseFloorDbm())} dBm per 20 MHz: thermal '
+            'noise (kT at 290 K) plus a 7 dB noise figure, as in Rate vs '
+            'Range. The SNR an MCS needs is its minimum sensitivity minus the '
+            'noise floor at that width (MCS 0 about '
+            '${_db(mcsRequiredSnrDb(0, a.scenario.widthMHz))} dB, MCS 7 about '
+            '${_db(mcsRequiredSnrDb(7, a.scenario.widthMHz))} dB), and a link '
+            'holds an MCS when its SINR is at least that. The sensitivities '
+            'are 802.11 conformance floors; real radios beat them, so these '
+            'verdicts are the worst case the standard allows.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _verdict(BuildContext context, ReuseLink k) {
+    final AppColorScheme colors = context.colors;
+    final Color c = k.holds ? colors.statusSuccess : colors.statusDanger;
+    final String best = k.bestMcs == null
+        ? 'not even MCS 0 (needs ${_db(mcsRequiredSnrDb(0, k.widthMHz))} dB)'
+        : mcsLabel(k.bestMcs!);
+    final String msg = k.holds
+        ? 'Holds MCS ${k.targetMcs}: SINR ${_db(k.sinrDb)} dB, needs '
+              '${_db(k.requiredSnrDb)} dB.'
+        : 'Does not hold MCS ${k.targetMcs}: SINR ${_db(k.sinrDb)} dB, needs '
+              '${_db(k.requiredSnrDb)} dB. Best it supports: $best.';
+    return MergeSemantics(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(k.holds ? Icons.check_circle : Icons.error, size: 16, color: c),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              msg,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c),
+            ),
           ),
         ],
       ),
