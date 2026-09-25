@@ -41,6 +41,7 @@ import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
+import '../screens/tools/calculators/rate_vs_range_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
 import '../screens/tools/calculators/channel_planner_screen.dart';
 import '../screens/tools/calculators/ofdma_simulator_screen.dart';
@@ -302,6 +303,10 @@ class AppRouter {
   // patterns in a rotatable 3D CustomPainter; pure on-device math, all
   // platforms incl. web.
   static const String antennaPattern = '/tools/antenna-pattern';
+  // Wi-Fi Lab (2026-09-25). MCS rings from the receiver sensitivity table,
+  // log-distance path loss and ssid-airtime beacon math; pure on-device
+  // math, all platforms incl. web.
+  static const String rateVsRange = '/tools/rate-vs-range';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -756,6 +761,7 @@ class AppRouter {
     roamingWalk: (_) => const RoamingWalkScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
+    rateVsRange: (_) => const RateVsRangeScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),
