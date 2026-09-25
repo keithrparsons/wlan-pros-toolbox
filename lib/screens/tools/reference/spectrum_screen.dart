@@ -167,8 +167,10 @@ class SpectrumScreen extends StatefulWidget {
           'by DFS)',
       notes:
           'UNII-1 (5150-5250 MHz): indoor use only in some regions. '
-          'UNII-2A/2C require DFS - expect 60-second channel availability '
-          'delay after radar detection. UNII-3 (5725-5850 MHz): no DFS.',
+          'UNII-2A/2C require DFS - a 60-second channel availability check '
+          'before first use (10 minutes for 5600-5650 MHz in the EU); on '
+          'radar, leave within 10 s and stay off 30 min. UNII-3 (5725-5850 '
+          'MHz): no DFS.',
     ),
     SpectrumBandInfo(
       band: SpectrumBand.ghz6,

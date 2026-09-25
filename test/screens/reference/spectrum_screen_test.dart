@@ -56,6 +56,18 @@ void main() {
       expect(b.dfs, contains('UNII-2C (5470-5725 MHz)'));
     });
 
+    test('5 GHz DFS note: 60 s check before use; 10 s move, 30 min off', () {
+      // 47 CFR 15.407(h)(2) and ETSI EN 301 893 Table D.1: the 60 s channel
+      // availability check comes BEFORE transmitting (10 min for 5600-5650
+      // MHz in the EU). After radar: leave within 10 s, stay off 30 min.
+      final SpectrumBandInfo b = bandOf(SpectrumBand.ghz5);
+      expect(b.notes.contains('after radar detection'), isFalse);
+      expect(b.notes, contains('60-second channel availability check'));
+      expect(b.notes, contains('5600-5650 MHz'));
+      expect(b.notes, contains('10 s'));
+      expect(b.notes, contains('30 min'));
+    });
+
     test('6 GHz spans 5925-7125 MHz with 1200 MHz total', () {
       final SpectrumBandInfo b = bandOf(SpectrumBand.ghz6);
       expect(b.range, '5925 - 7125 MHz');

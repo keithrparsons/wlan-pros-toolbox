@@ -1912,7 +1912,7 @@
       "fieldNotes": [
         "What it shows: each band gets a range badge plus eight facts: Total spectrum, Standards, Channels (US), Non-overlapping, Channel widths, DFS / Radar, Co-existence, and Key notes.",
         "US by default; every band carries the footnote \"US (FCC) regulatory domain. Verify local rules before deployment.\"",
-        "Includes useful specifics: UNII-1 is indoor-only in some regions; UNII-2A/2C DFS means a 60-second channel-availability delay after radar is detected; 6 GHz has four US power modes, namely Standard Power (up to 36 dBm EIRP, AFC required indoors and outdoors), LPI (up to 30 dBm, no AFC), VLP (up to 14 dBm EIRP, no AFC, mobile), and Geofenced Variable Power (up to 24 dBm EIRP, U-NII-5 and U-NII-7 only); and WPA3 is mandatory on 6 GHz.",
+        "Includes useful specifics: UNII-1 is indoor-only in some regions; UNII-2A/2C DFS means a 60-second channel availability check before first use (10 minutes for 5600 to 5650 MHz in the EU), and on radar the AP leaves within 10 seconds and stays off for 30 minutes; 6 GHz has four US power modes, namely Standard Power (up to 36 dBm EIRP, AFC required indoors and outdoors), LPI (up to 30 dBm, no AFC), VLP (up to 14 dBm EIRP, no AFC, mobile), and Geofenced Variable Power (up to 24 dBm EIRP, U-NII-5 and U-NII-7 only); and WPA3 is mandatory on 6 GHz.",
         "Data source: US (FCC) regulatory domain. Values: 2.4 GHz = 83.5 MHz (US); 5 GHz = about 580 MHz usable (UNII-1/2A/2C/3); 6 GHz = 1200 MHz (5925 to 7125 MHz)."
       ],
       "source": "Values come from the US (FCC) regulatory domain."
