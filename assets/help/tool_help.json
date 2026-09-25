@@ -614,6 +614,54 @@
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
+    "roaming-walk": {
+      "name": "Roaming Walk",
+      "category": "Calculators & Tools",
+      "purpose": "Walks a client across a floor of access points and shows when it roams and what each roam costs. The client, not the AP, decides: it holds its AP until the signal drops below its trigger, then moves only to an AP that is at least delta stronger. Every roam leaves a gap with no AP, and most of that gap is scanning.",
+      "whyHere": "Sticky clients and clients that flip between two APs are two of the most common roaming complaints, and both come from the same two numbers: the trigger and the delta. Apple publishes them for iPhone and Mac. Seeing a client walk past a closer, stronger AP because it is still above its trigger explains a lot of field behavior, and shows why a -67 dBm design still leaves an iPhone on its AP down to -70 dBm.",
+      "howToUse": [
+        "Pick a client. iPhone and Mac use Apple's published trigger and delta; the sticky and jumpy clients are illustrative, because Android and Windows publish no numbers. Or set the trigger and delta yourself.",
+        "Press Play, or use Step and the walk-time slider. On the floor plan the lime line joins the client to its AP. Below it, every AP's signal is drawn in that AP's color, the lime line is the AP the client is using, the dashed line is the trigger, and each roam is marked with its gap in milliseconds (PP marks a ping-pong).",
+        "Turn on 802.11k, PMK caching or 802.11r (FT) and watch the gap per roam change. Drag the APs or pick another path, including one you draw, and add shadowing to see a jumpy client ping-pong between two APs of similar strength."
+      ],
+      "inputs": [
+        {
+          "name": "Client",
+          "unit": "trigger dBm, delta dB",
+          "range": "iPhone transmitting -70/8, iPhone idle -70/12, Mac -75/12, illustrative sticky -85/12 and jumpy -65/2, or custom (trigger -90 to -55, delta 0 to 20)"
+        },
+        {
+          "name": "802.11k, PMK caching, 802.11r (FT)",
+          "unit": "on or off",
+          "range": "off by default"
+        },
+        {
+          "name": "Illustrative timings",
+          "unit": "ms and channels",
+          "range": "dwell 5 to 100 ms per channel (default 10), 1 to 40 channels in a full scan (default 25), 1 to 10 ms per authentication frame (default 3), 0 to 200 ms of authentication server time (default 50)"
+        },
+        {
+          "name": "Floor",
+          "unit": "m",
+          "range": "60 m x 20 m, 2 to 6 APs you can drag; paths along the corridor, under the APs, corner to corner, across at 20 m, down and back, or drawn by you"
+        },
+        {
+          "name": "Band, AP power, path-loss exponent, shadowing",
+          "unit": "GHz, dBm, n, dB",
+          "range": "2.4, 5 or 6 GHz; 5 to 30 dBm EIRP (default 14); n 2.0 to 4.0 (default 3.0); shadowing 0 to 6 dB (default 2)"
+        }
+      ],
+      "algorithm": "Signal from each AP: RSSI = EIRP - FSPL(1 m) - 10 x n x log10(d) + S, with d in meters (at least 1 m), FSPL(1 m) = 20 x log10(4 x pi x f / c), and S a seeded Gaussian shadowing term that is correlated along the path over about 5 m. The client samples every 100 ms while walking at 1.4 m/s. While the serving RSSI is below the trigger, it roams to the strongest other AP if that AP is at least delta stronger. Roam gap = scan time + authentication time. Scan = dwell x channels, where 802.11k limits the channels to the neighbors, at most 6. Authentication = frames x time per frame, plus server time for full 802.1X. Full 802.1X is 17 frames here (2 Open authentication, 2 reassociation, 2 EAP identity, 6 EAP method frames as an illustrative count that really depends on the EAP type, 1 EAP-Success, 4 EAPOL-Key); PMK caching is 8 and applies only to an AP the client already joined; FT over the air is 4. A ping-pong is a roam back to the previous AP within 5 s.",
+      "example": "Default floor with shadowing off, 3 APs 20 m apart and a walk along the corridor: the iPhone roams twice, at 17.7 s and 32.0 s, and spends 0.2 s below -70 dBm. The Mac values give 11.8 s below -70 dBm, and the illustrative sticky client never roams and spends 23.7 s there. Each full 802.1X roam costs 351 ms (250 ms scanning, 101 ms authenticating); with 802.11k and FT it costs 32 ms.",
+      "fieldNotes": [
+        "This is a teaching model: APs radiate equally in every direction, there are no walls, and the contours on the floor show the average signal without shadowing.",
+        "Every timing default is illustrative. For context, Mishra, Shin and Arbaugh (2003) measured handoffs of 58.74 to 396.76 ms on 802.11b with open authentication, with scanning over 90% of the time, and one FT lab capture read 14 ms. Neither is used by the model.",
+        "Because scanning dominates, 802.11k shortens a slow roam more than FT does. FT and PMK caching shorten only the authentication.",
+        "802.11v lets the AP suggest a better AP; the client still decides. The model does not simulate it.",
+        "Real clients average their readings, scan on their own schedule and weigh more than signal strength."
+      ],
+      "source": "Apple, Wi-Fi roaming support in Apple devices (deployment guide): iPhone trigger -70 dBm with 8 dB delta transmitting and 12 dB idle, Mac -75 dBm with 12 dB, and the first six Neighbor Report entries. Frame sequences from Cisco 9800 roaming documentation. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
+    },
     "channel-planner": {
       "name": "Channel Planner",
       "category": "Calculators & Tools",

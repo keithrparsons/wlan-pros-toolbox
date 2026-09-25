@@ -1006,6 +1006,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi Lab',
       ),
+      // Distinct from the 'roaming' reference card and the 'roaming-log' live
+      // tool, which stay as they are.
+      ToolEntry(
+        id: 'roaming-walk',
+        title: 'Roaming Walk',
+        description:
+            'Walk a client past APs and watch when it roams: trigger and '
+            'delta, sticky clients, ping-pong, and what 802.11k/r save',
+        routeName: '/tools/roaming-walk',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       ToolEntry(
         id: 'six-ghz-psd',
         title: '6 GHz Power and PSD',

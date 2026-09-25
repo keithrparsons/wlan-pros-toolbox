@@ -1,0 +1,542 @@
+// RoamingWalkStage: the pictures half of the Roaming Walk.
+//
+// The floor plan (APs, their -67 and -70 dBm contours, the path, the walking
+// client and its association line) and, below it, the RSSI of every AP over
+// the walk with the trigger line and roam markers. Takes the shared
+// RoamingWalkController and nothing else, so a phone layout can stack it with
+// RoamingWalkControls and a presenter layout can put the two side by side.
+//
+// Dragging an AP moves it and tapping the floor in drawing mode adds a
+// waypoint; both go through the controller. The AP position sliders and the
+// path select in RoamingWalkControls do the same for keyboard users.
+
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+
+import '../../../services/wifi_lab/roaming_walk_engine.dart';
+import '../../../theme/app_color_scheme.dart';
+import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
+import 'roaming_walk_controller.dart';
+import 'roaming_walk_painters.dart';
+import 'roaming_walk_palette.dart';
+import 'roaming_walk_parts.dart';
+
+class RoamingWalkStage extends StatelessWidget {
+  const RoamingWalkStage({super.key, required this.controller});
+
+  final RoamingWalkController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (BuildContext context, _) {
+        final RoamPaintStyle style = _paintStyle(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _FloorCard(controller: controller, style: style),
+            const SizedBox(height: AppSpacing.sm),
+            _PlotCard(controller: controller, style: style),
+          ],
+        );
+      },
+    );
+  }
+
+  static RoamPaintStyle _paintStyle(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return RoamPaintStyle(
+      apColors: <Color>[
+        for (int i = 0; i < kMaxAps; i++)
+          roamApColor(i, isLight: colors.isLight),
+      ],
+      accent: colors.textAccent,
+      primary: colors.textPrimary,
+      secondary: colors.textSecondary,
+      tertiary: colors.textTertiary,
+      grid: colors.border,
+      axis: colors.borderStrong,
+      halo: colors.surface2,
+      labelStyle: mono.inlineCode.copyWith(
+        fontSize: AppTextSize.caption - 2,
+        color: colors.textSecondary,
+      ),
+    );
+  }
+}
+
+/// A pan recognizer that wins the gesture arena at once when the pointer
+/// lands on an AP, so dragging an AP never scrolls the page, while a drag
+/// that starts on empty floor still scrolls.
+class _ApDragRecognizer extends PanGestureRecognizer {
+  _ApDragRecognizer({required this.claims});
+
+  final bool Function(Offset local) claims;
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    if (claims(event.localPosition)) resolve(GestureDisposition.accepted);
+  }
+}
+
+class _FloorCard extends StatefulWidget {
+  const _FloorCard({required this.controller, required this.style});
+
+  final RoamingWalkController controller;
+  final RoamPaintStyle style;
+
+  @override
+  State<_FloorCard> createState() => _FloorCardState();
+}
+
+class _FloorCardState extends State<_FloorCard> {
+  int? _dragging;
+  Size _size = Size.zero;
+
+  RoamingWalkController get c => widget.controller;
+
+  /// Touch radius around an AP, meters (at least 22 px).
+  double _hitRadiusM(FloorMapping m) => 22 / m.scale;
+
+  bool _claims(Offset local) {
+    if (c.drawing || _size == Size.zero) return false;
+    final FloorMapping m = FloorMapping(_size);
+    return c.apNear(m.toFloor(local), _hitRadiusM(m)) != null;
+  }
+
+  String _semantic() {
+    final RoamWalkConfig cfg = c.config;
+    final RoamWalkResult r = c.result;
+    final int k = c.sample;
+    final FloorPoint p = r.positions[k];
+    final StringBuffer b = StringBuffer(
+      'Floor plan, 60 by 20 meters, seen from above. ',
+    );
+    for (int i = 0; i < cfg.aps.length; i++) {
+      b.write(
+        'AP ${i + 1} at ${cfg.aps[i].x.toStringAsFixed(1)}, '
+        '${cfg.aps[i].y.toStringAsFixed(1)} m. ',
+      );
+    }
+    b.write(
+      'Minus 67 dBm reaches '
+      '${cfg.contourRadiusM(kDesignOverlapDbm).toStringAsFixed(1)} m from '
+      'each AP and minus 70 dBm '
+      '${cfg.contourRadiusM(kWeakSignalDbm).toStringAsFixed(1)} m. ',
+    );
+    if (c.drawing) {
+      b.write(
+        'Drawing a path: ${c.drawnPoints.length} points so far. Tap the '
+        'floor to add a point.',
+      );
+      return b.toString();
+    }
+    b.write(
+      'Client at ${p.x.toStringAsFixed(1)}, ${p.y.toStringAsFixed(1)} m, ',
+    );
+    final int? s = r.servingAt(k);
+    final RoamEvent? g = r.gapAt(k);
+    if (s != null) {
+      b.write('on AP ${s + 1} at ${fmtDbm(r.rssi[s][k])}.');
+    } else if (g != null) {
+      b.write('between APs, roaming to AP ${g.toAp + 1}.');
+    }
+    return b.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final RoamWalkConfig cfg = c.config;
+    final bool wide = MediaQuery.sizeOf(context).width >= 720;
+    return RwCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const RwSectionLabel('Floor plan, seen from above (60 m x 20 m)'),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'A teaching model: every AP radiates the same way in every '
+            'direction and there are no walls. Signal falls with distance '
+            'and wanders a little (shadowing).',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Semantics(
+            label: _semantic(),
+            excludeSemantics: true,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              child: Container(
+                color: colors.surface2,
+                child: AspectRatio(
+                  aspectRatio: wide ? 2.8 : 2.4,
+                  child: LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints bc) {
+                      _size = Size(bc.maxWidth, bc.maxHeight);
+                      final FloorMapping m = FloorMapping(_size);
+                      return MouseRegion(
+                        cursor: c.drawing
+                            ? SystemMouseCursors.precise
+                            : SystemMouseCursors.basic,
+                        child: RawGestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          gestures: <Type, GestureRecognizerFactory>{
+                            _ApDragRecognizer:
+                                GestureRecognizerFactoryWithHandlers<
+                                  _ApDragRecognizer
+                                >(() => _ApDragRecognizer(claims: _claims), (
+                                  _ApDragRecognizer r,
+                                ) {
+                                  r
+                                    ..onStart = (DragStartDetails d) {
+                                      _dragging = c.apNear(
+                                        m.toFloor(d.localPosition),
+                                        _hitRadiusM(m),
+                                      );
+                                    }
+                                    ..onUpdate = (DragUpdateDetails d) {
+                                      final int? i = _dragging;
+                                      if (i != null) {
+                                        c.moveAp(i, m.toFloor(d.localPosition));
+                                      }
+                                    }
+                                    ..onEnd = (DragEndDetails _) {
+                                      _dragging = null;
+                                    }
+                                    ..onCancel = () {
+                                      _dragging = null;
+                                    };
+                                }),
+                            TapGestureRecognizer:
+                                GestureRecognizerFactoryWithHandlers<
+                                  TapGestureRecognizer
+                                >(TapGestureRecognizer.new, (
+                                  TapGestureRecognizer r,
+                                ) {
+                                  r.onTapUp = (TapUpDetails d) {
+                                    if (c.drawing) {
+                                      c.addWaypoint(m.toFloor(d.localPosition));
+                                      return;
+                                    }
+                                    final int? i = c.apNear(
+                                      m.toFloor(d.localPosition),
+                                      _hitRadiusM(m),
+                                    );
+                                    if (i != null) c.editingAp = i;
+                                  };
+                                }),
+                          },
+                          child: CustomPaint(
+                            size: _size,
+                            painter: RoamFloorPainter(
+                              config: cfg,
+                              result: c.result,
+                              sample: c.sample,
+                              style: widget.style,
+                              editingAp: c.editingAp,
+                              drawnPoints: List<FloorPoint>.of(c.drawnPoints),
+                              drawing: c.drawing,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (c.drawing)
+            _DrawBar(controller: c)
+          else ...<Widget>[
+            _FloorLegend(style: widget.style, apCount: cfg.aps.length),
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Drag an AP to move it.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawBar extends StatelessWidget {
+  const _DrawBar({required this.controller});
+
+  final RoamingWalkController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final RoamingWalkController c = controller;
+    final int n = c.drawnPoints.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            n == 0
+                ? 'Drawing a path: tap the floor where the walk starts, then '
+                      'tap each turn.'
+                : n == 1
+                ? '1 point. Tap the next one.'
+                : '$n points, ${pathLengthM(c.drawnPoints).toStringAsFixed(0)} '
+                      'm. Tap to add more, or Use this path.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: <Widget>[
+            SizedBox(
+              width: 160,
+              child: FilledButton(
+                onPressed: c.canFinishDrawing ? c.finishDrawing : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
+                ),
+                child: const Text('Use this path'),
+              ),
+            ),
+            SizedBox(
+              width: 120,
+              child: RwOutlineButton(
+                icon: Icons.undo_rounded,
+                label: 'Undo',
+                semanticLabel: 'Remove the last point',
+                onPressed: n > 0 ? c.undoWaypoint : null,
+              ),
+            ),
+            SizedBox(
+              width: 120,
+              child: RwOutlineButton(
+                icon: Icons.close_rounded,
+                label: 'Cancel',
+                semanticLabel: 'Stop drawing and keep the old path',
+                onPressed: c.cancelDrawing,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _FloorLegend extends StatelessWidget {
+  const _FloorLegend({required this.style, required this.apCount});
+
+  final RoamPaintStyle style;
+  final int apCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextStyle t =
+        Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: colors.textSecondary) ??
+        TextStyle(color: colors.textSecondary);
+    Widget line(Color color, {bool dashed = false, double width = 2}) =>
+        SizedBox(
+          width: 20,
+          child: dashed
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Container(width: 6, height: width, color: color),
+                    Container(width: 6, height: width, color: color),
+                  ],
+                )
+              : Container(height: width, color: color),
+        );
+    Widget item(Widget swatch, String label) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        swatch,
+        const SizedBox(width: AppSpacing.xxs),
+        Text(label, style: t),
+      ],
+    );
+    return ExcludeSemantics(
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.xxs,
+        children: <Widget>[
+          item(line(colors.textSecondary), '-67 dBm'),
+          item(line(colors.textSecondary, dashed: true), '-70 dBm'),
+          item(line(style.accent, width: 3), 'Serving link'),
+          item(
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: style.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+            'Client',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlotCard extends StatelessWidget {
+  const _PlotCard({required this.controller, required this.style});
+
+  final RoamingWalkController controller;
+  final RoamPaintStyle style;
+
+  String _semantic() {
+    final RoamingWalkController c = controller;
+    final RoamWalkResult r = c.result;
+    final int k = c.sample;
+    final RoamTotals t = c.totals;
+    final StringBuffer b = StringBuffer(
+      'Signal from every AP over the walk, ${r.timeOf(k).toStringAsFixed(1)} '
+      'of ${r.durationS.toStringAsFixed(1)} seconds shown. Trigger at '
+      '${fmtDbm(c.config.triggerDbm)}. Now: ',
+    );
+    for (int a = 0; a < r.rssi.length; a++) {
+      b.write('AP ${a + 1} ${fmtDbm(r.rssi[a][k])}. ');
+    }
+    b.write('${t.roams} roams so far.');
+    return b.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final RoamingWalkController c = controller;
+    final bool wide = MediaQuery.sizeOf(context).width >= 720;
+    final int k = c.sample;
+    final RoamWalkResult r = c.result;
+    final int? s = r.servingAt(k);
+    final RoamEvent? gap = r.gapAt(k);
+    final String now = s != null
+        ? 'On AP ${s + 1} at ${fmtDbm(r.rssi[s][k])}'
+        : gap != null
+        ? 'Between APs: roaming to AP ${gap.toAp + 1}'
+        : 'Between APs';
+    return RwCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const RwSectionLabel('Signal from every AP (dBm) over time'),
+          const SizedBox(height: AppSpacing.xs),
+          Semantics(
+            label: _semantic(),
+            excludeSemantics: true,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+              child: Container(
+                height: wide ? 260 : 200,
+                color: colors.surface2,
+                child: CustomPaint(
+                  painter: RoamRssiPainter(result: r, sample: k, style: style),
+                  size: Size.infinite,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ExcludeSemantics(
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xxs,
+              children: <Widget>[
+                for (int a = 0; a < c.apCount; a++)
+                  _Swatch(color: style.ap(a), label: 'AP ${a + 1}'),
+                _Swatch(color: style.accent, label: 'Serving', thick: true),
+                _Swatch(
+                  color: colors.borderStrong,
+                  label: 'Trigger',
+                  dashed: true,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            'Each vertical line is a roam; the number above it is the gap in '
+            'ms with no AP. PP marks a ping-pong.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Semantics(
+            liveRegion: false,
+            child: Text(
+              '${r.timeOf(k).toStringAsFixed(1)} s of '
+              '${r.durationS.toStringAsFixed(1)} s. $now.',
+              style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.color,
+    required this.label,
+    this.thick = false,
+    this.dashed = false,
+  });
+
+  final Color color;
+  final String label;
+  final bool thick;
+  final bool dashed;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final double h = thick ? 3 : 2;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          width: 20,
+          child: dashed
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Container(width: 6, height: h, color: color),
+                    Container(width: 6, height: h, color: color),
+                  ],
+                )
+              : Container(height: h, color: color),
+        ),
+        const SizedBox(width: AppSpacing.xxs),
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
