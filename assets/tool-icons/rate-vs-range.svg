@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- AP at the center -->
+    <circle cx="12" cy="10" r="1.7" fill="currentColor" stroke="none"/>
+    <!-- inner ring: solid (high rate close in) -->
+    <circle cx="12" cy="10" r="3.6"/>
+    <!-- outer ring: broken into four arcs (rate thinning out with range) -->
+    <circle cx="12" cy="10" r="7" stroke-dasharray="7.5 3.5" stroke-dashoffset="-1.7"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="16" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

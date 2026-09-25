@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- three lanes: supplicant, authenticator, server -->
+    <path d="M4 3 V17"/>
+    <path d="M12 3 V17"/>
+    <path d="M20 3 V17"/>
+    <!-- the ladder: messages stepping across the lanes -->
+    <path d="M4 5 H10.5"/>
+    <path d="M9 3.5 L10.5 5 L9 6.5"/>
+    <path d="M12 10 H18.5"/>
+    <path d="M17 8.5 L18.5 10 L17 11.5"/>
+    <path d="M20 15 H5.5"/>
+    <path d="M7 13.5 L5.5 15 L7 16.5"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="5" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
