@@ -449,6 +449,66 @@
       ],
       "source": "The IEEE 802.11 PHY transmit-time equations (802.11-2020 clauses 17, 19 and 21; 802.11ax-2021 clause 27) and the default EDCA parameter set, as built into the WLAN Pros Airtime Calculator. Computed on your device."
     },
+    "multipath-simulator": {
+      "name": "Multipath Simulator",
+      "category": "Calculators & Tools",
+      "purpose": "Shows why the signal changes when you move a few centimeters. A receiver hears the direct signal plus copies that bounced off walls. Each copy travels a different distance, so it arrives with a different phase, and the copies add like arrows placed head to tail. In phase they reinforce; out of phase they cancel.",
+      "whyHere": "One RSSI reading taken in one spot can be several dB off from a reading a hand width away, and a survey or a troubleshooting call that trusts it is trusting luck. Seeing the arrows add and cancel explains the dips, why they repeat every half wavelength, and why a second antenna rarely sits in a dip at the same spot as the first.",
+      "howToUse": [
+        "Pick a scene. One wall shows the direct copy and one reflection, seen from above. Standing wave puts the receiver between a distant access point and a wall. Many paths blocks the direct copy and adds 2 to 30 reflections from random places.",
+        "Pick a band. The dips repeat every half wavelength: 6.2 cm at 2.4 GHz, 2.7 cm at 5.5 GHz and 2.3 cm at 6.5 GHz.",
+        "In One wall and Standing wave, pick the wall material (metal, thick concrete, drywall) or set the reflection strength yourself. Drag the receiver in the picture or on the plot, or use the slider, and watch the reflected arrow swing around the direct one.",
+        "In Many paths, set the number of reflectors and how far away they are, and press New layout for a different room. Move antenna A along the 2 m track and set how far antenna B sits from it, from 0 to 1 wavelength. The readout shows how often each antenna is more than 10 dB below the average and how often both are at once.",
+        "The delay list shows how late each copy arrives. A copy more than 0.8 microseconds late, about 240 m of extra path, spills past the guard interval into the next symbol."
+      ],
+      "inputs": [
+        {
+          "name": "Scene",
+          "unit": "One wall / Standing wave / Many paths",
+          "range": "default One wall"
+        },
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4, 5.5 or 6.5"
+        },
+        {
+          "name": "Wall material",
+          "unit": "reflection strength |Γ|",
+          "range": "Metal 1.0, Thick concrete 0.39, Drywall 0.1, or Custom 0 to 1"
+        },
+        {
+          "name": "Receiver position",
+          "unit": "cm",
+          "range": "0 to 100 along the track (One wall); 0 to 40 from the wall (Standing wave); 0 to 200 (Many paths)"
+        },
+        {
+          "name": "Reflectors",
+          "unit": "count",
+          "range": "2 to 30 (Many paths)"
+        },
+        {
+          "name": "Reflectors up to",
+          "unit": "m",
+          "range": "10, 60 or 300 (Many paths)"
+        },
+        {
+          "name": "Antenna B offset",
+          "unit": "wavelengths",
+          "range": "0 to 1 in steps of 0.05"
+        }
+      ],
+      "algorithm": "Each path adds a copy a · exp(-j k r) / r, where r is the path length, k = 2π/λ, and a is 1 for the direct copy or the reflection coefficient for a reflected one. Every wall reflects with a 180 degree phase flip. Power is 20 log10(|sum| / |direct alone|). One wall uses the image method: the reflected path is as long as a straight line from the access point's mirror image behind the wall. In Standing wave the reflected copy travels 2d further at distance d from the wall, so the copies cancel every λ/2. In Many paths each reflection gets equal power and a random phase, and power is shown against the average; theory (Rayleigh fading) says 1 - e^(-0.1), about 9.5%, of spots sit more than 10 dB below it. Extra delay = extra path / speed of light.",
+      "example": "At 2.4 GHz, λ = 12.49 cm, so in front of a metal wall the signal drops out every 6.2 cm. Thick concrete with |Γ| = 0.39 gives a swing of 20 log10(1.39 / 0.61) = 7.2 dB instead. A reflection that travels 240 m further arrives 240 / 299,792,458 s = 0.8 µs late, the length of the 802.11 OFDM guard interval.",
+      "fieldNotes": [
+        "The wall presets are one reflection strength each. A real wall reflects differently at different angles and bands; thick concrete's 0.39 is for a wave hitting it straight on.",
+        "Many paths blocks the direct copy on purpose. With a strong line-of-sight copy the dips are shallower and rarer than Rayleigh fading predicts.",
+        "A 2 m track at 2.4 GHz holds only a few dozen fades, so the histogram wanders around the Rayleigh curve. Longer tracks or new layouts average it out.",
+        "Layouts are seeded, so the same settings give the same room every time.",
+        "Only the delay list changes much when the reflectors move further away; the pattern along 2 m looks the same at any distance."
+      ],
+      "source": "Wave superposition, the two-ray (image) model and Rayleigh fading theory. Thick-concrete reflection strength from ITU-R P.2040 material properties at normal incidence. The guard interval is the 802.11 OFDM long guard interval. The simulation runs on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
