@@ -909,6 +909,74 @@
       ],
       "source": "47 CFR 15.407(h)(2) (eCFR, read directly); FCC KDB 905462 D02 as transcribed in an ICC test report (2018), secondhand; ETSI EN 301 893 V2.1.1 (2017) Tables D.1 and D.2, read directly. Channel numbers and edges from the Toolbox channel plan. Computed on your device."
     },
+    "mlo-simulator": {
+      "name": "Multi-Link Operation",
+      "category": "Calculators & Tools",
+      "purpose": "Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A client holds links on two or three bands, other networks keep each band busy part of the time, and a stream of frames arrives. Single link, STR, NSTR and EMLSR each send the frames their own way, and the tool shows each mode's mean and 99th-percentile latency, a latency histogram, and which links carried the frames.",
+      "whyHere": "MLO is often presented as a latency cure. The win is real when the links are about equally busy, because a frame can take whichever link frees up first. It shrinks when one link is much busier, and it can turn into a loss: a slow link that happens to be free first, or EMLSR paying its switch delays on every exchange. Real drivers also switch EMLSR off often, so a Wi-Fi 7 laptop is frequently on one link.",
+      "howToUse": [
+        "Pick a lesson, or set your own links, traffic and modes. Every change reruns all the modes on the same traffic; New random traffic draws a fresh sample with the same settings.",
+        "Read the lanes: one row per link, other networks' busy time shaded, and each frame placed where the chosen mode sent it, numbered in arrival order. EMLSR's lead-in and NSTR's padding are drawn hollow. Slide the view along the run.",
+        "Compare the histograms and the latency table. The verdict line says whether each mode beats the best single link or is worse than it.",
+        "Turn on EMLSR disabled by driver to see the fallback to one link, and raise the padding and transition delays to see EMLSR's switch cost."
+      ],
+      "inputs": [
+        {
+          "name": "Links",
+          "unit": "band",
+          "range": "2.4, 5 and 6 GHz, each on or off; at least one stays on. Default 5 and 6 GHz"
+        },
+        {
+          "name": "Busy",
+          "unit": "% of the time",
+          "range": "0 to 95 per link, in steps of 5; default 50"
+        },
+        {
+          "name": "Mean busy period",
+          "unit": "µs",
+          "range": "200, 500, 1,000 (default), 2,000 or 5,000 per link"
+        },
+        {
+          "name": "Frames per second",
+          "unit": "frames/s",
+          "range": "100 to 3,000 in steps of 100; default 1,000. 2,000 frames per run"
+        },
+        {
+          "name": "Frame airtime",
+          "unit": "µs",
+          "range": "Fixed: 100 to 2,000, default 300, the same on every link. Or from Airtime Anatomy: HE MCS 0 to 11 (default 7) and 1, 8 or 32 frames per A-MPDU"
+        },
+        {
+          "name": "Modes to compare",
+          "unit": "on/off",
+          "range": "STR, NSTR and EMLSR; all on by default. Single link is always shown"
+        },
+        {
+          "name": "EMLSR padding delay",
+          "unit": "µs",
+          "range": "0, 32, 64 (default), 128 or 256"
+        },
+        {
+          "name": "EMLSR transition delay",
+          "unit": "µs",
+          "range": "0, 16, 32, 64 (default), 128 or 256"
+        },
+        {
+          "name": "EMLSR disabled by driver",
+          "unit": "on/off",
+          "range": "off by default; needs two or more links"
+        }
+      ],
+      "algorithm": "Frames arrive at random (exponential gaps). Each link carries other networks' traffic: busy periods and idle gaps of random, exponentially distributed length, set by the busy fraction and mean busy period, seeded so every mode sees the same traffic. A frame starts the moment its link is idle; anyone due to start while it is on the air waits and goes right after it. Single link: first in, first out on one link. STR: each link sends on its own, and a frame takes whichever link is free first. NSTR: frames start together and end together; frames already waiting join on other idle links and are padded to the longest airtime. EMLSR: one exchange at a time on whichever link is free first; each opens with an initial control frame (sized as an RTS and CTS at 24 Mbps, a lower bound) plus the padding delay, and the next waits out the transition delay. Latency is from arrival to the end of the frame's own airtime. A mode is overloaded when more than 5% of frames have not started by the time the last one arrives. Airtime Anatomy mode uses one TXOP (AIFS, average backoff, preamble, data, SIFS, Block Ack) at HE, 2 streams, 1500-byte frames, 20 MHz on 2.4 GHz, 80 MHz on 5 GHz and 160 MHz on 6 GHz.",
+      "example": "The Two equal links lesson (5 and 6 GHz, each 50% busy, 300 µs frames, 1,000 per second, first traffic sample): single link means are 2.01 ms on 5 GHz and 1.74 ms on 6 GHz; STR averages 583 µs, NSTR 621 µs and EMLSR 1.49 ms. In the Slow 2.4 GHz link lesson (8-frame A-MPDUs, 794 µs on 2.4 GHz and 291 µs on 6 GHz), STR averages 462 µs, worse than 428 µs on 6 GHz alone, because some frames take the slow link just because it was free first.",
+      "fieldNotes": [
+        "The one published MLO latency study (Carrascosa, Geraci, Knightly and Bellalta, IEEE ICC 2022) is a model built on real traffic, not a field measurement: it replays measured 5 GHz channel occupancy. It found an order-of-magnitude latency win when the links are equally busy, and cases where MLO is worse when they are not. We found no independent latency measurement on Wi-Fi 7 hardware (research as of September 2026).",
+        "Intel's Linux driver leaves EMLSR for reasons that include low signal, Bluetooth coexistence, channel load, link usage and missed beacons, and after some of them it will not re-enter for 300 or 600 seconds.",
+        "EMLMR (moving extra radio chains to one link) is described but not simulated.",
+        "Not modeled: collisions, retries, uplink traffic, more than one frame or A-MPDU per exchange, and EHT (320 MHz, 4096-QAM). HE timing stands in for EHT. With EMLSR switched off, the model keeps the least busy link; a real driver picks by its own rules."
+      ],
+      "source": "Mode definitions: the IEEE TGbe email archive (EMLSR and EMLMR, October 2022) and Rohde & Schwarz's 802.11be white paper (STR), secondhand for 802.11be-2024 itself. EMLSR padding and transition delay values as listed in the Linux kernel header include/linux/ieee80211-eht.h, which cites 802.11be-2024 Tables 9-417j and 9-417l. Intel driver behavior from iwlwifi/mld/mlo.c. Latency study: arXiv 2111.09281. Airtime from the Toolbox's Airtime Anatomy calculator. Computed on your device."
+    },
     "spatial-reuse": {
       "name": "Spatial Reuse",
       "category": "Calculators & Tools",
