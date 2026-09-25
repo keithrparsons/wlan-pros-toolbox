@@ -150,11 +150,14 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     regulatorName: 'Innovation, Science and Economic Development Canada',
     abbreviation: 'ISED',
     websiteUrl: 'https://ised-isde.canada.ca',
-    governingDocs: 'RSS-247 (2.4 / 5 GHz LE-LAN); RSS-248 Issue 3 (6 GHz RLAN)',
+    governingDocs:
+        'RSS-247 Issue 4 (2.4 / 5 GHz LE-LAN); RSS-248 Issue 3 (6 GHz RLAN)',
     bandNotes:
-        '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
-        '6 GHz FULL (5925-7125): LPI + VLP, SP via AFC. RSS-248 Issue 3 '
-        '(2024-10-11) supersedes Issue 2.',
+        '2.4 GHz ch 1-11. 5 GHz UNII-1 (indoor, 200 mW EIRP)/2A/2C/3 (DFS on '
+        '2A/2C; 5600-5650 reopened by RSS-247 Iss. 4, 2025) + UNII-4 '
+        '(5850-5895: indoor, and fixed outdoor, since RSS-247 Iss. 3, 2023). '
+        '6 GHz FULL (5925-7125): LPI + VLP; SP via AFC on 5925-6875 (AFC live '
+        'since 2023). RSS-248 Issue 3 (2024-10-11) supersedes Issue 2.',
   ),
   RegulatoryDomain(
     jurisdiction: 'European Union (CEPT/ETSI bloc)',

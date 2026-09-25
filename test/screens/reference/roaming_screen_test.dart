@@ -78,14 +78,17 @@ void main() {
       final RoamingThreshold data = RoamingScreen.kThresholds.firstWhere(
         (RoamingThreshold r) => r.scenario == 'Standard data design target',
       );
-      // VoIP target: ≥ −67 dBm / ≥ 25 dB / < 50 ms with 802.11r.
+      // VoIP target: ≥ −67 dBm / ≥ 25 dB / < 50 ms with FT, a convention
+      // (IEEE TGr submission 11-04/0989), not a requirement.
       expect(voip.minRssi, '≥ −67 dBm');
       expect(voip.minSnr, '≥ 25 dB');
-      expect(voip.roamLatency, '< 50 ms (with 802.11r)');
+      expect(voip.roamLatency, '< 50 ms (FT; convention)');
       expect(voip.grade, RoamGrade.good);
-      // Standard data target: ≥ −70 dBm / ≥ 20 dB / < 150 ms.
+      // Standard data target: ≥ −70 dBm / ≥ 20 dB. The old < 150 ms was the
+      // ITU-T G.114 voice budget, not a published roam target for data.
       expect(data.minRssi, '≥ −70 dBm');
       expect(data.minSnr, '≥ 20 dB');
+      expect(data.roamLatency, 'no published target');
     });
 
     test('sticky-client and unusable rows grade as bad', () {

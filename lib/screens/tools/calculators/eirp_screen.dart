@@ -444,15 +444,23 @@ class _EirpScreenState extends State<EirpScreen> {
 
   Widget _referenceCard(TextTheme text, AppMonoText mono) {
     final AppColorScheme colors = context.colors;
-    // Compact regulatory EIRP ceilings, common Wi-Fi planning anchors. Figures
-    // are widely-cited band maxima for point-to-multipoint client access; exact
-    // limits vary by sub-band, channel width, and power-control rules. ASCII
-    // hyphen-minus (U+002D) to match the converter's rendered output (Vera F-08).
+    // Compact regulatory EIRP ceilings, common Wi-Fi planning anchors. Each
+    // context cell names the device class (AP or client) where the limit
+    // differs by class; exact limits vary by sub-band, channel width, and
+    // power-control rules. ASCII hyphen-minus (U+002D) to match the
+    // converter's rendered output (Vera F-08).
+    // 5 GHz rows corrected 2026-09-25 (Pax, reference-accuracy pass 2):
+    // FCC U-NII-1/3 AP = 1 W conducted + 6 dBi (47 CFR 15.407(a)(1),(a)(3));
+    // +30 dBm is the U-NII-1 client and U-NII-2A/2C figure ((a)(1)(iv), (a)(2));
+    // ETSI EN 301 893 Table 2: 5470-5725 MHz 30 dBm with TPC, 5150-5350 MHz
+    // 23 dBm. The old "ETSI 5.8 GHz, 1 W" row matched no EU RLAN limit.
     final List<List<String>> refs = const [
       ['2.4 GHz', '+36 dBm', 'FCC PtMP, 4 W EIRP'],
       ['2.4 GHz', '+20 dBm', 'ETSI, 100 mW EIRP'],
-      ['5 GHz', '+30 dBm', 'FCC U-NII-1, 1 W EIRP (typ.)'],
-      ['5 GHz', '+30 dBm', 'ETSI 5.8 GHz, 1 W EIRP'],
+      ['5 GHz', '+36 dBm', 'FCC U-NII-1/3 AP, 1 W cond. + 6 dBi'],
+      ['5 GHz', '+30 dBm', 'FCC U-NII-2A/2C, or U-NII-1 client'],
+      ['5 GHz', '+30 dBm', 'ETSI 5470-5725 MHz, 1 W EIRP w/ TPC'],
+      ['5 GHz', '+23 dBm', 'ETSI 5150-5350 MHz, 200 mW EIRP'],
       ['6 GHz', '+36 dBm', 'FCC 6 GHz SP, 4 W EIRP'],
     ];
 
