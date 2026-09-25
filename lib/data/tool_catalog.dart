@@ -1007,6 +1007,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'six-ghz-psd',
+        title: '6 GHz Power and PSD',
+        description:
+            'See why 6 GHz power is limited per MHz: EIRP and SNR against '
+            'channel width for LPI, VLP, Standard Power and GVP, US and EU',
+        routeName: '/tools/six-ghz-psd',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
