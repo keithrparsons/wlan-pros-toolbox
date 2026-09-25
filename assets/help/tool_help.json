@@ -614,6 +614,62 @@
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
+    "ofdma-simulator": {
+      "name": "OFDMA Resource Units",
+      "category": "Calculators & Tools",
+      "purpose": "Shows how 802.11ax OFDMA splits one channel into resource units (RUs) so an access point can talk to several clients in one transmission. You place clients into RUs across the channel, then compare the airtime of one frame per client sent as separate single-user transmissions with one downlink OFDMA and one uplink OFDMA transmission, all drawn to the same microsecond scale.",
+      "whyHere": "OFDMA is often sold as a faster PHY. It is not. For small frames the win comes from paying for contention, the preamble and the acknowledgment once for everyone instead of once per client. Seeing the timelines side by side shows where the time goes, and why one client with a large frame gains nothing.",
+      "howToUse": [
+        "Read the channel strip. Each block is one client's RU, with its letter and color. Hatched slots are center 26-tone RUs, which only a 26-tone RU can µse.",
+        "Move a client by dragging it along the channel, or tap it and then tap one of the dashed outlines: those are the free spots the tone plan offers for its RU size. With a keyboard, focus a client and µse the arrow keys.",
+        "Set the channel width, the number of clients, the frame size and the MCS. Under Resource units, pick a client (or All clients) and its RU size. Largest equal RUs gives every client the biggest RU that fits; Re-pack moves them all to the low edge.",
+        "Read the three timelines. SU is one full transmit opportunity per client. DL OFDMA is one transmission from the access point. UL OFDMA starts with a trigger frame and ends with one Multi-STA BlockAck. Each client's color follows its data.",
+        "Direction picks which OFDMA timeline the readouts compare with SU. The readouts give each total, the SU / OFDMA ratio, and a line naming what was saved: contention, preambles, or triggers, acks and SIFS.",
+        "Tap Show the arithmetic for every segment's formula. Values that are estimates carry an Assumption tag, and the Assumptions card lists them all."
+      ],
+      "inputs": [
+        {
+          "name": "Direction",
+          "unit": "",
+          "range": "Downlink (AP to clients) or Uplink (clients to AP)"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80 or 160"
+        },
+        {
+          "name": "Clients",
+          "unit": "count",
+          "range": "1 to 9 at 20 MHz; up to 18 at 40 MHz and wider"
+        },
+        {
+          "name": "Frame size per client",
+          "unit": "bytes",
+          "range": "64 to 1,500; default 200"
+        },
+        {
+          "name": "MCS",
+          "unit": "HE MCS",
+          "range": "0 to 11, the same for every client; MCS 10 and 11 need a 242-tone RU or larger"
+        },
+        {
+          "name": "RU size",
+          "unit": "tones",
+          "range": "26, 52, 106, 242, 484, 996 or 2x996, where the channel is wide enough"
+        }
+      ],
+      "algorithm": "RUs per width: 26-tone 9/18/37/74, 52-tone 4/8/16/32, 106-tone 2/4/8/16, 242-tone 1/2/4/8, 484-tone -/1/2/4, 996-tone -/-/1/2, 2x996 only at 160 MHz; data tones 24, 48, 102, 234, 468, 980, 1960. SU: each client gets one HE single-user TXOP from the Airtime Anatomy model (AIFS 43 + average backoff 67.5 + preamble + data + SIFS 16 + a 32-byte Block Ack at 24 Mbps). DL OFDMA: one AIFS and backoff, an HE MU preamble (20 + RL-SIG 4 + HE-SIG-A 8 + HE-SIG-B + HE-STF 4 + HE-LTF 7.2), data set by the slowest RU at 13.6 µs per symbol, SIFS, then every client's Block Ack together in one HE TB PPDU. UL OFDMA: one AIFS and backoff, a Basic trigger frame (16 + 8 + 6 per µser + 4 bytes at 24 Mbps), SIFS, one HE TB PPDU (preamble 48 µs with an 8 µs HE-STF, data at 14.4 µs per symbol), SIFS, and a Multi-STA BlockAck. Data bits per symbol on an RU = data tones x bits per subcarrier x coding rate, rounded down; symbols = ceil((16 + 8 x subframe bytes) / that).",
+      "example": "Four clients, one 200-byte frame each, 20 MHz, MCS 7, one stream. Sent one at a time, each TXOP is 228.9 µs, so four take 915.6 µs. With four 52-tone RUs, DL OFDMA takes 403.3 µs and UL OFDMA 408.1 µs: about 2.2 times less airtime. The saving is three fewer contentions, three fewer preambles and fewer acknowledgments; the data itself takes 13.6 µs longer on the narrower RUs.",
+      "fieldNotes": [
+        "A teaching estimate: one frame per client, no collisions or retries, the average backoff, best-effort access, one spatial stream, control frames at 24 Mbps.",
+        "Estimates, each labeled on screen: the HE-SIG-B length (computed from assumed field sizes), the rate of the downlink block acks, the trigger frame size, the Multi-STA BlockAck size, and the Block Ack after each single-user frame.",
+        "The channel strip draws RUs in tone-plan order with every 26-tone slot the same width. Guard, DC and leftover tones are not drawn, and positions are logical, not exact subcarrier numbers.",
+        "Real access points also schedule, send buffer status reports and sound the channel. None of that is modeled here.",
+        "With one client on a full-channel RU, OFDMA is slightly slower than single µser: the longer preamble and the triggered acknowledgment cost time and there is no one to share them with."
+      ],
+      "source": "RU counts and tone splits, HE TB PPDU timing, the trigger frame and the Multi-STA BlockAck from the WLAN Pros Wi-Fi Lab research brief (secondhand 802.11ax sources: Wikipedia Resource Unit, Clear To Send, Cisco, MathWorks). HE single-user timing from the Airtime Anatomy model (IEEE 802.11ax-2021 clause 27 TXTIME). Computed on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",

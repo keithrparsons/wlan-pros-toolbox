@@ -1290,6 +1290,36 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'simulator',
   ],
+  // Wi-Fi Lab (2026-09-25). What the OFDMA simulator shows, in the words a
+  // student would search with (GL-005).
+  'ofdma-simulator': <String>[
+    'ofdma',
+    'resource unit',
+    'resource units',
+    'ru',
+    'tone',
+    'subcarrier',
+    '26-tone',
+    '52-tone',
+    '106-tone',
+    '242-tone',
+    'multi-user',
+    'mu',
+    'downlink ofdma',
+    'uplink ofdma',
+    'trigger frame',
+    'he tb ppdu',
+    'he mu ppdu',
+    'he-sig-b',
+    'multi-sta blockack',
+    'block ack',
+    'airtime',
+    'overhead',
+    '802.11ax',
+    'wi-fi 6',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[
