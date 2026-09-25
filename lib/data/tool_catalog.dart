@@ -1050,6 +1050,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'ofdma-simulator',
+        title: 'OFDMA Resource Units',
+        description:
+            'Fit clients into resource units across the channel, then compare '
+            'one OFDMA transmission with one frame per client, drawn to scale',
+        routeName: '/tools/ofdma-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
