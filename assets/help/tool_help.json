@@ -258,6 +258,70 @@
       ],
       "source": "IEEE 802.11 channel access rules (DCF and EDCA, clause 10) and OFDM PHY timing (clause 17), with the default EDCA parameters for a non-AP station. The simulation runs on your device."
     },
+    "fspl-simulator": {
+      "name": "FSPL Simulator",
+      "category": "Calculators & Tools",
+      "purpose": "Draws free-space path loss, or the received power it leaves, against distance for 2.4, 5 and 6 GHz on one chart. A cursor reads out each band at any distance, and a Why panel splits each band's loss into the part every band shares and the part that changes with frequency.",
+      "whyHere": "Higher bands lose more at the same distance, and the common explanation (the air absorbs 6 GHz more) is wrong. The extra loss comes from the receive antenna: a shorter wavelength makes a smaller antenna that catches less energy. Seeing the two parts side by side makes that stick, and a measured point shows how far a real room sits from the free-space best case.",
+      "howToUse": [
+        "Turn bands on and off with the chips at the bottom of the screen (on a wide screen, the panel on the right). Each band has its own line style: 2.4 GHz solid with a circle, 5 GHz dashed with a square, 6 GHz dotted with a triangle.",
+        "Drag across the chart or tap it to move the cursor, or use the Cursor slider under it. The table under the chart shows path loss and received power for each band at that distance, and the difference between bands.",
+        "Switch the chart between Received and Path loss, and the distance axis between 100 m and 1 km. In the Received view, dashed lines mark the -67 dBm voice and -70 dBm HD video design targets from the Signal Thresholds tool.",
+        "Open the controls (the tune button) to pick any 20 MHz channel per band, set Tx power, both antenna gains and other losses, turn on the indoor log-distance model and set its exponent, or enter a measured RSSI and the distance it was taken at. The measured point plots as a diamond with its gap to the free-space curve in dB."
+      ],
+      "inputs": [
+        {
+          "name": "Bands",
+          "unit": "on / off",
+          "range": "2.4, 5 and 6 GHz, all on by default"
+        },
+        {
+          "name": "Channel",
+          "unit": "20 MHz channel number",
+          "range": "any 20 MHz channel in the band; defaults 6 (2437 MHz), 100 (5500 MHz), 37 (6135 MHz)"
+        },
+        {
+          "name": "Tx power",
+          "unit": "dBm",
+          "range": "0 to 30; default 20"
+        },
+        {
+          "name": "Tx and Rx antenna gain",
+          "unit": "dBi",
+          "range": "-5 to 15; default 0 (isotropic)"
+        },
+        {
+          "name": "Other losses",
+          "unit": "dB",
+          "range": "0 to 30; default 0"
+        },
+        {
+          "name": "Path-loss exponent n",
+          "unit": "none",
+          "range": "2.0 to 4.0; default 3.0; indoor model only"
+        },
+        {
+          "name": "Measured RSSI",
+          "unit": "dBm",
+          "range": "-120 to 0"
+        },
+        {
+          "name": "Measured distance",
+          "unit": "m",
+          "range": "1 to 1,000"
+        }
+      ],
+      "algorithm": "FSPL (dB) = 20 log10(4 pi d / lambda), with lambda = c / f and c = 299,792,458 m/s. With d in metres and f in MHz this is 20 log10(d) + 20 log10(f) - 27.55. It splits exactly into spreading loss 10 log10(4 pi d^2), the same at every frequency, plus the aperture term -10 log10(lambda^2 / 4 pi), which depends only on frequency. Received power = Tx power + Tx gain + Rx gain - path loss - other losses. The band difference at equal distance is 20 log10(f2 / f1). The indoor model is PL(d) = FSPL(1 m) + 10 n log10(d / 1 m).",
+      "example": "At 10 m on channel 6 (2437 MHz): spreading loss 10 log10(4 pi x 100) = 31.0 dB, aperture term 29.2 dB, total 60.2 dB. With 20 dBm Tx and 0 dBi antennas the received power is -40.2 dBm. Channel 100 (5500 MHz) loses 20 log10(5500 / 2437) = 7.1 dB more at every distance, and all of that difference is in the aperture term.",
+      "fieldNotes": [
+        "Free space is the best case: no walls, no floor reflection, no people, no fading. Real indoor readings are usually well below the curve.",
+        "Every doubling of distance costs 6 dB, so going from 1 m to 2 m costs as much as going from 50 m to 100 m.",
+        "The indoor overlay is a model with an exponent you choose, not a measurement. n = 2 reproduces free space.",
+        "The aperture term assumes an isotropic (0 dBi) receive antenna. A higher-gain antenna has a larger effective area and wins some of the difference back.",
+        "Measured points are typed in by hand. Nothing is read from the Wi-Fi adapter."
+      ],
+      "source": "The Friis transmission equation and the free-space path loss formula derived from it. Design targets are read from this app's Signal Thresholds tool. Everything is calculated on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",

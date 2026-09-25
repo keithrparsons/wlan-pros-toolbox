@@ -1136,6 +1136,26 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'half duplex',
     'simulation',
   ],
+  // Wi-Fi Lab (2026-09-25). Terms not already in the title or description.
+  'fspl-simulator': <String>[
+    'free space path loss',
+    'friis',
+    'inverse square',
+    '6 db per doubling',
+    'wavelength',
+    'effective aperture',
+    'antenna aperture',
+    'isotropic',
+    'received power',
+    'rssi',
+    'link budget',
+    'log-distance',
+    'path loss exponent',
+    'indoor propagation',
+    'band comparison',
+    '2.4 vs 5 vs 6 ghz',
+    'simulation',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[
