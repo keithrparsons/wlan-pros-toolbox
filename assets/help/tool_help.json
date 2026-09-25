@@ -322,6 +322,48 @@
       ],
       "source": "The Friis transmission equation and the free-space path loss formula derived from it. Design targets are read from this app's Signal Thresholds tool. Everything is calculated on your device."
     },
+    "airtime-fairness": {
+      "name": "Airtime Fairness",
+      "category": "Calculators & Tools",
+      "purpose": "Shows why one slow client drags every fast client down under plain Wi-Fi contention, and how airtime fairness fixes it. Build a cell of 1 to 8 clients, then compare packet fairness (every client gets the same number of turns) with airtime fairness (every client gets the same share of time).",
+      "whyHere": "A PHY rate is not a throughput. Every turn on the air pays a fixed overhead before any data moves, and under plain contention a 6 Mbps client holds the air for milliseconds each turn while an 867 Mbps client needs well under one. Seeing the airtime share and the throughput side by side explains the performance anomaly and why APs offer airtime fairness.",
+      "howToUse": [
+        "Pick the sharing rule: Packet, Airtime, or Compare to see both. The line under the switch states the result in numbers and changes as you edit.",
+        "Read the airtime share bar (who holds the air), the throughput bars (what each client and the whole cell get), and the round (each transmission drawn as wide as its airtime, with the overhead outlined and the frames filled). Replay round runs the animation again.",
+        "Edit the clients: a PHY rate from the presets or a custom rate, and the number of frames sent per turn (aggregation). Legacy clients send one frame per turn. Add up to 8 clients, and change the payload per frame to see small frames waste the air."
+      ],
+      "inputs": [
+        {
+          "name": "Clients",
+          "unit": "count",
+          "range": "1 to 8; default three at 867 Mbps with 32 frames per turn plus one legacy client at 6 Mbps"
+        },
+        {
+          "name": "PHY rate",
+          "unit": "Mbps",
+          "range": "6, 24, 54 (legacy); 150, 300 (HT); 433, 867 (VHT); 600, 1201 (HE); or a custom rate from 1 to 10,000 with a legacy or HT-or-newer preamble"
+        },
+        {
+          "name": "Frames per turn",
+          "unit": "frames",
+          "range": "1 to 64; always 1 for legacy clients"
+        },
+        {
+          "name": "Payload per frame",
+          "unit": "bytes",
+          "range": "64 to 1,500; default 1,500"
+        }
+      ],
+      "algorithm": "Airtime of one turn T = AIFS 43 µs + average backoff 67.5 µs + preamble (20 µs legacy, 40 µs HT or newer) + SIFS 16 µs + ACK 28 µs (or Block Ack 32 µs when frames are aggregated) + 8 x frames x (payload + 34) / rate. Packet fairness: each client gets one turn per round, so throughput = 8 x frames x payload / (sum of every client's T). Airtime fairness: each client gets 1/N of the time, so throughput = (1/N) x 8 x frames x payload / T. The total is the sum over clients.",
+      "example": "Defaults: an 867 Mbps client sending 32 frames takes about 651 µs per turn; the 6 Mbps client sending one frame takes about 2.22 ms. Under packet fairness the round lasts about 4.17 ms and the slow client holds 53% of it, so each fast client gets 92.0 Mbps, the slow one 2.87 Mbps, 278.9 Mbps in total. Under airtime fairness each client holds 25% of the air: the fast clients get 147.4 Mbps each, the slow one 1.35 Mbps, 443.4 Mbps in total.",
+      "fieldNotes": [
+        "This is a teaching model: one AP sending downlink to every client, every client always has data waiting, no collisions, no retries and no rate adaptation. Airtime Anatomy does the exact per-PHY airtime.",
+        "The 40 µs preamble is one teaching value for HT, VHT and HE. Real preambles vary with the PHY, the number of streams and the frame format.",
+        "The limits on how many frames or bytes one aggregate may carry are not enforced.",
+        "Airtime fairness costs the slow client throughput. That is the point: it stops paying for its slow turns with everyone else's time."
+      ],
+      "source": "IEEE 802.11 EDCA and OFDM timing, and M. Heusse, F. Rousseau, G. Berger-Sabbatel and A. Duda, Performance Anomaly of 802.11b, IEEE INFOCOM 2003. The calculation runs on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
