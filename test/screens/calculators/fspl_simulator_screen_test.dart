@@ -86,7 +86,7 @@ void main() {
     expect(e.subgroup, 'Wi-Fi Lab');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/fspl-simulator');
-    expect(rf.tools[i - 1].id, 'medium-access-simulator');
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab'); // shelf, not slot (2026-09-25 merge)
     // The two-input calculator is a separate, untouched entry.
     expect(
       kToolCategories.any(

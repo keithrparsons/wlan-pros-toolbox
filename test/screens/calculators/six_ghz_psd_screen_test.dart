@@ -74,7 +74,7 @@ Future<void> _toggleClass(WidgetTester tester, String label) async {
 }
 
 void main() {
-  test('catalog registers six-ghz-psd in Wi-Fi Lab after the wall tool', () {
+  test('catalog registers six-ghz-psd in Wi-Fi Lab', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -87,7 +87,7 @@ void main() {
     expect(e.subgroup, 'Wi-Fi Lab');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/six-ghz-psd');
-    expect(rf.tools[i - 1].id, 'wifi-through-a-wall');
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab'); // shelf, not slot (2026-09-25 merge)
   });
 
   test('MCS steps are read from Signal Thresholds, MCS 0 at 5 dB', () {
