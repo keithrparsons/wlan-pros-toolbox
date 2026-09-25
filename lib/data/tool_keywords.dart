@@ -1558,6 +1558,38 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'channel 144',
     'outage',
   ],
+  // Wi-Fi Lab (2026-09-25). Power Save: what a student types when a phone's
+  // battery drains on Wi-Fi, a sensor misses broadcasts, or a call stutters.
+  'power-save': <String>[
+    'power save',
+    'power saving',
+    'battery',
+    'battery life',
+    'sleep',
+    'doze',
+    'beacon interval',
+    'tu',
+    'time unit',
+    'dtim',
+    'dtim period',
+    'tim',
+    'listen interval',
+    'ps-poll',
+    'pspoll',
+    'u-apsd',
+    'uapsd',
+    'wmm power save',
+    'max sp length',
+    'qos info',
+    'service period',
+    'twt',
+    'target wake time',
+    'broadcast twt',
+    'individual twt',
+    'iot',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Wi-Fi Lab (2026-09-25). What the 802.1X ladder shows, in the words a
   // student would search with.
   'eap-ladder': <String>[
