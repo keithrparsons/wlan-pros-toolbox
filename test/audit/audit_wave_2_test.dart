@@ -1165,7 +1165,7 @@ void main() {
       expect(band24.overlap.contains('~60 MHz'), isFalse);
     });
 
-    test('802.11r roam-latency figures are hedged as design guidance', () {
+    test('802.11r note carries no unsourced roam-latency figures', () {
       // Finding A: <50 / >150 ms is a practitioner convention, not a standards
       // target (802.11 defines no roaming-time requirement).
       final String allNotes = FrameExchangeScreen.scenarios
@@ -1173,8 +1173,13 @@ void main() {
           .expand((FxPhase p) => p.frames)
           .map((FxFrame f) => f.note)
           .join(' ');
-      // The figure now appears only as hedged design guidance.
-      expect(allNotes, contains('design guide'));
+      // 2026-09-25: the hedged <50 / >150 ms figures had no measurement behind
+      // them either, so they are gone. The note now says what is supported:
+      // scanning dominates roam delay (Mishra, Shin and Arbaugh 2003), and FT
+      // does not shorten scanning.
+      expect(allNotes.contains('~50 ms'), isFalse);
+      expect(allNotes.contains('~150 ms'), isFalse);
+      expect(allNotes, contains('Mishra, Shin and Arbaugh'));
       expect(allNotes.contains('roam latency < 50 ms with 802.11r vs > 150 ms'),
           isFalse,
           reason: 'the old unhedged assertion must not survive');

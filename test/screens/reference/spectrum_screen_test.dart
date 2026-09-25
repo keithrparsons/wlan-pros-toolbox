@@ -62,11 +62,26 @@ void main() {
       expect(b.total, '1200 MHz');
     });
 
-    test('6 GHz lists 14 PSC channels and AFC (no DFS)', () {
+    test('6 GHz lists 15 PSC channels and AFC (no DFS)', () {
       final SpectrumBandInfo b = bandOf(SpectrumBand.ghz6);
-      expect(b.nonOverlap, contains('14 PSC'));
+      // 15 PSCs (5, 21, ... 229), matching k6Psc in channel_frequency_data.
+      // This test pinned the wrong count (14) until 2026-09-25.
+      expect(b.nonOverlap, contains('15 PSC'));
+      expect(b.nonOverlap.contains('14 PSC'), isFalse);
       expect(b.dfs, contains('No DFS'));
       expect(b.dfs, contains('AFC'));
+    });
+
+    test('6 GHz: four US power modes incl. GVP; AFC for every SP AP', () {
+      final SpectrumBandInfo b = bandOf(SpectrumBand.ghz6);
+      // 47 CFR 15.407(a)(4),(5),(7),(9): SP, LPI, GVP, VLP.
+      expect(b.notes, contains('Four power modes in US'));
+      expect(b.notes, contains('Geofenced Variable Power'));
+      expect(b.notes.contains('Three power modes'), isFalse);
+      // 15.407(k)(1): AFC is required for every Standard Power AP, indoor or
+      // outdoor, so no fact may scope AFC to outdoor use.
+      expect(b.notes.contains('AFC outdoors'), isFalse);
+      expect(b.dfs, contains('indoor or outdoor'));
     });
 
     test('every band exposes all eight fact rows in PWA order', () {

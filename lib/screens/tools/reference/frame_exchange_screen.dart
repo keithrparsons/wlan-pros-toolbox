@@ -1223,15 +1223,15 @@ const List<FxScenario> _kScenarios = <FxScenario>[
             label: 'FT Reassociation Response',
             type: FxType.mgmt,
             note:
-                // Hedged (Wave-2 finding A): the <50 / >150 ms figures are a
-                // practitioner design convention, not a standards requirement -
-                // 802.11 defines no roaming-time target. Framed as guidance the
-                // way the roaming-thresholds table already does.
-                'Status = 0. STA is now associated to AP2. As a rough design '
-                'guide (not a standards guarantee - 802.11 sets no roaming-time '
-                'target), 802.11r roams typically finish in well under ~50 ms '
-                'versus ~150 ms or more without it; actual times vary by client, '
-                'controller, and RF. '
+                // 2026-09-25: the <50 / >150 ms figures had no measurement
+                // behind them and are removed. What is sourced: scanning was
+                // over 90% of measured handoff delay (Mishra, Shin and Arbaugh,
+                // ACM SIGCOMM CCR 33(2), 2003), and FT does not shorten it.
+                'Status = 0. STA is now associated to AP2. FT removes the full '
+                '802.1X exchange from the roam; it does not shorten the scan. '
+                'In measured handoffs, scanning for the next AP was over 90% of '
+                'the delay (Mishra, Shin and Arbaugh 2003), and 802.11k neighbor '
+                'reports are what shorten that part. '
                 'Over-the-DS variant: instead of the FT Auth frames above going '
                 'over the air to AP2, the STA sends an FT Action Request to its '
                 'CURRENT AP, which relays it to the target AP through the '

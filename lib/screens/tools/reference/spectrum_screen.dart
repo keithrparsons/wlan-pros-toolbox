@@ -181,18 +181,19 @@ class SpectrumScreen extends StatefulWidget {
           '59 × 20 MHz · 29 × 40 MHz · 14 × 80 MHz · 7 × 160 MHz · '
           '3 × 320 MHz (Wi-Fi 7)',
       nonOverlap:
-          '59 non-overlapping at 20 MHz · 14 PSC (Preferred Scanning '
+          '59 non-overlapping at 20 MHz · 15 PSC (Preferred Scanning '
           'Channels) for APs',
       widths: '20 / 40 / 80 / 160 MHz (Wi-Fi 6E) · + 320 MHz (Wi-Fi 7)',
       dfs:
           'No DFS - incumbent protection via AFC (Automated Frequency '
-          'Coordination) for standard-power outdoor',
+          'Coordination) for every standard-power AP, indoor or outdoor',
       coexist: 'Fixed microwave backhaul links (managed via AFC database)',
       notes:
-          'Three power modes in US: Standard Power (up to 36 dBm EIRP, '
-          'requires AFC outdoors) · Low Power Indoor / LPI (up to 30 dBm, no '
-          'AFC) · Very Low Power / VLP (up to 14 dBm EIRP, no AFC, mobile '
-          'use). No '
+          'Four power modes in US: Standard Power (up to 36 dBm EIRP, '
+          'requires AFC indoors and outdoors) · Low Power Indoor / LPI (up to '
+          '30 dBm, no AFC) · Very Low Power / VLP (up to 14 dBm EIRP, no AFC, '
+          'mobile use) · Geofenced Variable Power / GVP (up to 24 dBm EIRP, '
+          'U-NII-5 and U-NII-7 only). No '
           'legacy Wi-Fi 4 or older devices - WPA3 mandatory.',
     ),
   ];

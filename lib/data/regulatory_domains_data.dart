@@ -139,9 +139,10 @@ const List<RegulatoryDomain> kRegulatoryDomains = <RegulatoryDomain>[
     websiteUrl: 'https://www.fcc.gov',
     governingDocs: '47 CFR 15.247 (2.4 / 5.8 ISM); 15.407 (UNII incl. 6 GHz)',
     bandNotes:
-        '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C). '
-        '6 GHz FULL (5925-7125): LPI + VLP unlicensed, SP via AFC. Defines the '
-        'FCC-aligned reference family.',
+        '2.4 GHz ch 1-11. 5 GHz UNII-1/2A/2C/3 (DFS on 2A/2C) + UNII-4 '
+        '(5850-5895, indoor). 6 GHz FULL (5925-7125): LPI + VLP unlicensed, SP '
+        'via AFC, GVP (geofenced, UNII-5/7). Defines the FCC-aligned reference '
+        'family.',
   ),
   RegulatoryDomain(
     jurisdiction: 'Canada',

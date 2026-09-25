@@ -49,6 +49,28 @@ void main() {
       expect(v.name, 'BSS Transition Management');
     });
 
+    test('802.11k Neighbor Report lists no RSSI field', () {
+      // The Neighbor Report element carries BSSID, BSSID Information,
+      // operating class, channel number and PHY type. It has no RSSI field.
+      final RoamingProtocol k = RoamingScreen.kProtocols.firstWhere(
+        (RoamingProtocol p) => p.proto == '802.11k',
+      );
+      expect(k.what.contains('RSSI'), isFalse);
+      expect(k.what, contains('BSSID'));
+      expect(k.what, contains('operating class'));
+      expect(k.what, contains('PHY type'));
+    });
+
+    test('802.11r carries no unsourced latency figures', () {
+      final RoamingProtocol ft = RoamingScreen.kProtocols.firstWhere(
+        (RoamingProtocol p) => p.proto == '802.11r',
+      );
+      expect(ft.what.contains('150 ms'), isFalse);
+      expect(ft.what.contains('50 ms'), isFalse);
+      expect(ft.what, contains('802.1X'));
+      expect(ft.what, contains('scanning'));
+    });
+
     test('roam-trigger RSSI design targets match the PWA thresholds', () {
       final RoamingThreshold voip = RoamingScreen.kThresholds.firstWhere(
         (RoamingThreshold r) => r.scenario == 'VoIP / UC design target',

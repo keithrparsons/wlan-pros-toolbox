@@ -92,6 +92,9 @@ class RoamingScreen extends StatelessWidget {
   // rendered as hyphens here per the no-em-dash rule; the PWA's own minus signs
   // (U+2212) in the dBm values and its em-dash "no value" cell marker are kept
   // exactly as the PWA paints them so the reference reads identically.
+  // Exception (2026-09-25): the 802.11r and 802.11k `what` text departs from
+  // the PWA to fix two facts. The Neighbor Report element has no RSSI field,
+  // and the PWA's FT latency figures (>150 ms to <50 ms) had no source.
 
   /// 802.11r / 802.11k / 802.11v protocol overview.
   static const List<RoamingProtocol> kProtocols = <RoamingProtocol>[
@@ -99,9 +102,10 @@ class RoamingScreen extends StatelessWidget {
       proto: '802.11r',
       name: 'Fast BSS Transition (FT)',
       what:
-          'Pre-authenticates the client to neighboring APs before roaming '
-          'occurs, caching the Pairwise Master Key. Reduces roaming latency '
-          'from >150 ms to <50 ms.',
+          'Folds the 4-way handshake into four frames (FT authentication '
+          'and reassociation), so on a roam the client skips the full 802.1X '
+          'exchange. Measured roam delay is dominated by scanning, which '
+          '802.11k shortens and FT does not (Mishra, Shin and Arbaugh 2003).',
       requirements:
           'Both AP and client must support 802.11r. Must be enabled per SSID '
           'on the controller.',
@@ -113,9 +117,9 @@ class RoamingScreen extends StatelessWidget {
       proto: '802.11k',
       name: 'Neighbor Report',
       what:
-          'AP provides the client a list of neighboring APs (channel, BSSID, '
-          'RSSI) so the client scans only relevant channels rather than all '
-          '40+ available.',
+          'AP provides the client a list of neighboring APs (BSSID, BSSID '
+          'information, operating class, channel number, PHY type) so the '
+          'client scans only relevant channels rather than all 40+ available.',
       requirements: 'Both AP and client must support 802.11k.',
       note:
           'Reduces channel scan time. Does not speed up the association step '

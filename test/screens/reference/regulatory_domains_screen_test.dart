@@ -53,6 +53,15 @@ void main() {
       expect(eu.websiteUrl, 'https://www.etsi.org');
     });
 
+    test('US row lists U-NII-4 in 5 GHz and GVP in 6 GHz', () {
+      // 47 CFR 15.407(a)(3)(ii): U-NII-4 5850-5895 MHz, indoor.
+      // 47 CFR 15.407(a)(7): Geofenced Variable Power, effective 2026-04-27.
+      final RegulatoryDomain us = domainFor('United States');
+      expect(us.bandNotes, contains('UNII-4'));
+      expect(us.bandNotes, contains('5850-5895'));
+      expect(us.bandNotes, contains('GVP'));
+    });
+
     test('colliding abbreviations are flagged and get distinct logo keys', () {
       final RegulatoryDomain ncc = domainFor('Taiwan');
       final RegulatoryDomain nccNg = domainFor('Nigeria');
