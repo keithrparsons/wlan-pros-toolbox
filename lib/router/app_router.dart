@@ -40,6 +40,7 @@ import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
+import '../screens/tools/calculators/channel_planner_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
 import '../screens/tools/calculators/unit_converter_screen.dart';
@@ -285,6 +286,9 @@ class AppRouter {
   // Wi-Fi Lab (2026-09-25). Pure-Dart MIMO streams, array factor and sounding
   // estimate; all platforms incl. web.
   static const String mimoBeamforming = '/tools/mimo-beamforming';
+  // Wi-Fi Lab (2026-09-25). Pure-Dart channel plan and CCA model; all
+  // platforms incl. web.
+  static const String channelPlanner = '/tools/channel-planner';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -735,6 +739,7 @@ class AppRouter {
     wifiThroughAWall: (_) => const WifiThroughAWallScreen(),
     sixGhzPsd: (_) => const SixGhzPsdScreen(),
     mimoBeamforming: (_) => const MimoBeamformingScreen(),
+    channelPlanner: (_) => const ChannelPlannerScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),

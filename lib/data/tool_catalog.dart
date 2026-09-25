@@ -1028,6 +1028,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'channel-planner',
+        title: 'Channel Planner',
+        description:
+            'Place APs on a floor and see who shares airtime: channel reuse, '
+            'wider channels, why 1, 6 and 11, and the -82 dBm rule',
+        routeName: '/tools/channel-planner',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
