@@ -1558,6 +1558,32 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'channel 144',
     'outage',
   ],
+  // Wi-Fi Lab (2026-09-25). The Multi-Link Operation simulator: what a
+  // student types when asking whether Wi-Fi 7 MLO really lowers latency.
+  'mlo-simulator': <String>[
+    'mlo',
+    'multi-link operation',
+    'multi-link',
+    'multilink',
+    'mld',
+    'multi-link device',
+    'str',
+    'nstr',
+    'emlsr',
+    'emlmr',
+    'wi-fi 7',
+    'wifi 7',
+    '802.11be',
+    'eht',
+    'latency',
+    'tail latency',
+    '99th percentile',
+    'link aggregation',
+    'padding delay',
+    'transition delay',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Wi-Fi Lab (2026-09-25). What the 802.1X ladder shows, in the words a
   // student would search with.
   'eap-ladder': <String>[

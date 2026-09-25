@@ -1112,6 +1112,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'mlo-simulator',
+        title: 'Multi-Link Operation',
+        description:
+            'Compare single link, STR, NSTR and EMLSR on the same Wi-Fi 7 '
+            'traffic, and see when MLO cuts latency and when it does not',
+        routeName: '/tools/mlo-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
