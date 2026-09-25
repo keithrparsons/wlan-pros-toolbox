@@ -36,6 +36,7 @@ import '../screens/tools/calculators/medium_access_simulator_screen.dart';
 import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
 import '../screens/tools/calculators/multipath_simulator_screen.dart';
+import '../screens/tools/calculators/roaming_walk_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
@@ -277,6 +278,9 @@ class AppRouter {
   // Wi-Fi Lab (2026-09-25). ITU-R P.2040 wall slab model, pure on-device
   // math; all platforms incl. web.
   static const String wifiThroughAWall = '/tools/wifi-through-a-wall';
+  // Wi-Fi Lab (2026-09-25). Pure-Dart client roaming walk (trigger, delta,
+  // roam gap); all platforms incl. web.
+  static const String roamingWalk = '/tools/roaming-walk';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -725,6 +729,7 @@ class AppRouter {
     multipathSimulator: (_) => const MultipathSimulatorScreen(),
     fourierFft: (_) => const FourierFftScreen(),
     wifiThroughAWall: (_) => const WifiThroughAWallScreen(),
+    roamingWalk: (_) => const RoamingWalkScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),

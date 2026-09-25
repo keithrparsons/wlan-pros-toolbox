@@ -1290,6 +1290,33 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'simulator',
   ],
+  // Wi-Fi Lab (2026-09-25). The roaming walk simulator: what a student types
+  // when a client will not let go of an AP, or keeps flipping between two.
+  'roaming-walk': <String>[
+    'roam',
+    'roaming',
+    'roam trigger',
+    'hysteresis',
+    'sticky client',
+    'ping-pong',
+    'handoff',
+    'handover',
+    'fast roaming',
+    '802.11k',
+    '802.11r',
+    'ft',
+    'fast transition',
+    'neighbor report',
+    'pmk caching',
+    'pmkid',
+    'rssi',
+    '-67 dbm',
+    'cell overlap',
+    'shadowing',
+    'path loss exponent',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[
