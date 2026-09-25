@@ -5,6 +5,8 @@
 //   Waves: time trace (10 ms) above, ideal line spectrum (dB, -60 dB floor).
 //   FFT:   the N captured samples with the window outline above, the N-bin
 //          spectrum in dB full scale (-120 dB floor) with true-tone ticks.
+//   Race:  FourierRaceStage (fourier_fft_race_stage.dart).
+//   OFDM:  FourierOfdmStage (fourier_fft_ofdm_stage.dart).
 //
 // Lime marks the measured quantity (the sum, the spectrum). Individual sines,
 // the window and the ticks are neutral (§8.15: no categorical palette).
@@ -17,8 +19,10 @@ import '../../../services/wifi_lab/fourier_dsp.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import 'fourier_fft_model.dart';
+import 'fourier_fft_ofdm_stage.dart';
 import 'fourier_fft_painters.dart';
 import 'fourier_fft_parts.dart';
+import 'fourier_fft_race_stage.dart';
 
 class FourierStage extends StatelessWidget {
   const FourierStage({super.key, required this.model, this.plotHeight = 176});
@@ -38,13 +42,18 @@ class FourierStage extends StatelessWidget {
             return _WavesStage(model: model, plotHeight: plotHeight);
           case FourierMode.fft:
             return _FftStage(model: model, plotHeight: plotHeight);
+          case FourierMode.race:
+            return FourierRaceStage(model: model, plotHeight: plotHeight);
+          case FourierMode.ofdm:
+            return FourierOfdmStage(model: model, plotHeight: plotHeight);
         }
       },
     );
   }
 }
 
-FourierPlotStyle _plotStyle(BuildContext context) {
+/// Plot colors from the theme. Shared with the part 2 stages.
+FourierPlotStyle fourierPlotStyle(BuildContext context) {
   final AppColorScheme colors = context.colors;
   return FourierPlotStyle(
     signal: colors.textAccent,
@@ -59,8 +68,11 @@ FourierPlotStyle _plotStyle(BuildContext context) {
   );
 }
 
-class _Plot extends StatelessWidget {
-  const _Plot({
+/// A plot on its surface with one worded Semantics label. Shared with the
+/// part 2 stages.
+class FourierPlot extends StatelessWidget {
+  const FourierPlot({
+    super.key,
     required this.semantic,
     required this.painter,
     required this.height,
@@ -97,7 +109,7 @@ class _WavesStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
-    final FourierPlotStyle style = _plotStyle(context);
+    final FourierPlotStyle style = fourierPlotStyle(context);
     final List<SineComponent> parts = model.parts;
     final bool showEach = model.showComponents && parts.length > 1;
     final bool silent = model.allSilent;
@@ -120,7 +132,7 @@ class _WavesStage extends StatelessWidget {
         children: <Widget>[
           const LabSectionLabel('Time: amplitude over 10 ms'),
           const SizedBox(height: AppSpacing.xs),
-          _Plot(
+          FourierPlot(
             semantic: timeSemantic,
             height: plotHeight,
             painter: TimeTracePainter(
@@ -149,7 +161,7 @@ class _WavesStage extends StatelessWidget {
             'Frequency: level in dB (floor ${kWavesFloorDb ~/ 1} dB)',
           ),
           const SizedBox(height: AppSpacing.xs),
-          _Plot(
+          FourierPlot(
             semantic: specSemantic,
             height: plotHeight,
             painter: SpectrumPainter(
@@ -191,7 +203,7 @@ class _FftStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
-    final FourierPlotStyle style = _plotStyle(context);
+    final FourierPlotStyle style = fourierPlotStyle(context);
     final SpectrumAnalysis a = model.analysis;
     final int n = model.n;
     final double fs = model.sampleRateHz;
@@ -216,7 +228,7 @@ class _FftStage extends StatelessWidget {
         children: <Widget>[
           LabSectionLabel('Time: $n samples over ${fmtTime(a.captureSeconds)}'),
           const SizedBox(height: AppSpacing.xs),
-          _Plot(
+          FourierPlot(
             semantic: timeSemantic,
             height: plotHeight,
             painter: TimeTracePainter(
@@ -261,7 +273,7 @@ class _FftStage extends StatelessWidget {
             'Spectrum: dB full scale (floor ${kFftFloorDb ~/ 1} dB)',
           ),
           const SizedBox(height: AppSpacing.xs),
-          _Plot(
+          FourierPlot(
             semantic: specSemantic,
             height: plotHeight + 24,
             painter: SpectrumPainter(

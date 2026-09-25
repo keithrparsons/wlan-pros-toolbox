@@ -18,6 +18,8 @@
 //   - a one-sided amplitude spectrum in dBFS, scaled so a sine of amplitude A
 //     that lands exactly on a bin reads 20 log10(A) with any window
 //   - bin spacing Fs/N and capture time N/Fs (their product is always 1)
+//   - the inverse FFT (part 2: an OFDM symbol is an inverse FFT; see
+//     fourier_ofdm.dart). The swept-vs-FFT race lives in fourier_race.dart.
 
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -358,6 +360,21 @@ abstract final class FourierDsp {
           cr = nr;
         }
       }
+    }
+  }
+
+  /// In-place inverse FFT, x[n] = (1/N) sum_k X[k] e^(+j 2 pi k n / N), by
+  /// the conjugate trick: conj(FFT(conj(X))) / N. [re] and [im] must share a
+  /// power-of-two length. fftInPlace followed by this returns the input.
+  static void ifftInPlace(Float64List re, Float64List im) {
+    final int n = re.length;
+    for (int i = 0; i < n; i++) {
+      im[i] = -im[i];
+    }
+    fftInPlace(re, im);
+    for (int i = 0; i < n; i++) {
+      re[i] = re[i] / n;
+      im[i] = -im[i] / n;
     }
   }
 

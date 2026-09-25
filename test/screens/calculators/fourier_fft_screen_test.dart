@@ -1,4 +1,6 @@
-// Widget and model tests for the Fourier and FFT screen (Wi-Fi Lab, part 1).
+// Widget and model tests for the Fourier and FFT screen (Wi-Fi Lab, parts 1
+// and 2). Part 2 made the mode selector a dropdown (four modes, GL-003
+// §8.14), so mode changes go through _pickFromSelect.
 //
 // The DSP has its own tests (test/services/wifi_lab/fourier_dsp_test.dart).
 // These check that the screen drives it: the Waves mode edits the signal, the
@@ -10,11 +12,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_controls.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_model.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_ofdm_controls.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_ofdm_stage.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_race_controls.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_race_stage.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fourier_fft_stage.dart';
 import 'package:wlan_pros_toolbox/services/audio/tone_engine.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/fourier_dsp.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_select.dart';
+import 'package:wlan_pros_toolbox/widgets/app_toggle.dart';
 
 /// Records calls; reports ready (or unavailable) like a real engine would.
 class _FakeVoice implements ToneEngine {
@@ -88,8 +96,13 @@ Widget _host({
   ThemeData? theme,
   _VoiceBank? bank,
   FourierMode mode = FourierMode.waves,
+  bool reduceMotion = false,
 }) => MaterialApp(
   theme: theme ?? AppTheme.dark(),
+  builder: (BuildContext context, Widget? child) => MediaQuery(
+    data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+    child: child!,
+  ),
   home: FourierFftScreen(
     toneEngineFactory: (bank ?? _VoiceBank()).make,
     initialMode: mode,
@@ -259,7 +272,7 @@ void main() {
     await _setSize(tester, const Size(800, 3000));
     await tester.pumpWidget(_host());
     await tester.pump();
-    await _tapText(tester, 'FFT');
+    await _pickFromSelect(tester, 'Waves', 'FFT');
 
     expect(find.text('100 Hz (Fs/N)'), findsOneWidget);
     expect(find.text('10 ms (N/Fs)'), findsOneWidget);
@@ -360,7 +373,7 @@ void main() {
       expect(bank.playing.length, 1);
       expect(bank.playing.single.hz, 1000);
 
-      await _tapText(tester, 'FFT');
+      await _pickFromSelect(tester, 'Waves', 'FFT');
       expect(bank.playing, isEmpty);
     });
 
@@ -415,6 +428,162 @@ void main() {
     });
   });
 
+  group('part 2', () {
+    testWidgets('four modes make the selector a dropdown', (
+      WidgetTester tester,
+    ) async {
+      await _setSize(tester, const Size(800, 2400));
+      await tester.pumpWidget(_host());
+      await tester.pump();
+      expect(find.byType(AppSelect<FourierMode>), findsOneWidget);
+      expect(find.byType(AppToggle<FourierMode>), findsNothing);
+      await _pickFromSelect(tester, 'Waves', 'Swept vs FFT race');
+      expect(find.byType(FourierRaceStage), findsOneWidget);
+      expect(find.byType(FourierRaceControls), findsOneWidget);
+      await _pickFromSelect(
+        tester,
+        'Swept vs FFT race',
+        'OFDM is an inverse FFT',
+      );
+      expect(find.byType(FourierOfdmStage), findsOneWidget);
+      expect(find.byType(FourierOfdmControls), findsOneWidget);
+      // Stage and controls stay separate widgets under the one screen.
+      expect(find.byType(FourierStage), findsOneWidget);
+      expect(find.byType(FourierControls), findsOneWidget);
+    });
+
+    testWidgets('race: sweep time and catches follow the RBW', (
+      WidgetTester tester,
+    ) async {
+      await _setSize(tester, const Size(800, 4000));
+      await tester.pumpWidget(_host(mode: FourierMode.race));
+      await tester.pump();
+
+      // 2.5 x 100 MHz / (100 kHz)^2 = 25 ms.
+      expect(find.text('25 ms'), findsOneWidget);
+      expect(find.text('320 of 320'), findsOneWidget); // FFT
+      expect(find.text('14 of 320'), findsOneWidget); // swept
+      expect(find.text('306'), findsOneWidget); // swept missed
+      expect(
+        find.bySemanticsLabel(RegExp(r'^FFT analyzer waterfall, 100 MHz')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Swept analyzer waterfall')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Color scale in dBm')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('sweep faster than this formula says'),
+        findsOneWidget,
+      );
+
+      await _pickFromSelect(tester, '100 kHz', '1 MHz');
+      expect(find.text('250 µs'), findsOneWidget);
+      // Both analyzers now catch every hop.
+      expect(find.text('320 of 320'), findsNWidgets(2));
+
+      // 30 kHz: the 100 MHz sweep takes 278 ms, longer than the 200 ms run.
+      // (10 kHz sits below the fold of the menu; the unit tests cover it.)
+      await _pickFromSelect(tester, '1 MHz', '30 kHz');
+      expect(find.text('277.778 ms'), findsOneWidget);
+      expect(find.textContaining('72% of the span'), findsOneWidget);
+    });
+
+    testWidgets('race: Run the race plays, then settles on the full result', (
+      WidgetTester tester,
+    ) async {
+      await _setSize(tester, const Size(800, 4000));
+      await tester.pumpWidget(_host(mode: FourierMode.race));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Run the race'));
+      await tester.tap(find.text('Run the race'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.text('Running...'), findsOneWidget);
+      expect(find.textContaining('Playing: '), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Run the race'), findsOneWidget);
+      expect(find.textContaining('Playing: '), findsNothing);
+      expect(find.text('320 of 320'), findsOneWidget);
+    });
+
+    testWidgets('race: reduced motion skips the playback', (
+      WidgetTester tester,
+    ) async {
+      await _setSize(tester, const Size(800, 4000));
+      await tester.pumpWidget(
+        _host(mode: FourierMode.race, reduceMotion: true),
+      );
+      await tester.pump();
+      await tester.ensureVisible(find.text('Run the race'));
+      await tester.tap(find.text('Run the race'));
+      await tester.pump();
+      expect(find.text('Run the race'), findsOneWidget);
+      expect(find.textContaining('Playing: '), findsNothing);
+    });
+
+    testWidgets('OFDM: toggling subcarriers, HE numerology, empty state', (
+      WidgetTester tester,
+    ) async {
+      await _setSize(tester, const Size(800, 5000));
+      await tester.pumpWidget(_host(mode: FourierMode.ofdm));
+      await tester.pump();
+
+      expect(find.text('Subcarriers on (3 of 16)'), findsOneWidget);
+      expect(find.text('312.5 kHz'), findsWidgets);
+      expect(find.text('3.2 µs (1 / spacing)'), findsOneWidget);
+      expect(find.text('4 samples'), findsOneWidget);
+      expect(find.textContaining('(rounding only)'), findsOneWidget);
+      expect(
+        find.textContaining(
+          'the receiver is an FFT analyzer whose bins are '
+          'the subcarriers',
+        ),
+        findsOneWidget,
+      );
+
+      await _tapText(tester, '-5');
+      expect(find.text('Subcarriers on (4 of 16)'), findsOneWidget);
+      // Newly on, it is highlighted: the spectrum legend and its receiver row.
+      expect(find.text('Subcarrier -5'), findsNWidgets(2));
+
+      await _tapText(tester, 'HE');
+      expect(find.text('78.125 kHz'), findsWidgets);
+      expect(find.text('12.8 µs (1 / spacing)'), findsOneWidget);
+      expect(
+        find.textContaining('Nothing about the carrier frequency changes'),
+        findsOneWidget,
+      );
+      await _pickFromSelect(tester, '0.8 µs', '3.2 µs');
+      expect(find.text('16 µs'), findsWidgets); // total symbol
+
+      await _tapText(tester, 'All off');
+      expect(find.text('Subcarriers on (0 of 16)'), findsOneWidget);
+      expect(find.textContaining('Every subcarrier is off'), findsNWidgets(2));
+      expect(find.text('nothing sent'), findsOneWidget);
+    });
+
+    testWidgets('OFDM: Real Wi-Fi uses 52 subcarriers at N = 64, 242 at '
+        'N = 256', (WidgetTester tester) async {
+      await _setSize(tester, const Size(800, 4000));
+      await tester.pumpWidget(_host(mode: FourierMode.ofdm));
+      await tester.pump();
+      await _tapText(tester, 'Real Wi-Fi');
+      expect(find.textContaining('52 subcarriers'), findsWidgets);
+      expect(find.text('64'), findsOneWidget); // IFFT size readout
+      expect(find.text('16 samples'), findsOneWidget);
+      await _tapText(tester, 'HE');
+      expect(find.textContaining('242-tone RU'), findsOneWidget);
+      expect(find.text('256'), findsOneWidget);
+      expect(find.text('64 samples'), findsNothing);
+      expect(find.text('16 samples'), findsOneWidget); // 0.8 us at 20 MS/s
+    });
+  });
+
   for (final (String, ThemeData Function()) theme
       in <(String, ThemeData Function())>[
         ('dark', AppTheme.dark),
@@ -426,18 +595,25 @@ void main() {
         await _setSize(tester, const Size(390, 900));
         await tester.pumpWidget(_host(theme: theme.$2(), mode: mode));
         await tester.pumpAndSettle();
-        if (mode == FourierMode.waves) {
-          await _pickFromSelect(
-            tester,
-            'One sine',
-            'Square wave (odd harmonics)',
-          );
-        } else {
-          await _pickFromSelect(
-            tester,
-            'Free play',
-            'Weak neighbor 40 dB down',
-          );
+        switch (mode) {
+          case FourierMode.waves:
+            await _pickFromSelect(
+              tester,
+              'One sine',
+              'Square wave (odd harmonics)',
+            );
+          case FourierMode.fft:
+            await _pickFromSelect(
+              tester,
+              'Free play',
+              'Weak neighbor 40 dB down',
+            );
+          case FourierMode.race:
+            await _pickFromSelect(tester, '100 kHz', '30 kHz');
+          case FourierMode.ofdm:
+            await _tapText(tester, 'All on');
+            await _tapText(tester, 'Real Wi-Fi');
+            await _tapText(tester, 'HE');
         }
         expect(tester.takeException(), isNull);
         final ScrollableState s = tester.state<ScrollableState>(

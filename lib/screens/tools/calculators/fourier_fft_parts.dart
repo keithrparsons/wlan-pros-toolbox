@@ -26,6 +26,9 @@ String fmtHz(double hz) {
   return '${_trim(hz.toStringAsFixed(3))} Hz';
 }
 
+/// 100 -> "100 MHz", 16.6 -> "16.6 MHz".
+String fmtMhz(double mhz) => '${_trim(mhz.toStringAsFixed(3))} MHz';
+
 /// 3.2e-6 -> "3.2 us" (with the micro sign), 0.01 -> "10 ms".
 String fmtTime(double s) {
   if (s >= 1) return '${_trim(s.toStringAsFixed(3))} s';
