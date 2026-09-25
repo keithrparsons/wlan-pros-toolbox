@@ -944,6 +944,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi Lab',
       ),
+      // Distinct from the 'fspl' calculator, which stays a two-input tool.
+      ToolEntry(
+        id: 'fspl-simulator',
+        title: 'FSPL Simulator',
+        description:
+            'See free-space path loss against distance for 2.4, 5 and 6 GHz, '
+            'and why higher bands lose more: the receive antenna, not the air',
+        routeName: '/tools/fspl-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
