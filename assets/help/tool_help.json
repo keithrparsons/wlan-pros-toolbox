@@ -614,6 +614,65 @@
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
+    "six-ghz-psd": {
+      "name": "6 GHz Power and PSD",
+      "category": "Calculators & Tools",
+      "purpose": "Plots the most EIRP each 6 GHz device class may radiate, and the SNR it leaves at a distance, against channel width from 20 to 320 MHz, one line per class. A second view draws one channel as a flat block of power per MHz, so you can see the block get wider while its height holds or drops.",
+      "whyHere": "6 GHz power is limited per MHz (power spectral density, PSD) as well as in total. While the PSD limit binds, a wider channel adds 3 dB of EIRP per doubling, which exactly offsets the 3 dB higher noise floor, so SNR holds. Once a class reaches its cap, every doubling costs 3 dB of SNR. The tool also shows that the client 6 dB rule applies as a relative limit only to Standard Power and GVP clients.",
+      "howToUse": [
+        "Pick US or EU, then turn classes on or off in the controls (below the chart on a phone, in the panel on the right on a wide screen). Each power class has its own color, and every class has its own line style and marker, so you can tell them apart without color.",
+        "Switch the chart between EIRP, SNR and Spectrum. Tap a column on the chart or use the Width slider to pick 20, 40, 80, 160 or 320 MHz.",
+        "Read the numbers for each class at that width under the chart: EIRP, received power, SNR, the power per MHz actually radiated, the typical highest MCS, and a line saying whether the class is PSD-limited or cap-limited.",
+        "Set the distance, extra loss for walls and the receiver noise figure. For Standard Power and GVP, set the AP's authorized power to see its clients follow it 6 dB lower."
+      ],
+      "inputs": [
+        {
+          "name": "Region",
+          "unit": "US or EU",
+          "range": "US (47 CFR 15.407) or EU (ETSI EN 303 687); default US"
+        },
+        {
+          "name": "Classes",
+          "unit": "on / off",
+          "range": "US: Standard Power AP, fixed client, SP client, LPI AP, subordinate, LPI client, GVP AP, GVP client, VLP. EU: LPI, VLP. Default US: SP AP, LPI AP, VLP"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80, 160 or 320; default 80"
+        },
+        {
+          "name": "Distance",
+          "unit": "m",
+          "range": "1 to 100; default 10"
+        },
+        {
+          "name": "Extra loss",
+          "unit": "dB",
+          "range": "0 to 40; default 0"
+        },
+        {
+          "name": "Noise figure",
+          "unit": "dB",
+          "range": "3 to 12; default 7"
+        },
+        {
+          "name": "AP authorized power",
+          "unit": "dBm EIRP",
+          "range": "Standard Power AP 0 to 36 (default 36); GVP AP 0 to 24 (default 24); US only"
+        }
+      ],
+      "algorithm": "EIRP = min(PSD limit + 10 log10(BW in MHz), max EIRP). SP and GVP clients are also held to their AP's authorized power minus 6 dB, and an SP or GVP AP to its own authorized power. US limits (PSD dBm/MHz, max dBm): SP AP and fixed client 23 and 36, SP client 17 and 30, LPI AP and subordinate 5 and 30, LPI client -1 and 24, GVP AP 11 and 24, GVP client 5 and 18, VLP -5 and 14. EU: LPI 10 and 23, VLP 1 and 14. Noise floor = -174 dBm/Hz + 10 log10(BW in Hz) + noise figure. Received power = EIRP - free-space path loss at 6105 MHz - extra loss, with a 0 dBi receive antenna. SNR = received power - noise floor. Channel counts are non-overlapping channels that fit wholly inside the class's sub-bands.",
+      "example": "At 10 m with no extra loss, free-space loss at 6105 MHz is 68.2 dB. An LPI AP radiates 18, 21, 24, 27 and 30 dBm at 20, 40, 80, 160 and 320 MHz, and its SNR stays at 43.8 dB from 20 to 160 MHz because the noise floor rises by the same 3 dB (-94.0 dBm at 20 MHz, -88.0 dBm at 80 MHz). A Standard Power AP holds 36 dBm at every width, so its SNR falls from 61.8 dB at 20 MHz to 49.8 dB at 320 MHz. An SP client whose AP is authorized at 30 dBm is limited to 24 dBm.",
+      "fieldNotes": [
+        "These are regulatory maximums. A device may transmit less than its limit.",
+        "Standard Power and GVP may use only U-NII-5 and U-NII-7 in the US, which leaves 41, 20, 9, 4 and 1 channels of 20 to 320 MHz. LPI and VLP may use the whole 5925 to 7125 MHz band: 59, 29, 14, 7 and 3. The EU band is 5945 to 6425 MHz.",
+        "The LPI client limit of 24 dBm and -1 dBm/MHz is a flat number, not tied to the AP. It only happens to sit 6 dB under the LPI AP. Fixed client devices are exempt from the 6 dB rule, VLP has no client class, and the EU has no client offset.",
+        "Path loss is taken at one frequency for every width so that only the width changes between columns. The MCS shown is the typical figure from this app's Signal Thresholds table, not a guarantee.",
+        "The PSD rule applies to any 1 MHz of the real emission. An HE 20 MHz transmission fills about 18.9 MHz, so a device exactly at the PSD limit radiates about 0.2 dB less than shown. That difference is too small to change the lesson."
+      ],
+      "source": "47 CFR 15.407(a)(4) to (a)(9), including Geofenced Variable Power in effect since 27 April 2026, and ETSI EN 303 687 V1.1.1 (2023-06), Tables 2 and 3, both read from the primary text. Free-space loss uses the same Friis math as the FSPL Simulator. Everything is calculated on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
