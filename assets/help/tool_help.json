@@ -740,6 +740,66 @@
       ],
       "source": "IEEE 802.11 (Open System and SAE authentication, association, the 4-way handshake, PMKSA caching, Fast BSS Transition); IEEE 802.1X (EAPOL); RFC 3748 (EAP); RFC 3579 (RADIUS support for EAP); RFC 5216 (EAP-TLS); RFC 5281 (EAP-TTLS); RFC 2759 (MS-CHAP-V2); RFC 2548 (MS-MPPE key attributes); Microsoft [MS-PEAP] for PEAPv0. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
+    "phy-preamble": {
+      "name": "PHY Preamble Reference",
+      "category": "Calculators & Tools",
+      "purpose": "Draws the preamble of every Wi-Fi PPDU format to scale in microseconds: Legacy (802.11a/g), HT mixed (802.11n), VHT (802.11ac), HE SU, ER SU, MU and TB (802.11ax), and EHT MU and TB (802.11be). Tap any block to open its bit table, with an evidence tag on every field. A second mode walks a receiver's decision from the first symbols after L-SIG, and a calculator shows the L-SIG LENGTH that makes a legacy radio defer for the whole PPDU.",
+      "whyHere": "Every PPDU since 802.11a starts with the same 20 µs legacy preamble (L-STF, L-LTF and L-SIG), so an older radio can hear any newer frame and stay quiet. What follows is where the PHYs differ, and it is where a capture's PHY details come from: the MCS, width, streams, BSS color and TXOP a receiver reads before the data. Seeing the bits, and how sure we are of each one, makes a packet capture easier to read.",
+      "howToUse": [
+        "Pick a PPDU type under Settings. The bar draws each field to scale: sand is the legacy preamble every PHY sends, blue is what this PHY adds, filled blocks carry bits and outlined blocks are training patterns. BPSK or QBPSK is marked under every SIG symbol.",
+        "Tap a block, or pick it in the list under the bar, to open its bit table: bit range, field name, width, meaning and evidence tag. Tags with a question mark (one source, inferred, not verified, or no tag in the brief) are not settled; treat them as leads.",
+        "Change the streams, the LTF size and guard interval (HE and EHT), the HE-SIG-B or EHT-SIG symbol count (HE MU and EHT MU) or the channel width (the VHT-SIG-B layout) to see what moves.",
+        "Switch Mode to Which PHY? and press Next step to walk the receiver's questions, or press Mystery to hide the PPDU's name, predict, then reveal.",
+        "In the L-SIG LENGTH calculator, enter the true PPDU duration to see the spoofed LENGTH, its value mod 3, and how long a legacy radio defers."
+      ],
+      "inputs": [
+        {
+          "name": "PPDU type",
+          "unit": "choice",
+          "range": "Legacy, HT mixed, VHT, HE SU, HE ER SU, HE MU, HE TB, EHT MU, EHT TB; default HE SU"
+        },
+        {
+          "name": "Spatial streams",
+          "unit": "streams",
+          "range": "1 to 4 for HT, 1 to 8 for VHT, HE and EHT; default 1"
+        },
+        {
+          "name": "LTF size and guard interval",
+          "unit": "choice",
+          "range": "2x with a 0.8 or 1.6 µs GI, 4x with a 0.8 or 3.2 µs GI; HE and EHT only; default 2x, 0.8 µs"
+        },
+        {
+          "name": "HE-SIG-B or EHT-SIG symbols",
+          "unit": "symbols",
+          "range": "1 to 12, set by the AP; HE MU and EHT MU only; default 2"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80 or 160; changes only the VHT-SIG-B layout"
+        },
+        {
+          "name": "TXTIME",
+          "unit": "µs",
+          "range": "The true PPDU duration, at least the preamble and up to 5,484 µs (plus the signal extension); default 200"
+        },
+        {
+          "name": "2.4 GHz signal extension",
+          "unit": "on or off",
+          "range": "Adds 6 µs after the data at 2.4 GHz; default off"
+        }
+      ],
+      "algorithm": "Legacy preamble: L-STF 8 µs, L-LTF 8 µs, L-SIG 4 µs. HT mixed adds HT-SIG 8 (two QBPSK symbols), HT-STF 4 and 4 µs per HT-LTF (1, 2, 4, 4 for 1 to 4 streams). VHT adds VHT-SIG-A 8 (BPSK, then QBPSK), VHT-STF 4, 4 µs per VHT-LTF and VHT-SIG-B 4, so its preamble is 36 + 4 x N_VHT-LTF µs. HE adds RL-SIG 4, HE-SIG-A 8 (16 in ER SU), HE-SIG-B 4 per symbol in MU, HE-STF 4 (8 in TB) and one HE-LTF per stream group of 6.4 or 12.8 µs plus the guard interval. EHT adds RL-SIG 4, U-SIG 8, EHT-SIG 4 per symbol in MU, EHT-STF 4 (8 in TB) and the EHT-LTFs. L-SIG LENGTH = ceil((TXTIME - signal extension - 20) / 4) x 3 - 3 - m, with m = 0 for HT, VHT and EHT, 1 for HE MU and ER SU, and 2 for HE SU and TB. A legacy radio at 6 Mb/s counts ceil((16 + 8 x LENGTH + 6) / 24) symbols of 4 µs after L-SIG, which covers the whole PPDU. The receiver's decision: QBPSK right after L-SIG means HT; a BPSK repeat of L-SIG means HE or EHT, split by LENGTH mod 3 (1 = HE SU or TB, 2 = HE MU or ER SU, 0 = EHT or later); otherwise a QBPSK second symbol means VHT, and anything else is non-HT.",
+      "example": "HE SU, 2 streams, 2x HE-LTF with a 0.8 µs guard interval: 20 + RL-SIG 4 + HE-SIG-A 8 + HE-STF 4 + 2 HE-LTFs x 7.2 = 50.4 µs. For a 200 µs HE SU PPDU, LENGTH = ceil((200 - 20) / 4) x 3 - 3 - 2 = 130, and 130 mod 3 = 1. A legacy radio counts ceil((16 + 8 x 130 + 6) / 24) = 45 symbols and defers 20 + 4 x 45 = 200 µs. The same 200 µs as HE MU gives LENGTH 131, and 131 mod 3 = 2.",
+      "fieldNotes": [
+        "Bit positions come from open-source driver and receiver code (Linux, ns-3, GNU Radio) and from secondary sources; the IEEE 802.11 standard itself was not read. Every field shows its tag: P (code or a document read directly), S2 (two independent sources), S1 (one source) or INF (derived).",
+        "Not settled, and marked so on screen: HE TB HE-SIG-A (one vendor, and its second symbol is inferred), the HE MU reserved bit at HE-SIG-A2 B7, HE-SIG-B Beamformed at B14, EHT-SIG positions (one vendor), VHT-SIG-B at 40 and 80 MHz, the VHT-SIG-A2 CRC and Tail (no tag in the brief), LTF counts above 4 streams, and the EHT-LTF length.",
+        "The BSS color moves with the HE PPDU type (HE-SIG-A1 B8-B13 in SU, B5-B10 in MU, B1-B6 in TB) and is fixed in EHT at U-SIG-1 B7-B12.",
+        "The LTF size and guard interval pairs offered are the brief's EHT list; 1x is not offered. LTF counts follow the Airtime Anatomy table. Durations are per field and do not change with width. The packet extension and the 2.4 GHz signal extension come after the data and are not drawn.",
+        "HE-SIG-B and EHT-SIG symbol counts depend on the users and the SIG MCS, so here they are a setting, not computed."
+      ],
+      "source": "Wi-Fi Lab wave-5 research brief (2026-09-25): the Linux ath11k, ath12k and iwlwifi drivers and ieee80211_radiotap.h; the ns-3 HE-SIG header; the cloud9477 gr-ieee80211 and bastibl gr-ieee802-11 receivers; the Rohde & Schwarz IEEE 802.11be technology introduction; MathWorks WLAN Toolbox documentation; Keysight 89600B; OpenOFDM; a Linköping University 802.11n receiver thesis; patents US 10,917,220 and US 8,867,574. Clause numbers are secondhand. Computed on your device."
+    },
     "dfs-simulator": {
       "name": "DFS and Radar",
       "category": "Calculators & Tools",

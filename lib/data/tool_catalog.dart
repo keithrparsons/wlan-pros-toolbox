@@ -1111,6 +1111,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi Lab',
       ),
+      // Pairs with 'airtime-anatomy': the same preamble durations, opened up
+      // field by field.
+      ToolEntry(
+        id: 'phy-preamble',
+        title: 'PHY Preamble Reference',
+        description:
+            'Every Wi-Fi preamble drawn to scale, from 802.11a to Wi-Fi 7, '
+            'with the bits of each SIG field and how a receiver tells them apart',
+        routeName: '/tools/phy-preamble',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
