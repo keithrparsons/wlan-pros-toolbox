@@ -1007,6 +1007,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'mimo-beamforming',
+        title: 'MIMO and Beamforming',
+        description:
+            'See why streams stop at the smaller side, what spare antennas '
+            'still add, what sounding costs, and why a sniffer misses '
+            'beamformed frames',
+        routeName: '/tools/mimo-beamforming',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',

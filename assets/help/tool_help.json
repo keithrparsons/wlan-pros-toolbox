@@ -614,6 +614,73 @@
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
+    "mimo-beamforming": {
+      "name": "MIMO and Beamforming",
+      "category": "Calculators & Tools",
+      "purpose": "Shows how many spatial streams an access point and a client can use, what the leftover antenna chains do instead, what beamforming costs in airtime, and why a packet capture taken nearby misses beamformed frames that the client received.",
+      "whyHere": "A 4x4 AP does not give a 2x2 phone four streams, and the two spare chains are not wasted either. Knowing which side has the spare chains, and what they add in each direction, explains real link rates. The capture lesson matters to anyone who troubleshoots from a laptop sniffer: the sniffer is not the device the AP is aiming at, so a pile of failed downlink frames in a capture can be a property of the capture, not of the network.",
+      "howToUse": [
+        "Set the AP and client chains. The streams readout is the smaller of the two, in both directions. Press Swap to flip the counts, for example from a 4x4 AP with a 2x2 client to a 2x2 AP with a 4x4 client.",
+        "Switch between Downlink and Uplink above the streams picture. Each stream is its own labeled lane, S1 to S4. Spare chains that help are drawn dashed into the lanes; idle ones stand alone. The table below the stage shows both directions side by side.",
+        "Turn AP transmit beamforming on or off. With it on, the beam pattern swings its main lobe toward the client. Drag the client or the sniffer in the pattern, or use the angle sliders, and read the sniffer's level against the client's.",
+        "Set the sniffer's receive chains. A sniffer with fewer chains than the frame's streams cannot separate them, and the readout says so.",
+        "Set the channel width and the sounding interval to see the sounding exchange drawn to scale and its share of airtime for one client."
+      ],
+      "inputs": [
+        {
+          "name": "AP chains",
+          "unit": "antenna chains",
+          "range": "1, 2, 3, 4 or 8; default 4"
+        },
+        {
+          "name": "Client chains",
+          "unit": "antenna chains",
+          "range": "1 to 4; default 2"
+        },
+        {
+          "name": "Direction",
+          "unit": "Downlink / Uplink",
+          "range": "default Downlink"
+        },
+        {
+          "name": "AP transmit beamforming",
+          "unit": "On / Off",
+          "range": "default On; not available with 1 AP chain"
+        },
+        {
+          "name": "Client angle and sniffer angle",
+          "unit": "degrees from straight ahead of the AP",
+          "range": "80 left to 80 right"
+        },
+        {
+          "name": "Sniffer chains",
+          "unit": "receive chains",
+          "range": "1 to 4; default 1"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80 or 160; default 80"
+        },
+        {
+          "name": "Sounding interval",
+          "unit": "ms",
+          "range": "2, 5, 10, 20, 50, 100 or 200; default 10"
+        }
+      ],
+      "algorithm": "Spatial streams Nss = min(AP chains, client chains, streams the client advertises). Ideal transmit beamforming gain = 10 log10(transmit chains / Nss) dB and ideal receive combining gain = 10 log10(receive chains / Nss) dB; both are upper bounds. Beam pattern: a line of AP elements half a wavelength apart, steered at the client, with array factor AF = |sum over n of e^(j n (k d sin(a) + b))|, where a is the angle from straight ahead, k d = pi and the steering phase b = -k d sin(client angle). The sniffer's level is 20 log10(AF at the sniffer / AF at the client). Sounding: NDPA, SIFS 16 µs, NDP, SIFS, compressed beamforming report. The report carries the Givens angles for an Nr x Nc matrix, sum over i = 1 to min(Nc, Nr - 1) of 2 (Nr - i) angles, for every 4th subcarrier (estimated as the full-band RU tones / 4, plus one), at 6 bits per phi and 4 per psi, plus one byte of SNR per column and 35 bytes of headers. NDPA: 25 bytes at 6 Mbps, 20 µs + 4 µs per symbol. NDP: 36 µs of preamble + 8 µs per HE-LTF (1, 2, 4, 4, 6, 6, 8, 8 for 1 to 8 antennas) + 4 µs packet extension. Report: HE single user, 1 stream, MCS 4, 0.8 µs guard interval, 13.6 µs symbols. Share of airtime = exchange time / sounding interval.",
+      "example": "A 4x4 AP and a 2x2 client use 2 streams both ways. Downlink: the AP's 2 spare transmit chains give up to +3.0 dB of beamforming gain; with a 1-stream client that becomes up to +6.0 dB. Uplink: the AP's 2 spare receive chains give up to +3.0 dB of combining gain. At 80 MHz the estimated report is about 1.6 kB and the whole exchange about 275 µs, so sounding one client every 10 ms takes about 2.8% of the airtime. A 1-chain sniffer cannot decode any of the 2-stream frames.",
+      "fieldNotes": [
+        "The gains are ideal upper bounds. Real beamforming and combining gain is lower and changes with the room, the client's position and how fresh the last sounding is.",
+        "The beam pattern is line of sight, one steered stream, from a straight line of elements. Indoors, reflections spread the energy, so real patterns are less clean, but the sniffer is still not the target.",
+        "The client does not beamform in this model. Clients seldom do: in our capture, 93% of the client's frames were not beamformed.",
+        "The sounding figures are estimates. They leave out the wait for the medium, assume one client, and assume a fixed rate for the report. Several beamformed clients multiply the cost.",
+        "A wider channel makes the report bigger, but the report also travels over the wider channel, so in this estimate its airtime stays the same. More antennas and more streams are what make sounding cost more.",
+        "Our measurement, not a model output: in one 802.11ax capture from a nearby sniffer, beamformed downlink frames failed their frame check 50.8% of the time against 5.1% for frames that were not beamformed, at matched signal strength (14,825 and 6,891 frames). The client received those frames; the sniffer was off the beam.",
+        "A capture on the AP sees more than a capture on a laptop: the AP knows what it sent and is the intended receiver for the uplink."
+      ],
+      "source": "MIMO array fundamentals (uniform linear array factor), the IEEE 802.11ax sounding sequence and compressed beamforming report format, and our own 802.11ax packet capture. Computed on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
