@@ -70,7 +70,9 @@ void main() {
     expect(e.subgroup, 'Wi-Fi Lab');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/wifi-through-a-wall');
-    expect(rf.tools[i - 1].id, 'medium-access-simulator');
+    // Sits inside the Wi-Fi Lab block; after the 2026-09-25 merge its exact
+    // neighbor depends on merge order, so assert the shelf, not the slot.
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab');
     // The existing attenuation tool is a separate, untouched entry.
     expect(
       kToolCategories.any(

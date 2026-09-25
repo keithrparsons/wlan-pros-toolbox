@@ -213,7 +213,7 @@
       "whyHere": "Wi-Fi is half duplex and shared, so airtime runs out long before the PHY rate does. Watching the waiting and the collisions shows why a 54 Mbps link delivers about 31 Mbps to one station, less as stations are added, and why voice traffic gets through first.",
       "howToUse": [
         "Press Play to run the clock, or Step to move one 9 µs slot at a time. The simulation starts paused. Reset replays the same run from time zero.",
-        "Read the timeline. The top lane is the medium as the AP hears it, and each station has its own lane. Hatched blocks are DIFS, AIFS or EIFS waits, outlined cells are backoff slots with the count inside, filled grey cells are a frozen count, lime blocks are data frames, green blocks are ACKs and red blocks are frames lost to a collision. Zoom changes the time scale; while paused, drag the timeline sideways to look back.",
+        "Read the timeline. The top lane is the medium as the AP hears it, and each station has its own lane. Hatched blocks are DIFS, AIFS or EIFS waits, outlined cells are backoff slots with the count inside, filled gray cells are a frozen count, lime blocks are data frames, green blocks are ACKs and red blocks are frames lost to a collision. Zoom changes the time scale; while paused, drag the timeline sideways to look back.",
         "Add up to 10 stations and set each one's offered load. Switch to EDCA to give each station an access category. Turn on Hidden node, then RTS/CTS, to see collisions nobody could hear coming and how the handshake removes most of them. Change the frame size and PHY rate to see airtime change."
       ],
       "inputs": [

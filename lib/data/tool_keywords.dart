@@ -1207,7 +1207,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '802.11ac',
     'wi-fi lab',
   ],
-  ],
   'multipath-simulator': <String>[
     'multipath',
     'multi-path',
@@ -1262,7 +1261,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'subcarrier spacing',
     '312.5 khz',
     'ofdm',
-  ],
   ],
   // Wi-Fi Lab (2026-09-25). What the wall simulator shows, in the words a
   // student would search with.
