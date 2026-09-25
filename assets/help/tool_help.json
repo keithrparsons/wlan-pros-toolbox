@@ -665,6 +665,65 @@
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
+    "room-propagation": {
+      "name": "Room Propagation",
+      "category": "Calculators & Tools",
+      "purpose": "Puts an AP, walls and doorways on a floor plan and colors the plan by received power. The signal at any spot is the direct path plus reflections off the walls, each wall both passes and reflects part of the signal, and signal bends past doorways and wall ends into the shadows behind them. A close-up around the client shows the fine ripple that makes RSSI change when you move a few centimeters.",
+      "whyHere": "A coverage map is usually a finished picture. This one lets you switch each mechanism on and off and see what it does: turn off reflections, turn off diffraction, change the band. It also splits the question of why 6 GHz loses more into its parts: free-space loss (the smaller antenna aperture at a shorter wavelength), wall absorption, and diffraction.",
+      "howToUse": [
+        "Pick a floor plan. Drywall offices and Concrete corridor have several walls and doorways; Empty plan has none, so you can draw your own.",
+        "Drag the AP or the client on the plan, or use the position sliders. The colors are received power in dBm, one shade per 10 dB, with the legend under the plan. The readouts show what the client receives and where the loss comes from: free space, each wall on the straight line, diffraction and reflections.",
+        "Change the band and watch the same spot on all three bands. Turn Reflections to None and Diffraction off to see the straight-line picture with sharp shadows, then turn them back on. The Fresnel zone overlay shows how wide the path to the client is; the shadow edges show where a doorway's shadow would start if signal traveled only in straight lines.",
+        "To edit the plan, pick a tool: Draw walls (drag), Add doorways (tap a wall), or Select a wall (tap it), then set its material and thickness, add or close doorways, or delete it. Every edit also works from the wall list, without the plan."
+      ],
+      "inputs": [
+        {
+          "name": "Floor plan",
+          "unit": "preset",
+          "range": "drywall offices, concrete corridor, open office, glass meeting room, empty plan; up to 20 x 15 m"
+        },
+        {
+          "name": "Band and channel",
+          "unit": "20 MHz channel",
+          "range": "2.4, 5 and 6 GHz channels; defaults 6, 100 and 117"
+        },
+        {
+          "name": "AP EIRP",
+          "unit": "dBm",
+          "range": "0 to 36"
+        },
+        {
+          "name": "AP antenna",
+          "unit": "orientation",
+          "range": "upright (TE) or flat (TM)"
+        },
+        {
+          "name": "Reflections",
+          "unit": "bounces",
+          "range": "none, one or two"
+        },
+        {
+          "name": "Diffraction",
+          "unit": "on or off",
+          "range": "ITU-R P.526 knife edge at wall ends and doorways"
+        },
+        {
+          "name": "Wall material and thickness",
+          "unit": "ITU-R P.2040 Table 3, mm",
+          "range": "concrete, brick, plasterboard, wood, glass, ceiling board, chipboard, plywood, marble, metal; 1 to 500 mm; up to 16 walls"
+        }
+      ],
+      "algorithm": "Field at each point U = sum of a x e^-jkr / r over the direct path and the image reflections (one or two bounces), with 1/r spreading as in three dimensions. Received power = EIRP + 20 log10(wavelength / 4 pi) + 10 log10 |U|^2 for a 0 dBi receiver, so with no walls it is exactly EIRP minus free-space path loss. Every wall's transmission T and reflection R come from the ITU-R P.2040 slab equations at the real angle of incidence, the same model as Wi-Fi Through a Wall. Diffraction uses the ITU-R P.526 knife-edge function: nu = h x sqrt((2 / wavelength) x (1/d1 + 1/d2)), and the exact complex form behind J(nu), so each wall line acts as a screen that is open where there is no wall and passes T where there is. A long wall costs exactly its slab loss, a doorway is the gap in the screen, and an opaque edge right on the line of sight costs 6.0 dB. The map shows the local average (the sum of path powers); the close-up adds every path with its phase to show the ripple. First Fresnel zone radius = sqrt(wavelength x d1 x d2 / (d1 + d2)).",
+      "example": "With no walls, 10 m from a 20 dBm EIRP AP on channel 6 the client receives 20 - 60.2 = -40.2 dBm. A metal edge 0.5 m into the path halfway along those 10 m adds 15.5 dB at 2.4 GHz and 19.4 dB at 6.5 GHz. The first Fresnel zone halfway along 10 m is 0.56 m in radius at 2.4 GHz, 0.37 m at 5.5 GHz and 0.34 m at 6.5 GHz. Near a metal wall the nulls repeat every 6.2 cm on channel 6 and every 2.3 cm on channel 117.",
+      "fieldNotes": [
+        "This is a 2D plan of a 3D model: signal spreads in three dimensions, but there is no floor or ceiling bounce, no furniture and no people.",
+        "Each wall is one solid, uniform slab. Real walls have studs, cavities, rebar and coatings, and published measurements often disagree with the model. Wi-Fi Through a Wall shows the measured values beside it.",
+        "Reflections stop at two bounces, and reflected paths pass through walls without diffraction. Real rooms add many more weak paths.",
+        "The map is the average over a few centimeters. At one exact spot the signal can sit well above or below it, which the close-up shows: that is why RSSI jumps when you move a phone a little.",
+        "The map is computed on your device, in the background where the platform allows. With two bounces and many walls it takes a moment; the plan says Computing while it works."
+      ],
+      "source": "ITU-R P.2040-4 (09/2025) for the wall materials and the slab reflection and transmission equations; ITU-R P.526-16 for knife-edge diffraction (Eqs. 26, 30 and 31) and the Fresnel zone (Eq. 2); the image method for reflections. Computed on your device."
+    },
     "antenna-pattern": {
       "name": "Antenna Pattern",
       "category": "Calculators & Tools",

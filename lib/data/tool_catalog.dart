@@ -1006,6 +1006,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi Lab',
       ),
+      // Distinct from the 'rf-attenuation' calculator, which stays as it is.
+      ToolEntry(
+        id: 'room-propagation',
+        title: 'Room Propagation',
+        description:
+            'Put an AP, walls and doorways on a floor plan and see the signal: '
+            'reflections, bending past edges, and why 6 GHz loses more',
+        routeName: '/tools/room-propagation',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       // Distinct from the 'roaming' reference card and the 'roaming-log' live
       // tool, which stay as they are.
       ToolEntry(

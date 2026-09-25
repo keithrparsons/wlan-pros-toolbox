@@ -42,6 +42,7 @@ import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
+import '../screens/tools/calculators/room_propagation_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
 import '../screens/tools/calculators/rate_vs_range_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
@@ -287,6 +288,10 @@ class AppRouter {
   // Wi-Fi Lab (2026-09-25). ITU-R P.2040 wall slab model, pure on-device
   // math; all platforms incl. web.
   static const String wifiThroughAWall = '/tools/wifi-through-a-wall';
+  // Wi-Fi Lab (2026-09-25). Image-ray room model with ITU-R P.2040 walls and
+  // P.526 diffraction, computed on device (background isolate where
+  // supported); all platforms incl. web.
+  static const String roomPropagation = '/tools/room-propagation';
   // Wi-Fi Lab (2026-09-25). 6 GHz EIRP / PSD / SNR by width from 47 CFR
   // 15.407 and ETSI EN 303 687, pure on-device math; all platforms incl. web.
   static const String sixGhzPsd = '/tools/six-ghz-psd';
@@ -768,6 +773,7 @@ class AppRouter {
     multipathSimulator: (_) => const MultipathSimulatorScreen(),
     fourierFft: (_) => const FourierFftScreen(),
     wifiThroughAWall: (_) => const WifiThroughAWallScreen(),
+    roomPropagation: (_) => const RoomPropagationScreen(),
     sixGhzPsd: (_) => const SixGhzPsdScreen(),
     mimoBeamforming: (_) => const MimoBeamformingScreen(),
     channelPlanner: (_) => const ChannelPlannerScreen(),
