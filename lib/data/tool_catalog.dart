@@ -1060,6 +1060,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'antenna-pattern',
+        title: 'Antenna Pattern',
+        description:
+            'Turn an omni into a directional, change its gain and rotate the '
+            '3D pattern; paste an MSI or NSMA file to see its two cuts in 3D',
+        routeName: '/tools/antenna-pattern',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',

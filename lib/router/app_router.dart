@@ -37,6 +37,7 @@ import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
 import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
+import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
@@ -297,6 +298,10 @@ class AppRouter {
   // Wi-Fi Lab (2026-09-25). HE resource units and SU vs OFDMA airtime,
   // pure on-device math; all platforms incl. web.
   static const String ofdmaSimulator = '/tools/ofdma-simulator';
+  // Wi-Fi Lab (2026-09-25). Parametric and imported (MSI / NSMA) antenna
+  // patterns in a rotatable 3D CustomPainter; pure on-device math, all
+  // platforms incl. web.
+  static const String antennaPattern = '/tools/antenna-pattern';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -750,6 +755,7 @@ class AppRouter {
     channelPlanner: (_) => const ChannelPlannerScreen(),
     roamingWalk: (_) => const RoamingWalkScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
+    antennaPattern: (_) => const AntennaPatternScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),
