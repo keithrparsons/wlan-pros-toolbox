@@ -1070,6 +1070,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'rate-vs-range',
+        title: 'Rate vs Range',
+        description:
+            'See rate fall with distance as MCS rings around an AP: wider '
+            'channels shrink every ring, a higher basic rate shrinks the cell',
+        routeName: '/tools/rate-vs-range',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
