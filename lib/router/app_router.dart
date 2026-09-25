@@ -31,6 +31,7 @@ import '../screens/tools/calculators/wavelength_screen.dart';
 import '../screens/tools/calculators/antenna_length_screen.dart';
 import '../screens/tools/calculators/hear_frequency_screen.dart';
 import '../screens/tools/calculators/modulation_simulator_screen.dart';
+import '../screens/tools/calculators/airtime_anatomy_screen.dart';
 import '../screens/tools/calculators/medium_access_simulator_screen.dart';
 import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
@@ -261,6 +262,9 @@ class AppRouter {
   // Wi-Fi Lab (2026-09-25). Pure-Dart packet vs airtime fairness model; all
   // platforms incl. web.
   static const String airtimeFairness = '/tools/airtime-fairness';
+  // Wi-Fi Lab (2026-09-25). Pure-Dart port of the WLAN Pros Airtime
+  // Calculator; all platforms incl. web.
+  static const String airtimeAnatomy = '/tools/airtime-anatomy';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -705,6 +709,7 @@ class AppRouter {
     mediumAccessSimulator: (_) => const MediumAccessSimulatorScreen(),
     fsplSimulator: (_) => const FsplSimulatorScreen(),
     airtimeFairness: (_) => const AirtimeFairnessScreen(),
+    airtimeAnatomy: (_) => const AirtimeAnatomyScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),

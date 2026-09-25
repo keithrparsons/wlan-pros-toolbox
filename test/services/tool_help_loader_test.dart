@@ -393,6 +393,9 @@ void main() {
       // 2026-09-25: airtime-fairness (Wi-Fi Lab) added ONE entry. 192 + 1 =
       // 193. Counted off the file: `len(json[...]['tools'])` returned 193 and
       // the id appears exactly once.
+      // 2026-09-25: airtime-anatomy (Wi-Fi Lab) added ONE entry. 192 + 1 =
+      // 193. Counted off the file, not derived: `len(json[...]['tools'])`
+      // returned 193 and the id appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
 
