@@ -945,6 +945,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'multipath-simulator',
+        title: 'Multipath Simulator',
+        description:
+            'See reflected copies add and cancel as arrows: two-ray fades, '
+            'standing-wave nulls every half wavelength, Rayleigh fading and '
+            'antenna diversity',
+        routeName: '/tools/multipath-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
