@@ -918,6 +918,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Utilities & Generators',
       ),
+      // ── Wi-Fi Lab (2026-09-25) ── interactive simulators built clean-room
+      // from IEEE 802.11 math; spec in myPKA
+      // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
+      //
+      // Distinct from the 'modulation' reference cards under Quick Reference,
+      // which stay as they are.
+      ToolEntry(
+        id: 'modulation-simulator',
+        title: 'Modulation Simulator',
+        description:
+            'Watch bits become a radio wave: pick BPSK to 4096-QAM, add noise, '
+            'and see the constellation, carrier, EVM and bit errors',
+        routeName: '/tools/modulation-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',

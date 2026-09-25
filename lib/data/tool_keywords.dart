@@ -1083,6 +1083,32 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'great circle',
     'bearing',
   ],
+  // Wi-Fi Lab (2026-09-25). What the simulator does: maps bits to I/Q points,
+  // draws the carrier, adds noise, measures EVM and counts errors (GL-005).
+  'modulation-simulator': <String>[
+    'modulation',
+    'constellation',
+    'i/q',
+    'iq',
+    'bpsk',
+    'qpsk',
+    'qam',
+    '16-qam',
+    '64-qam',
+    '256-qam',
+    '1024-qam',
+    '4096-qam',
+    'evm',
+    'error vector magnitude',
+    'snr',
+    'noise',
+    'bit error',
+    'gray code',
+    'symbol',
+    'carrier',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[

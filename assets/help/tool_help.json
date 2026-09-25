@@ -161,6 +161,51 @@
       ],
       "source": "Tones are generated live on your device from the frequency you enter, using standard equal-temperament music math."
     },
+    "modulation-simulator": {
+      "name": "Modulation Simulator",
+      "category": "Calculators & Tools",
+      "purpose": "Shows how bits become a radio wave. Each group of bits picks one point on the I/Q plane, and that point sets the amplitude and phase of the carrier for one symbol. Add noise and watch the receiver decide which point was sent, measure the EVM, and count the symbol and bit errors.",
+      "whyHere": "Every Wi-Fi data rate is a modulation plus a coding rate. Seeing BPSK next to 4096-QAM makes it plain why higher orders carry more bits per symbol and why they need a much cleaner signal to work.",
+      "howToUse": [
+        "Pick a modulation, from BPSK (1 bit per symbol) to 4096-QAM (12 bits per symbol).",
+        "Press Step to send one symbol, or Play to keep sending at the chosen speed. The simulator always opens paused. Use +100 to send a batch at once and Reset to clear the points and counts.",
+        "Move the SNR slider (0 to 45 dB) to add or remove noise. Received points spread around the ideal points, and a point that crosses a decision boundary is decided wrong and marked with an X.",
+        "Choose Random bits, or Your text to send a message as UTF-8 bits and read back what the receiver decoded.",
+        "Up to 16-QAM every point shows its bits. Above that, tap or hover a point to see them.",
+        "Read the waveform strip: the thin solid trace is I cos, the thin dashed trace is -Q sin, and the bold trace is their sum, the carrier actually sent. The bits for each symbol sit above it."
+      ],
+      "inputs": [
+        {
+          "name": "Modulation",
+          "unit": "BPSK, QPSK, 16, 64, 256, 1024 or 4096-QAM",
+          "range": "7 choices"
+        },
+        {
+          "name": "SNR",
+          "unit": "dB",
+          "range": "0 to 45 in 0.5 dB steps"
+        },
+        {
+          "name": "Speed",
+          "unit": "symbols per second",
+          "range": "1, 4 or 20"
+        },
+        {
+          "name": "Bits to send",
+          "unit": "random or typed text",
+          "range": "text up to 120 characters"
+        }
+      ],
+      "algorithm": "Square QAM with M points puts half the bits on I and half on Q. Each axis takes the odd levels -(sqrt(M)-1) to +(sqrt(M)-1) and is Gray coded, so neighboring points differ by one bit. BPSK uses I only, at -1 and +1. Every constellation is scaled by the 802.11 factor 1/sqrt(2(M-1)/3) so average symbol energy is 1. The carrier for a symbol is I cos(wt) - Q sin(wt), which equals A cos(wt + phase) with A = sqrt(I squared + Q squared) and phase = atan2(Q, I). Noise is Gaussian on each axis with standard deviation sqrt(1 / (2 x SNR)), SNR as a linear ratio. The receiver picks the nearest ideal point. With noise alone, RMS EVM is 1 / sqrt(SNR), so EVM in dB equals minus the SNR in dB; the measured value comes from the simulated points.",
+      "example": "16-QAM at 25 dB SNR gives an EVM of -25 dB, about 5.6%. That meets both 16-QAM transmit limits (-16 and -19 dB) and the 64-QAM rate 3/4 limit of -25 dB, but misses 64-QAM rate 5/6 at -27 dB. Typing the letter A sends 8 bits; in 64-QAM that is 2 symbols, with 4 zero bits padding the second.",
+      "fieldNotes": [
+        "The drawing is slowed down. It shows 3 carrier cycles per symbol; a real Wi-Fi carrier runs billions of cycles per second.",
+        "The required EVM table is the 802.11 transmitter accuracy requirement: how cleanly a radio must build each point. It is not a receiver sensitivity threshold. Meets or misses compares the limit with the EVM the current SNR produces.",
+        "Changing the modulation, the SNR, the bit source or the message clears the received points and counts, so every reading belongs to one setting.",
+        "Measured EVM from a handful of symbols wanders. Send a few hundred and it settles close to the theoretical value."
+      ],
+      "source": "Constellations, Gray mapping and scaling follow the IEEE 802.11 modulation mapping; transmit EVM limits are from the 802.11 transmit modulation accuracy tables. Noise and decisions are simulated on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
