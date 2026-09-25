@@ -909,6 +909,100 @@
       ],
       "source": "47 CFR 15.407(h)(2) (eCFR, read directly); FCC KDB 905462 D02 as transcribed in an ICC test report (2018), secondhand; ETSI EN 301 893 V2.1.1 (2017) Tables D.1 and D.2, read directly. Channel numbers and edges from the Toolbox channel plan. Computed on your device."
     },
+    "power-save": {
+      "name": "Power Save",
+      "category": "Calculators & Tools",
+      "purpose": "Puts a client and its AP on a timeline and shows how the client saves battery: beacons every beacon interval, a DTIM every few beacons, the frames the AP holds while the client dozes, and the client waking under four modes (always awake, legacy PS with PS-Poll, U-APSD, and Target Wake Time). Two modes side by side show that every saving costs latency.",
+      "whyHere": "Battery drain, a sensor that misses broadcasts, and a call that stutters on a phone that just went quiet all come back to power save. A sleeping client wakes for beacons and reads the TIM to learn whether the AP holds frames for it. The DTIM period decides how often broadcast and multicast go out. PS-Poll fetches one frame per poll, U-APSD fetches a service period's worth per trigger, and TWT lets the client sleep through beacons entirely. Each one trades time awake for time waiting.",
+      "howToUse": [
+        "Pick a mode and a mode to compare it with. Both run the same traffic, beacons and currents.",
+        "Read the timeline: beacons on top (DTIM beacons taller), then for each mode the frames the AP is holding for the client, a dot where the TIM bit is set, and the client's radio: a thin line while it dozes and a colored bar while it is awake, colored by what it is doing. Switch the span between 0.3 s and 60 s and slide the window along the run.",
+        "Change the beacon interval, DTIM period and listen interval, the U-APSD access categories and Max SP Length, or the TWT mantissa, exponent and wake duration. The QoS Info byte and the TWT wake interval are worked out as you go.",
+        "Choose a traffic pattern (phone idle, sensor, voice call, web page) or set your own, and set the currents and battery. The readouts give time awake, average current, a battery estimate, and mean and worst latency."
+      ],
+      "inputs": [
+        {
+          "name": "Mode, Compare with",
+          "unit": "mode",
+          "range": "Always awake, Legacy PS (PS-Poll), U-APSD, or TWT; default Legacy PS compared with TWT"
+        },
+        {
+          "name": "Beacon interval",
+          "unit": "TU (1 TU = 1024 µs)",
+          "range": "50, 100 (default, 102.4 ms), 200, 300, 500 or 1000"
+        },
+        {
+          "name": "DTIM period",
+          "unit": "beacons",
+          "range": "1 to 10; default 3"
+        },
+        {
+          "name": "Listen interval",
+          "unit": "beacons",
+          "range": "1 to 10; default 3"
+        },
+        {
+          "name": "U-APSD access categories",
+          "unit": "flags",
+          "range": "Voice, Video, Best effort, Background; all on by default"
+        },
+        {
+          "name": "Max SP Length",
+          "unit": "code",
+          "range": "0 = all buffered (default), 1 = 2, 2 = 4, 3 = 6 frames"
+        },
+        {
+          "name": "TWT agreement",
+          "unit": "type",
+          "range": "Individual (default) or Broadcast"
+        },
+        {
+          "name": "Wake interval mantissa",
+          "unit": "16-bit field",
+          "range": "1 to 65535; default 62500"
+        },
+        {
+          "name": "Wake interval exponent",
+          "unit": "5-bit field",
+          "range": "0 to 31; default 4 (62500 x 2^4 µs = 1 s). Intervals over 5 minutes are refused"
+        },
+        {
+          "name": "Minimum wake duration",
+          "unit": "256 µs or 1 TU",
+          "range": "1 to 255; default 16 x 256 µs = 4.1 ms"
+        },
+        {
+          "name": "Beacons (TWT)",
+          "unit": "choice",
+          "range": "Sleep through (default) or Wake for DTIM"
+        },
+        {
+          "name": "Traffic",
+          "unit": "frames",
+          "range": "downlink bursts (none to 50 per second) of 1, 4 or 16 frames; uplink (none to 50 per second); broadcast and multicast (none to 20 per second); access category; regular or random arrivals"
+        },
+        {
+          "name": "Awake and doze current",
+          "unit": "mA, µA",
+          "range": "awake 20, 50 (default), 100 or 200 mA; doze 5, 20 (default), 50 or 200 µA"
+        },
+        {
+          "name": "Battery",
+          "unit": "mAh",
+          "range": "250, 1000 (default), 3000 or 10000"
+        }
+      ],
+      "algorithm": "Time is kept in microseconds; 1 TU = 1024 µs. Beacons go out every beacon interval and every Nth is a DTIM, after which the AP sends the broadcast and multicast frames it held. In legacy PS and U-APSD the client wakes on every listen-interval beacon and on every DTIM beacon; if its TIM bit is set it retrieves the held frames: one PS-Poll per frame, or on a U-APSD access category one trigger per service period of up to Max SP Length frames (an uplink frame on that access category is itself the trigger). In TWT the wake interval is mantissa x 2^exponent µs and the client wakes for the minimum wake duration, during which the AP delivers held frames; broadcast TWT here starts each service period at a beacon. The run lasts 60 s, or four TWT intervals, up to 20 minutes. Time awake is the union of every awake stretch. Average current = awake share x awake current + doze share x doze current. Battery life = capacity / average current. Latency is from a frame reaching the AP (or being ready to send) to its delivery.",
+      "example": "Defaults: beacon 100 TU, DTIM 3, listen interval 3, phone-idle traffic. Legacy PS wakes for every third beacon (about 3.3 times a second) plus once for each uplink frame, and a downlink frame waits up to about 306 ms. TWT at 1 s wakes once a second and sleeps through beacons, so it is awake far less, but a downlink frame can wait up to a second and broadcast frames go by while it dozes. Set the voice-call pattern and compare Legacy PS with U-APSD: U-APSD collects each frame with the next uplink frame, within 20 ms.",
+      "fieldNotes": [
+        "100 TU (102.4 ms) is the common beacon interval, not a mandated value.",
+        "A longer DTIM saves the client wakes and makes broadcast and multicast wait longer. When the listen interval and DTIM period do not line up (3 and 4, say), this model's client wakes for both, so a longer DTIM can add wakes; make one a multiple of the other.",
+        "The battery figures in the Currents card are one vendor example, not a general truth: a Silicon Labs SiWx917 tested by Novus Labs in a study Silicon Labs commissioned averaged about 90 µA at DTIM 10 and 49 µA with a 30 s TWT. The simulator does not use them.",
+        "The frame-exchange durations, the traffic patterns and the currents are illustrative. Real clients also stay awake a while after traffic, retry, scan and roam, and APs limit how long they hold frames; none of that is modeled.",
+        "The TIM here is set whenever any frame waits for the client; the finer U-APSD rules for which access categories the TIM covers are not modeled."
+      ],
+      "source": "Wi-Fi Lab research briefs (wave 3 section 9, wave 5 section 9): TU and beacon interval from the Linux wireless power-savings documentation and CWNP; TWT and U-APSD field layouts from the Linux kernel headers include/linux/ieee80211.h and ieee80211-he.h; the SiWx917 figures from Silicon Labs and Novus Labs. IEEE 802.11 itself was not read. Computed on your device."
+    },
     "mlo-simulator": {
       "name": "Multi-Link Operation",
       "category": "Calculators & Tools",

@@ -1143,6 +1143,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'power-save',
+        title: 'Power Save',
+        description:
+            'Watch a client doze and wake around beacons, DTIM, U-APSD and '
+            'TWT, and see what each saving costs in latency',
+        routeName: '/tools/power-save',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',

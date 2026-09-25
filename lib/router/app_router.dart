@@ -39,6 +39,7 @@ import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
+import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
@@ -332,6 +333,10 @@ class AppRouter {
   // NSTR and EMLSR latency on the same seeded traffic; pure on-device math,
   // all platforms incl. web.
   static const String mloSimulator = '/tools/mlo-simulator';
+  // Wi-Fi Lab (2026-09-25). Beacons, DTIM, legacy PS, U-APSD and TWT on a
+  // timeline, with awake time, a battery estimate and latency; pure
+  // on-device math, all platforms incl. web.
+  static const String powerSave = '/tools/power-save';
   // Wi-Fi Lab (2026-09-25). 802.1X / EAP message ladder (client, AP,
   // RADIUS server); pure on-device model, all platforms incl. web.
   static const String eapLadder = '/tools/eap-ladder';
@@ -795,6 +800,7 @@ class AppRouter {
     spatialReuse: (_) => const SpatialReuseScreen(),
     dfsSimulator: (_) => const DfsSimulatorScreen(),
     mloSimulator: (_) => const MloSimulatorScreen(),
+    powerSave: (_) => const PowerSaveScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
