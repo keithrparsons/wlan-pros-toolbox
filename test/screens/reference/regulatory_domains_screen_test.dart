@@ -62,6 +62,17 @@ void main() {
       expect(us.bandNotes, contains('GVP'));
     });
 
+    test('Canada row: RSS-247 Issue 4, UNII-4, 5600-5650 reopened', () {
+      // RSS-247 Issue 3 (2023) permits 5850-5895 MHz; Issue 4 (2025-07-24)
+      // lifts the 5600-5650 MHz ban. RSS-248 Issue 3: SP on 5925-6875.
+      final RegulatoryDomain ca = domainFor('Canada');
+      expect(ca.governingDocs, contains('RSS-247 Issue 4'));
+      expect(ca.bandNotes, contains('UNII-4 (5850-5895'));
+      expect(ca.bandNotes, contains('5600-5650 reopened'));
+      expect(ca.bandNotes, contains('SP via AFC on 5925-6875'));
+      expect(ca.bandNotes, contains('RSS-248 Issue 3'));
+    });
+
     test('colliding abbreviations are flagged and get distinct logo keys', () {
       final RegulatoryDomain ncc = domainFor('Taiwan');
       final RegulatoryDomain nccNg = domainFor('Nigeria');

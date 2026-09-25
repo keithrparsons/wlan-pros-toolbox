@@ -131,6 +131,26 @@ void main() {
       });
     });
 
+    testWidgets('regulatory card: 5 GHz rows name AP vs client correctly',
+        (WidgetTester tester) async {
+      // 47 CFR 15.407(a)(1),(a)(2),(a)(3); ETSI EN 301 893 Table 2. The FCC
+      // U-NII-1 AP limit is 1 W conducted + 6 dBi = +36 dBm EIRP; +30 dBm is
+      // the client and U-NII-2A/2C figure. No EU RLAN rule gives 1 W at
+      // 5.8 GHz; +30 dBm with TPC is 5470-5725 MHz.
+      await _withViewport(tester, const Size(375, 900), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const EirpScreen()),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('FCC U-NII-1, 1 W EIRP (typ.)'), findsNothing);
+        expect(find.text('ETSI 5.8 GHz, 1 W EIRP'), findsNothing);
+        expect(find.text('FCC U-NII-1/3 AP, 1 W cond. + 6 dBi'), findsOneWidget);
+        expect(find.text('FCC U-NII-2A/2C, or U-NII-1 client'), findsOneWidget);
+        expect(find.text('ETSI 5470-5725 MHz, 1 W EIRP w/ TPC'), findsOneWidget);
+        expect(find.text('ETSI 5150-5350 MHz, 200 mW EIRP'), findsOneWidget);
+      });
+    });
+
     testWidgets('typing valid inputs produces a finite dBm result',
         (WidgetTester tester) async {
       await _withViewport(tester, const Size(375, 900), () async {

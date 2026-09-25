@@ -79,7 +79,7 @@ class RoamingThreshold {
   final String scenario;
   final String minRssi; // e.g. "≥ −67 dBm"
   final String minSnr; // e.g. "≥ 25 dB"
-  final String roamLatency; // e.g. "< 50 ms (with 802.11r)" or "—"
+  final String roamLatency; // e.g. "< 50 ms (FT; convention)" or "—"
   final String designRule;
   final RoamGrade grade;
 }
@@ -95,6 +95,9 @@ class RoamingScreen extends StatelessWidget {
   // Exception (2026-09-25): the 802.11r and 802.11k `what` text departs from
   // the PWA to fix two facts. The Neighbor Report element has no RSSI field,
   // and the PWA's FT latency figures (>150 ms to <50 ms) had no source.
+  // The thresholds table departs too: VoIP "< 50 ms" is a convention (IEEE
+  // TGr submission 11-04/0989), and the data row's "< 150 ms" was the ITU-T
+  // G.114 voice budget, so it now reads "no published target".
 
   /// 802.11r / 802.11k / 802.11v protocol overview.
   static const List<RoamingProtocol> kProtocols = <RoamingProtocol>[
@@ -148,7 +151,7 @@ class RoamingScreen extends StatelessWidget {
       scenario: 'VoIP / UC design target',
       minRssi: '≥ −67 dBm',
       minSnr: '≥ 25 dB',
-      roamLatency: '< 50 ms (with 802.11r)',
+      roamLatency: '< 50 ms (FT; convention)',
       designRule: '≥ 2 APs at −67 dBm everywhere',
       grade: RoamGrade.good,
     ),
@@ -156,7 +159,7 @@ class RoamingScreen extends StatelessWidget {
       scenario: 'Standard data design target',
       minRssi: '≥ −70 dBm',
       minSnr: '≥ 20 dB',
-      roamLatency: '< 150 ms',
+      roamLatency: 'no published target',
       designRule: '≥ 2 APs at −70 dBm everywhere',
       grade: RoamGrade.good,
     ),
