@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 199;
+const int _expectedEntryCount = 200;
 
 const String _fixture = '''
 {
@@ -111,7 +111,9 @@ void main() {
       expect(h.howToUse, isEmpty);
       expect(h.inputs, isEmpty);
       // Field notes are preserved verbatim (GL-005), never dropped.
-      expect(h.fieldNotes, <String>['DFS channels may require radar avoidance.']);
+      expect(h.fieldNotes, <String>[
+        'DFS channels may require radar avoidance.',
+      ]);
     });
 
     test('algorithmReadsAsFormula is true for a formula, false otherwise', () {
@@ -408,6 +410,9 @@ void main() {
       // 2026-09-25: Wi-Fi Lab added ONE entry, six-ghz-psd, on top of the
       // merged preview's 198. Counted off the file, not derived:
       // `len(json['tools'])` returned 199 and the id appears exactly once.
+      // 2026-09-25: Wi-Fi Lab added ONE entry, mimo-beamforming. 198 + 1 =
+      // 199. Counted off the file, not derived: `len(json['tools'])` returned
+      // 199 and the id appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
 
@@ -498,7 +503,11 @@ void main() {
           json.decode(await rootBundle.loadString(kToolHelpAsset))
               as Map<String, dynamic>;
       final Map<String, dynamic> tools = raw['tools'] as Map<String, dynamic>;
-      const List<String> listFields = <String>['howToUse', 'inputs', 'fieldNotes'];
+      const List<String> listFields = <String>[
+        'howToUse',
+        'inputs',
+        'fieldNotes',
+      ];
       final List<String> wrong = <String>[];
       tools.forEach((String id, dynamic entry) {
         final Map<String, dynamic> m = entry as Map<String, dynamic>;

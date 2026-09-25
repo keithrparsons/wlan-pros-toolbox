@@ -39,6 +39,7 @@ import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
+import '../screens/tools/calculators/mimo_beamforming_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
 import '../screens/tools/calculators/unit_converter_screen.dart';
@@ -281,6 +282,9 @@ class AppRouter {
   // Wi-Fi Lab (2026-09-25). 6 GHz EIRP / PSD / SNR by width from 47 CFR
   // 15.407 and ETSI EN 303 687, pure on-device math; all platforms incl. web.
   static const String sixGhzPsd = '/tools/six-ghz-psd';
+  // Wi-Fi Lab (2026-09-25). Pure-Dart MIMO streams, array factor and sounding
+  // estimate; all platforms incl. web.
+  static const String mimoBeamforming = '/tools/mimo-beamforming';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -730,6 +734,7 @@ class AppRouter {
     fourierFft: (_) => const FourierFftScreen(),
     wifiThroughAWall: (_) => const WifiThroughAWallScreen(),
     sixGhzPsd: (_) => const SixGhzPsdScreen(),
+    mimoBeamforming: (_) => const MimoBeamformingScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),
