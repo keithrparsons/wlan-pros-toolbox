@@ -692,6 +692,72 @@
       ],
       "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005). No manufacturer file is included. Computed on your device."
     },
+    "spatial-reuse": {
+      "name": "Spatial Reuse",
+      "category": "Calculators & Tools",
+      "purpose": "Two BSSs share one channel along a line: AP A with client A, AP B with client B. AP A is already sending, and AP B has a frame ready. The tool shows whether AP B waits or sends at the same time, which rule decided it, how much transmit power AP B gives up when it reuses the air, each client's SINR, and how much airtime the pair uses.",
+      "whyHere": "A radio waits for any Wi-Fi frame it hears at -82 dBm or more, so two APs on one channel take turns even when they barely bother each other's clients. 802.11ax adds a BSS color to every frame so a radio can tell a neighbor from its own BSS, and lets it ignore a neighbor below a higher threshold, OBSS_PD, if it turns its own power down by the same amount. This shows the trade: spatial reuse buys concurrency with range.",
+      "howToUse": [
+        "Start with the default: AP B hears AP A at about -77.7 dBm, above -82, so it waits and the pair needs two frame-times.",
+        "Raise OBSS_PD. Once it passes the level AP B hears, AP B ignores the neighbor, both frames go at once, and AP B's power drops 1 dB for every 1 dB you raised the threshold. Watch client B's SINR fall.",
+        "Give both BSSs the same color number. AP B can no longer tell AP A's frame from its own BSS, so -82 dBm applies again whatever OBSS_PD is. Turn BSS coloring off to see legacy radios.",
+        "Drag a radio along the line, or use the position sliders. Move the APs closer until energy detect (-62 dBm) fires, which no color or threshold gets past.",
+        "Change the channel width, AP power, TX_PWRref class and path-loss exponent to see how each moves the numbers. Copy puts the whole scenario on the clipboard."
+      ],
+      "inputs": [
+        {
+          "name": "BSS coloring",
+          "unit": "on or off",
+          "range": "on (802.11ax) by default; off is legacy behavior"
+        },
+        {
+          "name": "BSS color, each BSS",
+          "unit": "number",
+          "range": "1 to 63; defaults 6 and 26"
+        },
+        {
+          "name": "OBSS_PD threshold",
+          "unit": "dBm per 20 MHz",
+          "range": "-82 to -62, default -82"
+        },
+        {
+          "name": "TX_PWRref",
+          "unit": "dBm",
+          "range": "21 (client, or AP with 1 or 2 streams) or 25 (AP with 3 or more)"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80 or 160, default 20"
+        },
+        {
+          "name": "AP transmit power",
+          "unit": "dBm",
+          "range": "5 to 25, default 20, both APs"
+        },
+        {
+          "name": "Path-loss exponent n",
+          "unit": "",
+          "range": "2.0 to 4.0, default 3.0"
+        },
+        {
+          "name": "Positions",
+          "unit": "m",
+          "range": "0 to 60 on a line; defaults AP A 5, client A 15, client B 45, AP B 55"
+        }
+      ],
+      "algorithm": "Received level = AP power - (free-space loss at 1 m + 10 n log10(d)) at 5180 MHz with 0 dBi antennas, then minus 10 log10(width / 20) to get the level in each 20 MHz, which is what the thresholds are defined against. AP B decides in this order: energy at or above -62 dBm defers (energy detect); below -82 dBm nothing is detected; with coloring off any Wi-Fi preamble at or above -82 defers; with the same color on both BSSs the frame is intra-BSS and -82 applies; with a neighbor's color AP B defers at or above OBSS_PD, and below it AP B sends with its power capped at TX_PWRmax = TX_PWRref - (OBSS_PD - (-82)). A whole wide frame is compared with thresholds raised 3 dB per doubling of width, which is the same test. SINR at each client = signal - (other AP's level power-summed with thermal noise, -174 + 10 log10(20 MHz) = -101.0 dBm). Airtime counts one frame each: 1 frame-time together, 2 in turn.",
+      "example": "Defaults: the APs are 50 m apart at n = 3, so AP B hears AP A at -77.7 dBm and waits (OBSS_PD at -82). Raise OBSS_PD to -72: AP B sends at once, capped at 21 - 10 = 11 dBm. Client A's SINR drops from 44.3 to 27.0 dB, client B's from 44.3 to 9.1 dB, and the pair needs 1 frame-time instead of 2. At -62 AP B is down to 1 dBm and client B's SINR is -0.9 dB: the neighbor is louder than its own AP.",
+      "fieldNotes": [
+        "TX_PWRref (21 or 25 dBm) and the 3 dB per doubling of width each come from one secondary source. The -82, -62 and OBSS_PD range have two.",
+        "SRG (spatial reuse group) thresholds and parameterized spatial reuse (PSR) are out of scope.",
+        "Noise is thermal only, with no receiver noise figure, so SINR reads high when the neighbor is quiet. The tool reports SINR, not which MCS a link can hold.",
+        "Only AP B decides. AP A already holds the air, and uplink frames and clients' own deferral are left out.",
+        "Airtime ignores backoff, ACKs and rate changes; it counts one equal-length frame per BSS.",
+        "The -82 and -62 dBm thresholds and the per-20 MHz comparison match the Channel Planner, so the two tools agree."
+      ],
+      "source": "OBSS_PD rule and TX_PWRmax from IEEE 802.11ax as described by Wilhelmi et al., Spatial Reuse in IEEE 802.11ax WLANs (Computer Communications; arXiv 1907.04141), and SageAxe. TX_PWRref from Hitchhiker's Guide to Learning (OBSS PD). Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. Computed on your device."
+    },
     "ofdma-simulator": {
       "name": "OFDMA Resource Units",
       "category": "Calculators & Tools",

@@ -1476,6 +1476,37 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'simulator',
   ],
+  // Wi-Fi Lab (2026-09-25). What the spatial reuse simulator shows, in the
+  // words a student types when neighbor APs slow each other down.
+  'spatial-reuse': <String>[
+    'spatial reuse',
+    'bss color',
+    'bss coloring',
+    'bss colour',
+    'obss',
+    'obss_pd',
+    'obss pd',
+    'overlapping bss',
+    'co-channel',
+    'co-channel interference',
+    'cci',
+    'cca',
+    'clear channel assessment',
+    'preamble detect',
+    'energy detect',
+    '-82 dbm',
+    '-62 dbm',
+    'deferral',
+    'defer',
+    'tx_pwrref',
+    'transmit power',
+    'sinr',
+    '802.11ax',
+    'wi-fi 6',
+    'concurrent transmission',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[
