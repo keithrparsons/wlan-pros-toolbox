@@ -987,6 +987,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'fourier-fft',
+        title: 'Fourier and FFT',
+        description:
+            'Build a signal from sines, then see how an FFT analyzer measures '
+            'it: bins, RBW, windows and leakage',
+        routeName: '/tools/fourier-fft',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
