@@ -6,10 +6,19 @@
 // What is drawn, left to right, at true scale:
 //   - in front of the wall: incident plus reflected, E = e^(-jkx) + R e^(jkx);
 //     its envelope shows the standing-wave ripple, nodes lambda/2 apart;
-//   - inside: the wave with lambda/sqrt(e') and exponential decay, including
-//     the part bounced off the back face;
-//   - behind: the transmitted wave, amplitude |T|.
+//   - inside: the same wave, its height taken from the physics (the decay,
+//     including the part bounced off the back face);
+//   - behind: the same wave again, height |T|.
 // The field is the tangential E; SlabResult.fieldAt owns that math.
+//
+// FREQUENCY NEVER CHANGES (Keith, 2026-09-25: "The only thing that changes
+// is the height of the wave, NOT the frequency."). A snapshot of a wave with
+// a shorter wavelength reads as a higher frequency, so by DEFAULT the inside
+// wave keeps the air wavelength: only its height changes. The optional
+// "Show wavelength inside the material" view draws the true lambda/sqrt(e')
+// with a note that the frequency is unchanged. In both views the inside
+// phase is laid out on the air scale (px per metre), so widening a thin
+// wall's band to stay visible never stretches the wave. See WallWaveProfile.
 //
 // MOTION (GL-003 §8.8): the phase advances on a Ticker, one cycle every
 // [_kSecondsPerCycle] seconds. It starts running only when reduced motion is
@@ -47,10 +56,19 @@ class WallSlabStage extends StatefulWidget {
     required this.config,
     required this.playing,
     required this.onPlayingChanged,
+    this.showMaterialWavelength = false,
+    this.onShowMaterialWavelengthChanged,
     this.plotHeight = 200,
   });
 
   final WallConfig config;
+
+  /// Draw the true (shorter) wavelength inside the material. Off by default:
+  /// a shorter drawn wavelength reads as a higher frequency, which is wrong.
+  final bool showMaterialWavelength;
+
+  /// Null hides the switch (a presenter can own it elsewhere).
+  final ValueChanged<bool>? onShowMaterialWavelengthChanged;
 
   /// Whether the phase is advancing.
   final bool playing;
@@ -72,35 +90,39 @@ class _WallSlabStageState extends State<WallSlabStage>
   // One result per config, so the painter's phasor cache survives the
   // animation frames (which rebuild without changing the config).
   WallConfig? _resultFor;
+  bool? _modeFor;
   late SlabResult _result;
   final WallPhasorCache _cache = WallPhasorCache();
 
   SlabResult get _current {
-    if (_resultFor != widget.config) {
-      _result = widget.config.result;
+    if (_resultFor != widget.config ||
+        _modeFor != widget.showMaterialWavelength) {
+      if (_resultFor != widget.config) _result = widget.config.result;
       _resultFor = widget.config;
+      _modeFor = widget.showMaterialWavelength;
       // A still frame should show the wave, not a zero crossing: in front of
       // metal the standing wave is flat at phase 0. While paused, freeze at
       // the phase with the most field on screen. While playing, leave the
       // phase alone so the animation does not jump.
-      if (!widget.playing) _phase = _brightestPhase(_result);
+      if (!widget.playing) {
+        _phase = _brightestPhase(
+          WallWaveProfile(
+            _result,
+            400,
+            showMaterialWavelength: widget.showMaterialWavelength,
+          ),
+        );
+      }
     }
     return _result;
   }
 
-  /// Phase maximizing the summed squared field Re{f·e^(j·phase)}^2 over the
-  /// drawn span: with a = Re f, b = Im f, the sum is
-  /// A·cos^2 - 2C·cos·sin + B·sin^2, which peaks at
-  /// phase = atan2(-2C, A - B) / 2.
-  static double _brightestPhase(SlabResult r) {
-    final double lambda = r.props.lambdaAir;
-    final double d = r.thicknessM;
-    final double side = math.max(_kAirWavelengths * lambda, 0.15 * d);
+  /// Phase maximizing the summed squared drawn field Re{f·e^(j·phase)}^2:
+  /// with a = Re f, b = Im f, the sum is A·cos^2 - 2C·cos·sin + B·sin^2,
+  /// which peaks at phase = atan2(-2C, A - B) / 2.
+  static double _brightestPhase(WallWaveProfile p) {
     double a2 = 0, b2 = 0, ab = 0;
-    const int n = 240;
-    for (int i = 0; i <= n; i++) {
-      final double x = -side + (2 * side + d) * i / n;
-      final Complex f = r.fieldAt(x);
+    for (final Complex f in p.sample(241)) {
       a2 += f.re * f.re;
       b2 += f.im * f.im;
       ab += f.re * f.im;
@@ -155,8 +177,7 @@ class _WallSlabStageState extends State<WallSlabStage>
         '${cfg.material.label.toLowerCase()} at ${cfg.centerMHz} MHz. '
         'In front, the reflected wave makes a ripple of '
         '${r.standingWaveRippleDb <= 40 ? '${fmt1(r.standingWaveRippleDb)} dB' : 'full nulls'}. '
-        'Inside, the wavelength is ${fmtLength(r.props.lambdaInMaterial)} '
-        'instead of ${fmtLength(r.props.lambdaAir)} in air. '
+        '${widget.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial)} instead of ${fmtLength(r.props.lambdaAir)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
         'Behind, the amplitude is ${fmtPct(ampBehind)} of the incident '
         'amplitude: ${fmtLossDb(r.transmissionLossDb)} of loss.';
 
@@ -190,6 +211,7 @@ class _WallSlabStageState extends State<WallSlabStage>
                     result: r,
                     phase: _phase,
                     cache: _cache,
+                    showMaterialWavelength: widget.showMaterialWavelength,
                     style: WallWaveStyle(
                       wave: colors.textAccent,
                       envelope: colors.textTertiary,
@@ -208,6 +230,10 @@ class _WallSlabStageState extends State<WallSlabStage>
               ),
             ),
           ),
+          if (widget.onShowMaterialWavelengthChanged != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            _wavelengthSwitch(colors, text),
+          ],
           const SizedBox(height: AppSpacing.xs),
           ExcludeSemantics(
             child: Wrap(
@@ -272,11 +298,42 @@ class _WallSlabStageState extends State<WallSlabStage>
                       'animate it.'
                 : 'Slowed down: one cycle every ${_kSecondsPerCycle.toStringAsFixed(0)} '
                       'seconds. At ${cfg.centerMHz} MHz a real wave cycles '
-                      '${fmt1(cfg.fGhz)} billion times a second. The wall and '
-                      'the air are drawn to the same scale.',
+                      '${fmt1(cfg.fGhz)} billion times a second, in front of, '
+                      'inside and behind the wall alike.',
           ),
         ],
       ),
+    );
+  }
+
+  Widget _wavelengthSwitch(AppColorScheme colors, TextTheme text) {
+    final ValueChanged<bool> onChanged =
+        widget.onShowMaterialWavelengthChanged!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        MergeSemantics(
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Show wavelength inside the material',
+                  style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+              Switch(
+                value: widget.showMaterialWavelength,
+                onChanged: onChanged,
+              ),
+            ],
+          ),
+        ),
+        Text(
+          'Frequency never changes. Inside a material the wave travels '
+          'slower, so the same frequency packs into a shorter wavelength.',
+          style: text.bodySmall?.copyWith(color: colors.textSecondary),
+        ),
+      ],
     );
   }
 
@@ -367,13 +424,125 @@ class WallWaveStyle {
       Object.hash(wave, envelope, reference, axis, wallFill, wallEdge, label);
 }
 
-/// Sampled field phasors for one result at one width. Owned by the stage's
-/// state so each animation frame only rotates them.
+/// What the stage draws: complex field phasors along the wall normal,
+/// mapped to pixels. Pure and deterministic, so the tests can measure the
+/// drawn wavelength directly.
+///
+/// Front of the wall and behind it are the physics' field (SlabResult.fieldAt)
+/// on the air scale. Inside, the HEIGHT is the physics' |fieldAt| across the
+/// drawn band, while the PHASE advances on the air scale (px per metre of
+/// air) at either the air wavenumber (default: same wavelength everywhere)
+/// or the true inside wavenumber Re(q)/d (showMaterialWavelength). Because
+/// the phase uses the air scale in both cases, widening a thin wall's band to
+/// [_kMinWallPx] changes how much wave the band shows, never its wavelength.
+/// Behind the wall the wave continues from the phase the inside ended on, at
+/// height |T|, so the drawing is continuous at both faces.
+class WallWaveProfile {
+  factory WallWaveProfile(
+    SlabResult result,
+    double width, {
+    required bool showMaterialWavelength,
+  }) {
+    final double lambda = result.props.lambdaAir;
+    final double d = result.thicknessM;
+    final double side = math.max(_kAirWavelengths * lambda, 0.15 * d);
+    final double pxPerM = width / (2 * side + d);
+    double wallPx = d * pxPerM;
+    double frontPx = side * pxPerM;
+    bool widened = false;
+    if (wallPx < _kMinWallPx) {
+      frontPx -= (_kMinWallPx - wallPx) / 2;
+      wallPx = _kMinWallPx;
+      widened = true;
+    }
+    return WallWaveProfile._(
+      result: result,
+      width: width,
+      showMaterialWavelength: showMaterialWavelength,
+      side: side,
+      frontPx: frontPx,
+      wallPx: wallPx,
+      airPxPerM: frontPx / side,
+      widened: widened,
+    );
+  }
+
+  WallWaveProfile._({
+    required this.result,
+    required this.width,
+    required this.showMaterialWavelength,
+    required this.side,
+    required this.frontPx,
+    required this.wallPx,
+    required this.airPxPerM,
+    required this.widened,
+  }) : _k0z =
+           2 *
+           math.pi /
+           result.props.lambdaAir *
+           math.cos(result.angleDeg * math.pi / 180),
+       _front = result.fieldAt(0);
+
+  final SlabResult result;
+  final double width;
+  final bool showMaterialWavelength;
+
+  /// Air shown on each side, metres.
+  final double side;
+
+  /// Pixel extent of the air in front, and of the drawn wall band.
+  final double frontPx;
+  final double wallPx;
+
+  /// Pixels per metre of air (both sides).
+  final double airPxPerM;
+
+  /// Whether the wall band was widened to stay visible.
+  final bool widened;
+
+  final double _k0z;
+  final Complex _front;
+
+  /// Phase wavenumber inside the band, rad per metre of AIR scale.
+  double get insideWavenumber {
+    if (!showMaterialWavelength || result.thicknessM == 0) return _k0z;
+    return result.q.re / result.thicknessM;
+  }
+
+  double get _psi0 => _front.arg;
+
+  /// Phase at the back face of the drawn band.
+  double get _psiEnd => _psi0 - insideWavenumber * (wallPx / airPxPerM);
+
+  /// The drawn phasor at pixel column [px] (0..width).
+  Complex phasorAtPx(double px) {
+    if (px < frontPx) {
+      return result.fieldAt((px - frontPx) / airPxPerM);
+    }
+    final double d = result.thicknessM;
+    if (px <= frontPx + wallPx) {
+      final double u = px - frontPx;
+      final double mag = result.fieldAt(wallPx == 0 ? 0 : u / wallPx * d).abs;
+      return Complex.polar(mag, _psi0 - insideWavenumber * (u / airPxPerM));
+    }
+    final double xBehind = (px - frontPx - wallPx) / airPxPerM;
+    return Complex.polar(result.t.abs, _psiEnd - _k0z * xBehind);
+  }
+
+  /// [n] evenly spaced phasors across the width.
+  List<Complex> sample(int n) => <Complex>[
+    for (int i = 0; i < n; i++) phasorAtPx(i * width / (n - 1)),
+  ];
+}
+
+/// Sampled drawn phasors for one result, width and view. Owned by the
+/// stage's state so each animation frame only rotates them.
 class WallPhasorCache {
   SlabResult? _for;
   int _n = 0;
+  bool? _mode;
   List<Complex> _phasors = const <Complex>[];
-  _Geometry? _geo;
+  WallWaveProfile? _profile;
 }
 
 /// Draws the field along the wall normal.
@@ -383,58 +552,35 @@ class WallWavePainter extends CustomPainter {
     required this.phase,
     required this.style,
     required this.cache,
+    this.showMaterialWavelength = false,
   });
 
   final SlabResult result;
   final double phase;
   final WallWaveStyle style;
   final WallPhasorCache cache;
-
-  _Geometry _geometry(double width) {
-    final double lambda = result.props.lambdaAir;
-    final double d = result.thicknessM;
-    final double side = math.max(_kAirWavelengths * lambda, 0.15 * d);
-    final double span = 2 * side + d;
-    final double pxPerM = width / span;
-    double wallPx = d * pxPerM;
-    double frontPx = side * pxPerM;
-    if (wallPx < _kMinWallPx) {
-      // Keep the physics at true scale; only widen the drawn band.
-      frontPx -= (_kMinWallPx - wallPx) / 2;
-      wallPx = _kMinWallPx;
-    }
-    return _Geometry(side: side, span: span, frontPx: frontPx, wallPx: wallPx);
-  }
-
-  /// Maps a pixel column to metres from the front face, with the drawn wall
-  /// band standing in for the true thickness when it had to be widened.
-  double _xAt(double px, _Geometry g) {
-    final double d = result.thicknessM;
-    if (px < g.frontPx) return -(g.frontPx - px) / g.frontPx * g.side;
-    if (px <= g.frontPx + g.wallPx) {
-      return g.wallPx == 0 ? 0 : (px - g.frontPx) / g.wallPx * d;
-    }
-    final double backPx = g.frontPx + g.wallPx;
-    final double backWidth = math.max(1.0, g.frontPx);
-    return d + (px - backPx) / backWidth * g.side;
-  }
+  final bool showMaterialWavelength;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
     final int n = size.width.ceil() + 1;
-    if (!identical(cache._for, result) || cache._n != n) {
-      final _Geometry geo = _geometry(size.width);
+    if (!identical(cache._for, result) ||
+        cache._n != n ||
+        cache._mode != showMaterialWavelength) {
+      final WallWaveProfile prof = WallWaveProfile(
+        result,
+        size.width,
+        showMaterialWavelength: showMaterialWavelength,
+      );
       cache
-        .._geo = geo
-        .._phasors = <Complex>[
-          for (int i = 0; i < n; i++)
-            result.fieldAt(_xAt(i * size.width / (n - 1), geo)),
-        ]
+        .._profile = prof
+        .._phasors = prof.sample(n)
         .._for = result
-        .._n = n;
+        .._n = n
+        .._mode = showMaterialWavelength;
     }
-    final _Geometry g = cache._geo!;
+    final WallWaveProfile g = cache._profile!;
     final List<Complex> ph = cache._phasors;
 
     const double labelBand = 20;
@@ -541,19 +687,8 @@ class WallWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(WallWavePainter old) =>
-      old.phase != phase || old.result != result || old.style != style;
-}
-
-class _Geometry {
-  const _Geometry({
-    required this.side,
-    required this.span,
-    required this.frontPx,
-    required this.wallPx,
-  });
-
-  final double side;
-  final double span;
-  final double frontPx;
-  final double wallPx;
+      old.phase != phase ||
+      old.result != result ||
+      old.style != style ||
+      old.showMaterialWavelength != showMaterialWavelength;
 }

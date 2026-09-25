@@ -1,8 +1,9 @@
 // Wi-Fi Through a Wall: Wi-Fi Lab tool (wifi-through-a-wall).
 //
-// One wave, one wall. Part of the wave reflects off the face, the wavelength
-// shrinks inside the material while the frequency stays the same, and the
-// amplitude decays through it. Then the per-band story: concrete loses more
+// One wave, one wall. Part of the wave reflects off the face and the
+// amplitude decays through the wall; the frequency never changes, so the
+// drawn wave keeps one wavelength everywhere unless the optional "Show
+// wavelength inside the material" view is on. Then the per-band story: concrete loses more
 // at 6 GHz than at 2.4 GHz, but thin panels do not lose monotonically more at
 // higher frequency, because of thin-slab resonance.
 //
@@ -58,6 +59,10 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
     with WidgetsBindingObserver {
   late WallConfig _config = widget.initial;
   bool _playing = false;
+
+  /// Optional view: draw the true inside wavelength. Off by default (Keith,
+  /// 2026-09-25: only the height of the wave changes, not the frequency).
+  bool _showMaterialWavelength = false;
   bool _motionDecided = false;
 
   @override
@@ -164,6 +169,9 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
                         playing: _playing,
                         onPlayingChanged: (bool p) =>
                             setState(() => _playing = p),
+                        showMaterialWavelength: _showMaterialWavelength,
+                        onShowMaterialWavelengthChanged: (bool v) =>
+                            setState(() => _showMaterialWavelength = v),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       WallSlabControls(config: _config, onChanged: _set),
@@ -245,11 +253,13 @@ class _ExplainerCard extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.xs),
           WallNote(
-            icon: Icons.compress,
+            icon: Icons.graphic_eq,
             message:
-                'Shorter wavelength inside: the wave slows down in the '
-                'material, so its wavelength shrinks by the square root of '
-                'the permittivity. The frequency does not change.',
+                'Same frequency everywhere: in front of, inside and behind '
+                'the wall the wave cycles at the channel frequency. The wave '
+                'does travel slower inside, so the same frequency packs into '
+                'a shorter wavelength there; switch on Show wavelength inside '
+                'the material to see it.',
           ),
           SizedBox(height: AppSpacing.xs),
           WallNote(
