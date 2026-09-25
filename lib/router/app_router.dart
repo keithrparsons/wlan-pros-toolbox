@@ -44,6 +44,7 @@ import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
 import '../screens/tools/calculators/rate_vs_range_screen.dart';
+import '../screens/tools/calculators/rate_adaptation_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
 import '../screens/tools/calculators/channel_planner_screen.dart';
 import '../screens/tools/calculators/ofdma_simulator_screen.dart';
@@ -310,6 +311,10 @@ class AppRouter {
   // log-distance path loss and ssid-airtime beacon math; pure on-device
   // math, all platforms incl. web.
   static const String rateVsRange = '/tools/rate-vs-range';
+  // Wi-Fi Lab (2026-09-25). Minstrel-style rate control over one link,
+  // reusing the Rate vs Range, Airtime Anatomy and Medium Access math; pure
+  // on-device model, all platforms incl. web.
+  static const String rateAdaptation = '/tools/rate-adaptation';
   // Wi-Fi Lab (2026-09-25). Pure-Dart CCA, BSS color and OBSS_PD model;
   // all platforms incl. web.
   static const String spatialReuse = '/tools/spatial-reuse';
@@ -775,6 +780,7 @@ class AppRouter {
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
+    rateAdaptation: (_) => const RateAdaptationScreen(),
     spatialReuse: (_) => const SpatialReuseScreen(),
     dfsSimulator: (_) => const DfsSimulatorScreen(),
     eapLadder: (_) => const EapLadderScreen(),
