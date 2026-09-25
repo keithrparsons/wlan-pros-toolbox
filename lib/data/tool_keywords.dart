@@ -1136,6 +1136,34 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'half duplex',
     'simulation',
   ],
+  // Wi-Fi Lab (2026-09-25). What the wall simulator shows, in the words a
+  // student would search with.
+  'wifi-through-a-wall': <String>[
+    'wall',
+    'wall loss',
+    'wall attenuation',
+    'penetration loss',
+    'building materials',
+    'concrete',
+    'brick',
+    'drywall',
+    'plasterboard',
+    'glass',
+    'wood',
+    'metal',
+    'reflection',
+    'standing wave',
+    'permittivity',
+    'dielectric',
+    'absorption',
+    'wavelength',
+    'itu-r p.2040',
+    'p.2040',
+    'polarization',
+    'angle of incidence',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[

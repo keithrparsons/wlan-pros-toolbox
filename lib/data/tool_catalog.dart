@@ -945,6 +945,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'wifi-through-a-wall',
+        title: 'Wi-Fi Through a Wall',
+        description:
+            'Send one wave through one wall: see it reflect, shrink inside '
+            'and fade, and compare the loss across 2.4, 5 and 6 GHz',
+        routeName: '/tools/wifi-through-a-wall',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
