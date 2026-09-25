@@ -31,7 +31,6 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
 const int _expectedEntryCount = 201;
-const int _expectedEntryCount = 201;
 
 const String _fixture = '''
 {

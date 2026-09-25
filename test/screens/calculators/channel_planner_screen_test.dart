@@ -78,7 +78,7 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test('catalog registers channel-planner last in Wi-Fi Lab', () {
+  test('catalog registers channel-planner in Wi-Fi Lab', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -91,8 +91,9 @@ void main() {
     expect(e.subgroup, 'Wi-Fi Lab');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/channel-planner');
-    expect(rf.tools[i - 1].id, 'wifi-through-a-wall');
-    expect(rf.tools[i + 1].subgroup, isNot('Wi-Fi Lab'));
+    // Inside the Wi-Fi Lab block; the exact neighbors depend on merge order
+    // (2026-09-25 merge), so assert the shelf, not the slot.
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab');
   });
 
   test('§8.15.2 palette clears the contrast floor in both themes', () {
