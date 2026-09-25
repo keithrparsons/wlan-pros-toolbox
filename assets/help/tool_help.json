@@ -258,6 +258,63 @@
       ],
       "source": "IEEE 802.11 channel access rules (DCF and EDCA, clause 10) and OFDM PHY timing (clause 17), with the default EDCA parameters for a non-AP station. The simulation runs on your device."
     },
+    "fourier-fft": {
+      "name": "Fourier and FFT",
+      "category": "Calculators & Tools",
+      "purpose": "Shows that any signal is a sum of sines, and how a spectrum analyzer measures which sines are in it. Waves mode builds a signal from up to five sines and draws it over time and as a spectrum. FFT mode samples that signal, applies a window and runs an FFT, with the bin spacing, capture time, ENBW and RBW worked out on screen.",
+      "whyHere": "A Wi-Fi receiver runs an FFT on every symbol, and many spectrum analyzers compute their display the same way. Knowing what the bins, the window and the FFT size do explains why a weak signal can hide next to a strong one, why a peak can read a few dB low, and why legacy subcarriers are exactly 312.5 kHz apart.",
+      "howToUse": [
+        "In Waves, move a sine's frequency, amplitude and phase sliders and watch the time trace and the spectrum change together. Add up to five sines, or start from a preset: one sine, a square wave built from odd harmonics, two close tones, or a tone with a weak neighbor 40 dB down. Play sound to hear the sum.",
+        "In FFT, the same signal is sampled at Fs with N points. Pick the window, the sample rate and N, or use Halve N and Double N, and read the bin spacing, capture time, ENBW, RBW and the level of the strongest bin against the true level.",
+        "Pick a lesson to set everything up: a weak neighbor that the rectangular window hides and Blackman-Harris reveals, a tone between bins that reads low until you switch to flat top, and two close tones that merge when you halve N."
+      ],
+      "inputs": [
+        {
+          "name": "Sines",
+          "unit": "count",
+          "range": "1 to 5"
+        },
+        {
+          "name": "Frequency",
+          "unit": "Hz",
+          "range": "100 to 5,000 in 10 Hz steps"
+        },
+        {
+          "name": "Amplitude",
+          "unit": "linear, 1.00 = 0 dB full scale",
+          "range": "0 to 1.00"
+        },
+        {
+          "name": "Phase",
+          "unit": "degrees",
+          "range": "-180 to 180"
+        },
+        {
+          "name": "Sample rate (Fs)",
+          "unit": "kHz",
+          "range": "12.8, 25.6, 51.2 or 102.4"
+        },
+        {
+          "name": "FFT size (N)",
+          "unit": "points",
+          "range": "64 to 4,096, powers of two"
+        },
+        {
+          "name": "Window",
+          "unit": "type",
+          "range": "Rectangular, Hann, Hamming, Blackman-Harris (4-term), Flat top"
+        }
+      ],
+      "algorithm": "The signal is x(t) = sum of A cos(2 pi f t + phase). FFT mode takes N samples x[n] = x(n / Fs), multiplies them by the window w[n], and computes the DFT X[k] = sum of x[n] w[n] e^(-j 2 pi k n / N) with a radix-2 FFT. Bin spacing = Fs / N and capture time = N / Fs, so their product is always 1. ENBW is computed from the window itself as N x sum(w^2) / (sum w)^2, in bins, and RBW = ENBW x Fs / N. Levels are dB full scale, scaled so a sine of amplitude 1 exactly on a bin reads 0 dB with any window. The highest-sidelobe figure shown for each window is the published one, with the value measured from this window at the current N beside it.",
+      "example": "At Fs = 25.6 kHz and N = 256 the bins are 100 Hz apart and the capture lasts 10 ms. A Hann window has an ENBW of 1.50 bins, so the RBW is 150 Hz. A 20 MHz Wi-Fi receiver sampling at 20 MS/s with N = 64 gets bins exactly 312.5 kHz apart and a 3.2 µs frame; HE uses N = 256 for 78.125 kHz and 12.8 µs.",
+      "fieldNotes": [
+        "The windows use the periodic form used for spectral analysis. That is why Hann's ENBW comes out exactly 1.50 bins.",
+        "Flat top's published highest sidelobe is -88 dB. The flat top used here measures about -88 dB at N = 64 and about -93 dB from N = 256 up, and the screen shows both.",
+        "Frequencies are real audio frequencies, so the sound plays what the plots show. The sound does not follow the phase sliders.",
+        "Every tone stays below half the lowest sample rate, so nothing aliases in this tool."
+      ],
+      "source": "Textbook DSP: the DFT, bin spacing and RBW as set out in the Tektronix real-time spectrum analyzer primer, and the window figures published by Harris (1978). Wi-Fi numbers from the 802.11 OFDM parameters. Everything is computed on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
