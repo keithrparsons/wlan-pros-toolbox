@@ -1069,6 +1069,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Wi-Fi Lab',
       ),
+      // Distinct from the 'eap-types' and 'frame-exchange' references, which
+      // stay as they are.
+      ToolEntry(
+        id: 'eap-ladder',
+        title: '802.1X and EAP Ladder',
+        description:
+            'Watch a client, an AP and a RADIUS server authenticate step by '
+            'step: EAP-TLS, PEAP, EAP-TTLS, PSK and SAE, and what a roam skips',
+        routeName: '/tools/eap-ladder',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
