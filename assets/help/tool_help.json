@@ -614,6 +614,67 @@
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
+    "channel-planner": {
+      "name": "Channel Planner",
+      "category": "Calculators & Tools",
+      "purpose": "Place 2 to 12 access points on a floor, give each a channel and width, and see which ones share airtime. APs whose channels overlap and that hear each other above the clear channel assessment thresholds defer to each other; the largest group that all defer to each other is outlined as the contention domain, and each AP in it gets about 1/N of the airtime.",
+      "whyHere": "Channel planning is usually taught as a rule of thumb: use 1, 6 and 11, and keep channels narrow. This shows where the rules come from. Six APs on one floor fit on nine 20 MHz channels without sharing, but at 80 MHz only two channels exist without DFS in the US, so three APs share each one. In 2.4 GHz the transmit mask shows why 1, 6 and 11 beat 1, 4, 8 and 11.",
+      "howToUse": [
+        "Pick the band, region and width. In 5 GHz, turn DFS and (in the US) U-NII-4 on or off and watch the channel count for each width change. In 2.4 GHz, pick the OFDM or DSSS transmit mask.",
+        "Tap an AP to select it and drag it to move it, or pick it from the Selected AP list and use its position sliders. Choose its channel and width from the lists. Add up to 12 APs.",
+        "Turn on the wall tool and drag on the floor to draw a wall, or add a wall straight across from the controls. Every wall costs the same loss, which you set.",
+        "Solid lines join APs that defer to each other, labeled with the received level and the rule that fired. Dashed lines mean only one side defers. The dashed rings mark the largest contention domain. The strip under the floor shows which channels are in use across the band.",
+        "Press Auto-plan to spread the APs across the channels available at the chosen width, then change the width and plan again."
+      ],
+      "inputs": [
+        {
+          "name": "Band and region",
+          "unit": "2.4 or 5 GHz; US or EU",
+          "range": "US 2.4 GHz channels 1 to 11, EU 1 to 13; US 5 GHz 36 to 165 plus U-NII-4 169 to 177, EU 36 to 140"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20 or 40 in 2.4 GHz (20 only with DSSS); 20, 40, 80 or 160 in 5 GHz"
+        },
+        {
+          "name": "DFS and U-NII-4",
+          "unit": "on or off",
+          "range": "DFS: 52 to 64 and 100 to 144 (140 in the EU); U-NII-4 in the US only"
+        },
+        {
+          "name": "Access points",
+          "unit": "count and position",
+          "range": "2 to 12 on a floor 20 to 100 m wide and 10 to 60 m deep; default 50 x 30 m"
+        },
+        {
+          "name": "AP EIRP",
+          "unit": "dBm",
+          "range": "0 to 30, default 20"
+        },
+        {
+          "name": "Path-loss exponent n",
+          "unit": "",
+          "range": "2.0 to 4.0, default 3.0"
+        },
+        {
+          "name": "Loss per wall",
+          "unit": "dB",
+          "range": "0 to 30, default 10"
+        }
+      ],
+      "algorithm": "Received level between two APs = EIRP - (free-space loss at 1 m + 10 n log10(d)) - walls crossed x wall loss, with a 0 dBi receive antenna, computed at 2437 MHz in 2.4 GHz and 5500 MHz in 5 GHz. A wide transmission spreads its power, so each 20 MHz piece carries the total minus 10 log10(width / 20). An AP defers when a neighbor's channel overlaps its own and: the neighbor's preamble lands on its primary 20 MHz at -82 dBm or more (PD); or, in 5 GHz, a signal lands on its secondary 20 MHz at -72 dBm or more (SD); or the energy in any overlapping 20 MHz is -62 dBm or more (ED). Channels that do not overlap never contend. In 2.4 GHz the energy from a partly overlapping neighbor comes from its transmit mask (OFDM: 0 dBr to 9 MHz, -20 at 11, -28 at 20, -40 at 30 and beyond; DSSS: -30 dBr from 11 to 22 MHz, -50 beyond), interpolated in dB and summed over the victim's 20 MHz. A contention domain is the largest set of APs that all defer to each other; each gets 1/N of the airtime. Auto-plan is greedy: APs that hear the most neighbors choose first, each taking the channel that keeps the largest domain smallest, then every AP gets up to three chances to change its pick.",
+      "example": "The starting floor has six APs on 36 at 40 MHz in the US with DFS off, so all six hear each other and share one channel at about 17% each. Auto-plan uses all four 40 MHz channels and leaves pairs 32 m apart sharing (-72.4 dBm, preamble detect), so the largest domain is 2. At 20 MHz nobody shares; at 80 MHz, with two channels, three APs share each one. In 2.4 GHz the mask is -34 dBr at 25 MHz (1 and 6) but -23.6 dBr at 15 MHz (1 and 4).",
+      "fieldNotes": [
+        "The transmit mask is a ceiling, not what a radio emits. The adjacent-channel figures are the worst case the mask allows; real radios run below it.",
+        "Auto-plan is a teaching heuristic, not any vendor's RRM or DCA algorithm. It only knows the APs on this floor, not the neighbors, clients or interference a real network hears.",
+        "The -82, -72 and -62 dBm thresholds are the commonly cited 802.11 values from vendor documentation. The EU writes energy detect into law as -75 dBm/MHz, which is -62 dBm over 20 MHz.",
+        "On a secondary channel, deferring means the AP sends on fewer 20 MHz pieces rather than waiting. The Lab counts it as sharing to keep the picture simple.",
+        "1/N airtime is an even split among APs that all hear each other. Clients, retries, traffic load and APs that hear only part of the group change the real share.",
+        "One wall type with one loss. For real materials use the RF Attenuation tool."
+      ],
+      "source": "Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. ETSI EN 301 893 V2.1.1 for the EU 5 GHz band edges and energy detect. 802.11 transmit masks as quoted by Tektronix and ETSI EN 301 893 Figure 1. Channel numbers and bonding groups from this app's channel data. Computed on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",
