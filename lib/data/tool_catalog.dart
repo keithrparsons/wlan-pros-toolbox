@@ -935,6 +935,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'medium-access-simulator',
+        title: 'Medium Access Simulator',
+        description:
+            'Watch stations contend for the air slot by slot: backoff, '
+            'collisions, EDCA priority, hidden nodes and RTS/CTS',
+        routeName: '/tools/medium-access-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',

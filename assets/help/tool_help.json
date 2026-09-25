@@ -206,6 +206,58 @@
       ],
       "source": "Constellations, Gray mapping and scaling follow the IEEE 802.11 modulation mapping; transmit EVM limits are from the 802.11 transmit modulation accuracy tables. Noise and decisions are simulated on your device."
     },
+    "medium-access-simulator": {
+      "name": "Medium Access Simulator",
+      "category": "Calculators & Tools",
+      "purpose": "Shows how Wi-Fi stations share one channel. Each station waits for a quiet medium, counts down a random backoff in 9 µs slots, and transmits when the count reaches zero. You watch it happen slot by slot: collisions, the contention window doubling, EDCA priority, hidden nodes and RTS/CTS.",
+      "whyHere": "Wi-Fi is half duplex and shared, so airtime runs out long before the PHY rate does. Watching the waiting and the collisions shows why a 54 Mbps link delivers about 31 Mbps to one station, less as stations are added, and why voice traffic gets through first.",
+      "howToUse": [
+        "Press Play to run the clock, or Step to move one 9 µs slot at a time. The simulation starts paused. Reset replays the same run from time zero.",
+        "Read the timeline. The top lane is the medium as the AP hears it, and each station has its own lane. Hatched blocks are DIFS, AIFS or EIFS waits, outlined cells are backoff slots with the count inside, filled grey cells are a frozen count, lime blocks are data frames, green blocks are ACKs and red blocks are frames lost to a collision. Zoom changes the time scale; while paused, drag the timeline sideways to look back.",
+        "Add up to 10 stations and set each one's offered load. Switch to EDCA to give each station an access category. Turn on Hidden node, then RTS/CTS, to see collisions nobody could hear coming and how the handshake removes most of them. Change the frame size and PHY rate to see airtime change."
+      ],
+      "inputs": [
+        {
+          "name": "Stations",
+          "unit": "count",
+          "range": "1 to 10"
+        },
+        {
+          "name": "Access category",
+          "unit": "Voice / Video / Best effort / Background",
+          "range": "EDCA only; Legacy DCF gives every station DIFS and a contention window of 15 to 1023"
+        },
+        {
+          "name": "Offered load",
+          "unit": "frames per second",
+          "range": "always has a frame, or 50 to 2,000 frames/s with random arrivals"
+        },
+        {
+          "name": "Frame size",
+          "unit": "bytes",
+          "range": "100 to 2,304; default 1,500"
+        },
+        {
+          "name": "PHY rate",
+          "unit": "Mbps",
+          "range": "6 to 54 (legacy OFDM); default 54"
+        },
+        {
+          "name": "Speed",
+          "unit": "air time per real second",
+          "range": "0.1 ms to 200 ms"
+        }
+      ],
+      "algorithm": "Timing is 802.11 OFDM at 5 GHz: slot 9 µs, SIFS 16 µs, DIFS = SIFS + 2 slots = 34 µs, AIFS = SIFS + AIFSN x slot. A station waits for the medium to be idle for AIFS, then counts down a backoff drawn at random from 0 to CW, one per idle slot. If the medium goes busy the count freezes, and it resumes later without a new draw. At zero the station transmits. A clean frame gets an ACK after SIFS and CW resets to CWmin. No ACK means CW = 2(CW + 1) - 1, capped at CWmax, and a new draw; after 7 failed tries the frame is dropped. A station that heard a frame it could not decode waits EIFS (SIFS + DIFS + an ACK at 6 Mbps = 94 µs) in place of DIFS. Frame airtime = 20 µs + 4 µs x ceil((16 + 8 x bytes + 6) / (rate x 4)).",
+      "example": "A 1,500-byte frame at 54 Mbps takes 20 + 4 x ceil(12,022 / 216) = 244 µs, and its ACK at 24 Mbps takes 28 µs. One station alone spends 34 µs of DIFS, 67.5 µs of backoff on average, 244 µs of data, 16 µs of SIFS and 28 µs of ACK per frame, about 390 µs, so it delivers about 31 Mbps from a 54 Mbps rate. Each station you add brings collisions that eat into that.",
+      "fieldNotes": [
+        "Timing is legacy OFDM (802.11a/g). Newer PHYs (802.11n, ac, ax, be) have longer preambles and send many frames per access by aggregating them, so the numbers differ. The lesson about contention is the same.",
+        "Only uplink is modeled: every station sends to the AP, and the AP answers only with ACK or CTS. Rate adaptation and the NAV reset rule are not modeled.",
+        "RTS/CTS removes most hidden-node data collisions, not all of them. A hidden station whose own RTS overlaps the AP's CTS never hears that CTS, so it can still talk over the data frame that follows.",
+        "Runs are seeded, so the same settings give the same run every time."
+      ],
+      "source": "IEEE 802.11 channel access rules (DCF and EDCA, clause 10) and OFDM PHY timing (clause 17), with the default EDCA parameters for a non-AP station. The simulation runs on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",

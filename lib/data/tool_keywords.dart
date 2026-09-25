@@ -1109,6 +1109,33 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'simulator',
   ],
+  // Wi-Fi Lab (2026-09-25). What the simulator shows, in the words a student
+  // would search with.
+  'medium-access-simulator': <String>[
+    'csma/ca',
+    'csma',
+    'contention',
+    'contention window',
+    'backoff',
+    'collision',
+    'dcf',
+    'edca',
+    'wmm',
+    'access category',
+    'aifs',
+    'difs',
+    'sifs',
+    'eifs',
+    'slot time',
+    'hidden node',
+    'rts/cts',
+    'rts',
+    'cts',
+    'nav',
+    'airtime',
+    'half duplex',
+    'simulation',
+  ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES
   // (play tones, octaves, harmonics, intervals) - no aspirational claims (GL-005).
   'hear-frequency': <String>[
