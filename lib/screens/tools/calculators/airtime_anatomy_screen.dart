@@ -158,8 +158,8 @@ class _AboutCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'HT and VHT use one BCC encoder. HE uses LDPC with pre-FEC '
-            'padding ignored and 2x HE-LTFs, and covers the single-user '
-            'PPDU, not OFDMA resource units.',
+            'padding ignored, 2x HE-LTFs (4x at a 3.2 µs guard interval), '
+            'and covers the single-user PPDU, not OFDMA resource units.',
             style: body,
           ),
           const SizedBox(height: AppSpacing.xs),

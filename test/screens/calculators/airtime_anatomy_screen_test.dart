@@ -60,7 +60,7 @@ void main() {
     await _setSize(tester, const Size(800, 3600));
     await tester.pumpWidget(_host());
     await _tap(tester, find.widgetWithText(OutlinedButton, 'VHT one frame'));
-    expect(find.text('218.5 µs'), findsWidgets);
+    expect(find.text('214.5 µs'), findsWidgets);
     expect(find.text('2242.5 µs'), findsNothing);
     expect(find.text('866.67'), findsOneWidget);
 

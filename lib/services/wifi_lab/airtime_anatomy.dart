@@ -13,7 +13,8 @@
 // simplifications are kept on purpose (and stated in the help entry):
 //   1. One station, no contention, no retries; backoff is CWmin / 2 slots.
 //   2. HT/VHT use one BCC encoder (6 tail bits).
-//   3. HE uses LDPC with pre-FEC padding ignored; HE-LTFs are the 2x size.
+//   3. HE uses LDPC with pre-FEC padding ignored; HE-LTFs are 2x (6.4 us +
+//      GI) at 0.8/1.6 us GI and 4x (16 us) at 3.2 us GI.
 //   4. HE is the SU PPDU; no OFDMA resource units.
 //   5. Control frames at the chosen legacy rate; short slot (9 us).
 //   6. The Check does not catch every VHT MCS exclusion.
@@ -531,7 +532,7 @@ class AirtimeResult {
   final int rtsTenths;
   final int ctsTenths;
 
-  /// True when the response is a Block Ack (anything sent as an A-MPDU).
+  /// True when the response is a Block Ack (two or more frames aggregated).
   final bool usesBlockAck;
 
   /// The TXOP in order. RTS/CTS is present with zero length when off, so the
@@ -567,9 +568,15 @@ class AirtimeResult {
   /// Throughput / PHY rate, 0..1.
   double get efficiency => throughputMbps / phyRateMbps;
 
-  /// (Data portion - signal extension) / total, 0..1. Same as the sheet, so
-  /// an HE packet extension counts here.
-  double get dataShare => (dataTenths - signalExtensionUs * 10) / totalTenths;
+  /// (Data portion - signal extension - HE packet extension) / total, 0..1:
+  /// both extensions are padding, not data symbols.
+  double get dataShare =>
+      (dataTenths -
+          signalExtensionUs * 10 -
+          (scenario.phy == AirtimePhy.he
+              ? scenario.hePacketExtensionUs * 10
+              : 0)) /
+      totalTenths;
 
   TxopSegment segment(TxopSegmentKind kind) =>
       segments.firstWhere((TxopSegment s) => s.kind == kind);
@@ -666,7 +673,8 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
     case AirtimePhy.vht:
       pre = (20 + 8 + 4 + 4 * nltf + 4) * 10;
     case AirtimePhy.he:
-      pre = (20 + 4 + 8 + 4) * 10 + nltf * (64 + gi);
+      // 2x HE-LTF (6.4 + GI) at 0.8/1.6 us GI; 4x HE-LTF (16 us) at 3.2.
+      pre = (20 + 4 + 8 + 4) * 10 + nltf * _heLtfTenths(gi);
   }
 
   final bool shortGi = !legacy && s.guardInterval == GuardInterval.gi04;
@@ -708,7 +716,10 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
   final int tBackoff = cwMin * slot * 5; // CWmin / 2 x slot, in tenths.
   final int tRts = s.rtsCts ? rts + sifs * 10 + cts + sifs * 10 : 0;
   final int tSifs = sifs * 10;
-  final int tAck = singleMpdu ? ack : ba;
+  // One frame gets a normal ACK, for every PHY (a VHT/HE single-MPDU
+  // A-MPDU included); only an aggregate of 2 or more gets a Block Ack.
+  final bool blockAck = nn > 1;
+  final int tAck = blockAck ? ba : ack;
 
   const String Function(int) t = _fmtTenths;
   final String seNote = se > 0 ? ' + signal extension $se' : '';
@@ -749,7 +760,8 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
             '+ VHT-SIG-B 4 = ${t(pre)} µs.';
       case AirtimePhy.he:
         return 'Legacy 20 + RL-SIG 4 + HE-SIG-A 8 + HE-STF 4 + $nltf HE-LTF '
-            'x (6.4 + GI ${t(gi)}) = ${t(pre)} µs.';
+            '${gi == 32 ? 'x 16 (4x HE-LTF at 3.2 GI)' : 'x (6.4 + GI ${t(gi)}) (2x HE-LTF)'}'
+            ' = ${t(pre)} µs.';
     }
   }
 
@@ -785,12 +797,12 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
     (TxopSegmentKind.sifs, 'SIFS', tSifs, '$sifsWhy = $sifs µs.'),
     (
       TxopSegmentKind.ack,
-      singleMpdu ? 'ACK' : 'Block Ack',
+      blockAck ? 'Block Ack' : 'ACK',
       tAck,
       '20 + 4 x ceil((16 + 8 x '
-          '${singleMpdu ? AirtimeConstants.ackBytes : AirtimeConstants.blockAckBytes}'
+          '${blockAck ? AirtimeConstants.blockAckBytes : AirtimeConstants.ackBytes}'
           ' bytes + 6) / ${s.controlRateMbps * 4})$seNote = ${t(tAck)} µs, '
-          '${singleMpdu ? 'a 14-byte ACK' : 'a 32-byte compressed Block Ack'} '
+          '${blockAck ? 'a 32-byte compressed Block Ack' : 'a 14-byte ACK'} '
           'at $ctlRate.',
     ),
   ];
@@ -855,7 +867,7 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
     blockAckTenths: ba,
     rtsTenths: rts,
     ctsTenths: cts,
-    usesBlockAck: !singleMpdu,
+    usesBlockAck: blockAck,
     segments: List<TxopSegment>.unmodifiable(segments),
     check: check,
   );
@@ -875,6 +887,10 @@ String _fmtRational(int num, int den) {
   if (num % den == 0) return '${num ~/ den}';
   return (num / den).toStringAsFixed(2);
 }
+
+/// One HE-LTF, tenths of a us: 4x (16 us) at a 3.2 us GI, else 2x
+/// (6.4 us + GI).
+int _heLtfTenths(int giTenths) => giTenths == 32 ? 160 : 64 + giTenths;
 
 int _ceilDiv(int a, int b) {
   assert(b > 0);

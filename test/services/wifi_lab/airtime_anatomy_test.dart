@@ -78,13 +78,15 @@ void main() {
         44,
         16,
         16,
-        32,
+        28,
       ]);
-      expect(r.segment(TxopSegmentKind.ack).label, 'Block Ack');
-      expect(r.totalUs, 218.5);
-      expect(r.throughputMbps, closeTo(54.9199084668192, 1e-12));
-      expect(r.efficiency, closeTo(0.0633691251540222, 1e-12));
-      expect(r.dataShare, closeTo(0.0732265446224256, 1e-12));
+      // One frame gets a normal ACK, even as a VHT single-MPDU A-MPDU.
+      expect(r.segment(TxopSegmentKind.ack).label, 'ACK');
+      expect(r.usesBlockAck, isFalse);
+      expect(r.totalUs, 214.5);
+      expect(r.throughputMbps, closeTo(55.944055944056, 1e-11));
+      expect(r.efficiency, closeTo(55.944055944056 / 866.666666666667, 1e-12));
+      expect(r.dataShare, closeTo(0.0745920745920746, 1e-12));
       expect(r.check, AirtimeCheck.ok);
     });
 
@@ -304,6 +306,8 @@ void main() {
       );
       expect(pe.dataUs, base.dataUs + 16);
       expect(pe.totalUs, closeTo(base.totalUs + 16, 1e-9));
+      // The extension is padding: it is not counted as data symbols.
+      expect(pe.dataShare, closeTo(340 / pe.totalUs, 1e-12));
     });
 
     test('HE rounds data bits per symbol down (80 MHz, MCS 11, 1 stream)', () {
@@ -313,13 +317,52 @@ void main() {
       expect(r.bitsPerSymbol, 8166);
     });
 
-    test('HE-LTF length follows the guard interval', () {
-      final AirtimeResult r = computeAirtime(
+    test('HE-LTF is 2x (6.4 + GI) below 3.2 us GI, 4x (16 us) at 3.2', () {
+      final AirtimeResult gi16 = computeAirtime(
+        AirtimePreset.he32.scenario.copyWith(guardInterval: GuardInterval.gi16),
+      );
+      // 20 + 4 + 8 + 4 + 2 x (6.4 + 1.6) = 52.
+      expect(gi16.preambleUs, 52);
+      final AirtimeResult gi32 = computeAirtime(
         AirtimePreset.he32.scenario.copyWith(guardInterval: GuardInterval.gi32),
       );
-      // 36 + 2 x (6.4 + 3.2) = 55.2; symbols are 16 us.
-      expect(r.preambleUs, 55.2);
-      expect(r.symbolUs, 16);
+      // HE, 2 streams, GI 3.2: 20 + 4 + 8 + 4 + 2 x 16 = 68.
+      expect(gi32.preambleUs, 68);
+      expect(gi32.symbolUs, 16);
+      expect(
+        gi32.segment(TxopSegmentKind.preamble).formula,
+        contains('4x HE-LTF'),
+      );
+    });
+
+    test('Block Ack only when two or more frames are sent', () {
+      for (final AirtimePhy phy in AirtimePhy.values) {
+        final AirtimeScenario base = AirtimePreset.he32.scenario.copyWith(
+          band: phy == AirtimePhy.he ? AirtimeBand.ghz6 : AirtimeBand.ghz5,
+          phy: phy,
+          widthMhz: phy == AirtimePhy.legacy
+              ? 20
+              : (phy == AirtimePhy.ht ? 40 : 80),
+          mcs: 7,
+          guardInterval: GuardInterval.gi08,
+        );
+        final AirtimeResult one = computeAirtime(
+          base.copyWith(framesAggregated: 1),
+        );
+        expect(one.usesBlockAck, isFalse, reason: phy.label);
+        expect(one.segment(TxopSegmentKind.ack).us, 28, reason: phy.label);
+        final AirtimeResult two = computeAirtime(
+          base.copyWith(framesAggregated: 2),
+        );
+        // Legacy never aggregates.
+        final bool legacy = phy == AirtimePhy.legacy;
+        expect(two.usesBlockAck, !legacy, reason: phy.label);
+        expect(
+          two.segment(TxopSegmentKind.ack).us,
+          legacy ? 28 : 32,
+          reason: phy.label,
+        );
+      }
     });
 
     test('RTS/CTS adds RTS + SIFS + CTS + SIFS', () {
