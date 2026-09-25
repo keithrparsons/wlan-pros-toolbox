@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- PSD blocks on the frequency axis: same height, second one twice as wide -->
+    <path d="M3 15.5 H4 V7 H8.5 V15.5 H11 V7 H20 V15.5 H21"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="11" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

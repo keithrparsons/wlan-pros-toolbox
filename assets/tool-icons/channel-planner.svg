@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- cell plan: three hex cells, pointy-top, r=4; shared edges are where neighbors contend -->
+    <path d="M8.54 2.5 L12 4.5 V8.5 L8.54 10.5 L5.08 8.5 V4.5 Z"/>
+    <path d="M15.46 2.5 L18.92 4.5 V8.5 L15.46 10.5 L12 8.5 V4.5 Z"/>
+    <path d="M12 8.5 L15.46 10.5 V14.5 L12 16.5 L8.54 14.5 V10.5 Z"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="17" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

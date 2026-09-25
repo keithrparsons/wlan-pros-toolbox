@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 3D donut pattern around a vertical antenna -->
+    <ellipse cx="12" cy="10.5" rx="9" ry="5.5"/>
+    <!-- the hole: lower smile + upper frown -->
+    <path d="M7.6 10 Q12 13.4 16.4 10"/>
+    <path d="M9.2 11.3 Q12 9.2 14.8 11.3"/>
+    <!-- the antenna, standing up out of the hole -->
+    <path d="M12 2.5 V9.8"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="14" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

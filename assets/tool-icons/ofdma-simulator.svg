@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one channel, sliced into resource units -->
+    <rect x="3" y="3" width="9" height="13" rx="2"/>
+    <path d="M3 7.33 H12"/>
+    <path d="M3 11.67 H12"/>
+    <!-- each RU fans out to its own client -->
+    <path d="M12 5.2 L17.5 3.8"/>
+    <path d="M12 9.5 H17.5"/>
+    <path d="M12 13.8 L17.5 15.2"/>
+    <circle cx="19.6" cy="3.5" r="1.6" fill="currentColor" stroke="none"/>
+    <circle cx="19.6" cy="9.5" r="1.6" fill="currentColor" stroke="none"/>
+    <circle cx="19.6" cy="15.5" r="1.6" fill="currentColor" stroke="none"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="9" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
