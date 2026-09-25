@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the Internet -->
+    <circle cx="16" cy="8" r="5"/>
+    <path d="M11 8 H21"/>
+    <path d="M16 3 C14 5.3 14 10.7 16 13"/>
+    <!-- the path of hops up to it -->
+    <path d="M6 18 V10 H11"/>
+    <!-- Wi-Fi: the first hop -->
+    <circle cx="6" cy="21" r="1.1" fill="currentColor" stroke="none"/>
+    <path d="M3.9 18.9 A3 3 0 0 1 8.1 18.9"/>
+  </g>
+</svg>

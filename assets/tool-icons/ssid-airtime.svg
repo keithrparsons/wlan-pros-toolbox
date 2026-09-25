@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- stopwatch: airtime -->
+    <circle cx="12" cy="13.5" r="7.5"/>
+    <path d="M10 2.5 H14"/>
+    <path d="M12 2.5 V6"/>
+    <path d="M18.2 6.8 L19.6 5.4"/>
+    <!-- Wi-Fi inside: what the SSID spends of it -->
+    <circle cx="12" cy="16.8" r="1.1" fill="currentColor" stroke="none"/>
+    <path d="M9.9 14.7 A3 3 0 0 1 14.1 14.7"/>
+    <path d="M8.3 12.9 A5.3 5.3 0 0 1 15.7 12.9"/>
+  </g>
+</svg>

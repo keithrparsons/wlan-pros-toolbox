@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- time-domain wave -->
+    <path d="M3 9.5 C4.2 4 5.8 4 7 9.5 C8.2 15 9.8 15 11 9.5"/>
+    <!-- spectrum bars -->
+    <path d="M14.5 16 V13"/>
+    <path d="M17.75 16 V3.5"/>
+    <path d="M21 16 V9.5"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="16" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

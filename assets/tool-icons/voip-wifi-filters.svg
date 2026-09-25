@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- handset -->
+    <path d="M5 3.5 H8 L9.5 8 L7.5 9.5 A11 11 0 0 0 14.5 16.5 L16 14.5 L20.5 16 V19 A2 2 0 0 1 18.5 21 A15.5 15.5 0 0 1 3 5.5 A2 2 0 0 1 5 3.5 Z"/>
+    <!-- filter funnel -->
+    <path d="M13 3 H21 L18 6.5 V10 L16 9 V6.5 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- clock ring, open at upper right, closed by a sync arrowhead -->
+    <path d="M20 12 A8 8 0 1 1 17.66 6.34"/>
+    <path d="M14.66 6.34 H17.66 V3.34"/>
+    <!-- hands -->
+    <path d="M12 7.5 V12 L15 14"/>
+  </g>
+</svg>

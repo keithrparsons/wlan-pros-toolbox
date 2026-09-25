@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- cylindrical cell -->
+    <rect x="3.5" y="5.5" width="7" height="15.5" rx="1.5"/>
+    <path d="M6 3 H8"/>
+    <!-- coin cell -->
+    <circle cx="16.5" cy="15" r="4.5"/>
+    <path d="M16.5 13 V17"/>
+    <path d="M14.5 15 H18.5"/>
+  </g>
+</svg>

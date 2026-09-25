@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- stations taking turns in slot order -->
+    <rect x="3" y="3" width="5" height="3.5" rx="1"/>
+    <rect x="9.5" y="7.75" width="5" height="3.5" rx="1"/>
+    <rect x="16" y="12.5" width="5" height="3.5" rx="1"/>
+    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="15" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- RJ45 socket face -->
+    <path d="M2.5 5.5 H11.5 V15.5 H9 V18.5 H5 V15.5 H2.5 Z"/>
+    <!-- duplex: up and down arrows -->
+    <path d="M15.5 18.5 V5.5"/>
+    <path d="M13.5 7.5 L15.5 5.5 L17.5 7.5"/>
+    <path d="M20 5.5 V18.5"/>
+    <path d="M18 16.5 L20 18.5 L22 16.5"/>
+  </g>
+</svg>
