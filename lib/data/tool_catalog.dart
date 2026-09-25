@@ -918,6 +918,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Utilities & Generators',
       ),
+      // ── Wi-Fi Lab (2026-09-25) ── interactive simulators built clean-room
+      // from IEEE 802.11 math; spec in myPKA
+      // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/.
+      ToolEntry(
+        id: 'medium-access-simulator',
+        title: 'Medium Access Simulator',
+        description:
+            'Watch stations contend for the air slot by slot: backoff, '
+            'collisions, EDCA priority, hidden nodes and RTS/CTS',
+        routeName: '/tools/medium-access-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
       ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',

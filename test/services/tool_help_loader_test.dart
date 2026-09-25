@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 190;
+const int _expectedEntryCount = 191;
 
 const String _fixture = '''
 {
@@ -381,6 +381,12 @@ void main() {
       // 2026-09-16: shannon-capacity added ONE entry. 184 + 1 = 185. Counted
       // off the file, not derived: `len(json[...]['tools'])` returned 185 and
       // the id appears exactly once.
+      //
+      // 2026-09-25: medium-access-simulator (Wi-Fi Lab) added ONE entry.
+      // 190 + 1 = 191. Counted off the file, not derived:
+      // `len(json[...]['tools'])` returned 191 and the id appears exactly once.
+      // The chain above stops at 185 while the constant was already 190; the
+      // gap is in this prose, not in the file.
       expect(store.count, _expectedEntryCount);
     });
 

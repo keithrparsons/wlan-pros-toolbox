@@ -93,6 +93,10 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // RF math (QR Code Generator, DTMF Generator, Morse Code) plus, since
     // 2026-09-17, Hear the Frequency.
     'Utilities & Generators',
+    // Wi-Fi Lab (2026-09-25): interactive simulators built clean-room from
+    // IEEE 802.11 math (Medium Access Simulator first; the Modulation
+    // Simulator is built on a sibling branch and joins this section).
+    'Wi-Fi Lab',
     //
     // TWO NAMES WERE REMOVED FROM THIS LIST ON 2026-09-17 AND NO TOOL WAS.
     //
