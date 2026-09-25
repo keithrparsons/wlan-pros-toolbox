@@ -39,6 +39,7 @@ import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
+import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
@@ -316,6 +317,9 @@ class AppRouter {
   // move and non-occupancy on a simulated clock (47 CFR 15.407(h)(2), ETSI
   // EN 301 893); pure on-device math, all platforms incl. web.
   static const String dfsSimulator = '/tools/dfs-simulator';
+  // Wi-Fi Lab (2026-09-25). 802.1X / EAP message ladder (client, AP,
+  // RADIUS server); pure on-device model, all platforms incl. web.
+  static const String eapLadder = '/tools/eap-ladder';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -773,6 +777,7 @@ class AppRouter {
     rateVsRange: (_) => const RateVsRangeScreen(),
     spatialReuse: (_) => const SpatialReuseScreen(),
     dfsSimulator: (_) => const DfsSimulatorScreen(),
+    eapLadder: (_) => const EapLadderScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),

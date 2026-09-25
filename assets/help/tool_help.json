@@ -692,6 +692,54 @@
       ],
       "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005). No manufacturer file is included. Computed on your device."
     },
+    "eap-ladder": {
+      "name": "802.1X and EAP Ladder",
+      "category": "Calculators & Tools",
+      "purpose": "Plays an 802.1X connection one message at a time on a three-lane ladder: the client (supplicant), the AP (authenticator) and the RADIUS server (authentication server). EAP rides in EAPOL frames over the air and inside RADIUS Access-Request, Access-Challenge and Access-Accept packets on the wire. Pick EAP-TLS, PEAP or EAP-TTLS to change the middle of the ladder, or PSK and SAE to see a join with no RADIUS at all, and pick a roam mode to see what PMK caching and 802.11r remove.",
+      "whyHere": "The AP does not authenticate anyone in 802.1X; it relays. Seeing every EAP message cross the air and then cross the wire makes that plain, and shows where time goes: each RADIUS round trip, each certificate fragment, and the inner password exchange in PEAP. It also shows the order that matters when troubleshooting: the server sends the PMK to the AP in the Access-Accept, and nothing is encrypted over the air until the 4-way handshake completes.",
+      "howToUse": [
+        "Pick a method and a roam mode, then press Play, or use Step and Back to go one message at a time. Show all draws the whole ladder at once. Blue arrows cross the air; sand, dashed arrows cross the wire. The caption under the ladder names the frame, the leg it crossed and why it is there.",
+        "Watch for the two bands: Keys available (for 802.1X, after the Access-Accept) and Traffic protected (after message 4 of the 4-way handshake). Content in braces with a lock travels inside the TLS tunnel, where the AP cannot read it.",
+        "Raise the certificate size to see a large certificate chain split into fragments, each costing a round trip. Raise the RADIUS round-trip time to see a distant server slow the connection. Switch between methods with the whole ladder shown to compare them."
+      ],
+      "inputs": [
+        {
+          "name": "Method",
+          "unit": "choice",
+          "range": "EAP-TLS, PEAP (MSCHAPv2), EAP-TTLS, WPA2-Personal (PSK), WPA3-Personal (SAE); default EAP-TLS"
+        },
+        {
+          "name": "Inner method",
+          "unit": "choice",
+          "range": "MSCHAPv2 or PAP, for EAP-TTLS only; PEAP here always carries MSCHAPv2"
+        },
+        {
+          "name": "Roam mode",
+          "unit": "choice",
+          "range": "Full authentication, PMK caching, or 802.11r FT over the air; default full"
+        },
+        {
+          "name": "Certificate size",
+          "unit": "fragments per certificate message",
+          "range": "1 to 6 (default 1); used only when a certificate is sent"
+        },
+        {
+          "name": "RADIUS round-trip time",
+          "unit": "ms, illustrative",
+          "range": "1 to 200 (default 10); used only when RADIUS is"
+        }
+      ],
+      "algorithm": "Each ladder starts with one probe request and response. A full authentication adds Open System authentication (2 frames) or SAE commit and confirm (4 frames), association (2), for 802.1X the EAP exchange, and the 4-way handshake (4 EAPOL-Key frames). EAP: the AP sends EAP-Request/Identity itself; every later EAP-Request comes from the server in an Access-Challenge and every EAP-Response goes back in an Access-Request, one round trip each, until the Access-Accept carries EAP-Success and the PMK. A certificate message split into n fragments costs n - 1 extra round trips, because each fragment is acknowledged by an empty message. At one fragment the round trips are: EAP-TLS 4, EAP-TTLS with PAP 4, EAP-TTLS with MSCHAPv2 5, PEAP with MSCHAPv2 8. EAP-TLS fragments both the server's and the client's certificate messages. PMK caching replaces authentication with a PMKID in the Reassociation Request, then the 4-way handshake. FT over the air is 4 frames: two FT authentication frames and the reassociation pair, with the 4-way handshake folded in. Estimated time after the scan = over-the-air frames x 1 ms (illustrative) + RADIUS round trips x the round-trip time.",
+      "example": "EAP-TLS, full authentication, 1 fragment, 10 ms RADIUS: 19 frames over the air, 8 RADIUS messages on the wire, 4 round trips, 57 ms after the scan. With 3 fragments: 27 frames, 16 RADIUS messages, 8 round trips, 105 ms. PEAP at 1 fragment also takes 8 round trips and 105 ms. PMK caching drops the whole EAP exchange (17 fewer messages, 8 ms); FT over the air is 4 frames after the scan, with no RADIUS (4 ms).",
+      "fieldNotes": [
+        "This is a teaching model. The TLS messages follow the TLS 1.2 shape drawn in RFC 5216 and RFC 5281; TLS 1.3 and session resumption change the count and are not modeled.",
+        "How many fragments a certificate needs depends on the chain and the server's fragment size, so it is a setting, not a fixed count. Real round-trip counts also vary a little between servers and clients.",
+        "The TLS tunnel in PEAP and EAP-TTLS protects the inner exchange between client and RADIUS server, not the Wi-Fi link. A client that skips server-certificate validation can hand its inner credentials to an evil-twin server; see the 802.1X / EAP Types reference.",
+        "The scan for the next AP is not counted. In measured handoffs (802.11b, open authentication; Mishra, Shin and Arbaugh 2003) scanning was over 90% of the delay. 802.11k shortens the scan; PMK caching and FT shorten only the authentication shown here.",
+        "OKC is a vendor extension that shares a cached PMK between the APs of one controller; it is not part of IEEE 802.11. FT needs one full first connection in its mobility domain."
+      ],
+      "source": "IEEE 802.11 (Open System and SAE authentication, association, the 4-way handshake, PMKSA caching, Fast BSS Transition); IEEE 802.1X (EAPOL); RFC 3748 (EAP); RFC 3579 (RADIUS support for EAP); RFC 5216 (EAP-TLS); RFC 5281 (EAP-TTLS); RFC 2759 (MS-CHAP-V2); RFC 2548 (MS-MPPE key attributes); Microsoft [MS-PEAP] for PEAPv0. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
+    },
     "dfs-simulator": {
       "name": "DFS and Radar",
       "category": "Calculators & Tools",
