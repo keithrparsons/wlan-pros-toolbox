@@ -1080,6 +1080,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'spatial-reuse',
+        title: 'Spatial Reuse',
+        description:
+            'See why neighbor APs on one channel take turns, and how BSS '
+            'color and OBSS_PD let them talk at once for less power',
+        routeName: '/tools/spatial-reuse',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',

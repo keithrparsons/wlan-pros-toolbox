@@ -45,6 +45,7 @@ import '../screens/tools/calculators/rate_vs_range_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
 import '../screens/tools/calculators/channel_planner_screen.dart';
 import '../screens/tools/calculators/ofdma_simulator_screen.dart';
+import '../screens/tools/calculators/spatial_reuse_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
 import '../screens/tools/calculators/unit_converter_screen.dart';
@@ -307,6 +308,9 @@ class AppRouter {
   // log-distance path loss and ssid-airtime beacon math; pure on-device
   // math, all platforms incl. web.
   static const String rateVsRange = '/tools/rate-vs-range';
+  // Wi-Fi Lab (2026-09-25). Pure-Dart CCA, BSS color and OBSS_PD model;
+  // all platforms incl. web.
+  static const String spatialReuse = '/tools/spatial-reuse';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -762,6 +766,7 @@ class AppRouter {
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
+    spatialReuse: (_) => const SpatialReuseScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),
