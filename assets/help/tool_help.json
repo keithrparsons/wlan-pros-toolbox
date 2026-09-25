@@ -1341,6 +1341,70 @@
       ],
       "source": "Minimum receiver sensitivity per MCS and width as published for IEEE 802.11 conformance (Rohde & Schwarz 802.11be white paper Table 6-4, matched by a second source). Path loss uses the same Friis math as the FSPL Simulator; beacon airtime uses the SSID Airtime tool's calculator; data rates use the MCS Index tool. Everything is calculated on your device."
     },
+    "rate-adaptation": {
+      "name": "Rate Adaptation",
+      "category": "Calculators & Tools",
+      "purpose": "Runs one Wi-Fi link frame by frame under Minstrel-style rate control, the kind Linux uses, and shows it learning. A strip draws every attempt of the last 5 ms to scale, colored and numbered by MCS, with failures marked. A chart shows the chosen rate over the last 20 s against the rate the SNR supports, and a table shows what the radio has learned about each rate, updated every 50 ms.",
+      "whyHere": "A radio does not know the best rate. It learns it by trying rates and keeping statistics, and every retry costs more airtime than the first try: the contention window doubles, and a retry at a lower rate takes longer to send. Walking the client away and back shows the chosen rate step down as the signal falls and climb again as sampling finds the higher rates.",
+      "howToUse": [
+        "Press Play, or Step to send one frame with all its retries. The link opens paused with every rate untried. Restart starts a new link that has learned nothing.",
+        "Pick a path: Walk (away to 60 m and back to 2 m every 20 s), Steady (4 m) or Fading (12 m, with the signal swelling and fading by up to about 8 dB). The SNR offset slider adds or removes signal on top of the path.",
+        "Watch the table. Each rate shows its smoothed success, its throughput estimate and its place in the retry chain: 1st and 2nd are the best and second-best throughput, P is the best probability, low is the lowest rate.",
+        "Change the sampling share, the EWMA weight, the retry chain, the retry limit and the ACK timeout while it runs. Set sampling to 0% and Restart to see a link that never finds its higher rates."
+      ],
+      "inputs": [
+        {
+          "name": "Path",
+          "unit": "preset",
+          "range": "Walk (away and back), Steady or Fading; default Walk"
+        },
+        {
+          "name": "SNR offset",
+          "unit": "dB",
+          "range": "-20 to +20; default 0"
+        },
+        {
+          "name": "Sampling share",
+          "unit": "% of frames",
+          "range": "0 to 30; default 10"
+        },
+        {
+          "name": "EWMA weight on history",
+          "unit": "%",
+          "range": "50 to 95; default 75"
+        },
+        {
+          "name": "Retry chain",
+          "unit": "on or off",
+          "range": "On, or Off (every attempt stays at the first rate); default On"
+        },
+        {
+          "name": "Retry limit",
+          "unit": "attempts",
+          "range": "7 (short) or 4 (long); default 7"
+        },
+        {
+          "name": "ACK timeout",
+          "unit": "µs",
+          "range": "45 or 50; default 45"
+        },
+        {
+          "name": "Speed",
+          "unit": "air time per real second",
+          "range": "1/50, 1/10, 1/4 or real time; default 1/4"
+        }
+      ],
+      "algorithm": "The link is fixed: 5 GHz, 802.11ax, 20 MHz, one spatial stream, 0.8 µs guard interval, 1500-byte frames, best effort, ACK at 24 Mbps, MCS 0 to 11. SNR comes from the path with the Rate vs Range math (20 dBm EIRP, path-loss exponent 3, 5500 MHz) over a -94.0 dBm noise floor. The SNR an MCS needs is its minimum sensitivity minus that noise floor, 12.0 dB for MCS 0 up to 42.0 dB for MCS 11. Each attempt succeeds with a chance from a teaching curve, 90% at that SNR and 10% about 4.4 dB lower. Every 50 ms each rate's success ratio folds into an EWMA (75% on history by default). Throughput estimate = min(success, 90%) x 12,000 bits / the time of one attempt, and rates under 10% success are ignored. About 10% of frames sample a random other rate. Each frame follows a retry chain: best throughput, second best, best probability, lowest rate; a sample frame puts the sample rate first, or second when it is slower than the best rate. Attempts are split over the chain as evenly as they go (7 = 2, 2, 2, 1). Each attempt costs AIFS (43 µs) + mean backoff (CW / 2 x 9 µs) + TXTIME from the Airtime Anatomy calculator + SIFS and ACK, or the ACK timeout. CW is 15 on the first try and doubles per retry (31, 63, ...) up to 1023.",
+      "example": "With the client steady at 4 m the SNR is 48.7 dB, above the 42.0 dB MCS 11 needs, and the rate control settles on MCS 11 (143.4 Mbps) within a second or two, with an estimate of 36.9 Mbps: one first try there takes 292.9 µs of air. At MCS 7 a first try that is delivered takes 347.3 µs. If it fails (348.3 µs with a 45 µs timeout) and the retry goes out at MCS 6, the retry alone takes 432.9 µs, because the mean backoff has grown from 67.5 to 139.5 µs and MCS 6 sends for longer.",
+      "fieldNotes": [
+        "The success curve is a teaching model, not a measured error curve. The sensitivity table it is anchored to is a set of conformance floors; real radios do better.",
+        "This follows the published outline of Minstrel. Real drivers differ in detail: minstrel_ht samples on a timer with typed sample sets and sizes each chain stage by a time budget rather than a count.",
+        "Delivered throughput is far below the PHY rate here because every frame waits, sends a preamble and waits for its ACK on its own. Aggregation (A-MPDU) and Block Ack, which real links use, are left out.",
+        "There is one station, so there are no collisions, and backoff is the mean rather than a random draw. The Medium Access Simulator shows contention.",
+        "The ACK timeout is SIFS + slot + a receive delay of about 20 to 25 µs. The sources disagree on the exact constant, so it is a setting."
+      ],
+      "source": "Minstrel rate control as described in the Linux wireless documentation (EWMA with 75% history weight, 10% sampling, the multi-rate retry chain); IEEE 802.11 retry limits (dot11ShortRetryLimit 7, dot11LongRetryLimit 4) and contention-window doubling; ACK timeout from the 802.11 formula SIFS + slot + receive start delay. Sensitivity from the Rate vs Range tool, airtime from the Airtime Anatomy tool. Computed on your device."
+    },
     "ham-band-plan": {
       "name": "US Amateur Band Plan",
       "category": "Quick Reference",

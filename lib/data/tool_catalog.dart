@@ -1103,6 +1103,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'rate-adaptation',
+        title: 'Rate Adaptation',
+        description:
+            'Watch a radio learn its best rate: success statistics, sample '
+            'frames, the retry chain, and what every retry costs in airtime',
+        routeName: '/tools/rate-adaptation',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'spatial-reuse',
         title: 'Spatial Reuse',
         description:
