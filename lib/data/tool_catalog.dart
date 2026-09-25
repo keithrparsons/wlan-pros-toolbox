@@ -1090,6 +1090,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Wi-Fi Lab',
       ),
       ToolEntry(
+        id: 'dfs-simulator',
+        title: 'DFS and Radar',
+        description:
+            'Start an AP on a DFS channel, trigger radar and watch the '
+            'listen-first check, the channel move and the 30-minute block',
+        routeName: '/tools/dfs-simulator',
+        isLive: true,
+        subgroup: 'Wi-Fi Lab',
+      ),
+      ToolEntry(
         id: 'downtilt',
         title: 'Antenna Downtilt',
         description: 'Downtilt angle from height and target distance',
