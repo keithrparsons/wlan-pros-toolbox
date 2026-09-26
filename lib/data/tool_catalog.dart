@@ -2770,6 +2770,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Airtime and Access',
       ),
+      // The teaching side of the live 'bss-load' reader: what the AP's
+      // channel utilization byte counts, and why one sender tops out below
+      // 100%. Reuses Airtime Anatomy's timing and Medium Access's rules.
+      ToolEntry(
+        id: 'channel-utilization',
+        title: 'Channel Utilization Meter',
+        description:
+            'See what the busy number in an AP\'s beacon counts, why one '
+            'sender fills the channel at about 75%, and what is truly spare',
+        routeName: '/tools/channel-utilization',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
       ToolEntry(
         id: 'mlo-simulator',
         title: 'Multi-Link Operation',
