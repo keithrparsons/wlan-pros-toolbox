@@ -62,6 +62,7 @@ import '../screens/tools/calculators/uplink_downlink_screen.dart';
 import '../screens/tools/calculators/rate_adaptation_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
 import '../screens/tools/calculators/channel_planner_screen.dart';
+import '../screens/tools/calculators/adjacent_channel_screen.dart';
 import '../screens/tools/calculators/ofdma_simulator_screen.dart';
 import '../screens/tools/calculators/spatial_reuse_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
@@ -320,6 +321,9 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). Pure-Dart channel plan and CCA model; all
   // platforms incl. web.
   static const String channelPlanner = '/tools/channel-planner';
+  // Wi-Fi Classroom (2026-09-26). Pure-Dart adjacent-channel leakage vs
+  // receiver rejection (spec 29); all platforms incl. web.
+  static const String adjacentChannel = '/tools/adjacent-channel';
   // Wi-Fi Classroom (2026-09-25). Pure-Dart client roaming walk (trigger, delta,
   // roam gap); all platforms incl. web.
   static const String roamingWalk = '/tools/roaming-walk';
@@ -854,6 +858,7 @@ class AppRouter {
     sixGhzPsd: (_) => const SixGhzPsdScreen(),
     mimoBeamforming: (_) => const MimoBeamformingScreen(),
     channelPlanner: (_) => const ChannelPlannerScreen(),
+    adjacentChannel: (_) => const AdjacentChannelScreen(),
     roamingWalk: (_) => const RoamingWalkScreen(),
     surveyWalk: (_) => const SurveyWalkScreen(),
     heatMapBuilder: (_) => const HeatMapBuilderScreen(),

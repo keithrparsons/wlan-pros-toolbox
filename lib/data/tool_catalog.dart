@@ -2791,6 +2791,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Adjacent Channels and AP Stacking (2026-09-26, spec 29): why a
+      // channel that does not overlap still hurts when the neighbor is close.
+      ToolEntry(
+        id: 'adjacent-channel',
+        title: 'Adjacent Channels and AP Stacking',
+        description:
+            'Why a clean channel still hurts up close: transmit mask leakage '
+            'into your 20 MHz vs receiver rejection, distance and separation',
+        routeName: '/tools/adjacent-channel',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       // Distinct from the 'roaming' reference card and the 'roaming-log' live
       // tool, which stay as they are.
       ToolEntry(
