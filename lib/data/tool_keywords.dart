@@ -1770,6 +1770,34 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi classroom',
     'simulator',
   ],
+  // Wi-Fi Classroom (2026-09-27). Legacy Protection Cost: the spec's keyword
+  // list (spec 39), plus the words a student types about old 802.11b gear.
+  'legacy-protection': <String>[
+    'protection',
+    '802.11b',
+    'legacy',
+    'legacy devices',
+    'cts-to-self',
+    'cts to self',
+    'rts/cts',
+    'rts cts',
+    'erp',
+    'erp information element',
+    'nonerp_present',
+    'use_protection',
+    'barker preamble',
+    'slot time',
+    'long slot',
+    'short slot',
+    'preamble',
+    'long preamble',
+    'short preamble',
+    'ht protection',
+    'mixed mode',
+    'dsss',
+    'cck',
+    'airtime',
+  ],
   // Wi-Fi Classroom (2026-09-26). Multicast at the Basic Rate: what a student
   // types when video or discovery traffic slows a whole cell.
   'multicast-basic-rate': <String>[

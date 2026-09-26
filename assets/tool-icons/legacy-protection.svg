@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- a slow protection frame (striped) in front of the short modern frame it guards -->
+    <rect x="3" y="4" width="10" height="7" rx="1"/>
+    <path d="M6.5 4 V11 M9.5 4 V11"/>
+    <rect x="15" y="4" width="6" height="7" rx="1"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 18.5 H21"/>
+    <circle cx="9" cy="18.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

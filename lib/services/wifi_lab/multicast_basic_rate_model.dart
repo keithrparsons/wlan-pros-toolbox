@@ -29,8 +29,9 @@
 //     192 us (144 us preamble + 48 us PLCP header) + ceil(8 x bytes / rate)
 // with the 802.11b 20 us slot, 10 us SIFS and CWmin 31. The long preamble is
 // the one every 802.11b receiver decodes, which is the point of a basic rate.
-// These are the standard's well-known values, from the team's knowledge of
-// IEEE 802.11 (not re-read; the standard is paywalled).
+// Those constants and the payload rounding now live in dsss_timing.dart
+// (extracted 2026-09-27, shared with Legacy Protection Cost), which cites the
+// 802.11b-1999 clauses Pax read for the wave 4 brief.
 //
 // SIMPLIFICATIONS (stated in the help):
 //   1. Frame sizes follow Airtime Anatomy: payload + 26-byte QoS header +
@@ -51,6 +52,9 @@
 // ASCII only, no em dashes (GL-004). No Flutter imports.
 
 import 'airtime_anatomy.dart';
+import 'dsss_timing.dart';
+
+export 'dsss_timing.dart' show DsssTiming;
 
 /// Beacon interval: 100 TU = 102.4 ms, in microseconds.
 const double kMcBeaconIntervalUs = 102400;
@@ -85,18 +89,6 @@ const List<double> kMcStreamRatesMbps = <double>[
 
 /// Packet sizes offered, bytes (the IP packet the stream sends).
 const List<int> kMcPacketSizes = <int>[200, 400, 576, 1000, 1316, 1500];
-
-/// The 802.11b timing the long-preamble basic rates use.
-class DsssTiming {
-  DsssTiming._();
-
-  static const int slotUs = 20;
-  static const int sifsUs = 10;
-  static const int cwMin = 31;
-
-  /// 144 us long preamble + 48 us PLCP header.
-  static const int longPreambleUs = 192;
-}
 
 /// OFDM contention window minimum for the multicast wait.
 const int kOfdmCwMin = 15;
@@ -426,8 +418,9 @@ MulticastTiming multicastTiming(BasicRate rate, McBand band, int payloadBytes) {
     const int difs = DsssTiming.sifsUs + 2 * DsssTiming.slotUs;
     // CWmin / 2 x slot, in tenths: 31 x 20 x 5 = 3100.
     const int backoff = DsssTiming.cwMin * DsssTiming.slotUs * 5;
-    // ceil(8 x bytes / rate) us, with the rate in tenths of a Mb/s.
-    final int dataUs = _ceilDiv(80 * mpdu, rate.tenthsMbps);
+    // ceil(8 x bytes / rate) us, with the rate in tenths of a Mb/s
+    // (dsss_timing.dart, shared with Legacy Protection Cost).
+    final int dataUs = dsssPayloadUs(mpdu, rate.tenthsMbps);
     return MulticastTiming(
       difsTenths: difs * 10,
       backoffTenths: backoff,
@@ -599,5 +592,3 @@ AirtimeScenario _legacyScenario(McBand band, int rateMbps, int payload) =>
       framesAggregated: 1,
       encryptionBytes: UnicastAssumptions.encryptionBytes,
     );
-
-int _ceilDiv(int a, int b) => (a + b - 1) ~/ b;

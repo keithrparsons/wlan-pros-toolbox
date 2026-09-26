@@ -1262,6 +1262,87 @@
       ],
       "source": "Wi-Fi Classroom wave 4 research brief, row C: RFC 9119 (IETF, 2021) as the problem statement, read from summaries. Frame timing from the Airtime Anatomy tool's model (the IEEE 802.11 transmit-time equations and default channel-access parameters). Computed on your device."
     },
+    "legacy-protection": {
+      "name": "Legacy Protection Cost",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows what one old 802.11b device costs a modern network while it sends nothing. An 802.11b device cannot decode OFDM (orthogonal frequency-division multiplexing), which 802.11g and later use, so each modern frame is first protected by a short, slow frame the old device can decode, and an associated 802.11b device also forces a longer slot time. The tool draws both costs on a timeline beside a network of modern devices only, and a beacon inspector shows the ERP (Extended Rate PHY, the 802.11g physical layer) bits and the HT (High Throughput, 802.11n) Protection value that switch it on.",
+      "whyHere": "It is easy to think an old device only slows the network when it talks. Protection costs airtime even when it is silent. The protection frame is a CTS (Clear to Send) addressed to the sender itself, called CTS-to-self, or an RTS (Request to Send) and CTS pair, sent at a DSSS or CCK rate (direct sequence spread spectrum, complementary code keying) the old device can decode. Its Duration field makes every listener hold off. At 1 Mb/s with the long preamble, a 14-byte CTS takes 304 µs, longer than the 1,500-byte, 254 µs frame at 54 Mb/s it protects. Add the 20 µs slot instead of 9 µs and one 54 Mb/s laptop's ceiling falls from about 30.5 to about 14.8 Mb/s. Airtime Fairness shows the cost of a slow client's own traffic; Airtime Anatomy shows one frame's timing in detail.",
+      "howToUse": [
+        "Read the headline: the laptop's payload rate with this network's settings, what it would be with modern devices only, and the share lost.",
+        "Read the channel: two lanes over a few milliseconds, modern devices only above and this network below. The lime blocks are data. The warning-colored blocks are the two costs, each with its own pattern and label: vertical bars for the protection frame, hatching for the added wait from the long slot. Play sweeps the window about two thousand times slower than real time; Next cycle moves one send cycle at a time; Reset clears it.",
+        "Read one send cycle drawn to scale, part by part: DIFS (distributed interframe space) and backoff, the protection frame, preamble, data, SIFS (short interframe space) and ACK (acknowledgment). The durations are also written out under each bar.",
+        "Turn on 802.11b device associated or 802.11b network heard nearby and watch the beacon inspector: associated sets NonERP_Present and Use_Protection and forces the long slot; heard sets Use_Protection only. For a heard network, choose whether it is on this AP's channel or another one, and whether this AP reacts to its own channel only or to adjacent channels too.",
+        "Pick the protection frame: CTS-to-self or RTS/CTS, then a rate and preamble from the grid; each cell shows what it costs. 1 Mb/s with short preamble is grayed out because 802.11b does not define it. The 6 Mb/s OFDM contrast shows that most of the cost is the old preamble, not protection itself.",
+        "Predict, then reveal: Ask the class loads the question (an old 802.11b scanner in a drawer, associated but silent) and hides the answers; pick a range, from Nothing to Over 60%, then press Reveal.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow moves to the next send cycle, R resets, Up and Down make the protection frame faster or slower, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "802.11b device associated",
+          "unit": "switch",
+          "range": "On (default) or Off"
+        },
+        {
+          "name": "The 802.11b device can use short preamble",
+          "unit": "switch",
+          "range": "Off (default, illustrative: an old scanner is assumed long-preamble only) or On. Off sets Barker_Preamble_Mode while the device is associated"
+        },
+        {
+          "name": "802.11b network heard nearby",
+          "unit": "switch",
+          "range": "Off (default) or On"
+        },
+        {
+          "name": "The old network is",
+          "unit": "choice",
+          "range": "On our channel (default) or On another channel"
+        },
+        {
+          "name": "This AP reacts to",
+          "unit": "choice",
+          "range": "Own channel only (default) or Adjacent channels too. Sources disagree: one open-source access point reacts only to its own channel; a 2004 lab report saw protection spread between channels 1 and 11. The standard allows both."
+        },
+        {
+          "name": "Protection frame",
+          "unit": "choice",
+          "range": "CTS-to-self (default) or RTS/CTS"
+        },
+        {
+          "name": "Protection rate and preamble",
+          "unit": "Mb/s",
+          "range": "1 (long only), 2, 5.5 or 11, long or short preamble; or 6 Mb/s OFDM for contrast. Default 1 Mb/s long preamble, the worst case the standard allows: a provisional default, not yet confirmed"
+        },
+        {
+          "name": "Frame size",
+          "unit": "bytes",
+          "range": "64, 256, 512, 1,000 or 1,500; default 1,500"
+        },
+        {
+          "name": "Data rate",
+          "unit": "Mb/s",
+          "range": "6, 9, 12, 18, 24, 36, 48 or 54 (802.11g); default 54"
+        },
+        {
+          "name": "CWmin with an 802.11b device associated",
+          "unit": "slots",
+          "range": "15 (default) or 31. CWmin is the minimum contention window; 31 comes from one unverified source"
+        }
+      ],
+      "algorithm": "One send cycle = DIFS + mean backoff + protection + data frame + SIFS + ACK. DIFS = SIFS + 2 slots. Mean backoff = CWmin / 2 slots. The slot is 9 µs, or 20 µs while an 802.11b device is associated. The data frame and ACK come from Airtime Anatomy's timing: 802.11g at 2.4 GHz, frame = payload + 26-byte header + 4-byte checksum (an open network, no encryption bytes), a 20 µs preamble, 4 µs symbols, 6 µs signal extension, SIFS 10 µs, and the 14-byte ACK at 24 Mb/s (34 µs). A protection frame at an 802.11b rate takes the 802.11b transmit time: 192 µs (long preamble and header) or 96 µs (short), plus 8 x bytes / rate, rounded up to a whole microsecond. A CTS is 14 bytes and an RTS 20 bytes. CTS-to-self adds CTS + SIFS; RTS/CTS adds RTS + SIFS + CTS + SIFS. The 6 Mb/s OFDM contrast CTS takes 20 + 4 x ceil((16 + 8 x 14 + 6) / 24) + 6 = 50 µs. Payload rate = payload bits / cycle time. The loss compares it with the same frames sent with a 9 µs slot, CWmin 15 and no protection. ERP bits: associated sets NonERP_Present and Use_Protection; a heard network sets Use_Protection only, always on this AP's channel and on another channel only when the AP reacts to adjacent channels; Barker_Preamble_Mode is set when the associated device cannot use short preamble. Use_Protection turns the protection frame on. HT Protection reads 3 (non-HT mixed) with an older station associated, 1 (nonmember) with an older network heard, else 0.",
+      "example": "Defaults: 1,500 bytes at 54 Mb/s. With modern devices only, a cycle takes DIFS 28 + backoff 67.5 + data 254 + SIFS 10 + ACK 34 = 393.5 µs, 30.5 Mb/s of payload. The long slot alone makes it 498 µs, 24.1 Mb/s. Add CTS-to-self at 11 Mb/s short preamble (107 + 10 µs) and it is 615 µs, 19.5 Mb/s; at 11 Mb/s long (203 + 10 µs), 711 µs, 16.9 Mb/s; at 1 Mb/s long (304 + 10 µs), 812 µs, 14.8 Mb/s, about half lost. With CWmin 31 as well, 972 µs, 12.3 Mb/s. RTS/CTS at 2 Mb/s adds 540 µs with long preamble and 348 µs with short.",
+      "fieldNotes": [
+        "Everything here is 2.4 GHz. There is no DSSS at 5 GHz, so none of these numbers carry over there.",
+        "Protection must turn on when an 802.11b station is associated, and may turn on when one is only heard. Which heard networks an access point reacts to differs between implementations.",
+        "Which rate an access point picks for its protection frames is up to the implementation; 1 Mb/s long preamble is the slowest legal case.",
+        "The HT Protection value is a readout only, not animated: which 802.11n frames need a protection frame in mode 3 is not verified. Value 2 (a 20 MHz-only 802.11n station in a 20/40 MHz network) is not modeled. Including this readout is a provisional default, not yet confirmed.",
+        "CWmin 31 while an 802.11b station is present comes from one unverified source, so it is a setting, applied only while one is associated.",
+        "The ERP element is element 42 in 802.11g-2003, clause 7.3.2.13; its clause number in the current edition was not verified and is not shown.",
+        "One sender, no collisions, no retries, and the old device sends nothing. Its own slow traffic is what Airtime Fairness shows.",
+        "The network is open (no encryption bytes) so the data frame matches the 254 µs worked example; with 16 bytes of encryption it would take one more symbol, 258 µs.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Wi-Fi Classroom wave 4 research brief, section L: IEEE 802.11b-1999 clause 18 (transmit time, preambles, slot and SIFS), read in full; the 802.11g-2003 ERP element text as quoted in a 2004 white paper; open-source access point and operating-system source code for the triggers and the HT Protection values (IEEE 802.11-2020 clause 9.4.2.56). Data frame and ACK timing from the Airtime Anatomy tool's model. Computed on your device."
+    },
     "mlo-simulator": {
       "name": "Multi-Link Operation",
       "category": "Wi-Fi Classroom",
