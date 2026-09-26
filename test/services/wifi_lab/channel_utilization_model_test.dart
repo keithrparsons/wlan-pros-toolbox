@@ -58,13 +58,15 @@ void main() {
       expect(c.cycleTenths, 3935);
     });
 
-    test('physical carrier sense only: 73% (+/- 1), 73.2% to one decimal', () {
+    test('AP view (physical carrier sense only): 73% (+/- 1), 73.2% to one '
+        'decimal', () {
       expect(c.physicalBusyTenths, 2880);
       expect(c.physicalShare, closeTo(0.73, 0.01));
       expect((c.physicalShare * 1000).round() / 10, 73.2);
     });
 
-    test('physical or virtual: 76% (+/- 1), 75.7% to one decimal', () {
+    test('listener view (physical or virtual): 76% (+/- 1), 75.7% to one '
+        'decimal', () {
       expect(c.virtualBusyTenths, 2980);
       expect(c.virtualShare, closeTo(0.76, 0.01));
       expect((c.virtualShare * 1000).round() / 10, 75.7);
@@ -165,7 +167,8 @@ void main() {
       }
     });
 
-    test('one saturated sender reads 73% (physical) and 76% (virtual) over a '
+    test('one saturated sender reads 73% (AP view) and 76% (listener view) '
+        'over a '
         'window, and the meter never reaches 100%', () {
       final CuSim s = CuSim(const CuConfig())..runIntervals(100);
       final CuReading phys = s.reading(window: 50, countReserved: false)!;

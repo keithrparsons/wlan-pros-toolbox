@@ -97,7 +97,7 @@ void main() {
         expect(
           find.descendant(
             of: find.byKey(PresenterLayout.stageKey),
-            matching: find.text('Channel utilization'),
+            matching: find.text('What the access point reports'),
           ),
           findsOneWidget,
         );

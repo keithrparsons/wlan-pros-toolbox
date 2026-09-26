@@ -232,7 +232,7 @@ class _Formula extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Window in beacon intervals, beacon period in TU (time units of '
-            '1024 µs). Busy = ${controller.countReserved ? 'physical OR virtual carrier sense: energy or a preamble heard, or time reserved by a frame' : 'physical carrier sense only: the radio hearing energy or a preamble'}. '
+            '1024 µs). Busy = ${controller.countReserved ? 'listener view: the radio heard a signal, or a frame\'s Duration field reserved the time (physical or virtual carrier sense)' : 'what the access point reports: the radio heard a signal or was transmitting (physical carrier sense)'}. '
             '255 means 100%; each step is about 0.39%.',
             style: note,
           ),
@@ -325,7 +325,7 @@ class _Readouts extends StatelessWidget {
             },
             children: <TableRow>[
               row(
-                'Channel utilization',
+                controller.viewLabel,
                 masked
                     ? '?'
                     : r == null
@@ -348,8 +348,8 @@ class _Readouts extends StatelessWidget {
           Text(
             'One sender alone at ${c.rateMbps} Mb/s with ${c.payloadBytes}-byte '
             'frames: a cycle of ${cy.cycleUs.toStringAsFixed(1)} µs, '
-            '${cuPct(cy.physicalShare)} busy by physical carrier sense, '
-            '${cuPct(cy.virtualShare)} counting reserved time, payload '
+            '${cuPct(cy.physicalShare)} busy as the access point reports it, '
+            '${cuPct(cy.virtualShare)} in the listener view, payload '
             '${cuPct(cy.payloadShare)}. That channel is full there, not at '
             '100%.',
             style: note,
@@ -460,7 +460,8 @@ class _Predict extends StatelessWidget {
         ]);
       case CuQuestion.revealed:
         final CuCycle cy = controller.cycle;
-        final CuReading? r = controller.reading;
+        // The question is about the meter the AP reports, in either view.
+        final CuReading? r = controller.apReading;
         final CuGuess? g = controller.guess;
         final double answer = r?.share ?? cy.physicalShare;
         final CuGuess right = CuGuess.values.firstWhere(
@@ -470,14 +471,14 @@ class _Predict extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             compact
-                ? 'Meter: ${cuPct(answer)}, not 100%. One sender fills this '
-                      'channel at ${cuPct(cy.physicalShare)} to '
-                      '${cuPct(cy.virtualShare)}.'
+                ? 'Meter: ${cuPct(answer)}, not 100%. The AP sees one sender '
+                      'fill it at ${cuPct(cy.physicalShare)}.'
                 : 'The meter reads ${cuPct(answer)}'
                       '${r == null ? '' : ' (${r.byte} of 255)'}, not 100%. '
-                      'One sender fills this channel at '
-                      '${cuPct(cy.physicalShare)} busy, or '
-                      '${cuPct(cy.virtualShare)} counting reserved time.',
+                      'As the access point reports it, one sender fills this '
+                      'channel at ${cuPct(cy.physicalShare)} busy; a listener '
+                      'outside the exchange sees '
+                      '${cuPct(cy.virtualShare)}.',
             style: body.copyWith(fontWeight: FontWeight.w600),
           ),
           if (g != null)
@@ -630,7 +631,7 @@ class _Inputs extends StatelessWidget {
     );
 
     final Widget reserved = McSwitchRow(
-      title: 'Count reserved time (virtual carrier sense)',
+      title: ChannelUtilizationController.listenerViewLabel,
       value: m.countReserved,
       onChanged: (bool on) => m.countReserved = on,
     );
@@ -679,10 +680,11 @@ class _Inputs extends StatelessWidget {
     );
 
     const String reservedNote =
-        'Virtual carrier sense is the NAV (network allocation vector): the '
-        'time a frame\'s Duration field reserves, here the SIFS (short '
-        'interframe space) before its ACK (acknowledgment). The definition '
-        'counts it.';
+        'Off: what the access point reports, the time its radio heard a '
+        'signal or was transmitting. On: a device outside the exchange, '
+        'which honors the reservation a frame\'s Duration field sets (the '
+        'NAV, network allocation vector), so the SIFS (short interframe '
+        'space) before each ACK (acknowledgment) counts as busy too.';
 
     if (compact) {
       return Column(
@@ -698,7 +700,7 @@ class _Inputs extends StatelessWidget {
                 gap,
                 window,
                 _CompactSwitch(
-                  title: 'Count reserved time (network allocation vector)',
+                  title: ChannelUtilizationController.listenerViewLabel,
                   value: m.countReserved,
                   onChanged: (bool on) => m.countReserved = on,
                 ),
