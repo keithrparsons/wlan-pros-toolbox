@@ -2757,6 +2757,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Teaches documented interpolation methods only; never names or implies
+      // a survey product's algorithm.
+      ToolEntry(
+        id: 'heat-map-builder',
+        title: 'Heat Map Builder',
+        description:
+            'Place survey samples and watch a heat map get built: which '
+            'cells are guesses, how far to guess, and where it goes wrong',
+        routeName: '/tools/heat-map-builder',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       ToolEntry(
         id: 'dfs-simulator',
         title: 'DFS and Radar',

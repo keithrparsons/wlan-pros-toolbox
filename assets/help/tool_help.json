@@ -1343,6 +1343,68 @@
       ],
       "source": "Apple, Wi-Fi roaming support in Apple devices (deployment guide): iPhone trigger -70 dBm with 8 dB delta transmitting and 12 dB idle, Mac -75 dBm with 12 dB, and the first six Neighbor Report entries. Frame sequences from Cisco 9800 roaming documentation. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
+    "heat-map-builder": {
+      "name": "Heat Map Builder",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Builds a heat map from survey samples you place on a floor, so you can see which cells are measurements and which are guesses. Only the dots are measured. Every other cell is filled in by an interpolation method, and beyond the guess range the map should be white: no data, not no coverage.",
+      "whyHere": "Every survey heat map is mostly guesses drawn in the same colors as the measurements. Seeing three samples paint a whole floor, a hidden wall the map never saw, and the error shrink as samples get closer explains why sample spacing, averaging and a sensible guess range matter more than the colors. No survey product publishes its heat-map algorithm, so each method here is one documented method from the interpolation literature, not any product's method.",
+      "howToUse": [
+        "Place samples: tap the floor to add one, or press Grid or Corridor walk and set the spacing (1 to 10 m). Switch the tap to Inspect a cell to see which samples made a cell's value, drawn as lines as thick as their weights.",
+        "Pick the method. Inverse distance weighting (IDW) averages the nearest samples, weighted by 1 / distance to the power p; raise p from 1 toward 6 and the map turns blocky, like nearest neighbor. Average in dB or in milliwatts (mW) and watch the answer move.",
+        "Set the guess range (1 to 20 m). Cells farther than that from every sample are white. Beyond it, Flat IDW keeps filling and goes flat, and Path-loss fill uses a log-distance model fitted to each AP's samples.",
+        "Switch the map between Heat map, Truth and Error map. The readouts give the root mean square error (RMSE), the typical size of the map's error in dB, and the largest error. Reveal the hidden wall to see where the error comes from, and run the Spacing experiment to plot RMSE against grid spacing, with and without noise and averaging.",
+        "Predict, then reveal: Start: three dots asks whether three samples should paint the whole floor. The next reveal widens the guess range, and the last one shows the hidden wall on the error map.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Space takes the samples again with new noise, R resets, Up and Down move the guess range 1 m, P steps the power through 1, 2, 4 and 6, E switches heat map, truth and error map, W shows or hides the hidden wall, N is the next step of the three-dots lesson, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Samples",
+          "unit": "m",
+          "range": "taps (snapped to 0.5 m), a grid or a corridor walk with spacing 1 to 10 m (default 3); up to 1,200 samples"
+        },
+        {
+          "name": "Method",
+          "unit": "",
+          "range": "IDW with power p 1 to 6 (default 2), or nearest neighbor"
+        },
+        {
+          "name": "Averaging domain",
+          "unit": "dB or mW",
+          "range": "dB by default"
+        },
+        {
+          "name": "Guess range",
+          "unit": "m",
+          "range": "1 to 20 (default 5)"
+        },
+        {
+          "name": "Beyond the guess range",
+          "unit": "",
+          "range": "Off (white), Flat IDW, or Path-loss fill"
+        },
+        {
+          "name": "Noise and averaging",
+          "unit": "dB, readings",
+          "range": "sigma 0 to 8 dB (default 0, illustrative); 1 to 36 readings averaged per point"
+        },
+        {
+          "name": "Floor",
+          "unit": "m, n",
+          "range": "40 m x 25 m, 1 to 4 APs (default 2) at 17 dBm effective isotropic radiated power (EIRP) on 5 GHz, path-loss exponent n 2.0 to 4.0 (default 3.0), three drawn walls and one hidden 12 dB wall"
+        }
+      ],
+      "algorithm": "Truth at a point: the strongest AP's EIRP, minus the free-space path loss (FSPL) at 1 m for 5.5 GHz, minus 10 x n x log10(d), minus the loss of every wall crossed, with d in meters (at least 1 m). A sample reads every AP at its spot; with noise on, each reading is the mean of N Gaussian draws of standard deviation sigma, so the noise left is sigma / sqrt(N). IDW: z = sum(w x z_i) / sum(w), w = 1 / d_i^p, over the 8 nearest samples within the guess range; a cell on a sample takes its value. In milliwatts each value is converted with mW = 10^(dBm / 10), averaged with the same weights and converted back. Nearest neighbor takes the nearest sample within the guess range. Beyond the guess range: Off leaves the cell with no data; Flat IDW uses the 8 nearest samples at any distance; Path-loss fill fits reading = A - 10 x n x log10(d) to each AP's samples by least squares (n held to 1.6 to 6) and takes the strongest AP. Error = estimate - truth; RMSE is over the cells with data. The spacing experiment re-runs a grid at 1, 2, 3, 5, 7 and 10 m and scores every cell, filling beyond the guess range with flat IDW when extrapolation is off.",
+      "example": "A cell 2 m, 4 m and 6 m from samples of -55, -65 and -70 dBm: with p = 1 the weights are 0.500, 0.250 and 0.167 and the cell reads -60.5 dBm; p = 2 gives -58.1 dBm; p = 4 gives -55.8 dBm, almost the nearest sample; p = 2 averaged in milliwatts gives -56.2 dBm. With n = 3, going from 10 m to 15 m from an AP costs 10 x 3 x log10(1.5) = 5.3 dB, while flat IDW past the last sample changes by less than 1 dB; add one unmeasured 12 dB wall and the error on the far side is about 17 dB.",
+      "fieldNotes": [
+        "No survey vendor publishes its heat-map algorithm. Each method here is one documented method, and the tool never says which method any product uses. Which domain, dB or milliwatts, products average in is not published either.",
+        "White means no data, not no coverage. A cell farther than the guess range from every sample was never measured.",
+        "IDW can never predict a value outside the range of its samples, so it cannot show signal falling off past the last sample. A path-loss model can, but only for distance: it cannot see a wall no one measured across.",
+        "Closer samples help until noise on single readings dominates. Averaging several readings per point, or moving through the fades while measuring, brings the error back down.",
+        "This is a teaching model: the truth is a log-distance model with wall losses, the noise is illustrative, and real maps also carry antenna, adapter and position errors.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Shepard, A two-dimensional interpolation function for irregularly-spaced data, Proceedings of the 1968 Association for Computing Machinery (ACM) National Conference, pp. 517-524 (inverse distance weighting). Log-distance path loss as in the Roaming Walk. Keith Parsons, Seven Rules for Accurate Site Surveys: Rule 3, set your interpolation distance properly; Rule 5, capture on both sides of what you care about; Rule 6, white does not mean no coverage, white means no data. Computed on your device."
+    },
     "channel-planner": {
       "name": "Channel Planner",
       "category": "Wi-Fi Classroom",
