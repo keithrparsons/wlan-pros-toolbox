@@ -38,6 +38,7 @@ import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
 import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
+import '../screens/tools/calculators/survey_walk_screen.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/power_save_screen.dart';
@@ -309,6 +310,9 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). Pure-Dart client roaming walk (trigger, delta,
   // roam gap); all platforms incl. web.
   static const String roamingWalk = '/tools/roaming-walk';
+  // Wi-Fi Classroom (2026-09-26). Pure-Dart survey walk: scan revisit time,
+  // sample spacing vs guess range, capture methods; all platforms incl. web.
+  static const String surveyWalk = '/tools/survey-walk';
   // Wi-Fi Classroom (2026-09-25). HE resource units and SU vs OFDMA airtime,
   // pure on-device math; all platforms incl. web.
   static const String ofdmaSimulator = '/tools/ofdma-simulator';
@@ -803,6 +807,7 @@ class AppRouter {
     mimoBeamforming: (_) => const MimoBeamformingScreen(),
     channelPlanner: (_) => const ChannelPlannerScreen(),
     roamingWalk: (_) => const RoamingWalkScreen(),
+    surveyWalk: (_) => const SurveyWalkScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the walked survey path, down a corridor and round a corner -->
+    <path d="M3.5 4.5 H18.5 V15"/>
+    <!-- samples dropped at even spacing along the walk -->
+    <circle cx="3.5" cy="4.5" r="2" fill="currentColor" stroke="none"/>
+    <circle cx="11" cy="4.5" r="2" fill="currentColor" stroke="none"/>
+    <circle cx="18.5" cy="4.5" r="2" fill="currentColor" stroke="none"/>
+    <circle cx="18.5" cy="12" r="2" fill="currentColor" stroke="none"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="12" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
