@@ -40,6 +40,7 @@ import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
+import '../screens/tools/calculators/multicast_basic_rate_screen.dart';
 import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
@@ -339,6 +340,10 @@ class AppRouter {
   // timeline, with awake time, a battery estimate and latency; pure
   // on-device math, all platforms incl. web.
   static const String powerSave = '/tools/power-save';
+  // Wi-Fi Classroom (2026-09-26). Multicast and broadcast at the basic rate:
+  // airtime share, DTIM buffering, multicast-to-unicast break-even; pure
+  // on-device math, all platforms incl. web.
+  static const String multicastBasicRate = '/tools/multicast-basic-rate';
   // Wi-Fi Classroom (2026-09-25). 802.1X / EAP message ladder (client, AP,
   // RADIUS server); pure on-device model, all platforms incl. web.
   static const String eapLadder = '/tools/eap-ladder';
@@ -811,6 +816,7 @@ class AppRouter {
     dfsSimulator: (_) => const DfsSimulatorScreen(),
     mloSimulator: (_) => const MloSimulatorScreen(),
     powerSave: (_) => const PowerSaveScreen(),
+    multicastBasicRate: (_) => const MulticastBasicRateScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
     maidenhead: (_) => const MaidenheadScreen(),

@@ -338,9 +338,9 @@ void main() {
         );
       });
 
-      test('exactly the 23 simulators are gated in the real catalog', () {
+      test('exactly the 24 simulators are gated in the real catalog', () {
         final List<ToolEntry> lab = wifiLabTools().toList();
-        expect(lab, hasLength(23));
+        expect(lab, hasLength(24));
       });
     },
   );

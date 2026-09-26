@@ -2724,6 +2724,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Airtime and Access',
       ),
+      // Pairs with 'ssid-airtime' (what beacons cost) and 'airtime-anatomy'
+      // (the frame timing it reuses): this one is multicast and broadcast DATA.
+      ToolEntry(
+        id: 'multicast-basic-rate',
+        title: 'Multicast at the Basic Rate',
+        description:
+            'See how much of the channel one multicast stream takes at a low '
+            'basic rate, how DTIM holds it, and when unicast copies cost less',
+        routeName: '/tools/multicast-basic-rate',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
       ToolEntry(
         id: 'mlo-simulator',
         title: 'Multi-Link Operation',
