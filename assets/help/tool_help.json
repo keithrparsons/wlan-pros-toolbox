@@ -2171,6 +2171,73 @@
       ],
       "source": "Client power rules from the US Code of Federal Regulations, 47 CFR 15.407(a)(4) to (a)(8), and the European standard EN 303 687, Tables 2 and 3, as carried by the 6 GHz Power and PSD tool. Receiver sensitivity per MCS and width and the log-distance path loss are the Rate vs Range tool's. Everything is calculated on your device."
     },
+    "body-loss": {
+      "name": "Body Loss",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows what people cost a Wi-Fi signal, from above. An auditorium floor holds one AP on the front wall, a person holding a device (the holder) and up to 50 other people. A straight line runs from the AP to the device, and every person that line passes through is numbered. The readouts give the received level, the loss from the holder's own body, the loss from the crowd, the difference between the empty and the occupied room, and the MCS (modulation and coding scheme, the data-rate step) the level supports. Every body-loss value is an illustrative setting, not a measurement.",
+      "whyHere": "A person between the device and the AP costs decibels, and the person holding the device often costs the most, because their body sits right next to its antenna. Facing the AP with the device in front costs little; turning your back puts your body in the path. Crowds add up: a room full of people is a room full of obstacles that are mostly water, which is why a survey of the empty building reads better than the same building in use. Higher bands generally lose more to the body.",
+      "howToUse": [
+        "Turn the holder with the Holder facing slider, the Face the AP and Back to the AP buttons, or by tapping the floor: the holder turns toward the spot you tap. Watch the loss from the holder rise from nothing to the full value as the back turns toward the AP.",
+        "Drag the holder to move them, or use the Holder slider under the view. Drag any person to place them on or off the line.",
+        "Set the body losses in the controls (below the view on a phone, in the panel on the right on a wide screen). Each is labeled illustrative: set them to match what you measure.",
+        "Switch the building between Empty and Occupied, change how many people are in the room, and press Scatter the crowd for a new arrangement. The same arrangement always comes back for the same seed.",
+        "Predict, then reveal asks: you surveyed the auditorium empty on Saturday; what happens Monday at 9 a.m.? Reveal the answer, then switch between Saturday and Monday.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Left and Right turn the holder, Space empties or fills the room, Up and Down change the crowd size, R resets, P reveals the answer, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4, 5 or 6; default 5. Path loss is taken at 2437, 5500 or 6135 MHz"
+        },
+        {
+          "name": "Holder facing",
+          "unit": "degrees",
+          "range": "0 to 360, 0 up the page and 90 to the right; default facing the AP"
+        },
+        {
+          "name": "Holder body loss at 2.4 GHz",
+          "unit": "dB",
+          "range": "0 to 20; default 8 (illustrative)"
+        },
+        {
+          "name": "Loss per person on the line at 2.4 GHz",
+          "unit": "dB",
+          "range": "0 to 10; default 4 (illustrative)"
+        },
+        {
+          "name": "5 GHz body-loss multiplier",
+          "unit": "x",
+          "range": "1.0 to 2.0; default 1.2 (illustrative)"
+        },
+        {
+          "name": "6 GHz body-loss multiplier",
+          "unit": "x",
+          "range": "1.0 to 2.0; default 1.3 (illustrative)"
+        },
+        {
+          "name": "Building",
+          "unit": "state",
+          "range": "Empty or Occupied; default Occupied"
+        },
+        {
+          "name": "People in the room",
+          "unit": "people",
+          "range": "0 to 50; default 30"
+        }
+      ],
+      "algorithm": "Received level = 20 dBm radiated by the AP - path loss - holder loss - crowd loss, with a 0 dBi device antenna (decibels over an isotropic antenna). Path loss = free-space path loss at 1 m + 10 x 3 x log10(d), the log-distance model at the Roaming Walk default exponent, with d the distance from the AP to the device. Holder loss = the holder setting x the band multiplier x a turn share: 0 while the holder faces anywhere within 120 degrees of the AP, rising along a raised-cosine curve over the last 60 degrees to 1 with the back square to the AP (illustrative). Crowd loss = the per-person setting x the band multiplier x the number of people the straight line from the AP to the device passes through, each body taken as 0.5 m wide seen from above; it is zero while the building is empty, and empty vs occupied changes nothing else. The band multipliers are 1.0 at 2.4 GHz and, by default, 1.2 at 5 GHz and 1.3 at 6 GHz, an illustrative trend, not a measured table. The MCS is the highest whose minimum receiver sensitivity the level meets at 20 MHz (MCS 0 needs -82 dBm). The device is held 0.3 m in front of the body. The crowd is placed at random from a seed, at least 0.7 m apart.",
+      "example": "At 5 GHz with the illustrative defaults, the device is 14 m from the AP and the holder faces the AP. Empty, it reads -61.8 dBm (MCS 7). With 30 people in the room, 2 stand on the line, each costing 4 x 1.2 = 4.8 dB, so the occupied room reads -71.4 dBm (MCS 3): 9.6 dB worse than the survey of the empty room. Turn the holder's back to the AP and the body adds 8 x 1.2 = 9.6 dB more: -81.6 dBm, MCS 0.",
+      "fieldNotes": [
+        "Every body-loss value in this tool is an illustrative, adjustable setting. No measured body-loss figure stands behind the defaults, so treat the numbers as a way to see the shape of the effect, not as a design value.",
+        "The holder counts first. A device held against the body loses the most when the back turns toward the AP, which is why a reading can change just by turning around.",
+        "A survey walked in an empty building measures a building nobody uses that way. Leave margin for the people who will fill it.",
+        "Only people on the straight line count here. Real signals also arrive by reflections around a crowd, which this model leaves out, so it shows the direct path only.",
+        "For walls and building materials rather than people, use RF Attenuation (RF: radio frequency) and Wi-Fi Through a Wall.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "No primary source was read for any body-loss figure; every loss value is an illustrative setting. Receiver sensitivity per MCS and the log-distance path loss are the Rate vs Range tool's. Everything is calculated on your device."
+    },
     "rate-adaptation": {
       "name": "Rate Adaptation",
       "category": "Wi-Fi Classroom",

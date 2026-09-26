@@ -19,6 +19,7 @@ import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
 import '../widgets/presenter/large_screen_gate.dart' show gateWifiLabRoutes;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/architectural_scale_screen.dart';
+import '../screens/tools/calculators/body_loss_screen.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
 import '../screens/tools/calculators/channel_frequency_converter_screen.dart';
 import '../screens/tools/calculators/downtilt_screen.dart';
@@ -351,6 +352,11 @@ class AppRouter {
   // reusing the Rate vs Range and 6 GHz Power and PSD math; pure on-device
   // model, all platforms incl. web.
   static const String uplinkDownlink = '/tools/uplink-downlink';
+  // Wi-Fi Classroom (2026-09-26). The holder's body and a crowd between the
+  // device and the AP, every loss an illustrative setting, over the Rate vs
+  // Range path loss and MCS table; pure on-device model, all platforms incl.
+  // web.
+  static const String bodyLoss = '/tools/body-loss';
   // Wi-Fi Classroom (2026-09-25). Minstrel-style rate control over one link,
   // reusing the Rate vs Range, Airtime Anatomy and Medium Access math; pure
   // on-device model, all platforms incl. web.
@@ -852,6 +858,7 @@ class AppRouter {
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
     uplinkDownlink: (_) => const UplinkDownlinkScreen(),
+    bodyLoss: (_) => const BodyLossScreen(),
     rateAdaptation: (_) => const RateAdaptationScreen(),
     spatialReuse: (_) => const SpatialReuseScreen(),
     dfsSimulator: (_) => const DfsSimulatorScreen(),

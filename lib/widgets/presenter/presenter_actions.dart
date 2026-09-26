@@ -45,6 +45,7 @@ class PresenterActions {
     this.sliderDown,
     this.sliderUp,
     this.sliderLabel,
+    this.stepLabel,
     this.extra = const <PresenterExtraKey>[],
   }) : assert(
          (sliderDown == null) == (sliderUp == null),
@@ -58,7 +59,8 @@ class PresenterActions {
   final VoidCallback? playPause;
 
   /// What Space does, for the shortcut overlay, when it is not play/pause
-  /// (Why Two Devices Disagree: "Re-sample"). Null reads "Play or pause".
+  /// (Why Two Devices Disagree: "Re-sample"; Body Loss: empty or fill the
+  /// room). Null reads "Play or pause".
   final String? playPauseLabel;
 
   /// Right arrow.
@@ -75,6 +77,10 @@ class PresenterActions {
 
   /// What the main slider is, for the shortcut overlay ("SNR", "EIRP").
   final String? sliderLabel;
+
+  /// What Right arrow does, for the shortcut overlay, when it is not a step
+  /// (Body Loss: turn the holder clockwise). Null reads "Step".
+  final String? stepLabel;
 
   /// Tool-specific keys beyond the shared set. Empty for most tools.
   final List<PresenterExtraKey> extra;

@@ -445,7 +445,7 @@ class _PresenterLayoutState extends State<PresenterLayout> {
     final String slider = a.sliderLabel ?? 'Main slider';
     return <(String, String)>[
       if (a.playPause != null) ('Space', a.playPauseLabel ?? 'Play or pause'),
-      if (a.step != null) ('Right arrow', 'Step'),
+      if (a.step != null) ('Right arrow', a.stepLabel ?? 'Step'),
       if (a.reset != null) ('R', 'Reset'),
       if (a.hasSlider) ('Up arrow or ]', '$slider up'),
       if (a.hasSlider) ('Down arrow or [', '$slider down'),
