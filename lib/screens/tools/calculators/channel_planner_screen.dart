@@ -16,7 +16,8 @@
 //   - ChannelPlannerControls, ChannelPlannerReadouts
 //                            (channel_planner_panels.dart)  inputs, numbers
 //   - the math               (services/wifi_lab/channel_planner_model.dart)
-// A later full-screen presenter layout reuses the same widgets side by side.
+// The Present button (desktop and tablet windows) opens the same widgets over
+// the SAME state in the presenter layout (lib/widgets/presenter/, spec 00).
 //
 // LAYOUT: the stage never sits inside a scroll view, so dragging an AP is
 // never taken for a scroll. Phone (< 720 px): stage on top, readouts and
@@ -39,9 +40,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'channel_planner_panels.dart';
 import 'channel_planner_stage.dart';
@@ -50,6 +53,8 @@ import 'channel_planner_state.dart';
 export 'channel_planner_state.dart' show kChannelPlannerToolId;
 
 const double _kPanelWidth = 360;
+
+const String _kTitle = 'Channel Planner';
 
 class ChannelPlannerScreen extends StatefulWidget {
   const ChannelPlannerScreen({super.key});
@@ -67,13 +72,33 @@ class _ChannelPlannerScreenState extends State<ChannelPlannerScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's state (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: ChannelPlannerStage(state: _state, maxFloorHeight: double.infinity),
+    controls: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        ChannelPlannerControls(state: _state),
+        ChannelPlannerReadouts(state: _state),
+      ],
+    ),
+    actions: _state.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Channel Planner'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _state.copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.channelPlanner,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _state.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

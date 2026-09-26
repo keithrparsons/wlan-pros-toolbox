@@ -9,6 +9,12 @@
 // Dragging an AP moves it and tapping the floor in drawing mode adds a
 // waypoint; both go through the controller. The AP position sliders and the
 // path select in RoamingWalkControls do the same for keyboard users.
+//
+// PRESENTER (spec 00): inside a PresenterLayout the floor and the RSSI plot
+// share the stage height with no scroll, the phone prose is dropped, and a
+// strip over the floor carries the number the lesson is about: which AP the
+// client is on and at what signal, with the walk time, roams so far and the
+// gap per roam. Painters read PresenterMode.scaleOf through RoamPaintStyle.
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +23,7 @@ import '../../../services/wifi_lab/roaming_walk_engine.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter.dart';
 import 'roaming_walk_controller.dart';
 import 'roaming_walk_painters.dart';
 import 'roaming_walk_palette.dart';
@@ -33,6 +40,32 @@ class RoamingWalkStage extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final RoamPaintStyle style = _paintStyle(context);
+        if (PresenterMode.isActive(context)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _NowStrip(controller: controller),
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(
+                flex: 5,
+                child: _FloorCard(
+                  controller: controller,
+                  style: style,
+                  fill: true,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(
+                flex: 4,
+                child: _PlotCard(
+                  controller: controller,
+                  style: style,
+                  fill: true,
+                ),
+              ),
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -49,7 +82,9 @@ class RoamingWalkStage extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale sc = PresenterMode.scaleOf(context);
     return RoamPaintStyle(
+      sc: sc,
       apColors: <Color>[
         for (int i = 0; i < kMaxAps; i++)
           roamApColor(i, isLight: colors.isLight),
@@ -62,7 +97,8 @@ class RoamingWalkStage extends StatelessWidget {
       axis: colors.borderStrong,
       halo: colors.surface2,
       labelStyle: mono.inlineCode.copyWith(
-        fontSize: AppTextSize.caption - 2,
+        // Painted labels do not see MediaQuery's text scale.
+        fontSize: sc.paintFont(AppTextSize.caption - 2),
         color: colors.textSecondary,
       ),
     );
@@ -85,10 +121,18 @@ class _ApDragRecognizer extends PanGestureRecognizer {
 }
 
 class _FloorCard extends StatefulWidget {
-  const _FloorCard({required this.controller, required this.style});
+  const _FloorCard({
+    required this.controller,
+    required this.style,
+    this.fill = false,
+  });
 
   final RoamingWalkController controller;
   final RoamPaintStyle style;
+
+  /// Presenter: fill a bounded box; the floor takes the height the legend
+  /// leaves, and the teaching prose is dropped.
+  final bool fill;
 
   @override
   State<_FloorCard> createState() => _FloorCardState();
@@ -101,7 +145,8 @@ class _FloorCardState extends State<_FloorCard> {
   RoamingWalkController get c => widget.controller;
 
   /// Touch radius around an AP, meters (at least 22 px).
-  double _hitRadiusM(FloorMapping m) => 22 / m.scale;
+  double _hitRadiusM(FloorMapping m) =>
+      widget.style.sc.markerSize(22) / m.scale;
 
   bool _claims(Offset local) {
     if (c.drawing || _size == Size.zero) return false;
@@ -155,119 +200,124 @@ class _FloorCardState extends State<_FloorCard> {
     final TextTheme text = Theme.of(context).textTheme;
     final RoamWalkConfig cfg = c.config;
     final bool wide = MediaQuery.sizeOf(context).width >= 720;
+    final bool fill = widget.fill;
+    final Widget floor = Semantics(
+      label: _semantic(),
+      excludeSemantics: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        child: Container(
+          color: colors.surface2,
+          child: fill
+              ? _plan(cfg)
+              : AspectRatio(aspectRatio: wide ? 2.8 : 2.4, child: _plan(cfg)),
+        ),
+      ),
+    );
     return RwCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const RwSectionLabel('Floor plan, seen from above (60 m x 20 m)'),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'A teaching model: every AP radiates the same way in every '
-            'direction and there are no walls. Signal falls with distance '
-            'and wanders a little (shadowing).',
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label: _semantic(),
-            excludeSemantics: true,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              child: Container(
-                color: colors.surface2,
-                child: AspectRatio(
-                  aspectRatio: wide ? 2.8 : 2.4,
-                  child: LayoutBuilder(
-                    builder: (BuildContext context, BoxConstraints bc) {
-                      _size = Size(bc.maxWidth, bc.maxHeight);
-                      final FloorMapping m = FloorMapping(_size);
-                      return MouseRegion(
-                        cursor: c.drawing
-                            ? SystemMouseCursors.precise
-                            : SystemMouseCursors.basic,
-                        child: RawGestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          gestures: <Type, GestureRecognizerFactory>{
-                            _ApDragRecognizer:
-                                GestureRecognizerFactoryWithHandlers<
-                                  _ApDragRecognizer
-                                >(() => _ApDragRecognizer(claims: _claims), (
-                                  _ApDragRecognizer r,
-                                ) {
-                                  r
-                                    ..onStart = (DragStartDetails d) {
-                                      _dragging = c.apNear(
-                                        m.toFloor(d.localPosition),
-                                        _hitRadiusM(m),
-                                      );
-                                    }
-                                    ..onUpdate = (DragUpdateDetails d) {
-                                      final int? i = _dragging;
-                                      if (i != null) {
-                                        c.moveAp(i, m.toFloor(d.localPosition));
-                                      }
-                                    }
-                                    ..onEnd = (DragEndDetails _) {
-                                      _dragging = null;
-                                    }
-                                    ..onCancel = () {
-                                      _dragging = null;
-                                    };
-                                }),
-                            TapGestureRecognizer:
-                                GestureRecognizerFactoryWithHandlers<
-                                  TapGestureRecognizer
-                                >(TapGestureRecognizer.new, (
-                                  TapGestureRecognizer r,
-                                ) {
-                                  r.onTapUp = (TapUpDetails d) {
-                                    if (c.drawing) {
-                                      c.addWaypoint(m.toFloor(d.localPosition));
-                                      return;
-                                    }
-                                    final int? i = c.apNear(
-                                      m.toFloor(d.localPosition),
-                                      _hitRadiusM(m),
-                                    );
-                                    if (i != null) c.editingAp = i;
-                                  };
-                                }),
-                          },
-                          child: CustomPaint(
-                            size: _size,
-                            painter: RoamFloorPainter(
-                              config: cfg,
-                              result: c.result,
-                              sample: c.sample,
-                              style: widget.style,
-                              editingAp: c.editingAp,
-                              drawnPoints: List<FloorPoint>.of(c.drawnPoints),
-                              drawing: c.drawing,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+          if (!fill) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'A teaching model: every AP radiates the same way in every '
+              'direction and there are no walls. Signal falls with distance '
+              'and wanders a little (shadowing).',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
-          ),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          if (fill) Expanded(child: floor) else floor,
           const SizedBox(height: AppSpacing.xs),
           if (c.drawing)
             _DrawBar(controller: c)
           else ...<Widget>[
             _FloorLegend(style: widget.style, apCount: cfg.aps.length),
-            const SizedBox(height: AppSpacing.xxs),
-            Text(
-              'Drag an AP to move it.',
-              style: text.bodySmall?.copyWith(color: colors.textTertiary),
-            ),
+            if (!fill) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                'Drag an AP to move it.',
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
+            ],
           ],
         ],
       ),
     );
   }
+
+  Widget _plan(RoamWalkConfig cfg) => LayoutBuilder(
+    builder: (BuildContext context, BoxConstraints bc) {
+      _size = Size(bc.maxWidth, bc.maxHeight);
+      final FloorMapping m = FloorMapping(_size);
+      return MouseRegion(
+        cursor: c.drawing
+            ? SystemMouseCursors.precise
+            : SystemMouseCursors.basic,
+        child: RawGestureDetector(
+          behavior: HitTestBehavior.opaque,
+          gestures: <Type, GestureRecognizerFactory>{
+            _ApDragRecognizer:
+                GestureRecognizerFactoryWithHandlers<_ApDragRecognizer>(
+                  () => _ApDragRecognizer(claims: _claims),
+                  (_ApDragRecognizer r) {
+                    r
+                      ..onStart = (DragStartDetails d) {
+                        _dragging = c.apNear(
+                          m.toFloor(d.localPosition),
+                          _hitRadiusM(m),
+                        );
+                      }
+                      ..onUpdate = (DragUpdateDetails d) {
+                        final int? i = _dragging;
+                        if (i != null) {
+                          c.moveAp(i, m.toFloor(d.localPosition));
+                        }
+                      }
+                      ..onEnd = (DragEndDetails _) {
+                        _dragging = null;
+                      }
+                      ..onCancel = () {
+                        _dragging = null;
+                      };
+                  },
+                ),
+            TapGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                  TapGestureRecognizer.new,
+                  (TapGestureRecognizer r) {
+                    r.onTapUp = (TapUpDetails d) {
+                      if (c.drawing) {
+                        c.addWaypoint(m.toFloor(d.localPosition));
+                        return;
+                      }
+                      final int? i = c.apNear(
+                        m.toFloor(d.localPosition),
+                        _hitRadiusM(m),
+                      );
+                      if (i != null) c.editingAp = i;
+                    };
+                  },
+                ),
+          },
+          child: CustomPaint(
+            size: _size,
+            painter: RoamFloorPainter(
+              config: cfg,
+              result: c.result,
+              sample: c.sample,
+              style: widget.style,
+              editingAp: c.editingAp,
+              drawnPoints: List<FloorPoint>.of(c.drawnPoints),
+              drawing: c.drawing,
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _DrawBar extends StatelessWidget {
@@ -401,10 +451,18 @@ class _FloorLegend extends StatelessWidget {
 }
 
 class _PlotCard extends StatelessWidget {
-  const _PlotCard({required this.controller, required this.style});
+  const _PlotCard({
+    required this.controller,
+    required this.style,
+    this.fill = false,
+  });
 
   final RoamingWalkController controller;
   final RoamPaintStyle style;
+
+  /// Presenter: fill a bounded box. The "now" line is on the strip over the
+  /// floor, and the marker note is in the help.
+  final bool fill;
 
   String _semantic() {
     final RoamingWalkController c = controller;
@@ -438,27 +496,28 @@ class _PlotCard extends StatelessWidget {
         : gap != null
         ? 'Between APs: roaming to AP ${gap.toAp + 1}'
         : 'Between APs';
+    final Widget plot = Semantics(
+      label: _semantic(),
+      excludeSemantics: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        child: Container(
+          height: fill ? null : (wide ? 260 : 200),
+          color: colors.surface2,
+          child: CustomPaint(
+            painter: RoamRssiPainter(result: r, sample: k, style: style),
+            size: Size.infinite,
+          ),
+        ),
+      ),
+    );
     return RwCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const RwSectionLabel('Signal from every AP (dBm) over time'),
           const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label: _semantic(),
-            excludeSemantics: true,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              child: Container(
-                height: wide ? 260 : 200,
-                color: colors.surface2,
-                child: CustomPaint(
-                  painter: RoamRssiPainter(result: r, sample: k, style: style),
-                  size: Size.infinite,
-                ),
-              ),
-            ),
-          ),
+          if (fill) Expanded(child: plot) else plot,
           const SizedBox(height: AppSpacing.xs),
           ExcludeSemantics(
             child: Wrap(
@@ -476,21 +535,23 @@ class _PlotCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Each vertical line is a roam; the number above it is the gap in '
-            'ms with no AP. PP marks a ping-pong.',
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            liveRegion: false,
-            child: Text(
-              '${r.timeOf(k).toStringAsFixed(1)} s of '
-              '${r.durationS.toStringAsFixed(1)} s. $now.',
-              style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+          if (!fill) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Each vertical line is a roam; the number above it is the gap '
+              'in ms with no AP. PP marks a ping-pong.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
-          ),
+            const SizedBox(height: AppSpacing.xs),
+            Semantics(
+              liveRegion: false,
+              child: Text(
+                '${r.timeOf(k).toStringAsFixed(1)} s of '
+                '${r.durationS.toStringAsFixed(1)} s. $now.',
+                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -537,6 +598,136 @@ class _Swatch extends StatelessWidget {
           ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
         ),
       ],
+    );
+  }
+}
+
+// ── Presenter strip ─────────────────────────────────────────────────────────
+
+/// Presenter only: the client's AP and signal right now (the headline), then
+/// the walk time, roams so far, the gap per roam, and the two warnings.
+class _NowStrip extends StatelessWidget {
+  const _NowStrip({required this.controller});
+
+  final RoamingWalkController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final RoamingWalkController c = controller;
+    final RoamWalkResult r = c.result;
+    final RoamWalkConfig cfg = c.config;
+    final int k = c.sample;
+    final int? s = r.servingAt(k);
+    final RoamEvent? gap = r.gapAt(k);
+    final RoamTotals t = c.totals;
+    final RoamCost first = cfg.costFor(cfg.authMethodFor(joinedBefore: false));
+
+    final String now = s != null
+        ? 'AP ${s + 1}, ${fmtDbm(r.rssi[s][k])}'
+        : gap != null
+        ? 'Roaming to AP ${gap.toAp + 1}'
+        : 'Between APs';
+
+    Widget stat(String label, String value, {Color? color}) => MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          Text(
+            value,
+            style: mono.outputMedium.copyWith(
+              color: color ?? colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Widget warn(String message) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(Icons.warning_amber_rounded, color: colors.statusWarning),
+        const SizedBox(width: AppSpacing.xxs),
+        Text(
+          message,
+          style: text.bodyMedium?.copyWith(color: colors.statusWarning),
+        ),
+      ],
+    );
+
+    return RwCard(
+      child: Semantics(
+        liveRegion: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.end,
+              children: <Widget>[
+                MergeSemantics(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Client now',
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        now,
+                        style: sc
+                            .headlineStyle(mono.outputLarge)
+                            .copyWith(
+                              color: s != null
+                                  ? colors.textAccent
+                                  : colors.textPrimary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                stat(
+                  'Walk',
+                  '${r.timeOf(k).toStringAsFixed(1)} of '
+                      '${r.durationS.toStringAsFixed(1)} s',
+                ),
+                stat('Roams', '${t.roams}'),
+                stat('Gap per roam', fmtMs(first.totalMs)),
+              ],
+            ),
+            if (t.pingPongs > 0 || t.secondsBelowWeak > 0) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.xxs,
+                children: <Widget>[
+                  if (t.pingPongs > 0)
+                    warn(
+                      '${t.pingPongs} ping-pong'
+                      '${t.pingPongs == 1 ? '' : 's'}',
+                    ),
+                  if (t.secondsBelowWeak > 0)
+                    warn(
+                      '${t.secondsBelowWeak.toStringAsFixed(1)} s below '
+                      '-70 dBm',
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

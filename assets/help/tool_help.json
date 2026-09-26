@@ -813,7 +813,8 @@
       "howToUse": [
         "Pick a method and a roam mode, then press Play, or use Step and Back to go one message at a time. Show all draws the whole ladder at once. Blue arrows cross the air; sand, dashed arrows cross the wire. The caption under the ladder names the frame, the leg it crossed and why it is there.",
         "Watch for the two bands: Keys available (for 802.1X, after the Access-Accept) and Traffic protected (after message 4 of the 4-way handshake). Content in braces with a lock travels inside the TLS tunnel, where the AP cannot read it.",
-        "Raise the certificate size to see a large certificate chain split into fragments, each costing a round trip. Raise the RADIUS round-trip time to see a distant server slow the connection. Switch between methods with the whole ladder shown to compare them."
+        "Raise the certificate size to see a large certificate chain split into fragments, each costing a round trip. Raise the RADIUS round-trip time to see a distant server slow the connection. Switch between methods with the whole ladder shown to compare them.",
+        "On a computer or tablet, Present opens the ladder full screen for a projector: Space plays or pauses, the Right arrow sends the next message and the Left arrow takes one back, R resets, Up and Down change the certificate size, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -922,7 +923,8 @@
         "Pick a region, a width and a starting channel. The channel list says which are DFS and how long each CAC takes.",
         "Press Play, or use Step and the clock slider. The channel strip shows every 20 MHz channel: in use, listening (CAC), blocked after radar with its countdown, or not in the plan. A bar under a channel marks it as DFS.",
         "Press Radar now while the AP is on a DFS channel. The timeline shows the AP and three clients: CAC, service, the radar, the move and any gap with no service, plus a row for blocked channels. Switch the timeline to 3 minutes to see a short move.",
-        "Choose what the AP does after radar: prefer a non-DFS channel, or take another DFS channel and pay its CAC. Add random radar to see repeated moves."
+        "Choose what the AP does after radar: prefer a non-DFS channel, or take another DFS channel and pay its CAC. Add random radar to see repeated moves.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow steps 10 s, D is Radar now, R restarts, Up and Down move the clock a minute, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1075,7 +1077,8 @@
         "Pick a lesson, or set your own links, traffic and modes. Every change reruns all the modes on the same traffic; New random traffic draws a fresh sample with the same settings.",
         "Read the lanes: one row per link, other networks' busy time shaded, and each frame placed where the chosen mode sent it, numbered in arrival order. EMLSR's lead-in and NSTR's padding are drawn hollow. Slide the view along the run.",
         "Compare the histograms and the latency table. The verdict line says whether each mode beats the best single link or is worse than it.",
-        "Turn on EMLSR disabled by driver to see the fallback to one link, and raise the padding and transition delays to see EMLSR's switch cost."
+        "Turn on EMLSR disabled by driver to see the fallback to one link, and raise the padding and transition delays to see EMLSR's switch cost.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: R goes back to the lesson, Up and Down slide the lanes along the run, N draws new random traffic, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1270,7 +1273,8 @@
       "howToUse": [
         "Pick a client. iPhone and Mac use Apple's published trigger and delta; the sticky and jumpy clients are illustrative, because Android and Windows publish no numbers. Or set the trigger and delta yourself.",
         "Press Play, or use Step and the walk-time slider. On the floor plan the lime line joins the client to its AP. Below it, every AP's signal is drawn in that AP's color, the lime line is the AP the client is using, the dashed line is the trigger, and each roam is marked with its gap in milliseconds (PP marks a ping-pong).",
-        "Turn on 802.11k, PMK caching or 802.11r (FT) and watch the gap per roam change. Drag the APs or pick another path, including one you draw, and add shadowing to see a jumpy client ping-pong between two APs of similar strength."
+        "Turn on 802.11k, PMK caching or 802.11r (FT) and watch the gap per roam change. Drag the APs or pick another path, including one you draw, and add shadowing to see a jumpy client ping-pong between two APs of similar strength.",
+        "On a computer or tablet, Present opens the walk full screen for a projector: Space plays or pauses, the Right arrow steps 1 s, R restarts the walk, Up and Down move the roam trigger, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1320,7 +1324,8 @@
         "Tap an AP to select it and drag it to move it, or pick it from the Selected AP list and use its position sliders. Choose its channel and width from the lists. Add up to 12 APs.",
         "Turn on the wall tool and drag on the floor to draw a wall, or add a wall straight across from the controls. Every wall costs the same loss, which you set.",
         "Solid lines join APs that defer to each other, labeled with the received level and the rule that fired. Dashed lines mean only one side defers. The dashed rings mark the largest contention domain. The strip under the floor shows which channels are in use across the band.",
-        "Press Auto-plan to spread the APs across the channels available at the chosen width, then change the width and plan again."
+        "Press Auto-plan to spread the APs across the channels available at the chosen width, then change the width and plan again.",
+        "On a computer or tablet, Present opens the planner full screen for a projector: R resets the floor, Up and Down change the channel width for every AP, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {

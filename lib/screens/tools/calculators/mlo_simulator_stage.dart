@@ -20,6 +20,12 @@
 // the one number the lesson is about. Amber appears only as the "worse than
 // the best single link" verdict, with its word and icon (§8.13).
 //
+// PRESENTER (spec 00): inside a PresenterLayout the verdict line (does MLO
+// beat the best single link here, and by how much) sits over the lanes, the
+// lanes and the histograms share the stage height with no scroll, each
+// histogram leads with its mean in the accent, and painters read
+// PresenterMode.scaleOf.
+//
 // ASCII copy, no em dashes (GL-004).
 
 import 'dart:math' as math;
@@ -33,7 +39,9 @@ import '../../../theme/app_typography.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
+import 'mlo_simulator_controls.dart' show mloVerdict;
 import 'mlo_simulator_parts.dart';
 import 'mlo_simulator_state.dart';
 
@@ -47,6 +55,21 @@ class MloSimulatorStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: state,
       builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _VerdictStrip(state: state),
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(flex: 6, child: _LanesCard(state: state, fill: true)),
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(
+                flex: 5,
+                child: _HistogramCard(state: state, fill: true),
+              ),
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -96,9 +119,13 @@ String _oneLink(List<MloLinkConfig> links) =>
 // ── Lanes ───────────────────────────────────────────────────────────────────
 
 class _LanesCard extends StatelessWidget {
-  const _LanesCard({required this.state});
+  const _LanesCard({required this.state, this.fill = false});
 
   final MloSimulatorState state;
+
+  /// Presenter: fill a bounded box; the lane-mode select sits in the header
+  /// and the time controls share one row.
+  final bool fill;
 
   @override
   Widget build(BuildContext context) {
@@ -107,62 +134,116 @@ class _LanesCard extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final TextTheme text = Theme.of(context).textTheme;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final TextStyle rowLabel =
+        text.bodySmall?.copyWith(color: colors.textSecondary) ??
+        TextStyle(color: colors.textSecondary);
     final MloLanesStyle style = MloLanesStyle(
+      sc: sc,
       colors: colors,
       busy: colors.textTertiary.withValues(alpha: colors.isLight ? 0.30 : 0.35),
       grid: colors.border,
       tick: colors.textSecondary,
+      // Painted labels do not see MediaQuery's text scale.
       labelStyle: mono.inlineCode.copyWith(
-        fontSize: AppTextSize.caption - 2,
+        fontSize: sc.paintFont(AppTextSize.caption - 2),
         color: colors.textSecondary,
       ),
-      rowLabelStyle:
-          text.bodySmall?.copyWith(color: colors.textSecondary) ??
-          TextStyle(color: colors.textSecondary),
+      rowLabelStyle: rowLabel.copyWith(
+        fontSize: sc.paintFont(rowLabel.fontSize ?? AppTextSize.caption),
+      ),
     );
     final List<MloLinkConfig> links = s.run.config.links;
+    final Widget lanes = Semantics(
+      label: _lanesSemantics(s),
+      excludeSemantics: true,
+      child: SizedBox(
+        height: fill ? null : 34.0 * (links.length + 1) + 22,
+        child: CustomPaint(
+          painter: MloLanesPainter(
+            links: links,
+            result: s.laneResult,
+            arrivalsUs: s.run.arrivalsUs,
+            t0: s.windowStartUs,
+            t1: s.windowEndUs,
+            style: style,
+          ),
+          size: Size.infinite,
+        ),
+      ),
+    );
+    final AppSelect<MloMode> laneSelect = AppSelect<MloMode>(
+      value: s.laneMode,
+      semanticLabel: 'Show the lanes for',
+      items: <AppSelectItem<MloMode>>[
+        (MloMode.single, 'Best single link'),
+        for (final MloMode m in kMloComparableModes) (m, m.label),
+      ],
+      onChanged: (MloMode m) => s.laneMode = m,
+    );
+    final MloSlider viewSlider = MloSlider(
+      label: 'View starts at',
+      valueText: mloFmtUs(s.windowStartUs),
+      value: s.windowStartUs,
+      min: 0,
+      max: math.max(1, s.windowStartMaxUs),
+      divisions: 200,
+      onChanged: (double v) => s.windowStartUs = v,
+      semanticValue: (double v) => mloFmtUs(v),
+    );
+    if (fill) {
+      return MloCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(child: MloSectionLabel('Links over time')),
+                SizedBox(width: 260, child: laneSelect),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              mloLaneCaption(s),
+              style: text.bodySmall?.copyWith(color: colors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Expanded(child: lanes),
+            const SizedBox(height: AppSpacing.xxs),
+            _LanesLegend(links: links, mode: s.laneMode),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                AppToggle<MloWindow>(
+                  semanticLabel: 'Time shown in the lanes',
+                  value: s.window,
+                  items: <AppToggleItem<MloWindow>>[
+                    for (final MloWindow w in MloWindow.values) (w, w.label),
+                  ],
+                  onChanged: (MloWindow w) => s.window = w,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: viewSlider),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
     return MloCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const MloSectionLabel('Links over time'),
           const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Show the lanes for',
-            field: AppSelect<MloMode>(
-              value: s.laneMode,
-              semanticLabel: 'Show the lanes for',
-              items: <AppSelectItem<MloMode>>[
-                (MloMode.single, 'Best single link'),
-                for (final MloMode m in kMloComparableModes) (m, m.label),
-              ],
-              onChanged: (MloMode m) => s.laneMode = m,
-            ),
-          ),
+          LabeledField(label: 'Show the lanes for', field: laneSelect),
           const SizedBox(height: AppSpacing.xs),
           Text(
             mloLaneCaption(s),
             style: text.bodySmall?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label: _lanesSemantics(s),
-            excludeSemantics: true,
-            child: SizedBox(
-              height: 34.0 * (links.length + 1) + 22,
-              child: CustomPaint(
-                painter: MloLanesPainter(
-                  links: links,
-                  result: s.laneResult,
-                  arrivalsUs: s.run.arrivalsUs,
-                  t0: s.windowStartUs,
-                  t1: s.windowEndUs,
-                  style: style,
-                ),
-                size: Size.infinite,
-              ),
-            ),
-          ),
+          lanes,
           const SizedBox(height: AppSpacing.xs),
           _LanesLegend(links: links, mode: s.laneMode),
           const SizedBox(height: AppSpacing.sm),
@@ -177,16 +258,7 @@ class _LanesCard extends StatelessWidget {
             onChanged: (MloWindow w) => s.window = w,
           ),
           const SizedBox(height: AppSpacing.xs),
-          MloSlider(
-            label: 'View starts at',
-            valueText: mloFmtUs(s.windowStartUs),
-            value: s.windowStartUs,
-            min: 0,
-            max: math.max(1, s.windowStartMaxUs),
-            divisions: 200,
-            onChanged: (double v) => s.windowStartUs = v,
-            semanticValue: (double v) => mloFmtUs(v),
-          ),
+          viewSlider,
         ],
       ),
     );
@@ -300,6 +372,7 @@ class MloLanesStyle {
     required this.tick,
     required this.labelStyle,
     required this.rowLabelStyle,
+    this.sc = PresenterScale.normal,
   });
 
   final AppColorScheme colors;
@@ -309,15 +382,22 @@ class MloLanesStyle {
   final TextStyle labelStyle;
   final TextStyle rowLabelStyle;
 
+  /// Presenter scale for strokes and margins (identity outside presenter
+  /// mode; the label styles already carry the text factor).
+  final PresenterScale sc;
+
   @override
   bool operator ==(Object other) =>
       other is MloLanesStyle &&
       other.colors.isLight == colors.isLight &&
       other.busy == busy &&
-      other.labelStyle == labelStyle;
+      other.labelStyle == labelStyle &&
+      other.rowLabelStyle == rowLabelStyle &&
+      other.sc == sc;
 
   @override
-  int get hashCode => Object.hash(colors.isLight, busy, labelStyle);
+  int get hashCode =>
+      Object.hash(colors.isLight, busy, labelStyle, rowLabelStyle, sc);
 }
 
 class MloLanesPainter extends CustomPainter {
@@ -337,8 +417,8 @@ class MloLanesPainter extends CustomPainter {
   final double t1;
   final MloLanesStyle style;
 
-  static const double _labelW = 60;
-  static const double _axisH = 18;
+  double get _labelW => 60 * style.sc.text;
+  double get _axisH => 18 * style.sc.text;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -351,7 +431,7 @@ class MloLanesPainter extends CustomPainter {
     double x(double t) => left + (t - t0) / span * (right - left);
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.sc.strokeWidth(1);
 
     // Row labels and separators.
     for (int i = 0; i < rows; i++) {
@@ -393,7 +473,7 @@ class MloLanesPainter extends CustomPainter {
     // Arrivals.
     final Paint arr = Paint()
       ..color = style.tick
-      ..strokeWidth = 1.5;
+      ..strokeWidth = style.sc.strokeWidth(1.5);
     for (final double a in arrivalsUs) {
       if (a < t0) continue;
       if (a > t1) break;
@@ -433,13 +513,13 @@ class MloLanesPainter extends CustomPainter {
           Paint()
             ..color = ls.hue
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5,
+            ..strokeWidth = style.sc.strokeWidth(1.5),
         );
         // Label only the part inside the view, so a block cut by the left
         // edge never prints a fragment.
         final double visL = math.max(r.left, left);
         final double visR = math.min(r.right, right);
-        if (visR - visL > 30) {
+        if (visR - visL > 30 * style.sc.text) {
           _text(
             canvas,
             label,
@@ -464,12 +544,12 @@ class MloLanesPainter extends CustomPainter {
         data.bottomLeft,
         Paint()
           ..color = style.colors.surface1
-          ..strokeWidth = 1,
+          ..strokeWidth = style.sc.strokeWidth(1),
       );
       final String n = '${t.frame + 1}';
       final double dl = math.max(data.left, left);
       final double dr = math.min(data.right, right);
-      if (dr - dl > 8.0 * n.length + 6) {
+      if (dr - dl > (8.0 * n.length + 6) * style.sc.text) {
         _text(
           canvas,
           n,
@@ -513,9 +593,12 @@ class MloLanesPainter extends CustomPainter {
 const int _kBins = 30;
 
 class _HistogramCard extends StatelessWidget {
-  const _HistogramCard({required this.state});
+  const _HistogramCard({required this.state, this.fill = false});
 
   final MloSimulatorState state;
+
+  /// Presenter: fill a bounded box, each histogram an equal share.
+  final bool fill;
 
   @override
   Widget build(BuildContext context) {
@@ -525,6 +608,43 @@ class _HistogramCard extends StatelessWidget {
     final (double lo, double hi) = mloHistogramRange(<List<double>>[
       for (final MloMode m in modes) run.result(m).sortedLatenciesUs,
     ]);
+    if (fill) {
+      final AppColorScheme colors = context.colors;
+      return MloCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(
+                  child: MloSectionLabel(
+                    'Latency: frame arrives to frame sent',
+                  ),
+                ),
+                Text(
+                  'Same traffic for every mode. Log scale.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors.textTertiary),
+                ),
+              ],
+            ),
+            for (final MloMode m in modes) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(
+                child: _ModeHistogram(
+                  run: run,
+                  mode: m,
+                  lo: lo,
+                  hi: hi,
+                  fill: true,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
     return MloCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -553,12 +673,17 @@ class _ModeHistogram extends StatelessWidget {
     required this.mode,
     required this.lo,
     required this.hi,
+    this.fill = false,
   });
 
   final MloRun run;
   final MloMode mode;
   final double lo;
   final double hi;
+
+  /// Presenter: the plot takes the height left, and the mean leads in the
+  /// accent at readout size.
+  final bool fill;
 
   @override
   Widget build(BuildContext context) {
@@ -567,15 +692,101 @@ class _ModeHistogram extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final MloModeResult r = run.result(mode);
+    final PresenterScale sc = PresenterMode.scaleOf(context);
     final String name = mode == MloMode.single
         ? 'Best single link (${run.config.links[r.singleLink!].band.label})'
         : r.fellBackToSingle && run.linkCount > 1
         ? '${mode.label} (disabled by driver)'
         : mode.label;
     final bool worse = run.worseThanBestSingle(mode);
+    final Widget plot = _plotOf(r, colors, mono, sc);
     final String stats = r.overloaded
         ? 'Overloaded'
         : 'mean ${mloFmtUs(r.meanUs)}  p99 ${mloFmtUs(r.p99Us)}';
+    final String semantics =
+        '$name. ${r.overloaded ? 'Overloaded: frames arrive faster than it can send them.' : 'Mean ${mloFmtUs(r.meanUs)}, 99th percentile ${mloFmtUs(r.p99Us)}.'}'
+        '${worse ? ' Worse than the best single link.' : ''}';
+    if (fill) {
+      // Presenter: one row per mode, the numbers left of the plot. The
+      // numbers scale down as one piece if a short window leaves the row
+      // less height than they need.
+      final String shortName = mode == MloMode.single
+          ? 'Single (${run.config.links[r.singleLink!].band.label})'
+          : r.fellBackToSingle && run.linkCount > 1
+          ? '${mode.label} (driver off)'
+          : mode.label;
+      return Semantics(
+        container: true,
+        label: semantics,
+        excludeSemantics: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            SizedBox(
+              width: 240,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          shortName,
+                          style: text.bodyMedium?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (worse) ...<Widget>[
+                          const SizedBox(width: AppSpacing.xxs),
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: sc.markerSize(16),
+                            color: colors.statusWarning,
+                          ),
+                          Text(
+                            'worse',
+                            style: text.bodySmall?.copyWith(
+                              color: colors.statusWarning,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (r.overloaded)
+                      Text(
+                        'Overloaded',
+                        style: mono.outputMedium.copyWith(
+                          color: colors.statusDanger,
+                        ),
+                      )
+                    else ...<Widget>[
+                      Text(
+                        'mean ${mloFmtUs(r.meanUs)}',
+                        style: mono.outputMedium.copyWith(
+                          color: colors.textAccent,
+                        ),
+                      ),
+                      Text(
+                        'p99 ${mloFmtUs(r.p99Us)}',
+                        style: mono.inlineCode.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(child: plot),
+          ],
+        ),
+      );
+    }
     return Semantics(
       container: true,
       label:
@@ -611,7 +822,7 @@ class _ModeHistogram extends StatelessWidget {
                   children: <Widget>[
                     Icon(
                       Icons.warning_amber_rounded,
-                      size: 16,
+                      size: sc.markerSize(16),
                       color: colors.statusWarning,
                     ),
                     const SizedBox(width: AppSpacing.xxs),
@@ -626,31 +837,36 @@ class _ModeHistogram extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xxs),
-          SizedBox(
-            height: 76,
-            child: CustomPaint(
-              painter: MloHistogramPainter(
-                counts: mloLogHistogram(r.sortedLatenciesUs, lo, hi, _kBins),
-                lo: lo,
-                hi: hi,
-                meanUs: r.meanUs,
-                p99Us: r.p99Us,
-                bar: colors.textTertiary,
-                mean: colors.textAccent,
-                p99: colors.textPrimary,
-                grid: colors.border,
-                labelStyle: mono.inlineCode.copyWith(
-                  fontSize: AppTextSize.caption - 2,
-                  color: colors.textSecondary,
-                ),
-              ),
-              size: Size.infinite,
-            ),
-          ),
+          SizedBox(height: 76, child: plot),
         ],
       ),
     );
   }
+
+  Widget _plotOf(
+    MloModeResult r,
+    AppColorScheme colors,
+    AppMonoText mono,
+    PresenterScale sc,
+  ) => CustomPaint(
+    painter: MloHistogramPainter(
+      counts: mloLogHistogram(r.sortedLatenciesUs, lo, hi, _kBins),
+      lo: lo,
+      hi: hi,
+      meanUs: r.meanUs,
+      p99Us: r.p99Us,
+      bar: colors.textTertiary,
+      mean: colors.textAccent,
+      p99: colors.textPrimary,
+      grid: colors.border,
+      labelStyle: mono.inlineCode.copyWith(
+        fontSize: sc.paintFont(AppTextSize.caption - 2),
+        color: colors.textSecondary,
+      ),
+      sc: sc,
+    ),
+    size: Size.infinite,
+  );
 }
 
 class MloHistogramPainter extends CustomPainter {
@@ -665,6 +881,7 @@ class MloHistogramPainter extends CustomPainter {
     required this.p99,
     required this.grid,
     required this.labelStyle,
+    this.sc = PresenterScale.normal,
   });
 
   final List<int> counts;
@@ -678,8 +895,12 @@ class MloHistogramPainter extends CustomPainter {
   final Color grid;
   final TextStyle labelStyle;
 
-  static const double _axisH = 16;
-  static const double _markH = 12;
+  /// Presenter scale for strokes and margins (identity outside presenter
+  /// mode; labelStyle already carries the text factor).
+  final PresenterScale sc;
+
+  double get _axisH => 16 * sc.text;
+  double get _markH => 12 * sc.text;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -697,7 +918,7 @@ class MloHistogramPainter extends CustomPainter {
     // Decade grid and labels.
     final Paint gp = Paint()
       ..color = grid
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     for (int d = l0.round(); d <= l1.round(); d++) {
       final double gx = x(math.pow(10, d).toDouble());
       canvas.drawLine(Offset(gx, plotTop), Offset(gx, plotTop + plotH), gp);
@@ -737,7 +958,7 @@ class MloHistogramPainter extends CustomPainter {
       final double mx = x(us);
       final Paint p = Paint()
         ..color = c
-        ..strokeWidth = 2;
+        ..strokeWidth = sc.strokeWidth(2);
       if (dashed) {
         for (double y = plotTop; y < plotTop + plotH; y += 6) {
           canvas.drawLine(
@@ -761,14 +982,14 @@ class MloHistogramPainter extends CustomPainter {
     }
 
     marker(meanUs, mean, 'mean', dashed: false);
-    if (x(p99Us) - x(meanUs) > 34) {
+    if (x(p99Us) - x(meanUs) > 34 * sc.text) {
       marker(p99Us, p99, 'p99', dashed: true);
     } else {
       // Too close to label both: draw the line, skip the word.
       final double mx = x(p99Us);
       final Paint p = Paint()
         ..color = p99
-        ..strokeWidth = 2;
+        ..strokeWidth = sc.strokeWidth(2);
       for (double y = plotTop; y < plotTop + plotH; y += 6) {
         canvas.drawLine(
           Offset(mx, y),
@@ -787,5 +1008,49 @@ class MloHistogramPainter extends CustomPainter {
       old.meanUs != meanUs ||
       old.p99Us != p99Us ||
       old.bar != bar ||
-      old.mean != mean;
+      old.mean != mean ||
+      old.sc != sc;
+}
+
+// ── Presenter verdict ───────────────────────────────────────────────────────
+
+/// Presenter only: the verdict line, over the lanes where the class looks:
+/// whether MLO beats the best single link here, and by how much.
+class _VerdictStrip extends StatelessWidget {
+  const _VerdictStrip({required this.state});
+
+  final MloSimulatorState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final MloSimulatorState s = state;
+    final bool anyWorse = s.shownModes.any(s.run.worseThanBestSingle);
+    final Color color = anyWorse ? colors.statusWarning : colors.textPrimary;
+    return MloCard(
+      child: Semantics(
+        liveRegion: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(
+              anyWorse
+                  ? Icons.warning_amber_rounded
+                  : Icons.check_circle_outline,
+              color: anyWorse ? colors.statusWarning : colors.textAccent,
+              size: PresenterMode.scaleOf(context).markerSize(22),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Text(
+                mloVerdict(s),
+                style: text.titleMedium?.copyWith(color: color),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

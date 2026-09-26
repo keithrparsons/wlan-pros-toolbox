@@ -11,6 +11,12 @@
 // clock speed and EIRP are Selects. Status hues are verdicts only (§8.13
 // rule 6), each with its word and an icon: amber for "not usable yet" (a CAC
 // running, an outage so far), red for "blocked".
+//
+// PRESENTER (spec 00): inside a PresenterLayout the panel keeps the clock,
+// Radar now and the setup a lesson changes (region, width, starting channel,
+// what the AP does after radar) in view. The AP state, outage and clients
+// are on the stage; the readouts in words, the radar log, random radar and
+// the rules fold into PresenterDisclosures.
 
 import 'package:flutter/material.dart';
 
@@ -20,6 +26,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
 import 'dfs_simulator_controller.dart';
 import 'dfs_simulator_parts.dart';
@@ -64,6 +71,7 @@ class DfsSimulatorControls extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final DfsSimulatorController c = controller;
+        if (PresenterMode.isActive(context)) return _PresenterPanel(c);
         final List<Widget> cards = <Widget>[
           if (parts.contains(DfsControlPart.transport)) _TransportCard(c),
           if (parts.contains(DfsControlPart.readouts)) _ReadoutsCard(c),
@@ -81,6 +89,264 @@ class DfsSimulatorControls extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+// ── Presenter panel ─────────────────────────────────────────────────────────
+
+class _PresenterPanel extends StatelessWidget {
+  const _PresenterPanel(this.c);
+
+  final DfsSimulatorController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool reducedMotion =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final String? radarOff = c.radarDisabledReason;
+    final DfsConfig cfg = c.config;
+    final BondedChannel start = c.startPlacement;
+    String startLabel(BondedChannel p) {
+      final double cac = cacSecondsFor(cfg.region, p);
+      return '${placementLabel(p)}'
+          '${cac == 0 ? ', not DFS' : ', DFS, CAC ${fmtRule(cac)}'}';
+    }
+
+    final int hits = c.hitsSoFar.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        DfsCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: c.togglePlay,
+                      icon: Icon(
+                        c.playing
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      label: Text(
+                        c.playing
+                            ? 'Pause'
+                            : c.atEnd
+                            ? 'Play again'
+                            : 'Play',
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        minimumSize: const Size.fromHeight(
+                          AppSpacing.minTouchTarget,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Tooltip(
+                      message: 'Radar now (D)',
+                      child: DfsOutlineButton(
+                        icon: Icons.radar_rounded,
+                        label: 'Radar now',
+                        semanticLabel: radarOff == null
+                            ? 'Radar now: the AP detects radar at '
+                                  '${fmtClock(c.timeS)}'
+                            : 'Radar now, unavailable. $radarOff',
+                        onPressed: radarOff == null ? c.radarNow : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: DfsOutlineButton(
+                      icon: Icons.skip_next_rounded,
+                      label: 'Step 10 s',
+                      semanticLabel: 'Step the clock forward ten seconds',
+                      onPressed: c.atEnd ? null : c.step,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: DfsOutlineButton(
+                      icon: Icons.restart_alt_rounded,
+                      label: 'Restart',
+                      semanticLabel:
+                          'Back to 0:00, clearing the radar you added',
+                      onPressed: c.atStart ? null : c.restart,
+                    ),
+                  ),
+                ],
+              ),
+              if (radarOff != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.xxs),
+                ExcludeSemantics(
+                  child: Text(
+                    radarOff,
+                    style: text.bodySmall?.copyWith(color: colors.textTertiary),
+                  ),
+                ),
+              ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Expanded(
+                    child: DfsSlider(
+                      label: 'Clock',
+                      valueText:
+                          '${fmtClock(c.timeS)} of ${fmtClock(kDfsHorizonS)}',
+                      value: c.timeS,
+                      min: 0,
+                      max: kDfsHorizonS,
+                      divisions: (kDfsHorizonS / kDfsStepSeconds).round(),
+                      onChanged: c.seek,
+                      semanticValue: (double v) =>
+                          '${fmtClock(v)} of ${fmtClock(kDfsHorizonS)}',
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  SizedBox(
+                    width: 130,
+                    child: AppSelect<DfsClockSpeed>(
+                      value: c.speed,
+                      semanticLabel: 'Clock speed',
+                      items: <AppSelectItem<DfsClockSpeed>>[
+                        for (final DfsClockSpeed s in DfsClockSpeed.values)
+                          (s, '${s.factor.round()}x'),
+                      ],
+                      onChanged: (DfsClockSpeed s) => c.speed = s,
+                    ),
+                  ),
+                ],
+              ),
+              if (reducedMotion)
+                Text(
+                  'Reduced motion is on: the clock waits until you press '
+                  'Play.',
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        DfsCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Expanded(
+                    child: AppToggle<DfsRegion>(
+                      label: 'Region',
+                      semanticLabel: 'Region',
+                      value: cfg.region,
+                      expand: true,
+                      items: <AppToggleItem<DfsRegion>>[
+                        for (final DfsRegion r in DfsRegion.values)
+                          (r, r.label),
+                      ],
+                      onChanged: (DfsRegion r) => c.region = r,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  SizedBox(
+                    width: 150,
+                    child: LabeledField(
+                      label: 'Width',
+                      semanticLabel: 'Channel width',
+                      field: AppSelect<int>(
+                        value: cfg.widthMHz,
+                        semanticLabel: 'Channel width',
+                        items: <AppSelectItem<int>>[
+                          for (final int w in kDfsWidths) (w, '$w MHz'),
+                        ],
+                        onChanged: (int w) => c.widthMHz = w,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              LabeledField(
+                label: 'Starting channel',
+                semanticLabel: 'Starting channel',
+                // Keyed by the lowest 20 MHz channel: BondedChannel has no
+                // value equality.
+                field: AppSelect<int>(
+                  value: start.components.first,
+                  semanticLabel: 'Starting channel',
+                  items: <AppSelectItem<int>>[
+                    for (final BondedChannel p in c.startChoices)
+                      (p.components.first, startLabel(p)),
+                  ],
+                  onChanged: (int first) => c.start = c.startChoices.firstWhere(
+                    (BondedChannel p) => p.components.first == first,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              AppToggle<NewChannelPolicy>(
+                label: 'After radar',
+                semanticLabel: 'New channel after radar',
+                value: cfg.policy,
+                expand: true,
+                items: <AppToggleItem<NewChannelPolicy>>[
+                  for (final NewChannelPolicy p in NewChannelPolicy.values)
+                    (p, p.label),
+                ],
+                onChanged: (NewChannelPolicy p) => c.policy = p,
+              ),
+            ],
+          ),
+        ),
+        PresenterDisclosure(
+          title: 'Radar log ($hits)',
+          children: <Widget>[_LogCard(c)],
+        ),
+        PresenterDisclosure(
+          title: 'Readouts in words, random radar',
+          children: <Widget>[
+            _ReadoutsCard(c),
+            const SizedBox(height: AppSpacing.xs),
+            LabeledField(
+              label: 'Random radar',
+              semanticLabel: 'Random radar rate',
+              field: AppSelect<double>(
+                value: cfg.radarPerHour,
+                semanticLabel: 'Random radar rate',
+                items: <AppSelectItem<double>>[
+                  for (final double r in kRadarRates)
+                    (r, r == 0 ? 'Off' : '${r.toStringAsFixed(0)} per hour'),
+                ],
+                onChanged: (double r) => c.radarPerHour = r,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            DfsOutlineButton(
+              icon: Icons.shuffle_rounded,
+              label: 'New random pattern',
+              semanticLabel: 'New random radar pattern',
+              onPressed: cfg.radarPerHour == 0 ? null : c.newRandomRadar,
+            ),
+          ],
+        ),
+        PresenterDisclosure(
+          title: 'The rules, ${cfg.region.label}',
+          children: <Widget>[_RulesCard(c)],
+        ),
+      ],
     );
   }
 }

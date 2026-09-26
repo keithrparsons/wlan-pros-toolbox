@@ -11,14 +11,21 @@
 // the student presses "Radar now" (which adds the current time to the
 // config), and the clock only moves a cursor through it. The stage draws
 // only what has happened up to the cursor, so nothing ahead is given away.
+//
+// THE CLOCK. The Ticker is constructed here directly, not from a widget's
+// TickerProvider: a route under the presenter route is muted, and the hour
+// must keep running when the presenter layout opens over the phone screen
+// (spec 00). [vsync] is accepted and unused so older callers still compile.
 
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/dfs_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kDfsSimulatorToolId = 'dfs-simulator';
@@ -49,14 +56,17 @@ enum DfsTimelineView {
 /// Seconds moved by one press of Step.
 const double kDfsStepSeconds = 10;
 
+/// Seconds one presenter slider key moves the clock (Right steps 10 s).
+const double kDfsClockKeySeconds = 60;
+
 /// Width of the zoomed timeline window, seconds.
 const double kDfsZoomWindowS = 180;
 
 class DfsSimulatorController extends ChangeNotifier {
-  DfsSimulatorController({required TickerProvider vsync, DfsConfig? initial})
+  DfsSimulatorController({TickerProvider? vsync, DfsConfig? initial})
     : _config = initial ?? const DfsConfig() {
     _run = simulateDfs(_config);
-    _ticker = vsync.createTicker(_onTick);
+    _ticker = Ticker(_onTick, debugLabel: 'dfs-simulator');
   }
 
   DfsConfig _config;
@@ -203,6 +213,27 @@ class DfsSimulatorController extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  /// Presenter keys (spec 00): Space plays or pauses, Right steps 10 s, R
+  /// restarts, Up and Down move the clock a minute, and D is Radar now.
+  PresenterActions get presenterActions => PresenterActions(
+    playPause: togglePlay,
+    step: () {
+      if (!atEnd) step();
+    },
+    reset: restart,
+    sliderDown: () => seek(_timeS - kDfsClockKeySeconds),
+    sliderUp: () => seek(_timeS + kDfsClockKeySeconds),
+    sliderLabel: 'Clock (1 min)',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyD,
+        keyLabel: 'D',
+        description: 'Radar now (on a DFS channel)',
+        onPressed: radarNow,
+      ),
+    ],
+  );
 
   // ── Radar ─────────────────────────────────────────────────────────────────
 

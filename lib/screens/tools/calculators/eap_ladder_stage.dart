@@ -12,6 +12,13 @@
 // crossed, and why it is there. The ladder scrolls vertically inside its card
 // and follows the latest message; the page never scrolls sideways.
 //
+// PRESENTER (spec 00): inside a PresenterLayout the ladder takes the stage
+// height the caption leaves and still scrolls inside its own viewport,
+// following the latest message (the page never scrolls). The counts (air
+// frames, RADIUS messages, round trips, time to connect) sit in the ladder's
+// header, and the caption leads with "Step n of N". Strokes, arrowheads and
+// icons read PresenterMode.scaleOf.
+//
 // Takes the shared EapLadderController and nothing else.
 
 import 'package:flutter/material.dart';
@@ -21,6 +28,7 @@ import '../../../services/wifi_lab/eap_ladder.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter.dart';
 import 'eap_ladder_controller.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
@@ -43,11 +51,45 @@ class EapLadderStage extends StatelessWidget {
 
   final EapLadderController controller;
 
+  /// The ladder's own vertical scroll view. It is the one scroll the
+  /// presenter layout allows on this stage (long sequences), and it follows
+  /// the latest message; tests use this key to tell it from a page scroll.
+  static const Key ladderScrollKey = ValueKey<String>('eap-ladder-scroll');
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          return LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints box) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Expanded(
+                  child: _LadderCard(controller: controller, fill: true),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                // A long description scales down as one piece rather than
+                // take the ladder's height or clip.
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: box.maxHeight * 0.3),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.topLeft,
+                    child: SizedBox(
+                      width: box.maxWidth,
+                      child: _CaptionCard(
+                        controller: controller,
+                        presenter: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -64,9 +106,12 @@ class EapLadderStage extends StatelessWidget {
 // ── The ladder ──────────────────────────────────────────────────────────────
 
 class _LadderCard extends StatelessWidget {
-  const _LadderCard({required this.controller});
+  const _LadderCard({required this.controller, this.fill = false});
 
   final EapLadderController controller;
+
+  /// Presenter: fill a bounded box; counts replace the relay sentence.
+  final bool fill;
 
   @override
   Widget build(BuildContext context) {
@@ -83,41 +128,66 @@ class _LadderCard extends StatelessWidget {
             ': ${c.roam.label}',
           ),
           const SizedBox(height: AppSpacing.xxs),
-          Text(
-            controller.sequence.usesRadius
-                ? 'The AP relays EAP between the client and the RADIUS '
-                      'server. It does not do the authentication.'
-                : 'No RADIUS server: the client and the AP prove the key '
-                      'to each other directly.',
-            style: text.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
+          if (fill)
+            _Counts(controller: controller)
+          else
+            Text(
+              controller.sequence.usesRadius
+                  ? 'The AP relays EAP between the client and the RADIUS '
+                        'server. It does not do the authentication.'
+                  : 'No RADIUS server: the client and the AP prove the key '
+                        'to each other directly.',
+              style: text.bodySmall?.copyWith(color: colors.textSecondary),
+            ),
           const SizedBox(height: AppSpacing.xs),
           _Legend(
             showTunnel: controller.sequence.messages.any(
               (LadderMessage m) => m.tunneled,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final double w = constraints.maxWidth;
-              final bool wide = MediaQuery.sizeOf(context).width >= 720;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  _LaneHeader(
-                    width: w,
-                    radiusUsed: controller.sequence.usesRadius,
-                  ),
-                  _LadderViewport(
-                    controller: controller,
-                    width: w,
-                    height: wide ? _kViewportWide : _kViewportPhone,
-                  ),
-                ],
-              );
-            },
-          ),
+          SizedBox(height: fill ? AppSpacing.xs : AppSpacing.sm),
+          if (fill)
+            Expanded(
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints box) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    _LaneHeader(
+                      width: box.maxWidth,
+                      radiusUsed: controller.sequence.usesRadius,
+                    ),
+                    Expanded(
+                      child: _LadderViewport(
+                        controller: controller,
+                        width: box.maxWidth,
+                        height: double.infinity,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final double w = constraints.maxWidth;
+                final bool wide = MediaQuery.sizeOf(context).width >= 720;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    _LaneHeader(
+                      width: w,
+                      radiusUsed: controller.sequence.usesRadius,
+                    ),
+                    _LadderViewport(
+                      controller: controller,
+                      width: w,
+                      height: wide ? _kViewportWide : _kViewportPhone,
+                    ),
+                  ],
+                );
+              },
+            ),
         ],
       ),
     );
@@ -133,6 +203,8 @@ class _Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final double icon = sc.markerSize(16);
     final TextStyle? style = Theme.of(
       context,
     ).textTheme.bodySmall?.copyWith(color: colors.textSecondary);
@@ -160,17 +232,21 @@ class _Legend extends StatelessWidget {
           item(
             Icon(
               Icons.lock_outline_rounded,
-              size: 16,
+              size: icon,
               color: colors.textSecondary,
             ),
             '{ } inside the TLS tunnel',
           ),
         item(
-          Icon(Icons.key_rounded, size: 16, color: colors.textAccent),
+          Icon(Icons.key_rounded, size: icon, color: colors.textAccent),
           'Keys available',
         ),
         item(
-          Icon(Icons.verified_user_rounded, size: 16, color: colors.textAccent),
+          Icon(
+            Icons.verified_user_rounded,
+            size: icon,
+            color: colors.textAccent,
+          ),
           'Traffic protected',
         ),
       ],
@@ -186,18 +262,21 @@ class _LegSample extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final double w = 28 * sc.text;
     return SizedBox(
-      width: 28,
-      height: 12,
+      width: w,
+      height: 12 * sc.text,
       child: CustomPaint(
         painter: _ArrowPainter(
           color: ladderLegColor(leg, isLight: colors.isLight),
           dashed: leg == LadderLeg.wire,
           fromX: 0,
-          toX: 28,
-          y: 6,
-          stroke: 2,
+          toX: w,
+          y: 6 * sc.text,
+          stroke: sc.strokeWidth(2),
           progress: 1,
+          head: sc.markerSize(8),
         ),
       ),
     );
@@ -429,6 +508,7 @@ class _LadderViewportState extends State<_LadderViewport> {
         child: Scrollbar(
           controller: _scroll,
           child: SingleChildScrollView(
+            key: EapLadderStage.ladderScrollKey,
             controller: _scroll,
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Column(
@@ -467,6 +547,7 @@ class _PhaseRow extends StatelessWidget {
         width: width,
         color: colors.border,
         radiusUsed: radiusUsed,
+        stroke: PresenterMode.scaleOf(context).strokeWidth(1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.only(
@@ -523,6 +604,8 @@ class _MessageRow extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final LadderMessage m = message;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final double band = _kArrowBand * sc.text;
     final bool visible = state != _RowState.waiting;
     final Color legColor = ladderLegColor(m.leg, isLight: colors.isLight);
     final double fromX = _laneX(m.from, width);
@@ -579,14 +662,17 @@ class _MessageRow extends StatelessWidget {
               width: width,
               color: colors.border,
               radiusUsed: radiusUsed,
+              stroke: sc.strokeWidth(1.5),
               arrow: _ArrowPainter(
                 color: visible ? legColor : colors.border,
                 dashed: m.leg == LadderLeg.wire,
                 fromX: fromX,
                 toX: toX,
                 y: null,
-                stroke: state == _RowState.latest ? 3 : 2,
+                stroke: sc.strokeWidth(state == _RowState.latest ? 3 : 2),
                 progress: progress,
+                head: sc.markerSize(8),
+                band: band,
               ),
             ),
             child: child,
@@ -599,7 +685,7 @@ class _MessageRow extends StatelessWidget {
                 left: left,
                 right: right,
                 top: AppSpacing.xs,
-                bottom: _kArrowBand,
+                bottom: band,
               ),
               child: Center(child: labels),
             ),
@@ -621,7 +707,7 @@ class _MessageRow extends StatelessWidget {
                     if (m.tunneled) ...<Widget>[
                       Icon(
                         Icons.lock_outline_rounded,
-                        size: 16,
+                        size: sc.markerSize(16),
                         color: colors.textSecondary,
                       ),
                       const SizedBox(width: AppSpacing.xxs),
@@ -693,7 +779,7 @@ class _MilestoneRow extends StatelessWidget {
             milestone == LadderMilestone.keysAvailable
                 ? Icons.key_rounded
                 : Icons.verified_user_rounded,
-            size: 20,
+            size: PresenterMode.scaleOf(context).markerSize(20),
             color: colors.textAccent,
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -736,19 +822,21 @@ class _LanesPainter extends CustomPainter {
     required this.width,
     required this.color,
     required this.radiusUsed,
+    this.stroke = 1.5,
     this.arrow,
   });
 
   final double width;
   final Color color;
   final bool radiusUsed;
+  final double stroke;
   final _ArrowPainter? arrow;
 
   @override
   void paint(Canvas canvas, Size size) {
     final Paint lane = Paint()
       ..color = color
-      ..strokeWidth = 1.5;
+      ..strokeWidth = stroke;
     for (final LadderLane l in LadderLane.values) {
       final double x = _laneX(l, width);
       if (l == LadderLane.radius && !radiusUsed) {
@@ -768,6 +856,7 @@ class _LanesPainter extends CustomPainter {
       old.width != width ||
       old.color != color ||
       old.radiusUsed != radiusUsed ||
+      old.stroke != stroke ||
       old.arrow?.progress != arrow?.progress ||
       old.arrow?.color != arrow?.color ||
       old.arrow?.stroke != arrow?.stroke;
@@ -784,6 +873,8 @@ class _ArrowPainter extends CustomPainter {
     required this.y,
     required this.stroke,
     required this.progress,
+    this.head = 8,
+    this.band = _kArrowBand,
   });
 
   final Color color;
@@ -794,11 +885,16 @@ class _ArrowPainter extends CustomPainter {
   final double stroke;
   final double progress;
 
+  /// Arrowhead length, px.
+  final double head;
+
+  /// Height of the arrow band at the bottom of the row, px.
+  final double band;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final double yy = y ?? size.height - _kArrowBand / 2;
+    final double yy = y ?? size.height - band / 2;
     final double dir = toX >= fromX ? 1 : -1;
-    const double head = 8;
     // Stop short of the lane so the head's tip touches it.
     final double endX = fromX + (toX - fromX) * progress;
     final Paint p = Paint()
@@ -839,6 +935,8 @@ class _ArrowPainter extends CustomPainter {
       old.color != color ||
       old.progress != progress ||
       old.stroke != stroke ||
+      old.head != head ||
+      old.band != band ||
       old.fromX != fromX ||
       old.toX != toX;
 }
@@ -846,9 +944,12 @@ class _ArrowPainter extends CustomPainter {
 // ── Caption ─────────────────────────────────────────────────────────────────
 
 class _CaptionCard extends StatelessWidget {
-  const _CaptionCard({required this.controller});
+  const _CaptionCard({required this.controller, this.presenter = false});
 
   final EapLadderController controller;
+
+  /// Presenter: "Step n of N" is the headline, and the prompt is short.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
@@ -856,15 +957,20 @@ class _CaptionCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final LadderMessage? m = controller.current;
     final int n = controller.sequence.length;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final List<Widget> children;
     if (m == null) {
       children = <Widget>[
         const ElSectionLabel('Ready'),
         const SizedBox(height: AppSpacing.xxs),
         Text(
-          'Press Play or Step to send the first of $n messages. Each arrow '
-          'names its frame; the caption here says which leg it crossed and '
-          'why it is there.',
+          presenter
+              ? 'Press Play or Step to send the first of $n messages.'
+              : 'Press Play or Step to send the first of $n messages. Each '
+                    'arrow names its frame; the caption here says which leg '
+                    'it crossed and why it is there.',
           style: text.bodyMedium?.copyWith(color: colors.textSecondary),
         ),
       ];
@@ -872,7 +978,15 @@ class _CaptionCard extends StatelessWidget {
       final Color legColor = ladderLegColor(m.leg, isLight: colors.isLight);
       final String contents = m.contents;
       children = <Widget>[
-        ElSectionLabel('Step ${controller.shown} of $n'),
+        if (presenter)
+          Text(
+            'Step ${controller.shown} of $n',
+            style: sc
+                .headlineStyle(mono.outputLarge)
+                .copyWith(color: colors.textAccent),
+          )
+        else
+          ElSectionLabel('Step ${controller.shown} of $n'),
         const SizedBox(height: AppSpacing.xxs),
         Wrap(
           spacing: AppSpacing.xs,
@@ -915,7 +1029,7 @@ class _CaptionCard extends StatelessWidget {
                   m.milestone == LadderMilestone.keysAvailable
                       ? Icons.key_rounded
                       : Icons.verified_user_rounded,
-                  size: 20,
+                  size: sc.markerSize(20),
                   color: colors.textAccent,
                 ),
               ),
@@ -972,6 +1086,62 @@ class _Chip extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+// ── Presenter counts ────────────────────────────────────────────────────────
+
+/// Presenter only: the ladder's size and cost in one line of numbers, so a
+/// class can flip methods and compare without opening the readouts.
+class _Counts extends StatelessWidget {
+  const _Counts({required this.controller});
+
+  final EapLadderController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final LadderSequence s = controller.sequence;
+    Widget stat(String label, String value, {Color? color}) => MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          Text(
+            value,
+            style: mono.outputMedium.copyWith(
+              color: color ?? colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+    return Wrap(
+      spacing: AppSpacing.lg,
+      runSpacing: AppSpacing.xs,
+      children: <Widget>[
+        stat(
+          'Over the air',
+          '${s.airCount} frames',
+          color: ladderLegColor(LadderLeg.air, isLight: colors.isLight),
+        ),
+        stat(
+          'On the wire',
+          s.usesRadius ? '${s.wireCount} RADIUS' : 'none',
+          color: s.usesRadius
+              ? ladderLegColor(LadderLeg.wire, isLight: colors.isLight)
+              : null,
+        ),
+        stat('Round trips', '${s.radiusRoundTrips}'),
+        stat('After the scan, est.', formatLadderMs(s.estimatedMs)),
+      ],
     );
   }
 }

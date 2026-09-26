@@ -23,7 +23,8 @@
 // This screen only composes them. On a phone they stack: the stage, then
 // playback and readouts, then the setup cards. A presenter layout can place
 // the stage and a full RoamingWalkControls side by side with no change to
-// either.
+// either. The Present button (desktop and tablet windows) does exactly that,
+// over the SAME controller (lib/widgets/presenter/, spec 00).
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). Each AP has its
 // own hue from roaming_walk_palette.dart under GL-003 §8.15.2, always with its
@@ -54,10 +55,12 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/roaming_walk_engine.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'roaming_walk_controller.dart';
 import 'roaming_walk_controls.dart';
@@ -65,6 +68,8 @@ import 'roaming_walk_parts.dart';
 import 'roaming_walk_stage.dart';
 
 export 'roaming_walk_controller.dart' show kRoamingWalkToolId;
+
+const String _kTitle = 'Roaming Walk';
 
 class RoamingWalkScreen extends StatefulWidget {
   const RoamingWalkScreen({super.key, this.initial});
@@ -77,9 +82,10 @@ class RoamingWalkScreen extends StatefulWidget {
 }
 
 class _RoamingWalkScreenState extends State<RoamingWalkScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with WidgetsBindingObserver {
+  // The controller builds its own Ticker, so the walk keeps running while
+  // the presenter route covers (and mutes) this one.
   late final RoamingWalkController _controller = RoamingWalkController(
-    vsync: this,
     initial: widget.initial,
   );
 
@@ -101,13 +107,25 @@ class _RoamingWalkScreenState extends State<RoamingWalkScreen>
     super.dispose();
   }
 
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: RoamingWalkStage(controller: _controller),
+    controls: RoamingWalkControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Roaming Walk'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.roamingWalk, builder: _presenter),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

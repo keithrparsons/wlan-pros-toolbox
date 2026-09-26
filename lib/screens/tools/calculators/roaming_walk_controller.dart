@@ -11,6 +11,11 @@
 // The walk is computed whole whenever an input changes (a few hundred
 // samples), and playback only moves a cursor through it, so what the student
 // sees is always the same deterministic walk.
+//
+// THE CLOCK. The Ticker is constructed here directly, not from a widget's
+// TickerProvider: a route under the presenter route is muted, and the walk
+// must keep going when the presenter layout opens over the phone screen
+// (spec 00). [vsync] is accepted and unused so older callers still compile.
 
 import 'dart:math' as math;
 
@@ -18,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/roaming_walk_engine.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kRoamingWalkToolId = 'roaming-walk';
@@ -39,12 +45,10 @@ enum RoamPlaySpeed {
 const double kRoamStepSeconds = 1.0;
 
 class RoamingWalkController extends ChangeNotifier {
-  RoamingWalkController({
-    required TickerProvider vsync,
-    RoamWalkConfig? initial,
-  }) : _config = initial ?? RoamWalkConfig() {
+  RoamingWalkController({TickerProvider? vsync, RoamWalkConfig? initial})
+    : _config = initial ?? RoamWalkConfig() {
     _result = simulateRoamWalk(_config);
-    _ticker = vsync.createTicker(_onTick);
+    _ticker = Ticker(_onTick, debugLabel: 'roaming-walk');
   }
 
   RoamWalkConfig _config;
@@ -177,6 +181,24 @@ class RoamingWalkController extends ChangeNotifier {
 
   set triggerDbm(double v) =>
       _apply(_config.copyWith(triggerDbm: v.roundToDouble().clamp(-90, -55)));
+
+  /// The trigger one dBm up ([dir] > 0) or down, held to the slider range.
+  void nudgeTrigger(int dir) => triggerDbm = _config.triggerDbm + dir.sign;
+
+  /// Presenter keys (spec 00): Space plays or pauses, Right steps 1 s, R
+  /// restarts the walk, Up and Down move the roam trigger 1 dBm.
+  PresenterActions get presenterActions => PresenterActions(
+    playPause: () {
+      if (!drawing) togglePlay();
+    },
+    step: () {
+      if (!drawing && !atEnd) step();
+    },
+    reset: restart,
+    sliderDown: () => nudgeTrigger(-1),
+    sliderUp: () => nudgeTrigger(1),
+    sliderLabel: 'Roam trigger',
+  );
 
   set deltaDb(double v) =>
       _apply(_config.copyWith(deltaDb: v.roundToDouble().clamp(0, 20)));

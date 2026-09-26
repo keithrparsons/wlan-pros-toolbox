@@ -10,6 +10,11 @@
 // three-option AppToggle. Status hues are verdicts only (§8.13 rule 6):
 // warning amber on a ping-pong count above zero and on time spent below
 // -70 dBm, each with its word and an icon.
+//
+// PRESENTER (spec 00): inside a PresenterLayout the panel keeps playback, the
+// client's trigger and delta, and the three roam-cost switches in view; the
+// live readouts are on the stage, and the roam log, the illustrative timings
+// and the floor setup fold into PresenterDisclosures.
 
 import 'package:flutter/material.dart';
 
@@ -18,6 +23,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
 import 'roaming_walk_controller.dart';
 import 'roaming_walk_palette.dart';
@@ -66,6 +72,7 @@ class RoamingWalkControls extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final RoamingWalkController c = controller;
+        if (PresenterMode.isActive(context)) return _PresenterPanel(c);
         final List<Widget> cards = <Widget>[
           if (parts.contains(RoamControlPart.transport)) _TransportCard(c),
           if (parts.contains(RoamControlPart.readouts)) _ReadoutsCard(c),
@@ -83,6 +90,232 @@ class RoamingWalkControls extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+// ── Presenter panel ─────────────────────────────────────────────────────────
+
+class _PresenterPanel extends StatelessWidget {
+  const _PresenterPanel(this.c);
+
+  final RoamingWalkController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool reducedMotion =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final RoamWalkConfig cfg = c.config;
+    final ClientPreset? p = c.preset;
+    final double dur = c.result.durationS;
+    final RoamCost first = cfg.costFor(cfg.authMethodFor(joinedBefore: false));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        RwCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: FilledButton.icon(
+                      onPressed: c.drawing ? null : c.togglePlay,
+                      icon: Icon(
+                        c.playing
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      label: Text(
+                        c.playing
+                            ? 'Pause'
+                            : c.atEnd
+                            ? 'Play again'
+                            : 'Play',
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        disabledBackgroundColor: colors.disabledFill,
+                        disabledForegroundColor: colors.textDisabled,
+                        minimumSize: const Size.fromHeight(
+                          AppSpacing.minTouchTarget,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    flex: 2,
+                    child: RwOutlineButton(
+                      icon: Icons.skip_next_rounded,
+                      label: 'Step',
+                      semanticLabel: 'Step the walk forward one second',
+                      onPressed: c.atEnd || c.drawing ? null : c.step,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    onPressed: c.atStart ? null : c.restart,
+                    tooltip: 'Back to the start of the walk (R)',
+                    icon: const Icon(Icons.restart_alt_rounded),
+                    color: colors.textAccent,
+                  ),
+                ],
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Expanded(
+                    child: RwSlider(
+                      label: 'Walk time',
+                      valueText:
+                          '${c.timeS.toStringAsFixed(1)} of '
+                          '${dur.toStringAsFixed(1)} s',
+                      value: c.timeS,
+                      min: 0,
+                      max: dur,
+                      divisions: (dur / kRoamSampleSeconds).round().clamp(
+                        1,
+                        100000,
+                      ),
+                      onChanged: c.seek,
+                      semanticValue: (double v) =>
+                          '${v.toStringAsFixed(1)} of '
+                          '${dur.toStringAsFixed(1)} seconds',
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  SizedBox(
+                    width: 120,
+                    child: AppSelect<RoamPlaySpeed>(
+                      value: c.speed,
+                      semanticLabel: 'Playback speed',
+                      items: <AppSelectItem<RoamPlaySpeed>>[
+                        for (final RoamPlaySpeed s in RoamPlaySpeed.values)
+                          (s, s == RoamPlaySpeed.x1 ? '1x' : s.label),
+                      ],
+                      onChanged: (RoamPlaySpeed s) => c.speed = s,
+                    ),
+                  ),
+                ],
+              ),
+              if (reducedMotion)
+                Text(
+                  'Reduced motion is on: nothing moves until you press Play.',
+                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        RwCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              LabeledField(
+                label: 'Client',
+                semanticLabel: 'Client preset',
+                field: AppSelect<int>(
+                  value: p?.index ?? ClientPreset.values.length,
+                  semanticLabel: 'Client preset',
+                  items: <AppSelectItem<int>>[
+                    for (final ClientPreset x in ClientPreset.values)
+                      (x.index, x.label),
+                    if (p == null) (ClientPreset.values.length, 'Custom'),
+                  ],
+                  onChanged: (int i) {
+                    if (i < ClientPreset.values.length) {
+                      c.applyPreset(ClientPreset.values[i]);
+                    }
+                  },
+                ),
+              ),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: RwSlider(
+                      label: 'Trigger',
+                      valueText: '${cfg.triggerDbm.toStringAsFixed(0)} dBm',
+                      value: cfg.triggerDbm,
+                      min: -90,
+                      max: -55,
+                      divisions: 35,
+                      onChanged: (double v) => c.triggerDbm = v,
+                      semanticValue: (double v) =>
+                          '${v.toStringAsFixed(0)} dBm',
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: RwSlider(
+                      label: 'Delta',
+                      valueText: '${cfg.deltaDb.toStringAsFixed(0)} dB',
+                      value: cfg.deltaDb,
+                      min: 0,
+                      max: 20,
+                      divisions: 20,
+                      onChanged: (double v) => c.deltaDb = v,
+                      semanticValue: (double v) => '${v.toStringAsFixed(0)} dB',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        RwCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              RwSwitchRow(
+                title: '802.11k neighbor list',
+                subtitle: '',
+                value: cfg.use11k,
+                onChanged: (bool v) => c.use11k = v,
+              ),
+              RwSwitchRow(
+                title: 'PMK caching',
+                subtitle: '',
+                value: cfg.usePmkCaching,
+                onChanged: (bool v) => c.usePmkCaching = v,
+              ),
+              RwSwitchRow(
+                title: '802.11r fast transition (FT)',
+                subtitle: '',
+                value: cfg.useFt,
+                onChanged: (bool v) => c.useFt = v,
+              ),
+              // Short values so each fits one line; the timings fold has
+              // the long form.
+              RwRow(
+                label: 'Scan',
+                value: '${fmtMs(first.scanMs)}, ${first.scanChannels} ch',
+              ),
+              RwRow(
+                label: 'Authenticate',
+                value: '${fmtMs(first.authMs)}, ${first.method.label}',
+              ),
+            ],
+          ),
+        ),
+        PresenterDisclosure(
+          title: 'Roam log and totals',
+          children: <Widget>[_ReadoutsCard(c)],
+        ),
+        PresenterDisclosure(
+          title: 'Roam timings (illustrative)',
+          children: <Widget>[_RoamCostCard(c)],
+        ),
+        PresenterDisclosure(
+          title: 'The floor and the walk',
+          children: <Widget>[_FloorSetupCard(c)],
+        ),
+      ],
     );
   }
 }

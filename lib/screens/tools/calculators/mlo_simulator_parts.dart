@@ -165,6 +165,7 @@ class MloSlider extends StatelessWidget {
     required this.divisions,
     required this.onChanged,
     required this.semanticValue,
+    this.inline = false,
   });
 
   final String label;
@@ -176,11 +177,43 @@ class MloSlider extends StatelessWidget {
   final ValueChanged<double> onChanged;
   final String Function(double v) semanticValue;
 
+  /// One line: the track with the value after it, no visible label (the
+  /// label is still read to screen readers). For a row that already names
+  /// what the slider sets.
+  final bool inline;
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    if (inline) {
+      return Row(
+        children: <Widget>[
+          Expanded(
+            child: Semantics(
+              label: label,
+              child: Slider(
+                value: value.clamp(min, max),
+                min: min,
+                max: max,
+                divisions: divisions,
+                onChanged: onChanged,
+                activeColor: colors.primary,
+                inactiveColor: colors.disabledFill,
+                semanticFormatterCallback: semanticValue,
+              ),
+            ),
+          ),
+          ExcludeSemantics(
+            child: Text(
+              valueText,
+              style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            ),
+          ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -268,12 +301,13 @@ class MloSwitchRow extends StatelessWidget {
                             : colors.textPrimary,
                       ),
                     ),
-                    Text(
-                      subtitle,
-                      style: text.bodySmall?.copyWith(
-                        color: colors.textTertiary,
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textTertiary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

@@ -13,6 +13,12 @@
 // the best single link", red for "overloaded". Link hues (§8.15.2) sit beside
 // their band names.
 //
+// PRESENTER (spec 00): inside a PresenterLayout the verdict is on the stage;
+// the panel keeps the lesson, each link's on/off and busy share, the arrival
+// rate and the modes in view, and folds the busy-period lengths, the frame
+// airtime, the EMLSR delays, the latency table and the notes into
+// PresenterDisclosures.
+//
 // ASCII copy, no em dashes (GL-004).
 
 import 'package:flutter/material.dart';
@@ -23,6 +29,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
 import 'mlo_simulator_parts.dart';
 import 'mlo_simulator_state.dart';
@@ -71,6 +78,7 @@ class MloSimulatorControls extends StatelessWidget {
       listenable: state,
       builder: (BuildContext context, _) {
         final MloSimulatorState s = state;
+        if (PresenterMode.isActive(context)) return _PresenterPanel(s);
         final List<Widget> cards = <Widget>[
           if (parts.contains(MloControlPart.readouts)) _ReadoutsCard(s),
           if (parts.contains(MloControlPart.lesson)) _LessonCard(s),
@@ -89,6 +97,229 @@ class MloSimulatorControls extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+// ── Presenter panel ─────────────────────────────────────────────────────────
+
+class _PresenterPanel extends StatelessWidget {
+  const _PresenterPanel(this.s);
+
+  final MloSimulatorState s;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final MloConfig c = s.config;
+    final bool multi = c.links.length > 1;
+    final int on = c.links.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        MloCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Expanded(
+                    child: LabeledField(
+                      label: 'Lesson',
+                      field: AppSelect<MloPreset?>(
+                        value: s.preset,
+                        semanticLabel: 'Lesson',
+                        items: <AppSelectItem<MloPreset?>>[
+                          if (s.preset == null) (null, 'Your own settings'),
+                          for (final MloPreset p in MloPreset.values)
+                            (p, p.label),
+                        ],
+                        onChanged: (MloPreset? p) => s.preset = p,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: s.newTraffic,
+                    tooltip: 'New random traffic, same settings (N)',
+                    icon: const Icon(Icons.casino_outlined),
+                    color: colors.textAccent,
+                  ),
+                ],
+              ),
+              for (final MloBand b in MloBand.values)
+                _PresenterBand(
+                  s: s,
+                  band: b,
+                  isLastOn: on == 1 && s.bandEnabled(b),
+                ),
+              MloSlider(
+                label: 'Our frames per second',
+                valueText: _thousands(c.arrivalsPerSecond.round()),
+                value: c.arrivalsPerSecond,
+                min: kMloRateMin,
+                max: kMloRateMax,
+                divisions: 29,
+                onChanged: (double v) =>
+                    s.arrivalsPerSecond = (v / 100).round() * 100.0,
+                semanticValue: (double v) => '${v.round()} frames per second',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        MloCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              for (final MloMode m in kMloComparableModes)
+                MloSwitchRow(
+                  title: m.label,
+                  subtitle: '',
+                  value: s.isShown(m),
+                  onChanged: (bool v) => s.setModeShown(m, v),
+                ),
+              MloSwitchRow(
+                title: 'EMLSR disabled by driver',
+                subtitle: multi ? '' : 'Needs two or more links',
+                value: c.emlsrDisabledByDriver,
+                onChanged: multi
+                    ? (bool v) => s.emlsrDisabledByDriver = v
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        PresenterDisclosure(
+          title: 'Busy periods and frame airtime',
+          children: <Widget>[
+            for (final MloBand b in MloBand.values)
+              if (s.bandEnabled(b)) ...<Widget>[
+                LabeledField(
+                  label: '${b.label} mean busy period',
+                  field: AppSelect<double>(
+                    value:
+                        kMloBusyLengthsUs.contains(s.bandSettings(b).meanBusyUs)
+                        ? s.bandSettings(b).meanBusyUs
+                        : kMloBusyLengthsUs[2],
+                    semanticLabel: '${b.label} mean busy period',
+                    items: <AppSelectItem<double>>[
+                      for (final double us in kMloBusyLengthsUs)
+                        (us, mloFmtUs(us)),
+                    ],
+                    onChanged: (double us) => s.setMeanBusyUs(b, us),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+              ],
+            _TrafficCard(s),
+          ],
+        ),
+        PresenterDisclosure(
+          title: 'EMLSR switch delays',
+          children: <Widget>[
+            LabeledField(
+              label: 'Padding delay',
+              field: AppSelect<int>(
+                value: c.paddingDelayUs,
+                semanticLabel: 'EMLSR padding delay',
+                items: <AppSelectItem<int>>[
+                  for (final int d in kEmlsrPaddingDelaysUs) (d, '$d µs'),
+                ],
+                onChanged: (int d) => s.paddingDelayUs = d,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            LabeledField(
+              label: 'Transition delay',
+              field: AppSelect<int>(
+                value: c.transitionDelayUs,
+                semanticLabel: 'EMLSR transition delay',
+                items: <AppSelectItem<int>>[
+                  for (final int d in kEmlsrTransitionDelaysUs) (d, '$d µs'),
+                ],
+                onChanged: (int d) => s.transitionDelayUs = d,
+              ),
+            ),
+          ],
+        ),
+        PresenterDisclosure(
+          title: 'Latency per mode, as a table',
+          children: <Widget>[_ReadoutsCard(s)],
+        ),
+        const PresenterDisclosure(
+          title: 'The four modes, and the one study',
+          children: <Widget>[_NotesCard()],
+        ),
+      ],
+    );
+  }
+}
+
+/// Presenter: one link's switch and busy share, one line each.
+class _PresenterBand extends StatelessWidget {
+  const _PresenterBand({
+    required this.s,
+    required this.band,
+    required this.isLastOn,
+  });
+
+  final MloSimulatorState s;
+  final MloBand band;
+  final bool isLastOn;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final bool on = s.bandEnabled(band);
+    final MloLinkConfig l = s.bandSettings(band);
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: 190,
+          child: MloSwitchRow(
+            leading: ExcludeSemantics(
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: mloLinkStyle(band, colors).hue,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+            title: band.label,
+            subtitle: '',
+            value: on,
+            onChanged: isLastOn ? null : (bool v) => s.setBandEnabled(band, v),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: on
+              ? MloSlider(
+                  inline: true,
+                  label: '${band.label} busy',
+                  valueText: '${mloPct(l.busyFraction)} busy',
+                  value: l.busyFraction,
+                  min: 0,
+                  max: kMloMaxBusyFraction,
+                  divisions: 19,
+                  onChanged: (double v) =>
+                      s.setBusyFraction(band, (v * 20).round() / 20),
+                  semanticValue: (double v) => '${mloPct(v)} busy',
+                )
+              : Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.sm),
+                  child: Text(
+                    isLastOn ? 'The last link stays on' : 'Off',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: colors.textTertiary),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }
