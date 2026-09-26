@@ -102,10 +102,17 @@ void paintPadding(Canvas canvas, Rect rect, AppColorScheme colors) {
 
 /// The channel's 26-tone slot grid, with 20 MHz boundaries heavier.
 class OfdmaSlotGridPainter extends CustomPainter {
-  OfdmaSlotGridPainter({required this.widthMhz, required this.colors});
+  OfdmaSlotGridPainter({
+    required this.widthMhz,
+    required this.colors,
+    this.stroke = 1,
+  });
 
   final int widthMhz;
   final AppColorScheme colors;
+
+  /// Presenter stroke factor (PresenterScale.stroke); 1 elsewhere.
+  final double stroke;
 
   /// Slot indices where a 20 MHz subchannel starts, in order. Center 26-tone
   /// slots (80 and 160 MHz) sit between them.
@@ -125,7 +132,7 @@ class OfdmaSlotGridPainter extends CustomPainter {
     canvas.drawRect(all, Paint()..color = colors.surface2);
     final Paint thin = Paint()
       ..color = colors.border
-      ..strokeWidth = 1;
+      ..strokeWidth = stroke;
     for (int i = 1; i < slots; i++) {
       final double x = i * sw;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), thin);
@@ -137,7 +144,7 @@ class OfdmaSlotGridPainter extends CustomPainter {
     };
     final Paint hatch = Paint()
       ..color = colors.border
-      ..strokeWidth = 1;
+      ..strokeWidth = stroke;
     for (int i = 0; i < slots; i++) {
       if (covered.contains(i)) continue;
       final Rect r = Rect.fromLTWH(i * sw, 0, sw, size.height);
@@ -150,7 +157,7 @@ class OfdmaSlotGridPainter extends CustomPainter {
     }
     final Paint strong = Paint()
       ..color = colors.borderStrong
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5 * stroke;
     for (final int s in subchannelStarts(widthMhz)) {
       final double x = s * sw;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), strong);
@@ -158,17 +165,17 @@ class OfdmaSlotGridPainter extends CustomPainter {
       canvas.drawLine(Offset(xe, 0), Offset(xe, size.height), strong);
     }
     canvas.drawRect(
-      all.deflate(0.5),
+      all.deflate(stroke / 2),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
+        ..strokeWidth = stroke
         ..color = colors.borderStrong,
     );
   }
 
   @override
   bool shouldRepaint(OfdmaSlotGridPainter old) =>
-      old.widthMhz != widthMhz || old.colors != colors;
+      old.widthMhz != widthMhz || old.colors != colors || old.stroke != stroke;
 }
 
 /// Paints one timeline bar to scale.
@@ -181,6 +188,7 @@ class OfdmaBarPainter extends CustomPainter {
     required this.labelStyle,
     required this.letterStyle,
     required this.textScaler,
+    this.stroke = 1,
   });
 
   final OfdmaTimeline timeline;
@@ -192,6 +200,9 @@ class OfdmaBarPainter extends CustomPainter {
   /// Base style for client letters; the color is set per client.
   final TextStyle letterStyle;
   final TextScaler textScaler;
+
+  /// Presenter stroke factor (PresenterScale.stroke); 1 elsewhere.
+  final double stroke;
 
   bool get _isSu => timeline.mode == OfdmaMode.su;
 
@@ -230,7 +241,7 @@ class OfdmaBarPainter extends CustomPainter {
       final Rect r = rectOf(s);
       final AirtimeBlockStyle? style = ofdmaBlockStyle(s.kind);
       if (style != null) {
-        paintAirtimeBlock(canvas, r, style, colors);
+        paintAirtimeBlock(canvas, r, style, colors, stroke: stroke);
         _label(canvas, r, s.shortLabel, labelStyle);
         continue;
       }
@@ -267,7 +278,7 @@ class OfdmaBarPainter extends CustomPainter {
             Offset(r.right, top),
             Paint()
               ..color = colors.surface1
-              ..strokeWidth = 1,
+              ..strokeWidth = stroke,
           );
         }
       }
@@ -311,7 +322,7 @@ class OfdmaBarPainter extends CustomPainter {
     final double y = barHeight + OfdmaGeometry.bracketGap;
     final Paint line = Paint()
       ..color = colors.textTertiary
-      ..strokeWidth = 1;
+      ..strokeWidth = stroke;
     for (final MapEntry<int, (double, double)> e in spans.entries) {
       final double l = e.value.$1 + 1;
       final double r = math.min(e.value.$2, size.width) - 1;
@@ -337,7 +348,8 @@ class OfdmaBarPainter extends CustomPainter {
       old.colors != colors ||
       old.labelStyle != labelStyle ||
       old.letterStyle != letterStyle ||
-      old.textScaler != textScaler;
+      old.textScaler != textScaler ||
+      old.stroke != stroke;
 }
 
 /// A legend swatch for one client-colored data block with padding.

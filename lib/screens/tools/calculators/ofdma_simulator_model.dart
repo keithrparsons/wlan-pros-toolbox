@@ -17,6 +17,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/ofdma_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Which OFDMA direction the readouts compare with SU.
 enum OfdmaDirection {
@@ -278,6 +279,23 @@ class OfdmaSimulatorModel extends ChangeNotifier {
     for (int i = 0; i < _placement.length; i++)
       if (i != client && _placement[i] != null && _placement[i]!.overlaps(p)) i,
   ];
+
+  // ── Presenter keys ─────────────────────────────────────────────────────────
+
+  /// Right arrow: select the next client (A, B, ... then none), so the
+  /// dashed outlines show where each one could go.
+  void selectNext() {
+    final int? cur = _selected;
+    setSelected(cur == null ? 0 : (cur + 1 < clients ? cur + 1 : null));
+  }
+
+  /// Up and Down arrows: the number of clients.
+  PresenterActions get presenterActions => PresenterActions(
+    step: selectNext,
+    sliderDown: () => setClientCount(clients - 1),
+    sliderUp: () => setClientCount(clients + 1),
+    sliderLabel: 'Clients',
+  );
 
   void _fillUnplaced() {
     bool missed = false;

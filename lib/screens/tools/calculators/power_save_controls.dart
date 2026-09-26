@@ -2,8 +2,13 @@
 //
 // Takes the shared PowerSaveController and a set of parts to show, so the
 // phone layout can put the readouts right under the stage and the setup
-// cards after them, while a presenter layout shows every part in one column
-// beside the stage. No part draws the timeline; PowerSaveStage owns it.
+// cards after them. No part draws the timeline; PowerSaveStage owns it.
+//
+// PRESENTER (PresenterMode.isActive): the mode, the AP and the traffic
+// pattern stay open (mode and comparison side by side); the client's listen
+// interval and U-APSD with TWT, the traffic details with the currents, and
+// the readouts (whose key numbers are on the stage) fold into
+// PresenterDisclosures, so the panel fits at 1440x900 with no scroll.
 //
 // Control types follow GL-003 §8.14: two-option choices are AppToggles,
 // longer lists are Selects, bounded integers are sliders, and the TWT
@@ -22,6 +27,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'power_save_controller.dart';
 import 'power_save_parts.dart';
@@ -74,6 +81,38 @@ class PowerSaveControls extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final PowerSaveController c = controller;
+        if (PresenterMode.isActive(context)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _ModeCard(c),
+              const SizedBox(height: AppSpacing.xs),
+              _ApCard(c),
+              const SizedBox(height: AppSpacing.xs),
+              _TrafficCard(c, details: false),
+              PresenterDisclosure(
+                title: 'Listen interval, U-APSD and TWT',
+                children: <Widget>[
+                  _ClientCard(c),
+                  const SizedBox(height: AppSpacing.xs),
+                  _TwtCard(c),
+                ],
+              ),
+              PresenterDisclosure(
+                title: 'Traffic details, currents and battery',
+                children: <Widget>[
+                  _TrafficCard(c, pattern: false),
+                  const SizedBox(height: AppSpacing.xs),
+                  _EnergyCard(c),
+                ],
+              ),
+              PresenterDisclosure(
+                title: 'All readouts',
+                children: <Widget>[_ReadoutsCard(c)],
+              ),
+            ],
+          );
+        }
         final List<Widget> cards = <Widget>[
           if (parts.contains(PsControlPart.readouts)) _ReadoutsCard(c),
           if (parts.contains(PsControlPart.mode)) _ModeCard(c),
@@ -328,6 +367,53 @@ class _ModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PsMode m = c.config.mode;
+    if (PresenterMode.isActive(context)) {
+      return PsCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: LabeledField(
+                    label: 'Mode',
+                    semanticLabel: 'Power save mode',
+                    field: AppSelect<PsMode>(
+                      value: m,
+                      semanticLabel: 'Power save mode',
+                      items: <AppSelectItem<PsMode>>[
+                        for (final PsMode p in PsMode.values) (p, p.short),
+                      ],
+                      onChanged: (PsMode p) => c.mode = p,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: LabeledField(
+                    label: 'Compare with',
+                    semanticLabel: 'Compare with another mode',
+                    field: AppSelect<PsMode?>(
+                      value: c.compare,
+                      semanticLabel: 'Compare with another mode',
+                      items: <AppSelectItem<PsMode?>>[
+                        (null, 'Nothing'),
+                        for (final PsMode p in PsMode.values)
+                          if (p != m) (p, p.short),
+                      ],
+                      onChanged: (PsMode? p) => c.compare = p,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            PsHint(_modeDescription(m)),
+          ],
+        ),
+      );
+    }
     return PsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -390,8 +476,12 @@ class _ApCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const PsSectionLabel('The AP'),
-          const SizedBox(height: AppSpacing.xs),
+          // The presenter panel drops the section label: the field labels
+          // under it already say what they set.
+          if (!PresenterMode.isActive(context)) ...<Widget>[
+            const PsSectionLabel('The AP'),
+            const SizedBox(height: AppSpacing.xs),
+          ],
           LabeledField(
             label: 'Beacon interval',
             semanticLabel: 'Beacon interval',
@@ -409,11 +499,13 @@ class _ApCard extends StatelessWidget {
               onChanged: (int v) => c.beaconTu = v,
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          const PsHint(
-            '100 TU is the usual default, not a rule; the AP may use any '
-            'interval.',
-          ),
+          if (!PresenterMode.isActive(context)) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            const PsHint(
+              '100 TU is the usual default, not a rule; the AP may use any '
+              'interval.',
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
           PsSlider(
             label: 'DTIM period',
@@ -836,9 +928,16 @@ String _rate(double r) {
 }
 
 class _TrafficCard extends StatelessWidget {
-  const _TrafficCard(this.c);
+  const _TrafficCard(this.c, {this.pattern = true, this.details = true});
 
   final PowerSaveController c;
+
+  /// Show the pattern select and its description.
+  final bool pattern;
+
+  /// Show the per-traffic values under it. The presenter panel shows the
+  /// pattern and folds the details.
+  final bool details;
 
   @override
   Widget build(BuildContext context) {
@@ -848,117 +947,125 @@ class _TrafficCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const PsSectionLabel('Traffic'),
-          const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Pattern',
-            semanticLabel: 'Traffic pattern',
-            field: AppSelect<PsScenario>(
-              value: s,
+          // The presenter's pattern-only card goes without a section label:
+          // its field is labeled "Traffic pattern".
+          if (details) ...<Widget>[
+            PsSectionLabel(pattern ? 'Traffic' : 'Traffic details'),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          if (pattern) ...<Widget>[
+            LabeledField(
+              label: details ? 'Pattern' : 'Traffic pattern',
               semanticLabel: 'Traffic pattern',
-              items: <AppSelectItem<PsScenario>>[
-                for (final PsScenario p in PsScenario.values)
-                  if (p != PsScenario.custom || s == PsScenario.custom)
-                    (p, p.label),
-              ],
-              onChanged: (PsScenario p) => c.scenario = p,
+              field: AppSelect<PsScenario>(
+                value: s,
+                semanticLabel: 'Traffic pattern',
+                items: <AppSelectItem<PsScenario>>[
+                  for (final PsScenario p in PsScenario.values)
+                    if (p != PsScenario.custom || s == PsScenario.custom)
+                      (p, p.label),
+                ],
+                onChanged: (PsScenario p) => c.scenario = p,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          PsHint(s.description),
-          const SizedBox(height: AppSpacing.sm),
-          LabeledField(
-            label: 'Downlink bursts',
-            semanticLabel: 'Downlink bursts arriving at the AP',
-            field: AppSelect<double>(
-              value: t.dlBurstsPerS,
+            const SizedBox(height: AppSpacing.xxs),
+            PsHint(s.description),
+          ],
+          if (pattern && details) const SizedBox(height: AppSpacing.sm),
+          if (details) ...<Widget>[
+            LabeledField(
+              label: 'Downlink bursts',
               semanticLabel: 'Downlink bursts arriving at the AP',
-              items: <AppSelectItem<double>>[
-                for (final double r in _kDlRates) (r, _rate(r)),
-              ],
-              onChanged: (double v) => c.dlBurstsPerS = v,
+              field: AppSelect<double>(
+                value: t.dlBurstsPerS,
+                semanticLabel: 'Downlink bursts arriving at the AP',
+                items: <AppSelectItem<double>>[
+                  for (final double r in _kDlRates) (r, _rate(r)),
+                ],
+                onChanged: (double v) => c.dlBurstsPerS = v,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Frames per burst',
-            semanticLabel: 'Frames per downlink burst',
-            field: AppSelect<int>(
-              value: t.dlBurstSize,
+            const SizedBox(height: AppSpacing.xs),
+            LabeledField(
+              label: 'Frames per burst',
               semanticLabel: 'Frames per downlink burst',
-              items: <AppSelectItem<int>>[
-                for (final int n in _kBurstSizes) (n, '$n'),
-              ],
-              onChanged: (int v) => c.dlBurstSize = v,
+              field: AppSelect<int>(
+                value: t.dlBurstSize,
+                semanticLabel: 'Frames per downlink burst',
+                items: <AppSelectItem<int>>[
+                  for (final int n in _kBurstSizes) (n, '$n'),
+                ],
+                onChanged: (int v) => c.dlBurstSize = v,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Uplink frames',
-            semanticLabel: 'Uplink frames from the client',
-            field: AppSelect<double>(
-              value: t.ulPerS,
+            const SizedBox(height: AppSpacing.xs),
+            LabeledField(
+              label: 'Uplink frames',
               semanticLabel: 'Uplink frames from the client',
-              items: <AppSelectItem<double>>[
-                for (final double r in _kUlRates) (r, _rate(r)),
-              ],
-              onChanged: (double v) => c.ulPerS = v,
+              field: AppSelect<double>(
+                value: t.ulPerS,
+                semanticLabel: 'Uplink frames from the client',
+                items: <AppSelectItem<double>>[
+                  for (final double r in _kUlRates) (r, _rate(r)),
+                ],
+                onChanged: (double v) => c.ulPerS = v,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Broadcast and multicast',
-            semanticLabel: 'Group-addressed frames',
-            field: AppSelect<double>(
-              value: t.groupPerS,
+            const SizedBox(height: AppSpacing.xs),
+            LabeledField(
+              label: 'Broadcast and multicast',
               semanticLabel: 'Group-addressed frames',
-              items: <AppSelectItem<double>>[
-                for (final double r in _kGroupRates) (r, _rate(r)),
-              ],
-              onChanged: (double v) => c.groupPerS = v,
+              field: AppSelect<double>(
+                value: t.groupPerS,
+                semanticLabel: 'Group-addressed frames',
+                items: <AppSelectItem<double>>[
+                  for (final double r in _kGroupRates) (r, _rate(r)),
+                ],
+                onChanged: (double v) => c.groupPerS = v,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Access category',
-            semanticLabel: 'Access category of the unicast traffic',
-            field: AppSelect<AccessCategory>(
-              value: t.ac,
+            const SizedBox(height: AppSpacing.xs),
+            LabeledField(
+              label: 'Access category',
               semanticLabel: 'Access category of the unicast traffic',
-              items: <AppSelectItem<AccessCategory>>[
-                for (final AccessCategory a in AccessCategory.values)
-                  (a, '${a.label} (${a.code})'),
-              ],
-              onChanged: (AccessCategory a) => c.trafficAc = a,
+              field: AppSelect<AccessCategory>(
+                value: t.ac,
+                semanticLabel: 'Access category of the unicast traffic',
+                items: <AppSelectItem<AccessCategory>>[
+                  for (final AccessCategory a in AccessCategory.values)
+                    (a, '${a.label} (${a.code})'),
+                ],
+                onChanged: (AccessCategory a) => c.trafficAc = a,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<bool>(
-            label: 'Arrivals',
-            semanticLabel: 'Arrival timing',
-            value: t.regular,
-            expand: true,
-            items: const <AppToggleItem<bool>>[
-              (true, 'Regular'),
-              (false, 'Random'),
-            ],
-            onChanged: (bool v) => c.regular = v,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          PsOutlineButton(
-            icon: Icons.shuffle_rounded,
-            label: 'New random pattern',
-            semanticLabel: 'New random arrival pattern',
-            onPressed: t.regular ? null : c.newRandomPattern,
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          PsHint(
-            t.regular
-                ? 'Regular arrivals are evenly spaced, so there is no random '
-                      'pattern to change.'
-                : 'Random arrivals follow a fixed seed, so the same settings '
-                      'give the same run.',
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            AppToggle<bool>(
+              label: 'Arrivals',
+              semanticLabel: 'Arrival timing',
+              value: t.regular,
+              expand: true,
+              items: const <AppToggleItem<bool>>[
+                (true, 'Regular'),
+                (false, 'Random'),
+              ],
+              onChanged: (bool v) => c.regular = v,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            PsOutlineButton(
+              icon: Icons.shuffle_rounded,
+              label: 'New random pattern',
+              semanticLabel: 'New random arrival pattern',
+              onPressed: t.regular ? null : c.newRandomPattern,
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            PsHint(
+              t.regular
+                  ? 'Regular arrivals are evenly spaced, so there is no random '
+                        'pattern to change.'
+                  : 'Random arrivals follow a fixed seed, so the same settings '
+                        'give the same run.',
+            ),
+          ],
         ],
       ),
     );

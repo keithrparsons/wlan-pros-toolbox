@@ -333,7 +333,8 @@
       "howToUse": [
         "Pick the sharing rule: Packet, Airtime, or Compare to see both. The line under the switch states the result in numbers and changes as you edit.",
         "Read the airtime share bar (who holds the air), the throughput bars (what each client and the whole cell get), and the round (each transmission drawn as wide as its airtime, with the overhead outlined and the frames filled). Replay round runs the animation again.",
-        "Edit the clients: a PHY rate from the presets or a custom rate, and the number of frames sent per turn (aggregation). Legacy clients send one frame per turn. Add up to 8 clients, and change the payload per frame to see small frames waste the air."
+        "Edit the clients: a PHY rate from the presets or a custom rate, and the number of frames sent per turn (aggregation). Legacy clients send one frame per turn. Add up to 8 clients, and change the payload per frame to see small frames waste the air.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the round, the Right arrow steps one transmission, R empties the round, Up and Down change the sharing rule, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -376,7 +377,8 @@
         "Read the bars. Hatched blocks are waiting (AIFS and the average backoff), the gray block is the preamble, lime is the data symbols, the dashed box is SIFS and the outlined block is the ACK or Block Ack. Very short segments get a label under the bar with a leader line.",
         "Tap or hover a segment, or pick a duration in the table below the bars, to see how long it is, its share of the TXOP, and the formula with your numbers in it.",
         "Pick a preset or change the inputs. Compare with scenario B stacks a second TXOP on the same scale; Edit scenario chooses which one the inputs change. More settings holds encryption, access category, RTS/CTS, control frame rate and the HE packet extension.",
-        "Watch the Check line. It flags combinations the standard does not allow, such as VHT at 6 GHz or a VHT MCS, width and stream count with no whole number of data bits per symbol. A flagged scenario is not drawn."
+        "Watch the Check line. It flags combinations the standard does not allow, such as VHT at 6 GHz or a VHT MCS, width and stream count with no whole number of data bits per symbol. A flagged scenario is not drawn.",
+        "On a computer or tablet, Present opens this tool full screen for a projector: the Right arrow walks the TXOP one segment at a time, Up and Down change the rate of the scenario you are editing, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -986,7 +988,8 @@
         "Pick a mode and a mode to compare it with. Both run the same traffic, beacons and currents.",
         "Read the timeline: beacons on top (DTIM beacons taller), then for each mode the frames the AP is holding for the client, a dot where the TIM bit is set, and the client's radio: a thin line while it dozes and a colored bar while it is awake, colored by what it is doing. Switch the span between 0.3 s and 60 s and slide the window along the run.",
         "Change the beacon interval, DTIM period and listen interval, the U-APSD access categories and Max SP Length, or the TWT mantissa, exponent and wake duration. The QoS Info byte and the TWT wake interval are worked out as you go.",
-        "Choose a traffic pattern (phone idle, sensor, voice call, web page) or set your own, and set the currents and battery. The readouts give time awake, average current, a battery estimate, and mean and worst latency."
+        "Choose a traffic pattern (phone idle, sensor, voice call, web page) or set your own, and set the currents and battery. The readouts give time awake, average current, a battery estimate, and mean and worst latency.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: the Right arrow slides the window along the run, R returns it to the start, Up and Down change the DTIM period, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1223,7 +1226,8 @@
         "Set the channel width, the number of clients, the frame size and the MCS. Under Resource units, pick a client (or All clients) and its RU size. Largest equal RUs gives every client the biggest RU that fits; Re-pack moves them all to the low edge.",
         "Read the three timelines. SU is one full transmit opportunity per client. DL OFDMA is one transmission from the access point. UL OFDMA starts with a trigger frame and ends with one Multi-STA BlockAck. Each client's color follows its data.",
         "Direction picks which OFDMA timeline the readouts compare with SU. The readouts give each total, the SU / OFDMA ratio, and a line naming what was saved: contention, preambles, or triggers, acks and SIFS.",
-        "Tap Show the arithmetic for every segment's formula. Values that are estimates carry an Assumption tag, and the Assumptions card lists them all."
+        "Tap Show the arithmetic for every segment's formula. Values that are estimates carry an Assumption tag, and the Assumptions card lists them all.",
+        "On a computer or tablet, Present opens this tool full screen for a projector: the Right arrow selects the next client, Up and Down change the number of clients, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1585,7 +1589,8 @@
         "Press Play, or Step to send one frame with all its retries. The link opens paused with every rate untried. Restart starts a new link that has learned nothing.",
         "Pick a path: Walk (away to 60 m and back to 2 m every 20 s), Steady (4 m) or Fading (12 m, with the signal swelling and fading by up to about 8 dB). The SNR offset slider adds or removes signal on top of the path.",
         "Watch the table. Each rate shows its smoothed success, its throughput estimate and its place in the retry chain: 1st and 2nd are the best and second-best throughput, P is the best probability, low is the lowest rate.",
-        "Change the sampling share, the EWMA weight, the retry chain, the retry limit and the ACK timeout while it runs. Set sampling to 0% and Restart to see a link that never finds its higher rates."
+        "Change the sampling share, the EWMA weight, the retry chain, the retry limit and the ACK timeout while it runs. Set sampling to 0% and Restart to see a link that never finds its higher rates.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow steps one frame, R restarts, Up and Down move the SNR offset, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {

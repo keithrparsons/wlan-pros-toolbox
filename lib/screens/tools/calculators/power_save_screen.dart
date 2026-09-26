@@ -18,9 +18,9 @@
 //   - PowerSaveControls (power_save_controls.dart): readouts and inputs, in
 //                       parts (readouts, mode, ap, client, twt, traffic,
 //                       energy).
-// This screen only composes them. On a phone they stack; a presenter layout
-// can put the stage beside a full PowerSaveControls with no change to
-// either.
+// This screen only composes them. On a phone they stack; the Present button
+// (desktop and tablet windows) opens the stage beside PowerSaveControls over
+// the SAME controller in the presenter layout (lib/widgets/presenter/).
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). The awake
 // states take PsPalette (§8.15.2), each named in the legend. Lime marks the
@@ -47,20 +47,29 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/power_save_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'power_save_controller.dart';
 import 'power_save_controls.dart';
 import 'power_save_parts.dart';
 import 'power_save_stage.dart';
 
-export 'power_save_controller.dart' show kPowerSaveToolId;
+export 'power_save_controller.dart' show kPowerSaveToolId, PowerSaveController;
+
+const String _kTitle = 'Power Save';
 
 class PowerSaveScreen extends StatefulWidget {
-  const PowerSaveScreen({super.key, this.initial, this.compare = PsMode.twt});
+  const PowerSaveScreen({
+    super.key,
+    this.initial,
+    this.compare = PsMode.twt,
+    this.controller,
+  });
 
   /// Test seam: start from a given configuration.
   final PsConfig? initial;
@@ -68,29 +77,45 @@ class PowerSaveScreen extends StatefulWidget {
   /// Test seam: the mode to compare with, or null for none.
   final PsMode? compare;
 
+  /// Test and render seam: a controller the caller owns and disposes (then
+  /// [initial] and [compare] are ignored). Null (the app) makes the screen
+  /// create and dispose its own.
+  final PowerSaveController? controller;
+
   @override
   State<PowerSaveScreen> createState() => _PowerSaveScreenState();
 }
 
 class _PowerSaveScreenState extends State<PowerSaveScreen> {
-  late final PowerSaveController _controller = PowerSaveController(
-    initial: widget.initial,
-    compare: widget.compare,
-  );
+  late final PowerSaveController _controller =
+      widget.controller ??
+      PowerSaveController(initial: widget.initial, compare: widget.compare);
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (widget.controller == null) _controller.dispose();
     super.dispose();
   }
+
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: PowerSaveStage(controller: _controller),
+    controls: PowerSaveControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Power Save'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.powerSave, builder: _presenter),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

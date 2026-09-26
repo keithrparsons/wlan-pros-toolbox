@@ -16,6 +16,10 @@
 // Status hues are verdicts only (§8.13): the failed check and nothing else.
 // Numbers in DM Mono. Lime (textAccent) marks the one quantity the tool is
 // about: the ratio for the direction being compared.
+//
+// PRESENTER (PresenterMode.isActive): the ratio, the totals and the savings
+// line move onto the stage; the inputs pair up two per row and the readouts
+// table folds into a PresenterDisclosure, so the panel fits at 1440x900.
 
 import 'package:flutter/material.dart';
 
@@ -27,6 +31,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'ofdma_simulator_model.dart';
@@ -43,14 +49,28 @@ class OfdmaSimulatorControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: model,
-      builder: (BuildContext context, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _Readouts(model: model),
-          const SizedBox(height: AppSpacing.md),
-          _Inputs(model: model),
-        ],
-      ),
+      builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _PresenterInputs(model: model),
+              PresenterDisclosure(
+                title: 'All readouts',
+                children: <Widget>[_Readouts(model: model)],
+              ),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _Readouts(model: model),
+            const SizedBox(height: AppSpacing.md),
+            _Inputs(model: model),
+          ],
+        );
+      },
     );
   }
 }
@@ -413,6 +433,151 @@ class _Inputs extends StatelessWidget {
       semanticLabel: label,
     ),
   );
+}
+
+/// The presenter panel's inputs: the same controls as [_Inputs], two per
+/// row, with shorter option labels.
+class _PresenterInputs extends StatelessWidget {
+  const _PresenterInputs({required this.model});
+
+  final OfdmaSimulatorModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    const SizedBox gap = SizedBox(height: AppSpacing.xs);
+    final int w = model.widthMhz;
+    final int? sel = model.selected;
+    final RuSize shown = sel == null
+        ? (model.sizes.toSet().length == 1
+              ? model.sizes.first
+              : model.sizes.last)
+        : model.sizes[sel];
+    final bool canMove = sel != null && model.placement[sel] != null;
+    final OfdmaResult r = model.result;
+
+    Widget pair(Widget a, Widget b) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(child: a),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(child: b),
+      ],
+    );
+
+    Widget select<T>(
+      String label,
+      T value,
+      List<AppSelectItem<T>> items,
+      ValueChanged<T> onChanged,
+    ) => LabeledField(
+      label: label,
+      field: AppSelect<T>(
+        value: value,
+        items: items,
+        onChanged: onChanged,
+        semanticLabel: label,
+      ),
+    );
+
+    return AirtimeCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppToggle<OfdmaDirection>(
+            semanticLabel: 'Direction',
+            value: model.direction,
+            expand: true,
+            items: <AppToggleItem<OfdmaDirection>>[
+              for (final OfdmaDirection d in OfdmaDirection.values)
+                (d, d.label),
+            ],
+            onChanged: model.setDirection,
+          ),
+          gap,
+          pair(
+            select<int>('Channel width', w, <AppSelectItem<int>>[
+              for (final int x in OfdmaTonePlan.widthsMhz) (x, '$x MHz'),
+            ], model.setWidth),
+            select<int>('Clients', model.clients, <AppSelectItem<int>>[
+              for (int n = 1; n <= model.maxClients; n++) (n, '$n'),
+            ], model.setClientCount),
+          ),
+          gap,
+          pair(
+            select<int>('Frame size', model.payloadBytes, <AppSelectItem<int>>[
+              for (final int b in kOfdmaPayloadChoices)
+                (b, '${_thousands(b)} B'),
+            ], model.setPayload),
+            select<int>('MCS, every client', model.mcs, <AppSelectItem<int>>[
+              for (final McsRow m in AirtimeConstants.mcs)
+                (m.mcs, 'MCS ${m.mcs} ${m.modulation}'),
+            ], model.setMcs),
+          ),
+          gap,
+          pair(
+            select<int>('Client', sel ?? _kAll, <AppSelectItem<int>>[
+              (_kAll, 'All clients'),
+              for (int i = 0; i < model.clients; i++)
+                (i, 'Client ${clientLetter(i)}'),
+            ], (int v) => model.setSelected(v == _kAll ? null : v)),
+            select<RuSize>(
+              sel == null ? 'RU size, all' : 'RU size, ${clientLetter(sel)}',
+              shown,
+              <AppSelectItem<RuSize>>[
+                for (final RuSize s in OfdmaTonePlan.sizesFor(w))
+                  (s, '${s.toneLabel}, ${OfdmaTonePlan.count(s, w)} fit'),
+              ],
+              model.setRuSize,
+            ),
+          ),
+          gap,
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _Button(
+                  label: 'Largest equal',
+                  icon: Icons.view_week_outlined,
+                  onPressed: model.equalRus,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: _Button(
+                  label: 'Re-pack',
+                  icon: Icons.align_horizontal_left_rounded,
+                  onPressed: model.autoPlace,
+                ),
+              ),
+            ],
+          ),
+          gap,
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _Button(
+                  label: 'Move left',
+                  icon: Icons.chevron_left_rounded,
+                  onPressed: canMove ? () => model.nudge(sel, -1) : null,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: _Button(
+                  label: 'Move right',
+                  icon: Icons.chevron_right_rounded,
+                  onPressed: canMove ? () => model.nudge(sel, 1) : null,
+                ),
+              ),
+            ],
+          ),
+          if (!r.check.isOk) ...<Widget>[
+            gap,
+            _CheckLine(message: r.check.message),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _Button extends StatelessWidget {

@@ -4,9 +4,15 @@
 //
 // Two cards, each a public widget, and [AirtimeFairnessControls] composing
 // both. The phone layout places the rule card above the stage and the clients
-// card below it; a presenter layout can use [AirtimeFairnessControls] whole
-// beside the stage. The screen owns every piece of state; these widgets only
-// report edits through callbacks.
+// card below it; the presenter layout uses [AirtimeFairnessControls] whole
+// beside the stage. The controller owns every piece of state; these widgets
+// only report edits through callbacks.
+//
+// PRESENTER (PresenterMode.isActive): the intro prose is dropped and the
+// takeaway moves onto the stage; the rule card gains Play / Step / Reset for
+// the round; each client is one line (letter, rate, frames, remove) under a
+// shared header, and the per-turn lines fold into a disclosure, so eight
+// clients fit the panel at 1440x900.
 //
 // THEME: context.colors only. Status danger only on an invalid custom rate
 // (GL-003 §8.13). Selects for 4+ options (§8.14), toggles for 2 to 3 (§8.14.1).
@@ -20,6 +26,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'airtime_fairness_common.dart';
 
@@ -42,7 +50,9 @@ class AirtimeFairnessControls extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: <Widget>[
       rule,
-      const SizedBox(height: AppSpacing.md),
+      SizedBox(
+        height: PresenterMode.isActive(context) ? AppSpacing.sm : AppSpacing.md,
+      ),
       clients,
     ],
   );
@@ -58,6 +68,10 @@ class AirtimeFairnessRuleCard extends StatelessWidget {
     required this.takeaway,
     required this.onReplay,
     required this.reducedMotion,
+    this.playing = false,
+    this.onPlayPause,
+    this.onStep,
+    this.onReset,
   });
 
   final FairnessView view;
@@ -70,8 +84,15 @@ class AirtimeFairnessRuleCard extends StatelessWidget {
   final VoidCallback? onReplay;
   final bool reducedMotion;
 
+  /// Presenter transport for the round (null hides it).
+  final bool playing;
+  final VoidCallback? onPlayPause;
+  final VoidCallback? onStep;
+  final VoidCallback? onReset;
+
   @override
   Widget build(BuildContext context) {
+    if (PresenterMode.isActive(context)) return _presenter(context);
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final String? line = takeaway;
@@ -126,6 +147,76 @@ class AirtimeFairnessRuleCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _presenter(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool enabled = onReplay != null;
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppToggle<FairnessView>(
+            semanticLabel: 'Sharing rule',
+            value: view,
+            expand: true,
+            items: <AppToggleItem<FairnessView>>[
+              for (final FairnessView v in FairnessView.values) (v, v.label),
+            ],
+            onChanged: onViewChanged,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  label: playing ? 'Pause the round' : 'Play the round',
+                  excludeSemantics: true,
+                  enabled: enabled,
+                  child: FilledButton.icon(
+                    onPressed: enabled ? onPlayPause : null,
+                    icon: Icon(
+                      playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    ),
+                    label: Text(playing ? 'Pause' : 'Play'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      minimumSize: const Size.fromHeight(
+                        AppSpacing.minTouchTarget,
+                      ),
+                      textStyle: text.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: LabOutlineButton(
+                  icon: Icons.skip_next_rounded,
+                  label: 'Step',
+                  semanticLabel: 'Step to the end of the next transmission',
+                  onPressed: enabled ? onStep : null,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: LabOutlineButton(
+                  icon: Icons.restart_alt_rounded,
+                  label: 'Reset',
+                  semanticLabel: 'Reset the round to empty',
+                  onPressed: enabled ? onReset : null,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Clients card ─────────────────────────────────────────────────────────────
@@ -156,6 +247,7 @@ class AirtimeFairnessClientsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (PresenterMode.isActive(context)) return _presenter(context);
     final int n = clients.length;
     final bool full = n >= AirtimeConstants.maxClients;
     return LabCard(
@@ -197,6 +289,213 @@ class AirtimeFairnessClientsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+extension on AirtimeFairnessClientsCard {
+  /// One line per client under a shared header; per-turn lines in a fold.
+  Widget _presenter(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final int n = clients.length;
+    final bool full = n >= AirtimeConstants.maxClients;
+    final TextStyle head = labLabelStyle(context);
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: LabSectionTitle(
+                  'Clients ($n of ${AirtimeConstants.maxClients})',
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: AppSelect<int>(
+                  value: payloadBytes,
+                  semanticLabel: 'Payload per frame',
+                  items: <AppSelectItem<int>>[
+                    for (final int b in kAirtimePayloadChoices) (b, '$b bytes'),
+                  ],
+                  onChanged: onPayloadChanged,
+                ),
+              ),
+              Semantics(
+                button: true,
+                enabled: !full,
+                label: full
+                    ? 'Add client, unavailable: 8 is the maximum'
+                    : 'Add client ${clientLetter(n)}',
+                excludeSemantics: true,
+                child: IconButton(
+                  onPressed: full ? null : onAdd,
+                  tooltip: full ? '8 clients is the maximum' : 'Add client',
+                  icon: const Icon(Icons.add_circle_outline_rounded),
+                  color: colors.textAccent,
+                  disabledColor: colors.textDisabled,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ExcludeSemantics(
+            child: Row(
+              children: <Widget>[
+                const SizedBox(width: AppSpacing.md + AppSpacing.xs),
+                Expanded(flex: 3, child: Text('PHY rate', style: head)),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(flex: 2, child: Text('Frames per turn', style: head)),
+                const SizedBox(width: AppSpacing.minTouchTarget),
+              ],
+            ),
+          ),
+          for (int i = 0; i < n; i++) ...<Widget>[
+            _ClientLine(
+              key: ValueKey<int>(clients[i].id),
+              draft: clients[i],
+              index: i,
+              canRemove: n > AirtimeConstants.minClients,
+              onEdit: onEdit,
+              onRemove: () => onRemove(clients[i].id),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xxs),
+          PresenterDisclosure(
+            title: 'Each client\'s turn, and alone on the air',
+            children: <Widget>[
+              for (int i = 0; i < n; i++)
+                if (clients[i].toConfig() case final ClientConfig cfg)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xxs),
+                    child: Text(
+                      '${clientLetter(i)}: ${perTurnText(cfg, payloadBytes)}',
+                      style: text.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lesson 1 for one client: how much of a turn is overhead, and what the
+/// client would get alone.
+String perTurnText(ClientConfig cfg, int payloadBytes) {
+  final double t = airtimeUs(cfg, payloadBytes: payloadBytes);
+  final double oh = overheadUs(cfg);
+  final double solo = payloadBits(cfg, payloadBytes: payloadBytes) / t;
+  return 'Each turn: ${fmtUs(t)}, ${fmtPct(oh / t)} of it overhead. '
+      'Alone on the air: ${fmtMbps(solo)} Mbps, '
+      '${fmtPct(solo / cfg.rateMbps)} of its PHY rate.';
+}
+
+/// A presenter client line: letter, rate select, frames select, remove. A
+/// custom rate opens its field and preamble toggle under the line.
+class _ClientLine extends StatelessWidget {
+  const _ClientLine({
+    super.key,
+    required this.draft,
+    required this.index,
+    required this.canRemove,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final AirtimeClientDraft draft;
+  final int index;
+  final bool canRemove;
+  final void Function(VoidCallback change) onEdit;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AirtimeClientDraft c = draft;
+    final String letter = clientLetter(index);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            SizedBox(
+              width: AppSpacing.md,
+              child: Text(
+                letter,
+                style: text.titleSmall?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              flex: 3,
+              child: AppSelect<RatePreset?>(
+                value: c.preset,
+                semanticLabel: 'Client $letter PHY rate',
+                items: <AppSelectItem<RatePreset?>>[
+                  for (final RatePreset p in RatePreset.values) (p, p.label),
+                  (null, 'Custom rate'),
+                ],
+                onChanged: (RatePreset? p) => onEdit(() => _choosePreset(c, p)),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              flex: 2,
+              child: AppSelect<int>(
+                value: c.legacy ? 1 : c.aggregation,
+                enabled: !c.legacy,
+                semanticLabel: c.legacy
+                    ? 'Client $letter aggregation, unavailable: legacy '
+                          'clients send one frame per turn'
+                    : 'Client $letter frames per turn',
+                items: <AppSelectItem<int>>[
+                  for (final int a in kAirtimeAggregationChoices) (a, '$a'),
+                ],
+                onChanged: (int a) => onEdit(() => c.aggregation = a),
+              ),
+            ),
+            IconButton(
+              onPressed: canRemove ? onRemove : null,
+              tooltip: canRemove
+                  ? 'Remove client $letter'
+                  : 'At least one client is required',
+              icon: const Icon(Icons.remove_circle_outline_rounded),
+              color: colors.textSecondary,
+              disabledColor: colors.textDisabled,
+            ),
+          ],
+        ),
+        if (c.preset == null)
+          Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.md + AppSpacing.xs,
+              top: AppSpacing.xxs,
+            ),
+            child: _CustomRate(draft: c, letter: letter, onEdit: onEdit),
+          ),
+      ],
+    );
+  }
+}
+
+/// Seeds the custom field from the preset being left, then applies [p].
+void _choosePreset(AirtimeClientDraft c, RatePreset? p) {
+  if (p == null) {
+    final RatePreset? was = c.preset;
+    if (was != null) {
+      c.controller.text = was.mbps.round().toString();
+      c.customLegacy = was.family.isLegacy;
+    }
+  }
+  c.preset = p;
 }
 
 class _ClientRow extends StatelessWidget {
@@ -268,21 +567,11 @@ class _ClientRow extends StatelessWidget {
               for (final RatePreset p in RatePreset.values) (p, p.label),
               (null, 'Custom rate'),
             ],
-            onChanged: (RatePreset? p) => onEdit(() {
-              if (p == null) {
-                // Seed the custom field from the preset being left.
-                final RatePreset? was = c.preset;
-                if (was != null) {
-                  c.controller.text = was.mbps.round().toString();
-                  c.customLegacy = was.family.isLegacy;
-                }
-              }
-              c.preset = p;
-            }),
+            onChanged: (RatePreset? p) => onEdit(() => _choosePreset(c, p)),
           ),
           if (c.preset == null) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
-            _customRate(context, letter),
+            _CustomRate(draft: c, letter: letter, onEdit: onEdit),
           ],
           const SizedBox(height: AppSpacing.sm),
           _labeledSelect<int>(
@@ -308,68 +597,96 @@ class _ClientRow extends StatelessWidget {
     );
   }
 
-  Widget _customRate(BuildContext context, String letter) {
+  /// Lesson 1 on every row: how much of a turn is overhead, and what the
+  /// client would get alone.
+  Widget _perTurnLine(BuildContext context, ClientConfig cfg) {
+    final AppColorScheme colors = context.colors;
+    return Text(
+      perTurnText(cfg, payloadBytes),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+    );
+  }
+}
+
+/// The custom-rate field and its preamble toggle.
+class _CustomRate extends StatelessWidget {
+  const _CustomRate({
+    required this.draft,
+    required this.letter,
+    required this.onEdit,
+  });
+
+  final AirtimeClientDraft draft;
+  final String letter;
+  final void Function(VoidCallback change) onEdit;
+
+  @override
+  Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final bool presenting = PresenterMode.isActive(context);
+    final Widget field = TextField(
+      key: ValueKey<String>('custom-rate-${draft.id}'),
+      controller: draft.controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+      ],
+      onChanged: (_) => onEdit(() {}),
+      textInputAction: TextInputAction.done,
+      autocorrect: false,
+      enableSuggestions: false,
+      style: mono.outputLarge.copyWith(fontSize: AppTextSize.fieldNumeric),
+      cursorColor: colors.textAccent,
+      decoration: InputDecoration(
+        hintText: 'e.g. 1201',
+        suffixText: 'Mbps',
+        errorText: draft.rateError,
+      ),
+    );
+    final Widget preamble = AppToggle<bool>(
+      label: presenting ? null : 'Preamble',
+      semanticLabel: 'Client $letter preamble',
+      value: draft.customLegacy,
+      expand: true,
+      items: <AppToggleItem<bool>>[
+        (true, 'Legacy'),
+        (false, presenting ? 'HT+' : 'HT or newer'),
+      ],
+      onChanged: (bool v) => onEdit(() => draft.customLegacy = v),
+    );
+    // Presenter: the field and the preamble share one line, so an open
+    // custom rate costs one row of the panel, not three.
+    if (presenting) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            flex: 3,
+            child: Semantics(
+              label: 'Client $letter custom PHY rate in Mbps',
+              child: field,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(flex: 2, child: preamble),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         LabeledField(
           label: 'Custom rate',
           semanticLabel: 'Client $letter custom PHY rate in Mbps',
-          field: TextField(
-            key: ValueKey<String>('custom-rate-${draft.id}'),
-            controller: draft.controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-            ],
-            onChanged: (_) => onEdit(() {}),
-            textInputAction: TextInputAction.done,
-            autocorrect: false,
-            enableSuggestions: false,
-            style: mono.outputLarge.copyWith(
-              fontSize: AppTextSize.fieldNumeric,
-            ),
-            cursorColor: colors.textAccent,
-            decoration: InputDecoration(
-              hintText: 'e.g. 1201',
-              suffixText: 'Mbps',
-              errorText: draft.rateError,
-            ),
-          ),
+          field: field,
         ),
         const SizedBox(height: AppSpacing.sm),
-        AppToggle<bool>(
-          label: 'Preamble',
-          semanticLabel: 'Client $letter preamble',
-          value: draft.customLegacy,
-          expand: true,
-          items: const <AppToggleItem<bool>>[
-            (true, 'Legacy'),
-            (false, 'HT or newer'),
-          ],
-          onChanged: (bool v) => onEdit(() => draft.customLegacy = v),
-        ),
+        preamble,
       ],
-    );
-  }
-
-  /// Lesson 1 on every row: how much of a turn is overhead, and what the
-  /// client would get alone.
-  Widget _perTurnLine(BuildContext context, ClientConfig cfg) {
-    final AppColorScheme colors = context.colors;
-    final double t = airtimeUs(cfg, payloadBytes: payloadBytes);
-    final double oh = overheadUs(cfg);
-    final double solo = payloadBits(cfg, payloadBytes: payloadBytes) / t;
-    return Text(
-      'Each turn: ${fmtUs(t)}, ${fmtPct(oh / t)} of it overhead. '
-      'Alone on the air: ${fmtMbps(solo)} Mbps, '
-      '${fmtPct(solo / cfg.rateMbps)} of its PHY rate.',
-      style: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
     );
   }
 }

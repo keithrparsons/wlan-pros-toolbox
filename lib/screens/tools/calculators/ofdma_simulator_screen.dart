@@ -13,9 +13,10 @@
 // STRUCTURE. The screen owns an [OfdmaSimulatorModel] and composes two
 // separate widgets that share it: [OfdmaSimulatorStage] (the channel strip
 // and the timelines) and [OfdmaSimulatorControls] (readouts and inputs).
-// Phone and desktop widths stack them; a presenter layout can place the same
-// two side by side. The RU table and the assumptions are reference cards
-// under them.
+// Phone and desktop widths stack them; the Present button (desktop and
+// tablet windows) opens the same two over the SAME model in the presenter
+// layout (lib/widgets/presenter/). The RU table and the assumptions are
+// reference cards under them on the phone.
 //
 // THEME: context.colors, plus the Wi-Fi Lab client palette (GL-003 §8.15.2)
 // for the one-hue-per-client lesson, always paired with the client letter.
@@ -24,12 +25,14 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/airtime_anatomy.dart' show formatTenthsUs;
 import '../../../services/wifi_lab/ofdma_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'ofdma_simulator_controls.dart';
@@ -39,19 +42,25 @@ import 'ofdma_simulator_stage.dart';
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kOfdmaSimulatorToolId = 'ofdma-simulator';
 
+const String _kTitle = 'OFDMA Resource Units';
+
 class OfdmaSimulatorScreen extends StatefulWidget {
-  const OfdmaSimulatorScreen({super.key});
+  const OfdmaSimulatorScreen({super.key, this.model});
+
+  /// Test and render seam: a model the caller owns and disposes. Null (the
+  /// app) makes the screen create and dispose its own.
+  final OfdmaSimulatorModel? model;
 
   @override
   State<OfdmaSimulatorScreen> createState() => _OfdmaSimulatorScreenState();
 }
 
 class _OfdmaSimulatorScreenState extends State<OfdmaSimulatorScreen> {
-  final OfdmaSimulatorModel _model = OfdmaSimulatorModel();
+  late final OfdmaSimulatorModel _model = widget.model ?? OfdmaSimulatorModel();
 
   @override
   void dispose() {
-    _model.dispose();
+    if (widget.model == null) _model.dispose();
     super.dispose();
   }
 
@@ -93,13 +102,27 @@ class _OfdmaSimulatorScreenState extends State<OfdmaSimulatorScreen> {
     return b.toString().trimRight();
   }
 
+  /// The presenter layout over this screen's model (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: OfdmaSimulatorStage(model: _model),
+    controls: OfdmaSimulatorControls(model: _model),
+    actions: _model.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OFDMA Resource Units'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.ofdmaSimulator,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

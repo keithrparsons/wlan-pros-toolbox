@@ -15,6 +15,13 @@
 // DRAWING HONESTY: a 1.5 ms wake is under a pixel at most widths, so every
 // awake span is drawn at least 2 px wide, and the card says so. The
 // readouts carry the true awake share.
+//
+// PRESENTER (PresenterMode.isActive): the same card fills the bounded stage
+// box with no scroll, under a headline per mode with the numbers the lesson
+// is about (time awake at the headline scale, the battery estimate, the
+// average current and the worst downlink wait), moved here from the
+// readouts. The timeline's rows, labels and strokes grow with the presenter
+// scale (its painter lays out its own text).
 
 import 'dart:math' as math;
 
@@ -25,6 +32,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'power_save_controller.dart';
 import 'power_save_parts.dart';
 
@@ -44,7 +52,12 @@ class PowerSaveStage extends StatelessWidget {
         final AppMonoText mono =
             Theme.of(context).extension<AppMonoText>() ??
             AppMonoText.defaults();
+        final PresenterScale scale = PresenterMode.scaleOf(context);
+        final bool presenting = PresenterMode.isActive(context);
         final PsConfig cfg = c.config;
+        TextStyle painted(TextStyle st) => st.fontSize == null
+            ? st
+            : st.copyWith(fontSize: scale.paintFont(st.fontSize!));
         final PsTimelineStyle style = PsTimelineStyle(
           text: colors.textPrimary,
           secondary: colors.textSecondary,
@@ -57,22 +70,24 @@ class PowerSaveStage extends StatelessWidget {
           twtSp: PsPalette.of(AwakeKind.twtSp, colors),
           tint: colors.isLight ? 0.16 : 0.22,
           labelStyle: mono.inlineCode.copyWith(
-            fontSize: AppTextSize.caption - 2,
+            fontSize: scale.paintFont(AppTextSize.caption - 2),
             color: colors.textSecondary,
           ),
-          rowLabelStyle:
-              text.bodySmall?.copyWith(color: colors.textSecondary) ??
-              TextStyle(color: colors.textSecondary),
-          titleStyle:
-              text.bodySmall?.copyWith(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ) ??
-              TextStyle(color: colors.textPrimary),
+          rowLabelStyle: painted(
+            text.bodySmall?.copyWith(color: colors.textSecondary) ??
+                TextStyle(color: colors.textSecondary),
+          ),
+          titleStyle: painted(
+            text.bodySmall?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ) ??
+                TextStyle(color: colors.textPrimary),
+          ),
         );
         final List<PsRun> runs = c.runs;
         final double dtimMs = tuToMs(cfg.beaconTu * cfg.dtimPeriod);
-        return PsCard(
+        final Widget card = PsCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -103,13 +118,14 @@ class PowerSaveStage extends StatelessWidget {
                 label: _summary(c),
                 excludeSemantics: true,
                 child: SizedBox(
-                  height: PsTimelinePainter.heightFor(runs.length),
+                  height: PsTimelinePainter.heightFor(runs.length, scale),
                   child: CustomPaint(
                     painter: PsTimelinePainter(
                       runs: runs,
                       w0: c.startUs,
                       w1: c.endUs,
                       style: style,
+                      scale: scale,
                     ),
                     size: Size.infinite,
                   ),
@@ -141,6 +157,36 @@ class PowerSaveStage extends StatelessWidget {
               ),
             ],
           ),
+        );
+        if (!presenting) return card;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            PsCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (int i = 0; i < runs.length; i++) ...<Widget>[
+                    if (i > 0) const SizedBox(width: AppSpacing.md),
+                    Expanded(child: _Headline(run: runs[i])),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: LayoutBuilder(
+                // Full size when it fits; otherwise the card scales down as
+                // one piece, never a scroll.
+                builder: (BuildContext context, BoxConstraints box) =>
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(width: box.maxWidth, child: card),
+                    ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -187,6 +233,75 @@ class PowerSaveStage extends StatelessWidget {
       );
     }
     return b.toString().trimRight();
+  }
+}
+
+/// One mode's lesson numbers over the whole run: time awake, large, and
+/// what it buys (battery) and costs (the worst downlink wait).
+class _Headline extends StatelessWidget {
+  const _Headline({required this.run});
+
+  final PsRun run;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final PsRun r = run;
+    final LatencyStats dl = r.downlink;
+    final String wait = dl.count == 0
+        ? 'no downlink'
+        : 'downlink waits up to ${fmtUs(dl.worstUs!)}';
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '${r.mode.label}: time awake',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          Text(
+            fmtPct(r.awakeFraction),
+            style: scale
+                .headlineStyle(mono.outputLarge)
+                .copyWith(color: colors.textAccent),
+          ),
+          Text(
+            'Battery ${fmtLife(r.batteryLifeHours)}, '
+            '${fmtCurrent(r.averageMa)} average',
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
+          Text(
+            wait,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          if (r.groupMissed > 0)
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: AppSpacing.md,
+                  color: colors.statusWarning,
+                ),
+                const SizedBox(width: AppSpacing.xxs),
+                Flexible(
+                  child: Text(
+                    '${r.groupMissed} group frames missed',
+                    style: text.bodySmall?.copyWith(
+                      color: colors.statusWarning,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -303,6 +418,7 @@ class PsTimelinePainter extends CustomPainter {
     required this.w0,
     required this.w1,
     required this.style,
+    this.scale = PresenterScale.normal,
   });
 
   final List<PsRun> runs;
@@ -310,16 +426,36 @@ class PsTimelinePainter extends CustomPainter {
   final double w1;
   final PsTimelineStyle style;
 
-  static const double _labelW = 64;
-  static const double _beaconH = 22;
-  static const double _titleH = 18;
-  static const double _heldH = 32;
-  static const double _clientH = 22;
-  static const double _gap = 8;
-  static const double _axisH = 18;
+  /// Presenter scale. This painter lays out its own labels, which
+  /// MediaQuery's text scale does not reach, so its rows grow with the text
+  /// factor and its strokes with the stroke factor. Identity elsewhere.
+  final PresenterScale scale;
 
-  static double heightFor(int runs) =>
-      _beaconH + runs * (_titleH + _heldH + _clientH + _gap) + _axisH;
+  static const double _labelWBase = 64;
+  static const double _beaconHBase = 22;
+  static const double _titleHBase = 18;
+  static const double _heldHBase = 32;
+  static const double _clientHBase = 22;
+  static const double _gapBase = 8;
+  static const double _axisHBase = 18;
+
+  double get _k => scale.text;
+  double get _labelW => _labelWBase * _k;
+  double get _beaconH => _beaconHBase * _k;
+  double get _titleH => _titleHBase * _k;
+  double get _heldH => _heldHBase * _k;
+  double get _clientH => _clientHBase * _k;
+  double get _gap => _gapBase * _k;
+  double get _axisH => _axisHBase * _k;
+
+  static double heightFor(
+    int runs, [
+    PresenterScale scale = PresenterScale.normal,
+  ]) =>
+      (_beaconHBase +
+          runs * (_titleHBase + _heldHBase + _clientHBase + _gapBase) +
+          _axisHBase) *
+      scale.text;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -331,7 +467,7 @@ class PsTimelinePainter extends CustomPainter {
     final double plotBottom = size.height - _axisH;
     final Paint gridP = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = scale.strokeWidth(1);
 
     // Time grid and axis labels. A label that would touch the one before
     // it is skipped (the grid line stays).
@@ -379,13 +515,13 @@ class PsTimelinePainter extends CustomPainter {
       if (b.tUs < w0 || b.tUs > w1) continue;
       if (!b.dtim && pxPerBeacon < 3) continue;
       final double bx = x(b.tUs);
-      final double h = b.dtim ? _beaconH - 4 : (_beaconH - 4) / 2;
+      final double h = b.dtim ? _beaconH - 4 * _k : (_beaconH - 4 * _k) / 2;
       canvas.drawLine(
-        Offset(bx, _beaconH - 2 - h),
-        Offset(bx, _beaconH - 2),
+        Offset(bx, _beaconH - 2 * _k - h),
+        Offset(bx, _beaconH - 2 * _k),
         Paint()
           ..color = b.dtim ? style.text : style.secondary
-          ..strokeWidth = b.dtim ? 2 : 1.5,
+          ..strokeWidth = scale.strokeWidth(b.dtim ? 2 : 1.5),
       );
     }
 
@@ -444,8 +580,8 @@ class PsTimelinePainter extends CustomPainter {
         if (pxPerBeacon < 6) break;
         if (!b.tim || b.tUs < w0 || b.tUs > w1) continue;
         canvas.drawCircle(
-          Offset(x(b.tUs), y + 3.5),
-          3,
+          Offset(x(b.tUs), y + scale.markerSize(3.5)),
+          scale.markerSize(3),
           Paint()..color = style.text,
         );
       }
@@ -459,7 +595,7 @@ class PsTimelinePainter extends CustomPainter {
         Offset(right, mid),
         Paint()
           ..color = style.doze
-          ..strokeWidth = 1.5,
+          ..strokeWidth = scale.strokeWidth(1.5),
       );
       // With more wakes than room, a 2 px minimum would paint a solid bar
       // and look like "always awake". Then each wake is a 1 px tick at half
@@ -479,13 +615,13 @@ class PsTimelinePainter extends CustomPainter {
           if (s.kind != k) continue;
           double a = x(math.max(s.startUs, w0));
           double b = x(math.min(s.endUs, w1));
-          final double minW = dense ? 1 : 2;
+          final double minW = scale.strokeWidth(dense ? 1 : 2);
           if (b - a < minW) {
             final double c = (a + b) / 2;
             a = c - minW / 2;
             b = c + minW / 2;
           }
-          final double inset = dense ? _clientH / 4 : 2;
+          final double inset = dense ? _clientH / 4 : 2 * _k;
           final Rect rect = Rect.fromLTRB(
             a,
             y + inset,
@@ -503,7 +639,7 @@ class PsTimelinePainter extends CustomPainter {
               Paint()
                 ..color = col
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = 1.5,
+                ..strokeWidth = scale.strokeWidth(1.5),
             );
           } else {
             canvas.drawRect(rect, Paint()..color = col);
@@ -555,7 +691,7 @@ class PsTimelinePainter extends CustomPainter {
       canvas,
       label,
       style.rowLabelStyle,
-      Offset(0, top + h / 2 - 7),
+      Offset(0, top + h / 2 - 7 * _k),
       vCenter: true,
       maxWidth: _labelW - 4,
     );
@@ -563,7 +699,7 @@ class PsTimelinePainter extends CustomPainter {
       canvas,
       second,
       style.labelStyle,
-      Offset(0, top + h / 2 + 7),
+      Offset(0, top + h / 2 + 7 * _k),
       vCenter: true,
       maxWidth: _labelW - 4,
     );
@@ -597,5 +733,6 @@ class PsTimelinePainter extends CustomPainter {
       (runs.length > 1 && !identical(old.runs[1], runs[1])) ||
       old.w0 != w0 ||
       old.w1 != w1 ||
-      old.style != style;
+      old.style != style ||
+      old.scale != scale;
 }

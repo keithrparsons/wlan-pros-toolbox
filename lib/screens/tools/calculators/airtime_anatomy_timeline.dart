@@ -77,56 +77,59 @@ void paintAirtimeBlock(
   Canvas canvas,
   Rect rect,
   AirtimeBlockStyle style,
-  AppColorScheme colors,
-) {
+  AppColorScheme colors, {
+  double stroke = 1,
+}) {
+  // [stroke] is the presenter stroke factor (1 everywhere else).
+  final double w = stroke;
   switch (style) {
     case AirtimeBlockStyle.wait:
-      _hatch(canvas, rect, colors.textTertiary);
+      _hatch(canvas, rect, colors.textTertiary, w);
       canvas.drawRect(
-        rect.deflate(0.5),
+        rect.deflate(w / 2),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
+          ..strokeWidth = w
           ..color = colors.borderStrong,
       );
     case AirtimeBlockStyle.preamble:
       canvas.drawRect(rect, Paint()..color = colors.border);
       canvas.drawRect(
-        rect.deflate(0.5),
+        rect.deflate(w / 2),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
+          ..strokeWidth = w
           ..color = colors.borderStrong,
       );
     case AirtimeBlockStyle.data:
       canvas.drawRect(rect, Paint()..color = colors.primary);
       canvas.drawRect(
-        rect.deflate(0.5),
+        rect.deflate(w / 2),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
+          ..strokeWidth = w
           ..color = colors.textAccent,
       );
     case AirtimeBlockStyle.control:
       canvas.drawRect(
-        rect.deflate(0.75),
+        rect.deflate(0.75 * w),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
+          ..strokeWidth = 1.5 * w
           ..color = colors.textSecondary,
       );
     case AirtimeBlockStyle.gap:
-      _dashedRect(canvas, rect.deflate(0.5), colors.borderStrong);
+      _dashedRect(canvas, rect.deflate(w / 2), colors.borderStrong, w);
   }
 }
 
-void _hatch(Canvas canvas, Rect rect, Color color) {
+void _hatch(Canvas canvas, Rect rect, Color color, double w) {
   canvas.save();
   canvas.clipRect(rect);
   final Paint p = Paint()
     ..color = color
-    ..strokeWidth = 1;
-  const double step = 6;
+    ..strokeWidth = w;
+  final double step = 6 * w;
   for (double x = rect.left - rect.height; x < rect.right; x += step) {
     canvas.drawLine(
       Offset(x, rect.bottom),
@@ -137,11 +140,11 @@ void _hatch(Canvas canvas, Rect rect, Color color) {
   canvas.restore();
 }
 
-void _dashedRect(Canvas canvas, Rect r, Color color) {
+void _dashedRect(Canvas canvas, Rect r, Color color, double w) {
   final Paint p = Paint()
     ..color = color
-    ..strokeWidth = 1;
-  const double dash = 3;
+    ..strokeWidth = w;
+  final double dash = 3 * w;
   void h(double y) {
     for (double x = r.left; x < r.right; x += dash * 2) {
       canvas.drawLine(Offset(x, y), Offset(math.min(x + dash, r.right), y), p);
@@ -200,7 +203,7 @@ class PlacedSegment {
 /// Lays out one scenario's bar at a given width and scale. Pure geometry:
 /// the painter draws it and the screen hit-tests it.
 class AirtimeBarLayout {
-  AirtimeBarLayout._(this.placed, this.height, this.width);
+  AirtimeBarLayout._(this.placed, this.height, this.width, this.barHeight);
 
   /// Builds the layout. [scaleUs] is the microseconds the full [width]
   /// represents (the longest scenario on screen).
@@ -212,6 +215,7 @@ class AirtimeBarLayout {
     required TextStyle dataInsideStyle,
     required TextStyle leaderStyle,
     required TextScaler textScaler,
+    double barHeight = AirtimeBarGeometry.barHeight,
   }) {
     final double pxPerUs = scaleUs <= 0 ? 0 : width / scaleUs;
     final List<PlacedSegment> placed = <PlacedSegment>[];
@@ -233,7 +237,7 @@ class AirtimeBarLayout {
         x0,
         0,
         math.min(x1, math.max(width, x0 + 1)),
-        AirtimeBarGeometry.barHeight,
+        barHeight,
       );
       final TextStyle inStyle = s.kind == TxopSegmentKind.data
           ? dataInsideStyle
@@ -246,13 +250,11 @@ class AirtimeBarLayout {
         inStyle,
       );
       TextPainter? inside;
-      if (full.width + pad <= rect.width &&
-          full.height <= AirtimeBarGeometry.barHeight) {
+      if (full.width + pad <= rect.width && full.height <= barHeight) {
         inside = full;
       } else {
         final TextPainter short = paintText(s.label, inStyle);
-        if (short.width + pad <= rect.width &&
-            short.height <= AirtimeBarGeometry.barHeight) {
+        if (short.width + pad <= rect.width && short.height <= barHeight) {
           inside = short;
         }
       }
@@ -350,8 +352,7 @@ class AirtimeBarLayout {
 
     // Resolve leader rows to y positions.
     final double rowPitch = rowHeight + AirtimeBarGeometry.labelGap;
-    const double firstRowTop =
-        AirtimeBarGeometry.barHeight + AirtimeBarGeometry.leaderGap;
+    final double firstRowTop = barHeight + AirtimeBarGeometry.leaderGap;
     final List<PlacedSegment> resolved =
         <PlacedSegment>[
           for (final PlacedSegment p in placed)
@@ -373,14 +374,17 @@ class AirtimeBarLayout {
               p.segment.startTenths.compareTo(q.segment.startTenths),
         );
     final double height = rows == 0
-        ? AirtimeBarGeometry.barHeight
+        ? barHeight
         : firstRowTop + rows * rowPitch - AirtimeBarGeometry.labelGap;
-    return AirtimeBarLayout._(resolved, height, width);
+    return AirtimeBarLayout._(resolved, height, width, barHeight);
   }
 
   final List<PlacedSegment> placed;
   final double height;
   final double width;
+
+  /// Height of the bar itself (leader rows sit under it).
+  final double barHeight;
 
   /// The segment under [p], checking labels first (a leader label is the
   /// bigger target for a sliver of a segment), then the bar, then the nearest
@@ -391,7 +395,7 @@ class AirtimeBarLayout {
         return s.segment.kind;
       }
     }
-    if (p.dy < -2 || p.dy > AirtimeBarGeometry.barHeight + 2) return null;
+    if (p.dy < -2 || p.dy > barHeight + 2) return null;
     for (final PlacedSegment s in placed) {
       if (p.dx >= s.rect.left && p.dx <= s.rect.right) return s.segment.kind;
     }
@@ -417,17 +421,21 @@ class AirtimeBarPainter extends CustomPainter {
     required this.layout,
     required this.colors,
     required this.selected,
+    this.stroke = 1,
   });
 
   final AirtimeBarLayout layout;
   final AppColorScheme colors;
   final TxopSegmentKind? selected;
 
+  /// Presenter stroke factor (PresenterScale.stroke); 1 elsewhere.
+  final double stroke;
+
   @override
   void paint(Canvas canvas, Size size) {
     final Paint leader = Paint()
       ..color = colors.textTertiary
-      ..strokeWidth = 1;
+      ..strokeWidth = stroke;
 
     for (final PlacedSegment p in layout.placed) {
       paintAirtimeBlock(
@@ -435,6 +443,7 @@ class AirtimeBarPainter extends CustomPainter {
         p.rect,
         AirtimeBlockStyle.of(p.segment.kind),
         colors,
+        stroke: stroke,
       );
     }
     for (final PlacedSegment p in layout.placed) {
@@ -455,13 +464,16 @@ class AirtimeBarPainter extends CustomPainter {
     if (selected != null) {
       final Paint ring = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
+        ..strokeWidth = 2 * stroke
         ..color = colors.textPrimary;
       for (final PlacedSegment p in layout.placed) {
         if (p.segment.kind != selected) continue;
-        canvas.drawRect(p.rect.inflate(1), ring);
+        canvas.drawRect(p.rect.inflate(stroke), ring);
         if (!p.inside) {
-          canvas.drawRect(p.labelRect.inflate(2), ring..strokeWidth = 1);
+          canvas.drawRect(
+            p.labelRect.inflate(2 * stroke),
+            ring..strokeWidth = stroke,
+          );
         }
       }
     }
@@ -469,7 +481,10 @@ class AirtimeBarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(AirtimeBarPainter old) =>
-      old.layout != layout || old.colors != colors || old.selected != selected;
+      old.layout != layout ||
+      old.colors != colors ||
+      old.selected != selected ||
+      old.stroke != stroke;
 }
 
 /// The shared microsecond axis under the bars.
@@ -479,12 +494,16 @@ class AirtimeAxisPainter extends CustomPainter {
     required this.colors,
     required this.style,
     required this.textScaler,
+    this.stroke = 1,
   });
 
   final double scaleUs;
   final AppColorScheme colors;
   final TextStyle style;
   final TextScaler textScaler;
+
+  /// Presenter stroke factor; 1 elsewhere.
+  final double stroke;
 
   /// Tick spacing for [scaleUs] across [width] px, about 64 px apart or more.
   static double tickStepUs(double scaleUs, double width) {
@@ -525,7 +544,7 @@ class AirtimeAxisPainter extends CustomPainter {
     if (scaleUs <= 0) return;
     final Paint line = Paint()
       ..color = colors.borderStrong
-      ..strokeWidth = 1;
+      ..strokeWidth = stroke;
     canvas.drawLine(Offset.zero, Offset(size.width, 0), line);
     final double step = tickStepUs(scaleUs, size.width);
     final double pxPerUs = size.width / scaleUs;
@@ -551,21 +570,34 @@ class AirtimeAxisPainter extends CustomPainter {
       old.scaleUs != scaleUs ||
       old.colors != colors ||
       old.style != style ||
-      old.textScaler != textScaler;
+      old.textScaler != textScaler ||
+      old.stroke != stroke;
 }
 
 /// A legend swatch.
 class AirtimeSwatchPainter extends CustomPainter {
-  AirtimeSwatchPainter({required this.style, required this.colors});
+  AirtimeSwatchPainter({
+    required this.style,
+    required this.colors,
+    this.stroke = 1,
+  });
 
   final AirtimeBlockStyle style;
   final AppColorScheme colors;
 
+  /// Presenter stroke factor; 1 elsewhere.
+  final double stroke;
+
   @override
-  void paint(Canvas canvas, Size size) =>
-      paintAirtimeBlock(canvas, Offset.zero & size, style, colors);
+  void paint(Canvas canvas, Size size) => paintAirtimeBlock(
+    canvas,
+    Offset.zero & size,
+    style,
+    colors,
+    stroke: stroke,
+  );
 
   @override
   bool shouldRepaint(AirtimeSwatchPainter old) =>
-      old.style != style || old.colors != colors;
+      old.style != style || old.colors != colors || old.stroke != stroke;
 }
