@@ -1607,6 +1607,74 @@
       ],
       "source": "Minimum receiver sensitivity per MCS and width as published for IEEE 802.11 conformance (Rohde & Schwarz 802.11be white paper Table 6-4, matched by a second source). Path loss uses the same Friis math as the FSPL Simulator; beacon airtime uses the SSID Airtime tool's calculator; data rates use the MCS Index tool. Everything is calculated on your device."
     },
+    "uplink-downlink": {
+      "name": "Uplink vs Downlink",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows both directions of one Wi-Fi link at once, from above. The downlink runs from the AP to the client and the uplink from the client to the AP. A solid ring marks how far the client can still decode the AP, a dashed ring how far the AP can still decode the client, and the shaded band between them is the asymmetry zone. Two arrows between the AP and the client carry each direction's received level and its MCS (modulation and coding scheme, the data-rate step).",
+      "whyHere": "Every Wi-Fi link is two links, each with its own transmitter and receiver. The client usually transmits less power than the AP and usually has the worse antenna, so there is a zone where the client hears the AP well enough to stay connected while the AP barely hears the client. That asymmetry is normal, not a fault. Turning the AP down to \"match\" the client shrinks the cell on the side that was already stronger and does nothing for the uplink: the client is the weak end of the link and needs the AP's extra power.",
+      "howToUse": [
+        "Drag or tap on the floor to move the client, or use the Client slider under the view. The readout gives the level, MCS and signal-to-noise ratio (SNR) each way, the imbalance in dB and the width of the asymmetry zone in meters.",
+        "Set the AP and client transmit powers and both antenna gains in the controls (below the view on a phone, in the panel on the right on a wide screen). The values are illustrative. Watch the uplink move with the client's power and the AP's antenna, and never with the AP's power.",
+        "Pick a regulatory rule. US 6 GHz Standard Power and GVP (geofenced variable power) hold the client 6 dB below the AP's authorized power, so the client follows the AP as you move it. US 6 GHz LPI (low power indoor) gives the client a flat limit, and the EU gives AP and client the same limit. Custom applies no rule. Every rule is a 6 GHz rule, so another band returns to Custom.",
+        "Press Turn AP down to match to set the AP's transmit power to the client's. The solid ring shrinks, the dashed ring does not move, and the readout says what changed and what did not. Press it again to put the AP back.",
+        "Predict, then reveal asks: the client shows four bars; can the AP hear it? Reveal the answer, then put the client in the zone to see it.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Up and Down move the client out and in, R resets, P reveals the answer, M turns the AP down to match and back, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Regulatory rule",
+          "unit": "preset",
+          "range": "Custom, US 6 GHz Standard Power, US 6 GHz GVP, US 6 GHz LPI or EU 6 GHz LPI; default Custom"
+        },
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4, 5 or 6; default 5. Path loss is taken at 2437, 5500 or 6135 MHz"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20 or 40 at 2.4 GHz, up to 160 at 5 GHz, up to 320 at 6 GHz; default 20"
+        },
+        {
+          "name": "AP transmit power",
+          "unit": "dBm",
+          "range": "0 to 30; default 20 (illustrative)"
+        },
+        {
+          "name": "Client transmit power",
+          "unit": "dBm",
+          "range": "0 to 24; default 14 (illustrative). Under a rule, the rule sets it"
+        },
+        {
+          "name": "AP antenna gain",
+          "unit": "dBi",
+          "range": "0 to 8; default 4 (illustrative)"
+        },
+        {
+          "name": "Client antenna gain",
+          "unit": "dBi",
+          "range": "-5 to 3; default -2 (illustrative, a phone-class antenna)"
+        },
+        {
+          "name": "Path-loss exponent",
+          "unit": "n",
+          "range": "2.0 (free space) to 4.0; default 3.0"
+        }
+      ],
+      "algorithm": "Downlink level = AP transmit power + AP antenna gain - path loss + client antenna gain. Uplink level = client transmit power + client antenna gain - path loss + AP antenna gain. Path loss = free-space loss at 1 m + 10 n log10(d), the same both ways, so downlink minus uplink always equals AP transmit power minus client transmit power. Each direction's MCS is the highest whose minimum receiver sensitivity the level meets (MCS 0 needs -82 dBm at 20 MHz, 3 dB more per doubling of width), and each ring is where that direction falls to the MCS 0 floor. Noise floor = -174 dBm/Hz + 10 log10(BW in Hz) + a 7 dB noise figure at both ends. Rules, in equivalent isotropically radiated power (EIRP, transmit power plus antenna gain): US Standard Power, AP up to 36 dBm and client up to 6 dB below the AP's authorized power; US GVP, AP up to 24 dBm and client 6 dB below; US LPI, AP 5 dBm per MHz up to 30 dBm and client -1 dBm per MHz up to 24 dBm; EU LPI, AP and client both 10 dBm per MHz up to 23 dBm. Under a rule the client transmits at its limit.",
+      "example": "At 5 GHz (5500 MHz), 20 MHz and n = 3, with the illustrative AP at 20 dBm and 4 dBi and the client at 14 dBm and -2 dBi, a client 20 m away hears the AP at -64.3 dBm (MCS 6) while the AP hears the client at -70.3 dBm (MCS 3): a 6 dB imbalance. The client can decode the AP out to 78 m, but the AP can decode the client only out to 49 m, so the asymmetry zone is 29 m wide. Turning the AP down to 14 dBm to match pulls the solid ring in from 78 m to 49 m, and the uplink stays at -70.3 dBm.",
+      "fieldNotes": [
+        "The imbalance is set by the two transmit powers alone. Each antenna's gain counts in both directions, so the AP's better antenna helps it hear the client as much as it helps the client hear it.",
+        "Under a rule the client is set to the most it may transmit. The rule is a ceiling: many clients transmit less, which widens the gap.",
+        "The US LPI numbers sit 6 dB apart, but that is a coincidence of two flat limits. Only Standard Power and GVP tie the client to its AP, and they tie it to the AP's authorized power: turning the AP's transmitter down does not change its grant, so the client's limit stays put.",
+        "Both ends use the same receiver floors, the conformance minimums for each MCS. Real radios do better, and many APs gain more on receive from extra antennas and receive chains, which this model leaves out.",
+        "A client's bars come from the downlink only. They cannot tell you whether the AP hears the client.",
+        "For one direction in detail, with cable losses and fade margin, use the Link Budget tool.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Client power rules from the US Code of Federal Regulations, 47 CFR 15.407(a)(4) to (a)(8), and the European standard EN 303 687, Tables 2 and 3, as carried by the 6 GHz Power and PSD tool. Receiver sensitivity per MCS and width and the log-distance path loss are the Rate vs Range tool's. Everything is calculated on your device."
+    },
     "rate-adaptation": {
       "name": "Rate Adaptation",
       "category": "Wi-Fi Classroom",

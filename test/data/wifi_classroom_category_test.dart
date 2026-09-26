@@ -24,6 +24,7 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'antenna-pattern',
     'rate-vs-range',
     'six-ghz-psd',
+    'uplink-downlink',
   ],
   'Signals and PHY': <String>[
     'modulation-simulator',
@@ -87,12 +88,12 @@ void main() {
     );
   });
 
-  test('all 23 simulators are in wifi-classroom and none remain in '
+  test('all 24 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
-    expect(sims, hasLength(23));
+    expect(sims, hasLength(24));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -158,7 +159,7 @@ void main() {
         reason: s.header,
       );
     }
-    expect(classroom.tools, hasLength(36));
+    expect(classroom.tools, hasLength(37));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

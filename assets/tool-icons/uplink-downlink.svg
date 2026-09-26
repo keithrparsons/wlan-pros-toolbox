@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- AP on the left, client on the right -->
+    <rect x="3" y="7.5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <circle cx="19.5" cy="9.5" r="2" fill="currentColor" stroke="none"/>
+    <!-- downlink: AP to client, on top -->
+    <path d="M9 6 H15.5"/>
+    <path d="M13.5 4 L15.5 6 L13.5 8"/>
+    <!-- uplink: client to AP, below -->
+    <path d="M15.5 13 H9"/>
+    <path d="M11 11 L9 13 L11 15"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="8" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

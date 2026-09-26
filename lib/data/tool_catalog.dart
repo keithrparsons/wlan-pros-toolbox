@@ -2607,6 +2607,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'RF and Propagation',
       ),
+      ToolEntry(
+        id: 'uplink-downlink',
+        title: 'Uplink vs Downlink',
+        description:
+            'See both directions of one link at once: where the client hears '
+            'the AP but the AP cannot hear the client, and the 6 GHz client '
+            'power rules',
+        routeName: '/tools/uplink-downlink',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
       // ── Signals and PHY ──
       // Distinct from the 'modulation' reference cards under Quick Reference,
       // which stay as they are.
