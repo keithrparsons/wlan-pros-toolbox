@@ -277,12 +277,13 @@ class RwSwitchRow extends StatelessWidget {
                         color: colors.textPrimary,
                       ),
                     ),
-                    Text(
-                      subtitle,
-                      style: text.bodySmall?.copyWith(
-                        color: colors.textTertiary,
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textTertiary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

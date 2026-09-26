@@ -22,7 +22,8 @@
 //                          setup, rules).
 // This screen only composes them. On a phone they stack; a presenter layout
 // can put the stage beside a full DfsSimulatorControls with no change to
-// either.
+// either. The Present button (desktop and tablet windows) does that, over
+// the SAME controller (lib/widgets/presenter/, spec 00).
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). Lime marks the
 // channel in use and the time the AP and clients are served. Status hues are
@@ -52,10 +53,12 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/dfs_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'dfs_simulator_controller.dart';
 import 'dfs_simulator_controls.dart';
@@ -63,6 +66,8 @@ import 'dfs_simulator_parts.dart';
 import 'dfs_simulator_stage.dart';
 
 export 'dfs_simulator_controller.dart' show kDfsSimulatorToolId;
+
+const String _kTitle = 'DFS and Radar';
 
 class DfsSimulatorScreen extends StatefulWidget {
   const DfsSimulatorScreen({super.key, this.initial});
@@ -75,9 +80,10 @@ class DfsSimulatorScreen extends StatefulWidget {
 }
 
 class _DfsSimulatorScreenState extends State<DfsSimulatorScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with WidgetsBindingObserver {
+  // The controller builds its own Ticker, so the hour keeps running while
+  // the presenter route covers (and mutes) this one.
   late final DfsSimulatorController _controller = DfsSimulatorController(
-    vsync: this,
     initial: widget.initial,
   );
 
@@ -99,13 +105,25 @@ class _DfsSimulatorScreenState extends State<DfsSimulatorScreen>
     super.dispose();
   }
 
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: DfsSimulatorStage(controller: _controller),
+    controls: DfsSimulatorControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DFS and Radar'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.dfsSimulator, builder: _presenter),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

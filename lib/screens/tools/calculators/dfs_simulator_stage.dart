@@ -14,6 +14,12 @@
 // verdicts about a channel or about service, always with a word or an icon:
 // amber = not usable yet (CAC running), red = may not be used (blocked after
 // radar) or no service. Everything else is the neutral stack.
+//
+// PRESENTER (spec 00): inside a PresenterLayout a strip over the channels
+// carries what the lesson is about: the AP's state (serving, the CAC
+// countdown, or leaving after radar), the clock, the last outage and the
+// clients still connected. The timeline takes the height left over, its span
+// toggle sits in its header, and painters read PresenterMode.scaleOf.
 
 import 'package:flutter/material.dart';
 
@@ -22,6 +28,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter.dart';
 import 'dfs_simulator_controller.dart';
 import 'dfs_simulator_parts.dart';
 
@@ -35,6 +42,20 @@ class DfsSimulatorStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _NowStrip(controller: controller),
+              const SizedBox(height: AppSpacing.xs),
+              _StripCard(controller: controller),
+              const SizedBox(height: AppSpacing.xs),
+              Expanded(
+                child: _TimelineCard(controller: controller, fill: true),
+              ),
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -307,6 +328,7 @@ class _ChannelCell extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final _CellLook look = _lookFor(status.use, colors);
+    final PresenterScale sc = PresenterMode.scaleOf(context);
     final TextStyle numStyle = mono.inlineCode.copyWith(
       fontSize: AppTextSize.caption - 2,
       color: look.ink,
@@ -322,11 +344,14 @@ class _ChannelCell extends StatelessWidget {
       label: _cellSemantics(channel, status, now),
       excludeSemantics: true,
       child: Container(
-        height: 48,
+        height: 48 * sc.text,
         decoration: BoxDecoration(
           color: look.fill,
           borderRadius: BorderRadius.circular(AppSpacing.xxs),
-          border: Border.all(color: look.border, width: look.borderWidth),
+          border: Border.all(
+            color: look.border,
+            width: sc.strokeWidth(look.borderWidth),
+          ),
         ),
         child: Column(
           children: <Widget>[
@@ -337,19 +362,19 @@ class _ChannelCell extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             SizedBox(
-              height: 14,
+              height: sc.markerSize(14),
               child: look.icon == null
                   ? null
                   : Icon(
                       look.icon,
-                      size: 14,
+                      size: sc.markerSize(14),
                       color: _iconColor(status.use, colors),
                     ),
             ),
             const Spacer(),
             // The DFS mark: a bar along the bottom of every DFS cell.
             Container(
-              height: 3,
+              height: sc.strokeWidth(3),
               margin: const EdgeInsets.fromLTRB(3, 0, 3, 3),
               decoration: BoxDecoration(
                 color: status.isDfs ? colors.textTertiary : Colors.transparent,
@@ -425,9 +450,12 @@ class _StripLegend extends StatelessWidget {
 // ── Timeline ────────────────────────────────────────────────────────────────
 
 class _TimelineCard extends StatelessWidget {
-  const _TimelineCard({required this.controller});
+  const _TimelineCard({required this.controller, this.fill = false});
 
   final DfsSimulatorController controller;
+
+  /// Presenter: fill a bounded box, with the span toggle in the header.
+  final bool fill;
 
   @override
   Widget build(BuildContext context) {
@@ -437,7 +465,12 @@ class _TimelineCard extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final TextTheme text = Theme.of(context).textTheme;
     final (double w0, double w1) = c.window;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final TextStyle rowLabel =
+        text.bodySmall?.copyWith(color: colors.textSecondary) ??
+        TextStyle(color: colors.textSecondary);
     final DfsTimelineStyle style = DfsTimelineStyle(
+      sc: sc,
       accent: colors.textAccent,
       primary: colors.primary,
       warning: colors.statusWarning,
@@ -449,48 +482,71 @@ class _TimelineCard extends StatelessWidget {
       axis: colors.borderStrong,
       future: colors.surface2,
       tint: colors.isLight ? 0.22 : 0.28,
+      // Painted labels do not see MediaQuery's text scale.
       labelStyle: mono.inlineCode.copyWith(
-        fontSize: AppTextSize.caption - 2,
+        fontSize: sc.paintFont(AppTextSize.caption - 2),
         color: colors.textSecondary,
       ),
-      rowLabelStyle:
-          text.bodySmall?.copyWith(color: colors.textSecondary) ??
-          TextStyle(color: colors.textSecondary),
+      rowLabelStyle: rowLabel.copyWith(
+        fontSize: sc.paintFont(rowLabel.fontSize ?? AppTextSize.caption),
+      ),
     );
+    final Widget toggle = AppToggle<DfsTimelineView>(
+      value: c.view,
+      semanticLabel: 'Timeline span',
+      expand: !fill,
+      items: <AppToggleItem<DfsTimelineView>>[
+        for (final DfsTimelineView v in DfsTimelineView.values) (v, v.label),
+      ],
+      onChanged: (DfsTimelineView v) => c.view = v,
+    );
+    final Widget plot = Semantics(
+      label: _timelineSemantics(c),
+      excludeSemantics: true,
+      child: SizedBox(
+        height: fill ? null : 200,
+        child: CustomPaint(
+          painter: DfsTimelinePainter(
+            run: c.run,
+            now: c.timeS,
+            w0: w0,
+            w1: w1,
+            style: style,
+          ),
+          size: Size.infinite,
+        ),
+      ),
+    );
+    if (fill) {
+      return DfsCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Expanded(
+                  child: DfsSectionLabel('Timeline: the AP and its clients'),
+                ),
+                toggle,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Expanded(child: plot),
+            const SizedBox(height: AppSpacing.xs),
+            const _TimelineLegend(),
+          ],
+        ),
+      );
+    }
     return DfsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const DfsSectionLabel('Timeline: the AP and its clients'),
           const SizedBox(height: AppSpacing.xs),
-          AppToggle<DfsTimelineView>(
-            value: c.view,
-            semanticLabel: 'Timeline span',
-            expand: true,
-            items: <AppToggleItem<DfsTimelineView>>[
-              for (final DfsTimelineView v in DfsTimelineView.values)
-                (v, v.label),
-            ],
-            onChanged: (DfsTimelineView v) => c.view = v,
-          ),
+          toggle,
           const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label: _timelineSemantics(c),
-            excludeSemantics: true,
-            child: SizedBox(
-              height: 200,
-              child: CustomPaint(
-                painter: DfsTimelinePainter(
-                  run: c.run,
-                  now: c.timeS,
-                  w0: w0,
-                  w1: w1,
-                  style: style,
-                ),
-                size: Size.infinite,
-              ),
-            ),
-          ),
+          plot,
           const SizedBox(height: AppSpacing.xs),
           const _TimelineLegend(),
         ],
@@ -604,6 +660,7 @@ class DfsTimelineStyle {
     required this.tint,
     required this.labelStyle,
     required this.rowLabelStyle,
+    this.sc = PresenterScale.normal,
   });
 
   final Color accent;
@@ -620,6 +677,10 @@ class DfsTimelineStyle {
   final TextStyle labelStyle;
   final TextStyle rowLabelStyle;
 
+  /// Presenter scale for strokes, markers and margins (identity outside
+  /// presenter mode; the label styles already carry the text factor).
+  final PresenterScale sc;
+
   @override
   bool operator ==(Object other) =>
       other is DfsTimelineStyle &&
@@ -629,11 +690,22 @@ class DfsTimelineStyle {
       other.text == text &&
       other.future == future &&
       other.tint == tint &&
-      other.labelStyle == labelStyle;
+      other.labelStyle == labelStyle &&
+      other.rowLabelStyle == rowLabelStyle &&
+      other.sc == sc;
 
   @override
-  int get hashCode =>
-      Object.hash(accent, warning, danger, text, future, tint, labelStyle);
+  int get hashCode => Object.hash(
+    accent,
+    warning,
+    danger,
+    text,
+    future,
+    tint,
+    labelStyle,
+    rowLabelStyle,
+    sc,
+  );
 }
 
 /// Rows: AP, three clients, and the blocked channels.
@@ -652,9 +724,9 @@ class DfsTimelinePainter extends CustomPainter {
   final double w1;
   final DfsTimelineStyle style;
 
-  static const double _labelW = 64;
-  static const double _axisH = 18;
-  static const double _markerH = 16;
+  double get _labelW => 64 * style.sc.text;
+  double get _axisH => 18 * style.sc.text;
+  double get _markerH => 16 * style.sc.text;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -698,7 +770,7 @@ class DfsTimelinePainter extends CustomPainter {
         Offset(right, y + rowH),
         Paint()
           ..color = style.grid
-          ..strokeWidth = 1,
+          ..strokeWidth = style.sc.strokeWidth(1),
       );
     }
 
@@ -707,7 +779,7 @@ class DfsTimelinePainter extends CustomPainter {
     final double tick = span > 600 ? 600 : 30;
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.sc.strokeWidth(1);
     double lastRight = double.negativeInfinity;
     for (double t = (w0 / tick).ceil() * tick; t <= w1 + 1e-6; t += tick) {
       final double gx = x(t);
@@ -740,7 +812,7 @@ class DfsTimelinePainter extends CustomPainter {
         Paint()
           ..color = c
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
+          ..strokeWidth = style.sc.strokeWidth(1.5),
       );
       if (label != null) {
         final double visibleRight = r.right < xNow ? r.right : xNow;
@@ -815,11 +887,11 @@ class DfsTimelinePainter extends CustomPainter {
       final double rx = x(h.timeS);
       final Paint p = Paint()
         ..color = style.danger
-        ..strokeWidth = 2;
+        ..strokeWidth = style.sc.strokeWidth(2);
       _dashed(canvas, Offset(rx, top), Offset(rx, top + plotH), p);
       final Path tri = Path()
-        ..moveTo(rx - 6, 2)
-        ..lineTo(rx + 6, 2)
+        ..moveTo(rx - style.sc.markerSize(6), 2)
+        ..lineTo(rx + style.sc.markerSize(6), 2)
         ..lineTo(rx, _markerH - 2)
         ..close();
       canvas.drawPath(tri, Paint()..color = style.danger);
@@ -832,7 +904,7 @@ class DfsTimelinePainter extends CustomPainter {
         Offset(xNow, top + plotH),
         Paint()
           ..color = style.text
-          ..strokeWidth = 1.5,
+          ..strokeWidth = style.sc.strokeWidth(1.5),
       );
     }
   }
@@ -875,4 +947,135 @@ class DfsTimelinePainter extends CustomPainter {
       old.w0 != w0 ||
       old.w1 != w1 ||
       old.style != style;
+}
+
+// ── Presenter strip ─────────────────────────────────────────────────────────
+
+/// Presenter only: what the AP is doing right now (the headline: serving,
+/// the CAC countdown, or leaving after radar), then the clock, the last
+/// outage and the clients still connected.
+class _NowStrip extends StatelessWidget {
+  const _NowStrip({required this.controller});
+
+  final DfsSimulatorController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final DfsSimulatorController c = controller;
+    final double now = c.timeS;
+    final ApSegment seg = c.segment;
+    final String ch =
+        '${placementLabel(seg.channel)}, ${seg.channel.widthMHz} MHz';
+
+    final (
+      String head,
+      String state,
+      Color color,
+      IconData icon,
+    ) = switch (seg.phase) {
+      ApPhase.cac => (
+        'CAC: ${fmtSpan(seg.endS - now)} left',
+        'Listening on $ch, not usable yet',
+        colors.statusWarning,
+        Icons.hourglass_top_rounded,
+      ),
+      ApPhase.service => (
+        'Serving on ${placementLabel(seg.channel)}',
+        '${seg.channel.widthMHz} MHz'
+            '${placementIsDfs(c.config.region, seg.channel) ? ', a DFS channel' : ', not DFS'}',
+        colors.textAccent,
+        Icons.wifi_rounded,
+      ),
+      ApPhase.moving => (
+        'Radar: leaving ${placementLabel(seg.channel)}',
+        'Blocked for ${fmtRule(c.config.region.rules.nonOccupancyS)} once it '
+            'leaves',
+        colors.statusDanger,
+        Icons.block_rounded,
+      ),
+    };
+
+    final RadarHit? last = c.lastHit;
+    final String outage;
+    if (last == null) {
+      outage = 'No radar yet';
+    } else if (last.resumeS != null && last.resumeS! <= now) {
+      outage = fmtSpan(last.outageS!);
+    } else {
+      outage = '${fmtSpan(now - last.timeS)}, still out';
+    }
+    final int connected = <int>[
+      for (int i = 0; i < c.run.clients.length; i++)
+        if (c.run.clientConnectedAt(i, now)) i,
+    ].length;
+
+    Widget stat(String label, String value, {Color? color}) => MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          Text(
+            value,
+            style: mono.outputMedium.copyWith(
+              color: color ?? colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return DfsCard(
+      child: Semantics(
+        liveRegion: true,
+        child: Wrap(
+          spacing: AppSpacing.lg,
+          runSpacing: AppSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children: <Widget>[
+            MergeSemantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(icon, color: color, size: sc.markerSize(18)),
+                      const SizedBox(width: AppSpacing.xxs),
+                      Text(
+                        state,
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    head,
+                    style: sc
+                        .headlineStyle(mono.outputLarge)
+                        .copyWith(color: color),
+                  ),
+                ],
+              ),
+            ),
+            stat('Clock', fmtClock(now)),
+            stat(
+              'Outage, last radar',
+              outage,
+              color: last == null ? null : colors.statusWarning,
+            ),
+            stat('Clients', '$connected of ${c.run.clients.length}'),
+          ],
+        ),
+      ),
+    );
+  }
 }

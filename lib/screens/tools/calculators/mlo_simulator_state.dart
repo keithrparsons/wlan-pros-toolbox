@@ -11,8 +11,10 @@
 // no clock: the lanes show a window the student slides through.
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../../services/wifi_lab/mlo_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kMloSimulatorToolId = 'mlo-simulator';
@@ -286,6 +288,36 @@ class MloSimulatorState extends ChangeNotifier {
     _windowStartUs = us.clamp(0.0, windowStartMaxUs);
     notifyListeners();
   }
+
+  /// Back to the lesson the inputs came from (Two equal links once the
+  /// student has changed something), with the view at the start. Keeps the
+  /// traffic seed, as choosing a lesson does.
+  void resetToLesson() {
+    _windowStartUs = 0;
+    preset = _preset ?? MloPreset.equal;
+  }
+
+  /// Slides the lane view half a window later ([dir] > 0) or earlier.
+  void nudgeView(int dir) =>
+      windowStartUs = _windowStartUs + dir.sign * _window.us / 2;
+
+  /// Presenter keys (spec 00). No clock, so no play or step: R goes back to
+  /// the lesson, Up and Down slide the lanes along the run, N draws new
+  /// random traffic.
+  PresenterActions get presenterActions => PresenterActions(
+    reset: resetToLesson,
+    sliderDown: () => nudgeView(-1),
+    sliderUp: () => nudgeView(1),
+    sliderLabel: 'Lane view (half a window)',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyN,
+        keyLabel: 'N',
+        description: 'New random traffic',
+        onPressed: newTraffic,
+      ),
+    ],
+  );
 
   // ── Copy ──────────────────────────────────────────────────────────────────
 

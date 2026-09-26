@@ -20,7 +20,8 @@
 //                          inputs, in parts.
 // This screen only composes them. On a phone they stack; a presenter layout
 // can put the stage beside a full MloSimulatorControls with no change to
-// either.
+// either. The Present button (desktop and tablet windows) does that, over
+// the SAME state (lib/widgets/presenter/, spec 00).
 //
 // States (SOP-007 §5):
 //   - fresh       -> the "Two equal links" lesson, computed at once
@@ -42,15 +43,19 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/mlo_model.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'mlo_simulator_controls.dart';
 import 'mlo_simulator_stage.dart';
 import 'mlo_simulator_state.dart';
 
 export 'mlo_simulator_state.dart' show kMloSimulatorToolId;
+
+const String _kTitle = 'Multi-Link Operation';
 
 class MloSimulatorScreen extends StatefulWidget {
   const MloSimulatorScreen({super.key, this.initial, this.preset});
@@ -77,13 +82,24 @@ class _MloSimulatorScreenState extends State<MloSimulatorScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's state (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: MloSimulatorStage(state: _state),
+    controls: MloSimulatorControls(state: _state),
+    actions: _state.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Multi-Link Operation'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _state.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.mloSimulator, builder: _presenter),
+          AppCopyAction(textBuilder: _state.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

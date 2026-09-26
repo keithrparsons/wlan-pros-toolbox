@@ -228,6 +228,9 @@ class _PresenterLayoutState extends State<PresenterLayout> {
         ch == '[') {
       return run(a.sliderDown, allowRepeat: true);
     }
+    for (final PresenterExtraKey x in a.extra) {
+      if (key == x.key) return run(x.onPressed);
+    }
     return KeyEventResult.ignored;
   }
 
@@ -446,6 +449,7 @@ class _PresenterLayoutState extends State<PresenterLayout> {
       if (a.reset != null) ('R', 'Reset'),
       if (a.hasSlider) ('Up arrow or ]', '$slider up'),
       if (a.hasSlider) ('Down arrow or [', '$slider down'),
+      for (final PresenterExtraKey x in a.extra) (x.keyLabel, x.description),
       if (_window.supportsFullScreen) ('F', 'Full screen on or off'),
       ('?', 'Show or hide this list'),
       ('Esc', 'Exit presenter mode (the first press leaves a text field)'),

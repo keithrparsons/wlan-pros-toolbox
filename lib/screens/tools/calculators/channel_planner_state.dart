@@ -13,6 +13,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/channel_planner_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kChannelPlannerToolId = 'channel-planner';
@@ -285,6 +286,25 @@ class ChannelPlannerState extends ChangeNotifier {
     }
     _changed();
   }
+
+  /// The next width up ([dir] > 0) or down among the ones the rules allow.
+  /// Nothing happens at either end.
+  void nudgeWidth(int dir) {
+    final List<int> ws = _rules.widths;
+    final int at = ws.indexOf(_width);
+    final int next = (at < 0 ? 0 : at) + dir.sign;
+    if (next < 0 || next >= ws.length) return;
+    setWidth(ws[next]);
+  }
+
+  /// Presenter keys (spec 00): R resets the floor; Up and Down step the
+  /// channel width every AP uses. No clock, so no play or step.
+  PresenterActions get presenterActions => PresenterActions(
+    reset: reset,
+    sliderDown: () => nudgeWidth(-1),
+    sliderUp: () => nudgeWidth(1),
+    sliderLabel: 'Channel width',
+  );
 
   void setApWidth(int i, int w) {
     if (!_rules.widths.contains(w)) return;

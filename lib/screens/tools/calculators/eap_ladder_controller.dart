@@ -9,11 +9,18 @@
 //
 // The ladder is rebuilt whole whenever a setting changes (at most a few dozen
 // messages). Playback only moves a counter through it, one message per beat.
+//
+// THE CLOCK. The Ticker is constructed here directly, not from a widget's
+// TickerProvider: a route under the presenter route is muted, and playback
+// must keep going when the presenter layout opens over the phone screen
+// (spec 00). [vsync] is accepted and unused so older callers still compile.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../../services/wifi_lab/eap_ladder.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kEapLadderToolId = 'eap-ladder';
@@ -31,11 +38,11 @@ enum LadderSpeed {
 }
 
 class EapLadderController extends ChangeNotifier {
-  EapLadderController({required TickerProvider vsync, LadderConfig? initial})
+  EapLadderController({TickerProvider? vsync, LadderConfig? initial})
     : _config = initial ?? const LadderConfig() {
     _sequence = buildLadder(_config);
     _skipped = skippedVersusFull(_sequence);
-    _ticker = vsync.createTicker(_onTick);
+    _ticker = Ticker(_onTick, debugLabel: 'eap-ladder');
   }
 
   LadderConfig _config;
@@ -175,6 +182,35 @@ class EapLadderController extends ChangeNotifier {
       b.messages.map(key).toList(),
     );
   }
+
+  /// One more or one fewer certificate fragment, when the certificate is
+  /// sent in this method and roam mode; otherwise nothing.
+  void nudgeCertFragments(int dir) {
+    if (!_config.certificateMatters) return;
+    certFragments = (_config.certFragments + dir.sign)
+        .clamp(kMinCertFragments, kMaxCertFragments)
+        .toDouble();
+  }
+
+  /// Presenter keys (spec 00): Space plays or pauses, Right steps one
+  /// message, Left takes one back, R resets, Up and Down change the
+  /// certificate size.
+  PresenterActions get presenterActions => PresenterActions(
+    playPause: togglePlay,
+    step: step,
+    reset: reset,
+    sliderDown: () => nudgeCertFragments(-1),
+    sliderUp: () => nudgeCertFragments(1),
+    sliderLabel: 'Certificate size',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.arrowLeft,
+        keyLabel: 'Left arrow',
+        description: 'Back one message',
+        onPressed: back,
+      ),
+    ],
+  );
 
   set method(LadderMethod m) => _apply(_config.copyWith(method: m));
   set inner(LadderInner i) => _apply(_config.copyWith(inner: i));

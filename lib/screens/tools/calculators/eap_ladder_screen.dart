@@ -23,7 +23,9 @@
 //   - EapLadderControls (eap_ladder_controls.dart): transport, readouts and
 //                       settings, in parts.
 // This screen only composes them. On a phone they stack; a presenter layout
-// can place the stage and a full EapLadderControls side by side.
+// can place the stage and a full EapLadderControls side by side. The Present
+// button (desktop and tablet windows) does that, over the SAME controller
+// (lib/widgets/presenter/, spec 00).
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). The two legs
 // take one hue each from eap_ladder_palette.dart under GL-003 §8.15.2, with
@@ -55,10 +57,12 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/eap_ladder.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'eap_ladder_controller.dart';
 import 'eap_ladder_controls.dart';
@@ -66,6 +70,8 @@ import 'eap_ladder_parts.dart';
 import 'eap_ladder_stage.dart';
 
 export 'eap_ladder_controller.dart' show kEapLadderToolId;
+
+const String _kTitle = '802.1X and EAP Ladder';
 
 class EapLadderScreen extends StatefulWidget {
   const EapLadderScreen({super.key, this.initial});
@@ -78,9 +84,10 @@ class EapLadderScreen extends StatefulWidget {
 }
 
 class _EapLadderScreenState extends State<EapLadderScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with WidgetsBindingObserver {
+  // The controller builds its own Ticker, so playback keeps going while the
+  // presenter route covers (and mutes) this one.
   late final EapLadderController _controller = EapLadderController(
-    vsync: this,
     initial: widget.initial,
   );
 
@@ -102,13 +109,25 @@ class _EapLadderScreenState extends State<EapLadderScreen>
     super.dispose();
   }
 
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: EapLadderStage(controller: _controller),
+    controls: EapLadderControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('802.1X and EAP Ladder'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.eapLadder, builder: _presenter),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

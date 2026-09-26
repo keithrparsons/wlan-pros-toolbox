@@ -23,6 +23,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/roaming_walk_engine.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 /// Resolved colors and text styles shared by both painters.
 @immutable
@@ -37,6 +38,7 @@ class RoamPaintStyle {
     required this.axis,
     required this.halo,
     required this.labelStyle,
+    this.sc = PresenterScale.normal,
   });
 
   /// One hue per AP index (§8.15.2).
@@ -66,6 +68,10 @@ class RoamPaintStyle {
   /// Axis and marker labels.
   final TextStyle labelStyle;
 
+  /// Presenter scale for strokes, markers and label offsets (identity
+  /// outside presenter mode; labelStyle already carries the text factor).
+  final PresenterScale sc;
+
   Color ap(int i) => apColors[i % apColors.length];
 
   @override
@@ -79,7 +85,8 @@ class RoamPaintStyle {
       other.grid == grid &&
       other.axis == axis &&
       other.halo == halo &&
-      other.labelStyle == labelStyle;
+      other.labelStyle == labelStyle &&
+      other.sc == sc;
 
   @override
   int get hashCode => Object.hash(
@@ -92,6 +99,7 @@ class RoamPaintStyle {
     axis,
     halo,
     labelStyle,
+    sc,
   );
 }
 
@@ -215,7 +223,7 @@ class RoamFloorPainter extends CustomPainter {
     // Grid every 10 m.
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.sc.strokeWidth(1);
     for (double x = 10; x < kFloorWidthM; x += 10) {
       canvas.drawLine(
         m.toCanvas((x: x, y: 0)),
@@ -241,7 +249,7 @@ class RoamFloorPainter extends CustomPainter {
       final Paint p = Paint()
         ..color = style.ap(i)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+        ..strokeWidth = style.sc.strokeWidth(1.5);
       canvas.drawCircle(c, r67, p);
       _dashedPath(
         canvas,
@@ -257,7 +265,7 @@ class RoamFloorPainter extends CustomPainter {
       Paint()
         ..color = style.axis
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
+        ..strokeWidth = style.sc.strokeWidth(1.5),
     );
 
     // The path: still to walk (dashed, quiet), walked (solid).
@@ -268,7 +276,7 @@ class RoamFloorPainter extends CustomPainter {
       Paint()
         ..color = style.tertiary
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
+        ..strokeWidth = style.sc.strokeWidth(1.5),
     );
     if (sample > 0) {
       final Path walked = Path()
@@ -285,7 +293,7 @@ class RoamFloorPainter extends CustomPainter {
         Paint()
           ..color = style.secondary
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
+          ..strokeWidth = style.sc.strokeWidth(2),
       );
     }
     // Where the walk starts: a short label beside the first point, on the
@@ -313,7 +321,7 @@ class RoamFloorPainter extends CustomPainter {
           m.toCanvas(config.aps[s]),
           Paint()
             ..color = style.accent
-            ..strokeWidth = 3
+            ..strokeWidth = style.sc.strokeWidth(3)
             ..strokeCap = StrokeCap.round,
         );
       } else {
@@ -330,7 +338,7 @@ class RoamFloorPainter extends CustomPainter {
             Paint()
               ..color = style.secondary
               ..style = PaintingStyle.stroke
-              ..strokeWidth = 2,
+              ..strokeWidth = style.sc.strokeWidth(2),
             dash: 4,
             gap: 3,
           );
@@ -344,20 +352,24 @@ class RoamFloorPainter extends CustomPainter {
       if (i == editingAp) {
         canvas.drawCircle(
           c,
-          11,
+          style.sc.markerSize(11),
           Paint()
             ..color = style.primary
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5,
+            ..strokeWidth = style.sc.strokeWidth(1.5),
         );
       }
-      canvas.drawCircle(c, 8, Paint()..color = style.halo);
-      canvas.drawCircle(c, 6.5, Paint()..color = style.ap(i));
+      canvas.drawCircle(c, style.sc.markerSize(8), Paint()..color = style.halo);
+      canvas.drawCircle(
+        c,
+        style.sc.markerSize(6.5),
+        Paint()..color = style.ap(i),
+      );
       final bool below = config.aps[i].y < 3;
       _label(
         canvas,
         'AP ${i + 1}',
-        c + Offset(0, below ? 18 : -18),
+        c + Offset(0, (below ? 18 : -18) * style.sc.text),
         style.labelStyle.copyWith(
           color: style.ap(i),
           fontWeight: FontWeight.w600,
@@ -367,8 +379,16 @@ class RoamFloorPainter extends CustomPainter {
 
     // The client.
     if (!drawing) {
-      canvas.drawCircle(cp, 7.5, Paint()..color = style.halo);
-      canvas.drawCircle(cp, 6, Paint()..color = style.primary);
+      canvas.drawCircle(
+        cp,
+        style.sc.markerSize(7.5),
+        Paint()..color = style.halo,
+      );
+      canvas.drawCircle(
+        cp,
+        style.sc.markerSize(6),
+        Paint()..color = style.primary,
+      );
     }
 
     // A path being drawn.
@@ -376,11 +396,15 @@ class RoamFloorPainter extends CustomPainter {
       final Paint pen = Paint()
         ..color = style.accent
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
+        ..strokeWidth = style.sc.strokeWidth(2.5)
         ..strokeJoin = StrokeJoin.round;
       canvas.drawPath(_polyline(m, drawnPoints), pen);
       for (final FloorPoint p in drawnPoints) {
-        canvas.drawCircle(m.toCanvas(p), 4, Paint()..color = style.accent);
+        canvas.drawCircle(
+          m.toCanvas(p),
+          style.sc.markerSize(4),
+          Paint()..color = style.accent,
+        );
       }
     }
   }
@@ -434,11 +458,12 @@ class RoamRssiPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final RoamWalkConfig c = result.config;
+    final double k = style.sc.text;
     final Rect plot = Rect.fromLTRB(
-      _left,
-      _top,
-      size.width - _right,
-      size.height - _bottom,
+      _left * k,
+      _top * k,
+      size.width - _right * k,
+      size.height - _bottom * k,
     );
     final double dur = math.max(result.durationS, kRoamSampleSeconds);
     double xOf(double t) => plot.left + plot.width * t / dur;
@@ -455,7 +480,7 @@ class RoamRssiPainter extends CustomPainter {
     // Grid and dBm labels every 10 dB.
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.sc.strokeWidth(1);
     for (double d = -40; d >= kPlotBottomDbm; d -= 10) {
       final double y = yOf(d);
       canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
@@ -490,14 +515,14 @@ class RoamRssiPainter extends CustomPainter {
       Paint()
         ..color = style.axis
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
+        ..strokeWidth = style.sc.strokeWidth(1),
     );
 
     // Trigger, and -70 dBm when the trigger is elsewhere.
     final Paint ref = Paint()
       ..color = style.axis
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = style.sc.strokeWidth(1.5);
     final double yT = yOf(c.triggerDbm);
     _dashedPath(
       canvas,
@@ -516,7 +541,7 @@ class RoamRssiPainter extends CustomPainter {
         Paint()
           ..color = style.tertiary
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
+          ..strokeWidth = style.sc.strokeWidth(1),
         dash: 2,
         gap: 3,
       );
@@ -564,7 +589,7 @@ class RoamRssiPainter extends CustomPainter {
         Paint()
           ..color = style.ap(a)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
+          ..strokeWidth = style.sc.strokeWidth(1.5)
           ..strokeJoin = StrokeJoin.round,
       );
     }
@@ -573,7 +598,7 @@ class RoamRssiPainter extends CustomPainter {
     final Paint serve = Paint()
       ..color = style.accent
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
+      ..strokeWidth = style.sc.strokeWidth(3)
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     Path? run;
@@ -604,7 +629,7 @@ class RoamRssiPainter extends CustomPainter {
     double lastLabelRight = -1e9;
     final Paint mark = Paint()
       ..color = style.secondary
-      ..strokeWidth = 1;
+      ..strokeWidth = style.sc.strokeWidth(1);
     final TextStyle markStyle = axisLabel.copyWith(color: style.primary);
     for (final RoamEvent e in result.events) {
       if (e.sample > last) break;
@@ -618,7 +643,7 @@ class RoamRssiPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       )..layout();
       final double left = (x - tp.width / 2).clamp(
-        plot.left - _left + 44,
+        plot.left + (44 - _left) * k,
         size.width - tp.width,
       );
       if (left >= lastLabelRight + 4) {
@@ -640,7 +665,7 @@ class RoamRssiPainter extends CustomPainter {
       for (int a = 0; a < result.rssi.length; a++)
         (ap: a, y: yOf(result.rssi[a][last])),
     ]..sort((x, y) => x.y.compareTo(y.y));
-    const double gapPx = 11;
+    final double gapPx = 11 * k;
     final List<double> ys = <double>[for (final t in tags) t.y];
     for (int i = 1; i < ys.length; i++) {
       if (ys[i] - ys[i - 1] < gapPx) ys[i] = ys[i - 1] + gapPx;
@@ -671,7 +696,7 @@ class RoamRssiPainter extends CustomPainter {
       Offset(xNow, plot.bottom),
       Paint()
         ..color = style.primary
-        ..strokeWidth = 1.5,
+        ..strokeWidth = style.sc.strokeWidth(1.5),
     );
   }
 

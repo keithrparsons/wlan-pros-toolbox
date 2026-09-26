@@ -8,6 +8,12 @@
 // fired, the 2.4 GHz mask table, and the thresholds.
 // Each takes a ChannelPlannerState and neither knows about the stage.
 //
+// PRESENTER (spec 00): inside a PresenterLayout the plan's verdict moves onto
+// the stage (channel_planner_stage.dart), the controls keep band, width,
+// Auto-plan and the selected AP in view, and walls, floor and radio
+// settings, the pair list, the mask table and the thresholds fold into
+// PresenterDisclosures. Phone-only prose is dropped there.
+//
 // THEME: context.colors only. Status hues appear once, on the domain
 // verdict, with the verdict in words (§8.13 rules 2 and 6). Lime marks the
 // largest-domain number, the quantity the tool is about.
@@ -21,6 +27,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
 import 'channel_planner_state.dart';
 
@@ -114,6 +121,49 @@ String _domainChannels(ChannelPlannerState s, List<int> members) {
 /// Lowercase the first letter only, so MHz keeps its case.
 String _lower(String s) => s[0].toLowerCase() + s.substring(1);
 
+/// The plan's verdict: an icon, its §8.13 hue and the sentence that says it.
+typedef PlanVerdict = ({IconData icon, Color color, String message});
+
+/// The verdict the readouts and the presenter stage both show: a danger
+/// note when some AP has no channel at its width, else sharing by the size
+/// of the largest contention domain.
+PlanVerdict channelPlanVerdict(ChannelPlannerState s, AppColorScheme colors) {
+  final List<int> unassigned = s.unassigned;
+  if (unassigned.isNotEmpty) {
+    final bool dfsOff = s.band == PlannerBand.band5 && !s.rules.dfs;
+    return (
+      icon: Icons.error,
+      color: colors.statusDanger,
+      message:
+          'No ${s.apWidth(unassigned.first)} MHz channel exists in the '
+          '${s.rules.region.label}${dfsOff ? ' with DFS off' : ''}. '
+          '${unassigned.map(s.apName).join(', ')} '
+          '${unassigned.length == 1 ? 'has' : 'have'} no channel. '
+          '${dfsOff ? 'Turn DFS on or pick' : 'Pick'} a narrower width.',
+    );
+  }
+  final int n = s.analysis.largestDomain.length;
+  if (n <= 1) {
+    return (
+      icon: Icons.check_circle,
+      color: colors.statusSuccess,
+      message: 'No sharing: every AP has its channel to itself.',
+    );
+  }
+  if (n <= 3) {
+    return (
+      icon: Icons.warning,
+      color: colors.statusWarning,
+      message: 'Shared: $n APs take turns on one channel.',
+    );
+  }
+  return (
+    icon: Icons.error,
+    color: colors.statusDanger,
+    message: 'Crowded: $n APs take turns on one channel.',
+  );
+}
+
 // ── Controls ──────────────────────────────────────────────────────────────
 
 class ChannelPlannerControls extends StatelessWidget {
@@ -124,12 +174,195 @@ class ChannelPlannerControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: state,
-      builder: (BuildContext context, Widget? _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: _children(context),
+      builder: (BuildContext context, Widget? _) =>
+          PresenterMode.isActive(context)
+          ? _presenter(context)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _children(context),
+            ),
+    );
+  }
+
+  /// Presenter panel: what a lesson changes stays in view (band, width,
+  /// Auto-plan, the selected AP's channel); walls and the floor and radio
+  /// settings fold. The explanatory notes are phone-only.
+  Widget _presenter(BuildContext context) {
+    final ChannelPlannerState s = state;
+    final PlanRules r = s.rules;
+    final bool is5 = r.band == PlannerBand.band5;
+    final int? sel = s.selected;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        PlannerCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
+                children: <Widget>[
+                  AppToggle<PlannerBand>(
+                    semanticLabel: 'Band',
+                    value: r.band,
+                    items: <AppToggleItem<PlannerBand>>[
+                      for (final PlannerBand b in PlannerBand.values)
+                        (b, b.label),
+                    ],
+                    onChanged: s.setBand,
+                  ),
+                  AppToggle<PlannerRegion>(
+                    semanticLabel: 'Region',
+                    value: r.region,
+                    items: <AppToggleItem<PlannerRegion>>[
+                      for (final PlannerRegion g in PlannerRegion.values)
+                        (g, g.label),
+                    ],
+                    onChanged: s.setRegion,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _widthSelect(s),
+              if (is5)
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _switch(context, 'DFS channels', r.dfs, s.setDfs),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: _switch(
+                        context,
+                        'U-NII-4 (US)',
+                        r.unii4,
+                        r.region == PlannerRegion.us ? s.setUnii4 : null,
+                      ),
+                    ),
+                  ],
+                )
+              else ...<Widget>[
+                const SizedBox(height: AppSpacing.xs),
+                AppToggle<TxMask>(
+                  label: 'Transmit mask',
+                  value: r.mask,
+                  expand: true,
+                  items: <AppToggleItem<TxMask>>[
+                    for (final TxMask m in TxMask.values) (m, m.label),
+                  ],
+                  onChanged: s.setMask,
+                ),
+              ],
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: s.available == 0 ? null : s.runAutoPlan,
+                      icon: const Icon(Icons.auto_fix_high),
+                      label: const Text('Auto-plan'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    onPressed: s.reset,
+                    tooltip: 'Reset to the starting floor (R)',
+                    icon: const Icon(Icons.restart_alt),
+                    color: context.colors.textAccent,
+                  ),
+                ],
+              ),
+              if (s.planNote != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.xxs),
+                PlannerNote(Icons.auto_fix_high, s.planNote!),
+              ],
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Expanded(
+                    child: _apSelect(
+                      s,
+                      sel,
+                      label: 'Selected AP (${s.apCount} of $kMaxAps)',
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: s.canAdd ? s.addAp : null,
+                    tooltip: 'Add AP',
+                    icon: const Icon(Icons.add),
+                  ),
+                  IconButton(
+                    onPressed: sel != null && s.canRemove
+                        ? () => s.removeAp(sel)
+                        : null,
+                    tooltip: sel == null
+                        ? 'Remove AP'
+                        : 'Remove ${s.apName(sel)}',
+                    icon: const Icon(Icons.remove),
+                  ),
+                ],
+              ),
+              if (sel != null) ...<Widget>[
+                ..._apChannelAndWidth(sel),
+                PresenterDisclosure(
+                  title: 'Move ${s.apName(sel)} by the numbers',
+                  children: _apPosition(context, sel),
+                ),
+              ],
+            ],
+          ),
+        ),
+        PresenterDisclosure(
+          title: 'Walls, floor size and radios',
+          children: <Widget>[
+            ..._walls(context),
+            const SizedBox(height: AppSpacing.sm),
+            ..._floorAndRadios(context),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _widthSelect(ChannelPlannerState s) {
+    final PlanRules r = s.rules;
+    // Up to four widths: GL-003 §8.14 routes 4+ options to AppSelect.
+    return LabeledField(
+      label: 'Channel width, every AP',
+      field: AppSelect<int>(
+        value: s.width,
+        semanticLabel: 'Channel width, every AP',
+        enabled: r.widths.length > 1,
+        items: <AppSelectItem<int>>[
+          for (final int w in r.widths)
+            (w, '$w MHz  (${channelsAvailable(r, w)} available)'),
+        ],
+        onChanged: s.setWidth,
       ),
     );
   }
+
+  Widget _apSelect(
+    ChannelPlannerState s,
+    int? sel, {
+    String label = 'Selected AP',
+  }) => LabeledField(
+    label: label,
+    field: AppSelect<int>(
+      value: sel ?? 0,
+      semanticLabel: 'Selected AP',
+      items: <AppSelectItem<int>>[
+        for (int i = 0; i < s.apCount; i++)
+          (
+            i,
+            '${s.apName(i)}  (${s.channelOf(i)?.shortLabel ?? 'no channel'})',
+          ),
+      ],
+      onChanged: s.select,
+    ),
+  );
 
   List<Widget> _children(BuildContext context) {
     final ChannelPlannerState s = state;
@@ -166,20 +399,7 @@ class ChannelPlannerControls extends StatelessWidget {
         ],
       ),
       const SizedBox(height: AppSpacing.sm),
-      // Up to four widths: GL-003 §8.14 routes 4+ options to AppSelect.
-      LabeledField(
-        label: 'Channel width, every AP',
-        field: AppSelect<int>(
-          value: s.width,
-          semanticLabel: 'Channel width, every AP',
-          enabled: r.widths.length > 1,
-          items: <AppSelectItem<int>>[
-            for (final int w in r.widths)
-              (w, '$w MHz  (${channelsAvailable(r, w)} available)'),
-          ],
-          onChanged: s.setWidth,
-        ),
-      ),
+      _widthSelect(s),
       if (is5) ...<Widget>[
         _switch(context, 'DFS channels (52-64, 100-144)', r.dfs, s.setDfs),
         _switch(
@@ -245,24 +465,33 @@ class ChannelPlannerControls extends StatelessWidget {
       if (!s.canRemove)
         Text('The plan needs at least $kMinAps APs.', style: small()),
       const SizedBox(height: AppSpacing.sm),
-      LabeledField(
-        label: 'Selected AP',
-        field: AppSelect<int>(
-          value: sel ?? 0,
-          semanticLabel: 'Selected AP',
-          items: <AppSelectItem<int>>[
-            for (int i = 0; i < s.apCount; i++)
-              (
-                i,
-                '${s.apName(i)}  (${s.channelOf(i)?.shortLabel ?? 'no channel'})',
-              ),
-          ],
-          onChanged: s.select,
-        ),
-      ),
+      _apSelect(s, sel),
       if (sel != null) ..._apEditor(context, sel),
       const SizedBox(height: AppSpacing.md),
       const PlannerSectionLabel('Walls'),
+      ..._walls(context),
+      const SizedBox(height: AppSpacing.md),
+      const PlannerSectionLabel('Floor and radios'),
+      ..._floorAndRadios(context),
+      const SizedBox(height: AppSpacing.sm),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: s.reset,
+          icon: const Icon(Icons.restart_alt),
+          label: const Text('Reset to the starting floor'),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _walls(BuildContext context) {
+    final ChannelPlannerState s = state;
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool presenting = PresenterMode.isActive(context);
+    TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
+    return <Widget>[
       _switch(
         context,
         'Wall tool: drag on the floor',
@@ -280,11 +509,12 @@ class ChannelPlannerControls extends StatelessWidget {
         decimals: 0,
         onChanged: s.setWallLoss,
       ),
-      Text(
-        'One wall type, one number. 10 dB is a round starting value, not a '
-        'measured material.',
-        style: small(),
-      ),
+      if (!presenting)
+        Text(
+          'One wall type, one number. 10 dB is a round starting value, not '
+          'a measured material.',
+          style: small(),
+        ),
       const SizedBox(height: AppSpacing.xs),
       Wrap(
         spacing: AppSpacing.xs,
@@ -327,8 +557,16 @@ class ChannelPlannerControls extends StatelessWidget {
             label: const Text('Clear walls'),
           ),
         ),
-      const SizedBox(height: AppSpacing.md),
-      const PlannerSectionLabel('Floor and radios'),
+    ];
+  }
+
+  List<Widget> _floorAndRadios(BuildContext context) {
+    final ChannelPlannerState s = state;
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool presenting = PresenterMode.isActive(context);
+    TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
+    return <Widget>[
       _slider(
         context,
         label: 'AP EIRP',
@@ -350,11 +588,12 @@ class ChannelPlannerControls extends StatelessWidget {
         divisions: 20,
         onChanged: s.setExponent,
       ),
-      Text(
-        'Log-distance model: free-space loss at 1 m plus 10 n log10(d). '
-        'n = 2 is free space; 3 is a common office guess.',
-        style: small(),
-      ),
+      if (!presenting)
+        Text(
+          'Log-distance model: free-space loss at 1 m plus 10 n log10(d). '
+          'n = 2 is free space; 3 is a common office guess.',
+          style: small(),
+        ),
       _slider(
         context,
         label: 'Floor width',
@@ -377,59 +616,68 @@ class ChannelPlannerControls extends StatelessWidget {
         decimals: 0,
         onChanged: (double v) => s.setFloorSize(h: v),
       ),
-      const SizedBox(height: AppSpacing.sm),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: s.reset,
-          icon: const Icon(Icons.restart_alt),
-          label: const Text('Reset to the starting floor'),
-        ),
-      ),
     ];
   }
 
-  List<Widget> _apEditor(BuildContext context, int i) {
+  List<Widget> _apEditor(BuildContext context, int i) => <Widget>[
+    ..._apChannelAndWidth(i),
+    ..._apPosition(context, i),
+  ];
+
+  List<Widget> _apChannelAndWidth(int i) => <Widget>[
+    const SizedBox(height: AppSpacing.xs),
+    _apChannel(i),
+    const SizedBox(height: AppSpacing.xs),
+    _apWidth(i),
+  ];
+
+  Widget _apChannel(int i) {
     final ChannelPlannerState s = state;
     final List<ChannelOption> opts = s.optionsFor(s.apWidth(i));
     final ChannelOption? cur = s.channelOf(i);
+    return LabeledField(
+      label: '${s.apName(i)} channel',
+      field: opts.isEmpty || cur == null
+          ? AppSelect<int>(
+              value: 0,
+              semanticLabel: '${s.apName(i)} channel',
+              enabled: false,
+              errorText:
+                  'No ${s.apWidth(i)} MHz channel exists under these rules.',
+              items: const <AppSelectItem<int>>[(0, 'None')],
+              onChanged: (int _) {},
+            )
+          : AppSelect<ChannelOption>(
+              value: cur,
+              semanticLabel: '${s.apName(i)} channel',
+              items: <AppSelectItem<ChannelOption>>[
+                for (final ChannelOption o in opts) (o, o.longLabel),
+              ],
+              onChanged: (ChannelOption o) => s.setApChannel(i, o),
+            ),
+    );
+  }
+
+  Widget _apWidth(int i) {
+    final ChannelPlannerState s = state;
+    return LabeledField(
+      label: '${s.apName(i)} width',
+      field: AppSelect<int>(
+        value: s.apWidth(i),
+        semanticLabel: '${s.apName(i)} width',
+        enabled: s.rules.widths.length > 1,
+        items: <AppSelectItem<int>>[
+          for (final int w in s.rules.widths) (w, '$w MHz'),
+        ],
+        onChanged: (int w) => s.setApWidth(i, w),
+      ),
+    );
+  }
+
+  List<Widget> _apPosition(BuildContext context, int i) {
+    final ChannelPlannerState s = state;
     final FloorPoint p = s.position(i);
     return <Widget>[
-      const SizedBox(height: AppSpacing.xs),
-      LabeledField(
-        label: '${s.apName(i)} channel',
-        field: opts.isEmpty || cur == null
-            ? AppSelect<int>(
-                value: 0,
-                semanticLabel: '${s.apName(i)} channel',
-                enabled: false,
-                errorText:
-                    'No ${s.apWidth(i)} MHz channel exists under these rules.',
-                items: const <AppSelectItem<int>>[(0, 'None')],
-                onChanged: (int _) {},
-              )
-            : AppSelect<ChannelOption>(
-                value: cur,
-                semanticLabel: '${s.apName(i)} channel',
-                items: <AppSelectItem<ChannelOption>>[
-                  for (final ChannelOption o in opts) (o, o.longLabel),
-                ],
-                onChanged: (ChannelOption o) => s.setApChannel(i, o),
-              ),
-      ),
-      const SizedBox(height: AppSpacing.xs),
-      LabeledField(
-        label: '${s.apName(i)} width',
-        field: AppSelect<int>(
-          value: s.apWidth(i),
-          semanticLabel: '${s.apName(i)} width',
-          enabled: s.rules.widths.length > 1,
-          items: <AppSelectItem<int>>[
-            for (final int w in s.rules.widths) (w, '$w MHz'),
-          ],
-          onChanged: (int w) => s.setApWidth(i, w),
-        ),
-      ),
       _slider(
         context,
         label: '${s.apName(i)} across',
@@ -547,20 +795,50 @@ class ChannelPlannerReadouts extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: state,
-      builder: (BuildContext context, Widget? _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _summary(context),
-          const SizedBox(height: AppSpacing.sm),
-          _pairs(context),
-          if (state.band == PlannerBand.band24) ...<Widget>[
-            const SizedBox(height: AppSpacing.sm),
-            _maskTable(context),
+      builder: (BuildContext context, Widget? _) =>
+          PresenterMode.isActive(context)
+          ? _presenter(context)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _summary(context),
+                const SizedBox(height: AppSpacing.sm),
+                _pairs(context),
+                if (state.band == PlannerBand.band24) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  _maskTable(context),
+                ],
+                const SizedBox(height: AppSpacing.sm),
+                const _Thresholds(),
+              ],
+            ),
+    );
+  }
+
+  /// Presenter: the summary is on the stage; the detail folds.
+  Widget _presenter(BuildContext context) {
+    final int pairs =
+        state.analysis.contending.length + state.analysis.oneWay.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        PresenterDisclosure(
+          title: 'Who contends ($pairs pair${pairs == 1 ? '' : 's'})',
+          children: <Widget>[_pairs(context)],
+        ),
+        PresenterDisclosure(
+          title: state.band == PlannerBand.band24
+              ? 'Why they defer, and why 1, 6 and 11'
+              : 'When an AP defers: -82, -72, -62 dBm',
+          children: <Widget>[
+            const _Thresholds(),
+            if (state.band == PlannerBand.band24) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              _maskTable(context),
+            ],
           ],
-          const SizedBox(height: AppSpacing.sm),
-          const _Thresholds(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -605,23 +883,7 @@ class ChannelPlannerReadouts extends StatelessWidget {
     final bool none = unassigned.length == s.apCount;
     final ChannelOption? domCh = s.channelOf(a.largestDomain.first);
 
-    final (IconData, Color, String) verdict = n <= 1
-        ? (
-            Icons.check_circle,
-            colors.statusSuccess,
-            'No sharing: every AP has its channel to itself.',
-          )
-        : n <= 3
-        ? (
-            Icons.warning,
-            colors.statusWarning,
-            'Shared: $n APs take turns on one channel.',
-          )
-        : (
-            Icons.error,
-            colors.statusDanger,
-            'Crowded: $n APs take turns on one channel.',
-          );
+    final PlanVerdict verdict = channelPlanVerdict(s, colors);
 
     return PlannerCard(
       child: Column(
@@ -648,20 +910,7 @@ class ChannelPlannerReadouts extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          if (unassigned.isNotEmpty)
-            PlannerNote(
-              Icons.error,
-              'No ${s.apWidth(unassigned.first)} MHz channel exists in the '
-              '${s.rules.region.label}'
-              '${s.band == PlannerBand.band5 && !s.rules.dfs ? ' with DFS off' : ''}. '
-              '${unassigned.map(s.apName).join(', ')} '
-              '${unassigned.length == 1 ? 'has' : 'have'} no channel. '
-              '${s.band == PlannerBand.band5 && !s.rules.dfs ? 'Turn DFS on or pick' : 'Pick'} '
-              'a narrower width.',
-              color: colors.statusDanger,
-            )
-          else
-            PlannerNote(verdict.$1, verdict.$3, color: verdict.$2),
+          PlannerNote(verdict.icon, verdict.message, color: verdict.color),
           if (!none && n >= 2 && domCh != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(

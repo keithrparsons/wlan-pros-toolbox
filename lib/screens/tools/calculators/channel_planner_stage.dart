@@ -16,6 +16,12 @@
 // from channel_planner_palette.dart under GL-003 §8.15.2. No motion, so
 // reduced motion needs nothing (§8.8).
 //
+// PRESENTER (spec 00): inside a PresenterLayout the floor takes the height
+// the verdict strip, spectrum and legend leave, and the plan's verdict (the
+// largest contention domain, airtime each, channels at this width) sits over
+// the floor, where the class looks. Painted labels, strokes and AP markers
+// read PresenterMode.scaleOf (1.0 outside presenter mode).
+//
 // ASCII only, no em dashes (GL-004).
 
 import 'dart:math' as math;
@@ -26,7 +32,9 @@ import '../../../services/wifi_lab/channel_planner_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter.dart';
 import 'channel_planner_palette.dart';
+import 'channel_planner_panels.dart' show channelPlanVerdict, PlanVerdict;
 import 'channel_planner_state.dart';
 
 /// Floor width at which every link carries its dBm label. Narrower floors
@@ -52,7 +60,94 @@ class ChannelPlannerStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: state,
-      builder: (BuildContext context, Widget? _) => _build(context),
+      builder: (BuildContext context, Widget? _) =>
+          PresenterMode.isActive(context)
+          ? _buildPresenter(context)
+          : _build(context),
+    );
+  }
+
+  BoxDecoration _cardDecoration(AppColorScheme colors) => BoxDecoration(
+    color: colors.surface1,
+    borderRadius: BorderRadius.circular(AppRadius.card),
+    border: Border.all(color: colors.border, width: colors.isLight ? 1.5 : 1),
+  );
+
+  /// Presenter: verdict strip, then the floor filling the height left over,
+  /// then the spectrum and legend. Nothing scrolls.
+  Widget _buildPresenter(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final _Style style = _Style.of(context);
+    return Container(
+      decoration: _cardDecoration(colors),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _PresenterVerdict(state: state),
+          if (state.wallMode) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Wall tool on: drag on the floor to draw a wall.',
+              style: text.bodyMedium?.copyWith(color: colors.textAccent),
+            ),
+          ],
+          Expanded(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints box) => Align(
+                alignment: Alignment.topCenter,
+                child: _floor(style, box.maxHeight),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          ChannelSpectrumStrip(state: state),
+          const SizedBox(height: AppSpacing.xs),
+          _legend(context),
+        ],
+      ),
+    );
+  }
+
+  /// The floor at most [maxHeight] tall, as wide as its box allows.
+  Widget _floor(_Style style, double maxHeight) {
+    final double pad = _kFloorPad * style.sc.text;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+        final double innerW = c.maxWidth - 2 * pad;
+        double h = innerW * state.floorH / state.floorW;
+        double w = innerW;
+        final double maxInner = maxHeight - 2 * pad;
+        if (h > maxInner) {
+          h = math.max(40, maxInner);
+          w = h * state.floorW / state.floorH;
+        }
+        final Size size = Size(c.maxWidth, h + 2 * pad);
+        final double scale = w / state.floorW;
+        final Offset origin = Offset((c.maxWidth - w) / 2, pad);
+        return _FloorGestures(
+          state: state,
+          origin: origin,
+          scale: scale,
+          hitRadius: style.sc.markerSize(26),
+          child: Semantics(
+            label: _semantics(),
+            excludeSemantics: true,
+            child: CustomPaint(
+              size: size,
+              painter: _FloorPainter(
+                state: state,
+                origin: origin,
+                scale: scale,
+                style: style,
+                allLabels: w >= _kAllLabelsWidth,
+                revision: state.revision,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -84,41 +179,7 @@ class ChannelPlannerStage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xxs),
-          LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints c) {
-              final double innerW = c.maxWidth - 2 * _kFloorPad;
-              double h = innerW * state.floorH / state.floorW;
-              double w = innerW;
-              final double maxInner = maxFloorHeight - 2 * _kFloorPad;
-              if (h > maxInner) {
-                h = math.max(40, maxInner);
-                w = h * state.floorW / state.floorH;
-              }
-              final Size size = Size(c.maxWidth, h + 2 * _kFloorPad);
-              final double scale = w / state.floorW;
-              final Offset origin = Offset((c.maxWidth - w) / 2, _kFloorPad);
-              return _FloorGestures(
-                state: state,
-                origin: origin,
-                scale: scale,
-                child: Semantics(
-                  label: _semantics(),
-                  excludeSemantics: true,
-                  child: CustomPaint(
-                    size: size,
-                    painter: _FloorPainter(
-                      state: state,
-                      origin: origin,
-                      scale: scale,
-                      style: style,
-                      allLabels: w >= _kAllLabelsWidth,
-                      revision: state.revision,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          _floor(style, maxFloorHeight),
           const SizedBox(height: AppSpacing.xxs),
           ChannelSpectrumStrip(state: state),
           const SizedBox(height: AppSpacing.xs),
@@ -156,10 +217,15 @@ class ChannelPlannerStage extends StatelessWidget {
   Widget _legend(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    final PresenterScale sc = PresenterMode.scaleOf(context);
     Widget item(CustomPainter p, String label) => Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        SizedBox(width: 28, height: 14, child: CustomPaint(painter: p)),
+        SizedBox(
+          width: 28 * sc.text,
+          height: 14 * sc.text,
+          child: CustomPaint(painter: p),
+        ),
         const SizedBox(width: AppSpacing.xxs),
         Text(
           label,
@@ -172,13 +238,16 @@ class ChannelPlannerStage extends StatelessWidget {
         spacing: AppSpacing.sm,
         runSpacing: AppSpacing.xxs,
         children: <Widget>[
-          item(_LineSample(colors.textSecondary, dashed: false), 'Contend'),
           item(
-            _LineSample(colors.textSecondary, dashed: true),
+            _LineSample(colors.textSecondary, dashed: false, sc: sc),
+            'Contend',
+          ),
+          item(
+            _LineSample(colors.textSecondary, dashed: true, sc: sc),
             'One side defers',
           ),
-          item(_RingSample(colors.textPrimary), 'Largest domain'),
-          item(_WallSample(colors.textSecondary), 'Wall'),
+          item(_RingSample(colors.textPrimary, sc), 'Largest domain'),
+          item(_WallSample(colors.textSecondary, sc), 'Wall'),
         ],
       ),
     );
@@ -192,12 +261,16 @@ class _FloorGestures extends StatefulWidget {
     required this.state,
     required this.origin,
     required this.scale,
+    required this.hitRadius,
     required this.child,
   });
 
   final ChannelPlannerState state;
   final Offset origin;
   final double scale;
+
+  /// How close a press must be to an AP to pick it, px.
+  final double hitRadius;
   final Widget child;
 
   @override
@@ -215,7 +288,7 @@ class _FloorGesturesState extends State<_FloorGestures> {
   int? _hit(Offset p) {
     final ChannelPlannerState s = widget.state;
     int? best;
-    double bestD = 26;
+    double bestD = widget.hitRadius;
     for (int i = 0; i < s.apCount; i++) {
       final FloorPoint f = s.position(i);
       final Offset c =
@@ -286,6 +359,7 @@ class _Style {
     required this.label,
     required this.axisLabel,
     required this.chipLabel,
+    required this.sc,
   });
 
   final Color floor, grid, frame, wall, link, ring, selected, onChannel;
@@ -293,12 +367,23 @@ class _Style {
   final bool light;
   final TextStyle label, axisLabel, chipLabel;
 
+  /// Presenter scale (PresenterScale.normal outside presenter mode).
+  final PresenterScale sc;
+
+  /// Height of one spectrum lane.
+  double get lane => 20 * sc.text;
+
+  double w(double px) => sc.strokeWidth(px);
+
   factory _Style.of(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    // Painted labels do not see MediaQuery's text scale; the presenter scale
+    // reaches them here.
     final TextStyle small = mono.inlineCode.copyWith(
-      fontSize: AppTextSize.caption,
+      fontSize: sc.paintFont(AppTextSize.caption),
     );
     return _Style(
       floor: colors.surface2,
@@ -321,19 +406,26 @@ class _Style {
         color: colors.textPrimary,
         fontWeight: FontWeight.w500,
       ),
+      sc: sc,
     );
   }
 }
 
 // ── Painting helpers ──────────────────────────────────────────────────────
 
-void _paintPattern(Canvas canvas, Rect bounds, ChannelPattern p, Color color) {
+void _paintPattern(
+  Canvas canvas,
+  Rect bounds,
+  ChannelPattern p,
+  Color color, {
+  PresenterScale sc = PresenterScale.normal,
+}) {
   if (p == ChannelPattern.solid) return;
   final Paint line = Paint()
     ..color = color
-    ..strokeWidth = 1.5
+    ..strokeWidth = sc.strokeWidth(1.5)
     ..style = PaintingStyle.stroke;
-  const double gap = 6;
+  final double gap = 6 * sc.stroke;
   final double l = bounds.left, t = bounds.top, r = bounds.right;
   final double b = bounds.bottom;
   final double span = bounds.width + bounds.height;
@@ -380,7 +472,7 @@ void _paintPattern(Canvas canvas, Rect bounds, ChannelPattern p, Color color) {
       final Paint dot = Paint()..color = color;
       for (double y = t + gap / 2; y < b; y += gap) {
         for (double x = l + gap / 2; x < r; x += gap) {
-          canvas.drawCircle(Offset(x, y), 1.4, dot);
+          canvas.drawCircle(Offset(x, y), sc.markerSize(1.4), dot);
         }
       }
   }
@@ -422,13 +514,14 @@ Rect _chip(Canvas canvas, Offset center, String s, _Style st, {Color? edge}) {
     height: tp.height + 2,
   );
   final RRect rr = RRect.fromRectAndRadius(r, const Radius.circular(4));
+  final double edgeW = edge == null ? 1 : 2;
   canvas.drawRRect(rr, Paint()..color = st.chipFill);
   canvas.drawRRect(
     rr,
     Paint()
       ..color = edge ?? st.chipBorder
       ..style = PaintingStyle.stroke
-      ..strokeWidth = edge == null ? 1 : 2,
+      ..strokeWidth = st.w(edgeW),
   );
   tp.paint(canvas, Offset(r.left + 4, r.top + 1));
   return r;
@@ -467,7 +560,7 @@ class _FloorPainter extends CustomPainter {
     canvas.drawRect(floor, Paint()..color = st.floor);
     final Paint grid = Paint()
       ..color = st.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = st.w(1);
     for (double x = 10; x < state.floorW; x += 10) {
       canvas.drawLine(_pt(x, 0), _pt(x, state.floorH), grid);
     }
@@ -479,13 +572,13 @@ class _FloorPainter extends CustomPainter {
       Paint()
         ..color = st.frame
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
+        ..strokeWidth = st.w(1),
     );
 
     // Walls
     final Paint wall = Paint()
       ..color = st.wall
-      ..strokeWidth = 4
+      ..strokeWidth = st.w(4)
       ..strokeCap = StrokeCap.round;
     for (final Wall w in state.walls) {
       canvas.drawLine(_pt(w.x1, w.y1), _pt(w.x2, w.y2), wall);
@@ -498,17 +591,17 @@ class _FloorPainter extends CustomPainter {
         _pt(d.x2, d.y2),
         Paint()
           ..color = st.ring
-          ..strokeWidth = 3,
+          ..strokeWidth = st.w(3),
       );
     }
 
     final PlanAnalysis a = state.analysis;
-    final double r = scale * 50 >= _kAllLabelsWidth ? 16 : 13;
+    final double r = st.sc.markerSize(scale * 50 >= _kAllLabelsWidth ? 16 : 13);
 
     // Links
     final Paint solid = Paint()
       ..color = st.link
-      ..strokeWidth = 2;
+      ..strokeWidth = st.w(2);
     final List<ApLink> shown = <ApLink>[
       for (final ApLink l in a.links)
         if (l.aDefersToB.defers || l.bDefersToA.defers) l,
@@ -527,7 +620,7 @@ class _FloorPainter extends CustomPainter {
     if (dom.length >= 2) {
       final Paint ring = Paint()
         ..color = st.ring
-        ..strokeWidth = 2
+        ..strokeWidth = st.w(2)
         ..style = PaintingStyle.stroke;
       final List<Offset> pts = <Offset>[
         for (final int i in dom) _pt(state.position(i).x, state.position(i).y),
@@ -543,7 +636,7 @@ class _FloorPainter extends CustomPainter {
         );
       }
       for (final Offset c in pts) {
-        _dashedCircle(canvas, c, r + 7, ring);
+        _dashedCircle(canvas, c, r + st.sc.markerSize(7), ring);
       }
     }
 
@@ -564,7 +657,7 @@ class _FloorPainter extends CustomPainter {
           Paint()
             ..color = st.frame
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5,
+            ..strokeWidth = st.w(1.5),
         );
       } else {
         final int k = state.occupiedIndex(ch.group);
@@ -575,7 +668,7 @@ class _FloorPainter extends CustomPainter {
         );
         canvas.save();
         canvas.clipPath(Path()..addOval(box));
-        _paintPattern(canvas, box, channelPattern(k), st.onChannel);
+        _paintPattern(canvas, box, channelPattern(k), st.onChannel, sc: st.sc);
         canvas.restore();
         canvas.drawCircle(
           c,
@@ -583,17 +676,17 @@ class _FloorPainter extends CustomPainter {
           Paint()
             ..color = st.ring
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5,
+            ..strokeWidth = st.w(1.5),
         );
       }
       if (i == sel) {
         canvas.drawCircle(
           c,
-          r + 3.5,
+          r + st.sc.markerSize(3.5),
           Paint()
             ..color = st.selected
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 3,
+            ..strokeWidth = st.w(3),
         );
       }
       taken.add(box.inflate(4));
@@ -601,7 +694,7 @@ class _FloorPainter extends CustomPainter {
       taken.add(
         _chip(
           canvas,
-          c + Offset(0, r + 10),
+          c + Offset(0, r + 10 * st.sc.text),
           lbl,
           st,
           edge: ch == null
@@ -670,7 +763,8 @@ class _FloorPainter extends CustomPainter {
       old.scale != scale ||
       old.origin != origin ||
       old.allLabels != allLabels ||
-      old.style.light != style.light;
+      old.style.light != style.light ||
+      old.style.sc != style.sc;
 }
 
 // ── Spectrum strip ────────────────────────────────────────────────────────
@@ -687,7 +781,7 @@ class ChannelSpectrumStrip extends StatelessWidget {
     final List<(ChannelGroup, List<int>)> occ = state.occupied;
     final List<int> lanes = _lanes(occ);
     final int laneCount = lanes.isEmpty ? 1 : lanes.reduce(math.max) + 1;
-    final double h = laneCount * 20 + 52;
+    final double h = laneCount * st.lane + 52 * st.sc.text;
     return Semantics(
       label: _semantics(occ),
       excludeSemantics: true,
@@ -794,14 +888,15 @@ class _SpectrumPainter extends CustomPainter {
             ])
               if (state.rules.region == PlannerRegion.us || c <= 144) c,
           ];
-    final double lanesH = laneCount * 20.0;
+    final double lane = st.lane;
+    final double lanesH = laneCount * lane;
     final double axisY = lanesH + 4;
 
     // Slots: one cell per 20 MHz channel. Disallowed cells are hatched.
     final Paint slot = Paint()
       ..color = st.grid
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = st.w(1);
     for (final int c in all) {
       final double f = centerMHz(band, c).toDouble();
       final double half = band == PlannerBand.band24 ? 2.5 : 10;
@@ -810,7 +905,13 @@ class _SpectrumPainter extends CustomPainter {
       if (!allowed.contains(c)) {
         canvas.save();
         canvas.clipRect(cell);
-        _paintPattern(canvas, cell, ChannelPattern.backDiagonal, st.grid);
+        _paintPattern(
+          canvas,
+          cell,
+          ChannelPattern.backDiagonal,
+          st.grid,
+          sc: st.sc,
+        );
         canvas.restore();
       }
     }
@@ -820,14 +921,14 @@ class _SpectrumPainter extends CustomPainter {
       final (ChannelGroup g, List<int> aps) = occupied[i];
       final Rect r = Rect.fromLTRB(
         fx(g.lowMHz) + 1,
-        lanes[i] * 20.0 + 2,
+        lanes[i] * lane + 2,
         fx(g.highMHz) - 1,
-        lanes[i] * 20.0 + 18,
+        lanes[i] * lane + lane - 2,
       );
       canvas.drawRect(r, Paint()..color = channelHue(i, light: st.light));
       canvas.save();
       canvas.clipRect(r);
-      _paintPattern(canvas, r, channelPattern(i), st.onChannel);
+      _paintPattern(canvas, r, channelPattern(i), st.onChannel, sc: st.sc);
       canvas.restore();
       final TextPainter tp = _tp('${g.span} x${aps.length}', st.chipLabel);
       if (tp.width + 8 <= r.width) {
@@ -847,7 +948,7 @@ class _SpectrumPainter extends CustomPainter {
       Offset(size.width, axisY - 2),
       Paint()
         ..color = st.frame
-        ..strokeWidth = 1,
+        ..strokeWidth = st.w(1),
     );
     final List<int> labelled = band == PlannerBand.band24
         ? const <int>[1, 6, 11, 13]
@@ -865,10 +966,10 @@ class _SpectrumPainter extends CustomPainter {
 
     // DFS brackets (5 GHz).
     if (band == PlannerBand.band5) {
-      final double y = axisY + 32;
+      final double y = axisY + 32 * st.sc.text;
       final Paint br = Paint()
         ..color = st.hatch
-        ..strokeWidth = 1;
+        ..strokeWidth = st.w(1);
       for (final (int a, int b) in <(int, int)>[
         (52, 64),
         (100, state.rules.region == PlannerRegion.us ? 144 : 140),
@@ -897,27 +998,30 @@ class _SpectrumPainter extends CustomPainter {
             : 'EU: 1 to 13',
         st.axisLabel,
       );
-      tp.paint(canvas, Offset(0, axisY + 24));
+      tp.paint(canvas, Offset(0, axisY + 24 * st.sc.text));
     }
   }
 
   @override
   bool shouldRepaint(_SpectrumPainter old) =>
-      old.revision != revision || old.style.light != style.light;
+      old.revision != revision ||
+      old.style.light != style.light ||
+      old.style.sc != style.sc;
 }
 
 // ── Legend samples ────────────────────────────────────────────────────────
 
 class _LineSample extends CustomPainter {
-  _LineSample(this.color, {required this.dashed});
+  _LineSample(this.color, {required this.dashed, required this.sc});
   final Color color;
   final bool dashed;
+  final PresenterScale sc;
 
   @override
   void paint(Canvas canvas, Size size) {
     final Paint p = Paint()
       ..color = color
-      ..strokeWidth = 2;
+      ..strokeWidth = sc.strokeWidth(2);
     final Offset a = Offset(0, size.height / 2);
     final Offset b = Offset(size.width, size.height / 2);
     if (dashed) {
@@ -928,12 +1032,13 @@ class _LineSample extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_LineSample old) => old.color != color;
+  bool shouldRepaint(_LineSample old) => old.color != color || old.sc != sc;
 }
 
 class _RingSample extends CustomPainter {
-  _RingSample(this.color);
+  _RingSample(this.color, this.sc);
   final Color color;
+  final PresenterScale sc;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -943,18 +1048,19 @@ class _RingSample extends CustomPainter {
       size.height / 2 - 1,
       Paint()
         ..color = color
-        ..strokeWidth = 2
+        ..strokeWidth = sc.strokeWidth(2)
         ..style = PaintingStyle.stroke,
     );
   }
 
   @override
-  bool shouldRepaint(_RingSample old) => old.color != color;
+  bool shouldRepaint(_RingSample old) => old.color != color || old.sc != sc;
 }
 
 class _WallSample extends CustomPainter {
-  _WallSample(this.color);
+  _WallSample(this.color, this.sc);
   final Color color;
+  final PresenterScale sc;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -963,11 +1069,98 @@ class _WallSample extends CustomPainter {
       Offset(size.width - 2, size.height / 2),
       Paint()
         ..color = color
-        ..strokeWidth = 4
+        ..strokeWidth = sc.strokeWidth(4)
         ..strokeCap = StrokeCap.round,
     );
   }
 
   @override
-  bool shouldRepaint(_WallSample old) => old.color != color;
+  bool shouldRepaint(_WallSample old) => old.color != color || old.sc != sc;
+}
+
+// ── Presenter verdict ─────────────────────────────────────────────────────
+
+/// The plan's numbers, over the floor in presenter mode: the largest
+/// contention domain (the number the lesson is about), the airtime each of
+/// its APs gets, and how many channels this width leaves, then the verdict
+/// in words.
+class _PresenterVerdict extends StatelessWidget {
+  const _PresenterVerdict({required this.state});
+
+  final ChannelPlannerState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale sc = PresenterMode.scaleOf(context);
+    final ChannelPlannerState s = state;
+    final PlanAnalysis a = s.analysis;
+    final int n = a.largestDomain.length;
+    final bool none = s.unassigned.length == s.apCount;
+    final PlanVerdict v = channelPlanVerdict(s, colors);
+
+    Widget stat(String label, String value, {bool headline = false}) =>
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: text.bodySmall?.copyWith(color: colors.textSecondary),
+              ),
+              Text(
+                value,
+                style: headline
+                    ? sc
+                          .headlineStyle(mono.outputLarge)
+                          .copyWith(color: colors.textAccent)
+                    : mono.outputMedium.copyWith(color: colors.textPrimary),
+              ),
+            ],
+          ),
+        );
+
+    return Semantics(
+      liveRegion: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            children: <Widget>[
+              stat(
+                'Largest contention domain',
+                none ? '--' : '$n AP${n == 1 ? '' : 's'}',
+                headline: true,
+              ),
+              stat(
+                'Airtime each (1/N)',
+                none ? '--' : '${(a.largestShare * 100).round()}%',
+              ),
+              stat('Channels at ${s.width} MHz', '${s.available}'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(v.icon, color: v.color),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  v.message,
+                  style: text.bodyMedium?.copyWith(color: v.color),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
