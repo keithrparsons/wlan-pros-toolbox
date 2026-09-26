@@ -2804,6 +2804,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Wi-Fi Classroom (2026-09-26, spec 36). Relaying on one channel vs a
+      // dedicated or wired backhaul. Names no product.
+      ToolEntry(
+        id: 'repeater-mesh',
+        title: 'Repeaters and Mesh Backhaul',
+        description:
+            'See why a repeater on one channel halves throughput or worse, '
+            'why a weak backhaul hop limits everything behind it, and what a '
+            'dedicated backhaul radio changes',
+        routeName: '/tools/repeater-mesh',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       ToolEntry(
         id: 'dfs-simulator',
         title: 'DFS and Radar',
