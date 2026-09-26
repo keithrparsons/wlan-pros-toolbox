@@ -2783,6 +2783,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Airtime and Access',
       ),
+      // Pairs with 'airtime-fairness' (a slow client's OWN traffic) and
+      // 'airtime-anatomy' (the frame timing it reuses): this one is what an
+      // 802.11b device costs while it sends nothing.
+      ToolEntry(
+        id: 'legacy-protection',
+        title: 'Legacy Protection Cost',
+        description:
+            'See what one silent 802.11b device costs a modern sender: a slow '
+            'protection frame before every frame and a longer slot time',
+        routeName: '/tools/legacy-protection',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
       ToolEntry(
         id: 'mlo-simulator',
         title: 'Multi-Link Operation',

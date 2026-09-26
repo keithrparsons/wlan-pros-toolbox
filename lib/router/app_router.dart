@@ -50,6 +50,7 @@ import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/multicast_basic_rate_screen.dart';
 import '../screens/tools/calculators/channel_utilization_screen.dart';
 import '../screens/tools/calculators/band_steering_screen.dart';
+import '../screens/tools/calculators/legacy_protection_screen.dart';
 import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
@@ -399,6 +400,10 @@ class AppRouter {
   // client, what the AP can hide, refuse or suggest and what the client's
   // published rules decide; pure on-device model, all platforms incl. web.
   static const String bandSteering = '/tools/band-steering';
+  // Wi-Fi Classroom (2026-09-27). Legacy protection cost: what an associated
+  // or heard 802.11b device costs a 54 Mb/s sender (protection frames and the
+  // long slot); pure on-device math, all platforms incl. web.
+  static const String legacyProtection = '/tools/legacy-protection';
   // Wi-Fi Classroom (2026-09-25). 802.1X / EAP message ladder (client, AP,
   // RADIUS server); pure on-device model, all platforms incl. web.
   static const String eapLadder = '/tools/eap-ladder';
@@ -888,6 +893,7 @@ class AppRouter {
     multicastBasicRate: (_) => const MulticastBasicRateScreen(),
     channelUtilization: (_) => const ChannelUtilizationScreen(),
     bandSteering: (_) => const BandSteeringScreen(),
+    legacyProtection: (_) => const LegacyProtectionScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
