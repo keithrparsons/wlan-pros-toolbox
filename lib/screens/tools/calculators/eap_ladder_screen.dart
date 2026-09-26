@@ -14,6 +14,13 @@
 // lib/services/wifi_lab/eap_ladder.dart. Method wording is read from the
 // app's 802.1X / EAP Types reference (eap_types_screen.dart), unchanged.
 //
+// ROAM (spec 21b, 2026-09-26): a Mode toggle (Authenticate or Roam) sits
+// above the stage. Roam draws four lanes (client, current AP, target AP,
+// RADIUS server), Reassociation, PMK caching, OKC, FT over the air and over
+// the DS, and a timeline bar of scan, authentication and key handshake.
+// Authenticate is the original ladder, unchanged. Joining a network is its
+// own tool (join_ladder_screen.dart) on the same controller and stage.
+//
 // This is NOT the 'eap-types' reference or the 'frame-exchange' reference;
 // both are untouched.
 //
@@ -66,6 +73,7 @@ import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'eap_ladder_controller.dart';
 import 'eap_ladder_controls.dart';
+import 'eap_ladder_jr_controls.dart';
 import 'eap_ladder_parts.dart';
 import 'eap_ladder_stage.dart';
 
@@ -152,11 +160,19 @@ class _EapLadderScreenState extends State<EapLadderScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
+                      // Authenticate or Roam (spec 21b). Join is its own
+                      // tool (join-ladder).
+                      ElCard(child: LadderModeToggle(controller: _controller)),
+                      const SizedBox(height: AppSpacing.sm),
                       EapLadderStage(controller: _controller),
                       const SizedBox(height: AppSpacing.sm),
                       EapLadderControls(controller: _controller),
                       const SizedBox(height: AppSpacing.sm),
-                      const _AboutCard(),
+                      ListenableBuilder(
+                        listenable: _controller,
+                        builder: (BuildContext context, _) =>
+                            _AboutCard(roam: _controller.isJr),
+                      ),
                       const ToolHelpFooter(toolId: kEapLadderToolId),
                     ],
                   ),
@@ -171,7 +187,10 @@ class _EapLadderScreenState extends State<EapLadderScreen>
 }
 
 class _AboutCard extends StatelessWidget {
-  const _AboutCard();
+  const _AboutCard({required this.roam});
+
+  /// Roam mode: say what the four-lane ladder draws and leaves out.
+  final bool roam;
 
   @override
   Widget build(BuildContext context) {
@@ -203,9 +222,16 @@ class _AboutCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Not drawn: the client sending EAPOL-Start, accounting, FT over '
-            'the DS, and how FT and OKC move keys between APs. Times are '
-            'illustrative; change the RADIUS time to match what you measure.',
+            roam
+                ? 'Roam draws a second AP, Reassociation naming the current '
+                      'AP, OKC and FT over the DS. Not drawn: how the APs '
+                      'share keys for FT and OKC, and any DHCP after the '
+                      'roam. Every time is a setting you can change.'
+                : 'Not drawn: the client sending EAPOL-Start, accounting, and '
+                      'how FT and OKC move keys between APs (Roam mode draws '
+                      'FT over the DS and OKC with a second AP). Times are '
+                      'illustrative; change the RADIUS time to match what you '
+                      'measure.',
             style: body,
           ),
         ],
