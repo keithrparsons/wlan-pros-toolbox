@@ -13,6 +13,9 @@
 // certificate lines are read from the app's 802.1X / EAP Types reference
 // (EapTypesScreen.methods), not restated, so the two tools cannot disagree.
 //
+// JOIN AND ROAM (spec 21b): in those modes the readouts and settings come
+// from eap_ladder_jr_controls.dart; the transport is the same.
+//
 // PRESENTER (spec 00): inside a PresenterLayout the panel keeps playback, the
 // method and the roam mode in view (the inner method only for EAP-TTLS); the
 // counts are on the stage, and the certificate and RADIUS settings, the
@@ -21,6 +24,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/eap_ladder.dart';
+import '../../../services/wifi_lab/join_roam.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
@@ -29,6 +33,7 @@ import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
 import '../reference/eap_types_screen.dart';
 import 'eap_ladder_controller.dart';
+import 'eap_ladder_jr_controls.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
 
@@ -64,12 +69,26 @@ class EapLadderControls extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final EapLadderController c = controller;
-        if (PresenterMode.isActive(context)) return _PresenterPanel(c);
-        final List<Widget> cards = <Widget>[
-          if (parts.contains(LadderControlPart.transport)) _TransportCard(c),
-          if (parts.contains(LadderControlPart.readouts)) _ReadoutsCard(c),
-          if (parts.contains(LadderControlPart.settings)) _SettingsCard(c),
-        ];
+        if (PresenterMode.isActive(context)) {
+          return c.isJr ? _JrPresenterPanel(c) : _PresenterPanel(c);
+        }
+        final List<Widget> cards = c.isJr
+            ? <Widget>[
+                if (parts.contains(LadderControlPart.transport))
+                  _TransportCard(c),
+                if (parts.contains(LadderControlPart.readouts))
+                  JrReadoutsCard(controller: c),
+                if (parts.contains(LadderControlPart.settings))
+                  JrSettingsCard(controller: c),
+              ]
+            : <Widget>[
+                if (parts.contains(LadderControlPart.transport))
+                  _TransportCard(c),
+                if (parts.contains(LadderControlPart.readouts))
+                  _ReadoutsCard(c),
+                if (parts.contains(LadderControlPart.settings))
+                  _SettingsCard(c),
+              ];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -95,8 +114,6 @@ class _PresenterPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final bool reducedMotion =
-        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     final LadderConfig cfg = c.config;
     final EapMethod? ref = _SettingsCard._reference(cfg.method);
     final bool ttls = cfg.method == LadderMethod.eapTtls;
@@ -105,97 +122,11 @@ class _PresenterPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        ElCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: c.togglePlay,
-                      icon: Icon(
-                        c.playing
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded,
-                      ),
-                      label: Text(
-                        c.playing
-                            ? 'Pause'
-                            : c.atEnd
-                            ? 'Play again'
-                            : 'Play',
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-                        minimumSize: const Size.fromHeight(
-                          AppSpacing.minTouchTarget,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Expanded(
-                    child: ElOutlineButton(
-                      icon: Icons.skip_previous_rounded,
-                      label: 'Back',
-                      semanticLabel: 'Take back the last message',
-                      onPressed: c.atStart ? null : c.back,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Expanded(
-                    child: ElOutlineButton(
-                      icon: Icons.skip_next_rounded,
-                      label: 'Step',
-                      semanticLabel: 'Send the next message',
-                      onPressed: c.atEnd ? null : c.step,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Row(
-                children: <Widget>[
-                  IconButton(
-                    onPressed: c.atStart ? null : c.reset,
-                    tooltip: 'Back to the start, nothing sent (R)',
-                    icon: const Icon(Icons.restart_alt_rounded),
-                    color: colors.textAccent,
-                  ),
-                  Tooltip(
-                    message: 'Show every message at once',
-                    child: TextButton.icon(
-                      onPressed: c.atEnd ? null : c.showAll,
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.textAccent,
-                        minimumSize: const Size(0, AppSpacing.minTouchTarget),
-                      ),
-                      icon: const Icon(Icons.unfold_more_rounded),
-                      label: const Text('Show all'),
-                    ),
-                  ),
-                  const Spacer(),
-                  AppToggle<LadderSpeed>(
-                    semanticLabel: 'Playback speed',
-                    value: c.speed,
-                    items: <AppToggleItem<LadderSpeed>>[
-                      for (final LadderSpeed s in LadderSpeed.values)
-                        (s, s.label),
-                    ],
-                    onChanged: (LadderSpeed s) => c.speed = s,
-                  ),
-                ],
-              ),
-              if (reducedMotion)
-                Text(
-                  'Reduced motion is on: arrows appear without drawing in.',
-                  style: text.bodySmall?.copyWith(color: colors.textTertiary),
-                ),
-            ],
-          ),
-        ),
+        if (c.mode != LadderMode.join) ...<Widget>[
+          ElCard(child: LadderModeToggle(controller: c)),
+          const SizedBox(height: AppSpacing.xs),
+        ],
+        _PresenterTransport(c),
         const SizedBox(height: AppSpacing.xs),
         ElCard(
           child: Column(
@@ -291,6 +222,133 @@ class _PresenterPanel extends StatelessWidget {
               ElRow(label: 'Client cert', value: ref.clientCert),
             ],
           ),
+      ],
+    );
+  }
+}
+
+/// Play, Back, Step, Reset, Show all and speed, for the presenter panel.
+class _PresenterTransport extends StatelessWidget {
+  const _PresenterTransport(this.c);
+
+  final EapLadderController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final bool reducedMotion =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return ElCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: c.togglePlay,
+                  icon: Icon(
+                    c.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(
+                    c.playing
+                        ? 'Pause'
+                        : c.atEnd
+                        ? 'Play again'
+                        : 'Play',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    minimumSize: const Size.fromHeight(
+                      AppSpacing.minTouchTarget,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: ElOutlineButton(
+                  icon: Icons.skip_previous_rounded,
+                  label: 'Back',
+                  semanticLabel: 'Take back the last message',
+                  onPressed: c.atStart ? null : c.back,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: ElOutlineButton(
+                  icon: Icons.skip_next_rounded,
+                  label: 'Step',
+                  semanticLabel: 'Send the next message',
+                  onPressed: c.atEnd ? null : c.step,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: <Widget>[
+              IconButton(
+                onPressed: c.atStart ? null : c.reset,
+                tooltip: 'Back to the start, nothing sent (R)',
+                icon: const Icon(Icons.restart_alt_rounded),
+                color: colors.textAccent,
+              ),
+              Tooltip(
+                message: 'Show every message at once',
+                child: TextButton.icon(
+                  onPressed: c.atEnd ? null : c.showAll,
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.textAccent,
+                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                  ),
+                  icon: const Icon(Icons.unfold_more_rounded),
+                  label: const Text('Show all'),
+                ),
+              ),
+              const Spacer(),
+              AppToggle<LadderSpeed>(
+                semanticLabel: 'Playback speed',
+                value: c.speed,
+                items: <AppToggleItem<LadderSpeed>>[
+                  for (final LadderSpeed s in LadderSpeed.values) (s, s.label),
+                ],
+                onChanged: (LadderSpeed s) => c.speed = s,
+              ),
+            ],
+          ),
+          if (reducedMotion)
+            Text(
+              'Reduced motion is on: arrows appear without drawing in.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The presenter panel in Join and Roam: the mode (Roam only, in the
+/// ladder), playback, then the Join or Roam settings.
+class _JrPresenterPanel extends StatelessWidget {
+  const _JrPresenterPanel(this.c);
+
+  final EapLadderController c;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (c.mode != LadderMode.join) ...<Widget>[
+          ElCard(child: LadderModeToggle(controller: c)),
+          const SizedBox(height: AppSpacing.xs),
+        ],
+        _PresenterTransport(c),
+        const SizedBox(height: AppSpacing.xs),
+        JrPresenterSettings(controller: c),
       ],
     );
   }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the client device -->
+    <rect x="3" y="4" width="5" height="10" rx="1.2"/>
+    <!-- joining: an arrow from the client toward the network -->
+    <path d="M9.5 9 H12.5"/>
+    <path d="M11 7.5 L12.5 9 L11 10.5"/>
+    <!-- the network: Wi-Fi arcs above the AP point -->
+    <path d="M16.23 11.23 A2.5 2.5 0 0 1 19.77 11.23"/>
+    <path d="M14.46 9.46 A5 5 0 0 1 21.54 9.46"/>
+    <circle cx="18" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="9" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

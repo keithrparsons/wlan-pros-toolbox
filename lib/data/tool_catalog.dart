@@ -2794,6 +2794,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // Distinct from the 'eap-types' and 'frame-exchange' references, which
       // stay as they are.
       ToolEntry(
+        id: 'join-ladder',
+        title: 'Joining a Network, Frame by Frame',
+        description:
+            'Watch a client join a network frame by frame: scan, '
+            'authentication, association, the 4-way handshake, DHCP and the '
+            'address check',
+        routeName: '/tools/join-ladder',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
+      ToolEntry(
         id: 'eap-ladder',
         title: '802.1X and EAP Ladder',
         description:

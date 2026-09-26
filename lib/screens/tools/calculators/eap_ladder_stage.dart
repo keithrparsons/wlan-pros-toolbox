@@ -19,7 +19,8 @@
 // header, and the caption leads with "Step n of N". Strokes, arrowheads and
 // icons read PresenterMode.scaleOf.
 //
-// Takes the shared EapLadderController and nothing else.
+// Takes the shared EapLadderController and nothing else. In Roam mode (spec
+// 21b) it hands the whole stage to JoinRoamStage (eap_ladder_jr_stage.dart).
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
@@ -30,6 +31,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
 import 'eap_ladder_controller.dart';
+import 'eap_ladder_jr_stage.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
 
@@ -61,6 +63,9 @@ class EapLadderStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, _) {
+        // Roam (and Join, in the join-ladder tool) draw their own
+        // ladder: more lanes, the channel strip and the phase timeline.
+        if (controller.isJr) return JoinRoamStage(controller: controller);
         if (PresenterMode.isActive(context)) {
           return LayoutBuilder(
             builder: (BuildContext context, BoxConstraints box) => Column(
