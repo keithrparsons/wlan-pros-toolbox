@@ -2781,6 +2781,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Predict, Then Measure (2026-09-26, spec 32): a predictive design's wall
+      // losses are claims until an AP-on-a-stick walk crosses them. Every loss
+      // illustrative; no product named.
+      ToolEntry(
+        id: 'predict-then-measure',
+        title: 'Predict, Then Measure',
+        description:
+            'Test a predictive design with an AP on a stick: which wall '
+            'losses were wrong, and why only a walk across a wall can tell',
+        routeName: '/tools/predict-then-measure',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       ToolEntry(
         id: 'dfs-simulator',
         title: 'DFS and Radar',

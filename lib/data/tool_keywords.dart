@@ -1484,6 +1484,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'no data',
     'rmse',
   ],
+  // Wi-Fi Classroom (2026-09-26). Predict, then measure (spec 32): what a
+  // student types when asking how to check a predictive design on site.
+  'predict-then-measure': <String>[
+    'predictive design',
+    'predictive',
+    'prediction',
+    'ap on a stick',
+    'ap-on-a-stick',
+    'apos',
+    'validation',
+    'validation survey',
+    'wall loss',
+    'wall attenuation',
+    'survey',
+    'site survey',
+    'model vs reality',
+    'model versus reality',
+    'both sides',
+  ],
   // Wi-Fi Classroom (2026-09-26). The survey walk simulator (spec 26): what a
   // student types when asking how fast to walk a survey.
   'survey-walk': <String>[

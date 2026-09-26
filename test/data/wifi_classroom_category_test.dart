@@ -46,6 +46,7 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'roaming-walk',
     'survey-walk',
     'heat-map-builder',
+    'predict-then-measure',
     'dfs-simulator',
     'eap-ladder',
   ],
@@ -89,13 +90,14 @@ void main() {
     );
   });
 
-  test('all 25 simulators are in wifi-classroom and none remain in '
+  test('all 26 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: survey-walk and heat-map-builder added. 23 + 2 = 25.
-    expect(sims, hasLength(25));
+    // 2026-09-26: predict-then-measure added (spec 32). 25 + 1 = 26.
+    expect(sims, hasLength(26));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -162,7 +164,8 @@ void main() {
       );
     }
     // 2026-09-26: survey-walk and heat-map-builder added. 36 + 2 = 38.
-    expect(classroom.tools, hasLength(38));
+    // 2026-09-26: predict-then-measure added (spec 32). 38 + 1 = 39.
+    expect(classroom.tools, hasLength(39));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

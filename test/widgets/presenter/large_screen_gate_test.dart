@@ -339,9 +339,10 @@ void main() {
       });
 
       // 2026-09-26: survey-walk and heat-map-builder added. 23 + 2 = 25.
-      test('exactly the 25 simulators are gated in the real catalog', () {
+      // 2026-09-26: predict-then-measure added (spec 32). 25 + 1 = 26.
+      test('exactly the 26 simulators are gated in the real catalog', () {
         final List<ToolEntry> lab = wifiLabTools().toList();
-        expect(lab, hasLength(25));
+        expect(lab, hasLength(26));
       });
     },
   );

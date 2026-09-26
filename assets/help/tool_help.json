@@ -1472,6 +1472,62 @@
       ],
       "source": "Shepard, A two-dimensional interpolation function for irregularly-spaced data, Proceedings of the 1968 Association for Computing Machinery (ACM) National Conference, pp. 517-524 (inverse distance weighting). Log-distance path loss as in the Roaming Walk. Keith Parsons, Seven Rules for Accurate Site Surveys: Rule 3, set your interpolation distance properly; Rule 5, capture on both sides of what you care about; Rule 6, white does not mean no coverage, white means no data. Computed on your device."
     },
+    "predict-then-measure": {
+      "name": "Predict, Then Measure",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Tests a predictive design against the building with an AP on a stick (APoS): a temporary AP placed where the design says, measured on site. Every wall loss in a predictive design is a claim. Walk the floor, compare the Predicted and Measured maps, and see which walls the design got wrong, and which your walk never tested.",
+      "whyHere": "A predictive design is a model: walls drawn with assumed losses, APs placed, a heat map computed. It can show good coverage everywhere and still be wrong about a wall. You only learn a wall's real loss by measuring on both sides of it (Keith's Rule 5), so a validation walk that stays on one side of a wall cannot find the error. All wall losses here, including the material defaults, are illustrative, adjustable values, not measured material data.",
+      "howToUse": [
+        "Pick a scenario (office, school or warehouse; illustrative). The Predicted map is the design. Each wall is labeled with its design loss and 'untested'.",
+        "Walk the floor: drag on the floor to draw a walk leg (a tap continues the last leg), or press One side only or Both sides of every wall. A sample is taken every meter. Set the noise on each sample (0 to 8 dB, illustrative) to see what real readings do to the estimates.",
+        "A wall with samples on both sides of it on one leg reads 'tested' with its measured loss. Switch the map between Predicted, Measured (the samples spread with inverse distance weighting (IDW), white where there is no data) and Difference (each sample minus the design at that spot, spread the same way).",
+        "Update model replaces each tested wall's design loss with its measured loss and recomputes the Predicted map. Untested walls keep what the design said.",
+        "Predict, then reveal: the design shows green everywhere. What would you check before signing it off? Reveal the truth to see the true wall losses and the Truth map, and which wrong walls your walk missed. Then move the AP, or decide the design needs another AP.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Space reveals or hides the truth, M steps through the maps, R resets, U updates the model, C clears the walk, B walks both sides of every wall, O walks one side only, Up and Down change the noise, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Scenario",
+          "unit": "",
+          "range": "Office (30 m x 20 m, 11 walls), School (32 m x 20 m, 11 walls) or Warehouse (40 m x 26 m, 8 walls); illustrative"
+        },
+        {
+          "name": "Walk",
+          "unit": "m",
+          "range": "drawn legs, or One side only, or Both sides of every wall; a sample every 1 m, up to 600 samples"
+        },
+        {
+          "name": "Noise",
+          "unit": "dB",
+          "range": "0 to 8, standard deviation of each sample (default 0, illustrative)"
+        },
+        {
+          "name": "Wall design loss",
+          "unit": "dB",
+          "range": "0 to 45 per wall; material defaults drywall 3, glass 4, brick 10, concrete 15, elevator shaft 25 (illustrative)"
+        },
+        {
+          "name": "AP position",
+          "unit": "m",
+          "range": "anywhere on the floor, snapped to 0.5 m"
+        },
+        {
+          "name": "Hidden truth",
+          "unit": "dB",
+          "range": "by default two walls 8 to 14 dB worse than the design and one 4 to 8 dB better, picked by a seed; the instructor can set any wall's true loss, 0 to 45 dB (illustrative)"
+        }
+      ],
+      "algorithm": "Signal at a point: an illustrative 20 dBm effective isotropic radiated power (EIRP), minus the free-space path loss (FSPL) at 1 m for 5.5 GHz, minus 10 x n x log10(d), minus the loss of every wall the straight line from the AP crosses, with d in meters (at least 1 m) and n set per scenario (illustrative). The Predicted map uses the design losses, the Truth map the true losses. Each sample reads the truth plus Gaussian noise. Measured map: IDW over the 8 nearest samples within 5 m, weights 1 / d^2; white beyond 5 m. Difference: for each sample, measured minus the design's prediction at that spot, spread with the same IDW. A wall is tested when two neighboring samples on one leg sit on opposite sides of it: the leg crosses it, and the line from the AP crosses it for one sample and not the other, with every other wall the same for both. Its measured loss is S(near) - S(far) - (PL(far) - PL(near)), averaged over every such pair; the other walls cancel. Readouts: walls tested and untested, the largest difference, the share of the floor where the difference is more than 5 dB, and the share below a -67 dBm design target (illustrative).",
+      "example": "Two samples 1 m apart straddle a wall, at 7.5 m and 8.5 m from the AP, with n = 2.8 and no other wall between them and the AP. The near one reads -51.8 dBm and the far one -69.3 dBm. The extra meter costs 10 x 2.8 x log10(8.5 / 7.5) = 1.5 dB, so the wall costs 69.3 - 51.8 - 1.5 = 16.0 dB. If the design said 4 dB, the wall is 12 dB worse than the model.",
+      "fieldNotes": [
+        "Wall losses here are illustrative, adjustable values. No primary source for multi-wall model coefficients was used, and real walls of one material vary widely.",
+        "Capture on both sides of what you care about. A sample inside a room tells you nothing about its wall unless another sample sits on the other side of it.",
+        "A design that looks right everywhere is still a model. An AP-on-a-stick walk tests the walls it crosses and nothing else.",
+        "This is a teaching model: straight-line wall losses only, no doors, reflections or floors above and below.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Keith Parsons, Seven Rules for Accurate Site Surveys: Rule 5, capture on both sides of what you care about; Rule 6, white does not mean no coverage, white means no data. Log-distance path loss and inverse distance weighting as in the Heat Map Builder. Computed on your device."
+    },
     "channel-planner": {
       "name": "Channel Planner",
       "category": "Wi-Fi Classroom",
