@@ -1463,6 +1463,27 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'shadowing',
     'path loss exponent',
   ],
+  // Wi-Fi Classroom (2026-09-26). The heat map builder: what a student types
+  // when asking how a survey tool turns dots into a colored floor.
+  'heat-map-builder': <String>[
+    'heat map',
+    'heatmap',
+    'interpolation',
+    'extrapolation',
+    'idw',
+    'inverse distance',
+    'inverse distance weighting',
+    'nearest neighbor',
+    'kriging',
+    'guess range',
+    'accuracy distance',
+    'interpolation distance',
+    'sample spacing',
+    'survey',
+    'site survey',
+    'no data',
+    'rmse',
+  ],
   // Wi-Fi Classroom (2026-09-26). The survey walk simulator (spec 26): what a
   // student types when asking how fast to walk a survey.
   'survey-walk': <String>[

@@ -39,6 +39,7 @@ import '../screens/tools/calculators/airtime_fairness_screen.dart';
 import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
 import '../screens/tools/calculators/survey_walk_screen.dart';
+import '../screens/tools/calculators/heat_map_builder_screen.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/power_save_screen.dart';
@@ -313,6 +314,10 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-26). Pure-Dart survey walk: scan revisit time,
   // sample spacing vs guess range, capture methods; all platforms incl. web.
   static const String surveyWalk = '/tools/survey-walk';
+  // Wi-Fi Classroom (2026-09-26). Survey samples to a heat map: inverse
+  // distance weighting, nearest neighbor, guess range, extrapolation and the
+  // error map; pure on-device math, all platforms incl. web.
+  static const String heatMapBuilder = '/tools/heat-map-builder';
   // Wi-Fi Classroom (2026-09-25). HE resource units and SU vs OFDMA airtime,
   // pure on-device math; all platforms incl. web.
   static const String ofdmaSimulator = '/tools/ofdma-simulator';
@@ -808,6 +813,7 @@ class AppRouter {
     channelPlanner: (_) => const ChannelPlannerScreen(),
     roamingWalk: (_) => const RoamingWalkScreen(),
     surveyWalk: (_) => const SurveyWalkScreen(),
+    heatMapBuilder: (_) => const HeatMapBuilderScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
