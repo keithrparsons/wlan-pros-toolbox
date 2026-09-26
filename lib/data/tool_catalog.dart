@@ -2566,6 +2566,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'RF and Propagation',
       ),
+      // Why Two Devices Disagree (2026-09-26, spec 31). Reuses the Multipath
+      // Simulator's fading, so it sits right after it.
+      ToolEntry(
+        id: 'devices-disagree',
+        title: 'Why Two Devices Disagree',
+        description:
+            'Four devices at one spot report different signal: device '
+            'offsets, grip, body, fading and rounding, and what applying '
+            'offsets removes',
+        routeName: '/tools/devices-disagree',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
       // Distinct from the 'rf-attenuation' calculator, which stays as it is.
       ToolEntry(
         id: 'room-propagation',

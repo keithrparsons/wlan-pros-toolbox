@@ -39,6 +39,7 @@ class PresenterExtraKey {
 class PresenterActions {
   const PresenterActions({
     this.playPause,
+    this.playPauseLabel,
     this.step,
     this.reset,
     this.sliderDown,
@@ -55,6 +56,10 @@ class PresenterActions {
 
   /// Space.
   final VoidCallback? playPause;
+
+  /// What Space does, for the shortcut overlay, when it is not play/pause
+  /// (Why Two Devices Disagree: "Re-sample"). Null reads "Play or pause".
+  final String? playPauseLabel;
 
   /// Right arrow.
   final VoidCallback? step;

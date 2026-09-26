@@ -521,6 +521,89 @@
       ],
       "source": "Wave superposition, the two-ray (image) model and Rayleigh fading theory. Thick-concrete reflection strength from ITU-R P.2040 material properties at normal incidence. The guard interval is the 802.11 OFDM long guard interval. The simulation runs on your device."
     },
+    "devices-disagree": {
+      "name": "Why Two Devices Disagree",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows why two devices at the same spot, hearing the same AP, report different signal strength. The true received power at the spot is held fixed, and up to four generic devices (a laptop, a phone, a tablet and a survey adapter by default) each report it their own way.",
+      "whyHere": "RSSI (received signal strength indicator) is a number each chipset reports in its own way, so a laptop and a phone side by side commonly disagree by several dB. Comparing raw numbers across devices compares the devices, not the network. This is why survey tools let you enter an offset per adapter, and why a reading taken on one device is not a design target for another.",
+      "howToUse": [
+        "Start with the question at the top: the laptop says -62, the phone says -68, same spot. Which one is right? Predict, then press Reveal.",
+        "Each device card shows what that device reports now. The strip chart shows every device's readings over the last 6 seconds, with the true power as a dashed line.",
+        "Pick a device (A to D) and set its fixed offset, from -10 to +10 dB, and its orientation and grip loss, from 0 to 10 dB. Every offset and loss is illustrative, not a measurement of any real device.",
+        "For the same device, turn on body loss (the person holding it), choose a 1 dB or 2 dB reporting step, and choose how many readings it averages, from 1 to 10.",
+        "Turn on Apply offsets to subtract each device's offset, as a survey tool does. With fading off, the fixed spread disappears entirely. With fading on, the fading remains, and so do grip and body loss.",
+        "Set the spacing between devices. Farther apart than half a wavelength (about 2.7 cm at 5 GHz), each device sees its own fade. Averaging more readings makes the fading spread smaller.",
+        "Re-sample takes the next few seconds of readings. Reset puts every setting back.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space re-samples, R resets, Up and Down move the AP a meter, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4, 5 or 6"
+        },
+        {
+          "name": "AP distance",
+          "unit": "m",
+          "range": "1 to 50, default 8"
+        },
+        {
+          "name": "Fading",
+          "unit": "on / off",
+          "range": "default on"
+        },
+        {
+          "name": "Spacing between devices",
+          "unit": "cm",
+          "range": "0 to 30, default 10"
+        },
+        {
+          "name": "Devices",
+          "unit": "count",
+          "range": "2 to 4, default 4"
+        },
+        {
+          "name": "Device offset",
+          "unit": "dB",
+          "range": "-10 to +10, illustrative defaults 0, -4, -2, +1"
+        },
+        {
+          "name": "Orientation and grip loss",
+          "unit": "dB",
+          "range": "0 to 10, illustrative"
+        },
+        {
+          "name": "Body loss when on",
+          "unit": "dB",
+          "range": "0 to 10, illustrative default 3"
+        },
+        {
+          "name": "Reporting step",
+          "unit": "dB",
+          "range": "1 or 2"
+        },
+        {
+          "name": "Averaging",
+          "unit": "readings",
+          "range": "1 to 10"
+        },
+        {
+          "name": "Apply offsets",
+          "unit": "on / off",
+          "range": "default off"
+        }
+      ],
+      "algorithm": "True power at the spot = effective isotropic radiated power (EIRP) - free-space loss at 1 m - 10 n log10(distance), with an illustrative 14 dBm EIRP and exponent n = 3, the same log-distance model as the Roaming Walk. Each device receives true power + its offset - grip loss - body loss + fading. Fading comes from the Multipath Simulator's Rayleigh model: 12 reflections of equal strength and random phase, direct path blocked, evaluated at each device's own position. The fading pattern moves past the devices at an illustrative 0.1 m/s, sampled 10 times a second. Each device averages its last N samples in milliwatts, converts back to dBm and rounds to its reporting step. Apply offsets subtracts each device's offset from what it reports.",
+      "example": "At 5 GHz and 8 m the true power is about -60.4 dBm. With fading off, a device with a -4 dB offset, no grip or body loss and a 1 dB step reports -64 dBm, and one with a +1 dB offset reports -59 dBm: a 5 dB spread. Apply offsets and both show -60 dBm, a spread of 0 dB.",
+      "fieldNotes": [
+        "Every device offset, grip and body loss, the AP power and the path loss exponent in this tool are illustrative. Real offsets depend on the device, its antennas and its driver; measure yours against a reference before you rely on them.",
+        "802.11k defines RCPI (received channel power indicator) as a standardized measurement of received power, which helps comparability where devices report it. This tool shows RCPI as a concept only and does not compute RCPI values.",
+        "An offset calibrates a device. It does not correct how the device is held, the person holding it, or fading at the spot, so a corrected reading still moves.",
+        "Runs are seeded: the same settings and sample set give the same readings every time.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Log-distance path loss (the Roaming Walk model) and Rayleigh fading from wave superposition (the Multipath Simulator model). Per-adapter offset correction as found in survey tools; RCPI as defined in IEEE 802.11k. The simulation runs on your device."
+    },
     "fourier-fft": {
       "name": "Fourier and FFT",
       "category": "Wi-Fi Classroom",
