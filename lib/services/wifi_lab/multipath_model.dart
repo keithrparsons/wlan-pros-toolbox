@@ -1,9 +1,9 @@
-// Multipath Simulator model (Wi-Fi Lab, 2026-09-25).
+// Multipath Simulator model (Wi-Fi Classroom, 2026-09-25).
 //
 // Pure Dart, no Flutter imports. Built clean-room from wave superposition,
-// the two-ray (image) model and Rayleigh fading theory, per the Wi-Fi Lab spec
+// the two-ray (image) model and Rayleigh fading theory, per the Wi-Fi Classroom spec
 // (myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/07-multipath.md).
-// Physics background: the Wi-Fi Lab research brief §6.3 (lambda/2 node
+// Physics background: the Wi-Fi Classroom research brief §6.3 (lambda/2 node
 // spacing; thick concrete |Gamma| about 0.39 at normal incidence).
 //
 // THE ONE EQUATION. The field at a receiver is the sum of every path's copy:

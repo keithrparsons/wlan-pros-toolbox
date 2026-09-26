@@ -1,4 +1,4 @@
-// 6 GHz Power and PSD: Wi-Fi Lab tool (six-ghz-psd).
+// 6 GHz Power and PSD: Wi-Fi Classroom tool (six-ghz-psd).
 //
 // EIRP and SNR against channel width, one line per regulatory class, and one
 // channel's spectrum as a flat PSD block. The lessons (spec 17): a

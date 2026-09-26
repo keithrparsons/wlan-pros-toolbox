@@ -1,6 +1,6 @@
-// Power Save: the pure model behind the Wi-Fi Lab tool (power-save).
+// Power Save: the pure model behind the Wi-Fi Classroom tool (power-save).
 //
-// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Lab wave 3 research brief §9
+// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Classroom wave 3 research brief §9
 // and the wave 5 brief §9, per myPKA Deliverables/2026-09-25-wifi-lab-
 // cleanroom/specs/24-power-save.md. What those briefs pin, and what this file
 // takes from them:

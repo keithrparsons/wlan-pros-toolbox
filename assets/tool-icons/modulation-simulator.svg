@@ -7,7 +7,7 @@
     <circle cx="10" cy="12.5" r="1.6" fill="currentColor" stroke="none"/>
     <!-- the carrier wave -->
     <path d="M13.5 9.25 C14.6 4.25 16.4 4.25 17.5 9.25 C18.6 14.25 20.4 14.25 21.5 9.25"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="8" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

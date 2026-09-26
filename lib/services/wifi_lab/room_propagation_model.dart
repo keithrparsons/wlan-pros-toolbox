@@ -1,4 +1,4 @@
-// Room propagation model for the Wi-Fi Lab "Room Propagation" simulator
+// Room propagation model for the Wi-Fi Classroom "Room Propagation" simulator
 // (room-propagation).
 //
 // CLEAN-ROOM BUILD (2026-09-25) from the equations in myPKA

@@ -1,7 +1,7 @@
-// The gain ramp for the Wi-Fi Lab Antenna Pattern simulator: the ONE place
+// The gain ramp for the Wi-Fi Classroom Antenna Pattern simulator: the ONE place
 // its colors live.
 //
-// GL-003 §8.15.2 (Keith, 2026-09-25): in a Wi-Fi Lab teaching simulator,
+// GL-003 §8.15.2 (Keith, 2026-09-25): in a Wi-Fi Classroom teaching simulator,
 // where color carries the lesson, the author may use extra hues from one
 // harmonious family, keeping the §8.9 contrast floor and a label so meaning
 // never rests on color alone. This ramp is that allowance, used for one

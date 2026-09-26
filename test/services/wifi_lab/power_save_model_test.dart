@@ -1,6 +1,6 @@
-// Unit tests for the Wi-Fi Lab Power Save model (power-save).
+// Unit tests for the Wi-Fi Classroom Power Save model (power-save).
 //
-// The field values come from the Wi-Fi Lab wave 3 brief §9 and the wave 5
+// The field values come from the Wi-Fi Classroom wave 3 brief §9 and the wave 5
 // brief §9 (TWT mantissa 16 bits, exponent 5 bits, wake duration in 256 µs
 // or 1 TU; U-APSD QoS Info B0-B3 and Max SP Length B5-B6), per spec 24's
 // "Done means".

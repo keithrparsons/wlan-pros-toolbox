@@ -1,4 +1,4 @@
-// Timeline painters for Airtime Anatomy (Wi-Fi Lab).
+// Timeline painters for Airtime Anatomy (Wi-Fi Classroom).
 //
 // One horizontal bar per scenario, every segment drawn to scale in
 // microseconds against a shared axis, so two scenarios compare by length. The

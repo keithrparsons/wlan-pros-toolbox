@@ -1,4 +1,4 @@
-// OFDM as an inverse FFT: the pure-Dart math behind mode 4 of the Wi-Fi Lab
+// OFDM as an inverse FFT: the pure-Dart math behind mode 4 of the Wi-Fi Classroom
 // "Fourier and FFT" tool (fourier-fft). No Flutter imports.
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA Deliverables/2026-09-25-wifi-lab-

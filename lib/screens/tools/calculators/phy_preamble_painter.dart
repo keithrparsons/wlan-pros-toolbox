@@ -1,4 +1,4 @@
-// The to-scale preamble bar for the PHY Preamble Reference (Wi-Fi Lab).
+// The to-scale preamble bar for the PHY Preamble Reference (Wi-Fi Classroom).
 //
 // Top to bottom:
 //   - leader lanes: names of blocks too narrow to hold their own label, each
@@ -12,7 +12,7 @@
 //   - the bracket over the first 20 µs: the legacy preamble every PHY sends.
 //
 // The drawing is a picture of time. It draws no waveform, so it cannot imply
-// a frequency change (Wi-Fi Lab standing rule).
+// a frequency change (Wi-Fi Classroom standing rule).
 //
 // Accessibility: the stage wraps this in a worded Semantics label and lists
 // every block as a focusable button under the bar, so no fact rests on the

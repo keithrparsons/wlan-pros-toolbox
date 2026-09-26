@@ -1,4 +1,4 @@
-// 6 GHz power, PSD and SNR math for the Wi-Fi Lab 6 GHz Power and PSD tool.
+// 6 GHz power, PSD and SNR math for the Wi-Fi Classroom 6 GHz Power and PSD tool.
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/17-six-ghz-psd.md, with

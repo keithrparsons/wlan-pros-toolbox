@@ -1,4 +1,4 @@
-// Wi-Fi Through a Wall: Wi-Fi Lab tool (wifi-through-a-wall).
+// Wi-Fi Through a Wall: Wi-Fi Classroom tool (wifi-through-a-wall).
 //
 // One wave, one wall. Part of the wave reflects off the face and the
 // amplitude decays through the wall; the frequency never changes, so the

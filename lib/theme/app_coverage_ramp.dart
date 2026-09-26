@@ -1,4 +1,4 @@
-// The coverage heat-map colors for the Wi-Fi Lab Room Propagation simulator:
+// The coverage heat-map colors for the Wi-Fi Classroom Room Propagation simulator:
 // the ONE place they live.
 //
 // THE RAMP is the GL-003 §8.22 brand-green amplitude ramp, stop for stop

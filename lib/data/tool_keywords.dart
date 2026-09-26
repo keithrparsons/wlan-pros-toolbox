@@ -1083,7 +1083,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'great circle',
     'bearing',
   ],
-  // Wi-Fi Lab (2026-09-25). What the simulator does: maps bits to I/Q points,
+  // Wi-Fi Classroom (2026-09-25). What the simulator does: maps bits to I/Q points,
   // draws the carrier, adds noise, measures EVM and counts errors (GL-005).
   'modulation-simulator': <String>[
     'modulation',
@@ -1107,9 +1107,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'symbol',
     'carrier',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). What the simulator shows, in the words a student
+  // Wi-Fi Classroom (2026-09-25). What the simulator shows, in the words a student
   // would search with.
   'medium-access-simulator': <String>[
     'csma/ca',
@@ -1136,7 +1137,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'half duplex',
     'simulation',
   ],
-  // Wi-Fi Lab (2026-09-25). Terms not already in the title or description.
+  // Wi-Fi Classroom (2026-09-25). Terms not already in the title or description.
   'fspl-simulator': <String>[
     'free space path loss',
     'friis',
@@ -1156,7 +1157,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '2.4 vs 5 vs 6 ghz',
     'simulation',
   ],
-  // Wi-Fi Lab (2026-09-25). What the simulator shows, in the words a student
+  // Wi-Fi Classroom (2026-09-25). What the simulator shows, in the words a student
   // would search with.
   'airtime-fairness': <String>[
     'airtime fairness',
@@ -1176,9 +1177,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'data rate',
     'overhead',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). What the tool computes and draws: one TXOP's
+  // Wi-Fi Classroom (2026-09-25). What the tool computes and draws: one TXOP's
   // airtime, segment by segment (GL-005).
   'airtime-anatomy': <String>[
     'airtime',
@@ -1206,6 +1208,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '802.11ax',
     '802.11ac',
     'wi-fi lab',
+    'wi-fi classroom',
   ],
   'multipath-simulator': <String>[
     'multipath',
@@ -1274,7 +1277,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'subcarrier',
     'orthogonality',
   ],
-  // Wi-Fi Lab (2026-09-25). What the wall simulator shows, in the words a
+  // Wi-Fi Classroom (2026-09-25). What the wall simulator shows, in the words a
   // student would search with.
   'wifi-through-a-wall': <String>[
     'wall',
@@ -1300,9 +1303,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'polarization',
     'angle of incidence',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). What the room simulator shows, in the words a
+  // Wi-Fi Classroom (2026-09-25). What the room simulator shows, in the words a
   // student would search with.
   'room-propagation': <String>[
     'heat map',
@@ -1333,9 +1337,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'p.526',
     '6 ghz',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). Terms not already in the title or description.
+  // Wi-Fi Classroom (2026-09-25). Terms not already in the title or description.
   'six-ghz-psd': <String>[
     'psd',
     'power spectral density',
@@ -1433,7 +1438,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'rrm',
     'floor plan',
   ],
-  // Wi-Fi Lab (2026-09-25). The roaming walk simulator: what a student types
+  // Wi-Fi Classroom (2026-09-25). The roaming walk simulator: what a student types
   // when a client will not let go of an AP, or keeps flipping between two.
   'roaming-walk': <String>[
     'roam',
@@ -1458,7 +1463,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'shadowing',
     'path loss exponent',
   ],
-  // Wi-Fi Lab (2026-09-25). What the OFDMA simulator shows, in the words a
+  // Wi-Fi Classroom (2026-09-25). What the OFDMA simulator shows, in the words a
   // student would search with (GL-005).
   'ofdma-simulator': <String>[
     'ofdma',
@@ -1486,7 +1491,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '802.11ax',
     'wi-fi 6',
   ],
-  // Wi-Fi Lab (2026-09-25). What the antenna pattern simulator shows, in the
+  // Wi-Fi Classroom (2026-09-25). What the antenna pattern simulator shows, in the
   // words a student would search with.
   'antenna-pattern': <String>[
     'antenna',
@@ -1519,9 +1524,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'polarization',
     'polarization mismatch',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). Terms not already in the title or description.
+  // Wi-Fi Classroom (2026-09-25). Terms not already in the title or description.
   'rate-adaptation': <String>[
     'rate control',
     'minstrel',
@@ -1542,9 +1548,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'sampling',
     'fading',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). Terms not already in the title or description.
+  // Wi-Fi Classroom (2026-09-25). Terms not already in the title or description.
   'rate-vs-range': <String>[
     'mcs',
     'mcs ring',
@@ -1570,7 +1577,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'eirp',
     'fade margin',
   ],
-  // Wi-Fi Lab (2026-09-25). What the spatial reuse simulator shows, in the
+  // Wi-Fi Classroom (2026-09-25). What the spatial reuse simulator shows, in the
   // words a student types when neighbor APs slow each other down.
   'spatial-reuse': <String>[
     'spatial reuse',
@@ -1599,7 +1606,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi 6',
     'concurrent transmission',
   ],
-  // Wi-Fi Lab (2026-09-25). The DFS and radar simulator: what a student types
+  // Wi-Fi Classroom (2026-09-25). The DFS and radar simulator: what a student types
   // when an AP went quiet for a minute, jumped channel, or will not use 120.
   'dfs-simulator': <String>[
     'dfs',
@@ -1626,7 +1633,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'channel 144',
     'outage',
   ],
-  // Wi-Fi Lab (2026-09-25). The Multi-Link Operation simulator: what a
+  // Wi-Fi Classroom (2026-09-25). The Multi-Link Operation simulator: what a
   // student types when asking whether Wi-Fi 7 MLO really lowers latency.
   'mlo-simulator': <String>[
     'mlo',
@@ -1650,7 +1657,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'padding delay',
     'transition delay',
   ],
-  // Wi-Fi Lab (2026-09-25). Power Save: what a student types when a phone's
+  // Wi-Fi Classroom (2026-09-25). Power Save: what a student types when a phone's
   // battery drains on Wi-Fi, a sensor misses broadcasts, or a call stutters.
   'power-save': <String>[
     'power save',
@@ -1680,9 +1687,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'individual twt',
     'iot',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). What the 802.1X ladder shows, in the words a
+  // Wi-Fi Classroom (2026-09-25). What the 802.1X ladder shows, in the words a
   // student would search with.
   'eap-ladder': <String>[
     '802.1x',
@@ -1724,9 +1732,10 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'ladder diagram',
     'sequence diagram',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
-  // Wi-Fi Lab (2026-09-25). What the preamble reference shows, in the words
+  // Wi-Fi Classroom (2026-09-25). What the preamble reference shows, in the words
   // a student would search with.
   'phy-preamble': <String>[
     'preamble',
@@ -1766,6 +1775,7 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     '802.11be',
     'wi-fi 7',
     'wi-fi lab',
+    'wi-fi classroom',
     'simulator',
   ],
   // Learn / RF intuition (2026-06-28). Keywords describe what the tool DOES

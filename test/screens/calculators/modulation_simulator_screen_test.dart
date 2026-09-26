@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab Modulation Simulator screen.
+// Widget tests for the Wi-Fi Classroom Modulation Simulator screen.
 //
 // The math is pinned in test/services/rf/modulation_math_test.dart; these
 // tests cover the screen contract: it opens PAUSED (GL-003 §8.8), Step sends
@@ -55,7 +55,7 @@ Future<void> _tapButton(WidgetTester tester, String label) async {
 }
 
 void main() {
-  test('catalog registers modulation-simulator in Wi-Fi Lab', () {
+  test('catalog registers modulation-simulator in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -63,7 +63,7 @@ void main() {
       (ToolEntry t) => t.id == kModulationSimulatorToolId,
     );
     expect(e.title, 'Modulation Simulator');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/modulation-simulator');
     // The reference-card tool is a separate, untouched entry.

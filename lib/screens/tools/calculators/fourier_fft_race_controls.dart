@@ -1,4 +1,4 @@
-// FourierRaceControls: mode 3 of the Wi-Fi Lab "Fourier and FFT" tool
+// FourierRaceControls: mode 3 of the Wi-Fi Classroom "Fourier and FFT" tool
 // (fourier-fft), swept vs FFT race. Inputs and readouts only; it writes
 // FourierLabModel.race and never draws a plot.
 //

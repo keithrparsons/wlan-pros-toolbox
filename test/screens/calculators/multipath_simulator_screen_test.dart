@@ -1,4 +1,4 @@
-// Widget tests for the Multipath Simulator screen (Wi-Fi Lab).
+// Widget tests for the Multipath Simulator screen (Wi-Fi Classroom).
 //
 // The model has its own tests (test/services/wifi_lab/multipath_model_test
 // .dart); these check the screen drives it: each scene renders its pieces,

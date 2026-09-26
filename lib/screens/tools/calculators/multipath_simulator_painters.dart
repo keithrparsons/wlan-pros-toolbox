@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab Multipath Simulator (multipath-simulator).
+// Painters for the Wi-Fi Classroom Multipath Simulator (multipath-simulator).
 //
 // Token-only CustomPainters in the modulation_simulator_painters.dart idiom:
 // every color and text style arrives resolved from context.colors by the

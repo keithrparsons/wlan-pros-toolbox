@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab "Wi-Fi Through a Wall" screen.
+// Widget tests for the Wi-Fi Classroom "Wi-Fi Through a Wall" screen.
 //
 // The physics is pinned in test/services/wifi_lab/wall_slab_physics_test.dart;
 // these cover the screen contract: catalog registration beside an untouched
@@ -57,7 +57,7 @@ String _valueOf(WidgetTester tester, String label) {
 }
 
 void main() {
-  test('catalog registers wifi-through-a-wall in Wi-Fi Lab', () {
+  test('catalog registers wifi-through-a-wall in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -67,12 +67,12 @@ void main() {
     expect(i, greaterThan(0));
     final ToolEntry e = rf.tools[i];
     expect(e.title, 'Wi-Fi Through a Wall');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/wifi-through-a-wall');
-    // Sits inside the Wi-Fi Lab block; after the 2026-09-25 merge its exact
+    // Sits inside the Wi-Fi Classroom block; after the 2026-09-25 merge its exact
     // neighbor depends on merge order, so assert the shelf, not the slot.
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab');
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom');
     // The existing attenuation tool is a separate, untouched entry.
     expect(
       kToolCategories.any(

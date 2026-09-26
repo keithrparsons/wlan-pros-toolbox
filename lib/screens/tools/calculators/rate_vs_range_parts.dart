@@ -1,4 +1,4 @@
-// Shared small widgets for the Wi-Fi Lab Rate vs Range tool: card, section
+// Shared small widgets for the Wi-Fi Classroom Rate vs Range tool: card, section
 // label, note row and the MCS ring palette. Used by both the stage and the
 // controls, so neither imports the other.
 //
@@ -83,7 +83,7 @@ class RvrNote extends StatelessWidget {
 
 /// One hue per MCS ring, the single home of this tool's palette.
 ///
-/// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Lab teaching simulator may use
+/// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Classroom teaching simulator may use
 /// extra hues from one harmonious family when telling categories apart by
 /// color is part of the lesson. Here it is: the student must see coverage as
 /// a set of nested rings, one per MCS, and watch every ring shrink together.

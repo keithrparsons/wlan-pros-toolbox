@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Rate Adaptation tool (rate-adaptation).
+// State for the Wi-Fi Classroom Rate Adaptation tool (rate-adaptation).
 //
 // One ChangeNotifier holds the settings, the run and the clock, so the stage
 // (RateAdaptationStage) and the controls (RateAdaptationControls,

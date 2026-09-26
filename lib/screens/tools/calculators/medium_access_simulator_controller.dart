@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Medium Access Simulator (medium-access-simulator).
+// State for the Wi-Fi Classroom Medium Access Simulator (medium-access-simulator).
 //
 // One ChangeNotifier holds the configuration, the engine run and the clock,
 // so the tool's views are independent widgets over it (Keith, 2026-09-25: a

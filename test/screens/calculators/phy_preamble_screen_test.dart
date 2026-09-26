@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab "PHY Preamble Reference" screen.
+// Widget tests for the Wi-Fi Classroom "PHY Preamble Reference" screen.
 //
 // The numbers are pinned in test/services/wifi_lab/phy_preamble_test.dart;
 // these cover the screen contract: catalog and route registration, the stage
@@ -62,7 +62,7 @@ Future<void> _tap(WidgetTester tester, Finder f) async {
 }
 
 void main() {
-  test('catalog and route register phy-preamble in Wi-Fi Lab', () {
+  test('catalog and route register phy-preamble in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -70,7 +70,7 @@ void main() {
       (ToolEntry t) => t.id == kPhyPreambleToolId,
     );
     expect(e.title, 'PHY Preamble Reference');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/phy-preamble');
     expect(AppRouter.routes.containsKey('/tools/phy-preamble'), isTrue);

@@ -1,4 +1,4 @@
-// Tests for the Multipath Simulator model (Wi-Fi Lab spec 07, "Done means").
+// Tests for the Multipath Simulator model (Wi-Fi Classroom spec 07, "Done means").
 //
 // Each group maps to one clause of the spec:
 //   - two equal paths with a pi phase difference sum to zero;

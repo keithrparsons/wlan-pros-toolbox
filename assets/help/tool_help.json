@@ -204,7 +204,7 @@
         "The required EVM table is the 802.11 transmitter accuracy requirement: how cleanly a radio must build each point. It is not a receiver sensitivity threshold. Meets or misses compares the limit with the EVM the current SNR produces.",
         "Changing the modulation, the SNR, the bit source or the message clears the received points and counts, so every reading belongs to one setting.",
         "Measured EVM from a handful of symbols wanders. Send a few hundred and it settles close to the theoretical value.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Constellations, Gray mapping and scaling follow the IEEE 802.11 modulation mapping; transmit EVM limits are from the 802.11 transmit modulation accuracy tables. Noise and decisions are simulated on your device."
     },
@@ -258,7 +258,7 @@
         "Only uplink is modeled: every station sends to the AP, and the AP answers only with ACK or CTS. Rate adaptation and the NAV reset rule are not modeled.",
         "RTS/CTS removes most hidden-node data collisions, not all of them. A hidden station whose own RTS overlaps the AP's CTS never hears that CTS, so it can still talk over the data frame that follows.",
         "Runs are seeded, so the same settings give the same run every time.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "IEEE 802.11 channel access rules (DCF and EDCA, clause 10) and OFDM PHY timing (clause 17), with the default EDCA parameters for a non-AP station. The simulation runs on your device."
     },
@@ -324,7 +324,7 @@
         "The indoor overlay is a model with an exponent you choose, not a measurement. n = 2 reproduces free space.",
         "The aperture term assumes an isotropic (0 dBi) receive antenna. A higher-gain antenna has a larger effective area and wins some of the difference back.",
         "Measured points are typed in by hand. Nothing is read from the Wi-Fi adapter.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "The Friis transmission equation and the free-space path loss formula derived from it. Design targets are read from this app's Signal Thresholds tool. Everything is calculated on your device."
     },
@@ -368,7 +368,7 @@
         "The 40 µs preamble is one teaching value for HT, VHT and HE. Real preambles vary with the PHY, the number of streams and the frame format.",
         "The limits on how many frames or bytes one aggregate may carry are not enforced.",
         "Airtime fairness costs the slow client throughput. That is the point: it stops paying for its slow turns with everyone else's time.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "IEEE 802.11 EDCA and OFDM timing, and M. Heusse, F. Rousseau, G. Berger-Sabbatel and A. Duda, Performance Anomaly of 802.11b, IEEE INFOCOM 2003. The calculation runs on your device."
     },
@@ -455,7 +455,7 @@
         "Control frames go at the legacy rate you choose, and the slot is the 9 µs short slot of an all-OFDM network.",
         "The Check does not catch every VHT MCS exclusion (for example 80 MHz, MCS 6, 3 streams). Confirm unusual combinations in the MCS Index tool.",
         "Airtime on data symbols leaves out the HE packet extension and the 2.4 GHz signal extension: both are padding, not data.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "The IEEE 802.11 PHY transmit-time equations (802.11-2020 clauses 17, 19 and 21; 802.11ax-2021 clause 27) and the default EDCA parameter set, as built into the WLAN Pros Airtime Calculator. Computed on your device."
     },
@@ -517,7 +517,7 @@
         "A 2 m track at 2.4 GHz holds only a few dozen fades, so the histogram wanders around the Rayleigh curve. Longer tracks or new layouts average it out.",
         "Layouts are seeded, so the same settings give the same room every time.",
         "Only the delay list changes much when the reflectors move further away; the pattern along 2 m looks the same at any distance.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Wave superposition, the two-ray (image) model and Rayleigh fading theory. Thick-concrete reflection strength from ITU-R P.2040 material properties at normal incidence. The guard interval is the 802.11 OFDM long guard interval. The simulation runs on your device."
     },
@@ -627,7 +627,7 @@
         "Real analyzers with digital RBW filters, or FFT-assisted sweeps, sweep faster than the formula. A real FFT analyzer also has a real-time bandwidth limit; the one here covers the whole span with no gaps.",
         "The waterfalls use the analyzer color scale from dark blue at the noise floor (-95 dBm) through green, yellow and red to white at -30 dBm, with the scale drawn under them.",
         "In the OFDM teaching view the same 16 subcarriers are kept when you switch to HE, so they span a quarter of the width. Real HE fills the same 20 MHz channel with 4 times as many subcarriers. The carrier frequency never changes.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Textbook DSP: the DFT, bin spacing and RBW as set out in the Tektronix real-time spectrum analyzer primer, and the window figures published by Harris (1978). Swept sweep time from Keysight Application Note 150. Interferer timings from published measurements and the Bluetooth and BLE channel plans. Wi-Fi numbers from the 802.11 OFDM and HE parameters. Everything is computed on your device."
     },
@@ -677,7 +677,7 @@
         "NIST has no data between 2.0 and 3.0 GHz, so its lowest point here is 2.0 GHz, not 2.4.",
         "Free-space loss is a separate effect: with the same antennas it rises about 7.2 dB from 2.4 to 5.5 GHz and 8.7 dB from 2.4 to 6.5 GHz with no wall at all. The Free Space Path Loss calculator covers it.",
         "The drawing is slowed to one cycle every 2 seconds and shows the field along a line straight through the wall. By default it keeps one wavelength everywhere, because the frequency never changes; only the height of the wave changes.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "ITU-R P.2040-4 (09/2025), Table 3 material properties and the slab reflection and transmission equations. Measured comparisons: NIST IR 6055, NYU (Shakya et al., IEEE GLOBECOM 2024) and 3GPP TR 38.901. Computed on your device."
     },
@@ -738,7 +738,7 @@
         "Reflections stop at two bounces, and reflected paths pass through walls without diffraction. Real rooms add many more weak paths.",
         "The map is the average over a few centimeters. At one exact spot the signal can sit well above or below it, which the close-up shows: that is why RSSI jumps when you move a phone a little.",
         "The map is computed on your device, in the background where the platform allows. With two bounces and many walls it takes a moment; the plan says Computing while it works.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "ITU-R P.2040-4 (09/2025) for the wall materials and the slab reflection and transmission equations; ITU-R P.526-16 for knife-edge diffraction (Eqs. 26, 30 and 31) and the Fresnel zone (Eq. 2); the image method for reflections. Computed on your device."
     },
@@ -818,7 +818,7 @@
         "The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.",
         "Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.",
         "NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005). No manufacturer file is included. Computed on your device."
     },
@@ -868,7 +868,7 @@
         "The TLS tunnel in PEAP and EAP-TTLS protects the inner exchange between client and RADIUS server, not the Wi-Fi link. A client that skips server-certificate validation can hand its inner credentials to an evil-twin server; see the 802.1X / EAP Types reference.",
         "The scan for the next AP is not counted. In measured handoffs (802.11b, open authentication; Mishra, Shin and Arbaugh 2003) scanning was over 90% of the delay. 802.11k shortens the scan; PMK caching and FT shorten only the authentication shown here.",
         "OKC is a vendor extension that shares a cached PMK between the APs of one controller; it is not part of IEEE 802.11. FT needs one full first connection in its mobility domain.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "IEEE 802.11 (Open System and SAE authentication, association, the 4-way handshake, PMKSA caching, Fast BSS Transition); IEEE 802.1X (EAPOL); RFC 3748 (EAP); RFC 3579 (RADIUS support for EAP); RFC 5216 (EAP-TLS); RFC 5281 (EAP-TTLS); RFC 2759 (MS-CHAP-V2); RFC 2548 (MS-MPPE key attributes); Microsoft [MS-PEAP] for PEAPv0. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
@@ -930,9 +930,9 @@
         "The BSS color moves with the HE PPDU type (HE-SIG-A1 B8-B13 in SU, B5-B10 in MU, B1-B6 in TB) and is fixed in EHT at U-SIG-1 B7-B12.",
         "The LTF size and guard interval pairs offered are the brief's EHT list; 1x is not offered. LTF counts follow the Airtime Anatomy table. Durations are per field and do not change with width. The packet extension and the 2.4 GHz signal extension come after the data and are not drawn.",
         "HE-SIG-B and EHT-SIG symbol counts depend on the users and the SIG MCS, so here they are a setting, not computed.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
-      "source": "Wi-Fi Lab wave-5 research brief (2026-09-25): the Linux ath11k, ath12k and iwlwifi drivers and ieee80211_radiotap.h; the ns-3 HE-SIG header; the cloud9477 gr-ieee80211 and bastibl gr-ieee802-11 receivers; the Rohde & Schwarz IEEE 802.11be technology introduction; MathWorks WLAN Toolbox documentation; Keysight 89600B; OpenOFDM; a Linköping University 802.11n receiver thesis; patents US 10,917,220 and US 8,867,574. Clause numbers are secondhand. Computed on your device."
+      "source": "Wi-Fi Classroom wave-5 research brief (2026-09-25): the Linux ath11k, ath12k and iwlwifi drivers and ieee80211_radiotap.h; the ns-3 HE-SIG header; the cloud9477 gr-ieee80211 and bastibl gr-ieee802-11 receivers; the Rohde & Schwarz IEEE 802.11be technology introduction; MathWorks WLAN Toolbox documentation; Keysight 89600B; OpenOFDM; a Linköping University 802.11n receiver thesis; patents US 10,917,220 and US 8,867,574. Clause numbers are secondhand. Computed on your device."
     },
     "dfs-simulator": {
       "name": "DFS and Radar",
@@ -991,7 +991,7 @@
         "Channel 144 is DFS in the US and is not in the EU plan: it crosses the 5725 MHz edge.",
         "The AP's 1 s move and the clients' rejoin delays are illustrative. Real APs differ, and some block only the part of a wide channel that saw the radar.",
         "Not modeled: off-channel CAC in the EU, a second radio that listens while the first serves, and radar signal levels. The detection threshold is shown for context only.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "47 CFR 15.407(h)(2) (eCFR, read directly); FCC KDB 905462 D02 as transcribed in an ICC test report (2018), secondhand; ETSI EN 301 893 V2.1.1 (2017) Tables D.1 and D.2, read directly. Channel numbers and edges from the Toolbox channel plan. Computed on your device."
     },
@@ -1087,9 +1087,9 @@
         "The battery figures in the Currents card are one vendor example, not a general truth: a Silicon Labs SiWx917 tested by Novus Labs in a study Silicon Labs commissioned averaged about 90 µA at DTIM 10 and 49 µA with a 30 s TWT. The simulator does not use them.",
         "The frame-exchange durations, the traffic patterns and the currents are illustrative. Real clients also stay awake a while after traffic, retry, scan and roam, and APs limit how long they hold frames; none of that is modeled.",
         "The TIM here is set whenever any frame waits for the client; the finer U-APSD rules for which access categories the TIM covers are not modeled.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
-      "source": "Wi-Fi Lab research briefs (wave 3 section 9, wave 5 section 9): TU and beacon interval from the Linux wireless power-savings documentation and CWNP; TWT and U-APSD field layouts from the Linux kernel headers include/linux/ieee80211.h and ieee80211-he.h; the SiWx917 figures from Silicon Labs and Novus Labs. IEEE 802.11 itself was not read. Computed on your device."
+      "source": "Wi-Fi Classroom research briefs (wave 3 section 9, wave 5 section 9): TU and beacon interval from the Linux wireless power-savings documentation and CWNP; TWT and U-APSD field layouts from the Linux kernel headers include/linux/ieee80211.h and ieee80211-he.h; the SiWx917 figures from Silicon Labs and Novus Labs. IEEE 802.11 itself was not read. Computed on your device."
     },
     "mlo-simulator": {
       "name": "Multi-Link Operation",
@@ -1157,7 +1157,7 @@
         "Intel's Linux driver leaves EMLSR for reasons that include low signal, Bluetooth coexistence, channel load, link usage and missed beacons, and after some of them it will not re-enter for 300 or 600 seconds.",
         "EMLMR (moving extra radio chains to one link) is described but not simulated.",
         "Not modeled: collisions, retries, uplink traffic, more than one frame or A-MPDU per exchange, and EHT (320 MHz, 4096-QAM). HE timing stands in for EHT. With EMLSR switched off, the model keeps the least busy link; a real driver picks by its own rules.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Mode definitions: the IEEE TGbe email archive (EMLSR and EMLMR, October 2022) and Rohde & Schwarz's 802.11be white paper (STR), secondhand for 802.11be-2024 itself. EMLSR padding and transition delay values as listed in the Linux kernel header include/linux/ieee80211-eht.h, which cites 802.11be-2024 Tables 9-417j and 9-417l. Intel driver behavior from iwlwifi/mld/mlo.c. Latency study: arXiv 2111.09281. Airtime from the Toolbox's Airtime Anatomy calculator. Computed on your device."
     },
@@ -1231,7 +1231,7 @@
         "Only AP B decides. AP A already holds the air, and uplink frames and clients' own deferral are left out.",
         "Airtime ignores backoff, ACKs and rate changes; it counts one equal-length frame per BSS.",
         "The -82 and -62 dBm thresholds and the per-20 MHz comparison match the Channel Planner, so the two tools agree.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "OBSS_PD rule and TX_PWRmax from IEEE 802.11ax as described by Wilhelmi et al., Spatial Reuse in IEEE 802.11ax WLANs (Computer Communications; arXiv 1907.04141), and SageAxe. TX_PWRref from Hitchhiker's Guide to Learning (OBSS PD). Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. MCS sensitivities from the Rohde & Schwarz 802.11be white paper and RF Wireless World, as used by Rate vs Range. Computed on your device."
     },
@@ -1289,9 +1289,9 @@
         "The channel strip draws RUs in tone-plan order with every 26-tone slot the same width. Guard, DC and leftover tones are not drawn, and positions are logical, not exact subcarrier numbers.",
         "Real access points also schedule, send buffer status reports and sound the channel. None of that is modeled here.",
         "With one client on a full-channel RU, OFDMA is slightly slower than single user: the longer preamble and the triggered acknowledgment cost time and there is no one to share them with.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
-      "source": "RU counts and tone splits, HE TB PPDU timing, the trigger frame and the Multi-STA BlockAck from the WLAN Pros Wi-Fi Lab research brief (secondhand 802.11ax sources: Wikipedia Resource Unit, Clear To Send, Cisco, MathWorks). HE single-user timing from the Airtime Anatomy model (IEEE 802.11ax-2021 clause 27 TXTIME). Computed on your device."
+      "source": "RU counts and tone splits, HE TB PPDU timing, the trigger frame and the Multi-STA BlockAck from the WLAN Pros Wi-Fi Classroom research brief (secondhand 802.11ax sources: Wikipedia Resource Unit, Clear To Send, Cisco, MathWorks). HE single-user timing from the Airtime Anatomy model (IEEE 802.11ax-2021 clause 27 TXTIME). Computed on your device."
     },
     "roaming-walk": {
       "name": "Roaming Walk",
@@ -1339,7 +1339,7 @@
         "Because scanning dominates, 802.11k shortens a slow roam more than FT does. FT and PMK caching shorten only the authentication.",
         "802.11v lets the AP suggest a better AP; the client still decides. The model does not simulate it.",
         "Real clients average their readings, scan on their own schedule and weigh more than signal strength.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Apple, Wi-Fi roaming support in Apple devices (deployment guide): iPhone trigger -70 dBm with 8 dB delta transmitting and 12 dB idle, Mac -75 dBm with 12 dB, and the first six Neighbor Report entries. Frame sequences from Cisco 9800 roaming documentation. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
@@ -1402,7 +1402,7 @@
         "On a secondary channel, deferring means the AP sends on fewer 20 MHz pieces rather than waiting. The Lab counts it as sharing to keep the picture simple.",
         "1/N airtime is an even split among APs that all hear each other. Clients, retries, traffic load and APs that hear only part of the group change the real share.",
         "One wall type with one loss. For real materials use the RF Attenuation tool.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. ETSI EN 301 893 V2.1.1 for the EU 5 GHz band edges and energy detect. 802.11 transmit masks as quoted by Tektronix and ETSI EN 301 893 Figure 1. Channel numbers and bonding groups from this app's channel data. Computed on your device."
     },
@@ -1471,7 +1471,7 @@
         "A wider channel makes the report bigger, but the report also travels over the wider channel, so in this estimate its airtime stays the same. More antennas and more streams are what make sounding cost more.",
         "Our measurement, not a model output: in one 802.11ax capture from a nearby sniffer, beamformed downlink frames failed their frame check 50.8% of the time against 5.1% for frames that were not beamformed, at matched signal strength (14,825 and 6,891 frames). The client received those frames; the sniffer was off the beam.",
         "A capture on the AP sees more than a capture on a laptop: the AP knows what it sent and is the intended receiver for the uplink.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "MIMO array fundamentals (uniform linear array factor), the IEEE 802.11ax sounding sequence and compressed beamforming report format, and our own 802.11ax packet capture. Computed on your device."
     },
@@ -1532,7 +1532,7 @@
         "The LPI client limit of 24 dBm and -1 dBm/MHz is a flat number, not tied to the AP. It only happens to sit 6 dB under the LPI AP. Fixed client devices are exempt from the 6 dB rule, VLP has no client class, and the EU has no client offset.",
         "Path loss is taken at one frequency for every width so that only the width changes between columns. The MCS shown is the typical figure from this app's Signal Thresholds table, not a guarantee.",
         "The PSD rule applies to any 1 MHz of the real emission. An HE 20 MHz transmission fills about 18.9 MHz, so a device exactly at the PSD limit radiates about 0.2 dB less than shown. That difference is too small to change the lesson.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "47 CFR 15.407(a)(4) to (a)(9), including Geofenced Variable Power in effect since 27 April 2026, and ETSI EN 303 687 V1.1.1 (2023-06), Tables 2 and 3, both read from the primary text. Free-space loss uses the same Friis math as the FSPL Simulator. Everything is calculated on your device."
     },
@@ -1603,7 +1603,7 @@
         "The path-loss exponent is a model with a chosen value, not a measurement. Walls, people and furniture make real rings uneven.",
         "The width is held fixed. A real AP may send a narrower transmission to a far client, which reaches as far as the 20 MHz rings.",
         "The beacon bar counts beacons only, as time on the air. It leaves out probe responses, the wait for the medium, and other APs on the same channel, all of which the SSID Airtime tool can add.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Minimum receiver sensitivity per MCS and width as published for IEEE 802.11 conformance (Rohde & Schwarz 802.11be white paper Table 6-4, matched by a second source). Path loss uses the same Friis math as the FSPL Simulator; beacon airtime uses the SSID Airtime tool's calculator; data rates use the MCS Index tool. Everything is calculated on your device."
     },
@@ -1669,7 +1669,7 @@
         "Delivered throughput is far below the PHY rate here because every frame waits, sends a preamble and waits for its ACK on its own. Aggregation (A-MPDU) and Block Ack, which real links use, are left out.",
         "There is one station, so there are no collisions, and backoff is the mean rather than a random draw. The Medium Access Simulator shows contention.",
         "The ACK timeout is SIFS + slot + a receive delay of about 20 to 25 µs. The sources disagree on the exact constant, so it is a setting.",
-        "The Wi-Fi Lab is designed for tablets and computers, and on a phone some views are cramped."
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
       "source": "Minstrel rate control as described in the Linux wireless documentation (EWMA with 75% history weight, 10% sampling, the multi-rate retry chain); IEEE 802.11 retry limits (dot11ShortRetryLimit 7, dot11LongRetryLimit 4) and contention-window doubling; ACK timeout from the 802.11 formula SIFS + slot + receive start delay. Sensitivity from the Rate vs Range tool, airtime from the Airtime Anatomy tool. Computed on your device."
     },

@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab DFS and Radar simulator (dfs-simulator).
+// State for the Wi-Fi Classroom DFS and Radar simulator (dfs-simulator).
 //
 // One ChangeNotifier holds every input, the computed hour and the clock, so
 // the two halves of the screen stay independent widgets: DfsSimulatorStage

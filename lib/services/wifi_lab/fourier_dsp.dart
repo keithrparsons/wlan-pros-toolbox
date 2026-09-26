@@ -1,4 +1,4 @@
-// Fourier DSP: the pure-Dart math behind the Wi-Fi Lab "Fourier and FFT" tool
+// Fourier DSP: the pure-Dart math behind the Wi-Fi Classroom "Fourier and FFT" tool
 // (fourier-fft). No Flutter imports, so every number the screen shows can be
 // unit-tested headless.
 //

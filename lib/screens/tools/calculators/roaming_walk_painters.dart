@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab Roaming Walk (roaming-walk).
+// Painters for the Wi-Fi Classroom Roaming Walk (roaming-walk).
 //
 // Token-only CustomPainters: every neutral color and text style arrives
 // resolved from context.colors by the stage, and the AP hues come from

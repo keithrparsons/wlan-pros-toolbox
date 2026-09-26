@@ -1,4 +1,4 @@
-// Widget tests for OFDMA Resource Units (Wi-Fi Lab).
+// Widget tests for OFDMA Resource Units (Wi-Fi Classroom).
 //
 // The math has its own tests (test/services/wifi_lab/ofdma_model_test.dart);
 // these check the screen: it opens on the research brief's worked example,
@@ -224,10 +224,10 @@ void main() {
     });
   }
 
-  // Registration. Deliberately NO neighbor assertions: several Wi-Fi Lab tools
+  // Registration. Deliberately NO neighbor assertions: several Wi-Fi Classroom tools
   // merge into one branch, so which tool sits before or after this one, and
   // whether it is last, is not this tool's contract.
-  test('catalog entry: rf-calculators, subgroup Wi-Fi Lab, live, routed', () {
+  test('catalog entry: rf-calculators, subgroup Wi-Fi Classroom, live, routed', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -238,7 +238,7 @@ void main() {
     final ToolEntry e = hits.single;
     expect(e.title, 'OFDMA Resource Units');
     expect(e.routeName, '/tools/ofdma-simulator');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(AppRouter.ofdmaSimulator, e.routeName);
     expect(AppRouter.routes.containsKey(e.routeName), isTrue);

@@ -1,4 +1,4 @@
-// Airtime Fairness (Wi-Fi Lab) — the CONTROLS: everything the student sets,
+// Airtime Fairness (Wi-Fi Classroom) — the CONTROLS: everything the student sets,
 // plus the readouts that answer it (the takeaway line, the per-turn line on
 // each client).
 //
@@ -714,7 +714,7 @@ Widget _labeledSelect<T>({
   );
 }
 
-/// Full-width outlined button, matching the Wi-Fi Lab siblings.
+/// Full-width outlined button, matching the Wi-Fi Classroom siblings.
 class LabOutlineButton extends StatelessWidget {
   const LabOutlineButton({
     super.key,

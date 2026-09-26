@@ -1,4 +1,4 @@
-// Modulation Simulator: Wi-Fi Lab tool (modulation-simulator).
+// Modulation Simulator: Wi-Fi Classroom tool (modulation-simulator).
 //
 // Shows how bits become a radio wave. A group of k bits picks one point on the
 // I/Q plane; that point sets the carrier's amplitude and phase for one symbol.

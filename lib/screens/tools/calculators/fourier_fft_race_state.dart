@@ -1,4 +1,4 @@
-// Mode 3 state for the Wi-Fi Lab "Fourier and FFT" tool (fourier-fft): the
+// Mode 3 state for the Wi-Fi Classroom "Fourier and FFT" tool (fourier-fft): the
 // swept vs FFT race. Owned by FourierLabModel (the one shared state object);
 // every setter calls back into it, so the stage and the controls both rebuild
 // from the same notification.

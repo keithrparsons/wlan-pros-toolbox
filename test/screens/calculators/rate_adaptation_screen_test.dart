@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab Rate Adaptation screen.
+// Widget tests for the Wi-Fi Classroom Rate Adaptation screen.
 //
 // The model is pinned in test/services/wifi_lab/rate_adaptation_model_test.
 // dart; these tests cover the screen contract: registration, the fresh
@@ -75,7 +75,7 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test('catalog registers rate-adaptation in Wi-Fi Lab', () {
+  test('catalog registers rate-adaptation in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -84,7 +84,7 @@ void main() {
     );
     expect(kRateAdaptationToolId, 'rate-adaptation');
     expect(e.title, 'Rate Adaptation');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/rate-adaptation');
     expect(AppRouter.rateAdaptation, e.routeName);

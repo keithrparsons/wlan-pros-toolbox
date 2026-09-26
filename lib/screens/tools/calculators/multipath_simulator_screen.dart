@@ -1,4 +1,4 @@
-// Multipath Simulator: Wi-Fi Lab tool (multipath-simulator).
+// Multipath Simulator: Wi-Fi Classroom tool (multipath-simulator).
 //
 // A receiver hears the direct signal plus copies that bounced off walls. Each
 // copy arrives later, so with a different phase, and the copies add as

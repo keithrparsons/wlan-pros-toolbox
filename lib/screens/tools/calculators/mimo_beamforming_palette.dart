@@ -1,4 +1,4 @@
-// Spatial-stream palette for the Wi-Fi Lab MIMO and Beamforming simulator.
+// Spatial-stream palette for the Wi-Fi Classroom MIMO and Beamforming simulator.
 //
 // GL-003 §8.15.2 (Keith, 2026-09-25): a teaching simulator MAY use extra
 // hues when telling categories apart by color is part of the lesson, drawn

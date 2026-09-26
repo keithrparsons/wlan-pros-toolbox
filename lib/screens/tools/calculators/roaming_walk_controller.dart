@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Roaming Walk (roaming-walk).
+// State for the Wi-Fi Classroom Roaming Walk (roaming-walk).
 //
 // One ChangeNotifier holds every input, the computed walk and the playback
 // position, so the two halves of the screen stay independent widgets:

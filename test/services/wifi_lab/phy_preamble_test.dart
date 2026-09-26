@@ -1,4 +1,4 @@
-// Tests for the PHY Preamble Reference model (Wi-Fi Lab).
+// Tests for the PHY Preamble Reference model (Wi-Fi Classroom).
 //
 // Pins every "Done means" clause of myPKA Deliverables/2026-09-25-wifi-lab-
 // cleanroom/specs/13-phy-preamble.md against Pax's wave-5 brief

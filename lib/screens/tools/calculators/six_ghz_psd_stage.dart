@@ -1,4 +1,4 @@
-// SixGhzPsdStage: the plot half of the Wi-Fi Lab 6 GHz Power and PSD tool.
+// SixGhzPsdStage: the plot half of the Wi-Fi Classroom 6 GHz Power and PSD tool.
 //
 // The stage is the chart and everything that belongs to reading it: the view
 // toggle (EIRP / SNR / Spectrum), the plot, its legend, and the width cursor

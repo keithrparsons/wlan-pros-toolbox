@@ -1,4 +1,4 @@
-// Painters for part 2 of the Wi-Fi Lab "Fourier and FFT" tool (fourier-fft).
+// Painters for part 2 of the Wi-Fi Classroom "Fourier and FFT" tool (fourier-fft).
 //
 //   - WaterfallPainter (mode 3): frequency across, time up (newest at the
 //     top, GL-003 §8.22), each cell a flat fill of the §8.22 analyzer

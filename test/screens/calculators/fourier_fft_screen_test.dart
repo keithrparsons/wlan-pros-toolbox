@@ -1,4 +1,4 @@
-// Widget and model tests for the Fourier and FFT screen (Wi-Fi Lab, parts 1
+// Widget and model tests for the Fourier and FFT screen (Wi-Fi Classroom, parts 1
 // and 2). Part 2 made the mode selector a dropdown (four modes, GL-003
 // §8.14), so mode changes go through _pickFromSelect.
 //

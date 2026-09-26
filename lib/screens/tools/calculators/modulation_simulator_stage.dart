@@ -1,4 +1,4 @@
-// Stage for the Wi-Fi Lab Modulation Simulator: the I/Q constellation and the
+// Stage for the Wi-Fi Classroom Modulation Simulator: the I/Q constellation and the
 // carrier strip, over one ModulationSimulatorController.
 //
 // Two arrangements of the same parts:

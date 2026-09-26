@@ -14,7 +14,7 @@
 // left to right and nothing is drawn as a wave, so nothing here can imply a
 // frequency.
 //
-// COLOR: links take their Wi-Fi Lab family hue (GL-003 §8.15.2, see
+// COLOR: links take their Wi-Fi Classroom family hue (GL-003 §8.15.2, see
 // mlo_simulator_parts.dart), always beside the band name. Busy periods and
 // histogram bars are the neutral stack. Lime (text accent) marks the mean,
 // the one number the lesson is about. Amber appears only as the "worse than

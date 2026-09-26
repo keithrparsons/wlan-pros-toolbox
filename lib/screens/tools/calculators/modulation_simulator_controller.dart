@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Modulation Simulator (modulation-simulator).
+// State for the Wi-Fi Classroom Modulation Simulator (modulation-simulator).
 //
 // One ChangeNotifier holds every input, the accumulated run and the playback
 // timer, so the tool's views are independent widgets over it

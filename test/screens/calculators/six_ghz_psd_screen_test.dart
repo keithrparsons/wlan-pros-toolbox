@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab 6 GHz Power and PSD screen.
+// Widget tests for the Wi-Fi Classroom 6 GHz Power and PSD screen.
 //
 // The regulatory math is pinned in
 // test/services/wifi_lab/six_ghz_psd_math_test.dart; these tests cover the
@@ -74,7 +74,7 @@ Future<void> _toggleClass(WidgetTester tester, String label) async {
 }
 
 void main() {
-  test('catalog registers six-ghz-psd in Wi-Fi Lab', () {
+  test('catalog registers six-ghz-psd in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -84,10 +84,10 @@ void main() {
     expect(i, isNonNegative);
     final ToolEntry e = rf.tools[i];
     expect(e.title, '6 GHz Power and PSD');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/six-ghz-psd');
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab'); // shelf, not slot (2026-09-25 merge)
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom'); // shelf, not slot (2026-09-25 merge)
   });
 
   test('MCS steps are read from Signal Thresholds, MCS 0 at 5 dB', () {

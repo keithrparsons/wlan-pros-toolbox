@@ -1,4 +1,4 @@
-// FourierOfdmControls: mode 4 of the Wi-Fi Lab "Fourier and FFT" tool
+// FourierOfdmControls: mode 4 of the Wi-Fi Classroom "Fourier and FFT" tool
 // (fourier-fft), OFDM is an inverse FFT. Inputs and readouts only; it writes
 // FourierLabModel.ofdm and never draws a plot.
 

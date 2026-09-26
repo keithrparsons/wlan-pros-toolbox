@@ -1,11 +1,11 @@
 // Small building blocks shared by MloSimulatorStage and MloSimulatorControls
-// (Wi-Fi Lab Multi-Link Operation). Same card, label, row, slider and switch
-// idiom as the other Wi-Fi Lab simulators, kept local so this tool does not
+// (Wi-Fi Classroom Multi-Link Operation). Same card, label, row, slider and switch
+// idiom as the other Wi-Fi Classroom simulators, kept local so this tool does not
 // reach into a sibling's parts. Theme tokens only. ASCII copy (GL-004).
 //
 // LINK HUES (GL-003 §8.15.2, Keith 2026-09-25): each link is told apart by
 // color because the lesson is WHICH link carried each frame. The hues are
-// three members of the Wi-Fi Lab family (lib/theme/wifi_lab_client_palette
+// three members of the Wi-Fi Classroom family (lib/theme/wifi_lab_client_palette
 // .dart, equal OKLCH lightness, contrast measured there): the pink for
 // 2.4 GHz, the sky for 5 GHz, the violet for 6 GHz. All three sit away from
 // lime and from the §8.13 amber, red and green. Every use also prints the

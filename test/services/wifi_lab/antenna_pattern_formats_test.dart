@@ -1,4 +1,4 @@
-// MSI and NSMA read/write tests for the Antenna Pattern tool (Wi-Fi Lab,
+// MSI and NSMA read/write tests for the Antenna Pattern tool (Wi-Fi Classroom,
 // antenna-pattern). Every fixture is generated here from a closed-form model
 // or written by hand from the brief's stated conventions; no vendor file.
 

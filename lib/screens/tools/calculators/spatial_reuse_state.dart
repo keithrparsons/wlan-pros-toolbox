@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Spatial Reuse simulator (spatial-reuse).
+// State for the Wi-Fi Classroom Spatial Reuse simulator (spatial-reuse).
 //
 // One ChangeNotifier holds the scenario and caches its analysis. The stage
 // and the controls never talk to each other, only to this object, so a phone
@@ -123,7 +123,7 @@ class SpatialReuseState extends ChangeNotifier {
         '${k.holds ? 'holds' : 'does not hold'} MCS ${k.targetMcs} '
         '(needs ${db(k.requiredSnrDb)} dB)';
     return <String>[
-      'Spatial Reuse (Wi-Fi Lab)',
+      'Spatial Reuse (Wi-Fi Classroom)',
       'AP A ${db(s.layout.apA)} m, client A ${db(s.layout.clientA)} m, '
           'client B ${db(s.layout.clientB)} m, AP B ${db(s.layout.apB)} m; '
           'n ${s.exponent.toStringAsFixed(1)}, ${s.widthMHz} MHz, '

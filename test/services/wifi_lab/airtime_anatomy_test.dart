@@ -1,4 +1,4 @@
-// Airtime Anatomy service tests (Wi-Fi Lab).
+// Airtime Anatomy service tests (Wi-Fi Classroom).
 //
 // The reference is the WLAN Pros Airtime Calculator workbook (myPKA
 // Deliverables/2026-09-25-wlanpros-airtime-calculator), whose four default

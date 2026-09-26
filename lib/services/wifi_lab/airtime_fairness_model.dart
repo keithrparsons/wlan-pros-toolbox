@@ -1,4 +1,4 @@
-// Airtime Fairness model (Wi-Fi Lab, 2026-09-25) — airtime-fairness.
+// Airtime Fairness model (Wi-Fi Classroom, 2026-09-25) — airtime-fairness.
 //
 // One AP, N saturated downlink clients, no collisions. Each client wins a
 // transmission opportunity and sends n frames of L bytes at its PHY rate. The

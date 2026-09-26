@@ -1,4 +1,4 @@
-// MIMO and Beamforming: Wi-Fi Lab tool (mimo-beamforming).
+// MIMO and Beamforming: Wi-Fi Classroom tool (mimo-beamforming).
 //
 // Teaches four things (Keith, 2026-09-25, spec 06):
 //   1. Streams are capped by the smaller side: Nss = min(AP, client).

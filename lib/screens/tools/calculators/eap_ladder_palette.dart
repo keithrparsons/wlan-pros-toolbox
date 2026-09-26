@@ -1,13 +1,13 @@
-// Leg colors for the Wi-Fi Lab 802.1X and EAP Ladder (eap-ladder). THE ONE
+// Leg colors for the Wi-Fi Classroom 802.1X and EAP Ladder (eap-ladder). THE ONE
 // PLACE these hues live.
 //
-// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Lab teaching simulator may use
+// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Classroom teaching simulator may use
 // extra hues when telling categories apart by color is part of the lesson.
 // Here it is: the student must see which messages cross the air (client and
 // AP, 802.11 and EAPOL) and which cross the wire (AP and RADIUS server,
 // RADIUS over UDP), and that the same EAP message makes both trips.
 //
-// Two hues from one family: the blue and the sand of the Wi-Fi Lab AP family
+// Two hues from one family: the blue and the sand of the Wi-Fi Classroom AP family
 // (roaming_walk_palette.dart, equal OKLCH lightness, kept away from lime and
 // from the §8.13 amber and red). Blue against sand stays apart for the common
 // color-vision deficiencies. Neither carries meaning alone: every arrow has

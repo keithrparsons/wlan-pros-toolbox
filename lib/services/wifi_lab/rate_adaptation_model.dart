@@ -1,4 +1,4 @@
-// Rate Adaptation model for the Wi-Fi Lab (rate-adaptation).
+// Rate Adaptation model for the Wi-Fi Classroom (rate-adaptation).
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/23-rate-adaptation.md, from

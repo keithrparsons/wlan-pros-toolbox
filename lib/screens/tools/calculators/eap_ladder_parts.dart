@@ -1,6 +1,6 @@
 // Small building blocks shared by EapLadderStage and EapLadderControls
-// (Wi-Fi Lab 802.1X and EAP Ladder). Same card, label, row, slider header and switch
-// idiom as the other Wi-Fi Lab simulators, kept local so this tool does not
+// (Wi-Fi Classroom 802.1X and EAP Ladder). Same card, label, row, slider header and switch
+// idiom as the other Wi-Fi Classroom simulators, kept local so this tool does not
 // reach into a sibling's private parts. Theme tokens only.
 
 import 'package:flutter/material.dart';

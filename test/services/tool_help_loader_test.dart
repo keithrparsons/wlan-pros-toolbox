@@ -384,60 +384,60 @@ void main() {
       // off the file, not derived: `len(json[...]['tools'])` returned 185 and
       // the id appears exactly once.
       //
-      // 2026-09-25: Wi-Fi Lab added TWO entries, modulation-simulator and
+      // 2026-09-25: Wi-Fi Classroom added TWO entries, modulation-simulator and
       // medium-access-simulator. 190 + 2 = 192. Counted off the file after the
       // merge, not derived. The chain above stops at 185 while the constant was
       // already 190; the gap is in this prose, not in the file.
       //
-      // 2026-09-25: fspl-simulator (Wi-Fi Lab) added ONE entry. 192 + 1 = 193.
+      // 2026-09-25: fspl-simulator (Wi-Fi Classroom) added ONE entry. 192 + 1 = 193.
       // Counted off the file, not derived: `len(json[...]['tools'])` returned
       // 193 and the id appears exactly once.
-      // 2026-09-25: airtime-fairness (Wi-Fi Lab) added ONE entry. 192 + 1 =
+      // 2026-09-25: airtime-fairness (Wi-Fi Classroom) added ONE entry. 192 + 1 =
       // 193. Counted off the file: `len(json[...]['tools'])` returned 193 and
       // the id appears exactly once.
-      // 2026-09-25: airtime-anatomy (Wi-Fi Lab) added ONE entry. 192 + 1 =
+      // 2026-09-25: airtime-anatomy (Wi-Fi Classroom) added ONE entry. 192 + 1 =
       // 193. Counted off the file, not derived: `len(json[...]['tools'])`
       // returned 193 and the id appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added multipath-simulator. 192 + 1 = 193.
+      // 2026-09-25: Wi-Fi Classroom added multipath-simulator. 192 + 1 = 193.
       // Counted off the file: `len(json['tools'])` returned 193 and the id
       // appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added fourier-fft. 192 + 1 = 193. Counted off
+      // 2026-09-25: Wi-Fi Classroom added fourier-fft. 192 + 1 = 193. Counted off
       // the file, not derived: `len(json[...]['tools'])` returned 193 and the
       // id appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, wifi-through-a-wall. 192 + 1 =
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, wifi-through-a-wall. 192 + 1 =
       // 193. Counted off the file, not derived: `len(json['tools'])` returned
       // 193 and the id appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, six-ghz-psd, on top of the
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, six-ghz-psd, on top of the
       // merged preview's 198. Counted off the file, not derived:
       // `len(json['tools'])` returned 199 and the id appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, mimo-beamforming. 198 + 1 =
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, mimo-beamforming. 198 + 1 =
       // 199. Counted off the file, not derived: `len(json['tools'])` returned
       // 199 and the id appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added channel-planner. 198 + 1 = 199, on top
+      // 2026-09-25: Wi-Fi Classroom added channel-planner. 198 + 1 = 199, on top
       // of wifi-lab/preview (1748e4e9), which counted 198. Counted off the
       // file: `len(json['tools'])` returned 199 and the id appears once.
-      // 2026-09-25: Wi-Fi Lab added roaming-walk. 198 + 1 = 199. Counted off
+      // 2026-09-25: Wi-Fi Classroom added roaming-walk. 198 + 1 = 199. Counted off
       // the file, not derived: `len(json['tools'])` returned 199 and the id
       // appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, ofdma-simulator, on top of the
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, ofdma-simulator, on top of the
       // merged preview's 198. 198 + 1 = 199. Counted off the file, not
-      // 2026-09-25: Wi-Fi Lab added ONE entry, antenna-pattern, on top of the
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, antenna-pattern, on top of the
       // preview branch's 198. 198 + 1 = 199. Counted off the file, not
       // derived: `len(json['tools'])` returned 199 and the id appears once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, dfs-simulator, on top of
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, dfs-simulator, on top of
       // wifi-lab/preview (e72559ef), which counted 204. 204 + 1 = 205.
       // Counted off the file, not derived: `len(json['tools'])` returned 205
       // and the id appears exactly once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, eap-ladder, on top of the
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, eap-ladder, on top of the
       // preview branch's 204 (e72559ef). 204 + 1 = 205. Counted off the file,
       // not derived: `len(json['tools'])` returned 205 and the id appears once.
-      // 2026-09-25: Wi-Fi Lab added ONE entry, room-propagation, on top of
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, room-propagation, on top of
       // wifi-lab/preview (e72559ef), which counted 204. 204 + 1 = 205.
       // Counted off the file, not derived: `len(json['tools'])` returned 205
-      // 2026-09-25: Wi-Fi Lab added ONE entry, rate-adaptation, on top of
-      // 2026-09-25: Wi-Fi Lab added ONE entry, mlo-simulator, on top of
-      // 2026-09-25: Wi-Fi Lab added ONE entry, power-save, on top of
-      // 2026-09-25: Wi-Fi Lab added ONE entry, phy-preamble, on top of
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, rate-adaptation, on top of
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, mlo-simulator, on top of
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, power-save, on top of
+      // 2026-09-25: Wi-Fi Classroom added ONE entry, phy-preamble, on top of
       // wifi-lab/preview (39b59411), which counted 208. 208 + 1 = 209.
       // Counted off the file, not derived: `len(json['tools'])` returned 209
       // and the id appears exactly once.

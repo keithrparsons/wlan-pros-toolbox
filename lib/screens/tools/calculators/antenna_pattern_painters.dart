@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab "Antenna Pattern" tool (antenna-pattern).
+// Painters for the Wi-Fi Classroom "Antenna Pattern" tool (antenna-pattern).
 //
 //   OrbitPainter     the rotatable 3D surface on its dark viewport, with the
 //                    floor and the mounting surface drawn as thin reference

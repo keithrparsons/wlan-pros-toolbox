@@ -1,4 +1,4 @@
-// Rate Adaptation: Wi-Fi Lab tool (rate-adaptation).
+// Rate Adaptation: Wi-Fi Classroom tool (rate-adaptation).
 //
 // A radio does not know the best rate; it learns it. This screen runs one
 // link frame by frame under Minstrel-style rate control: per-rate success

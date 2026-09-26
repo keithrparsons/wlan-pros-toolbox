@@ -1,4 +1,4 @@
-// Multi-Link Operation: Wi-Fi Lab tool (mlo-simulator).
+// Multi-Link Operation: Wi-Fi Classroom tool (mlo-simulator).
 //
 // A Wi-Fi 7 client with links on two or three bands, other networks keeping
 // each band busy, and a stream of frames. Single link, STR, NSTR and EMLSR
@@ -7,7 +7,7 @@
 // shrinks when one is much busier, and it can lose (a slow link that is free
 // first, or EMLSR's switch cost).
 //
-// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Lab wave 3 research brief §7
+// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Classroom wave 3 research brief §7
 // and wave 5 brief §10, per myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/
 // specs/22-mlo.md. The model lives in lib/services/wifi_lab/mlo_model.dart;
 // airtime comes from lib/services/wifi_lab/airtime_anatomy.dart.

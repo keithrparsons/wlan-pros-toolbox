@@ -1,4 +1,4 @@
-// Timeline painter for the Medium Access Simulator (Wi-Fi Lab).
+// Timeline painter for the Medium Access Simulator (Wi-Fi Classroom).
 //
 // One lane for the medium (what the AP hears) plus one lane per station. The
 // canvas always ends at "now" on its right edge and covers the last

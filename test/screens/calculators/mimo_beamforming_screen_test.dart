@@ -1,4 +1,4 @@
-// Widget tests for the MIMO and Beamforming screen (Wi-Fi Lab spec 06).
+// Widget tests for the MIMO and Beamforming screen (Wi-Fi Classroom spec 06).
 //
 // The model has its own tests (test/services/wifi_lab/mimo_beamforming_model
 // _test.dart); these check the screen drives it: the stage and controls are

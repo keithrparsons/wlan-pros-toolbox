@@ -1,4 +1,4 @@
-// The Wi-Fi Lab large-screen notice (Keith, 2026-09-26: "Go with the
+// The Wi-Fi Classroom large-screen notice (Keith, 2026-09-26: "Go with the
 // large-screen notice and Continue anyway").
 //
 // Pins: the notice shows below the presenter threshold and not at or above
@@ -235,7 +235,7 @@ void main() {
       );
     }
 
-    testWidgets('every Wi-Fi Lab catalog tool is gated', (
+    testWidgets('every Wi-Fi Classroom catalog tool is gated', (
       WidgetTester tester,
     ) async {
       await grabContext(tester);
@@ -250,7 +250,7 @@ void main() {
       }
     });
 
-    testWidgets('no tool outside the Wi-Fi Lab is gated', (
+    testWidgets('no tool outside the Wi-Fi Classroom is gated', (
       WidgetTester tester,
     ) async {
       await grabContext(tester);
@@ -271,7 +271,7 @@ void main() {
     });
   });
 
-  test('every Wi-Fi Lab help entry says the Lab is for tablets and '
+  test('every Wi-Fi Classroom help entry says the Lab is for tablets and '
       'computers', () {
     final Map<String, dynamic> tools =
         (jsonDecode(File('assets/help/tool_help.json').readAsStringSync())
@@ -284,7 +284,7 @@ void main() {
       expect(
         notes.any(
           (dynamic n) => (n as String).contains(
-            'The Wi-Fi Lab is designed for tablets and computers',
+            'The Wi-Fi Classroom is designed for tablets and computers',
           ),
         ),
         isTrue,

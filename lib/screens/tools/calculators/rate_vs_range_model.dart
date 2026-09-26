@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Rate vs Range tool (rate-vs-range).
+// State for the Wi-Fi Classroom Rate vs Range tool (rate-vs-range).
 //
 // One ChangeNotifier holds every input and derives every number the stage and
 // the controls show, so the two lay out independently (stacked on a phone,

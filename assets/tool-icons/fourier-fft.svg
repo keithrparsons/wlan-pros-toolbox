@@ -6,7 +6,7 @@
     <path d="M14.5 16 V13"/>
     <path d="M17.75 16 V3.5"/>
     <path d="M21 16 V9.5"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="16" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

@@ -1,4 +1,4 @@
-// Tests for the Wi-Fi Lab Modulation Simulator math (clean-room build).
+// Tests for the Wi-Fi Classroom Modulation Simulator math (clean-room build).
 //
 // Spec "Done means": K_MOD values, Gray adjacency for all seven orders, the
 // text-to-bits round trip, the EVM formula, and error detection at very high

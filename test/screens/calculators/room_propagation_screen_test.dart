@@ -1,4 +1,4 @@
-// Widget and controller tests for the Wi-Fi Lab "Room Propagation" screen.
+// Widget and controller tests for the Wi-Fi Classroom "Room Propagation" screen.
 //
 // The physics is pinned in test/services/wifi_lab/room_propagation_model_test
 // .dart; these cover the screen contract: catalog and route registration, the
@@ -79,7 +79,7 @@ RoomPropagationController _controllerOf(WidgetTester tester) => tester
     .controller;
 
 void main() {
-  test('catalog registers room-propagation in Wi-Fi Lab', () {
+  test('catalog registers room-propagation in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -87,7 +87,7 @@ void main() {
       (ToolEntry t) => t.id == kRoomPropagationToolId,
     );
     expect(e.title, 'Room Propagation');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/room-propagation');
     expect(AppRouter.roomPropagation, '/tools/room-propagation');

@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab MIMO and Beamforming simulator (mimo-beamforming).
+// State for the Wi-Fi Classroom MIMO and Beamforming simulator (mimo-beamforming).
 //
 // One ChangeNotifier holds every input, so the two halves of the screen stay
 // independent widgets: MimoStage (the pictures) and MimoControls (inputs and

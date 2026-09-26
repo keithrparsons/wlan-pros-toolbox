@@ -1,4 +1,4 @@
-// Widget tests for the Medium Access Simulator screen (Wi-Fi Lab).
+// Widget tests for the Medium Access Simulator screen (Wi-Fi Classroom).
 //
 // The engine has its own tests (test/services/wifi_lab/); these check the
 // screen drives it: paused by default, Step moves exactly one slot, Play runs

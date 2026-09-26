@@ -1,4 +1,4 @@
-// Spatial reuse and BSS coloring model for the Wi-Fi Lab (spatial-reuse).
+// Spatial reuse and BSS coloring model for the Wi-Fi Classroom (spatial-reuse).
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/20-spatial-reuse.md, with

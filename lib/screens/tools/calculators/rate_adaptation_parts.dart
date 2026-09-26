@@ -1,4 +1,4 @@
-// Shared small widgets for the Wi-Fi Lab Rate Adaptation tool: card, section
+// Shared small widgets for the Wi-Fi Classroom Rate Adaptation tool: card, section
 // label, note, slider, outlined button and the per-MCS palette. Used by both
 // the stage and the controls, so neither imports the other.
 //

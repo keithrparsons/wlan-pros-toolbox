@@ -1,4 +1,4 @@
-// Free-space path loss math for the Wi-Fi Lab FSPL Simulator.
+// Free-space path loss math for the Wi-Fi Classroom FSPL Simulator.
 //
 // CLEAN-ROOM BUILD (2026-09-25) from the Friis transmission equation, per
 // myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/03-fspl-simulator.md.

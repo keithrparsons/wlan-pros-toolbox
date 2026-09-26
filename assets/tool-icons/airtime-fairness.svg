@@ -4,7 +4,7 @@
     <circle cx="12" cy="9.5" r="6.5"/>
     <path d="M12 3 V9.5 H18.5"/>
     <path d="M12 9.5 L7.4 14.1"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="12" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

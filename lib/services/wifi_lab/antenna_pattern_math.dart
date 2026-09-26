@@ -1,4 +1,4 @@
-// Antenna pattern math for the Wi-Fi Lab "Antenna Pattern" tool
+// Antenna pattern math for the Wi-Fi Classroom "Antenna Pattern" tool
 // (antenna-pattern). Pure Dart: no Flutter import, so every number the screen
 // shows is unit-testable.
 //

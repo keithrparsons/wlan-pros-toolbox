@@ -1,4 +1,4 @@
-// 802.1X and EAP Ladder (Wi-Fi Lab, eap-ladder): the message sequences.
+// 802.1X and EAP Ladder (Wi-Fi Classroom, eap-ladder): the message sequences.
 //
 // Pure Dart, no Flutter. Given a method (EAP-TLS, PEAP, EAP-TTLS, PSK or
 // SAE), a roam mode (full, PMK caching, FT over the air), an inner method for

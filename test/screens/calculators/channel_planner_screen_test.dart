@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab Channel Planner screen.
+// Widget tests for the Wi-Fi Classroom Channel Planner screen.
 //
 // The math is pinned in test/services/wifi_lab/channel_planner_model_test.dart;
 // these tests cover the screen contract: registration, the default readout,
@@ -78,7 +78,7 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test('catalog registers channel-planner in Wi-Fi Lab', () {
+  test('catalog registers channel-planner in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -88,12 +88,12 @@ void main() {
     expect(i, isNonNegative);
     final ToolEntry e = rf.tools[i];
     expect(e.title, 'Channel Planner');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/channel-planner');
-    // Inside the Wi-Fi Lab block; the exact neighbors depend on merge order
+    // Inside the Wi-Fi Classroom block; the exact neighbors depend on merge order
     // (2026-09-25 merge), so assert the shelf, not the slot.
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab');
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom');
   });
 
   test('§8.15.2 palette clears the contrast floor in both themes', () {

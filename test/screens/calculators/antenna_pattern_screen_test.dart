@@ -1,4 +1,4 @@
-// Widget, model and mesh tests for the Antenna Pattern screen (Wi-Fi Lab,
+// Widget, model and mesh tests for the Antenna Pattern screen (Wi-Fi Classroom,
 // antenna-pattern).
 //
 // The math and the file formats have their own tests
@@ -53,13 +53,13 @@ AntennaPatternLab _labOf(WidgetTester tester) =>
 
 void main() {
   group('registration', () {
-    test('catalog entry in the Wi-Fi Lab subgroup, with route and help id', () {
+    test('catalog entry in the Wi-Fi Classroom subgroup, with route and help id', () {
       final ToolEntry t = kToolCategories
           .expand((ToolCategory c) => c.tools)
           .firstWhere((ToolEntry e) => e.id == 'antenna-pattern');
       expect(t.title, 'Antenna Pattern');
       expect(t.routeName, '/tools/antenna-pattern');
-      expect(t.subgroup, 'Wi-Fi Lab');
+      expect(t.subgroup, 'Wi-Fi Classroom');
       expect(t.isLive, isTrue);
       expect(kAntennaPatternToolId, t.id);
       expect(AppRouter.routes.containsKey(t.routeName), isTrue);

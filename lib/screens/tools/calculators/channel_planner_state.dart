@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Channel Planner (channel-planner).
+// State for the Wi-Fi Classroom Channel Planner (channel-planner).
 //
 // One ChangeNotifier holds the floor, the APs, the walls and the plan rules,
 // and caches the analysis the stage and the controls both read. The stage and

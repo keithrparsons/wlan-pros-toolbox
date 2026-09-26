@@ -11,7 +11,7 @@
     <path d="M17 8.5 L18.5 10 L17 11.5"/>
     <path d="M20 15 H5.5"/>
     <path d="M7 13.5 L5.5 15 L7 16.5"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="5" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

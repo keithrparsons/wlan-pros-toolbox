@@ -1,4 +1,4 @@
-// Airtime Fairness (Wi-Fi Lab) — pieces shared by the stage, the controls and
+// Airtime Fairness (Wi-Fi Classroom) — pieces shared by the stage, the controls and
 // the screen: the view enum, the editable client draft, number formatting, the
 // takeaway sentence, and the card / title chrome.
 //

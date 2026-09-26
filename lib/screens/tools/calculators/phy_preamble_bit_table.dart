@@ -1,4 +1,4 @@
-// Bit tables and evidence tags for the PHY Preamble Reference (Wi-Fi Lab).
+// Bit tables and evidence tags for the PHY Preamble Reference (Wi-Fi Classroom).
 //
 // A table is a column of rows, never a wide grid, so it fits a 390 px phone
 // without sideways scroll: the bit range in DM Mono on the left, then the

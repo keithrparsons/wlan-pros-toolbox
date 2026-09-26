@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Multi-Link Operation simulator (mlo-simulator).
+// State for the Wi-Fi Classroom Multi-Link Operation simulator (mlo-simulator).
 //
 // One ChangeNotifier holds every input and the computed run, so the two
 // halves of the screen stay independent widgets: MloSimulatorStage (link

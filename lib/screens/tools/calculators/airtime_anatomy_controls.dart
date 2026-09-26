@@ -1,4 +1,4 @@
-// The controls for Airtime Anatomy (Wi-Fi Lab): readouts for each scenario,
+// The controls for Airtime Anatomy (Wi-Fi Classroom): readouts for each scenario,
 // the compare switch, which scenario to edit, the four presets, and every
 // input on the WLAN Pros Airtime Calculator sheet, with the less-used ones
 // behind "More settings". Reads and writes an [AirtimeAnatomyModel]; owns no

@@ -1,4 +1,4 @@
-// Tests for the Wi-Fi Lab presenter shell (lib/widgets/presenter/), against
+// Tests for the Wi-Fi Classroom presenter shell (lib/widgets/presenter/), against
 // the "Done means" of myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
 // 00-presenter-layout.md:
 //   - the layout at 1920x1080 and 1440x900 shows stage and controls with no

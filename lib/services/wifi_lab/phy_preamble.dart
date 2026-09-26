@@ -1,4 +1,4 @@
-// PHY Preamble Reference (Wi-Fi Lab, 2026-09-25): the model.
+// PHY Preamble Reference (Wi-Fi Classroom, 2026-09-25): the model.
 //
 // Every Wi-Fi PPDU since 802.11a opens with the same 20 us legacy preamble
 // (L-STF, L-LTF, L-SIG). This file lays out what each later PHY adds after

@@ -1,4 +1,4 @@
-// State for the PHY Preamble Reference (Wi-Fi Lab): the settings, the mode,
+// State for the PHY Preamble Reference (Wi-Fi Classroom): the settings, the mode,
 // the selected block, the "which PHY is this?" walk and the L-SIG LENGTH
 // calculator's input.
 //

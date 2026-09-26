@@ -7,7 +7,7 @@
     <path d="M9.2 11.3 Q12 9.2 14.8 11.3"/>
     <!-- the antenna, standing up out of the hole -->
     <path d="M12 2.5 V9.8"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="14" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

@@ -1,4 +1,4 @@
-// Unit tests for FsplMath (Wi-Fi Lab FSPL Simulator).
+// Unit tests for FsplMath (Wi-Fi Classroom FSPL Simulator).
 //
 // Reference values were computed independently of this code (Python, exact
 // c = 299,792,458 m/s) and are pinned here to +/-0.02 dB, per spec 03

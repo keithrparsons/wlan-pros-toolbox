@@ -1,12 +1,12 @@
-// Block colors for the Wi-Fi Lab PHY Preamble Reference (phy-preamble). THE
+// Block colors for the Wi-Fi Classroom PHY Preamble Reference (phy-preamble). THE
 // ONE PLACE these hues live.
 //
-// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Lab teaching simulator may use
+// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Classroom teaching simulator may use
 // extra hues when telling categories apart by color is part of the lesson.
 // Here it is: the student must see that the first 20 µs (L-STF, L-LTF, L-SIG)
 // is the same in every PHY, and what each newer PHY adds after it.
 //
-// Two hues from one family, the sand and the blue of the Wi-Fi Lab AP family
+// Two hues from one family, the sand and the blue of the Wi-Fi Classroom AP family
 // (the same values as eap_ladder_palette.dart, kept away from lime and from
 // the §8.13 amber and red). Sand = the legacy preamble every PHY sends; blue =
 // fields this PHY adds. Signal fields are FILLED (bits you can read); training

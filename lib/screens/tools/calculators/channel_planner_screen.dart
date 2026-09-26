@@ -1,4 +1,4 @@
-// Channel Planner: Wi-Fi Lab tool (channel-planner).
+// Channel Planner: Wi-Fi Classroom tool (channel-planner).
 //
 // Place 2 to 12 APs on a floor, give each a channel and width, and see which
 // ones share airtime. Teaches four things (spec 16): APs on one channel that

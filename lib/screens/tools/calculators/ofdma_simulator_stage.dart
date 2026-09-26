@@ -1,4 +1,4 @@
-// The stage for OFDMA Resource Units (Wi-Fi Lab): the channel drawn as a
+// The stage for OFDMA Resource Units (Wi-Fi Classroom): the channel drawn as a
 // strip of resource units with the clients in them, and below it the SU, DL
 // OFDMA and UL OFDMA timelines on one microsecond scale. Reads an
 // [OfdmaSimulatorModel]; owns no state, so a presenter layout can place it

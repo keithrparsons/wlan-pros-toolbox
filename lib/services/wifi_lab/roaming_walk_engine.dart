@@ -1,6 +1,6 @@
-// Roaming Walk engine (Wi-Fi Lab, 2026-09-25).
+// Roaming Walk engine (Wi-Fi Classroom, 2026-09-25).
 //
-// Pure Dart, no Flutter imports. Built clean-room from the Wi-Fi Lab wave 3
+// Pure Dart, no Flutter imports. Built clean-room from the Wi-Fi Classroom wave 3
 // research brief §3 (roaming) per myPKA Deliverables/2026-09-25-wifi-lab-
 // cleanroom/specs/15-roaming-walk.md. Same config and seed, same walk.
 //

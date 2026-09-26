@@ -1,4 +1,4 @@
-// Modulation math for the Wi-Fi Lab Modulation Simulator
+// Modulation math for the Wi-Fi Classroom Modulation Simulator
 // (modulation-simulator).
 //
 // CLEAN-ROOM BUILD. Written from the IEEE 802.11 constellation mapping

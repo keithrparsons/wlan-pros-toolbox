@@ -1,4 +1,4 @@
-// Controls and readouts for the Wi-Fi Lab 6 GHz Power and PSD tool.
+// Controls and readouts for the Wi-Fi Classroom 6 GHz Power and PSD tool.
 //
 // Everything that is not the plot: region, the classes to show, distance,
 // extra loss, noise figure and the AP authorized powers

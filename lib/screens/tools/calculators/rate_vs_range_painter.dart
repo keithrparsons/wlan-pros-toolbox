@@ -1,4 +1,4 @@
-// Painter for the Wi-Fi Lab Rate vs Range stage (rate-vs-range).
+// Painter for the Wi-Fi Classroom Rate vs Range stage (rate-vs-range).
 //
 // A top-down view: the AP at the center, one filled ring per MCS (MCS 0
 // outermost), the minimum-basic-rate cell edge as a dashed circle, two
@@ -8,7 +8,7 @@
 // drag handler so a touch and a drawn position can never disagree.
 //
 // Nothing here draws a wave, so nothing can imply a frequency change
-// (Wi-Fi Lab standing rule).
+// (Wi-Fi Classroom standing rule).
 //
 // COLOR: ring hues come in from RvrPalette (GL-003 §8.15.2); every other
 // color and text style arrives through [RvrStageStyle], built by the stage

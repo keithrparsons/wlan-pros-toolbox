@@ -1,4 +1,4 @@
-// Complex: a small immutable complex number for the Wi-Fi Lab physics.
+// Complex: a small immutable complex number for the Wi-Fi Classroom physics.
 //
 // Dart has no built-in complex type and the repo had none (checked
 // 2026-09-25: no `class Complex` under lib/ or test/). This one carries only

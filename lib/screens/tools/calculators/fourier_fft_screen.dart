@@ -1,4 +1,4 @@
-// Fourier and FFT: Wi-Fi Lab tool (fourier-fft), parts 1 and 2.
+// Fourier and FFT: Wi-Fi Classroom tool (fourier-fft), parts 1 and 2.
 //
 // Mode 1, Waves: up to five sines, each with amplitude, frequency and phase.
 // The time trace and the ideal line spectrum are the same signal seen two

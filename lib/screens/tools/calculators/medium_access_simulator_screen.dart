@@ -1,4 +1,4 @@
-// Medium Access Simulator (Wi-Fi Lab, 2026-09-25) — medium-access-simulator.
+// Medium Access Simulator (Wi-Fi Classroom, 2026-09-25) — medium-access-simulator.
 //
 // Watch 802.11 contention happen one 9 us slot at a time: stations wait out
 // AIFS, count down a random backoff, freeze when someone else takes the

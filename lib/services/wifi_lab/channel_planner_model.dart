@@ -1,4 +1,4 @@
-// Channel planning model for the Wi-Fi Lab Channel Planner (channel-planner).
+// Channel planning model for the Wi-Fi Classroom Channel Planner (channel-planner).
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/16-channel-planner.md, with

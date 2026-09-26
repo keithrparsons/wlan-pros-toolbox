@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab "Multi-Link Operation" screen
+// Widget tests for the Wi-Fi Classroom "Multi-Link Operation" screen
 // (mlo-simulator).
 //
 // The model is pinned in test/services/wifi_lab/mlo_model_test.dart; these
@@ -46,7 +46,7 @@ MloSimulatorState _state(WidgetTester tester) =>
     tester.widget<MloSimulatorStage>(find.byType(MloSimulatorStage)).state;
 
 void main() {
-  test('catalog registers mlo-simulator in Wi-Fi Lab, with its route', () {
+  test('catalog registers mlo-simulator in Wi-Fi Classroom, with its route', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -54,7 +54,7 @@ void main() {
       (ToolEntry t) => t.id == kMloSimulatorToolId,
     );
     expect(e.title, 'Multi-Link Operation');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/mlo-simulator');
     expect(AppRouter.mloSimulator, '/tools/mlo-simulator');

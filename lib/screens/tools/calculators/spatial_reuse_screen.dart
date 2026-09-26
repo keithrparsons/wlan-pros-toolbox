@@ -1,4 +1,4 @@
-// Spatial Reuse: Wi-Fi Lab tool (spatial-reuse).
+// Spatial Reuse: Wi-Fi Classroom tool (spatial-reuse).
 //
 // Two BSSs on one channel along a line. AP A is sending; AP B has a frame
 // ready. Teaches three things (spec 20): a radio defers to any Wi-Fi preamble

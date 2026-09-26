@@ -1,4 +1,4 @@
-// PresenterActions: what a Wi-Fi Lab tool lets the presenter keyboard do.
+// PresenterActions: what a Wi-Fi Classroom tool lets the presenter keyboard do.
 //
 // A tool fills in only the callbacks it supports. A null callback means the
 // key does nothing and the shortcut overlay leaves that row out, so an

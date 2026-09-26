@@ -1,4 +1,4 @@
-// Rate vs Range: Wi-Fi Lab tool (rate-vs-range).
+// Rate vs Range: Wi-Fi Classroom tool (rate-vs-range).
 //
 // MCS rings around an AP, top down. The lessons (spec 18): rate falls with
 // distance in steps because each MCS needs a minimum signal; doubling the

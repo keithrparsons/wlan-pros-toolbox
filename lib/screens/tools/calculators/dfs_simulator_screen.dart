@@ -1,4 +1,4 @@
-// DFS and Radar: Wi-Fi Lab tool (dfs-simulator).
+// DFS and Radar: Wi-Fi Classroom tool (dfs-simulator).
 //
 // An AP on a simulated one-hour clock. On a DFS channel it must listen for
 // radar before it transmits (the channel availability check: 60 s, or 10 min
@@ -7,7 +7,7 @@
 // follow it to a non-DFS channel at once or wait out a new CAC. The student
 // presses "Radar now" and watches the outage.
 //
-// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Lab wave 3 research brief §2
+// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Classroom wave 3 research brief §2
 // (FCC 47 CFR §15.407(h)(2), ETSI EN 301 893 V2.1.1), per myPKA
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/25-dfs.md. All rules and
 // the run live in lib/services/wifi_lab/dfs_model.dart; channel data comes

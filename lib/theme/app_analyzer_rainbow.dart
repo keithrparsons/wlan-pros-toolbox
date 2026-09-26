@@ -16,7 +16,7 @@
 // cards are dark-baked: the top stops (yellow, white) vanish on a light
 // ground.
 //
-// First user: the Wi-Fi Lab "Fourier and FFT" tool, mode 3 (swept vs FFT).
+// First user: the Wi-Fi Classroom "Fourier and FFT" tool, mode 3 (swept vs FFT).
 
 import 'package:flutter/material.dart';
 

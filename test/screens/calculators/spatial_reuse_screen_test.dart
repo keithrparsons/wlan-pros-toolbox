@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab Spatial Reuse screen.
+// Widget tests for the Wi-Fi Classroom Spatial Reuse screen.
 //
 // The math is pinned in test/services/wifi_lab/spatial_reuse_model_test.dart;
 // these tests cover the screen contract: registration, the default decision,
@@ -79,7 +79,7 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test('catalog and router register spatial-reuse in Wi-Fi Lab', () {
+  test('catalog and router register spatial-reuse in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -87,7 +87,7 @@ void main() {
       (ToolEntry t) => t.id == kSpatialReuseToolId,
     );
     expect(e.title, 'Spatial Reuse');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/spatial-reuse');
     expect(AppRouter.spatialReuse, '/tools/spatial-reuse');

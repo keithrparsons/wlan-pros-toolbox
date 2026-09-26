@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Airtime Fairness tool (airtime-fairness).
+// State for the Wi-Fi Classroom Airtime Fairness tool (airtime-fairness).
 //
 // One ChangeNotifier holds the client drafts, the sharing rule, the payload
 // and the round clock, so the stage and the controls are independent views

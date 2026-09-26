@@ -1,4 +1,4 @@
-// Controls and readouts for the Wi-Fi Lab Spatial Reuse simulator.
+// Controls and readouts for the Wi-Fi Classroom Spatial Reuse simulator.
 //
 // SpatialReuseControls: BSS coloring on or off, each BSS's color number,
 // OBSS_PD, TX_PWRref class, channel width, AP power, path-loss exponent and

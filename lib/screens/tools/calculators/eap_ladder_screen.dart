@@ -1,4 +1,4 @@
-// 802.1X and EAP Ladder: Wi-Fi Lab tool (eap-ladder).
+// 802.1X and EAP Ladder: Wi-Fi Classroom tool (eap-ladder).
 //
 // A three-lane ladder (client, AP, RADIUS server) that plays an 802.1X
 // connection one message at a time: EAP rides EAPOL over the air and RADIUS

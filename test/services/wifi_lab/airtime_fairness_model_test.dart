@@ -1,4 +1,4 @@
-// Unit tests for the Airtime Fairness model (Wi-Fi Lab spec 04, "Done means").
+// Unit tests for the Airtime Fairness model (Wi-Fi Classroom spec 04, "Done means").
 
 import 'dart:math' as math;
 

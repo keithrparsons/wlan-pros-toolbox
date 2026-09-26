@@ -1,4 +1,4 @@
-// FourierRaceStage: mode 3 of the Wi-Fi Lab "Fourier and FFT" tool
+// FourierRaceStage: mode 3 of the Wi-Fi Classroom "Fourier and FFT" tool
 // (fourier-fft), swept vs FFT race. Plots only; it reads FourierLabModel.race
 // and holds no inputs, so a presenter layout can place it beside the controls
 // unchanged.

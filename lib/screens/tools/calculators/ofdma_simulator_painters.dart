@@ -1,7 +1,7 @@
-// Painters for OFDMA Resource Units (Wi-Fi Lab): the channel's slot grid and
+// Painters for OFDMA Resource Units (Wi-Fi Classroom): the channel's slot grid and
 // the to-scale airtime bars.
 //
-// COLOR. Clients carry one hue each, from the Wi-Fi Lab client palette
+// COLOR. Clients carry one hue each, from the Wi-Fi Classroom client palette
 // (lib/theme/wifi_lab_client_palette.dart, GL-003 §8.15.2): the same hue marks
 // a client's RU in the channel strip and its data in every timeline, and its
 // letter is always drawn or spoken with it, so nothing rests on color alone.

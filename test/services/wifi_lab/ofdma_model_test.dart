@@ -1,4 +1,4 @@
-// Tests for the OFDMA Resource Units model (Wi-Fi Lab).
+// Tests for the OFDMA Resource Units model (Wi-Fi Classroom).
 //
 // Anchors: the RU table and the worked example in the wave-3 research brief,
 // §6 (myPKA Deliverables/2026-09-25-wifi-lab-wave3-research/brief.md), and

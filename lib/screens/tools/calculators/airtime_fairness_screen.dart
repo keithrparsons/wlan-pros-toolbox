@@ -1,4 +1,4 @@
-// Airtime Fairness (Wi-Fi Lab, 2026-09-25) — airtime-fairness.
+// Airtime Fairness (Wi-Fi Classroom, 2026-09-25) — airtime-fairness.
 //
 // Why one slow client drags every fast client down under plain 802.11
 // contention (the performance anomaly), and how giving each client an equal

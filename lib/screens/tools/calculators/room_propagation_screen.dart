@@ -1,4 +1,4 @@
-// Room Propagation: Wi-Fi Lab tool (room-propagation).
+// Room Propagation: Wi-Fi Classroom tool (room-propagation).
 //
 // A top-down floor plan with an AP, walls and doorways, and a heat map of the
 // received power. The student sees four things (spec):
@@ -35,7 +35,7 @@
 //
 // MOTION (§8.8): nothing animates. Every change is a redraw in answer to the
 // user's own drag, tap or control, so reduced motion needs no special path,
-// and no drawing can suggest the frequency changed (Wi-Fi Lab standing rule).
+// and no drawing can suggest the frequency changed (Wi-Fi Classroom standing rule).
 //
 // States (SOP-007 §5):
 //   - loading     -> "Computing" beside the plan title while a map is on its

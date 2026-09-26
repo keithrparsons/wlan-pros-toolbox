@@ -1,4 +1,4 @@
-// OFDMA Resource Units (Wi-Fi Lab, 2026-09-25): the pure-Dart model.
+// OFDMA Resource Units (Wi-Fi Classroom, 2026-09-25): the pure-Dart model.
 //
 // Two parts:
 //   1. The HE tone plan: which resource units (RUs) exist at each channel

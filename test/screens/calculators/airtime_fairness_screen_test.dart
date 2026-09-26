@@ -1,4 +1,4 @@
-// Widget tests for the Airtime Fairness screen (Wi-Fi Lab spec 04).
+// Widget tests for the Airtime Fairness screen (Wi-Fi Classroom spec 04).
 //
 // The model has its own tests (test/services/wifi_lab/); these check the
 // screen: spec defaults and the live takeaway, the Packet / Airtime / Compare

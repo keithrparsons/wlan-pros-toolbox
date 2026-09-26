@@ -1,4 +1,4 @@
-// Mode 4 state for the Wi-Fi Lab "Fourier and FFT" tool (fourier-fft): OFDM
+// Mode 4 state for the Wi-Fi Classroom "Fourier and FFT" tool (fourier-fft): OFDM
 // is an inverse FFT. Owned by FourierLabModel (the one shared state object);
 // every setter calls back into it.
 //

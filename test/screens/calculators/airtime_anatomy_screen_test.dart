@@ -1,4 +1,4 @@
-// Widget tests for Airtime Anatomy (Wi-Fi Lab).
+// Widget tests for Airtime Anatomy (Wi-Fi Classroom).
 //
 // The math has its own tests (test/services/wifi_lab/airtime_anatomy_test
 // .dart); these check the screen: it opens on two spreadsheet defaults,

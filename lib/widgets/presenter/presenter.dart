@@ -1,4 +1,4 @@
-// Wi-Fi Lab presenter layout: one import for a tool that adopts it.
+// Wi-Fi Classroom presenter layout: one import for a tool that adopts it.
 //
 // HOW A TOOL ADOPTS PRESENTER MODE (worked example: Modulation Simulator;
 // the long form is myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/

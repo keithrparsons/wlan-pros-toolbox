@@ -1,4 +1,4 @@
-// Swept vs FFT race: the pure-Dart model behind mode 3 of the Wi-Fi Lab
+// Swept vs FFT race: the pure-Dart model behind mode 3 of the Wi-Fi Classroom
 // "Fourier and FFT" tool (fourier-fft). No Flutter imports.
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA Deliverables/2026-09-25-wifi-lab-

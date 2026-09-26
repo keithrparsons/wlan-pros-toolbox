@@ -1,4 +1,4 @@
-// The controls for OFDMA Resource Units (Wi-Fi Lab): readouts (airtime per
+// The controls for OFDMA Resource Units (Wi-Fi Classroom): readouts (airtime per
 // mode, the SU / OFDMA ratio, and where the savings came from) and the
 // inputs (direction, channel width, clients, frame size, MCS, and each
 // client's RU). Reads and writes an [OfdmaSimulatorModel]; owns no state, so

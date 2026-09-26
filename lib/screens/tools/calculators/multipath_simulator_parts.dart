@@ -1,5 +1,5 @@
 // Small building blocks shared by MultipathStage and MultipathControls
-// (Wi-Fi Lab Multipath Simulator). Same card, label, row and legend idiom as
+// (Wi-Fi Classroom Multipath Simulator). Same card, label, row and legend idiom as
 // the Modulation and Medium Access simulators, lifted out so both halves of
 // this screen draw them identically. Theme tokens only.
 

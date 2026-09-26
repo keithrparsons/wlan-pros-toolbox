@@ -1,4 +1,4 @@
-// State for Airtime Anatomy (Wi-Fi Lab): the two scenarios, which one the
+// State for Airtime Anatomy (Wi-Fi Classroom): the two scenarios, which one the
 // controls edit, whether B is shown, and the selected segment.
 //
 // A ChangeNotifier so the stage (AirtimeAnatomyStage) and the controls

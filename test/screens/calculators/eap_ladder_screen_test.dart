@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab "802.1X and EAP Ladder" screen.
+// Widget tests for the Wi-Fi Classroom "802.1X and EAP Ladder" screen.
 //
 // The sequences are pinned in test/services/wifi_lab/eap_ladder_test.dart;
 // these cover the screen contract: catalog and route registration beside the
@@ -64,7 +64,7 @@ OutlinedButton _button(WidgetTester tester, String label) =>
     );
 
 void main() {
-  test('catalog and route register eap-ladder in Wi-Fi Lab', () {
+  test('catalog and route register eap-ladder in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -72,7 +72,7 @@ void main() {
       (ToolEntry t) => t.id == kEapLadderToolId,
     );
     expect(e.title, '802.1X and EAP Ladder');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/eap-ladder');
     expect(AppRouter.routes.containsKey('/tools/eap-ladder'), isTrue);

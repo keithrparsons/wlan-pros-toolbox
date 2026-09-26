@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab MIMO and Beamforming simulator.
+// Painters for the Wi-Fi Classroom MIMO and Beamforming simulator.
 //
 // Token-only CustomPainters in the multipath_simulator_painters.dart idiom:
 // every color and text style arrives resolved from context.colors by the

@@ -1,4 +1,4 @@
-// Controls, readouts and explainer for the Wi-Fi Lab Rate vs Range tool.
+// Controls, readouts and explainer for the Wi-Fi Classroom Rate vs Range tool.
 //
 // Everything that is not the ring view: band, width, spatial streams, the
 // link (AP EIRP, client antenna gain, path-loss exponent, margin) and the

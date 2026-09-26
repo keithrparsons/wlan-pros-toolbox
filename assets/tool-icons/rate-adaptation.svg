@@ -5,7 +5,7 @@
     <!-- and climbing back once the link recovers -->
     <path d="M19.5 14 C21.5 8 18 3.5 10.5 4"/>
     <path d="M12.5 2 L10.5 4 L12.5 6"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="5" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

@@ -1,4 +1,4 @@
-// The stage for Airtime Anatomy (Wi-Fi Lab): the to-scale TXOP bars, the
+// The stage for Airtime Anatomy (Wi-Fi Classroom): the to-scale TXOP bars, the
 // shared microsecond axis, the legend, the selected segment's formula, and a
 // segment-by-segment table. Reads an [AirtimeAnatomyModel]; owns no state of
 // its own, so a presenter layout can place it beside [AirtimeAnatomyControls].

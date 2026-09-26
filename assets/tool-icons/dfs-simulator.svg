@@ -8,7 +8,7 @@
     <!-- radar pulse heading out -->
     <path d="M14.5 5.5 A4 4 0 0 1 14.5 10"/>
     <path d="M17.5 3 A7.5 7.5 0 0 1 17.5 12.5"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="19" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

@@ -1,4 +1,4 @@
-// Controls for the Wi-Fi Lab Modulation Simulator, over one
+// Controls for the Wi-Fi Classroom Modulation Simulator, over one
 // ModulationSimulatorController:
 //   - ModulationPicker            the modulation select
 //   - ModulationSimulatorControls transport, SNR, speed, bit source, message

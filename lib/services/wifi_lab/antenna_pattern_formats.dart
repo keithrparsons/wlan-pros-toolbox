@@ -1,4 +1,4 @@
-// MSI / Planet and NSMA WG16.99.050 pattern files for the Wi-Fi Lab
+// MSI / Planet and NSMA WG16.99.050 pattern files for the Wi-Fi Classroom
 // "Antenna Pattern" tool (antenna-pattern): read them into PatternCuts, and
 // write our own fixtures from a known pattern. Pure Dart.
 //

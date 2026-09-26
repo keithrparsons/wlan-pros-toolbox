@@ -1,4 +1,4 @@
-// Controls for the Wi-Fi Lab "Fourier and FFT" tool (fourier-fft): the mode
+// Controls for the Wi-Fi Classroom "Fourier and FFT" tool (fourier-fft): the mode
 // selector, the inputs and the readouts. They write FourierLabModel and never
 // draw a plot, so a presenter layout can put them beside FourierStage
 // unchanged.

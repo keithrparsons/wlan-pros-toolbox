@@ -1,4 +1,4 @@
-// Airtime Fairness (Wi-Fi Lab) — the STAGE: everything the student watches.
+// Airtime Fairness (Wi-Fi Classroom) — the STAGE: everything the student watches.
 //
 // The airtime share bar, the throughput bars and the animated round, drawn
 // from the model state it is handed. It holds no inputs and edits nothing, so

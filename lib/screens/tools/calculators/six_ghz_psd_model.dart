@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab 6 GHz Power and PSD tool (six-ghz-psd).
+// State for the Wi-Fi Classroom 6 GHz Power and PSD tool (six-ghz-psd).
 //
 // One ChangeNotifier holds every input and derives every number the stage and
 // the controls show, so the two can be laid out independently (stacked on a

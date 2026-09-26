@@ -1,4 +1,4 @@
-// Small building blocks shared by MimoStage and MimoControls (Wi-Fi Lab MIMO
+// Small building blocks shared by MimoStage and MimoControls (Wi-Fi Classroom MIMO
 // and Beamforming). The same card, label, row and legend idiom as the
 // Multipath and Modulation simulators, kept per tool as the siblings do, so
 // both halves of this screen draw them identically. Theme tokens only.

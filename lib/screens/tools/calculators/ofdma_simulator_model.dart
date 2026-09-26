@@ -1,4 +1,4 @@
-// State for OFDMA Resource Units (Wi-Fi Lab): the inputs, where each client's
+// State for OFDMA Resource Units (Wi-Fi Classroom): the inputs, where each client's
 // RU sits in the channel, which client is selected, and the computed result.
 //
 // A ChangeNotifier so the stage (OfdmaSimulatorStage) and the controls

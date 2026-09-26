@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Room Propagation simulator (room-propagation).
+// State for the Wi-Fi Classroom Room Propagation simulator (room-propagation).
 //
 // One ChangeNotifier holds every input and the computed maps, so the screen's
 // halves stay independent widgets: RoomPropagationStage (the plan, the heat

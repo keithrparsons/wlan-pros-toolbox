@@ -1,7 +1,7 @@
-// MIMO, spatial streams and beamforming model (Wi-Fi Lab, 2026-09-25).
+// MIMO, spatial streams and beamforming model (Wi-Fi Classroom, 2026-09-25).
 //
 // Pure Dart, no Flutter imports. Built clean-room from MIMO fundamentals and
-// the 802.11 sounding frame formats, per the Wi-Fi Lab spec
+// the 802.11 sounding frame formats, per the Wi-Fi Classroom spec
 // (myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
 // 06-mimo-beamforming.md). This is a TEACHING model: every gain here is an
 // ideal upper bound, and every airtime figure is an estimate built from the

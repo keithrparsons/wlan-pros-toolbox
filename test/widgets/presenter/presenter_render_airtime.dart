@@ -1,4 +1,4 @@
-// Render-proof capture of the presenter layout for five Wi-Fi Lab tools:
+// Render-proof capture of the presenter layout for five Wi-Fi Classroom tools:
 // Airtime Fairness, Airtime Anatomy, OFDMA Resource Units, Rate Adaptation
 // and Power Save (NOT a golden, NOT a gate). Same harness as
 // presenter_render.dart, kept in its own file so the tool batches converted

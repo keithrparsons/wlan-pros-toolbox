@@ -1,4 +1,4 @@
-// Airtime Anatomy (Wi-Fi Lab, 2026-09-25) — airtime-anatomy.
+// Airtime Anatomy (Wi-Fi Classroom, 2026-09-25) — airtime-anatomy.
 //
 // One transmit opportunity drawn to scale: AIFS, average backoff, optional
 // RTS/CTS, preamble, data, SIFS, ACK or Block Ack. Two scenarios stack on one

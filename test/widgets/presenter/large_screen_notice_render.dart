@@ -1,4 +1,4 @@
-// Render-proof capture of the Wi-Fi Lab large-screen notice (NOT a golden,
+// Render-proof capture of the Wi-Fi Classroom large-screen notice (NOT a golden,
 // NOT a gate). The `_render.dart` suffix keeps it out of the default run:
 //
 //   LARGE_SCREEN_RENDER_OUT=/some/dir \

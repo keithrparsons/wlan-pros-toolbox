@@ -1,6 +1,6 @@
 // PresentButton and PresenterRoute: the way into presenter mode.
 //
-// The button sits in a Wi-Fi Lab tool's AppBar actions. It opens the SAME
+// The button sits in a Wi-Fi Classroom tool's AppBar actions. It opens the SAME
 // tool over the SAME state object (the screen passes a builder that closes
 // over its own controller), so a scene set on the normal screen is what the
 // room sees, and whatever the instructor changes while presenting is still

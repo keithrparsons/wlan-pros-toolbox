@@ -918,7 +918,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Utilities & Generators',
       ),
-      // ── Wi-Fi Lab (2026-09-25) ── interactive simulators built clean-room
+      // ── Wi-Fi Classroom (2026-09-25) ── interactive simulators built clean-room
       // from IEEE 802.11 math; spec in myPKA
       // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
       //
@@ -932,7 +932,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and see the constellation, carrier, EVM and bit errors',
         routeName: '/tools/modulation-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'medium-access-simulator',
@@ -942,7 +942,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'collisions, EDCA priority, hidden nodes and RTS/CTS',
         routeName: '/tools/medium-access-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(
@@ -953,7 +953,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and why higher bands lose more: the receive antenna, not the air',
         routeName: '/tools/fspl-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'airtime-fairness',
@@ -963,7 +963,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'sharing time instead of turns lifts throughput',
         routeName: '/tools/airtime-fairness',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'airtime-anatomy',
@@ -973,7 +973,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'SIFS and ACK, and how much of the air carries your data',
         routeName: '/tools/airtime-anatomy',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'multipath-simulator',
@@ -984,7 +984,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'antenna diversity',
         routeName: '/tools/multipath-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'fourier-fft',
@@ -994,7 +994,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'it: bins, RBW, windows and leakage',
         routeName: '/tools/fourier-fft',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'wifi-through-a-wall',
@@ -1004,7 +1004,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'and fade, and compare the loss across 2.4, 5 and 6 GHz',
         routeName: '/tools/wifi-through-a-wall',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       // Distinct from the 'rf-attenuation' calculator, which stays as it is.
       ToolEntry(
@@ -1015,7 +1015,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'reflections, bending past edges, and why 6 GHz loses more',
         routeName: '/tools/room-propagation',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       // Distinct from the 'roaming' reference card and the 'roaming-log' live
       // tool, which stay as they are.
@@ -1027,7 +1027,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'delta, sticky clients, ping-pong, and what 802.11k/r save',
         routeName: '/tools/roaming-walk',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'six-ghz-psd',
@@ -1037,7 +1037,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'channel width for LPI, VLP, Standard Power and GVP, US and EU',
         routeName: '/tools/six-ghz-psd',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'mimo-beamforming',
@@ -1048,7 +1048,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'beamformed frames',
         routeName: '/tools/mimo-beamforming',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'channel-planner',
@@ -1058,7 +1058,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'wider channels, why 1, 6 and 11, and the -82 dBm rule',
         routeName: '/tools/channel-planner',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'ofdma-simulator',
@@ -1068,7 +1068,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'one OFDMA transmission with one frame per client, drawn to scale',
         routeName: '/tools/ofdma-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'antenna-pattern',
@@ -1078,7 +1078,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             '3D pattern; paste an MSI or NSMA file to see its two cuts in 3D',
         routeName: '/tools/antenna-pattern',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       // Distinct from the 'eap-types' and 'frame-exchange' references, which
       // stay as they are.
@@ -1090,7 +1090,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'step: EAP-TLS, PEAP, EAP-TTLS, PSK and SAE, and what a roam skips',
         routeName: '/tools/eap-ladder',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'rate-vs-range',
@@ -1100,7 +1100,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'channels shrink every ring, a higher basic rate shrinks the cell',
         routeName: '/tools/rate-vs-range',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'rate-adaptation',
@@ -1110,7 +1110,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'frames, the retry chain, and what every retry costs in airtime',
         routeName: '/tools/rate-adaptation',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'spatial-reuse',
@@ -1120,7 +1120,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'color and OBSS_PD let them talk at once for less power',
         routeName: '/tools/spatial-reuse',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'dfs-simulator',
@@ -1130,7 +1130,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'listen-first check, the channel move and the 30-minute block',
         routeName: '/tools/dfs-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       // Pairs with 'airtime-anatomy': the same preamble durations, opened up
       // field by field.
@@ -1142,7 +1142,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'with the bits of each SIG field and how a receiver tells them apart',
         routeName: '/tools/phy-preamble',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'mlo-simulator',
@@ -1152,7 +1152,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'traffic, and see when MLO cuts latency and when it does not',
         routeName: '/tools/mlo-simulator',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'power-save',
@@ -1162,7 +1162,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'TWT, and see what each saving costs in latency',
         routeName: '/tools/power-save',
         isLive: true,
-        subgroup: 'Wi-Fi Lab',
+        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'downtilt',

@@ -1,4 +1,4 @@
-// Power Save: Wi-Fi Lab tool (power-save).
+// Power Save: Wi-Fi Classroom tool (power-save).
 //
 // A client and its AP on a timeline: beacons every beacon interval, a DTIM
 // every N beacons, frames the AP holds while the client dozes, and the
@@ -7,7 +7,7 @@
 // show what each saving costs in latency. Readouts: time awake, average
 // current, a battery estimate, and downlink, group and uplink latency.
 //
-// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Lab wave 3 research brief §9
+// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Classroom wave 3 research brief §9
 // and wave 5 brief §9, per myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/
 // specs/24-power-save.md. All rules and the run live in
 // lib/services/wifi_lab/power_save_model.dart.

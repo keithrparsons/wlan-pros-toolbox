@@ -6,7 +6,7 @@
     <!-- BSS color marks: a dot in one cell, a diamond in the other -->
     <circle cx="7" cy="10" r="1.8" fill="currentColor" stroke="none"/>
     <path d="M17 7.6 L19.4 10 L17 12.4 L14.6 10 Z" fill="currentColor" stroke="none"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="12" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

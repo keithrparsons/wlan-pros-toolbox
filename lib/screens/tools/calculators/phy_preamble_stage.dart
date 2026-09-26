@@ -1,4 +1,4 @@
-// The stage for the PHY Preamble Reference (Wi-Fi Lab): the preamble drawn to
+// The stage for the PHY Preamble Reference (Wi-Fi Classroom): the preamble drawn to
 // scale, its legend, the blocks as a focusable list, and either the selected
 // block's bit table (Explore) or the receiver's decision walk (Which PHY?).
 // Reads a PhyPreambleModel; owns no state of its own, so a presenter layout

@@ -1,4 +1,4 @@
-// RateVsRangeStage: the picture half of the Wi-Fi Lab Rate vs Range tool.
+// RateVsRangeStage: the picture half of the Wi-Fi Classroom Rate vs Range tool.
 //
 // The top-down ring view and everything that belongs to reading it: the
 // caption, the rings with the draggable client, a distance slider for

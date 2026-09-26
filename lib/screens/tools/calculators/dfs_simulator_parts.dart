@@ -1,6 +1,6 @@
 // Small building blocks shared by DfsSimulatorStage and DfsSimulatorControls
-// (Wi-Fi Lab DFS and Radar). Same card, label, row, slider header and button
-// idiom as the other Wi-Fi Lab simulators, kept local so this tool does not
+// (Wi-Fi Classroom DFS and Radar). Same card, label, row, slider header and button
+// idiom as the other Wi-Fi Classroom simulators, kept local so this tool does not
 // reach into a sibling's parts. Theme tokens only.
 
 import 'package:flutter/material.dart';

@@ -1,4 +1,4 @@
-// Airtime Fairness (Wi-Fi Lab) — the animated round.
+// Airtime Fairness (Wi-Fi Classroom) — the animated round.
 //
 // One lane per fairness rule. Each transmission is a block whose width is its
 // airtime on one shared time scale, so under packet fairness the slow client's

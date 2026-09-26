@@ -1,4 +1,4 @@
-// Tests for the Wi-Fi Lab wall slab physics (ITU-R P.2040-4, clean-room).
+// Tests for the Wi-Fi Classroom wall slab physics (ITU-R P.2040-4, clean-room).
 //
 // Spec 12 "Done means": Eq. 27a attenuation for concrete within 2 dB/m of
 // Pax's hand figures (65/125/143 dB/m at 2.4/5.5/6.5 GHz); zero thickness

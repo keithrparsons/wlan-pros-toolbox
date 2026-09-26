@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab Rate vs Range screen.
+// Widget tests for the Wi-Fi Classroom Rate vs Range screen.
 //
 // The math is pinned in test/services/wifi_lab/rate_vs_range_math_test.dart;
 // these tests cover the screen contract: registration, the default client
@@ -76,7 +76,7 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test('catalog registers rate-vs-range in Wi-Fi Lab', () {
+  test('catalog registers rate-vs-range in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -85,7 +85,7 @@ void main() {
     );
     expect(kRateVsRangeToolId, 'rate-vs-range');
     expect(e.title, 'Rate vs Range');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/rate-vs-range');
   });

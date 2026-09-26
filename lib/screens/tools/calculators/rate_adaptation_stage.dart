@@ -1,4 +1,4 @@
-// Stage for the Wi-Fi Lab Rate Adaptation tool (rate-adaptation).
+// Stage for the Wi-Fi Classroom Rate Adaptation tool (rate-adaptation).
 //
 // Three views of one run, top to bottom:
 //   1. Attempts, the last 5 ms of air: each attempt drawn to scale as its

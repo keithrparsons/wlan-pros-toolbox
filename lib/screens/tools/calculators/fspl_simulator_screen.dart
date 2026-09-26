@@ -1,4 +1,4 @@
-// FSPL Simulator: Wi-Fi Lab tool (fspl-simulator).
+// FSPL Simulator: Wi-Fi Classroom tool (fspl-simulator).
 //
 // Draws free-space path loss (or the received power it leaves) against
 // distance on a log axis, one curve per band, and splits the loss into the

@@ -1,8 +1,8 @@
-// Medium Access Simulator engine (Wi-Fi Lab, 2026-09-25).
+// Medium Access Simulator engine (Wi-Fi Classroom, 2026-09-25).
 //
 // A deterministic, pure-Dart model of 802.11 contention: DCF and EDCA channel
 // access (IEEE 802.11 clause 10) over legacy OFDM timing (clause 17). Built
-// clean-room from the standard's rules as written in the Wi-Fi Lab spec
+// clean-room from the standard's rules as written in the Wi-Fi Classroom spec
 // (myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
 // 02-medium-access-simulator.md). No Flutter imports: the screen drives this
 // with a Ticker and renders it with a CustomPainter, and the tests drive it

@@ -1,4 +1,4 @@
-// Tests for the MIMO and Beamforming model (Wi-Fi Lab spec 06, "Done means").
+// Tests for the MIMO and Beamforming model (Wi-Fi Classroom spec 06, "Done means").
 //
 // The first five groups map to the spec's clauses:
 //   - a 4x4 AP to a 2x2 client gives Nss = 2 both ways;

@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab FSPL Simulator (fspl-simulator).
+// State for the Wi-Fi Classroom FSPL Simulator (fspl-simulator).
 //
 // One ChangeNotifier holds every input and derives every number the stage and
 // the controls show, so the two can be laid out independently (stacked on a

@@ -1,4 +1,4 @@
-// Controls, readouts and explainer for the Wi-Fi Lab Rate Adaptation tool.
+// Controls, readouts and explainer for the Wi-Fi Classroom Rate Adaptation tool.
 //
 // RateAdaptationControls: transport (Play, Step one frame, Restart, speed)
 // and the settings (path, SNR offset, sampling share, EWMA weight, retry

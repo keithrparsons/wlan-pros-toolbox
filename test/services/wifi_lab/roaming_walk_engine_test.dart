@@ -1,4 +1,4 @@
-// Tests for the Roaming Walk engine (Wi-Fi Lab spec 15, "Done means").
+// Tests for the Roaming Walk engine (Wi-Fi Classroom spec 15, "Done means").
 //
 // Each group maps to one clause of the spec:
 //   - with delta = 0 and two equal APs, ping-pong occurs; with delta = 8 dB

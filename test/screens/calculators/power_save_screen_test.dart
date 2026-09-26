@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab "Power Save" screen (power-save).
+// Widget tests for the Wi-Fi Classroom "Power Save" screen (power-save).
 //
 // The rules and the run are pinned in test/services/wifi_lab/
 // power_save_model_test.dart; these cover the screen contract: catalog
@@ -44,12 +44,12 @@ PowerSaveController _controller(WidgetTester tester) =>
     tester.widget<PowerSaveStage>(find.byType(PowerSaveStage)).controller;
 
 void main() {
-  test('catalog registers power-save in Wi-Fi Lab, with its route', () {
+  test('catalog registers power-save in Wi-Fi Classroom, with its route', () {
     final ToolEntry t = kToolCategories
         .expand((ToolCategory c) => c.tools)
         .firstWhere((ToolEntry e) => e.id == kPowerSaveToolId);
     expect(t.title, 'Power Save');
-    expect(t.subgroup, 'Wi-Fi Lab');
+    expect(t.subgroup, 'Wi-Fi Classroom');
     expect(t.routeName, '/tools/power-save');
     expect(t.isLive, isTrue);
     expect(AppRouter.powerSave, '/tools/power-save');

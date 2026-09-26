@@ -1,4 +1,4 @@
-// Multi-Link Operation teaching model (Wi-Fi Lab, mlo-simulator).
+// Multi-Link Operation teaching model (Wi-Fi Classroom, mlo-simulator).
 //
 // A Wi-Fi 7 client holds links on up to three bands. Each link carries other
 // networks' traffic (busy periods, random, seeded). A stream of frames for
@@ -22,7 +22,7 @@
 // All modes see THE SAME random traffic (the same frame arrivals and the same
 // busy periods on each band), so their latencies can be compared.
 //
-// CLEAN-ROOM (2026-09-25). Values from the Wi-Fi Lab research briefs, not
+// CLEAN-ROOM (2026-09-25). Values from the Wi-Fi Classroom research briefs, not
 // from any other tool: myPKA Deliverables/2026-09-25-wifi-lab-wave3-research/
 // brief.md section 7 (mode definitions; EMLSR padding delay 0/32/64/128/256
 // us and transition delay 0/16/32/64/128/256 us, as listed in the Linux

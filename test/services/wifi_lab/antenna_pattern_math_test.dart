@@ -1,4 +1,4 @@
-// Unit tests for the Antenna Pattern model (Wi-Fi Lab, antenna-pattern).
+// Unit tests for the Antenna Pattern model (Wi-Fi Classroom, antenna-pattern).
 // The numbers come from spec 14's "Done means" and the research brief §2-§3.
 
 import 'dart:math' as math;

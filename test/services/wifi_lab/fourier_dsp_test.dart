@@ -1,4 +1,4 @@
-// Unit tests for FourierDsp (Wi-Fi Lab "Fourier and FFT", part 1).
+// Unit tests for FourierDsp (Wi-Fi Classroom "Fourier and FFT", part 1).
 //
 // The first block is the spec's "Done means" list, one test each: ENBW for
 // Hann and rectangular, an on-bin tone landing in bins k and N-k only,

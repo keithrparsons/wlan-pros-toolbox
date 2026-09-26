@@ -1,6 +1,6 @@
 // Small building blocks shared by PowerSaveStage and PowerSaveControls
-// (Wi-Fi Lab Power Save), and the one place this tool's state hues live.
-// Same card, label, row, slider and button idiom as the other Wi-Fi Lab
+// (Wi-Fi Classroom Power Save), and the one place this tool's state hues live.
+// Same card, label, row, slider and button idiom as the other Wi-Fi Classroom
 // simulators, kept local so this tool does not reach into a sibling's parts.
 // Theme tokens only.
 
@@ -14,12 +14,12 @@ import '../../../theme/wifi_lab_client_palette.dart';
 
 /// One hue per radio state, the single home of this tool's palette.
 ///
-/// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Lab teaching simulator may use
+/// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Classroom teaching simulator may use
 /// extra hues from one harmonious family when telling categories apart by
 /// color is part of the lesson. Here it is: the student must see at a glance
 /// how the awake time splits into listening for beacons, moving frames,
 /// sending, and sitting in a TWT service period, and how much of the bar is
-/// doze. The hues are four stops of the shared, measured Wi-Fi Lab family
+/// doze. The hues are four stops of the shared, measured Wi-Fi Classroom family
 /// (WifiLabClientPalette: one OKLCH lightness and chroma per theme, every
 /// fill at least 4.6:1 on the card surfaces). Doze is no hue at all: a thin
 /// neutral line. No §8.13 status hue; none of these is a verdict. Every state

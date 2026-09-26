@@ -1,4 +1,4 @@
-// FourierStage: the plots for the Wi-Fi Lab "Fourier and FFT" tool
+// FourierStage: the plots for the Wi-Fi Classroom "Fourier and FFT" tool
 // (fourier-fft). It reads FourierLabModel and draws; it holds no inputs, so a
 // presenter layout can put it beside FourierControls unchanged.
 //

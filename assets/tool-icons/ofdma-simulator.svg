@@ -11,7 +11,7 @@
     <circle cx="19.6" cy="3.5" r="1.6" fill="currentColor" stroke="none"/>
     <circle cx="19.6" cy="9.5" r="1.6" fill="currentColor" stroke="none"/>
     <circle cx="19.6" cy="15.5" r="1.6" fill="currentColor" stroke="none"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="9" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

@@ -1,4 +1,4 @@
-// LargeScreenGate: the Wi-Fi Lab's "designed for a larger screen" notice.
+// LargeScreenGate: the Wi-Fi Classroom's "designed for a larger screen" notice.
 //
 // Keith, 2026-09-26: "Go with the large-screen notice and Continue anyway."
 // As it binds (myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/README.md,
@@ -7,7 +7,7 @@
 // shows the tool exactly as it is today.
 //
 // APPLIED CENTRALLY. [gateWifiLabRoutes] wraps every AppRouter route whose
-// catalog entry is in the 'Wi-Fi Lab' subgroup, so a new Lab tool is gated the
+// catalog entry is in the 'Wi-Fi Classroom' subgroup, so a new Lab tool is gated the
 // moment it is added to the catalog and the route table. No screen imports
 // this file.
 //
@@ -31,14 +31,14 @@ import '../../theme/app_tokens.dart';
 import 'present_button.dart' show presenterAvailable;
 
 /// The catalog subgroup whose tools are gated.
-const String kWifiLabSubgroup = 'Wi-Fi Lab';
+const String kWifiLabSubgroup = 'Wi-Fi Classroom';
 
 /// Notice headline.
 const String kLargeScreenNoticeTitle = 'Best on a larger screen';
 
 /// Notice body.
 const String kLargeScreenNoticeBody =
-    'The Wi-Fi Lab is designed for a tablet or computer screen. On a phone '
+    'The Wi-Fi Classroom is designed for a tablet or computer screen. On a phone '
     'some views will be cramped.';
 
 /// Primary action: show the tool anyway.
@@ -59,7 +59,7 @@ void resetLargeScreenNoticeForTest() {
   largeScreenNoticeDismissed.value = false;
 }
 
-/// Every catalog tool in the Wi-Fi Lab subgroup.
+/// Every catalog tool in the Wi-Fi Classroom subgroup.
 Iterable<ToolEntry> wifiLabTools([List<ToolCategory>? catalog]) sync* {
   for (final ToolCategory c in catalog ?? kToolCategories) {
     for (final ToolEntry t in c.tools) {
@@ -68,7 +68,7 @@ Iterable<ToolEntry> wifiLabTools([List<ToolCategory>? catalog]) sync* {
   }
 }
 
-/// Returns [routes] with every Wi-Fi Lab tool's builder wrapped in a
+/// Returns [routes] with every Wi-Fi Classroom tool's builder wrapped in a
 /// [LargeScreenGate]. Routes that are not Lab tools pass through untouched.
 Map<String, WidgetBuilder> gateWifiLabRoutes(
   Map<String, WidgetBuilder> routes, {

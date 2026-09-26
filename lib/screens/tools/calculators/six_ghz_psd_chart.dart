@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab 6 GHz Power and PSD tool (six-ghz-psd).
+// Painters for the Wi-Fi Classroom 6 GHz Power and PSD tool (six-ghz-psd).
 //
 // Two views, both CustomPainters on one geometry each so the stage's tap
 // handler and the painter can never disagree about where a width sits:

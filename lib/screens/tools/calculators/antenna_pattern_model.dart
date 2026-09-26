@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab "Antenna Pattern" tool (antenna-pattern).
+// State for the Wi-Fi Classroom "Antenna Pattern" tool (antenna-pattern).
 //
 // Keith's standing rule (spec 00): the screen is a STAGE (the 3D surface and
 // the two polar cuts, AntennaPatternStage) and CONTROLS (inputs and readouts,

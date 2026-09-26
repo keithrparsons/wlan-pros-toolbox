@@ -1,4 +1,4 @@
-// Shared small widgets for the Wi-Fi Lab 6 GHz Power and PSD tool: card,
+// Shared small widgets for the Wi-Fi Classroom 6 GHz Power and PSD tool: card,
 // section label, note row and the per-class stroke sample. Used by both the
 // stage and the controls, so neither imports the other.
 //
@@ -106,7 +106,7 @@ class PsdClassSample extends StatelessWidget {
 
 /// One hue per power class, the single home of this tool's palette.
 ///
-/// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Lab teaching simulator may use
+/// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Classroom teaching simulator may use
 /// extra hues from one harmonious family when telling categories apart by
 /// color is part of the lesson. Here it is: the student must follow each
 /// power class across the EIRP-vs-width chart and see which lines rise and

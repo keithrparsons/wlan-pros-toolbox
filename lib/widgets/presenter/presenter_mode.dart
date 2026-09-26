@@ -1,4 +1,4 @@
-// PresenterMode: the projector-legibility scale for the Wi-Fi Lab presenter
+// PresenterMode: the projector-legibility scale for the Wi-Fi Classroom presenter
 // layout (myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
 // 00-presenter-layout.md).
 //

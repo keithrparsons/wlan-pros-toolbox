@@ -8,7 +8,7 @@
     <path d="M4 14 H20"/>
     <circle cx="4" cy="14" r="1.6" fill="currentColor" stroke="none"/>
     <circle cx="20" cy="14" r="1.6" fill="currentColor" stroke="none"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="10" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

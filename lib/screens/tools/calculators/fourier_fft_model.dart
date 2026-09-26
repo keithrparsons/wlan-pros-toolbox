@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab "Fourier and FFT" tool (fourier-fft).
+// State for the Wi-Fi Classroom "Fourier and FFT" tool (fourier-fft).
 //
 // The screen is split into a stage (the plots, FourierStage) and controls
 // (inputs and readouts, FourierModeSelector + FourierControls), so a later

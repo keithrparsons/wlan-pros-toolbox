@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab "DFS and Radar" screen (dfs-simulator).
+// Widget tests for the Wi-Fi Classroom "DFS and Radar" screen (dfs-simulator).
 //
 // The rules and the run are pinned in test/services/wifi_lab/
 // dfs_model_test.dart; these cover the screen contract: catalog
@@ -77,7 +77,7 @@ DfsSimulatorController _controller(WidgetTester tester) =>
     tester.widget<DfsSimulatorStage>(find.byType(DfsSimulatorStage)).controller;
 
 void main() {
-  test('catalog registers dfs-simulator in Wi-Fi Lab, with its route', () {
+  test('catalog registers dfs-simulator in Wi-Fi Classroom, with its route', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -85,7 +85,7 @@ void main() {
       (ToolEntry t) => t.id == kDfsSimulatorToolId,
     );
     expect(e.title, 'DFS and Radar');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/dfs-simulator');
     expect(AppRouter.dfsSimulator, '/tools/dfs-simulator');

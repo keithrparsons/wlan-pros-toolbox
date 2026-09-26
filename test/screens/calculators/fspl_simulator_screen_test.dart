@@ -1,4 +1,4 @@
-// Widget tests for the Wi-Fi Lab FSPL Simulator screen.
+// Widget tests for the Wi-Fi Classroom FSPL Simulator screen.
 //
 // The math is pinned in test/services/wifi_lab/fspl_math_test.dart; these
 // tests cover the screen contract: registration, the default readout, the
@@ -73,7 +73,7 @@ void _expectTextInsideWidth(WidgetTester tester, double width) {
 }
 
 void main() {
-  test('catalog registers fspl-simulator in Wi-Fi Lab after medium access', () {
+  test('catalog registers fspl-simulator in Wi-Fi Classroom after medium access', () {
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
@@ -83,10 +83,10 @@ void main() {
     expect(i, isNonNegative);
     final ToolEntry e = rf.tools[i];
     expect(e.title, 'FSPL Simulator');
-    expect(e.subgroup, 'Wi-Fi Lab');
+    expect(e.subgroup, 'Wi-Fi Classroom');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/fspl-simulator');
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Lab'); // shelf, not slot (2026-09-25 merge)
+    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom'); // shelf, not slot (2026-09-25 merge)
     // The two-input calculator is a separate, untouched entry.
     expect(
       kToolCategories.any(

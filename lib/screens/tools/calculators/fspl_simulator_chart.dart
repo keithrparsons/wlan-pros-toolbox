@@ -1,4 +1,4 @@
-// Chart painter for the Wi-Fi Lab FSPL Simulator (fspl-simulator).
+// Chart painter for the Wi-Fi Classroom FSPL Simulator (fspl-simulator).
 //
 // A CustomPainter rather than fl_chart: the distance axis is logarithmic
 // (1 m to 100 m or 1 km, decade grid with 2..9 minor ticks), and the chart

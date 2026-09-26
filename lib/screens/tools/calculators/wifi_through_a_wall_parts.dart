@@ -1,8 +1,8 @@
-// Shared pieces for the Wi-Fi Lab "Wi-Fi Through a Wall" tool
+// Shared pieces for the Wi-Fi Classroom "Wi-Fi Through a Wall" tool
 // (wifi-through-a-wall): the immutable wall configuration the screen owns,
 // the number formatting every panel uses, and the small themed building
 // blocks (card, section label, readout row, note) that match the sibling
-// Wi-Fi Lab screens.
+// Wi-Fi Classroom screens.
 //
 // The stage (wifi_through_a_wall_stage.dart) and the controls
 // (wifi_through_a_wall_controls.dart) are separate widgets that both read a
@@ -185,7 +185,7 @@ double fsplDeltaDb(double f1Ghz, double f2Ghz) =>
 
 // ── Building blocks ───────────────────────────────────────────────────────
 
-/// Card surface matching the sibling Wi-Fi Lab screens.
+/// Card surface matching the sibling Wi-Fi Classroom screens.
 class WallCard extends StatelessWidget {
   const WallCard({super.key, required this.child});
 

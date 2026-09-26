@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab "Fourier and FFT" tool (fourier-fft).
+// Painters for the Wi-Fi Classroom "Fourier and FFT" tool (fourier-fft).
 //
 // Two plots, shared by every mode:
 //   - TimeTracePainter: amplitude against time. Draws the sum in the measured

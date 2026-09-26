@@ -1,6 +1,6 @@
-// Small shared view pieces and formatters for the Wi-Fi Lab "Fourier and
+// Small shared view pieces and formatters for the Wi-Fi Classroom "Fourier and
 // FFT" tool (fourier-fft). Used by both the stage and the controls, so the
-// two stay visually identical to each other and to the Wi-Fi Lab siblings
+// two stay visually identical to each other and to the Wi-Fi Classroom siblings
 // (same card, row, note and legend treatment as the Modulation Simulator).
 // Theme tokens only.
 

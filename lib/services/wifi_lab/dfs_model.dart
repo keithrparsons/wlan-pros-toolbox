@@ -1,6 +1,6 @@
-// DFS and Radar model (Wi-Fi Lab, 2026-09-25).
+// DFS and Radar model (Wi-Fi Classroom, 2026-09-25).
 //
-// Pure Dart. Built clean-room from the Wi-Fi Lab wave 3 research brief §2
+// Pure Dart. Built clean-room from the Wi-Fi Classroom wave 3 research brief §2
 // (FCC 47 CFR §15.407(h)(2) and ETSI EN 301 893 V2.1.1 Table D.1, read from
 // the primary text) per myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/
 // specs/25-dfs.md. Channel numbers, bonding groups and band edges come from

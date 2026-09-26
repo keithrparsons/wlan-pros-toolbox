@@ -1,4 +1,4 @@
-// Unit tests for part 2 of the Wi-Fi Lab "Fourier and FFT" tool: the swept
+// Unit tests for part 2 of the Wi-Fi Classroom "Fourier and FFT" tool: the swept
 // vs FFT race (fourier_race.dart) and OFDM as an inverse FFT
 // (fourier_ofdm.dart).
 //

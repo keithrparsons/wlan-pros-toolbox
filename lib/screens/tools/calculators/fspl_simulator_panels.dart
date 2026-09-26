@@ -1,4 +1,4 @@
-// Controls and readouts for the Wi-Fi Lab FSPL Simulator.
+// Controls and readouts for the Wi-Fi Classroom FSPL Simulator.
 //
 // Everything that is not the plot: band toggles, channel and link inputs, the
 // indoor model, the measured point (FsplControls, FsplBandChips), and the

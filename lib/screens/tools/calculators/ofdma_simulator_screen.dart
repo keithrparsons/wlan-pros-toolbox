@@ -1,4 +1,4 @@
-// OFDMA Resource Units (Wi-Fi Lab, 2026-09-25) — ofdma-simulator.
+// OFDMA Resource Units (Wi-Fi Classroom, 2026-09-25) — ofdma-simulator.
 //
 // OFDMA splits one channel into resource units (RUs) so an AP can talk to
 // several clients in one transmission. The student places clients into RUs
@@ -18,7 +18,7 @@
 // layout (lib/widgets/presenter/). The RU table and the assumptions are
 // reference cards under them on the phone.
 //
-// THEME: context.colors, plus the Wi-Fi Lab client palette (GL-003 §8.15.2)
+// THEME: context.colors, plus the Wi-Fi Classroom client palette (GL-003 §8.15.2)
 // for the one-hue-per-client lesson, always paired with the client letter.
 // Status hues only on a failed check (§8.13). Nothing animates, so reduced
 // motion (§8.8) has nothing to remove.

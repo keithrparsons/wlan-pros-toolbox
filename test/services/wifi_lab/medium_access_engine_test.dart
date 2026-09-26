@@ -1,4 +1,4 @@
-// Medium Access Simulator engine tests (Wi-Fi Lab spec 02, "Done means").
+// Medium Access Simulator engine tests (Wi-Fi Classroom spec 02, "Done means").
 //
 // Pure Dart: no widgets. Every scenario is deterministic, either under a fixed
 // seed or with scripted backoff draws, so each expected microsecond below is

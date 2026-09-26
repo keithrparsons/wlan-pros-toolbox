@@ -1,6 +1,6 @@
-// Channel colors and patterns for the Wi-Fi Lab Channel Planner.
+// Channel colors and patterns for the Wi-Fi Classroom Channel Planner.
 //
-// GL-003 §8.15.2 (Keith, 2026-09-25): in a Wi-Fi Lab teaching simulator,
+// GL-003 §8.15.2 (Keith, 2026-09-25): in a Wi-Fi Classroom teaching simulator,
 // where telling categories apart by color is part of the lesson, extra hues
 // are allowed if they come from one harmonious family, meet the §8.9
 // contrast floor, and are always paired with a label. Here the categories are

@@ -1,4 +1,4 @@
-// Roaming Walk: Wi-Fi Lab tool (roaming-walk).
+// Roaming Walk: Wi-Fi Classroom tool (roaming-walk).
 //
 // A client walks across a floor of APs. It holds its AP until the signal
 // falls below its trigger, then moves only to an AP that is delta stronger,
@@ -6,7 +6,7 @@
 // Mac (Apple's published values) and two illustrative clients show a sticky
 // client and a ping-pong one; 802.11k, PMK caching and FT change the gap.
 //
-// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Lab wave 3 research brief §3,
+// CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Classroom wave 3 research brief §3,
 // per myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
 // 15-roaming-walk.md. All math lives in lib/services/wifi_lab/
 // roaming_walk_engine.dart.

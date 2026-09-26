@@ -1,10 +1,10 @@
-// Wi-Fi Lab client palette: one hue per client, for teaching simulators only.
+// Wi-Fi Classroom client palette: one hue per client, for teaching simulators only.
 //
-// GL-003 §8.15.2 (Keith, 2026-09-25): in a Wi-Fi Lab teaching simulator,
+// GL-003 §8.15.2 (Keith, 2026-09-25): in a Wi-Fi Classroom teaching simulator,
 // where telling clients apart by color is part of the lesson, extra hues from
 // ONE harmonious family are allowed, provided they meet the §8.9 contrast
 // floor and meaning never rests on color alone. Every use of this palette
-// also draws the client's letter. Outside the Wi-Fi Lab, §8.15 case 3 still
+// also draws the client's letter. Outside the Wi-Fi Classroom, §8.15 case 3 still
 // applies: no categorical hues.
 //
 // THE FAMILY. Nine hues 40 degrees apart in OKLCH (25, 65, ..., 345), at one

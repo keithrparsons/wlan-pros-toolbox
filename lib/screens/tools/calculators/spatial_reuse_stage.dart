@@ -18,7 +18,7 @@
 // the presenter text scale), and the two links sit side by side below them
 // with their SINR, best MCS and verdict.
 //
-// COLOR (GL-003 §8.15.2): each BSS gets one hue from the Wi-Fi Lab family in
+// COLOR (GL-003 §8.15.2): each BSS gets one hue from the Wi-Fi Classroom family in
 // lib/theme/wifi_lab_client_palette.dart (BSS A the blue, BSS B the violet),
 // always beside its name and color number, never color alone. The hue shows
 // what AP B can tell apart: with coloring off both BSSs are drawn neutral,

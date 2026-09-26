@@ -1,4 +1,4 @@
-// Model tests for the Wi-Fi Lab DFS and Radar simulator (dfs-simulator).
+// Model tests for the Wi-Fi Classroom DFS and Radar simulator (dfs-simulator).
 //
 // Pins spec 25 "Done means" (myPKA Deliverables/2026-09-25-wifi-lab-
 // cleanroom/specs/25-dfs.md) against the brief §2 values: CAC 60 s in the

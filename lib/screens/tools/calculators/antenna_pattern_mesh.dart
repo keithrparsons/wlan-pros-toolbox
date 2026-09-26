@@ -1,4 +1,4 @@
-// The rotatable 3D surface for the Wi-Fi Lab "Antenna Pattern" tool
+// The rotatable 3D surface for the Wi-Fi Classroom "Antenna Pattern" tool
 // (antenna-pattern).
 //
 // PERFORMANCE CONTRACT (Larry's brief): the gain grid and the mesh are built

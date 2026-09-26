@@ -1,4 +1,4 @@
-// Controls for the Wi-Fi Lab "Antenna Pattern" tool (antenna-pattern): the
+// Controls for the Wi-Fi Classroom "Antenna Pattern" tool (antenna-pattern): the
 // inputs and the readouts. They write AntennaPatternLab and never draw the
 // pattern, so a presenter layout can put them beside AntennaPatternStage
 // unchanged.

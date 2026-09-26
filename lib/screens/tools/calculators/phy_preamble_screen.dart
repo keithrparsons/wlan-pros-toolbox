@@ -1,4 +1,4 @@
-// PHY Preamble Reference: Wi-Fi Lab tool (phy-preamble).
+// PHY Preamble Reference: Wi-Fi Classroom tool (phy-preamble).
 //
 // Every Wi-Fi PPDU since 802.11a starts with the same 20 µs legacy preamble,
 // so older radios can hear it and defer. This tool draws the preamble of each

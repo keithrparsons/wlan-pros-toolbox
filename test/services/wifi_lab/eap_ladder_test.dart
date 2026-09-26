@@ -1,4 +1,4 @@
-// Model tests for the Wi-Fi Lab 802.1X and EAP Ladder (eap-ladder).
+// Model tests for the Wi-Fi Classroom 802.1X and EAP Ladder (eap-ladder).
 //
 // One group per clause of the spec's "Done means" (myPKA Deliverables/
 // 2026-09-25-wifi-lab-cleanroom/specs/21-eap-ladder.md), plus the RFC shapes

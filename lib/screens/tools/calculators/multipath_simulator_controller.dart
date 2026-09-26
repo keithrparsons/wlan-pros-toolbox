@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Multipath Simulator (multipath-simulator).
+// State for the Wi-Fi Classroom Multipath Simulator (multipath-simulator).
 //
 // One ChangeNotifier holds every input and caches the derived results, so the
 // two halves of the screen stay independent widgets: MultipathStage (the

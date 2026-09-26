@@ -1,4 +1,4 @@
-// Antenna Pattern: Wi-Fi Lab tool (antenna-pattern).
+// Antenna Pattern: Wi-Fi Classroom tool (antenna-pattern).
 //
 // Change an antenna from omni to directional, change its gain, and watch the
 // 3D pattern reshape; import a pattern file's two 2D cuts and rotate the 3D

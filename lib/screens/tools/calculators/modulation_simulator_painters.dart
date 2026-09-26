@@ -1,4 +1,4 @@
-// Painters for the Wi-Fi Lab Modulation Simulator (modulation-simulator).
+// Painters for the Wi-Fi Classroom Modulation Simulator (modulation-simulator).
 //
 // Two token-only CustomPainters, following the metric_sparkline.dart idiom:
 // every color arrives as a constructor argument resolved from

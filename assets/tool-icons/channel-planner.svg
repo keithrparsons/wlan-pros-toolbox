@@ -4,7 +4,7 @@
     <path d="M8.54 2.5 L12 4.5 V8.5 L8.54 10.5 L5.08 8.5 V4.5 Z"/>
     <path d="M15.46 2.5 L18.92 4.5 V8.5 L15.46 10.5 L12 8.5 V4.5 Z"/>
     <path d="M12 8.5 L15.46 10.5 V14.5 L12 16.5 L8.54 14.5 V10.5 Z"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="17" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

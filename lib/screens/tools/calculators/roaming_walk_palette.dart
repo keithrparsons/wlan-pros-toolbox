@@ -1,7 +1,7 @@
-// AP colors for the Wi-Fi Lab Roaming Walk (roaming-walk). THE ONE PLACE
+// AP colors for the Wi-Fi Classroom Roaming Walk (roaming-walk). THE ONE PLACE
 // these hues live.
 //
-// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Lab teaching simulator may use
+// GL-003 §8.15.2 (Keith, 2026-09-25): a Wi-Fi Classroom teaching simulator may use
 // extra hues when telling categories apart by color is part of the lesson.
 // Here it is: the student matches each AP on the floor plan, its -67 and
 // -70 dBm contours, and its RSSI trace on the time plot. The hues are one

@@ -1,4 +1,4 @@
-// Unit tests for the Wi-Fi Lab Multi-Link Operation model (mlo-simulator).
+// Unit tests for the Wi-Fi Classroom Multi-Link Operation model (mlo-simulator).
 //
 // The spec's "Done means" (myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/
 // specs/22-mlo.md): one link makes every mode the single link; two

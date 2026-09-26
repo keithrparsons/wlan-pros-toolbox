@@ -1,4 +1,4 @@
-// Rate vs Range math for the Wi-Fi Lab (rate-vs-range).
+// Rate vs Range math for the Wi-Fi Classroom (rate-vs-range).
 //
 // CLEAN-ROOM BUILD (2026-09-25) per myPKA
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/18-rate-vs-range.md. The

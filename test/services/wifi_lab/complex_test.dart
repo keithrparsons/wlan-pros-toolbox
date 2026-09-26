@@ -1,4 +1,4 @@
-// Tests for the Wi-Fi Lab Complex type. The wall simulator's P.2040 slab
+// Tests for the Wi-Fi Classroom Complex type. The wall simulator's P.2040 slab
 // equations stand on these: arithmetic, the principal square root (branch
 // choice decides whether a lossy wave decays or grows) and exp (a thick metal
 // wall must underflow to zero, not overflow to NaN).

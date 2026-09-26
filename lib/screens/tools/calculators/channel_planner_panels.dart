@@ -1,4 +1,4 @@
-// Controls and readouts for the Wi-Fi Lab Channel Planner.
+// Controls and readouts for the Wi-Fi Classroom Channel Planner.
 //
 // ChannelPlannerControls: band, region, width, DFS and U-NII-4, the 2.4 GHz
 // mask, Auto-plan, the AP list (pick, channel, width, position, add,

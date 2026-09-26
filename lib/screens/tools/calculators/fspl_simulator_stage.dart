@@ -1,4 +1,4 @@
-// FsplStage: the plot half of the Wi-Fi Lab FSPL Simulator.
+// FsplStage: the plot half of the Wi-Fi Classroom FSPL Simulator.
 //
 // The stage is the chart and everything that belongs to reading it: the view
 // and distance-range toggles, the plot, its legend, and the cursor (drag or

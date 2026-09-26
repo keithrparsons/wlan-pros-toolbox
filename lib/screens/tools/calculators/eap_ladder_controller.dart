@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab 802.1X and EAP Ladder (eap-ladder).
+// State for the Wi-Fi Classroom 802.1X and EAP Ladder (eap-ladder).
 //
 // One ChangeNotifier holds the configuration, the built ladder and how many
 // of its messages have been sent, so the two halves of the screen stay

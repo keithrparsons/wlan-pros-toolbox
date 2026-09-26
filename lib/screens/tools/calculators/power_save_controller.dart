@@ -1,4 +1,4 @@
-// State for the Wi-Fi Lab Power Save simulator (power-save).
+// State for the Wi-Fi Classroom Power Save simulator (power-save).
 //
 // One ChangeNotifier holds every input and the computed runs, so the two
 // halves of the screen stay independent widgets: PowerSaveStage (the

@@ -1,5 +1,5 @@
 // PhyPreambleControls: the inputs-and-readouts half of the PHY Preamble
-// Reference (Wi-Fi Lab).
+// Reference (Wi-Fi Classroom).
 //
 // Takes the shared PhyPreambleModel and a set of parts to show, so a phone
 // stacks them under the stage while a presenter layout can show every part in

@@ -269,80 +269,80 @@ class AppRouter {
   // Learn / RF intuition (2026-06-28). Real-time audio synthesis (flutter_soloud
   // behind the ToneEngine seam); on-device DSP only, all platforms incl. web.
   static const String hearFrequency = '/tools/hear-frequency';
-  // Wi-Fi Lab (2026-09-25). Clean-room simulators from IEEE 802.11 math;
+  // Wi-Fi Classroom (2026-09-25). Clean-room simulators from IEEE 802.11 math;
   // pure on-device math, all platforms incl. web.
   static const String modulationSimulator = '/tools/modulation-simulator';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart DCF/EDCA contention engine; all
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart DCF/EDCA contention engine; all
   // platforms incl. web.
   static const String mediumAccessSimulator = '/tools/medium-access-simulator';
-  // Wi-Fi Lab (2026-09-25). Friis / FSPL curves, pure on-device math; all
+  // Wi-Fi Classroom (2026-09-25). Friis / FSPL curves, pure on-device math; all
   // platforms incl. web.
   static const String fsplSimulator = '/tools/fspl-simulator';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart packet vs airtime fairness model; all
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart packet vs airtime fairness model; all
   // platforms incl. web.
   static const String airtimeFairness = '/tools/airtime-fairness';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart port of the WLAN Pros Airtime
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart port of the WLAN Pros Airtime
   // Calculator; all platforms incl. web.
   static const String airtimeAnatomy = '/tools/airtime-anatomy';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart two-ray / standing-wave / Rayleigh
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart two-ray / standing-wave / Rayleigh
   // multipath model; all platforms incl. web.
   static const String multipathSimulator = '/tools/multipath-simulator';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart DFT/FFT and windows; optional sound via
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart DFT/FFT and windows; optional sound via
   // the hear-frequency ToneEngine seam. All platforms incl. web.
   static const String fourierFft = '/tools/fourier-fft';
-  // Wi-Fi Lab (2026-09-25). ITU-R P.2040 wall slab model, pure on-device
+  // Wi-Fi Classroom (2026-09-25). ITU-R P.2040 wall slab model, pure on-device
   // math; all platforms incl. web.
   static const String wifiThroughAWall = '/tools/wifi-through-a-wall';
-  // Wi-Fi Lab (2026-09-25). Image-ray room model with ITU-R P.2040 walls and
+  // Wi-Fi Classroom (2026-09-25). Image-ray room model with ITU-R P.2040 walls and
   // P.526 diffraction, computed on device (background isolate where
   // supported); all platforms incl. web.
   static const String roomPropagation = '/tools/room-propagation';
-  // Wi-Fi Lab (2026-09-25). 6 GHz EIRP / PSD / SNR by width from 47 CFR
+  // Wi-Fi Classroom (2026-09-25). 6 GHz EIRP / PSD / SNR by width from 47 CFR
   // 15.407 and ETSI EN 303 687, pure on-device math; all platforms incl. web.
   static const String sixGhzPsd = '/tools/six-ghz-psd';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart MIMO streams, array factor and sounding
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart MIMO streams, array factor and sounding
   // estimate; all platforms incl. web.
   static const String mimoBeamforming = '/tools/mimo-beamforming';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart channel plan and CCA model; all
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart channel plan and CCA model; all
   // platforms incl. web.
   static const String channelPlanner = '/tools/channel-planner';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart client roaming walk (trigger, delta,
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart client roaming walk (trigger, delta,
   // roam gap); all platforms incl. web.
   static const String roamingWalk = '/tools/roaming-walk';
-  // Wi-Fi Lab (2026-09-25). HE resource units and SU vs OFDMA airtime,
+  // Wi-Fi Classroom (2026-09-25). HE resource units and SU vs OFDMA airtime,
   // pure on-device math; all platforms incl. web.
   static const String ofdmaSimulator = '/tools/ofdma-simulator';
-  // Wi-Fi Lab (2026-09-25). Parametric and imported (MSI / NSMA) antenna
+  // Wi-Fi Classroom (2026-09-25). Parametric and imported (MSI / NSMA) antenna
   // patterns in a rotatable 3D CustomPainter; pure on-device math, all
   // platforms incl. web.
   static const String antennaPattern = '/tools/antenna-pattern';
-  // Wi-Fi Lab (2026-09-25). MCS rings from the receiver sensitivity table,
+  // Wi-Fi Classroom (2026-09-25). MCS rings from the receiver sensitivity table,
   // log-distance path loss and ssid-airtime beacon math; pure on-device
   // math, all platforms incl. web.
   static const String rateVsRange = '/tools/rate-vs-range';
-  // Wi-Fi Lab (2026-09-25). Minstrel-style rate control over one link,
+  // Wi-Fi Classroom (2026-09-25). Minstrel-style rate control over one link,
   // reusing the Rate vs Range, Airtime Anatomy and Medium Access math; pure
   // on-device model, all platforms incl. web.
   static const String rateAdaptation = '/tools/rate-adaptation';
-  // Wi-Fi Lab (2026-09-25). Pure-Dart CCA, BSS color and OBSS_PD model;
+  // Wi-Fi Classroom (2026-09-25). Pure-Dart CCA, BSS color and OBSS_PD model;
   // all platforms incl. web.
   static const String spatialReuse = '/tools/spatial-reuse';
-  // Wi-Fi Lab (2026-09-25). DFS channel availability check, radar, channel
+  // Wi-Fi Classroom (2026-09-25). DFS channel availability check, radar, channel
   // move and non-occupancy on a simulated clock (47 CFR 15.407(h)(2), ETSI
   // EN 301 893); pure on-device math, all platforms incl. web.
   static const String dfsSimulator = '/tools/dfs-simulator';
-  // Wi-Fi Lab (2026-09-25). Wi-Fi 7 Multi-Link Operation: single link, STR,
+  // Wi-Fi Classroom (2026-09-25). Wi-Fi 7 Multi-Link Operation: single link, STR,
   // NSTR and EMLSR latency on the same seeded traffic; pure on-device math,
   // all platforms incl. web.
   static const String mloSimulator = '/tools/mlo-simulator';
-  // Wi-Fi Lab (2026-09-25). Beacons, DTIM, legacy PS, U-APSD and TWT on a
+  // Wi-Fi Classroom (2026-09-25). Beacons, DTIM, legacy PS, U-APSD and TWT on a
   // timeline, with awake time, a battery estimate and latency; pure
   // on-device math, all platforms incl. web.
   static const String powerSave = '/tools/power-save';
-  // Wi-Fi Lab (2026-09-25). 802.1X / EAP message ladder (client, AP,
+  // Wi-Fi Classroom (2026-09-25). 802.1X / EAP message ladder (client, AP,
   // RADIUS server); pure on-device model, all platforms incl. web.
   static const String eapLadder = '/tools/eap-ladder';
-  // Wi-Fi Lab (2026-09-25). PHY preamble per PPDU format, to scale, with
+  // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
@@ -764,7 +764,7 @@ class AppRouter {
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
   ///
-  /// Every Wi-Fi Lab tool (catalog subgroup 'Wi-Fi Lab') is wrapped in the
+  /// Every Wi-Fi Classroom tool (catalog subgroup 'Wi-Fi Classroom') is wrapped in the
   /// large-screen notice here, in one place ([gateWifiLabRoutes]), so a new
   /// Lab tool is gated as soon as it is in the catalog and this table.
   static final Map<String, WidgetBuilder>

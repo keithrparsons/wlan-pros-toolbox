@@ -1,4 +1,4 @@
-// AntennaPatternStage: the plots for the Wi-Fi Lab "Antenna Pattern" tool
+// AntennaPatternStage: the plots for the Wi-Fi Classroom "Antenna Pattern" tool
 // (antenna-pattern). It reads AntennaPatternLab and draws; its only inputs
 // are the camera (drag, pinch, scroll, arrow keys, Reset view), so a
 // presenter layout can put it beside AntennaPatternControls unchanged.

@@ -1,4 +1,4 @@
-// Airtime Anatomy calculator (Wi-Fi Lab, 2026-09-25).
+// Airtime Anatomy calculator (Wi-Fi Classroom, 2026-09-25).
 //
 // One transmit opportunity (TXOP), microsecond by microsecond: AIFS, average
 // backoff, optional RTS/CTS, preamble, data, SIFS, ACK or Block Ack. A pure

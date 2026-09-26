@@ -1,4 +1,4 @@
-// Unit tests for the Channel Planner model (Wi-Fi Lab, channel-planner).
+// Unit tests for the Channel Planner model (Wi-Fi Classroom, channel-planner).
 //
 // Expected values are spec 16 "Done means" and brief §4 of
 // myPKA Deliverables/2026-09-25-wifi-lab-wave3-research/brief.md. The channel

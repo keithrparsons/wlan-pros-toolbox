@@ -1,4 +1,4 @@
-// Render-proof capture of the presenter layout for five Wi-Fi Lab tools
+// Render-proof capture of the presenter layout for five Wi-Fi Classroom tools
 // (NOT a golden, NOT a gate): Fourier and FFT (all four modes), MIMO and
 // Beamforming, Antenna Pattern, PHY Preamble Reference, Spatial Reuse.
 // Same pattern as presenter_render.dart; a separate file so the branches

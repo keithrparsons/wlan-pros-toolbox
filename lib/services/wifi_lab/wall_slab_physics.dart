@@ -1,4 +1,4 @@
-// Wall slab physics for the Wi-Fi Lab "Wi-Fi Through a Wall" simulator
+// Wall slab physics for the Wi-Fi Classroom "Wi-Fi Through a Wall" simulator
 // (wifi-through-a-wall).
 //
 // CLEAN-ROOM BUILD (2026-09-25) from ITU-R P.2040-4 (09/2025) as set out in

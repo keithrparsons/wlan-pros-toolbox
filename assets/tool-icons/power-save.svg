@@ -4,7 +4,7 @@
     <path d="M9.5 8.5 A4 4 0 1 1 6 3 A3 3 0 0 0 9.5 8.5 Z"/>
     <!-- radio trace: dozing flat, waking briefly on each beacon -->
     <path d="M3 15 H10 L11.5 10 L13 15 H17 L18.5 10 L20 15 H21"/>
-    <!-- Wi-Fi Lab family cue: slider track + knob (interactive simulator) -->
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="7" cy="20.5" r="2" fill="currentColor" stroke="none"/>
   </g>

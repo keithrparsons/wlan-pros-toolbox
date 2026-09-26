@@ -1,6 +1,6 @@
 // Small building blocks shared by PhyPreambleStage and PhyPreambleControls
-// (Wi-Fi Lab PHY Preamble Reference). Same card, label, row, slider header and switch
-// idiom as the other Wi-Fi Lab simulators, kept local so this tool does not
+// (Wi-Fi Classroom PHY Preamble Reference). Same card, label, row, slider header and switch
+// idiom as the other Wi-Fi Classroom simulators, kept local so this tool does not
 // reach into a sibling's private parts. Theme tokens only.
 
 import 'package:flutter/material.dart';

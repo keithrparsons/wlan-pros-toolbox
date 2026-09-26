@@ -1,6 +1,6 @@
-// Small shared view pieces and formatters for the Wi-Fi Lab "Antenna
+// Small shared view pieces and formatters for the Wi-Fi Classroom "Antenna
 // Pattern" tool (antenna-pattern). Used by the stage and the controls so the
-// two match each other and the Wi-Fi Lab siblings (same card, row, note and
+// two match each other and the Wi-Fi Classroom siblings (same card, row, note and
 // slider treatment as Fourier and FFT). Theme tokens only.
 
 import 'package:flutter/material.dart';
