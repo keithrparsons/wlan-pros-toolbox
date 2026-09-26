@@ -339,9 +339,10 @@ void main() {
       });
 
       // 2026-09-26: survey-walk added. 23 + 1 = 24.
-      test('exactly the 24 simulators are gated in the real catalog', () {
+      // 2026-09-26: adjacent-channel added. 24 + 1 = 25.
+      test('exactly the 25 simulators are gated in the real catalog', () {
         final List<ToolEntry> lab = wifiLabTools().toList();
-        expect(lab, hasLength(24));
+        expect(lab, hasLength(25));
       });
     },
   );

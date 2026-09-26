@@ -1473,6 +1473,95 @@
       ],
       "source": "Clear channel assessment thresholds from the Cisco RRM white paper and Extreme Networks. ETSI EN 301 893 V2.1.1 for the EU 5 GHz band edges and energy detect. 802.11 transmit masks as quoted by Tektronix and ETSI EN 301 893 Figure 1. Channel numbers and bonding groups from this app's channel data. Computed on your device."
     },
+    "adjacent-channel": {
+      "name": "Adjacent Channels and AP Stacking",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows why a channel that does not overlap yours still hurts when the other transmitter is close. A spectrum strip draws your 20 MHz channel, the wanted signal in it, and a neighbor's transmit mask reaching into it, shaded where its energy lands in your channel. Below it, your receiver, the radio you want to hear, and the neighbor sit on a line. Move the neighbor closer or farther and watch the leakage, the signal quality and the highest usable rate change.",
+      "whyHere": "Channel Planner shows which channels overlap on paper. This tool is the other half: a transmitter's energy does not stop at its channel edge. The standard's spectral mask limits how much spills into the next channels, and your receiver can reject only so much of it, the adjacent-channel rejection (ACR). Higher data rates need more signal over the interference, so they tolerate less. That is why two APs on clean channels stacked on one ceiling, or a client sitting next to someone else's AP, still interfere, and why distance matters as much as channel choice.",
+      "howToUse": [
+        "Start with the question at the top: two APs on channels 36 and 44, 30 cm apart. Pick an answer, then press Reveal to load that scene and read what happens.",
+        "Drag the Neighbor distance slider under the floor line. The neighbor's curve and the shaded leakage rise and fall; the channel centers never move.",
+        "Pick the band, the neighbor's transmit mask and width, and the channel separation. In 2.4 GHz the separations are the 1/6/11 pair (25 MHz) and the 1/4/8/11 pairs (20 and 15 MHz).",
+        "Set who is listening (your client or your AP), the neighbor's power, and the power and distance of the radio you want to hear.",
+        "Adjust the rejection for each MCS (modulation and coding scheme) group. These values are illustrative: real receivers vary, and no primary per-rate table was read.",
+        "Read the verdicts: the highest MCS without and with the neighbor, the SINR (signal to interference plus noise ratio) and SIR (signal to interference ratio) at the rate the link would otherwise use, the leakage in your 20 MHz, and whether CCA (clear channel assessment) energy detect calls the air busy.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Up and Down move the neighbor away and closer, R resets, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4, 5 or 6; default 5"
+        },
+        {
+          "name": "Neighbor transmit mask",
+          "unit": "",
+          "range": "OFDM (orthogonal frequency-division multiplexing, 802.11a/g, 20 MHz only, not in 6 GHz) or HE/EHT (High Efficiency and Extremely High Throughput, 802.11ax/be); default HE/EHT"
+        },
+        {
+          "name": "Neighbor width",
+          "unit": "MHz",
+          "range": "20 in 2.4 GHz; 20 to 160 in 5 GHz; 20 to 320 in 6 GHz; default 20. You always listen on 20 MHz"
+        },
+        {
+          "name": "Channel separation",
+          "unit": "",
+          "range": "5 and 6 GHz: next channel, one channel gap, two channel gaps (default one gap: 36 and 44). 2.4 GHz: 1 and 6, 4 and 8, 1 and 4"
+        },
+        {
+          "name": "Who is listening",
+          "unit": "",
+          "range": "Your client (downlink) or your AP (uplink); labels only; default your AP"
+        },
+        {
+          "name": "Neighbor distance",
+          "unit": "m",
+          "range": "0.3 to 30; default 3"
+        },
+        {
+          "name": "Neighbor power",
+          "unit": "dBm",
+          "range": "0 to 30, antenna gain included; default 20"
+        },
+        {
+          "name": "Wanted transmitter power",
+          "unit": "dBm",
+          "range": "0 to 30, antenna gain included; default 20"
+        },
+        {
+          "name": "Wanted transmitter distance",
+          "unit": "m",
+          "range": "1 to 60; default 10"
+        },
+        {
+          "name": "Path-loss exponent",
+          "unit": "n",
+          "range": "2.0 to 4.0; default 3.0"
+        },
+        {
+          "name": "Rejection per MCS group (illustrative)",
+          "unit": "dB",
+          "range": "-10 to 40; defaults 16 (MCS 0 to 2), 10 (MCS 3 to 4), 4 (MCS 5 to 7), -1 (MCS 8 to 13)"
+        },
+        {
+          "name": "CCA energy-detect threshold",
+          "unit": "dBm",
+          "range": "-82 to -52; default -62"
+        }
+      ],
+      "algorithm": "Received power = transmit power - path loss, with path loss = free-space loss at 1 m + 10 n log10(d), and free space (n = 2) below 1 m. The neighbor's transmit mask is taken in dBr (decibels relative to its in-channel level), linear in dB between its points: OFDM 20 MHz is 0 dBr to 9 MHz from center, -20 at 11, -28 at 20 and -40 at 30 and beyond; HE/EHT 20 MHz is 0 to 9.75, -20 at 10.5, -28 at 20 and -40 at 30, and the wider HE/EHT masks scale the same way (40 MHz: 19.5, 20.5, 40, 60). Leakage = the neighbor's received power + the mask added up in linear power across your 20 MHz, divided by the mask added up across the neighbor's own channel. Effective interference = leakage - rejection for the MCS group. SIR = wanted - effective interference. SINR = wanted - (effective interference + noise, added in milliwatts), with noise = -174 dBm/Hz + 10 log10(20 MHz) + a 7 dB noise figure = -94.0 dBm. An MCS is usable when its SINR is at least its minimum sensitivity minus the noise floor, using the 20 MHz sensitivities from Rate vs Range. CCA energy detect calls the air busy when the leakage alone is at or above the threshold.",
+      "example": "Two APs on channels 36 and 44 (one channel gap, 40 MHz center to center), 30 cm apart, each at 20 dBm, HE/EHT mask. The neighbor on 36 arrives at -16.8 dBm. Its mask at 44's center is -40 dBr, and added up across 44's 20 MHz it is -40.0 dBr, so -56.7 dBm leaks into channel 44. That is above the -62 dBm energy-detect threshold, so the AP on 44 hears the air as busy and waits. Its own client 15 m away arrives at -62.5 dBm, which alone supports MCS 7. With 16 dB of illustrative rejection the SINR at the lowest rates is 10.2 dB, short of the 12 dB MCS 0 needs, so the link is lost. For 2.4 GHz channels 1 and 6 with the OFDM mask, the mask at channel 6's center is -34 dBr but the leakage across its 20 MHz is -29.8 dBr.",
+      "fieldNotes": [
+        "The mask is a ceiling on the transmitter, not a measurement. Real radios run at or below it, so the leakage here is the worst case the rule allows.",
+        "The mask value at your center frequency is not the interference level. What matters is the neighbor's energy added up across your whole 20 MHz, which is shown next to it.",
+        "The rejection values are illustrative, and the tool subtracts them from the leakage as this lesson defines it. Real receivers vary, and no primary per-rate table was read.",
+        "Past 30 MHz from its center, a 20 MHz mask stays flat at -40 dBr, so a second empty channel buys nothing more from the mask. Distance keeps helping.",
+        "Below 1 m the path is taken as free space. At 30 cm the antennas are only a few wavelengths apart, so treat those numbers as rough.",
+        "Walls, antenna patterns and fading are left out. For which channels overlap on paper and who shares airtime, open Channel Planner.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Transmit spectral mask breakpoints for 802.11 OFDM (20 MHz) and HE/EHT (20 to 320 MHz) as collected in the Wi-Fi Classroom research brief, with the OFDM points matching the European 5 GHz regulatory mask; the -62 dBm energy-detect threshold; minimum receiver sensitivities per MCS from Rate vs Range. Receiver rejection values are illustrative. Everything is calculated on your device."
+    },
     "mimo-beamforming": {
       "name": "MIMO and Beamforming",
       "category": "Wi-Fi Classroom",

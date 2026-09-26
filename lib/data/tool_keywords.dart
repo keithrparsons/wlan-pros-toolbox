@@ -1463,6 +1463,31 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'shadowing',
     'path loss exponent',
   ],
+  // Wi-Fi Classroom (2026-09-26). Adjacent channels and AP stacking (spec
+  // 29): what a student types when two close radios on clean channels fight.
+  'adjacent-channel': <String>[
+    'adjacent channel',
+    'adjacent channel interference',
+    'aci',
+    'adjacent channel rejection',
+    'acr',
+    'spectral mask',
+    'transmit mask',
+    'mask',
+    'leakage',
+    'ap stacking',
+    'stacked aps',
+    'co-located aps',
+    'colocated aps',
+    'desense',
+    'rejection',
+    'channel separation',
+    'sinr',
+    'sir',
+    'cca',
+    'energy detect',
+    'dbr',
+  ],
   // Wi-Fi Classroom (2026-09-26). The survey walk simulator (spec 26): what a
   // student types when asking how fast to walk a survey.
   'survey-walk': <String>[

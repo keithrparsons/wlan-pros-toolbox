@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the neighbor's channel, its mask skirt running on under the next channel -->
+    <path d="M2 16.5 L4 13.5 L5 5 H9 L10 13.5 L20.5 16"/>
+    <!-- your channel, which the skirt reaches into -->
+    <path d="M13.5 16.5 V9 H21 V16.5"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="12" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

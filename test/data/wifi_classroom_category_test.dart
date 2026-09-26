@@ -43,6 +43,7 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
   ],
   'Network Design and Security': <String>[
     'channel-planner',
+    'adjacent-channel',
     'roaming-walk',
     'survey-walk',
     'dfs-simulator',
@@ -88,13 +89,14 @@ void main() {
     );
   });
 
-  test('all 24 simulators are in wifi-classroom and none remain in '
+  test('all 25 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: survey-walk added. 23 + 1 = 24.
-    expect(sims, hasLength(24));
+    // 2026-09-26: adjacent-channel added. 24 + 1 = 25.
+    expect(sims, hasLength(25));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -161,7 +163,8 @@ void main() {
       );
     }
     // 2026-09-26: survey-walk added. 36 + 1 = 37.
-    expect(classroom.tools, hasLength(37));
+    // 2026-09-26: adjacent-channel added. 37 + 1 = 38.
+    expect(classroom.tools, hasLength(38));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

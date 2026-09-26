@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 214;
+const int _expectedEntryCount = 215;
 
 const String _fixture = '''
 {
@@ -444,6 +444,10 @@ void main() {
       // 2026-09-26: Wi-Fi Classroom added ONE entry, survey-walk, on top of
       // wifi-lab/preview (d201602d), which counted 213. 213 + 1 = 214.
       // Counted off the file, not derived: `len(json['tools'])` returned 214
+      // and the id appears exactly once.
+      // 2026-09-26: Wi-Fi Classroom added ONE entry, adjacent-channel, on top
+      // of wifi-lab/preview (1b461e0b), which counted 214. 214 + 1 = 215.
+      // Counted off the file, not derived: `len(json['tools'])` returned 215
       // and the id appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
