@@ -36,6 +36,7 @@ import '../screens/tools/calculators/airtime_anatomy_screen.dart';
 import '../screens/tools/calculators/medium_access_simulator_screen.dart';
 import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
+import '../screens/tools/calculators/devices_disagree_screen.dart';
 import '../screens/tools/calculators/multipath_simulator_screen.dart';
 import '../screens/tools/calculators/roaming_walk_screen.dart';
 import '../screens/tools/calculators/survey_walk_screen.dart';
@@ -292,6 +293,10 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). Pure-Dart two-ray / standing-wave / Rayleigh
   // multipath model; all platforms incl. web.
   static const String multipathSimulator = '/tools/multipath-simulator';
+  // Wi-Fi Classroom (2026-09-26). Why Two Devices Disagree: pure-Dart model
+  // reusing the Roaming Walk path loss and the Multipath Rayleigh scene; all
+  // platforms incl. web.
+  static const String devicesDisagree = '/tools/devices-disagree';
   // Wi-Fi Classroom (2026-09-25). Pure-Dart DFT/FFT and windows; optional sound via
   // the hear-frequency ToneEngine seam. All platforms incl. web.
   static const String fourierFft = '/tools/fourier-fft';
@@ -821,6 +826,7 @@ class AppRouter {
     airtimeFairness: (_) => const AirtimeFairnessScreen(),
     airtimeAnatomy: (_) => const AirtimeAnatomyScreen(),
     multipathSimulator: (_) => const MultipathSimulatorScreen(),
+    devicesDisagree: (_) => const DevicesDisagreeScreen(),
     fourierFft: (_) => const FourierFftScreen(),
     wifiThroughAWall: (_) => const WifiThroughAWallScreen(),
     roomPropagation: (_) => const RoomPropagationScreen(),
