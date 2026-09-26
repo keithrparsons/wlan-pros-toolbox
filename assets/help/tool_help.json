@@ -1566,6 +1566,63 @@
       ],
       "source": "Shepard, A two-dimensional interpolation function for irregularly-spaced data, Proceedings of the 1968 Association for Computing Machinery (ACM) National Conference, pp. 517-524 (inverse distance weighting). Log-distance path loss as in the Roaming Walk. Keith Parsons, Seven Rules for Accurate Site Surveys: Rule 3, set your interpolation distance properly; Rule 5, capture on both sides of what you care about; Rule 6, white does not mean no coverage, white means no data. Computed on your device."
     },
+    "location-rssi-ftm": {
+      "name": "Where Am I? Signal Strength vs Round-Trip Timing",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Finds a device on a floor of 3 to 6 APs two ways and shows how far off each one is. Signal strength estimates each AP's distance from the level heard; fine timing measurement (FTM), from 802.11mc, estimates it from the round-trip time (RTT) of frames. Three or more distances give a position by trilateration, drawn as circles around the APs and the point that best fits them.",
+      "whyHere": "Signal strength does fall with distance, so it can estimate distance, but a few dB of shadowing becomes meters of error, and the error grows the farther away the AP is. Timing measures something light does at about 30 cm per nanosecond, so it gives meter-class distances. Seeing both scatters side by side, and a blocked direct path pulling a timing position off, explains why indoor location needs more than signal strength.",
+      "howToUse": [
+        "Drag the device across the floor, or use the device position sliders. Each AP's circle is the distance the method estimated; the lime marker is the position that best fits all the circles, and the dotted line to the true position is the position error.",
+        "Pick the method: Signal strength (diamond), FTM timing (triangle) or Both, side by side. The small marks are 50 repeated estimates; Re-sample draws new measurement errors.",
+        "For signal strength, set the path-loss exponent n (2 to 4) and the shadowing sigma (0 to 10 dB, illustrative). The readout gives the one-sigma distance factor, 10^(sigma / 10n), and what it does to a device 10 m away.",
+        "For timing, set the timing error (0.5 to 3 m; a vendor developer document gives 1 to 2 m), and block the direct path to any AP. A blocked AP reads long by the extra distance you set (illustrative), and its circle is drawn dashed.",
+        "When two circles cannot meet, the tool says so: no point fits every distance, and the marker is the best compromise.",
+        "Predict, then reveal: your phone sees an AP at -70 dBm. How far away is it? Say a number, then reveal what the model says and how wide one sigma of shadowing makes it.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Space re-samples, Tab switches signal strength, FTM and both while no control has focus (Shift+Tab moves into the controls, where Tab moves between them as usual), M also switches the method, R resets, Up and Down move the shadowing sigma 1 dB, B blocks or clears AP 1's direct path, P steps the -70 dBm question, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Method",
+          "unit": "",
+          "range": "Signal strength, FTM timing, or Both (default Both)"
+        },
+        {
+          "name": "Path-loss exponent n",
+          "unit": "",
+          "range": "2.0 to 4.0 (default 3.0)"
+        },
+        {
+          "name": "Shadowing sigma",
+          "unit": "dB",
+          "range": "0 to 10 (default 6, illustrative)"
+        },
+        {
+          "name": "Timing error",
+          "unit": "m",
+          "range": "0.5 to 3 one standard deviation (default 1.5; vendor-documented 1 to 2 m)"
+        },
+        {
+          "name": "Blocked direct path",
+          "unit": "m",
+          "range": "per AP, on or off; extra distance 0 to 10 (default 4, illustrative)"
+        },
+        {
+          "name": "Floor",
+          "unit": "m",
+          "range": "30 m x 20 m, 3 to 6 APs (default 4), each radiating 17 dBm on 5 GHz (illustrative)"
+        }
+      ],
+      "algorithm": "Signal strength: the level heard from an AP d meters away is the power it radiates, minus the free-space path loss at 1 m for 5.5 GHz, minus 10 x n x log10(d), plus shadowing (sigma times a seeded standard normal draw). The device inverts the same model without the shadowing: d_est = 10^((power - loss at 1 m - level) / (10 n)). So d_est = d x 10^(-sigma x draw / (10 n)), and a one-sigma error multiplies the distance by 10^(sigma / (10 n)). Timing: distance = speed of light x RTT / 2, plus a seeded Gaussian error with the chosen standard deviation, plus the blocked-path extra distance for a blocked AP, never below zero. Trilateration: the position that minimizes the sum of (distance from the point to AP i minus the estimated distance to AP i) squared, started from a linear solve and refined by Gauss-Newton. The whole measurement is repeated 50 times with new draws; the spread radius is the root mean square distance of those 50 positions from their average. Two circles cannot meet when their APs are farther apart than the two radii added up, or when one circle sits inside the other.",
+      "example": "With sigma = 6 dB and n = 3 the factor is 10^(6 / 30) = 1.585, so a device 10 m away reads 6.3 m to 15.8 m, one sigma either way. The lesson's -70 dBm, with each AP radiating 17 dBm on 5 GHz and n = 3, inverts to 21.1 m, and one sigma of shadowing makes it 13.3 m to 33.5 m. The round trip for 10 m takes 66.7 ns, and 1 ns of RTT is 15 cm of distance.",
+      "fieldNotes": [
+        "The 1 to 2 m timing accuracy is from a vendor developer document, not a measurement in this tool. Real results depend on the devices and the building.",
+        "A signal-strength distance error is a factor, not a fixed number of meters: at n = 3 the same one sigma of 6 dB that stretches a 5 m reading to 7.9 m stretches a 20 m reading to 31.7 m.",
+        "When the direct path is blocked, the first signal to arrive at the device is a reflection that travelled farther, so timing reads long, never short.",
+        "This is a teaching model: the log-distance model, the shadowing, the power each AP radiates and the blocked-path distance are illustrative, and real location systems also face AP position errors, clock offsets and floors above and below.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Wi-Fi Classroom wave 4 research brief, row F: distance error factor 10^(sigma / 10n) computed from the log-distance model with Gaussian shadowing; FTM accuracy of 1 to 2 m from a mobile operating system's developer documentation (vendor). Fine timing measurement comes from 802.11mc. Log-distance path loss as in the Roaming Walk. Computed on your device."
+    },
     "channel-planner": {
       "name": "Channel Planner",
       "category": "Wi-Fi Classroom",

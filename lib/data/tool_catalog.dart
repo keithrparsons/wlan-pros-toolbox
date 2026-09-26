@@ -2781,6 +2781,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Where Am I? (2026-09-26, spec 33): signal-strength distance vs FTM
+      // round-trip timing, and trilateration. Names no vendor or product.
+      ToolEntry(
+        id: 'location-rssi-ftm',
+        title: 'Where Am I? Signal Strength vs Round-Trip Timing',
+        description:
+            'Find a device from its APs two ways: distance from signal '
+            'strength, or from fine timing measurement (FTM), and trilaterate',
+        routeName: '/tools/location-rssi-ftm',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       ToolEntry(
         id: 'dfs-simulator',
         title: 'DFS and Radar',
