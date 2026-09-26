@@ -81,13 +81,13 @@ RoomPropagationController _controllerOf(WidgetTester tester) => tester
 void main() {
   test('catalog registers room-propagation in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kRoomPropagationToolId,
     );
     expect(e.title, 'Room Propagation');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'RF and Propagation');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/room-propagation');
     expect(AppRouter.roomPropagation, '/tools/room-propagation');

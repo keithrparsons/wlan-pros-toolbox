@@ -1,0 +1,186 @@
+// Wi-Fi Classroom is its own home section (Keith, 2026-09-26: "Own section,
+// next to Educational Resources"), and holds the WLAN Pros lessons and
+// handouts as well as the simulators (same day: "Lessons and handouts, all
+// ours").
+//
+// Pins: the category sits right after Educational Resources; every simulator,
+// lesson and handout is in it and in none of its old homes; the shelves and
+// the tools on them render in teaching order; no shelf holds a single tool;
+// ids and routes did not change in the move.
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
+import 'package:wlan_pros_toolbox/data/tool_subgroups.dart';
+import 'package:wlan_pros_toolbox/router/app_router.dart';
+
+/// Shelf -> tool ids, in the order the screen must show them.
+const Map<String, List<String>> _teachingOrder = <String, List<String>>{
+  'Guided Lessons': <String>['antenna-fundamentals', 'spectrum-analysis'],
+  'RF and Propagation': <String>[
+    'fspl-simulator',
+    'wifi-through-a-wall',
+    'multipath-simulator',
+    'room-propagation',
+    'antenna-pattern',
+    'rate-vs-range',
+    'six-ghz-psd',
+  ],
+  'Signals and PHY': <String>[
+    'modulation-simulator',
+    'fourier-fft',
+    'ofdma-simulator',
+    'mimo-beamforming',
+    'phy-preamble',
+  ],
+  'Airtime and Access': <String>[
+    'medium-access-simulator',
+    'airtime-anatomy',
+    'airtime-fairness',
+    'rate-adaptation',
+    'spatial-reuse',
+    'power-save',
+    'mlo-simulator',
+  ],
+  'Network Design and Security': <String>[
+    'channel-planner',
+    'roaming-walk',
+    'dfs-simulator',
+    'eap-ladder',
+  ],
+  'Course Handouts': <String>[
+    'channel-allocations-24ghz',
+    'channel-allocations-5ghz',
+    'channel-allocations-6ghz',
+    'channel-allocations-6ghz-gvp',
+    'troubleshooting-causes',
+    'bubble-diagram',
+    'top-20-checklist',
+    'extended-checklist',
+    'extended-checklist-nonadvertised',
+    'connection-checklist',
+    'mcs-index-card',
+  ],
+};
+
+const Set<String> _simulatorShelves = <String>{
+  'RF and Propagation',
+  'Signals and PHY',
+  'Airtime and Access',
+  'Network Design and Security',
+};
+
+ToolCategory _cat(String id) =>
+    kToolCategories.firstWhere((ToolCategory c) => c.id == id);
+
+void main() {
+  final ToolCategory classroom = _cat('wifi-classroom');
+
+  test('the section is titled Wi-Fi Classroom and sits right after '
+      'Educational Resources', () {
+    expect(classroom.title, 'Wi-Fi Classroom');
+    final List<String> ids = kToolCategories
+        .map((ToolCategory c) => c.id)
+        .toList();
+    expect(
+      ids.indexOf('wifi-classroom'),
+      ids.indexOf('educational-resources') + 1,
+    );
+  });
+
+  test('all 23 simulators are in wifi-classroom and none remain in '
+      'rf-calculators', () {
+    final Set<String> sims = <String>{
+      for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
+    };
+    expect(sims, hasLength(23));
+    final Set<String> inClassroom = <String>{
+      for (final ToolEntry t in classroom.tools) t.id,
+    };
+    final Set<String> inCalc = <String>{
+      for (final ToolEntry t in _cat('rf-calculators').tools) t.id,
+    };
+    expect(
+      inClassroom.containsAll(sims),
+      isTrue,
+      reason: 'missing: ${sims.difference(inClassroom)}',
+    );
+    expect(inCalc.intersection(sims), isEmpty);
+    expect(
+      _cat(
+        'rf-calculators',
+      ).tools.where((ToolEntry t) => t.subgroup == 'Wi-Fi Classroom'),
+      isEmpty,
+    );
+    expect(
+      kCategorySubgroupOrder['rf-calculators'],
+      isNot(contains('Wi-Fi Classroom')),
+    );
+  });
+
+  test('the 13 lessons and handouts left educational-resources; Ham Radio '
+      'Study Resources stayed', () {
+    final Set<String> moved = <String>{
+      ..._teachingOrder['Guided Lessons']!,
+      ..._teachingOrder['Course Handouts']!,
+    };
+    expect(moved, hasLength(13));
+    final Set<String> edu = <String>{
+      for (final ToolEntry t in _cat('educational-resources').tools) t.id,
+    };
+    expect(edu.intersection(moved), isEmpty);
+    expect(edu, contains('ham-study-resources'));
+  });
+
+  test('each tool is in exactly one category', () {
+    final Map<String, int> seen = <String, int>{};
+    for (final ToolCategory c in kToolCategories) {
+      for (final ToolEntry t in c.tools) {
+        seen[t.id] = (seen[t.id] ?? 0) + 1;
+      }
+    }
+    for (final String id in _teachingOrder.values.expand(
+      (List<String> l) => l,
+    )) {
+      expect(seen[id], 1, reason: id);
+    }
+  });
+
+  test('shelves and tools render in teaching order, not A-Z', () {
+    final List<ToolSection> sections = groupedCategoryTools(classroom);
+    expect(
+      sections.map((ToolSection s) => s.header).toList(),
+      _teachingOrder.keys.toList(),
+    );
+    for (final ToolSection s in sections) {
+      expect(
+        s.tools.map((ToolEntry t) => t.id).toList(),
+        _teachingOrder[s.header],
+        reason: s.header,
+      );
+    }
+    expect(classroom.tools, hasLength(36));
+  });
+
+  test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
+    for (final ToolSection s in groupedCategoryTools(classroom)) {
+      expect(s.count, greaterThanOrEqualTo(2), reason: s.header);
+    }
+  });
+
+  test('ids and routes did not change in the move', () {
+    for (final ToolEntry t in classroom.tools) {
+      expect(t.routeName, '/tools/${t.id}', reason: t.id);
+      expect(AppRouter.routes.containsKey(t.routeName), isTrue, reason: t.id);
+      expect(t.isLive, isTrue, reason: t.id);
+    }
+  });
+
+  test('home-tile examples name tools that are in the section (GL-005)', () {
+    final Set<String> titles = <String>{
+      for (final ToolEntry t in classroom.tools) t.title,
+    };
+    for (final String ex in classroom.exampleToolTitles) {
+      expect(titles, contains(ex));
+    }
+  });
+}

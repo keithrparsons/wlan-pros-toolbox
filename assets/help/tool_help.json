@@ -163,7 +163,7 @@
     },
     "modulation-simulator": {
       "name": "Modulation Simulator",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows how bits become a radio wave. Each group of bits picks one point on the I/Q plane, and that point sets the amplitude and phase of the carrier for one symbol. Add noise and watch the receiver decide which point was sent, measure the EVM, and count the symbol and bit errors.",
       "whyHere": "Every Wi-Fi data rate is a modulation plus a coding rate. Seeing BPSK next to 4096-QAM makes it plain why higher orders carry more bits per symbol and why they need a much cleaner signal to work.",
       "howToUse": [
@@ -210,7 +210,7 @@
     },
     "medium-access-simulator": {
       "name": "Medium Access Simulator",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows how Wi-Fi stations share one channel. Each station waits for a quiet medium, counts down a random backoff in 9 µs slots, and transmits when the count reaches zero. You watch it happen slot by slot: collisions, the contention window doubling, EDCA priority, hidden nodes and RTS/CTS.",
       "whyHere": "Wi-Fi is half duplex and shared, so airtime runs out long before the PHY rate does. Watching the waiting and the collisions shows why a 54 Mbps link delivers about 31 Mbps to one station, less as stations are added, and why voice traffic gets through first.",
       "howToUse": [
@@ -264,7 +264,7 @@
     },
     "fspl-simulator": {
       "name": "FSPL Simulator",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Draws free-space path loss, or the received power it leaves, against distance for 2.4, 5 and 6 GHz on one chart. A cursor reads out each band at any distance, and a Why panel splits each band's loss into the part every band shares and the part that changes with frequency.",
       "whyHere": "Higher bands lose more at the same distance, and the common explanation (the air absorbs 6 GHz more) is wrong. The extra loss comes from the receive antenna: a shorter wavelength makes a smaller antenna that catches less energy. Seeing the two parts side by side makes that stick, and a measured point shows how far a real room sits from the free-space best case.",
       "howToUse": [
@@ -330,7 +330,7 @@
     },
     "airtime-fairness": {
       "name": "Airtime Fairness",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows why one slow client drags every fast client down under plain Wi-Fi contention, and how airtime fairness fixes it. Build a cell of 1 to 8 clients, then compare packet fairness (every client gets the same number of turns) with airtime fairness (every client gets the same share of time).",
       "whyHere": "A PHY rate is not a throughput. Every turn on the air pays a fixed overhead before any data moves, and under plain contention a 6 Mbps client holds the air for milliseconds each turn while an 867 Mbps client needs well under one. Seeing the airtime share and the throughput side by side explains the performance anomaly and why APs offer airtime fairness.",
       "howToUse": [
@@ -374,7 +374,7 @@
     },
     "airtime-anatomy": {
       "name": "Airtime Anatomy",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Draws one transmit opportunity (TXOP) to scale, microsecond by microsecond: the wait (AIFS plus backoff), optional RTS/CTS, the preamble, the data, SIFS and the acknowledgment. Two scenarios stack on one axis so you can compare them, and the readouts show the PHY rate, total airtime, throughput and how much of the air carried data.",
       "whyHere": "A PHY rate is the speed of the data symbols only. Every frame also pays for waiting, a preamble and an acknowledgment, and those costs do not shrink as the rate goes up. Seeing them to scale shows why one 1,500-byte frame at 867 Mbps delivers about 56 Mbps, and why aggregation recovers airtime that a faster MCS cannot.",
       "howToUse": [
@@ -461,7 +461,7 @@
     },
     "multipath-simulator": {
       "name": "Multipath Simulator",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows why the signal changes when you move a few centimeters. A receiver hears the direct signal plus copies that bounced off walls. Each copy travels a different distance, so it arrives with a different phase, and the copies add like arrows placed head to tail. In phase they reinforce; out of phase they cancel.",
       "whyHere": "One RSSI reading taken in one spot can be several dB off from a reading a hand width away, and a survey or a troubleshooting call that trusts it is trusting luck. Seeing the arrows add and cancel explains the dips, why they repeat every half wavelength, and why a second antenna rarely sits in a dip at the same spot as the first.",
       "howToUse": [
@@ -523,7 +523,7 @@
     },
     "fourier-fft": {
       "name": "Fourier and FFT",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows that any signal is a sum of sines, and how a spectrum analyzer and a Wi-Fi radio use the FFT. Waves mode builds a signal from up to five sines and draws it over time and as a spectrum. FFT mode samples that signal, applies a window and runs an FFT, with the bin spacing, capture time, ENBW and RBW worked out on screen. Swept vs FFT race puts a swept analyzer and a real-time FFT analyzer on the same simulated 2.4 GHz band and counts the Bluetooth hops and microwave pulses each one catches. OFDM is an inverse FFT builds a Wi-Fi symbol from subcarriers and shows the receiver's FFT getting every constellation point back.",
       "whyHere": "A Wi-Fi receiver runs an FFT on every symbol, and many spectrum analyzers compute their display the same way. Knowing what the bins, the window and the FFT size do explains why a weak signal can hide next to a strong one, why a peak can read a few dB low, why a swept analyzer misses hopping and bursty interferers that a real-time analyzer shows, and why legacy subcarriers are exactly 312.5 kHz apart.",
       "howToUse": [
@@ -633,7 +633,7 @@
     },
     "wifi-through-a-wall": {
       "name": "Wi-Fi Through a Wall",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Sends one wave through one wall and shows three things at once: part of the wave reflects off the face, the wave gets smaller as the material absorbs it, and the same wave continues behind the wall, smaller. The frequency never changes. The numbers come from the ITU-R P.2040 building-material model.",
       "whyHere": "Wall loss is usually quoted as one number per material, and 6 GHz is usually said to lose more. This shows where the number comes from and splits it into absorption and reflection. Concrete does lose more at 6 GHz, but a thin panel such as glass or plasterboard can lose less at a higher frequency, because the echoes from its two faces can cancel.",
       "howToUse": [
@@ -683,7 +683,7 @@
     },
     "room-propagation": {
       "name": "Room Propagation",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Puts an AP, walls and doorways on a floor plan and colors the plan by received power. The signal at any spot is the direct path plus reflections off the walls, each wall both passes and reflects part of the signal, and signal bends past doorways and wall ends into the shadows behind them. A close-up around the client shows the fine ripple that makes RSSI change when you move a few centimeters.",
       "whyHere": "A coverage map is usually a finished picture. This one lets you switch each mechanism on and off and see what it does: turn off reflections, turn off diffraction, change the band. It also splits the question of why 6 GHz loses more into its parts: free-space loss (the smaller antenna aperture at a shorter wavelength), wall absorption, and diffraction.",
       "howToUse": [
@@ -744,7 +744,7 @@
     },
     "antenna-pattern": {
       "name": "Antenna Pattern",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet prints. Pick a dipole, an omni set by its gain, a collinear array, or a directional patch or sector and change it with sliders, or paste an MSI or NSMA pattern file and rotate the 3D estimate built from its two cuts.",
       "whyHere": "Antenna gain is easy to misread as more power. Here every antenna radiates the same power, so raising the gain visibly takes signal from somewhere else: a high-gain omni flattens into a pancake with a hole under it, and a directional narrows its beam. It also shows why a 3D view built from a pattern file is an estimate, and how ceiling and wall mounting light different parts of a room.",
       "howToUse": [
@@ -824,7 +824,7 @@
     },
     "eap-ladder": {
       "name": "802.1X and EAP Ladder",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Plays an 802.1X connection one message at a time on a three-lane ladder: the client (supplicant), the AP (authenticator) and the RADIUS server (authentication server). EAP rides in EAPOL frames over the air and inside RADIUS Access-Request, Access-Challenge and Access-Accept packets on the wire. Pick EAP-TLS, PEAP or EAP-TTLS to change the middle of the ladder, or PSK and SAE to see a join with no RADIUS at all, and pick a roam mode to see what PMK caching and 802.11r remove.",
       "whyHere": "The AP does not authenticate anyone in 802.1X; it relays. Seeing every EAP message cross the air and then cross the wire makes that plain, and shows where time goes: each RADIUS round trip, each certificate fragment, and the inner password exchange in PEAP. It also shows the order that matters when troubleshooting: the server sends the PMK to the AP in the Access-Accept, and nothing is encrypted over the air until the 4-way handshake completes.",
       "howToUse": [
@@ -874,7 +874,7 @@
     },
     "phy-preamble": {
       "name": "PHY Preamble Reference",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Draws the preamble of every Wi-Fi PPDU format to scale in microseconds: Legacy (802.11a/g), HT mixed (802.11n), VHT (802.11ac), HE SU, ER SU, MU and TB (802.11ax), and EHT MU and TB (802.11be). Tap any block to open its bit table, with an evidence tag on every field. A second mode walks a receiver's decision from the first symbols after L-SIG, and a calculator shows the L-SIG LENGTH that makes a legacy radio defer for the whole PPDU.",
       "whyHere": "Every PPDU since 802.11a starts with the same 20 µs legacy preamble (L-STF, L-LTF and L-SIG), so an older radio can hear any newer frame and stay quiet. What follows is where the PHYs differ, and it is where a capture's PHY details come from: the MCS, width, streams, BSS color and TXOP a receiver reads before the data. Seeing the bits, and how sure we are of each one, makes a packet capture easier to read.",
       "howToUse": [
@@ -936,7 +936,7 @@
     },
     "dfs-simulator": {
       "name": "DFS and Radar",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Runs one access point on a simulated one-hour clock and shows what Dynamic Frequency Selection (DFS) costs. On a DFS channel the AP must listen for radar before it transmits (the channel availability check, or CAC). When radar appears it stops its traffic, leaves the channel within 10 seconds and may not return for 30 minutes. You press Radar now and watch the outage.",
       "whyHere": "DFS is why an AP can go quiet for a minute after a reboot, why clients sometimes lose an AP for no visible reason, and why some channels sit unused on a busy plan. The listening time, the move and the 30-minute block are fixed by regulation, so the only real choice is what the AP does next: a non-DFS channel is available at once, another DFS channel means another CAC, and in the EU channels 120, 124 and 128 need 10 minutes.",
       "howToUse": [
@@ -997,7 +997,7 @@
     },
     "power-save": {
       "name": "Power Save",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Puts a client and its AP on a timeline and shows how the client saves battery: beacons every beacon interval, a DTIM every few beacons, the frames the AP holds while the client dozes, and the client waking under four modes (always awake, legacy PS with PS-Poll, U-APSD, and Target Wake Time). Two modes side by side show that every saving costs latency.",
       "whyHere": "Battery drain, a sensor that misses broadcasts, and a call that stutters on a phone that just went quiet all come back to power save. A sleeping client wakes for beacons and reads the TIM to learn whether the AP holds frames for it. The DTIM period decides how often broadcast and multicast go out. PS-Poll fetches one frame per poll, U-APSD fetches a service period's worth per trigger, and TWT lets the client sleep through beacons entirely. Each one trades time awake for time waiting.",
       "howToUse": [
@@ -1093,7 +1093,7 @@
     },
     "mlo-simulator": {
       "name": "Multi-Link Operation",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A client holds links on two or three bands, other networks keep each band busy part of the time, and a stream of frames arrives. Single link, STR, NSTR and EMLSR each send the frames their own way, and the tool shows each mode's mean and 99th-percentile latency, a latency histogram, and which links carried the frames.",
       "whyHere": "MLO is often presented as a latency cure. The win is real when the links are about equally busy, because a frame can take whichever link frees up first. It shrinks when one link is much busier, and it can turn into a loss: a slow link that happens to be free first, or EMLSR paying its switch delays on every exchange. Real drivers also switch EMLSR off often, so a Wi-Fi 7 laptop is frequently on one link.",
       "howToUse": [
@@ -1163,7 +1163,7 @@
     },
     "spatial-reuse": {
       "name": "Spatial Reuse",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Two BSSs share one channel along a line: AP A with client A, AP B with client B. AP A is already sending, and AP B has a frame ready. The tool shows whether AP B waits or sends at the same time, which rule decided it, how much transmit power AP B gives up when it reuses the air, each client's SINR, the highest MCS that SINR supports, whether each link still holds the MCS you pick, and how much airtime the pair uses.",
       "whyHere": "A radio waits for any Wi-Fi frame it hears at -82 dBm or more, so two APs on one channel take turns even when they barely bother each other's clients. 802.11ax adds a BSS color to every frame so a radio can tell a neighbor from its own BSS, and lets it ignore a neighbor below a higher threshold, OBSS_PD, if it turns its own power down by the same amount. This shows the trade: spatial reuse buys concurrency with range.",
       "howToUse": [
@@ -1237,7 +1237,7 @@
     },
     "ofdma-simulator": {
       "name": "OFDMA Resource Units",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows how 802.11ax OFDMA splits one channel into resource units (RUs) so an access point can talk to several clients in one transmission. You place clients into RUs across the channel, then compare the airtime of one frame per client sent as separate single-user transmissions with one downlink OFDMA and one uplink OFDMA transmission, all drawn to the same microsecond scale.",
       "whyHere": "OFDMA is often sold as a faster PHY. It is not. For small frames the win comes from paying for contention, the preamble and the acknowledgment once for everyone instead of once per client. Seeing the timelines side by side shows where the time goes, and why one client with a large frame gains nothing.",
       "howToUse": [
@@ -1295,7 +1295,7 @@
     },
     "roaming-walk": {
       "name": "Roaming Walk",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Walks a client across a floor of access points and shows when it roams and what each roam costs. The client, not the AP, decides: it holds its AP until the signal drops below its trigger, then moves only to an AP that is at least delta stronger. Every roam leaves a gap with no AP, and most of that gap is scanning.",
       "whyHere": "Sticky clients and clients that flip between two APs are two of the most common roaming complaints, and both come from the same two numbers: the trigger and the delta. Apple publishes them for iPhone and Mac. Seeing a client walk past a closer, stronger AP because it is still above its trigger explains a lot of field behavior, and shows why a -67 dBm design still leaves an iPhone on its AP down to -70 dBm.",
       "howToUse": [
@@ -1345,7 +1345,7 @@
     },
     "channel-planner": {
       "name": "Channel Planner",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Place 2 to 12 access points on a floor, give each a channel and width, and see which ones share airtime. APs whose channels overlap and that hear each other above the clear channel assessment thresholds defer to each other; the largest group that all defer to each other is outlined as the contention domain, and each AP in it gets about 1/N of the airtime.",
       "whyHere": "Channel planning is usually taught as a rule of thumb: use 1, 6 and 11, and keep channels narrow. This shows where the rules come from. Six APs on one floor fit on nine 20 MHz channels without sharing, but at 80 MHz only two channels exist without DFS in the US, so three APs share each one. In 2.4 GHz the transmit mask shows why 1, 6 and 11 beat 1, 4, 8 and 11.",
       "howToUse": [
@@ -1408,7 +1408,7 @@
     },
     "mimo-beamforming": {
       "name": "MIMO and Beamforming",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Shows how many spatial streams an access point and a client can use, what the leftover antenna chains do instead, what beamforming costs in airtime, and why a packet capture taken nearby misses beamformed frames that the client received.",
       "whyHere": "A 4x4 AP does not give a 2x2 phone four streams, and the two spare chains are not wasted either. Knowing which side has the spare chains, and what they add in each direction, explains real link rates. The capture lesson matters to anyone who troubleshoots from a laptop sniffer: the sniffer is not the device the AP is aiming at, so a pile of failed downlink frames in a capture can be a property of the capture, not of the network.",
       "howToUse": [
@@ -1477,7 +1477,7 @@
     },
     "six-ghz-psd": {
       "name": "6 GHz Power and PSD",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Plots the most EIRP each 6 GHz device class may radiate, and the SNR it leaves at a distance, against channel width from 20 to 320 MHz, one line per class. A second view draws one channel as a flat block of power per MHz, so you can see the block get wider while its height holds or drops.",
       "whyHere": "6 GHz power is limited per MHz (power spectral density, PSD) as well as in total. While the PSD limit binds, a wider channel adds 3 dB of EIRP per doubling, which exactly offsets the 3 dB higher noise floor, so SNR holds. Once a class reaches its cap, every doubling costs 3 dB of SNR. The tool also shows that the client 6 dB rule applies as a relative limit only to Standard Power and GVP clients.",
       "howToUse": [
@@ -1538,7 +1538,7 @@
     },
     "rate-vs-range": {
       "name": "Rate vs Range",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Draws an AP from above with one ring per MCS: inside a ring, a client has enough signal for that MCS. A dashed circle marks the cell edge, where beacons sent at the minimum basic rate can no longer be decoded. Drag the client dot to read its signal, SNR, MCS and data rate, and watch the beacon airtime bar change with the basic rate.",
       "whyHere": "Rate does not fall smoothly with distance. Each MCS needs a minimum signal, so coverage is a set of rings. Doubling the channel width raises the noise floor 3 dB, so every MCS needs 3 dB more signal and every ring shrinks. Raising the minimum basic rate shrinks the cell edge and cuts the airtime beacons use: 6 to 24 Mbps moves the edge from -82 to -74 dBm at 20 MHz and makes each beacon about 3.6 times shorter.",
       "howToUse": [
@@ -1609,7 +1609,7 @@
     },
     "rate-adaptation": {
       "name": "Rate Adaptation",
-      "category": "Calculators & Tools",
+      "category": "Wi-Fi Classroom",
       "purpose": "Runs one Wi-Fi link frame by frame under Minstrel-style rate control, the kind Linux uses, and shows it learning. A strip draws every attempt of the last 5 ms to scale, colored and numbered by MCS, with failures marked. A chart shows the chosen rate over the last 20 s against the rate the SNR supports, and a table shows what the radio has learned about each rate, updated every 50 ms.",
       "whyHere": "A radio does not know the best rate. It learns it by trying rates and keeping statistics, and every retry costs more airtime than the first try: the contention window doubles, and a retry at a lower rate takes longer to send. Walking the client away and back shows the chosen rate step down as the signal falls and climb again as sampling finds the higher rates.",
       "howToUse": [
@@ -4264,7 +4264,7 @@
     },
     "bubble-diagram": {
       "name": "WLAN Pros Bubble Diagram",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A bundled, offline, pinch-to-zoom copy of Keith's published \"Wi-Fi design decision bubble diagram\" laminated reference card.",
       "whyHere": "You want the WLAN Pros bubble-diagram design-decision flow exactly as printed, viewable and zoomable on the phone you already have, with no network needed.",
       "howToUse": [
@@ -4284,7 +4284,7 @@
     },
     "troubleshooting-causes": {
       "name": "Wireless LAN Troubleshooting Causes",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A bundled, offline, pinch-to-zoom copy of Keith's published \"common causes to check when troubleshooting\" laminated reference card.",
       "whyHere": "You want the WLAN Pros troubleshooting-causes card exactly as printed, viewable and zoomable on the phone you already have, with no network needed.",
       "howToUse": [
@@ -4303,7 +4303,7 @@
     },
     "top-20-checklist": {
       "name": "Top 20 Wi-Fi Checklist",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A bundled, offline, pinch-to-zoom copy of Keith's published \"Top 20 Wi-Fi design checklist\" laminated reference card (in PDF card form).",
       "whyHere": "You want the WLAN Pros Top 20 checklist card exactly as printed, viewable and zoomable on the phone you already have, with no network needed.",
       "howToUse": [
@@ -4322,7 +4322,7 @@
     },
     "extended-checklist": {
       "name": "Extended Wi-Fi Checklist",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A bundled, offline, pinch-to-zoom copy of Keith's published \"extended design checklist items\" laminated reference card.",
       "whyHere": "You want the WLAN Pros extended checklist card exactly as printed, viewable and zoomable on the phone you already have, with no network needed.",
       "howToUse": [
@@ -4340,7 +4340,7 @@
     },
     "extended-checklist-nonadvertised": {
       "name": "Extended Checklist (Non-Advertised Items)",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A bundled, offline, pinch-to-zoom copy of Keith's published \"extended checklist, non-advertised items\" laminated reference card.",
       "whyHere": "You want the WLAN Pros extended (non-advertised items) checklist card exactly as printed, viewable and zoomable on the phone you already have, with no network needed.",
       "howToUse": [
@@ -4358,7 +4358,7 @@
     },
     "connection-checklist": {
       "name": "Wi-Fi Connection Checklist",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A bundled, offline, pinch-to-zoom copy of Keith's published \"client connection sequence checklist\" laminated reference card.",
       "whyHere": "You want the WLAN Pros connection-sequence checklist card exactly as printed, viewable and zoomable on the phone you already have, with no network needed.",
       "howToUse": [
@@ -4376,7 +4376,7 @@
     },
     "channel-allocations-24ghz": {
       "name": "2.4 GHz Channel Allocations",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A built-in, offline, zoomable copy of Keith's published 2.4 GHz channel layout and allocations reference card.",
       "whyHere": "You want the WLAN Pros 2.4 GHz channel map exactly as printed, ready to view and zoom on the phone in your pocket, with no signal needed.",
       "howToUse": [
@@ -4394,7 +4394,7 @@
     },
     "channel-allocations-5ghz": {
       "name": "5 GHz Channel Allocations",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A built-in, offline, zoomable copy of Keith's published 5 GHz channel layout and allocations reference card.",
       "whyHere": "You want the WLAN Pros 5 GHz channel map exactly as printed, ready to view and zoom on the phone in your pocket, with no signal needed.",
       "howToUse": [
@@ -4412,7 +4412,7 @@
     },
     "channel-allocations-6ghz": {
       "name": "6 GHz Channel Allocations",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A built-in, offline, zoomable copy of Keith's published 6 GHz channel layout and allocations reference card.",
       "whyHere": "You want the WLAN Pros 6 GHz channel map exactly as printed, ready to view and zoom on the phone in your pocket, with no signal needed.",
       "howToUse": [
@@ -4430,7 +4430,7 @@
     },
     "mcs-index-card": {
       "name": "Modulation and Coding Schemes (MCS Index)",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A built-in, offline, zoomable copy of Keith's published MCS index, rates, and modulation reference card.",
       "whyHere": "You want the WLAN Pros MCS index card exactly as printed, ready to view and zoom on the phone in your pocket, with no signal needed.",
       "howToUse": [
@@ -4853,7 +4853,7 @@
     },
     "antenna-fundamentals": {
       "name": "Antenna Fundamentals",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "A read-along teaching reference for antenna literacy: what an antenna actually does (it shapes where the radio's energy goes, it does not add power), azimuth vs elevation, why gain trades against beamwidth, polarization and the wall-clock mistake, downtilt, how to read a radiation-pattern polar plot (main lobe, the -3 dB beamwidth points, side lobes, nulls, front-to-back ratio), and which antenna type (omni, patch, sector, Yagi, dish) fits which space. Seven line diagrams are embedded at the points they teach.",
       "whyHere": "It is the antenna-literacy companion to the directional tools in the toolbox (Downtilt, Point-to-Point, Fresnel). When you are choosing or mounting an antenna and want to reason about coverage shape rather than chase a gain number, this is the read-first reference.",
       "howToUse": [
@@ -5650,7 +5650,7 @@
     },
     "spectrum-analysis": {
       "name": "Spectrum Analysis",
-      "category": "Educational Resources",
+      "category": "Wi-Fi Classroom",
       "purpose": "A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum analyzer sees energy a Wi-Fi adapter is blind to, how the instrument works (swept versus real-time, and the time-versus-frequency trade), the knobs an operator touches (span, resolution and video bandwidth, reference level, the dBm scale, detectors, max-hold and averaging), the three main views (live trace, waterfall, and density/duty cycle) and how to read each, a nine-card gallery of interferer fingerprints (microwave oven, Bluetooth Classic and BLE, analog video camera, baby monitor, drone/FPV downlink, Zigbee, analog cordless phone, continuous wireless bridge), how to compare captures, the current tool landscape, and the mitigation ladder.",
       "whyHere": "This is the spectrum-analysis companion to the rest of the toolbox: when a Wi-Fi scan shows a clean channel but performance is poor, the cause is usually a non-Wi-Fi interferer that only a spectrum analyzer can see. This module teaches you to recognize those interferers by their waterfall shape and to pick a fix. It is an in-app reference, alongside Antenna Fundamentals.",
       "howToUse": [
@@ -5943,7 +5943,7 @@
     },
     "channel-allocations-6ghz-gvp": {
       "name": "6 GHz Channel Allocations with GVP",
-      "category": "Quick Reference",
+      "category": "Wi-Fi Classroom",
       "purpose": "Keith's 6 GHz channel chart showing all four US power classes, including Geofenced Variable Power.",
       "whyHere": "The 6 GHz card most people know shows three power classes. A fourth, Geofenced Variable Power, entered the rules effective 27 April 2026. This is the same chart with that class added, so you can see where it is allowed and where it is not.",
       "howToUse": [

@@ -53,13 +53,13 @@ AntennaPatternLab _labOf(WidgetTester tester) =>
 
 void main() {
   group('registration', () {
-    test('catalog entry in the Wi-Fi Classroom subgroup, with route and help id', () {
+    test('catalog entry in the Wi-Fi Classroom, with route and help id', () {
       final ToolEntry t = kToolCategories
           .expand((ToolCategory c) => c.tools)
           .firstWhere((ToolEntry e) => e.id == 'antenna-pattern');
       expect(t.title, 'Antenna Pattern');
       expect(t.routeName, '/tools/antenna-pattern');
-      expect(t.subgroup, 'Wi-Fi Classroom');
+      expect(t.subgroup, 'RF and Propagation');
       expect(t.isLive, isTrue);
       expect(kAntennaPatternToolId, t.id);
       expect(AppRouter.routes.containsKey(t.routeName), isTrue);

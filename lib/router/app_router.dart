@@ -764,8 +764,8 @@ class AppRouter {
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
   ///
-  /// Every Wi-Fi Classroom tool (catalog subgroup 'Wi-Fi Classroom') is wrapped in the
-  /// large-screen notice here, in one place ([gateWifiLabRoutes]), so a new
+  /// Every Wi-Fi Classroom tool (catalog category 'wifi-classroom') is wrapped
+  /// in the large-screen notice here, in one place ([gateWifiLabRoutes]), so a new
   /// Lab tool is gated as soon as it is in the catalog and this table.
   static final Map<String, WidgetBuilder>
   routes = gateWifiLabRoutes(<String, WidgetBuilder>{

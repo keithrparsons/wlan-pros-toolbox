@@ -7,9 +7,16 @@
 // shows the tool exactly as it is today.
 //
 // APPLIED CENTRALLY. [gateWifiLabRoutes] wraps every AppRouter route whose
-// catalog entry is in the 'Wi-Fi Classroom' subgroup, so a new Lab tool is gated the
-// moment it is added to the catalog and the route table. No screen imports
-// this file.
+// catalog entry is a Wi-Fi Classroom SIMULATOR: in the 'wifi-classroom'
+// category, on one of the [kWifiClassroomSimulatorSubgroups] shelves. A new
+// simulator is gated the moment it is added to the catalog and the route
+// table. No screen imports this file.
+//
+// RE-KEYED 2026-09-26. It keyed on a 'Wi-Fi Classroom' subgroup of Calculators
+// & Tools until the simulators became their own home section. The same day the
+// Classroom took in the WLAN Pros lessons and handouts, which must NOT be
+// gated, so the key is category AND simulator shelf. A test holds every
+// Classroom shelf to one of the two sets.
 //
 // THRESHOLD. The same one the Present button uses ([presenterAvailable]:
 // at least [kPresentMinWidth] wide and [kPresentMinHeight] tall). A window at
@@ -30,8 +37,28 @@ import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import 'present_button.dart' show presenterAvailable;
 
-/// The catalog subgroup whose tools are gated.
-const String kWifiLabSubgroup = 'Wi-Fi Classroom';
+/// The catalog category that holds the simulators.
+const String kWifiClassroomCategoryId = 'wifi-classroom';
+
+/// The Wi-Fi Classroom shelves whose tools are gated: the simulators.
+///
+/// The Classroom also holds Guided Lessons and Course Handouts (Keith,
+/// 2026-09-26), which read fine on a phone and are NOT gated
+/// ([kWifiClassroomUngatedSubgroups]). A test asserts the two sets together
+/// cover every Classroom shelf, so a new shelf has to be classified before the
+/// suite passes and cannot be ungated by accident.
+const Set<String> kWifiClassroomSimulatorSubgroups = <String>{
+  'RF and Propagation',
+  'Signals and PHY',
+  'Airtime and Access',
+  'Network Design and Security',
+};
+
+/// The Wi-Fi Classroom shelves that stay ungated.
+const Set<String> kWifiClassroomUngatedSubgroups = <String>{
+  'Guided Lessons',
+  'Course Handouts',
+};
 
 /// Notice headline.
 const String kLargeScreenNoticeTitle = 'Best on a larger screen';
@@ -59,11 +86,13 @@ void resetLargeScreenNoticeForTest() {
   largeScreenNoticeDismissed.value = false;
 }
 
-/// Every catalog tool in the Wi-Fi Classroom subgroup.
+/// Every Wi-Fi Classroom simulator: a tool in the 'wifi-classroom' category on
+/// one of the [kWifiClassroomSimulatorSubgroups] shelves.
 Iterable<ToolEntry> wifiLabTools([List<ToolCategory>? catalog]) sync* {
   for (final ToolCategory c in catalog ?? kToolCategories) {
+    if (c.id != kWifiClassroomCategoryId) continue;
     for (final ToolEntry t in c.tools) {
-      if (t.subgroup == kWifiLabSubgroup) yield t;
+      if (kWifiClassroomSimulatorSubgroups.contains(t.subgroup)) yield t;
     }
   }
 }

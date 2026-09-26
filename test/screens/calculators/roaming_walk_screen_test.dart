@@ -64,7 +64,7 @@ Future<void> _tap(WidgetTester tester, Finder f) async {
 void main() {
   test('catalog registers roaming-walk in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final int i = rf.tools.indexWhere(
       (ToolEntry t) => t.id == kRoamingWalkToolId,
@@ -72,10 +72,9 @@ void main() {
     expect(i, greaterThan(0));
     final ToolEntry e = rf.tools[i];
     expect(e.title, 'Roaming Walk');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Network Design and Security');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/roaming-walk');
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom');
     // The existing roaming tools are separate, untouched entries.
     for (final String id in <String>['roaming', 'roaming-log']) {
       expect(

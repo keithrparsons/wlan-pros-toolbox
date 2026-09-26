@@ -82,6 +82,7 @@ void main() {
           'rf-calculators',
           'quick-reference',
           'educational-resources',
+          'wifi-classroom',
         };
         for (final ToolCategory c in kToolCategories) {
           if (!webSafeCategoryIds.contains(c.id)) continue;

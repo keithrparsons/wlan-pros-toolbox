@@ -35,9 +35,9 @@ const List<String> _slugs = <String>[
 ];
 
 Widget _harness({required bool light}) => MaterialApp(
-      theme: light ? AppTheme.light() : AppTheme.dark(),
-      home: const AntennaFundamentalsScreen(),
-    );
+  theme: light ? AppTheme.light() : AppTheme.dark(),
+  home: const AntennaFundamentalsScreen(),
+);
 
 /// The teaching screen is a long ListView, so items below the first viewport are
 /// not built until scrolled into view. This scrolls the body until [finder]
@@ -61,21 +61,20 @@ void main() {
   tearDown(() => AntennaFundamentalsDiagrams.debugReset());
 
   group('catalog + route + keyword wiring', () {
-    test('the tool id resolves to a live ToolEntry in Educational Resources',
-        () {
+    test('the tool id resolves to a live ToolEntry in Wi-Fi Classroom', () {
       // Moved 2026-06-06 (BF6-3) from Quick Reference to Educational Resources.
       final ToolEntry entry = _entry();
       expect(entry.title, 'Antenna Fundamentals');
       expect(entry.routeName, '/tools/antenna-fundamentals');
       expect(entry.isLive, isTrue);
-      // Educational Resources is not a subgroup-ordered category → no subgroup.
-      expect(entry.subgroup, isNull);
+      // Moved to Wi-Fi Classroom's Guided Lessons shelf on 2026-09-26.
+      expect(entry.subgroup, 'Guided Lessons');
 
       final ToolCategory cat = kToolCategories.firstWhere(
         (ToolCategory c) =>
             c.tools.any((ToolEntry t) => t.id == 'antenna-fundamentals'),
       );
-      expect(cat.id, 'educational-resources');
+      expect(cat.id, 'wifi-classroom'); // moved 2026-09-26
     });
 
     test('the route is registered and follows the /tools/<id> convention', () {
@@ -130,11 +129,11 @@ void main() {
       AntennaFundamentalsDiagrams.debugSetBundled(<String>{
         AntennaFundamentalsDiagrams.path('g3-polar-plot-anatomy'),
       });
+      expect(AntennaFundamentalsDiagrams.has('g3-polar-plot-anatomy'), isTrue);
       expect(
-        AntennaFundamentalsDiagrams.has('g3-polar-plot-anatomy'),
-        isTrue,
+        AntennaFundamentalsDiagrams.has('g1-azimuth-vs-elevation'),
+        isFalse,
       );
-      expect(AntennaFundamentalsDiagrams.has('g1-azimuth-vs-elevation'), isFalse);
     });
   });
 
@@ -154,7 +153,9 @@ void main() {
       expect(find.text('The one idea'), findsOneWidget);
     });
 
-    testWidgets('every section header is reachable by scrolling', (tester) async {
+    testWidgets('every section header is reachable by scrolling', (
+      tester,
+    ) async {
       await tester.pumpWidget(_harness(light: false));
       await tester.pump();
 
@@ -174,8 +175,9 @@ void main() {
     testWidgets('renders the §8.13 mounting warning verbatim', (tester) async {
       await tester.pumpWidget(_harness(light: false));
       await tester.pump();
-      final Finder warning =
-          find.text('Never mount an Access Point on a wall like a clock.');
+      final Finder warning = find.text(
+        'Never mount an Access Point on a wall like a clock.',
+      );
       await _scrollTo(tester, warning);
       expect(warning, findsOneWidget);
     });
@@ -193,20 +195,23 @@ void main() {
       expect(find.text('~15 to 40°'), findsOneWidget);
     });
 
-    testWidgets('renders no diagram band when nothing is bundled (prose-only)',
-        (tester) async {
-      await tester.pumpWidget(_harness(light: false));
-      await tester.pump();
-      // The prose still renders; the diagram bands collapse to nothing.
-      expect(find.text('The one idea'), findsOneWidget);
-      // No AspectRatio diagram band is built when no diagram is bundled.
-      expect(find.byType(AspectRatio), findsNothing);
-    });
+    testWidgets(
+      'renders no diagram band when nothing is bundled (prose-only)',
+      (tester) async {
+        await tester.pumpWidget(_harness(light: false));
+        await tester.pump();
+        // The prose still renders; the diagram bands collapse to nothing.
+        expect(find.text('The one idea'), findsOneWidget);
+        // No AspectRatio diagram band is built when no diagram is bundled.
+        expect(find.byType(AspectRatio), findsNothing);
+      },
+    );
   });
 
   group('screen (light)', () {
-    testWidgets('renders the full teaching scroll in light without throwing',
-        (tester) async {
+    testWidgets('renders the full teaching scroll in light without throwing', (
+      tester,
+    ) async {
       await tester.pumpWidget(_harness(light: true));
       await tester.pump();
       expect(find.text('Antenna Fundamentals'), findsWidgets);

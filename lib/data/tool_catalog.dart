@@ -33,6 +33,12 @@
 //                         after the reorganization above; its tile is
 //                         intercepted in home_screen.dart to push the
 //                         dedicated directory screen rather than CategoryScreen.
+//   6. Wi-Fi Classroom — WLAN Pros teaching material: lessons, simulators and
+//                         course handouts (2026-09-26, Keith: "Own section,
+//                         next to Educational Resources"; "Lessons and
+//                         handouts, all ours"). Grouped in teaching order, not
+//                         A-Z. Only the simulators sit behind the large-screen
+//                         notice.
 // The three dissolved categories (Planning Tools, Command & Capture,
 // Checklists) merged their tools into the survivors per this map; nothing was
 // dropped or duplicated. The tappable-checklist screen type
@@ -204,7 +210,8 @@ class ToolCategory {
 ///   * ipv4-subnet / ipv6-subnet — pure subnet math, no I/O.
 ///   * my-current-location — `geolocator` uses the browser Geolocation API and
 ///     renders its own honest "Location unavailable" state when denied.
-///   * every Calculator, Quick Reference, and Educational Resources tool.
+///   * every Calculator, Quick Reference, Educational Resources and Wi-Fi
+///     Classroom tool.
 ///
 /// WEB-ONLY. This set is consulted exclusively through [toolUnavailableOnWeb],
 /// which short-circuits to `false` off web, so native iOS/macOS/Android tile
@@ -355,9 +362,10 @@ const Set<String> kPiOnlyToolIds = <String>{
 
 /// Catalog seed — the 4-category reorganization (Keith, 2026-06-01; see file
 /// header). The list order IS the home-grid order: Test Network, Networking
-/// Tools, Calculators & Tools, Quick Reference. Tool order within each category
-/// is presentation-sorted in category_screen.dart (alphabetical, except the
-/// pinned three in Test Network).
+/// Tools, Calculators & Tools, Quick Reference, Educational Resources, Wi-Fi
+/// Classroom. Tool order within each category is presentation-sorted in
+/// category_screen.dart (alphabetical, except the pinned tools in Test Network
+/// and the teaching order of Wi-Fi Classroom).
 ///
 /// This is the FULL, platform-agnostic catalog. UI consumers read
 /// [kToolCategories] (below). On web, every tile in this list now appears (no
@@ -917,252 +925,6 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         routeName: '/tools/hear-frequency',
         isLive: true,
         subgroup: 'Utilities & Generators',
-      ),
-      // ── Wi-Fi Classroom (2026-09-25) ── interactive simulators built clean-room
-      // from IEEE 802.11 math; spec in myPKA
-      // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
-      //
-      // Distinct from the 'modulation' reference cards under Quick Reference,
-      // which stay as they are.
-      ToolEntry(
-        id: 'modulation-simulator',
-        title: 'Modulation Simulator',
-        description:
-            'Watch bits become a radio wave: pick BPSK to 4096-QAM, add noise, '
-            'and see the constellation, carrier, EVM and bit errors',
-        routeName: '/tools/modulation-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'medium-access-simulator',
-        title: 'Medium Access Simulator',
-        description:
-            'Watch stations contend for the air slot by slot: backoff, '
-            'collisions, EDCA priority, hidden nodes and RTS/CTS',
-        routeName: '/tools/medium-access-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      // Distinct from the 'fspl' calculator, which stays a two-input tool.
-      ToolEntry(
-        id: 'fspl-simulator',
-        title: 'FSPL Simulator',
-        description:
-            'See free-space path loss against distance for 2.4, 5 and 6 GHz, '
-            'and why higher bands lose more: the receive antenna, not the air',
-        routeName: '/tools/fspl-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'airtime-fairness',
-        title: 'Airtime Fairness',
-        description:
-            'See why one slow client drags every fast one down, and how '
-            'sharing time instead of turns lifts throughput',
-        routeName: '/tools/airtime-fairness',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'airtime-anatomy',
-        title: 'Airtime Anatomy',
-        description:
-            'One transmit opportunity drawn to scale: wait, preamble, data, '
-            'SIFS and ACK, and how much of the air carries your data',
-        routeName: '/tools/airtime-anatomy',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'multipath-simulator',
-        title: 'Multipath Simulator',
-        description:
-            'See reflected copies add and cancel as arrows: two-ray fades, '
-            'standing-wave nulls every half wavelength, Rayleigh fading and '
-            'antenna diversity',
-        routeName: '/tools/multipath-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'fourier-fft',
-        title: 'Fourier and FFT',
-        description:
-            'Build a signal from sines, then see how an FFT analyzer measures '
-            'it: bins, RBW, windows and leakage',
-        routeName: '/tools/fourier-fft',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'wifi-through-a-wall',
-        title: 'Wi-Fi Through a Wall',
-        description:
-            'Send one wave through one wall: see it reflect, shrink inside '
-            'and fade, and compare the loss across 2.4, 5 and 6 GHz',
-        routeName: '/tools/wifi-through-a-wall',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      // Distinct from the 'rf-attenuation' calculator, which stays as it is.
-      ToolEntry(
-        id: 'room-propagation',
-        title: 'Room Propagation',
-        description:
-            'Put an AP, walls and doorways on a floor plan and see the signal: '
-            'reflections, bending past edges, and why 6 GHz loses more',
-        routeName: '/tools/room-propagation',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      // Distinct from the 'roaming' reference card and the 'roaming-log' live
-      // tool, which stay as they are.
-      ToolEntry(
-        id: 'roaming-walk',
-        title: 'Roaming Walk',
-        description:
-            'Walk a client past APs and watch when it roams: trigger and '
-            'delta, sticky clients, ping-pong, and what 802.11k/r save',
-        routeName: '/tools/roaming-walk',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'six-ghz-psd',
-        title: '6 GHz Power and PSD',
-        description:
-            'See why 6 GHz power is limited per MHz: EIRP and SNR against '
-            'channel width for LPI, VLP, Standard Power and GVP, US and EU',
-        routeName: '/tools/six-ghz-psd',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'mimo-beamforming',
-        title: 'MIMO and Beamforming',
-        description:
-            'See why streams stop at the smaller side, what spare antennas '
-            'still add, what sounding costs, and why a sniffer misses '
-            'beamformed frames',
-        routeName: '/tools/mimo-beamforming',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'channel-planner',
-        title: 'Channel Planner',
-        description:
-            'Place APs on a floor and see who shares airtime: channel reuse, '
-            'wider channels, why 1, 6 and 11, and the -82 dBm rule',
-        routeName: '/tools/channel-planner',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'ofdma-simulator',
-        title: 'OFDMA Resource Units',
-        description:
-            'Fit clients into resource units across the channel, then compare '
-            'one OFDMA transmission with one frame per client, drawn to scale',
-        routeName: '/tools/ofdma-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'antenna-pattern',
-        title: 'Antenna Pattern',
-        description:
-            'Turn an omni into a directional, change its gain and rotate the '
-            '3D pattern; paste an MSI or NSMA file to see its two cuts in 3D',
-        routeName: '/tools/antenna-pattern',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      // Distinct from the 'eap-types' and 'frame-exchange' references, which
-      // stay as they are.
-      ToolEntry(
-        id: 'eap-ladder',
-        title: '802.1X and EAP Ladder',
-        description:
-            'Watch a client, an AP and a RADIUS server authenticate step by '
-            'step: EAP-TLS, PEAP, EAP-TTLS, PSK and SAE, and what a roam skips',
-        routeName: '/tools/eap-ladder',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'rate-vs-range',
-        title: 'Rate vs Range',
-        description:
-            'See rate fall with distance as MCS rings around an AP: wider '
-            'channels shrink every ring, a higher basic rate shrinks the cell',
-        routeName: '/tools/rate-vs-range',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'rate-adaptation',
-        title: 'Rate Adaptation',
-        description:
-            'Watch a radio learn its best rate: success statistics, sample '
-            'frames, the retry chain, and what every retry costs in airtime',
-        routeName: '/tools/rate-adaptation',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'spatial-reuse',
-        title: 'Spatial Reuse',
-        description:
-            'See why neighbor APs on one channel take turns, and how BSS '
-            'color and OBSS_PD let them talk at once for less power',
-        routeName: '/tools/spatial-reuse',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'dfs-simulator',
-        title: 'DFS and Radar',
-        description:
-            'Start an AP on a DFS channel, trigger radar and watch the '
-            'listen-first check, the channel move and the 30-minute block',
-        routeName: '/tools/dfs-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      // Pairs with 'airtime-anatomy': the same preamble durations, opened up
-      // field by field.
-      ToolEntry(
-        id: 'phy-preamble',
-        title: 'PHY Preamble Reference',
-        description:
-            'Every Wi-Fi preamble drawn to scale, from 802.11a to Wi-Fi 7, '
-            'with the bits of each SIG field and how a receiver tells them apart',
-        routeName: '/tools/phy-preamble',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'mlo-simulator',
-        title: 'Multi-Link Operation',
-        description:
-            'Compare single link, STR, NSTR and EMLSR on the same Wi-Fi 7 '
-            'traffic, and see when MLO cuts latency and when it does not',
-        routeName: '/tools/mlo-simulator',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
-      ),
-      ToolEntry(
-        id: 'power-save',
-        title: 'Power Save',
-        description:
-            'Watch a client doze and wake around beacons, DTIM, U-APSD and '
-            'TWT, and see what each saving costs in latency',
-        routeName: '/tools/power-save',
-        isLive: true,
-        subgroup: 'Wi-Fi Classroom',
       ),
       ToolEntry(
         id: 'downtilt',
@@ -2612,12 +2374,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // dedicated EducationalResourcesScreen, because the resources are external
   // links with rich detail, not in-app tool routes. The single placeholder
   // ToolEntry below exists only so the tile reads as live and the category is
-  // non-empty; it never renders as generic ToolEntry rows. The 10 laminated PDF
-  // reference cards (moved here from Quick Reference 2026-06-04) plus the
-  // Antenna Fundamentals teaching screen (moved here 2026-06-06, BF6-3) ARE its
-  // `tools` list: EducationalResourcesScreen reads them and renders an in-app
-  // references section at the top, above the 37 online resources. No `subgroup`
-  // — this is not a subgroup-ordered category.
+  // non-empty; it never renders as generic ToolEntry rows. Its `tools` list is
+  // read by EducationalResourcesScreen and rendered as an in-app references
+  // section above the online resources. No `subgroup` — this is not a
+  // subgroup-ordered category.
+  //
+  // THE WLAN PROS CARDS AND LESSONS LEFT ON 2026-09-26. The 11 PDF cards and
+  // checklists and the two read-along lessons (Antenna Fundamentals, Spectrum
+  // Analysis) moved to Wi-Fi Classroom. Keith chose "Lessons and handouts, all
+  // ours": Wi-Fi Classroom holds OUR teaching material, and this section keeps
+  // pointers to other people's work. Ham Radio Study Resources stays here,
+  // because it is a list of other people's study material.
   //
   // Tile count: the home badge would otherwise show only the live tool count
   // (the in-app reference cards). The true total the Educational Resources
@@ -2635,7 +2402,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // Bespoke Tier-2 mortarboard glyph (GL-003 §8.6.1). Falls back to the
     // Material [icon] above if the asset is ever absent from the bundle.
     iconAsset: 'assets/tool-icons/educational-resources.svg',
-    exampleToolTitles: <String>['Reference Cards', 'Blogs', 'Podcasts'],
+    // 'Reference Cards' led this list until 2026-09-26, when the cards moved to
+    // Wi-Fi Classroom. Examples name what is actually behind the tile (GL-005).
+    exampleToolTitles: <String>['Blogs', 'Talk Archives', 'Podcasts'],
     // 52 = 11 in-app references (10 PDF cards + Antenna Fundamentals, moved here
     // 2026-06-06 BF6-3) + 41 online resources (WiFi Training added 2026-06-07
     // under Training Providers; MackenzieWiFi re-added 2026-06-08, site back up
@@ -2668,106 +2437,11 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
     // 66 = 48 -> 51. Three bufferbloat entries added 2026-09-24 under Tools and
     // utilities: bufferbloat.net, the LibreQoS Bufferbloat Test, and the
     // Waveform Bufferbloat Test. All three are 'not_required'.
-    countLabelOverride: '66',
+    // 53 = 66 - 13. The 11 PDF cards and the two lessons moved to Wi-Fi
+    // Classroom on 2026-09-26, leaving 1 in-app reference (Ham Radio Study
+    // Resources) + the Field Manual + 51 online resources.
+    countLabelOverride: '53',
     tools: <ToolEntry>[
-      // The 6 PDF reference cards.
-      ToolEntry(
-        id: 'bubble-diagram',
-        title: 'WLAN Pros Bubble Diagram',
-        description: 'Wi-Fi design decision bubble diagram',
-        routeName: '/tools/bubble-diagram',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'troubleshooting-causes',
-        title: 'Wireless LAN Troubleshooting Causes',
-        description: 'Common causes to check when troubleshooting',
-        routeName: '/tools/troubleshooting-causes',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'channel-allocations-24ghz',
-        title: '2.4 GHz Channel Allocations',
-        description: '2.4 GHz channel layout and allocations',
-        routeName: '/tools/channel-allocations-24ghz',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'channel-allocations-5ghz',
-        title: '5 GHz Channel Allocations',
-        description: '5 GHz channel layout and allocations',
-        routeName: '/tools/channel-allocations-5ghz',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'channel-allocations-6ghz',
-        title: '6 GHz Channel Allocations',
-        description: '6 GHz channel layout and allocations',
-        routeName: '/tools/channel-allocations-6ghz',
-        isLive: true,
-      ),
-      // Added 2026-07-28. The four US 6 GHz power classes on one chart, including
-      // Geofenced Variable Power, which entered 47 CFR 15.407(a)(7) effective
-      // 27 April 2026. The plain 6 GHz card above shows three classes and is kept
-      // because it is the layout most people already know.
-      ToolEntry(
-        id: 'channel-allocations-6ghz-gvp',
-        title: '6 GHz Channel Allocations with GVP',
-        description:
-            'All four 6 GHz power classes, including Geofenced Variable Power',
-        routeName: '/tools/channel-allocations-6ghz-gvp',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'mcs-index-card',
-        title: 'Modulation and Coding Schemes (MCS Index)',
-        description: 'MCS index, rates, and modulation',
-        routeName: '/tools/mcs-index-card',
-        isLive: true,
-      ),
-      // The 4 checklist PDF cards.
-      ToolEntry(
-        id: 'top-20-checklist',
-        title: 'Top 20 Wi-Fi Checklist',
-        description: 'The Top 20 Wi-Fi design checklist',
-        routeName: '/tools/top-20-checklist',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'extended-checklist',
-        title: 'Extended Wi-Fi Checklist',
-        description: 'Extended design checklist items',
-        routeName: '/tools/extended-checklist',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'extended-checklist-nonadvertised',
-        title: 'Extended Checklist (Non-Advertised Items)',
-        description: 'Extended checklist, non-advertised items',
-        routeName: '/tools/extended-checklist-nonadvertised',
-        isLive: true,
-      ),
-      ToolEntry(
-        id: 'connection-checklist',
-        title: 'Wi-Fi Connection Checklist',
-        description: 'Client connection sequence checklist',
-        routeName: '/tools/connection-checklist',
-        isLive: true,
-      ),
-      // Antenna Fundamentals — MOVED here 2026-06-06 (BF6-3) from Quick
-      // Reference. A read-along teaching screen (not a PDF card), so it renders
-      // in the in-app references section of the Educational Resources directory.
-      // Route, id, asset, and help entry are unchanged from its Quick Reference
-      // life.
-      ToolEntry(
-        id: 'antenna-fundamentals',
-        title: 'Antenna Fundamentals',
-        description:
-            'Gain, beamwidth, polarization, downtilt, and reading a radiation '
-            'pattern, with diagrams',
-        routeName: '/tools/antenna-fundamentals',
-        isLive: true,
-      ),
       // Ham Radio Study Resources (2026-06-28) — an in-app reference tile (like
       // Antenna Fundamentals): the vetted study-materials list (hamstudy.org,
       // ARRL manuals, FCC Part 97, AREDN) with url_launcher links and the two
@@ -2781,6 +2455,65 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'manuals, FCC Part 97, and AREDN, with the current exam structure',
         routeName: '/tools/ham-study-resources',
         isLive: true,
+      ),
+    ],
+  ),
+
+  // ──────────────────────── 6. Wi-Fi Classroom ─────────────────────
+  // Its own home section since 2026-09-26. Keith was asked whether the
+  // simulators should be their own section and chose "Own section, next to
+  // Educational Resources." Until then they were a 'Wi-Fi Classroom' subgroup
+  // at the bottom of Calculators & Tools.
+  //
+  // Interactive simulators built clean-room from IEEE 802.11 math; specs in
+  // myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/.
+  //
+  // TEACHING ORDER, NOT A-Z. Unlike every other grouped category, the tools
+  // below render in the order they are listed here (kCatalogOrderCategoryIds
+  // in tool_subgroups.dart): the order a class meets the ideas, from the wave
+  // in free space, to what rides on it, to who gets the air, to the network
+  // built from it. Reordering this list reorders the screen.
+  //
+  // LESSONS AND HANDOUTS TOO (2026-09-26). Keith chose "Lessons and handouts,
+  // all ours": the WLAN Pros read-along lessons and printed cards moved in from
+  // Educational Resources, as the first and last shelves. The rule: Wi-Fi
+  // Classroom holds OUR teaching material; Educational Resources points at
+  // other people's.
+  //
+  // Only the SIMULATOR shelves sit behind the large-screen notice
+  // (kWifiClassroomSimulatorSubgroups in
+  // lib/widgets/presenter/large_screen_gate.dart). A phone user opening a
+  // checklist card must not be told it was designed for a tablet. Every id and
+  // route is the one the tool had before it moved, so deep links, presenter
+  // mode, help entries and the keyword index are unchanged.
+  ToolCategory(
+    id: 'wifi-classroom',
+    title: 'Wi-Fi Classroom',
+    summary: 'Interactive simulators for teaching Wi-Fi',
+    icon: Icons.cast_for_education_outlined,
+    exampleToolTitles: <String>[
+      'FSPL Simulator',
+      'Modulation Simulator',
+      'Antenna Fundamentals',
+    ],
+    tools: <ToolEntry>[
+      // ── Guided Lessons ── read-along teaching screens, moved in from
+      // Educational Resources 2026-09-26. Ids, routes, assets and help entries
+      // unchanged.
+      // Antenna Fundamentals — MOVED here 2026-06-06 (BF6-3) from Quick
+      // Reference. A read-along teaching screen (not a PDF card), so it renders
+      // in the in-app references section of the Educational Resources directory.
+      // Route, id, asset, and help entry are unchanged from its Quick Reference
+      // life.
+      ToolEntry(
+        id: 'antenna-fundamentals',
+        title: 'Antenna Fundamentals',
+        description:
+            'Gain, beamwidth, polarization, downtilt, and reading a radiation '
+            'pattern, with diagrams',
+        routeName: '/tools/antenna-fundamentals',
+        isLive: true,
+        subgroup: 'Guided Lessons',
       ),
       // Spectrum Analysis (2026-06-28) — a read-along teaching MODULE (hub + 8
       // topic screens) on spectrum analyzers: the NIC-vs-spectrum distinction,
@@ -2798,6 +2531,349 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'interference. Teaching content, not a live tool',
         routeName: '/tools/spectrum-analysis',
         isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // ── RF and Propagation ──
+      // Distinct from the 'fspl' calculator, which stays a two-input tool.
+      ToolEntry(
+        id: 'fspl-simulator',
+        title: 'FSPL Simulator',
+        description:
+            'See free-space path loss against distance for 2.4, 5 and 6 GHz, '
+            'and why higher bands lose more: the receive antenna, not the air',
+        routeName: '/tools/fspl-simulator',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      ToolEntry(
+        id: 'wifi-through-a-wall',
+        title: 'Wi-Fi Through a Wall',
+        description:
+            'Send one wave through one wall: see it reflect, shrink inside '
+            'and fade, and compare the loss across 2.4, 5 and 6 GHz',
+        routeName: '/tools/wifi-through-a-wall',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      ToolEntry(
+        id: 'multipath-simulator',
+        title: 'Multipath Simulator',
+        description:
+            'See reflected copies add and cancel as arrows: two-ray fades, '
+            'standing-wave nulls every half wavelength, Rayleigh fading and '
+            'antenna diversity',
+        routeName: '/tools/multipath-simulator',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      // Distinct from the 'rf-attenuation' calculator, which stays as it is.
+      ToolEntry(
+        id: 'room-propagation',
+        title: 'Room Propagation',
+        description:
+            'Put an AP, walls and doorways on a floor plan and see the signal: '
+            'reflections, bending past edges, and why 6 GHz loses more',
+        routeName: '/tools/room-propagation',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      ToolEntry(
+        id: 'antenna-pattern',
+        title: 'Antenna Pattern',
+        description:
+            'Turn an omni into a directional, change its gain and rotate the '
+            '3D pattern; paste an MSI or NSMA file to see its two cuts in 3D',
+        routeName: '/tools/antenna-pattern',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      ToolEntry(
+        id: 'rate-vs-range',
+        title: 'Rate vs Range',
+        description:
+            'See rate fall with distance as MCS rings around an AP: wider '
+            'channels shrink every ring, a higher basic rate shrinks the cell',
+        routeName: '/tools/rate-vs-range',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      ToolEntry(
+        id: 'six-ghz-psd',
+        title: '6 GHz Power and PSD',
+        description:
+            'See why 6 GHz power is limited per MHz: EIRP and SNR against '
+            'channel width for LPI, VLP, Standard Power and GVP, US and EU',
+        routeName: '/tools/six-ghz-psd',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      // ── Signals and PHY ──
+      // Distinct from the 'modulation' reference cards under Quick Reference,
+      // which stay as they are.
+      ToolEntry(
+        id: 'modulation-simulator',
+        title: 'Modulation Simulator',
+        description:
+            'Watch bits become a radio wave: pick BPSK to 4096-QAM, add noise, '
+            'and see the constellation, carrier, EVM and bit errors',
+        routeName: '/tools/modulation-simulator',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
+      ToolEntry(
+        id: 'fourier-fft',
+        title: 'Fourier and FFT',
+        description:
+            'Build a signal from sines, then see how an FFT analyzer measures '
+            'it: bins, RBW, windows and leakage',
+        routeName: '/tools/fourier-fft',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
+      ToolEntry(
+        id: 'ofdma-simulator',
+        title: 'OFDMA Resource Units',
+        description:
+            'Fit clients into resource units across the channel, then compare '
+            'one OFDMA transmission with one frame per client, drawn to scale',
+        routeName: '/tools/ofdma-simulator',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
+      ToolEntry(
+        id: 'mimo-beamforming',
+        title: 'MIMO and Beamforming',
+        description:
+            'See why streams stop at the smaller side, what spare antennas '
+            'still add, what sounding costs, and why a sniffer misses '
+            'beamformed frames',
+        routeName: '/tools/mimo-beamforming',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
+      // Pairs with 'airtime-anatomy': the same preamble durations, opened up
+      // field by field.
+      ToolEntry(
+        id: 'phy-preamble',
+        title: 'PHY Preamble Reference',
+        description:
+            'Every Wi-Fi preamble drawn to scale, from 802.11a to Wi-Fi 7, '
+            'with the bits of each SIG field and how a receiver tells them apart',
+        routeName: '/tools/phy-preamble',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
+      // ── Airtime and Access ──
+      ToolEntry(
+        id: 'medium-access-simulator',
+        title: 'Medium Access Simulator',
+        description:
+            'Watch stations contend for the air slot by slot: backoff, '
+            'collisions, EDCA priority, hidden nodes and RTS/CTS',
+        routeName: '/tools/medium-access-simulator',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      ToolEntry(
+        id: 'airtime-anatomy',
+        title: 'Airtime Anatomy',
+        description:
+            'One transmit opportunity drawn to scale: wait, preamble, data, '
+            'SIFS and ACK, and how much of the air carries your data',
+        routeName: '/tools/airtime-anatomy',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      ToolEntry(
+        id: 'airtime-fairness',
+        title: 'Airtime Fairness',
+        description:
+            'See why one slow client drags every fast one down, and how '
+            'sharing time instead of turns lifts throughput',
+        routeName: '/tools/airtime-fairness',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      ToolEntry(
+        id: 'rate-adaptation',
+        title: 'Rate Adaptation',
+        description:
+            'Watch a radio learn its best rate: success statistics, sample '
+            'frames, the retry chain, and what every retry costs in airtime',
+        routeName: '/tools/rate-adaptation',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      ToolEntry(
+        id: 'spatial-reuse',
+        title: 'Spatial Reuse',
+        description:
+            'See why neighbor APs on one channel take turns, and how BSS '
+            'color and OBSS_PD let them talk at once for less power',
+        routeName: '/tools/spatial-reuse',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      ToolEntry(
+        id: 'power-save',
+        title: 'Power Save',
+        description:
+            'Watch a client doze and wake around beacons, DTIM, U-APSD and '
+            'TWT, and see what each saving costs in latency',
+        routeName: '/tools/power-save',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      ToolEntry(
+        id: 'mlo-simulator',
+        title: 'Multi-Link Operation',
+        description:
+            'Compare single link, STR, NSTR and EMLSR on the same Wi-Fi 7 '
+            'traffic, and see when MLO cuts latency and when it does not',
+        routeName: '/tools/mlo-simulator',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
+      // ── Network Design and Security ──
+      ToolEntry(
+        id: 'channel-planner',
+        title: 'Channel Planner',
+        description:
+            'Place APs on a floor and see who shares airtime: channel reuse, '
+            'wider channels, why 1, 6 and 11, and the -82 dBm rule',
+        routeName: '/tools/channel-planner',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
+      // Distinct from the 'roaming' reference card and the 'roaming-log' live
+      // tool, which stay as they are.
+      ToolEntry(
+        id: 'roaming-walk',
+        title: 'Roaming Walk',
+        description:
+            'Walk a client past APs and watch when it roams: trigger and '
+            'delta, sticky clients, ping-pong, and what 802.11k/r save',
+        routeName: '/tools/roaming-walk',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
+      ToolEntry(
+        id: 'dfs-simulator',
+        title: 'DFS and Radar',
+        description:
+            'Start an AP on a DFS channel, trigger radar and watch the '
+            'listen-first check, the channel move and the 30-minute block',
+        routeName: '/tools/dfs-simulator',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
+      // Distinct from the 'eap-types' and 'frame-exchange' references, which
+      // stay as they are.
+      ToolEntry(
+        id: 'eap-ladder',
+        title: '802.1X and EAP Ladder',
+        description:
+            'Watch a client, an AP and a RADIUS server authenticate step by '
+            'step: EAP-TLS, PEAP, EAP-TTLS, PSK and SAE, and what a roam skips',
+        routeName: '/tools/eap-ladder',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
+      // ── Course Handouts ── the WLAN Pros printed cards and checklists (PDF),
+      // moved in from Educational Resources 2026-09-26. Ids, routes, assets and
+      // help entries unchanged.
+      ToolEntry(
+        id: 'channel-allocations-24ghz',
+        title: '2.4 GHz Channel Allocations',
+        description: '2.4 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-24ghz',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'channel-allocations-5ghz',
+        title: '5 GHz Channel Allocations',
+        description: '5 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-5ghz',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'channel-allocations-6ghz',
+        title: '6 GHz Channel Allocations',
+        description: '6 GHz channel layout and allocations',
+        routeName: '/tools/channel-allocations-6ghz',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      // Added 2026-07-28. The four US 6 GHz power classes on one chart, including
+      // Geofenced Variable Power, which entered 47 CFR 15.407(a)(7) effective
+      // 27 April 2026. The plain 6 GHz card above shows three classes and is kept
+      // because it is the layout most people already know.
+      ToolEntry(
+        id: 'channel-allocations-6ghz-gvp',
+        title: '6 GHz Channel Allocations with GVP',
+        description:
+            'All four 6 GHz power classes, including Geofenced Variable Power',
+        routeName: '/tools/channel-allocations-6ghz-gvp',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'troubleshooting-causes',
+        title: 'Wireless LAN Troubleshooting Causes',
+        description: 'Common causes to check when troubleshooting',
+        routeName: '/tools/troubleshooting-causes',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'bubble-diagram',
+        title: 'WLAN Pros Bubble Diagram',
+        description: 'Wi-Fi design decision bubble diagram',
+        routeName: '/tools/bubble-diagram',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'top-20-checklist',
+        title: 'Top 20 Wi-Fi Checklist',
+        description: 'The Top 20 Wi-Fi design checklist',
+        routeName: '/tools/top-20-checklist',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'extended-checklist',
+        title: 'Extended Wi-Fi Checklist',
+        description: 'Extended design checklist items',
+        routeName: '/tools/extended-checklist',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'extended-checklist-nonadvertised',
+        title: 'Extended Checklist (Non-Advertised Items)',
+        description: 'Extended checklist, non-advertised items',
+        routeName: '/tools/extended-checklist-nonadvertised',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'connection-checklist',
+        title: 'Wi-Fi Connection Checklist',
+        description: 'Client connection sequence checklist',
+        routeName: '/tools/connection-checklist',
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+      ToolEntry(
+        id: 'mcs-index-card',
+        title: 'Modulation and Coding Schemes (MCS Index)',
+        description: 'MCS index, rates, and modulation',
+        routeName: '/tools/mcs-index-card',
+        isLive: true,
+        subgroup: 'Course Handouts',
       ),
     ],
   ),

@@ -66,7 +66,14 @@ const Set<String> _cliSheetIds = <String>{
 /// The how-to / guide tool ids (the "Guides & How-To" subgroup). A guide is a
 /// step-by-step walkthrough that may bundle a companion file — distinct from a
 /// reference table, card, CLI sheet, or checklist.
-const Set<String> _guideIds = <String>{'freeradius-wlanpi'};
+const Set<String> _guideIds = <String>{
+  'freeradius-wlanpi',
+  // The Wi-Fi Classroom Guided Lessons (2026-09-26): read-along teaching
+  // screens, not calculators. Without this they would inherit the
+  // simulators' "Tool" chip and calculator glyph.
+  'antenna-fundamentals',
+  'spectrum-analysis',
+};
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.
 ///
@@ -83,6 +90,9 @@ ContentType contentTypeFor(ToolEntry tool, String categoryId) {
     case 'quick-reference':
       return ContentType.table;
     case 'rf-calculators':
+    // The simulators kept the chip they had under Calculators & Tools when
+    // they moved to their own section (2026-09-26).
+    case 'wifi-classroom':
       return ContentType.calculator;
     case 'test-network':
       return ContentType.diagnostic;

@@ -64,13 +64,13 @@ Future<void> _tap(WidgetTester tester, Finder f) async {
 void main() {
   test('catalog and route register phy-preamble in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kPhyPreambleToolId,
     );
     expect(e.title, 'PHY Preamble Reference');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Signals and PHY');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/phy-preamble');
     expect(AppRouter.routes.containsKey('/tools/phy-preamble'), isTrue);

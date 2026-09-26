@@ -23,9 +23,9 @@ import 'package:wlan_pros_toolbox/screens/tools/educational/spectrum_analysis_sc
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 Widget _harness({required bool light}) => MaterialApp(
-      theme: light ? AppTheme.light() : AppTheme.dark(),
-      home: const SpectrumAnalysisScreen(),
-    );
+  theme: light ? AppTheme.light() : AppTheme.dark(),
+  home: const SpectrumAnalysisScreen(),
+);
 
 ToolEntry _entry() => kToolCategories
     .expand((ToolCategory c) => c.tools)
@@ -43,26 +43,23 @@ Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
 
 void main() {
   group('catalog + route wiring', () {
-    test('the id resolves to a live ToolEntry in Educational Resources', () {
+    test('the id resolves to a live ToolEntry in Wi-Fi Classroom', () {
       final ToolEntry entry = _entry();
       expect(entry.title, 'Spectrum Analysis');
       expect(entry.routeName, '/tools/spectrum-analysis');
       expect(entry.isLive, isTrue);
-      // Educational Resources is not a subgroup-ordered category → no subgroup.
-      expect(entry.subgroup, isNull);
+      // Moved to Wi-Fi Classroom's Guided Lessons shelf on 2026-09-26.
+      expect(entry.subgroup, 'Guided Lessons');
 
       final ToolCategory cat = kToolCategories.firstWhere(
         (ToolCategory c) =>
             c.tools.any((ToolEntry t) => t.id == 'spectrum-analysis'),
       );
-      expect(cat.id, 'educational-resources');
+      expect(cat.id, 'wifi-classroom'); // moved 2026-09-26
     });
 
     test('the route is registered and follows the /tools/<id> convention', () {
-      expect(
-        AppRouter.routes.containsKey(AppRouter.spectrumAnalysis),
-        isTrue,
-      );
+      expect(AppRouter.routes.containsKey(AppRouter.spectrumAnalysis), isTrue);
       expect(AppRouter.spectrumAnalysis, '/tools/spectrum-analysis');
     });
 
@@ -72,8 +69,9 @@ void main() {
   });
 
   group('hub (dark)', () {
-    testWidgets('renders the title, lead, scope note, and eight topic cards',
-        (WidgetTester tester) async {
+    testWidgets('renders the title, lead, scope note, and eight topic cards', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_harness(light: false));
       await tester.pump();
 
@@ -102,8 +100,9 @@ void main() {
   });
 
   group('hub (light)', () {
-    testWidgets('renders without throwing in light theme',
-        (WidgetTester tester) async {
+    testWidgets('renders without throwing in light theme', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_harness(light: true));
       await tester.pump();
       expect(find.text('Spectrum Analysis'), findsWidgets);
@@ -122,8 +121,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('each topic card opens its teaching screen',
-        (WidgetTester tester) async {
+    testWidgets('each topic card opens its teaching screen', (
+      WidgetTester tester,
+    ) async {
       // (hub title, an excerpt from the top-of-page lead of the pushed screen,
       // which is always in the first viewport so no detail scroll is needed).
       const List<List<String>> topics = <List<String>>[
@@ -161,15 +161,15 @@ void main() {
       }
     });
 
-    testWidgets('the signature gallery renders all nine interferer names',
-        (WidgetTester tester) async {
+    testWidgets('the signature gallery renders all nine interferer names', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_harness(light: false));
       await tester.pump();
       await openTopic(tester, 'Fingerprinting interferers');
 
       // The nine signature names, each above its (gracefully degrading) raster.
-      final Scrollable scroll =
-          tester.widget(find.byType(Scrollable).first);
+      final Scrollable scroll = tester.widget(find.byType(Scrollable).first);
       for (final String name in <String>[
         'Microwave oven',
         'Bluetooth Classic',

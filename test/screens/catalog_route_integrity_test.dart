@@ -67,10 +67,16 @@ void main() {
         final List<String>? order = kCategorySubgroupOrder[c.id];
         if (order == null) continue; // flat categories don't require a subgroup
         for (final ToolEntry t in c.tools) {
-          expect(t.subgroup, isNotNull,
-              reason: '${c.id}/${t.id} missing a subgroup');
-          expect(order.contains(t.subgroup), isTrue,
-              reason: '${c.id}/${t.id} subgroup "${t.subgroup}" not in order');
+          expect(
+            t.subgroup,
+            isNotNull,
+            reason: '${c.id}/${t.id} missing a subgroup',
+          );
+          expect(
+            order.contains(t.subgroup),
+            isTrue,
+            reason: '${c.id}/${t.id} subgroup "${t.subgroup}" not in order',
+          );
         }
       }
     });
@@ -130,12 +136,14 @@ void main() {
       });
     }
 
-    test('the 6 reference PDF cards live in educational-resources', () {
-      expectCardsInCategory('educational-resources', referenceCards);
+    // Moved from educational-resources to wifi-classroom on 2026-09-26
+    // (Keith: "Lessons and handouts, all ours").
+    test('the reference PDF cards live in wifi-classroom', () {
+      expectCardsInCategory('wifi-classroom', referenceCards);
     });
 
-    test('the 4 checklist PDF cards now live in educational-resources too', () {
-      expectCardsInCategory('educational-resources', checklistCards);
+    test('the checklist PDF cards live in wifi-classroom too', () {
+      expectCardsInCategory('wifi-classroom', checklistCards);
     });
 
     test('each PDF card route resolves to a builder', () {

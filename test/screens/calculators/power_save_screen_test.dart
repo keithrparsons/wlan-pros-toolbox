@@ -49,14 +49,14 @@ void main() {
         .expand((ToolCategory c) => c.tools)
         .firstWhere((ToolEntry e) => e.id == kPowerSaveToolId);
     expect(t.title, 'Power Save');
-    expect(t.subgroup, 'Wi-Fi Classroom');
+    expect(t.subgroup, 'Airtime and Access');
     expect(t.routeName, '/tools/power-save');
     expect(t.isLive, isTrue);
     expect(AppRouter.powerSave, '/tools/power-save');
     final ToolCategory rf = kToolCategories.firstWhere(
       (ToolCategory c) => c.tools.any((ToolEntry e) => e.id == 'power-save'),
     );
-    expect(rf.id, 'rf-calculators');
+    expect(rf.id, 'wifi-classroom');
   });
 
   testWidgets('fresh: Legacy PS vs TWT, stage and controls share one '

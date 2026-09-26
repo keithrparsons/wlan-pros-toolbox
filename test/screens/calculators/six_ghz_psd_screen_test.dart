@@ -76,7 +76,7 @@ Future<void> _toggleClass(WidgetTester tester, String label) async {
 void main() {
   test('catalog registers six-ghz-psd in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final int i = rf.tools.indexWhere(
       (ToolEntry t) => t.id == kSixGhzPsdToolId,
@@ -84,10 +84,9 @@ void main() {
     expect(i, isNonNegative);
     final ToolEntry e = rf.tools[i];
     expect(e.title, '6 GHz Power and PSD');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'RF and Propagation');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/six-ghz-psd');
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom'); // shelf, not slot (2026-09-25 merge)
   });
 
   test('MCS steps are read from Signal Thresholds, MCS 0 at 5 dB', () {

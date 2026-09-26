@@ -24,11 +24,13 @@ const String _labA = '/test/lab-a';
 const String _labB = '/test/lab-b';
 const String _plain = '/test/plain';
 
-/// A two-tool Lab catalog plus one ordinary tool, so the gate's behavior is
-/// tested without pumping a real simulator.
+const String _handout = '/test/handout';
+
+/// A two-simulator Classroom plus a Classroom handout and one ordinary tool, so
+/// the gate's behavior is tested without pumping a real simulator.
 final List<ToolCategory> _fakeCatalog = <ToolCategory>[
   ToolCategory(
-    id: 'test',
+    id: kWifiClassroomCategoryId,
     title: 'Test',
     summary: '',
     icon: Icons.science,
@@ -40,7 +42,7 @@ final List<ToolCategory> _fakeCatalog = <ToolCategory>[
         description: '',
         routeName: _labA,
         isLive: true,
-        subgroup: kWifiLabSubgroup,
+        subgroup: 'Signals and PHY',
       ),
       ToolEntry(
         id: 'lab-b',
@@ -48,14 +50,33 @@ final List<ToolCategory> _fakeCatalog = <ToolCategory>[
         description: '',
         routeName: _labB,
         isLive: true,
-        subgroup: kWifiLabSubgroup,
+        subgroup: 'Signals and PHY',
       ),
+      ToolEntry(
+        id: 'handout',
+        title: 'Handout',
+        description: '',
+        routeName: _handout,
+        isLive: true,
+        subgroup: 'Course Handouts',
+      ),
+    ],
+  ),
+  ToolCategory(
+    id: 'other',
+    title: 'Other',
+    summary: '',
+    icon: Icons.science,
+    exampleToolTitles: const <String>[],
+    tools: const <ToolEntry>[
       ToolEntry(
         id: 'plain',
         title: 'Plain',
         description: '',
         routeName: _plain,
         isLive: true,
+        // A simulator shelf name OUTSIDE the Classroom must not be gated.
+        subgroup: 'Signals and PHY',
       ),
     ],
   ),
@@ -72,6 +93,7 @@ final Map<String, WidgetBuilder> _routes =
       _labA: (_) => _tool('Lab A'),
       _labB: (_) => _tool('Lab B'),
       _plain: (_) => _tool('Plain'),
+      _handout: (_) => _tool('Handout'),
     }, catalog: _fakeCatalog);
 
 class _Home extends StatelessWidget {
@@ -82,7 +104,7 @@ class _Home extends StatelessWidget {
     body: Column(
       children: <Widget>[
         const Text('Home'),
-        for (final String r in <String>[_labA, _labB, _plain])
+        for (final String r in <String>[_labA, _labB, _plain, _handout])
           TextButton(
             onPressed: () => Navigator.of(context).pushNamed(r),
             child: Text('open $r'),
@@ -203,6 +225,15 @@ void main() {
     expect(find.text('Plain body'), findsOneWidget);
   });
 
+  testWidgets('a Classroom handout on a phone opens with no notice', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(tester, const Size(390, 844));
+    await _open(tester, _handout);
+    expect(_notice, findsNothing);
+    expect(find.text('Handout body'), findsOneWidget);
+  });
+
   testWidgets('notice renders without overflow in light mode at 390x844', (
     WidgetTester tester,
   ) async {
@@ -250,9 +281,8 @@ void main() {
       }
     });
 
-    testWidgets('no tool outside the Wi-Fi Classroom is gated', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('no tool outside the Classroom simulators is gated, lessons '
+        'and handouts included', (WidgetTester tester) async {
       await grabContext(tester);
       final Set<String> labRoutes = <String>{
         for (final ToolEntry t in wifiLabTools()) t.routeName,
@@ -270,6 +300,50 @@ void main() {
       expect(checked, greaterThan(0));
     });
   });
+
+  group(
+    'simulators only (Keith, 2026-09-26: lessons and handouts moved in)',
+    () {
+      test('gating is by Classroom simulator shelf, not by category alone', () {
+        final Set<String> gated = <String>{
+          for (final ToolEntry t in wifiLabTools(_fakeCatalog)) t.id,
+        };
+        expect(gated, <String>{'lab-a', 'lab-b'});
+      });
+
+      test('every Classroom shelf is classified as gated or ungated, once', () {
+        final Set<String> shelves = <String>{
+          for (final ToolEntry t
+              in kToolCategories
+                  .firstWhere(
+                    (ToolCategory c) => c.id == kWifiClassroomCategoryId,
+                  )
+                  .tools)
+            t.subgroup!,
+        };
+        expect(
+          kWifiClassroomSimulatorSubgroups.intersection(
+            kWifiClassroomUngatedSubgroups,
+          ),
+          isEmpty,
+        );
+        expect(
+          shelves,
+          kWifiClassroomSimulatorSubgroups.union(
+            kWifiClassroomUngatedSubgroups,
+          ),
+          reason:
+              'a new Classroom shelf must be added to exactly one of the two '
+              'sets in large_screen_gate.dart before it ships',
+        );
+      });
+
+      test('exactly the 23 simulators are gated in the real catalog', () {
+        final List<ToolEntry> lab = wifiLabTools().toList();
+        expect(lab, hasLength(23));
+      });
+    },
+  );
 
   test('every Wi-Fi Classroom help entry says the Lab is for tablets and '
       'computers', () {

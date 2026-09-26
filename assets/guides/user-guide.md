@@ -130,7 +130,7 @@ Wi-Fi, the internet, and cellular are three different things. Get clear on which
 
 ## A tour of the app, section by section
 
-The Toolbox is organized into five areas. I'll walk you through them in the order that matters most to a normal user, spending the most time on the tools you'll actually touch.
+The Toolbox is organized into six areas. I'll walk you through them in the order that matters most to a normal user, spending the most time on the tools you'll actually touch.
 
 ### Test Network: the everyday answers
 
@@ -186,7 +186,7 @@ The rest of the reference cards are deep professional material. They're there wh
 
 ### Educational Resources: other people's good work
 
-The other four sections are things the app does. This one is a door out.
+The other five sections are things the app does. This one is a door out.
 
 It is a curated list of places to learn Wi-Fi, gathered in one spot so you never have to go hunting: independent blogs, conference talk archives, YouTube channels, podcasts, training paths, and free tools built by working engineers. Tap any entry to read what it is and why it is worth your time, then open its website.
 
@@ -194,7 +194,15 @@ Two things worth knowing about what is in here. **It is community work, not vend
 
 Most of it is aimed at people who do this for a living. For everyone else, the glossary-style blogs and the beginner podcast episodes are the gentle way in, and the search box at the top will find them faster than scrolling.
 
-This section also holds the in-app reference cards and the full Field Manual, which is the deep version of this guide for people who want the professional detail.
+This section also holds the full Field Manual, which is the deep version of this guide for people who want the professional detail.
+
+### Wi-Fi Classroom: learn it by watching it happen
+
+This is our own teaching material, built for a class or for one curious person. It opens with two read-along lessons, Antenna Fundamentals and Spectrum Analysis, and closes with the printed WLAN Pros course handouts: channel charts, the MCS card, the bubble diagram and the design checklists.
+
+In between are the simulators. Each one takes a single idea and lets you move it: push an access point farther away and watch the signal fall, add noise and watch bits turn into errors, add clients and watch them take turns for the air. They are in teaching order, starting with the radio wave and ending with the finished network.
+
+The simulators are designed for a tablet or a computer screen. On a phone they still work, but the app will tell you some views are cramped before it opens one.
 
 ## Where to go next
 

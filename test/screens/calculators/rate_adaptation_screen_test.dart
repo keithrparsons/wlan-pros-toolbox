@@ -77,14 +77,14 @@ double _contrast(Color a, Color b) {
 void main() {
   test('catalog registers rate-adaptation in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kRateAdaptationToolId,
     );
     expect(kRateAdaptationToolId, 'rate-adaptation');
     expect(e.title, 'Rate Adaptation');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Airtime and Access');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/rate-adaptation');
     expect(AppRouter.rateAdaptation, e.routeName);

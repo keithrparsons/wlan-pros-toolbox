@@ -73,9 +73,9 @@ void _expectTextInsideWidth(WidgetTester tester, double width) {
 }
 
 void main() {
-  test('catalog registers fspl-simulator in Wi-Fi Classroom after medium access', () {
+  test('catalog registers fspl-simulator in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final int i = rf.tools.indexWhere(
       (ToolEntry t) => t.id == kFsplSimulatorToolId,
@@ -83,10 +83,9 @@ void main() {
     expect(i, isNonNegative);
     final ToolEntry e = rf.tools[i];
     expect(e.title, 'FSPL Simulator');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'RF and Propagation');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/fspl-simulator');
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom'); // shelf, not slot (2026-09-25 merge)
     // The two-input calculator is a separate, untouched entry.
     expect(
       kToolCategories.any(

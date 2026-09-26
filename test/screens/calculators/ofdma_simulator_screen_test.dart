@@ -227,20 +227,23 @@ void main() {
   // Registration. Deliberately NO neighbor assertions: several Wi-Fi Classroom tools
   // merge into one branch, so which tool sits before or after this one, and
   // whether it is last, is not this tool's contract.
-  test('catalog entry: rf-calculators, subgroup Wi-Fi Classroom, live, routed', () {
-    final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
-    );
-    final List<ToolEntry> hits = rf.tools
-        .where((ToolEntry t) => t.id == kOfdmaSimulatorToolId)
-        .toList();
-    expect(hits, hasLength(1));
-    final ToolEntry e = hits.single;
-    expect(e.title, 'OFDMA Resource Units');
-    expect(e.routeName, '/tools/ofdma-simulator');
-    expect(e.subgroup, 'Wi-Fi Classroom');
-    expect(e.isLive, isTrue);
-    expect(AppRouter.ofdmaSimulator, e.routeName);
-    expect(AppRouter.routes.containsKey(e.routeName), isTrue);
-  });
+  test(
+    'catalog entry: rf-calculators, subgroup Wi-Fi Classroom, live, routed',
+    () {
+      final ToolCategory rf = kToolCategories.firstWhere(
+        (ToolCategory c) => c.id == 'wifi-classroom',
+      );
+      final List<ToolEntry> hits = rf.tools
+          .where((ToolEntry t) => t.id == kOfdmaSimulatorToolId)
+          .toList();
+      expect(hits, hasLength(1));
+      final ToolEntry e = hits.single;
+      expect(e.title, 'OFDMA Resource Units');
+      expect(e.routeName, '/tools/ofdma-simulator');
+      expect(e.subgroup, 'Signals and PHY');
+      expect(e.isLive, isTrue);
+      expect(AppRouter.ofdmaSimulator, e.routeName);
+      expect(AppRouter.routes.containsKey(e.routeName), isTrue);
+    },
+  );
 }

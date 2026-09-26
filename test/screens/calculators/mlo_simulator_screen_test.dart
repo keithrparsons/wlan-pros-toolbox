@@ -46,19 +46,22 @@ MloSimulatorState _state(WidgetTester tester) =>
     tester.widget<MloSimulatorStage>(find.byType(MloSimulatorStage)).state;
 
 void main() {
-  test('catalog registers mlo-simulator in Wi-Fi Classroom, with its route', () {
-    final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
-    );
-    final ToolEntry e = rf.tools.firstWhere(
-      (ToolEntry t) => t.id == kMloSimulatorToolId,
-    );
-    expect(e.title, 'Multi-Link Operation');
-    expect(e.subgroup, 'Wi-Fi Classroom');
-    expect(e.isLive, isTrue);
-    expect(e.routeName, '/tools/mlo-simulator');
-    expect(AppRouter.mloSimulator, '/tools/mlo-simulator');
-  });
+  test(
+    'catalog registers mlo-simulator in Wi-Fi Classroom, with its route',
+    () {
+      final ToolCategory rf = kToolCategories.firstWhere(
+        (ToolCategory c) => c.id == 'wifi-classroom',
+      );
+      final ToolEntry e = rf.tools.firstWhere(
+        (ToolEntry t) => t.id == kMloSimulatorToolId,
+      );
+      expect(e.title, 'Multi-Link Operation');
+      expect(e.subgroup, 'Airtime and Access');
+      expect(e.isLive, isTrue);
+      expect(e.routeName, '/tools/mlo-simulator');
+      expect(AppRouter.mloSimulator, '/tools/mlo-simulator');
+    },
+  );
 
   testWidgets('fresh: equal links, MLO wins, study labeled', (
     WidgetTester tester,

@@ -80,7 +80,7 @@ double _contrast(Color a, Color b) {
 void main() {
   test('catalog registers channel-planner in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final int i = rf.tools.indexWhere(
       (ToolEntry t) => t.id == kChannelPlannerToolId,
@@ -88,12 +88,9 @@ void main() {
     expect(i, isNonNegative);
     final ToolEntry e = rf.tools[i];
     expect(e.title, 'Channel Planner');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Network Design and Security');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/channel-planner');
-    // Inside the Wi-Fi Classroom block; the exact neighbors depend on merge order
-    // (2026-09-25 merge), so assert the shelf, not the slot.
-    expect(rf.tools[i - 1].subgroup, 'Wi-Fi Classroom');
   });
 
   test('§8.15.2 palette clears the contrast floor in both themes', () {

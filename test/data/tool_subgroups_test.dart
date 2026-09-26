@@ -84,6 +84,9 @@ void main() {
       });
 
       test('$id: each section is alphabetized by title', () {
+        // Wi-Fi Classroom keeps teaching order instead; pinned in
+        // wifi_classroom_category_test.dart.
+        if (kCatalogOrderCategoryIds.contains(id)) return;
         for (final ToolSection s in groupedCategoryTools(cat(id))) {
           final List<String> titles = s.tools
               .map((ToolEntry t) => t.title.toLowerCase())

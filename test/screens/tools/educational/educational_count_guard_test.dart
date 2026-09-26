@@ -23,8 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 
 void main() {
-  test('educational-resources countLabelOverride == cards + JSON _meta.count',
-      () {
+  test('educational-resources countLabelOverride == cards + JSON _meta.count', () {
     final ToolCategory edu = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'educational-resources',
     );
@@ -37,14 +36,18 @@ void main() {
     // four-power-class 6 GHz chart including Geofenced Variable Power. The
     // three-class card is kept alongside it, so this is an addition rather
     // than a replacement.
-    expect(cardCount, 14,
-        reason: 'expected 11 PDF reference cards + Antenna Fundamentals + '
-            'Ham Radio Study Resources + Spectrum Analysis');
+    // 2026-09-26: 14 -> 1. The 11 PDF cards, Antenna Fundamentals and
+    // Spectrum Analysis moved to Wi-Fi Classroom (Keith: "Lessons and
+    // handouts, all ours"). Ham Radio Study Resources stays.
+    expect(cardCount, 1, reason: 'expected Ham Radio Study Resources only');
 
     // Online-resource count from the bundled dataset's _meta block.
     final File asset = File('assets/data/educational_resources.json');
-    expect(asset.existsSync(), isTrue,
-        reason: 'bundled educational_resources.json must exist');
+    expect(
+      asset.existsSync(),
+      isTrue,
+      reason: 'bundled educational_resources.json must exist',
+    );
     final Map<String, dynamic> decoded =
         jsonDecode(asset.readAsStringSync()) as Map<String, dynamic>;
     final Map<String, dynamic> meta = decoded['_meta'] as Map<String, dynamic>;
@@ -66,7 +69,8 @@ void main() {
     expect(
       edu.countLabelOverride,
       '$expectedTotal',
-      reason: 'tile badge ($expectedTotal) = $cardCount cards + '
+      reason:
+          'tile badge ($expectedTotal) = $cardCount cards + '
           '$fieldManualCount Field Manual + $onlineCount online resources; '
           'this must equal the screen header total (1 + cards + online). '
           'Update the override if any term changes',

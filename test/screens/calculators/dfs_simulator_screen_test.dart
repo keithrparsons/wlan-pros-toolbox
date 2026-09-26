@@ -77,19 +77,22 @@ DfsSimulatorController _controller(WidgetTester tester) =>
     tester.widget<DfsSimulatorStage>(find.byType(DfsSimulatorStage)).controller;
 
 void main() {
-  test('catalog registers dfs-simulator in Wi-Fi Classroom, with its route', () {
-    final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
-    );
-    final ToolEntry e = rf.tools.firstWhere(
-      (ToolEntry t) => t.id == kDfsSimulatorToolId,
-    );
-    expect(e.title, 'DFS and Radar');
-    expect(e.subgroup, 'Wi-Fi Classroom');
-    expect(e.isLive, isTrue);
-    expect(e.routeName, '/tools/dfs-simulator');
-    expect(AppRouter.dfsSimulator, '/tools/dfs-simulator');
-  });
+  test(
+    'catalog registers dfs-simulator in Wi-Fi Classroom, with its route',
+    () {
+      final ToolCategory rf = kToolCategories.firstWhere(
+        (ToolCategory c) => c.id == 'wifi-classroom',
+      );
+      final ToolEntry e = rf.tools.firstWhere(
+        (ToolEntry t) => t.id == kDfsSimulatorToolId,
+      );
+      expect(e.title, 'DFS and Radar');
+      expect(e.subgroup, 'Network Design and Security');
+      expect(e.isLive, isTrue);
+      expect(e.routeName, '/tools/dfs-simulator');
+      expect(AppRouter.dfsSimulator, '/tools/dfs-simulator');
+    },
+  );
 
   testWidgets('fresh: 0:00, paused, CAC running on 100, no radar yet', (
     WidgetTester tester,

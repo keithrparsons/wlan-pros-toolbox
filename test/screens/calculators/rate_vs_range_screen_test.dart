@@ -78,14 +78,14 @@ double _contrast(Color a, Color b) {
 void main() {
   test('catalog registers rate-vs-range in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kRateVsRangeToolId,
     );
     expect(kRateVsRangeToolId, 'rate-vs-range');
     expect(e.title, 'Rate vs Range');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'RF and Propagation');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/rate-vs-range');
   });

@@ -93,11 +93,10 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // RF math (QR Code Generator, DTMF Generator, Morse Code) plus, since
     // 2026-09-17, Hear the Frequency.
     'Utilities & Generators',
-    // Wi-Fi Classroom (2026-09-25): interactive simulators built clean-room from
-    // IEEE 802.11 math: Modulation Simulator and Medium Access Simulator.
-    // Placed last as a new shelf; the position is editorial and Keith's to
-    // overrule.
-    'Wi-Fi Classroom',
+    //
+    // 'Wi-Fi Classroom' WAS THE LAST SUBGROUP HERE FROM 2026-09-25 TO 2026-09-26.
+    // Its 23 simulators moved to their own home section, 'wifi-classroom'
+    // below (Keith: "Own section, next to Educational Resources").
     //
     // TWO NAMES WERE REMOVED FROM THIS LIST ON 2026-09-17 AND NO TOOL WAS.
     //
@@ -117,6 +116,26 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
     // different subgroup that happens to share a name. Subgroups are scoped
     // per category, which is why the 2026-09-16 rewrite was confined to the
     // quick-reference block, and why this change is confined to this one.
+  ],
+  // Wi-Fi Classroom (2026-09-26, Keith: "Own section, next to Educational
+  // Resources"). Four simulator shelves in TEACHING ORDER: the wave in free space and
+  // through a building, what rides on the wave, who gets the air and when,
+  // and the network built from all of it. Each shelf holds at least two tools
+  // (Keith's 2026-09-17 rule: no one-tool sections). Tools inside each shelf
+  // keep catalog order too, not A-Z; see [kCatalogOrderCategoryIds].
+  //
+  // Guided Lessons and Course Handouts (2026-09-26, Keith: "Lessons and
+  // handouts, all ours") are the WLAN Pros read-along lessons and printed
+  // cards, moved in from Educational Resources. Lessons open the section
+  // because they are where a class starts; handouts close it because they are
+  // what a class takes away.
+  'wifi-classroom': <String>[
+    'Guided Lessons',
+    'RF and Propagation',
+    'Signals and PHY',
+    'Airtime and Access',
+    'Network Design and Security',
+    'Course Handouts',
   ],
   // Networking Tools (2026-09-13, Keith): 25 tools rendering FLAT was the one
   // real findability gap left in the app. Every other oversized category was
@@ -140,6 +159,12 @@ const Map<String, List<String>> kCategorySubgroupOrder = <String, List<String>>{
   ],
 };
 
+/// Grouped categories whose tools keep their CATALOG order inside each section
+/// instead of sorting A-Z by title. Wi-Fi Classroom is a syllabus: the catalog
+/// lists each shelf in the order a class meets the ideas, and alphabetizing it
+/// would put 6 GHz Power and PSD before Free Space Path Loss.
+const Set<String> kCatalogOrderCategoryIds = <String>{'wifi-classroom'};
+
 /// One rendered section of a category screen: a header (empty for the flat
 /// single-section case), its tool count, and its (alphabetized) tools.
 typedef ToolSection = ({String header, int count, List<ToolEntry> tools});
@@ -148,7 +173,8 @@ typedef ToolSection = ({String header, int count, List<ToolEntry> tools});
 ///
 ///   * If the category has an entry in [kCategorySubgroupOrder], tools are
 ///     bucketed by [ToolEntry.subgroup] into those sections in that order, each
-///     bucket sorted alphabetically by title. A trailing "Other" section is
+///     bucket sorted alphabetically by title (or left in catalog order for a
+///     category in [kCatalogOrderCategoryIds]). A trailing "Other" section is
 ///     appended ONLY if some tool has a null/unknown subgroup (defensive — the
 ///     orphan test should keep this empty in practice).
 ///   * Otherwise the category renders flat: a single section with an empty
@@ -165,8 +191,13 @@ List<ToolSection> groupedCategoryTools(ToolCategory category) {
     return <ToolSection>[(header: '', count: flat.length, tools: flat)];
   }
 
-  int byTitle(ToolEntry a, ToolEntry b) =>
-      a.title.toLowerCase().compareTo(b.title.toLowerCase());
+  final bool catalogOrder = kCatalogOrderCategoryIds.contains(category.id);
+  // List.sort is not stable, so catalog order is kept by comparing positions
+  // rather than by returning 0.
+  final List<ToolEntry> source = category.tools;
+  int byTitle(ToolEntry a, ToolEntry b) => catalogOrder
+      ? source.indexOf(a).compareTo(source.indexOf(b))
+      : a.title.toLowerCase().compareTo(b.title.toLowerCase());
 
   final List<ToolSection> sections = <ToolSection>[];
   final Set<ToolEntry> placed = <ToolEntry>{};

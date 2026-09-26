@@ -57,13 +57,13 @@ Future<void> _tapButton(WidgetTester tester, String label) async {
 void main() {
   test('catalog registers modulation-simulator in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kModulationSimulatorToolId,
     );
     expect(e.title, 'Modulation Simulator');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Signals and PHY');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/modulation-simulator');
     // The reference-card tool is a separate, untouched entry.

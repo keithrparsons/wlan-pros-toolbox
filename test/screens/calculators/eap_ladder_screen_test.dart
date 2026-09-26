@@ -66,13 +66,13 @@ OutlinedButton _button(WidgetTester tester, String label) =>
 void main() {
   test('catalog and route register eap-ladder in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kEapLadderToolId,
     );
     expect(e.title, '802.1X and EAP Ladder');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Network Design and Security');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/eap-ladder');
     expect(AppRouter.routes.containsKey('/tools/eap-ladder'), isTrue);

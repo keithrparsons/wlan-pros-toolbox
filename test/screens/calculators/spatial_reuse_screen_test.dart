@@ -81,13 +81,13 @@ double _contrast(Color a, Color b) {
 void main() {
   test('catalog and router register spatial-reuse in Wi-Fi Classroom', () {
     final ToolCategory rf = kToolCategories.firstWhere(
-      (ToolCategory c) => c.id == 'rf-calculators',
+      (ToolCategory c) => c.id == 'wifi-classroom',
     );
     final ToolEntry e = rf.tools.firstWhere(
       (ToolEntry t) => t.id == kSpatialReuseToolId,
     );
     expect(e.title, 'Spatial Reuse');
-    expect(e.subgroup, 'Wi-Fi Classroom');
+    expect(e.subgroup, 'Airtime and Access');
     expect(e.isLive, isTrue);
     expect(e.routeName, '/tools/spatial-reuse');
     expect(AppRouter.spatialReuse, '/tools/spatial-reuse');
