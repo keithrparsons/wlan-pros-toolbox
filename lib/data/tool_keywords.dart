@@ -1791,6 +1791,32 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'airtime',
     'rfc 9119',
   ],
+  // Wi-Fi Classroom (2026-09-26). Channel Utilization Meter: the words a
+  // student types after reading a busy number off an AP.
+  'channel-utilization': <String>[
+    'channel utilization',
+    'utilization',
+    'busy',
+    'channel busy',
+    'busy time',
+    'bss load',
+    'qbss',
+    'qbss load',
+    'station count',
+    'airtime',
+    'nav',
+    'network allocation vector',
+    'carrier sense',
+    'virtual carrier sense',
+    'cca',
+    'clear channel assessment',
+    'contention',
+    'capacity',
+    'admission capacity',
+    'wi-fi classroom',
+    'wi-fi lab',
+    'simulator',
+  ],
   // Wi-Fi Classroom (2026-09-25). What the 802.1X ladder shows, in the words a
   // student would search with.
   'eap-ladder': <String>[

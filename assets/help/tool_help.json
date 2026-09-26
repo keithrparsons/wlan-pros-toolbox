@@ -1262,6 +1262,92 @@
       ],
       "source": "Wi-Fi Classroom wave 4 research brief, row C: RFC 9119 (IETF, 2021) as the problem statement, read from summaries. Frame timing from the Airtime Anatomy tool's model (the IEEE 802.11 transmit-time equations and default channel-access parameters). Computed on your device."
     },
+    "channel-utilization": {
+      "name": "Channel Utilization Meter",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows the number an AP reports as channel utilization, and what it does and does not mean. The AP counts the share of time its radio found the channel busy, averaged over several seconds, and puts it in every beacon as one byte from 0 to 255. A strip of channel time shows the frames and the waits between them, a bracket shows the averaging window sliding over the beacon intervals, and a split bar shows how much of that time was your data, overhead, collisions, other networks, waiting the protocol requires, and truly spare time.",
+      "whyHere": "Channel utilization is the busy number in the BSS Load element (BSS: basic service set, one AP's network; IEEE, the Institute of Electrical and Electronics Engineers, 802.11-2024 clause 9.4.2.26, first added by 802.11e as the QBSS Load element, a QBSS being a quality of service basic service set). Busy counts everything the AP hears: its own network, neighbor networks, collisions, retries, and non-Wi-Fi energy loud enough to make the channel read busy. Busy is not the same as used for your data: preambles, acknowledgments and collisions are all busy time. Idle is not the same as available: every frame waits a DIFS (distributed interframe space) and a random backoff first, so one sender at full speed fills a 54 Mb/s channel at 73 to 76% busy, never 100%. The Station Count beside it counts associated stations, not active ones. Clients read these numbers when choosing an AP, so a busy-looking channel pushes clients away whether or not the busy time is the AP's own. Airtime Anatomy shows one frame exchange in detail; the Medium Access Simulator shows contention and backoff; the BSS Load tool (macOS) reads the real element from the AP you are connected to.",
+      "howToUse": [
+        "Read the headline: channel utilization as a percent and as the byte (0 to 255), the Station Count, and the share of time that was truly spare.",
+        "Run the channel. The strip scrolls the last few milliseconds: gray preambles and lime data are this network's frames, outlined blocks are ACKs (acknowledgments), dashed gaps are the SIFS (short interframe space) before each ACK, hatched gaps are the DIFS and backoff every sender must wait, striped blocks are another network, crossed blocks are collisions and zigzag blocks are non-Wi-Fi energy. Every kind of block is named in the legend.",
+        "Watch the averaging window: each bar is one beacon interval (100 TU, time units of 1024 µs, so 102.4 ms), and the bracket spans the window. The meter is the average over the bracket, so a one-second burst barely moves a 5-second average. Next beacon interval runs one interval, Skip one window fills a whole window at once, Add a 1-second non-Wi-Fi burst adds a burst now, and Reset starts over.",
+        "Change the traffic: senders (1 to 50), offered load, data rate, frame payload, and stations that are associated but idle. Change the measurement: the window, and whether reserved time counts. Add a neighbor network or non-Wi-Fi bursts.",
+        "Read the split bar and the readouts: payload, overhead, collisions, other network, non-Wi-Fi, required idle and truly spare. The formula card shows the byte computed with the live numbers.",
+        "Many senders: with every sender saturated, busy stays near its ceiling while your data's share falls, because collisions are busy time. The tool's own run is drawn beside points from a published paper.",
+        "Predict, then reveal: Ask the class loads one laptop sending as fast as it can and hides the meter; pick an answer, then press Reveal.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space runs or pauses the channel, the Right arrow runs one beacon interval, R resets, Up and Down change the number of senders, B adds a 1-second burst, W skips ahead one window, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Senders",
+          "unit": "count",
+          "range": "1 to 50; default 1"
+        },
+        {
+          "name": "Offered load, each",
+          "unit": "%",
+          "range": "5 to 100 in steps of 5, a share of what one sender alone can carry; 100 means saturated, a frame always waiting (default)"
+        },
+        {
+          "name": "Data rate",
+          "unit": "Mb/s",
+          "range": "6, 9, 12, 18, 24, 36, 48 or 54 (802.11g, 2.4 GHz); default 54"
+        },
+        {
+          "name": "Frame payload",
+          "unit": "bytes",
+          "range": "100, 500, 1,000, 1,500 or 2,304; default 1,500"
+        },
+        {
+          "name": "Associated but idle",
+          "unit": "count",
+          "range": "0 to 60; default 0"
+        },
+        {
+          "name": "Averaging window",
+          "unit": "beacon intervals",
+          "range": "1 to 255; default 50 (5.12 s), the standard's default according to one secondary source"
+        },
+        {
+          "name": "Count reserved time (virtual carrier sense)",
+          "unit": "switch",
+          "range": "Off (default): physical carrier sense only. On: physical or virtual carrier sense"
+        },
+        {
+          "name": "A neighbor network on this channel",
+          "unit": "switch",
+          "range": "Off (default) or On"
+        },
+        {
+          "name": "Neighbor's airtime",
+          "unit": "%",
+          "range": "5 to 60; default 20 (illustrative)"
+        },
+        {
+          "name": "Non-Wi-Fi bursts",
+          "unit": "switch",
+          "range": "Off (default) or On: 4 ms bursts about 20% of the time (illustrative)"
+        },
+        {
+          "name": "Speed",
+          "unit": "choice",
+          "range": "1 ms per second, 20 ms per second, Real time (default), or 5 s per second"
+        }
+      ],
+      "algorithm": "Channel Utilization = floor(255 × busy µs ÷ (window × beacon period in TU × 1024)), with the beacon period fixed at 100 TU. Busy is physical carrier sense (the radio hearing energy or a preamble: CCA, clear channel assessment), or, with reserved time counted, physical or virtual carrier sense: the NAV (network allocation vector) that a frame's Duration field sets, here the SIFS between a data frame and its ACK. Frame timing comes from Airtime Anatomy at 2.4 GHz with 802.11g rates: 9 µs slot, 10 µs SIFS, DIFS = SIFS + 2 slots = 28 µs, 6 µs signal extension, and the ACK at the fastest of 6, 12 or 24 Mb/s that is not above the data rate. Each frame is the payload plus a 26-byte header and a 4-byte checksum, with no encryption bytes. Contention follows the Medium Access Simulator's rules for legacy DCF (distributed coordination function): a contention window of 15 slots at first and at most 1023, a random backoff of 0 to the window counted down only while the channel has been idle for a DIFS, and frozen while it is busy. Two senders reaching zero on the same slot collide, double their window and try again, up to 7 attempts. Senders below saturation get frames at random (Poisson) times. The run is recorded per beacon interval, and the meter averages the last window of them (fewer while the window is still filling). The split bar sorts every microsecond: payload (the payload bits at the data rate), overhead (preamble, header, signal extension, the ACK, and the SIFS when reserved time counts), collisions, other network, non-Wi-Fi, required idle (DIFS, backoff, the ACK timeout after a collision, and the SIFS when reserved time does not count) and truly spare (idle with nobody waiting to send).",
+      "example": "One sender at 54 Mb/s with 1500-byte payloads: the data frame is 57 OFDM (orthogonal frequency-division multiplexing) symbols = 228 µs, plus 20 µs of preamble and SIGNAL field and 6 µs of signal extension = 254 µs. One cycle is DIFS 28 + mean backoff 7.5 × 9 = 67.5 + data 254 + SIFS 10 + ACK 34 = 393.5 µs. Busy by physical carrier sense is 254 + 34 = 288 µs, 73.2% of the cycle; counting the reserved SIFS it is 298 µs, 75.7%. The payload itself is 12,000 bits at 54 Mb/s = 222.2 µs, 56.5%. Over a full window the AP reports about 186 of 255 (72.9%). That channel is full there: a meter reading 50% on it means about two-thirds of what it can carry is in use, not half.",
+      "fieldNotes": [
+        "The window's default of 50 beacon intervals is the standard's default according to one secondary source; the standard's own definition of it was not read. It is labeled so on screen.",
+        "The formula is the definition, not any product's code. Real access points may compute it differently: one open-source implementation averages the radio driver's busy counters over a period the operator sets, and whether such counters include reserved time is not known.",
+        "Only the primary 20 MHz channel is modeled. Whether the basic field covers only the primary channel is not verified; extended load elements for wider channels exist and are not shown.",
+        "Available Admission Capacity is the medium time left under explicit admission control, in units of 32 µs per second. Most networks do not run admission control, so it is not a general capacity gauge; this tool shows it as not in use.",
+        "The many-sender points are from Bianchi (2000), IEEE Journal on Selected Areas in Communications 18(3), read off the paper's figure: about 0.8 of the channel at 5 stations and 0.55 at 50 for basic access, and about 0.83 with RTS/CTS (request to send / clear to send). Those use 1 Mbps parameters: the shape transfers, the exact numbers do not.",
+        "Simplifications: every station hears every other (no hidden nodes); after a collision every station waits the ACK timeout instead of the extended interframe space; a new frame always draws a backoff; the neighbor network sends the same frames at the same rate; non-Wi-Fi bursts never land on top of a frame; beacons' own airtime is left out (SSID Airtime shows it).",
+        "The neighbor's airtime and the non-Wi-Fi burst pattern are illustrative, chosen to show the effect, not measured.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Wi-Fi Classroom wave 4 research brief, section G: the BSS Load element and its definition (open-source implementations' source code, and secondary sources quoting the standard's definition), and Bianchi (2000). Frame timing from the Airtime Anatomy tool's model; contention rules from the Medium Access Simulator's engine. Computed on your device."
+    },
     "mlo-simulator": {
       "name": "Multi-Link Operation",
       "category": "Wi-Fi Classroom",
