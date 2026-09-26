@@ -49,6 +49,7 @@ import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/multicast_basic_rate_screen.dart';
 import '../screens/tools/calculators/channel_utilization_screen.dart';
+import '../screens/tools/calculators/band_steering_screen.dart';
 import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
@@ -394,6 +395,10 @@ class AppRouter {
   // byte: busy vs used vs available, one sender full at 73 to 76%; pure
   // on-device model, all platforms incl. web.
   static const String channelUtilization = '/tools/channel-utilization';
+  // Wi-Fi Classroom (2026-09-27). Band steering: one dual-band AP, a walking
+  // client, what the AP can hide, refuse or suggest and what the client's
+  // published rules decide; pure on-device model, all platforms incl. web.
+  static const String bandSteering = '/tools/band-steering';
   // Wi-Fi Classroom (2026-09-25). 802.1X / EAP message ladder (client, AP,
   // RADIUS server); pure on-device model, all platforms incl. web.
   static const String eapLadder = '/tools/eap-ladder';
@@ -882,6 +887,7 @@ class AppRouter {
     powerSave: (_) => const PowerSaveScreen(),
     multicastBasicRate: (_) => const MulticastBasicRateScreen(),
     channelUtilization: (_) => const ChannelUtilizationScreen(),
+    bandSteering: (_) => const BandSteeringScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),

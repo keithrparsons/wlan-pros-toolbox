@@ -1949,6 +1949,31 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'simulator',
   ],
+  // Wi-Fi Classroom (2026-09-27). Band Steering: what a student types when a
+  // dual-band client sits on 2.4 GHz next to the AP.
+  'band-steering': <String>[
+    'band steering',
+    'band select',
+    'band-select',
+    '2.4 ghz',
+    '5 ghz',
+    'dual band',
+    'dual-band',
+    'sticky client',
+    'probe suppression',
+    'probe response',
+    'authentication refusal',
+    '802.11v',
+    'bss transition',
+    'bss transition management',
+    'btm',
+    'mac randomization',
+    'random mac',
+    'private address',
+    'client steering',
+    'wi-fi classroom',
+    'simulator',
+  ],
   // Wi-Fi Classroom (2026-09-25). What the 802.1X ladder shows, in the words a
   // student would search with.
   'eap-ladder': <String>[

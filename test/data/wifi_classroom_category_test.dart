@@ -50,6 +50,8 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'channel-planner',
     'adjacent-channel',
     'roaming-walk',
+    // 2026-09-27: Band Steering (spec 38), beside the walk it pairs with.
+    'band-steering',
     'survey-walk',
     'heat-map-builder',
     'predict-then-measure',
@@ -102,13 +104,13 @@ void main() {
     );
   });
 
-  test('all 35 simulators are in wifi-classroom and none remain in '
+  test('all 36 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(35));
+    expect(sims, hasLength(36));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -175,7 +177,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(48));
+    expect(classroom.tools, hasLength(49));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
