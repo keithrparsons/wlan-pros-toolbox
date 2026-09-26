@@ -1546,6 +1546,26 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'shadowing',
     'where am i',
   ],
+  // Wi-Fi Classroom (2026-09-26). Repeaters and mesh backhaul (spec 36): what
+  // a student types when a repeater made the Wi-Fi slower.
+  'repeater-mesh': <String>[
+    'repeater',
+    'extender',
+    'range extender',
+    'wi-fi extender',
+    'mesh',
+    'mesh wi-fi',
+    'backhaul',
+    'wireless backhaul',
+    'wired backhaul',
+    'dedicated backhaul',
+    'relay',
+    'multihop',
+    'multi-hop',
+    'half throughput',
+    'halves throughput',
+    'same channel',
+  ],
   // Wi-Fi Classroom (2026-09-26). The survey walk simulator (spec 26): what a
   // student types when asking how fast to walk a survey.
   'survey-walk': <String>[

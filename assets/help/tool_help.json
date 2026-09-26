@@ -1268,6 +1268,63 @@
       ],
       "source": "Wi-Fi Classroom research briefs (wave 3 section 9, wave 5 section 9): TU and beacon interval from the Linux wireless power-savings documentation and CWNP; TWT and U-APSD field layouts from the Linux kernel headers include/linux/ieee80211.h and ieee80211-he.h; the SiWx917 figures from Silicon Labs and Novus Labs. IEEE 802.11 itself was not read. Computed on your device."
     },
+    "repeater-mesh": {
+      "name": "Repeaters and Mesh Backhaul",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows what relaying costs. A corridor holds the root AP, one to three relays (a repeater, extender or mesh node) and a client. Each hop is drawn with its MCS (modulation and coding scheme, the data-rate step) and the throughput it would carry alone, and an animation shows frames crossing the hops: taking turns when the relays use one radio on one channel, all at once when they have a dedicated backhaul radio. The readouts compare the end-to-end throughput with the client connected straight to the AP from the same spot.",
+      "whyHere": "A repeater or mesh node with one radio on one channel has to receive every frame and then send it again on that same channel, so its two hops share the same air and take turns. For one radio relaying on one channel the end-to-end throughput T follows 1/T = 1/T1 + 1/T2, where T1 and T2 are what each hop carries alone: two equal hops give half, and a slow hop drags the total toward itself. That is why a repeater can show full bars to a laptop and still be slower than the AP was. A dedicated backhaul radio on another channel, or a cable, lets the hops run at once, and where the relay stands matters more than where the client is: a weak hop back to the AP limits everything behind it.",
+      "howToUse": [
+        "Read the headline: the end-to-end throughput, the straight-to-the-AP throughput from the same spot, and the forwarding delay. The corridor shows each hop's MCS and throughput; the slowest hop is marked.",
+        "Drag a relay or the client along the corridor, or use the position sliders. Move the relay toward the AP and watch the hop back to the AP get faster.",
+        "Pick the number of relays (1 to 3; the relays are spaced evenly) and the backhaul: Same channel, one radio; Dedicated backhaul radio, another channel; or Wired backhaul. Change the band, the efficiency and the forwarding delay; the efficiency and the delay are illustrative.",
+        "Play the frames runs the animation: on one channel a single frame crosses one hop at a time, and the Air in use lane shows each hop's share of the air back to back. With a dedicated backhaul every hop has its own lane and all send at once; the slowest hop is busy all the time. Reset returns to the opening scene.",
+        "Predict, then reveal: Ask the class loads the question (\"Your repeater shows full bars to the laptop. Why is it slower than before?\") with a repeater 30 m down the corridor and the laptop 2 m from it, and hides the throughputs; pick a reason, then press Reveal.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the frames, Up and Down add or remove a relay, R resets, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Relays",
+          "unit": "count",
+          "range": "1 to 3; default 1. Changing the count spaces them evenly between the AP and the client"
+        },
+        {
+          "name": "Backhaul",
+          "unit": "choice",
+          "range": "Same channel, one radio (default); Dedicated backhaul radio, another channel; Wired backhaul"
+        },
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4, 5 or 6; default 5. Path loss is taken at 2437, 5500 or 6525 MHz"
+        },
+        {
+          "name": "Relay and client positions",
+          "unit": "m",
+          "range": "Along a 60 m corridor from the AP, in order, at least 2 m apart; default relay at 18 m, client at 36 m"
+        },
+        {
+          "name": "Efficiency",
+          "unit": "factor",
+          "range": "0.40 to 0.80; default 0.60 (illustrative)"
+        },
+        {
+          "name": "Forwarding delay per hop",
+          "unit": "ms",
+          "range": "0 to 10; default 1 (illustrative)"
+        }
+      ],
+      "algorithm": "Each hop's received level = 20 dBm EIRP (equivalent isotropically radiated power) - path loss, with path loss = free-space loss at 1 m + 10 x 3.0 x log10(d), the model Roaming Walk uses. The hop's MCS is the highest whose minimum receiver sensitivity the level meets (the Rate vs Range floors: MCS 0 needs -82 dBm at 20 MHz, 3 dB more per doubling of width), held at MCS 11. Its PHY (physical layer) rate is Airtime Anatomy's 802.11ax figure for that MCS at 2 spatial streams and a 0.8 µs guard interval, on 80 MHz at 5 and 6 GHz and 20 MHz at 2.4 GHz. Hop throughput Ti = PHY rate x efficiency. End to end: same channel, one radio, 1/T = 1/T1 + 1/T2 + ... over every hop; dedicated backhaul radio, T = the smallest Ti; wired backhaul, T = the last hop alone. A hop with no link (below MCS 0) that the chain needs gives 0. Each hop's share of the air = T / Ti. Delay = forwarding delay x number of hops; straight to the AP is one hop. The straight-to-the-AP figure is the same calculation for one hop from the AP to the client.",
+      "example": "Defaults: 5 GHz, one relay at 18 m, the client at 36 m, one channel, efficiency 0.6. Each 18 m hop receives -64.9 dBm, MCS 3, a PHY rate of 288.2 Mb/s, so it carries 172.9 Mb/s alone. On one channel the two take turns: 1/T = 1/172.9 + 1/172.9, so T = 86.5 Mb/s, exactly half. A dedicated backhaul radio gives 172.9 Mb/s. Straight to the AP from 36 m the client gets MCS 0, 43.2 Mb/s. The question's scene: the repeater at 30 m hears the AP at -71.6 dBm (MCS 1, 86.5 Mb/s) and the laptop 2 m away at MCS 11 (720.6 Mb/s): full bars, yet 1/T = 1/86.5 + 1/720.6 gives 77.2 Mb/s, less than the 86.5 Mb/s the laptop got straight from the AP at 32 m. Move the repeater to 12 m and the total rises to 115.3 Mb/s.",
+      "fieldNotes": [
+        "The formula 1/T = 1/T1 + 1/T2 is for one radio relaying on one channel. It is worked out from airtime; no published multihop measurement was checked for this tool.",
+        "Adding relays shortens the hops, which raises each hop's rate, but on one channel every hop costs its own airtime. At the default spot two relays beat one, and three lose to two.",
+        "The dedicated backhaul gives every hop a channel of its own. With two or more relays sharing one backhaul channel, those backhaul hops would take turns again.",
+        "The efficiency factor, the forwarding delay, the 20 dBm EIRP, the path-loss exponent and the channel widths are illustrative, chosen to show the effect, not measured. Traffic flows one way, with no neighbors, collisions or retries.",
+        "The delay counts only the forwarding delay at each hop, not the time a frame waits for the shared channel.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Wi-Fi Classroom wave 4 research brief, row J: the relay formula derived from airtime (an inference, not a measurement). Path loss from the Roaming Walk tool, receiver sensitivity per MCS from the Rate vs Range tool, 802.11ax PHY rates from the Airtime Anatomy tool. Computed on your device."
+    },
     "multicast-basic-rate": {
       "name": "Multicast at the Basic Rate",
       "category": "Wi-Fi Classroom",

@@ -44,6 +44,7 @@ import '../screens/tools/calculators/survey_walk_screen.dart';
 import '../screens/tools/calculators/heat_map_builder_screen.dart';
 import '../screens/tools/calculators/predict_measure_screen.dart';
 import '../screens/tools/calculators/location_screen.dart';
+import '../screens/tools/calculators/repeater_mesh_screen.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/multicast_basic_rate_screen.dart';
@@ -337,6 +338,10 @@ class AppRouter {
   // round-trip timing, and trilateration; pure on-device math, all platforms
   // incl. web.
   static const String locationRssiFtm = '/tools/location-rssi-ftm';
+  // Wi-Fi Classroom (2026-09-26). Repeaters and mesh backhaul: hops on one
+  // channel take turns (1/T = 1/T1 + 1/T2), a dedicated backhaul radio or a
+  // cable does not; pure on-device math, all platforms incl. web.
+  static const String repeaterMesh = '/tools/repeater-mesh';
   // Wi-Fi Classroom (2026-09-25). HE resource units and SU vs OFDMA airtime,
   // pure on-device math; all platforms incl. web.
   static const String ofdmaSimulator = '/tools/ofdma-simulator';
@@ -854,6 +859,7 @@ class AppRouter {
     heatMapBuilder: (_) => const HeatMapBuilderScreen(),
     predictThenMeasure: (_) => const PredictMeasureScreen(),
     locationRssiFtm: (_) => const LocationScreen(),
+    repeaterMesh: (_) => const RepeaterMeshScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
