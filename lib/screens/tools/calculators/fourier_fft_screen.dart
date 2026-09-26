@@ -32,8 +32,18 @@
 //   fourier_fft_painters.dart  the CustomPainters
 //   fourier_fft_parts.dart     shared cards, rows, formatters
 // This screen only owns the model's lifetime and stacks the three for phone
-// and desktop. A presenter layout can place FourierStage beside the
-// controls with no change to either.
+// and desktop. The Present button (desktop and tablet windows) opens the
+// same stage and controls over the SAME model in the presenter layout
+// (lib/widgets/presenter/, spec 00), each mode with its own keys:
+//   1 to 4   the four modes (every mode)
+//   Waves    Space sound on or off; Up and Down the picked sine's frequency;
+//            R back to one sine
+//   FFT      Up and Down double or halve N; W the next window; R the
+//            analyzer back to Hann, 25.6 kHz, N = 256
+//   Race     Space run, pause, resume; Right one step; R an empty run;
+//            Up and Down the RBW
+//   OFDM     Right the next subcarrier highlighted; Up and Down the
+//            modulation; R back to how the mode opens
 //
 // GROWTH: a mode is a FourierMode value plus a case in the stage and the
 // controls. At 4+ modes the selector is a dropdown (GL-003 §8.14); part 2
@@ -41,7 +51,8 @@
 // .ofdm and their widgets in fourier_fft_race_* and fourier_fft_ofdm_*.
 //
 // PLAYBACK (mode 3): the race opens finished. Run the race replays it over
-// four seconds, driven by this screen's ticker writing race.progress; with
+// four seconds, driven by the race state's own Ticker (it moved there from
+// this screen for the presenter layout, whose route mutes this one); with
 // reduced motion on it jumps straight to the end.
 //
 // AUDIO: through the hear-frequency ToneEngine seam, unmodified; one engine
@@ -68,20 +79,26 @@
 //   - interactive -> themed Material controls with the global focus ring;
 //                    plots carry worded Semantics labels
 
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../router/app_router.dart';
 import '../../../services/audio/tone_engine.dart';
 import '../../../services/wifi_lab/fourier_dsp.dart';
 import '../../../services/wifi_lab/fourier_ofdm.dart';
 import '../../../services/wifi_lab/fourier_race.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'fourier_fft_controls.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_parts.dart';
 import 'fourier_fft_race_state.dart';
 import 'fourier_fft_stage.dart';
+import 'wifi_lab_presenter_follow.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kFourierFftToolId = 'fourier-fft';
@@ -104,7 +121,7 @@ class FourierFftScreen extends StatefulWidget {
 }
 
 class _FourierFftScreenState extends State<FourierFftScreen>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver {
   late final FourierLabModel _model = FourierLabModel(
     initialMode: widget.initialMode,
   );
@@ -113,47 +130,27 @@ class _FourierFftScreenState extends State<FourierFftScreen>
     engineFactory: widget.toneEngineFactory,
   );
 
-  late final AnimationController _race;
-  int _raceToken = 0;
-
   @override
   void initState() {
     super.initState();
-    // Created here, not lazily: a first touch in dispose() would ask a
-    // deactivated context for its TickerMode.
-    _race = AnimationController(vsync: this, duration: kRacePlayback)
-      ..addListener(_onRaceTick);
     WidgetsBinding.instance.addObserver(this);
-    _model.addListener(_onModel);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The race's own clock (in FourierRaceState) jumps to the end with
+    // reduced motion on.
+    _model.race.reduceMotion =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _model.removeListener(_onModel);
-    _race.dispose();
     _sound.dispose();
     _model.dispose();
     super.dispose();
-  }
-
-  void _onRaceTick() => _model.race.setProgress(_race.value);
-
-  /// Starts or stops the race playback to match the model.
-  void _onModel() {
-    final FourierRaceState r = _model.race;
-    if (r.animating && r.runToken != _raceToken) {
-      _raceToken = r.runToken;
-      final bool reduce =
-          MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-      if (reduce) {
-        r.setProgress(1);
-      } else {
-        _race.forward(from: 0);
-      }
-    } else if (!r.animating && _race.isAnimating) {
-      _race.stop();
-    }
   }
 
   @override
@@ -227,13 +224,106 @@ class _FourierFftScreenState extends State<FourierFftScreen>
     ].join('\n');
   }
 
+  // ── Presenter ─────────────────────────────────────────────────────────
+
+  /// Keys 1 to 4 switch modes in every mode.
+  List<PresenterExtraKey> get _modeKeys => <PresenterExtraKey>[
+    for (int i = 0; i < FourierMode.values.length; i++)
+      PresenterExtraKey(
+        key: <LogicalKeyboardKey>[
+          LogicalKeyboardKey.digit1,
+          LogicalKeyboardKey.digit2,
+          LogicalKeyboardKey.digit3,
+          LogicalKeyboardKey.digit4,
+        ][i],
+        keyLabel: '${i + 1}',
+        description: '${FourierMode.values[i].label} mode',
+        onPressed: () => _model.setMode(FourierMode.values[i]),
+      ),
+  ];
+
+  /// What the keys do in the current mode (they change with it).
+  PresenterActions get _presenterActions {
+    final FourierLabModel m = _model;
+    switch (m.mode) {
+      case FourierMode.waves:
+        return PresenterActions(
+          playPause: () =>
+              unawaited(_sound.isOn ? _sound.stop() : _sound.start()),
+          reset: () => m.applyPreset(WavePreset.oneSine),
+          sliderDown: () => m.nudgeEditFrequency(-1),
+          sliderUp: () => m.nudgeEditFrequency(1),
+          sliderLabel: 'Picked sine frequency',
+          extra: _modeKeys,
+        );
+      case FourierMode.fft:
+        return PresenterActions(
+          reset: m.resetAnalyzer,
+          sliderDown: m.halveN,
+          sliderUp: m.doubleN,
+          sliderLabel: 'FFT size N',
+          extra: <PresenterExtraKey>[
+            PresenterExtraKey(
+              key: LogicalKeyboardKey.keyW,
+              keyLabel: 'W',
+              description: 'Next window',
+              onPressed: m.nextWindow,
+            ),
+            ..._modeKeys,
+          ],
+        );
+      case FourierMode.race:
+        return PresenterActions(
+          playPause: m.race.playPause,
+          step: m.race.step,
+          reset: m.race.rewind,
+          sliderDown: () => m.race.nudgeRbw(-1),
+          sliderUp: () => m.race.nudgeRbw(1),
+          sliderLabel: 'RBW',
+          extra: _modeKeys,
+        );
+      case FourierMode.ofdm:
+        return PresenterActions(
+          step: m.ofdm.highlightNext,
+          reset: m.ofdm.reset,
+          sliderDown: () => m.ofdm.nudgeModulation(-1),
+          sliderUp: () => m.ofdm.nudgeModulation(1),
+          sliderLabel: 'Modulation',
+          extra: _modeKeys,
+        );
+    }
+  }
+
+  /// The presenter layout over this screen's model (shared, not copied),
+  /// rebuilt when the mode changes so the keys follow it.
+  Widget _presenter(BuildContext context) => PresenterFollow(
+    listenable: _model,
+    select: () => _model.mode,
+    builder: (BuildContext context) => PresenterLayout(
+      title: 'Fourier and FFT',
+      stage: FourierStage(model: _model),
+      controls: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          FourierModeSelector(model: _model),
+          const SizedBox(height: AppSpacing.sm),
+          FourierControls(model: _model, sound: _sound),
+        ],
+      ),
+      actions: _presenterActions,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fourier and FFT'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.fourierFft, builder: _presenter),
+          AppCopyAction(textBuilder: _buildCopyText),
+        ],
       ),
       body: SafeArea(
         top: false,

@@ -184,6 +184,40 @@ class FourierOfdmState {
     _onChanged();
   }
 
+  /// Presenter Step: the highlight moves to the next subcarrier that is on,
+  /// wrapping, so the room walks the sincs one by one.
+  void highlightNext() {
+    final List<int> on = activeIndices;
+    if (on.length < 2) return;
+    final int? h = highlight;
+    final int i = h == null ? -1 : on.indexOf(h);
+    _highlight = on[(i + 1) % on.length];
+    _onChanged();
+  }
+
+  /// The next or previous modulation, held at the ends of the list.
+  void nudgeModulation(int delta) {
+    final int i = (kOfdmModulations.indexOf(_modulation) + delta).clamp(
+      0,
+      kOfdmModulations.length - 1,
+    );
+    setModulation(kOfdmModulations[i]);
+  }
+
+  /// Back to how the mode opens: the teaching view, legacy, QPSK,
+  /// subcarriers +1 to +3 with +1 highlighted, one time scale.
+  void reset() {
+    _view = OfdmView.teaching;
+    _numerology = OfdmNumerology.legacy;
+    _guard = OfdmNumerology.legacy.guardOptionsSeconds.first;
+    _modulation = Modulation.qpsk;
+    _seed = 1;
+    _teachingOn = <int>{1, 2, 3};
+    _highlight = 1;
+    _sameTimeScale = true;
+    _onChanged();
+  }
+
   void setSameTimeScale(bool v) {
     if (v == _sameTimeScale) return;
     _sameTimeScale = v;

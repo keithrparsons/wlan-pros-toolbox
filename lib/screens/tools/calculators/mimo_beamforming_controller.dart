@@ -11,6 +11,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/mimo_beamforming_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kMimoBeamformingToolId = 'mimo-beamforming';
@@ -27,6 +28,9 @@ const List<double> kSoundingIntervalsMs = <double>[2, 5, 10, 20, 50, 100, 200];
 /// Client and sniffer angle limit, degrees either side of straight ahead.
 const double kMaxAngleDeg = 80;
 
+/// How far one presenter key press steers the client, degrees.
+const double kClientAngleKeyStepDeg = 5;
+
 class MimoController extends ChangeNotifier {
   MimoController({
     int apChains = 4,
@@ -34,7 +38,14 @@ class MimoController extends ChangeNotifier {
     LinkDirection initialDirection = LinkDirection.downlink,
   }) : _ap = apChains,
        _client = clientChains,
-       _direction = initialDirection;
+       _direction = initialDirection,
+       _initialAp = apChains,
+       _initialClient = clientChains,
+       _initialDirection = initialDirection;
+
+  final int _initialAp;
+  final int _initialClient;
+  final LinkDirection _initialDirection;
 
   int _ap;
   int _client;
@@ -96,6 +107,30 @@ class MimoController extends ChangeNotifier {
     f();
     notifyListeners();
   }
+
+  /// Back to the link the screen opened on, with every other input at its
+  /// default.
+  void reset() => _set(() {
+    _ap = _initialAp;
+    _client = _initialClient;
+    _direction = _initialDirection;
+    _beamforming = true;
+    _clientDeg = 20;
+    _snifferDeg = -35;
+    _snifferChains = 1;
+    _width = ChannelWidth.w80;
+    _intervalIndex = 2;
+  });
+
+  /// Presenter keys: Up and Down steer the client
+  /// [kClientAngleKeyStepDeg] at a time (the main lobe follows it), R
+  /// resets. Nothing runs on a clock, so there is no play or step.
+  PresenterActions get presenterActions => PresenterActions(
+    reset: reset,
+    sliderDown: () => clientDeg = _clientDeg - kClientAngleKeyStepDeg,
+    sliderUp: () => clientDeg = _clientDeg + kClientAngleKeyStepDeg,
+    sliderLabel: 'Client angle',
+  );
 
   // ── Derived ─────────────────────────────────────────────────────────────
 

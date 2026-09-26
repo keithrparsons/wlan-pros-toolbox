@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/phy_preamble.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'phy_preamble_palette.dart';
 
 /// Lane rows (left, right, leader x per label) and each block's placement
@@ -92,9 +93,11 @@ class PreambleBarLayout {
     required this.height,
     required this.axisStepTenths,
     required this.textHeight,
+    required this.barHeight,
   });
 
-  static const double barHeight = AppSpacing.xl - AppSpacing.xs; // 40
+  /// The bar's height on the phone and desktop layouts.
+  static const double defaultBarHeight = AppSpacing.xl - AppSpacing.xs; // 40
   static const double dataStubWidth = AppSpacing.xl; // 48
   static const double gap = AppSpacing.xxs;
 
@@ -122,6 +125,10 @@ class PreambleBarLayout {
   final int axisStepTenths;
   final double textHeight;
 
+  /// The blocks' height ([defaultBarHeight] unless the presenter stage asks
+  /// for a taller bar).
+  final double barHeight;
+
   double get barBottom => barTop + barHeight;
 
   /// X for [tenths] from the start of the PPDU.
@@ -147,6 +154,7 @@ class PreambleBarLayout {
     required TextStyle labelStyle,
     required TextScaler textScaler,
     bool masked = false,
+    double barHeight = defaultBarHeight,
   }) {
     final double w = math.max(width, dataStubWidth * 2);
     final int total = blocks
@@ -400,6 +408,7 @@ class PreambleBarLayout {
       height: height,
       axisStepTenths: step,
       textHeight: th,
+      barHeight: barHeight,
     );
   }
 
@@ -422,6 +431,7 @@ class PreambleBarPainter extends CustomPainter {
     required this.labelStyle,
     required this.textScaler,
     required this.selected,
+    this.scale = PresenterScale.normal,
   });
 
   final PreambleBarLayout layout;
@@ -429,6 +439,9 @@ class PreambleBarPainter extends CustomPainter {
   final TextStyle labelStyle;
   final TextScaler textScaler;
   final int? selected;
+
+  /// Presenter scale for strokes (text already follows [textScaler]).
+  final PresenterScale scale;
 
   void _text(Canvas c, String s, Offset at, Color color, {FontWeight? weight}) {
     final TextPainter tp = TextPainter(
@@ -456,7 +469,7 @@ class PreambleBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final PreambleBarLayout l = layout;
-    final double sw = colors.isLight ? 1.5 : 1;
+    final double sw = scale.strokeWidth(colors.isLight ? 1.5 : 1);
 
     // Blocks.
     for (int i = 0; i < l.blocks.length; i++) {
@@ -473,7 +486,9 @@ class PreambleBarPainter extends CustomPainter {
       final Paint border = Paint()
         ..color = st.border
         ..style = PaintingStyle.stroke
-        ..strokeWidth = b.form == BlockForm.training && !m ? 2 : sw;
+        ..strokeWidth = b.form == BlockForm.training && !m
+            ? scale.strokeWidth(2)
+            : sw;
       if (b.role == BlockRole.data) {
         // Open, dashed right end: the data field continues past the drawing.
         canvas.drawLine(r.topLeft, r.bottomLeft, border);
@@ -489,7 +504,7 @@ class PreambleBarPainter extends CustomPainter {
       if (b.count > 1 && b.isToScale) {
         final Paint div = Paint()
           ..color = st.label.withValues(alpha: 0.55)
-          ..strokeWidth = 1;
+          ..strokeWidth = scale.strokeWidth(1);
         final double step = r.width / b.count;
         // Ticks at the top and bottom edges only, so they never cut
         // through the block's label.
@@ -529,7 +544,7 @@ class PreambleBarPainter extends CustomPainter {
           Offset(x, l.barTop),
           Paint()
             ..color = colors.borderStrong
-            ..strokeWidth = 1,
+            ..strokeWidth = scale.strokeWidth(1),
         );
         _text(canvas, p.text, p.rect.topLeft, colors.textSecondary);
       }
@@ -538,11 +553,11 @@ class PreambleBarPainter extends CustomPainter {
     // Selection ring.
     if (selected != null && selected! < l.rects.length) {
       canvas.drawRect(
-        l.rects[selected!].inflate(1.5),
+        l.rects[selected!].inflate(scale.strokeWidth(1.5)),
         Paint()
           ..color = colors.textPrimary
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5,
+          ..strokeWidth = scale.strokeWidth(2.5),
       );
     }
 
@@ -561,7 +576,7 @@ class PreambleBarPainter extends CustomPainter {
     // Axis.
     final Paint axis = Paint()
       ..color = colors.borderStrong
-      ..strokeWidth = 1;
+      ..strokeWidth = scale.strokeWidth(1);
     canvas.drawLine(
       Offset(0, l.axisTop),
       Offset(l.scaleWidth, l.axisTop),
@@ -599,7 +614,7 @@ class PreambleBarPainter extends CustomPainter {
     final Color legacy = preambleRoleHue(BlockRole.legacy, colors);
     final Paint br = Paint()
       ..color = legacy
-      ..strokeWidth = 2;
+      ..strokeWidth = scale.strokeWidth(2);
     final double x20 = l.xFor(kLegacyPreambleTenths);
     final double by = l.bracketTop;
     canvas.drawLine(Offset(1, by), Offset(x20 - 1, by), br);
@@ -648,6 +663,7 @@ class PreambleBarPainter extends CustomPainter {
       old.colors != colors ||
       old.selected != selected ||
       old.labelStyle != labelStyle ||
+      old.scale != scale ||
       old.textScaler != textScaler;
 }
 

@@ -8,6 +8,12 @@
 //   Race:  FourierRaceStage (fourier_fft_race_stage.dart).
 //   OFDM:  FourierOfdmStage (fourier_fft_ofdm_stage.dart).
 //
+// PRESENTER (PresenterMode.isActive): every mode fills the stage's bounded
+// box with no scroll. The plots share the height (Expanded, not a fixed
+// plotHeight), the numbers the lesson is about sit above them as large
+// LabStats, the long captions stay on the phone, and the painters get the
+// presenter scale through FourierPlotStyle.
+//
 // Lime marks the measured quantity (the sum, the spectrum). Individual sines,
 // the window and the ticks are neutral (§8.15: no categorical palette).
 
@@ -18,6 +24,7 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/fourier_dsp.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_ofdm_stage.dart';
 import 'fourier_fft_painters.dart';
@@ -37,11 +44,19 @@ class FourierStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: model,
       builder: (BuildContext context, _) {
+        // Presenter: each mode fills its bounded box with no scroll, its
+        // lesson numbers on top as LabStats. Race and OFDM branch in their
+        // own stage widgets.
+        final bool presenting = PresenterMode.isActive(context);
         switch (model.mode) {
           case FourierMode.waves:
-            return _WavesStage(model: model, plotHeight: plotHeight);
+            return presenting
+                ? _PresenterWaves(model: model)
+                : _WavesStage(model: model, plotHeight: plotHeight);
           case FourierMode.fft:
-            return _FftStage(model: model, plotHeight: plotHeight);
+            return presenting
+                ? _PresenterFft(model: model)
+                : _FftStage(model: model, plotHeight: plotHeight);
           case FourierMode.race:
             return FourierRaceStage(model: model, plotHeight: plotHeight);
           case FourierMode.ofdm:
@@ -55,16 +70,22 @@ class FourierStage extends StatelessWidget {
 /// Plot colors from the theme. Shared with the part 2 stages.
 FourierPlotStyle fourierPlotStyle(BuildContext context) {
   final AppColorScheme colors = context.colors;
+  final PresenterScale scale = PresenterMode.scaleOf(context);
+  final TextStyle label = Theme.of(context).textTheme.labelSmall!;
   return FourierPlotStyle(
+    scale: scale,
     signal: colors.textAccent,
     component: colors.textTertiary.withValues(alpha: 0.7),
     window: colors.textSecondary,
     grid: colors.border,
     axis: colors.borderStrong,
     marker: colors.textSecondary,
-    labelStyle: Theme.of(
-      context,
-    ).textTheme.labelSmall!.copyWith(color: colors.textTertiary),
+    // The painters lay out their own labels, which MediaQuery's text scale
+    // does not reach, so the presenter factor goes on the size here.
+    labelStyle: label.copyWith(
+      color: colors.textTertiary,
+      fontSize: scale.paintFont(label.fontSize ?? AppTextSize.caption),
+    ),
   );
 }
 
@@ -312,6 +333,255 @@ class _FftStage extends StatelessWidget {
               message:
                   'Every amplitude is zero, so every bin sits on the floor. '
                   'Raise an amplitude in Waves or pick a lesson.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Presenter arrangements ──────────────────────────────────────────────────
+
+/// A section label with its legend beside it, so the legend costs no line.
+class _PlotHeader extends StatelessWidget {
+  const _PlotHeader({required this.label, required this.legend});
+  final String label;
+  final List<(Widget, String)> legend;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: <Widget>[
+      LabSectionLabel(label),
+      const SizedBox(width: AppSpacing.md),
+      Expanded(child: LabLegend(items: legend)),
+    ],
+  );
+}
+
+class _PresenterWaves extends StatelessWidget {
+  const _PresenterWaves({required this.model});
+  final FourierLabModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final FourierPlotStyle style = fourierPlotStyle(context);
+    final List<SineComponent> parts = model.parts;
+    final bool showEach = model.showComponents && parts.length > 1;
+    final bool silent = model.allSilent;
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _PlotHeader(
+            label: 'Time: amplitude over 10 ms',
+            legend: <(Widget, String)>[
+              (labLineSample(colors.textAccent, 2), 'Sum'),
+              if (showEach)
+                (labLineSample(colors.textTertiary, 1), 'Each sine'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: FourierPlot(
+              semantic: silent
+                  ? 'Time trace over 10 milliseconds. Every amplitude is '
+                        'zero, so the trace is flat.'
+                  : 'Time trace over 10 milliseconds of the sum of '
+                        '${parts.length} sine${parts.length == 1 ? '' : 's'}.',
+              height: double.infinity,
+              painter: TimeTracePainter(
+                durationSeconds: kWavesWindowSeconds,
+                yMax: model.yMax,
+                style: style,
+                revision: model.revision,
+                signalAt: (double t) => FourierDsp.sumAt(parts, t),
+                componentsAt: showEach
+                    ? <double Function(double)>[
+                        for (final SineComponent p in parts) p.valueAt,
+                      ]
+                    : const <double Function(double)>[],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          LabSectionLabel(
+            'Frequency: level in dB (floor ${kWavesFloorDb ~/ 1} dB)',
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: FourierPlot(
+              semantic: silent
+                  ? 'Spectrum. No lines above the floor.'
+                  : 'Spectrum lines: '
+                        '${<String>[for (final SineComponent p in parts)
+                          if (p.amplitude > 0) '${fmtHz(p.frequencyHz)} at ${fmtDb(p.levelDb)} dB'].join('; ')}.',
+              height: double.infinity,
+              painter: SpectrumPainter(
+                maxHz: kSpectrumMaxHz,
+                floorDb: kWavesFloorDb,
+                style: style,
+                revision: model.revision,
+                lines: <SpectrumLine>[
+                  for (final SineComponent p in parts)
+                    (frequencyHz: p.frequencyHz, levelDb: p.levelDb),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (silent)
+            const LabNote(
+              icon: Icons.info_outline,
+              message:
+                  'Every amplitude is zero, so there is nothing to show. '
+                  'Raise an amplitude.',
+            )
+          else
+            // The lines themselves, the numbers the spectrum draws.
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.xxs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Text(
+                  'Lines',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                ),
+                for (final SineComponent p in parts)
+                  if (p.amplitude > 0)
+                    Text(
+                      '${fmtHz(p.frequencyHz)}  ${fmtDb(p.levelDb)} dB',
+                      style: labMono(
+                        context,
+                      ).inlineCode.copyWith(color: colors.textPrimary),
+                    ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PresenterFft extends StatelessWidget {
+  const _PresenterFft({required this.model});
+  final FourierLabModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final FourierPlotStyle style = fourierPlotStyle(context);
+    final SpectrumAnalysis a = model.analysis;
+    final int n = model.n;
+    final double fs = model.sampleRateHz;
+    final double shownHz = math.min(kSpectrumMaxHz, fs / 2);
+    final int peak = a.peakBin;
+    final SpectrumWindow window = model.window;
+    final SineComponent? strongest = model.strongest;
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LabStatRow(
+            children: <Widget>[
+              LabStat(
+                label: 'Bin spacing, Fs/N',
+                value: fmtHz(a.binSpacingHz),
+                accent: true,
+              ),
+              LabStat(
+                label: 'Capture time, N/Fs',
+                value: fmtTime(a.captureSeconds),
+              ),
+              LabStat(
+                label: strongest == null
+                    ? 'Strongest bin'
+                    : 'Strongest bin (true ${fmtDb(strongest.levelDb)} dB '
+                          'at ${fmtHz(strongest.frequencyHz)})',
+                value: strongest == null
+                    ? 'none'
+                    : '${fmtDb(a.levelsDb[peak])} dB at '
+                          '${fmtHz(a.binFrequencyHz(peak))}',
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _PlotHeader(
+            label: 'Time: $n samples over ${fmtTime(a.captureSeconds)}',
+            legend: <(Widget, String)>[
+              (labDot(colors.textAccent, 3), 'Samples'),
+              (
+                labLineSample(colors.textSecondary, 1.5, dashed: true),
+                'Window (${window.label})',
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            flex: 2,
+            child: FourierPlot(
+              semantic:
+                  'Capture of $n samples at ${fmtHz(fs)}, lasting '
+                  '${fmtTime(a.captureSeconds)}, with the ${window.label} '
+                  'window drawn as a dashed outline.',
+              height: double.infinity,
+              painter: TimeTracePainter(
+                durationSeconds: a.captureSeconds,
+                yMax: model.yMax,
+                style: style,
+                revision: model.revision,
+                samples: a.samples,
+                windowValues: a.windowValues,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _PlotHeader(
+            label: 'Spectrum: dB full scale, 0 to ${fmtHz(shownHz)}',
+            legend: <(Widget, String)>[
+              (labLineSample(colors.textAccent, 2), 'FFT bins'),
+              (
+                Container(width: 2, height: 8, color: colors.textSecondary),
+                'True tone',
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            flex: 3,
+            child: FourierPlot(
+              semantic: model.allSilent
+                  ? 'Spectrum of $n bins. Nothing above the floor.'
+                  : 'Spectrum of $n bins, ${fmtHz(a.binSpacingHz)} apart, '
+                        'with the ${window.label} window. Strongest bin '
+                        '${fmtHz(a.binFrequencyHz(peak))} at '
+                        '${fmtDb(a.levelsDb[peak])} dB full scale.',
+              height: double.infinity,
+              painter: SpectrumPainter(
+                maxHz: shownHz,
+                floorDb: kFftFloorDb,
+                style: style,
+                revision: model.revision,
+                bins: a.levelsDb,
+                binSpacingHz: a.binSpacingHz,
+                markersHz: <double>[
+                  for (final SineComponent p in model.parts)
+                    if (p.amplitude > 0) p.frequencyHz,
+                ],
+              ),
+            ),
+          ),
+          if (model.allSilent) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            const LabNote(
+              icon: Icons.info_outline,
+              message:
+                  'Every amplitude is zero, so every bin sits on the floor.',
             ),
           ],
         ],

@@ -17,6 +17,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'antenna_pattern_model.dart';
 import 'antenna_pattern_parts.dart';
@@ -31,6 +33,47 @@ class AntennaPatternControls extends StatelessWidget {
       listenable: lab,
       builder: (BuildContext context, _) {
         const Widget gap = SizedBox(height: AppSpacing.sm);
+        if (PresenterMode.isActive(context)) {
+          // Presenter panel: the headline readouts are on the stage, so the
+          // panel keeps the antenna and its sliders, mounting and
+          // polarization; the rest of the readouts and the explainer fold.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _ModelCard(lab: lab, presenting: true),
+              gap,
+              if (lab.kind == AntennaModelKind.imported) ...<Widget>[
+                _ImportCard(lab: lab, presenting: true),
+                gap,
+              ],
+              _MountCard(lab: lab, presenting: true),
+              gap,
+              PatternCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    PresenterDisclosure(
+                      title:
+                          'Polarization mismatch: '
+                          '${fmtPolarizationLoss(lab.polarizationLossDb)}',
+                      children: <Widget>[
+                        _PolarizationCard(lab: lab, presenting: true),
+                      ],
+                    ),
+                    PresenterDisclosure(
+                      title: 'All readouts',
+                      children: <Widget>[_ReadoutsCard(lab: lab)],
+                    ),
+                    const PresenterDisclosure(
+                      title: 'What you are seeing',
+                      children: <Widget>[_ExplainerCard()],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -57,8 +100,12 @@ class AntennaPatternControls extends StatelessWidget {
 // ── Model and its parameters ──────────────────────────────────────────────
 
 class _ModelCard extends StatelessWidget {
-  const _ModelCard({required this.lab});
+  const _ModelCard({required this.lab, this.presenting = false});
   final AntennaPatternLab lab;
+
+  /// Presenter panel: the sentences under the controls are dropped, and the
+  /// directional antenna's floors and tilt fold.
+  final bool presenting;
 
   static String blurb(AntennaModelKind k) => switch (k) {
     AntennaModelKind.dipole =>
@@ -97,11 +144,13 @@ class _ModelCard extends StatelessWidget {
               onChanged: lab.setKind,
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          PatternCaption(blurb(lab.kind)),
+          if (!presenting) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            PatternCaption(blurb(lab.kind)),
+          ],
           ..._parameters(context),
           if (lab.kind.isParametric) ...<Widget>[
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: presenting ? AppSpacing.xs : AppSpacing.sm),
             OutlinedButton.icon(
               onPressed: lab.rebuildFromTwoCuts,
               icon: const Icon(Icons.content_cut, size: 20),
@@ -115,12 +164,15 @@ class _ModelCard extends StatelessWidget {
                 minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
               ),
             ),
-            const SizedBox(height: AppSpacing.xxs),
-            const PatternCaption(
-              'Writes this antenna as an MSI file (two 2D cuts), reads it '
-              'back and rebuilds the 3D from the cuts, the way a planning '
-              'tool does. The readouts then show how far off the rebuild is.',
-            ),
+            if (!presenting) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              const PatternCaption(
+                'Writes this antenna as an MSI file (two 2D cuts), reads it '
+                'back and rebuilds the 3D from the cuts, the way a planning '
+                'tool does. The readouts then show how far off the rebuild '
+                'is.',
+              ),
+            ],
           ],
         ],
       ),
@@ -160,11 +212,12 @@ class _ModelCard extends StatelessWidget {
             onChanged: (double v) => lab.setOmniTilt(v.roundToDouble()),
             semanticValue: (double v) => '${v.round()} degrees',
           ),
-          PatternCaption(
-            'F.1336 half-power beamwidth at this gain: θ3 = 107.6 × '
-            '10^(−0.1 × G) = ${fmtDeg1(th3)}. The tilt tilts the whole cone, '
-            'so the ring of strongest signal moves closer on the floor.',
-          ),
+          if (!presenting)
+            PatternCaption(
+              'F.1336 half-power beamwidth at this gain: θ3 = 107.6 × '
+              '10^(−0.1 × G) = ${fmtDeg1(th3)}. The tilt tilts the whole cone, '
+              'so the ring of strongest signal moves closer on the floor.',
+            ),
         ];
       case AntennaModelKind.collinear:
         return <Widget>[
@@ -199,11 +252,12 @@ class _ModelCard extends StatelessWidget {
             onChanged: (double v) => lab.setCollinearTilt(v.roundToDouble()),
             semanticValue: (double v) => '${v.round()} degrees',
           ),
-          const PatternCaption(
-            'Element pattern times array factor. Watch the nulls between the '
-            'lobes: at 1 λ spacing a second beam (a grating lobe) appears '
-            'straight up and down.',
-          ),
+          if (!presenting)
+            const PatternCaption(
+              'Element pattern times array factor. Watch the nulls between the '
+              'lobes: at 1 λ spacing a second beam (a grating lobe) appears '
+              'straight up and down.',
+            ),
         ];
       case AntennaModelKind.directional:
         final double g = lab.directionalBeamwidthGainDbi;
@@ -239,51 +293,66 @@ class _ModelCard extends StatelessWidget {
             onChanged: (double v) => lab.setVBeam(v.roundToDouble()),
             semanticValue: (double v) => '${v.round()} degrees',
           ),
-          PatternSlider(
-            label: 'Front-to-back (A_max)',
-            valueText: '${lab.frontToBackDb.round()} dB',
-            value: lab.frontToBackDb,
-            min: kLevelMin,
-            max: kLevelMax,
-            divisions: (kLevelMax - kLevelMin).round(),
-            onChanged: (double v) => lab.setFrontToBack(v.roundToDouble()),
-            semanticValue: (double v) => '${v.round()} dB',
-          ),
-          PatternSlider(
-            label: 'Side-lobe level (SLA_V)',
-            valueText: '${lab.sideLobeDb.round()} dB',
-            value: lab.sideLobeDb,
-            min: kLevelMin,
-            max: kLevelMax,
-            divisions: (kLevelMax - kLevelMin).round(),
-            onChanged: (double v) => lab.setSideLobe(v.roundToDouble()),
-            semanticValue: (double v) => '${v.round()} dB',
-          ),
-          PatternSlider(
-            label: 'Mechanical downtilt',
-            valueText: fmtDeg(lab.sectorTiltDeg),
-            value: lab.sectorTiltDeg,
-            min: 0,
-            max: kSectorTiltMax,
-            divisions: kSectorTiltMax.round(),
-            onChanged: (double v) => lab.setSectorTilt(v.roundToDouble()),
-            semanticValue: (double v) => '${v.round()} degrees',
-          ),
-          const PatternCaption(
-            'The gain slider uses the practical rule G = 10 log10(31,000 / '
-            '(θ × φ)) and keeps the beam\'s shape. The readouts show what '
-            'this exact shape integrates to, which is not the same number.',
-          ),
+          if (presenting)
+            PresenterDisclosure(
+              title: 'Front-to-back, side lobes and tilt',
+              children: _directionalFloors(),
+            )
+          else
+            ..._directionalFloors(),
+          if (!presenting)
+            const PatternCaption(
+              'The gain slider uses the practical rule G = 10 log10(31,000 / '
+              '(θ × φ)) and keeps the beam\'s shape. The readouts show what '
+              'this exact shape integrates to, which is not the same number.',
+            ),
         ];
     }
   }
+
+  List<Widget> _directionalFloors() => <Widget>[
+    PatternSlider(
+      label: 'Front-to-back (A_max)',
+      valueText: '${lab.frontToBackDb.round()} dB',
+      value: lab.frontToBackDb,
+      min: kLevelMin,
+      max: kLevelMax,
+      divisions: (kLevelMax - kLevelMin).round(),
+      onChanged: (double v) => lab.setFrontToBack(v.roundToDouble()),
+      semanticValue: (double v) => '${v.round()} dB',
+    ),
+    PatternSlider(
+      label: 'Side-lobe level (SLA_V)',
+      valueText: '${lab.sideLobeDb.round()} dB',
+      value: lab.sideLobeDb,
+      min: kLevelMin,
+      max: kLevelMax,
+      divisions: (kLevelMax - kLevelMin).round(),
+      onChanged: (double v) => lab.setSideLobe(v.roundToDouble()),
+      semanticValue: (double v) => '${v.round()} dB',
+    ),
+    PatternSlider(
+      label: 'Mechanical downtilt',
+      valueText: fmtDeg(lab.sectorTiltDeg),
+      value: lab.sectorTiltDeg,
+      min: 0,
+      max: kSectorTiltMax,
+      divisions: kSectorTiltMax.round(),
+      onChanged: (double v) => lab.setSectorTilt(v.roundToDouble()),
+      semanticValue: (double v) => '${v.round()} degrees',
+    ),
+  ];
 }
 
 // ── Import ─────────────────────────────────────────────────────────────────
 
 class _ImportCard extends StatefulWidget {
-  const _ImportCard({required this.lab});
+  const _ImportCard({required this.lab, this.presenting = false});
   final AntennaPatternLab lab;
+
+  /// Presenter panel: the example, the rebuild method and the shape slider
+  /// stay out; pasting a file and what was read fold.
+  final bool presenting;
 
   @override
   State<_ImportCard> createState() => _ImportCardState();
@@ -310,97 +379,133 @@ class _ImportCardState extends State<_ImportCard> {
       _text.text = lab.importText;
     }
     final ParsedPattern? p = lab.parsed;
+    final bool presenting = widget.presenting;
+    final Widget example = LabeledField(
+      label: 'Generated example',
+      semanticLabel: 'Load a generated example file',
+      field: AppSelect<PatternExample?>(
+        value: lab.example,
+        semanticLabel: 'Load a generated example file',
+        maxLines: 2,
+        items: <AppSelectItem<PatternExample?>>[
+          if (lab.example == null) (null, 'Pick one to load it'),
+          for (final PatternExample e in PatternExample.values) (e, e.label),
+        ],
+        onChanged: (PatternExample? e) {
+          if (e != null) lab.loadExample(e);
+        },
+      ),
+    );
+    final List<Widget> paste = <Widget>[
+      LabeledField(
+        label: 'Or paste pattern text (MSI or NSMA)',
+        semanticLabel: 'Pattern file text',
+        field: TextField(
+          controller: _text,
+          minLines: 4,
+          maxLines: 8,
+          keyboardType: TextInputType.multiline,
+          style: patternMono(
+            context,
+          ).inlineCode.copyWith(color: colors.textPrimary, fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'NAME ...\nGAIN 5 dBi\nHORIZONTAL 360\n0 0.00\n...',
+            errorText: lab.importError,
+            errorMaxLines: 4,
+          ),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      FilledButton.icon(
+        onPressed: () => lab.importPattern(_text.text),
+        icon: const Icon(Icons.file_open_outlined),
+        label: const Text('Read pattern'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xxs),
+      const PatternCaption(
+        'There is no file picker in this version. Open the .msi, .pln, '
+        '.adf or .txt file in a text editor, copy all of it and paste it '
+        'here.',
+      ),
+    ];
+    final List<Widget> parsed = <Widget>[
+      if (p != null) ...<Widget>[
+        const SizedBox(height: AppSpacing.sm),
+        PatternReadoutRow(label: 'Format', value: p.format.label),
+        if (p.name != null && p.name!.isNotEmpty)
+          PatternReadoutRow(label: 'Name', value: p.name!),
+        PatternReadoutRow(label: 'Gain as written', value: p.gainAsWritten),
+        PatternReadoutRow(
+          label: 'Gain in dBi',
+          value: fmtDbi(p.gainDbi),
+          emphasize: true,
+        ),
+        if (p.tilt != null && p.tilt!.isNotEmpty)
+          PatternReadoutRow(label: 'Tilt as written', value: p.tilt!),
+        for (final String w in p.warnings) ...<Widget>[
+          const SizedBox(height: AppSpacing.xxs),
+          PatternNote(icon: Icons.info_outline, message: w),
+        ],
+      ],
+    ];
+    final Widget method = AppToggle<ReconstructionMethod>(
+      label: 'Rebuild the 3D by',
+      value: lab.method,
+      expand: true,
+      items: <AppToggleItem<ReconstructionMethod>>[
+        for (final ReconstructionMethod m in ReconstructionMethod.values)
+          (m, m.label),
+      ],
+      onChanged: lab.setMethod,
+    );
+    final Widget shape = PatternSlider(
+      label: 'What if: shape (× the file\'s dB)',
+      valueText: '× ${lab.shaping.toStringAsFixed(2)}',
+      value: lab.shaping,
+      min: kShapingMin,
+      max: kShapingMax,
+      divisions: ((kShapingMax - kShapingMin) * 20).round(),
+      onChanged: (double v) => lab.setShaping((v * 20).round() / 20),
+      semanticValue: (double v) => 'times ${v.toStringAsFixed(2)}',
+    );
+    if (presenting) {
+      return PatternCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            example,
+            const SizedBox(height: AppSpacing.xs),
+            method,
+            const SizedBox(height: AppSpacing.xs),
+            shape,
+            PresenterDisclosure(
+              title: 'Paste a pattern file, and what was read',
+              children: <Widget>[...paste, ...parsed],
+            ),
+          ],
+        ),
+      );
+    }
     return PatternCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const PatternSectionLabel('Pattern file'),
           const SizedBox(height: AppSpacing.xs),
-          LabeledField(
-            label: 'Generated example',
-            semanticLabel: 'Load a generated example file',
-            field: AppSelect<PatternExample?>(
-              value: lab.example,
-              semanticLabel: 'Load a generated example file',
-              maxLines: 2,
-              items: <AppSelectItem<PatternExample?>>[
-                if (lab.example == null) (null, 'Pick one to load it'),
-                for (final PatternExample e in PatternExample.values)
-                  (e, e.label),
-              ],
-              onChanged: (PatternExample? e) {
-                if (e != null) lab.loadExample(e);
-              },
-            ),
-          ),
+          example,
           const SizedBox(height: AppSpacing.xxs),
           const PatternCaption(
             'Made by this app from closed-form models, so the exact 3D is '
             'known. No manufacturer file is included.',
           ),
           const SizedBox(height: AppSpacing.sm),
-          LabeledField(
-            label: 'Or paste pattern text (MSI or NSMA)',
-            semanticLabel: 'Pattern file text',
-            field: TextField(
-              controller: _text,
-              minLines: 4,
-              maxLines: 8,
-              keyboardType: TextInputType.multiline,
-              style: patternMono(
-                context,
-              ).inlineCode.copyWith(color: colors.textPrimary, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'NAME ...\nGAIN 5 dBi\nHORIZONTAL 360\n0 0.00\n...',
-                errorText: lab.importError,
-                errorMaxLines: 4,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          FilledButton.icon(
-            onPressed: () => lab.importPattern(_text.text),
-            icon: const Icon(Icons.file_open_outlined),
-            label: const Text('Read pattern'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          const PatternCaption(
-            'There is no file picker in this version. Open the .msi, .pln, '
-            '.adf or .txt file in a text editor, copy all of it and paste it '
-            'here.',
-          ),
-          if (p != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.sm),
-            PatternReadoutRow(label: 'Format', value: p.format.label),
-            if (p.name != null && p.name!.isNotEmpty)
-              PatternReadoutRow(label: 'Name', value: p.name!),
-            PatternReadoutRow(label: 'Gain as written', value: p.gainAsWritten),
-            PatternReadoutRow(
-              label: 'Gain in dBi',
-              value: fmtDbi(p.gainDbi),
-              emphasize: true,
-            ),
-            if (p.tilt != null && p.tilt!.isNotEmpty)
-              PatternReadoutRow(label: 'Tilt as written', value: p.tilt!),
-            for (final String w in p.warnings) ...<Widget>[
-              const SizedBox(height: AppSpacing.xxs),
-              PatternNote(icon: Icons.info_outline, message: w),
-            ],
-          ],
+          ...paste,
+          ...parsed,
           const SizedBox(height: AppSpacing.sm),
-          AppToggle<ReconstructionMethod>(
-            label: 'Rebuild the 3D by',
-            value: lab.method,
-            expand: true,
-            items: <AppToggleItem<ReconstructionMethod>>[
-              for (final ReconstructionMethod m in ReconstructionMethod.values)
-                (m, m.label),
-            ],
-            onChanged: lab.setMethod,
-          ),
+          method,
           const SizedBox(height: AppSpacing.xxs),
           PatternCaption(
             lab.method == ReconstructionMethod.summing
@@ -413,16 +518,7 @@ class _ImportCardState extends State<_ImportCard> {
                       'always.',
           ),
           const SizedBox(height: AppSpacing.xs),
-          PatternSlider(
-            label: 'What if: shape (× the file\'s dB)',
-            valueText: '× ${lab.shaping.toStringAsFixed(2)}',
-            value: lab.shaping,
-            min: kShapingMin,
-            max: kShapingMax,
-            divisions: ((kShapingMax - kShapingMin) * 20).round(),
-            onChanged: (double v) => lab.setShaping((v * 20).round() / 20),
-            semanticValue: (double v) => 'times ${v.toStringAsFixed(2)}',
-          ),
+          shape,
           const PatternCaption(
             'Multiplies every loss in the file. Above 1 the beams narrow and '
             'the edges fall off faster; below 1 the pattern flattens. The '
@@ -555,8 +651,11 @@ class _ReadoutsCard extends StatelessWidget {
 // ── Mount ──────────────────────────────────────────────────────────────────
 
 class _MountCard extends StatelessWidget {
-  const _MountCard({required this.lab});
+  const _MountCard({required this.lab, this.presenting = false});
   final AntennaPatternLab lab;
+
+  /// Presenter panel: the toggle and its one-line consequence only.
+  final bool presenting;
 
   @override
   Widget build(BuildContext context) {
@@ -593,9 +692,13 @@ class _MountCard extends StatelessWidget {
             ],
             onChanged: lab.setMount,
           ),
-          const SizedBox(height: AppSpacing.xs),
-          PatternCaption(what),
-          if (lab.kind == AntennaModelKind.imported) ...<Widget>[
+          // The stage shows what mounting does; the sentence is the
+          // phone's.
+          if (!presenting) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            PatternCaption(what),
+          ],
+          if (!presenting && lab.kind == AntennaModelKind.imported) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             const PatternCaption(
               'A file with a horizontal cut within 3 dB all around is taken '
@@ -604,11 +707,13 @@ class _MountCard extends StatelessWidget {
               'which way the peak points.',
             ),
           ],
-          const SizedBox(height: AppSpacing.xxs),
-          const PatternCaption(
-            'Mounting turns the 3D view only. The 2D cuts stay in the '
-            'antenna\'s own frame, the way a datasheet draws them.',
-          ),
+          if (!presenting) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            const PatternCaption(
+              'Mounting turns the 3D view only. The 2D cuts stay in the '
+              'antenna\'s own frame, the way a datasheet draws them.',
+            ),
+          ],
         ],
       ),
     );
@@ -618,8 +723,11 @@ class _MountCard extends StatelessWidget {
 // ── Polarization ───────────────────────────────────────────────────────────
 
 class _PolarizationCard extends StatelessWidget {
-  const _PolarizationCard({required this.lab});
+  const _PolarizationCard({required this.lab, this.presenting = false});
   final AntennaPatternLab lab;
+
+  /// Presenter panel: the slider and the loss, without the formula note.
+  final bool presenting;
 
   @override
   Widget build(BuildContext context) {
@@ -645,16 +753,17 @@ class _PolarizationCard extends StatelessWidget {
             value: fmtPolarizationLoss(loss),
             emphasize: true,
           ),
-          PatternCaption(
-            loss.isFinite && loss <= 40
-                ? 'Loss = −20 log10|cos Δ|. At 45° it is 3.01 dB. Real links '
-                      'lose less than the formula at large angles, because '
-                      'reflections scramble polarization.'
-                : 'Crossed at 90°, the formula says nothing arrives at all '
-                      '(unbounded), so the display stops at 40 dB. Real '
-                      'links still see something, from reflections that '
-                      'scramble polarization.',
-          ),
+          if (!presenting)
+            PatternCaption(
+              loss.isFinite && loss <= 40
+                  ? 'Loss = −20 log10|cos Δ|. At 45° it is 3.01 dB. Real links '
+                        'lose less than the formula at large angles, because '
+                        'reflections scramble polarization.'
+                  : 'Crossed at 90°, the formula says nothing arrives at all '
+                        '(unbounded), so the display stops at 40 dB. Real '
+                        'links still see something, from reflections that '
+                        'scramble polarization.',
+            ),
         ],
       ),
     );

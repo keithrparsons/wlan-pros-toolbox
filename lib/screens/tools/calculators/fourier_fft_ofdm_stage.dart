@@ -14,12 +14,15 @@
 // points). Everything else is neutral: the subcarriers are told apart by
 // position and by the highlight, not by hue.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../services/rf/modulation_math.dart';
 import '../../../services/wifi_lab/fourier_ofdm.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_ofdm_state.dart';
 import 'fourier_fft_painters.dart';
@@ -75,6 +78,22 @@ class FourierOfdmStage extends StatelessWidget {
               '${fmtK(h!)}: its sinc is zero at every other subcarrier '
               'center.';
 
+    if (PresenterMode.isActive(context)) {
+      return _presenter(
+        context,
+        colors: colors,
+        o: o,
+        style: style,
+        s: s,
+        count: count,
+        h: h,
+        axis: axis,
+        halfSpan: halfSpan,
+        cpFill: cpFill,
+        timeSemantic: timeSemantic,
+        specSemantic: specSemantic,
+      );
+    }
     return LabCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -258,6 +277,195 @@ class FourierOfdmStage extends StatelessWidget {
               message:
                   'Every subcarrier is off, so there is no signal. Turn one '
                   'on in Subcarriers below.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Presenter: spacing and symbol times lead; the symbol runs full width,
+  /// the subcarriers' sincs and the constellation share the row below. The
+  /// long captions stay on the phone.
+  Widget _presenter(
+    BuildContext context, {
+    required AppColorScheme colors,
+    required FourierOfdmState o,
+    required FourierPlotStyle style,
+    required OfdmSymbol s,
+    required int count,
+    required int? h,
+    required double axis,
+    required double halfSpan,
+    required Color cpFill,
+    required String timeSemantic,
+    required String specSemantic,
+  }) {
+    final OfdmSpectrumPainter spectrum = OfdmSpectrumPainter(
+      symbol: s,
+      highlight: h,
+      halfSpanHz: halfSpan,
+      style: style,
+      revision: model.revision,
+    );
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LabStatRow(
+            children: <Widget>[
+              LabStat(
+                label: 'Subcarrier spacing',
+                value: fmtHz(s.spacingHz),
+                accent: true,
+              ),
+              LabStat(
+                label: 'Useful symbol, 1 / spacing',
+                value: fmtTime(s.usefulSeconds),
+              ),
+              LabStat(
+                label: 'With the ${fmtTime(s.guardSeconds)} guard',
+                value: fmtTime(s.totalSeconds),
+              ),
+              LabStat(
+                label: '${o.numerology.shortLabel}, IFFT size',
+                value: 'N = ${s.n}',
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: <Widget>[
+              LabSectionLabel('Time: one symbol, $count on'),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: LabLegend(
+                  items: <(Widget, String)>[
+                    (labLineSample(colors.textAccent, 2), 'I'),
+                    (labLineSample(style.component, 1.2), 'Q'),
+                    (
+                      Container(width: 14, height: 10, color: cpFill),
+                      'Cyclic prefix',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            flex: 4,
+            child: FourierPlot(
+              semantic: timeSemantic,
+              height: double.infinity,
+              painter: OfdmTimePainter(
+                symbol: s,
+                axisSeconds: axis,
+                style: style,
+                revision: model.revision,
+                cpFill: cpFill,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Expanded(
+            flex: 5,
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints box) {
+                // The constellation is a square as tall as the row allows
+                // under its label, never more than a third of the width.
+                final double labelRoom =
+                    MediaQuery.textScalerOf(
+                          context,
+                        ).scale(AppTextSize.caption) *
+                        1.6 +
+                    AppSpacing.xs;
+                final double side = math.min(
+                  box.maxHeight - labelRoom,
+                  box.maxWidth / 3,
+                );
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              LabSectionLabel(
+                                'Frequency: ${fmtHz(s.spacingHz)} apart',
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: LabLegend(
+                                  items: <(Widget, String)>[
+                                    (
+                                      labLineSample(colors.textAccent, 2.5),
+                                      h == null
+                                          ? 'Highlighted'
+                                          : 'Subcarrier ${fmtK(h)}',
+                                    ),
+                                    (
+                                      labLineSample(style.component, 1.2),
+                                      'The others',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Expanded(
+                            child: FourierPlot(
+                              semantic: specSemantic,
+                              height: double.infinity,
+                              painter: spectrum,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    SizedBox(
+                      width: math.max(0, side),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          const LabSectionLabel('Sent and recovered'),
+                          const SizedBox(height: AppSpacing.xs),
+                          FourierPlot(
+                            semantic:
+                                '${o.modulation.label} constellation with '
+                                '$count sent point${count == 1 ? '' : 's'}. '
+                                'The receiver\'s FFT puts every recovered '
+                                'point on its sent point.',
+                            height: math.max(0, side),
+                            painter: OfdmConstellationPainter(
+                              modulation: o.modulation,
+                              sent: <ConstellationPoint>[
+                                for (final int k in s.indices) s.points[k]!,
+                              ],
+                              recovered: o.recovered,
+                              style: style,
+                              revision: model.revision,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          if (count == 0) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            const LabNote(
+              icon: Icons.info_outline,
+              message:
+                  'Every subcarrier is off, so there is no signal. Turn one '
+                  'on beside the stage.',
             ),
           ],
         ],

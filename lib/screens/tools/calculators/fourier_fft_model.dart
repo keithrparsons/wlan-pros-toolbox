@@ -161,6 +161,12 @@ class FourierLabModel extends ChangeNotifier {
 
   // ── Mode ────────────────────────────────────────────────────────────────
 
+  @override
+  void dispose() {
+    race.dispose();
+    super.dispose();
+  }
+
   void setMode(FourierMode m) {
     if (m == _mode) return;
     _mode = m;
@@ -298,6 +304,46 @@ class FourierLabModel extends ChangeNotifier {
     if (n == _n || !FourierDsp.fftSizes.contains(n)) return;
     _n = n;
     _changed();
+  }
+
+  /// Back to the analyzer the FFT mode opens with (Hann, 25.6 kHz, N 256,
+  /// free play). The signal is left alone.
+  void resetAnalyzer() {
+    _lesson = FftLesson.free;
+    _fs = 25600;
+    _n = 256;
+    _window = SpectrumWindow.hann;
+    _changed();
+  }
+
+  /// The next window in the list, wrapping (the presenter's W key).
+  void nextWindow() {
+    const List<SpectrumWindow> all = SpectrumWindow.values;
+    setWindow(all[(all.indexOf(_window) + 1) % all.length]);
+  }
+
+  // ── The sine the presenter panel edits ──────────────────────────────────
+
+  int _editSine = 0;
+
+  /// Which sine the presenter panel's sliders (and Up and Down) edit.
+  int get editSine => _editSine.clamp(0, _parts.length - 1);
+
+  void setEditSine(int i) {
+    if (i < 0 || i >= _parts.length || i == editSine) return;
+    _editSine = i;
+    _changed();
+  }
+
+  /// The edited sine's frequency one step (50 Hz) up or down.
+  void nudgeEditFrequency(int dir) {
+    final SineComponent p = _parts[editSine];
+    updateSine(
+      editSine,
+      p.copyWith(
+        frequencyHz: (p.frequencyHz + 50 * dir).clamp(kMinToneHz, kMaxToneHz),
+      ),
+    );
   }
 
   void halveN() {

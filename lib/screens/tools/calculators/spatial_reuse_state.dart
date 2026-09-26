@@ -10,6 +10,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/spatial_reuse_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kSpatialReuseToolId = 'spatial-reuse';
@@ -92,6 +93,22 @@ class SpatialReuseState extends ChangeNotifier {
   void setMcsA(int v) => _set(_s.copyWith(mcsA: v.clamp(0, kReuseMaxMcs)));
   void setMcsB(int v) => _set(_s.copyWith(mcsB: v.clamp(0, kReuseMaxMcs)));
   void reset() => _set(const ReuseScenario());
+
+  /// OBSS_PD one step from the keyboard. Does nothing with coloring off,
+  /// where the slider is disabled too.
+  void nudgeObssPd(double delta) {
+    if (!_s.coloring) return;
+    setObssPd(_s.obssPdDbm + delta);
+  }
+
+  /// Presenter keys: Up and Down move OBSS_PD 1 dB, R resets the scenario.
+  /// Nothing runs on a clock, so there is no play or step.
+  PresenterActions get presenterActions => PresenterActions(
+    reset: reset,
+    sliderDown: () => nudgeObssPd(-1),
+    sliderUp: () => nudgeObssPd(1),
+    sliderLabel: 'OBSS_PD',
+  );
 
   /// Plain-text summary for the Copy action.
   String copyText() {

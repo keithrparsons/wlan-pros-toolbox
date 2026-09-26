@@ -27,6 +27,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/mimo_beamforming_model.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 /// Resolved colors and text styles shared by every MIMO painter.
 @immutable
@@ -41,6 +42,7 @@ class MimoPaintStyle {
     required this.fill,
     required this.background,
     required this.labelStyle,
+    this.scale = PresenterScale.normal,
   });
 
   /// Lime: the quantity the picture is about.
@@ -67,11 +69,26 @@ class MimoPaintStyle {
   /// The plot surface itself, for knocking out a label's backing.
   final Color background;
 
+  /// Already applied to [labelStyle]'s size.
   final TextStyle labelStyle;
+
+  /// The presenter scale: strokes, markers and text-driven spacing grow with
+  /// it. [PresenterScale.normal] (every factor 1) outside presenter mode.
+  final PresenterScale scale;
+
+  /// A stroke width at this scale.
+  double w(double width) => scale.strokeWidth(width);
+
+  /// A marker radius or size at this scale.
+  double m(double r) => scale.markerSize(r);
+
+  /// A text-driven offset (label bands, rows) at this scale.
+  double t(double px) => px * scale.text;
 
   @override
   bool operator ==(Object other) =>
       other is MimoPaintStyle &&
+      other.scale == scale &&
       other.accent == accent &&
       other.primary == primary &&
       other.secondary == secondary &&
@@ -93,6 +110,7 @@ class MimoPaintStyle {
     fill,
     background,
     labelStyle,
+    scale,
   );
 }
 
@@ -142,8 +160,13 @@ void _dashedLine(
   }
 }
 
-void _arrowHead(Canvas canvas, Offset tip, double angle, Color color) {
-  const double h = 7;
+void _arrowHead(
+  Canvas canvas,
+  Offset tip,
+  double angle,
+  Color color, {
+  double h = 7,
+}) {
   const double spread = 0.5;
   final Path p = Path()
     ..moveTo(tip.dx, tip.dy)
@@ -174,25 +197,25 @@ enum ChainRole {
 void _antenna(Canvas canvas, Offset c, ChainRole role, MimoPaintStyle s) {
   switch (role) {
     case ChainRole.used:
-      canvas.drawCircle(c, 5, Paint()..color = s.primary);
+      canvas.drawCircle(c, s.m(5), Paint()..color = s.primary);
     case ChainRole.contributing:
-      canvas.drawCircle(c, 5, Paint()..color = s.secondary);
+      canvas.drawCircle(c, s.m(5), Paint()..color = s.secondary);
       canvas.drawCircle(
         c,
-        5,
+        s.m(5),
         Paint()
           ..color = s.primary
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
+          ..strokeWidth = s.w(1),
       );
     case ChainRole.idle:
       canvas.drawCircle(
         c,
-        4.5,
+        s.m(4.5),
         Paint()
           ..color = s.tertiary
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
+          ..strokeWidth = s.w(1.5),
       );
   }
 }
@@ -227,16 +250,21 @@ class StreamsPainter extends CustomPainter {
     final int nss = link.streams;
     final bool down = link.direction == LinkDirection.downlink;
 
-    final double top = labelBand + 6;
-    final double bottom = size.height - labelBand - 4;
+    final double band = s.t(labelBand);
+    final double top = band + 6;
+    final double bottom = size.height - band - 4;
     final double usable = bottom - top;
-    final double spacing = math.min(22, usable / math.max(1, math.max(ap, cl)));
+    // On the presenter stage the lanes spread to use the height it gives.
+    final double spacing = math.min(
+      s.scale.isPresenting ? s.t(64) : 22,
+      usable / math.max(1, math.max(ap, cl)),
+    );
     final double cy = (top + bottom) / 2;
 
-    final double apX = pad + 24;
-    final double clX = size.width - pad - 24;
-    final double laneL = apX + 44;
-    final double laneR = clX - 44;
+    final double apX = pad + s.t(24);
+    final double clX = size.width - pad - s.t(24);
+    final double laneL = apX + s.t(44);
+    final double laneR = clX - s.t(44);
 
     double yOf(int i, int n) => cy + (i - (n - 1) / 2) * spacing;
     double laneY(int i) => cy + (i - (nss - 1) / 2) * spacing;
@@ -260,7 +288,7 @@ class StreamsPainter extends CustomPainter {
     Color hue(int i) => streamColors[i % streamColors.length];
     final Paint spareFeed = Paint()
       ..color = s.secondary
-      ..strokeWidth = 1.5;
+      ..strokeWidth = s.w(1.5);
 
     // Lanes.
     for (int i = 0; i < nss; i++) {
@@ -271,13 +299,13 @@ class StreamsPainter extends CustomPainter {
         Offset(laneR, y),
         Paint()
           ..color = c
-          ..strokeWidth = 3
+          ..strokeWidth = s.w(3)
           ..strokeCap = StrokeCap.round,
       );
       if (down) {
-        _arrowHead(canvas, Offset(laneR + 2, y), 0, c);
+        _arrowHead(canvas, Offset(laneR + 2, y), 0, c, h: s.m(7));
       } else {
-        _arrowHead(canvas, Offset(laneL - 2, y), math.pi, c);
+        _arrowHead(canvas, Offset(laneL - 2, y), math.pi, c, h: s.m(7));
       }
       // The label, so the stream never rests on its hue alone.
       final TextStyle tag = s.labelStyle.copyWith(
@@ -309,7 +337,7 @@ class StreamsPainter extends CustomPainter {
             Offset(laneEnd, laneY(laneIdx)),
             Paint()
               ..color = hue(laneIdx)
-              ..strokeWidth = 1.5,
+              ..strokeWidth = s.w(1.5),
           );
           _antenna(canvas, e, ChainRole.used, s);
         } else {
@@ -393,10 +421,19 @@ class BeamPatternPainter extends CustomPainter {
   static const double rangeDb = 30;
   static const double pad = 14;
 
-  static ({Offset center, double radius}) geometry(Size size) {
+  /// [labelRoom] is the space kept above the outer ring for the client and
+  /// sniffer labels and beside it for the dB labels (grows with the
+  /// presenter text scale).
+  static ({Offset center, double radius}) geometry(
+    Size size, {
+    double labelRoom = 1,
+  }) {
     final double r = math.max(
       10,
-      math.min(size.width / 2 - pad - 18, size.height - pad - 22),
+      math.min(
+        size.width / 2 - pad - 18 * labelRoom,
+        size.height - pad - 22 * labelRoom,
+      ),
     );
     return (center: Offset(size.width / 2, size.height - pad), radius: r);
   }
@@ -407,8 +444,11 @@ class BeamPatternPainter extends CustomPainter {
       Offset(c.dx + r * math.sin(_rad(deg)), c.dy - r * math.cos(_rad(deg)));
 
   /// Angle from straight ahead for a canvas point, degrees, clamped.
-  static double angleAt(Offset p, Size size) {
-    final ({Offset center, double radius}) g = geometry(size);
+  static double angleAt(Offset p, Size size, {double labelRoom = 1}) {
+    final ({Offset center, double radius}) g = geometry(
+      size,
+      labelRoom: labelRoom,
+    );
     final Offset v = p - g.center;
     final double a = math.atan2(v.dx, -v.dy) * 180 / math.pi;
     return a.clamp(-90.0, 90.0);
@@ -420,7 +460,10 @@ class BeamPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final MimoPaintStyle s = style;
-    final ({Offset center, double radius}) g = geometry(size);
+    final ({Offset center, double radius}) g = geometry(
+      size,
+      labelRoom: s.scale.text,
+    );
     final Offset c = g.center;
     final double r = g.radius;
 
@@ -428,7 +471,7 @@ class BeamPatternPainter extends CustomPainter {
     final Paint grid = Paint()
       ..color = s.grid
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = s.w(1);
     for (int db = 0; db > -rangeDb; db -= 10) {
       final double rr = _radiusFor(db.toDouble(), r);
       canvas.drawArc(
@@ -454,7 +497,7 @@ class BeamPatternPainter extends CustomPainter {
       Offset(c.dx + r, c.dy),
       Paint()
         ..color = s.axis
-        ..strokeWidth = 1,
+        ..strokeWidth = s.w(1),
     );
 
     // Pattern or the unsteered reference.
@@ -478,38 +521,41 @@ class BeamPatternPainter extends CustomPainter {
         Paint()
           ..color = s.accent
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5
+          ..strokeWidth = s.w(2.5)
           ..strokeJoin = StrokeJoin.round,
       );
     } else {
       final Paint ref = Paint()
         ..color = s.accent
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5;
+        ..strokeWidth = s.w(2.5);
       final Path arc = Path()
         ..addArc(Rect.fromCircle(center: c, radius: r), math.pi, math.pi);
       // Dashed: the same level everywhere, nothing steered.
       for (final PathMetric m in arc.computeMetrics()) {
         double d = 0;
         while (d < m.length) {
-          canvas.drawPath(m.extractPath(d, math.min(d + 8, m.length)), ref);
-          d += 13;
+          canvas.drawPath(
+            m.extractPath(d, math.min(d + s.m(8), m.length)),
+            ref,
+          );
+          d += s.m(13);
         }
       }
     }
 
     // The array: elements along the baseline.
-    final double span = math.min(56, r * 0.4);
+    final double span = math.min(s.m(56), r * 0.4);
     for (int i = 0; i < elements; i++) {
       final double x = elements == 1
           ? c.dx
           : c.dx - span / 2 + span * i / (elements - 1);
-      canvas.drawCircle(Offset(x, c.dy), 3, Paint()..color = s.primary);
+      canvas.drawCircle(Offset(x, c.dy), s.m(3), Paint()..color = s.primary);
     }
     _label(
       canvas,
       'AP',
-      Offset(c.dx - span / 2 - 8, c.dy + 1),
+      Offset(c.dx - span / 2 - s.m(8), c.dy + 1),
       s.labelStyle.copyWith(color: s.primary, fontWeight: FontWeight.w600),
       align: Alignment.bottomRight,
     );
@@ -523,9 +569,9 @@ class BeamPatternPainter extends CustomPainter {
       sn,
       Paint()
         ..color = s.secondary
-        ..strokeWidth = 1.2,
-      dash: 3,
-      gap: 3,
+        ..strokeWidth = s.w(1.2),
+      dash: s.m(3),
+      gap: s.m(3),
     );
     final double snDb = steered && elements >= 2
         ? MimoMath.patternDb(
@@ -536,30 +582,34 @@ class BeamPatternPainter extends CustomPainter {
         : 0;
     canvas.drawCircle(
       polar(c, _radiusFor(snDb, r), snifferDeg),
-      4,
+      s.m(4),
       Paint()
         ..color = s.primary
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+        ..strokeWidth = s.w(2),
     );
-    final Rect snBox = Rect.fromCenter(center: sn, width: 14, height: 14);
+    final Rect snBox = Rect.fromCenter(
+      center: sn,
+      width: s.m(14),
+      height: s.m(14),
+    );
     canvas.drawRect(snBox, Paint()..color = s.secondary);
     _label(
       canvas,
       'Sniffer',
-      sn.translate(0, -10),
+      sn.translate(0, -s.m(10)),
       s.labelStyle.copyWith(color: s.secondary),
       align: Alignment.bottomCenter,
     );
 
     // Client: filled marker at its angle, on the outer ring.
     final Offset cl = polar(c, r, clientDeg);
-    canvas.drawCircle(cl, 8, Paint()..color = s.primary);
-    canvas.drawCircle(cl, 4, Paint()..color = s.accent);
+    canvas.drawCircle(cl, s.m(8), Paint()..color = s.primary);
+    canvas.drawCircle(cl, s.m(4), Paint()..color = s.accent);
     _label(
       canvas,
       'Client',
-      cl.translate(0, -12),
+      cl.translate(0, -s.m(12)),
       s.labelStyle.copyWith(color: s.primary, fontWeight: FontWeight.w600),
       align: Alignment.bottomCenter,
     );
@@ -593,6 +643,9 @@ class SoundingPainter extends CustomPainter {
 
   static const double barH = 26;
 
+  /// Height the painter needs at text scale [t] (1 outside presenter mode).
+  static double heightFor(double t) => (18 + barH + 26 + barH * 0.6) * t + 4;
+
   @override
   void paint(Canvas canvas, Size size) {
     final MimoPaintStyle s = style;
@@ -600,8 +653,9 @@ class SoundingPainter extends CustomPainter {
     if (total <= 0) return;
     final double w = size.width;
 
-    // Row 1: the exchange.
-    const double y1 = 18;
+    // Row 1: the exchange. Rows grow with the presenter text scale.
+    final double bar = s.t(barH);
+    final double y1 = s.t(18);
     _label(
       canvas,
       'One sounding exchange',
@@ -613,18 +667,18 @@ class SoundingPainter extends CustomPainter {
     final Paint edge = Paint()
       ..color = s.axis
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = s.w(1);
     for (final SoundingSegment seg in segments) {
       final double sw = w * seg.us / total;
-      final Rect rect = Rect.fromLTWH(x, y1, sw, barH);
+      final Rect rect = Rect.fromLTWH(x, y1, sw, bar);
       if (seg.isGap) {
         _dashedLine(
           canvas,
           Offset(rect.center.dx, y1 + 4),
-          Offset(rect.center.dx, y1 + barH - 4),
+          Offset(rect.center.dx, y1 + bar - 4),
           Paint()
             ..color = s.tertiary
-            ..strokeWidth = 1,
+            ..strokeWidth = s.w(1),
           dash: 2,
           gap: 2,
         );
@@ -645,14 +699,14 @@ class SoundingPainter extends CustomPainter {
     }
 
     // Row 2: the interval.
-    const double y2 = y1 + barH + 26;
+    final double y2 = y1 + bar + s.t(26);
     _label(
       canvas,
       'One sounding interval',
-      const Offset(0, y2 - 18),
+      Offset(0, y2 - s.t(18)),
       s.labelStyle.copyWith(color: s.tertiary),
     );
-    final Rect whole = Rect.fromLTWH(0, y2, w, barH * 0.6);
+    final Rect whole = Rect.fromLTWH(0, y2, w, bar * 0.6);
     canvas.drawRect(whole.deflate(0.5), edge);
     final double sw = math.max(2, w * share.clamp(0.0, 1.0));
     canvas.drawRect(
