@@ -1527,6 +1527,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'model versus reality',
     'both sides',
   ],
+  // Wi-Fi Classroom (2026-09-26). Where Am I? (spec 33): what a student types
+  // when asking how a device is located indoors, or how far away an AP is.
+  'location-rssi-ftm': <String>[
+    'location',
+    'positioning',
+    'indoor location',
+    'indoor positioning',
+    'ftm',
+    'fine timing measurement',
+    '802.11mc',
+    'round trip time',
+    'round-trip time',
+    'rtt',
+    'trilateration',
+    'rssi distance',
+    'distance from rssi',
+    'shadowing',
+    'where am i',
+  ],
   // Wi-Fi Classroom (2026-09-26). The survey walk simulator (spec 26): what a
   // student types when asking how fast to walk a survey.
   'survey-walk': <String>[
