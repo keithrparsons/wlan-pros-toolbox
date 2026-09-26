@@ -9,9 +9,13 @@
 // WHAT IT COMPUTES
 //   - The BSS Load element's Channel Utilization byte:
 //       floor(255 x busy us / (window x beacon period in TU x 1024))
-//     where busy is physical carrier sense, or physical OR virtual carrier
-//     sense (the reservation a frame's Duration field sets) when the student
-//     counts reserved time.
+//     where busy is physical carrier sense (what the access point reports:
+//     it is one end of every exchange in its own network and never sets its
+//     NAV from a frame addressed to it), or physical OR virtual carrier sense
+//     in the listener view (a device outside the exchange, which honors the
+//     reservation a frame's Duration field sets). Pax, 2026-09-27,
+//     Deliverables/2026-09-26-wifi-classroom-wave4-research/
+//     channel-utilization-nav-check.md, option (b).
 //   - The worked single-sender cycle (spec 37): DIFS + mean backoff + data +
 //     SIFS + ACK, and the busy and payload shares of it.
 //   - A seeded, event-driven contention run: 1 to 50 senders, a neighbor

@@ -141,7 +141,27 @@ class ChannelUtilizationController extends ChangeNotifier {
   /// The worked single-sender case for the current rate and size.
   CuCycle get cycle => CuCycle(_sim.timing);
 
-  /// The meter over the window, or null before one interval completes.
+  /// Labels for the two readings. The access point is one end of every
+  /// exchange in its own network and never sets its reservation timer (NAV)
+  /// from a frame addressed to it, so what it reports is physical busy only.
+  /// A device outside the exchange honors the reservation (Pax, 2026-09-27,
+  /// channel-utilization-nav-check.md, option b).
+  static const String apViewLabel = 'What the access point reports';
+  static const String listenerViewLabel = 'Listener view (counts reservations)';
+
+  /// The label of the reading on screen.
+  String get viewLabel => _countReserved ? listenerViewLabel : apViewLabel;
+
+  /// True in the listener view.
+  bool get listenerView => _countReserved;
+
+  /// What the access point reports: physical busy only, whatever the view.
+  /// The beacon card always shows this, because it is what a beacon carries.
+  CuReading? get apReading =>
+      _sim.reading(window: _window, countReserved: false);
+
+  /// The meter in the current view over the window, or null before one
+  /// interval completes.
   CuReading? get reading =>
       _sim.reading(window: _window, countReserved: _countReserved);
 
@@ -390,16 +410,24 @@ class ChannelUtilizationController extends ChangeNotifier {
       )
       ..writeln(
         'Window: $_window beacon intervals (${windowSeconds.toStringAsFixed(2)} s); '
-        'busy counts ${_countReserved ? 'physical or virtual carrier sense' : 'physical carrier sense only'}',
+        'view: ${viewLabel.toLowerCase()}',
       );
-    if (r == null) {
+    final CuReading? ap = apReading;
+    if (r == null || ap == null) {
       b.writeln('Meter: collecting the first beacon interval');
     } else {
+      b.writeln(
+        'Channel Utilization, what the access point reports: ${ap.byte} of '
+        '255 (${pct(ap.share)})'
+        '${ap.filling ? ', window filling: ${ap.intervalsUsed} of $_window intervals' : ''}',
+      );
+      if (_countReserved) {
+        b.writeln(
+          'Listener view (counts reservations): ${r.byte} of 255 '
+          '(${pct(r.share)})',
+        );
+      }
       b
-        ..writeln(
-          'Channel Utilization: ${r.byte} of 255 (${pct(r.share)})'
-          '${r.filling ? ', window filling: ${r.intervalsUsed} of $_window intervals' : ''}',
-        )
         ..writeln('Station Count: ${c.stationCount}')
         ..writeln(
           'Payload ${pct(r.totals.share(CuSpan.payload))}, collisions '
@@ -410,8 +438,8 @@ class ChannelUtilizationController extends ChangeNotifier {
     }
     b.writeln(
       'One sender alone: cycle ${cy.cycleUs.toStringAsFixed(1)} µs, '
-      '${pct(cy.physicalShare)} busy (physical), '
-      '${pct(cy.virtualShare)} (counting reserved time), '
+      '${pct(cy.physicalShare)} busy as the access point reports it, '
+      '${pct(cy.virtualShare)} in the listener view, '
       'payload ${pct(cy.payloadShare)}',
     );
     return b.toString().trimRight();

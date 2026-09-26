@@ -2,7 +2,8 @@
 // (channel-utilization). The math has its own tests (test/services/wifi_lab/
 // channel_utilization_model_test.dart); these check the screen: it is
 // registered, it opens on the spec defaults, a full window shows the byte and
-// the percent, counting reserved time moves the meter on the same history,
+// the percent, the listener view moves the meter on the same history while
+// the beacon keeps what the access point reports,
 // the station count follows associated stations and not the neighbor,
 // predict-then-reveal hides and shows the meter, labeled values carry their
 // labels, Run moves the channel, and the layout holds at phone widths in
@@ -72,31 +73,44 @@ void main() {
     expect(find.text('collecting the first beacon interval'), findsOneWidget);
     // The worked case is in the readouts before anything runs.
     expect(find.textContaining('a cycle of 393.5 µs'), findsOneWidget);
-    expect(find.textContaining('73.2% busy by physical'), findsOneWidget);
-    expect(find.textContaining('75.7% counting reserved'), findsOneWidget);
+    expect(
+      find.textContaining('73.2% busy as the access point reports it'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('75.7% in the listener view'), findsOneWidget);
     expect(find.textContaining('payload 56.5%'), findsOneWidget);
   });
 
-  testWidgets('a full window reads 186 of 255 = 72.9%, and counting '
-      'reserved time moves it on the same history', (
+  testWidgets('what the access point reports is 186 of 255 = 72.9%; the '
+      'listener view moves the meter on the same history, not the beacon', (
     WidgetTester tester,
   ) async {
     final ChannelUtilizationController c = await _open(tester);
     await _tap(tester, find.text('Skip one window'));
     expect(c.sim.completedIntervals, 50);
     expect(find.text('72.9%'), findsWidgets);
+    expect(find.text('What the access point reports'), findsWidgets);
     expect(find.text('186 of 255'), findsOneWidget);
     expect(find.text('186 (72.9%)'), findsOneWidget);
     expect(find.text('0.0%'), findsWidgets); // truly spare
     final int before = c.sim.nowTenths;
-    await _tap(
-      tester,
-      find.text('Count reserved time (virtual carrier sense)'),
-    );
+    await _tap(tester, find.text('Listener view (counts reservations)'));
     expect(c.countReserved, isTrue);
     expect(c.sim.nowTenths, before);
     expect(c.reading!.byte, greaterThan(186));
     expect(c.reading!.exactShare, closeTo(0.757, 0.01));
+    // The headline says whose view it is; the beacon still carries the
+    // access point's own number.
+    expect(
+      find.text('${c.reading!.byte} of 255, a device outside the exchange'),
+      findsOneWidget,
+    );
+    expect(c.apReading!.byte, 186);
+    expect(find.text('186 (72.9%)'), findsOneWidget);
+    expect(
+      find.textContaining('A listener outside the exchange measures'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the window slider re-reads history; a filling window says so', (
@@ -135,7 +149,7 @@ void main() {
     expect(find.textContaining(kCuBianchiCaption), findsOneWidget);
     // Acronyms spelled out where they first appear.
     expect(
-      find.textContaining('NAV (network allocation vector)'),
+      find.textContaining('NAV, network allocation vector'),
       findsOneWidget,
     );
     expect(find.textContaining('BSS: basic service set'), findsOneWidget);
@@ -232,7 +246,15 @@ void main() {
     final ChannelUtilizationController c = await _open(tester);
     c.skipWindow();
     final String t = c.copyText();
-    expect(t, contains('Channel Utilization: 186 of 255 (72.9%)'));
+    expect(
+      t,
+      contains(
+        'Channel Utilization, what the access point reports: 186 of 255 '
+        '(72.9%)',
+      ),
+    );
+    c.countReserved = true;
+    expect(c.copyText(), contains('Listener view (counts reservations):'));
     expect(t, contains('cycle 393.5 µs'));
   });
 

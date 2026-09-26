@@ -291,6 +291,8 @@ class _Headline extends StatelessWidget {
         ? hidden
         : r == null
         ? 'collecting the first beacon interval'
+        : controller.listenerView
+        ? '${r.byte} of 255, a device outside the exchange'
         : '${r.byte} of 255${r.filling ? ', window filling' : ''}';
     final double? spare = r == null
         ? null
@@ -301,14 +303,14 @@ class _Headline extends StatelessWidget {
 
     final List<Widget> tiles = <Widget>[
       CuHeadlineTile(
-        label: 'Channel utilization',
+        label: controller.viewLabel,
         value: meterValue,
         note: meterNote,
         semantics: masked
-            ? 'Channel utilization hidden until Reveal'
+            ? '${controller.viewLabel}: hidden until Reveal'
             : r == null
-            ? 'Channel utilization: collecting the first beacon interval'
-            : 'Channel utilization ${cuPct(r.share)}, ${r.byte} of 255',
+            ? '${controller.viewLabel}: collecting the first beacon interval'
+            : '${controller.viewLabel}: ${cuPct(r.share)}, ${r.byte} of 255',
       ),
       CuHeadlineTile(
         label: 'Station count',
@@ -671,15 +673,18 @@ class _WindowCard extends StatelessWidget {
     final int n = controller.window;
     final String seconds = controller.windowSeconds.toStringAsFixed(2);
 
+    final String who = controller.listenerView
+        ? 'A listener outside the exchange measures'
+        : 'The AP reports';
     final String status = masked
         ? 'The meter\'s value is hidden until Reveal.'
         : r == null
         ? 'Collecting the first beacon interval (102.4 ms).'
         : r.filling
         ? 'Window filling: ${r.intervalsUsed} of $n intervals so far. '
-              'The AP reports ${r.byte} of 255 = ${cuPct(r.share)}.'
-        : 'The AP reports ${r.byte} of 255 = ${cuPct(r.share)}, the '
-              'average over the bracket.';
+              '$who ${r.byte} of 255 = ${cuPct(r.share)}.'
+        : '$who ${r.byte} of 255 = ${cuPct(r.share)}, the average over the '
+              'bracket.';
 
     final Widget paint = Semantics(
       label: masked
@@ -1075,7 +1080,8 @@ class CuBeaconCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final CuReading? r = controller.reading;
+    // A beacon carries what the access point measures, in either view.
+    final CuReading? r = controller.apReading;
     final bool masked = controller.masked;
     final TextStyle label =
         text.bodySmall?.copyWith(color: colors.textSecondary) ??
