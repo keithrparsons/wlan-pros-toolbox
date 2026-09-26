@@ -316,7 +316,7 @@
           "range": "1 to 1,000"
         }
       ],
-      "algorithm": "FSPL (dB) = 20 log10(4 pi d / lambda), with lambda = c / f and c = 299,792,458 m/s. With d in metres and f in MHz this is 20 log10(d) + 20 log10(f) - 27.55. It splits exactly into spreading loss 10 log10(4 pi d^2), the same at every frequency, plus the aperture term -10 log10(lambda^2 / 4 pi), which depends only on frequency. Received power = Tx power + Tx gain + Rx gain - path loss - other losses. The band difference at equal distance is 20 log10(f2 / f1). The indoor model is PL(d) = FSPL(1 m) + 10 n log10(d / 1 m).",
+      "algorithm": "FSPL (dB) = 20 log10(4 pi d / lambda), with lambda = c / f and c = 299,792,458 m/s. With d in meters and f in MHz this is 20 log10(d) + 20 log10(f) - 27.55. It splits exactly into spreading loss 10 log10(4 pi d^2), the same at every frequency, plus the aperture term -10 log10(lambda^2 / 4 pi), which depends only on frequency. Received power = Tx power + Tx gain + Rx gain - path loss - other losses. The band difference at equal distance is 20 log10(f2 / f1). The indoor model is PL(d) = FSPL(1 m) + 10 n log10(d / 1 m).",
       "example": "At 10 m on channel 6 (2437 MHz): spreading loss 10 log10(4 pi x 100) = 31.0 dB, aperture term 29.2 dB, total 60.2 dB. With 20 dBm Tx and 0 dBi antennas the received power is -40.2 dBm. Channel 100 (5500 MHz) loses 20 log10(5500 / 2437) = 7.1 dB more at every distance, and all of that difference is in the aperture term.",
       "fieldNotes": [
         "Free space is the best case: no walls, no floor reflection, no people, no fading. Real indoor readings are usually well below the curve.",
@@ -2816,7 +2816,7 @@
     },
     "ipv6-subnet": {
       "name": "IP Subnet Calculator (IPv6)",
-      "category": "Networking Tools",
+      "category": "Calculators & Tools",
       "purpose": "Enter an IPv6 address and prefix length and get back the expanded and compressed forms, the network address, the first and last address in the prefix, the number of hosts, and the address type. It also decodes transition addresses: whether the address you typed carries an IPv4 address inside it, and how a given IPv4 address is written the four ways IPv6 can carry one.",
       "whyHere": "IPv6 subnetting and address-type lookups during design and troubleshooting, where doing 128-bit math by hand invites mistakes. The transition section answers a different question: NAT64, 6to4 and IPv4-mapped addresses genuinely turn up in captures and firewall logs, and \"what am I looking at\" is the moment they cause.",
       "howToUse": [
@@ -2863,7 +2863,7 @@
         "IPv4-compatible (::a.b.c.d) is deprecated. It is decoded so you can recognize one in an old configuration, and labeled so you do not build on it.",
         "The 6to4 output is a PREFIX for a whole site (a /48), not a host address.",
         "A zone index (the %en0 on fe80::1%en0) names the local interface the scope belongs to, so it sits outside the 128 bits and is set aside before the math runs. The Zone row shows it back, because a character you typed that vanishes with no acknowledgement looks like an input the tool failed to read. A half-typed zone such as fe80::1% is reported as an invalid address.",
-        "The solicited-node multicast address (RFC 4291 section 2.7.1) is FF02::1:FF plus the low-order 24 bits of the address. IPv6 neighbour discovery sends its solicitation to that group rather than to all nodes, which is how it avoids waking every device on the link the way ARP broadcast does. When address resolution is failing, whether the node joined the right group is the question, and working the address out by hand is where it goes wrong.",
+        "The solicited-node multicast address (RFC 4291 section 2.7.1) is FF02::1:FF plus the low-order 24 bits of the address. IPv6 neighbor discovery sends its solicitation to that group rather than to all nodes, which is how it avoids waking every device on the link the way ARP broadcast does. When address resolution is failing, whether the node joined the right group is the question, and working the address out by hand is where it goes wrong.",
         "Only the low 24 bits are used, so two addresses in completely different prefixes can share a solicited-node group. It is a useful filter, not a unique identifier.",
         "The reverse DNS name (RFC 3596 section 2.5) is all 32 nibbles in reverse order with the ip6.arpa suffix. No trailing dot is shown, because this is a screen rather than a zone file; add one if you are pasting it somewhere that needs a fully qualified name."
       ],
@@ -2871,7 +2871,7 @@
     },
     "subnet-planner": {
       "name": "Subnet Planner (VLSM)",
-      "category": "Networking Tools",
+      "category": "Calculators & Tools",
       "purpose": "Two jobs on IPv4 blocks that span more than one network. Split carves a parent block into right-sized subnets from a list of host counts. Summarize takes a list of networks and gives the single block that covers them all, plus the smallest set of blocks that covers them exactly.",
       "whyHere": "\"Here is your /22 for the site, now give me a VLAN for staff, one for guests, one for the IoT gear and a point-to-point link\" is a design question the single-subnet calculator cannot answer, because it works on one network at a time. Summarize is the same math in reverse, for when you are writing a route, an ACL, or a firewall rule and want one line instead of nine.",
       "howToUse": [
@@ -4530,7 +4530,7 @@
     },
     "ipv4-subnet": {
       "name": "IP Subnet Calculator (IPv4)",
-      "category": "Networking Tools",
+      "category": "Calculators & Tools",
       "purpose": "Two modes of IPv4 mask arithmetic. Subnet works out the full breakdown (network, broadcast, netmask, wildcard, first and last usable host, total addresses, usable host count, and the same address as an integer, in hex and in binary) from an address plus a CIDR prefix or a dotted mask. Range turns a start and end address into the smallest set of CIDR blocks that covers it exactly, and turns a block back into its range.",
       "whyHere": "The CIDR math you'd otherwise do on paper or in your head at a whiteboard. Reach for Subnet to confirm a network or broadcast boundary, a usable-host range, or a mask-to-prefix conversion. Reach for Range when a customer hands you \"10.4.16.0 through 10.4.31.255\" and you need blocks for an ACL, a firewall rule, or a DHCP scope.",
       "howToUse": [
@@ -4900,7 +4900,7 @@
     },
     "power-phasing": {
       "name": "Power Phasing",
-      "category": "Power & Cooling",
+      "category": "Quick Reference",
       "purpose": "Reference for the three power topologies a field tech meets in IT spaces: US single-phase 120V (one hot plus neutral), split-phase 120/240V (two hots 180 degrees apart, 240V hot-to-hot, 120V hot-to-neutral), and three-phase wye 208V (three hots 120 degrees apart, 208V line-to-line, 120V line-to-neutral). It makes clear the 208-vs-240 distinction that installers confuse.",
       "whyHere": "When you read a panel or nameplate, confirm which topology you're on and what hot-to-hot voltage to expect, so you don't feed 240V-rated gear from a 208V wye (about 13 percent low) or mislabel split-phase as two-phase.",
       "howToUse": [
@@ -4922,7 +4922,7 @@
     },
     "ohms-law": {
       "name": "Ohm's Law & Power Wheel",
-      "category": "Power & Cooling",
+      "category": "Quick Reference",
       "purpose": "Reference for the V / I / R / P relationships every field tech reaches for: the four core identities (V = I x R, P = V x I, P = I squared x R, P = V squared / R), the 12-segment power wheel that expresses each of V, I, R, P in terms of any two of the others, and the single-phase versus three-phase power formulas with the power-factor term.",
       "whyHere": "When you need to solve for a missing electrical quantity at a panel or on a nameplate, find the right form of the wheel and read off the relationship, without re-deriving it. The power-factor caveat keeps you from reading V x I as watts on an AC reactive load.",
       "howToUse": [
@@ -4943,7 +4943,7 @@
     },
     "cooling-thermal": {
       "name": "Cooling & Thermal",
-      "category": "Power & Cooling",
+      "category": "Quick Reference",
       "purpose": "The heat-load conversions you need when sizing cooling for IT spaces: watts to BTU/hr to tons of refrigeration, the fact that IT power turns into heat that has to be removed, and the standard airflow (CFM for a given temperature rise) rule.",
       "whyHere": "When you have to size cooling for a closet or rack from an IT load, turn that load into BTU/hr or tons and read the airflow a given temperature rise needs, so the cooling equipment matches the heat the gear actually produces.",
       "howToUse": [
@@ -4964,7 +4964,7 @@
     },
     "iec-connectors": {
       "name": "IEC Power Connectors",
-      "category": "Power & Cooling",
+      "category": "Quick Reference",
       "purpose": "A guide to the IEC 60320 appliance couplers (C1/C2 through C19/C20, including the C13/C14 PC cord and the C15/C16 kettle cord) and the IEC 60309 industrial pin-and-sleeve connectors, with current ratings, temperature classes, and keying.",
       "whyHere": "When you grab a cord or read an inlet on a PDU, server, or UPS, confirm the coupler pair and its rating so you match cord to inlet, and tell the 70 degC C13/C14 PC cord apart from the 120 degC C15/C16 kettle cord.",
       "howToUse": [
@@ -4985,7 +4985,7 @@
     },
     "nema-connectors": {
       "name": "NEMA Connectors",
-      "category": "Power & Cooling",
+      "category": "Quick Reference",
       "purpose": "A guide to North American NEMA straight-blade and locking plug and receptacle configurations: how to read a designation (the L prefix, the configuration code, the current rating, and the P/R suffix) and the device groups by voltage class with phase, wiring, and amp rating.",
       "whyHere": "When you read a NEMA designation on a plug, receptacle, or PDU, decode it correctly instead of misreading the leading number as a voltage, and confirm the phase and wiring so you do not mistake split-phase for three-phase.",
       "howToUse": [
@@ -5006,7 +5006,7 @@
     },
     "international-plugs": {
       "name": "International Power Plugs",
-      "category": "Power & Cooling",
+      "category": "Quick Reference",
       "purpose": "A guide to the IEC World Plugs letter system (Types A through M) by region, with each one's national standard, nominal voltage class and frequency, and current rating, plus the CEE 7 European family breakout.",
       "whyHere": "When you travel or spec gear for a site abroad, confirm the plug type, nominal mains voltage, and frequency you will meet, so power adapters and equipment ratings match what is at the wall.",
       "howToUse": [
@@ -5654,7 +5654,7 @@
       "purpose": "A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum analyzer sees energy a Wi-Fi adapter is blind to, how the instrument works (swept versus real-time, and the time-versus-frequency trade), the knobs an operator touches (span, resolution and video bandwidth, reference level, the dBm scale, detectors, max-hold and averaging), the three main views (live trace, waterfall, and density/duty cycle) and how to read each, a nine-card gallery of interferer fingerprints (microwave oven, Bluetooth Classic and BLE, analog video camera, baby monitor, drone/FPV downlink, Zigbee, analog cordless phone, continuous wireless bridge), how to compare captures, the current tool landscape, and the mitigation ladder.",
       "whyHere": "This is the spectrum-analysis companion to the rest of the toolbox: when a Wi-Fi scan shows a clean channel but performance is poor, the cause is usually a non-Wi-Fi interferer that only a spectrum analyzer can see. This module teaches you to recognize those interferers by their waterfall shape and to pick a fix. It is an in-app reference, alongside Antenna Fundamentals.",
       "howToUse": [
-        "Open the module from Educational Resources, then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi adapter) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.",
+        "Open the module from the Wi-Fi Classroom (Guided Lessons), then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi adapter) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.",
         "On Fingerprinting interferers, swipe through the nine signature cards and tap any card to zoom in. The caption under each card is its waterfall fingerprint.",
         "On The knobs, tap the Wi-Fi Glossary link to resolve any term in one tap."
       ],
@@ -5921,7 +5921,7 @@
     },
     "lldp-cdp-reference": {
       "name": "Find the Switch and Port (LLDP/CDP)",
-      "category": "CLI & Capture",
+      "category": "Quick Reference",
       "purpose": "A how-to reference for reading LLDP (IEEE 802.1AB) and CDP, the Layer-2 protocols a switch uses to announce its own name, the exact port you are plugged into, its management IP, and often the VLAN. Shows how to read it on every OS and how to find which switch port an access point is on.",
       "whyHere": "When an access point is dark and you need its switch port, or a device is wired somewhere and you need to trace it without walking the patch panel, LLDP or CDP puts that answer in a single frame. This reference tells you how to read it on whatever machine is in front of you, and where each OS hides the answer.",
       "howToUse": [
