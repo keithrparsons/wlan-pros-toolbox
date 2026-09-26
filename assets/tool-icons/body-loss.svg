@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- AP on the left -->
+    <rect x="2" y="10.5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <!-- the signal line, broken by a person standing in it -->
+    <path d="M7.5 12.5 H9"/>
+    <path d="M20 12.5 H22"/>
+    <!-- a person seen from the front: head and shoulders -->
+    <circle cx="14.5" cy="5" r="2"/>
+    <path d="M10.5 16.5 V13 a4 4 0 0 1 8 0 V16.5"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="8" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

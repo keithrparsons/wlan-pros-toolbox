@@ -1658,6 +1658,30 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi classroom',
     'simulator',
   ],
+  // Wi-Fi Classroom (2026-09-26). Spec 34's keyword list plus the terms the
+  // tool teaches.
+  'body-loss': <String>[
+    'body loss',
+    'human body',
+    'crowd',
+    'occupancy',
+    'attenuation',
+    'orientation',
+    'holding the phone',
+    'body shadowing',
+    'people',
+    'audience',
+    'auditorium',
+    'occupied building',
+    'empty building',
+    'survey',
+    'facing',
+    'rssi',
+    'mcs',
+    'wi-fi lab',
+    'wi-fi classroom',
+    'simulator',
+  ],
   // Wi-Fi Classroom (2026-09-25). What the spatial reuse simulator shows, in the
   // words a student types when neighbor APs slow each other down.
   'spatial-reuse': <String>[

@@ -2618,6 +2618,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'RF and Propagation',
       ),
+      ToolEntry(
+        id: 'body-loss',
+        title: 'Body Loss',
+        description:
+            'See what people cost the signal: the holder turning their back '
+            'to the AP, and a crowd on the line, with illustrative losses',
+        routeName: '/tools/body-loss',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
       // ── Signals and PHY ──
       // Distinct from the 'modulation' reference cards under Quick Reference,
       // which stay as they are.

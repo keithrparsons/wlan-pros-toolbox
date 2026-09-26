@@ -25,6 +25,7 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'rate-vs-range',
     'six-ghz-psd',
     'uplink-downlink',
+    'body-loss',
   ],
   'Signals and PHY': <String>[
     'modulation-simulator',
@@ -93,13 +94,13 @@ void main() {
     );
   });
 
-  test('all 27 simulators are in wifi-classroom and none remain in '
+  test('all 28 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(27));
+    expect(sims, hasLength(28));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -166,7 +167,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(40));
+    expect(classroom.tools, hasLength(41));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
