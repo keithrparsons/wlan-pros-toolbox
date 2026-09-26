@@ -24,8 +24,9 @@
 //   - RoomPresetPicker, RoomPropagationControls, RoomPropagationReadouts
 //                              (room_propagation_controls.dart).
 // This screen only composes them. On a phone they stack: preset, stage,
-// readouts, controls. A presenter layout can place the stage beside the
-// controls with no change to either.
+// readouts, controls. The Present button (desktop and tablet windows) puts
+// the stage beside the controls over the SAME controller
+// (lib/widgets/presenter/).
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). The plan is the
 // §8.22 brand-green heat map on a dark viewport in both themes
@@ -56,8 +57,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'room_propagation_controller.dart';
 import 'room_propagation_controls.dart';
@@ -91,13 +94,35 @@ class _RoomPropagationScreenState extends State<RoomPropagationScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's controller (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'Room Propagation',
+    stage: RoomPropagationStage(controller: _controller),
+    controls: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // The client readout is on the stage in presenter mode.
+        RoomPresetPicker(controller: _controller),
+        const SizedBox(height: AppSpacing.xs),
+        RoomPropagationControls(controller: _controller),
+      ],
+    ),
+    actions: _controller.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Room Propagation'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.roomPropagation,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

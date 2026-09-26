@@ -22,7 +22,9 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_coverage_ramp.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'room_propagation_controller.dart';
+import 'room_propagation_controls.dart' show RoomClientReadout;
 import 'room_propagation_painters.dart';
 import 'wifi_through_a_wall_parts.dart'
     show WallCard, WallSectionLabel, WallNote;
@@ -39,6 +41,60 @@ class RoomPropagationStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          // Presenter: the plan fills the stage, the close-up stands beside
+          // it; both fit the box, nothing scrolls.
+          return LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints box) {
+              final double side = (box.maxWidth * 0.34).clamp(320.0, 480.0);
+              // The client readout sits under the close-up; if it is taller
+              // than its share (many walls on the path) it scales down as
+              // one piece rather than clip.
+              final Widget client = ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: controller.showCloseUp
+                      ? box.maxHeight * 0.45
+                      : box.maxHeight,
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: side,
+                    child: RoomClientReadout(controller: controller),
+                  ),
+                ),
+              );
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: _PlanCard(controller: controller, presenter: true),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  SizedBox(
+                    width: side,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        if (controller.showCloseUp) ...<Widget>[
+                          Expanded(
+                            child: _CloseUpCard(
+                              controller: controller,
+                              presenter: true,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
+                        client,
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -57,15 +113,22 @@ class RoomPropagationStage extends StatelessWidget {
 TextStyle _labelStyle(BuildContext context) {
   final AppMonoText mono =
       Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-  return mono.inlineCode.copyWith(fontSize: AppTextSize.caption - 2);
+  // Painted labels do not see MediaQuery's text scale; the presenter scale
+  // reaches them here (1.0 outside presenter mode).
+  return mono.inlineCode.copyWith(
+    fontSize: PresenterMode.scaleOf(context).paintFont(AppTextSize.caption - 2),
+  );
 }
 
 // ── Plan ──────────────────────────────────────────────────────────────────
 
 class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.controller});
+  const _PlanCard({required this.controller, this.presenter = false});
 
   final RoomPropagationController controller;
+
+  /// Fill a bounded box: the plan takes the height the legends leave.
+  final bool presenter;
 
   String get _toolHint => switch (controller.tool) {
     RoomTool.move =>
@@ -102,6 +165,7 @@ class _PlanCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final RoomPropagationController c = controller;
     final String? err = c.error;
+    if (presenter) return _presenterCard(context, colors, text, c, err);
     return WallCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,6 +228,94 @@ class _PlanCard extends StatelessWidget {
             message:
                 'A 2D plan of a 3D model: the signal spreads in three '
                 'dimensions (1/r), but there is no floor or ceiling bounce.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _presenterCard(
+    BuildContext context,
+    AppColorScheme colors,
+    TextTheme text,
+    RoomPropagationController c,
+    String? err,
+  ) {
+    return WallCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Expanded(
+                child: WallSectionLabel('Received power on the floor plan'),
+              ),
+              if (c.computing) const _Computing(),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            '${c.tool.label} tool: $_toolHint',
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: Semantics(
+              label: _semantic(),
+              excludeSemantics: true,
+              child: Center(child: _PlanView(controller: c)),
+            ),
+          ),
+          if (c.message != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            WallNote(icon: Icons.info_outline, message: c.message!),
+          ],
+          if (err != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            WallNote(icon: Icons.error_outline, message: err),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: c.retry,
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.textAccent,
+                  minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                ),
+                child: const Text('Try again'),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints box) {
+              // Side by side only where both legends keep their labels
+              // apart at the presenter text size.
+              if (box.maxWidth < 1000) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    const _PowerLegend(),
+                    const SizedBox(height: AppSpacing.xs),
+                    _KeyLegend(controller: c),
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Expanded(child: _PowerLegend()),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: _KeyLegend(controller: c)),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          const WallNote(
+            icon: Icons.layers_outlined,
+            message:
+                'Local average of 20 cm cells. A 2D plan of a 3D model: no '
+                'floor or ceiling bounce.',
           ),
         ],
       ),
@@ -299,7 +451,11 @@ class _PlanViewState extends State<_PlanView> {
     final TextStyle label = _labelStyle(context);
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints box) {
-        final double w = box.maxWidth;
+        // Fill the width; in a bounded box (the presenter stage) also fit
+        // the height, keeping the plan's proportions.
+        final double w = box.hasBoundedHeight
+            ? math.min(box.maxWidth, box.maxHeight * c.widthM / c.heightM)
+            : box.maxWidth;
         final double h = w * c.heightM / c.widthM;
         final PlanTransform t = PlanTransform(w / c.widthM);
         final FieldGrid? grid = c.averageGrid;
@@ -361,6 +517,7 @@ class _PlanViewState extends State<_PlanView> {
                           ),
                           transform: t,
                           labelStyle: label,
+                          markerScale: PresenterMode.scaleOf(context).marker,
                         ),
                       ),
                     ),
@@ -632,9 +789,12 @@ class _DashSwatch extends CustomPainter {
 // ── Close-up ──────────────────────────────────────────────────────────────
 
 class _CloseUpCard extends StatelessWidget {
-  const _CloseUpCard({required this.controller});
+  const _CloseUpCard({required this.controller, this.presenter = false});
 
   final RoomPropagationController controller;
+
+  /// Fill a bounded column beside the plan: the square takes the height.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
@@ -672,6 +832,65 @@ class _CloseUpCard extends StatelessWidget {
         v > 0 ? '+${v.toStringAsFixed(0)}' : v.toStringAsFixed(0),
     ];
 
+    final Widget ripple = Semantics(
+      label:
+          'Close-up of the fine ripple around the client. $swing '
+          'Peaks repeat every ${_C.cm(half)}.',
+      excludeSemantics: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        child: CustomPaint(
+          painter: RipplePainter(
+            grid: c.rippleGrid,
+            walls: c.walls,
+            client: c.client,
+            lambda: c.lambda,
+            rulerNormal: normal,
+            labelStyle: _labelStyle(context),
+            revision: c.revision,
+          ),
+        ),
+      ),
+    );
+    final Widget legend = _StepLegend(
+      title: 'dB above or below the local average',
+      labels: labels,
+      firstStop: 1,
+      semantic:
+          'Legend: seven shades of green. Darkest, more than 12 dB '
+          'below the average (a null); then one shade per 3 dB; '
+          'palest, more than 3 dB above the average.',
+    );
+    if (presenter) {
+      return WallCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            WallSectionLabel(
+              'Close-up around the client: nulls about every ${_C.cm(half)}',
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints box) {
+                  // Too small to read is not drawn at all.
+                  if (box.biggest.shortestSide < 48) {
+                    return const SizedBox.shrink();
+                  }
+                  return Center(
+                    child: AspectRatio(aspectRatio: 1, child: ripple),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            legend,
+            const SizedBox(height: AppSpacing.xs),
+            WallNote(icon: Icons.swap_vert, message: swing),
+          ],
+        ),
+      );
+    }
     return WallCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -689,29 +908,7 @@ class _CloseUpCard extends StatelessWidget {
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: Semantics(
-                  label:
-                      'Close-up of the fine ripple around the client. $swing '
-                      'Peaks repeat every ${_C.cm(half)}.',
-                  excludeSemantics: true,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.control),
-                    child: CustomPaint(
-                      painter: RipplePainter(
-                        grid: c.rippleGrid,
-                        walls: c.walls,
-                        client: c.client,
-                        lambda: c.lambda,
-                        rulerNormal: normal,
-                        labelStyle: _labelStyle(context),
-                        revision: c.revision,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              child: AspectRatio(aspectRatio: 1, child: ripple),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

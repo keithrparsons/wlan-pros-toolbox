@@ -172,7 +172,8 @@
         "Move the SNR slider (0 to 45 dB) to add or remove noise. Received points spread around the ideal points, and a point that crosses a decision boundary is decided wrong and marked with an X.",
         "Choose Random bits, or Your text to send a message as UTF-8 bits and read back what the receiver decoded.",
         "Up to 16-QAM every point shows its bits. Above that, tap or hover a point to see them.",
-        "Read the waveform strip: the thin solid trace is I cos, the thin dashed trace is -Q sin, and the bold trace is their sum, the carrier actually sent. The bits for each symbol sit above it."
+        "Read the waveform strip: the thin solid trace is I cos, the thin dashed trace is -Q sin, and the bold trace is their sum, the carrier actually sent. The bits for each symbol sit above it.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow steps, R resets, Up and Down move the SNR, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -214,7 +215,8 @@
       "howToUse": [
         "Press Play to run the clock, or Step to move one 9 µs slot at a time. The simulation starts paused. Reset replays the same run from time zero.",
         "Read the timeline. The top lane is the medium as the AP hears it, and each station has its own lane. Hatched blocks are DIFS, AIFS or EIFS waits, outlined cells are backoff slots with the count inside, filled gray cells are a frozen count, lime blocks are data frames, green blocks are ACKs and red blocks are frames lost to a collision. Zoom changes the time scale; while paused, drag the timeline sideways to look back.",
-        "Add up to 10 stations and set each one's offered load. Switch to EDCA to give each station an access category. Turn on Hidden node, then RTS/CTS, to see collisions nobody could hear coming and how the handshake removes most of them. Change the frame size and PHY rate to see airtime change."
+        "Add up to 10 stations and set each one's offered load. Switch to EDCA to give each station an access category. Turn on Hidden node, then RTS/CTS, to see collisions nobody could hear coming and how the handshake removes most of them. Change the frame size and PHY rate to see airtime change.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow steps one slot, R resets, Up and Down change the speed, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -674,7 +676,8 @@
         "Pick a floor plan. Drywall offices and Concrete corridor have several walls and doorways; Empty plan has none, so you can draw your own.",
         "Drag the AP or the client on the plan, or use the position sliders. The colors are received power in dBm, one shade per 10 dB, with the legend under the plan. The readouts show what the client receives and where the loss comes from: free space, each wall on the straight line, diffraction and reflections.",
         "Change the band and watch the same spot on all three bands. Turn Reflections to None and Diffraction off to see the straight-line picture with sharp shadows, then turn them back on. The Fresnel zone overlay shows how wide the path to the client is; the shadow edges show where a doorway's shadow would start if signal traveled only in straight lines.",
-        "To edit the plan, pick a tool: Draw walls (drag), Add doorways (tap a wall), or Select a wall (tap it), then set its material and thickness, add or close doorways, or delete it. Every edit also works from the wall list, without the plan."
+        "To edit the plan, pick a tool: Draw walls (drag), Add doorways (tap a wall), or Select a wall (tap it), then set its material and thickness, add or close doorways, or delete it. Every edit also works from the wall list, without the plan.",
+        "On a computer or tablet, Present opens the plan full screen for a projector: R reloads the plan, Up and Down move the AP EIRP, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {

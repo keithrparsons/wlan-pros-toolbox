@@ -13,6 +13,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/presenter/presenter_mode.dart';
+
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -255,6 +257,9 @@ class WallRow extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final double labelScale = PresenterMode.isActive(context)
+        ? PresenterMode.scaleOf(context).text
+        : 1;
     return MergeSemantics(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
@@ -263,7 +268,8 @@ class WallRow extends StatelessWidget {
           children: <Widget>[
             if (indent) const SizedBox(width: AppSpacing.sm),
             SizedBox(
-              width: indent ? 136 - AppSpacing.sm : 136,
+              // Presenter mode scales the label column with its text.
+              width: (indent ? 136 - AppSpacing.sm : 136) * labelScale,
               child: Text(
                 label,
                 style: text.bodyMedium?.copyWith(

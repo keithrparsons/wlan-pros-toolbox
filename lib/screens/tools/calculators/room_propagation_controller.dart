@@ -27,6 +27,7 @@ import 'package:flutter/foundation.dart';
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/room_propagation_model.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 import 'room_propagation_presets.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
@@ -765,4 +766,14 @@ class RoomPropagationController extends ChangeNotifier {
 
   /// A loss in dB for display, capped.
   static String lossDb(double v) => _lossText(v);
+
+  /// Presenter keyboard. Nothing animates here, so there is no play or
+  /// step: R reloads the plan, and Up/Down move the EIRP 1 dB, which shifts
+  /// the whole map with no recompute.
+  PresenterActions get presenterActions => PresenterActions(
+    reset: () => loadPreset(_preset),
+    sliderDown: () => eirpDbm = _eirp - 1,
+    sliderUp: () => eirpDbm = _eirp + 1,
+    sliderLabel: 'AP EIRP',
+  );
 }

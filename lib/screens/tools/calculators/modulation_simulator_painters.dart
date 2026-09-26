@@ -21,6 +21,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../services/rf/modulation_math.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 /// Resolved colors and text styles for [ConstellationPainter].
 @immutable
@@ -34,6 +35,7 @@ class ConstellationStyle {
     required this.highlight,
     required this.labelStyle,
     required this.axisLabelStyle,
+    this.scale = PresenterScale.normal,
   });
 
   final Color ideal;
@@ -44,6 +46,10 @@ class ConstellationStyle {
   final Color highlight;
   final TextStyle labelStyle;
   final TextStyle axisLabelStyle;
+
+  /// Presenter scale for strokes and markers (1.0 outside presenter mode).
+  /// Label font sizes arrive already scaled in [labelStyle].
+  final PresenterScale scale;
 }
 
 /// Draws the I/Q plane: decision boundaries, ideal points (optionally with
@@ -108,6 +114,7 @@ class ConstellationPainter extends CustomPainter {
     final Modulation m = modulation;
     final double k = ModulationMath.kMod(m);
     final int levels = m.levelsPerAxis;
+    final PresenterScale sc = style.scale;
     final double side = math.min(size.width, size.height);
     final double spacingPx = side / (2 * plotRange(m)) * 2 * k;
 
@@ -116,7 +123,7 @@ class ConstellationPainter extends CustomPainter {
     // drawn stronger on top because they are also the zero lines.
     final Paint boundary = Paint()
       ..color = style.boundary
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     final double edge = levels * k;
     for (int b = -(levels - 2); b <= levels - 2; b += 2) {
       if (b == 0) continue;
@@ -136,7 +143,7 @@ class ConstellationPainter extends CustomPainter {
     }
     final Paint axis = Paint()
       ..color = style.axis
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     final double r = plotRange(m);
     canvas.drawLine(toCanvas(-r, 0, size, m), toCanvas(r, 0, size, m), axis);
     canvas.drawLine(toCanvas(0, -r, size, m), toCanvas(0, r, size, m), axis);
@@ -145,7 +152,7 @@ class ConstellationPainter extends CustomPainter {
 
     // Ideal points. Dot size follows the grid spacing so 4096-QAM still
     // resolves and BPSK does not look like a pinprick.
-    final double idealR = (spacingPx * 0.14).clamp(1.0, 4.0);
+    final double idealR = sc.markerSize((spacingPx * 0.14).clamp(1.0, 4.0));
     final Paint idealPaint = Paint()..color = style.ideal;
     for (final ConstellationPoint p in ideal) {
       canvas.drawCircle(toCanvas(p.i, p.q, size, m), idealR, idealPaint);
@@ -162,11 +169,11 @@ class ConstellationPainter extends CustomPainter {
     }
 
     // Received cloud.
-    final double rxR = (spacingPx * 0.09).clamp(1.2, 3.0);
+    final double rxR = sc.markerSize((spacingPx * 0.09).clamp(1.2, 3.0));
     final Paint rxPaint = Paint()..color = style.received;
     final Paint errPaint = Paint()
       ..color = style.error
-      ..strokeWidth = 1.5
+      ..strokeWidth = sc.strokeWidth(1.5)
       ..strokeCap = StrokeCap.round;
     for (final SimulatedSymbol s in cloud) {
       final Offset c = toCanvas(s.receivedI, s.receivedQ, size, m);
@@ -188,27 +195,27 @@ class ConstellationPainter extends CustomPainter {
       final Paint ring = Paint()
         ..color = style.highlight
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-      canvas.drawCircle(ideal0, idealR + 4, ring);
+        ..strokeWidth = sc.strokeWidth(2);
+      canvas.drawCircle(ideal0, idealR + sc.markerSize(4), ring);
       canvas.drawLine(
         ideal0,
         rx,
         Paint()
           ..color = style.highlight
-          ..strokeWidth = 1.5,
+          ..strokeWidth = sc.strokeWidth(1.5),
       );
       canvas.drawCircle(
         rx,
-        rxR + 2,
+        rxR + sc.markerSize(2),
         Paint()..color = cur.isSymbolError ? style.error : style.received,
       );
       canvas.drawCircle(
         rx,
-        rxR + 2,
+        rxR + sc.markerSize(2),
         Paint()
           ..color = style.highlight
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
+          ..strokeWidth = sc.strokeWidth(1),
       );
     }
 
@@ -218,11 +225,11 @@ class ConstellationPainter extends CustomPainter {
       final Offset c = toCanvas(pr.i, pr.q, size, m);
       canvas.drawCircle(
         c,
-        idealR + 3,
+        idealR + sc.markerSize(3),
         Paint()
           ..color = style.highlight
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
+          ..strokeWidth = sc.strokeWidth(1.5),
       );
     }
   }
@@ -270,6 +277,7 @@ class WaveformStyle {
     required this.boundary,
     required this.baseline,
     required this.currentBar,
+    this.scale = PresenterScale.normal,
   });
 
   final Color iTrace;
@@ -278,6 +286,9 @@ class WaveformStyle {
   final Color boundary;
   final Color baseline;
   final Color currentBar;
+
+  /// Presenter scale for strokes (1.0 outside presenter mode).
+  final PresenterScale scale;
 }
 
 /// Draws the carrier for a run of symbols: [cyclesPerSymbol] cycles each, the
@@ -312,6 +323,7 @@ class WaveformPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final PresenterScale sc = style.scale;
     final double mid = size.height / 2;
     final double amp = (size.height / 2) * 0.88;
     canvas.drawLine(
@@ -319,14 +331,14 @@ class WaveformPainter extends CustomPainter {
       Offset(size.width, mid),
       Paint()
         ..color = style.baseline
-        ..strokeWidth = 1,
+        ..strokeWidth = sc.strokeWidth(1),
     );
     if (symbols.isEmpty || slots <= 0) return;
 
     final double slotW = size.width / slots;
     final Paint boundary = Paint()
       ..color = style.boundary
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     for (int s = 1; s < slots; s++) {
       canvas.drawLine(
         Offset(s * slotW, 0),
@@ -385,12 +397,12 @@ class WaveformPainter extends CustomPainter {
       Paint()
         ..color = style.iTrace
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
+        ..strokeWidth = sc.strokeWidth(1),
     );
     final Paint qPaint = Paint()
       ..color = style.qTrace
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     for (final List<Offset> d in qDashes) {
       if (d.length < 2) continue;
       canvas.drawPath(Path()..addPolygon(d, false), qPaint);
@@ -400,14 +412,14 @@ class WaveformPainter extends CustomPainter {
       Paint()
         ..color = style.sum
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
+        ..strokeWidth = sc.strokeWidth(2.5)
         ..strokeJoin = StrokeJoin.round
         ..strokeCap = StrokeCap.round,
     );
 
     // Current (newest) symbol marker: a filled bar along the top of its slot.
     canvas.drawRect(
-      Rect.fromLTWH((slots - 1) * slotW, 0, slotW, 3),
+      Rect.fromLTWH((slots - 1) * slotW, 0, slotW, sc.strokeWidth(3)),
       Paint()..color = style.currentBar,
     );
   }

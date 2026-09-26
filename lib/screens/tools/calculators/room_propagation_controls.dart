@@ -26,6 +26,8 @@ import '../../../theme/app_typography.dart';
 import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'room_propagation_controller.dart';
 import 'wifi_through_a_wall_parts.dart'
@@ -48,16 +50,41 @@ class RoomPropagationControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: controller,
-      builder: (BuildContext context, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _SignalCard(c: controller),
-          const SizedBox(height: AppSpacing.sm),
-          _PositionsCard(c: controller),
-          const SizedBox(height: AppSpacing.sm),
-          _WallsCard(c: controller),
-        ],
-      ),
+      builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          // Presenter panel: the signal settings stay in view; the rest is
+          // one tap away. The client readout is on the stage.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _SignalCard(c: controller, presenter: true),
+              PresenterDisclosure(
+                title: 'The same spot on all three bands',
+                children: <Widget>[_BandsCard(c: controller)],
+              ),
+              // One fold for editing the plan: positions and walls.
+              PresenterDisclosure(
+                title: 'Edit the plan: positions, walls, doorways',
+                children: <Widget>[
+                  _PositionsCard(c: controller),
+                  const SizedBox(height: AppSpacing.sm),
+                  _WallsCard(c: controller),
+                ],
+              ),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _SignalCard(c: controller),
+            const SizedBox(height: AppSpacing.sm),
+            _PositionsCard(c: controller),
+            const SizedBox(height: AppSpacing.sm),
+            _WallsCard(c: controller),
+          ],
+        );
+      },
     );
   }
 }
@@ -78,23 +105,49 @@ class RoomPresetPicker extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final RoomPropagationController c = controller;
+        final Widget select = LabeledField(
+          label: 'Floor plan',
+          semanticLabel: 'Floor plan',
+          field: AppSelect<int>(
+            value: c.presetIndex,
+            semanticLabel: 'Floor plan',
+            items: <AppSelectItem<int>>[
+              for (int i = 0; i < _C.presets.length; i++)
+                (i, _C.presets[i].label),
+            ],
+            onChanged: c.loadPreset,
+          ),
+        );
+        if (PresenterMode.isActive(context)) {
+          // Presenter: Reset rides beside the select (R does the same).
+          return WallCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Expanded(child: select),
+                    const SizedBox(width: AppSpacing.xs),
+                    IconButton(
+                      onPressed: () => c.loadPreset(c.presetIndex),
+                      tooltip: 'Reset this plan (R)',
+                      icon: const Icon(Icons.restart_alt),
+                      color: context.colors.textAccent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(c.preset.lesson, style: _hint(context)),
+              ],
+            ),
+          );
+        }
         return WallCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              LabeledField(
-                label: 'Floor plan',
-                semanticLabel: 'Floor plan',
-                field: AppSelect<int>(
-                  value: c.presetIndex,
-                  semanticLabel: 'Floor plan',
-                  items: <AppSelectItem<int>>[
-                    for (int i = 0; i < _C.presets.length; i++)
-                      (i, _C.presets[i].label),
-                  ],
-                  onChanged: c.loadPreset,
-                ),
-              ),
+              select,
               const SizedBox(height: AppSpacing.xxs),
               Text(c.preset.lesson, style: _hint(context)),
               Align(
@@ -121,15 +174,88 @@ class RoomPresetPicker extends StatelessWidget {
 }
 
 class _SignalCard extends StatelessWidget {
-  const _SignalCard({required this.c});
+  const _SignalCard({required this.c, this.presenter = false});
 
   final RoomPropagationController c;
+
+  /// Presenter: band, channel, EIRP, reflections and diffraction in view;
+  /// the antenna and the overlays behind one disclosure; no hint lines but
+  /// the wavelength.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final List<Widget> antenna = <Widget>[
+      const SizedBox(height: AppSpacing.sm),
+      AppToggle<Polarization>(
+        label: 'AP antenna',
+        value: c.polarization,
+        expand: true,
+        items: const <AppToggleItem<Polarization>>[
+          (Polarization.te, 'Upright (TE)'),
+          (Polarization.tm, 'Flat (TM)'),
+        ],
+        onChanged: (Polarization p) => c.polarization = p,
+      ),
+      const SizedBox(height: AppSpacing.xxs),
+      Text(
+        'Upright: the electric field runs up and down, along every wall '
+        'face (TE). Flat: it lies in the plan (TM), and walls reflect a '
+        'glancing wave differently.',
+        style: _hint(context),
+      ),
+    ];
+    final List<Widget> overlays = <Widget>[
+      if (presenter) const SizedBox(height: AppSpacing.sm),
+      const WallSectionLabel('Overlays'),
+      _SwitchRow(
+        title: 'Fresnel zone to the client',
+        subtitle:
+            'Radius ${_C.cm(c.fresnelMidRadiusM, 0)} at the middle of the '
+            'path. Keep it clear of walls and edges.',
+        value: c.showFresnel,
+        onChanged: (bool v) => c.showFresnel = v,
+      ),
+      _SwitchRow(
+        title: 'Doorway shadow edges',
+        subtitle:
+            'Straight lines from the AP past each door jamb: where a '
+            'shadow would start with no diffraction.',
+        value: c.showShadows,
+        onChanged: (bool v) => c.showShadows = v,
+      ),
+      _SwitchRow(
+        title: 'Close-up of the ripple',
+        subtitle: 'Peaks and nulls every half wavelength around the client.',
+        value: c.showCloseUp,
+        onChanged: (bool v) => c.showCloseUp = v,
+      ),
+    ];
+    final Widget reflections = AppToggle<int>(
+      label: presenter ? 'Reflections (bounces)' : 'Reflections',
+      semanticLabel: 'Reflections',
+      value: c.reflectionOrder,
+      expand: true,
+      items: presenter
+          ? const <AppToggleItem<int>>[(0, 'None'), (1, '1'), (2, '2')]
+          : const <AppToggleItem<int>>[
+              (0, 'None'),
+              (1, '1 bounce'),
+              (2, '2 bounces'),
+            ],
+      onChanged: (int o) => c.reflectionOrder = o,
+    );
+    Widget diffraction(String label) => AppToggle<bool>(
+      label: label,
+      semanticLabel: 'Diffraction at wall ends and doorways',
+      value: c.diffraction,
+      expand: true,
+      items: const <AppToggleItem<bool>>[(true, 'On'), (false, 'Off')],
+      onChanged: (bool v) => c.diffraction = v,
+    );
     return WallCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,7 +271,7 @@ class _SignalCard extends StatelessWidget {
             ],
             onChanged: (WifiBand b) => c.band = b,
           ),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: presenter ? AppSpacing.xs : AppSpacing.sm),
           LabeledField(
             label: 'Channel',
             semanticLabel: 'Channel',
@@ -163,13 +289,15 @@ class _SignalCard extends StatelessWidget {
               onChanged: (int ch) => c.channel = ch,
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Wavelength ${_C.cm(c.lambda)}, half wavelength '
-            '${_C.cm(c.lambda / 2)}.',
-            style: _hint(context),
-          ),
-          const SizedBox(height: AppSpacing.sm),
+          if (!presenter) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Wavelength ${_C.cm(c.lambda)}, half wavelength '
+              '${_C.cm(c.lambda / 2)}.',
+              style: _hint(context),
+            ),
+          ],
+          SizedBox(height: presenter ? AppSpacing.xs : AppSpacing.sm),
           Row(
             children: <Widget>[
               const WallSectionLabel('AP EIRP'),
@@ -190,80 +318,60 @@ class _SignalCard extends StatelessWidget {
             label: '${c.eirpDbm.toStringAsFixed(0)} dBm',
             semanticFormatterCallback: (double v) => 'AP EIRP ${v.round()} dBm',
           ),
-          Text(
-            'Transmit power plus antenna gain. The receiver is a 0 dBi '
-            'antenna.',
-            style: _hint(context),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<Polarization>(
-            label: 'AP antenna',
-            value: c.polarization,
-            expand: true,
-            items: const <AppToggleItem<Polarization>>[
-              (Polarization.te, 'Upright (TE)'),
-              (Polarization.tm, 'Flat (TM)'),
-            ],
-            onChanged: (Polarization p) => c.polarization = p,
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Upright: the electric field runs up and down, along every wall '
-            'face (TE). Flat: it lies in the plan (TM), and walls reflect a '
-            'glancing wave differently.',
-            style: _hint(context),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<int>(
-            label: 'Reflections',
-            value: c.reflectionOrder,
-            expand: true,
-            items: const <AppToggleItem<int>>[
-              (0, 'None'),
-              (1, '1 bounce'),
-              (2, '2 bounces'),
-            ],
-            onChanged: (int o) => c.reflectionOrder = o,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<bool>(
-            label: 'Diffraction at wall ends and doorways',
-            value: c.diffraction,
-            expand: true,
-            items: const <AppToggleItem<bool>>[(true, 'On'), (false, 'Off')],
-            onChanged: (bool v) => c.diffraction = v,
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Off: straight lines only, so every shadow edge is sharp. On: '
-            'signal bends past edges (ITU-R P.526 knife edge).',
-            style: _hint(context),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const WallSectionLabel('Overlays'),
-          _SwitchRow(
-            title: 'Fresnel zone to the client',
-            subtitle:
-                'Radius ${_C.cm(c.fresnelMidRadiusM, 0)} at the middle of the '
-                'path. Keep it clear of walls and edges.',
-            value: c.showFresnel,
-            onChanged: (bool v) => c.showFresnel = v,
-          ),
-          _SwitchRow(
-            title: 'Doorway shadow edges',
-            subtitle:
-                'Straight lines from the AP past each door jamb: where a '
-                'shadow would start with no diffraction.',
-            value: c.showShadows,
-            onChanged: (bool v) => c.showShadows = v,
-          ),
-          _SwitchRow(
-            title: 'Close-up of the ripple',
-            subtitle:
-                'Peaks and nulls every half wavelength around the client.',
-            value: c.showCloseUp,
-            onChanged: (bool v) => c.showCloseUp = v,
-          ),
+          if (!presenter)
+            Text(
+              'Transmit power plus antenna gain. The receiver is a 0 dBi '
+              'antenna.',
+              style: _hint(context),
+            ),
+          if (!presenter) ...antenna,
+          SizedBox(height: presenter ? AppSpacing.xs : AppSpacing.sm),
+          if (!presenter) ...<Widget>[
+            reflections,
+            SizedBox(height: presenter ? AppSpacing.xs : AppSpacing.sm),
+            diffraction('Diffraction at wall ends and doorways'),
+          ] else
+            // Presenter: side by side when both fit at the presenter text
+            // size, stacked otherwise.
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints box) {
+                if (box.maxWidth <
+                    MediaQuery.textScalerOf(context).scale(400)) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      reflections,
+                      SizedBox(
+                        height: presenter ? AppSpacing.xs : AppSpacing.sm,
+                      ),
+                      diffraction('Diffraction'),
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Expanded(flex: 3, child: reflections),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(flex: 2, child: diffraction('Diffraction')),
+                  ],
+                );
+              },
+            ),
+          if (!presenter) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Off: straight lines only, so every shadow edge is sharp. On: '
+              'signal bends past edges (ITU-R P.526 knife edge).',
+              style: _hint(context),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            ...overlays,
+          ] else
+            PresenterDisclosure(
+              title: 'AP antenna and overlays',
+              children: <Widget>[...antenna, ...overlays],
+            ),
         ],
       ),
     );
@@ -661,10 +769,31 @@ class RoomPropagationReadouts extends StatelessWidget {
   }
 }
 
+/// The client readout alone ("At the client" and where the loss comes
+/// from). The presenter stage shows it under the close-up.
+class RoomClientReadout extends StatelessWidget {
+  const RoomClientReadout({super.key, required this.controller});
+
+  final RoomPropagationController controller;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: controller,
+    builder: (BuildContext context, _) =>
+        _ClientCard(c: controller, presenter: true),
+  );
+}
+
 class _ClientCard extends StatelessWidget {
-  const _ClientCard({required this.c});
+  const _ClientCard({required this.c, this.presenter = false});
 
   final RoomPropagationController c;
+
+  /// Presenter: the received level as the headline, then the loss chain one
+  /// value per row, right-aligned, without the per-wall detail and the
+  /// parenthetical notes, so it reads from the back of the room in a narrow
+  /// column.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
@@ -713,6 +842,9 @@ class _ClientCard extends StatelessWidget {
           'path${r.pathCount - 1 == 1 ? '' : 's'})';
     }
 
+    if (presenter) {
+      return _presenterCard(context, r, walls, difText, reflText);
+    }
     return WallCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -767,6 +899,87 @@ class _ClientCard extends StatelessWidget {
                       'diffraction and reflections, gives what the client '
                       'receives at this exact spot (before rounding).',
           ),
+        ],
+      ),
+    );
+  }
+}
+
+extension on _ClientCard {
+  Widget _presenterCard(
+    BuildContext context,
+    PointReport r,
+    String walls,
+    String difText,
+    String reflText,
+  ) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    // The same values as the phone card, without their notes in brackets.
+    String short(String v) => v.replaceFirst(RegExp(r' \(.*\)$'), '');
+
+    Widget row(String label, String value) => MergeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                label,
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                style: mono.inlineCode.copyWith(color: colors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return WallCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const WallSectionLabel('Received at the client'),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _C.dbm(c.clientDbm),
+              style: scale
+                  .headlineStyle(mono.outputLarge)
+                  .copyWith(color: colors.textAccent),
+            ),
+          ),
+          Text(
+            'Local average ${_C.dbm(c.clientAverageDbm)} (the map). '
+            '${r.distanceM.toStringAsFixed(2)} m from the AP, '
+            '${c.freqMHz} MHz.',
+            style: _hint(context),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          const WallSectionLabel('Where the loss comes from'),
+          row('AP EIRP', '${c.eirpDbm.toStringAsFixed(0)} dBm'),
+          row('Free space', '-${_C.fmt1(r.fsplDb)} dB'),
+          row(
+            r.crossed.length > 1
+                ? 'Walls (${r.crossed.length})'
+                : r.crossed.length == 1
+                ? 'Wall (1)'
+                : 'Walls',
+            short(walls),
+          ),
+          row('Diffraction', short(difText)),
+          row('Reflections', short(reflText)),
         ],
       ),
     );

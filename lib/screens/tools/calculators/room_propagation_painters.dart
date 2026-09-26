@@ -129,6 +129,7 @@ class PlanOverlayPainter extends CustomPainter {
     required this.labelStyle,
     this.drawMarkers = true,
     this.drawLabels = true,
+    this.markerScale = 1,
   });
 
   final PlanOverlayData data;
@@ -136,6 +137,9 @@ class PlanOverlayPainter extends CustomPainter {
   final TextStyle labelStyle;
   final bool drawMarkers;
   final bool drawLabels;
+
+  /// Presenter scale for the AP and client markers (1 elsewhere).
+  final double markerScale;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -355,25 +359,26 @@ class PlanOverlayPainter extends CustomPainter {
     final Offset c = transform.toPx(p);
     final Paint casing = Paint()..color = AppCoverageRamp.casing;
     final Paint ink = Paint()..color = AppCoverageRamp.viewportText;
+    final double m = markerScale;
     if (isAp) {
-      canvas.drawCircle(c, 9, casing);
-      canvas.drawCircle(c, 7, ink);
-      canvas.drawCircle(c, 2.5, casing);
+      canvas.drawCircle(c, 9 * m, casing);
+      canvas.drawCircle(c, 7 * m, ink);
+      canvas.drawCircle(c, 2.5 * m, casing);
     } else {
-      canvas.drawCircle(c, 9, casing);
+      canvas.drawCircle(c, 9 * m, casing);
       canvas.drawCircle(
         c,
-        6,
+        6 * m,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 3
+          ..strokeWidth = 3 * m
           ..color = AppCoverageRamp.viewportText,
       );
     }
     if (drawLabels) {
       _pill(
         canvas,
-        c + const Offset(0, -14),
+        c + Offset(0, -14 * m),
         isAp ? 'AP' : 'Client',
         above: true,
       );
@@ -417,7 +422,8 @@ class PlanOverlayPainter extends CustomPainter {
       old.data != data ||
       old.transform.scale != transform.scale ||
       old.transform.origin != transform.origin ||
-      old.labelStyle != labelStyle;
+      old.labelStyle != labelStyle ||
+      old.markerScale != markerScale;
 }
 
 /// Draws [a] -> [b] as dashes.

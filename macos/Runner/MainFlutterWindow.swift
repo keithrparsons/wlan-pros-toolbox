@@ -15,6 +15,27 @@ class MainFlutterWindow: NSWindow {
   // Nearby AP Scan — retained so the CoreWLAN neighbour-scan channel handler
   // stays live for the window lifetime.
   private var apScanChannel: ApScanChannel?
+  // Wi-Fi Lab presenter mode: full screen on request (window.toggleFullScreen).
+  // Retained so its handler stays live for the window lifetime.
+  private var presenterWindowChannel: FlutterMethodChannel?
+  private var fullScreenTarget: Bool?
+  private var inFullScreenTransition = false
+  private var fullScreenObservers: [NSObjectProtocol] = []
+
+  /// A full-screen transition ended: if a later request wants the other
+  /// state, apply it now.
+  private func settleFullScreen() {
+    inFullScreenTransition = false
+    let isFull = styleMask.contains(.fullScreen)
+    guard let want = fullScreenTarget else { return }
+    // Either way the request is spent: reached, or retried exactly once
+    // (so a transition that fails can never loop), and the user's own
+    // green-button toggle later is never reversed.
+    fullScreenTarget = nil
+    if want != isFull {
+      toggleFullScreen(nil)
+    }
+  }
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -61,6 +82,57 @@ class MainFlutterWindow: NSWindow {
     self.apScanChannel = ApScanChannel(
       messenger: flutterViewController.engine.binaryMessenger
     )
+
+    // Wi-Fi Lab presenter mode: full screen for a projector. Dart side:
+    // lib/widgets/presenter/presenter_window.dart. `setFullScreen` records the
+    // wanted state and toggles only when the window differs, so a repeated
+    // call never flips it back. A request that lands mid-animation is held
+    // and applied when the transition ends, so a quick Esc after entering
+    // still leaves full screen. It returns the state asked for, because the
+    // transition animates and styleMask would still report the old state.
+    self.collectionBehavior.insert(.fullScreenPrimary)
+    let center = NotificationCenter.default
+    for name in [NSWindow.willEnterFullScreenNotification,
+                 NSWindow.willExitFullScreenNotification] {
+      fullScreenObservers.append(center.addObserver(
+        forName: name, object: self, queue: .main
+      ) { [weak self] _ in self?.inFullScreenTransition = true })
+    }
+    for name in [NSWindow.didEnterFullScreenNotification,
+                 NSWindow.didExitFullScreenNotification] {
+      fullScreenObservers.append(center.addObserver(
+        forName: name, object: self, queue: .main
+      ) { [weak self] _ in self?.settleFullScreen() })
+    }
+    let presenter = FlutterMethodChannel(
+      name: "com.wlanpros.toolbox/window",
+      binaryMessenger: flutterViewController.engine.binaryMessenger
+    )
+    presenter.setMethodCallHandler { [weak self] call, result in
+      guard let window = self else {
+        result(false)
+        return
+      }
+      let isFull = window.styleMask.contains(.fullScreen)
+      switch call.method {
+      case "isFullScreen":
+        result(window.fullScreenTarget ?? isFull)
+      case "setFullScreen":
+        let want = (call.arguments as? Bool) ?? !isFull
+        if window.inFullScreenTransition {
+          window.fullScreenTarget = want
+        } else if want != isFull {
+          window.fullScreenTarget = want
+          window.toggleFullScreen(nil)
+        } else {
+          window.fullScreenTarget = nil
+        }
+        result(want)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    self.presenterWindowChannel = presenter
 
     super.awakeFromNib()
   }

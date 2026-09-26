@@ -55,11 +55,14 @@ class TimelineGeometry {
   static const double laneGap = AppSpacing.xxs;
   static const double axisHeight = AppSpacing.md;
 
-  /// Top of lane [row] (row 0 is the medium lane).
-  static double laneTop(int row) => row * (laneHeight + laneGap);
+  /// Top of lane [row] (row 0 is the medium lane). [k] scales the lanes
+  /// (the presenter layout fits them to the room; 1 everywhere else).
+  static double laneTop(int row, [double k = 1]) =>
+      row * (laneHeight * k + laneGap);
 
   /// Total canvas height for [stations] station lanes plus the medium lane.
-  static double height(int stations) => laneTop(stations + 1) + axisHeight;
+  static double height(int stations, [double k = 1]) =>
+      laneTop(stations + 1, k) + axisHeight * k;
 }
 
 /// Every visual kind a block on the timeline can take. Shared by the painter
@@ -82,8 +85,9 @@ void paintTimelineBlock(
   Canvas canvas,
   Rect rect,
   BlockStyle style,
-  AppColorScheme colors,
-) {
+  AppColorScheme colors, [
+  double stroke = 1,
+]) {
   switch (style) {
     case BlockStyle.wait:
     case BlockStyle.eifs:
@@ -92,13 +96,14 @@ void paintTimelineBlock(
         rect,
         style == BlockStyle.eifs ? colors.borderStrong : colors.textTertiary,
         dense: style == BlockStyle.eifs,
+        stroke: stroke,
       );
     case BlockStyle.backoff:
       canvas.drawRect(
-        rect.deflate(0.5),
+        rect.deflate(0.5 * stroke),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
+          ..strokeWidth = stroke
           ..color = colors.borderStrong,
       );
     case BlockStyle.frozen:
@@ -106,25 +111,25 @@ void paintTimelineBlock(
       canvas.drawRect(rect, Paint()..color = colors.border);
       if (style == BlockStyle.nav) {
         canvas.drawRect(
-          Rect.fromLTWH(rect.left, rect.top, rect.width, 2),
+          Rect.fromLTWH(rect.left, rect.top, rect.width, 2 * stroke),
           Paint()..color = colors.textTertiary,
         );
       }
     case BlockStyle.data:
       canvas.drawRect(rect, Paint()..color = colors.primary);
       canvas.drawRect(
-        rect.deflate(0.5),
+        rect.deflate(0.5 * stroke),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
+          ..strokeWidth = stroke
           ..color = colors.textAccent,
       );
     case BlockStyle.control:
       canvas.drawRect(
-        rect.deflate(0.75),
+        rect.deflate(0.75 * stroke),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
+          ..strokeWidth = 1.5 * stroke
           ..color = colors.textSecondary,
       );
     case BlockStyle.lost:
@@ -136,10 +141,10 @@ void paintTimelineBlock(
       // 2px boundary; the label on top is textPrimary.
       canvas.drawRect(rect, Paint()..color = hue.withValues(alpha: 0.3));
       canvas.drawRect(
-        rect.deflate(1),
+        rect.deflate(stroke),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
+          ..strokeWidth = 2 * stroke
           ..color = hue,
       );
     case BlockStyle.awaiting:
@@ -148,7 +153,7 @@ void paintTimelineBlock(
         Offset(rect.left, y),
         Offset(rect.right, y),
         Paint()
-          ..strokeWidth = 1
+          ..strokeWidth = stroke
           ..color = colors.textTertiary,
       );
   }
@@ -174,11 +179,17 @@ Color timelineLabelColor(BlockStyle style, AppColorScheme colors) {
   }
 }
 
-void _hatch(Canvas canvas, Rect rect, Color color, {required bool dense}) {
-  final double step = dense ? AppSpacing.xxs : AppSpacing.xs;
+void _hatch(
+  Canvas canvas,
+  Rect rect,
+  Color color, {
+  required bool dense,
+  double stroke = 1,
+}) {
+  final double step = (dense ? AppSpacing.xxs : AppSpacing.xs) * stroke;
   final Paint p = Paint()
     ..color = color
-    ..strokeWidth = 1;
+    ..strokeWidth = stroke;
   canvas.save();
   canvas.clipRect(rect);
   final double h = rect.height;
@@ -220,6 +231,9 @@ class MediumAccessTimelinePainter extends CustomPainter {
     required this.labels,
     required this.scroll,
     required this.legacyDcf,
+    this.laneScale = 1,
+    this.timeScale = 1,
+    this.strokeScale = 1,
   }) : super(repaint: scroll);
 
   final MediumAccessEngine engine;
@@ -236,10 +250,18 @@ class MediumAccessTimelinePainter extends CustomPainter {
   /// Label the plain wait "DIFS" in legacy mode and "AIFS" under EDCA.
   final bool legacyDcf;
 
+  /// Presenter scales: lane height, pixels per microsecond, line widths.
+  /// All 1 outside presenter mode.
+  final double laneScale;
+  final double timeScale;
+  final double strokeScale;
+
+  double get _pxPerUs => zoom.pxPerUs * timeScale;
+
   double _labelLeft = 0;
   double _labelRight = double.infinity;
 
-  double _x(int us) => (us - (nowUs - zoom.windowUs)) * zoom.pxPerUs;
+  double _x(int us) => (us - (nowUs - zoom.windowUs)) * _pxPerUs;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -258,14 +280,15 @@ class MediumAccessTimelinePainter extends CustomPainter {
     visRight += AppSpacing.xl;
 
     final int nStations = engine.config.stations.length;
-    const double lh = TimelineGeometry.laneHeight;
+    final double k = laneScale;
+    final double lh = TimelineGeometry.laneHeight * k;
 
     // Lane backgrounds: a decorative hairline under each lane.
     final Paint rule = Paint()
       ..color = colors.border
-      ..strokeWidth = 1;
+      ..strokeWidth = strokeScale;
     for (int row = 0; row <= nStations; row++) {
-      final double y = TimelineGeometry.laneTop(row) + lh;
+      final double y = TimelineGeometry.laneTop(row, k) + lh;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), rule);
     }
 
@@ -276,12 +299,12 @@ class MediumAccessTimelinePainter extends CustomPainter {
       if (x1 < visLeft || x0 > visRight) continue;
       final Rect r = Rect.fromLTRB(
         x0,
-        TimelineGeometry.laneTop(s.lane + 1),
+        TimelineGeometry.laneTop(s.lane + 1, k),
         x1,
-        TimelineGeometry.laneTop(s.lane + 1) + lh,
+        TimelineGeometry.laneTop(s.lane + 1, k) + lh,
       );
       final BlockStyle style = _styleFor(s);
-      paintTimelineBlock(canvas, r, style, colors);
+      paintTimelineBlock(canvas, r, style, colors, strokeScale);
       _label(canvas, r, _textFor(s), style);
     }
 
@@ -295,7 +318,13 @@ class MediumAccessTimelinePainter extends CustomPainter {
       final double x1 = _x(f.endUs);
       if (x1 < visLeft || x0 > visRight) continue;
       final BlockStyle style = _airStyle(f);
-      paintTimelineBlock(canvas, Rect.fromLTRB(x0, 0, x1, lh), style, colors);
+      paintTimelineBlock(
+        canvas,
+        Rect.fromLTRB(x0, 0, x1, lh),
+        style,
+        colors,
+        strokeScale,
+      );
     }
     int clusterEnd = -1;
     for (int i = 0; i < air.length; i++) {
@@ -434,10 +463,10 @@ class MediumAccessTimelinePainter extends CustomPainter {
     double visRight,
     int nStations,
   ) {
-    final double top = TimelineGeometry.laneTop(nStations + 1);
+    final double top = TimelineGeometry.laneTop(nStations + 1, laneScale);
     final Paint tick = Paint()
       ..color = colors.borderStrong
-      ..strokeWidth = 1;
+      ..strokeWidth = strokeScale;
     final TextStyle st = monoStyle.copyWith(color: colors.textTertiary);
     final int start = nowUs - zoom.windowUs;
     int first = (start ~/ zoom.tickUs) * zoom.tickUs;
@@ -446,9 +475,10 @@ class MediumAccessTimelinePainter extends CustomPainter {
       if (us < 0) continue;
       final double x = _x(us);
       if (x < visLeft || x > visRight) continue;
-      canvas.drawLine(Offset(x, top), Offset(x, top + AppSpacing.xxs), tick);
+      final double tickH = AppSpacing.xxs * laneScale;
+      canvas.drawLine(Offset(x, top), Offset(x, top + tickH), tick);
       final TextPainter tp = labels.label(_fmtUs(us), st);
-      tp.paint(canvas, Offset(x - tp.width / 2, top + AppSpacing.xxs));
+      tp.paint(canvas, Offset(x - tp.width / 2, top + tickH));
     }
     // The "now" edge.
     final double nx = size.width - 1;
@@ -457,7 +487,7 @@ class MediumAccessTimelinePainter extends CustomPainter {
       Offset(nx, top),
       Paint()
         ..color = colors.textAccent
-        ..strokeWidth = 2,
+        ..strokeWidth = 2 * strokeScale,
     );
   }
 
@@ -472,5 +502,9 @@ class MediumAccessTimelinePainter extends CustomPainter {
       old.engine != engine ||
       old.zoom != zoom ||
       old.colors != colors ||
-      old.legacyDcf != legacyDcf;
+      old.legacyDcf != legacyDcf ||
+      old.laneScale != laneScale ||
+      old.timeScale != timeScale ||
+      old.strokeScale != strokeScale ||
+      old.labelStyle != labelStyle;
 }
