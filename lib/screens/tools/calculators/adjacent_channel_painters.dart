@@ -70,13 +70,18 @@ void _text(
   double ay = 0,
   double? maxWidth,
   Color? backing,
+  double? clampWidth,
 }) {
   final TextPainter tp = TextPainter(
     text: TextSpan(text: s, style: style),
     textDirection: TextDirection.ltr,
     textAlign: TextAlign.center,
   )..layout(maxWidth: maxWidth ?? double.infinity);
-  final Offset o = at - Offset(tp.width * ax, tp.height * ay);
+  Offset o = at - Offset(tp.width * ax, tp.height * ay);
+  // Keep the label inside a canvas [clampWidth] wide.
+  if (clampWidth != null) {
+    o = Offset(o.dx.clamp(2, math.max(2, clampWidth - tp.width - 2)), o.dy);
+  }
   if (backing != null) {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -281,7 +286,8 @@ class AciSpectrumPainter extends CustomPainter {
       neighborLine,
     );
 
-    // Energy-detect threshold and the leakage, both spread over your 20 MHz.
+    // Energy-detect threshold and the effective interference, both spread
+    // over your 20 MHz.
     final double ccaY = yOf(c.ccaThresholdDbm - kAciPer20);
     _dashedH(
       canvas,
@@ -292,7 +298,7 @@ class AciSpectrumPainter extends CustomPainter {
         ..color = s.threshold
         ..strokeWidth = k.strokeWidth(1.6),
     );
-    final double leakY = yOf(result.leakageDbm - kAciPer20);
+    final double leakY = yOf(result.effectiveInterferenceDbm - kAciPer20);
     canvas.drawLine(
       Offset(rx0, leakY),
       Offset(rx1, leakY),
@@ -329,7 +335,7 @@ class AciSpectrumPainter extends CustomPainter {
     );
     _text(
       canvas,
-      'Leakage ${result.leakageDbm.toStringAsFixed(1)} dBm',
+      'Interference ${result.effectiveInterferenceDbm.toStringAsFixed(1)} dBm',
       s.neighborLabel,
       Offset(lx, leakLabelY),
       ax: ax,
@@ -448,7 +454,17 @@ class AciFloorPainter extends CustomPainter {
       ..strokeWidth = k.strokeWidth(2.5);
     canvas.drawLine(Offset(rxX, y), Offset(nx, y), nLink);
 
-    void radio(double x, Color fill, String name, String sub, TextStyle st) {
+    // The wanted radio's distance reads leftward from its dot and the
+    // neighbor's rightward, so the two never run into each other when both
+    // sit close to the receiver.
+    void radio(
+      double x,
+      Color fill,
+      String name,
+      String sub,
+      TextStyle st, {
+      required double subAx,
+    }) {
       final double r = k.markerSize(8);
       canvas.drawCircle(Offset(x, y), r, Paint()..color = fill);
       canvas.drawCircle(
@@ -460,7 +476,15 @@ class AciFloorPainter extends CustomPainter {
           ..strokeWidth = k.strokeWidth(1.5),
       );
       _text(canvas, name, st, Offset(x, y - r - 4), ax: 0.5, ay: 1);
-      _text(canvas, sub, s.label, Offset(x, y + r + 4), ax: 0.5);
+      final double subX = subAx == 1 ? x + r : (subAx == 0 ? x - r : x);
+      _text(
+        canvas,
+        sub,
+        s.label,
+        Offset(subX, y + r + 4),
+        ax: subAx,
+        clampWidth: size.width,
+      );
     }
 
     radio(
@@ -469,6 +493,7 @@ class AciFloorPainter extends CustomPainter {
       wantedName,
       '${_dist(c.wantedDistanceM)} away, ${c.wantedPowerDbm.round()} dBm',
       s.yoursLabel,
+      subAx: 1,
     );
     radio(
       nx,
@@ -476,6 +501,7 @@ class AciFloorPainter extends CustomPainter {
       'Neighbor, ${p.neighborLabel}',
       '${_dist(c.neighborDistanceM)} away, ${c.neighborPowerDbm.round()} dBm',
       s.neighborLabel,
+      subAx: 0,
     );
     // The receiver: a ring, drawn last so it sits on both links.
     final double rr = k.markerSize(11);

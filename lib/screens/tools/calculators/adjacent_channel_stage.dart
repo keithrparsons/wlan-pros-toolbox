@@ -231,8 +231,10 @@ class AdjacentChannelStage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xxs),
         Text(
           'Dashed across your channel: the clear channel assessment (CCA) '
-          'energy-detect threshold. The solid bar is the leakage. Both are '
-          'spread over your 20 MHz, so they compare directly. Moving a radio '
+          'energy-detect threshold. The solid bar is the interference: the '
+          'leakage plus what of the neighbor\'s own channel gets past your '
+          'receiver\'s filter. Both are spread over your 20 MHz, so they '
+          'compare directly. Moving a radio '
           'changes heights only; channel centers never move.',
           style: small,
         ),
@@ -292,7 +294,8 @@ class AdjacentChannelStage extends StatelessWidget {
         '${p.neighborWidthMHz} MHz wide, received at '
         '${AciFormat.dbm(r.neighborDbm)} in its own channel. Your channel '
         '${p.receiverLabel}, wanted signal ${AciFormat.dbm(r.wantedDbm)}. '
-        'Leakage into your 20 MHz ${AciFormat.dbm(r.leakageDbm)}, against a '
+        'Leakage into your 20 MHz ${AciFormat.dbm(r.leakageDbm)}; '
+        'interference ${AciFormat.dbm(r.effectiveInterferenceDbm)}, against a '
         'CCA threshold of ${r.config.ccaThresholdDbm.round()} dBm: '
         '${r.ccaBusy ? 'busy' : 'clear'}.';
   }
@@ -328,7 +331,6 @@ class AciHeadline extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final PresenterScale scale = PresenterMode.scaleOf(context);
     final AciResult r = controller.result;
-    final AciGroupReading h = r.headline;
 
     Widget value(String label, String v) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,12 +372,11 @@ class AciHeadline extends StatelessWidget {
             AciVerdictText(linkVerdict(r, colors)),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'SINR (signal to interference plus noise ratio) at '
-              '${h.group.label}',
+              'SINR (signal to interference plus noise ratio)',
               style: text.labelSmall?.copyWith(color: colors.textTertiary),
             ),
             Text(
-              AciFormat.db(h.sinrDb),
+              AciFormat.db(r.sinrDb),
               style: mono.outputMedium.copyWith(color: colors.textAccent),
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -385,11 +386,15 @@ class AciHeadline extends StatelessWidget {
               children: <Widget>[
                 value(
                   'SIR (signal to interference ratio)',
-                  AciFormat.db(h.sirDb),
+                  AciFormat.db(r.sirDb),
                 ),
                 value('Signal to noise, no neighbor', AciFormat.db(r.snrDb)),
                 value('Wanted signal', AciFormat.dbm(r.wantedDbm)),
                 value('Leakage in your 20 MHz', AciFormat.dbm(r.leakageDbm)),
+                value(
+                  'Interference',
+                  AciFormat.dbm(r.effectiveInterferenceDbm),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -419,8 +424,9 @@ class AciHeadline extends StatelessWidget {
             AciVerdictText(ccaVerdict(r, colors)),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Rejection ${AciFormat.n(h.rejectionDb, 0)} dB at '
-              '${h.group.label}: illustrative.',
+              'Selectivity ${AciFormat.n(r.selectivityDb, 0)} dB '
+              '(${r.config.separation.isAdjacent ? 'next channel' : 'one gap or more'}): '
+              'illustrative.',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
           ],

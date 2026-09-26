@@ -23,21 +23,32 @@
 //     linear power, relative to the mask integrated over the neighbor's own
 //     channel. The mask is a ceiling on the transmitter, so this is the worst
 //     case the rule allows, not what a real radio emits.
-//   - Receiver rejection: one ILLUSTRATIVE value per MCS group (spec 29: no
-//     primary per-rate table was read). Effective interference = leakage -
-//     rejection, as the spec defines it.
+//   - Receiver selectivity S: how far the receiver's filter pushes down the
+//     neighbor's IN-CHANNEL power. One ILLUSTRATIVE value per separation
+//     (35 dB next channel, 51 dB one gap or more), never per MCS.
+//   - Effective interference (spec 29 CORRECTION 2026-09-27, Pax,
+//     Deliverables/2026-09-26-wifi-classroom-wave4-research/
+//     adjacent-channel-rejection-check.md, formula c):
+//       I = P_neighbor + 10 log10(10^(L/10) + 10^(-S/10))
+//     Leakage L is already inside the receiver's channel, so no filter
+//     removes it; S acts only on the neighbor's own channel. The two add in
+//     linear power. The first version subtracted a per-MCS rejection from
+//     the leakage, which counted protection twice.
 //   - SINR, SIR, and the highest MCS the SINR supports: an MCS is supported
-//     when received power minus the rise of the noise floor caused by the
-//     interference still meets its minimum sensitivity (Rate vs Range's
-//     table, 20 MHz column), which is the same as SINR >= sensitivity -
-//     noise floor.
-//   - Clear channel assessment (CCA) energy detect: busy when the leakage in
-//     the receiver's 20 MHz is at or above the threshold (default -62 dBm,
-//     Channel Planner's CcaRule.energyDetect).
+//     when SINR >= its minimum sensitivity minus the noise floor (Rate vs
+//     Range's table, 20 MHz column). That per-MCS threshold is the ONLY
+//     place the rate enters: the receiver's rejection does not change with
+//     rate.
+//   - Clear channel assessment (CCA) energy detect: busy when the effective
+//     interference (what gets past the filter) is at or above the threshold
+//     (default -62 dBm, Channel Planner's CcaRule.energyDetect).
+//   - Reference only: the standard's minimum adjacent-channel rejection
+//     (ACR) per MCS, via a 2024 802.11be test white paper (Table 6-5).
+//     ACR + minimum sensitivity = -66 dBm at every MCS; a test holds that.
 //
 // THE STANDING DRAWING RULE (README, Keith 2026-09-25): power changes change
 // heights only. Channel centers come from the channel choice alone (band,
-// width, separation) and never from distance, power, rejection or the CCA
+// width, separation) and never from distance, power, selectivity or the CCA
 // threshold; a test holds that.
 //
 // ASCII only, no em dashes (GL-004).
@@ -191,6 +202,10 @@ enum AciSeparation {
   /// 2.4 GHz only: the receiver's channel.
   final int? receiver24Channel;
 
+  /// True for the next channel. Every 2.4 GHz pair counts as next-channel:
+  /// their centers are 15 to 25 MHz apart, about one channel width.
+  bool get isAdjacent => gaps == null || gaps == 0;
+
   /// The separations offered in [band], in order of growing distance for 5
   /// and 6 GHz and of the plans for 2.4 GHz.
   static List<AciSeparation> forBand(WifiBand band) => band == WifiBand.band24
@@ -311,33 +326,25 @@ AciChannelPlan resolveAciPlan(
   );
 }
 
-// ── MCS groups and rejection ────────────────────────────────────────────────
+// ── Receiver selectivity and the standard's reference table ───────────────
 
-/// The MCS groups that each get one illustrative rejection value.
-enum AciRateGroup {
-  low('MCS 0 to 2', 0, 2, 16),
-  mid('MCS 3 to 4', 3, 4, 10),
-  high('MCS 5 to 7', 5, 7, 4),
-  top('MCS 8 to 13', 8, 13, -1);
+/// ILLUSTRATIVE selectivity defaults, dB (Pax's inference, 2026-09-27: the
+/// non-adjacent value is the adjacent one + 16 dB, mirroring the standard's
+/// constant 16 dB gap between adjacent and non-adjacent rejection).
+const double kAciDefaultSelectivityAdjacentDb = 35;
+const double kAciDefaultSelectivityNonAdjacentDb = 51;
 
-  const AciRateGroup(
-    this.label,
-    this.firstMcs,
-    this.lastMcs,
-    this.defaultRejectionDb,
-  );
+/// The standard's minimum adjacent-channel rejection (ACR), dB, MCS 0 to 13,
+/// same-width interferer one channel width away. Via a 2024 802.11be test
+/// white paper, Table 6-5 (the standard itself was not read). REFERENCE ONLY:
+/// it is a pass/fail ratio measured with each MCS's signal requirement
+/// already folded in, so it is shown, never fed into the SINR.
+const List<double> kAciStandardAcrDb = <double>[
+  16, 13, 11, 8, 4, 0, -1, -2, -7, -9, -12, -14, -17, -20, //
+];
 
-  final String label;
-  final int firstMcs;
-  final int lastMcs;
-
-  /// ILLUSTRATIVE default (spec 29: "16 dB at low rates falling to -1 dB at
-  /// the highest rate"; no primary per-rate table was read).
-  final double defaultRejectionDb;
-
-  static AciRateGroup of(int mcs) =>
-      AciRateGroup.values.firstWhere((AciRateGroup g) => mcs <= g.lastMcs);
-}
+/// The standard's non-adjacent rejection is ACR + 16 dB at every MCS.
+double aciStandardNonAdjacentDb(int mcs) => kAciStandardAcrDb[mcs] + 16;
 
 /// Who is listening: sets the labels only; the math is the same.
 enum AciListener {
@@ -369,7 +376,8 @@ class AciConfig {
     this.wantedDistanceM = 10,
     this.wantedPowerDbm = 20,
     this.pathLossExponent = 3,
-    this.rejectionDb = kAciDefaultRejection,
+    this.selectivityAdjacentDb = kAciDefaultSelectivityAdjacentDb,
+    this.selectivityNonAdjacentDb = kAciDefaultSelectivityNonAdjacentDb,
     this.ccaThresholdDbm = kAciDefaultCcaDbm,
   });
 
@@ -392,13 +400,18 @@ class AciConfig {
   final double wantedPowerDbm;
   final double pathLossExponent;
 
-  /// ILLUSTRATIVE receiver rejection per group, dB, in [AciRateGroup] order.
-  final List<double> rejectionDb;
+  /// ILLUSTRATIVE receiver selectivity for the next channel, dB.
+  final double selectivityAdjacentDb;
+
+  /// ILLUSTRATIVE receiver selectivity for one gap or more, dB.
+  final double selectivityNonAdjacentDb;
 
   /// Energy-detect threshold, dBm per 20 MHz.
   final double ccaThresholdDbm;
 
-  double rejectionFor(AciRateGroup g) => rejectionDb[g.index];
+  /// The selectivity that applies at this separation.
+  double get selectivityDb =>
+      separation.isAdjacent ? selectivityAdjacentDb : selectivityNonAdjacentDb;
 
   AciConfig copyWith({
     WifiBand? band,
@@ -411,7 +424,8 @@ class AciConfig {
     double? wantedDistanceM,
     double? wantedPowerDbm,
     double? pathLossExponent,
-    List<double>? rejectionDb,
+    double? selectivityAdjacentDb,
+    double? selectivityNonAdjacentDb,
     double? ccaThresholdDbm,
   }) => AciConfig(
     band: band ?? this.band,
@@ -424,17 +438,18 @@ class AciConfig {
     wantedDistanceM: wantedDistanceM ?? this.wantedDistanceM,
     wantedPowerDbm: wantedPowerDbm ?? this.wantedPowerDbm,
     pathLossExponent: pathLossExponent ?? this.pathLossExponent,
-    rejectionDb: rejectionDb ?? this.rejectionDb,
+    selectivityAdjacentDb: selectivityAdjacentDb ?? this.selectivityAdjacentDb,
+    selectivityNonAdjacentDb:
+        selectivityNonAdjacentDb ?? this.selectivityNonAdjacentDb,
     ccaThresholdDbm: ccaThresholdDbm ?? this.ccaThresholdDbm,
   );
 
-  /// The same settings with one group's rejection replaced.
-  AciConfig withRejection(AciRateGroup g, double db) =>
-      copyWith(rejectionDb: <double>[...rejectionDb]..[g.index] = db);
+  /// The same settings with the selectivity for the current separation
+  /// replaced.
+  AciConfig withSelectivity(double db) => separation.isAdjacent
+      ? copyWith(selectivityAdjacentDb: db)
+      : copyWith(selectivityNonAdjacentDb: db);
 }
-
-/// ILLUSTRATIVE rejection defaults, dB, in [AciRateGroup] order.
-const List<double> kAciDefaultRejection = <double>[16, 10, 4, -1];
 
 /// Energy-detect threshold, dBm per 20 MHz (brief §4). The same value as
 /// Channel Planner's CcaRule.energyDetect; a test holds the two together.
@@ -450,36 +465,13 @@ abstract final class AciLimits {
   static const double powerMax = 30;
   static const double exponentMin = 2;
   static const double exponentMax = 4;
-  static const double rejectionMin = -10;
-  static const double rejectionMax = 40;
+  static const double selectivityMin = 20;
+  static const double selectivityMax = 60;
   static const double ccaMin = -82;
   static const double ccaMax = -52;
 }
 
 // ── Result ──────────────────────────────────────────────────────────────────
-
-/// The numbers for one MCS group.
-class AciGroupReading {
-  const AciGroupReading({
-    required this.group,
-    required this.rejectionDb,
-    required this.effectiveInterferenceDbm,
-    required this.sirDb,
-    required this.sinrDb,
-  });
-
-  final AciRateGroup group;
-  final double rejectionDb;
-
-  /// Leakage minus rejection, dBm.
-  final double effectiveInterferenceDbm;
-
-  /// Signal to interference ratio, dB.
-  final double sirDb;
-
-  /// Signal to interference plus noise ratio, dB.
-  final double sinrDb;
-}
 
 class AciResult {
   const AciResult({
@@ -493,7 +485,11 @@ class AciResult {
     required this.maskAtFarEdgeDbr,
     required this.leakageDbr,
     required this.leakageDbm,
-    required this.groups,
+    required this.selectivityDb,
+    required this.filteredDbm,
+    required this.effectiveInterferenceDbm,
+    required this.sirDb,
+    required this.sinrDb,
     required this.snrDb,
     required this.mcsWithout,
     required this.mcsWith,
@@ -527,8 +523,21 @@ class AciResult {
   /// Leakage power in the receiver's 20 MHz, dBm.
   final double leakageDbm;
 
-  /// One reading per MCS group, in [AciRateGroup] order.
-  final List<AciGroupReading> groups;
+  /// Receiver selectivity at this separation, dB (illustrative).
+  final double selectivityDb;
+
+  /// What of the neighbor's own channel gets past the filter, dBm:
+  /// neighbor power - selectivity.
+  final double filteredDbm;
+
+  /// Leakage + filtered, added in linear power, dBm.
+  final double effectiveInterferenceDbm;
+
+  /// Signal to interference ratio, dB.
+  final double sirDb;
+
+  /// Signal to interference plus noise ratio, dB.
+  final double sinrDb;
 
   /// Signal to noise with no neighbor, dB.
   final double snrDb;
@@ -539,18 +548,16 @@ class AciResult {
   /// Highest MCS with the neighbor, or null below MCS 0.
   final int? mcsWith;
 
-  /// Energy detect fires on the leakage alone.
+  /// Energy detect fires on the effective interference.
   final bool ccaBusy;
 
-  AciGroupReading reading(AciRateGroup g) => groups[g.index];
+  /// The SINR MCS [m] needs: its minimum sensitivity minus the noise floor.
+  double requiredSinrDb(int m) =>
+      RateVsRangeMath.sensitivityDbm(m, 20) - receiverNoiseDbm;
 
-  /// The group whose rejection decides the rate the link runs without the
-  /// neighbor (the low group when even MCS 0 fails).
-  AciRateGroup get headlineGroup =>
-      mcsWithout == null ? AciRateGroup.low : AciRateGroup.of(mcsWithout!);
-
-  /// The reading the headline shows.
-  AciGroupReading get headline => reading(headlineGroup);
+  /// The MCS the reference readout is about: the rate the link runs without
+  /// the neighbor, or MCS 0 when even that fails.
+  int get referenceMcs => mcsWithout ?? 0;
 }
 
 // ── The model ───────────────────────────────────────────────────────────────
@@ -600,27 +607,16 @@ AciResult computeAci(AciConfig c) {
   );
   final double leakDbm = neighbor + leakDbr;
 
-  final List<AciGroupReading> groups = <AciGroupReading>[
-    for (final AciRateGroup g in AciRateGroup.values)
-      () {
-        final double ieff = leakDbm - c.rejectionFor(g);
-        return AciGroupReading(
-          group: g,
-          rejectionDb: c.rejectionFor(g),
-          effectiveInterferenceDbm: ieff,
-          sirDb: wanted - ieff,
-          sinrDb: wanted - _dbSum(noise, ieff),
-        );
-      }(),
-  ];
+  final double selectivity = c.selectivityDb;
+  final double filtered = neighbor - selectivity;
+  // Formula (c): leakage and filtered in-channel power add in linear power.
+  final double ieff = _dbSum(leakDbm, filtered);
+  final double sinr = wanted - _dbSum(noise, ieff);
 
   int? mcsWith;
   for (int m = 0; m <= RateVsRangeMath.maxMcs; m++) {
-    final AciGroupReading r = groups[AciRateGroup.of(m).index];
-    // SINR >= sensitivity - noise floor: the MCS's own SNR requirement.
-    if (r.sinrDb >= RateVsRangeMath.sensitivityDbm(m, 20) - noise) {
-      mcsWith = m;
-    }
+    // SINR >= sensitivity - noise floor: the MCS's own requirement.
+    if (sinr >= RateVsRangeMath.sensitivityDbm(m, 20) - noise) mcsWith = m;
   }
 
   return AciResult(
@@ -634,11 +630,15 @@ AciResult computeAci(AciConfig c) {
     maskAtFarEdgeDbr: aciMaskDbr(c.family, c.neighborWidthMHz, off + 10),
     leakageDbr: leakDbr,
     leakageDbm: leakDbm,
-    groups: groups,
+    selectivityDb: selectivity,
+    filteredDbm: filtered,
+    effectiveInterferenceDbm: ieff,
+    sirDb: wanted - ieff,
+    sinrDb: sinr,
     snrDb: wanted - noise,
     mcsWithout: RateVsRangeMath.mcsFor(wanted, 20),
     mcsWith: mcsWith,
-    ccaBusy: leakDbm >= c.ccaThresholdDbm,
+    ccaBusy: ieff >= c.ccaThresholdDbm,
   );
 }
 

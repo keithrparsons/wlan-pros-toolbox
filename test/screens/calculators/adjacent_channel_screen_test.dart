@@ -4,7 +4,7 @@
 // The model is pinned in test/services/wifi_lab/adjacent_channel_model_test
 // .dart; these cover the screen contract: catalog, route, help, icon and
 // keywords; acronyms spelled out at first use in the help; every rejection
-// value labeled illustrative; no vendor or product name in any string the tool
+// selectivity value labeled illustrative; no vendor or product name in any string the tool
 // ships; the fresh state and its verdicts; predict, then reveal; the controls
 // offer only what the band allows; stage and controls as separate widgets;
 // the copy text; phone and desktop widths in both themes with no overflow.
@@ -156,7 +156,7 @@ void main() {
   });
 
   test('the help spells out ACR, SINR, SIR, CCA, MCS, OFDM and dBr at first '
-      'use, and says the rejection values are illustrative', () {
+      'use, and says the selectivity values are illustrative', () {
     final String t = _helpText();
     for (final (String acronym, String spelled) in <(String, String)>[
       ('ACR', 'adjacent-channel rejection (ACR)'),
@@ -177,7 +177,13 @@ void main() {
       );
     }
     expect(t, contains('illustrative'));
-    expect(t, contains('no primary per-rate table was read'));
+    expect(t, contains('no measured selectivity was read'));
+    // Spec 29 CORRECTION: the teaching point, cited with no vendor name, and
+    // the wide-neighbor mask rule.
+    expect(t, contains('-66 dBm at every MCS'));
+    expect(t, contains('via a 2024 802.11be test white paper'));
+    expect(t, contains('1.5 times its width'));
+    expect(t, isNot(contains('count')));
   });
 
   test('no vendor or product name in any string the tool ships', () {
@@ -213,15 +219,15 @@ void main() {
     }
   });
 
-  testWidgets('fresh: 36 and 44 at 3 m, MCS 8 falls to MCS 4, energy detect '
+  testWidgets('fresh: 36 and 44 at 3 m, MCS 8 falls to MCS 3, energy detect '
       'clear, and the question waits', (WidgetTester tester) async {
     final AdjacentChannelController c = await _pump(tester);
     expect(c.plan.neighborChannel, 36);
     expect(c.plan.receiverChannel, 44);
     expect(find.text(kAciQuestion), findsOneWidget);
     expect(find.text('Reveal'), findsOneWidget);
-    expect(find.text('MCS 8 to MCS 4'), findsOneWidget);
-    expect(find.text('Down 4 MCS steps'), findsOneWidget);
+    expect(find.text('MCS 8 to MCS 3'), findsOneWidget);
+    expect(find.text('Down 5 MCS steps'), findsOneWidget);
     expect(find.text('Clear'), findsOneWidget);
     expect(
       find.text('Highest MCS (modulation and coding scheme)'),
@@ -236,20 +242,35 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('Adjacent-channel rejection (ACR)'),
+      find.textContaining('adjacent-channel rejection (ACR)'),
       findsOneWidget,
     );
   });
 
-  testWidgets('every rejection value is labeled illustrative', (
+  testWidgets('one selectivity slider, labeled illustrative, for the '
+      'current separation; the standard reference readout is not', (
     WidgetTester tester,
   ) async {
-    await _pump(tester);
+    final AdjacentChannelController c = await _pump(tester);
     expect(find.text(kAciIllustrativeNote), findsOneWidget);
-    for (final AciRateGroup g in AciRateGroup.values) {
-      expect(find.text('${g.label} (illustrative)'), findsOneWidget);
-    }
+    expect(
+      find.text('Selectivity, one gap or more (illustrative)'),
+      findsOneWidget,
+    );
     expect(find.textContaining(': illustrative.'), findsOneWidget);
+    // No per-MCS rejection sliders survive.
+    expect(find.textContaining('MCS 0 to 2'), findsNothing);
+    expect(
+      find.textContaining('ACR plus minimum sensitivity is -66 dBm'),
+      findsOneWidget,
+    );
+    c.separation = AciSeparation.adjacent;
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Selectivity, next channel (illustrative)'),
+      findsOneWidget,
+    );
+    expect(c.result.selectivityDb, 35);
   });
 
   testWidgets('Reveal loads the 36 and 44 at 30 cm scene and answers from it', (
@@ -309,7 +330,7 @@ void main() {
     c
       ..neighborDistanceM = 0.5
       ..neighborPowerDbm = 5
-      ..setRejection(AciRateGroup.low, 30);
+      ..selectivityDb = 30;
     await tester.pumpAndSettle();
     c.presenterActions.reset!();
     expect(c.config.neighborDistanceM, const AciConfig().neighborDistanceM);
@@ -320,7 +341,7 @@ void main() {
   });
 
   testWidgets('stage and controls are separate widgets, and the copy text '
-      'says the rejection is illustrative', (WidgetTester tester) async {
+      'says the selectivity is illustrative', (WidgetTester tester) async {
     final AdjacentChannelController c = await _pump(tester);
     expect(find.byType(AdjacentChannelStage), findsOneWidget);
     expect(find.byType(AdjacentChannelControls), findsOneWidget);
@@ -332,7 +353,7 @@ void main() {
       findsNothing,
     );
     final String copy = c.copyText();
-    expect(copy, contains('Rejection dB (illustrative)'));
+    expect(copy, contains('selectivity 51 dB (illustrative)'));
     expect(copy, contains('worst case the mask allows'));
     expect(copy, contains('ch 36'));
     expect(copy, contains('ch 44'));

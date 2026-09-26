@@ -24,7 +24,8 @@ const String kAdjacentChannelToolId = 'adjacent-channel';
 enum AciPrediction { problem, noProblem }
 
 /// The opening question's scene: two APs on 36 and 44, 30 cm apart, the
-/// listening AP hearing its own client 15 m away.
+/// listening AP hearing its own client 10 m away (the scene Pax worked in
+/// the 2026-09-27 rejection check).
 const AciConfig kAciQuestionScene = AciConfig(
   band: WifiBand.band5,
   family: AciMaskFamily.heEht,
@@ -32,7 +33,7 @@ const AciConfig kAciQuestionScene = AciConfig(
   separation: AciSeparation.oneGap,
   listener: AciListener.ap,
   neighborDistanceM: 0.3,
-  wantedDistanceM: 15,
+  wantedDistanceM: 10,
 );
 
 /// Number formatting shared by stage and controls.
@@ -186,10 +187,11 @@ class AdjacentChannelController extends ChangeNotifier {
 
   // ── Receiver ──────────────────────────────────────────────────────────────
 
-  void setRejection(AciRateGroup g, double db) => _apply(
-    _config.withRejection(
-      g,
-      db.clamp(AciLimits.rejectionMin, AciLimits.rejectionMax),
+  /// Sets the selectivity for the current separation (next channel, or one
+  /// gap or more); the other keeps its value.
+  set selectivityDb(double db) => _apply(
+    _config.withSelectivity(
+      db.clamp(AciLimits.selectivityMin, AciLimits.selectivityMax),
     ),
   );
 
@@ -267,20 +269,19 @@ class AdjacentChannelController extends ChangeNotifier {
         '(worst case the mask allows)',
       )
       ..writeln(
-        'Leakage in your 20 MHz ${AciFormat.dbm(r.leakageDbm)}; CCA '
+        'Leakage in your 20 MHz ${AciFormat.dbm(r.leakageDbm)}; receiver '
+        'selectivity ${n(r.selectivityDb, 0)} dB (illustrative) lets '
+        '${AciFormat.dbm(r.filteredDbm)} of the neighbor channel through; '
+        'effective interference ${AciFormat.dbm(r.effectiveInterferenceDbm)}',
+      )
+      ..writeln(
+        'SIR ${AciFormat.db(r.sirDb)}, SINR ${AciFormat.db(r.sinrDb)}; CCA '
         '${n(c.ccaThresholdDbm, 0)} dBm: ${r.ccaBusy ? 'busy' : 'clear'}',
       )
-      ..writeln('Group\tRejection dB (illustrative)\tSIR dB\tSINR dB');
-    for (final AciGroupReading g in r.groups) {
-      b.writeln(
-        '${g.group.label}\t${n(g.rejectionDb, 0)}\t${n(g.sirDb)}\t'
-        '${n(g.sinrDb)}',
+      ..writeln(
+        'Highest MCS: ${AciFormat.mcs(r.mcsWithout)} without the neighbor, '
+        '${AciFormat.mcs(r.mcsWith)} with it',
       );
-    }
-    b.writeln(
-      'Highest MCS: ${AciFormat.mcs(r.mcsWithout)} without the neighbor, '
-      '${AciFormat.mcs(r.mcsWith)} with it',
-    );
     return b.toString().trimRight();
   }
 }

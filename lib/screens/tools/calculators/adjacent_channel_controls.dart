@@ -32,9 +32,10 @@ import '../../../widgets/presenter/presenter_mode.dart';
 import 'adjacent_channel_controller.dart';
 import 'rate_vs_range_parts.dart';
 
-/// The spec's wording for every rejection value (spec 29).
+/// The label every selectivity value carries (spec 29 CORRECTION).
 const String kAciIllustrativeNote =
-    'Illustrative; real receivers vary; no primary per-rate table was read.';
+    'Illustrative; real receivers vary, and no measured selectivity was '
+    'read.';
 
 class AdjacentChannelControls extends StatelessWidget {
   const AdjacentChannelControls({super.key, required this.controller});
@@ -81,8 +82,8 @@ class AdjacentChannelControls extends StatelessWidget {
         _neighborPower(context),
         _wantedDistance(context),
         PresenterDisclosure(
-          title: 'Adjacent-channel rejection (ACR), illustrative',
-          children: <Widget>[_rejection(context, prose: false)],
+          title: 'Receiver selectivity, illustrative',
+          children: <Widget>[_selectivity(context, prose: false)],
         ),
         PresenterDisclosure(
           title: 'Who listens, wanted power, path loss, CCA',
@@ -284,11 +285,17 @@ class AdjacentChannelControls extends StatelessWidget {
 
   // ── Receiver ──────────────────────────────────────────────────────────────
 
-  Widget _rejection(BuildContext context, {required bool prose}) {
+  Widget _selectivity(BuildContext context, {required bool prose}) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final AciConfig cfg = controller.config;
+    final AciResult r = controller.result;
+    final String where = cfg.separation.isAdjacent
+        ? 'next channel'
+        : 'one gap or more';
+    final int m = r.referenceMcs;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -296,33 +303,44 @@ class AdjacentChannelControls extends StatelessWidget {
           kAciIllustrativeNote,
           style: text.bodySmall?.copyWith(color: colors.textSecondary),
         ),
-        for (final AciRateGroup g in AciRateGroup.values)
-          _slider(
-            context,
-            label: '${g.label} (illustrative)',
-            valueText:
-                '${AciFormat.n(controller.config.rejectionFor(g), 0)} dB',
-            value: controller.config.rejectionFor(g),
-            min: AciLimits.rejectionMin,
-            max: AciLimits.rejectionMax,
-            divisions: 50,
-            onChanged: (double v) => controller.setRejection(g, v),
-            semantic: (double v) =>
-                'Rejection at ${g.label} ${v.round()} dB, illustrative',
-          ),
+        _slider(
+          context,
+          label: 'Selectivity, $where (illustrative)',
+          valueText: '${AciFormat.n(cfg.selectivityDb, 0)} dB',
+          value: cfg.selectivityDb,
+          min: AciLimits.selectivityMin,
+          max: AciLimits.selectivityMax,
+          divisions: 40,
+          onChanged: (double v) => controller.selectivityDb = v,
+          semantic: (double v) =>
+              'Receiver selectivity, $where, ${v.round()} dB, illustrative',
+        ),
         if (prose) ...<Widget>[
           Text(
-            'Effective interference = leakage - rejection',
+            'Interference = neighbor + 10 log10(10^(leakage/10) + '
+            '10^(-selectivity/10))',
             style: mono.inlineCode.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Higher rates need more signal over the interference, so they '
-            'tolerate less: the defaults fall from 16 dB at the lowest rates '
-            'to -1 dB at the highest.',
+            'Selectivity only pushes down the neighbor\'s own channel. The '
+            'leakage is already inside yours, so no filter removes it; the '
+            'two add. Defaults: 35 dB for the next channel, 51 dB for one '
+            'gap or more.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ],
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'For reference, the standard\'s minimum adjacent-channel rejection '
+          '(ACR) at MCS $m is ${AciFormat.n(kAciStandardAcrDb[m], 0)} dB '
+          '(${AciFormat.n(aciStandardNonAdjacentDb(m), 0)} dB one gap away). '
+          'ACR plus minimum sensitivity is -66 dBm at every MCS: the '
+          'receiver\'s rejection does not change with rate, only how much '
+          'interference each rate can absorb. Via a 2024 802.11be test '
+          'white paper.',
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
       ],
     );
   }
@@ -364,19 +382,20 @@ class AdjacentChannelControls extends StatelessWidget {
         const RvrSectionLabel('Receiver'),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Adjacent-channel rejection (ACR): how much of the neighbor this '
-          'receiver copes with, per MCS group.',
+          'Selectivity: how far this receiver\'s filter pushes down the '
+          'neighbor\'s own channel. One value per separation, the same at '
+          'every rate.',
           style: text.bodyMedium?.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: AppSpacing.xxs),
-        _rejection(context, prose: prose),
+        _selectivity(context, prose: prose),
         const SizedBox(height: AppSpacing.sm),
         _cca(context),
         if (prose)
           Text(
             'Energy detect: the radio calls the air busy when this much '
-            'energy sits in its 20 MHz, whatever sent it. The usual value is '
-            '-62 dBm.',
+            'energy gets through into its 20 MHz, whatever sent it. The '
+            'usual value is -62 dBm.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         const SizedBox(height: AppSpacing.xs),
@@ -553,7 +572,9 @@ class AciQuestionCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           Text(
             'Channel 36 does not stop at its edge. At 30 cm its leakage into '
-            'channel 44 is ${AciFormat.dbm(r.leakageDbm)}, '
+            'channel 44 is ${AciFormat.dbm(r.leakageDbm)}; with what gets '
+            'past the receiver\'s filter, the interference is '
+            '${AciFormat.dbm(r.effectiveInterferenceDbm)}, '
             '${r.ccaBusy ? 'above' : 'below'} the '
             '${r.config.ccaThresholdDbm.round()} dBm energy-detect '
             'threshold${r.ccaBusy ? ', so the AP on 44 hears the air as busy and waits, as if the two shared a channel' : ''}.',
@@ -572,10 +593,11 @@ class AciQuestionCard extends StatelessWidget {
           Text(
             'Move the neighbor away with the Neighbor distance slider and '
             'watch the leakage fall. A second empty channel buys nothing '
-            'more here: past 30 MHz from its center a 20 MHz mask stays flat '
-            'at -40 dB below its in-channel level, so distance is what helps. '
-            'The mask is a ceiling, so this is the worst case the rule '
-            'allows.',
+            'more here: a 20 MHz neighbor\'s mask is flat at -40 dB below '
+            'its in-channel level past 30 MHz (1.5 channel widths) from its '
+            'center. A wider neighbor\'s mask keeps falling until 1.5 times '
+            'its width, so there each extra empty channel still helps. The '
+            'mask is a ceiling, so this is the worst case the rule allows.',
             style: body,
           ),
           Align(

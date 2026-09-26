@@ -217,10 +217,20 @@ class _AboutCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'The mask is a ceiling on the transmitter, so the leakage is the '
-            'worst case the rule allows; real radios leak less. The rejection '
-            'values are illustrative and the tool subtracts them from the '
-            'leakage, as the lesson defines it. Walls, antenna patterns and '
-            'fading are left out.',
+            'worst case the rule allows; real radios leak less. The '
+            'receiver\'s filter works only on the neighbor\'s own channel, '
+            'so interference = leakage plus what the filter lets through, '
+            'added in milliwatts. The selectivity values are illustrative. '
+            'Walls, antenna patterns and fading are left out.',
+            style: body,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'The rate enters only through what each MCS needs. The '
+            'standard\'s minimum adjacent-channel rejection plus minimum '
+            'sensitivity is -66 dBm at every MCS (via a 2024 802.11be test '
+            'white paper): the receiver\'s rejection does not change with '
+            'rate, only how much interference each rate can absorb.',
             style: body,
           ),
           const SizedBox(height: AppSpacing.xs),

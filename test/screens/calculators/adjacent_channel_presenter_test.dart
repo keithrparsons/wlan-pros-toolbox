@@ -118,7 +118,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the rejection fold opens, says illustrative, and state set '
+  testWidgets('the selectivity fold opens, says illustrative, and state set '
       'before presenting is still set', (WidgetTester tester) async {
     setWindow(tester, const Size(1920, 1080));
     installFakeWindow();
@@ -135,11 +135,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.config.neighborPowerDbm, 7);
     expect(find.text('7 dBm'), findsWidgets);
-    await tester.tap(
-      find.text('Adjacent-channel rejection (ACR), illustrative'),
-    );
+    await tester.tap(find.text('Receiver selectivity, illustrative'));
     await tester.pumpAndSettle();
-    expect(find.text('MCS 0 to 2 (illustrative)'), findsOneWidget);
+    expect(
+      find.text('Selectivity, one gap or more (illustrative)'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }
