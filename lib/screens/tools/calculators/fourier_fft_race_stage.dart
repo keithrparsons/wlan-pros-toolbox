@@ -17,6 +17,7 @@ import '../../../services/wifi_lab/fourier_race.dart';
 import '../../../theme/app_analyzer_rainbow.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_painters.dart';
 import 'fourier_fft_part2_painters.dart';
@@ -55,6 +56,25 @@ class FourierRaceStage extends StatelessWidget {
     final String runLen = fmtTime(run.runSeconds);
     final bool pathDrawn = run.sweepsInRun <= kMaxSweepLinesDrawn;
     final double height = plotHeight + 64;
+    final bool presenting = PresenterMode.isActive(context);
+
+    Widget waterfall(
+      Float32List grid,
+      String semantic,
+      bool showPath, {
+      double height = double.infinity,
+    }) => FourierPlot(
+      semantic: semantic,
+      height: height,
+      painter: WaterfallPainter(
+        run: run,
+        grid: grid,
+        progress: race.progress,
+        style: style,
+        revision: model.revision,
+        showSweepPath: showPath,
+      ),
+    );
 
     Widget panel({
       required String title,
@@ -70,18 +90,11 @@ class FourierRaceStage extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           LabCaption(subtitle),
           const SizedBox(height: AppSpacing.xs),
-          FourierPlot(
-            semantic: semantic,
-            height: height,
-            painter: WaterfallPainter(
-              run: run,
-              grid: grid,
-              progress: race.progress,
-              style: style,
-              revision: model.revision,
-              showSweepPath: showPath,
-            ),
-          ),
+          // Presenter: the waterfall takes the height the stage gives it.
+          if (presenting)
+            Expanded(child: waterfall(grid, semantic, showPath))
+          else
+            waterfall(grid, semantic, showPath, height: height),
         ],
       );
     }
@@ -110,6 +123,79 @@ class FourierRaceStage extends StatelessWidget {
           '${_caught(bt.sweptCaught, bt.total)} Bluetooth hops and '
           '${_caught(mw.sweptCaught, mw.total)} microwave pulses.',
     );
+
+    final String status =
+        '${race.paused ? 'Paused' : 'Playing'}: ${fmtTime(elapsed)} of '
+        '$runLen, slowed down '
+        '${(kRacePlayback.inMicroseconds / 1e6 / run.runSeconds).round()}x.';
+    if (presenting) {
+      // Presenter: the sweep time and what each analyzer caught are the
+      // lesson, so they lead; the two waterfalls share the height below.
+      return LabCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            LabStatRow(
+              children: <Widget>[
+                LabStat(
+                  label: 'Sweep time (k x Span / RBW²)',
+                  value: fmtTime(run.swept.sweepSeconds),
+                  accent: true,
+                ),
+                LabStat(
+                  label: 'Bluetooth hops caught, swept / FFT',
+                  value: bt.total == 0
+                      ? 'none yet'
+                      : '${bt.sweptCaught} / ${bt.fftCaught} of ${bt.total}',
+                ),
+                LabStat(
+                  label: 'Microwave pulses caught, swept / FFT',
+                  value: mw.total == 0
+                      ? 'none yet'
+                      : '${mw.sweptCaught} / ${mw.fftCaught} of ${mw.total}',
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: LabSectionLabel(
+                    'Synthetic 2.4 GHz scene: $span, $runLen, same scene '
+                    'for both, time running up',
+                  ),
+                ),
+                if (race.animating)
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      status,
+                      style: labMono(
+                        context,
+                      ).inlineCode.copyWith(color: context.colors.textPrimary),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(child: fftPanel),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: sweptPanel),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            const AnalyzerDbmLegend(),
+            const SizedBox(height: AppSpacing.xxs),
+            _PathLegend(pathDrawn: pathDrawn, sweeps: run.sweepsInRun),
+          ],
+        ),
+      );
+    }
 
     return LabCard(
       child: Column(
@@ -158,10 +244,10 @@ class FourierRaceStage extends StatelessWidget {
             Semantics(
               liveRegion: true,
               child: LabNote(
-                icon: Icons.play_arrow_rounded,
-                message:
-                    'Playing: ${fmtTime(elapsed)} of $runLen, slowed down '
-                    '${(kRacePlayback.inMicroseconds / 1e6 / run.runSeconds).round()}x.',
+                icon: race.paused
+                    ? Icons.pause_rounded
+                    : Icons.play_arrow_rounded,
+                message: status,
               ),
             ),
           ],

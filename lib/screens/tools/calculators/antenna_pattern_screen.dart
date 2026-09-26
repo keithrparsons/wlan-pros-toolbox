@@ -26,6 +26,13 @@
 //   antenna_pattern_painters.dart  the CustomPainters
 //   antenna_pattern_parts.dart     shared cards, rows, sliders, formatters
 //
+// PRESENTER (spec 00, 2026-09-26): the Present button (desktop and tablet
+// windows) opens the same stage and controls over the SAME lab in the
+// presenter layout (lib/widgets/presenter/). The 3D takes the stage's extra
+// height with the two cuts beside it. Keys: Space spins the 3D view, Right
+// turns it one step, R resets it, Up and Down move the antenna's main
+// setting (gain, elements or shape; none for the dipole).
+//
 // THEME: chrome from context.colors (dark §8 / light §8.20). The 3D colors
 // are the GL-003 §8.15.2 gain ramp in lib/theme/app_gain_ramp.dart, on a dark
 // viewport in both themes, with a dBi legend. Lime marks the measured
@@ -52,14 +59,17 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/antenna_pattern_math.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'antenna_pattern_controls.dart';
 import 'antenna_pattern_model.dart';
 import 'antenna_pattern_parts.dart';
 import 'antenna_pattern_stage.dart';
+import 'wifi_lab_presenter_follow.dart';
 
 export 'antenna_pattern_parts.dart' show kAntennaPatternToolId;
 
@@ -137,13 +147,33 @@ class _AntennaPatternScreenState extends State<AntennaPatternScreen> {
     return b.toString().trimRight();
   }
 
+  /// The presenter layout over this screen's lab (shared, not copied). The
+  /// main slider's key follows the antenna, so the layout is rebuilt when
+  /// that changes (and only then).
+  Widget _presenter(BuildContext context) => PresenterFollow(
+    listenable: _lab,
+    select: () => _lab.mainSliderLabel,
+    builder: (BuildContext context) => PresenterLayout(
+      title: 'Antenna Pattern',
+      stage: AntennaPatternStage(lab: _lab),
+      controls: AntennaPatternControls(lab: _lab),
+      actions: _lab.presenterActions,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Antenna Pattern'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.antennaPattern,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _buildCopyText),
+        ],
       ),
       body: SafeArea(
         top: false,

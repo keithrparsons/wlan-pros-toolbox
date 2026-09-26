@@ -20,7 +20,13 @@
 //                         list, and the bit table or the decision walk.
 //   - PhyPreambleControls (phy_preamble_controls.dart): mode, settings,
 //                         readouts and the LENGTH calculator, in parts.
-// This screen only composes them.
+// This screen only composes them. The Present button (desktop and tablet
+// windows) opens the same views over the SAME model in the presenter layout
+// (lib/widgets/presenter/, spec 00): the stage takes the bar, the headline
+// length and the bit table; the panel takes the mode, the block list and the
+// settings, with the rest folded. Keys: Right opens the next block (or asks
+// the next question), R closes it (or restarts the walk), Up and Down change
+// the PPDU type.
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). Blocks take a
 // sand (legacy) or blue (added) hue from phy_preamble_palette.dart under
@@ -30,11 +36,14 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/phy_preamble.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'phy_preamble_bit_table.dart';
 import 'phy_preamble_controls.dart';
 import 'phy_preamble_model.dart';
 import 'phy_preamble_parts.dart';
@@ -72,13 +81,63 @@ class _PhyPreambleScreenState extends State<PhyPreambleScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's model (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'PHY Preamble Reference',
+    stage: PhyPreambleStage(model: _model),
+    controls: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        PhyPreambleControls(
+          model: _model,
+          parts: const <PreambleControlPart>{PreambleControlPart.mode},
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        // The block list is the Explore lesson's keyboard route; walking the
+        // receiver's questions does not use it (Right asks the next one).
+        ListenableBuilder(
+          listenable: _model,
+          builder: (BuildContext context, _) =>
+              _model.mode == PreambleMode.explore
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: PpCard(child: PreambleBlockList(model: _model)),
+                )
+              : const SizedBox.shrink(),
+        ),
+        PhyPreambleControls(
+          model: _model,
+          parts: const <PreambleControlPart>{
+            PreambleControlPart.settings,
+            PreambleControlPart.readouts,
+            PreambleControlPart.length,
+          },
+          presenterFolds: const <Widget>[
+            PresenterDisclosure(
+              title: 'Sources and evidence tags',
+              children: <Widget>[
+                EvidenceKey(),
+                SizedBox(height: AppSpacing.xs),
+                _AboutCard(),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+    actions: _model.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('PHY Preamble Reference'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _model.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.phyPreamble, builder: _presenter),
+          AppCopyAction(textBuilder: _model.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

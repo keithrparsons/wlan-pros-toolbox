@@ -21,6 +21,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_ofdm_controls.dart';
@@ -77,13 +79,18 @@ class FourierModeSelector extends StatelessWidget {
                   onChanged: model.setMode,
                 ),
               );
+        final bool presenting = PresenterMode.isActive(context);
         return LabCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               selector,
-              const SizedBox(height: AppSpacing.xs),
-              LabCaption(blurb(model.mode)),
+              // Presenter: the stage shows the mode, and the "?" list names
+              // the 1 to 4 keys, so the blurb stays on the phone.
+              if (!presenting) ...<Widget>[
+                const SizedBox(height: AppSpacing.xs),
+                LabCaption(blurb(model.mode)),
+              ],
             ],
           ),
         );
@@ -104,6 +111,12 @@ class FourierControls extends StatelessWidget {
       listenable: Listenable.merge(<Listenable>[model, sound]),
       builder: (BuildContext context, _) {
         const Widget gap = SizedBox(height: AppSpacing.sm);
+        if (PresenterMode.isActive(context)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: _presenterCards(gap),
+          );
+        }
         final List<Widget> cards = switch (model.mode) {
           FourierMode.waves => <Widget>[
             _SoundCard(model: model, sound: sound),
@@ -133,12 +146,145 @@ class FourierControls extends StatelessWidget {
   }
 }
 
+extension on FourierControls {
+  /// Presenter panel, per mode: the inputs a lesson moves stay out, the
+  /// numbers are on the stage, and reference cards fold.
+  List<Widget> _presenterCards(Widget gap) => switch (model.mode) {
+    FourierMode.waves => <Widget>[
+      _SoundCard(model: model, sound: sound, compact: true),
+      gap,
+      _PresenterSinesCard(model: model),
+    ],
+    FourierMode.fft => <Widget>[
+      _LessonCard(model: model),
+      gap,
+      _AnalyzerCard(model: model, compact: true),
+      gap,
+      LabCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            PresenterDisclosure(
+              title: 'ENBW, RBW, sidelobes, scalloping',
+              children: <Widget>[_ReadoutsCard(model: model)],
+            ),
+            const PresenterDisclosure(
+              title: 'The Wi-Fi receiver is an FFT analyzer',
+              children: <Widget>[_WifiBridgeCard()],
+            ),
+          ],
+        ),
+      ),
+    ],
+    FourierMode.race => <Widget>[FourierRaceControls(model: model)],
+    FourierMode.ofdm => <Widget>[FourierOfdmControls(model: model)],
+  };
+}
+
+/// Presenter: one sine at a time. Chips pick the sine (Up and Down move its
+/// frequency), and its three sliders sit below them, so five sines fit the
+/// panel with no scroll.
+class _PresenterSinesCard extends StatelessWidget {
+  const _PresenterSinesCard({required this.model});
+  final FourierLabModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final List<SineComponent> parts = model.parts;
+    final int edit = model.editSine;
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LabeledField(
+            label: 'Start from',
+            semanticLabel: 'Start from preset',
+            field: AppSelect<WavePreset>(
+              value: model.preset,
+              semanticLabel: 'Start from preset',
+              items: <AppSelectItem<WavePreset>>[
+                for (final WavePreset p in WavePreset.values)
+                  if (p != WavePreset.custom ||
+                      model.preset == WavePreset.custom)
+                    (p, p.label),
+              ],
+              onChanged: model.applyPreset,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          LabCaption(_SinesCard.presetBlurb(model.preset)),
+          if (parts.length > 1)
+            MergeSemantics(
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'Show each sine behind the sum',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Switch(
+                    value: model.showComponents,
+                    onChanged: model.setShowComponents,
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              for (int i = 0; i < parts.length; i++)
+                ChoiceChip(
+                  label: Text('Sine ${i + 1}'),
+                  selected: i == edit,
+                  showCheckmark: false,
+                  selectedColor: colors.primary,
+                  labelStyle: TextStyle(
+                    color: i == edit ? colors.onPrimary : colors.textPrimary,
+                  ),
+                  backgroundColor: colors.surface2,
+                  side: BorderSide(color: colors.borderStrong),
+                  tooltip: 'Edit sine ${i + 1}',
+                  onSelected: (_) => model.setEditSine(i),
+                ),
+              // At five sines there is nothing to add; the button would
+              // only take a row.
+              if (model.canAddSine)
+                IconButton(
+                  onPressed: model.addSine,
+                  icon: const Icon(Icons.add_rounded),
+                  tooltip: 'Add a sine',
+                  color: colors.textPrimary,
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _SineRow(model: model, index: edit),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Waves ───────────────────────────────────────────────────────────────────
 
 class _SoundCard extends StatelessWidget {
-  const _SoundCard({required this.model, required this.sound});
+  const _SoundCard({
+    required this.model,
+    required this.sound,
+    this.compact = false,
+  });
   final FourierLabModel model;
   final FourierSound sound;
+
+  /// Presenter: the button (and the warning when audio fails) only.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +294,10 @@ class _SoundCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const LabSectionLabel('Sound'),
-          const SizedBox(height: AppSpacing.xs),
+          if (!compact) ...<Widget>[
+            const LabSectionLabel('Sound'),
+            const SizedBox(height: AppSpacing.xs),
+          ],
           if (unavailable) ...<Widget>[
             const _AudioUnavailableBanner(),
             const SizedBox(height: AppSpacing.xs),
@@ -174,14 +322,15 @@ class _SoundCard extends StatelessWidget {
                 minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
               ),
             ),
-          const SizedBox(height: AppSpacing.xs),
-          LabCaption(
-            model.allSilent
-                ? 'Every amplitude is zero, so there is nothing to play.'
-                : 'Plays each sine as its own tone at the frequency shown, as '
-                      'loud as its amplitude. The phase sliders do not change '
-                      'the sound. Mind your volume.',
-          ),
+          if (!compact) const SizedBox(height: AppSpacing.xs),
+          if (!compact)
+            LabCaption(
+              model.allSilent
+                  ? 'Every amplitude is zero, so there is nothing to play.'
+                  : 'Plays each sine as its own tone at the frequency shown, as '
+                        'loud as its amplitude. The phase sliders do not change '
+                        'the sound. Mind your volume.',
+            ),
         ],
       ),
     );
@@ -573,8 +722,11 @@ class _LessonCard extends StatelessWidget {
 }
 
 class _AnalyzerCard extends StatelessWidget {
-  const _AnalyzerCard({required this.model});
+  const _AnalyzerCard({required this.model, this.compact = false});
   final FourierLabModel model;
+
+  /// Presenter: without the sidelobe sentence under the window.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -602,11 +754,13 @@ class _AnalyzerCard extends StatelessWidget {
               onChanged: model.setWindow,
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          const LabCaption(
-            'The number after each window is its published highest sidelobe: '
-            'how far below the peak its leakage stays.',
-          ),
+          if (!compact) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            const LabCaption(
+              'The number after each window is its published highest '
+              'sidelobe: how far below the peak its leakage stays.',
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,

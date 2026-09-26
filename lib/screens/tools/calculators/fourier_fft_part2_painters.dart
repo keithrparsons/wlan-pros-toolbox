@@ -112,10 +112,10 @@ class WaterfallPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect plot = Rect.fromLTRB(
-      left,
-      top,
+      style.t(left),
+      style.t(top),
       size.width - right,
-      size.height - bottom,
+      size.height - style.t(bottom),
     );
     final double start = run.swept.startMhz;
     final double span = run.swept.spanMhz;
@@ -178,11 +178,11 @@ class WaterfallPainter extends CustomPainter {
       canvas.clipRect(plot);
       final Paint halo = Paint()
         ..color = AppAnalyzerRainbow.annotationHalo
-        ..strokeWidth = 3
+        ..strokeWidth = style.w(3)
         ..strokeCap = StrokeCap.round;
       final Paint line = Paint()
         ..color = AppAnalyzerRainbow.annotation
-        ..strokeWidth = 1.5
+        ..strokeWidth = style.w(1.5)
         ..strokeCap = StrokeCap.round;
       for (int m = 0; m * st < elapsed; m++) {
         final double t0 = m * st;
@@ -201,7 +201,7 @@ class WaterfallPainter extends CustomPainter {
       Paint()
         ..color = style.axis
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
+        ..strokeWidth = style.w(1),
     );
 
     // Frequency axis (MHz) below.
@@ -214,7 +214,7 @@ class WaterfallPainter extends CustomPainter {
         Offset(px, plot.bottom + 3),
         Paint()
           ..color = style.axis
-          ..strokeWidth = 1,
+          ..strokeWidth = style.w(1),
       );
       if (px < plot.right - 26 && px > plot.left + 10) {
         _label(
@@ -243,7 +243,7 @@ class WaterfallPainter extends CustomPainter {
         Offset(px, plot.top),
         Paint()
           ..color = style.marker
-          ..strokeWidth = 1.5,
+          ..strokeWidth = style.w(1.5),
       );
       _label(
         canvas,
@@ -317,10 +317,10 @@ class OfdmTimePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect plot = Rect.fromLTRB(
-      _left,
-      _top,
+      style.t(_left),
+      style.t(_top),
       size.width - 6,
-      size.height - _bottom,
+      size.height - style.t(_bottom),
     );
     final double gi = symbol.guardSeconds;
     final double total = symbol.totalSeconds;
@@ -342,10 +342,10 @@ class OfdmTimePainter extends CustomPainter {
 
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
     final Paint axis = Paint()
       ..color = style.axis
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
 
     // CP shade and the tail it was copied from.
     final Rect cp = Rect.fromLTRB(x(0), plot.top, x(gi), plot.bottom);
@@ -361,7 +361,7 @@ class OfdmTimePainter extends CustomPainter {
       tail,
       Paint()
         ..color = style.window
-        ..strokeWidth = 1.2,
+        ..strokeWidth = style.w(1.2),
     );
     _label(
       canvas,
@@ -431,14 +431,14 @@ class OfdmTimePainter extends CustomPainter {
       trace((({double re, double im}) v) => v.im),
       Paint()
         ..color = style.component
-        ..strokeWidth = 1.2
+        ..strokeWidth = style.w(1.2)
         ..style = PaintingStyle.stroke,
     );
     canvas.drawPath(
       trace((({double re, double im}) v) => v.re),
       Paint()
         ..color = style.signal
-        ..strokeWidth = 2
+        ..strokeWidth = style.w(2)
         ..style = PaintingStyle.stroke
         ..strokeJoin = StrokeJoin.round,
     );
@@ -452,11 +452,11 @@ class OfdmTimePainter extends CustomPainter {
       final Paint ring = Paint()
         ..color = style.axis
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1;
+        ..strokeWidth = style.w(1);
       for (int i = 0; i < count; i++) {
         final Offset o = Offset(x(i * ts), y(tx.re[i]));
-        canvas.drawCircle(o, 3, dot);
-        canvas.drawCircle(o, 3, ring);
+        canvas.drawCircle(o, style.m(3), dot);
+        canvas.drawCircle(o, style.m(3), ring);
       }
     }
     canvas.restore();
@@ -522,10 +522,10 @@ class OfdmSpectrumPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect plot = Rect.fromLTRB(
-      _left,
+      style.t(_left),
       6,
       size.width - 6,
-      size.height - _bottom,
+      size.height - style.t(_bottom),
     );
     final double df = symbol.spacingHz;
     double peakAmp = 1e-9;
@@ -541,10 +541,10 @@ class OfdmSpectrumPainter extends CustomPainter {
 
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
     final Paint axis = Paint()
       ..color = style.axis
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
 
     // Frequency ticks (MHz from the channel center).
     final double stepHz = _niceStep(2 * halfSpanHz / 1e6, 4) * 1e6;
@@ -587,7 +587,7 @@ class OfdmSpectrumPainter extends CustomPainter {
       Offset(x(0), plot.bottom),
       Paint()
         ..color = style.marker
-        ..strokeWidth = 1.5,
+        ..strokeWidth = style.w(1.5),
     );
     canvas.drawLine(Offset(plot.left, y(0)), Offset(plot.right, y(0)), axis);
     _label(
@@ -627,7 +627,7 @@ class OfdmSpectrumPainter extends CustomPainter {
     if (every) {
       final Paint each = Paint()
         ..color = style.component
-        ..strokeWidth = 1.2
+        ..strokeWidth = style.w(1.2)
         ..style = PaintingStyle.stroke;
       for (final int k in ks) {
         if (k == highlight) continue;
@@ -641,12 +641,12 @@ class OfdmSpectrumPainter extends CustomPainter {
         sincPath(h, amp),
         Paint()
           ..color = style.signal
-          ..strokeWidth = 2.5
+          ..strokeWidth = style.w(2.5)
           ..style = PaintingStyle.stroke,
       );
       canvas.drawCircle(
         Offset(x(h * df), y(amp)),
-        4,
+        style.m(4),
         Paint()..color = style.signal,
       );
       // Its zeros at every other active center, when they are far enough
@@ -659,12 +659,12 @@ class OfdmSpectrumPainter extends CustomPainter {
       final Paint ring = Paint()
         ..color = style.signal
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+        ..strokeWidth = style.w(1.5);
       for (final int k in ks) {
         if (k == h) continue;
         final double px = x(k * df);
         if (px < plot.left || px > plot.right) continue;
-        canvas.drawCircle(Offset(px, y(0)), 3.5, ring);
+        canvas.drawCircle(Offset(px, y(0)), style.m(3.5), ring);
       }
     }
     canvas.restore();
@@ -712,7 +712,7 @@ class OfdmConstellationPainter extends CustomPainter {
     );
     final Paint axis = Paint()
       ..color = style.axis
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
     canvas.drawLine(plot.centerLeft, plot.centerRight, axis);
     canvas.drawLine(plot.topCenter, plot.bottomCenter, axis);
     _label(
@@ -732,18 +732,18 @@ class OfdmConstellationPainter extends CustomPainter {
     for (final ConstellationPoint p in ModulationMath.constellation(
       modulation,
     )) {
-      canvas.drawCircle(at(p.i, p.q), r, gridDot);
+      canvas.drawCircle(at(p.i, p.q), style.m(r), gridDot);
     }
     final Paint ring = Paint()
       ..color = style.signal
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = style.w(2);
     for (final ConstellationPoint p in sent) {
-      canvas.drawCircle(at(p.i, p.q), 6, ring);
+      canvas.drawCircle(at(p.i, p.q), style.m(6), ring);
     }
     final Paint dot = Paint()..color = style.marker;
     for (final RecoveredPoint p in recovered) {
-      canvas.drawCircle(at(p.i, p.q), 2.5, dot);
+      canvas.drawCircle(at(p.i, p.q), style.m(2.5), dot);
     }
   }
 

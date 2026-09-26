@@ -22,6 +22,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'mimo_beamforming_controller.dart';
 import 'mimo_beamforming_parts.dart';
@@ -60,10 +62,36 @@ class MimoControls extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final MimoController c = controller;
+        // Presenter panel: the stream count, the sniffer's verdict and level,
+        // the capture measurement and the sounding share are on the stage,
+        // so the panel keeps the inputs and folds the tables.
+        final bool presenting = PresenterMode.isActive(context);
         final List<Widget> cards = <Widget>[
           if (parts.contains(MimoControlPart.setup)) _SetupCard(c),
-          if (parts.contains(MimoControlPart.inputs)) _InputsCard(c),
-          if (parts.contains(MimoControlPart.readouts)) ...<Widget>[
+          if (parts.contains(MimoControlPart.inputs))
+            _InputsCard(c, presenting: presenting),
+          if (presenting && parts.contains(MimoControlPart.readouts))
+            MbCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  PresenterDisclosure(
+                    title: 'Both directions side by side',
+                    children: <Widget>[_DirectionsCard(c)],
+                  ),
+                  if (c.sounding)
+                    PresenterDisclosure(
+                      title: 'Sounding, in detail',
+                      children: <Widget>[_SoundingReadoutCard(c)],
+                    ),
+                  const PresenterDisclosure(
+                    title: 'Our measurement, in full',
+                    children: <Widget>[_MeasurementCard()],
+                  ),
+                ],
+              ),
+            )
+          else if (parts.contains(MimoControlPart.readouts)) ...<Widget>[
             _DirectionsCard(c),
             _SnifferCard(c),
             const _MeasurementCard(),
@@ -96,81 +124,98 @@ class _SetupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
+    // Presenter: Swap joins the selects' row, and the stream sentence is
+    // dropped because the stage's headline says it.
+    final bool presenting = PresenterMode.isActive(context);
+    final Widget apSelect = LabeledField(
+      label: 'AP chains',
+      semanticLabel: 'AP antenna chains',
+      field: AppSelect<int>(
+        value: c.apChains,
+        semanticLabel: 'AP antenna chains',
+        items: <AppSelectItem<int>>[
+          for (final int n in kApChainOptions) (n, '$n'),
+        ],
+        onChanged: (int n) => c.apChains = n,
+      ),
+    );
+    final Widget clientSelect = LabeledField(
+      label: 'Client chains',
+      semanticLabel: 'Client antenna chains',
+      field: AppSelect<int>(
+        value: c.clientChains,
+        semanticLabel: 'Client antenna chains',
+        items: <AppSelectItem<int>>[
+          for (final int n in kClientChainOptions) (n, '$n'),
+        ],
+        onChanged: (int n) => c.clientChains = n,
+      ),
+    );
+    final Widget swap = Semantics(
+      button: true,
+      label:
+          'Swap: give the AP the client\'s chains and the '
+          'client the AP\'s',
+      excludeSemantics: true,
+      child: OutlinedButton.icon(
+        onPressed: c.swapSides,
+        icon: Icon(Icons.swap_horiz, color: colors.textAccent),
+        label: Text(
+          'Swap',
+          style: text.labelLarge?.copyWith(
+            color: colors.textAccent,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colors.textAccent,
+          side: BorderSide(color: colors.borderStrong, width: 1.5),
+          minimumSize: const Size(0, AppSpacing.minTouchTarget),
+        ),
+      ),
+    );
     return MbCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: LabeledField(
-                  label: 'AP chains',
-                  semanticLabel: 'AP antenna chains',
-                  field: AppSelect<int>(
-                    value: c.apChains,
-                    semanticLabel: 'AP antenna chains',
-                    items: <AppSelectItem<int>>[
-                      for (final int n in kApChainOptions) (n, '$n'),
-                    ],
-                    onChanged: (int n) => c.apChains = n,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: LabeledField(
-                  label: 'Client chains',
-                  semanticLabel: 'Client antenna chains',
-                  field: AppSelect<int>(
-                    value: c.clientChains,
-                    semanticLabel: 'Client antenna chains',
-                    items: <AppSelectItem<int>>[
-                      for (final int n in kClientChainOptions) (n, '$n'),
-                    ],
-                    onChanged: (int n) => c.clientChains = n,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  '${c.apChains}x${c.apChains} AP, '
-                  '${c.clientChains}x${c.clientChains} client: '
-                  '${c.downlink.streams} stream'
-                  '${c.downlink.streams == 1 ? '' : 's'} each way.',
-                  style: text.bodyMedium?.copyWith(color: colors.textSecondary),
-                ),
-              ),
-              Semantics(
-                button: true,
-                label:
-                    'Swap: give the AP the client\'s chains and the '
-                    'client the AP\'s',
-                excludeSemantics: true,
-                child: OutlinedButton.icon(
-                  onPressed: c.swapSides,
-                  icon: Icon(Icons.swap_horiz, color: colors.textAccent),
-                  label: Text(
-                    'Swap',
-                    style: text.labelLarge?.copyWith(
-                      color: colors.textAccent,
-                      fontWeight: FontWeight.w600,
+          if (presenting)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                Expanded(child: apSelect),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(child: clientSelect),
+                const SizedBox(width: AppSpacing.xs),
+                swap,
+              ],
+            )
+          else ...<Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(child: apSelect),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: clientSelect),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    '${c.apChains}x${c.apChains} AP, '
+                    '${c.clientChains}x${c.clientChains} client: '
+                    '${c.downlink.streams} stream'
+                    '${c.downlink.streams == 1 ? '' : 's'} each way.',
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.textAccent,
-                    side: BorderSide(color: colors.borderStrong, width: 1.5),
-                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
-                  ),
                 ),
-              ),
-            ],
-          ),
+                swap,
+              ],
+            ),
+          ],
           if (c.swapClamps)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xxs),
@@ -205,9 +250,14 @@ class _SetupCard extends StatelessWidget {
 // ── Inputs ──────────────────────────────────────────────────────────────────
 
 class _InputsCard extends StatelessWidget {
-  const _InputsCard(this.c);
+  const _InputsCard(this.c, {this.presenting = false});
 
   final MimoController c;
+
+  /// Presenter panel: the channel width and the sounding interval (set once
+  /// per lesson) fold away, and the drag hint is dropped (the stage shows
+  /// the pattern to drag).
+  final bool presenting;
 
   Slider _angleSlider(
     AppColorScheme colors,
@@ -248,70 +298,83 @@ class _InputsCard extends StatelessWidget {
             (double v) => c.snifferDeg = v,
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: LabeledField(
-                  label: 'Sniffer chains',
-                  semanticLabel: 'Sniffer receive chains',
-                  field: AppSelect<int>(
-                    value: c.snifferChains,
-                    semanticLabel: 'Sniffer receive chains',
-                    items: <AppSelectItem<int>>[
-                      for (final int n in kClientChainOptions) (n, '$n'),
-                    ],
-                    onChanged: (int n) => c.snifferChains = n,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: LabeledField(
-                  label: 'Channel width',
-                  semanticLabel: 'Channel width',
-                  field: AppSelect<ChannelWidth>(
-                    value: c.width,
-                    semanticLabel: 'Channel width',
-                    items: <AppSelectItem<ChannelWidth>>[
-                      for (final ChannelWidth w in ChannelWidth.values)
-                        (w, w.label),
-                    ],
-                    onChanged: (ChannelWidth w) => c.width = w,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          MbSliderHeader(
-            label: 'Sounding interval',
-            value: c.sounding ? _C.ms(c.intervalMs) : 'no sounding',
-          ),
-          Slider(
-            value: c.intervalIndex.toDouble(),
-            max: (kSoundingIntervalsMs.length - 1).toDouble(),
-            divisions: kSoundingIntervalsMs.length - 1,
-            onChanged: c.sounding
-                ? (double v) => c.intervalIndex = v.round()
-                : null,
-            activeColor: colors.primary,
-            inactiveColor: colors.disabledFill,
-            label: _C.ms(c.intervalMs),
-            semanticFormatterCallback: (double v) =>
-                'Sounding interval '
-                '${_C.ms(kSoundingIntervalsMs[v.round()])}',
-          ),
-          MbNote(
-            icon: Icons.swipe,
-            message:
-                'Drag the client or the sniffer in the beam pattern, or use '
-                'the angle sliders. Arrow keys move them 1 deg at a time.',
-          ),
+          if (presenting) ...<Widget>[
+            _snifferChains(),
+            PresenterDisclosure(
+              title: 'Channel width and sounding interval',
+              children: <Widget>[
+                _width(),
+                const SizedBox(height: AppSpacing.sm),
+                ..._interval(colors),
+              ],
+            ),
+          ] else ...<Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(child: _snifferChains()),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: _width()),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ..._interval(colors),
+            MbNote(
+              icon: Icons.swipe,
+              message:
+                  'Drag the client or the sniffer in the beam pattern, or use '
+                  'the angle sliders. Arrow keys move them 1 deg at a time.',
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _snifferChains() => LabeledField(
+    label: 'Sniffer chains',
+    semanticLabel: 'Sniffer receive chains',
+    field: AppSelect<int>(
+      value: c.snifferChains,
+      semanticLabel: 'Sniffer receive chains',
+      items: <AppSelectItem<int>>[
+        for (final int n in kClientChainOptions) (n, '$n'),
+      ],
+      onChanged: (int n) => c.snifferChains = n,
+    ),
+  );
+
+  Widget _width() => LabeledField(
+    label: 'Channel width',
+    semanticLabel: 'Channel width',
+    field: AppSelect<ChannelWidth>(
+      value: c.width,
+      semanticLabel: 'Channel width',
+      items: <AppSelectItem<ChannelWidth>>[
+        for (final ChannelWidth w in ChannelWidth.values) (w, w.label),
+      ],
+      onChanged: (ChannelWidth w) => c.width = w,
+    ),
+  );
+
+  List<Widget> _interval(AppColorScheme colors) => <Widget>[
+    MbSliderHeader(
+      label: 'Sounding interval',
+      value: c.sounding ? _C.ms(c.intervalMs) : 'no sounding',
+    ),
+    Slider(
+      value: c.intervalIndex.toDouble(),
+      max: (kSoundingIntervalsMs.length - 1).toDouble(),
+      divisions: kSoundingIntervalsMs.length - 1,
+      onChanged: c.sounding ? (double v) => c.intervalIndex = v.round() : null,
+      activeColor: colors.primary,
+      inactiveColor: colors.disabledFill,
+      label: _C.ms(c.intervalMs),
+      semanticFormatterCallback: (double v) =>
+          'Sounding interval '
+          '${_C.ms(kSoundingIntervalsMs[v.round()])}',
+    ),
+  ];
 }
 
 // ── Readouts ────────────────────────────────────────────────────────────────

@@ -8,8 +8,11 @@ import '../../../services/rf/modulation_math.dart';
 import '../../../services/wifi_lab/fourier_ofdm.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_ofdm_stage.dart';
@@ -23,6 +26,27 @@ class FourierOfdmControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Widget gap = SizedBox(height: AppSpacing.sm);
+    if (PresenterMode.isActive(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _PresenterOfdmCard(model: model),
+          gap,
+          LabCard(
+            child: PresenterDisclosure(
+              title: 'Time scale and the receiver',
+              children: <Widget>[
+                _SameTimeScaleSwitch(model: model),
+                const SizedBox(height: AppSpacing.xs),
+                _ReceiverCard(model: model),
+                const SizedBox(height: AppSpacing.xs),
+                const OfdmReceiverIsFftCard(),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -411,6 +435,272 @@ class OfdmReceiverIsFftCard extends StatelessWidget {
             emphasize: true,
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Presenter ───────────────────────────────────────────────────────────────
+
+/// "Same time scale for legacy and HE" as a labeled switch.
+class _SameTimeScaleSwitch extends StatelessWidget {
+  const _SameTimeScaleSwitch({required this.model});
+  final FourierLabModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final FourierOfdmState o = model.ofdm;
+    return MergeSemantics(
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Same time scale for legacy and HE',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
+          ),
+          Switch(value: o.sameTimeScale, onChanged: o.setSameTimeScale),
+        ],
+      ),
+    );
+  }
+}
+
+/// Presenter panel, OFDM: every input in one card, packed (the spacing and
+/// the symbol times are on the stage). View and numerology share a row, the
+/// sixteen subcarrier chips take two rows, and the modulation, guard
+/// interval and New data share one. One line keeps the frequency rule.
+class _PresenterOfdmCard extends StatelessWidget {
+  const _PresenterOfdmCard({required this.model});
+  final FourierLabModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final FourierOfdmState o = model.ofdm;
+    final OfdmNumerology nu = o.numerology;
+    final bool teaching = o.view == OfdmView.teaching;
+    final List<int> on = o.activeIndices;
+    final int? h = o.highlight;
+    final AppMonoText mono = labMono(context);
+    return LabCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                flex: 5,
+                child: AppToggle<OfdmView>(
+                  label: 'View',
+                  value: o.view,
+                  expand: true,
+                  items: const <AppToggleItem<OfdmView>>[
+                    (OfdmView.teaching, 'Teaching'),
+                    (OfdmView.real, 'Real Wi-Fi'),
+                  ],
+                  onChanged: o.setView,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                flex: 4,
+                child: AppToggle<OfdmNumerology>(
+                  label: 'Numerology',
+                  value: nu,
+                  expand: true,
+                  items: <AppToggleItem<OfdmNumerology>>[
+                    for (final OfdmNumerology v in OfdmNumerology.values)
+                      (v, v.shortLabel),
+                  ],
+                  onChanged: o.setNumerology,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          const LabCaption(
+            'The carrier frequency never changes: the center stays put and '
+            '20 MHz stays 20 MHz wide.',
+          ),
+          if (teaching) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: <Widget>[
+                Expanded(child: LabSectionLabel('On: ${on.length} of 16')),
+                TextButton(
+                  onPressed: on.length < 16 ? o.allOn : null,
+                  child: const Text('All on'),
+                ),
+                TextButton(
+                  onPressed: on.isNotEmpty ? o.allOff : null,
+                  child: const Text('All off'),
+                ),
+              ],
+            ),
+            // Eight to a row: two rows for sixteen.
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints c) {
+                const double gap = AppSpacing.xxs;
+                final double w = (c.maxWidth - gap * 7) / 8;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: <Widget>[
+                    for (final int k in OfdmMath.teachingIndices)
+                      SizedBox(
+                        width: w,
+                        child: _SubcarrierToggle(
+                          k: k,
+                          on: o.isOn(k),
+                          onTap: () => o.toggle(k),
+                          style: mono.inlineCode,
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: LabeledField(
+                  label: 'Modulation',
+                  semanticLabel: 'Modulation',
+                  field: AppSelect<Modulation>(
+                    value: o.modulation,
+                    semanticLabel: 'Modulation',
+                    items: <AppSelectItem<Modulation>>[
+                      for (final Modulation m in kOfdmModulations) (m, m.label),
+                    ],
+                    onChanged: o.setModulation,
+                  ),
+                ),
+              ),
+              if (nu.guardOptionsSeconds.length > 1) ...<Widget>[
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: LabeledField(
+                    label: 'Guard',
+                    semanticLabel: 'Guard interval',
+                    field: AppSelect<double>(
+                      value: o.guardSeconds,
+                      semanticLabel: 'Guard interval',
+                      items: <AppSelectItem<double>>[
+                        for (final double g in nu.guardOptionsSeconds)
+                          (g, fmtTime(g)),
+                      ],
+                      onChanged: o.setGuard,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: AppSpacing.xs),
+              OutlinedButton.icon(
+                onPressed: o.newData,
+                icon: const Icon(Icons.shuffle_rounded),
+                label: const Text('New data'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colors.textPrimary,
+                  side: BorderSide(color: colors.borderStrong, width: 1.5),
+                  minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                ),
+              ),
+            ],
+          ),
+          if (on.length > 1 && h != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: <Widget>[
+                Text(
+                  'Highlighted subcarrier (Right arrow steps)',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                ),
+                const Spacer(),
+                Text(
+                  fmtK(h),
+                  style: mono.inlineCode.copyWith(color: colors.textPrimary),
+                ),
+              ],
+            ),
+            Slider(
+              key: ValueKey<String>('presenter-${o.view.name}-${on.length}'),
+              value: on.indexOf(h).toDouble(),
+              min: 0,
+              max: (on.length - 1).toDouble(),
+              divisions: on.length - 1,
+              onChanged: (double v) =>
+                  o.setHighlight(on[v.round().clamp(0, on.length - 1)]),
+              activeColor: colors.primary,
+              inactiveColor: colors.borderStrong,
+              semanticFormatterCallback: (double v) =>
+                  'Highlighted subcarrier '
+                  '${fmtK(on[v.round().clamp(0, on.length - 1)])}',
+            ),
+          ],
+          if (on.isEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            const LabNote(
+              icon: Icons.info_outline,
+              message: 'Every subcarrier is off. Turn one on to see a symbol.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One subcarrier as an on/off button, sized by its grid cell.
+class _SubcarrierToggle extends StatelessWidget {
+  const _SubcarrierToggle({
+    required this.k,
+    required this.on,
+    required this.onTap,
+    required this.style,
+  });
+
+  final int k;
+  final bool on;
+  final VoidCallback onTap;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    return Semantics(
+      toggled: on,
+      button: true,
+      label:
+          'Subcarrier ${fmtK(k)}, ${on ? 'on' : 'off'}'
+          '${k == 0 ? '. Real Wi-Fi leaves the center (DC) subcarrier empty' : ''}',
+      excludeSemantics: true,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(0, AppSpacing.minTouchTarget),
+          backgroundColor: on ? colors.primary : colors.surface2,
+          foregroundColor: on ? colors.onPrimary : colors.textPrimary,
+          side: BorderSide(color: colors.borderStrong),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.control),
+          ),
+        ),
+        child: Text(
+          fmtK(k),
+          style: style.copyWith(
+            color: on ? colors.onPrimary : colors.textPrimary,
+          ),
+        ),
       ),
     );
   }

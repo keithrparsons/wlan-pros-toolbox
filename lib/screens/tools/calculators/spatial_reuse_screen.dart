@@ -18,7 +18,11 @@
 //   - SpatialReuseControls, SpatialReuseReadouts
 //                           (spatial_reuse_panels.dart)  inputs, numbers
 //   - the math              (services/wifi_lab/spatial_reuse_model.dart)
-// A later full-screen presenter layout reuses the same widgets side by side.
+// PRESENTER (spec 00, 2026-09-26): the Present button (desktop and tablet
+// windows) opens the same stage and controls over the SAME state in the
+// presenter layout (lib/widgets/presenter/). The decision and the links move
+// onto the stage; the panel folds the once-per-lesson settings. Keys: Up and
+// Down move OBSS_PD, R resets.
 //
 // LAYOUT: phone (< 720 px) pins the stage above scrolling readouts and
 // controls, so moving a slider shows its effect; on a short screen
@@ -41,9 +45,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'spatial_reuse_panels.dart';
 import 'spatial_reuse_stage.dart';
@@ -78,7 +84,10 @@ class _SpatialReuseScreenState extends State<SpatialReuseScreen> {
       appBar: AppBar(
         title: const Text('Spatial Reuse'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _state.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.spatialReuse, builder: _presenter),
+          AppCopyAction(textBuilder: _state.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -89,6 +98,16 @@ class _SpatialReuseScreenState extends State<SpatialReuseScreen> {
       ),
     );
   }
+
+  /// The presenter layout over this screen's state (shared, not copied).
+  /// The decision and both links are on the presenter stage, so the panel
+  /// holds only the controls.
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'Spatial Reuse',
+    stage: SpatialReuseStage(state: _state),
+    controls: ReuseCard(child: SpatialReuseControls(state: _state)),
+    actions: _state.presenterActions,
+  );
 
   List<Widget> _below() => <Widget>[
     SpatialReuseReadouts(state: _state),

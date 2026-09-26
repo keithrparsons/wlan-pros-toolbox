@@ -11,6 +11,13 @@
 // (phone), beside them (desktop) or full screen (the presenter layout,
 // spec 00). No waves are drawn, so nothing here can imply a frequency.
 //
+// PRESENTER (PresenterMode.isActive): the stage fills its bounded box with no
+// scroll. The decision and its numbers move onto the stage above the three
+// drawings (what the room is asked to predict), the drawings are zoomed as
+// one piece to fill the height (strokes and labels included, never below
+// the presenter text scale), and the two links sit side by side below them
+// with their SINR, best MCS and verdict.
+//
 // COLOR (GL-003 §8.15.2): each BSS gets one hue from the Wi-Fi Lab family in
 // lib/theme/wifi_lab_client_palette.dart (BSS A the blue, BSS B the violet),
 // always beside its name and color number, never color alone. The hue shows
@@ -33,6 +40,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
+import 'spatial_reuse_panels.dart';
 import 'spatial_reuse_state.dart';
 
 /// Palette slots for the two BSSs: blue and violet, both cool, so neither
@@ -93,7 +102,10 @@ class SpatialReuseStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: state,
-      builder: (BuildContext context, Widget? _) => _build(context),
+      builder: (BuildContext context, Widget? _) =>
+          PresenterMode.isActive(context)
+          ? _PresenterStage(state: state)
+          : _build(context),
     );
   }
 
@@ -119,7 +131,7 @@ class SpatialReuseStage extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.xs),
       child: Semantics(
-        label: _semantics(a),
+        label: semanticsOf(a),
         excludeSemantics: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -172,7 +184,8 @@ class SpatialReuseStage extends StatelessWidget {
     );
   }
 
-  String _semantics(ReuseAnalysis a) {
+  /// The worded description of the whole stage for screen readers.
+  static String semanticsOf(ReuseAnalysis a) {
     final ReuseScenario s = a.scenario;
     String db(double v) => v.toStringAsFixed(1);
     return 'Line of four radios. AP A at ${db(s.layout.apA)} metres, client A '
@@ -187,6 +200,285 @@ class SpatialReuseStage extends StatelessWidget {
         '${db(a.linkB.sinrDb)} dB, '
         '${a.linkB.bestMcs == null ? 'no MCS' : 'up to MCS ${a.linkB.bestMcs}'}. '
         '${a.frameTimes} frame-time${a.frameTimes == 1 ? '' : 's'} for both frames.';
+  }
+}
+
+// ── Presenter arrangement ─────────────────────────────────────────────────
+
+/// Drawing heights at zoom 1: line, meter, timeline.
+const double _kDrawingsHeight =
+    _LinePainter.height + _MeterPainter.height + _TimelinePainter.height;
+
+/// Narrowest the line may be, in its own (unzoomed) units, before its labels
+/// crowd: the zoom stops where the drawing would get narrower than this.
+const double _kMinLineWidth = 440;
+
+/// The largest zoom worth drawing; past it the labels outgrow the room.
+const double _kMaxZoom = 2.4;
+
+class _PresenterStage extends StatelessWidget {
+  const _PresenterStage({required this.state});
+
+  final SpatialReuseState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final ReuseAnalysis a = state.analysis;
+    final ReuseScenario s = state.scenario;
+    final _Style st = _Style.of(context);
+    final BssLook lookA = BssLook.of(context, s, bssA: true);
+    final BssLook lookB = BssLook.of(context, s, bssA: false);
+    String db(double v) => v.toStringAsFixed(1);
+
+    Widget stat(String label, String value, {bool accent = false}) =>
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: text.bodySmall?.copyWith(color: colors.textSecondary),
+              ),
+              Text(
+                value,
+                style: scale
+                    .headlineStyle(mono.outputMedium)
+                    .copyWith(
+                      color: accent ? colors.textAccent : colors.textPrimary,
+                    ),
+              ),
+            ],
+          ),
+        );
+
+    Widget link(String name, ReuseLink k, BssLook look) => Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: colors.surface2,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                ExcludeSemantics(
+                  child: Container(
+                    width: AppSpacing.sm,
+                    height: AppSpacing.sm,
+                    decoration: BoxDecoration(
+                      color: look.hue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.xxs,
+              children: <Widget>[
+                stat('SINR', '${db(k.sinrDb)} dB'),
+                stat(
+                  'Best MCS',
+                  k.bestMcs == null ? 'none' : 'MCS ${k.bestMcs}',
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            ReuseVerdict(link: k, style: text.bodyMedium, compact: true),
+          ],
+        ),
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: colors.border,
+          width: colors.isLight ? 1.5 : 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              reuseHeadline(a),
+              style: scale
+                  .headlineStyle(text.headlineSmall ?? text.titleLarge!)
+                  .copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            reuseWhy(a),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.xs,
+            children: <Widget>[
+              stat('AP B hears AP A', '${db(a.heardByBDbm)} dBm'),
+              stat('AP B transmit power', '${db(a.txPowerBDbm)} dBm'),
+              stat(
+                'Airtime, one frame each',
+                '${a.frameTimes} frame-time${a.frameTimes == 1 ? '' : 's'}',
+                accent: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: Semantics(
+              label: SpatialReuseStage.semanticsOf(a),
+              excludeSemantics: true,
+              child: _ZoomedDrawings(
+                state: state,
+                analysis: a,
+                style: st,
+                lookA: lookA,
+                lookB: lookB,
+                minZoom: scale.text,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              link('Link A: AP A to client A', a.linkA, lookA),
+              const SizedBox(width: AppSpacing.sm),
+              link('Link B: AP B to client B', a.linkB, lookB),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The line, the meter and the timeline, zoomed as one to fill the box.
+class _ZoomedDrawings extends StatelessWidget {
+  const _ZoomedDrawings({
+    required this.state,
+    required this.analysis,
+    required this.style,
+    required this.lookA,
+    required this.lookB,
+    required this.minZoom,
+  });
+
+  final SpatialReuseState state;
+  final ReuseAnalysis analysis;
+  final _Style style;
+  final BssLook lookA, lookB;
+
+  /// The presenter text scale: the drawings never get smaller than it.
+  final double minZoom;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final TextStyle? label = text.labelSmall?.copyWith(
+      color: colors.textTertiary,
+    );
+    // Measured, not estimated: the two captions are laid out exactly as
+    // the Text widgets below will lay them out.
+    final TextPainter probe = TextPainter(
+      text: TextSpan(text: 'Airtime', style: label),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final double labelH = probe.height;
+    probe.dispose();
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        // Two caption lines and three gaps sit between the drawings.
+        const double gaps = AppSpacing.xs * 2 + AppSpacing.xxs;
+        // A pixel of slack for rounding in the painted heights.
+        final double room = box.maxHeight - 2 * labelH - gaps - 1;
+        final double zoom = math.max(
+          1.0,
+          math.min(
+            math.min(room / _kDrawingsHeight, box.maxWidth / _kMinLineWidth),
+            math.max(minZoom, _kMaxZoom),
+          ),
+        );
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _LineGestures(
+              state: state,
+              zoom: zoom,
+              child: CustomPaint(
+                size: Size.fromHeight(_LinePainter.height * zoom),
+                painter: _LinePainter(
+                  analysis: analysis,
+                  style: style,
+                  lookA: lookA,
+                  lookB: lookB,
+                  zoom: zoom,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text('What AP B hears from AP A, dBm per 20 MHz', style: label),
+            CustomPaint(
+              size: Size.fromHeight(_MeterPainter.height * zoom),
+              painter: _MeterPainter(
+                analysis: analysis,
+                style: style,
+                sender: lookA,
+                zoom: zoom,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text('Airtime, one frame each', style: label),
+            const SizedBox(height: AppSpacing.xxs),
+            CustomPaint(
+              size: Size.fromHeight(_TimelinePainter.height * zoom),
+              painter: _TimelinePainter(
+                analysis: analysis,
+                style: style,
+                lookA: lookA,
+                lookB: lookB,
+                zoom: zoom,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -254,10 +546,17 @@ double _lineX(double metres, double width) =>
 // ── Gestures ──────────────────────────────────────────────────────────────
 
 class _LineGestures extends StatefulWidget {
-  const _LineGestures({required this.state, required this.child});
+  const _LineGestures({
+    required this.state,
+    required this.child,
+    this.zoom = 1,
+  });
 
   final SpatialReuseState state;
   final Widget child;
+
+  /// The line painter's zoom, so a touch maps back to its coordinates.
+  final double zoom;
 
   @override
   State<_LineGestures> createState() => _LineGesturesState();
@@ -285,13 +584,14 @@ class _LineGesturesState extends State<_LineGestures> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
-        final double w = c.maxWidth;
+        final double z = widget.zoom;
+        final double w = c.maxWidth / z;
         double toM(double x) =>
-            (x - _kLinePad) / (w - 2 * _kLinePad) * kReuseLineM;
+            (x / z - _kLinePad) / (w - 2 * _kLinePad) * kReuseLineM;
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
           onHorizontalDragStart: (DragStartDetails d) =>
-              _drag = _hit(d.localPosition, w),
+              _drag = _hit(d.localPosition / z, w),
           onHorizontalDragUpdate: (DragUpdateDetails d) {
             final ReuseNode? n = _drag;
             if (n != null) widget.state.move(n, toM(d.localPosition.dx));
@@ -313,11 +613,16 @@ class _LinePainter extends CustomPainter {
     required this.style,
     required this.lookA,
     required this.lookB,
+    this.zoom = 1,
   });
 
   final ReuseAnalysis analysis;
   final _Style style;
   final BssLook lookA, lookB;
+
+  /// Presenter zoom: the whole drawing, strokes and labels included, is
+  /// scaled by this (1 on the phone and desktop layouts).
+  final double zoom;
 
   static const double height = 156;
   static const double apY = 50;
@@ -326,6 +631,13 @@ class _LinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(zoom);
+    _paint(canvas, size / zoom);
+    canvas.restore();
+  }
+
+  void _paint(Canvas canvas, Size size) {
     final double w = size.width;
     final ReuseLayout l = analysis.scenario.layout;
     final double xa = _lineX(l.apA, w);
@@ -490,6 +802,7 @@ class _LinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LinePainter old) =>
+      old.zoom != zoom ||
       old.analysis != analysis ||
       old.style.neutral != style.neutral ||
       old.lookA.hue != lookA.hue ||
@@ -503,11 +816,13 @@ class _MeterPainter extends CustomPainter {
     required this.analysis,
     required this.style,
     required this.sender,
+    this.zoom = 1,
   });
 
   final ReuseAnalysis analysis;
   final _Style style;
   final BssLook sender;
+  final double zoom;
 
   static const double height = 84;
   static const double _barTop = 30;
@@ -515,6 +830,13 @@ class _MeterPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(zoom);
+    _paint(canvas, size / zoom);
+    canvas.restore();
+  }
+
+  void _paint(Canvas canvas, Size size) {
     final double w = size.width;
     const double pad = AppSpacing.xs;
     double x(double dbm) =>
@@ -641,6 +963,7 @@ class _MeterPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MeterPainter old) =>
+      old.zoom != zoom ||
       old.analysis != analysis ||
       old.style.neutral != style.neutral ||
       old.sender.hue != sender.hue;
@@ -654,11 +977,13 @@ class _TimelinePainter extends CustomPainter {
     required this.style,
     required this.lookA,
     required this.lookB,
+    this.zoom = 1,
   });
 
   final ReuseAnalysis analysis;
   final _Style style;
   final BssLook lookA, lookB;
+  final double zoom;
 
   static const double height = 88;
   static const double _laneH = 24;
@@ -667,6 +992,13 @@ class _TimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(zoom);
+    _paint(canvas, size / zoom);
+    canvas.restore();
+  }
+
+  void _paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double x0 = _labelW;
     final double unit = (w - x0 - AppSpacing.xxs) / 2;
@@ -772,6 +1104,7 @@ class _TimelinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_TimelinePainter old) =>
+      old.zoom != zoom ||
       old.analysis != analysis ||
       old.style.neutral != style.neutral ||
       old.lookA.hue != lookA.hue ||

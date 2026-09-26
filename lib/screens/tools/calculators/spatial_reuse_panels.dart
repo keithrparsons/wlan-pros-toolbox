@@ -24,6 +24,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'spatial_reuse_state.dart';
 
@@ -74,6 +76,42 @@ class _SectionLabel extends StatelessWidget {
 
 String _db(double v) => v.toStringAsFixed(1);
 
+/// The decision in five words, shared by the readouts and the presenter
+/// stage.
+String reuseHeadline(ReuseAnalysis a) =>
+    a.together ? 'AP B sends at the same time' : 'AP B waits its turn';
+
+/// Why the rule fired, in one or two sentences. Shared by the readouts and
+/// the presenter stage, so both say the same thing.
+String reuseWhy(ReuseAnalysis a) {
+  final ReuseScenario s = a.scenario;
+  final ReuseRule r = a.decision.rule;
+  return switch (r) {
+    ReuseRule.energyDetect =>
+      'AP A is so loud that energy detect fires. No color or threshold '
+          'lets AP B past -62 dBm.',
+    ReuseRule.preambleDetect =>
+      'Without BSS color AP B cannot tell a neighbor from its own BSS, so '
+          'any Wi-Fi preamble at -82 dBm or more makes it wait, even one '
+          'that would barely bother client B.',
+    ReuseRule.intraBss =>
+      'Both BSSs use color ${s.colorA}, so AP B reads AP A\'s frame as its '
+          'own BSS. Intra-BSS frames keep -82 dBm whatever OBSS_PD is.',
+    ReuseRule.obssPd =>
+      'The frame carries a neighbor\'s color, but at ${_db(a.heardByBDbm)} '
+          'dBm it is at or above OBSS_PD (${_db(clampObssPd(s.obssPdDbm))} '
+          'dBm). Raise OBSS_PD above ${_db(a.heardByBDbm)} to reuse the '
+          'air.',
+    ReuseRule.spatialReuse =>
+      'The frame carries a neighbor\'s color and is below OBSS_PD, so AP B '
+          'ignores it, and in return caps its power at '
+          '${_db(a.decision.txPowerLimitDbm!)} dBm for this frame.',
+    ReuseRule.notDetected =>
+      'AP A\'s frame reaches AP B below -82 dBm, so AP B never detects it '
+          'and sends at full power. No spatial reuse is needed.',
+  };
+}
+
 // ── Controls ──────────────────────────────────────────────────────────────
 
 class SpatialReuseControls extends StatelessWidget {
@@ -86,9 +124,162 @@ class SpatialReuseControls extends StatelessWidget {
       listenable: state,
       builder: (BuildContext context, Widget? _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: _children(context),
+        children: PresenterMode.isActive(context)
+            ? _presenterChildren(context)
+            : _children(context),
       ),
     );
+  }
+
+  /// Presenter panel: what an instructor changes during the lesson stays
+  /// out (coloring, both colors, OBSS_PD, TX_PWRref, Reset); settings used
+  /// once per lesson fold away. The positions are also draggable on the
+  /// stage, and the rules card is reference, so both fold too.
+  List<Widget> _presenterChildren(BuildContext context) {
+    final SpatialReuseState st = state;
+    final ReuseScenario s = st.scenario;
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
+    Widget colorSlider(String label, int value, ValueChanged<int> set) =>
+        _slider(
+          context,
+          label: label,
+          unit: '',
+          value: value.toDouble(),
+          min: kMinBssColor.toDouble(),
+          max: kMaxBssColor.toDouble(),
+          divisions: kMaxBssColor - kMinBssColor,
+          decimals: 0,
+          onChanged: s.coloring ? (double v) => set(v.round()) : null,
+        );
+
+    return <Widget>[
+      _switch(context, 'BSS coloring (802.11ax)', s.coloring, st.setColoring),
+      colorSlider('BSS A color', s.colorA, st.setColorA),
+      colorSlider('BSS B color', s.colorB, st.setColorB),
+      const SizedBox(height: AppSpacing.xs),
+      _slider(
+        context,
+        label: 'OBSS_PD, per 20 MHz',
+        unit: 'dBm',
+        value: s.obssPdDbm,
+        min: kObssPdMinDbm,
+        max: kObssPdMaxDbm,
+        divisions: (kObssPdMaxDbm - kObssPdMinDbm).round(),
+        decimals: 0,
+        onChanged: s.coloring ? st.setObssPd : null,
+      ),
+      Text(
+        s.coloring
+            ? 'Each 1 dB above -82 costs AP B 1 dB of power.'
+            : 'Turn BSS coloring on to use OBSS_PD.',
+        style: small(),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      AppToggle<TxPwrRefClass>(
+        label: 'TX_PWRref (single source)',
+        value: s.txPwrRef,
+        expand: true,
+        enabled: s.coloring,
+        items: <AppToggleItem<TxPwrRefClass>>[
+          for (final TxPwrRefClass c in TxPwrRefClass.values) (c, c.short),
+        ],
+        onChanged: st.setTxPwrRef,
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: st.reset,
+          icon: const Icon(Icons.restart_alt),
+          label: const Text('Reset to the starting line'),
+        ),
+      ),
+      PresenterDisclosure(
+        title: 'MCS, width, power and path loss',
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              for (final (String name, int mcs, ValueChanged<int> set)
+                  in <(String, int, ValueChanged<int>)>[
+                    ('Link A MCS', s.mcsA, st.setMcsA),
+                    ('Link B MCS', s.mcsB, st.setMcsB),
+                  ]) ...<Widget>[
+                if (name == 'Link B MCS') const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: LabeledField(
+                    label: name,
+                    field: AppSelect<int>(
+                      value: mcs,
+                      semanticLabel: name,
+                      items: <AppSelectItem<int>>[
+                        for (int m = 0; m <= kReuseMaxMcs; m++) (m, 'MCS $m'),
+                      ],
+                      onChanged: set,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          LabeledField(
+            label: 'Channel width, both BSSs',
+            field: AppSelect<int>(
+              value: s.widthMHz,
+              semanticLabel: 'Channel width, both BSSs',
+              items: <AppSelectItem<int>>[
+                for (final int w in kReuseWidths) (w, '$w MHz'),
+              ],
+              onChanged: st.setWidth,
+            ),
+          ),
+          _slider(
+            context,
+            label: 'AP transmit power, both',
+            unit: 'dBm',
+            value: s.apPowerDbm,
+            min: 5,
+            max: 25,
+            divisions: 20,
+            decimals: 0,
+            onChanged: st.setApPower,
+          ),
+          _slider(
+            context,
+            label: 'Path-loss exponent n',
+            unit: '',
+            value: s.exponent,
+            min: 2,
+            max: 4,
+            divisions: 20,
+            onChanged: st.setExponent,
+          ),
+        ],
+      ),
+      PresenterDisclosure(
+        title: 'Positions (or drag a radio on the stage)',
+        children: <Widget>[
+          for (final ReuseNode n in ReuseNode.values)
+            _slider(
+              context,
+              label: n.label,
+              unit: 'm',
+              value: st.position(n),
+              min: 0,
+              max: kReuseLineM,
+              divisions: (kReuseLineM * 2).round(),
+              onChanged: (double v) => st.move(n, v),
+            ),
+        ],
+      ),
+      PresenterDisclosure(
+        title: 'The rules and their sources',
+        children: <Widget>[SpatialReuseReadouts(state: st, rulesOnly: true)],
+      ),
+    ];
   }
 
   List<Widget> _children(BuildContext context) {
@@ -350,23 +541,33 @@ class SpatialReuseControls extends StatelessWidget {
 // ── Readouts ──────────────────────────────────────────────────────────────
 
 class SpatialReuseReadouts extends StatelessWidget {
-  const SpatialReuseReadouts({super.key, required this.state});
+  const SpatialReuseReadouts({
+    super.key,
+    required this.state,
+    this.rulesOnly = false,
+  });
   final SpatialReuseState state;
+
+  /// Only the rules card (the presenter panel folds it; the decision and
+  /// the links are on the presenter stage).
+  final bool rulesOnly;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: state,
-      builder: (BuildContext context, Widget? _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _decision(context),
-          const SizedBox(height: AppSpacing.sm),
-          _links(context),
-          const SizedBox(height: AppSpacing.sm),
-          _rules(context),
-        ],
-      ),
+      builder: (BuildContext context, Widget? _) => rulesOnly
+          ? _rules(context)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _decision(context),
+                const SizedBox(height: AppSpacing.sm),
+                _links(context),
+                const SizedBox(height: AppSpacing.sm),
+                _rules(context),
+              ],
+            ),
     );
   }
 
@@ -402,37 +603,11 @@ class SpatialReuseReadouts extends StatelessWidget {
 
   Widget _decision(BuildContext context) {
     final ReuseAnalysis a = state.analysis;
-    final ReuseScenario s = a.scenario;
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final ReuseRule r = a.decision.rule;
-    final String headline = a.together
-        ? 'AP B sends at the same time'
-        : 'AP B waits its turn';
-    final String why = switch (r) {
-      ReuseRule.energyDetect =>
-        'AP A is so loud that energy detect fires. No color or threshold '
-            'lets AP B past -62 dBm.',
-      ReuseRule.preambleDetect =>
-        'Without BSS color AP B cannot tell a neighbor from its own BSS, so '
-            'any Wi-Fi preamble at -82 dBm or more makes it wait, even one '
-            'that would barely bother client B.',
-      ReuseRule.intraBss =>
-        'Both BSSs use color ${s.colorA}, so AP B reads AP A\'s frame as its '
-            'own BSS. Intra-BSS frames keep -82 dBm whatever OBSS_PD is.',
-      ReuseRule.obssPd =>
-        'The frame carries a neighbor\'s color, but at ${_db(a.heardByBDbm)} '
-            'dBm it is at or above OBSS_PD (${_db(clampObssPd(s.obssPdDbm))} '
-            'dBm). Raise OBSS_PD above ${_db(a.heardByBDbm)} to reuse the '
-            'air.',
-      ReuseRule.spatialReuse =>
-        'The frame carries a neighbor\'s color and is below OBSS_PD, so AP B '
-            'ignores it, and in return caps its power at '
-            '${_db(a.decision.txPowerLimitDbm!)} dBm for this frame.',
-      ReuseRule.notDetected =>
-        'AP A\'s frame reaches AP B below -82 dBm, so AP B never detects it '
-            'and sends at full power. No spatial reuse is needed.',
-    };
+    final String headline = reuseHeadline(a);
+    final String why = reuseWhy(a);
 
     return ReuseCard(
       child: Column(
@@ -533,7 +708,7 @@ class SpatialReuseReadouts extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          _verdict(context, k),
+          ReuseVerdict(link: k),
           if (k.interferenceDbm != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(
@@ -566,34 +741,6 @@ class SpatialReuseReadouts extends StatelessWidget {
             'are 802.11 conformance floors; real radios beat them, so these '
             'verdicts are the worst case the standard allows.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _verdict(BuildContext context, ReuseLink k) {
-    final AppColorScheme colors = context.colors;
-    final Color c = k.holds ? colors.statusSuccess : colors.statusDanger;
-    final String best = k.bestMcs == null
-        ? 'not even MCS 0 (needs ${_db(mcsRequiredSnrDb(0, k.widthMHz))} dB)'
-        : mcsLabel(k.bestMcs!);
-    final String msg = k.holds
-        ? 'Holds MCS ${k.targetMcs}: SINR ${_db(k.sinrDb)} dB, needs '
-              '${_db(k.requiredSnrDb)} dB.'
-        : 'Does not hold MCS ${k.targetMcs}: SINR ${_db(k.sinrDb)} dB, needs '
-              '${_db(k.requiredSnrDb)} dB. Best it supports: $best.';
-    return MergeSemantics(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(k.holds ? Icons.check_circle : Icons.error, size: 16, color: c),
-          const SizedBox(width: AppSpacing.xs),
-          Expanded(
-            child: Text(
-              msg,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c),
-            ),
           ),
         ],
       ),
@@ -673,6 +820,68 @@ class SpatialReuseReadouts extends StatelessWidget {
             'One frame each, drawn as equal lengths: backoff, ACKs and rate '
             'changes are left out so the airtime comparison stays simple.',
             style: body(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Whether a link still holds the MCS the student picked: success or danger
+/// with an icon and the words (§8.13 case 2). Shared with the presenter stage.
+class ReuseVerdict extends StatelessWidget {
+  const ReuseVerdict({
+    super.key,
+    required this.link,
+    this.style,
+    this.compact = false,
+  });
+
+  final ReuseLink link;
+
+  /// Text style; bodySmall when null.
+  final TextStyle? style;
+
+  /// One short line for the presenter stage, where the SINR and the best
+  /// MCS already sit above it as large numbers.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final ReuseLink k = link;
+    final AppColorScheme colors = context.colors;
+    final Color c = k.holds ? colors.statusSuccess : colors.statusDanger;
+    final String best = k.bestMcs == null
+        ? 'not even MCS 0 (needs ${_db(mcsRequiredSnrDb(0, k.widthMHz))} dB)'
+        : mcsLabel(k.bestMcs!);
+    final String msg = compact
+        ? (k.holds
+              ? 'Holds MCS ${k.targetMcs} (needs ${_db(k.requiredSnrDb)} dB)'
+              : 'Misses MCS ${k.targetMcs} (needs '
+                    '${_db(k.requiredSnrDb)} dB)')
+        : k.holds
+        ? 'Holds MCS ${k.targetMcs}: SINR ${_db(k.sinrDb)} dB, needs '
+              '${_db(k.requiredSnrDb)} dB.'
+        : 'Does not hold MCS ${k.targetMcs}: SINR ${_db(k.sinrDb)} dB, needs '
+              '${_db(k.requiredSnrDb)} dB. Best it supports: $best.';
+    return MergeSemantics(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            k.holds ? Icons.check_circle : Icons.error,
+            // 16 on the phone, as before; with a larger style, in step.
+            size: style?.fontSize == null ? 16 : style!.fontSize! * 1.2,
+            color: c,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              msg,
+              style: (style ?? Theme.of(context).textTheme.bodySmall)?.copyWith(
+                color: c,
+              ),
+            ),
           ),
         ],
       ),

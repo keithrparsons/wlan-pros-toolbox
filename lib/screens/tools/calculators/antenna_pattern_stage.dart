@@ -8,6 +8,14 @@
 //        it; see app_gain_ramp.dart). Floor and mounting surface as lines.
 //   2D:  the horizontal cut (top view) and vertical cut (side view) on the
 //        same dBi scale, updating live.
+//
+// PRESENTER (PresenterMode.isActive): the stage fills its bounded box with no
+// scroll. The peak gain, the two beamwidths and the front-to-back ratio sit
+// on top as large numbers; the 3D view takes the full height at the left
+// (the extra stage area goes to it), with Spin and Reset view under it; the
+// two cuts stack beside it as squares. Painters get the presenter scale.
+// Rotation cost does not grow with the view: a frame projects the same
+// 16,380 vertices whatever the size (antenna_pattern_mesh.dart).
 
 import 'dart:math' as math;
 
@@ -18,6 +26,9 @@ import 'package:flutter/services.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_gain_ramp.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
+import '../../../services/wifi_lab/antenna_pattern_math.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'antenna_pattern_mesh.dart';
 import 'antenna_pattern_model.dart';
 import 'antenna_pattern_painters.dart';
@@ -42,8 +53,14 @@ class AntennaPatternStage extends StatelessWidget {
       builder: (BuildContext context, _) {
         final PatternResult? r = lab.result;
         final PatternMesh? mesh = lab.mesh;
+        final bool presenting = PresenterMode.isActive(context);
         if (r == null || mesh == null) {
-          return _EmptyStage(height: viewportHeight);
+          return presenting
+              ? const _EmptyStage(height: double.infinity)
+              : _EmptyStage(height: viewportHeight);
+        }
+        if (presenting) {
+          return _PresenterStage(lab: lab, mesh: mesh, result: r);
         }
         return PatternCard(
           child: Column(
@@ -78,6 +95,129 @@ class AntennaPatternStage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ── Presenter arrangement ─────────────────────────────────────────────────
+
+class _PresenterStage extends StatelessWidget {
+  const _PresenterStage({
+    required this.lab,
+    required this.mesh,
+    required this.result,
+  });
+
+  final AntennaPatternLab lab;
+  final PatternMesh mesh;
+  final PatternResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono = patternMono(context);
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final PatternResult r = result;
+    final GainGrid g = r.grid;
+    final double? hbw = r.cuts.horizontalBeamwidthDeg;
+    final double? vbw = r.cuts.verticalBeamwidthDeg;
+    final bool omni = r.cuts.looksOmni;
+    final TextStyle big = scale.headlineStyle(mono.outputMedium);
+
+    Widget stat(String label, String value, {bool accent = false}) =>
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: text.bodySmall?.copyWith(color: colors.textSecondary),
+              ),
+              Text(
+                value,
+                style: big.copyWith(
+                  color: accent ? colors.textAccent : colors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        );
+
+    return PatternCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          PatternSectionLabel(
+            r.estimated
+                ? '3D pattern, estimated from two cuts '
+                      '(${lab.method.label.toLowerCase()})'
+                : '3D pattern, gain in dBi',
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Semantics(
+            liveRegion: true,
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.xs,
+              children: <Widget>[
+                stat(
+                  'Peak gain, ${fmtDbd(dbiToDbd(g.peakDbi))}',
+                  fmtDbi(g.peakDbi),
+                  accent: true,
+                ),
+                stat(
+                  'Beamwidth, horizontal / vertical',
+                  '${hbw == null ? 'omni' : fmtDeg1(hbw)} / '
+                      '${vbw == null ? 'none' : fmtDeg1(vbw)}',
+                ),
+                stat(
+                  'Front-to-back',
+                  omni
+                      ? 'no back'
+                      : '${fmtDb1(g.peakDbi - g.oppositePeakDbi())} dB',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints box) {
+                // The two cuts stack beside the 3D, each a square as tall as
+                // half the height allows, never wider than a third of the
+                // stage; the 3D keeps the rest (the extra stage area).
+                final double side = math.min(
+                  box.maxHeight / 2 - AppSpacing.lg,
+                  box.maxWidth / 3,
+                );
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Expanded(
+                      child: _Viewport(
+                        lab: lab,
+                        mesh: mesh,
+                        result: r,
+                        presenting: true,
+                        height:
+                            box.maxHeight - _ViewportState.presenterBarHeight(),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    SizedBox(
+                      width: math.max(0, side),
+                      child: _Cuts(lab: lab, result: r, stacked: true),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          _GainLegend(topDbi: r.topDbi),
+        ],
+      ),
     );
   }
 }
@@ -127,12 +267,16 @@ class _Viewport extends StatefulWidget {
     required this.mesh,
     required this.result,
     required this.height,
+    this.presenting = false,
   });
 
   final AntennaPatternLab lab;
   final PatternMesh mesh;
   final PatternResult result;
   final double height;
+
+  /// Presenter stage: Spin beside Reset view, and a one-line caption.
+  final bool presenting;
 
   @override
   State<_Viewport> createState() => _ViewportState();
@@ -154,6 +298,8 @@ class _ViewportState extends State<_Viewport> {
   }
 
   void _onScaleStart(ScaleStartDetails d) {
+    // A hand on the view takes over from the spin.
+    widget.lab.stopSpin();
     _gestureStart = _view.value;
     _yawAccum = 0;
     _pitchAccum = 0;
@@ -197,12 +343,46 @@ class _ViewportState extends State<_Viewport> {
         'focus, arrow keys rotate and plus or minus zoom.';
   }
 
+  /// Presenter: Spin and Reset view, then what the square and the grid are.
+  Widget _presenterBar(AppColorScheme colors) {
+    final bool spinning = widget.lab.spinning;
+    return Row(
+      children: <Widget>[
+        TextButton.icon(
+          onPressed: widget.lab.toggleSpin,
+          icon: Icon(spinning ? Icons.pause_rounded : Icons.play_arrow_rounded),
+          label: Text(spinning ? 'Stop' : 'Spin'),
+        ),
+        TextButton.icon(
+          onPressed: widget.lab.resetView,
+          icon: const Icon(Icons.threed_rotation),
+          label: const Text('Reset view'),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: PatternCaption(
+            widget.lab.mount == AntennaMount.ceiling
+                ? 'The square above is the ceiling; the grid is the floor.'
+                : 'The square behind is the wall; the grid is the floor.',
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Height of [_presenterBar] and the gap above it, for the stage's sums.
+  static double presenterBarHeight() =>
+      AppSpacing.minTouchTarget + AppSpacing.xxs;
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
-    final TextStyle label = Theme.of(
-      context,
-    ).textTheme.labelSmall!.copyWith(color: AppGainRamp.viewportText);
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final TextStyle base = Theme.of(context).textTheme.labelSmall!;
+    final TextStyle label = base.copyWith(
+      color: AppGainRamp.viewportText,
+      fontSize: scale.paintFont(base.fontSize ?? AppTextSize.caption),
+    );
     final bool omniFrame = !widget.lab.rotatedForMount
         ? widget.lab.mount == AntennaMount.ceiling
         : widget.lab.mount == AntennaMount.wall;
@@ -252,6 +432,7 @@ class _ViewportState extends State<_Viewport> {
                               : MountSurface.wall,
                           labelStyle: label,
                           frontLabel: omniFrame ? '0°' : 'Front',
+                          scale: scale,
                         ),
                       ),
                     ),
@@ -262,25 +443,28 @@ class _ViewportState extends State<_Viewport> {
           ),
         ),
         const SizedBox(height: AppSpacing.xxs),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: PatternCaption(
-                widget.lab.mount == AntennaMount.ceiling
-                    ? 'Ceiling mount: the square just above the antenna is '
-                          'the ceiling; the grid below is the floor.'
-                    : 'Wall mount: the square just behind the antenna is the '
-                          'wall; the grid below is the floor.',
+        if (widget.presenting)
+          _presenterBar(colors)
+        else
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: PatternCaption(
+                  widget.lab.mount == AntennaMount.ceiling
+                      ? 'Ceiling mount: the square just above the antenna is '
+                            'the ceiling; the grid below is the floor.'
+                      : 'Wall mount: the square just behind the antenna is the '
+                            'wall; the grid below is the floor.',
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            TextButton.icon(
-              onPressed: widget.lab.resetView,
-              icon: const Icon(Icons.threed_rotation, size: 18),
-              label: const Text('Reset view'),
-            ),
-          ],
-        ),
+              const SizedBox(width: AppSpacing.xs),
+              TextButton.icon(
+                onPressed: widget.lab.resetView,
+                icon: const Icon(Icons.threed_rotation, size: 18),
+                label: const Text('Reset view'),
+              ),
+            ],
+          ),
       ],
     );
   }
@@ -337,17 +521,21 @@ class _GainLegend extends StatelessWidget {
                     String edge(int k) => fmtDb1(
                       floor + AppGainRamp.bandDb * k,
                     ).replaceAll('.0', '');
+                    // Room for one label at the current text scale (the
+                    // presenter raises it).
+                    final double t =
+                        MediaQuery.textScalerOf(context).scale(11) / 11;
                     // Every band edge when there is room, else every other.
-                    final int every = w < 36 ? 2 : 1;
+                    final int every = w < 36 * t ? 2 : 1;
                     return SizedBox(
-                      height: 16,
+                      height: 16 * t,
                       child: Stack(
                         children: <Widget>[
                           Positioned(left: 0, child: Text(edge(0), style: ts)),
                           for (int k = every; k < 7; k += every)
                             Positioned(
-                              left: w * k - 16,
-                              width: 32,
+                              left: w * k - 16 * t,
+                              width: 32 * t,
                               child: Text(
                                 edge(k),
                                 textAlign: TextAlign.center,
@@ -370,13 +558,18 @@ class _GainLegend extends StatelessWidget {
 }
 
 class _Cuts extends StatelessWidget {
-  const _Cuts({required this.lab, required this.result});
+  const _Cuts({required this.lab, required this.result, this.stacked = false});
   final AntennaPatternLab lab;
   final PatternResult result;
+
+  /// Presenter stage: the two cuts one above the other, beside the 3D, with
+  /// one short caption.
+  final bool stacked;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
+    final PresenterScale scale = PresenterMode.scaleOf(context);
     final PolarStyle style = PolarStyle(
       trace: colors.textAccent,
       ring: colors.border,
@@ -384,51 +577,91 @@ class _Cuts extends StatelessWidget {
       isotropic: colors.textTertiary,
       labelStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
         color: colors.textTertiary,
-        fontSize: 10,
+        fontSize: scale.paintFont(10),
       ),
+      scale: scale,
     );
     final double? hbw = result.cuts.horizontalBeamwidthDeg;
     final double? vbw = result.cuts.verticalBeamwidthDeg;
-    Widget plot(CutKind kind, String title, String semantic) => Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+    Widget square(CutKind kind, String semantic) => Semantics(
+      label: semantic,
+      image: true,
+      excludeSemantics: true,
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surface2,
+            borderRadius: BorderRadius.circular(AppRadius.control),
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          Semantics(
-            label: semantic,
-            image: true,
-            excludeSemantics: true,
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colors.surface2,
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                child: CustomPaint(
-                  painter: PolarCutPainter(
-                    lossDb: kind == CutKind.horizontal
-                        ? result.cuts.horizontalLossDb
-                        : result.cuts.verticalLossDb,
-                    peakDbi: result.cuts.peakGainDbi,
-                    topDbi: result.topDbi,
-                    kind: kind,
-                    style: style,
-                    revision: lab.revision,
-                  ),
-                ),
-              ),
+          child: CustomPaint(
+            painter: PolarCutPainter(
+              lossDb: kind == CutKind.horizontal
+                  ? result.cuts.horizontalLossDb
+                  : result.cuts.verticalLossDb,
+              peakDbi: result.cuts.peakGainDbi,
+              topDbi: result.topDbi,
+              kind: kind,
+              style: style,
+              revision: lab.revision,
             ),
           ),
-        ],
+        ),
       ),
     );
+    Widget title(String t) => Text(
+      t,
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+    );
+    Widget plotOf(CutKind kind, String t, String semantic) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        title(t),
+        const SizedBox(height: AppSpacing.xxs),
+        square(kind, semantic),
+      ],
+    );
+    Widget plot(CutKind kind, String title, String semantic) =>
+        Expanded(child: plotOf(kind, title, semantic));
+    final String hSemantic =
+        'Horizontal cut, seen from above with the front at the top. '
+        '${hbw == null ? 'Omnidirectional: no half-power points.' : 'Half-power beamwidth ${fmtDeg1(hbw)}.'}';
+    final String vSemantic =
+        'Vertical cut, seen from the side with the front at the right '
+        'and down at the bottom. '
+        '${vbw == null ? '' : 'Half-power beamwidth ${fmtDeg1(vbw)}. '}'
+        'Peak ${fmtElevation(result.cuts.verticalPeakAngle.toDouble())}.';
+    if (stacked) {
+      // Each cut takes half of what is left after the caption and stays
+      // square inside it, its title above.
+      Widget half(CutKind kind, String t, String semantic) => Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            title(t),
+            const SizedBox(height: AppSpacing.xxs),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: square(kind, semantic),
+              ),
+            ),
+          ],
+        ),
+      );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          half(CutKind.horizontal, 'Horizontal cut, from above', hSemantic),
+          const SizedBox(height: AppSpacing.xs),
+          half(CutKind.vertical, 'Vertical cut, from the side', vSemantic),
+          const SizedBox(height: AppSpacing.xxs),
+          const PatternCaption('Same dBi scale as the 3D. Dashed ring: 0 dBi.'),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -437,21 +670,9 @@ class _Cuts extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            plot(
-              CutKind.horizontal,
-              'Horizontal (from above)',
-              'Horizontal cut, seen from above with the front at the top. '
-                  '${hbw == null ? 'Omnidirectional: no half-power points.' : 'Half-power beamwidth ${fmtDeg1(hbw)}.'}',
-            ),
+            plot(CutKind.horizontal, 'Horizontal (from above)', hSemantic),
             const SizedBox(width: AppSpacing.xs),
-            plot(
-              CutKind.vertical,
-              'Vertical (from the side)',
-              'Vertical cut, seen from the side with the front at the right '
-                  'and down at the bottom. '
-                  '${vbw == null ? '' : 'Half-power beamwidth ${fmtDeg1(vbw)}. '}'
-                  'Peak ${fmtElevation(result.cuts.verticalPeakAngle.toDouble())}.',
-            ),
+            plot(CutKind.vertical, 'Vertical (from the side)', vSemantic),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),

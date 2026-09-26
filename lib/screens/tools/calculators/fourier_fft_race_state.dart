@@ -4,12 +4,18 @@
 // from the same notification.
 //
 // The run is computed once per settings change (RaceRun.compute) and cached.
-// Playback only moves [progress]; the screen drives it with a ticker so this
-// file needs no TickerProvider. The run opens finished (progress 1), so the
-// full result shows without pressing anything and reduced motion needs no
-// special path: the screen jumps straight to 1.
+// Playback only moves [progress]. The run opens finished (progress 1), so the
+// full result shows without pressing anything.
+//
+// PLAYBACK CLOCK (moved here from the screen, 2026-09-26, for the presenter
+// layout): a Ticker built directly, not from a widget's TickerProvider,
+// because the phone route under the presenter route is muted and a playback
+// started there must keep going. With [reduceMotion] (the screen sets it
+// from MediaQuery) a playback jumps straight to the end, as before. The
+// presenter keys add pause, resume, a step of one [stepFraction] of the run,
+// and a rewind to an empty run.
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/fourier_race.dart';
 
@@ -31,10 +37,21 @@ const List<double> kVideoBandwidthsMhz = <double>[4, 8, 18];
 /// Wall-clock length of one playback, whatever the run length.
 const Duration kRacePlayback = Duration(seconds: 4);
 
+/// One Step (Right arrow) of a race playback, as a share of the run.
+const double kRaceStepFraction = 1 / 40;
+
 class FourierRaceState {
   FourierRaceState(this._onChanged);
 
   final VoidCallback _onChanged;
+
+  /// Set by the screen from MediaQuery: playbacks jump to the end.
+  bool reduceMotion = false;
+
+  Ticker? _ticker;
+  double _tickFrom = 0;
+  bool _paused = false;
+  bool _disposed = false;
 
   double _spanMhz = 100;
   double _rbwHz = 100e3;
@@ -53,8 +70,14 @@ class FourierRaceState {
   /// 0 .. 1 of the run revealed so far.
   double get progress => _progress;
 
-  /// True while a playback is under way.
+  /// True while a playback is under way, running or paused.
   bool get animating => _animating;
+
+  /// True while a playback is under way and paused.
+  bool get paused => _animating && _paused;
+
+  /// True while a playback is under way and running.
+  bool get playing => _animating && !_paused;
 
   /// Bumped each time a playback is asked for.
   int get runToken => _runToken;
@@ -84,9 +107,29 @@ class FourierRaceState {
 
   /// Any setting change stops a playback and shows the full new result.
   void _settle() {
+    _stopClock();
     _animating = false;
+    _paused = false;
     _progress = 1;
     _onChanged();
+  }
+
+  void _stopClock() {
+    final Ticker? t = _ticker;
+    if (t != null && t.isActive) t.stop();
+  }
+
+  void _startClock() {
+    if (_disposed) return;
+    _stopClock();
+    _tickFrom = _progress;
+    (_ticker ??= Ticker(_onTick, debugLabel: 'fourier-race')).start();
+  }
+
+  void _onTick(Duration elapsed) {
+    setProgress(
+      _tickFrom + elapsed.inMicroseconds / kRacePlayback.inMicroseconds,
+    );
   }
 
   void setSpan(double mhz) {
@@ -99,6 +142,15 @@ class FourierRaceState {
     if (hz == _rbwHz || !kRaceRbwHz.contains(hz)) return;
     _rbwHz = hz;
     _settle();
+  }
+
+  /// The next wider (+1) or narrower (-1) RBW, held at the ends.
+  void nudgeRbw(int wider) {
+    final int i = (kRaceRbwHz.indexOf(_rbwHz) - wider).clamp(
+      0,
+      kRaceRbwHz.length - 1,
+    );
+    setRbw(kRaceRbwHz[i]);
   }
 
   void setRunSeconds(double s) {
@@ -137,20 +189,91 @@ class FourierRaceState {
     _settle();
   }
 
-  /// Asks the screen to play the run from the start.
+  /// Plays the run from the start (or, with reduced motion, shows the end).
   void startRun() {
     _progress = 0;
     _animating = true;
+    _paused = false;
+    _runToken++;
+    if (reduceMotion) {
+      setProgress(1);
+      return;
+    }
+    _startClock();
+    _onChanged();
+  }
+
+  /// Holds a running playback where it is.
+  void pause() {
+    if (!playing) return;
+    _paused = true;
+    _stopClock();
+    _onChanged();
+  }
+
+  /// Carries on from a pause.
+  void resume() {
+    if (!paused) return;
+    _paused = false;
+    if (reduceMotion) {
+      setProgress(1);
+      return;
+    }
+    _startClock();
+    _onChanged();
+  }
+
+  /// Space in presenter mode: pause while running, resume while paused,
+  /// otherwise play from the start.
+  void playPause() {
+    if (playing) {
+      pause();
+    } else if (paused) {
+      resume();
+    } else {
+      startRun();
+    }
+  }
+
+  /// One [kRaceStepFraction] of the run, then paused. From a finished run
+  /// it starts again from empty.
+  void step() {
+    if (!_animating) {
+      _progress = 0;
+      _animating = true;
+      _runToken++;
+    }
+    _paused = true;
+    _stopClock();
+    setProgress(_progress + kRaceStepFraction);
+    if (_animating) _onChanged();
+  }
+
+  /// Back to an empty run, paused, ready to play or step.
+  void rewind() {
+    _stopClock();
+    _progress = 0;
+    _animating = true;
+    _paused = true;
     _runToken++;
     _onChanged();
   }
 
-  /// Called by the screen's ticker (or with 1 to finish at once).
+  /// Moves the playback (the clock calls this; 1 finishes at once).
   void setProgress(double p) {
     final double v = p.clamp(0.0, 1.0);
     if (v == _progress && (v < 1 || !_animating)) return;
     _progress = v;
-    if (v >= 1) _animating = false;
+    if (v >= 1) {
+      _animating = false;
+      _paused = false;
+      _stopClock();
+    }
     _onChanged();
+  }
+
+  void dispose() {
+    _disposed = true;
+    _ticker?.dispose();
   }
 }

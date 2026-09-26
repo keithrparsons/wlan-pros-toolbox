@@ -17,6 +17,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_gain_ramp.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'antenna_pattern_mesh.dart';
 
 void _text(
@@ -47,6 +48,7 @@ class OrbitPainter extends CustomPainter {
     required this.surface,
     required this.labelStyle,
     required this.frontLabel,
+    this.scale = PresenterScale.normal,
   }) : super(repaint: view);
 
   final PatternMesh mesh;
@@ -54,6 +56,10 @@ class OrbitPainter extends CustomPainter {
   final MountSurface surface;
   final TextStyle labelStyle;
   final String frontLabel;
+
+  /// Presenter scale for the floor and mounting-surface lines (the surface
+  /// itself is filled, so it needs none).
+  final PresenterScale scale;
 
   static const double _room = 1.15;
 
@@ -69,11 +75,11 @@ class OrbitPainter extends CustomPainter {
   void _floor(Canvas c, Projector cam) {
     final Paint grid = Paint()
       ..color = AppGainRamp.viewportRule
-      ..strokeWidth = 1
+      ..strokeWidth = scale.strokeWidth(1)
       ..style = PaintingStyle.stroke;
     final Paint edge = Paint()
       ..color = AppGainRamp.viewportRuleStrong
-      ..strokeWidth = 1
+      ..strokeWidth = scale.strokeWidth(1)
       ..style = PaintingStyle.stroke;
     const double z = -_room;
     for (int k = -2; k <= 2; k++) {
@@ -92,7 +98,7 @@ class OrbitPainter extends CustomPainter {
   void _mountSurface(Canvas c, Projector cam) {
     final Paint edge = Paint()
       ..color = AppGainRamp.viewportRuleStrong
-      ..strokeWidth = 1
+      ..strokeWidth = scale.strokeWidth(1)
       ..style = PaintingStyle.stroke;
     const double r = _room;
     const double off = 0.05;
@@ -153,6 +159,7 @@ class OrbitPainter extends CustomPainter {
       old.mesh != mesh ||
       old.surface != surface ||
       old.frontLabel != frontLabel ||
+      old.scale != scale ||
       old.labelStyle != labelStyle;
 }
 
@@ -167,6 +174,7 @@ class PolarStyle {
     required this.axis,
     required this.isotropic,
     required this.labelStyle,
+    this.scale = PresenterScale.normal,
   });
 
   /// The cut itself (lime: the measured quantity).
@@ -176,7 +184,12 @@ class PolarStyle {
 
   /// The dashed 0 dBi reference ring.
   final Color isotropic;
+
+  /// Already applied to its size.
   final TextStyle labelStyle;
+
+  /// Presenter scale for the strokes.
+  final PresenterScale scale;
 }
 
 class PolarCutPainter extends CustomPainter {
@@ -217,14 +230,15 @@ class PolarCutPainter extends CustomPainter {
     final double rMax = math.min(size.width, size.height) / 2 - pad;
     if (rMax <= 4) return;
 
+    final PresenterScale sc = style.scale;
     final Paint ring = Paint()
       ..color = style.ring
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     final Paint axis = Paint()
       ..color = style.axis
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
 
     for (int k = 0; k <= 3; k++) {
       final double g = topDbi - 10 * k;
@@ -241,7 +255,7 @@ class PolarCutPainter extends CustomPainter {
     final Paint iso = Paint()
       ..color = style.isotropic
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = sc.strokeWidth(1);
     for (int a = 0; a < 360; a += 12) {
       canvas.drawArc(
         Rect.fromCircle(center: c, radius: ri),
@@ -264,7 +278,7 @@ class PolarCutPainter extends CustomPainter {
       Paint()
         ..color = style.trace
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
+        ..strokeWidth = sc.strokeWidth(2)
         ..strokeJoin = StrokeJoin.round,
     );
 
@@ -291,5 +305,6 @@ class PolarCutPainter extends CustomPainter {
       old.revision != revision ||
       old.kind != kind ||
       old.style.trace != style.trace ||
+      old.style.scale != style.scale ||
       old.style.labelStyle != style.labelStyle;
 }

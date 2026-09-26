@@ -15,9 +15,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/antenna_pattern_formats.dart';
 import '../../../services/wifi_lab/antenna_pattern_math.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 import 'antenna_pattern_mesh.dart';
 
 enum AntennaModelKind {
@@ -489,10 +491,107 @@ class AntennaPatternLab extends ChangeNotifier {
     _changed();
   }
 
-  void resetView() => view.value = OrbitView.initial;
+  void resetView() {
+    stopSpin();
+    view.value = OrbitView.initial;
+  }
+
+  // ── Spin (the presenter's Play) ─────────────────────────────────────────
+  //
+  // A slow turn of the 3D view about the vertical, started only by the user
+  // (Space in presenter mode), so reduced motion (GL-003 §8.8) has nothing
+  // to stop: nothing moves unless asked. The Ticker is built directly, not
+  // from a widget's TickerProvider, because the phone route under the
+  // presenter is muted and the spin must keep going there.
+
+  /// Degrees the view turns per second while spinning.
+  static const double spinDegPerSecond = 30;
+
+  /// Degrees one Step (Right arrow) turns the view.
+  static const double stepDeg = 15;
+
+  Ticker? _spinTicker;
+  Duration _lastSpinTick = Duration.zero;
+  bool _spinning = false;
+  bool _disposed = false;
+
+  bool get spinning => _spinning;
+
+  void toggleSpin() => _spinning ? stopSpin() : startSpin();
+
+  void startSpin() {
+    if (_spinning || _disposed) return;
+    _spinning = true;
+    _lastSpinTick = Duration.zero;
+    (_spinTicker ??= Ticker(_onSpin, debugLabel: 'antenna-spin')).start();
+    notifyListeners();
+  }
+
+  void stopSpin() {
+    if (!_spinning) return;
+    _spinning = false;
+    _spinTicker?.stop();
+    if (!_disposed) notifyListeners();
+  }
+
+  void _onSpin(Duration elapsed) {
+    final double dt = (elapsed - _lastSpinTick).inMicroseconds / 1e6;
+    _lastSpinTick = elapsed;
+    // A long stall (the app in the background) does not jump the view.
+    view.value = view.value.rotated(-spinDegPerSecond * dt.clamp(0, 0.1), 0);
+  }
+
+  /// One step of the view, the same way the spin turns.
+  void stepView() => view.value = view.value.rotated(-stepDeg, 0);
+
+  // ── Presenter keys ──────────────────────────────────────────────────────
+
+  /// What Up and Down move for the current antenna, or null (the dipole
+  /// has no parameter; an import has nothing to shape until it is read).
+  String? get mainSliderLabel => switch (_kind) {
+    AntennaModelKind.dipole => null,
+    AntennaModelKind.omni || AntennaModelKind.directional => 'Gain',
+    AntennaModelKind.collinear => 'Elements',
+    AntennaModelKind.imported => _parsed == null ? null : 'Shape',
+  };
+
+  /// The main slider one notch: 1 dB of gain, one element, or 0.05 of
+  /// shape.
+  void nudgeMain(int dir) {
+    switch (_kind) {
+      case AntennaModelKind.dipole:
+        return;
+      case AntennaModelKind.omni:
+        setOmniGain(_omniGainDbi + dir);
+      case AntennaModelKind.collinear:
+        setElements(_elements + dir);
+      case AntennaModelKind.directional:
+        setDirectionalGain(
+          (directionalBeamwidthGainDbi + dir).clamp(3.0, 21.0),
+        );
+      case AntennaModelKind.imported:
+        if (_parsed != null) setShaping(_shaping + 0.05 * dir);
+    }
+  }
+
+  /// Presenter keys: Space spins the 3D view, Right turns it one step, R
+  /// resets it, Up and Down move the antenna's main setting.
+  PresenterActions get presenterActions {
+    final String? label = mainSliderLabel;
+    return PresenterActions(
+      playPause: toggleSpin,
+      step: stepView,
+      reset: resetView,
+      sliderDown: label == null ? null : () => nudgeMain(-1),
+      sliderUp: label == null ? null : () => nudgeMain(1),
+      sliderLabel: label,
+    );
+  }
 
   @override
   void dispose() {
+    _disposed = true;
+    _spinTicker?.dispose();
     view.dispose();
     super.dispose();
   }

@@ -14,6 +14,13 @@
 //   - walk             -> steps revealed one at a time, then the verdict
 //   - loading / error  -> not reachable: the model is synchronous and pure
 //                         and every input is bounded
+//
+// PRESENTER (PresenterMode.isActive): the stage fills its bounded box with no
+// scroll. The preamble's length is the headline beside the title; the bar is
+// taller with larger labels; the block list moves to the panel (the Right
+// arrow walks the blocks); and the open block's bit table lays its groups
+// side by side. If a table is still taller than the room left, it scales
+// down as one piece rather than clip or scroll.
 
 import 'package:flutter/material.dart';
 
@@ -21,6 +28,7 @@ import '../../../services/wifi_lab/phy_preamble.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'phy_preamble_bit_table.dart';
 import 'phy_preamble_model.dart';
 import 'phy_preamble_painter.dart';
@@ -36,7 +44,9 @@ class PhyPreambleStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: model,
-      builder: (BuildContext context, _) => _StageBody(model: model),
+      builder: (BuildContext context, _) => PresenterMode.isActive(context)
+          ? _PresenterStage(model: model)
+          : _StageBody(model: model),
     );
   }
 }
@@ -84,7 +94,7 @@ class _StageBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           _Summary(model: model),
           const SizedBox(height: AppSpacing.sm),
-          _BlockList(model: model),
+          PreambleBlockList(model: model),
           const SizedBox(height: AppSpacing.sm),
           if (identify) _Walk(model: model) else _Detail(model: model),
         ],
@@ -93,8 +103,10 @@ class _StageBody extends StatelessWidget {
   }
 }
 
-class _Bar extends StatelessWidget {
-  const _Bar({required this.model});
+// ── Presenter arrangement ─────────────────────────────────────────────────
+
+class _PresenterStage extends StatelessWidget {
+  const _PresenterStage({required this.model});
 
   final PhyPreambleModel model;
 
@@ -102,9 +114,130 @@ class _Bar extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final bool identify = model.mode == PreambleMode.identify;
+    final String who = model.hidden ? 'this PPDU' : model.type.shortLabel;
+    return PpCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        model.hidden
+                            ? 'Mystery PPDU, drawn to scale'
+                            : '${model.type.label}, drawn to scale',
+                        style: text.titleLarge?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      identify
+                          ? 'Name the PPDU from the symbols after L-SIG.'
+                          : 'Filled blocks carry bits; outlined ones train.',
+                      style: text.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              MergeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Text.rich(
+                      TextSpan(
+                        children: <InlineSpan>[
+                          TextSpan(
+                            text: 'Preamble  ',
+                            style: text.bodyMedium?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                          TextSpan(
+                            text:
+                                '${formatPreambleTenths(model.preambleTenths)} '
+                                'µs',
+                            style: scale
+                                .headlineStyle(mono.outputMedium)
+                                .copyWith(color: colors.textAccent),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      model.type == PpduType.nonHt && !model.hidden
+                          ? 'the legacy 20 µs, nothing added'
+                          : '20 legacy + '
+                                '${formatPreambleTenths(model.addedTenths)} '
+                                'added by $who',
+                      style: mono.inlineCode.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _Bar(model: model, presenting: true),
+          const SizedBox(height: AppSpacing.xs),
+          // While a bit table is open it needs the height, so the legend
+          // steps aside (the bar keeps its colors and the ring); closing the
+          // block brings it back.
+          if (identify || model.selectedBlock?.table == null) ...<Widget>[
+            _Legend(masked: model.hidden, compact: true),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          Expanded(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints box) => FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: box.maxWidth,
+                  child: identify ? _Walk(model: model) : _Detail(model: model),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar({required this.model, this.presenting = false});
+
+  final PhyPreambleModel model;
+
+  /// Presenter stage: a taller bar with larger labels.
+  final bool presenting;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
     final TextScaler scaler = MediaQuery.textScalerOf(context);
+    final PresenterScale scale = PresenterMode.scaleOf(context);
     final TextStyle style =
-        text.labelSmall ?? const TextStyle(fontSize: AppTextSize.caption);
+        (presenting ? text.labelLarge : text.labelSmall) ??
+        const TextStyle(fontSize: AppTextSize.caption);
     final bool masked = model.hidden;
     final List<PreambleBlock> blocks = model.blocks;
     final String spoken = <String>[
@@ -129,6 +262,9 @@ class _Bar extends StatelessWidget {
           labelStyle: style,
           textScaler: scaler,
           masked: masked,
+          barHeight: presenting
+              ? PreambleBarLayout.defaultBarHeight * scale.marker * 1.2
+              : PreambleBarLayout.defaultBarHeight,
         );
         return Semantics(
           label: spoken,
@@ -150,6 +286,7 @@ class _Bar extends StatelessWidget {
                   labelStyle: style,
                   textScaler: scaler,
                   selected: model.selected,
+                  scale: scale,
                 ),
               ),
             ),
@@ -161,9 +298,13 @@ class _Bar extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
-  const _Legend({required this.masked});
+  const _Legend({required this.masked, this.compact = false});
 
   final bool masked;
+
+  /// Presenter stage: shorter names and the BPSK sentence as one more item,
+  /// so the legend takes as few lines as it can.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -190,22 +331,22 @@ class _Legend extends StatelessWidget {
           (
             st(BlockRole.legacy, BlockForm.signal),
             false,
-            'Legacy signal field (L-SIG)',
+            compact ? 'Legacy signal' : 'Legacy signal field (L-SIG)',
           ),
           (
             st(BlockRole.legacy, BlockForm.training),
             true,
-            'Legacy training field',
+            compact ? 'Legacy training' : 'Legacy training field',
           ),
           (
             st(BlockRole.added, BlockForm.signal),
             false,
-            'Signal field this PHY adds',
+            compact ? 'Added signal' : 'Signal field this PHY adds',
           ),
           (
             st(BlockRole.added, BlockForm.training),
             true,
-            'Training field this PHY adds',
+            compact ? 'Added training' : 'Training field this PHY adds',
           ),
           if (masked)
             (
@@ -216,7 +357,7 @@ class _Legend extends StatelessWidget {
           (
             st(BlockRole.data, BlockForm.data),
             false,
-            'Data (continues, not to scale)',
+            compact ? 'Data, not to scale' : 'Data (continues, not to scale)',
           ),
         ];
     final TextStyle? label = text.bodySmall?.copyWith(
@@ -247,14 +388,20 @@ class _Legend extends StatelessWidget {
                   Text(name, style: label),
                 ],
               ),
+            if (compact)
+              Text(
+                'B = BPSK, Q = QBPSK',
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          'Under each SIG symbol: BPSK, or QBPSK (the same two points turned '
-          '90 degrees). B and Q when the symbol is narrow.',
-          style: text.bodySmall?.copyWith(color: colors.textTertiary),
-        ),
+        if (!compact) const SizedBox(height: AppSpacing.xs),
+        if (!compact)
+          Text(
+            'Under each SIG symbol: BPSK, or QBPSK (the same two points turned '
+            '90 degrees). B and Q when the symbol is narrow.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
       ],
     );
   }
@@ -288,14 +435,20 @@ class _Summary extends StatelessWidget {
 }
 
 /// Every block as a focusable button: the keyboard and screen-reader route
-/// to the same selection as tapping the bar.
-class _BlockList extends StatelessWidget {
-  const _BlockList({required this.model});
+/// to the same selection as tapping the bar. The presenter panel shows it on
+/// its own, so it listens to the model itself.
+class PreambleBlockList extends StatelessWidget {
+  const PreambleBlockList({super.key, required this.model});
 
   final PhyPreambleModel model;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: model,
+    builder: (BuildContext context, _) => _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
@@ -326,7 +479,11 @@ class _BlockList extends StatelessWidget {
   ) {
     final bool masked = PreambleBarLayout.isMasked(b, model.hidden);
     final bool on = model.selected == i;
-    final String dur = b.isToScale ? ' ${formatPreambleTenths(b.tenths)}' : '';
+    // The presenter panel is narrow and the bar's axis shows the durations,
+    // so its chips carry the names only (the spoken label keeps both).
+    final String dur = b.isToScale && !PresenterMode.isActive(context)
+        ? ' ${formatPreambleTenths(b.tenths)}'
+        : '';
     final String label = masked ? '?$dur' : '${b.name}$dur';
     final String spoken = masked
         ? 'Hidden field, ${formatPreambleTenths(b.tenths)} microseconds, '
@@ -379,61 +536,124 @@ class _Detail extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final PreambleBlock? b = model.selectedBlock;
 
+    final bool presenting = PresenterMode.isActive(context);
     final Widget body;
     if (b == null) {
       body = Text(
-        'Nothing open. Tap a block on the bar, or pick one in the list, to '
-        'see its duration, its modulation and, for a signal field, every bit '
-        'with its evidence tag.',
+        presenting
+            ? 'Nothing open. Press the Right arrow, tap a block on the bar, '
+                  'or pick one in the list beside the stage, to see its '
+                  'duration, its modulation and, for a signal field, every '
+                  'bit with its evidence tag.'
+            : 'Nothing open. Tap a block on the bar, or pick one in the list, '
+                  'to see its duration, its modulation and, for a signal '
+                  'field, every bit with its evidence tag.',
         style: text.bodySmall?.copyWith(color: colors.textTertiary),
       );
     } else {
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    b.name,
-                    style: text.titleMedium?.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w600,
+          // Presenter: name, duration and their evidence on one line.
+          if (presenting)
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.xxs,
+                    children: <Widget>[
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          b.name,
+                          style: text.titleMedium?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        b.isToScale
+                            ? '${formatPreambleTenths(b.tenths)} µs · '
+                                  '${b.durationNote}'
+                            : b.durationNote,
+                        style: mono.inlineCode.copyWith(
+                          color: colors.textAccent,
+                        ),
+                      ),
+                      if (b.durationEvidence.isNotEmpty)
+                        _TaggedLine(
+                          label: 'Duration',
+                          evidence: b.durationEvidence,
+                        ),
+                      if (b.countEvidence != null)
+                        _TaggedLine(
+                          label: 'Count ${b.count}',
+                          evidence: <Evidence>[b.countEvidence!],
+                        ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: model.clearSelection,
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.textAccent,
+                    minimumSize: const Size(
+                      AppSpacing.minTouchTarget,
+                      AppSpacing.minTouchTarget,
+                    ),
+                  ),
+                  child: Text('Close', semanticsLabel: 'Close ${b.name}'),
+                ),
+              ],
+            )
+          else ...<Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      b.name,
+                      style: text.titleMedium?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: model.clearSelection,
-                style: TextButton.styleFrom(
-                  foregroundColor: colors.textAccent,
-                  minimumSize: const Size(
-                    AppSpacing.minTouchTarget,
-                    AppSpacing.minTouchTarget,
+                TextButton(
+                  onPressed: model.clearSelection,
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.textAccent,
+                    minimumSize: const Size(
+                      AppSpacing.minTouchTarget,
+                      AppSpacing.minTouchTarget,
+                    ),
                   ),
+                  child: Text('Close', semanticsLabel: 'Close ${b.name}'),
                 ),
-                child: Text('Close', semanticsLabel: 'Close ${b.name}'),
+              ],
+            ),
+            Text(
+              b.isToScale
+                  ? '${formatPreambleTenths(b.tenths)} µs · ${b.durationNote}'
+                  : b.durationNote,
+              style: mono.inlineCode.copyWith(color: colors.textAccent),
+            ),
+            if (b.durationEvidence.isNotEmpty) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              _TaggedLine(label: 'Duration', evidence: b.durationEvidence),
+            ],
+            if (b.countEvidence != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              _TaggedLine(
+                label: 'Count ${b.count}',
+                evidence: <Evidence>[b.countEvidence!],
               ),
             ],
-          ),
-          Text(
-            b.isToScale
-                ? '${formatPreambleTenths(b.tenths)} µs · ${b.durationNote}'
-                : b.durationNote,
-            style: mono.inlineCode.copyWith(color: colors.textAccent),
-          ),
-          if (b.durationEvidence.isNotEmpty) ...<Widget>[
-            const SizedBox(height: AppSpacing.xxs),
-            _TaggedLine(label: 'Duration', evidence: b.durationEvidence),
-          ],
-          if (b.countEvidence != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xxs),
-            _TaggedLine(
-              label: 'Count ${b.count}',
-              evidence: <Evidence>[b.countEvidence!],
-            ),
           ],
           if (b.modulationNote != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
@@ -449,8 +669,11 @@ class _Detail extends StatelessWidget {
           ),
           if (b.table != null) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
-            const EvidenceKey(),
-            const SizedBox(height: AppSpacing.xs),
+            // The presenter panel folds the key under Sources.
+            if (!presenting) ...<Widget>[
+              const EvidenceKey(),
+              const SizedBox(height: AppSpacing.xs),
+            ],
             BitTableView(table: b.table!),
           ],
         ],

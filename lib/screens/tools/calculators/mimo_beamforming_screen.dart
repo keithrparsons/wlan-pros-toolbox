@@ -21,8 +21,10 @@
 //   - MimoControls (mimo_beamforming_controls.dart): inputs and readouts, in
 //                  three parts (setup, inputs, readouts).
 // This screen only composes them. On a phone they stack: setup, then the
-// stage, then inputs and readouts. A presenter layout can place the stage
-// and a full MimoControls side by side with no change to either.
+// stage, then inputs and readouts. The Present button (desktop and tablet
+// windows) opens the stage and a full MimoControls side by side over the
+// SAME controller in the presenter layout (lib/widgets/presenter/, spec 00).
+// Keys: Up and Down steer the client 5 degrees, R resets.
 //
 // THEME: chrome from context.colors (dark §8 / light §8.20). Numerics in DM
 // Mono. Streams take the §8.15.2 stream palette (mimo_beamforming_palette
@@ -48,9 +50,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/mimo_beamforming_model.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'mimo_beamforming_controller.dart';
 import 'mimo_beamforming_controls.dart';
@@ -88,6 +92,15 @@ class _MimoBeamformingScreenState extends State<MimoBeamformingScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied). Every control part in one column beside the stage.
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'MIMO and Beamforming',
+    stage: MimoStage(controller: _controller),
+    controls: MimoControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,7 +113,13 @@ class _MimoBeamformingScreenState extends State<MimoBeamformingScreen> {
           child: Text('MIMO and Beamforming'),
         ),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.mimoBeamforming,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

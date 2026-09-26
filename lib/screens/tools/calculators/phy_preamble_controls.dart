@@ -20,6 +20,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'phy_preamble_bit_table.dart';
 import 'phy_preamble_model.dart';
@@ -50,23 +52,56 @@ class PhyPreambleControls extends StatelessWidget {
       PreambleControlPart.readouts,
       PreambleControlPart.length,
     },
+    this.presenterFolds = const <Widget>[],
   });
 
   final PhyPreambleModel model;
   final Set<PreambleControlPart> parts;
+
+  /// More disclosures for the presenter panel's folded card (the screen
+  /// adds its sources note here, so every fold shares one card).
+  final List<Widget> presenterFolds;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: model,
       builder: (BuildContext context, _) {
+        // Presenter panel: the mode and the two settings that change the
+        // picture most stay out; the rest of the settings, the readouts and
+        // the LENGTH calculator fold (the preamble's length is the stage's
+        // headline).
+        final bool presenting = PresenterMode.isActive(context);
+        final bool folded =
+            presenting &&
+            (parts.contains(PreambleControlPart.readouts) ||
+                parts.contains(PreambleControlPart.length));
         final List<Widget> cards = <Widget>[
           if (parts.contains(PreambleControlPart.mode)) _ModeCard(model),
           if (parts.contains(PreambleControlPart.settings))
             _SettingsCard(model),
-          if (parts.contains(PreambleControlPart.readouts))
+          if (folded)
+            PpCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  if (parts.contains(PreambleControlPart.readouts))
+                    PresenterDisclosure(
+                      title: 'Readouts: L-SIG and BSS color',
+                      children: <Widget>[_ReadoutsCard(model)],
+                    ),
+                  if (parts.contains(PreambleControlPart.length))
+                    PresenterDisclosure(
+                      title: 'L-SIG LENGTH calculator',
+                      children: <Widget>[_LengthCard(model: model)],
+                    ),
+                  ...presenterFolds,
+                ],
+              ),
+            ),
+          if (!presenting && parts.contains(PreambleControlPart.readouts))
             _ReadoutsCard(model),
-          if (parts.contains(PreambleControlPart.length))
+          if (!presenting && parts.contains(PreambleControlPart.length))
             _LengthCard(model: model),
         ];
         return Column(
@@ -112,7 +147,9 @@ class _ModeCard extends StatelessWidget {
             ],
             onChanged: (PreambleMode p) => m.mode = p,
           ),
-          if (identify) ...<Widget>[
+          if (identify && PresenterMode.isActive(context))
+            ..._presenterWalkButtons(colors, text)
+          else if (identify) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             SizedBox(
               width: double.infinity,
@@ -199,6 +236,87 @@ class _ModeCard extends StatelessWidget {
   }
 }
 
+extension on _ModeCard {
+  /// Presenter panel: the five walk buttons in two rows, with no caption
+  /// (the Right arrow asks the next question, R starts again).
+  List<Widget> _presenterWalkButtons(
+    AppColorScheme colors,
+    TextTheme text,
+  ) => <Widget>[
+    const SizedBox(height: AppSpacing.xs),
+    Row(
+      children: <Widget>[
+        Expanded(
+          flex: 2,
+          child: Semantics(
+            button: true,
+            label: m.walkDone
+                ? 'The walk is complete'
+                : 'Ask the receiver\'s next question',
+            excludeSemantics: true,
+            child: FilledButton.icon(
+              onPressed: m.walkDone ? null : m.stepWalk,
+              icon: const Icon(Icons.skip_next_rounded),
+              label: Text(m.walkDone ? 'Walk complete' : 'Next step'),
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+                disabledBackgroundColor: colors.disabledFill,
+                disabledForegroundColor: colors.textDisabled,
+                minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
+                textStyle: text.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: PpOutlineButton(
+            icon: Icons.skip_previous_rounded,
+            label: 'Back',
+            semanticLabel: 'Take back the last question',
+            onPressed: m.stepsShown == 0 ? null : m.backWalk,
+          ),
+        ),
+      ],
+    ),
+    const SizedBox(height: AppSpacing.xs),
+    Row(
+      children: <Widget>[
+        Expanded(
+          child: PpOutlineButton(
+            icon: Icons.visibility_rounded,
+            label: 'Reveal',
+            semanticLabel: 'Show every question and the verdict',
+            onPressed: m.walkDone ? null : m.revealWalk,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: PpOutlineButton(
+            icon: Icons.restart_alt_rounded,
+            label: 'Reset',
+            semanticLabel: 'Back to the first question',
+            onPressed: m.stepsShown == 0 ? null : m.resetWalk,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: PpOutlineButton(
+            icon: Icons.casino_rounded,
+            label: 'Mystery',
+            semanticLabel:
+                'New mystery PPDU: pick one at random and hide its name',
+            onPressed: m.newMystery,
+          ),
+        ),
+      ],
+    ),
+  ];
+}
+
 // ── Settings ────────────────────────────────────────────────────────────────
 
 class _SettingsCard extends StatelessWidget {
@@ -225,6 +343,7 @@ class _SettingsCard extends StatelessWidget {
         ),
       );
     }
+    if (PresenterMode.isActive(context)) return _presenter(context, note);
     final PreambleSettings s = m.settings;
     final PpduType t = s.type;
     final bool streamsOn = t != PpduType.nonHt;
@@ -354,6 +473,131 @@ class _SettingsCard extends StatelessWidget {
                       'width changes nothing drawn here. In VHT it changes '
                       'VHT-SIG-B\'s layout.',
             style: note,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+extension on _SettingsCard {
+  /// Presenter panel: PPDU type and streams (with the LTF count they set)
+  /// stay out; LTF size, SIG symbols and width fold, and the explanatory
+  /// sentences under each control are dropped.
+  Widget _presenter(BuildContext context, TextStyle? note) {
+    final PreambleSettings s = m.settings;
+    final PpduType t = s.type;
+    final bool streamsOn = t != PpduType.nonHt;
+    final int maxS = t.maxStreams;
+    final int streams = s.effectiveStreams;
+    final ({int count, Evidence evidence}) ltf = m.ltf;
+    final String sigName = t == PpduType.ehtMu ? 'EHT-SIG' : 'HE-SIG-B';
+    // Walking the receiver's questions, the PPDU type is the one setting in
+    // use, so the streams fold too.
+    final bool walking = m.mode == PreambleMode.identify;
+    final List<Widget> streamsControls = <Widget>[
+      const SizedBox(height: AppSpacing.xs),
+      PpSlider(
+        label: 'Spatial streams (N_STS)',
+        valueText: streamsOn ? '$streams' : 'none',
+        value: streams.toDouble(),
+        min: 1,
+        max: maxS < 2 ? 2 : maxS.toDouble(),
+        divisions: maxS < 2 ? 1 : maxS - 1,
+        onChanged: streamsOn ? (double v) => m.streams = v.round() : null,
+        semanticValue: (double v) =>
+            '${v.round()} stream${v.round() == 1 ? '' : 's'}',
+      ),
+      if (streamsOn)
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xxs,
+          children: <Widget>[
+            Text(
+              '${ltf.count} LTF${ltf.count == 1 ? '' : 's'}'
+              '${t == PpduType.htMixed ? ' (HT stops at 4)' : ''}.',
+              style: note,
+            ),
+            EvidenceChip(ltf.evidence),
+          ],
+        ),
+    ];
+    return PpCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LabeledField(
+            label: 'PPDU type',
+            semanticLabel: 'PPDU type',
+            field: AppSelect<PpduType>(
+              value: t,
+              semanticLabel: 'PPDU type',
+              items: <AppSelectItem<PpduType>>[
+                for (final PpduType p in PpduType.values) (p, p.label),
+              ],
+              onChanged: (PpduType p) => m.type = p,
+            ),
+          ),
+          if (!walking) ...streamsControls,
+          PresenterDisclosure(
+            title: walking
+                ? 'Streams, LTF, SIG symbols and width'
+                : 'LTF size, SIG symbols and width',
+            children: <Widget>[
+              if (walking) ...streamsControls,
+              LabeledField(
+                label: 'LTF size and guard interval',
+                semanticLabel: 'LTF size and guard interval',
+                field: AppSelect<HeLtfMode>(
+                  value: s.ltf,
+                  enabled: t.hasHeLtf,
+                  semanticLabel: 'LTF size and guard interval',
+                  items: <AppSelectItem<HeLtfMode>>[
+                    for (final HeLtfMode h in HeLtfMode.values) (h, h.label),
+                  ],
+                  onChanged: (HeLtfMode h) => m.ltfMode = h,
+                ),
+              ),
+              if (!t.hasHeLtf)
+                Text('Only HE and EHT choose an LTF size.', style: note),
+              const SizedBox(height: AppSpacing.xs),
+              PpSlider(
+                label: t.hasSigBSymbols
+                    ? '$sigName symbols (set by the AP)'
+                    : 'HE-SIG-B / EHT-SIG symbols',
+                valueText: t.hasSigBSymbols ? '${s.sigSymbols}' : 'none',
+                value: s.sigSymbols.toDouble(),
+                min: 1,
+                max: kMaxSigSymbols.toDouble(),
+                divisions: kMaxSigSymbols - 1,
+                onChanged: t.hasSigBSymbols
+                    ? (double v) => m.sigSymbols = v.round()
+                    : null,
+                semanticValue: (double v) =>
+                    '${v.round()} symbol${v.round() == 1 ? '' : 's'}',
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              LabeledField(
+                label: 'Channel width',
+                semanticLabel: 'Channel width',
+                field: AppSelect<int>(
+                  value: s.widthMhz,
+                  enabled: t.widthChangesLayout,
+                  semanticLabel: 'Channel width',
+                  items: <AppSelectItem<int>>[
+                    for (final int w in kPreambleWidthsMhz) (w, '$w MHz'),
+                  ],
+                  onChanged: (int w) => m.widthMhz = w,
+                ),
+              ),
+              Text(
+                t.widthChangesLayout
+                    ? 'Width changes VHT-SIG-B\'s bit layout, not any duration.'
+                    : 'Width changes no duration drawn here.',
+                style: note,
+              ),
+            ],
           ),
         ],
       ),

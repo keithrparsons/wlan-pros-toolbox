@@ -12,6 +12,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/phy_preamble.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kPhyPreambleToolId = 'phy-preamble';
@@ -223,6 +224,43 @@ class PhyPreambleModel extends ChangeNotifier {
     _stepsShown = _classification.steps.length;
     notifyListeners();
   }
+
+  // ── Presenter keys ──────────────────────────────────────────────────────
+
+  /// Opens the next block after the open one (the first when none is open),
+  /// wrapping, and skipping blocks hidden in a mystery PPDU.
+  void selectNext() {
+    final int n = _blocks.length;
+    if (n == 0) return;
+    final int from = _selected ?? -1;
+    for (int k = 1; k <= n; k++) {
+      final int i = (from + k) % n;
+      if (hidden && _blocks[i].role != BlockRole.legacy) continue;
+      if (i == _selected) return;
+      _selected = i;
+      notifyListeners();
+      return;
+    }
+  }
+
+  /// The next or previous PPDU type, held at the ends of the list.
+  void nudgeType(int delta) {
+    final List<PpduType> all = PpduType.values;
+    final int i = (all.indexOf(type) + delta).clamp(0, all.length - 1);
+    if (all[i] != type) type = all[i];
+  }
+
+  /// Presenter keys. Right: in Explore, open the next block; in Which PHY?,
+  /// ask the next question. R: close the block, or restart the walk. Up and
+  /// Down: the PPDU type. Nothing runs on a clock, so there is no play.
+  PresenterActions get presenterActions => PresenterActions(
+    step: () => _mode == PreambleMode.identify ? stepWalk() : selectNext(),
+    reset: () =>
+        _mode == PreambleMode.identify ? resetWalk() : clearSelection(),
+    sliderDown: () => nudgeType(-1),
+    sliderUp: () => nudgeType(1),
+    sliderLabel: 'PPDU type',
+  );
 
   set txtimeText(String s) {
     if (s == _txtimeText) return;

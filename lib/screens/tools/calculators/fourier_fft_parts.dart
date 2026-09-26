@@ -10,6 +10,7 @@ import '../../../services/wifi_lab/fourier_dsp.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 
@@ -278,4 +279,65 @@ class LabOutlinedAction extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A presenter-stage number: a small label over a large DM Mono value (the
+/// presenter's headline size). Lime when [accent] (the quantity the lesson is
+/// about).
+class LabStat extends StatelessWidget {
+  const LabStat({
+    super.key,
+    required this.label,
+    required this.value,
+    this.accent = false,
+  });
+
+  final String label;
+  final String value;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          Text(
+            value,
+            style: scale
+                .headlineStyle(labMono(context).outputMedium)
+                .copyWith(
+                  color: accent ? colors.textAccent : colors.textPrimary,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A row of [LabStat]s that wraps when the stage is narrow.
+class LabStatRow extends StatelessWidget {
+  const LabStatRow({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Wrap(
+      spacing: AppSpacing.lg,
+      runSpacing: AppSpacing.xs,
+      children: children,
+    ),
+  );
 }

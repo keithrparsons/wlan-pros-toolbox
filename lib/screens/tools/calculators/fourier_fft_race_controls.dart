@@ -14,6 +14,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'fourier_fft_model.dart';
 import 'fourier_fft_parts.dart';
@@ -71,6 +73,39 @@ class FourierRaceControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Widget gap = SizedBox(height: AppSpacing.sm);
+    if (PresenterMode.isActive(context)) {
+      // Presenter: the catches and the sweep time are on the stage; the
+      // run button and the analyzer settings stay; the scene, the
+      // fingerprints and the formula's caveats fold.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _RaceCard(model: model, compact: true),
+          gap,
+          _AnalyzersCard(model: model, compact: true),
+          gap,
+          LabCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                PresenterDisclosure(
+                  title: 'Scene: mains, oven sweep, camera',
+                  children: <Widget>[_SceneCard(model: model)],
+                ),
+                PresenterDisclosure(
+                  title: 'What each one looks like',
+                  children: <Widget>[_FingerprintsCard(model: model)],
+                ),
+                const PresenterDisclosure(
+                  title: 'About the sweep-time formula',
+                  children: <Widget>[_SweepFormulaNotes()],
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -87,8 +122,12 @@ class FourierRaceControls extends StatelessWidget {
 }
 
 class _RaceCard extends StatelessWidget {
-  const _RaceCard({required this.model});
+  const _RaceCard({required this.model, this.compact = false});
   final FourierLabModel model;
+
+  /// Presenter: Run, Pause or Resume and Rewind only (the stage shows the
+  /// catches).
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +137,45 @@ class _RaceCard extends StatelessWidget {
     final RaceTally bt = run.tally(RaceSource.bluetooth, untilSeconds: until);
     final RaceTally mw = run.tally(RaceSource.microwave, untilSeconds: until);
 
+    if (compact) {
+      return LabCard(
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              flex: 3,
+              child: FilledButton.icon(
+                onPressed: race.playPause,
+                icon: Icon(
+                  race.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                ),
+                label: Text(
+                  race.playing
+                      ? 'Pause'
+                      : race.paused
+                      ? 'Resume'
+                      : 'Run the race',
+                ),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              flex: 2,
+              child: LabOutlinedAction(
+                label: 'Step',
+                icon: Icons.skip_next_rounded,
+                semantic: 'Step the race one fortieth of the run',
+                enabled: true,
+                onTap: race.step,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return LabCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,9 +183,19 @@ class _RaceCard extends StatelessWidget {
           const LabSectionLabel('The race'),
           const SizedBox(height: AppSpacing.xs),
           FilledButton.icon(
-            onPressed: race.animating ? null : race.startRun,
+            onPressed: race.playing
+                ? null
+                : race.paused
+                ? race.resume
+                : race.startRun,
             icon: const Icon(Icons.play_arrow_rounded),
-            label: Text(race.animating ? 'Running...' : 'Run the race'),
+            label: Text(
+              race.playing
+                  ? 'Running...'
+                  : race.paused
+                  ? 'Resume'
+                  : 'Run the race',
+            ),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
             ),
@@ -208,8 +296,12 @@ class _TallyTable extends StatelessWidget {
 }
 
 class _AnalyzersCard extends StatelessWidget {
-  const _AnalyzersCard({required this.model});
+  const _AnalyzersCard({required this.model, this.compact = false});
   final FourierLabModel model;
+
+  /// Presenter: settings and the two secondary readouts; the sweep time is
+  /// on the stage and the formula's caveats fold.
+  final bool compact;
 
   static String _rbwLabel(double hz) => fmtHz(hz);
 
@@ -272,11 +364,12 @@ class _AnalyzersCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          LabReadoutRow(
-            label: 'Sweep time',
-            value: fmtTime(run.swept.sweepSeconds),
-            emphasize: true,
-          ),
+          if (!compact)
+            LabReadoutRow(
+              label: 'Sweep time',
+              value: fmtTime(run.swept.sweepSeconds),
+              emphasize: true,
+            ),
           LabReadoutRow(
             label: 'Sweeps in run',
             value: sweeps >= 1
@@ -289,28 +382,44 @@ class _AnalyzersCard extends StatelessWidget {
             label: 'FFT frame',
             value: 'about ${fmtTime(run.fft.frameSeconds)} (1/RBW), no gaps',
           ),
-          const SizedBox(height: AppSpacing.xs),
-          LabCaption(
-            'Sweep time = k x Span / RBW², with k = '
-            '${SweptAnalyzer.kSweepK} (Keysight AN 150 gives 2 to 3 for '
-            'analog filters). Ten times narrower RBW makes the sweep 100 '
-            'times slower. Narrow RBW is worth having: it lowers the noise '
-            'floor and separates close signals.',
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          const LabNote(
-            icon: Icons.info_outline,
-            message:
-                'Real analyzers with digital RBW filters, or FFT-assisted '
-                'sweeps, sweep faster than this formula says. The formula is '
-                'the classic analog case. The FFT analyzer here is ideal: it '
-                'covers the whole span with no gaps; a real one has a '
-                'real-time bandwidth limit.',
-          ),
+          if (!compact) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            const _SweepFormulaNotes(),
+          ],
         ],
       ),
     );
   }
+}
+
+/// What the sweep-time formula is and is not (the phone shows it under the
+/// analyzer settings; the presenter panel folds it).
+class _SweepFormulaNotes extends StatelessWidget {
+  const _SweepFormulaNotes();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: <Widget>[
+      LabCaption(
+        'Sweep time = k x Span / RBW², with k = '
+        '${SweptAnalyzer.kSweepK} (Keysight AN 150 gives 2 to 3 for '
+        'analog filters). Ten times narrower RBW makes the sweep 100 '
+        'times slower. Narrow RBW is worth having: it lowers the noise '
+        'floor and separates close signals.',
+      ),
+      SizedBox(height: AppSpacing.xs),
+      LabNote(
+        icon: Icons.info_outline,
+        message:
+            'Real analyzers with digital RBW filters, or FFT-assisted '
+            'sweeps, sweep faster than this formula says. The formula is '
+            'the classic analog case. The FFT analyzer here is ideal: it '
+            'covers the whole span with no gaps; a real one has a '
+            'real-time bandwidth limit.',
+      ),
+    ],
+  );
 }
 
 class _SceneCard extends StatelessWidget {

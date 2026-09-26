@@ -17,6 +17,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/presenter/presenter_mode.dart';
+
 /// Colors and text styles for both plots.
 class FourierPlotStyle {
   const FourierPlotStyle({
@@ -27,6 +29,7 @@ class FourierPlotStyle {
     required this.axis,
     required this.marker,
     required this.labelStyle,
+    this.scale = PresenterScale.normal,
   });
 
   /// The measured quantity: the summed trace, the spectrum (lime).
@@ -47,8 +50,16 @@ class FourierPlotStyle {
   /// True-frequency tick marks under the spectrum (neutral).
   final Color marker;
 
-  /// Axis label text.
+  /// Axis label text (already at the presenter's size).
   final TextStyle labelStyle;
+
+  /// The presenter scale: strokes, dots and label margins grow with it.
+  /// [PresenterScale.normal] (every factor 1) outside presenter mode.
+  final PresenterScale scale;
+
+  double w(double width) => scale.strokeWidth(width);
+  double m(double r) => scale.markerSize(r);
+  double t(double px) => px * scale.text;
 }
 
 double _niceStep(double span, int targetTicks) {
@@ -169,10 +180,10 @@ class TimeTracePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect plot = Rect.fromLTRB(
-      _left,
+      style.t(_left),
       4,
       size.width - 4,
-      size.height - _bottom,
+      size.height - style.t(_bottom),
     );
     double x(double t) => plot.left + t / durationSeconds * plot.width;
     double y(double v) =>
@@ -180,10 +191,10 @@ class TimeTracePainter extends CustomPainter {
 
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
     final Paint axis = Paint()
       ..color = style.axis
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
 
     // Y gridlines at -yMax, 0, +yMax.
     for (final double v in <double>[-yMax, 0, yMax]) {
@@ -231,7 +242,7 @@ class TimeTracePainter extends CustomPainter {
     if (w != null && w.isNotEmpty) {
       final Paint wp = Paint()
         ..color = style.window
-        ..strokeWidth = 1.5;
+        ..strokeWidth = style.w(1.5);
       final List<Offset> top = <Offset>[];
       final List<Offset> bottom = <Offset>[];
       for (int i = 0; i <= w.length; i++) {
@@ -248,7 +259,7 @@ class TimeTracePainter extends CustomPainter {
     if (componentsAt.length > 1) {
       final Paint cp = Paint()
         ..color = style.component
-        ..strokeWidth = 1
+        ..strokeWidth = style.w(1)
         ..style = PaintingStyle.stroke;
       for (final double Function(double) f in componentsAt) {
         canvas.drawPath(_curve(f, cols * 2, x, y), cp);
@@ -257,7 +268,7 @@ class TimeTracePainter extends CustomPainter {
 
     final Paint sp = Paint()
       ..color = style.signal
-      ..strokeWidth = 2
+      ..strokeWidth = style.w(2)
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.round;
 
@@ -267,12 +278,16 @@ class TimeTracePainter extends CustomPainter {
       if (spacing >= 4) {
         final Paint stem = Paint()
           ..color = style.signal.withValues(alpha: 0.5)
-          ..strokeWidth = 1;
+          ..strokeWidth = style.w(1);
         final Paint dot = Paint()..color = style.signal;
         for (int i = 0; i < s.length; i++) {
           final double px = x(i / s.length * durationSeconds);
           canvas.drawLine(Offset(px, y(0)), Offset(px, y(s[i])), stem);
-          canvas.drawCircle(Offset(px, y(s[i])), spacing >= 8 ? 3 : 2, dot);
+          canvas.drawCircle(
+            Offset(px, y(s[i])),
+            style.m(spacing >= 8 ? 3 : 2),
+            dot,
+          );
         }
       } else if (spacing >= 1) {
         // A line through the samples: close, but still fewer than one per
@@ -286,12 +301,12 @@ class TimeTracePainter extends CustomPainter {
             p.lineTo(o.dx, o.dy);
           }
         }
-        canvas.drawPath(p, sp..strokeWidth = 1.5);
+        canvas.drawPath(p, sp..strokeWidth = style.w(1.5));
       } else {
         // More than one sample per pixel column: draw each column's range.
         final Paint band = Paint()
           ..color = style.signal
-          ..strokeWidth = 1;
+          ..strokeWidth = style.w(1);
         for (int c = 0; c < cols; c++) {
           final int i0 = (c / cols * s.length).floor();
           final int i1 = math.max(i0 + 1, ((c + 1) / cols * s.length).floor());
@@ -381,10 +396,10 @@ class SpectrumPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Rect plot = Rect.fromLTRB(
-      _left,
+      style.t(_left),
       6,
       size.width - 8,
-      size.height - _bottom,
+      size.height - style.t(_bottom),
     );
     double x(double hz) => plot.left + hz / maxHz * plot.width;
     double y(double db) {
@@ -394,10 +409,10 @@ class SpectrumPainter extends CustomPainter {
 
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = style.w(1);
     final Paint axis = Paint()
       ..color = style.axis
-      ..strokeWidth = 1
+      ..strokeWidth = style.w(1)
       ..style = PaintingStyle.stroke;
 
     final double dbStep = (topDb - floorDb) > 80 ? 20 : 10;
@@ -436,7 +451,7 @@ class SpectrumPainter extends CustomPainter {
     // True-frequency ticks just under the plot.
     final Paint mk = Paint()
       ..color = style.marker
-      ..strokeWidth = 2;
+      ..strokeWidth = style.w(2);
     for (final double f in markersHz) {
       if (f < 0 || f > maxHz) continue;
       canvas.drawLine(
@@ -450,7 +465,7 @@ class SpectrumPainter extends CustomPainter {
     canvas.clipRect(plot);
     final Paint sp = Paint()
       ..color = style.signal
-      ..strokeWidth = 2
+      ..strokeWidth = style.w(2)
       ..strokeCap = StrokeCap.round;
 
     for (final SpectrumLine l in lines) {
@@ -459,11 +474,11 @@ class SpectrumPainter extends CustomPainter {
       canvas.drawLine(
         Offset(px, plot.bottom),
         Offset(px, y(l.levelDb)),
-        sp..strokeWidth = 3,
+        sp..strokeWidth = style.w(3),
       );
       canvas.drawCircle(
         Offset(px, y(l.levelDb)),
-        3.5,
+        style.m(3.5),
         Paint()..color = style.signal,
       );
     }
@@ -476,13 +491,13 @@ class SpectrumPainter extends CustomPainter {
         // Stems with a dot: each bin is visibly one value.
         final Paint stem = Paint()
           ..color = style.signal
-          ..strokeWidth = math.min(3, math.max(1.5, spacing / 4));
+          ..strokeWidth = style.w(math.min(3, math.max(1.5, spacing / 4)));
         final Paint dot = Paint()..color = style.signal;
         for (int k = 0; k < shown; k++) {
           final double px = x(k * binSpacingHz);
           canvas.drawLine(Offset(px, plot.bottom), Offset(px, y(b[k])), stem);
           if (spacing >= 6) {
-            canvas.drawCircle(Offset(px, y(b[k])), 2.5, dot);
+            canvas.drawCircle(Offset(px, y(b[k])), style.m(2.5), dot);
           }
         }
       } else {
@@ -499,7 +514,7 @@ class SpectrumPainter extends CustomPainter {
           p,
           Paint()
             ..color = style.signal
-            ..strokeWidth = 1.5
+            ..strokeWidth = style.w(1.5)
             ..style = PaintingStyle.stroke
             ..strokeJoin = StrokeJoin.round,
         );
