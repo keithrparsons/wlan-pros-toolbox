@@ -338,10 +338,10 @@ void main() {
         );
       });
 
-      // 2026-09-26: survey-walk, heat-map-builder and join-ladder added. 23 + 3 = 26.
-      test('exactly the 26 simulators are gated in the real catalog', () {
+      // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
+      test('exactly the 27 simulators are gated in the real catalog', () {
         final List<ToolEntry> lab = wifiLabTools().toList();
-        expect(lab, hasLength(26));
+        expect(lab, hasLength(27));
       });
     },
   );
