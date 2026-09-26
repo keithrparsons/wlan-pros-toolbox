@@ -49,6 +49,7 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'roaming-walk',
     'survey-walk',
     'heat-map-builder',
+    'predict-then-measure',
     'dfs-simulator',
     // 2026-09-26: Joining a Network, Frame by Frame (spec 21b), its own tool
     // by Keith's call, shelved beside the ladder whose engine it shares.
@@ -95,13 +96,13 @@ void main() {
     );
   });
 
-  test('all 29 simulators are in wifi-classroom and none remain in '
+  test('all 30 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(29));
+    expect(sims, hasLength(30));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -168,7 +169,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(42));
+    expect(classroom.tools, hasLength(43));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
