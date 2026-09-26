@@ -16,6 +16,7 @@ import '../screens/tools/educational/spectrum_analysis_screen.dart';
 import '../screens/tools/educational/ham_study_resources_screen.dart';
 import '../screens/search_screen.dart';
 import '../data/tool_catalog.dart' show kEducationalResourcesRoute;
+import '../widgets/presenter/large_screen_gate.dart' show gateWifiLabRoutes;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/architectural_scale_screen.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
@@ -762,7 +763,12 @@ class AppRouter {
 
   /// Map of static, argument-less routes. Categories use MaterialPageRoute
   /// directly because each category screen takes a typed `ToolCategory`.
-  static final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
+  ///
+  /// Every Wi-Fi Lab tool (catalog subgroup 'Wi-Fi Lab') is wrapped in the
+  /// large-screen notice here, in one place ([gateWifiLabRoutes]), so a new
+  /// Lab tool is gated as soon as it is in the catalog and this table.
+  static final Map<String, WidgetBuilder>
+  routes = gateWifiLabRoutes(<String, WidgetBuilder>{
     home: (_) => const HomeScreen(),
     about: (_) => const AboutScreen(),
     helpBrowse: (_) => const HelpBrowseScreen(),
@@ -1094,7 +1100,7 @@ class AppRouter {
       checklist: kClientTestChecklist,
       toolId: 'checklist-client-test',
     ),
-  };
+  });
 
   /// Fallback for any unregistered route. Sends the user back to home rather
   /// than blowing up — useful while many tools are still "Coming soon".
