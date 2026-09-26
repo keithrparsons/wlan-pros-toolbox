@@ -1514,6 +1514,68 @@
       ],
       "source": "Apple, Wi-Fi roaming support in Apple devices (deployment guide): iPhone trigger -70 dBm with 8 dB delta transmitting and 12 dB idle, Mac -75 dBm with 12 dB, and the first six Neighbor Report entries. Frame sequences from Cisco 9800 roaming documentation. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
+    "band-steering": {
+      "name": "Band Steering",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows why a dual-band client so often stays on 2.4 GHz, and what an AP can and cannot do about it. The client chooses the band. The AP can only hide (stop answering broadcast probe requests on 2.4 GHz), refuse (reject authentication on 2.4 GHz) or suggest (send a BSS, basic service set, Transition Management request naming the 5 GHz network). None of the three stops the 2.4 GHz beacons. No clause of the IEEE (Institute of Electrical and Electronics Engineers) 802.11 standard defines band steering; the term is industry usage for those three tools.",
+      "whyHere": "Band steering is sold as the AP moving clients to 5 GHz. It does not move anyone. The same AP sounds weaker on 5 GHz: free-space loss alone is 7.1 dB higher at 5.5 GHz than at 2.437 GHz, and walls usually add more, so near the edge of coverage 5 GHz drops below a client's entry level first. Once a client is on 2.4 GHz with a good signal, its own published rules say it does not look again, and walking toward the AP only makes that signal better. Roaming Walk shows a client choosing between APs on one band; this tool is the choice between bands on one AP, with the same log-distance model.",
+      "howToUse": [
+        "Read the top card: which band the client is on, how far it is from the AP, and one sentence saying why it did what it did.",
+        "Press Walk to move the client along its path one meter at a time, or use Step 1 m, Reset and the Walked slider. Pick Edge to AP or AP to edge. On the floor the solid ring is where 2.4 GHz can still be heard and the dashed ring is 5 GHz; the line from the AP to the client is the band it is on, in the same pattern. When the client scans, a probe arrow per band points at the AP: two heads when the AP answered, a cross when it did not.",
+        "Pick the AP's steering mode: off, probe suppression, authentication refusal, or a transition request (802.11v amendment). Pick Client A, B or C and read its rule set; the gauges draw its thresholds as lines. Turn on Client uses a random address while scanning to see the AP lose track of it. Change the extra 5 GHz wall loss and, under authentication refusal, how many refusals a client tolerates.",
+        "Predict, then reveal: Ask the class loads the question (the client walks from the edge of coverage right up to the AP: does it move to 5 GHz?); pick an answer, then press Reveal to walk it in.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space walks or pauses, the Right arrow steps 1 m, R resets the walk, Up and Down move the client 5 m along the path, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "AP steering",
+          "unit": "choice",
+          "range": "Off (default), probe suppression on 2.4 GHz, authentication refusal on 2.4 GHz, or a BSS Transition Management request (802.11v amendment)"
+        },
+        {
+          "name": "Client",
+          "unit": "choice",
+          "range": "Client A, Client B or Client C (default A); each follows one published rule set, or none, as described on screen"
+        },
+        {
+          "name": "Client uses a random address while scanning",
+          "unit": "switch",
+          "range": "Off (default) or On"
+        },
+        {
+          "name": "Extra 5 GHz wall loss",
+          "unit": "dB",
+          "range": "0 to 10; default 3 (illustrative)"
+        },
+        {
+          "name": "Refusals a client tolerates",
+          "unit": "count",
+          "range": "1 to 10; default 3 (illustrative; used only with authentication refusal)"
+        },
+        {
+          "name": "Walking path",
+          "unit": "choice",
+          "range": "Edge to AP (55 m to 2 m, default) or AP to edge"
+        },
+        {
+          "name": "Client C's driver supports transition requests",
+          "unit": "switch",
+          "range": "On (default) or Off; shown for Client C only"
+        }
+      ],
+      "algorithm": "Signal on each band: RSSI = EIRP - [FSPL(1 m) + 10 x n x log10(d)] - extra loss, where EIRP is the effective isotropic radiated power, FSPL(1 m) the free-space path loss at 1 m and n the path-loss exponent, with EIRP 14 dBm on both bands and n = 3.0 (both illustrative, the same model and defaults as Roaming Walk), 2437 MHz for 2.4 GHz and 5500 MHz for 5 GHz, and the extra wall loss on 5 GHz only. The frequency term makes 5 GHz 20 x log10(5500 / 2437) = 7.1 dB weaker at every distance. Nothing is heard below -82 dBm (illustrative), and the AP hears the client wherever the client hears the AP. Each ring is where its band reaches -82 dBm. The client walks one meter per step. When it is not connected, or its own rule says to look, it scans: one broadcast probe request per band, 5 GHz first. The AP matches a dual-band client by seeing the same MAC (media access control) address in probe requests on both radios, and remembers it for the walk; with the random-address switch on, every probe comes from a random address and the AP never matches it. Client A looks below -70 dBm and moves only to a band at least 8 dB stronger (12 dB when idle; this tool uses 8); at join it takes 5 GHz when 5 GHz is at or above -70 dBm, else the stronger band (a model choice). Client B joins only above -80 dBm on 2.4 GHz or -77 dBm on 5 GHz, re-runs selection only when its link is not above -73 dBm on 2.4 GHz or -70 dBm on 5 GHz, and picks the higher throughput estimate: the Shannon limit of a 20 MHz (2.4 GHz) or 80 MHz (5 GHz) channel at the signal capped at -73 or -70 dBm, over thermal noise plus a 7 dB noise figure, with the current network's score times 1.2 (all illustrative). Client C joins the strongest band and has no rule for leaving. Under probe suppression the AP does not answer a broadcast probe on 2.4 GHz from a matched client; a probe naming the network is answered and beacons still go out. Under authentication refusal the AP refuses a matched client on 2.4 GHz until it has refused it the tolerated number of times, then lets it in; a refused client tries its other acceptable band, and with none it tries 2.4 GHz again at the next step. A transition request goes out right after the client joins 2.4 GHz and every 5 m walked after that (illustrative); Client A accepts when 5 GHz is at or above -70 dBm (a model choice), Client B when 5 GHz passes its -77 dBm entry level, Client C when it can hear 5 GHz and its driver supports the request. A decline gives status 7, no suitable candidates.",
+      "example": "Defaults (Client A, steering off, edge to AP, 3 dB extra 5 GHz loss): at 55 m 2.4 GHz arrives at -78.4 dBm and 5 GHz at -88.5 dBm, below the floor, so the client joins 2.4 GHz. Walking in, 2.4 GHz rises above -70 dBm at about 29 m, and from there Client A does not look again; at 2 m it is still on 2.4 GHz at -35.2 dBm, with 5 GHz at -45.3 dBm. Client B stays on 2.4 GHz the same way. With a transition request, Client B declines (status 7, no suitable candidates) until 5 GHz reaches -77 dBm, then accepts and moves at 20 m.",
+      "fieldNotes": [
+        "Probe suppression and authentication refusal are modeled on one open-source access point implementation, whose own configuration notes warn that both can cause connection problems and slow down finding and joining the AP. How commercial APs do it, and their thresholds, are not published in anything read for this tool.",
+        "Clients A, B and C follow rules published by the makers of three client platforms, on their own support and developer pages. Device makers can change every number, so each is one published rule set, not how every device behaves. Client C's maker publishes support for transition requests and no band rule.",
+        "The transition request's answer codes are from the standard's list: 0 accepts; 7 means no suitable candidates.",
+        "Not modeled: an AP forcing a client off with a deauthentication frame. It happens in practice, but no primary source describing it was found, so the tool leaves it out.",
+        "Provisional, pending review: including Client C, and leaving out forced deauthentication.",
+        "Platforms document scanning from random MAC (media access control) addresses when not connected; that is what the random-address switch models.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Wi-Fi Classroom wave 4 research brief, row K: the configuration notes of one open-source access point implementation, three client platform makers' own client-selection pages, and the BSS Transition Management status codes as listed by two independent sources. Path loss from the log-distance model shared with Roaming Walk. Computed on your device."
+    },
     "survey-walk": {
       "name": "Survey Walk",
       "category": "Wi-Fi Classroom",

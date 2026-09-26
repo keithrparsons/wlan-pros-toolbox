@@ -2780,6 +2780,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Band Steering (2026-09-27, spec 38): bands on one AP, where Roaming
+      // Walk is APs on one band. Generic clients, no product names.
+      ToolEntry(
+        id: 'band-steering',
+        title: 'Band Steering',
+        description:
+            'Walk a dual-band client toward an AP and see why it stays on '
+            '2.4 GHz: what the AP can hide, refuse or suggest, and what the '
+            'client decides',
+        routeName: '/tools/band-steering',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       // Survey Walk (2026-09-26, spec 26): walking speed sets sample spacing
       // through the scanner's revisit time. Generic devices, no product names.
       ToolEntry(
