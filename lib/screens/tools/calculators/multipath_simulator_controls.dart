@@ -10,6 +10,11 @@
 // The only status hue is the guard-interval verdict (§8.13 rule 6): a copy
 // that arrives after 0.8 us is tinted statusWarning with an icon and the
 // words "past GI"; copies within it stay neutral (§8.15.1).
+//
+// PRESENTER: inside a PresenterLayout the panel shows setup and inputs
+// without their explanatory prose, folds the delay list into a
+// PresenterDisclosure, and leaves the received level and the fade figures
+// to the stage.
 
 import 'package:flutter/material.dart';
 
@@ -19,6 +24,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'multipath_simulator_controller.dart';
 import 'multipath_simulator_parts.dart';
@@ -60,18 +67,30 @@ class MultipathControls extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, _) {
         final MultipathController c = controller;
-        final List<Widget> cards = <Widget>[
-          if (parts.contains(MultipathControlPart.setup)) _SetupCard(c),
-          if (parts.contains(MultipathControlPart.inputs)) ...<Widget>[
-            if (c.isManyPaths) _ReflectorsCard(c) else _WallCard(c),
-          ],
-          if (parts.contains(MultipathControlPart.readouts)) ...<Widget>[
-            _ReceivedCard(c),
-            if (c.isManyPaths) _DiversityCard(c),
-            _DelayCard(c),
-            _ExplainerCard(c),
-          ],
-        ];
+        final bool presenter = PresenterMode.isActive(context);
+        final List<Widget> cards = presenter
+            ? <Widget>[
+                _SetupCard(c),
+                if (c.isManyPaths) _ReflectorsCard(c) else _WallCard(c),
+                PresenterDisclosure(
+                  title: c.isManyPaths
+                      ? 'How late each copy arrives'
+                      : 'How late the reflected copy arrives',
+                  children: <Widget>[_DelayCard(c)],
+                ),
+              ]
+            : <Widget>[
+                if (parts.contains(MultipathControlPart.setup)) _SetupCard(c),
+                if (parts.contains(MultipathControlPart.inputs)) ...<Widget>[
+                  if (c.isManyPaths) _ReflectorsCard(c) else _WallCard(c),
+                ],
+                if (parts.contains(MultipathControlPart.readouts)) ...<Widget>[
+                  _ReceivedCard(c),
+                  if (c.isManyPaths) _DiversityCard(c),
+                  _DelayCard(c),
+                  _ExplainerCard(c),
+                ],
+              ];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -198,10 +217,11 @@ class _WallCard extends StatelessWidget {
             semanticFormatterCallback: (double v) =>
                 'Reflection strength ${v.toStringAsFixed(2)}',
           ),
-          Text(
-            gammaText,
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
+          if (!PresenterMode.isActive(context))
+            Text(
+              gammaText,
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
           const SizedBox(height: AppSpacing.md),
           MpSliderHeader(
             label: one ? 'Receiver position' : 'Distance to the wall',
@@ -227,13 +247,14 @@ class _WallCard extends StatelessWidget {
                 ? 'Receiver position ${_C.cm(v)}'
                 : 'Distance to the wall ${_C.cm(v)}',
           ),
-          MpNote(
-            icon: Icons.swipe,
-            message:
-                'Drag the receiver in the picture or on the plot, or use this '
-                'slider. Arrow keys move it '
-                '${one ? '1 mm' : '0.5 mm'} at a time.',
-          ),
+          if (!PresenterMode.isActive(context))
+            MpNote(
+              icon: Icons.swipe,
+              message:
+                  'Drag the receiver in the picture or on the plot, or use this '
+                  'slider. Arrow keys move it '
+                  '${one ? '1 mm' : '0.5 mm'} at a time.',
+            ),
         ],
       ),
     );
@@ -277,12 +298,15 @@ class _ReflectorsCard extends StatelessWidget {
             ],
             onChanged: (ScatterEnvironment e) => c.environment = e,
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            '${c.environment.label}. The direct path is blocked, so every '
-            'copy is a reflection, each with equal power and a random phase.',
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
+          if (!PresenterMode.isActive(context)) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              '${c.environment.label}. The direct path is blocked, so every '
+              'copy is a reflection, each with equal power and a random '
+              'phase.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: <Widget>[

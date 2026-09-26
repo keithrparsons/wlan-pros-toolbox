@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 /// A surface-1 card with the calculator border and padding.
 class MpCard extends StatelessWidget {
@@ -84,7 +85,8 @@ class MpRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(
-            width: 120,
+            // Presenter mode scales the label column with its text.
+            width: 120 * PresenterMode.scaleOf(context).text,
             child: Text(
               label,
               style: text.bodyMedium?.copyWith(color: colors.textSecondary),

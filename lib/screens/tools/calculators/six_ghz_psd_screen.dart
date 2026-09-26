@@ -25,7 +25,8 @@
 //   - SixGhzPsdControls, SixGhzPsdReadouts, SixGhzPsdExplainer
 //                        (six_ghz_psd_controls.dart)  inputs and readouts
 //   - PsdWidthChartPainter, PsdSpectrumPainter (six_ghz_psd_chart.dart)
-// A later full-screen presenter layout reuses the same widgets side by side.
+// The Present button (desktop and tablet windows) puts the stage beside the
+// controls over the SAME model (lib/widgets/presenter/).
 //
 // LAYOUT: phone first. Below 720 px everything stacks in one scroll: stage,
 // readouts, controls, explainer. At 720 px and up the controls become a side
@@ -48,9 +49,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'six_ghz_psd_controls.dart';
 import 'six_ghz_psd_model.dart';
@@ -78,13 +81,25 @@ class _SixGhzPsdScreenState extends State<SixGhzPsdScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's model (shared, not copied).
+  /// The per-class numbers are on the stage.
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: '6 GHz Power and PSD',
+    stage: SixGhzPsdStage(model: _model, chartHeight: 0),
+    controls: SixGhzPsdControls(model: _model),
+    actions: _model.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('6 GHz Power and PSD'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _model.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.sixGhzPsd, builder: _presenter),
+          AppCopyAction(textBuilder: _model.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

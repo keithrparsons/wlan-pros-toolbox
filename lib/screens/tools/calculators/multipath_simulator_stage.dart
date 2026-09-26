@@ -6,6 +6,13 @@
 // MultipathControls and a presenter layout can put the two side by side.
 // Dragging the scene or the plot moves the receiver through the controller;
 // the sliders in MultipathControls do the same thing for keyboard users.
+//
+// PRESENTER (lib/widgets/presenter/): inside a PresenterLayout the pictures
+// fill the stage with no scroll. Two-path scenes put the scene beside the
+// arrows, with the received level in headline type over the arrows, and the
+// power plot under both. Many paths puts the plot beside the arrows and the
+// histogram beside the two-antenna fade figures. Strokes, markers and
+// painted labels follow PresenterMode.scaleOf.
 
 import 'package:flutter/material.dart';
 
@@ -13,6 +20,7 @@ import '../../../services/wifi_lab/multipath_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'multipath_simulator_controller.dart';
 import 'multipath_simulator_painters.dart';
 import 'multipath_simulator_parts.dart';
@@ -31,6 +39,9 @@ class MultipathStage extends StatelessWidget {
       builder: (BuildContext context, _) {
         final MultipathPaintStyle style = _paintStyle(context);
         final bool many = controller.isManyPaths;
+        if (PresenterMode.isActive(context)) {
+          return _presenter(context, style, many);
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -51,11 +62,81 @@ class MultipathStage extends StatelessWidget {
     );
   }
 
+  /// Presenter: every picture in a bounded box, no scroll.
+  Widget _presenter(
+    BuildContext context,
+    MultipathPaintStyle style,
+    bool many,
+  ) {
+    final MultipathController c = controller;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        final double side = (box.maxWidth * 0.36).clamp(300.0, 480.0);
+        Widget row(Widget main, Widget aside) => Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Expanded(child: main),
+            const SizedBox(width: AppSpacing.sm),
+            SizedBox(width: side, child: aside),
+          ],
+        );
+        final Widget phasors = _PhasorCard(
+          controller: c,
+          style: style,
+          presenter: true,
+        );
+        if (!many) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 11,
+                child: row(
+                  _SceneCard(controller: c, style: style, presenter: true),
+                  phasors,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                flex: 9,
+                child: _PlotCard(controller: c, style: style, presenter: true),
+              ),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Expanded(
+              flex: 11,
+              child: row(
+                _PlotCard(controller: c, style: style, presenter: true),
+                phasors,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              flex: 9,
+              child: row(
+                _HistogramCard(controller: c, style: style, presenter: true),
+                _FadeCard(controller: c),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   static MultipathPaintStyle _paintStyle(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    // Painted text does not see MediaQuery's text scale; the presenter scale
+    // reaches it here (1.0 outside presenter mode).
+    final PresenterScale scale = PresenterMode.scaleOf(context);
     return MultipathPaintStyle(
+      scale: scale,
       accent: colors.textAccent,
       primary: colors.textPrimary,
       secondary: colors.textSecondary,
@@ -64,8 +145,67 @@ class MultipathStage extends StatelessWidget {
       axis: colors.borderStrong,
       wall: colors.borderStrong,
       labelStyle: mono.inlineCode.copyWith(
-        fontSize: AppTextSize.caption - 2,
+        fontSize: scale.paintFont(AppTextSize.caption - 2),
         color: colors.textSecondary,
+      ),
+    );
+  }
+}
+
+/// In presenter mode [child] takes the rest of its card's height.
+Widget _fill(bool presenter, Widget child) =>
+    presenter ? Expanded(child: child) : child;
+
+/// Presenter stage, many paths: how often each antenna, and both at once,
+/// sit more than 10 dB down. "Both at once" is the lesson, in headline type.
+class _FadeCard extends StatelessWidget {
+  const _FadeCard({required this.controller});
+
+  final MultipathController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final FadeStats f = controller.fade;
+    return MpCard(
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints box) => FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: box.maxWidth,
+            child: Semantics(
+              container: true,
+              liveRegion: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const MpSectionLabel('Two antennas: time below -10 dB'),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    'Both at once',
+                    style: text.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  Text(
+                    _C.pct(f.fractionBoth),
+                    style: scale
+                        .headlineStyle(mono.outputLarge)
+                        .copyWith(color: colors.textAccent),
+                  ),
+                  MpRow(label: 'Antenna A', value: _C.pct(f.fractionA)),
+                  MpRow(label: 'Antenna B', value: _C.pct(f.fractionB)),
+                  const MpRow(label: 'Rayleigh, one', value: '9.5%'),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -75,14 +215,15 @@ class MultipathStage extends StatelessWidget {
 /// optional drag-to-move handler that gets the local x and the size.
 class _PlotSurface extends StatelessWidget {
   const _PlotSurface({
-    required this.height,
+    this.height,
     required this.semantic,
     required this.painter,
     this.onDrag,
     this.verticalPadding = 0,
   });
 
-  final double height;
+  /// Null fills the parent's bounded height (the presenter stage).
+  final double? height;
   final String semantic;
   final CustomPainter Function(Size size) painter;
   final void Function(double dx, Size size)? onDrag;
@@ -131,10 +272,17 @@ class _PlotSurface extends StatelessWidget {
 // ── Scene (modes 1 and 2) ───────────────────────────────────────────────────
 
 class _SceneCard extends StatelessWidget {
-  const _SceneCard({required this.controller, required this.style});
+  const _SceneCard({
+    required this.controller,
+    required this.style,
+    this.presenter = false,
+  });
 
   final MultipathController controller;
   final MultipathPaintStyle style;
+
+  /// Fill a bounded box: the picture takes the height.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
@@ -157,36 +305,39 @@ class _SceneCard extends StatelessWidget {
         children: <Widget>[
           MpSectionLabel(one ? 'Seen from above' : 'Walking toward the wall'),
           const SizedBox(height: AppSpacing.xs),
-          _PlotSurface(
-            height: 170,
-            semantic: semantic,
-            painter: (Size size) => one
-                ? TwoRayScenePainter(
-                    scene: MultipathController.twoRay,
-                    t: c.trackOffset,
-                    style: style,
-                  )
-                : StandingWaveScenePainter(
-                    range: MultipathController.standing.range,
-                    distance: c.wallDistance,
-                    nulls: nulls,
-                    style: style,
-                  ),
-            onDrag: (double dx, Size size) {
-              if (one) {
-                c.trackOffset = TwoRayScenePainter.trackOffsetAt(
-                  dx,
-                  MultipathController.twoRay,
-                  size,
-                );
-              } else {
-                c.wallDistance = StandingWaveScenePainter.distanceAt(
-                  dx,
-                  MultipathController.standing.range,
-                  size,
-                );
-              }
-            },
+          _fill(
+            presenter,
+            _PlotSurface(
+              height: presenter ? null : 170,
+              semantic: semantic,
+              painter: (Size size) => one
+                  ? TwoRayScenePainter(
+                      scene: MultipathController.twoRay,
+                      t: c.trackOffset,
+                      style: style,
+                    )
+                  : StandingWaveScenePainter(
+                      range: MultipathController.standing.range,
+                      distance: c.wallDistance,
+                      nulls: nulls,
+                      style: style,
+                    ),
+              onDrag: (double dx, Size size) {
+                if (one) {
+                  c.trackOffset = TwoRayScenePainter.trackOffsetAt(
+                    dx,
+                    MultipathController.twoRay,
+                    size,
+                  );
+                } else {
+                  c.wallDistance = StandingWaveScenePainter.distanceAt(
+                    dx,
+                    MultipathController.standing.range,
+                    size,
+                  );
+                }
+              },
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           MpLegend(
@@ -221,10 +372,50 @@ class _SceneCard extends StatelessWidget {
 // ── Phasors ─────────────────────────────────────────────────────────────────
 
 class _PhasorCard extends StatelessWidget {
-  const _PhasorCard({required this.controller, required this.style});
+  const _PhasorCard({
+    required this.controller,
+    required this.style,
+    this.presenter = false,
+  });
 
   final MultipathController controller;
   final MultipathPaintStyle style;
+
+  /// Fill a bounded box, with the received level in headline type over the
+  /// arrows (the number the lesson is about).
+  final bool presenter;
+
+  Widget _headline(BuildContext context, bool many, double db) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return Semantics(
+      liveRegion: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            many
+                ? 'Antenna A, against the average'
+                : 'Received, against the direct copy alone',
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _C.db(db),
+              style: PresenterMode.scaleOf(context)
+                  .headlineStyle(mono.outputLarge)
+                  .copyWith(color: colors.textAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -245,25 +436,29 @@ class _PhasorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const MpSectionLabel('The copies add as arrows'),
+          if (presenter) _headline(context, many, db),
           const SizedBox(height: AppSpacing.xs),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: AspectRatio(
-                aspectRatio: 1.3,
-                child: Semantics(
-                  label: semantic,
-                  excludeSemantics: true,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.control),
-                    child: ColoredBox(
-                      color: colors.surface2,
-                      child: CustomPaint(
-                        size: Size.infinite,
-                        painter: PhasorPainter(
-                          phasors: ph,
-                          style: style,
-                          showUnitCircle: true,
+          _fill(
+            presenter,
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: presenter ? 1e4 : 360),
+                child: AspectRatio(
+                  aspectRatio: 1.3,
+                  child: Semantics(
+                    label: semantic,
+                    excludeSemantics: true,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.control),
+                      child: ColoredBox(
+                        color: colors.surface2,
+                        child: CustomPaint(
+                          size: Size.infinite,
+                          painter: PhasorPainter(
+                            phasors: ph,
+                            style: style,
+                            showUnitCircle: true,
+                          ),
                         ),
                       ),
                     ),
@@ -316,10 +511,17 @@ class _PhasorCard extends StatelessWidget {
 // ── Power vs position ───────────────────────────────────────────────────────
 
 class _PlotCard extends StatelessWidget {
-  const _PlotCard({required this.controller, required this.style});
+  const _PlotCard({
+    required this.controller,
+    required this.style,
+    this.presenter = false,
+  });
 
   final MultipathController controller;
   final MultipathPaintStyle style;
+
+  /// Fill a bounded box: the plot takes the height.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
@@ -345,21 +547,24 @@ class _PlotCard extends StatelessWidget {
         children: <Widget>[
           MpSectionLabel(title),
           const SizedBox(height: AppSpacing.xs),
-          _PlotSurface(
-            height: 200,
-            verticalPadding: AppSpacing.xxs,
-            semantic: semantic,
-            painter: (Size size) => PowerPlotPainter(
-              traceA: a,
-              traceB: b,
-              xMax: c.plotRangeCm,
-              xUnitLabel: 'cm',
-              marker: c.positionCm,
-              style: style,
-              revision: c.plotRevision,
-            ),
-            onDrag: (double dx, Size size) => c.setPositionCm(
-              PowerPlotPainter.positionAt(dx, c.plotRangeCm, size),
+          _fill(
+            presenter,
+            _PlotSurface(
+              height: presenter ? null : 200,
+              verticalPadding: AppSpacing.xxs,
+              semantic: semantic,
+              painter: (Size size) => PowerPlotPainter(
+                traceA: a,
+                traceB: b,
+                xMax: c.plotRangeCm,
+                xUnitLabel: 'cm',
+                marker: c.positionCm,
+                style: style,
+                revision: c.plotRevision,
+              ),
+              onDrag: (double dx, Size size) => c.setPositionCm(
+                PowerPlotPainter.positionAt(dx, c.plotRangeCm, size),
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -402,10 +607,17 @@ class _PlotCard extends StatelessWidget {
 // ── Histogram (mode 3) ──────────────────────────────────────────────────────
 
 class _HistogramCard extends StatelessWidget {
-  const _HistogramCard({required this.controller, required this.style});
+  const _HistogramCard({
+    required this.controller,
+    required this.style,
+    this.presenter = false,
+  });
 
   final MultipathController controller;
   final MultipathPaintStyle style;
+
+  /// Fill a bounded box; the long note is phone-only.
+  final bool presenter;
 
   @override
   Widget build(BuildContext context) {
@@ -417,17 +629,20 @@ class _HistogramCard extends StatelessWidget {
         children: <Widget>[
           const MpSectionLabel('How often each power level shows up'),
           const SizedBox(height: AppSpacing.xs),
-          _PlotSurface(
-            height: 170,
-            verticalPadding: AppSpacing.xxs,
-            semantic:
-                'Histogram of antenna A power along 2 m in 2.5 dB bins, with '
-                'the Rayleigh prediction drawn over it. Measured below -10 dB: '
-                '${_C.pct(c.fade.fractionA)}; Rayleigh predicts 9.5%.',
-            painter: (Size size) => HistogramPainter(
-              histogram: c.histogram,
-              style: style,
-              revision: c.plotRevision,
+          _fill(
+            presenter,
+            _PlotSurface(
+              height: presenter ? null : 170,
+              verticalPadding: AppSpacing.xxs,
+              semantic:
+                  'Histogram of antenna A power along 2 m in 2.5 dB bins, with '
+                  'the Rayleigh prediction drawn over it. Measured below -10 dB: '
+                  '${_C.pct(c.fade.fractionA)}; Rayleigh predicts 9.5%.',
+              painter: (Size size) => HistogramPainter(
+                histogram: c.histogram,
+                style: style,
+                revision: c.plotRevision,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -448,15 +663,16 @@ class _HistogramCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-          const MpNote(
-            icon: Icons.info_outline,
-            message:
-                'The end bars also hold everything past -30 and +10 dB. A 2 m '
-                'track holds only a few dozen fades, so the bars wander '
-                'around the curve; try New layout, more reflectors, or a '
-                'higher band.',
-          ),
+          if (!presenter) const SizedBox(height: AppSpacing.xs),
+          if (!presenter)
+            const MpNote(
+              icon: Icons.info_outline,
+              message:
+                  'The end bars also hold everything past -30 and +10 dB. A 2 m '
+                  'track holds only a few dozen fades, so the bars wander '
+                  'around the curve; try New layout, more reflectors, or a '
+                  'higher band.',
+            ),
         ],
       ),
     );

@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/rate_vs_range_math.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 import '../reference/mcs_index_screen.dart';
 import 'fspl_simulator_model.dart' show kFsplDefaultChannels;
 
@@ -240,6 +241,18 @@ class RateVsRangeModel extends ChangeNotifier {
     _clientAngle = angle;
     _changed();
   }
+
+  /// Presenter keyboard. Nothing animates, so there is no play, step or
+  /// reset: Up and Down move the client out and in along its bearing, a
+  /// quarter of a doubling at a time, so a few presses cross a ring.
+  PresenterActions get presenterActions => PresenterActions(
+    sliderDown: () => setClientDistance(_clientDistanceM / _keyStep),
+    sliderUp: () => setClientDistance(_clientDistanceM * _keyStep),
+    sliderLabel: 'Client distance',
+  );
+
+  /// 2^(1/4): four presses double or halve the distance.
+  static final double _keyStep = math.pow(2, 0.25).toDouble();
 
   void _clampClient() {
     _clientDistanceM = _clientDistanceM.clamp(1, viewRangeM);

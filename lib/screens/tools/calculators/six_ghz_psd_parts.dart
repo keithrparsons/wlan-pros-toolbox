@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/six_ghz_psd_math.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'fspl_simulator_chart.dart';
 import 'six_ghz_psd_model.dart';
 
@@ -97,6 +98,7 @@ class PsdClassSample extends StatelessWidget {
         marker: marker,
         color: PsdPalette.of(powerClass, colors),
         surface: colors.surface1,
+        scale: PresenterMode.scaleOf(context).marker,
       ),
     );
   }

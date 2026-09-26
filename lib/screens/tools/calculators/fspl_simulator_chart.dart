@@ -22,6 +22,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/presenter/presenter_mode.dart';
+
 /// How a series line is stroked. One per band, so bands are distinguishable
 /// without color.
 enum CurveStroke { solid, dashed, dotted }
@@ -99,6 +101,7 @@ class FsplChartStyle {
     required this.refLabel,
     required this.cursorLabel,
     required this.emptyLabel,
+    this.scale = PresenterScale.normal,
   });
 
   final Color curve;
@@ -115,6 +118,10 @@ class FsplChartStyle {
   final TextStyle refLabel;
   final TextStyle cursorLabel;
   final TextStyle emptyLabel;
+
+  /// Presenter scale for strokes, markers and the axis gutters. The text
+  /// styles above arrive already scaled (the stage applies paintFont).
+  final PresenterScale scale;
 }
 
 /// The single coordinate mapping shared by painter and gesture code.
@@ -125,6 +132,7 @@ class FsplChartGeometry {
     required this.maxDistanceM,
     required this.yMin,
     required this.yMax,
+    this.padScale = 1,
   });
 
   static const double padLeft = 40;
@@ -138,11 +146,15 @@ class FsplChartGeometry {
   final double yMin;
   final double yMax;
 
+  /// Grows the gutters with the axis labels (the presenter text scale; 1
+  /// elsewhere), so larger tick labels never run off the plot.
+  final double padScale;
+
   Rect get plot => Rect.fromLTRB(
-    padLeft,
-    padTop,
-    math.max(padLeft + 1, size.width - padRight),
-    math.max(padTop + 1, size.height - padBottom),
+    padLeft * padScale,
+    padTop * padScale,
+    math.max(padLeft * padScale + 1, size.width - padRight * padScale),
+    math.max(padTop * padScale + 1, size.height - padBottom * padScale),
   );
 
   static double _log10(double v) => math.log(v) / math.ln10;
@@ -212,6 +224,7 @@ class FsplChartPainter extends CustomPainter {
       maxDistanceM: maxDistanceM,
       yMin: yMin,
       yMax: yMax,
+      padScale: style.scale.text,
     );
     final Rect p = g.plot;
     _grid(canvas, g, p);
@@ -325,18 +338,19 @@ class FsplChartPainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = s.isModel ? style.model : style.curve
       ..style = PaintingStyle.stroke
-      ..strokeWidth = s.isModel ? 1.5 : 2.5
+      ..strokeWidth = style.scale.strokeWidth(s.isModel ? 1.5 : 2.5)
       ..strokeCap = s.stroke == CurveStroke.dotted
           ? StrokeCap.round
           : StrokeCap.butt
       ..strokeJoin = StrokeJoin.round;
+    final double k = style.scale.stroke;
     switch (s.stroke) {
       case CurveStroke.solid:
         canvas.drawPath(path, paint);
       case CurveStroke.dashed:
-        canvas.drawPath(_dash(path, 10, 6), paint);
+        canvas.drawPath(_dash(path, 10 * k, 6 * k), paint);
       case CurveStroke.dotted:
-        canvas.drawPath(_dash(path, 0.1, 6), paint);
+        canvas.drawPath(_dash(path, 0.1, 6 * k), paint);
     }
   }
 
@@ -361,15 +375,15 @@ class FsplChartPainter extends CustomPainter {
     CurveMarker shape, {
     bool hollow = false,
   }) {
-    const double r = 5.5;
+    final double r = style.scale.markerSize(5.5);
     final Paint rim = Paint()
       ..color = style.surface
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
+      ..strokeWidth = style.scale.strokeWidth(4);
     final Paint body = Paint()
       ..color = hollow ? style.model : style.curve
       ..style = hollow ? PaintingStyle.stroke : PaintingStyle.fill
-      ..strokeWidth = 2;
+      ..strokeWidth = style.scale.strokeWidth(2);
     final Path path = Path();
     switch (shape) {
       case CurveMarker.circle:
@@ -396,7 +410,7 @@ class FsplChartPainter extends CustomPainter {
     final double y = g.yFor(r.y);
     final Paint paint = Paint()
       ..color = style.refLine
-      ..strokeWidth = 1.25
+      ..strokeWidth = style.scale.strokeWidth(1.25)
       ..style = PaintingStyle.stroke;
     final Path line = Path()
       ..moveTo(p.left, y)
@@ -424,10 +438,14 @@ class FsplChartPainter extends CustomPainter {
       Offset(x, p.bottom),
       Paint()
         ..color = style.cursor
-        ..strokeWidth = 1.5,
+        ..strokeWidth = style.scale.strokeWidth(1.5),
     );
     // Handle at the foot of the line: shows the line can be dragged.
-    canvas.drawCircle(Offset(x, p.bottom), 5, Paint()..color = style.cursor);
+    canvas.drawCircle(
+      Offset(x, p.bottom),
+      style.scale.markerSize(5),
+      Paint()..color = style.cursor,
+    );
     final TextPainter tp = _layout(cursorLabel, style.cursorLabel);
     final double w = tp.width + 10;
     final double left = (x - w / 2).clamp(p.left, p.right - w);
@@ -453,7 +471,7 @@ class FsplChartPainter extends CustomPainter {
     final double yc = g.yFor(m.curveY.clamp(yMin, yMax));
     final Paint link = Paint()
       ..color = style.measured
-      ..strokeWidth = 1.5
+      ..strokeWidth = style.scale.strokeWidth(1.5)
       ..style = PaintingStyle.stroke;
     canvas.drawPath(
       _dash(
@@ -466,7 +484,7 @@ class FsplChartPainter extends CustomPainter {
       link,
     );
     // Diamond marker.
-    const double r = 7;
+    final double r = style.scale.markerSize(7);
     final Path diamond = Path()
       ..moveTo(x, y - r)
       ..lineTo(x + r, y)
@@ -547,6 +565,7 @@ class FsplStrokeSamplePainter extends CustomPainter {
     required this.color,
     required this.surface,
     this.model = false,
+    this.scale = 1,
   });
 
   final CurveStroke stroke;
@@ -554,6 +573,10 @@ class FsplStrokeSamplePainter extends CustomPainter {
   final Color color;
   final Color surface;
   final bool model;
+
+  /// Presenter factor on the stroke and marker (1 elsewhere), so a legend
+  /// sample matches the thicker presenter curves.
+  final double scale;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -564,7 +587,7 @@ class FsplStrokeSamplePainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = model ? 1.5 : 2.5
+      ..strokeWidth = (model ? 1.5 : 2.5) * scale
       ..strokeCap = stroke == CurveStroke.dotted
           ? StrokeCap.round
           : StrokeCap.butt;
@@ -579,15 +602,15 @@ class FsplStrokeSamplePainter extends CustomPainter {
     final CurveMarker? m = marker;
     if (m == null) return;
     final Offset c = Offset(size.width / 2, y);
-    const double r = 4.5;
+    final double r = 4.5 * scale;
     final Paint body = Paint()
       ..color = color
       ..style = model ? PaintingStyle.stroke : PaintingStyle.fill
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5 * scale;
     final Paint rim = Paint()
       ..color = surface
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+      ..strokeWidth = 3 * scale;
     final Path path = Path();
     switch (m) {
       case CurveMarker.circle:
@@ -613,5 +636,6 @@ class FsplStrokeSamplePainter extends CustomPainter {
       old.marker != marker ||
       old.color != color ||
       old.surface != surface ||
-      old.model != model;
+      old.model != model ||
+      old.scale != scale;
 }

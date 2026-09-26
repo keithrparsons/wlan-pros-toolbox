@@ -22,6 +22,9 @@
 //                         (rate_vs_range_controls.dart) inputs and readouts
 //   - RvrStagePainter     (rate_vs_range_painter.dart)
 //
+// The Present button (desktop and tablet windows) puts the stage beside the
+// controls over the SAME model (lib/widgets/presenter/).
+//
 // LAYOUT: phone first. Below 720 px everything stacks in one scroll: stage,
 // readouts, controls, explainer. At 720 px and up the controls become a side
 // panel.
@@ -42,9 +45,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'rate_vs_range_controls.dart';
 import 'rate_vs_range_model.dart';
@@ -72,13 +77,25 @@ class _RateVsRangeScreenState extends State<RateVsRangeScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's model (shared, not copied).
+  /// What the client reads is on the stage.
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'Rate vs Range',
+    stage: RateVsRangeStage(model: _model, stageHeight: 0),
+    controls: RateVsRangeControls(model: _model),
+    actions: _model.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rate vs Range'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _model.copyText)],
+        actions: <Widget>[
+          PresentButton(toolRoute: AppRouter.rateVsRange, builder: _presenter),
+          AppCopyAction(textBuilder: _model.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

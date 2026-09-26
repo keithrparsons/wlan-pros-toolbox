@@ -19,6 +19,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/fspl_math.dart';
 import '../../../services/wifi_lab/six_ghz_psd_math.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 import '../reference/signal_thresholds_screen.dart';
 import 'fspl_simulator_chart.dart' show CurveMarker, CurveStroke;
 
@@ -246,6 +247,19 @@ class SixGhzPsdModel extends ChangeNotifier {
   void setWidthIndex(int i) => setWidth(SixGhzPsdMath.widthsMHz[i.clamp(0, 4)]);
 
   int get widthIndex => SixGhzPsdMath.widthsMHz.indexOf(_widthMHz);
+
+  /// Presenter keyboard. Nothing animates, so there is no play, step or
+  /// reset: Up and Down move the channel width one step (20 to 320 MHz), the
+  /// lesson's own control. Disabled with no class on, like the width slider.
+  PresenterActions get presenterActions => PresenterActions(
+    sliderDown: () {
+      if (classes.isNotEmpty) setWidthIndex(widthIndex - 1);
+    },
+    sliderUp: () {
+      if (classes.isNotEmpty) setWidthIndex(widthIndex + 1);
+    },
+    sliderLabel: 'Channel width',
+  );
 
   void setDistance(double d) {
     _distanceM = d.clamp(minDistanceM, maxDistanceM);

@@ -8,6 +8,10 @@
 // none knows about RateVsRangeStage, so a screen composes them in whatever
 // arrangement it needs.
 //
+// PRESENTER: RateVsRangeControls drops its explanatory prose inside a
+// PresenterLayout (the instructor says it), so every input fits the panel;
+// what the client reads moves onto the stage.
+//
 // THEME: context.colors (dark §8 / light §8.20), MCS hues from RvrPalette
 // (§8.15.2) on the swatches only. No status hues: an MCS is a description,
 // not a pass/fail verdict (§8.13 rule 6). ASCII copy, no em dashes (GL-004).
@@ -21,6 +25,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'rate_vs_range_model.dart';
 import 'rate_vs_range_parts.dart';
 
@@ -47,6 +53,30 @@ class RateVsRangeControls extends StatelessWidget {
     final RateVsRangeModel m = model;
     TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
     final String Function(double, [int]) n = RvrFormat.n;
+    // Presenter: phone prose goes; every control stays.
+    final bool prose = !PresenterMode.isActive(context);
+    final Widget clientGain = _slider(
+      context,
+      label: 'Client antenna gain',
+      valueText: '${n(m.clientGainDbi, 0)} dBi',
+      value: m.clientGainDbi,
+      min: RateVsRangeModel.gainMin,
+      max: RateVsRangeModel.gainMax,
+      divisions: 11,
+      onChanged: m.setClientGain,
+      semantic: (double v) => 'Client antenna gain ${v.round()} dBi',
+    );
+    final Widget margin = _slider(
+      context,
+      label: 'Margin',
+      valueText: '${n(m.marginDb, 0)} dB',
+      value: m.marginDb,
+      min: 0,
+      max: RateVsRangeModel.marginMax,
+      divisions: 20,
+      onChanged: m.setMargin,
+      semantic: (double v) => 'Margin ${v.round()} dB',
+    );
 
     return <Widget>[
       AppToggle<WifiBand>(
@@ -78,15 +108,16 @@ class RateVsRangeControls extends StatelessWidget {
         ],
         onChanged: m.setStreams,
       ),
-      const SizedBox(height: AppSpacing.xs),
-      Text(
-        'Path loss is taken at ${m.band.label} channel ${m.channel} '
-        '(${m.freqMHz.round()} MHz). Rates are 802.11be (Wi-Fi 7) with an '
-        '800 ns guard interval, from the MCS Index tool; MCS 0 to 11 match '
-        '802.11ax.',
-        style: small(),
-      ),
-      const SizedBox(height: AppSpacing.md),
+      if (prose) const SizedBox(height: AppSpacing.xs),
+      if (prose)
+        Text(
+          'Path loss is taken at ${m.band.label} channel ${m.channel} '
+          '(${m.freqMHz.round()} MHz). Rates are 802.11be (Wi-Fi 7) with an '
+          '800 ns guard interval, from the MCS Index tool; MCS 0 to 11 match '
+          '802.11ax.',
+          style: small(),
+        ),
+      SizedBox(height: prose ? AppSpacing.md : AppSpacing.sm),
       const RvrSectionLabel('Link'),
       _slider(
         context,
@@ -99,17 +130,7 @@ class RateVsRangeControls extends StatelessWidget {
         onChanged: m.setEirp,
         semantic: (double v) => 'AP EIRP ${v.round()} dBm',
       ),
-      _slider(
-        context,
-        label: 'Client antenna gain',
-        valueText: '${n(m.clientGainDbi, 0)} dBi',
-        value: m.clientGainDbi,
-        min: RateVsRangeModel.gainMin,
-        max: RateVsRangeModel.gainMax,
-        divisions: 11,
-        onChanged: m.setClientGain,
-        semantic: (double v) => 'Client antenna gain ${v.round()} dBi',
-      ),
+      if (prose) clientGain,
       _slider(
         context,
         label: 'Path-loss exponent (model)',
@@ -121,23 +142,21 @@ class RateVsRangeControls extends StatelessWidget {
         onChanged: m.setExponent,
         semantic: (double v) => 'Path-loss exponent ${n(v)}',
       ),
-      Text(
-        'n = 2 is free space. Indoors is usually 3 to 4. This is a model with '
-        'a chosen exponent, not a measurement.',
-        style: small(),
-      ),
-      _slider(
-        context,
-        label: 'Margin',
-        valueText: '${n(m.marginDb, 0)} dB',
-        value: m.marginDb,
-        min: 0,
-        max: RateVsRangeModel.marginMax,
-        divisions: 20,
-        onChanged: m.setMargin,
-        semantic: (double v) => 'Margin ${v.round()} dB',
-      ),
-      const SizedBox(height: AppSpacing.md),
+      if (prose)
+        Text(
+          'n = 2 is free space. Indoors is usually 3 to 4. This is a model '
+          'with a chosen exponent, not a measurement.',
+          style: small(),
+        ),
+      if (prose)
+        margin
+      else
+        // Set once per lesson: folded so the panel fits a projector.
+        PresenterDisclosure(
+          title: 'Client antenna gain and margin',
+          children: <Widget>[clientGain, margin],
+        ),
+      SizedBox(height: prose ? AppSpacing.md : AppSpacing.sm),
       const RvrSectionLabel('Beacons'),
       const SizedBox(height: AppSpacing.xs),
       Text(
@@ -166,14 +185,15 @@ class RateVsRangeControls extends StatelessWidget {
         onChanged: (double v) => m.setSsids(v.round()),
         semantic: (double v) => '${v.round()} SSIDs',
       ),
-      Text(
-        'Only 6 Mbps has a published floor of its own (-82 dBm, equal to '
-        'MCS 0). 12 to 54 Mbps use the floor of the MCS with the same '
-        'modulation and coding, so they are MCS-equivalent. 9 Mbps and the '
-        '2.4 GHz DSSS rates (1, 2, 5.5, 11) have no sourced floor here and '
-        'are not offered.',
-        style: small(),
-      ),
+      if (prose)
+        Text(
+          'Only 6 Mbps has a published floor of its own (-82 dBm, equal to '
+          'MCS 0). 12 to 54 Mbps use the floor of the MCS with the same '
+          'modulation and coding, so they are MCS-equivalent. 9 Mbps and the '
+          '2.4 GHz DSSS rates (1, 2, 5.5, 11) have no sourced floor here and '
+          'are not offered.',
+          style: small(),
+        ),
     ];
   }
 

@@ -18,6 +18,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/fspl_math.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 import '../reference/signal_thresholds_screen.dart';
 import 'fspl_simulator_chart.dart';
 
@@ -248,6 +249,20 @@ class FsplSimModel extends ChangeNotifier {
     _measuredBand = b;
     _changed();
   }
+
+  /// Presenter keyboard. Nothing animates, so there is no play, step or
+  /// reset: Up and Down double and halve the cursor distance, which is the
+  /// lesson's own step (every doubling costs 6 dB). Disabled with no band
+  /// on, like the cursor slider.
+  PresenterActions get presenterActions => PresenterActions(
+    sliderDown: () {
+      if (bands.isNotEmpty) setCursor(_cursorM / 2);
+    },
+    sliderUp: () {
+      if (bands.isNotEmpty) setCursor(_cursorM * 2);
+    },
+    sliderLabel: 'Cursor distance (halve or double)',
+  );
 
   // ── Derived ─────────────────────────────────────────────────────────────
 

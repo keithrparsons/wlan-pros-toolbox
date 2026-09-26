@@ -269,7 +269,8 @@
         "Turn bands on and off with the chips at the bottom of the screen (on a wide screen, the panel on the right). Each band has its own line style: 2.4 GHz solid with a circle, 5 GHz dashed with a square, 6 GHz dotted with a triangle.",
         "Drag across the chart or tap it to move the cursor, or use the Cursor slider under it. The table under the chart shows path loss and received power for each band at that distance, and the difference between bands.",
         "Switch the chart between Received and Path loss, and the distance axis between 100 m and 1 km. In the Received view, dashed lines mark the -67 dBm voice and -70 dBm HD video design targets from the Signal Thresholds tool.",
-        "Open the controls (the tune button) to pick any 20 MHz channel per band, set Tx power, both antenna gains and other losses, turn on the indoor log-distance model and set its exponent, or enter a measured RSSI and the distance it was taken at. The measured point plots as a diamond with its gap to the free-space curve in dB."
+        "Open the controls (the tune button) to pick any 20 MHz channel per band, set Tx power, both antenna gains and other losses, turn on the indoor log-distance model and set its exponent, or enter a measured RSSI and the distance it was taken at. The measured point plots as a diamond with its gap to the free-space curve in dB.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down double and halve the cursor distance, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -461,7 +462,8 @@
         "Pick a band. The dips repeat every half wavelength: 6.2 cm at 2.4 GHz, 2.7 cm at 5.5 GHz and 2.3 cm at 6.5 GHz.",
         "In One wall and Standing wave, pick the wall material (metal, thick concrete, drywall) or set the reflection strength yourself. Drag the receiver in the picture or on the plot, or use the slider, and watch the reflected arrow swing around the direct one.",
         "In Many paths, set the number of reflectors and how far away they are, and press New layout for a different room. Move antenna A along the 2 m track and set how far antenna B sits from it, from 0 to 1 wavelength. The readout shows how often each antenna is more than 10 dB below the average and how often both are at once.",
-        "The delay list shows how late each copy arrives. A copy more than 0.8 microseconds late, about 240 m of extra path, spills past the guard interval into the next symbol."
+        "The delay list shows how late each copy arrives. A copy more than 0.8 microseconds late, about 240 m of extra path, spills past the guard interval into the next symbol.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down move the receiver a sixteenth of a wavelength, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -627,7 +629,8 @@
       "howToUse": [
         "Pick a band and channel, then a material and a thickness. Type the thickness or drag the slider; the slider is logarithmic from 1 to 500 mm.",
         "Watch the wave. In front of the wall the incident and reflected waves overlap into a ripple with peaks every half wavelength. Inside, the same wave shrinks in height as it goes. Behind, the same wave continues, smaller. Turn on Show wavelength inside the material to see the shorter wavelength inside: the frequency stays the same, but the wave travels slower in the material, so each cycle takes up less distance. Pause stops the animation; with reduced motion on it starts frozen.",
-        "Read the loss and its two parts, then compare the same wall at 2.4, 5.5 and 6.5 GHz. The measured values card puts published measurements beside the model, names the source and says how far apart they are. Set the angle of arrival and TE or TM to see how a glancing wave reflects more."
+        "Read the loss and its two parts, then compare the same wall at 2.4, 5.5 and 6.5 GHz. The measured values card puts published measurements beside the model, names the source and says how far apart they are. Set the angle of arrival and TE or TM to see how a glancing wave reflects more.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the wave, R returns to the opening wall, Up and Down change the thickness, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1447,7 +1450,8 @@
         "Pick US or EU, then turn classes on or off in the controls (below the chart on a phone, in the panel on the right on a wide screen). Each power class has its own color, and every class has its own line style and marker, so you can tell them apart without color.",
         "Switch the chart between EIRP, SNR and Spectrum. Tap a column on the chart or use the Width slider to pick 20, 40, 80, 160 or 320 MHz.",
         "Read the numbers for each class at that width under the chart: EIRP, received power, SNR, the power per MHz actually radiated, the typical highest MCS, and a line saying whether the class is PSD-limited or cap-limited.",
-        "Set the distance, extra loss for walls and the receiver noise figure. For Standard Power and GVP, set the AP's authorized power to see its clients follow it 6 dB lower."
+        "Set the distance, extra loss for walls and the receiver noise figure. For Standard Power and GVP, set the AP's authorized power to see its clients follow it 6 dB lower.",
+        "On a computer or tablet, Present opens the chart full screen for a projector: Up and Down change the channel width, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1506,7 +1510,8 @@
         "Drag or tap on the rings to move the client, or use the Client slider under the view. The label next to the dot and the readout below show its received power, noise floor, SNR, MCS and data rate.",
         "Pick the band, channel width and spatial streams in the controls (below the view on a phone, in the panel on the right on a wide screen). Change the width and watch every ring shrink while the view stays the same size.",
         "Set the AP EIRP, the client antenna gain, the path-loss exponent and an optional margin. The legend lists every ring with its data rate and radius, including rings too thin to label on the view.",
-        "Pick a minimum basic rate and the number of SSIDs. The dashed cell edge moves, and the bar shows beacon airtime at that rate against the same beacons at 6 Mbps."
+        "Pick a minimum basic rate and the number of SSIDs. The dashed cell edge moves, and the bar shows beacon airtime at that rate against the same beacons at 6 Mbps.",
+        "On a computer or tablet, Present opens the rings full screen for a projector: Up and Down move the client out and in, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {

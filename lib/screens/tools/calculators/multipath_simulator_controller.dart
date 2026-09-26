@@ -15,6 +15,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/multipath_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kMultipathSimulatorToolId = 'multipath-simulator';
@@ -142,6 +143,19 @@ class MultipathController extends ChangeNotifier {
         antennaX = cm / 100;
     }
   }
+
+  /// Presenter keyboard. Nothing animates, so there is no play, step or
+  /// reset: Up and Down move the receiver (antenna A in Many paths) a
+  /// sixteenth of a wavelength, so eight presses walk from one null to the
+  /// next in any band.
+  PresenterActions get presenterActions => PresenterActions(
+    sliderDown: () => setPositionCm(positionCm - keyStepCm),
+    sliderUp: () => setPositionCm(positionCm + keyStepCm),
+    sliderLabel: 'Receiver position',
+  );
+
+  /// One presenter key press, cm: a sixteenth of the band's wavelength.
+  double get keyStepCm => _band.wavelength * 100 / 16;
 
   /// Right end of the plot's x axis, cm.
   double get plotRangeCm => switch (_mode) {

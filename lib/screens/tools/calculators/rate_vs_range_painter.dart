@@ -19,6 +19,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/presenter/presenter_mode.dart';
+
 /// Maps meters to pixels and back for one stage size and view range.
 @immutable
 class RvrStageGeometry {
@@ -73,6 +75,7 @@ class RvrStageStyle {
     required this.ringLabel,
     required this.edgeLabel,
     required this.clientLabel,
+    this.scale = PresenterScale.normal,
   });
 
   final Color surface;
@@ -85,6 +88,10 @@ class RvrStageStyle {
   final TextStyle ringLabel;
   final TextStyle edgeLabel;
   final TextStyle clientLabel;
+
+  /// Presenter scale for strokes and markers. The text styles above arrive
+  /// already scaled (the stage applies paintFont).
+  final PresenterScale scale;
 }
 
 class RvrStagePainter extends CustomPainter {
@@ -151,7 +158,7 @@ class RvrStagePainter extends CustomPainter {
         px,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = hi ? 3 : 1.5
+          ..strokeWidth = style.scale.strokeWidth(hi ? 3 : 1.5)
           ..color = r.color,
       );
     }
@@ -167,7 +174,7 @@ class RvrStagePainter extends CustomPainter {
   void _distanceGrid(Canvas canvas, RvrStageGeometry g) {
     final Paint p = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
+      ..strokeWidth = style.scale.strokeWidth(1)
       ..color = style.grid;
     for (final double f in <double>[0.5, 1]) {
       final double r = g.radiusPx * f;
@@ -185,9 +192,10 @@ class RvrStagePainter extends CustomPainter {
     if (r < 1 || r > g.size.longestSide) return;
     final Paint p = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
+      ..strokeWidth = style.scale.strokeWidth(2)
       ..color = style.edge;
-    _dashedCircle(canvas, g.center, r, p, dash: 8, gap: 5);
+    final double k = style.scale.stroke;
+    _dashedCircle(canvas, g.center, r, p, dash: 8 * k, gap: 5 * k);
     final TextPainter tp = _text(cellEdgeLabel, style.edgeLabel);
     Offset at = g.center + Offset(-tp.width / 2, r + 4);
     if (at.dy + tp.height > g.size.height) {
@@ -210,7 +218,8 @@ class RvrStagePainter extends CustomPainter {
       final TextPainter tp = _text('${rings[i].mcs}', style.ringLabel);
       if (outer - inner < tp.height + 2) continue;
       final double mid = (outer + inner) / 2;
-      if (mid < 16) continue; // would sit on the AP marker
+      // would sit on the AP marker
+      if (mid < style.scale.markerSize(16)) continue;
       final Offset at = g.center + Offset(-tp.width / 2, -mid - tp.height / 2);
       if (at.dy < 0) continue;
       if (at.dy + tp.height > lastTop - 1) continue;
@@ -220,7 +229,8 @@ class RvrStagePainter extends CustomPainter {
   }
 
   void _ap(Canvas canvas, Offset c) {
-    final Rect r = Rect.fromCenter(center: c, width: 12, height: 12);
+    final double m = style.scale.marker;
+    final Rect r = Rect.fromCenter(center: c, width: 12 * m, height: 12 * m);
     canvas.drawRRect(
       RRect.fromRectAndRadius(r, const Radius.circular(2)),
       Paint()..color = style.ap,
@@ -229,11 +239,11 @@ class RvrStagePainter extends CustomPainter {
       RRect.fromRectAndRadius(r.inflate(1.5), const Radius.circular(3)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
+        ..strokeWidth = 1.5 * m
         ..color = style.surface,
     );
     final TextPainter tp = _text('AP', style.clientLabel);
-    _knockout(canvas, c + Offset(-tp.width / 2, 9), tp);
+    _knockout(canvas, c + Offset(-tp.width / 2, 9 * m), tp);
   }
 
   void _client(Canvas canvas, RvrStageGeometry g) {
@@ -243,16 +253,25 @@ class RvrStagePainter extends CustomPainter {
       g.center,
       p,
       Paint()
-        ..strokeWidth = 1.5
+        ..strokeWidth = style.scale.strokeWidth(1.5)
         ..color = style.client,
     );
-    canvas.drawCircle(p, 9, Paint()..color = style.clientRim);
-    canvas.drawCircle(p, 7, Paint()..color = style.client);
+    canvas.drawCircle(
+      p,
+      style.scale.markerSize(9),
+      Paint()..color = style.clientRim,
+    );
+    canvas.drawCircle(
+      p,
+      style.scale.markerSize(7),
+      Paint()..color = style.client,
+    );
 
     final TextPainter tp = _text(clientLabel, style.clientLabel);
     // Put the label on the side of the dot away from the AP, kept on screen.
     final bool right = p.dx >= g.center.dx;
-    double x = right ? p.dx + 12 : p.dx - 12 - tp.width;
+    final double gap = style.scale.markerSize(12);
+    double x = right ? p.dx + gap : p.dx - gap - tp.width;
     double y = p.dy - tp.height / 2;
     x = x.clamp(2, math.max(2, g.size.width - tp.width - 2));
     y = y.clamp(2, math.max(2, g.size.height - tp.height - 2));

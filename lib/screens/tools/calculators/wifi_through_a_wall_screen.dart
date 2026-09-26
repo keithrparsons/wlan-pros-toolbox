@@ -15,11 +15,14 @@
 // This is NOT the 'rf-attenuation' tool, which is untouched; whether its
 // numbers change is Keith's decision (spec).
 //
-// STRUCTURE: the screen owns one WallConfig and composes separate widgets,
-// so a later presenter layout can reuse them side by side:
+// STRUCTURE: one WallSlabController (wifi_through_a_wall_controller.dart)
+// holds the wall, the play state, the view toggle and the phase; the screen
+// creates and disposes it and composes separate widgets over it:
 //   WallSlabStage     the animated wave (wifi_through_a_wall_stage.dart)
 //   WallSlabControls  the inputs      (wifi_through_a_wall_controls.dart)
 //   WallSlabReadouts, WallBandsCard, WallMeasuredCard  the numbers
+// The Present button (desktop and tablet windows) puts the stage beside the
+// controls over the SAME controller (lib/widgets/presenter/).
 //
 // States (SOP-007 §5):
 //   - running     -> the wave animates (default unless reduced motion is on)
@@ -35,14 +38,17 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../services/wifi_lab/wall_slab_physics.dart';
+import '../../../router/app_router.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'wifi_through_a_wall_controller.dart';
 import 'wifi_through_a_wall_controls.dart';
 import 'wifi_through_a_wall_parts.dart';
 import 'wifi_through_a_wall_stage.dart';
 
+export 'wifi_through_a_wall_controller.dart' show WallSlabController;
 export 'wifi_through_a_wall_parts.dart' show kWifiThroughAWallToolId;
 
 class WifiThroughAWallScreen extends StatefulWidget {
@@ -57,13 +63,9 @@ class WifiThroughAWallScreen extends StatefulWidget {
 
 class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
     with WidgetsBindingObserver {
-  late WallConfig _config = widget.initial;
-  bool _playing = false;
-
-  /// Optional view: draw the true inside wavelength. Off by default (Keith,
-  /// 2026-09-25: only the height of the wave changes, not the frequency).
-  bool _showMaterialWavelength = false;
-  bool _motionDecided = false;
+  late final WallSlabController _controller = WallSlabController(
+    initial: widget.initial,
+  );
 
   @override
   void initState() {
@@ -74,63 +76,60 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_motionDecided) {
-      // Animate on open only when reduced motion is off (GL-003 §8.8).
-      _playing = !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
-      _motionDecided = true;
-    }
+    // Animate on open only when reduced motion is off (GL-003 §8.8); the
+    // controller decides once.
+    _controller.decideMotion(
+      reduceMotion: MediaQuery.maybeOf(context)?.disableAnimations ?? false,
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed && _playing) {
-      setState(() => _playing = false);
-    }
+    if (state != AppLifecycleState.resumed) _controller.setPlaying(false);
   }
 
-  void _set(WallConfig c) {
-    if (c != _config) setState(() => _config = c);
-  }
-
-  String _buildCopyText() {
-    final WallConfig c = _config;
-    final SlabResult r = c.result;
-    final StringBuffer b = StringBuffer()
-      ..writeln('Wi-Fi Through a Wall (ITU-R P.2040-4 model)')
-      ..writeln(
-        '${c.material.label}, ${fmtMm(c.thicknessMm)} mm, '
-        '${c.angleDeg.toStringAsFixed(0)} deg, '
-        '${c.polarization.name.toUpperCase()}',
-      )
-      ..writeln('Channel ${c.channel}, ${c.centerMHz} MHz')
-      ..writeln(
-        'Transmission loss: ${fmtLossDb(r.transmissionLossDb)} '
-        '(absorption ${fmtLossDb(r.absorptionDb)}, reflection '
-        '${fmtLossDb(r.reflectionPartDb)})',
-      );
-    if (r.reflectedPower > 0) {
-      b.writeln(
-        'Reflection: ${fmt1(r.reflectionDb)} dB '
-        '(${fmtPct(r.reflectedPower)} of the power)',
-      );
-    }
-    b
-      ..writeln('Wavelength in air: ${fmtLength(r.props.lambdaAir)}')
-      ..writeln('Same wall by band:');
-    for (final double f in kComparisonGhz) {
-      b.writeln('  $f GHz: ${fmtLossDb(c.resultAt(f).transmissionLossDb)}');
-    }
-    b.writeln(
-      'Model values, not measurements. Free-space loss is not included.',
-    );
-    return b.toString().trimRight();
-  }
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied). The loss and the three-band table are on the stage; the
+  /// detailed readouts and the measured values fold into the panel.
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'Wi-Fi Through a Wall',
+    stage: WallSlabStage(controller: _controller),
+    controls: ListenableBuilder(
+      listenable: _controller,
+      builder: (BuildContext context, _) {
+        final WallConfig c = _controller.config;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            WallSlabControls(config: c, onChanged: _controller.setConfig),
+            const SizedBox(height: AppSpacing.xs),
+            PresenterDisclosure(
+              title: 'Readouts: absorption, reflection, wavelengths',
+              children: <Widget>[WallSlabReadouts(config: c)],
+            ),
+            PresenterDisclosure(
+              title: 'Measured values beside the model',
+              children: <Widget>[
+                WallMeasuredCard(
+                  config: c,
+                  onUseThickness: (double mm) =>
+                      _controller.setConfig(c.copyWith(thicknessMm: mm)),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    ),
+    actions: _controller.presenterActions,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +137,13 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
       appBar: AppBar(
         title: const Text('Wi-Fi Through a Wall'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _buildCopyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.wifiThroughAWall,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -164,26 +169,34 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       WallSlabStage(
-                        config: _config,
+                        controller: _controller,
                         plotHeight: isDesktop ? 260 : 200,
-                        playing: _playing,
-                        onPlayingChanged: (bool p) =>
-                            setState(() => _playing = p),
-                        showMaterialWavelength: _showMaterialWavelength,
-                        onShowMaterialWavelengthChanged: (bool v) =>
-                            setState(() => _showMaterialWavelength = v),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      WallSlabControls(config: _config, onChanged: _set),
-                      const SizedBox(height: AppSpacing.sm),
-                      WallSlabReadouts(config: _config),
-                      const SizedBox(height: AppSpacing.sm),
-                      WallBandsCard(config: _config),
-                      const SizedBox(height: AppSpacing.sm),
-                      WallMeasuredCard(
-                        config: _config,
-                        onUseThickness: (double mm) =>
-                            _set(_config.copyWith(thicknessMm: mm)),
+                      ListenableBuilder(
+                        listenable: _controller,
+                        builder: (BuildContext context, _) {
+                          final WallConfig c = _controller.config;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              WallSlabControls(
+                                config: c,
+                                onChanged: _controller.setConfig,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              WallSlabReadouts(config: c),
+                              const SizedBox(height: AppSpacing.sm),
+                              WallBandsCard(config: c),
+                              const SizedBox(height: AppSpacing.sm),
+                              WallMeasuredCard(
+                                config: c,
+                                onUseThickness: (double mm) => _controller
+                                    .setConfig(c.copyWith(thicknessMm: mm)),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       const _FreeSpaceCard(),

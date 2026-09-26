@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/rate_vs_range_math.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 class RvrCard extends StatelessWidget {
   const RvrCard({super.key, required this.child});
@@ -124,9 +125,10 @@ class RvrSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double k = PresenterMode.scaleOf(context).marker;
     return Container(
-      width: 12,
-      height: 12,
+      width: 12 * k,
+      height: 12 * k,
       decoration: BoxDecoration(
         color: RvrPalette.of(mcs, context.colors),
         shape: BoxShape.circle,

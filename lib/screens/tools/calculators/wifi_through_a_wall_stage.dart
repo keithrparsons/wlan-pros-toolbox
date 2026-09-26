@@ -1,7 +1,9 @@
 // The stage for "Wi-Fi Through a Wall": the wave drawn along the wall's
-// normal, animated in phase. A self-contained widget that takes the model
-// state (a WallConfig) and the play state; it holds no inputs of its own, so
-// a presenter layout can place it beside WallSlabControls unchanged.
+// normal, animated in phase. It reads the shared WallSlabController (wall,
+// play state, view toggle, phase) and holds no inputs of its own, so the
+// presenter layout (lib/widgets/presenter/) places it beside WallSlabControls
+// over the same state. In presenter mode the wave fills the stage and the
+// loss, in headline type, stands under it beside the three-band table.
 //
 // What is drawn, left to right, at true scale:
 //   - in front of the wall: incident plus reflected, E = e^(-jkx) + R e^(jkx);
@@ -20,8 +22,8 @@
 // phase is laid out on the air scale (px per metre), so widening a thin
 // wall's band to stay visible never stretches the wave. See WallWaveProfile.
 //
-// MOTION (GL-003 §8.8): the phase advances on a Ticker, one cycle every
-// [_kSecondsPerCycle] seconds. It starts running only when reduced motion is
+// MOTION (GL-003 §8.8): the phase advances on the controller's Ticker, one
+// cycle every [kWallSecondsPerCycle] seconds. It starts running only when reduced motion is
 // OFF; with reduced motion on, the stage is frozen and says so, and Play still
 // works because the user starts it. A Pause control is always offered (WCAG
 // 2.2.2).
@@ -33,16 +35,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/complex.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
+import 'wifi_through_a_wall_controller.dart';
+import 'wifi_through_a_wall_controls.dart' show WallBandsCard;
 import 'wifi_through_a_wall_parts.dart';
-
-/// The drawing is slowed down to one cycle in this many seconds.
-const double _kSecondsPerCycle = 2;
 
 /// Air shown on each side of the wall, in free-space wavelengths.
 const double _kAirWavelengths = 1.5;
@@ -53,133 +55,107 @@ const double _kMinWallPx = 3;
 class WallSlabStage extends StatefulWidget {
   const WallSlabStage({
     super.key,
-    required this.config,
-    required this.playing,
-    required this.onPlayingChanged,
-    this.showMaterialWavelength = false,
-    this.onShowMaterialWavelengthChanged,
+    required this.controller,
     this.plotHeight = 200,
+    this.showWavelengthSwitch = true,
   });
 
-  final WallConfig config;
+  /// The shared state: wall, play state, view toggle and phase.
+  final WallSlabController controller;
 
-  /// Draw the true (shorter) wavelength inside the material. Off by default:
-  /// a shorter drawn wavelength reads as a higher frequency, which is wrong.
-  final bool showMaterialWavelength;
-
-  /// Null hides the switch (a presenter can own it elsewhere).
-  final ValueChanged<bool>? onShowMaterialWavelengthChanged;
-
-  /// Whether the phase is advancing.
-  final bool playing;
-  final ValueChanged<bool> onPlayingChanged;
-
-  /// Plot height, px. A presenter layout can pass more.
+  /// Plot height, px. Ignored in presenter mode, where the plot fills the
+  /// stage.
   final double plotHeight;
+
+  /// False hides the "Show wavelength inside the material" switch (a
+  /// presenter can own it elsewhere).
+  final bool showWavelengthSwitch;
 
   @override
   State<WallSlabStage> createState() => _WallSlabStageState();
 }
 
-class _WallSlabStageState extends State<WallSlabStage>
-    with SingleTickerProviderStateMixin {
-  late final Ticker _ticker;
-  double _phase = 0;
-  Duration _last = Duration.zero;
-
-  // One result per config, so the painter's phasor cache survives the
-  // animation frames (which rebuild without changing the config).
-  WallConfig? _resultFor;
-  bool? _modeFor;
-  late SlabResult _result;
+class _WallSlabStageState extends State<WallSlabStage> {
+  // View-local: sized to this view's plot, so each mounted stage (phone and
+  // presenter) keeps its own.
   final WallPhasorCache _cache = WallPhasorCache();
 
-  SlabResult get _current {
-    if (_resultFor != widget.config ||
-        _modeFor != widget.showMaterialWavelength) {
-      if (_resultFor != widget.config) _result = widget.config.result;
-      _resultFor = widget.config;
-      _modeFor = widget.showMaterialWavelength;
-      // A still frame should show the wave, not a zero crossing: in front of
-      // metal the standing wave is flat at phase 0. While paused, freeze at
-      // the phase with the most field on screen. While playing, leave the
-      // phase alone so the animation does not jump.
-      if (!widget.playing) {
-        _phase = _brightestPhase(
-          WallWaveProfile(
-            _result,
-            400,
-            showMaterialWavelength: widget.showMaterialWavelength,
-          ),
-        );
-      }
-    }
-    return _result;
-  }
-
-  /// Phase maximizing the summed squared drawn field Re{f·e^(j·phase)}^2:
-  /// with a = Re f, b = Im f, the sum is A·cos^2 - 2C·cos·sin + B·sin^2,
-  /// which peaks at phase = atan2(-2C, A - B) / 2.
-  static double _brightestPhase(WallWaveProfile p) {
-    double a2 = 0, b2 = 0, ab = 0;
-    for (final Complex f in p.sample(241)) {
-      a2 += f.re * f.re;
-      b2 += f.im * f.im;
-      ab += f.re * f.im;
-    }
-    return 0.5 * math.atan2(-2 * ab, a2 - b2);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = createTicker(_onTick);
-    if (widget.playing) _ticker.start();
-  }
-
-  @override
-  void didUpdateWidget(WallSlabStage old) {
-    super.didUpdateWidget(old);
-    if (widget.playing && !_ticker.isActive) {
-      _last = Duration.zero;
-      _ticker.start();
-    } else if (!widget.playing && _ticker.isActive) {
-      _ticker.stop();
-    }
-  }
-
-  @override
-  void dispose() {
-    _ticker.dispose();
-    super.dispose();
-  }
-
-  void _onTick(Duration elapsed) {
-    final double dt = (elapsed - _last).inMicroseconds / 1e6;
-    _last = elapsed;
-    setState(() {
-      _phase = (_phase + 2 * math.pi * dt / _kSecondsPerCycle) % (2 * math.pi);
-    });
-  }
+  WallSlabController get _c => widget.controller;
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final bool reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final WallConfig cfg = widget.config;
-    final SlabResult r = _current;
-    final double ampBehind = r.t.abs;
+    return ListenableBuilder(
+      listenable: _c,
+      builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) return _presenter(context);
+        return _phone(context);
+      },
+    );
+  }
 
-    final String semantic =
-        'Wave through ${fmtMm(cfg.thicknessMm)} mm of '
+  String _semantic() {
+    final WallConfig cfg = _c.config;
+    final SlabResult r = _c.result;
+    final double ampBehind = r.t.abs;
+    return 'Wave through ${fmtMm(cfg.thicknessMm)} mm of '
         '${cfg.material.label.toLowerCase()} at ${cfg.centerMHz} MHz. '
         'In front, the reflected wave makes a ripple of '
         '${r.standingWaveRippleDb <= 40 ? '${fmt1(r.standingWaveRippleDb)} dB' : 'full nulls'}. '
-        '${widget.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial)} instead of ${fmtLength(r.props.lambdaAir)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
+        '${_c.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial)} instead of ${fmtLength(r.props.lambdaAir)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
         'Behind, the amplitude is ${fmtPct(ampBehind)} of the incident '
         'amplitude: ${fmtLossDb(r.transmissionLossDb)} of loss.';
+  }
+
+  Widget _plot(BuildContext context, {double? height}) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final TextStyle label =
+        text.labelSmall?.copyWith(color: colors.textSecondary) ??
+        TextStyle(color: colors.textSecondary);
+    return Semantics(
+      label: _semantic(),
+      excludeSemantics: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.control),
+        child: Container(
+          height: height,
+          color: colors.surface2,
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: WallWavePainter(
+              result: _c.result,
+              phase: _c.phase,
+              cache: _cache,
+              showMaterialWavelength: _c.showMaterialWavelength,
+              style: WallWaveStyle(
+                wave: colors.textAccent,
+                envelope: colors.textTertiary,
+                reference: colors.border,
+                axis: colors.borderStrong,
+                wallFill: colors.surface3,
+                wallEdge: colors.borderStrong,
+                // Painted labels do not see MediaQuery's text scale; the
+                // presenter scale reaches them here (1.0 elsewhere).
+                label: label.copyWith(
+                  fontSize: scale.paintFont(
+                    label.fontSize ?? AppTextSize.caption,
+                  ),
+                ),
+                scale: scale,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _phone(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final SlabResult r = _c.result;
+    final double ampBehind = r.t.abs;
 
     return WallCard(
       child: Column(
@@ -197,67 +173,13 @@ class _WallSlabStageState extends State<WallSlabStage>
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label: semantic,
-            excludeSemantics: true,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              child: Container(
-                height: widget.plotHeight,
-                color: colors.surface2,
-                child: CustomPaint(
-                  size: Size.infinite,
-                  painter: WallWavePainter(
-                    result: r,
-                    phase: _phase,
-                    cache: _cache,
-                    showMaterialWavelength: widget.showMaterialWavelength,
-                    style: WallWaveStyle(
-                      wave: colors.textAccent,
-                      envelope: colors.textTertiary,
-                      reference: colors.border,
-                      axis: colors.borderStrong,
-                      wallFill: colors.surface3,
-                      wallEdge: colors.borderStrong,
-                      label:
-                          text.labelSmall?.copyWith(
-                            color: colors.textSecondary,
-                          ) ??
-                          TextStyle(color: colors.textSecondary),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (widget.onShowMaterialWavelengthChanged != null) ...<Widget>[
+          _plot(context, height: widget.plotHeight),
+          if (widget.showWavelengthSwitch) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             _wavelengthSwitch(colors, text),
           ],
           const SizedBox(height: AppSpacing.xs),
-          ExcludeSemantics(
-            child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xxs,
-              children: <Widget>[
-                _legendItem(
-                  context,
-                  _line(colors.textAccent, 3),
-                  'The wave now',
-                ),
-                _legendItem(
-                  context,
-                  _dashed(colors.textTertiary),
-                  'Its peak (envelope)',
-                ),
-                _legendItem(
-                  context,
-                  _dashed(colors.border),
-                  'Incident peak, for scale',
-                ),
-              ],
-            ),
-          ),
+          _legend(context),
           const SizedBox(height: AppSpacing.xs),
           Text.rich(
             TextSpan(
@@ -289,26 +211,169 @@ class _WallSlabStageState extends State<WallSlabStage>
             ),
           ],
           const SizedBox(height: AppSpacing.xs),
-          WallNote(
-            icon: reduceMotion && !widget.playing
-                ? Icons.motion_photos_off_outlined
-                : Icons.slow_motion_video_outlined,
-            message: reduceMotion && !widget.playing
-                ? 'Reduced motion is on, so the wave is frozen. Press Play to '
-                      'animate it.'
-                : 'Slowed down: one cycle every ${_kSecondsPerCycle.toStringAsFixed(0)} '
-                      'seconds. At ${cfg.centerMHz} MHz a real wave cycles '
-                      '${fmt1(cfg.fGhz)} billion times a second, in front of, '
-                      'inside and behind the wall alike.',
+          _motionNote(context),
+        ],
+      ),
+    );
+  }
+
+  /// Presenter: the wave fills the stage; under it, the loss in headline
+  /// type beside the same wall at all three bands.
+  Widget _presenter(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final SlabResult r = _c.result;
+    final double ampBehind = r.t.abs;
+
+    final Widget wave = WallCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Expanded(
+                child: WallSectionLabel(
+                  'The wave, along a line through the wall',
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              _playButton(colors),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(child: _plot(context)),
+          if (widget.showWavelengthSwitch) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            _wavelengthSwitch(colors, text),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          _legend(context),
+          if (ampBehind < 0.02) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            const WallNote(
+              icon: Icons.visibility_off_outlined,
+              message:
+                  'Behind the wall the wave is too small to see at this '
+                  'scale, but not zero.',
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          _motionNote(context),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        final double side = (box.maxWidth * 0.34).clamp(280.0, 440.0);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Expanded(child: wave),
+            const SizedBox(height: AppSpacing.sm),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(width: side, child: _lossHeadline(context)),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: WallBandsCard(config: _c.config)),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// The number the lesson is about, in headline type.
+  Widget _lossHeadline(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final SlabResult r = _c.result;
+    final WallConfig cfg = _c.config;
+    return WallCard(
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const WallSectionLabel('Through the wall'),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                fmtLossDb(r.transmissionLossDb),
+                style: PresenterMode.scaleOf(context)
+                    .headlineStyle(mono.outputLarge)
+                    .copyWith(color: colors.textAccent),
+              ),
+            ),
+            Text(
+              'Reflected back: ${fmtPct(r.reflectedPower)} of the power.',
+              style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              '${fmtMm(cfg.thicknessMm)} mm '
+              '${cfg.material.label.toLowerCase()}, ${cfg.centerMHz} MHz',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _legend(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final double k = PresenterMode.scaleOf(context).stroke;
+    return ExcludeSemantics(
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.xxs,
+        children: <Widget>[
+          _legendItem(context, _line(colors.textAccent, 3 * k), 'The wave now'),
+          _legendItem(
+            context,
+            _dashed(colors.textTertiary, k),
+            'Its peak (envelope)',
+          ),
+          _legendItem(
+            context,
+            _dashed(colors.border, k),
+            'Incident peak, for scale',
           ),
         ],
       ),
     );
   }
 
+  Widget _motionNote(BuildContext context) {
+    final bool reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final WallConfig cfg = _c.config;
+    final bool frozen = reduceMotion && !_c.playing;
+    return WallNote(
+      icon: frozen
+          ? Icons.motion_photos_off_outlined
+          : Icons.slow_motion_video_outlined,
+      message: frozen
+          ? 'Reduced motion is on, so the wave is frozen. Press Play to '
+                'animate it.'
+          : 'Slowed down: one cycle every '
+                '${kWallSecondsPerCycle.toStringAsFixed(0)} seconds. At '
+                '${cfg.centerMHz} MHz a real wave cycles '
+                '${fmt1(cfg.fGhz)} billion times a second, in front of, '
+                'inside and behind the wall alike.',
+    );
+  }
+
   Widget _wavelengthSwitch(AppColorScheme colors, TextTheme text) {
-    final ValueChanged<bool> onChanged =
-        widget.onShowMaterialWavelengthChanged!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -322,15 +387,19 @@ class _WallSlabStageState extends State<WallSlabStage>
                 ),
               ),
               Switch(
-                value: widget.showMaterialWavelength,
-                onChanged: onChanged,
+                value: _c.showMaterialWavelength,
+                onChanged: _c.setShowMaterialWavelength,
               ),
             ],
           ),
         ),
         Text(
-          'Frequency never changes. Inside a material the wave travels '
-          'slower, so the same frequency packs into a shorter wavelength.',
+          PresenterMode.isActive(context)
+              ? 'Frequency never changes. Inside, slower travel packs the '
+                    'same frequency into a shorter wavelength.'
+              : 'Frequency never changes. Inside a material the wave travels '
+                    'slower, so the same frequency packs into a shorter '
+                    'wavelength.',
           style: text.bodySmall?.copyWith(color: colors.textSecondary),
         ),
       ],
@@ -338,13 +407,13 @@ class _WallSlabStageState extends State<WallSlabStage>
   }
 
   Widget _playButton(AppColorScheme colors) {
-    final bool p = widget.playing;
+    final bool p = _c.playing;
     return Semantics(
       button: true,
       label: p ? 'Pause the wave' : 'Play the wave',
       excludeSemantics: true,
       child: OutlinedButton.icon(
-        onPressed: () => widget.onPlayingChanged(!p),
+        onPressed: _c.togglePlay,
         icon: Icon(p ? Icons.pause : Icons.play_arrow, size: 20),
         label: Text(p ? 'Pause' : 'Play'),
         style: OutlinedButton.styleFrom(
@@ -358,10 +427,14 @@ class _WallSlabStageState extends State<WallSlabStage>
 
   Widget _legendItem(BuildContext context, Widget swatch, String label) {
     final AppColorScheme colors = context.colors;
+    final double k = PresenterMode.scaleOf(context).stroke;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        SizedBox(width: 22, child: Center(child: swatch)),
+        SizedBox(
+          width: 22 * k,
+          child: Center(child: swatch),
+        ),
         const SizedBox(width: AppSpacing.xxs),
         Text(
           label,
@@ -375,14 +448,14 @@ class _WallSlabStageState extends State<WallSlabStage>
 
   Widget _line(Color c, double w) => Container(width: 20, height: w, color: c);
 
-  Widget _dashed(Color c) => Row(
+  Widget _dashed(Color c, [double k = 1]) => Row(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
-      Container(width: 5, height: 1.5, color: c),
-      const SizedBox(width: 3),
-      Container(width: 5, height: 1.5, color: c),
-      const SizedBox(width: 3),
-      Container(width: 4, height: 1.5, color: c),
+      Container(width: 5 * k, height: 1.5 * k, color: c),
+      SizedBox(width: 3 * k),
+      Container(width: 5 * k, height: 1.5 * k, color: c),
+      SizedBox(width: 3 * k),
+      Container(width: 4 * k, height: 1.5 * k, color: c),
     ],
   );
 }
@@ -398,6 +471,7 @@ class WallWaveStyle {
     required this.wallFill,
     required this.wallEdge,
     required this.label,
+    this.scale = PresenterScale.normal,
   });
 
   final Color wave;
@@ -408,6 +482,10 @@ class WallWaveStyle {
   final Color wallEdge;
   final TextStyle label;
 
+  /// Presenter scale for strokes and the label band (1 elsewhere). [label]
+  /// arrives already scaled.
+  final PresenterScale scale;
+
   @override
   bool operator ==(Object other) =>
       other is WallWaveStyle &&
@@ -417,11 +495,20 @@ class WallWaveStyle {
       other.axis == axis &&
       other.wallFill == wallFill &&
       other.wallEdge == wallEdge &&
-      other.label == label;
+      other.label == label &&
+      other.scale == scale;
 
   @override
-  int get hashCode =>
-      Object.hash(wave, envelope, reference, axis, wallFill, wallEdge, label);
+  int get hashCode => Object.hash(
+    wave,
+    envelope,
+    reference,
+    axis,
+    wallFill,
+    wallEdge,
+    label,
+    scale,
+  );
 }
 
 /// What the stage draws: complex field phasors along the wall normal,
@@ -583,7 +670,8 @@ class WallWavePainter extends CustomPainter {
     final WallWaveProfile g = cache._profile!;
     final List<Complex> ph = cache._phasors;
 
-    const double labelBand = 20;
+    final double k = style.scale.stroke;
+    final double labelBand = 20 * style.scale.text;
     final double top = labelBand;
     final double plotH = size.height - labelBand - AppSpacing.xxs;
     final double midY = top + plotH / 2;
@@ -595,7 +683,7 @@ class WallWavePainter extends CustomPainter {
     canvas.drawRect(wall, Paint()..color = style.wallFill);
     final Paint edge = Paint()
       ..color = style.wallEdge
-      ..strokeWidth = 1;
+      ..strokeWidth = k;
     canvas.drawLine(wall.topLeft, wall.bottomLeft, edge);
     canvas.drawLine(wall.topRight, wall.bottomRight, edge);
 
@@ -605,18 +693,18 @@ class WallWavePainter extends CustomPainter {
       Offset(size.width, midY),
       Paint()
         ..color = style.axis
-        ..strokeWidth = 1,
+        ..strokeWidth = k,
     );
     final Paint ref = Paint()
       ..color = style.reference
-      ..strokeWidth = 1.5;
-    _dashedH(canvas, midY - yScale, size.width, ref);
-    _dashedH(canvas, midY + yScale, size.width, ref);
+      ..strokeWidth = 1.5 * k;
+    _dashedH(canvas, midY - yScale, size.width, ref, k);
+    _dashedH(canvas, midY + yScale, size.width, ref, k);
 
     // Envelope |f(x)|, above and below.
     final Paint env = Paint()
       ..color = style.envelope
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1.2 * k
       ..style = PaintingStyle.stroke;
     final double step = size.width / (ph.length - 1);
     for (final int sign in <int>[1, -1]) {
@@ -647,7 +735,7 @@ class WallWavePainter extends CustomPainter {
       wave,
       Paint()
         ..color = style.wave
-        ..strokeWidth = 2.5
+        ..strokeWidth = 2.5 * k
         ..style = PaintingStyle.stroke
         ..strokeJoin = StrokeJoin.round,
     );
@@ -660,9 +748,9 @@ class WallWavePainter extends CustomPainter {
     }
   }
 
-  void _dashedH(Canvas canvas, double y, double width, Paint p) {
-    for (double x = 0; x < width; x += 10) {
-      canvas.drawLine(Offset(x, y), Offset(math.min(x + 5, width), y), p);
+  void _dashedH(Canvas canvas, double y, double width, Paint p, double k) {
+    for (double x = 0; x < width; x += 10 * k) {
+      canvas.drawLine(Offset(x, y), Offset(math.min(x + 5 * k, width), y), p);
     }
   }
 

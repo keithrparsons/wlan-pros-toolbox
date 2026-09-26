@@ -8,6 +8,11 @@
 // SixGhzPsdModel and none knows about SixGhzPsdStage, so a screen composes
 // them in whatever arrangement it needs.
 //
+// PRESENTER: SixGhzPsdControls keeps the region and the class list open
+// (one line per class) and folds the link and the AP grants into
+// PresenterDisclosures, with no phone prose, so the panel fits a projector;
+// the per-class numbers move onto the stage.
+//
 // THEME: context.colors (dark §8 / light §8.20), class hues from PsdPalette
 // (§8.15.2) on the class samples only. No status hues: PSD-limited and
 // cap-limited are descriptions, not pass/fail verdicts (§8.13 rule 6).
@@ -23,6 +28,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'six_ghz_psd_model.dart';
 import 'six_ghz_psd_parts.dart';
 
@@ -49,23 +56,76 @@ class SixGhzPsdControls extends StatelessWidget {
     final SixGhzPsdModel m = model;
     TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
     final bool us = m.region == PsdRegion.us;
+    if (PresenterMode.isActive(context)) {
+      return <Widget>[
+        _regionToggle(),
+        const SizedBox(height: AppSpacing.sm),
+        const PsdSectionLabel('Classes to show'),
+        const SizedBox(height: AppSpacing.xxs),
+        for (final PowerClass c in m.regionClasses)
+          _classRow(context, c, compact: true),
+        const SizedBox(height: AppSpacing.xs),
+        PresenterDisclosure(
+          title: 'Link: distance, walls, noise figure',
+          children: _linkSliders(context),
+        ),
+        if (us)
+          PresenterDisclosure(
+            title: 'AP authorized power',
+            children: _grantSliders(context),
+          ),
+      ];
+    }
 
     return <Widget>[
-      AppToggle<PsdRegion>(
-        label: 'Region',
-        value: m.region,
-        expand: true,
-        items: <AppToggleItem<PsdRegion>>[
-          for (final PsdRegion r in PsdRegion.values) (r, r.label),
-        ],
-        onChanged: m.setRegion,
-      ),
+      _regionToggle(),
       const SizedBox(height: AppSpacing.md),
       const PsdSectionLabel('Classes to show'),
       const SizedBox(height: AppSpacing.xxs),
       for (final PowerClass c in m.regionClasses) _classRow(context, c),
       const SizedBox(height: AppSpacing.md),
       const PsdSectionLabel('Link'),
+      ..._linkSliders(context),
+      Text(
+        'Free-space loss at ${SixGhzPsdMath.referenceFreqMHz.round()} MHz '
+        '(channel 31) for every width, so only the width changes. The '
+        'receive antenna is 0 dBi.',
+        style: small(),
+      ),
+      if (us) ...<Widget>[
+        const SizedBox(height: AppSpacing.md),
+        const PsdSectionLabel('AP authorized power'),
+        ..._grantSliders(context),
+        Text(
+          'SP and GVP clients must stay 6 dB below their AP\'s authorized '
+          'power, and the AP itself cannot exceed its grant. Turn on an SP '
+          'or GVP class to use these.',
+          style: small(),
+        ),
+      ] else ...<Widget>[
+        const SizedBox(height: AppSpacing.sm),
+        const PsdNote(
+          Icons.info_outline,
+          'The EU has no client offset: an LPI client may use the same '
+          '23 dBm as the AP, so there is no AP power to set.',
+        ),
+      ],
+    ];
+  }
+
+  Widget _regionToggle() => AppToggle<PsdRegion>(
+    label: 'Region',
+    value: model.region,
+    expand: true,
+    items: <AppToggleItem<PsdRegion>>[
+      for (final PsdRegion r in PsdRegion.values) (r, r.label),
+    ],
+    onChanged: model.setRegion,
+  );
+
+  List<Widget> _linkSliders(BuildContext context) {
+    final SixGhzPsdModel m = model;
+    return <Widget>[
       _slider(
         context,
         label: 'Distance',
@@ -100,58 +160,42 @@ class SixGhzPsdControls extends StatelessWidget {
         onChanged: m.setNoiseFigure,
         semantic: (double v) => 'Noise figure ${PsdFormat.n(v)} dB',
       ),
-      Text(
-        'Free-space loss at ${SixGhzPsdMath.referenceFreqMHz.round()} MHz '
-        '(channel 31) for every width, so only the width changes. The '
-        'receive antenna is 0 dBi.',
-        style: small(),
-      ),
-      if (us) ...<Widget>[
-        const SizedBox(height: AppSpacing.md),
-        const PsdSectionLabel('AP authorized power'),
-        _slider(
-          context,
-          label: 'Standard Power AP (AFC)',
-          valueText: '${PsdFormat.n(m.spAuthorizedDbm, 0)} dBm',
-          value: m.spAuthorizedDbm,
-          min: 0,
-          max: 36,
-          divisions: 36,
-          enabled: m.spGrantInPlay,
-          onChanged: m.setSpAuthorized,
-          semantic: (double v) =>
-              'Standard Power AP authorized ${v.round()} dBm',
-        ),
-        _slider(
-          context,
-          label: 'GVP AP (geofencing)',
-          valueText: '${PsdFormat.n(m.gvpAuthorizedDbm, 0)} dBm',
-          value: m.gvpAuthorizedDbm,
-          min: 0,
-          max: 24,
-          divisions: 24,
-          enabled: m.gvpGrantInPlay,
-          onChanged: m.setGvpAuthorized,
-          semantic: (double v) => 'GVP AP authorized ${v.round()} dBm',
-        ),
-        Text(
-          'SP and GVP clients must stay 6 dB below their AP\'s authorized '
-          'power, and the AP itself cannot exceed its grant. Turn on an SP '
-          'or GVP class to use these.',
-          style: small(),
-        ),
-      ] else ...<Widget>[
-        const SizedBox(height: AppSpacing.sm),
-        const PsdNote(
-          Icons.info_outline,
-          'The EU has no client offset: an LPI client may use the same '
-          '23 dBm as the AP, so there is no AP power to set.',
-        ),
-      ],
     ];
   }
 
-  Widget _classRow(BuildContext context, PowerClass c) {
+  List<Widget> _grantSliders(BuildContext context) {
+    final SixGhzPsdModel m = model;
+    return <Widget>[
+      _slider(
+        context,
+        label: 'Standard Power AP (AFC)',
+        valueText: '${PsdFormat.n(m.spAuthorizedDbm, 0)} dBm',
+        value: m.spAuthorizedDbm,
+        min: 0,
+        max: 36,
+        divisions: 36,
+        enabled: m.spGrantInPlay,
+        onChanged: m.setSpAuthorized,
+        semantic: (double v) => 'Standard Power AP authorized ${v.round()} dBm',
+      ),
+      _slider(
+        context,
+        label: 'GVP AP (geofencing)',
+        valueText: '${PsdFormat.n(m.gvpAuthorizedDbm, 0)} dBm',
+        value: m.gvpAuthorizedDbm,
+        min: 0,
+        max: 24,
+        divisions: 24,
+        enabled: m.gvpGrantInPlay,
+        onChanged: m.setGvpAuthorized,
+        semantic: (double v) => 'GVP AP authorized ${v.round()} dBm',
+      ),
+    ];
+  }
+
+  /// One class with its checkbox. [compact] (presenter) drops the limits
+  /// line under the name.
+  Widget _classRow(BuildContext context, PowerClass c, {bool compact = false}) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final bool on = model.isShown(c);
@@ -170,8 +214,8 @@ class SixGhzPsdControls extends StatelessWidget {
                 onChanged: (bool? v) => model.setShown(c, v ?? false),
               ),
               SizedBox(
-                width: 28,
-                height: 14,
+                width: 28 * PresenterMode.scaleOf(context).marker,
+                height: 14 * PresenterMode.scaleOf(context).marker,
                 child: ExcludeSemantics(child: PsdClassSample(powerClass: c)),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -185,13 +229,14 @@ class SixGhzPsdControls extends StatelessWidget {
                         color: colors.textPrimary,
                       ),
                     ),
-                    Text(
-                      '${PsdFormat.n(c.psdDbmPerMHz, 0)} dBm/MHz, '
-                      'max ${PsdFormat.n(c.maxEirpDbm, 0)} dBm',
-                      style: text.bodySmall?.copyWith(
-                        color: colors.textTertiary,
+                    if (!compact)
+                      Text(
+                        '${PsdFormat.n(c.psdDbmPerMHz, 0)} dBm/MHz, '
+                        'max ${PsdFormat.n(c.maxEirpDbm, 0)} dBm',
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textTertiary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

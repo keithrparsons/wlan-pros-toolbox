@@ -19,7 +19,8 @@
 //   - FsplBandChips, FsplControls, FsplReadouts, FsplExplainer
 //                       (fspl_simulator_panels.dart) inputs and readouts
 //   - FsplChartPainter  (fspl_simulator_chart.dart)  the log-axis painter
-// A later full-screen presenter layout reuses the same widgets side by side.
+// The Present button (desktop and tablet windows) puts the stage beside the
+// controls over the SAME model (lib/widgets/presenter/).
 //
 // LAYOUT: phone first. Below 720 px the stage leads the scroll and the
 // controls live in a bottom sheet collapsed to one row of band toggles. At
@@ -41,9 +42,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'fspl_simulator_model.dart';
 import 'fspl_simulator_panels.dart';
@@ -71,6 +74,24 @@ class _FsplSimulatorScreenState extends State<FsplSimulatorScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's model (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'FSPL Simulator',
+    stage: FsplStage(model: _model, chartHeight: 0),
+    controls: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // The cursor readout and the Why bars are on the stage.
+        const FsplSectionLabel('Bands'),
+        const SizedBox(height: AppSpacing.xs),
+        FsplBandChips(model: _model),
+        const SizedBox(height: AppSpacing.sm),
+        FsplControls(model: _model),
+      ],
+    ),
+    actions: _model.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     final bool reduceMotion =
@@ -79,7 +100,13 @@ class _FsplSimulatorScreenState extends State<FsplSimulatorScreen> {
       appBar: AppBar(
         title: const Text('FSPL Simulator'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _model.copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.fsplSimulator,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _model.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

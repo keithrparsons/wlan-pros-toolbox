@@ -7,6 +7,10 @@
 // spreading and aperture). Each takes an FsplSimModel and none knows about
 // FsplStage, so a screen composes them in whatever arrangement it needs.
 //
+// PRESENTER: FsplControls drops its phone prose and folds the channels and
+// the measured point into PresenterDisclosures; FsplCursorHeadline carries
+// the per-band numbers onto the stage in headline type.
+//
 // THEME: context.colors only (dark §8 / light §8.20). No status hues (nothing
 // here is a pass/fail verdict, §8.13 rule 6). Lime marks the received-power
 // values and the aperture bar, the one quantity that changes with band.
@@ -23,6 +27,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'fspl_simulator_chart.dart';
 import 'fspl_simulator_model.dart';
@@ -114,6 +120,7 @@ class FsplBandSample extends StatelessWidget {
         color: model ? colors.textTertiary : colors.textAccent,
         surface: colors.surface1,
         model: model,
+        scale: PresenterMode.scaleOf(context).marker,
       ),
     );
   }
@@ -200,15 +207,57 @@ class _FsplControlsState extends State<FsplControls> {
   }
 
   List<Widget> _children(BuildContext context) {
+    if (PresenterMode.isActive(context)) return _presenterChildren(context);
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final FsplMeasuredInput mi = m.measuredInput;
-    final ({double rssi, double dist})? meas = m.measured;
     TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
 
     return <Widget>[
       const FsplSectionLabel('Channels'),
       const SizedBox(height: AppSpacing.xs),
+      ..._channelFields(),
+      const SizedBox(height: AppSpacing.sm),
+      const FsplSectionLabel('Link'),
+      ..._linkSliders(context),
+      Text(
+        '0 dBi is an isotropic antenna, the one the aperture term assumes.',
+        style: small(),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      const FsplSectionLabel('Indoor model'),
+      ..._indoor(context),
+      Text(
+        'A model with an exponent you choose, not a measurement. n = 2 is '
+        'free space; 3 is a common starting guess for offices.',
+        style: small(),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      const FsplSectionLabel('Measured point'),
+      const SizedBox(height: AppSpacing.xs),
+      ..._measuredFields(context),
+    ];
+  }
+
+  /// Presenter panel: the link and the indoor model open, phone prose gone,
+  /// channels and the measured point folded (set once per lesson).
+  List<Widget> _presenterChildren(BuildContext context) {
+    return <Widget>[
+      const FsplSectionLabel('Link'),
+      ..._linkSliders(context),
+      const SizedBox(height: AppSpacing.sm),
+      const FsplSectionLabel('Indoor model'),
+      ..._indoor(context),
+      const SizedBox(height: AppSpacing.xs),
+      PresenterDisclosure(title: 'Channels', children: _channelFields()),
+      PresenterDisclosure(
+        title: 'Measured point',
+        children: _measuredFields(context),
+      ),
+    ];
+  }
+
+  List<Widget> _channelFields() {
+    return <Widget>[
       for (final WifiBand b in WifiBand.values) ...<Widget>[
         // 14, 28 and 60 options: GL-003 §8.14 routes 4+ options to AppSelect.
         LabeledField(
@@ -225,8 +274,11 @@ class _FsplControlsState extends State<FsplControls> {
         ),
         const SizedBox(height: AppSpacing.xs),
       ],
-      const SizedBox(height: AppSpacing.sm),
-      const FsplSectionLabel('Link'),
+    ];
+  }
+
+  List<Widget> _linkSliders(BuildContext context) {
+    return <Widget>[
       _slider(
         context,
         label: 'Tx power',
@@ -268,12 +320,13 @@ class _FsplControlsState extends State<FsplControls> {
         divisions: 60,
         onChanged: m.setOtherLoss,
       ),
-      Text(
-        '0 dBi is an isotropic antenna, the one the aperture term assumes.',
-        style: small(),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      const FsplSectionLabel('Indoor model'),
+    ];
+  }
+
+  List<Widget> _indoor(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return <Widget>[
       MergeSemantics(
         child: Row(
           children: <Widget>[
@@ -298,14 +351,13 @@ class _FsplControlsState extends State<FsplControls> {
         enabled: m.indoor,
         onChanged: m.setExponent,
       ),
-      Text(
-        'A model with an exponent you choose, not a measurement. n = 2 is '
-        'free space; 3 is a common starting guess for offices.',
-        style: small(),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      const FsplSectionLabel('Measured point'),
-      const SizedBox(height: AppSpacing.xs),
+    ];
+  }
+
+  List<Widget> _measuredFields(BuildContext context) {
+    final FsplMeasuredInput mi = m.measuredInput;
+    final ({double rssi, double dist})? meas = m.measured;
+    return <Widget>[
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -690,14 +742,141 @@ class FsplReadouts extends StatelessWidget {
   }
 }
 
+// ── Cursor headline (presenter stage) ─────────────────────────────────────
+
+/// The numbers the lesson is about, in headline type across the top of the
+/// presenter stage: each band's value at the cursor in the chart's current
+/// view, the other quantity under it, and the gap between the highest and
+/// lowest band.
+class FsplCursorHeadline extends StatelessWidget {
+  const FsplCursorHeadline({super.key, required this.model});
+  final FsplSimModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final List<WifiBand> bands = model.bands;
+    final double d = model.cursorM;
+    final bool received = model.view == FsplView.received;
+    final String Function(double, [int]) n = FsplFormat.n;
+
+    if (bands.isEmpty) {
+      return const FsplCard(
+        child: FsplNote(
+          Icons.visibility_off_outlined,
+          'No band is on. Turn one on to read its loss.',
+        ),
+      );
+    }
+    final WifiBand lo = bands.first;
+    final WifiBand hi = bands.last;
+
+    Widget band(WifiBand b) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            SizedBox(
+              width: 28 * scale.marker,
+              height: 14 * scale.marker,
+              child: FsplBandSample(band: b),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Flexible(
+              child: Text(
+                '${b.label} ch ${model.channel(b)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.bodyMedium?.copyWith(color: colors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            received
+                ? '${n(model.rx(model.pathLoss(b, d)))} dBm'
+                : '${n(model.pathLoss(b, d))} dB',
+            style: scale
+                .headlineStyle(mono.outputLarge)
+                .copyWith(color: colors.textAccent),
+          ),
+        ),
+        Text(
+          received
+              ? '${n(model.pathLoss(b, d))} dB of path loss'
+              : '${n(model.rx(model.pathLoss(b, d)))} dBm received',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
+      ],
+    );
+
+    return FsplCard(
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.xxs,
+              children: <Widget>[
+                FsplSectionLabel(
+                  '${received ? 'Received' : 'Path loss'} at '
+                  '${FsplFormat.dist(d)}',
+                ),
+                if (bands.length > 1)
+                  Text(
+                    '${hi.label} vs ${lo.label}: '
+                    '${FsplFormat.signed(FsplMath.bandDifferenceDb(model.freq(lo), model.freq(hi)))} dB '
+                    'at every distance',
+                    style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xxs),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                for (int i = 0; i < bands.length; i++) ...<Widget>[
+                  if (i > 0) const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: band(bands[i])),
+                ],
+                // Keep a lone band from spreading across the whole stage.
+                for (int i = bands.length; i < 3; i++) ...<Widget>[
+                  const SizedBox(width: AppSpacing.sm),
+                  const Expanded(child: SizedBox.shrink()),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ── Why panel ─────────────────────────────────────────────────────────────
 
 /// Spreading loss and aperture term as two stacked bars per band, at the
 /// cursor distance. The spreading bar is identical across bands; only the
 /// aperture bar changes.
 class FsplWhyPanel extends StatelessWidget {
-  const FsplWhyPanel({super.key, required this.model});
+  const FsplWhyPanel({super.key, required this.model, this.compact = false});
   final FsplSimModel model;
+
+  /// Presenter stage: the closing paragraph shrinks to one line (the
+  /// instructor says the rest).
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -764,10 +943,13 @@ class FsplWhyPanel extends StatelessWidget {
           if (bands.length > 1) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'The spreading parts are identical: the energy spreads over '
-              'the same sphere at every frequency. Only the aperture part '
-              'changes. A shorter wavelength makes a smaller antenna, which '
-              'catches less of that energy.',
+              compact
+                  ? 'Spreading is identical. Only the aperture changes: a '
+                        'shorter wavelength makes a smaller antenna.'
+                  : 'The spreading parts are identical: the energy spreads '
+                        'over the same sphere at every frequency. Only the '
+                        'aperture part changes. A shorter wavelength makes a '
+                        'smaller antenna, which catches less of that energy.',
               style: text.bodySmall?.copyWith(color: colors.textSecondary),
             ),
           ],
@@ -818,11 +1000,12 @@ class FsplWhyPanel extends StatelessWidget {
               final double w = c.maxWidth;
               final double sw = w * spread / maxTotal;
               final double aw = math.max(0.0, w * ap / maxTotal - 2);
+              final double barH = 14 * PresenterMode.scaleOf(context).marker;
               return Row(
                 children: <Widget>[
                   Container(
                     width: sw,
-                    height: 14,
+                    height: barH,
                     decoration: BoxDecoration(
                       color: colors.borderStrong,
                       borderRadius: const BorderRadius.horizontal(
@@ -833,7 +1016,7 @@ class FsplWhyPanel extends StatelessWidget {
                   const SizedBox(width: 2),
                   Container(
                     width: aw,
-                    height: 14,
+                    height: barH,
                     decoration: BoxDecoration(
                       color: colors.textAccent,
                       borderRadius: const BorderRadius.horizontal(
@@ -847,8 +1030,10 @@ class FsplWhyPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            '${n(spread)} spreading + ${n(ap)} aperture. Antenna area '
-            '${n(cm2)} cm².',
+            compact
+                ? '${n(spread)} + ${n(ap)} dB, antenna ${n(cm2)} cm²'
+                : '${n(spread)} spreading + ${n(ap)} aperture. Antenna area '
+                      '${n(cm2)} cm².',
             style: mono.inlineCode.copyWith(
               fontSize: AppTextSize.caption,
               color: colors.textTertiary,

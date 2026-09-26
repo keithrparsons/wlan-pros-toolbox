@@ -21,6 +21,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/multipath_model.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 
 /// Resolved colors and text styles shared by every multipath painter.
 @immutable
@@ -34,6 +35,7 @@ class MultipathPaintStyle {
     required this.axis,
     required this.wall,
     required this.labelStyle,
+    this.scale = PresenterScale.normal,
   });
 
   /// Lime: the measured quantity.
@@ -60,6 +62,16 @@ class MultipathPaintStyle {
   /// Axis and scene labels.
   final TextStyle labelStyle;
 
+  /// Presenter scale. The label style arrives already scaled (the stage
+  /// applies paintFont); strokes multiply by [k] and markers by [m].
+  final PresenterScale scale;
+
+  /// Stroke factor (1 outside presenter mode).
+  double get k => scale.stroke;
+
+  /// Marker factor (1 outside presenter mode).
+  double get m => scale.marker;
+
   @override
   bool operator ==(Object other) =>
       other is MultipathPaintStyle &&
@@ -70,7 +82,8 @@ class MultipathPaintStyle {
       other.grid == grid &&
       other.axis == axis &&
       other.wall == wall &&
-      other.labelStyle == labelStyle;
+      other.labelStyle == labelStyle &&
+      other.scale == scale;
 
   @override
   int get hashCode => Object.hash(
@@ -82,6 +95,7 @@ class MultipathPaintStyle {
     axis,
     wall,
     labelStyle,
+    scale,
   );
 }
 
@@ -175,24 +189,24 @@ void _hatchedWall(Canvas canvas, Rect r, Color color) {
 void _transmitter(Canvas canvas, Offset c, MultipathPaintStyle s) {
   final Paint p = Paint()
     ..color = s.primary
-    ..strokeWidth = 2
+    ..strokeWidth = 2 * s.k
     ..style = PaintingStyle.stroke;
-  canvas.drawLine(c, c.translate(0, 12), p);
+  canvas.drawLine(c, c.translate(0, 12 * s.m), p);
   for (final double r in <double>[5, 9]) {
     canvas.drawArc(
-      Rect.fromCircle(center: c, radius: r),
+      Rect.fromCircle(center: c, radius: r * s.m),
       -math.pi * 0.85,
       math.pi * 0.7,
       false,
       p,
     );
   }
-  canvas.drawCircle(c, 2.5, Paint()..color = s.primary);
+  canvas.drawCircle(c, 2.5 * s.m, Paint()..color = s.primary);
 }
 
 void _receiver(Canvas canvas, Offset c, MultipathPaintStyle s) {
   final RRect body = RRect.fromRectAndRadius(
-    Rect.fromCenter(center: c, width: 10, height: 16),
+    Rect.fromCenter(center: c, width: 10 * s.m, height: 16 * s.m),
     const Radius.circular(2),
   );
   canvas.drawRRect(body, Paint()..color = s.primary);
@@ -260,7 +274,7 @@ class TwoRayScenePainter extends CustomPainter {
       Offset(size.width, wallBand),
       Paint()
         ..color = style.axis
-        ..strokeWidth = 1.5,
+        ..strokeWidth = 1.5 * style.k,
     );
 
     final Offset tx = w(scene.txX, scene.txY);
@@ -270,7 +284,7 @@ class TwoRayScenePainter extends CustomPainter {
     // Receiver track.
     final Paint track = Paint()
       ..color = style.grid
-      ..strokeWidth = 2
+      ..strokeWidth = 2 * style.k
       ..strokeCap = StrokeCap.round;
     final Offset a = w(scene.trackStart, scene.rxY);
     final Offset b = w(scene.trackStart + scene.trackLength, scene.rxY);
@@ -289,14 +303,14 @@ class TwoRayScenePainter extends CustomPainter {
     // Rays: direct solid, reflected dashed; both neutral.
     final Paint direct = Paint()
       ..color = style.secondary
-      ..strokeWidth = 1.5;
-    _arrow(canvas, tx, rx, direct);
+      ..strokeWidth = 1.5 * style.k;
+    _arrow(canvas, tx, rx, direct, head: 7 * style.k);
     final Paint refl = Paint()
       ..color = style.secondary
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5 * style.k;
     _dashedLine(canvas, tx, hit, refl);
     _dashedLine(canvas, hit, rx, refl);
-    _arrow(canvas, hit + (rx - hit) * 0.9, rx, refl);
+    _arrow(canvas, hit + (rx - hit) * 0.9, rx, refl, head: 7 * style.k);
 
     _transmitter(canvas, tx.translate(0, -6), style);
     _label(
@@ -364,13 +378,13 @@ class StandingWaveScenePainter extends CustomPainter {
       Offset(wallBand, size.height),
       Paint()
         ..color = style.axis
-        ..strokeWidth = 1.5,
+        ..strokeWidth = 1.5 * style.k,
     );
 
     final double floorY = size.height - 22;
     final Paint floor = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = 1 * style.k;
     canvas.drawLine(
       Offset(wallBand, floorY),
       Offset(size.width - rightPad, floorY),
@@ -380,7 +394,7 @@ class StandingWaveScenePainter extends CustomPainter {
     // Null ticks along the floor.
     final Paint tick = Paint()
       ..color = style.axis
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5 * style.k;
     for (final double n in nulls) {
       final double x = _x(n, range, size);
       canvas.drawLine(Offset(x, floorY - 5), Offset(x, floorY + 5), tick);
@@ -402,12 +416,24 @@ class StandingWaveScenePainter extends CustomPainter {
     // receiver; it continues to the wall and comes back (dashed).
     final Paint direct = Paint()
       ..color = style.secondary
-      ..strokeWidth = 1.5;
-    _arrow(canvas, Offset(right, y1), Offset(rx + 8, y1), direct);
+      ..strokeWidth = 1.5 * style.k;
+    _arrow(
+      canvas,
+      Offset(right, y1),
+      Offset(rx + 8, y1),
+      direct,
+      head: 7 * style.k,
+    );
     _dashedLine(canvas, Offset(rx, y1), Offset(wallBand, y1), direct);
     _dashedLine(canvas, Offset(wallBand, y1), Offset(wallBand, y2), direct);
     _dashedLine(canvas, Offset(wallBand, y2), Offset(rx - 8, y2), direct);
-    _arrow(canvas, Offset(rx - 16, y2), Offset(rx - 7, y2), direct);
+    _arrow(
+      canvas,
+      Offset(rx - 16, y2),
+      Offset(rx - 7, y2),
+      direct,
+      head: 7 * style.k,
+    );
     _label(
       canvas,
       'from AP, 10 m',
@@ -423,7 +449,7 @@ class StandingWaveScenePainter extends CustomPainter {
       Offset(rx, floorY),
       Paint()
         ..color = style.grid
-        ..strokeWidth = 1,
+        ..strokeWidth = 1 * style.k,
       dash: 3,
       gap: 3,
     );
@@ -493,7 +519,7 @@ class PhasorPainter extends CustomPainter {
 
     final Paint axis = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = 1 * style.k;
     canvas.drawLine(Offset(0, origin.dy), Offset(size.width, origin.dy), axis);
     canvas.drawLine(Offset(origin.dx, 0), Offset(origin.dx, size.height), axis);
     if (showUnitCircle) {
@@ -504,9 +530,9 @@ class PhasorPainter extends CustomPainter {
     // visible on top of it when they line up.
     final Paint res = Paint()
       ..color = style.accent
-      ..strokeWidth = 3.5
+      ..strokeWidth = 3.5 * style.k
       ..strokeCap = StrokeCap.round;
-    _arrow(canvas, origin, at(cx, cy), res, head: 11);
+    _arrow(canvas, origin, at(cx, cy), res, head: 11 * style.k);
 
     final bool many = phasors.length > 2;
     double hx = 0, hy = 0;
@@ -518,22 +544,22 @@ class PhasorPainter extends CustomPainter {
       final Offset to = at(hx, hy);
       final Paint paint = Paint()
         ..color = style.secondary
-        ..strokeWidth = many ? 1.25 : 2;
+        ..strokeWidth = (many ? 1.25 : 2) * style.k;
       if (!many && dashedAfterFirst && i > 0) {
         _dashedLine(canvas, from, to, paint);
-        _arrow(canvas, from + (to - from) * 0.85, to, paint);
+        _arrow(canvas, from + (to - from) * 0.85, to, paint, head: 7 * style.k);
       } else {
-        _arrow(canvas, from, to, paint, head: many ? 5 : 7);
+        _arrow(canvas, from, to, paint, head: (many ? 5 : 7) * style.k);
       }
     }
 
-    canvas.drawCircle(origin, 3, Paint()..color = style.primary);
+    canvas.drawCircle(origin, 3 * style.m, Paint()..color = style.primary);
   }
 
   void _dashedCircle(Canvas canvas, Offset c, double r, Color color) {
     final Paint p = Paint()
       ..color = color
-      ..strokeWidth = 1
+      ..strokeWidth = 1 * style.k
       ..style = PaintingStyle.stroke;
     const int segs = 48;
     for (int i = 0; i < segs; i += 2) {
@@ -625,7 +651,7 @@ class PowerPlotPainter extends CustomPainter {
 
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = 1 * style.k;
     for (double db = yMin; db <= yMax + 1e-9; db += 10) {
       final double y = yOf(db);
       canvas.drawLine(Offset(r.left, y), Offset(r.right, y), grid);
@@ -665,7 +691,7 @@ class PowerPlotPainter extends CustomPainter {
       Offset(r.right, yOf(0)),
       Paint()
         ..color = style.axis
-        ..strokeWidth = 1,
+        ..strokeWidth = 1 * style.k,
     );
     if (fadeLine) {
       _dashedLine(
@@ -674,7 +700,7 @@ class PowerPlotPainter extends CustomPainter {
         Offset(r.right, yOf(kFadeThresholdDb)),
         Paint()
           ..color = style.axis
-          ..strokeWidth = 1,
+          ..strokeWidth = 1 * style.k,
       );
     }
 
@@ -694,11 +720,11 @@ class PowerPlotPainter extends CustomPainter {
       Offset(mx, r.bottom),
       Paint()
         ..color = style.primary
-        ..strokeWidth = 1.5,
+        ..strokeWidth = 1.5 * style.k,
     );
     canvas.drawCircle(
       Offset(mx, r.top + 1),
-      3.5,
+      3.5 * style.m,
       Paint()..color = style.primary,
     );
   }
@@ -715,7 +741,7 @@ class PowerPlotPainter extends CustomPainter {
     final int n = ys.length;
     final Paint p = Paint()
       ..color = color
-      ..strokeWidth = width
+      ..strokeWidth = width * style.k
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.round;
     if (!dashed) {
@@ -798,7 +824,7 @@ class HistogramPainter extends CustomPainter {
 
     final Paint grid = Paint()
       ..color = style.grid
-      ..strokeWidth = 1;
+      ..strokeWidth = 1 * style.k;
     for (double f = 0; f <= yTop + 1e-9; f += tickStep) {
       final double y = yOf(f);
       canvas.drawLine(Offset(r.left, y), Offset(r.right, y), grid);
@@ -845,7 +871,7 @@ class HistogramPainter extends CustomPainter {
     // Rayleigh prediction through the bin centers, with a dot per bin.
     final Paint curve = Paint()
       ..color = style.primary
-      ..strokeWidth = 2
+      ..strokeWidth = 2 * style.k
       ..style = PaintingStyle.stroke;
     final Path path = Path();
     for (int i = 0; i < h.bins; i++) {
@@ -863,7 +889,7 @@ class HistogramPainter extends CustomPainter {
     for (int i = 0; i < h.bins; i++) {
       canvas.drawCircle(
         Offset(r.left + (i + 0.5) * bw, yOf(h.rayleighFraction(i))),
-        2.5,
+        2.5 * style.m,
         Paint()..color = style.primary,
       );
     }

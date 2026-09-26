@@ -26,6 +26,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/presenter/presenter_mode.dart';
+
 import 'fspl_simulator_chart.dart' show CurveMarker, CurveStroke;
 
 /// One plotted class: a value per width column.
@@ -63,6 +65,7 @@ class PsdChartStyle {
     required this.pillLabel,
     required this.blockLabel,
     required this.emptyLabel,
+    this.scale = PresenterScale.normal,
   });
 
   final Color ghost;
@@ -82,9 +85,14 @@ class PsdChartStyle {
   final TextStyle blockLabel;
   final TextStyle emptyLabel;
 
+  /// Presenter scale for strokes, markers and the axis gutters. The text
+  /// styles above arrive already scaled (the stage applies paintFont).
+  final PresenterScale scale;
+
   @override
   bool operator ==(Object other) =>
       other is PsdChartStyle &&
+      other.scale == scale &&
       other.ghost == ghost &&
       other.grid == grid &&
       other.axis == axis &&
@@ -112,6 +120,7 @@ class PsdChartStyle {
     pillLabel,
     blockLabel,
     emptyLabel,
+    scale,
   );
 }
 
@@ -122,11 +131,13 @@ abstract final class PsdChartPad {
   static const double top = 12;
   static const double bottom = 24;
 
-  static Rect plot(Size size) => Rect.fromLTRB(
-    left,
-    top,
-    math.max(left + 1, size.width - right),
-    math.max(top + 1, size.height - bottom),
+  /// [k] grows the gutters with the axis labels (the presenter text scale;
+  /// 1 elsewhere).
+  static Rect plot(Size size, [double k = 1]) => Rect.fromLTRB(
+    left * k,
+    top * k,
+    math.max(left * k + 1, size.width - right * k),
+    math.max(top * k + 1, size.height - bottom * k),
   );
 }
 
@@ -138,6 +149,7 @@ class PsdWidthGeometry {
     required this.columns,
     required this.yMin,
     required this.yMax,
+    this.padScale = 1,
   });
 
   final Size size;
@@ -145,7 +157,10 @@ class PsdWidthGeometry {
   final double yMin;
   final double yMax;
 
-  Rect get plot => PsdChartPad.plot(size);
+  /// Gutter factor (the presenter text scale; 1 elsewhere).
+  final double padScale;
+
+  Rect get plot => PsdChartPad.plot(size, padScale);
 
   double get columnWidth => plot.width / columns;
 
@@ -219,7 +234,7 @@ void _levelGrid(
 ) {
   final Paint minor = Paint()
     ..color = style.grid
-    ..strokeWidth = 1;
+    ..strokeWidth = style.scale.strokeWidth(1);
   final double first = (yMin / step).ceil() * step;
   for (double v = first; v <= yMax + 1e-9; v += step) {
     final double y = yFor(v);
@@ -250,8 +265,9 @@ void _marker(
   CurveMarker shape,
   Color body,
   Color rim,
+  PresenterScale scale,
 ) {
-  const double r = 5.5;
+  final double r = scale.markerSize(5.5);
   final Path path = Path();
   switch (shape) {
     case CurveMarker.circle:
@@ -270,7 +286,7 @@ void _marker(
     Paint()
       ..color = rim
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4,
+      ..strokeWidth = scale.strokeWidth(4),
   );
   canvas.drawPath(path, Paint()..color = body);
 }
@@ -323,6 +339,7 @@ class PsdWidthChartPainter extends CustomPainter {
       columns: columnLabels.length,
       yMin: yMin,
       yMax: yMax,
+      padScale: style.scale.text,
     );
     final Rect p = g.plot;
 
@@ -393,13 +410,15 @@ class PsdWidthChartPainter extends CustomPainter {
         for (int k = 0; k < gr.length; k++) {
           final double v = gr[k].values[col];
           if (v < yMin || v > yMax) continue;
-          final double dx = (k - (gr.length - 1) / 2) * 12;
+          final double dx =
+              (k - (gr.length - 1) / 2) * style.scale.markerSize(12);
           _marker(
             canvas,
             Offset(g.xFor(col) + dx, g.yFor(v)),
             gr[k].marker,
             gr[k].color,
             style.surface,
+            style.scale,
           );
         }
       }
@@ -423,18 +442,19 @@ class PsdWidthChartPainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = s.color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
+      ..strokeWidth = style.scale.strokeWidth(2.5)
       ..strokeCap = s.stroke == CurveStroke.dotted
           ? StrokeCap.round
           : StrokeCap.butt
       ..strokeJoin = StrokeJoin.round;
+    final double k = style.scale.stroke;
     switch (s.stroke) {
       case CurveStroke.solid:
         canvas.drawPath(path, paint);
       case CurveStroke.dashed:
-        canvas.drawPath(_dash(path, 10, 6), paint);
+        canvas.drawPath(_dash(path, 10 * k, 6 * k), paint);
       case CurveStroke.dotted:
-        canvas.drawPath(_dash(path, 0.1, 6), paint);
+        canvas.drawPath(_dash(path, 0.1, 6 * k), paint);
     }
   }
 
@@ -491,7 +511,7 @@ class PsdSpectrumPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Rect p = PsdChartPad.plot(size);
+    final Rect p = PsdChartPad.plot(size, style.scale.text);
     double xFor(double mhz) =>
         p.left + (mhz + spanMHz) / (2 * spanMHz) * p.width;
     double yFor(double v) => p.bottom - (v - yMin) / (yMax - yMin) * p.height;
@@ -533,7 +553,7 @@ class PsdSpectrumPainter extends CustomPainter {
     final Paint ghost = Paint()
       ..color = style.ghost
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.25;
+      ..strokeWidth = style.scale.strokeWidth(1.25);
     for (final PsdBlock b in others) {
       final Path o = Path()
         ..moveTo(xFor(-b.widthMHz / 2), p.bottom)
@@ -559,7 +579,7 @@ class PsdSpectrumPainter extends CustomPainter {
       Paint()
         ..color = blockColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
+        ..strokeWidth = style.scale.strokeWidth(2.5),
     );
     // PSD limit.
     final double yl = yFor(psdLimit);
@@ -573,7 +593,7 @@ class PsdSpectrumPainter extends CustomPainter {
       ),
       Paint()
         ..color = style.limit
-        ..strokeWidth = 1.5
+        ..strokeWidth = style.scale.strokeWidth(1.5)
         ..style = PaintingStyle.stroke,
     );
     canvas.restore();

@@ -1,7 +1,9 @@
 // Controls and readouts for "Wi-Fi Through a Wall". Separate widgets from
 // the stage (wifi_through_a_wall_stage.dart): each takes the WallConfig the
-// screen owns and reports changes through a callback, so the phone layout
-// stacks them and a later presenter layout can put them beside the stage.
+// screen's WallSlabController holds and reports changes through a callback,
+// so the phone layout stacks them and the presenter layout puts them beside
+// the stage. In presenter mode WallSlabControls drops its explanatory prose
+// and folds the angle and polarization into a PresenterDisclosure.
 //
 //   WallSlabControls   band, channel, material, thickness, angle, TE/TM
 //   WallSlabReadouts   loss (split into absorption and reflection),
@@ -28,6 +30,8 @@ import '../../../theme/app_typography.dart';
 import '../../../utils/decimal_input.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'wifi_through_a_wall_parts.dart';
 
@@ -118,6 +122,56 @@ class _WallSlabControlsState extends State<WallSlabControls> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final WallConfig c = widget.config;
     final MaterialProperties p = c.result.props;
+    final bool presenter = PresenterMode.isActive(context);
+
+    final List<Widget> angle = <Widget>[
+      Row(
+        children: <Widget>[
+          const WallSectionLabel('Angle of arrival'),
+          const Spacer(),
+          Text(
+            '${c.angleDeg.toStringAsFixed(0)} deg',
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
+        ],
+      ),
+      Slider(
+        value: c.angleDeg,
+        max: kWallMaxAngle,
+        // Whole degrees, rounded here rather than with `divisions`, which
+        // would paint 80 tick dots along the track.
+        onChanged: (double v) => _emit(c.copyWith(angleDeg: v.roundToDouble())),
+        activeColor: colors.primary,
+        inactiveColor: colors.disabledFill,
+        label: '${c.angleDeg.toStringAsFixed(0)} deg',
+        semanticFormatterCallback: (double v) =>
+            'Angle of arrival ${v.toStringAsFixed(0)} degrees',
+      ),
+      if (!presenter)
+        Text(
+          '0 deg hits the wall head on. 80 deg nearly skims along it.',
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
+      const SizedBox(height: AppSpacing.sm),
+      AppToggle<Polarization>(
+        label: 'Polarization',
+        value: c.polarization,
+        expand: true,
+        items: const <AppToggleItem<Polarization>>[
+          (Polarization.te, 'TE'),
+          (Polarization.tm, 'TM'),
+        ],
+        onChanged: (Polarization v) => _emit(c.copyWith(polarization: v)),
+      ),
+      if (!presenter) ...<Widget>[
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          'TE: the electric field lies along the wall face. TM: it tilts '
+          'with the angle of arrival. Head on (0 deg) they are the same.',
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
+      ],
+    ];
 
     return WallCard(
       child: Column(
@@ -168,14 +222,15 @@ class _WallSlabControlsState extends State<WallSlabControls> {
               onChanged: (WallMaterial m) => _emit(c.copyWith(material: m)),
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'At ${c.centerMHz} MHz: relative permittivity '
-            '${_eps(p.epsReal)}, conductivity ${_sigma(p.sigma)} S/m. '
-            'Table 3 range ${_ghz(c.material.minGhz)} to '
-            '${_ghz(c.material.maxGhz)} GHz.',
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
+          if (!presenter) const SizedBox(height: AppSpacing.xxs),
+          if (!presenter)
+            Text(
+              'At ${c.centerMHz} MHz: relative permittivity '
+              '${_eps(p.epsReal)}, conductivity ${_sigma(p.sigma)} S/m. '
+              'Table 3 range ${_ghz(c.material.minGhz)} to '
+              '${_ghz(c.material.maxGhz)} GHz.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
           const SizedBox(height: AppSpacing.sm),
           LabeledField(
             label: 'Thickness',
@@ -225,50 +280,14 @@ class _WallSlabControlsState extends State<WallSlabControls> {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: <Widget>[
-              const WallSectionLabel('Angle of arrival'),
-              const Spacer(),
-              Text(
-                '${c.angleDeg.toStringAsFixed(0)} deg',
-                style: mono.inlineCode.copyWith(color: colors.textPrimary),
-              ),
-            ],
-          ),
-          Slider(
-            value: c.angleDeg,
-            max: kWallMaxAngle,
-            // Whole degrees, rounded here rather than with `divisions`, which
-            // would paint 80 tick dots along the track.
-            onChanged: (double v) =>
-                _emit(c.copyWith(angleDeg: v.roundToDouble())),
-            activeColor: colors.primary,
-            inactiveColor: colors.disabledFill,
-            label: '${c.angleDeg.toStringAsFixed(0)} deg',
-            semanticFormatterCallback: (double v) =>
-                'Angle of arrival ${v.toStringAsFixed(0)} degrees',
-          ),
-          Text(
-            '0 deg hits the wall head on. 80 deg nearly skims along it.',
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<Polarization>(
-            label: 'Polarization',
-            value: c.polarization,
-            expand: true,
-            items: const <AppToggleItem<Polarization>>[
-              (Polarization.te, 'TE'),
-              (Polarization.tm, 'TM'),
-            ],
-            onChanged: (Polarization v) => _emit(c.copyWith(polarization: v)),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'TE: the electric field lies along the wall face. TM: it tilts '
-            'with the angle of arrival. Head on (0 deg) they are the same.',
-            style: text.bodySmall?.copyWith(color: colors.textTertiary),
-          ),
+          if (presenter)
+            // Set once per lesson: folded so the panel fits a projector.
+            PresenterDisclosure(
+              title: 'Angle of arrival and polarization',
+              children: angle,
+            )
+          else
+            ...angle,
         ],
       ),
     );
@@ -420,11 +439,13 @@ class WallBandsCard extends StatelessWidget {
     TextStyle head = text.labelMedium!.copyWith(color: colors.textTertiary);
     TextStyle cell = mono.inlineCode.copyWith(color: colors.textPrimary);
 
+    // Presenter mode scales the band column with its text.
+    final double bandCol = 72 * PresenterMode.scaleOf(context).text;
     Widget row(List<Widget> cells) => Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
       child: Row(
         children: <Widget>[
-          SizedBox(width: 72, child: cells[0]),
+          SizedBox(width: bandCol, child: cells[0]),
           for (final Widget w in cells.skip(1))
             Expanded(
               child: Align(alignment: Alignment.centerRight, child: w),

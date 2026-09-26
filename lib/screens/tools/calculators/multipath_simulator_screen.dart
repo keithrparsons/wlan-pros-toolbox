@@ -49,8 +49,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'multipath_simulator_controller.dart';
 import 'multipath_simulator_controls.dart';
@@ -81,13 +83,28 @@ class _MultipathSimulatorScreenState extends State<MultipathSimulatorScreen> {
     super.dispose();
   }
 
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied). The received level and fade figures are on the stage.
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: 'Multipath Simulator',
+    stage: MultipathStage(controller: _controller),
+    controls: MultipathControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Multipath Simulator'),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.multipathSimulator,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,
