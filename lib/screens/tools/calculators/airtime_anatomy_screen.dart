@@ -13,8 +13,9 @@
 // STRUCTURE. The screen owns an [AirtimeAnatomyModel] and composes two
 // separate widgets that share it: [AirtimeAnatomyStage] (the bars, axis,
 // legend, formula and breakdown) and [AirtimeAnatomyControls] (readouts and
-// inputs). Phone and desktop widths stack them; a presenter layout can place
-// the same two side by side.
+// inputs). Phone and desktop widths stack them; the Present button (desktop
+// and tablet windows) opens the same two over the SAME model in the
+// presenter layout (lib/widgets/presenter/).
 //
 // THEME: context.colors only (dark §8 / light §8.20). No categorical hues
 // (§8.15); lime marks the data symbols; status hues only on the Check verdict
@@ -22,10 +23,12 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/airtime_anatomy.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'airtime_anatomy_controls.dart';
 import 'airtime_anatomy_model.dart';
@@ -34,19 +37,25 @@ import 'airtime_anatomy_stage.dart';
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kAirtimeAnatomyToolId = 'airtime-anatomy';
 
+const String _kTitle = 'Airtime Anatomy';
+
 class AirtimeAnatomyScreen extends StatefulWidget {
-  const AirtimeAnatomyScreen({super.key});
+  const AirtimeAnatomyScreen({super.key, this.model});
+
+  /// Test and render seam: a model the caller owns and disposes. Null (the
+  /// app) makes the screen create and dispose its own.
+  final AirtimeAnatomyModel? model;
 
   @override
   State<AirtimeAnatomyScreen> createState() => _AirtimeAnatomyScreenState();
 }
 
 class _AirtimeAnatomyScreenState extends State<AirtimeAnatomyScreen> {
-  final AirtimeAnatomyModel _model = AirtimeAnatomyModel();
+  late final AirtimeAnatomyModel _model = widget.model ?? AirtimeAnatomyModel();
 
   @override
   void dispose() {
-    _model.dispose();
+    if (widget.model == null) _model.dispose();
     super.dispose();
   }
 
@@ -84,13 +93,27 @@ class _AirtimeAnatomyScreenState extends State<AirtimeAnatomyScreen> {
     return b.toString().trimRight();
   }
 
+  /// The presenter layout over this screen's model (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: AirtimeAnatomyStage(model: _model),
+    controls: AirtimeAnatomyControls(model: _model),
+    actions: _model.presenterActions,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Airtime Anatomy'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.airtimeAnatomy,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

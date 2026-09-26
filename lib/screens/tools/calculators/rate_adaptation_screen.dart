@@ -24,7 +24,9 @@
 //
 // LAYOUT: phone first. Below 720 px everything stacks in one scroll: stage,
 // readouts, controls, explainer. At 720 px and up the controls become a side
-// panel.
+// panel. The Present button (desktop and tablet windows) opens the stage and
+// the controls over the SAME controller in the presenter layout
+// (lib/widgets/presenter/); the controller's Ticker keeps running there.
 //
 // MOTION (§8.8): opens paused at 0 s and moves only on Play; Step
 // moves one frame. Playback pauses when the app is backgrounded.
@@ -43,9 +45,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'rate_adaptation_controller.dart';
 import 'rate_adaptation_controls.dart';
@@ -56,22 +60,27 @@ export 'rate_adaptation_controller.dart' show kRateAdaptationToolId;
 /// Side panel width on desktop.
 const double _kPanelWidth = 360;
 
+const String _kTitle = 'Rate Adaptation';
+
 class RateAdaptationScreen extends StatefulWidget {
-  const RateAdaptationScreen({super.key, this.seed = 1});
+  const RateAdaptationScreen({super.key, this.seed = 1, this.controller});
 
   /// Seed for every random draw. Same seed, same run.
   final int seed;
+
+  /// Test and render seam: a controller the caller owns and disposes (then
+  /// [seed] is ignored). Null (the app) makes the screen create and dispose
+  /// its own.
+  final RateAdaptationController? controller;
 
   @override
   State<RateAdaptationScreen> createState() => _RateAdaptationScreenState();
 }
 
 class _RateAdaptationScreenState extends State<RateAdaptationScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final RateAdaptationController _controller = RateAdaptationController(
-    vsync: this,
-    seed: widget.seed,
-  );
+    with WidgetsBindingObserver {
+  late final RateAdaptationController _controller =
+      widget.controller ?? RateAdaptationController(seed: widget.seed);
 
   @override
   void initState() {
@@ -87,17 +96,32 @@ class _RateAdaptationScreenState extends State<RateAdaptationScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _controller.dispose();
+    if (widget.controller == null) _controller.dispose();
     super.dispose();
   }
+
+  /// The presenter layout over this screen's controller (shared, not
+  /// copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: RateAdaptationStage(controller: _controller),
+    controls: RateAdaptationControls(controller: _controller),
+    actions: _controller.presenterActions,
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rate Adaptation'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _controller.copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.rateAdaptation,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,

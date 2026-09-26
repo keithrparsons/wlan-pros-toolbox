@@ -15,6 +15,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/power_save_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kPowerSaveToolId = 'power-save';
@@ -251,6 +252,26 @@ class PowerSaveController extends ChangeNotifier {
   set awakeMa(double v) => _apply(_config.copyWith(awakeMa: v));
   set dozeMa(double v) => _apply(_config.copyWith(dozeMa: v));
   set batteryMah(double v) => _apply(_config.copyWith(batteryMah: v));
+
+  // ── Presenter keys ────────────────────────────────────────────────────────
+
+  /// Right arrow: slide the window a quarter of its span along the run.
+  void stepWindow() => seek(_startUs + _view.spanUs / 4);
+
+  /// R: the window back to the start of the run.
+  void windowToStart() => seek(0);
+
+  /// Up and Down arrows: the DTIM period one beacon, 1 to 10.
+  void nudgeDtim(int delta) =>
+      dtimPeriod = (_config.dtimPeriod + delta).clamp(1, 10);
+
+  PresenterActions get presenterActions => PresenterActions(
+    step: stepWindow,
+    reset: windowToStart,
+    sliderDown: () => nudgeDtim(-1),
+    sliderUp: () => nudgeDtim(1),
+    sliderLabel: 'DTIM period',
+  );
 
   // ── Copy ──────────────────────────────────────────────────────────────────
 

@@ -7,6 +7,11 @@
 // estimate. RateAdaptationExplainer: the four lessons and the formulas.
 // Each takes a RateAdaptationController and none knows about the stage.
 //
+// PRESENTER (PresenterMode.isActive): Play, Step and Restart share one row;
+// the path, the SNR offset and the sampling share stay open; the rest of the
+// rate-control settings and the readouts (whose key numbers are on the
+// stage) fold into PresenterDisclosures, so the panel fits at 1440x900.
+//
 // THEME: context.colors (dark §8 / light §8.20). No status hues here: a rate
 // is a description, not a verdict (§8.13). ASCII copy, no em dashes (GL-004).
 
@@ -18,6 +23,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
+import '../../../widgets/presenter/presenter_disclosure.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import '../labeled_field.dart';
 import 'rate_adaptation_controller.dart';
 import 'rate_adaptation_parts.dart';
@@ -38,6 +45,13 @@ class RateAdaptationControls extends StatelessWidget {
           _Transport(c: controller),
           const SizedBox(height: AppSpacing.sm),
           _Settings(c: controller),
+          if (PresenterMode.isActive(context))
+            PresenterDisclosure(
+              title: 'All readouts',
+              children: <Widget>[
+                RateAdaptationReadouts(controller: controller),
+              ],
+            ),
         ],
       ),
     );
@@ -54,6 +68,7 @@ class _Transport extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final bool reducedMotion =
         MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (PresenterMode.isActive(context)) return _presenter(context);
     return RaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -127,6 +142,79 @@ class _Transport extends StatelessWidget {
   }
 }
 
+extension on _Transport {
+  /// Play, Step and Restart on one row, the speed under them.
+  Widget _presenter(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    return RaCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  label: c.playing ? 'Pause the link' : 'Play the link',
+                  excludeSemantics: true,
+                  child: FilledButton.icon(
+                    onPressed: c.togglePlay,
+                    icon: Icon(
+                      c.playing
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                    ),
+                    label: Text(c.playing ? 'Pause' : 'Play'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      minimumSize: const Size.fromHeight(
+                        AppSpacing.minTouchTarget,
+                      ),
+                      textStyle: text.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: RaOutlineButton(
+                  icon: Icons.skip_next_rounded,
+                  label: 'Step',
+                  semanticLabel: 'Step one frame, with all its retries',
+                  onPressed: c.stepFrame,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: RaOutlineButton(
+                  icon: Icons.restart_alt_rounded,
+                  label: 'Restart',
+                  semanticLabel:
+                      'Restart: a fresh link that has learned nothing yet',
+                  onPressed: c.atStart ? null : c.restart,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          AppSelect<RaSpeed>(
+            value: c.speed,
+            semanticLabel: 'Speed, air time per second',
+            items: <AppSelectItem<RaSpeed>>[
+              for (final RaSpeed s in RaSpeed.values) (s, 'Speed ${s.label}'),
+            ],
+            onChanged: (RaSpeed s) => c.speed = s,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Settings extends StatelessWidget {
   const _Settings({required this.c});
   final RateAdaptationController c;
@@ -135,6 +223,58 @@ class _Settings extends StatelessWidget {
   Widget build(BuildContext context) {
     final RaSettings s = c.settings;
     final String Function(double, [int]) n = RaFormat.n;
+    final bool presenting = PresenterMode.isActive(context);
+    final List<Widget> advanced = <Widget>[
+      RaSlider(
+        label: 'EWMA weight on history',
+        valueText: RaFormat.pct(s.ewmaHistory),
+        value: s.ewmaHistory * 100,
+        min: 50,
+        max: 95,
+        divisions: 9,
+        onChanged: (double v) => c.ewmaHistory = v.round() / 100,
+        semanticValue: (double v) => '${v.round()} percent',
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      AppToggle<bool>(
+        label: 'Retry chain',
+        value: s.retryChain,
+        expand: true,
+        items: const <AppToggleItem<bool>>[
+          (true, 'On'),
+          (false, 'Off, same rate'),
+        ],
+        onChanged: (bool v) => c.retryChain = v,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      AppToggle<RaRetryLimit>(
+        label: 'Retry limit (attempts)',
+        value: s.retryLimit,
+        expand: true,
+        items: <AppToggleItem<RaRetryLimit>>[
+          for (final RaRetryLimit l in RaRetryLimit.values) (l, l.label),
+        ],
+        onChanged: (RaRetryLimit l) => c.retryLimit = l,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      AppToggle<double>(
+        label: 'ACK timeout',
+        value: s.ackTimeoutUs,
+        expand: true,
+        items: const <AppToggleItem<double>>[
+          (RateAdaptationMath.ackTimeoutMinUs, '45 µs'),
+          (RateAdaptationMath.ackTimeoutMaxUs, '50 µs'),
+        ],
+        onChanged: (double v) => c.ackTimeoutUs = v,
+      ),
+      const SizedBox(height: AppSpacing.xxs),
+      const RaNote(
+        'ACK timeout = SIFS + slot + about 20 to 25 µs, so 45 to 50 µs at '
+        '5 GHz. The sources do not settle one constant, so pick either '
+        'end. Settings apply to the running link; Restart starts a link '
+        'that has learned nothing.',
+      ),
+    ];
     return RaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,8 +304,8 @@ class _Settings extends StatelessWidget {
             valueText:
                 '${s.snrOffsetDb > 0 ? '+' : ''}${n(s.snrOffsetDb, 0)} dB',
             value: s.snrOffsetDb,
-            min: -20,
-            max: 20,
+            min: RateAdaptationController.snrOffsetMinDb,
+            max: RateAdaptationController.snrOffsetMaxDb,
             divisions: 40,
             onChanged: (double v) => c.snrOffsetDb = v.roundToDouble(),
             semanticValue: (double v) => '${v.round()} dB',
@@ -180,55 +320,13 @@ class _Settings extends StatelessWidget {
             onChanged: (double v) => c.samplingShare = v.round() / 100,
             semanticValue: (double v) => '${v.round()} percent of frames',
           ),
-          RaSlider(
-            label: 'EWMA weight on history',
-            valueText: RaFormat.pct(s.ewmaHistory),
-            value: s.ewmaHistory * 100,
-            min: 50,
-            max: 95,
-            divisions: 9,
-            onChanged: (double v) => c.ewmaHistory = v.round() / 100,
-            semanticValue: (double v) => '${v.round()} percent',
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          AppToggle<bool>(
-            label: 'Retry chain',
-            value: s.retryChain,
-            expand: true,
-            items: const <AppToggleItem<bool>>[
-              (true, 'On'),
-              (false, 'Off, same rate'),
-            ],
-            onChanged: (bool v) => c.retryChain = v,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<RaRetryLimit>(
-            label: 'Retry limit (attempts)',
-            value: s.retryLimit,
-            expand: true,
-            items: <AppToggleItem<RaRetryLimit>>[
-              for (final RaRetryLimit l in RaRetryLimit.values) (l, l.label),
-            ],
-            onChanged: (RaRetryLimit l) => c.retryLimit = l,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppToggle<double>(
-            label: 'ACK timeout',
-            value: s.ackTimeoutUs,
-            expand: true,
-            items: const <AppToggleItem<double>>[
-              (RateAdaptationMath.ackTimeoutMinUs, '45 µs'),
-              (RateAdaptationMath.ackTimeoutMaxUs, '50 µs'),
-            ],
-            onChanged: (double v) => c.ackTimeoutUs = v,
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          const RaNote(
-            'ACK timeout = SIFS + slot + about 20 to 25 µs, so 45 to 50 µs at '
-            '5 GHz. The sources do not settle one constant, so pick either '
-            'end. Settings apply to the running link; Restart starts a link '
-            'that has learned nothing.',
-          ),
+          if (presenting)
+            PresenterDisclosure(
+              title: 'EWMA, retry chain, retry limit, ACK timeout',
+              children: advanced,
+            )
+          else
+            ...advanced,
         ],
       ),
     );

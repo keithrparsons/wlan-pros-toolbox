@@ -11,11 +11,14 @@
 // Spec: myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/
 // 04-throughput-airtime-fairness.md.
 //
-// STRUCTURE (Keith, 2026-09-25): the screen owns all state and composes two
-// independent widgets, AirtimeFairnessStage (what the student watches) and
-// the controls (AirtimeFairnessRuleCard + AirtimeFairnessClientsCard, or both
-// as AirtimeFairnessControls). Phone stacks rule, stage, clients, about. A
-// later presenter layout can place stage and controls side by side.
+// STRUCTURE (Keith, 2026-09-25; controller split 2026-09-26 for the
+// presenter layout): AirtimeFairnessController holds all state and the round
+// clock; the screen owns it and composes two independent widgets over it,
+// AirtimeFairnessStage (what the student watches) and the controls
+// (AirtimeFairnessRuleCard + AirtimeFairnessClientsCard, or both as
+// AirtimeFairnessControls). Phone stacks rule, stage, clients, about. The
+// Present button (desktop and tablet windows) opens the same views over the
+// SAME controller in the presenter layout (lib/widgets/presenter/).
 //
 // States (SOP-007 §5):
 //   - success   -> every client valid: takeaway, share bars, throughput bars,
@@ -31,201 +34,127 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
 import '../../../services/wifi_lab/airtime_fairness_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'airtime_fairness_common.dart';
+import 'airtime_fairness_controller.dart';
 import 'airtime_fairness_controls.dart';
 import 'airtime_fairness_stage.dart';
 
-/// Stable catalog tool id: backs the route, the help entry, and the tests.
-const String kAirtimeFairnessToolId = 'airtime-fairness';
+export 'airtime_fairness_controller.dart'
+    show kAirtimeFairnessToolId, AirtimeFairnessController;
 
-const Duration _kRoundDuration = Duration(milliseconds: 2400);
+const String _kTitle = 'Airtime Fairness';
 
 class AirtimeFairnessScreen extends StatefulWidget {
-  const AirtimeFairnessScreen({super.key});
+  const AirtimeFairnessScreen({super.key, this.controller});
+
+  /// Test and render seam: a controller the caller owns and disposes. Null
+  /// (the app) makes the screen create and dispose its own.
+  final AirtimeFairnessController? controller;
 
   @override
   State<AirtimeFairnessScreen> createState() => _AirtimeFairnessScreenState();
 }
 
-class _AirtimeFairnessScreenState extends State<AirtimeFairnessScreen>
-    with SingleTickerProviderStateMixin {
-  int _nextId = 0;
-
-  /// Spec defaults: three clients at 867 Mbps sending 32 frames per turn,
-  /// plus one legacy client at 6 Mbps with no aggregation.
-  late List<AirtimeClientDraft> _clients = <AirtimeClientDraft>[
-    for (int i = 0; i < 3; i++)
-      AirtimeClientDraft(
-        id: _nextId++,
-        preset: RatePreset.vht867,
-        aggregation: 32,
-      ),
-    AirtimeClientDraft(id: _nextId++, preset: RatePreset.legacy6),
-  ];
-  FairnessView _view = FairnessView.compare;
-  int _payload = AirtimeConstants.defaultPayloadBytes;
-
-  late final AnimationController _round = AnimationController(
-    vsync: this,
-    duration: _kRoundDuration,
-  );
+class _AirtimeFairnessScreenState extends State<AirtimeFairnessScreen> {
+  late final AirtimeFairnessController _controller =
+      widget.controller ?? AirtimeFairnessController();
   bool _startedRound = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _controller.reducedMotion =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (!_startedRound) {
       _startedRound = true;
-      _replay();
-    } else if (_reducedMotion) {
-      _round.value = 1;
+      _controller.replay();
     }
   }
 
   @override
   void dispose() {
-    _round.dispose();
-    for (final AirtimeClientDraft c in _clients) {
-      c.controller.dispose();
-    }
+    if (widget.controller == null) _controller.dispose();
     super.dispose();
   }
 
-  bool get _reducedMotion =>
-      MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-
-  void _replay() {
-    if (_reducedMotion) {
-      _round.value = 1;
-    } else {
-      _round.forward(from: 0);
-    }
+  AirtimeFairnessRuleCard _rule() {
+    final AirtimeFairnessController c = _controller;
+    final bool valid = c.configs != null;
+    return AirtimeFairnessRuleCard(
+      view: c.view,
+      onViewChanged: (FairnessView v) => c.view = v,
+      takeaway: c.takeaway,
+      onReplay: valid ? c.replay : null,
+      reducedMotion: c.reducedMotion,
+      playing: c.playing,
+      onPlayPause: c.togglePlay,
+      onStep: c.stepTransmission,
+      onReset: c.resetRound,
+    );
   }
 
-  void _change(VoidCallback f) {
-    setState(f);
-    _replay();
+  Widget _stage() {
+    final AirtimeFairnessController c = _controller;
+    return AirtimeFairnessStage(
+      clients: c.configs,
+      payloadBytes: c.payloadBytes,
+      view: c.view,
+      round: c.round,
+      invalidClient: c.invalidClient,
+      takeaway: c.takeaway,
+    );
   }
 
-  void _add() => _change(
-    () => _clients = <AirtimeClientDraft>[
-      ..._clients,
-      AirtimeClientDraft(id: _nextId++, preset: RatePreset.vht867),
-    ],
+  AirtimeFairnessClientsCard _clients() {
+    final AirtimeFairnessController c = _controller;
+    return AirtimeFairnessClientsCard(
+      clients: c.clients,
+      payloadBytes: c.payloadBytes,
+      onPayloadChanged: (int b) => c.payloadBytes = b,
+      onEdit: c.edit,
+      onAdd: c.addClient,
+      onRemove: c.removeClient,
+    );
+  }
+
+  /// The presenter layout over this screen's controller (shared, not copied).
+  Widget _presenter(BuildContext context) => PresenterLayout(
+    title: _kTitle,
+    stage: ListenableBuilder(
+      listenable: _controller,
+      builder: (BuildContext context, _) => _stage(),
+    ),
+    controls: ListenableBuilder(
+      listenable: _controller,
+      builder: (BuildContext context, _) =>
+          AirtimeFairnessControls(rule: _rule(), clients: _clients()),
+    ),
+    actions: _controller.presenterActions,
   );
-
-  void _remove(int id) => _change(() {
-    final AirtimeClientDraft gone = _clients.firstWhere(
-      (AirtimeClientDraft d) => d.id == id,
-    );
-    // Dispose after the row's TextField has detached from the controller.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => gone.controller.dispose(),
-    );
-    _clients = <AirtimeClientDraft>[
-      for (final AirtimeClientDraft d in _clients)
-        if (d.id != id) d,
-    ];
-  });
-
-  /// All client configs, or null while any row is invalid.
-  List<ClientConfig>? get _configs {
-    final List<ClientConfig> out = <ClientConfig>[];
-    for (final AirtimeClientDraft c in _clients) {
-      final ClientConfig? cfg = c.toConfig();
-      if (cfg == null) return null;
-      out.add(cfg);
-    }
-    return out;
-  }
-
-  // ── Copy ───────────────────────────────────────────────────────────────────
-
-  String? _copyText() {
-    final List<ClientConfig>? cs = _configs;
-    if (cs == null) return null;
-    final FairnessResult p = computeFairness(
-      cs,
-      FairnessMode.packet,
-      payloadBytes: _payload,
-    );
-    final FairnessResult a = computeFairness(
-      cs,
-      FairnessMode.airtime,
-      payloadBytes: _payload,
-    );
-    final StringBuffer b = StringBuffer()
-      ..writeln('Airtime Fairness (WLAN Pros Toolbox)')
-      ..writeln('Payload $_payload bytes per frame; downlink, no collisions')
-      ..writeln(airtimeTakeaway(p, a, FairnessView.compare));
-    for (int i = 0; i < cs.length; i++) {
-      b.writeln(
-        'Client ${clientLetter(i)}: ${rateText(cs[i])} per turn, '
-        '${fmtUs(p.clients[i].airtimePerTxUs)} per turn; '
-        'packet ${fmtMbps(p.clients[i].throughputMbps)} Mbps '
-        '(${fmtPct(p.clients[i].airtimeShare)} of air), '
-        'airtime ${fmtMbps(a.clients[i].throughputMbps)} Mbps '
-        '(${fmtPct(a.clients[i].airtimeShare)} of air)',
-      );
-    }
-    b.writeln(
-      'Total: packet ${fmtMbps(p.aggregateMbps)} Mbps, '
-      'airtime ${fmtMbps(a.aggregateMbps)} Mbps',
-    );
-    return b.toString().trimRight();
-  }
 
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final List<ClientConfig>? cs = _configs;
-    String? takeaway;
-    if (cs != null) {
-      takeaway = airtimeTakeaway(
-        computeFairness(cs, FairnessMode.packet, payloadBytes: _payload),
-        computeFairness(cs, FairnessMode.airtime, payloadBytes: _payload),
-        _view,
-      );
-    }
-    final int invalid = _clients.indexWhere(
-      (AirtimeClientDraft c) => c.rateError != null,
-    );
-
-    final AirtimeFairnessRuleCard rule = AirtimeFairnessRuleCard(
-      view: _view,
-      onViewChanged: (FairnessView v) => _change(() => _view = v),
-      takeaway: takeaway,
-      onReplay: cs == null ? null : _replay,
-      reducedMotion: _reducedMotion,
-    );
-    final Widget stage = AirtimeFairnessStage(
-      clients: cs,
-      payloadBytes: _payload,
-      view: _view,
-      round: _round,
-      invalidClient: invalid < 0 ? null : invalid,
-    );
-    final AirtimeFairnessClientsCard clients = AirtimeFairnessClientsCard(
-      clients: _clients,
-      payloadBytes: _payload,
-      onPayloadChanged: (int b) => _change(() => _payload = b),
-      onEdit: _change,
-      onAdd: _add,
-      onRemove: _remove,
-    );
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Airtime Fairness'),
+        title: const Text(_kTitle),
         toolbarHeight: 64,
-        actions: <Widget>[AppCopyAction(textBuilder: _copyText)],
+        actions: <Widget>[
+          PresentButton(
+            toolRoute: AppRouter.airtimeFairness,
+            builder: _presenter,
+          ),
+          AppCopyAction(textBuilder: _controller.copyText),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -247,18 +176,21 @@ class _AirtimeFairnessScreenState extends State<AirtimeFairnessScreen>
                     edge,
                     edge + AppSpacing.sm,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      rule,
-                      const SizedBox(height: AppSpacing.md),
-                      stage,
-                      const SizedBox(height: AppSpacing.md),
-                      clients,
-                      const SizedBox(height: AppSpacing.md),
-                      const _AboutCard(),
-                      const ToolHelpFooter(toolId: kAirtimeFairnessToolId),
-                    ],
+                  child: ListenableBuilder(
+                    listenable: _controller,
+                    builder: (BuildContext context, _) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        _rule(),
+                        const SizedBox(height: AppSpacing.md),
+                        _stage(),
+                        const SizedBox(height: AppSpacing.md),
+                        _clients(),
+                        const SizedBox(height: AppSpacing.md),
+                        const _AboutCard(),
+                        const ToolHelpFooter(toolId: kAirtimeFairnessToolId),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -17,6 +17,14 @@
 // the page still scrolls); or tap a client, then a dashed outline; or focus
 // a client and use the arrow keys. Every block and outline is a focusable,
 // labeled button.
+//
+// PRESENTER (PresenterMode.isActive): the same cards fill the bounded stage
+// box with no scroll. The SU / OFDMA ratio and the sentence naming what was
+// saved sit on top at the headline scale (moved here from the controls'
+// readouts); the strip and the bars grow and thicken with the presenter
+// scale; "Show the arithmetic" stays on the phone.
+
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,10 +35,16 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'airtime_anatomy_timeline.dart';
+import 'ofdma_simulator_controls.dart' show ofdmaSavingsLine;
 import 'ofdma_simulator_model.dart';
 import 'ofdma_simulator_painters.dart';
+
+/// The channel strip's height at this context's presenter scale.
+double _stripHeight(BuildContext context) =>
+    PresenterMode.scaleOf(context).markerSize(OfdmaGeometry.stripHeight);
 
 class OfdmaSimulatorStage extends StatelessWidget {
   const OfdmaSimulatorStage({super.key, required this.model});
@@ -41,13 +55,143 @@ class OfdmaSimulatorStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: model,
-      builder: (BuildContext context, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _ChannelCard(model: model),
-          const SizedBox(height: AppSpacing.md),
-          _TimelinesCard(model: model),
-        ],
+      builder: (BuildContext context, _) {
+        if (PresenterMode.isActive(context)) {
+          return _PresenterStage(model: model);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _ChannelCard(model: model),
+            const SizedBox(height: AppSpacing.md),
+            _TimelinesCard(model: model),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ── Presenter arrangement ─────────────────────────────────────────────────
+
+class _PresenterStage extends StatelessWidget {
+  const _PresenterStage({required this.model});
+
+  final OfdmaSimulatorModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _Headline(model: model),
+        const SizedBox(height: AppSpacing.sm),
+        Expanded(
+          child: LayoutBuilder(
+            // Full size when it fits; eighteen clients at 80 MHz on a 900 px
+            // window scale down as one piece, never a scroll.
+            builder: (BuildContext context, BoxConstraints box) => FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: box.maxWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    _ChannelCard(model: model),
+                    const SizedBox(height: AppSpacing.sm),
+                    _TimelinesCard(model: model),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The lesson's number, large: how many times longer SU takes than the
+/// compared OFDMA direction, with both totals and what was saved.
+class _Headline extends StatelessWidget {
+  const _Headline({required this.model});
+
+  final OfdmaSimulatorModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final OfdmaResult r = model.result;
+    final OfdmaMode cmp = model.direction.mode;
+    final double? ratio = r.ratio(cmp);
+    final OfdmaTimeline? t = r.timeline(cmp);
+    final String? line = ofdmaSavingsLine(r, cmp);
+    String total(OfdmaTimeline? x) => x == null || x.ppduTooLong
+        ? '--'
+        : '${formatTenthsUs(x.totalTenths)} µs';
+    return AirtimeCard(
+      child: Semantics(
+        liveRegion: true,
+        container: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            if (ratio == null)
+              Text(
+                'SU / ${cmp.shortLabel}: not drawn. '
+                '${t == null ? r.check.message : 'A PPDU would run past the 5.484 ms limit'}.',
+                style: text.titleMedium?.copyWith(color: colors.textPrimary),
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'SU / ${cmp.shortLabel}',
+                        style: text.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        '${ratio.toStringAsFixed(2)}x',
+                        style: scale
+                            .headlineStyle(mono.outputLarge)
+                            .copyWith(color: colors.textAccent),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+                      child: Text(
+                        'SU ${total(r.su)} for ${model.clients} TXOPs; '
+                        '${cmp.shortLabel} ${total(t)} for one.',
+                        style: mono.inlineCode.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            if (line != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                line,
+                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -141,15 +285,13 @@ class _StripState extends State<_Strip> {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final int slots = OfdmaTonePlan.slots(model.widthMhz);
+    final double stripH = _stripHeight(context);
+    final double stroke = PresenterMode.scaleOf(context).stroke;
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
         final double sw = c.maxWidth / slots;
-        Rect rectOf(RuSpan s) => Rect.fromLTWH(
-          s.start * sw,
-          0,
-          s.length * sw,
-          OfdmaGeometry.stripHeight,
-        );
+        Rect rectOf(RuSpan s) =>
+            Rect.fromLTWH(s.start * sw, 0, s.length * sw, stripH);
         final int? sel = model.selected;
         final List<RuSpan> targets = sel == null || model.placement[sel] == null
             ? const <RuSpan>[]
@@ -160,8 +302,7 @@ class _StripState extends State<_Strip> {
                 _key.currentContext?.findRenderObject() as RenderBox?;
             if (box == null) return;
             final Offset local = box.globalToLocal(
-              d.offset +
-                  Offset(d.data.width / 2, OfdmaGeometry.stripHeight / 2),
+              d.offset + Offset(d.data.width / 2, stripH / 2),
             );
             final int slot = (local.dx / sw).floor().clamp(0, slots - 1);
             model.moveTo(d.data.client, slot);
@@ -169,7 +310,7 @@ class _StripState extends State<_Strip> {
           builder: (BuildContext context, List<_Drag?> hovering, _) {
             return SizedBox(
               key: _key,
-              height: OfdmaGeometry.stripHeight,
+              height: stripH,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: <Widget>[
@@ -179,6 +320,7 @@ class _StripState extends State<_Strip> {
                         painter: OfdmaSlotGridPainter(
                           widthMhz: model.widthMhz,
                           colors: colors,
+                          stroke: stroke,
                         ),
                       ),
                     ),
@@ -288,7 +430,7 @@ class _RuBlockState extends State<_RuBlock> {
             feedback: Material(
               type: MaterialType.transparency,
               child: SizedBox(
-                height: OfdmaGeometry.stripHeight,
+                height: _stripHeight(context),
                 child: face(ring: true),
               ),
             ),
@@ -334,7 +476,7 @@ class _BlockFace extends StatelessWidget {
             .copyWith(color: ink);
     return Container(
       width: width,
-      height: OfdmaGeometry.stripHeight,
+      height: _stripHeight(context),
       decoration: BoxDecoration(
         color: st.outlined ? colors.surface1 : st.hue,
         border: Border.all(
@@ -576,31 +718,33 @@ class _TimelinesCard extends StatelessWidget {
           if (scale > 0) _Axis(scaleUs: scale),
           const SizedBox(height: AppSpacing.sm),
           const _Legend(),
-          const SizedBox(height: AppSpacing.xs),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: model.toggleWorking,
-              icon: Icon(
-                model.showWorking
-                    ? Icons.expand_less_rounded
-                    : Icons.expand_more_rounded,
-              ),
-              label: Text(
-                model.showWorking
-                    ? 'Hide the arithmetic'
-                    : 'Show the arithmetic',
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: colors.textAccent,
-                minimumSize: const Size(0, AppSpacing.minTouchTarget),
+          if (!PresenterMode.isActive(context)) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: model.toggleWorking,
+                icon: Icon(
+                  model.showWorking
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                ),
+                label: Text(
+                  model.showWorking
+                      ? 'Hide the arithmetic'
+                      : 'Show the arithmetic',
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.textAccent,
+                  minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                ),
               ),
             ),
-          ),
-          if (model.showWorking)
-            for (final OfdmaMode m in OfdmaMode.values)
-              if (r.timeline(m) != null)
-                _Working(result: r, mode: m, mono: mono),
+            if (model.showWorking)
+              for (final OfdmaMode m in OfdmaMode.values)
+                if (r.timeline(m) != null)
+                  _Working(result: r, mode: m, mono: mono),
+          ],
         ],
       ),
     );
@@ -700,12 +844,18 @@ class _Bar extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
     final TextScaler scaler = MediaQuery.textScalerOf(context);
+    final PresenterScale pscale = PresenterMode.scaleOf(context);
     final TextStyle base =
         text.labelSmall ?? const TextStyle(fontSize: AppTextSize.caption);
     final TextStyle letter = base.copyWith(fontWeight: FontWeight.w700);
+    // The SU bar grows with the presenter scale. An OFDMA bar is already
+    // one lane per client, so it grows only up to its own cap.
     final double barH = timeline.mode == OfdmaMode.su
-        ? OfdmaGeometry.barHeight
-        : OfdmaGeometry.ofdmaBarHeight(clients);
+        ? pscale.markerSize(OfdmaGeometry.barHeight)
+        : math.max(
+            pscale.markerSize(OfdmaGeometry.barHeight),
+            OfdmaGeometry.ofdmaBarHeight(clients),
+          );
     final double h = OfdmaBarPainter.heightFor(
       timeline: timeline,
       barHeight: barH,
@@ -746,6 +896,7 @@ class _Bar extends StatelessWidget {
             labelStyle: base.copyWith(color: colors.textPrimary),
             letterStyle: letter,
             textScaler: scaler,
+            stroke: pscale.stroke,
           ),
         ),
       ),
@@ -811,6 +962,7 @@ class _Axis extends StatelessWidget {
             colors: colors,
             style: style,
             textScaler: scaler,
+            stroke: PresenterMode.scaleOf(context).stroke,
           ),
         ),
       ),
@@ -828,13 +980,17 @@ class _Legend extends StatelessWidget {
     final TextStyle label =
         text.bodySmall?.copyWith(color: colors.textSecondary) ??
         TextStyle(color: colors.textSecondary);
+    final PresenterScale scale = PresenterMode.scaleOf(context);
 
     Widget item(CustomPainter p, String s) => Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         ExcludeSemantics(
           child: CustomPaint(
-            size: const Size(AppSpacing.md, AppSpacing.sm),
+            size: Size(
+              scale.markerSize(AppSpacing.md),
+              scale.markerSize(AppSpacing.sm),
+            ),
             painter: p,
           ),
         ),
@@ -848,13 +1004,18 @@ class _Legend extends StatelessWidget {
       runSpacing: AppSpacing.xs,
       children: <Widget>[
         item(
-          AirtimeSwatchPainter(style: AirtimeBlockStyle.wait, colors: colors),
+          AirtimeSwatchPainter(
+            style: AirtimeBlockStyle.wait,
+            colors: colors,
+            stroke: scale.stroke,
+          ),
           'Contention (AIFS, backoff)',
         ),
         item(
           AirtimeSwatchPainter(
             style: AirtimeBlockStyle.preamble,
             colors: colors,
+            stroke: scale.stroke,
           ),
           'Preamble',
         ),
@@ -870,11 +1031,16 @@ class _Legend extends StatelessWidget {
           AirtimeSwatchPainter(
             style: AirtimeBlockStyle.control,
             colors: colors,
+            stroke: scale.stroke,
           ),
           'Trigger or acknowledgment',
         ),
         item(
-          AirtimeSwatchPainter(style: AirtimeBlockStyle.gap, colors: colors),
+          AirtimeSwatchPainter(
+            style: AirtimeBlockStyle.gap,
+            colors: colors,
+            stroke: scale.stroke,
+          ),
           'SIFS (silence)',
         ),
       ],

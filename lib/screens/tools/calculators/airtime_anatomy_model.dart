@@ -9,6 +9,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/airtime_anatomy.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// The two scenario slots.
 const List<String> kScenarioLetters = <String>['A', 'B'];
@@ -142,6 +143,53 @@ class AirtimeAnatomyModel extends ChangeNotifier {
     _presets[_editing] = _matchingPreset(next);
     _afterEdit();
   }
+
+  // ── Presenter keys ─────────────────────────────────────────────────────────
+
+  /// Right arrow: select the next segment of the TXOP, left to right, so an
+  /// instructor can walk one transmit opportunity frame by frame. Walks the
+  /// scenario that holds the selection, else the one the inputs edit; after
+  /// the last segment the selection clears.
+  void stepSegment() {
+    final int i = _selection?.scenario ?? _editing;
+    final AirtimeResult r = _results[i];
+    if (!r.check.isOk) return;
+    final List<TxopSegmentKind> kinds = <TxopSegmentKind>[
+      for (final TxopSegment s in r.segments)
+        if (s.tenths > 0) s.kind,
+    ];
+    if (kinds.isEmpty) return;
+    final AirtimeSelection? sel = _selection;
+    final int at = sel == null || sel.scenario != i
+        ? -1
+        : kinds.indexOf(sel.kind);
+    _selection = at + 1 < kinds.length
+        ? (scenario: i, kind: kinds[at + 1])
+        : null;
+    notifyListeners();
+  }
+
+  /// Up and Down arrows: the edited scenario's rate one step, the MCS for
+  /// HT and newer, the data rate for Legacy.
+  void nudgeRate(int delta) {
+    edit((AirtimeScenario s) {
+      if (s.phy == AirtimePhy.legacy) {
+        const List<int> rates = AirtimeConstants.legacyRatesMbps;
+        final int at = rates.indexOf(s.legacyRateMbps);
+        final int next = (at + delta).clamp(0, rates.length - 1);
+        return s.copyWith(legacyRateMbps: rates[next]);
+      }
+      final int last = AirtimeConstants.mcs.last.mcs;
+      return s.copyWith(mcs: (s.mcs + delta).clamp(0, last));
+    });
+  }
+
+  PresenterActions get presenterActions => PresenterActions(
+    step: stepSegment,
+    sliderDown: () => nudgeRate(-1),
+    sliderUp: () => nudgeRate(1),
+    sliderLabel: 'Rate (MCS or legacy rate)',
+  );
 
   AirtimePreset? _matchingPreset(AirtimeScenario s) {
     for (final AirtimePreset p in AirtimePreset.values) {

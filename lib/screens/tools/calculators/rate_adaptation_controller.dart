@@ -7,6 +7,10 @@
 // controls in a side panel; a presenter layout can do either without
 // touching them (spec 00).
 //
+// THE CLOCK. The Ticker is constructed here directly, not from a widget's
+// TickerProvider: the route under the presenter route is muted, and a
+// playing link must keep running while the presenter shows it (spec 00).
+//
 // The model and every rule live in lib/services/wifi_lab/
 // rate_adaptation_model.dart. Settings apply to the running link at once
 // (the student moves a slider and watches the rate control react); Restart
@@ -20,6 +24,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/rate_adaptation_model.dart';
+import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kRateAdaptationToolId = 'rate-adaptation';
@@ -58,11 +63,10 @@ abstract final class RaFormat {
 
 class RateAdaptationController extends ChangeNotifier {
   RateAdaptationController({
-    required TickerProvider vsync,
     this.seed = 1,
     RaSettings initial = const RaSettings(),
   }) : _engine = RateAdaptationEngine(settings: initial, seed: seed) {
-    _ticker = vsync.createTicker(_onTick);
+    _ticker = Ticker(_onTick, debugLabel: 'rate-adaptation');
   }
 
   final int seed;
@@ -154,6 +158,28 @@ class RateAdaptationController extends ChangeNotifier {
   set retryChain(bool v) => _apply(settings.copyWith(retryChain: v));
   set retryLimit(RaRetryLimit v) => _apply(settings.copyWith(retryLimit: v));
   set ackTimeoutUs(double v) => _apply(settings.copyWith(ackTimeoutUs: v));
+
+  /// The SNR offset slider's range, dB.
+  static const double snrOffsetMinDb = -20;
+  static const double snrOffsetMaxDb = 20;
+
+  /// Up and Down arrows: the SNR offset one dB.
+  void nudgeSnrOffset(double deltaDb) {
+    snrOffsetDb = (settings.snrOffsetDb + deltaDb)
+        .clamp(snrOffsetMinDb, snrOffsetMaxDb)
+        .roundToDouble();
+  }
+
+  // ── Presenter keys ────────────────────────────────────────────────────────
+
+  PresenterActions get presenterActions => PresenterActions(
+    playPause: togglePlay,
+    step: stepFrame,
+    reset: restart,
+    sliderDown: () => nudgeSnrOffset(-1),
+    sliderUp: () => nudgeSnrOffset(1),
+    sliderLabel: 'SNR offset',
+  );
 
   // ── Copy ──────────────────────────────────────────────────────────────────
 

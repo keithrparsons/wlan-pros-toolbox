@@ -14,6 +14,15 @@
 // Interaction: tap a segment or its leader label; hover on desktop; or use the
 // table below the bars, whose cells are focusable buttons (keyboard and
 // screen reader route to the same selection).
+//
+// PRESENTER (PresenterMode.isActive): the same parts fill the bounded stage
+// box with no scroll. Each scenario's throughput, TXOP length and efficiency
+// sit on top at the headline scale (the numbers the lesson is about, moved
+// here from the controls' readouts); the bars are taller and thicker; the
+// selected segment's formula sits under them. The Right arrow walks the
+// selection through the TXOP segment by segment; the breakdown table, the
+// same selection by pointer or Tab, folds into the panel
+// ([AirtimeAnatomyBreakdown]).
 
 import 'package:flutter/gestures.dart' show PointerHoverEvent;
 import 'package:flutter/material.dart';
@@ -22,6 +31,7 @@ import '../../../services/wifi_lab/airtime_anatomy.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'airtime_anatomy_model.dart';
 import 'airtime_anatomy_timeline.dart';
 
@@ -34,7 +44,172 @@ class AirtimeAnatomyStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: model,
-      builder: (BuildContext context, _) => _StageBody(model: model),
+      builder: (BuildContext context, _) => PresenterMode.isActive(context)
+          ? _PresenterStage(model: model)
+          : _StageBody(model: model),
+    );
+  }
+}
+
+// ── Presenter arrangement ─────────────────────────────────────────────────
+
+class _PresenterStage extends StatelessWidget {
+  const _PresenterStage({required this.model});
+
+  final AirtimeAnatomyModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final double scale = model.scaleUs;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        AirtimeCard(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              for (final int i in model.visible) ...<Widget>[
+                if (i > 0) const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _Headline(model: model, index: i, mono: mono),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Expanded(
+          child: LayoutBuilder(
+            // Shown at full size when it fits; with RTS/CTS and many leader
+            // rows on a 900 px window it scales down as one piece, never a
+            // scroll.
+            builder: (BuildContext context, BoxConstraints box) => FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: box.maxWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    AirtimeCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          const AirtimeSectionTitle('One TXOP, drawn to scale'),
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            'Lime is the only part that carries your data.',
+                            style: text.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          for (final int i in model.visible) ...<Widget>[
+                            _ScenarioRow(
+                              model: model,
+                              index: i,
+                              scaleUs: scale,
+                              mono: mono,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          if (scale > 0) _Axis(scaleUs: scale),
+                          const SizedBox(height: AppSpacing.sm),
+                          const _Legend(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _Detail(model: model, mono: mono),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One scenario's lesson numbers, large: throughput at the headline scale,
+/// with the TXOP length and the efficiency under it.
+class _Headline extends StatelessWidget {
+  const _Headline({
+    required this.model,
+    required this.index,
+    required this.mono,
+  });
+
+  final AirtimeAnatomyModel model;
+  final int index;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final AirtimeResult r = model.result(index);
+    final String letter = kScenarioLetters[index];
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              _LetterBadge(letter),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  model.name(index),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.bodyMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          if (!r.check.isOk)
+            Text(
+              'Not drawn: ${r.check.message}.',
+              style: text.bodyMedium?.copyWith(color: colors.statusDanger),
+            )
+          else ...<Widget>[
+            Text(
+              'Throughput',
+              style: text.bodySmall?.copyWith(color: colors.textSecondary),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${r.throughputMbps.toStringAsFixed(1)} Mbps',
+                style: scale
+                    .headlineStyle(mono.outputLarge)
+                    .copyWith(color: colors.textAccent),
+              ),
+            ),
+            Text(
+              '${formatTenthsUs(r.totalTenths)} µs, '
+              '${(r.efficiency * 100).toStringAsFixed(1)} % efficient',
+              semanticsLabel:
+                  '${formatTenthsUs(r.totalTenths)} microseconds on the air, '
+                  '${(r.efficiency * 100).toStringAsFixed(1)} percent of the '
+                  'PHY rate',
+              style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -149,6 +324,7 @@ class _Bar extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
     final TextScaler scaler = MediaQuery.textScalerOf(context);
+    final PresenterScale pscale = PresenterMode.scaleOf(context);
     final AirtimeResult r = model.result(index);
     final TextStyle base =
         text.labelSmall ?? const TextStyle(fontSize: AppTextSize.caption);
@@ -177,6 +353,7 @@ class _Bar extends StatelessWidget {
           ),
           leaderStyle: base.copyWith(color: colors.textSecondary),
           textScaler: scaler,
+          barHeight: pscale.markerSize(AirtimeBarGeometry.barHeight),
         );
         return Semantics(
           label: spoken,
@@ -200,6 +377,7 @@ class _Bar extends StatelessWidget {
                   layout: layout,
                   colors: colors,
                   selected: selected,
+                  stroke: pscale.stroke,
                 ),
               ),
             ),
@@ -268,6 +446,7 @@ class _Axis extends StatelessWidget {
             colors: colors,
             style: style,
             textScaler: scaler,
+            stroke: PresenterMode.scaleOf(context).stroke,
           ),
         ),
       ),
@@ -282,6 +461,7 @@ class _Legend extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
+    final PresenterScale scale = PresenterMode.scaleOf(context);
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.xs,
@@ -292,8 +472,15 @@ class _Legend extends StatelessWidget {
             children: <Widget>[
               ExcludeSemantics(
                 child: CustomPaint(
-                  size: const Size(AppSpacing.md, AppSpacing.sm),
-                  painter: AirtimeSwatchPainter(style: s, colors: colors),
+                  size: Size(
+                    scale.markerSize(AppSpacing.md),
+                    scale.markerSize(AppSpacing.sm),
+                  ),
+                  painter: AirtimeSwatchPainter(
+                    style: s,
+                    colors: colors,
+                    stroke: scale.stroke,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.xxs),
@@ -323,8 +510,12 @@ class _Detail extends StatelessWidget {
     final Widget body;
     if (sel == null) {
       body = Text(
-        'Tap or hover a segment, or pick one in the table, to see its '
-        'duration and the formula behind it.',
+        PresenterMode.isActive(context)
+            ? 'Press the Right arrow to walk the TXOP segment by segment, or '
+                  'tap a segment, to see its duration and the formula '
+                  'behind it.'
+            : 'Tap or hover a segment, or pick one in the table, to see its '
+                  'duration and the formula behind it.',
         style: text.bodySmall?.copyWith(color: colors.textTertiary),
       );
     } else {
@@ -370,6 +561,19 @@ class _Detail extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The breakdown table on its own, for the presenter panel's fold.
+class AirtimeAnatomyBreakdown extends StatelessWidget {
+  const AirtimeAnatomyBreakdown({super.key, required this.model});
+
+  final AirtimeAnatomyModel model;
+
+  @override
+  Widget build(BuildContext context) => _Breakdown(
+    model: model,
+    mono: Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults(),
+  );
 }
 
 /// Segment | A | B, each duration a focusable button that selects it.

@@ -10,6 +10,13 @@
 //      each MCS's hue, against a dashed line for the MCS the SNR supports.
 //   3. The per-rate statistics table, updating every 50 ms.
 //
+// PRESENTER (PresenterMode.isActive): the same three views fill the bounded
+// stage box with no scroll. The chosen rate, what the link delivers and what
+// its retries cost sit on top at the headline scale (moved from the
+// readouts); the attempts strip runs full width under them; the chart
+// (growing into the height) and the table share the rest. Painters thicken strokes and grow
+// the strip with PresenterMode.scaleOf.
+//
 // Nothing here draws a wave, so nothing can imply a frequency change (Wi-Fi
 // Lab standing rule). Every hue is paired with an MCS number or name
 // (GL-003 §8.15.2); failure is red with an "x" and a word (§8.13).
@@ -22,6 +29,7 @@ import '../../../services/wifi_lab/rate_adaptation_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/presenter/presenter_mode.dart';
 import 'rate_adaptation_controller.dart';
 import 'rate_adaptation_parts.dart';
 
@@ -45,14 +53,168 @@ class RateAdaptationStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: controller,
-      builder: (BuildContext context, Widget? _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      builder: (BuildContext context, Widget? _) {
+        if (PresenterMode.isActive(context)) {
+          return _PresenterStage(engine: controller.engine);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _AttemptsCard(engine: controller.engine),
+            const SizedBox(height: AppSpacing.sm),
+            _RateChartCard(engine: controller.engine, height: chartHeight),
+            const SizedBox(height: AppSpacing.sm),
+            RaStatsTable(engine: controller.engine),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ── Presenter arrangement ─────────────────────────────────────────────────
+
+class _PresenterStage extends StatelessWidget {
+  const _PresenterStage({required this.engine});
+  final RateAdaptationEngine engine;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _Headline(engine: engine),
+        const SizedBox(height: AppSpacing.sm),
+        _AttemptsCard(engine: engine),
+        const SizedBox(height: AppSpacing.sm),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // The chart grows into whatever height is left.
+              Expanded(
+                flex: 5,
+                child: _RateChartCard(engine: engine, height: null),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                flex: 4,
+                child: LayoutBuilder(
+                  // Full size when it fits; on a short window the table
+                  // scales down as one piece rather than scroll.
+                  builder: (BuildContext context, BoxConstraints box) =>
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topCenter,
+                        child: SizedBox(
+                          width: box.maxWidth,
+                          child: RaStatsTable(engine: engine),
+                        ),
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The chosen rate, large, with what the link delivers and what its retries
+/// cost: the numbers the lesson is about.
+class _Headline extends StatelessWidget {
+  const _Headline({required this.engine});
+  final RateAdaptationEngine engine;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final RaWindowStats w = engine.window;
+    final int best = engine.ranking.bestThroughput;
+    final bool fresh = engine.nowUs == 0;
+    final int? sup = RateAdaptationMath.supportedMcs(engine.snrNowDb);
+
+    Widget stat(String label, String value) => Semantics(
+      label: '$label: $value',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _AttemptsCard(engine: controller.engine),
-          const SizedBox(height: AppSpacing.sm),
-          _RateChartCard(engine: controller.engine, height: chartHeight),
-          const SizedBox(height: AppSpacing.sm),
-          RaStatsTable(engine: controller.engine),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
+        ],
+      ),
+    );
+
+    return RaCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          Semantics(
+            label: 'Chosen rate: ${RaFormat.rate(best)}',
+            excludeSemantics: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  fresh
+                      ? 'Chosen rate (press Play or Step)'
+                      : 'Chosen rate at ${RaFormat.clock(engine.nowUs)}, '
+                            '${RaFormat.n(engine.distanceNowM)} m',
+                  style: text.bodySmall?.copyWith(color: colors.textSecondary),
+                ),
+                Text(
+                  RaFormat.mcs(best),
+                  style: scale
+                      .headlineStyle(mono.outputLarge)
+                      .copyWith(color: RaPalette.of(best, colors)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.xs,
+              children: <Widget>[
+                stat(
+                  'Delivered, last second',
+                  fresh ? '-' : RaFormat.mbps(w.deliveredMbps),
+                ),
+                stat(
+                  'Retries per frame',
+                  fresh ? '-' : RaFormat.n(w.retriesPerFrame, 2),
+                ),
+                stat(
+                  'Airtime on retries',
+                  fresh ? '-' : RaFormat.pct(w.retryAirtimeShare),
+                ),
+                stat(
+                  'SNR now, supports',
+                  '${RaFormat.n(engine.snrNowDb)} dB, '
+                      '${sup == null ? 'no MCS' : RaFormat.mcs(sup)}',
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -141,13 +303,14 @@ class _AttemptsCard extends StatelessWidget {
                 '$lastFrame',
             excludeSemantics: true,
             child: SizedBox(
-              height: 92,
+              height: _StripPainter.heightFor(PresenterMode.scaleOf(context)),
               child: CustomPaint(
                 painter: _StripPainter(
                   attempts: shown,
                   nowUs: engine.nowUs,
                   style: style,
                   scaler: MediaQuery.textScalerOf(context),
+                  scale: PresenterMode.scaleOf(context),
                 ),
                 size: Size.infinite,
               ),
@@ -314,6 +477,7 @@ class _StripPainter extends CustomPainter {
     required this.nowUs,
     required this.style,
     required this.scaler,
+    this.scale = PresenterScale.normal,
   });
 
   final List<RaAttempt> attempts;
@@ -321,29 +485,42 @@ class _StripPainter extends CustomPainter {
   final _Style style;
   final TextScaler scaler;
 
-  static const double _sampleTop = 0;
-  static const double _blockTop = 12;
-  static const double _blockH = 34;
-  static const double _failTop = 50;
+  /// Presenter scale: markers grow the geometry, strokes thicken. Identity
+  /// outside presenter mode.
+  final PresenterScale scale;
+
+  static const double _height = 92;
+  static const double _sampleTopBase = 0;
+  static const double _blockTopBase = 12;
+  static const double _blockHBase = 34;
+  static const double _failTopBase = 50;
+
+  /// Height of the strip at [scale].
+  static double heightFor(PresenterScale scale) => scale.markerSize(_height);
 
   @override
   void paint(Canvas canvas, Size size) {
     final AppColorScheme c = style.colors;
     final double w = size.width;
+    final double k = scale.marker;
+    final double sampleTop = _sampleTopBase * k;
+    final double blockTop = _blockTopBase * k;
+    final double blockH = _blockHBase * k;
+    final double failTop = _failTopBase * k;
     final double t0 = math.max(0, nowUs - kRaStripWindowUs);
     double x(double t) => (t - t0) / kRaStripWindowUs * w;
-    final double waitY = _blockTop + _blockH / 2;
+    final double waitY = blockTop + blockH / 2;
 
     canvas.save();
     canvas.clipRect(Offset.zero & size);
 
     final Paint waitPaint = Paint()
       ..color = c.textTertiary
-      ..strokeWidth = 2;
+      ..strokeWidth = scale.strokeWidth(2);
     final Paint ackPaint = Paint()..color = c.textTertiary;
     final Paint failPaint = Paint()
       ..color = c.statusDanger
-      ..strokeWidth = 2
+      ..strokeWidth = scale.strokeWidth(2)
       ..strokeCap = StrokeCap.round;
 
     for (final RaAttempt a in attempts) {
@@ -357,9 +534,9 @@ class _StripPainter extends CustomPainter {
       // PPDU.
       final Rect block = Rect.fromLTRB(
         x(a.txStartUs),
-        _blockTop,
+        blockTop,
         math.max(x(a.txEndUs), x(a.txStartUs) + 1),
-        _blockTop + _blockH,
+        blockTop + blockH,
       );
       if (a.delivered) {
         canvas.drawRect(block, Paint()..color = hue);
@@ -368,31 +545,31 @@ class _StripPainter extends CustomPainter {
         canvas.drawRect(
           Rect.fromLTRB(
             x(ackStart),
-            _blockTop + _blockH - 12,
+            blockTop + blockH - 12 * k,
             math.max(x(ackStart + RaLink.ackUs), x(ackStart) + 1),
-            _blockTop + _blockH,
+            blockTop + blockH,
           ),
           ackPaint,
         );
       } else {
         canvas.drawRect(block, Paint()..color = hue.withValues(alpha: 0.18));
         canvas.drawRect(
-          block.deflate(1),
+          block.deflate(scale.strokeWidth(1)),
           Paint()
             ..color = hue
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 2,
+            ..strokeWidth = scale.strokeWidth(2),
         );
         final double cx = block.center.dx;
-        const double r = 4;
+        final double r = scale.markerSize(4);
         canvas.drawLine(
-          Offset(cx - r, _failTop),
-          Offset(cx + r, _failTop + 2 * r),
+          Offset(cx - r, failTop),
+          Offset(cx + r, failTop + 2 * r),
           failPaint,
         );
         canvas.drawLine(
-          Offset(cx + r, _failTop),
-          Offset(cx - r, _failTop + 2 * r),
+          Offset(cx + r, failTop),
+          Offset(cx - r, failTop + 2 * r),
           failPaint,
         );
       }
@@ -417,9 +594,9 @@ class _StripPainter extends CustomPainter {
       if (a.isSample) {
         final double cx = block.center.dx;
         final Path tri = Path()
-          ..moveTo(cx - 5, _sampleTop)
-          ..lineTo(cx + 5, _sampleTop)
-          ..lineTo(cx, _sampleTop + 8)
+          ..moveTo(cx - 5 * k, sampleTop)
+          ..lineTo(cx + 5 * k, sampleTop)
+          ..lineTo(cx, sampleTop + 8 * k)
           ..close();
         canvas.drawPath(tri, Paint()..color = c.textPrimary);
       }
@@ -427,13 +604,13 @@ class _StripPainter extends CustomPainter {
     canvas.restore();
 
     // Axis.
-    final double axisY = size.height - 22;
+    final double axisY = size.height - 22 * k;
     canvas.drawLine(
       Offset(0, axisY),
       Offset(w, axisY),
       Paint()
         ..color = c.border
-        ..strokeWidth = 1,
+        ..strokeWidth = scale.strokeWidth(1),
     );
     final TextPainter left = _text(
       nowUs <= kRaStripWindowUs ? '0 ms' : '-5 ms',
@@ -453,7 +630,8 @@ class _StripPainter extends CustomPainter {
       old.nowUs != nowUs ||
       old.attempts.length != attempts.length ||
       old.style != style ||
-      old.scaler != scaler;
+      old.scaler != scaler ||
+      old.scale != scale;
 }
 
 // ── 2. Rate chart ───────────────────────────────────────────────────────────
@@ -461,7 +639,9 @@ class _StripPainter extends CustomPainter {
 class _RateChartCard extends StatelessWidget {
   const _RateChartCard({required this.engine, required this.height});
   final RateAdaptationEngine engine;
-  final double height;
+
+  /// Plot height; null fills the card's bounded height (presenter).
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -469,30 +649,32 @@ class _RateChartCard extends StatelessWidget {
     final AppColorScheme colors = style.colors;
     final int best = engine.ranking.bestThroughput;
     final int? sup = RateAdaptationMath.supportedMcs(engine.snrNowDb);
+    final Widget plot = Semantics(
+      label:
+          'Chosen rate now ${RaFormat.mcs(best)}. The SNR now '
+          'supports ${sup == null ? 'no MCS' : RaFormat.mcs(sup)}.',
+      excludeSemantics: true,
+      child: SizedBox(
+        height: height ?? double.infinity,
+        child: CustomPaint(
+          painter: _ChartPainter(
+            history: engine.history,
+            nowUs: engine.nowUs,
+            style: style,
+            scaler: MediaQuery.textScalerOf(context),
+            scale: PresenterMode.scaleOf(context),
+          ),
+          size: Size.infinite,
+        ),
+      ),
+    );
     return RaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const RaSectionLabel('Chosen rate, the last 20 s'),
           const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            label:
-                'Chosen rate now ${RaFormat.mcs(best)}. The SNR now '
-                'supports ${sup == null ? 'no MCS' : RaFormat.mcs(sup)}.',
-            excludeSemantics: true,
-            child: SizedBox(
-              height: height,
-              child: CustomPaint(
-                painter: _ChartPainter(
-                  history: engine.history,
-                  nowUs: engine.nowUs,
-                  style: style,
-                  scaler: MediaQuery.textScalerOf(context),
-                ),
-                size: Size.infinite,
-              ),
-            ),
-          ),
+          if (height == null) Expanded(child: plot) else plot,
           const SizedBox(height: AppSpacing.xs),
           ExcludeSemantics(
             child: Wrap(
@@ -553,12 +735,16 @@ class _ChartPainter extends CustomPainter {
     required this.nowUs,
     required this.style,
     required this.scaler,
+    this.scale = PresenterScale.normal,
   });
 
   final List<RaUpdate> history;
   final double nowUs;
   final _Style style;
   final TextScaler scaler;
+
+  /// Presenter scale for strokes and the dot; identity elsewhere.
+  final PresenterScale scale;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -580,7 +766,7 @@ class _ChartPainter extends CustomPainter {
     // Grid and MCS labels.
     final Paint grid = Paint()
       ..color = c.border
-      ..strokeWidth = 1;
+      ..strokeWidth = scale.strokeWidth(1);
     for (int m = 0; m <= RaLink.maxMcs; m++) {
       canvas.drawLine(Offset(plot.left, y(m)), Offset(plot.right, y(m)), grid);
       if (m.isEven || m == RaLink.maxMcs) {
@@ -609,7 +795,7 @@ class _ChartPainter extends CustomPainter {
     // Supported MCS: dashed step line.
     final Paint dash = Paint()
       ..color = c.textTertiary
-      ..strokeWidth = 1.5;
+      ..strokeWidth = scale.strokeWidth(1.5);
     for (int i = 0; i < h.length; i++) {
       final int? m = h[i].supportedMcs;
       if (m == null) continue;
@@ -631,7 +817,7 @@ class _ChartPainter extends CustomPainter {
       final double xb = i + 1 < h.length ? x(h[i + 1].timeUs) : x(nowUs);
       final Paint p = Paint()
         ..color = RaPalette.of(m, c)
-        ..strokeWidth = 3
+        ..strokeWidth = scale.strokeWidth(3)
         ..strokeCap = StrokeCap.butt;
       canvas.drawLine(Offset(xa, y(m)), Offset(xb, y(m)), p);
       if (i + 1 < h.length) {
@@ -642,7 +828,7 @@ class _ChartPainter extends CustomPainter {
             Offset(xb, y(next)),
             Paint()
               ..color = c.textTertiary
-              ..strokeWidth = 1,
+              ..strokeWidth = scale.strokeWidth(1),
           );
         }
       }
@@ -651,14 +837,15 @@ class _ChartPainter extends CustomPainter {
     // Now: a dot and the MCS.
     final int now = h.last.ranking.bestThroughput;
     final Offset dot = Offset(x(nowUs), y(now));
-    canvas.drawCircle(dot, 5, Paint()..color = RaPalette.of(now, c));
+    final double dotR = scale.markerSize(5);
+    canvas.drawCircle(dot, dotR, Paint()..color = RaPalette.of(now, c));
     canvas.drawCircle(
       dot,
-      5,
+      dotR,
       Paint()
         ..color = c.textPrimary
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
+        ..strokeWidth = scale.strokeWidth(1.5),
     );
     final TextPainter tag = _text(
       RaFormat.mcs(now),
@@ -686,7 +873,8 @@ class _ChartPainter extends CustomPainter {
       old.nowUs != nowUs ||
       old.history.length != history.length ||
       old.style != style ||
-      old.scaler != scaler;
+      old.scaler != scaler ||
+      old.scale != scale;
 }
 
 // ── 3. Statistics table ─────────────────────────────────────────────────────
@@ -703,14 +891,23 @@ class RaStatsTable extends StatelessWidget {
   const RaStatsTable({super.key, required this.engine});
   final RateAdaptationEngine engine;
 
-  static const double _mcsW = 44;
-  static const double _rateW = 44;
-  static const double _pctW = 38;
-  static const double _estW = 38;
-  static const double _roleW = 64;
+  static const double _mcsWBase = 44;
+  static const double _rateWBase = 44;
+  static const double _pctWBase = 38;
+  static const double _estWBase = 38;
+  static const double _roleWBase = 64;
 
   @override
   Widget build(BuildContext context) {
+    // Fixed columns grow with the presenter's text so the numbers keep one
+    // line; outside presenter mode the factor is 1.
+    final PresenterScale scale = PresenterMode.scaleOf(context);
+    final bool presenting = PresenterMode.isActive(context);
+    final double mcsW = scale.paintFont(_mcsWBase);
+    final double rateW = scale.paintFont(_rateWBase);
+    final double pctW = scale.paintFont(_pctWBase);
+    final double estW = scale.paintFont(_estWBase);
+    final double roleW = scale.paintFont(_roleWBase);
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
@@ -751,7 +948,7 @@ class RaStatsTable extends StatelessWidget {
           child: Row(
             children: <Widget>[
               SizedBox(
-                width: _mcsW,
+                width: mcsW,
                 child: Row(
                   children: <Widget>[
                     RaSwatch(mcs: st.mcs),
@@ -770,7 +967,7 @@ class RaStatsTable extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                width: _rateW,
+                width: rateW,
                 child: Text(
                   RaFormat.n(RaLink.phyRateMbps(st.mcs)),
                   textAlign: TextAlign.right,
@@ -794,7 +991,7 @@ class RaStatsTable extends StatelessWidget {
                       ),
               ),
               SizedBox(
-                width: _pctW,
+                width: pctW,
                 child: Text(
                   p == null ? '-' : RaFormat.pct(p),
                   textAlign: TextAlign.right,
@@ -804,7 +1001,7 @@ class RaStatsTable extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                width: _estW,
+                width: estW,
                 child: Text(
                   st.throughputEstimateMbps == 0
                       ? '-'
@@ -814,7 +1011,7 @@ class RaStatsTable extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                width: _roleW,
+                width: roleW,
                 child: Text(
                   roles.map(((String, String) e) => e.$1).join(' '),
                   textAlign: TextAlign.right,
@@ -834,24 +1031,26 @@ class RaStatsTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const RaSectionLabel('What the radio has learned, per rate'),
-          const SizedBox(height: AppSpacing.xxs),
-          const RaNote('Updated every 50 ms.'),
+          if (!presenting) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            const RaNote('Updated every 50 ms.'),
+          ],
           const SizedBox(height: AppSpacing.xs),
           ExcludeSemantics(
             child: Row(
               children: <Widget>[
                 SizedBox(
-                  width: _mcsW,
+                  width: mcsW,
                   child: Text('Rate', style: head),
                 ),
                 SizedBox(
-                  width: _rateW,
+                  width: rateW,
                   child: Text('Mbps', textAlign: TextAlign.right, style: head),
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(child: Text('Success', style: head)),
                 SizedBox(
-                  width: _pctW + _estW,
+                  width: pctW + estW,
                   child: Text(
                     'Est. Mbps',
                     textAlign: TextAlign.right,
@@ -859,7 +1058,7 @@ class RaStatsTable extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
-                  width: _roleW,
+                  width: roleW,
                   child: Text('Chain', textAlign: TextAlign.right, style: head),
                 ),
               ],
@@ -868,12 +1067,19 @@ class RaStatsTable extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           for (int m = RaLink.maxMcs; m >= 0; m--) row(engine.stats[m]),
           const SizedBox(height: AppSpacing.xs),
-          const RaNote(
-            'Chain order: 1st = best throughput, 2nd = second-best '
-            'throughput, P = best probability, low = lowest rate. Success is '
-            'smoothed (EWMA). The estimate is success, capped at 90%, times '
-            'bits over the time of one attempt; rates under 10% are ignored.',
-          ),
+          // The presenter keeps one short key; the phone explains in full.
+          if (presenting)
+            const RaNote(
+              'Updated every 50 ms. Chain: 1st and 2nd best throughput, P '
+              'best probability, low lowest rate. Under 10% is ignored.',
+            )
+          else
+            const RaNote(
+              'Chain order: 1st = best throughput, 2nd = second-best '
+              'throughput, P = best probability, low = lowest rate. Success is '
+              'smoothed (EWMA). The estimate is success, capped at 90%, times '
+              'bits over the time of one attempt; rates under 10% are ignored.',
+            ),
         ],
       ),
     );
@@ -896,7 +1102,7 @@ class _Bar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 10,
+      height: PresenterMode.scaleOf(context).markerSize(10),
       child: CustomPaint(
         painter: _BarPainter(
           value,
