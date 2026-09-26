@@ -1343,6 +1343,73 @@
       ],
       "source": "Apple, Wi-Fi roaming support in Apple devices (deployment guide): iPhone trigger -70 dBm with 8 dB delta transmitting and 12 dB idle, Mac -75 dBm with 12 dB, and the first six Neighbor Report entries. Frame sequences from Cisco 9800 roaming documentation. Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
+    "survey-walk": {
+      "name": "Survey Walk",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Walks a site survey down a corridor-and-rooms floor and shows why walking speed matters even though radio waves travel at the speed of light. A scanner visits one channel at a time, so each channel is measured once per revisit, and its samples land walking speed x revisit time apart. The tool shows that spacing against the guess range, the white stretches with no data, and how the number of network interface cards (NICs), the channel list, the dwell and the hopping algorithm change it.",
+      "whyHere": "Walking never distorts a single measurement: at 1.4 m/s the channel holds still for 14 to 37 ms, and the longest Wi-Fi frame lasts 5.484 ms. What walking speed changes is how far apart the samples of each channel land, and how far a pause or a timestamp shortcut moves them from where they were really taken. A laptop's one radio scanning 28 channels at 250 ms needs 7.0 s to come back to a channel, which is 9.8 m at a normal walk, twice a 5 m guess range. Seeing that on the floor explains why survey guidance asks for a steady, slower pace and why more radios help.",
+      "howToUse": [
+        "Answer the opening question, then press Walk, or use Step and the walk-time slider. The strip under the floor lights the channel each NIC is on right now.",
+        "Pick a channel to show. Its samples are placed along the path where the survey app puts them; the band around the path is the guess range, and any stretch with no sample within half of it turns white, meaning no data, never no coverage. Pick All channels to see every sample, shaped by band (circle 2.4 GHz, square 5 GHz, diamond 6 GHz).",
+        "Change the data-collection device from 1 NIC (a laptop's built-in radio) to 2, 3 or 4 NICs, the channels scanned, the dwell and the hopping algorithm, and watch the revisit time, the spacing and the Rule 4 verdict change. Rule 4: the longest revisit allowed is the guess range divided by the walking pace.",
+        "Turn on Pause at the door, or switch timestamps to Per cycle, and watch placed samples slide away from the rings that mark where they were really taken. Try Stop and go and Line capture, and the Active and Hybrid survey types.",
+        "Turn on Signal along the path to see each sample's level: a moving scanner draws a new fade at every sample, while standing still repeats one fade.",
+        "On a computer or tablet, Present opens the walk full screen for a projector: Space plays or pauses, the Right arrow steps 1 s, R restarts the walk, Up and Down change the walking pace, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Survey type",
+          "unit": "passive, active or hybrid",
+          "range": "passive by default; hybrid needs at least 2 NICs, because one holds the active connection"
+        },
+        {
+          "name": "Capture method",
+          "unit": "continuous, line or stop and go",
+          "range": "continuous by default; stop and go completes two full scan cycles at each stop, 2 to 20 m apart (default 5 m)"
+        },
+        {
+          "name": "Data-collection device",
+          "unit": "NICs",
+          "range": "1 NIC (a laptop's built-in radio), 2, 3 or 4 NICs, on the same channels and dwell"
+        },
+        {
+          "name": "Channels scanned",
+          "unit": "channels",
+          "range": "2.4 GHz 1, 6, 11 (3); plus US 5 GHz (28, default); plus the 15 6 GHz Preferred Scanning Channels, PSCs (43); every US 20 MHz channel (95); 6 GHz only (59); or the first 1 to 95 of the full list"
+        },
+        {
+          "name": "Dwell and channel switch",
+          "unit": "ms",
+          "range": "dwell 20 to 500 ms per channel (default 250, a common survey default); switch 0 to 50 ms per hop (default 0, illustrative)"
+        },
+        {
+          "name": "Hopping algorithm",
+          "unit": "sequential, band per NIC or priority",
+          "range": "priority channels default to 1, 6, 11, 36 and 149, visited every k-th slot, k 2 to 6 (default 3)"
+        },
+        {
+          "name": "Walking pace and guess range",
+          "unit": "m/s, m",
+          "range": "pace 0.5 to 2.0 m/s (default 1.4); guess range, also called accuracy distance, 1 to 20 m (default 5)"
+        },
+        {
+          "name": "Timestamps and the door",
+          "unit": "per channel or per cycle; s",
+          "range": "per channel by default; a pause of 1 to 10 s (default 3) halfway along the first leg"
+        }
+      ],
+      "algorithm": "Each scanning NIC spends one slot of (dwell + switch) on a channel and the visit is stamped at the end of the slot. Sequential, shared: the NICs take the next channel in turn, so revisit = ceil(channels / NICs) x slot. Band per NIC: each NIC owns whole bands and spare NICs split the slowest band, so each band has its own revisit. Priority: every k-th slot goes to the next priority channel and the others go round the rest. Spacing = pace x revisit. Rule 4: longest allowed revisit = guess range / pace, checked against the longest revisit of any channel. Continuous capture places each sample by spreading time evenly between clicks (start, turns, stop); Line does the same per straight segment and does not record the 2 s pause between segments; Stop and go places every sample at its stop. Per-cycle timestamps give every sample of a cycle the time the cycle completes. Signal: effective isotropic radiated power (EIRP) 14 dBm - free-space path loss at 1 m (FSPL) - 10 x 3.0 x log10(d), plus Rayleigh fading from 24 seeded scatterers evaluated at the sample's true position. The active client uses the strongest of our APs and tests once a second (illustrative).",
+      "example": "Straight corridor, 58 m at 1.4 m/s, 28 channels at 250 ms, 5 m guess range. 1 NIC: revisit 7.0 s, spacing 9.8 m, and Rule 4 fails (3.57 s allowed). 2 NICs: 3.5 s and 4.9 m, which only just passes. 3 NICs: 2.5 s and 3.5 m. 4 NICs: 1.75 s and 2.45 m. A 3 s pause at the door in continuous mode misplaces samples by up to 2.0 m; per-cycle timestamps misplace them by up to 9.45 m.",
+      "fieldNotes": [
+        "White on a survey map means no data, not no coverage. The fix is to go get the data, not to widen the guess range.",
+        "An active survey shows where one client, at one point in time, on one walking path, with one set of other traffic, roams. It does not show where or how other clients will connect, and it sees only a single AP at a time. Always do a passive survey as well.",
+        "Whether real survey apps stamp each channel or each cycle is not published, and neither is how they place samples between clicks.",
+        "Counting 20 MHz channels in the US, 2.4 + 5 + 6 GHz is 11 + 25 + 59 = 95. At 250 ms per channel on one radio that is almost 24 s per cycle.",
+        "This is a teaching model: the walls are drawn but not modeled, and every timing that is not a common default is marked illustrative.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Keith Parsons, WLAN Pros site-survey rules: scan only the channels you need, set the interpolation distance, capture at least every interpolation distance, white means no data. Walking speed: Bohannon, Age and Ageing 26:15-19 (1997), comfortable gait 1.27 to 1.46 m/s. Coherence time about 0.423 / Doppler shift, after Rappaport, Wireless Communications. Longest Wi-Fi 4, 5 and 6 frame 5.484 ms (the 802.11 limit aPPDUMaxTime). Computed on your device."
+    },
     "channel-planner": {
       "name": "Channel Planner",
       "category": "Wi-Fi Classroom",

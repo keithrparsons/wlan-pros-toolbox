@@ -2757,6 +2757,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Survey Walk (2026-09-26, spec 26): walking speed sets sample spacing
+      // through the scanner's revisit time. Generic devices, no product names.
+      ToolEntry(
+        id: 'survey-walk',
+        title: 'Survey Walk',
+        description:
+            'Walk a site survey and see why pace matters: channel revisit '
+            'time, sample spacing vs guess range, NICs and capture methods',
+        routeName: '/tools/survey-walk',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       ToolEntry(
         id: 'dfs-simulator',
         title: 'DFS and Radar',

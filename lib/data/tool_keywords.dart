@@ -1463,6 +1463,33 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'shadowing',
     'path loss exponent',
   ],
+  // Wi-Fi Classroom (2026-09-26). The survey walk simulator (spec 26): what a
+  // student types when asking how fast to walk a survey.
+  'survey-walk': <String>[
+    'survey',
+    'site survey',
+    'walking speed',
+    'walk speed',
+    'pace',
+    'scan',
+    'scan cycle',
+    'dwell',
+    'nic',
+    'network interface card',
+    'adapter',
+    'guess range',
+    'accuracy distance',
+    'interpolation distance',
+    'sample spacing',
+    'continuous',
+    'stop and go',
+    'line survey',
+    'passive',
+    'active',
+    'hybrid',
+    'psc',
+    'preferred scanning channel',
+  ],
   // Wi-Fi Classroom (2026-09-25). What the OFDMA simulator shows, in the words a
   // student would search with (GL-005).
   'ofdma-simulator': <String>[
