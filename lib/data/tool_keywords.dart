@@ -161,7 +161,6 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   'network-discovery': <String>[
     'lan scan',
     'mdns',
-    'bonjour',
     'service discovery',
     'devices on network',
     'who is on my network',
@@ -1770,6 +1769,27 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi lab',
     'wi-fi classroom',
     'simulator',
+  ],
+  // Wi-Fi Classroom (2026-09-26). Multicast at the Basic Rate: what a student
+  // types when video or discovery traffic slows a whole cell.
+  'multicast-basic-rate': <String>[
+    'multicast',
+    'broadcast',
+    'group traffic',
+    'basic rate',
+    'mandatory rate',
+    'minimum rate',
+    'dtim',
+    'dtim period',
+    'multicast to unicast',
+    'multicast-to-unicast',
+    'unicast conversion',
+    'video',
+    'iptv',
+    'mdns',
+    'service discovery',
+    'airtime',
+    'rfc 9119',
   ],
   // Wi-Fi Classroom (2026-09-25). What the 802.1X ladder shows, in the words a
   // student would search with.

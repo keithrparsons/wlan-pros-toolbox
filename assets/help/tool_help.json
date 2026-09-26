@@ -1185,6 +1185,83 @@
       ],
       "source": "Wi-Fi Classroom research briefs (wave 3 section 9, wave 5 section 9): TU and beacon interval from the Linux wireless power-savings documentation and CWNP; TWT and U-APSD field layouts from the Linux kernel headers include/linux/ieee80211.h and ieee80211-he.h; the SiWx917 figures from Silicon Labs and Novus Labs. IEEE 802.11 itself was not read. Computed on your device."
     },
+    "multicast-basic-rate": {
+      "name": "Multicast at the Basic Rate",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows what multicast and broadcast data cost the channel. They go at a basic rate so every client can decode them, with no acknowledgment and no retry, so the same bytes take many times the airtime of a unicast frame. A one-second timeline draws the frames, the beacons and the DTIM (delivery traffic indication message) beacons, and compares the multicast stream with the same stream converted to one unicast copy per listening client.",
+      "whyHere": "One multicast video stream, or a lot of service-discovery chatter, can slow a whole cell. A unicast frame goes at the best rate its one receiver supports and is acknowledged and retried. A multicast or broadcast frame goes at a basic rate, one every client must support, and nobody acknowledges it. If any client on the AP is in power save, the AP also holds multicast until just after the next DTIM beacon, so it arrives late and in bursts. Converting multicast to unicast often uses less airtime when few clients listen, and more when many do; raising the basic rate helps too, at the cost of range for multicast. SSID Airtime shows what beacons cost; this tool is about the data. Airtime Anatomy shows one frame's timing in detail.",
+      "howToUse": [
+        "Read the headline: the share of the channel the multicast stream uses, and the share the same stream would use as unicast copies. Over 100% means the stream does not fit: the queue grows until packets are dropped.",
+        "Read the one-second timeline. Thin lines are beacons every 102.4 ms, thick lines are DTIM beacons. Lime blocks are busy air. Play the second sweeps it six times slower than real time; Next beacon moves one beacon at a time; Reset clears it.",
+        "Read the close-up: one packet drawn to scale, as one multicast frame (waiting, preamble, data, and no acknowledgment) and as unicast copies, each with its own wait, SIFS (short interframe space) and ACK (acknowledgment).",
+        "Change the stream (a preset, or the bit rate and packet size), the band and the basic rate, how many clients listen and their rates, and whether multicast, unicast or both are shown. Turn on A client is in power save and change the DTIM period to see multicast held and released in bursts.",
+        "Predict, then reveal: Ask the class loads the question (a 4 Mb/s video stream on a Wi-Fi 6 AP) and hides the airtime answers; pick a range, then press Reveal.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the second, the Right arrow moves to the next beacon, R resets it, Up and Down change the basic rate, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Stream preset",
+          "unit": "choice",
+          "range": "Voice paging (0.064 Mb/s, 200-byte packets), Video (4 Mb/s, 1,316-byte packets), Service discovery chatter (0.1 Mb/s, 400-byte packets); all illustrative"
+        },
+        {
+          "name": "Stream bit rate",
+          "unit": "Mb/s",
+          "range": "0.064 to 20; default 4 (illustrative)"
+        },
+        {
+          "name": "Packet size",
+          "unit": "bytes",
+          "range": "200, 400, 576, 1,000, 1,316 or 1,500; default 1,316 (illustrative)"
+        },
+        {
+          "name": "Band",
+          "unit": "GHz",
+          "range": "2.4 or 5; default 5"
+        },
+        {
+          "name": "Basic rate",
+          "unit": "Mb/s",
+          "range": "1, 2, 5.5 or 11 (802.11b, 2.4 GHz only), 6, 12 or 24 (802.11a/g); default 6"
+        },
+        {
+          "name": "Show",
+          "unit": "choice",
+          "range": "Multicast, Unicast, or Both (default)"
+        },
+        {
+          "name": "Listening clients",
+          "unit": "count",
+          "range": "1 to 30; default 5"
+        },
+        {
+          "name": "Listener rates",
+          "unit": "MCS (modulation and coding scheme)",
+          "range": "Spread (MCS 9, 5, 7, 3, 11, 1, repeating; default), All close (MCS 9), All far (MCS 1); all illustrative"
+        },
+        {
+          "name": "DTIM period",
+          "unit": "beacons",
+          "range": "1 to 10; default 3. Beacons every 102.4 ms"
+        },
+        {
+          "name": "A client is in power save",
+          "unit": "switch",
+          "range": "Off (default) or On"
+        }
+      ],
+      "algorithm": "Packets per second = bit rate / (8 x packet size). Each packet becomes a frame of packet + 26-byte header + 4-byte checksum + 16 bytes of encryption, as in Airtime Anatomy. Multicast airtime per packet = DIFS (distributed interframe space, SIFS + 2 slots) + average backoff (half the minimum contention window, in slots) + preamble + data, with no acknowledgment. At 802.11a/g rates the preamble and data come from Airtime Anatomy's timing (9 µs slot, minimum contention window 15). At 802.11b rates the preamble is the long one, 192 µs, the data takes 8 x frame bytes / rate microseconds, the slot is 20 µs, SIFS 10 µs and the minimum contention window 31. Each unicast copy is a full Airtime Anatomy exchange: wait (AIFS, arbitration interframe space, plus average backoff, video access category), preamble, data, SIFS and ACK, as a Wi-Fi 6 frame at 20 MHz, 2 spatial streams, 0.8 µs guard interval, at the listener's MCS, with the ACK at 24 Mb/s. Airtime share = airtime per packet x packets per second / 1 s. The break-even listener count is the smallest count at which the copies take at least as long as the one multicast frame. With a client in power save, a packet that reaches the AP is sent right after the next DTIM beacon (every DTIM period x 102.4 ms), so the added delay is up to one DTIM interval and half of it on average. Frames go on the air in order, each after the one before it.",
+      "example": "Defaults: 4 Mb/s video in 1,316-byte packets is about 380 packets per second. At a 6 Mb/s basic rate on 5 GHz each multicast frame takes 1,941.5 µs, so the stream uses 73.8% of the channel. The same stream converted to unicast for five listeners spread across the MCS range takes 1,207.5 µs per packet, 45.9% of the channel, and the break-even is 8 listeners. Raise the basic rate to 24 Mb/s and multicast drops to 21.9%. On 2.4 GHz at 1 Mb/s it would need 435% of the channel: it does not fit.",
+      "fieldNotes": [
+        "RFC 9119 (Request for Comments 9119, from the IETF, the Internet Engineering Task Force, 2021) describes these multicast problems on Wi-Fi. The values in this tool are computed from the airtime model, not taken from the RFC.",
+        "The stream presets, the default bit rate and packet size, the listeners' rates and the unicast radio settings are illustrative, chosen to show the effect, not measured.",
+        "One AP, no other traffic, no collisions and no retries. Beacons are drawn as markers; their own airtime is what SSID Airtime shows.",
+        "A unicast copy to a dozing client waits for that client to wake, which this tool does not draw: the power save switch holds multicast only.",
+        "The 802.11b timing (192 µs long preamble, 20 µs slot) uses the standard's well-known values; IEEE 802.11 itself was not re-read for this tool.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "Wi-Fi Classroom wave 4 research brief, row C: RFC 9119 (IETF, 2021) as the problem statement, read from summaries. Frame timing from the Airtime Anatomy tool's model (the IEEE 802.11 transmit-time equations and default channel-access parameters). Computed on your device."
+    },
     "mlo-simulator": {
       "name": "Multi-Link Operation",
       "category": "Wi-Fi Classroom",
