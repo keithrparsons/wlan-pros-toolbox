@@ -3896,9 +3896,10 @@ Draws free-space path loss, or the received power it leaves, against distance fo
 **How to use**
 1. Turn bands on and off with the chips at the bottom of the screen (on a wide screen, the panel on the right). Each band has its own line style: 2.4 GHz solid with a circle, 5 GHz dashed with a square, 6 GHz dotted with a triangle.
 2. Drag across the chart or tap it to move the cursor, or use the Cursor slider under it. The table under the chart shows path loss and received power for each band at that distance, and the difference between bands.
-3. Switch the chart between Received and Path loss, and the distance axis between 100 m and 1 km. In the Received view, dashed lines mark the -67 dBm voice and -70 dBm HD video design targets from the Signal Thresholds tool.
+3. Switch the chart between Received and Path loss, and the distance axis between 100 m and 1 km. In the Received view, dashed lines mark design targets. By default they are the -67 dBm voice and -70 dBm HD video targets from the Signal Thresholds tool.
 4. Open the controls (the tune button) to pick any 20 MHz channel per band, set Tx power, both antenna gains and other losses, turn on the indoor log-distance model and set its exponent, or enter a measured RSSI and the distance it was taken at. The measured point plots as a diamond with its gap to the free-space curve in dB.
-5. On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down double and halve the cursor distance, F switches full screen, ? lists the keys and Esc exits.
+5. Under Design targets in the controls, set each line's level in dBm and a short label, add a line (up to four) or remove one. A line with no label reads as its level, for example -72 dBm. Your lines are saved on this device for every lesson, and Reset to -67 voice / -70 HD video puts the defaults back.
+6. On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down double and halve the cursor distance, F switches full screen, ? lists the keys and Esc exits.
 
 **Inputs**
 
@@ -3912,6 +3913,7 @@ Draws free-space path loss, or the received power it leaves, against distance fo
 | Path-loss exponent n | none | 2.0 to 4.0; default 3.0; indoor model only |
 | Measured RSSI | dBm | -120 to 0 |
 | Measured distance | m | 1 to 1,000 |
+| Design targets | dBm and a label | up to 4 lines, each -100 to -30 dBm with a label of up to 24 characters; default -67 dBm voice and -70 dBm HD video |
 
 **How it works.** FSPL (dB) = 20 log10(4 pi d / lambda), with lambda = c / f and c = 299,792,458 m/s. With d in meters and f in MHz this is 20 log10(d) + 20 log10(f) - 27.55. It splits exactly into spreading loss 10 log10(4 pi d^2), the same at every frequency, plus the aperture term -10 log10(lambda^2 / 4 pi), which depends only on frequency. Received power = Tx power + Tx gain + Rx gain - path loss - other losses. The band difference at equal distance is 20 log10(f2 / f1). The indoor model is PL(d) = FSPL(1 m) + 10 n log10(d / 1 m).
 
