@@ -89,6 +89,7 @@ class AntennaFundamentalsScreen extends StatelessWidget {
                 const _Section(
                   number: '0',
                   title: 'The one idea',
+                  emphasizedParagraphs: <int>{2},
                   paragraphs: <String>[
                     'An antenna is not a power booster. It is a shaper.',
                     'Take the same radio, leave the transmit power exactly where '
@@ -622,6 +623,7 @@ class _Section extends StatelessWidget {
     required this.title,
     this.introParagraphs = const <String>[],
     this.paragraphs = const <String>[],
+    this.emphasizedParagraphs = const <int>{},
     this.bullets = const <_Bullet>[],
     this.trailingParagraphs = const <String>[],
     this.subsections = const <_Subsection>[],
@@ -646,6 +648,9 @@ class _Section extends StatelessWidget {
   /// Lead paragraphs, rendered right after the header (and after a leading
   /// diagram if one is set).
   final List<String> paragraphs;
+
+  /// Indices into [paragraphs] rendered bold in the accent green.
+  final Set<int> emphasizedParagraphs;
   final List<_Bullet> bullets;
 
   /// Paragraphs after the bullets.
@@ -700,17 +705,19 @@ class _Section extends StatelessWidget {
         ..add(const SizedBox(height: AppSpacing.md));
     }
 
-    void prose(Iterable<String> ps, {bool muted = false}) {
+    void prose(Iterable<String> ps,
+        {bool muted = false, Set<int> emphasize = const <int>{}}) {
+      int i = 0;
       for (final String p in ps) {
         children
-          ..add(_Para(text: p, muted: muted))
+          ..add(_Para(text: p, muted: muted, emphasis: emphasize.contains(i++)))
           ..add(const SizedBox(height: AppSpacing.sm));
       }
     }
 
     prose(introParagraphs);
     if (leadingDiagram != null) diagram(leadingDiagram!);
-    prose(paragraphs);
+    prose(paragraphs, emphasize: emphasizedParagraphs);
 
     if (customAfterLeading != null) {
       children
@@ -832,10 +839,15 @@ class _SectionHeader extends StatelessWidget {
 /// A body paragraph (§8.2 body register). [muted] renders the GL-005 "these are
 /// ranges" note in the secondary register; default is primary body text.
 class _Para extends StatelessWidget {
-  const _Para({required this.text, this.muted = false});
+  const _Para({required this.text, this.muted = false, this.emphasis = false});
 
   final String text;
   final bool muted;
+
+  /// Keith, 2026-09-27: the section's rule should stand out, bold and green.
+  /// Uses [AppColorScheme.textAccent] (lime in dark, darkened lime in light) so
+  /// the green stays legible on both canvases (GL-003 §8.20.2).
+  final bool emphasis;
 
   @override
   Widget build(BuildContext context) {
@@ -844,8 +856,11 @@ class _Para extends StatelessWidget {
     return Text(
       text,
       style: (t.bodyMedium ?? const TextStyle()).copyWith(
-        color: muted ? colors.textSecondary : colors.textPrimary,
+        color: emphasis
+            ? colors.textAccent
+            : (muted ? colors.textSecondary : colors.textPrimary),
         height: 1.5,
+        fontWeight: emphasis ? FontWeight.w700 : null,
         fontStyle: muted ? FontStyle.italic : FontStyle.normal,
       ),
     );
