@@ -19,6 +19,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'uplink_downlink_controller.dart';
 import 'uplink_downlink_parts.dart';
 
@@ -40,31 +41,35 @@ String udImbalanceSentence(UdConfig c) {
 }
 
 /// The presenter-stage form of [udZoneSentence].
-String udZoneShort(UdConfig c) {
+String udZoneShort(UdConfig c, [UnitSystem u = UnitSystem.metric]) {
   if (c.zoneMiddleM == null) return 'The rings are the same size.';
   final bool down = c.downlinkRingM >= c.uplinkRingM;
   final double lo = down ? c.uplinkRingM : c.downlinkRingM;
   final double hi = down ? c.downlinkRingM : c.uplinkRingM;
-  return 'From ${UdFormat.dist(lo)} to ${UdFormat.dist(hi)}: only '
+  return 'From ${UdFormat.dist(lo, u)} to ${UdFormat.dist(hi, u)}: only '
       '${down ? 'the client' : 'the AP'} decodes.';
 }
 
 /// The presenter-stage form of udMatchSummary.
-String udMatchShort(UdConfig before, UdConfig after) =>
+String udMatchShort(
+  UdConfig before,
+  UdConfig after, [
+  UnitSystem u = UnitSystem.metric,
+]) =>
     'AP turned down to ${UdFormat.n(after.apTxDbm)} dBm. Downlink ring '
-    '${UdFormat.dist(before.downlinkRingM)} to '
-    '${UdFormat.dist(after.downlinkRingM)}. Uplink unchanged.';
+    '${UdFormat.dist(before.downlinkRingM, u)} to '
+    '${UdFormat.dist(after.downlinkRingM, u)}. Uplink unchanged.';
 
 /// One sentence on the asymmetry zone.
-String udZoneSentence(UdConfig c) {
+String udZoneSentence(UdConfig c, [UnitSystem u = UnitSystem.metric]) {
   if (c.zoneMiddleM == null) {
     return 'No asymmetry zone: both rings are the same size.';
   }
   final bool down = c.downlinkRingM >= c.uplinkRingM;
   final double lo = down ? c.uplinkRingM : c.downlinkRingM;
   final double hi = down ? c.downlinkRingM : c.uplinkRingM;
-  return 'Asymmetry zone: ${UdFormat.dist(c.asymmetryZoneM)} wide, from '
-      '${UdFormat.dist(lo)} to ${UdFormat.dist(hi)}. There '
+  return 'Asymmetry zone: ${UdFormat.dist(c.asymmetryZoneM, u)} wide, from '
+      '${UdFormat.dist(lo, u)} to ${UdFormat.dist(hi, u)}. There '
       '${down ? 'the client still decodes the AP, but the AP cannot decode the client' : 'the AP still decodes the client, but the client cannot decode the AP'}.';
 }
 
@@ -93,6 +98,7 @@ class UplinkDownlinkReadouts extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final UdConfig c = controller.config;
     final UdConfig? before = controller.beforeMatch;
+    final UnitSystem u = controller.units;
     TextStyle body() => text.bodyMedium!.copyWith(color: colors.textPrimary);
     TextStyle small() => text.bodySmall!.copyWith(color: colors.textTertiary);
 
@@ -103,7 +109,7 @@ class UplinkDownlinkReadouts extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            UdSectionLabel('Client at ${UdFormat.dist(c.clientDistanceM)}'),
+            UdSectionLabel('Client at ${UdFormat.dist(c.clientDistanceM, u)}'),
             Text(
               'Each way: level, MCS and signal-to-noise ratio (SNR)',
               style: small(),
@@ -146,17 +152,19 @@ class UplinkDownlinkReadouts extends StatelessWidget {
               label: 'Asymmetry zone',
               value: c.zoneMiddleM == null
                   ? 'none'
-                  : '${UdFormat.dist(c.asymmetryZoneM)} wide',
+                  : '${UdFormat.dist(c.asymmetryZoneM, u)} wide',
             ),
             Text(
-              compact ? udZoneShort(c) : udZoneSentence(c),
+              compact ? udZoneShort(c, u) : udZoneSentence(c, u),
               style: compact ? small() : body(),
             ),
             if (before != null) ...<Widget>[
               const SizedBox(height: AppSpacing.xs),
               UdNote(
                 Icons.compare_arrows,
-                compact ? udMatchShort(before, c) : udMatchSummary(before, c),
+                compact
+                    ? udMatchShort(before, c, u)
+                    : udMatchSummary(before, c, u),
               ),
             ],
             if (!compact) ...<Widget>[

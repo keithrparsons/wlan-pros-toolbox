@@ -54,6 +54,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'body_loss_controller.dart';
 import 'body_loss_controls.dart';
 import 'body_loss_parts.dart';
@@ -72,7 +74,13 @@ class BodyLossScreen extends StatefulWidget {
   State<BodyLossScreen> createState() => _BodyLossScreenState();
 }
 
-class _BodyLossScreenState extends State<BodyLossScreen> {
+class _BodyLossScreenState extends State<BodyLossScreen>
+    with UnitSystemFollower<BodyLossScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   final BodyLossController _controller = BodyLossController();
 
   @override
@@ -84,6 +92,7 @@ class _BodyLossScreenState extends State<BodyLossScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied). The readouts and the prediction are on the stage.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Body Loss',
     stage: BodyLossStage(controller: _controller, stageHeight: 0),
     controls: BodyLossControls(controller: _controller),
@@ -97,6 +106,7 @@ class _BodyLossScreenState extends State<BodyLossScreen> {
         title: const Text('Body Loss'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.bodyLoss, builder: _presenter),
           AppCopyAction(textBuilder: _controller.copyText),
         ],

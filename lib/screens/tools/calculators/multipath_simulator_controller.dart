@@ -16,6 +16,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/multipath_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kMultipathSimulatorToolId = 'multipath-simulator';
@@ -333,6 +335,35 @@ class MultipathController extends ChangeNotifier {
     return '${meters.toStringAsFixed(meters < 10 ? 2 : 1)} m';
   }
 
+  /// A short length in [u]: [cm] to [decimals] in metric, inches by the
+  /// shared small rule in imperial.
+  static String len(double meters, UnitSystem u, [int decimals = 1]) =>
+      u.isMetric ? cm(meters, decimals) : LengthFormat(u).small(meters);
+
+  /// An extra path length in [u]: [m] in metric; in imperial inches under a
+  /// foot, else feet to two decimals under 10 ft, one above.
+  static String path(double meters, UnitSystem u) {
+    if (u.isMetric) return m(meters);
+    final double ft = LengthUnits.metresToFeet(meters);
+    if (ft < 1) return LengthFormat(u).small(meters);
+    return '${ft.toStringAsFixed(ft < 10 ? 2 : 1)} ft';
+  }
+
+  /// A plain distance label, "1 m" / "3.3 ft", "10 m" / "33 ft".
+  static String dist(double meters, UnitSystem u) =>
+      LengthFormat(u).dist(meters);
+
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The scene stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   static String ns(double v) =>
       v < 10 ? '${v.toStringAsFixed(2)} ns' : '${v.toStringAsFixed(0)} ns';
 
@@ -351,8 +382,8 @@ class MultipathController extends ChangeNotifier {
       ..writeln('Multipath Simulator')
       ..writeln('Mode: ${_mode.label}')
       ..writeln(
-        'Band: ${_band.label}, wavelength ${cm(_band.wavelength, 2)}, '
-        'half wavelength ${cm(_band.wavelength / 2, 2)}',
+        'Band: ${_band.label}, wavelength ${len(_band.wavelength, _units, 2)}, '
+        'half wavelength ${len(_band.wavelength / 2, _units, 2)}',
       );
     if (!isManyPaths) {
       final double extra = delayRows.first.extraMeters;
@@ -363,12 +394,13 @@ class MultipathController extends ChangeNotifier {
         )
         ..writeln(
           _mode == MultipathMode.oneWall
-              ? 'Receiver: ${cm(_t)} along the 1 m track'
-              : 'Receiver: ${cm(_d)} from the wall',
+              ? 'Receiver: ${len(_t, _units)} along the '
+                    '${dist(twoRay.trackLength, _units)} track'
+              : 'Receiver: ${len(_d, _units)} from the wall',
         )
         ..writeln('Received: ${db(receivedDb)} vs the direct path alone')
         ..writeln(
-          'Reflected copy: ${m(extra)} longer, '
+          'Reflected copy: ${path(extra, _units)} longer, '
           '${ns(MultipathMath.delayNs(extra))} late',
         );
       return b.toString().trimRight();
@@ -376,10 +408,12 @@ class MultipathController extends ChangeNotifier {
     final FadeStats f = fade;
     b
       ..writeln('Reflectors: $_count (${_env.label}, layout $_seed)')
-      ..writeln('Antenna A at ${cm(_x)}: ${db(receivedDb)} vs the average')
+      ..writeln(
+        'Antenna A at ${len(_x, _units)}: ${db(receivedDb)} vs the average',
+      )
       ..writeln(
         'Antenna B offset: ${_offsetLambda.toStringAsFixed(2)} '
-        'wavelengths (${cm(offsetMeters)})',
+        'wavelengths (${len(offsetMeters, _units)})',
       )
       ..writeln('Below -10 dB, A: ${pct(f.fractionA)}')
       ..writeln('Below -10 dB, B: ${pct(f.fractionB)}')

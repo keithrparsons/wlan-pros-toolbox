@@ -29,6 +29,8 @@ import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'devices_disagree_controller.dart';
 import 'devices_disagree_parts.dart';
@@ -290,6 +292,8 @@ class DevicesDisagreeControls extends StatelessWidget {
     final DevicesDisagreeController c = controller;
     final DdConfig cfg = c.config;
     final double half = cfg.band.wavelength / 2;
+    final UnitSystem u = c.units;
+    final LengthFormat f = LengthFormat(u);
     return <Widget>[
       const SizedBox(height: AppSpacing.xs),
       AppToggle<DdBand>(
@@ -301,32 +305,48 @@ class DevicesDisagreeControls extends StatelessWidget {
         ],
         onChanged: (DdBand b) => c.band = b,
       ),
+      // The sliders run in the unit on screen: whole metres or whole feet,
+      // whole cm or tenths of an inch. The model stays in metres.
       _slider(
         context,
         label: 'AP distance',
-        valueText: DdFormat.meters(cfg.distanceM),
-        value: cfg.distanceM,
-        min: kMinDistanceM,
-        max: kMaxDistanceM,
-        divisions: (kMaxDistanceM - kMinDistanceM).round(),
-        onChanged: (double v) => c.distanceM = v.roundToDouble(),
-        semantic: (double v) => 'AP distance ${v.round()} meters',
+        valueText: DdFormat.meters(cfg.distanceM, u),
+        value: f.distValue(cfg.distanceM),
+        min: f.distValue(kMinDistanceM).ceilToDouble(),
+        max: f.distValue(kMaxDistanceM).floorToDouble(),
+        divisions:
+            (f.distValue(kMaxDistanceM).floorToDouble() -
+                    f.distValue(kMinDistanceM).ceilToDouble())
+                .round(),
+        onChanged: (double v) =>
+            c.distanceM = c.snapDistance(f.distToMetres(v)),
+        semantic: (double v) => 'AP distance ${v.round()} ${f.distUnitSpoken}',
       ),
       _slider(
         context,
         label: 'Spacing between devices',
-        valueText: DdFormat.cm(cfg.spacingM),
-        value: cfg.spacingM,
+        valueText: DdFormat.cm(cfg.spacingM, u),
+        value: u.isMetric
+            ? cfg.spacingM * 100
+            : LengthUnits.metresToInches(cfg.spacingM),
         min: 0,
-        max: kMaxSpacingM,
-        divisions: (kMaxSpacingM * 100).round(),
-        onChanged: (double v) => c.spacingM = (v * 100).roundToDouble() / 100,
-        semantic: (double v) =>
-            'Spacing between devices ${(v * 100).round()} centimeters',
+        max: u.isMetric
+            ? kMaxSpacingM * 100
+            : (LengthUnits.metresToInches(kMaxSpacingM) * 10).floorToDouble() /
+                  10,
+        divisions: u.isMetric
+            ? (kMaxSpacingM * 100).round()
+            : (LengthUnits.metresToInches(kMaxSpacingM) * 10).floor(),
+        onChanged: (double v) => c.spacingM = u.isMetric
+            ? v.roundToDouble() / 100
+            : LengthUnits.inchesToMetres((v * 10).roundToDouble() / 10),
+        semantic: (double v) => u.isMetric
+            ? 'Spacing between devices ${v.round()} centimeters'
+            : 'Spacing between devices ${v.toStringAsFixed(1)} inches',
       ),
       Text(
         'Half a wavelength at ${cfg.band.label} is '
-        '${DdFormat.cmPrecise(half)}. Farther apart than that, each device '
+        '${DdFormat.cmPrecise(half, u)}. Farther apart than that, each device '
         'sees its own fade.',
         style: Theme.of(
           context,

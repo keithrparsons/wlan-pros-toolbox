@@ -51,6 +51,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'spatial_reuse_panels.dart';
 import 'spatial_reuse_stage.dart';
 import 'spatial_reuse_state.dart';
@@ -69,7 +71,13 @@ class SpatialReuseScreen extends StatefulWidget {
   State<SpatialReuseScreen> createState() => _SpatialReuseScreenState();
 }
 
-class _SpatialReuseScreenState extends State<SpatialReuseScreen> {
+class _SpatialReuseScreenState extends State<SpatialReuseScreen>
+    with UnitSystemFollower<SpatialReuseScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _state.setUnits(system);
+  }
+
   final SpatialReuseState _state = SpatialReuseState();
 
   @override
@@ -85,6 +93,7 @@ class _SpatialReuseScreenState extends State<SpatialReuseScreen> {
         title: const Text('Spatial Reuse'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.spatialReuse, builder: _presenter),
           AppCopyAction(textBuilder: _state.copyText),
         ],
@@ -103,6 +112,7 @@ class _SpatialReuseScreenState extends State<SpatialReuseScreen> {
   /// The decision and both links are on the presenter stage, so the panel
   /// holds only the controls.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Spatial Reuse',
     stage: SpatialReuseStage(state: _state),
     controls: ReuseCard(child: SpatialReuseControls(state: _state)),

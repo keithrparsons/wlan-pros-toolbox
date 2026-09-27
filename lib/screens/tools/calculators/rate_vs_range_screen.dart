@@ -51,6 +51,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'rate_vs_range_controls.dart';
 import 'rate_vs_range_model.dart';
 import 'rate_vs_range_parts.dart';
@@ -68,7 +70,13 @@ class RateVsRangeScreen extends StatefulWidget {
   State<RateVsRangeScreen> createState() => _RateVsRangeScreenState();
 }
 
-class _RateVsRangeScreenState extends State<RateVsRangeScreen> {
+class _RateVsRangeScreenState extends State<RateVsRangeScreen>
+    with UnitSystemFollower<RateVsRangeScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _model.setUnits(system);
+  }
+
   final RateVsRangeModel _model = RateVsRangeModel();
 
   @override
@@ -80,6 +88,7 @@ class _RateVsRangeScreenState extends State<RateVsRangeScreen> {
   /// The presenter layout over this screen's model (shared, not copied).
   /// What the client reads is on the stage.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Rate vs Range',
     stage: RateVsRangeStage(model: _model, stageHeight: 0),
     controls: RateVsRangeControls(model: _model),
@@ -93,6 +102,7 @@ class _RateVsRangeScreenState extends State<RateVsRangeScreen> {
         title: const Text('Rate vs Range'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.rateVsRange, builder: _presenter),
           AppCopyAction(textBuilder: _model.copyText),
         ],

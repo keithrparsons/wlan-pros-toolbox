@@ -26,6 +26,8 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'location_controller.dart';
 import 'location_parts.dart';
@@ -186,13 +188,13 @@ class _ReadoutsCard extends StatelessWidget {
           for (int i = 0; i < drawn.length; i++)
             LocRow(
               label:
-                  'AP ${i + 1}, true ${fmtM(drawn[i].trueDistanceM)}'
+                  'AP ${i + 1}, true ${fmtM(drawn[i].trueDistanceM, UnitSystemScope.systemOf(context))}'
                   '${c.isBlocked(i) && methods.contains(LocMethod.ftm) ? ', blocked' : ''}',
               value: <String>[
                 for (final LocMethod m in methods)
                   '${methods.length > 1 ? (m == LocMethod.signal ? 'Signal ' : 'Timing ') : ''}'
-                      '${fmtM(drawn[i].distanceFor(m))} '
-                      '(${fmtSignedM(drawn[i].errorFor(m))})',
+                      '${fmtM(drawn[i].distanceFor(m), UnitSystemScope.systemOf(context))} '
+                      '(${fmtSignedM(drawn[i].errorFor(m), UnitSystemScope.systemOf(context))})',
               ].join('\n'),
             ),
           const SizedBox(height: AppSpacing.xxs),
@@ -201,12 +203,18 @@ class _ReadoutsCard extends StatelessWidget {
               label: '${locMethodShort(m)}: position error',
               value: c.run.result(m).positionErrorM == null
                   ? 'no fix'
-                  : fmtM(c.run.result(m).positionErrorM!),
+                  : fmtM(
+                      c.run.result(m).positionErrorM!,
+                      UnitSystemScope.systemOf(context),
+                    ),
               emphasize: true,
             ),
             LocRow(
               label: '${locMethodShort(m)}: spread radius, $kLocTrials repeats',
-              value: fmtM(c.run.result(m).spreadRadiusM),
+              value: fmtM(
+                c.run.result(m).spreadRadiusM,
+                UnitSystemScope.systemOf(context),
+              ),
             ),
           ],
           const SizedBox(height: AppSpacing.xxs),
@@ -315,11 +323,17 @@ class _WorkedExample extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final LocSettings s = c.settings;
-    final (double lo, double hi) = locOneSigmaRange(10, s.sigmaDb, s.exponent);
+    final UnitSystem u = UnitSystemScope.systemOf(context);
+    final String ten = LengthFormat(u).dist(locWorkedDistanceM(u), decimals: 0);
+    final (double lo, double hi) = locOneSigmaRange(
+      locWorkedDistanceM(u),
+      s.sigmaDb,
+      s.exponent,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const LocSectionLabel('Worked example: a device 10 m away'),
+        LocSectionLabel('Worked example: a device $ten away'),
         const SizedBox(height: AppSpacing.xxs),
         Text(
           '10^(${s.sigmaDb.toStringAsFixed(1)} / (10 x '
@@ -327,10 +341,11 @@ class _WorkedExample extends StatelessWidget {
           'x${c.errorFactor.toStringAsFixed(3)}',
           style: mono.inlineCode.copyWith(color: colors.textPrimary),
         ),
-        LocRow(label: 'One sigma short: 10 m / factor', value: fmtM(lo)),
-        LocRow(label: 'One sigma long: 10 m x factor', value: fmtM(hi)),
-        const LocNote(
-          'The same dB error costs more meters the farther away the AP is: '
+        LocRow(label: 'One sigma short: $ten / factor', value: fmtM(lo, u)),
+        LocRow(label: 'One sigma long: $ten x factor', value: fmtM(hi, u)),
+        LocNote(
+          'The same dB error costs more ${u.isMetric ? 'meters' : 'feet'} '
+          'the farther away the AP is: '
           'the error is a factor, not a fixed distance.',
         ),
       ],
@@ -352,27 +367,28 @@ class _TimingCard extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final Widget error = LocSlider(
       label: compact
-          ? 'Error (vendor-documented 1 to 2 m)'
-          : 'Timing error, one standard deviation (vendor-documented 1 to 2 m)',
-      valueText: fmtM(s.ftmErrorM),
+          ? 'Error (vendor-documented ${locVendorRange(c.units)})'
+          : 'Timing error, one standard deviation (vendor-documented '
+                '${locVendorRange(c.units)})',
+      valueText: fmtM(s.ftmErrorM, UnitSystemScope.systemOf(context)),
       value: s.ftmErrorM,
       min: kLocMinFtmErrorM,
       max: kLocMaxFtmErrorM,
       divisions: ((kLocMaxFtmErrorM - kLocMinFtmErrorM) * 10).round(),
       onChanged: (double v) => c.ftmErrorM = v,
-      semanticValue: (double v) => '${v.toStringAsFixed(1)} meters',
+      semanticValue: (double v) => fmtM(v, c.units),
     );
     final Widget bias = LocSlider(
       label: compact
           ? 'Blocked extra (illustrative)'
           : 'Blocked-path extra distance (illustrative)',
-      valueText: fmtM(s.blockedBiasM),
+      valueText: fmtM(s.blockedBiasM, UnitSystemScope.systemOf(context)),
       value: s.blockedBiasM,
       min: 0,
       max: kLocMaxBlockedBiasM,
       divisions: (kLocMaxBlockedBiasM * 2).round(),
       onChanged: (double v) => c.blockedBiasM = v,
-      semanticValue: (double v) => '${v.toStringAsFixed(1)} meters',
+      semanticValue: (double v) => fmtM(v, c.units),
     );
     final Widget chips = Wrap(
       spacing: AppSpacing.xs,
@@ -451,9 +467,9 @@ class _TimingCard extends StatelessWidget {
           const LocSectionLabel('Round-trip timing (FTM, from 802.11mc)'),
           const SizedBox(height: AppSpacing.xxs),
           error,
-          const LocNote(
-            'The 1 to 2 m figure comes from a vendor developer document, not '
-            'a measurement here.',
+          LocNote(
+            'The ${locVendorRange(c.units)} figure comes from a vendor '
+            'developer document, not a measurement here.',
           ),
           const SizedBox(height: AppSpacing.xs),
           Text('Direct path blocked', style: chipsLabel),
@@ -484,19 +500,24 @@ class _LightSpeed extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const LocSectionLabel('Why timing gives meters'),
+        LocSectionLabel(
+          'Why timing gives ${c.units.isMetric ? 'meters' : 'feet'}',
+        ),
         LocRow(
           label: 'Light travels, per nanosecond',
-          value: '${(kLocMetersPerNs * 100).toStringAsFixed(0)} cm',
+          value: c.units.isMetric
+              ? '${(kLocMetersPerNs * 100).toStringAsFixed(0)} cm'
+              : LengthFormat(c.units).small(kLocMetersPerNs, decimals: 1),
         ),
         LocRow(
           label: '1 ns of round-trip time (RTT) is',
           value:
-              '${(locDistanceFromRoundTripNs(1) * 100).toStringAsFixed(0)} cm '
+              '${c.units.isMetric ? '${(locDistanceFromRoundTripNs(1) * 100).toStringAsFixed(0)} cm' : LengthFormat(c.units).small(locDistanceFromRoundTripNs(1), decimals: 1)} '
               'of distance',
         ),
         LocRow(
-          label: 'RTT to AP 1 now (${fmtM(d0)})',
+          label:
+              'RTT to AP 1 now (${fmtM(d0, UnitSystemScope.systemOf(context))})',
           value: '${locRoundTripNs(d0).toStringAsFixed(1)} ns',
         ),
         const LocNote(
@@ -587,29 +608,41 @@ class _FloorCard extends StatelessWidget {
           ),
           LocSlider(
             label: 'Device position, across',
-            valueText: fmtM(d.x),
-            value: d.x,
+            valueText: fmtM(d.x, c.units),
+            // 0.5 m steps, or whole feet.
+            value: LengthFormat(c.units).distValue(d.x),
             min: 0,
-            max: kLocFloorWidthM,
-            divisions: (kLocFloorWidthM * 2).round(),
-            onChanged: (double v) => c.device = (x: v, y: d.y),
-            semanticValue: (double v) => '${v.toStringAsFixed(1)} meters',
+            max: c.units.isMetric
+                ? kLocFloorWidthM
+                : LengthUnits.metresToFeet(kLocFloorWidthM).floorToDouble(),
+            divisions: c.units.isMetric
+                ? (kLocFloorWidthM * 2).round()
+                : LengthUnits.metresToFeet(kLocFloorWidthM).floor(),
+            onChanged: (double v) =>
+                c.device = (x: LengthFormat(c.units).distToMetres(v), y: d.y),
+            semanticValue: (double v) => fmtM(v, c.units),
           ),
           LocSlider(
             label: 'Device position, down',
-            valueText: fmtM(d.y),
-            value: d.y,
+            valueText: fmtM(d.y, c.units),
+            // 0.5 m steps, or whole feet.
+            value: LengthFormat(c.units).distValue(d.y),
             min: 0,
-            max: kLocFloorDepthM,
-            divisions: (kLocFloorDepthM * 2).round(),
-            onChanged: (double v) => c.device = (x: d.x, y: v),
-            semanticValue: (double v) => '${v.toStringAsFixed(1)} meters',
+            max: c.units.isMetric
+                ? kLocFloorDepthM
+                : LengthUnits.metresToFeet(kLocFloorDepthM).floorToDouble(),
+            divisions: c.units.isMetric
+                ? (kLocFloorDepthM * 2).round()
+                : LengthUnits.metresToFeet(kLocFloorDepthM).floor(),
+            onChanged: (double v) =>
+                c.device = (x: d.x, y: LengthFormat(c.units).distToMetres(v)),
+            semanticValue: (double v) => fmtM(v, c.units),
           ),
           LocRow(
             label: 'Floor',
             value:
-                '${kLocFloorWidthM.toStringAsFixed(0)} m x '
-                '${kLocFloorDepthM.toStringAsFixed(0)} m',
+                '${LengthFormat(c.units).dist(kLocFloorWidthM, decimals: 0)} x '
+                '${LengthFormat(c.units).dist(kLocFloorDepthM, decimals: 0)}',
           ),
         ],
       ),

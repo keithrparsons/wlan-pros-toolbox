@@ -21,6 +21,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'rate_vs_range_painter.dart' show RvrStageGeometry;
 
 export 'rate_vs_range_painter.dart' show RvrStageGeometry;
@@ -60,6 +62,7 @@ class UdStageStyle {
 class UdStagePainter extends CustomPainter {
   UdStagePainter({
     required this.rangeM,
+    this.units = UnitSystem.metric,
     required this.downRingM,
     required this.upRingM,
     required this.clientDistanceM,
@@ -75,6 +78,9 @@ class UdStagePainter extends CustomPainter {
   });
 
   final double rangeM;
+
+  /// Units for the grid circle labels.
+  final UnitSystem units;
   final double downRingM;
   final double upRingM;
   final double clientDistanceM;
@@ -168,7 +174,10 @@ class UdStagePainter extends CustomPainter {
     for (final double f in <double>[0.5, 1]) {
       final double r = g.radiusPx * f;
       _dashedCircle(canvas, g.center, r, p, dash: 2, gap: 4);
-      final TextPainter tp = _text(_meters(rangeM * f), style.gridLabel);
+      final TextPainter tp = _text(
+        LengthFormat(units).ring(rangeM * f, rangeM: rangeM),
+        style.gridLabel,
+      );
       final Offset at = g.center + Offset(-r + 2, 2);
       _knockout(canvas, at, tp);
       _placed.add((at & tp.size).inflate(2));
@@ -315,7 +324,11 @@ class UdStagePainter extends CustomPainter {
       style.scale.markerSize(9),
       Paint()..color = style.surface,
     );
-    canvas.drawCircle(cl, style.scale.markerSize(7), Paint()..color = style.ink);
+    canvas.drawCircle(
+      cl,
+      style.scale.markerSize(7),
+      Paint()..color = style.ink,
+    );
 
     // Arrow labels, one on each side of the pair, kept on the canvas. When
     // the client is close to the AP they stack beside the client instead.
@@ -432,10 +445,6 @@ class UdStagePainter extends CustomPainter {
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────
-
-  static String _meters(double m) => m >= 1000
-      ? '${(m / 1000).toStringAsFixed(m % 1000 == 0 ? 0 : 1)} km'
-      : '${m.round()} m';
 
   TextPainter _text(String s, TextStyle st) => TextPainter(
     text: TextSpan(text: s, style: st),

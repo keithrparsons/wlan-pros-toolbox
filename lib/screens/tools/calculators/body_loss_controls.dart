@@ -27,6 +27,8 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'body_loss_controller.dart';
 import 'body_loss_parts.dart';
 
@@ -335,7 +337,8 @@ class BodyLossExplainer extends StatelessWidget {
             'receiver floors at 20 MHz. The turn share is 0 facing the AP and '
             'rises along a cosine curve to 1 as the back turns square to it. '
             'A person is on the line when the straight line from the AP to '
-            'the device passes through their body, taken as 0.5 m wide.',
+            'the device passes through their body, taken as '
+            '${LengthFormat(UnitSystemScope.systemOf(context)).dist(0.5)} wide.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),

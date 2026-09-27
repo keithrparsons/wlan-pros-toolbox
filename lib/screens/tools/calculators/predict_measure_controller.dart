@@ -17,6 +17,8 @@ import 'package:flutter/services.dart';
 import '../../../services/wifi_lab/heat_map_builder_engine.dart';
 import '../../../services/wifi_lab/predict_measure_engine.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kPredictMeasureToolId = 'predict-then-measure';
@@ -44,6 +46,41 @@ enum PmTapAction {
 }
 
 class PredictMeasureController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The floor stays in metres.
+  UnitSystem get units => _units;
+
+  /// The formatter for [units].
+  LengthFormat get lf => LengthFormat(_units);
+
+  /// A floor length: "12.5 m" / "41 ft" (a tenth only when needed).
+  String len(double m) {
+    final double v = lf.distValue(m);
+    return '${_units.isMetric ? fmtM(v) : v.round().toString()} ${lf.distUnit}';
+  }
+
+  /// A floor coordinate, number only, in the unit on screen.
+  String coord(double m) =>
+      _units.isMetric ? fmtM(m) : lf.distValue(m).round().toString();
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
+  /// Rounds an AP coordinate to 0.5 m, or a whole foot, inside the floor
+  /// with half a metre to spare.
+  double _snapAp(double v, double span) {
+    if (_units.isMetric) return ((v * 2).round() / 2).clamp(0.5, span - 0.5);
+    final double lo = LengthUnits.metresToFeet(0.5).ceilToDouble();
+    final double hi = LengthUnits.metresToFeet(span - 0.5).floorToDouble();
+    return LengthUnits.feetToMetres(
+      LengthUnits.metresToFeet(v).roundToDouble().clamp(lo, hi),
+    );
+  }
+
   PredictMeasureController({PmPreset preset = PmPreset.office})
     : _preset = preset {
     _load(pmScenario(preset).defaultSeed);
@@ -262,10 +299,7 @@ class PredictMeasureController extends ChangeNotifier {
   void updateModel() {
     if (_survey.tests.isEmpty) return;
     _model = _model.copyWith(walls: pmUpdateModel(_model.walls, _survey));
-    _updated = Set<int>.unmodifiable(<int>{
-      ..._updated,
-      ..._survey.tests.keys,
-    });
+    _updated = Set<int>.unmodifiable(<int>{..._updated, ..._survey.tests.keys});
     _changed(predicted: true);
   }
 
@@ -275,8 +309,8 @@ class PredictMeasureController extends ChangeNotifier {
   /// spot, as it would be on site.
   void moveAp(HmPoint p) {
     final HmPoint q = (
-      x: ((p.x * 2).round() / 2).clamp(0.5, _model.widthM - 0.5),
-      y: ((p.y * 2).round() / 2).clamp(0.5, _model.depthM - 0.5),
+      x: _snapAp(p.x, _model.widthM),
+      y: _snapAp(p.y, _model.depthM),
     );
     if (q == _model.ap) return;
     _model = _model.copyWith(ap: q);
@@ -296,10 +330,8 @@ class PredictMeasureController extends ChangeNotifier {
 
   int get sampleCount => _survey.samples.length;
 
-  HmPoint _clampFloor(HmPoint p) => (
-    x: p.x.clamp(0.0, _model.widthM),
-    y: p.y.clamp(0.0, _model.depthM),
-  );
+  HmPoint _clampFloor(HmPoint p) =>
+      (x: p.x.clamp(0.0, _model.widthM), y: p.y.clamp(0.0, _model.depthM));
 
   /// Appends [p] to the last leg when the walk still has room.
   bool _append(HmPoint p, {bool newLeg = false}) {
@@ -499,16 +531,16 @@ class PredictMeasureController extends ChangeNotifier {
       ..writeln('Predict, Then Measure (WLAN Pros Toolbox, teaching model)')
       ..writeln(
         '${_preset.label} floor (illustrative), '
-        '${_model.widthM.toStringAsFixed(0)} m x '
-        '${_model.depthM.toStringAsFixed(0)} m, AP on a stick at '
-        '${fmtM(_model.ap.x)}, ${fmtM(_model.ap.y)} m, '
+        '${len(_model.widthM)} x '
+        '${len(_model.depthM)}, AP on a stick at '
+        '${coord(_model.ap.x)}, ${len(_model.ap.y)}, '
         '${_model.eirpDbm.toStringAsFixed(0)} dBm effective isotropic '
         'radiated power (EIRP), n = '
         '${_model.pathLossExponent.toStringAsFixed(1)} (illustrative)',
       )
       ..writeln(
         'Walk: $sampleCount samples every '
-        '${kPmSampleSpacingM.toStringAsFixed(0)} m, noise '
+        '${len(kPmSampleSpacingM)}, noise '
         '${_sigmaDb.toStringAsFixed(1)} dB (illustrative)',
       )
       ..writeln('Walls (losses illustrative):');

@@ -162,7 +162,7 @@ class RateVsRangeStage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            RvrSectionLabel('Client at ${RvrFormat.dist(c.distanceM)}'),
+            RvrSectionLabel('Client at ${model.dist(c.distanceM)}'),
             const SizedBox(height: AppSpacing.xxs),
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -206,15 +206,15 @@ class RateVsRangeStage extends StatelessWidget {
 
   String _semantics(List<RvrRing> rings, RvrClientReading c) {
     final String radii = rings
-        .map((RvrRing r) => 'MCS ${r.mcs} ${RvrFormat.dist(r.radiusM)}')
+        .map((RvrRing r) => 'MCS ${r.mcs} ${model.dist(r.radiusM)}')
         .join(', ');
     final String at = c.mcs == null
         ? 'below MCS 0'
         : 'MCS ${c.mcs}, ${RvrFormat.rate(c.rateMbps)}';
     return 'Coverage rings around the AP at ${model.widthMHz} MHz: $radii. '
         'Cell edge at ${model.basicRate.label} basic rate '
-        '${RvrFormat.dist(model.cellEdgeM)}. Client at '
-        '${RvrFormat.dist(c.distanceM)}: ${RvrFormat.n(c.receivedDbm)} dBm, '
+        '${model.dist(model.cellEdgeM)}. Client at '
+        '${model.dist(c.distanceM)}: ${RvrFormat.n(c.receivedDbm)} dBm, '
         '$at.';
   }
 
@@ -285,6 +285,7 @@ class RateVsRangeStage extends StatelessWidget {
           child: CustomPaint(
             size: size,
             painter: RvrStagePainter(
+              units: model.units,
               rangeM: range,
               rings: <RvrPaintRing>[
                 for (final RvrRing r in rings)
@@ -335,16 +336,16 @@ class RateVsRangeStage extends StatelessWidget {
                 model.setClientDistance(math.pow(10, v).toDouble()),
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
-            label: RvrFormat.dist(model.clientDistanceM),
+            label: model.dist(model.clientDistanceM),
             semanticFormatterCallback: (double v) =>
-                'Client distance ${RvrFormat.dist(math.pow(10, v).toDouble())}',
+                'Client distance ${model.dist(math.pow(10, v).toDouble())}',
           ),
         ),
         ExcludeSemantics(
           child: SizedBox(
             width: 72 * PresenterMode.scaleOf(context).text,
             child: Text(
-              RvrFormat.dist(model.clientDistanceM),
+              model.dist(model.clientDistanceM),
               textAlign: TextAlign.right,
               style: mono.inlineCode.copyWith(color: colors.textPrimary),
             ),
@@ -371,7 +372,7 @@ class RateVsRangeStage extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   'MCS ${r.mcs}: ${RvrFormat.rate(r.rateMbps)}, '
-                  '${RvrFormat.dist(r.radiusM)}',
+                  '${model.dist(r.radiusM)}',
                   style: text.bodySmall?.copyWith(
                     color: r.mcs == at
                         ? colors.textPrimary
@@ -451,8 +452,8 @@ class RateVsRangeStage extends StatelessWidget {
         Text(
           'Minimum basic rate ${model.basicRate.label}, $rateNote: cell '
           'edge ${RvrFormat.n(model.cellEdgeDbm, 0)} dBm at '
-          '${RvrFormat.dist(model.cellEdgeM)}'
-          '${model.basicRate == RvrBasicRate.mbps6 ? '' : ' (6 Mbps: ${RvrFormat.dist(model.cellEdge6M)})'}.',
+          '${model.dist(model.cellEdgeM)}'
+          '${model.basicRate == RvrBasicRate.mbps6 ? '' : ' (6 Mbps: ${model.dist(model.cellEdge6M)})'}.',
           style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ],

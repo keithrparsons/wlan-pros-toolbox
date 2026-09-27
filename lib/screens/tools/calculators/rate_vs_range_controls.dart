@@ -321,7 +321,7 @@ class RateVsRangeReadouts extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            RvrSectionLabel('Client at ${RvrFormat.dist(c.distanceM)}'),
+            RvrSectionLabel('Client at ${model.dist(c.distanceM)}'),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.md,

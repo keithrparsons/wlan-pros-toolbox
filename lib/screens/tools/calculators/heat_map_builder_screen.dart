@@ -66,6 +66,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'heat_map_builder_controller.dart';
 import 'heat_map_builder_controls.dart';
 import 'heat_map_builder_parts.dart';
@@ -85,7 +87,13 @@ class HeatMapBuilderScreen extends StatefulWidget {
   State<HeatMapBuilderScreen> createState() => _HeatMapBuilderScreenState();
 }
 
-class _HeatMapBuilderScreenState extends State<HeatMapBuilderScreen> {
+class _HeatMapBuilderScreenState extends State<HeatMapBuilderScreen>
+    with UnitSystemFollower<HeatMapBuilderScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final HeatMapBuilderController _controller =
       widget.controller ?? HeatMapBuilderController();
 
@@ -98,6 +106,7 @@ class _HeatMapBuilderScreenState extends State<HeatMapBuilderScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: HeatMapBuilderStage(controller: _controller),
     controls: HeatMapBuilderControls(controller: _controller),
@@ -111,6 +120,7 @@ class _HeatMapBuilderScreenState extends State<HeatMapBuilderScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.heatMapBuilder,
             builder: _presenter,

@@ -23,6 +23,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/repeater_mesh_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/unit_system.dart';
 
 export '../../../services/wifi_lab/repeater_mesh_model.dart'
     show kRepeaterMeshToolId;
@@ -70,6 +71,17 @@ final RmConfig kRmQuestionConfig = RmConfig(
 );
 
 class RepeaterMeshController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The corridor stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   RepeaterMeshController({RmConfig? initial})
     : _config = initial ?? RmConfig(),
       _result = computeRepeaterMesh(initial ?? RmConfig()) {
@@ -242,7 +254,7 @@ class RepeaterMeshController extends ChangeNotifier {
         h.wired
             ? 'Hop ${h.from + 1}, $from to $to: cable'
             : 'Hop ${h.from + 1}, $from to $to, '
-                  '${rmMeters(h.link.distanceM)}: '
+                  '${rmMeters(h.link.distanceM, _units)}: '
                   '${h.link.rxDbm.toStringAsFixed(1)} dBm, '
                   '${h.link.hasLink ? 'MCS ${h.link.mcs}, ${rmMbps(h.throughputMbps)}' : 'no link'}',
       );
@@ -252,7 +264,7 @@ class RepeaterMeshController extends ChangeNotifier {
         'End to end: ${rmMbps(r.endToEndMbps)}, delay ${rmMs(r.delayMs)}',
       )
       ..writeln(
-        'Straight to the AP from ${rmMeters(c.clientM)}: '
+        'Straight to the AP from ${rmMeters(c.clientM, _units)}: '
         '${r.direct.hasLink ? rmMbps(r.direct.throughputMbps) : 'no link'}, '
         'delay ${rmMs(r.directDelayMs)}',
       );

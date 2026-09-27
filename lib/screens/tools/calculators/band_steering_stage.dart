@@ -27,6 +27,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'band_steering_controller.dart';
 import 'band_steering_painters.dart';
@@ -180,7 +182,7 @@ class BsHeadline extends StatelessWidget {
         children: <Widget>[
           Semantics(
             label:
-                '$who, ${s.distanceM.toStringAsFixed(0)} meters from the AP: '
+                '$who, ${_bsLenSpoken(context, s.distanceM)} from the AP: '
                 '${band == null ? 'not connected' : 'on ${band.label}'}',
             excludeSemantics: true,
             child: Column(
@@ -219,7 +221,7 @@ class BsHeadline extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  '${s.distanceM.toStringAsFixed(0)} m from the AP',
+                  '${_bsLen(context, s.distanceM)} from the AP',
                   style: mono.inlineCode.copyWith(color: colors.textPrimary),
                 ),
               ],
@@ -266,10 +268,10 @@ class _FloorCard extends StatelessWidget {
       label:
           'Top-down floor. The AP is at the left; the client walks '
           '${c.path == WalkPath.edgeToAp ? 'from the edge toward the AP' : 'from the AP out to the edge'}. '
-          '2.4 GHz can be heard out to ${ring24.toStringAsFixed(0)} meters, '
-          '5 GHz out to ${ring5.toStringAsFixed(0)} meters. Beacons go out '
-          'on both bands. The client is ${s.distanceM.toStringAsFixed(0)} '
-          'meters away, '
+          '2.4 GHz can be heard out to ${_bsLenSpoken(context, ring24)}, '
+          '5 GHz out to ${_bsLenSpoken(context, ring5)}. Beacons go out '
+          'on both bands. The client is '
+          '${_bsLenSpoken(context, s.distanceM)} away, '
           '${s.band == null ? 'not connected' : 'on ${s.band!.label}'}.',
       excludeSemantics: true,
       child: ClipRRect(
@@ -285,6 +287,7 @@ class _FloorCard extends StatelessWidget {
             clientLetter: c.profile.letter,
             style: bsStageStyle(context),
             pulse: controller.pulse,
+            units: UnitSystemScope.systemOf(context),
           ),
           child: const SizedBox.expand(),
         ),
@@ -309,13 +312,12 @@ class _FloorCard extends StatelessWidget {
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
             semanticFormatterCallback: (double v) =>
-                'Client ${pos[v.round()].toStringAsFixed(0)} meters from the '
-                'AP',
+                'Client ${_bsLenSpoken(context, pos[v.round()])} from the AP',
           ),
         ),
         ExcludeSemantics(
           child: Text(
-            '${s.distanceM.toStringAsFixed(0)} m',
+            _bsLen(context, s.distanceM),
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
         ),
@@ -339,11 +341,11 @@ class _FloorCard extends StatelessWidget {
         children: <Widget>[
           legendRow(
             const BsBandSwatch(band: BsBand.ghz24),
-            'Solid: 2.4 GHz, heard to ${ring24.toStringAsFixed(0)} m',
+            'Solid: 2.4 GHz, heard to ${_bsLen(context, ring24)}',
           ),
           legendRow(
             const BsBandSwatch(band: BsBand.ghz5),
-            'Dashed: 5 GHz, heard to ${ring5.toStringAsFixed(0)} m',
+            'Dashed: 5 GHz, heard to ${_bsLen(context, ring5)}',
           ),
           Text(
             'Probe arrows: two heads when answered, a cross when not',
@@ -545,3 +547,11 @@ class _Frames extends StatelessWidget {
     );
   }
 }
+
+/// A walk distance, whole metres or whole feet.
+String _bsLen(BuildContext context, double m) =>
+    LengthFormat(UnitSystemScope.systemOf(context)).dist(m, decimals: 0);
+
+/// [_bsLen] spoken: "12 meters" / "39 feet".
+String _bsLenSpoken(BuildContext context, double m) =>
+    LengthFormat(UnitSystemScope.systemOf(context)).distSpoken(m, decimals: 0);

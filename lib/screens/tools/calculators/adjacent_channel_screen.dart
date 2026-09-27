@@ -56,6 +56,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'adjacent_channel_controller.dart';
 import 'adjacent_channel_controls.dart';
 import 'adjacent_channel_stage.dart';
@@ -78,7 +80,13 @@ class AdjacentChannelScreen extends StatefulWidget {
   State<AdjacentChannelScreen> createState() => _AdjacentChannelScreenState();
 }
 
-class _AdjacentChannelScreenState extends State<AdjacentChannelScreen> {
+class _AdjacentChannelScreenState extends State<AdjacentChannelScreen>
+    with UnitSystemFollower<AdjacentChannelScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final AdjacentChannelController _controller = AdjacentChannelController(
     initial: widget.initial,
   );
@@ -90,6 +98,7 @@ class _AdjacentChannelScreenState extends State<AdjacentChannelScreen> {
   }
 
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: AdjacentChannelStage(controller: _controller),
     controls: AdjacentChannelControls(controller: _controller),
@@ -103,6 +112,7 @@ class _AdjacentChannelScreenState extends State<AdjacentChannelScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.adjacentChannel,
             builder: _presenter,

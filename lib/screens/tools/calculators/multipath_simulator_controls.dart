@@ -26,6 +26,7 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'multipath_simulator_controller.dart';
 import 'multipath_simulator_parts.dart';
@@ -146,8 +147,8 @@ class _SetupCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Wavelength λ = ${_C.cm(c.band.wavelength, 2)}, so λ/2 = '
-            '${_C.cm(c.band.wavelength / 2, 2)}.',
+            'Wavelength λ = ${_C.len(c.band.wavelength, UnitSystemScope.systemOf(context), 2)}, so λ/2 = '
+            '${_C.len(c.band.wavelength / 2, UnitSystemScope.systemOf(context), 2)}.',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.textTertiary),
@@ -225,7 +226,7 @@ class _WallCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           MpSliderHeader(
             label: one ? 'Receiver position' : 'Distance to the wall',
-            value: _C.cm(pos),
+            value: _C.len(pos, UnitSystemScope.systemOf(context)),
           ),
           Slider(
             value: pos,
@@ -242,10 +243,10 @@ class _WallCard extends StatelessWidget {
             },
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
-            label: _C.cm(pos),
+            label: _C.len(pos, UnitSystemScope.systemOf(context)),
             semanticFormatterCallback: (double v) => one
-                ? 'Receiver position ${_C.cm(v)}'
-                : 'Distance to the wall ${_C.cm(v)}',
+                ? 'Receiver position ${_C.len(v, UnitSystemScope.systemOf(context))}'
+                : 'Distance to the wall ${_C.len(v, UnitSystemScope.systemOf(context))}',
           ),
           if (!PresenterMode.isActive(context))
             MpNote(
@@ -253,7 +254,7 @@ class _WallCard extends StatelessWidget {
               message:
                   'Drag the receiver in the picture or on the plot, or use this '
                   'slider. Arrow keys move it '
-                  '${one ? '1 mm' : '0.5 mm'} at a time.',
+                  '${UnitSystemScope.systemOf(context).isMetric ? (one ? '1 mm' : '0.5 mm') : (one ? '0.04 in' : '0.02 in')} at a time.',
             ),
         ],
       ),
@@ -294,7 +295,7 @@ class _ReflectorsCard extends StatelessWidget {
             expand: true,
             items: <AppToggleItem<ScatterEnvironment>>[
               for (final ScatterEnvironment e in ScatterEnvironment.values)
-                (e, '${e.maxRadius.round()} m'),
+                (e, _C.dist(e.maxRadius, UnitSystemScope.systemOf(context))),
             ],
             onChanged: (ScatterEnvironment e) => c.environment = e,
           ),
@@ -340,7 +341,10 @@ class _ReflectorsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          MpSliderHeader(label: 'Antenna A position', value: _C.cm(c.antennaX)),
+          MpSliderHeader(
+            label: 'Antenna A position',
+            value: _C.len(c.antennaX, UnitSystemScope.systemOf(context)),
+          ),
           Slider(
             value: c.antennaX,
             max: 2,
@@ -348,15 +352,15 @@ class _ReflectorsCard extends StatelessWidget {
             onChanged: (double v) => c.antennaX = v,
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
-            label: _C.cm(c.antennaX),
+            label: _C.len(c.antennaX, UnitSystemScope.systemOf(context)),
             semanticFormatterCallback: (double v) =>
-                'Antenna A position ${_C.cm(v)}',
+                'Antenna A position ${_C.len(v, UnitSystemScope.systemOf(context))}',
           ),
           MpSliderHeader(
             label: 'Antenna B offset (λ)',
             value:
                 '${c.offsetLambda.toStringAsFixed(2)} = '
-                '${_C.cm(c.offsetMeters)}',
+                '${_C.len(c.offsetMeters, UnitSystemScope.systemOf(context))}',
           ),
           Slider(
             value: c.offsetLambda,
@@ -438,11 +442,16 @@ class _ReceivedCard extends StatelessWidget {
               label: 'Dips measured',
               value:
                   'every '
-                  '${_C.cm((nulls.last - nulls.first) / (nulls.length - 1), 2)}',
+                  '${_C.len((nulls.last - nulls.first) / (nulls.length - 1), UnitSystemScope.systemOf(context), 2)}',
             ),
           );
         }
-        rows.add(MpRow(label: 'Half wavelength', value: _C.cm(half, 2)));
+        rows.add(
+          MpRow(
+            label: 'Half wavelength',
+            value: _C.len(half, UnitSystemScope.systemOf(context), 2),
+          ),
+        );
         double lo = trace[1];
         for (final double v in trace.skip(1)) {
           if (v < lo) lo = v;
@@ -555,10 +564,12 @@ class _DelayCard extends StatelessWidget {
             ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'A copy that travels 240 m further arrives 0.8 µs late, the '
+            'A copy that travels '
+            '${_C.dist(240, UnitSystemScope.systemOf(context))} further '
+            'arrives 0.8 µs late, the '
             'length of the guard interval that protects each OFDM symbol. '
             'Later than that, it spills into the next symbol.'
-            '${many && c.environment != ScatterEnvironment.outdoors ? ' Try 300 m reflectors.' : ''}',
+            '${many && c.environment != ScatterEnvironment.outdoors ? ' Try ${_C.dist(ScatterEnvironment.outdoors.maxRadius, UnitSystemScope.systemOf(context))} reflectors.' : ''}',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.textTertiary),
@@ -584,7 +595,7 @@ class _DelayRow extends StatelessWidget {
     final bool past = MultipathMath.exceedsGuardInterval(ns);
     return Semantics(
       label:
-          '${row.name}: ${_C.m(row.extraMeters)} longer, ${_C.ns(ns)} late, '
+          '${row.name}: ${_C.path(row.extraMeters, UnitSystemScope.systemOf(context))} longer, ${_C.ns(ns)} late, '
           '${past ? 'past the guard interval' : 'within the guard interval'}',
       excludeSemantics: true,
       child: Padding(
@@ -601,7 +612,7 @@ class _DelayRow extends StatelessWidget {
             ),
             Expanded(
               child: Text(
-                '+${_C.m(row.extraMeters)}  ${_C.ns(ns)}',
+                '+${_C.path(row.extraMeters, UnitSystemScope.systemOf(context))}  ${_C.ns(ns)}',
                 style: mono.inlineCode.copyWith(color: colors.textPrimary),
               ),
             ),
@@ -654,7 +665,7 @@ class _ExplainerCard extends StatelessWidget {
         'The wave coming in and the wave coming back off the wall overlap. '
             'Every half wavelength you step closer, the reflected copy loses '
             'one full turn against the direct one, so the dips repeat every '
-            'λ/2: 6.2 cm at 2.4 GHz, 2.7 cm at 5.5 GHz, 2.3 cm at 6.5 GHz.',
+            'λ/2: ${UnitSystemScope.systemOf(context).isMetric ? '6.2 cm at 2.4 GHz, 2.7 cm at 5.5 GHz, 2.3 cm at 6.5 GHz' : '2.42 in at 2.4 GHz, 1.07 in at 5.5 GHz, 0.91 in at 6.5 GHz'}.',
         'Metal sends almost everything back, so the dips go to nothing. A '
             'weaker reflector gives shallower dips: thick concrete swings '
             'about 7 dB.',

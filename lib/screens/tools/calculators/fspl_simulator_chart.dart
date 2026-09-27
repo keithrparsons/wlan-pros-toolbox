@@ -22,6 +22,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 
 /// How a series line is stroked. One per band, so bands are distinguishable
@@ -134,13 +136,20 @@ class FsplChartGeometry {
     required this.yMax,
     this.padScale = 1,
     this.logDistance = true,
+    this.minDistanceM = defaultMinDistanceM,
   });
 
   static const double padLeft = 40;
   static const double padRight = 12;
   static const double padTop = 12;
   static const double padBottom = 24;
-  static const double minDistanceM = 1;
+
+  /// Metric axis start. Imperial starts at 3 ft (FsplSimModel.minM).
+  static const double defaultMinDistanceM = 1;
+
+  /// Where the distance axis starts, metres (the log axis cannot start at 0;
+  /// the linear axis starts at 0 and this is only the cursor's floor).
+  final double minDistanceM;
 
   final Size size;
   final double maxDistanceM;
@@ -208,10 +217,18 @@ class FsplChartPainter extends CustomPainter {
     this.measured,
     this.emptyMessage,
     this.logDistance = true,
+    this.minDistanceM = FsplChartGeometry.defaultMinDistanceM,
+    this.units = UnitSystem.metric,
   });
 
   /// See [FsplChartGeometry.logDistance].
   final bool logDistance;
+
+  /// See [FsplChartGeometry.minDistanceM].
+  final double minDistanceM;
+
+  /// Units the distance ticks are labelled in; ticks are round in this unit.
+  final UnitSystem units;
   final double maxDistanceM;
   final double yMin;
   final double yMax;
@@ -238,6 +255,7 @@ class FsplChartPainter extends CustomPainter {
       yMax: yMax,
       padScale: style.scale.text,
       logDistance: logDistance,
+      minDistanceM: minDistanceM,
     );
     final Rect p = g.plot;
     _grid(canvas, g, p);
@@ -294,51 +312,35 @@ class FsplChartPainter extends CustomPainter {
       ..color = style.axis
       ..strokeWidth = 1;
 
-    if (!logDistance) {
-      // Linear distance: a major line and label every fifth of the range
-      // (20 m on 100 m, 200 m on 1 km), a minor line every tenth.
-      final double major = maxDistanceM / 5;
-      final double minorStep = maxDistanceM / 10;
-      for (double d = 0; d <= maxDistanceM + 1e-9; d += minorStep) {
-        final double x = g.xFor(d);
-        final bool isMajor = (d / major - (d / major).round()).abs() < 1e-6;
-        canvas.drawLine(
-          Offset(x, p.top),
-          Offset(x, p.bottom),
-          isMajor ? majorPaint : minor,
-        );
-        if (isMajor) {
-          _text(
-            canvas,
-            d == 0 ? '0' : _distanceTick(d),
-            style.axisLabel,
-            Offset(x, p.bottom + 4),
-            anchor: Offset(d == 0 ? 0 : (d >= maxDistanceM ? 1 : 0.5), 0),
-          );
-        }
-      }
-    } else {
-      // Distance: decades major, 2..9 minor.
-      for (double decade = 1; decade <= maxDistanceM; decade *= 10) {
-        final double x = g.xFor(decade);
-        canvas.drawLine(Offset(x, p.top), Offset(x, p.bottom), majorPaint);
-        _text(
-          canvas,
-          _distanceTick(decade),
-          style.axisLabel,
-          Offset(x, p.bottom + 4),
-          anchor: Offset(
-            decade == 1 ? 0 : (decade >= maxDistanceM ? 1 : 0.5),
-            0,
-          ),
-        );
-        for (int k = 2; k <= 9; k++) {
-          final double d = decade * k;
-          if (d >= maxDistanceM) break;
-          final double xm = g.xFor(d);
-          canvas.drawLine(Offset(xm, p.top), Offset(xm, p.bottom), minor);
-        }
-      }
+    final List<FsplDistanceTick> ticks = distanceTicks(
+      units: units,
+      minDistanceM: minDistanceM,
+      maxDistanceM: maxDistanceM,
+      logDistance: logDistance,
+    );
+    for (final FsplDistanceTick t in ticks) {
+      final double x = g.xFor(t.metres);
+      canvas.drawLine(
+        Offset(x, p.top),
+        Offset(x, p.bottom),
+        t.major ? majorPaint : minor,
+      );
+    }
+    // Labels: the two ends always; an interior label only where it clears
+    // its neighbours (3 ft to 300 ft puts 100 ft close to 300 ft on a phone).
+    final List<(FsplDistanceTick, Rect)> labelled =
+        <(FsplDistanceTick, Rect)>[
+          for (final FsplDistanceTick t in ticks)
+            if (t.label != null) (t, _labelRect(g, t)),
+        ]..sort(((FsplDistanceTick, Rect) a, (FsplDistanceTick, Rect) b) {
+          int rank(FsplDistanceTick t) => (t.first || t.last) ? 0 : 1;
+          return rank(a.$1).compareTo(rank(b.$1));
+        });
+    final List<Rect> drawn = <Rect>[];
+    for (final (FsplDistanceTick t, Rect r) in labelled) {
+      if (drawn.any((Rect d) => d.inflate(3).overlaps(r))) continue;
+      drawn.add(r);
+      _text(canvas, t.label!, style.axisLabel, r.topLeft);
     }
 
     // Level: every yStep.
@@ -363,9 +365,78 @@ class FsplChartPainter extends CustomPainter {
     );
   }
 
-  static String _distanceTick(double d) => d >= 1000
-      ? '${(d / 1000).toStringAsFixed(d % 1000 == 0 ? 0 : 1)} km'
-      : '${d.round()} m';
+  /// The distance grid, every tick a round number in the unit on screen.
+  ///
+  /// Linear: a labelled major every NiceTicks step (20 m on 100 m, 200 m on
+  /// 1 km, 50 ft on 300 ft, 500 ft on 3,000 ft) and a minor halfway.
+  /// Log: in the displayed unit, a labelled major at each power of ten and
+  /// at both ends of the axis, a minor at every other whole multiple (2..9 m,
+  /// 20..90 m; 4..9 ft, 20..90 ft, 200 ft).
+  static List<FsplDistanceTick> distanceTicks({
+    required UnitSystem units,
+    required double minDistanceM,
+    required double maxDistanceM,
+    required bool logDistance,
+  }) {
+    final LengthFormat f = LengthFormat(units);
+    final double lo = f.distValue(minDistanceM);
+    final double hi = f.distValue(maxDistanceM);
+    bool near(double a, double b) => (a - b).abs() <= 1e-6 * math.max(1, b);
+    final List<FsplDistanceTick> out = <FsplDistanceTick>[];
+    if (!logDistance) {
+      final double major = NiceTicks.step(hi);
+      final double minorStep = major / 2;
+      for (int i = 0; i * minorStep <= hi * (1 + 1e-9); i++) {
+        final double v = i * minorStep;
+        final bool isMajor = i.isEven;
+        out.add(
+          FsplDistanceTick(
+            metres: f.distToMetres(v),
+            major: isMajor,
+            label: !isMajor ? null : (v == 0 ? '0' : _tickLabel(v, units)),
+            first: v == 0,
+            last: near(v, hi),
+          ),
+        );
+      }
+      return out;
+    }
+    final double firstDecade = math
+        .pow(10, (math.log(lo) / math.ln10 + 1e-9).floor())
+        .toDouble();
+    for (double decade = firstDecade; decade <= hi * (1 + 1e-9); decade *= 10) {
+      for (int k = 1; k <= 9; k++) {
+        final double v = decade * k;
+        if (v < lo * (1 - 1e-9) || v > hi * (1 + 1e-9)) continue;
+        final bool isFirst = near(v, lo);
+        final bool isLast = near(v, hi);
+        final bool isMajor = k == 1 || isFirst || isLast;
+        out.add(
+          FsplDistanceTick(
+            metres: f.distToMetres(v),
+            major: isMajor,
+            label: isMajor ? _tickLabel(v, units) : null,
+            first: isFirst,
+            last: isLast,
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
+  /// A tick label: whole metres (km from 1000) or whole feet.
+  static String _tickLabel(double shown, UnitSystem u) {
+    if (u.isMetric) {
+      return shown >= 1000
+          ? '${(shown / 1000).toStringAsFixed(shown % 1000 == 0 ? 0 : 1)} km'
+          : '${shown.round()} m';
+    }
+    final int ft = shown.round();
+    return ft >= 1000
+        ? '${ft ~/ 1000},${(ft % 1000).toString().padLeft(3, '0')} ft'
+        : '$ft ft';
+  }
 
   // ── Series ───────────────────────────────────────────────────────────────
 
@@ -570,6 +641,18 @@ class FsplChartPainter extends CustomPainter {
   }
 
   /// Paints [s] so that [anchor] (0..1 of the text box) lands on [at].
+  /// Where a distance tick label sits: under its line, pulled inside the
+  /// plot at the two ends.
+  Rect _labelRect(FsplChartGeometry g, FsplDistanceTick t) {
+    final TextPainter tp = _layout(t.label!, style.axisLabel);
+    final double ax = t.first ? 0 : (t.last ? 1 : 0.5);
+    final Offset o = Offset(
+      g.xFor(t.metres) - tp.width * ax,
+      g.plot.bottom + 4,
+    );
+    return o & tp.size;
+  }
+
   void _text(
     Canvas canvas,
     String s,
@@ -595,6 +678,8 @@ class FsplChartPainter extends CustomPainter {
   bool shouldRepaint(FsplChartPainter old) =>
       old.revision != revision ||
       old.logDistance != logDistance ||
+      old.units != units ||
+      old.minDistanceM != minDistanceM ||
       old.cursorDistanceM != cursorDistanceM ||
       old.style != style;
 }
@@ -681,4 +766,24 @@ class FsplStrokeSamplePainter extends CustomPainter {
       old.surface != surface ||
       old.model != model ||
       old.scale != scale;
+}
+
+/// One distance grid line: where it sits, whether it is major, and its label
+/// (null for an unlabelled minor line). [first] and [last] anchor the label
+/// inside the plot at the two ends.
+@immutable
+class FsplDistanceTick {
+  const FsplDistanceTick({
+    required this.metres,
+    required this.major,
+    required this.label,
+    this.first = false,
+    this.last = false,
+  });
+
+  final double metres;
+  final bool major;
+  final String? label;
+  final bool first;
+  final bool last;
 }

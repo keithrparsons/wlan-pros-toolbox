@@ -191,7 +191,7 @@ class SixGhzPsdStage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             PsdSectionLabel(
-              'At ${model.widthMHz} MHz, ${PsdFormat.dist(model.distanceM)}'
+              'At ${model.widthMHz} MHz, ${model.dist(model.distanceM)}'
               '${model.extraLossDb > 0 ? ' + ${n(model.extraLossDb, 0)} dB' : ''}',
             ),
             if (cs.isEmpty) ...<Widget>[
@@ -310,7 +310,7 @@ class SixGhzPsdStage extends StatelessWidget {
       case PsdView.eirp:
         return 'EIRP (dBm) vs channel width';
       case PsdView.snr:
-        return 'SNR (dB) at ${PsdFormat.dist(model.distanceM)} vs channel '
+        return 'SNR (dB) at ${model.dist(model.distanceM)} vs channel '
             'width';
       case PsdView.spectrum:
         return focus == null

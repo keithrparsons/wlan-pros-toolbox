@@ -19,6 +19,8 @@
 // largest-domain number, the quantity the tool is about.
 // ASCII copy, no em dashes (GL-004).
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/channel_planner_model.dart';
@@ -28,6 +30,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
 import '../labeled_field.dart';
 import 'channel_planner_state.dart';
 
@@ -535,9 +538,9 @@ class ChannelPlannerControls extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: Text(
-                'Wall ${i + 1}: (${s.walls[i].x1.round()}, '
-                '${s.walls[i].y1.round()}) to (${s.walls[i].x2.round()}, '
-                '${s.walls[i].y2.round()}) m',
+                'Wall ${i + 1}: (${s.whole(s.walls[i].x1)}, '
+                '${s.whole(s.walls[i].y1)}) to (${s.whole(s.walls[i].x2)}, '
+                '${s.whole(s.walls[i].y2)}) ${s.lf.distUnit}',
                 style: text.bodyMedium?.copyWith(color: colors.textPrimary),
               ),
             ),
@@ -594,27 +597,25 @@ class ChannelPlannerControls extends StatelessWidget {
           'n = 2 is free space; 3 is a common office guess.',
           style: small(),
         ),
-      _slider(
+      _lengthSlider(
         context,
         label: 'Floor width',
-        unit: 'm',
-        value: s.floorW,
-        min: 20,
-        max: 100,
-        divisions: 16,
-        decimals: 0,
-        onChanged: (double v) => s.setFloorSize(w: v),
+        valueM: s.floorW,
+        minM: 20,
+        maxM: 100,
+        stepM: 5,
+        stepFt: 10,
+        onChangedM: (double v) => s.setFloorSize(w: v),
       ),
-      _slider(
+      _lengthSlider(
         context,
         label: 'Floor depth',
-        unit: 'm',
-        value: s.floorH,
-        min: 10,
-        max: 60,
-        divisions: 10,
-        decimals: 0,
-        onChanged: (double v) => s.setFloorSize(h: v),
+        valueM: s.floorH,
+        minM: 10,
+        maxM: 60,
+        stepM: 5,
+        stepFt: 10,
+        onChangedM: (double v) => s.setFloorSize(h: v),
       ),
     ];
   }
@@ -678,27 +679,25 @@ class ChannelPlannerControls extends StatelessWidget {
     final ChannelPlannerState s = state;
     final FloorPoint p = s.position(i);
     return <Widget>[
-      _slider(
+      _lengthSlider(
         context,
         label: '${s.apName(i)} across',
-        unit: 'm',
-        value: p.x.clamp(0, s.floorW).toDouble(),
-        min: 0,
-        max: s.floorW,
-        divisions: (s.floorW * 2).round(),
-        decimals: 1,
-        onChanged: (double v) => s.moveAp(i, FloorPoint(v, p.y)),
+        valueM: p.x,
+        minM: 0,
+        maxM: s.floorW,
+        stepM: 0.5,
+        stepFt: 1,
+        onChangedM: (double v) => s.moveAp(i, FloorPoint(v, p.y)),
       ),
-      _slider(
+      _lengthSlider(
         context,
         label: '${s.apName(i)} down',
-        unit: 'm',
-        value: p.y.clamp(0, s.floorH).toDouble(),
-        min: 0,
-        max: s.floorH,
-        divisions: (s.floorH * 2).round(),
-        decimals: 1,
-        onChanged: (double v) => s.moveAp(i, FloorPoint(p.x, v)),
+        valueM: p.y,
+        minM: 0,
+        maxM: s.floorH,
+        stepM: 0.5,
+        stepFt: 1,
+        onChangedM: (double v) => s.moveAp(i, FloorPoint(p.x, v)),
       ),
     ];
   }
@@ -726,6 +725,36 @@ class ChannelPlannerControls extends StatelessWidget {
           Switch(value: value, onChanged: onChanged),
         ],
       ),
+    );
+  }
+
+  /// A length slider in the unit on screen: [stepM] metres, or [stepFt]
+  /// feet, per step, over the round span inside [minM] to [maxM]. The state
+  /// stays in metres.
+  Widget _lengthSlider(
+    BuildContext context, {
+    required String label,
+    required double valueM,
+    required double minM,
+    required double maxM,
+    required double stepM,
+    required double stepFt,
+    required ValueChanged<double> onChangedM,
+  }) {
+    final LengthFormat f = state.lf;
+    final double step = f.isMetric ? stepM : stepFt;
+    final double lo = (f.distValue(minM) / step - 1e-9).ceilToDouble() * step;
+    final double hi = (f.distValue(maxM) / step + 1e-9).floorToDouble() * step;
+    return _slider(
+      context,
+      label: label,
+      unit: f.distUnit,
+      value: f.distValue(valueM).clamp(lo, hi).toDouble(),
+      min: lo,
+      max: hi,
+      divisions: math.max(1, ((hi - lo) / step).round()),
+      decimals: step < 1 ? 1 : 0,
+      onChanged: (double v) => onChangedM(f.distToMetres(v)),
     );
   }
 

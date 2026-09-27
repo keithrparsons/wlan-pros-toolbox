@@ -17,6 +17,8 @@ import 'package:flutter/foundation.dart';
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/rate_vs_range_math.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../reference/mcs_index_screen.dart';
 import 'fspl_simulator_model.dart' show kFsplDefaultChannels;
 
@@ -77,11 +79,18 @@ abstract final class RvrFormat {
     return RegExp(r'^-0\.?0*$').hasMatch(s) ? s.substring(1) : s;
   }
 
-  static String dist(double d) {
-    if (d < 1) return 'under 1 m';
-    if (d < 10) return '${d.toStringAsFixed(1)} m';
-    if (d < 1000) return '${d.round()} m';
-    return '${(d / 1000).toStringAsFixed(2)} km';
+  static String dist(double d, [UnitSystem u = UnitSystem.metric]) {
+    if (u.isMetric) {
+      if (d < 1) return 'under 1 m';
+      if (d < 10) return '${d.toStringAsFixed(1)} m';
+      if (d < 1000) return '${d.round()} m';
+      return '${(d / 1000).toStringAsFixed(2)} km';
+    }
+    final double ft = LengthUnits.metresToFeet(d);
+    if (ft < 3) return 'under 3 ft';
+    if (ft < 10) return '${ft.toStringAsFixed(1)} ft';
+    if (d < LengthUnits.metresPerMile) return '${ft.round()} ft';
+    return '${(d / LengthUnits.metresPerMile).toStringAsFixed(2)} mi';
   }
 
   static String rate(double? mbps) {
@@ -127,6 +136,21 @@ class RateVsRangeModel extends ChangeNotifier {
     3000,
     5000,
   ];
+
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The model stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    _clientDistanceM = _clientDistanceM.clamp(1, viewRangeM);
+    _changed();
+  }
+
+  /// [RvrFormat.dist] in the current units.
+  String dist(double d) => RvrFormat.dist(d, _units);
 
   WifiBand _band = WifiBand.band5;
   int _widthMHz = 20;
@@ -305,10 +329,7 @@ class RateVsRangeModel extends ChangeNotifier {
   /// shrink instead.
   double get viewRangeM {
     final double far = _radius(RateVsRangeMath.sensitivityDbm(0, 20)) * 1.08;
-    for (final double r in viewRanges) {
-      if (r >= far) return r;
-    }
-    return viewRanges.last;
+    return NiceTicks.viewRange(far, _units, viewRanges);
   }
 
   RvrClientReading get client {
@@ -356,10 +377,14 @@ class RateVsRangeModel extends ChangeNotifier {
         '${n(_clientGainDbi, 0)} dBi, path-loss exponent ${n(_exponent)}, '
         'margin ${n(_marginDb, 0)} dB',
       )
-      ..writeln('MCS\tSensitivity dBm\tRadius m\tRate Mbps');
+      ..writeln(
+        'MCS\tSensitivity dBm\tRadius ${LengthFormat(_units).distUnit}\t'
+        'Rate Mbps',
+      );
     for (final RvrRing r in rings) {
       b.writeln(
-        '${r.mcs}\t${n(r.sensitivityDbm, 0)}\t${n(r.radiusM)}\t'
+        '${r.mcs}\t${n(r.sensitivityDbm, 0)}\t'
+        '${n(LengthFormat(_units).distValue(r.radiusM))}\t'
         '${r.rateMbps == null ? '-' : n(r.rateMbps!)}',
       );
     }
@@ -367,14 +392,16 @@ class RateVsRangeModel extends ChangeNotifier {
       ..writeln(
         'Minimum basic rate ${_basicRate.label} '
         '(${_basicRate.isSourcedDirectly ? 'same floor as MCS 0' : 'MCS-equivalent: MCS ${_basicRate.equivalentMcs}'}): cell edge '
-        '${n(cellEdgeDbm, 0)} dBm at ${n(cellEdgeM)} m',
+        '${n(cellEdgeDbm, 0)} dBm at '
+        '${n(LengthFormat(_units).distValue(cellEdgeM))} '
+        '${LengthFormat(_units).distUnit}',
       )
       ..writeln(
         'Beacons, $_ssids SSIDs: ${RvrFormat.pct(beaconPercent)} of airtime '
         '(${RvrFormat.pct(beaconPercentAt6)} at 6 Mbps)',
       )
       ..writeln(
-        'Client at ${RvrFormat.dist(c.distanceM)}: ${n(c.receivedDbm)} dBm, '
+        'Client at ${dist(c.distanceM)}: ${n(c.receivedDbm)} dBm, '
         'SNR ${n(c.snrDb)} dB, '
         '${c.mcs == null ? 'below MCS 0' : 'MCS ${c.mcs} ${RvrFormat.rate(c.rateMbps)}'}',
       );

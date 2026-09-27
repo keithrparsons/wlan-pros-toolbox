@@ -29,6 +29,7 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'fspl_simulator_chart.dart';
 import 'fspl_simulator_model.dart';
@@ -189,7 +190,22 @@ class _FsplControlsState extends State<FsplControls> {
   FsplSimModel get m => widget.model;
 
   @override
+  void initState() {
+    super.initState();
+    m.addListener(_followModelText);
+  }
+
+  /// A unit flip rewrites the typed distance in the model (setUnits); mirror
+  /// it here. Runs from the model's notify, outside build.
+  void _followModelText() {
+    if (_dist.text != m.distText && m.distText.isNotEmpty) {
+      _dist.text = m.distText;
+    }
+  }
+
+  @override
   void dispose() {
+    m.removeListener(_followModelText);
     _rssi.dispose();
     _dist.dispose();
     super.dispose();
@@ -379,12 +395,13 @@ class _FsplControlsState extends State<FsplControls> {
           Expanded(
             child: LabeledField(
               label: 'Distance',
-              hint: '(m)',
-              semanticLabel: 'Measured distance in metres',
+              hint: '(${m.units.isMetric ? 'm' : 'ft'})',
+              semanticLabel:
+                  'Measured distance in ${m.units.isMetric ? 'meters' : 'feet'}',
               field: _numberField(
                 context,
                 _dist,
-                'e.g. 15',
+                m.units.isMetric ? 'e.g. 15' : 'e.g. 50',
                 mi.distError,
                 (String s) => m.setMeasuredText(dist: s),
               ),
@@ -409,11 +426,11 @@ class _FsplControlsState extends State<FsplControls> {
           'Turn on ${m.measuredBand.label} to plot this point against its '
           'curve.',
         )
-      else if (meas != null && meas.dist > m.range.maxM)
+      else if (meas != null && meas.dist > m.maxM + 1e-9)
         FsplNote(
           Icons.open_in_full,
-          'This point is past ${m.range.label}. Switch the distance axis to '
-          '1 km to see it.',
+          'This point is past ${m.rangeLabel}. Switch the distance axis to '
+          '${FsplRange.km1.labelFor(m.units)} to see it.',
         )
       else if (meas == null)
         const FsplNote(
@@ -579,7 +596,7 @@ class FsplReadouts extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          FsplSectionLabel('At ${FsplFormat.dist(d)}'),
+          FsplSectionLabel('At ${model.dist(d)}'),
           const SizedBox(height: AppSpacing.xs),
           Table(
             columnWidths: const <int, TableColumnWidth>{
@@ -713,7 +730,7 @@ class FsplReadouts extends StatelessWidget {
     final double? fitN = model.fitExponent(rssi, dist);
     final String Function(double, [int]) n = FsplFormat.n;
     final String lead =
-        '${n(rssi)} dBm at ${FsplFormat.dist(dist)} on '
+        '${n(rssi)} dBm at ${model.dist(dist)} on '
         '${model.measuredBand.label}. Free space predicts ${n(free)} dBm, so '
         'the reading is ${n(gap.abs())} dB ${gap < 0 ? 'below' : 'above'} '
         'free space.';
@@ -832,7 +849,7 @@ class FsplCursorHeadline extends StatelessWidget {
               children: <Widget>[
                 FsplSectionLabel(
                   '${received ? 'Received' : 'Path loss'} at '
-                  '${FsplFormat.dist(d)}',
+                  '${model.dist(d)}',
                 ),
                 if (bands.length > 1)
                   Text(
@@ -915,9 +932,7 @@ class FsplWhyPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          FsplSectionLabel(
-            'Why higher bands lose more, at ${FsplFormat.dist(d)}',
-          ),
+          FsplSectionLabel('Why higher bands lose more, at ${model.dist(d)}'),
           const SizedBox(height: AppSpacing.xs),
           ExcludeSemantics(
             child: Wrap(
@@ -1067,8 +1082,8 @@ class FsplExplainer extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '1. Signal falls fast close in and slowly far out. Every doubling '
-            'of distance costs 6 dB, so 1 m to 2 m costs the same as 50 m to '
-            '100 m.',
+            'of distance costs 6 dB, so '
+            '${UnitSystemScope.systemOf(context).isMetric ? '1 m to 2 m costs the same as 50 m to 100 m' : '3 ft to 6 ft costs the same as 150 ft to 300 ft'}.',
             style: body(),
           ),
           const SizedBox(height: AppSpacing.xs),

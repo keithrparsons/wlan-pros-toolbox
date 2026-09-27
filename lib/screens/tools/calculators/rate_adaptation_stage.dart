@@ -30,6 +30,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'rate_adaptation_controller.dart';
 import 'rate_adaptation_parts.dart';
 
@@ -177,7 +179,7 @@ class _Headline extends StatelessWidget {
                   fresh
                       ? 'Chosen rate (press Play or Step)'
                       : 'Chosen rate at ${RaFormat.clock(engine.nowUs)}, '
-                            '${RaFormat.n(engine.distanceNowM)} m',
+                            '${LengthFormat(UnitSystemScope.systemOf(context)).dist(engine.distanceNowM, decimals: 1, keepZeros: true)}',
                   style: text.bodySmall?.copyWith(color: colors.textSecondary),
                 ),
                 Text(

@@ -14,6 +14,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/channel_planner_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kChannelPlannerToolId = 'channel-planner';
@@ -95,6 +97,29 @@ class ChannelPlannerState extends ChangeNotifier {
   bool get canAdd => _aps.length < kMaxAps;
   bool get canRemove => _aps.length > kMinAps;
   int get revision => _revision;
+
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The floor stays in metres.
+  UnitSystem get units => _units;
+
+  /// The formatter for [units].
+  LengthFormat get lf => LengthFormat(_units);
+
+  /// Grid spacing on the floor, metres: 10 m, or 25 ft.
+  double get gridM => _units.isMetric ? 10 : LengthUnits.feetToMetres(25);
+
+  /// "10 m" / "25 ft".
+  String get gridLabel => _units.isMetric ? '10 m' : '25 ft';
+
+  /// A floor size or coordinate, whole metres or whole feet, no unit.
+  String whole(double m) => lf.distValue(m).round().toString();
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    _changed(keepNote: true);
+  }
 
   /// A note after Auto-plan ran, cleared by the next manual change.
   String? get planNote => _planNote;
@@ -497,7 +522,7 @@ class ChannelPlannerState extends ChangeNotifier {
         '${_rules.band == PlannerBand.band5 && _rules.region == PlannerRegion.us ? ', U-NII-4 ${_rules.unii4 ? 'on' : 'off'}' : ''}',
       )
       ..writeln(
-        'Floor ${_floorW.round()} x ${_floorH.round()} m, EIRP '
+        'Floor ${whole(_floorW)} x ${whole(_floorH)} ${lf.distUnit}, EIRP '
         '${_prop.eirpDbm.round()} dBm, n = ${_prop.exponent.toStringAsFixed(1)}, '
         '${_walls.length} wall${_walls.length == 1 ? '' : 's'} at '
         '${_prop.wallLossDb.round()} dB',
@@ -507,7 +532,8 @@ class ChannelPlannerState extends ChangeNotifier {
       final ChannelOption? c = _aps[i].channel;
       b.writeln(
         '${apName(i)}: ${c == null ? 'no channel' : c.longLabel} at '
-        '(${_aps[i].position.x.round()}, ${_aps[i].position.y.round()}) m',
+        '(${whole(_aps[i].position.x)}, ${whole(_aps[i].position.y)}) '
+        '${lf.distUnit}',
       );
     }
     b.writeln(

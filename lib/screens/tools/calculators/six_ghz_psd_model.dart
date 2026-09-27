@@ -20,6 +20,8 @@ import 'package:flutter/foundation.dart';
 import '../../../services/wifi_lab/fspl_math.dart';
 import '../../../services/wifi_lab/six_ghz_psd_math.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../reference/signal_thresholds_screen.dart';
 import 'fspl_simulator_chart.dart' show CurveMarker, CurveStroke;
 
@@ -132,9 +134,13 @@ abstract final class PsdFormat {
     return (v >= 0 && !s.startsWith('-')) ? '+$s' : s;
   }
 
-  static String dist(double d) {
-    if (d < 10) return '${d.toStringAsFixed(1)} m';
-    return '${d.round()} m';
+  /// A distance in metres, in [u]: tenths under 10, whole above.
+  static String dist(double d, [UnitSystem u = UnitSystem.metric]) {
+    final LengthFormat f = LengthFormat(u);
+    final double v = f.distValue(d);
+    return v < 10
+        ? '${v.toStringAsFixed(1)} ${f.distUnit}'
+        : '${v.round()} ${f.distUnit}';
   }
 }
 
@@ -143,6 +149,20 @@ class SixGhzPsdModel extends ChangeNotifier {
 
   static const double minDistanceM = 1;
   static const double maxDistanceM = 100;
+
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The model stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
+  /// [PsdFormat.dist] in the current units.
+  String dist(double d) => PsdFormat.dist(d, _units);
 
   PsdRegion _region = PsdRegion.us;
   final Map<PsdRegion, Set<PowerClass>> _shown = <PsdRegion, Set<PowerClass>>{
@@ -412,7 +432,7 @@ class SixGhzPsdModel extends ChangeNotifier {
     final StringBuffer b = StringBuffer()
       ..writeln('6 GHz Power and PSD (${_region.label})')
       ..writeln(
-        '$_widthMHz MHz at ${PsdFormat.dist(_distanceM)}, free-space loss '
+        '$_widthMHz MHz at ${dist(_distanceM)}, free-space loss '
         '${n(pathLossDb)} dB at ${SixGhzPsdMath.referenceFreqMHz.round()} MHz'
         '${_extraLossDb > 0 ? ' + ${n(_extraLossDb)} dB extra' : ''}, '
         'noise figure ${n(_noiseFigureDb)} dB',

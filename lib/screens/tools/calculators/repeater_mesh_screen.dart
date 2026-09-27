@@ -34,6 +34,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'repeater_mesh_controller.dart';
 import 'repeater_mesh_controls.dart';
@@ -61,7 +63,13 @@ class RepeaterMeshScreen extends StatefulWidget {
   State<RepeaterMeshScreen> createState() => _RepeaterMeshScreenState();
 }
 
-class _RepeaterMeshScreenState extends State<RepeaterMeshScreen> {
+class _RepeaterMeshScreenState extends State<RepeaterMeshScreen>
+    with UnitSystemFollower<RepeaterMeshScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final RepeaterMeshController _controller =
       widget.controller ?? RepeaterMeshController();
 
@@ -81,6 +89,7 @@ class _RepeaterMeshScreenState extends State<RepeaterMeshScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: RepeaterMeshStage(controller: _controller),
     controls: RepeaterMeshControls(controller: _controller),
@@ -94,6 +103,7 @@ class _RepeaterMeshScreenState extends State<RepeaterMeshScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.repeaterMesh, builder: _presenter),
           AppCopyAction(textBuilder: _controller.copyText),
         ],

@@ -133,9 +133,9 @@ class UplinkDownlinkStage extends StatelessWidget {
     final UdDirection dl = c.downlink;
     final UdDirection ul = c.uplink;
     return 'Top-down view. The client can decode the AP out to '
-        '${UdFormat.dist(c.downlinkRingM)}; the AP can decode the client out '
-        'to ${UdFormat.dist(c.uplinkRingM)}. Client at '
-        '${UdFormat.dist(c.clientDistanceM)}: downlink, AP to client, '
+        '${UdFormat.dist(c.downlinkRingM, controller.units)}; the AP can decode the client out '
+        'to ${UdFormat.dist(c.uplinkRingM, controller.units)}. Client at '
+        '${UdFormat.dist(c.clientDistanceM, controller.units)}: downlink, AP to client, '
         '${UdFormat.dbm(dl.rssiDbm)}, ${UdFormat.mcs(dl.mcs)}; uplink, client '
         'to AP, ${UdFormat.dbm(ul.rssiDbm)}, ${UdFormat.mcs(ul.mcs)}.';
   }
@@ -200,6 +200,7 @@ class UplinkDownlinkStage extends StatelessWidget {
           child: CustomPaint(
             size: size,
             painter: UdStagePainter(
+              units: controller.units,
               rangeM: range,
               downRingM: c.downlinkRingM,
               upRingM: c.uplinkRingM,
@@ -252,7 +253,7 @@ class UplinkDownlinkStage extends StatelessWidget {
                 controller.setClientDistance(math.pow(10, v).toDouble()),
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
-            label: UdFormat.dist(c.clientDistanceM),
+            label: UdFormat.dist(c.clientDistanceM, controller.units),
             semanticFormatterCallback: (double v) =>
                 'Client distance ${UdFormat.dist(math.pow(10, v).toDouble())}',
           ),
@@ -261,7 +262,7 @@ class UplinkDownlinkStage extends StatelessWidget {
           child: SizedBox(
             width: 72 * PresenterMode.scaleOf(context).text,
             child: Text(
-              UdFormat.dist(c.clientDistanceM),
+              UdFormat.dist(c.clientDistanceM, controller.units),
               textAlign: TextAlign.right,
               style: mono.inlineCode.copyWith(color: colors.textPrimary),
             ),
@@ -291,16 +292,16 @@ class UplinkDownlinkStage extends StatelessWidget {
           row(
             const UdLineSwatch(dir: UdDir.downlink),
             'Solid: downlink, AP to client. Client decodes AP to '
-            '${UdFormat.dist(c.downlinkRingM)}',
+            '${UdFormat.dist(c.downlinkRingM, controller.units)}',
           ),
           row(
             const UdLineSwatch(dir: UdDir.uplink),
             'Dashed: uplink, client to AP. AP decodes client to '
-            '${UdFormat.dist(c.uplinkRingM)}',
+            '${UdFormat.dist(c.uplinkRingM, controller.units)}',
           ),
           row(
             const UdZoneSwatch(),
-            'Asymmetry zone, ${UdFormat.dist(c.asymmetryZoneM)} wide',
+            'Asymmetry zone, ${UdFormat.dist(c.asymmetryZoneM, controller.units)} wide',
           ),
         ],
       ),

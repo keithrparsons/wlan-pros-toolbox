@@ -48,6 +48,8 @@ import 'dart:math' as math;
 import 'airtime_anatomy.dart';
 import 'rate_vs_range_math.dart';
 import 'roaming_walk_engine.dart';
+import '../../units/length_format.dart';
+import '../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kRepeaterMeshToolId = 'repeater-mesh';
@@ -454,8 +456,12 @@ String rmMbps(double v) {
 }
 
 /// Formats a distance along the corridor: 18 -> "18 m", 18.5 -> "18.5 m".
-String rmMeters(double m) =>
-    m == m.roundToDouble() ? '${m.round()} m' : '${m.toStringAsFixed(1)} m';
+String rmMeters(double m, [UnitSystem u = UnitSystem.metric]) {
+  if (!u.isMetric) return '${LengthUnits.metresToFeet(m).round()} ft';
+  return m == m.roundToDouble()
+      ? '${m.round()} m'
+      : '${m.toStringAsFixed(1)} m';
+}
 
 /// Formats a delay: 1 -> "1 ms", 0.5 -> "0.5 ms".
 String rmMs(double ms) => ms == ms.roundToDouble()

@@ -64,6 +64,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'heat_map_builder_parts.dart';
 import 'predict_measure_controller.dart';
 import 'predict_measure_controls.dart';
@@ -83,7 +85,13 @@ class PredictMeasureScreen extends StatefulWidget {
   State<PredictMeasureScreen> createState() => _PredictMeasureScreenState();
 }
 
-class _PredictMeasureScreenState extends State<PredictMeasureScreen> {
+class _PredictMeasureScreenState extends State<PredictMeasureScreen>
+    with UnitSystemFollower<PredictMeasureScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final PredictMeasureController _controller =
       widget.controller ?? PredictMeasureController();
 
@@ -94,6 +102,7 @@ class _PredictMeasureScreenState extends State<PredictMeasureScreen> {
   }
 
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: PredictMeasureStage(controller: _controller),
     controls: PredictMeasureControls(controller: _controller),
@@ -107,6 +116,7 @@ class _PredictMeasureScreenState extends State<PredictMeasureScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.predictThenMeasure,
             builder: _presenter,

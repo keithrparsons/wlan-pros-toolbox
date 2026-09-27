@@ -42,6 +42,8 @@ import 'dart:math' as math;
 import '../../data/channel_frequency_data.dart';
 import 'rate_vs_range_math.dart';
 import 'six_ghz_psd_math.dart';
+import '../../units/length_format.dart';
+import '../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kUplinkDownlinkToolId = 'uplink-downlink';
@@ -415,8 +417,7 @@ class UdConfig {
     ap = math.max(ap, apTxMin);
     final UdConfig held = _copy(apTxDbm: ap, beforeMatch: () => null);
     return held._copy(
-      authorized: () =>
-          held.preset.clientFollowsAp ? held.apEirpDbm : null,
+      authorized: () => held.preset.clientFollowsAp ? held.apEirpDbm : null,
     );
   }
 
@@ -458,7 +459,9 @@ class UdConfig {
     final bool atCeiling =
         oldCeiling != null && (apEirpDbm - oldCeiling).abs() < 1e-9;
     UdConfig next = _copy(widthMHz: w);
-    if (atCeiling) next = next._copy(apTxDbm: next.apCeilingEirpDbm! - apGainDbi);
+    if (atCeiling) {
+      next = next._copy(apTxDbm: next.apCeilingEirpDbm! - apGainDbi);
+    }
     return next._settle();
   }
 
@@ -487,10 +490,7 @@ class UdConfig {
   /// grant stays where it was, so the client's limit does not move.
   UdConfig matchApToClient() {
     if (!canMatch) return this;
-    return _copy(
-      apTxDbm: clientTxEffectiveDbm,
-      beforeMatch: () => apTxDbm,
-    );
+    return _copy(apTxDbm: clientTxEffectiveDbm, beforeMatch: () => apTxDbm);
   }
 
   /// Puts the AP back where it was before the match.
@@ -516,12 +516,19 @@ abstract final class UdFormat {
 
   static String dbm(double v) => '${n(v)} dBm';
 
-  static String dist(double d) {
+  static String dist(double d, [UnitSystem u = UnitSystem.metric]) {
     if (!d.isFinite) return 'beyond range';
-    if (d < 1) return 'under 1 m';
-    if (d < 10) return '${d.toStringAsFixed(1)} m';
-    if (d < 1000) return '${d.round()} m';
-    return '${(d / 1000).toStringAsFixed(2)} km';
+    if (u.isMetric) {
+      if (d < 1) return 'under 1 m';
+      if (d < 10) return '${d.toStringAsFixed(1)} m';
+      if (d < 1000) return '${d.round()} m';
+      return '${(d / 1000).toStringAsFixed(2)} km';
+    }
+    final double ft = LengthUnits.metresToFeet(d);
+    if (ft < 3) return 'under 3 ft';
+    if (ft < 10) return '${ft.toStringAsFixed(1)} ft';
+    if (d < LengthUnits.metresPerMile) return '${ft.round()} ft';
+    return '${(d / LengthUnits.metresPerMile).toStringAsFixed(2)} mi';
   }
 
   static String mcs(int? m) => m == null ? 'below MCS 0' : 'MCS $m';
@@ -529,7 +536,11 @@ abstract final class UdFormat {
 
 /// The words for what "turn AP down to match" did, from the link before and
 /// after. Says what changed and what did not; never calls it an improvement.
-String udMatchSummary(UdConfig before, UdConfig after) {
+String udMatchSummary(
+  UdConfig before,
+  UdConfig after, [
+  UnitSystem u = UnitSystem.metric,
+]) {
   final String Function(double, [int]) n = UdFormat.n;
   final double downLoss =
       before.downlinkDbmAt(after.clientDistanceM) -
@@ -537,10 +548,10 @@ String udMatchSummary(UdConfig before, UdConfig after) {
   return 'The AP went from ${n(before.apTxDbm)} to ${n(after.apTxDbm)} dBm, '
       'the client\'s power. What changed: the downlink lost ${n(downLoss)} dB '
       'at every distance, so the ring where the client can decode the AP '
-      'shrank from ${UdFormat.dist(before.downlinkRingM)} to '
-      '${UdFormat.dist(after.downlinkRingM)}. What did not change: the '
+      'shrank from ${UdFormat.dist(before.downlinkRingM, u)} to '
+      '${UdFormat.dist(after.downlinkRingM, u)}. What did not change: the '
       'uplink. It is still ${UdFormat.dbm(after.uplink.rssiDbm)} here and the '
-      'AP still decodes the client out to ${UdFormat.dist(after.uplinkRingM)}, '
+      'AP still decodes the client out to ${UdFormat.dist(after.uplinkRingM, u)}, '
       'because the AP\'s transmit power is not part of the uplink. The weak '
       'side of the link is exactly as weak as before.';
 }

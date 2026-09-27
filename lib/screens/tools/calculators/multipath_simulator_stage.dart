@@ -21,6 +21,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'multipath_simulator_controller.dart';
 import 'multipath_simulator_painters.dart';
 import 'multipath_simulator_parts.dart';
@@ -148,6 +150,7 @@ class MultipathStage extends StatelessWidget {
         fontSize: scale.paintFont(AppTextSize.caption - 2),
         color: colors.textSecondary,
       ),
+      units: UnitSystemScope.systemOf(context),
     );
   }
 }
@@ -292,12 +295,15 @@ class _SceneCard extends StatelessWidget {
     final List<double> nulls = one ? const <double>[] : c.nulls;
     final String semantic = one
         ? 'Scene seen from above: a wall along the top, the access point on '
-              'the left, and the receiver ${_C.cm(c.trackOffset, 0)} along a '
-              '1 m track. The direct ray goes straight across; the reflected '
+              'the left, and the receiver ${_C.len(c.trackOffset, UnitSystemScope.systemOf(context), 0)} along a '
+              '${_C.dist(1, UnitSystemScope.systemOf(context))} track. The '
+              'direct ray goes straight across; the reflected '
               'ray bounces off the wall.'
         : 'Scene: a wall on the left, the receiver '
-              '${_C.cm(c.wallDistance)} in front of it, and the signal '
-              'arriving from an access point 10 m away. ${nulls.length} '
+              '${_C.len(c.wallDistance, UnitSystemScope.systemOf(context))} in front of it, and the signal '
+              'arriving from an access point '
+              '${_C.dist(10, UnitSystemScope.systemOf(context))} away. '
+              '${nulls.length} '
               'nulls are marked along the floor.';
     return MpCard(
       child: Column(
@@ -529,17 +535,28 @@ class _PlotCard extends StatelessWidget {
     final MultipathController c = controller;
     final List<double> a = c.traceA;
     final List<double>? b = c.traceB;
+    final UnitSystem u = c.units;
+    final LengthFormat f = LengthFormat(u);
     final String title = switch (c.mode) {
-      MultipathMode.oneWall => 'Power along the 1 m track',
+      MultipathMode.oneWall =>
+        'Power along the ${f.dist(MultipathController.twoRay.trackLength)} '
+            'track',
       MultipathMode.standingWave => 'Power vs distance to the wall',
-      MultipathMode.manyPaths => 'Power along 2 m, against the average',
+      MultipathMode.manyPaths =>
+        'Power along ${f.dist(2)}, against the average',
     };
+    // The plot works in cm; imperial shows inches with round ticks.
+    final double toShown = u.isMetric ? 1 : 1 / 2.54;
+    final double shownMax = c.plotRangeCm * toShown;
+    final List<double>? ticks = u.isMetric
+        ? null
+        : NiceTicks.between(0, shownMax, target: 3);
     final String semantic = c.isManyPaths
-        ? 'Plot of received power along 2 m for antenna A, solid, and '
+        ? 'Plot of received power along ${f.dist(2)} for antenna A, solid, and '
               'antenna B, dashed. Antenna A is below -10 dB '
               '${_C.pct(c.fade.fractionA)} of the way.'
         : 'Plot of received power against position. The receiver is at '
-              '${c.positionCm.toStringAsFixed(1)} cm, where the power is '
+              '${_C.len(c.positionCm / 100, u)}, where the power is '
               '${_C.db(c.receivedDb)}.';
     return MpCard(
       child: Column(
@@ -556,14 +573,15 @@ class _PlotCard extends StatelessWidget {
               painter: (Size size) => PowerPlotPainter(
                 traceA: a,
                 traceB: b,
-                xMax: c.plotRangeCm,
-                xUnitLabel: 'cm',
-                marker: c.positionCm,
+                xMax: shownMax,
+                xUnitLabel: f.smallUnit,
+                xTicks: ticks,
+                marker: c.positionCm * toShown,
                 style: style,
                 revision: c.plotRevision,
               ),
               onDrag: (double dx, Size size) => c.setPositionCm(
-                PowerPlotPainter.positionAt(dx, c.plotRangeCm, size),
+                PowerPlotPainter.positionAt(dx, shownMax, size) / toShown,
               ),
             ),
           ),
@@ -635,7 +653,9 @@ class _HistogramCard extends StatelessWidget {
               height: presenter ? null : 170,
               verticalPadding: AppSpacing.xxs,
               semantic:
-                  'Histogram of antenna A power along 2 m in 2.5 dB bins, with '
+                  'Histogram of antenna A power along '
+                  '${_C.dist(2, UnitSystemScope.systemOf(context))} in 2.5 dB '
+                  'bins, with '
                   'the Rayleigh prediction drawn over it. Measured below -10 dB: '
                   '${_C.pct(c.fade.fractionA)}; Rayleigh predicts 9.5%.',
               painter: (Size size) => HistogramPainter(
@@ -665,10 +685,11 @@ class _HistogramCard extends StatelessWidget {
           ),
           if (!presenter) const SizedBox(height: AppSpacing.xs),
           if (!presenter)
-            const MpNote(
+            MpNote(
               icon: Icons.info_outline,
               message:
-                  'The end bars also hold everything past -30 and +10 dB. A 2 m '
+                  'The end bars also hold everything past -30 and +10 dB. A '
+                  '${_C.dist(2, UnitSystemScope.systemOf(context))} '
                   'track holds only a few dozen fades, so the bars wander '
                   'around the curve; try New layout, more reflectors, or a '
                   'higher band.',

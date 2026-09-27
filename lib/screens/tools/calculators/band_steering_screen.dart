@@ -33,6 +33,8 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'band_steering_controller.dart';
 import 'band_steering_controls.dart';
 import 'band_steering_stage.dart';
@@ -59,7 +61,13 @@ class BandSteeringScreen extends StatefulWidget {
   State<BandSteeringScreen> createState() => _BandSteeringScreenState();
 }
 
-class _BandSteeringScreenState extends State<BandSteeringScreen> {
+class _BandSteeringScreenState extends State<BandSteeringScreen>
+    with UnitSystemFollower<BandSteeringScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final BandSteeringController _controller =
       widget.controller ?? BandSteeringController();
 
@@ -79,6 +87,7 @@ class _BandSteeringScreenState extends State<BandSteeringScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: BandSteeringStage(controller: _controller),
     controls: BandSteeringControls(controller: _controller),
@@ -92,6 +101,7 @@ class _BandSteeringScreenState extends State<BandSteeringScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.bandSteering, builder: _presenter),
           AppCopyAction(textBuilder: _controller.copyText),
         ],

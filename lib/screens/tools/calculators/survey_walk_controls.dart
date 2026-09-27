@@ -23,6 +23,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'roaming_walk_parts.dart';
 import 'survey_walk_controller.dart';
@@ -375,7 +377,7 @@ class _QuestionCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     'Walking never distorts a measurement. At '
-                    '${pace.toStringAsFixed(1)} m/s the channel holds still '
+                    '${fmtPace(pace, UnitSystemScope.systemOf(context))} the channel holds still '
                     'for ${lo.toStringAsFixed(0)} to ${hi.toStringAsFixed(0)} '
                     'ms, and the longest Wi-Fi frame lasts '
                     '${kLongestPpduMs.toStringAsFixed(3)} ms.',
@@ -387,9 +389,9 @@ class _QuestionCard extends StatelessWidget {
                   Text(
                     'Walking speed sets the spacing. Each channel is visited '
                     'once every ${fmtS(revisit)}, so its samples land '
-                    '${fmtM(sampleSpacingM(pace, revisit))} apart at '
-                    '${pace.toStringAsFixed(1)} m/s. With a '
-                    '${fmtM(cfg.guessRangeM)} guess range that is a Rule 4 '
+                    '${fmtM(sampleSpacingM(pace, revisit), UnitSystemScope.systemOf(context))} apart at '
+                    '${fmtPace(pace, UnitSystemScope.systemOf(context))}. With a '
+                    '${fmtM(cfg.guessRangeM, UnitSystemScope.systemOf(context))} guess range that is a Rule 4 '
                     '${r.rule4Pass ? 'pass' : 'fail'}.',
                     style: text.bodyMedium?.copyWith(
                       color: colors.textSecondary,
@@ -520,8 +522,8 @@ class _ReadoutsCard extends StatelessWidget {
       RwRow(
         label: 'Longest allowed revisit (guess range / pace)',
         value:
-            '${fmtS(r.maxAllowedRevisit)} = ${fmtM(cfg.guessRangeM)} / '
-            '${pace.toStringAsFixed(1)} m/s',
+            '${fmtS(r.maxAllowedRevisit)} = ${fmtM(cfg.guessRangeM, UnitSystemScope.systemOf(context))} / '
+            '${fmtPace(pace, UnitSystemScope.systemOf(context))}',
       ),
       RwRow(
         label: 'Rule 4: a sample at least every guess range',
@@ -539,7 +541,7 @@ class _ReadoutsCard extends StatelessWidget {
           label: 'Active test every',
           value:
               '${fmtS(kActiveTestIntervalS)}, spacing '
-              '${fmtM(sampleSpacingM(pace, kActiveTestIntervalS))}',
+              '${fmtM(sampleSpacingM(pace, kActiveTestIntervalS), UnitSystemScope.systemOf(context))}',
         ),
       );
     } else if (sch.isPriority) {
@@ -557,7 +559,7 @@ class _ReadoutsCard extends StatelessWidget {
           RwRow(
             label: pri ? 'Priority channels' : 'Other channels',
             value:
-                'revisit ${fmtS(m)}, spacing ${fmtM(sampleSpacingM(pace, m))}',
+                'revisit ${fmtS(m)}, spacing ${fmtM(sampleSpacingM(pace, m), UnitSystemScope.systemOf(context))}',
             emphasize: pri,
           ),
         );
@@ -569,7 +571,7 @@ class _ReadoutsCard extends StatelessWidget {
             label: 'Revisit, ${e.key.label}',
             value:
                 '${fmtS(e.value)}, spacing '
-                '${fmtM(sampleSpacingM(pace, e.value))}',
+                '${fmtM(sampleSpacingM(pace, e.value), UnitSystemScope.systemOf(context))}',
           ),
         );
       }
@@ -580,7 +582,7 @@ class _ReadoutsCard extends StatelessWidget {
         RwRow(
           label: 'Shown: ch ${r.channels[ch].shortLabel}',
           value:
-              '${fmtS(s.revisit.meanS)} revisit, ${fmtM(s.spacingM)} '
+              '${fmtS(s.revisit.meanS)} revisit, ${fmtM(s.spacingM, UnitSystemScope.systemOf(context))} '
               'spacing, ${s.samples} samples',
           emphasize: true,
         ),
@@ -588,7 +590,7 @@ class _ReadoutsCard extends StatelessWidget {
           label: 'Largest gap, ch ${r.channels[ch].shortLabel}',
           value: s.largestGapM == null
               ? 'fewer than 2 samples'
-              : fmtM(s.largestGapM!),
+              : fmtM(s.largestGapM!, UnitSystemScope.systemOf(context)),
         ),
       ]);
     }
@@ -602,7 +604,9 @@ class _ReadoutsCard extends StatelessWidget {
     rows.addAll(<Widget>[
       RwRow(
         label: 'Largest gap, any channel',
-        value: gap == null ? 'n/a' : fmtM(gap),
+        value: gap == null
+            ? 'n/a'
+            : fmtM(gap, UnitSystemScope.systemOf(context)),
       ),
       RwRow(
         label: 'Samples per channel',
@@ -610,7 +614,8 @@ class _ReadoutsCard extends StatelessWidget {
       ),
       RwRow(
         label: 'Position error (pauses, stamping)',
-        value: 'up to ${fmtM(r.maxErrorM)}, mean ${fmtM(r.meanErrorM)}',
+        value:
+            'up to ${fmtM(r.maxErrorM, UnitSystemScope.systemOf(context))}, mean ${fmtM(r.meanErrorM, UnitSystemScope.systemOf(context))}',
       ),
     ]);
     return RwCard(
@@ -720,13 +725,17 @@ class _SurveyCard extends StatelessWidget {
           if (cfg.capture == CaptureMethod.stopAndGo)
             RwSlider(
               label: 'Stop every',
-              valueText: fmtM(cfg.stopSpacingM),
-              value: cfg.stopSpacingM,
-              min: kStopSpacingMin,
-              max: kStopSpacingMax,
-              divisions: (kStopSpacingMax - kStopSpacingMin).round(),
-              onChanged: (double v) => c.stopSpacingM = v,
-              semanticValue: (double v) => '${v.toStringAsFixed(0)} meters',
+              valueText: fmtM(cfg.stopSpacingM, c.units),
+              value: LengthFormat(c.units).distValue(cfg.stopSpacingM),
+              min: _lo(c, kStopSpacingMin, 1),
+              max: _hi(c, kStopSpacingMax, 1),
+              divisions:
+                  (_hi(c, kStopSpacingMax, 1) - _lo(c, kStopSpacingMin, 1))
+                      .round(),
+              onChanged: (double v) =>
+                  c.stopSpacingM = LengthFormat(c.units).distToMetres(v),
+              semanticValue: (double v) =>
+                  '${v.toStringAsFixed(0)} ${LengthFormat(c.units).distUnitSpoken}',
             ),
           const SizedBox(height: AppSpacing.xs),
           LabeledField(
@@ -937,25 +946,37 @@ class _ScannerCard extends StatelessWidget {
 
 Widget _paceSlider(SurveyWalkController c, {bool short = false}) => RwSlider(
   label: short ? 'Pace' : 'Walking pace',
-  valueText: '${c.config.paceMps.toStringAsFixed(1)} m/s',
-  value: c.config.paceMps,
-  min: kSurveyPaceMin,
-  max: kSurveyPaceMax,
-  divisions: ((kSurveyPaceMax - kSurveyPaceMin) * 10).round(),
-  onChanged: (double v) => c.paceMps = v,
-  semanticValue: (double v) => '${v.toStringAsFixed(1)} meters per second',
+  valueText: fmtPace(c.config.paceMps, c.units),
+  value: LengthFormat(c.units).distValue(c.config.paceMps),
+  min: _lo(c, kSurveyPaceMin, 0.1),
+  max: _hi(c, kSurveyPaceMax, 0.1),
+  divisions: ((_hi(c, kSurveyPaceMax, 0.1) - _lo(c, kSurveyPaceMin, 0.1)) * 10)
+      .round(),
+  onChanged: (double v) => c.paceMps = LengthFormat(c.units).distToMetres(v),
+  semanticValue: (double v) =>
+      '${v.toStringAsFixed(1)} ${c.units.isMetric ? 'meters' : 'feet'} per '
+      'second',
 );
 
 Widget _guessSlider(SurveyWalkController c, {bool short = false}) => RwSlider(
   label: short ? 'Guess range' : 'Guess range (accuracy distance)',
-  valueText: fmtM(c.config.guessRangeM),
-  value: c.config.guessRangeM,
-  min: kGuessRangeMin,
-  max: kGuessRangeMax,
-  divisions: (kGuessRangeMax - kGuessRangeMin).round(),
-  onChanged: (double v) => c.guessRangeM = v,
-  semanticValue: (double v) => '${v.toStringAsFixed(0)} meters',
+  valueText: fmtM(c.config.guessRangeM, c.units),
+  value: LengthFormat(c.units).distValue(c.config.guessRangeM),
+  min: _lo(c, kGuessRangeMin, 1),
+  max: _hi(c, kGuessRangeMax, 1),
+  divisions: (_hi(c, kGuessRangeMax, 1) - _lo(c, kGuessRangeMin, 1)).round(),
+  onChanged: (double v) =>
+      c.guessRangeM = LengthFormat(c.units).distToMetres(v),
+  semanticValue: (double v) =>
+      '${v.toStringAsFixed(0)} ${LengthFormat(c.units).distUnitSpoken}',
 );
+
+/// A slider end in the unit on screen, rounded inward to [step].
+double _lo(SurveyWalkController c, double m, double step) =>
+    (LengthFormat(c.units).distValue(m) / step - 1e-9).ceilToDouble() * step;
+
+double _hi(SurveyWalkController c, double m, double step) =>
+    (LengthFormat(c.units).distValue(m) / step + 1e-9).floorToDouble() * step;
 
 class _WalkerCard extends StatelessWidget {
   const _WalkerCard(this.c, {this.withSliders = true});
@@ -990,14 +1011,18 @@ class _WalkerCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             _paceSlider(c),
             Text(
-              'Comfortable gait is 1.27 to 1.46 m/s; some vendors ask for '
-              'about 1 m/s.',
+              c.units.isMetric
+                  ? 'Comfortable gait is 1.27 to 1.46 m/s; some vendors ask '
+                        'for about 1 m/s.'
+                  : 'Comfortable gait is 4.2 to 4.8 ft/s; some vendors ask '
+                        'for about 3.3 ft/s.',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
             const SizedBox(height: AppSpacing.xs),
             _guessSlider(c),
             Text(
-              'How far the map may guess from each sample. About 5 m suits '
+              'How far the map may guess from each sample. About '
+              '${c.units.isMetric ? '5 m' : '16 ft'} suits '
               'most indoor buildings. A stretch with no sample within half of it is '
               'white: no data, not no coverage.',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),

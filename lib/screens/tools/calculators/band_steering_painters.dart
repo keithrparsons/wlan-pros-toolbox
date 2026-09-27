@@ -24,6 +24,8 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/band_steering_model.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'band_steering_parts.dart' show bsBandDashed;
 
 @immutable
@@ -178,7 +180,11 @@ class BsFloorPainter extends CustomPainter {
     required this.clientLetter,
     required this.style,
     required this.pulse,
+    this.units = UnitSystem.metric,
   }) : super(repaint: pulse);
+
+  /// Units for the path ticks.
+  final UnitSystem units;
 
   final double rangeM;
   final double ring24M;
@@ -219,10 +225,21 @@ class BsFloorPainter extends CustomPainter {
     final Offset a = g.client(kBsNearM);
     final Offset b = g.client(kBsEdgeM);
     _dashedLine(canvas, a, b, line, dash: 3, gap: 4);
-    for (int m = 10; m <= kBsEdgeM; m += 10) {
-      final Offset t = g.client(m.toDouble());
+    // Ticks every 10 m, or every 50 ft (25 ft crowds the 180 ft path and
+    // runs into the client marker at its end).
+    final LengthFormat f = LengthFormat(units);
+    final double stepShown = units.isMetric ? 10 : 50;
+    for (
+      double v = stepShown;
+      f.distToMetres(v) <= kBsEdgeM + 1e-9;
+      v += stepShown
+    ) {
+      final Offset t = g.client(f.distToMetres(v));
       canvas.drawLine(t, t + Offset(0, 5 * _s.marker), line);
-      final TextPainter tp = _text('$m m', style.gridLabel);
+      final TextPainter tp = _text(
+        '${v.round()} ${f.distUnit}',
+        style.gridLabel,
+      );
       tp.paint(canvas, t + Offset(-tp.width / 2, 7 * _s.marker));
     }
     // The walk's direction, at the far end of the path, above it: an arrow
@@ -454,6 +471,7 @@ class BsFloorPainter extends CustomPainter {
   @override
   bool shouldRepaint(BsFloorPainter old) =>
       old.rangeM != rangeM ||
+      old.units != units ||
       old.ring24M != ring24M ||
       old.ring5M != ring5M ||
       !identical(old.step, step) ||

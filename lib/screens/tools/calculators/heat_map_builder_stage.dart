@@ -180,7 +180,11 @@ class _NowStrip extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.label, required this.value, this.headline = false});
+  const _Tile({
+    required this.label,
+    required this.value,
+    this.headline = false,
+  });
 
   final String label;
   final String value;
@@ -230,11 +234,11 @@ String hmLessonText(HeatMapBuilderController c) {
     case HmLessonStep.predict:
       return 'Predict: three dots can paint the whole floor green. Should '
           'they? Only the dots are measurements; with a '
-          '${c.settings.guessRangeM.toStringAsFixed(0)} m guess range the '
+          '${c.whole(c.settings.guessRangeM)} guess range the '
           'rest of the floor is white, because it has no data.';
     case HmLessonStep.widened:
       return 'Reveal 1: the guess range is now '
-          '${c.settings.guessRangeM.toStringAsFixed(0)} m and flat inverse '
+          '${c.whole(c.settings.guessRangeM)} and flat inverse '
           'distance weighting fills the rest. Three dots paint the whole '
           'floor, and every cell but the three is a guess.';
     case HmLessonStep.wallRevealed:
@@ -305,7 +309,9 @@ class _MapCardState extends State<_MapCard> {
   String _semantic() {
     final HmMap m = c.map;
     final StringBuffer b = StringBuffer(
-      'Floor, 40 by 25 meters, seen from above, showing the '
+      'Floor, ${c.lf.distNumber(c.floor.widthM, decimals: 0)} by '
+      '${c.lf.distNumber(c.floor.depthM, decimals: 0)} '
+      '${c.lf.distUnitSpoken}, seen from above, showing the '
       '${c.view.label.toLowerCase()}. ${c.apCount} '
       '${c.apCount == 1 ? 'AP' : 'APs'}. ${c.points.length} samples. ',
     );
@@ -388,8 +394,11 @@ class _MapCardState extends State<_MapCard> {
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Expanded(
-                child: HmSectionLabel('Floor, seen from above (40 m x 25 m)'),
+              Expanded(
+                child: HmSectionLabel(
+                  'Floor, seen from above (${c.whole(c.floor.widthM)} x '
+                  '${c.whole(c.floor.depthM)})',
+                ),
               ),
               const SizedBox(width: AppSpacing.xs),
               AppToggle<HmView>(
@@ -588,7 +597,8 @@ class _InspectorLine extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Text(
-            'Cell at ${q.x.toStringAsFixed(2)}, ${q.y.toStringAsFixed(2)} m: '
+            'Cell at ${c.lf.distValue(q.x).toStringAsFixed(2)}, '
+            '${c.lf.dist(q.y, decimals: 2, keepZeros: true)}: '
             '$value',
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
@@ -631,12 +641,15 @@ class _ExperimentCard extends StatelessWidget {
     final Widget plot = Semantics(
       label:
           'Root mean square error against grid spacing '
-          '${kHmExperimentSpacings.map((double v) => v.toStringAsFixed(0)).join(', ')} m. '
+          '${controller.experimentSpacingsShown.map((double v) => v.toStringAsFixed(0)).join(', ')} ${controller.lf.distUnit}. '
           '$summary.',
       excludeSemantics: true,
       child: CustomPaint(
         painter: HmSpacingPainter(
           series: series,
+          spacingsShown: controller.experimentSpacingsShown,
+          axisMax: controller.units.isMetric ? 10 : 30,
+          unit: controller.lf.distUnit,
           style: HmSpacingPlotStyle(
             sc: sc,
             series: hues,
@@ -695,7 +708,10 @@ class _ExperimentCard extends StatelessWidget {
               ),
             ],
           ),
-          if (fill) Expanded(child: plot) else SizedBox(height: 180, child: plot),
+          if (fill)
+            Expanded(child: plot)
+          else
+            SizedBox(height: 180, child: plot),
           const SizedBox(height: AppSpacing.xxs),
           legend,
           if (!fill && series.length == 1) ...<Widget>[

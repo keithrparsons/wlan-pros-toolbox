@@ -173,8 +173,10 @@ class ChannelPlannerStage extends StatelessWidget {
             child: Text(
               state.wallMode
                   ? 'Wall tool on: drag on the floor to draw a wall.'
-                  : 'Floor ${state.floorW.round()} x ${state.floorH.round()} m, '
-                        'grid 10 m. Tap an AP to select it, drag to move it.',
+                  : 'Floor ${state.whole(state.floorW)} x '
+                        '${state.whole(state.floorH)} ${state.lf.distUnit}, '
+                        'grid ${state.gridLabel}. Tap an AP to select it, '
+                        'drag to move it.',
               style: text.bodySmall?.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -192,7 +194,8 @@ class ChannelPlannerStage extends StatelessWidget {
   String _semantics() {
     final PlanAnalysis a = state.analysis;
     final StringBuffer b = StringBuffer(
-      'Floor plan, ${state.floorW.round()} by ${state.floorH.round()} metres, '
+      'Floor plan, ${state.whole(state.floorW)} by '
+      '${state.whole(state.floorH)} ${state.lf.distUnitSpoken}, '
       '${state.apCount} access points, ${state.walls.length} walls. ',
     );
     for (int i = 0; i < state.apCount; i++) {
@@ -561,10 +564,11 @@ class _FloorPainter extends CustomPainter {
     final Paint grid = Paint()
       ..color = st.grid
       ..strokeWidth = st.w(1);
-    for (double x = 10; x < state.floorW; x += 10) {
+    final double step = state.gridM;
+    for (double x = step; x < state.floorW; x += step) {
       canvas.drawLine(_pt(x, 0), _pt(x, state.floorH), grid);
     }
-    for (double y = 10; y < state.floorH; y += 10) {
+    for (double y = step; y < state.floorH; y += step) {
       canvas.drawLine(_pt(0, y), _pt(state.floorW, y), grid);
     }
     canvas.drawRect(

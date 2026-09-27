@@ -24,6 +24,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'repeater_mesh_controller.dart';
 import 'repeater_mesh_painter.dart';
@@ -151,10 +152,11 @@ class _Headline extends StatelessWidget {
               : r.direct.hasLink
               ? rmMbps(r.direct.throughputMbps)
               : 'no link',
-          note: 'from ${rmMeters(c.clientM)}, for comparison',
+          note:
+              'from ${rmMeters(c.clientM, UnitSystemScope.systemOf(context))}, for comparison',
           semantics: masked
               ? 'Straight-to-AP throughput hidden until Reveal'
-              : 'Straight to the AP from ${rmMeters(c.clientM)}: '
+              : 'Straight to the AP from ${rmMeters(c.clientM, UnitSystemScope.systemOf(context))}: '
                     '${r.direct.hasLink ? rmMbps(r.direct.throughputMbps) : 'no link'}',
         ),
         _HeadlineTile(
@@ -308,7 +310,7 @@ class _CorridorViewState extends State<_CorridorView> {
     final RmResult r = k.result;
     final RmPaintStyle style = rmPaintStyle(context);
     return Semantics(
-      label: _semantics(r, k.masked),
+      label: _semantics(r, k.masked, UnitSystemScope.systemOf(context)),
       excludeSemantics: true,
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints box) {
@@ -341,6 +343,7 @@ class _CorridorViewState extends State<_CorridorView> {
                 masked: k.masked,
                 style: style,
                 phase: k.phase,
+                units: UnitSystemScope.systemOf(context),
               ),
             ),
           );
@@ -362,7 +365,7 @@ class _CorridorViewState extends State<_CorridorView> {
     widget.controller.moveNode(i, g.mOf(local.dx));
   }
 
-  static String _semantics(RmResult r, bool masked) {
+  static String _semantics(RmResult r, bool masked, UnitSystem u) {
     final RmConfig c = r.config;
     final StringBuffer b = StringBuffer(
       'Corridor, ${c.band.label}, ${c.backhaul.label}. ',
@@ -374,12 +377,12 @@ class _CorridorViewState extends State<_CorridorView> {
         b.write('Hop ${h.from + 1}, $from to $to: cable. ');
       } else if (!h.link.hasLink) {
         b.write(
-          'Hop ${h.from + 1}, $from to $to, ${rmMeters(h.link.distanceM)}: '
+          'Hop ${h.from + 1}, $from to $to, ${rmMeters(h.link.distanceM, u)}: '
           'no link. ',
         );
       } else {
         b.write(
-          'Hop ${h.from + 1}, $from to $to, ${rmMeters(h.link.distanceM)}: '
+          'Hop ${h.from + 1}, $from to $to, ${rmMeters(h.link.distanceM, u)}: '
           'MCS ${h.link.mcs}'
           '${masked ? '' : ', ${rmMbps(h.throughputMbps)}'}. ',
         );

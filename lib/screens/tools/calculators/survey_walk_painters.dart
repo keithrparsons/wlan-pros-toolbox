@@ -30,6 +30,8 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/survey_walk_engine.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'roaming_walk_painters.dart' show FloorMapping;
 
 /// Resolved colors and text styles shared by the painters.
@@ -723,7 +725,11 @@ class SurveySignalPainter extends CustomPainter {
     required this.timeS,
     required this.shown,
     required this.style,
+    this.units = UnitSystem.metric,
   });
+
+  /// Units for the distance-walked axis: 10 or 20 m, or 25 or 50 ft.
+  final UnitSystem units;
 
   final SurveyWalkResult result;
   final double timeS;
@@ -798,10 +804,16 @@ class SurveySignalPainter extends CustomPainter {
         align: Alignment.centerRight,
       );
     }
-    for (double s = 0; s <= length + 0.1; s += length > 80 ? 20 : 10) {
+    final LengthFormat f = LengthFormat(units);
+    final double lenShown = f.distValue(length);
+    final double stepShown = units.isMetric
+        ? (length > 80 ? 20 : 10)
+        : (lenShown > 260 ? 50 : 25);
+    for (double v = 0; v <= lenShown + 0.1; v += stepShown) {
+      final double s = f.distToMetres(v);
       _label(
         canvas,
-        '${s.toStringAsFixed(0)} m',
+        '${v.toStringAsFixed(0)} ${f.distUnit}',
         Offset(px(s), plot.bottom + 2),
         style.labelStyle,
         align: Alignment.topCenter,
@@ -863,6 +875,7 @@ class SurveySignalPainter extends CustomPainter {
   @override
   bool shouldRepaint(SurveySignalPainter old) =>
       old.result != result ||
+      old.units != units ||
       old.timeS != timeS ||
       old.shown != shown ||
       old.style != style;

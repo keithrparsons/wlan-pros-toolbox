@@ -16,6 +16,8 @@ import 'package:flutter/services.dart';
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/uplink_downlink_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 export '../../../services/wifi_lab/uplink_downlink_model.dart';
 
@@ -72,14 +74,24 @@ class UplinkDownlinkController extends ChangeNotifier {
   /// nice steps only, so small slider moves leave it alone.
   double get viewRangeM => viewRangeFor(_config);
 
-  static double viewRangeFor(UdConfig c) {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The model stays in metres.
+  UnitSystem get units => _units;
+
+  /// Switches units. The view range steps through round feet in imperial,
+  /// so the client is pulled inside it as on any other change.
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    _set(_config);
+  }
+
+  double viewRangeFor(UdConfig c) {
     double far = math.max(c.downlinkRingM, c.uplinkRingM);
     if (c.isMatched) far = math.max(far, c.beforeMatch.downlinkRingM);
     far *= 1.12;
-    for (final double r in viewRanges) {
-      if (r >= far) return r;
-    }
-    return viewRanges.last;
+    return NiceTicks.viewRange(far, _units, viewRanges);
   }
 
   void _set(UdConfig next) {
@@ -182,18 +194,18 @@ class UplinkDownlinkController extends ChangeNotifier {
         '(illustrative values)',
       )
       ..writeln(
-        'Client at ${UdFormat.dist(c.clientDistanceM)}: downlink '
+        'Client at ${UdFormat.dist(c.clientDistanceM, _units)}: downlink '
         '${UdFormat.dbm(dl.rssiDbm)}, ${UdFormat.mcs(dl.mcs)}; uplink '
         '${UdFormat.dbm(ul.rssiDbm)}, ${UdFormat.mcs(ul.mcs)}',
       )
       ..writeln(
         'Imbalance ${n(c.imbalanceDb)} dB. Client decodes AP to '
-        '${UdFormat.dist(c.downlinkRingM)}; AP decodes client to '
-        '${UdFormat.dist(c.uplinkRingM)}; asymmetry zone '
-        '${UdFormat.dist(c.asymmetryZoneM)} wide',
+        '${UdFormat.dist(c.downlinkRingM, _units)}; AP decodes client to '
+        '${UdFormat.dist(c.uplinkRingM, _units)}; asymmetry zone '
+        '${UdFormat.dist(c.asymmetryZoneM, _units)} wide',
       );
     final UdConfig? before = beforeMatch;
-    if (before != null) b.writeln(udMatchSummary(before, c));
+    if (before != null) b.writeln(udMatchSummary(before, c, _units));
     return b.toString().trimRight();
   }
 }

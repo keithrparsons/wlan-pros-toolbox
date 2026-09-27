@@ -54,6 +54,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'multipath_simulator_controller.dart';
 import 'multipath_simulator_controls.dart';
 import 'multipath_simulator_stage.dart';
@@ -72,7 +74,13 @@ class MultipathSimulatorScreen extends StatefulWidget {
       _MultipathSimulatorScreenState();
 }
 
-class _MultipathSimulatorScreenState extends State<MultipathSimulatorScreen> {
+class _MultipathSimulatorScreenState extends State<MultipathSimulatorScreen>
+    with UnitSystemFollower<MultipathSimulatorScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final MultipathController _controller = MultipathController(
     initialMode: widget.initialMode ?? MultipathMode.oneWall,
   );
@@ -86,6 +94,7 @@ class _MultipathSimulatorScreenState extends State<MultipathSimulatorScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied). The received level and fade figures are on the stage.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Multipath Simulator',
     stage: MultipathStage(controller: _controller),
     controls: MultipathControls(controller: _controller),
@@ -99,6 +108,7 @@ class _MultipathSimulatorScreenState extends State<MultipathSimulatorScreen> {
         title: const Text('Multipath Simulator'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.multipathSimulator,
             builder: _presenter,

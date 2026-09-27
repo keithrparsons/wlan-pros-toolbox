@@ -36,6 +36,8 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'multicast_basic_rate_controls.dart' show McChoiceButton, McSlider;
@@ -183,7 +185,7 @@ class _Readouts extends StatelessWidget {
                 row(
                   'Hop ${h.from + 1}, ${rmNodeName(h.from, c.relayCount)} to '
                   '${rmNodeName(h.to, c.relayCount)}'
-                  '${h.wired ? '' : ', ${rmMeters(h.link.distanceM)}'}',
+                  '${h.wired ? '' : ', ${rmMeters(h.link.distanceM, UnitSystemScope.systemOf(context))}'}',
                   hopValue(h),
                   danger: !h.wired && !h.link.hasLink,
                 ),
@@ -285,8 +287,11 @@ class _Predict extends StatelessWidget {
           if (!compact) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(
-              'Loads the scene (a repeater 30 m down the corridor, the laptop '
-              '2 m from it, one channel) and hides the throughputs until you '
+              'Loads the scene (a repeater '
+              '${rmMeters(30, UnitSystemScope.systemOf(context))} down the '
+              'corridor, the laptop '
+              '${rmMeters(2, UnitSystemScope.systemOf(context))} from it, one '
+              'channel) and hides the throughputs until you '
               'reveal them.',
               style: note,
             ),
@@ -534,20 +539,27 @@ class _Positions extends StatelessWidget {
   Widget build(BuildContext context) {
     final RmConfig c = controller.config;
     final List<double> nodes = c.nodesM;
+    final UnitSystem u = UnitSystemScope.systemOf(context);
+    final LengthFormat f = LengthFormat(u);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         for (int i = 1; i < nodes.length; i++)
           McSlider(
             label: '${rmNodeName(i, c.relayCount)} position',
-            valueText: rmMeters(nodes[i]),
-            value: nodes[i],
+            valueText: rmMeters(nodes[i], u),
+            // 0.5 m steps, or whole feet; the model keeps metres.
+            value: f.distValue(nodes[i]),
             min: 0,
-            max: kRmCorridorM,
-            divisions: (kRmCorridorM * 2).round(),
-            onChanged: (double v) => controller.moveNode(i, v),
+            max: u.isMetric
+                ? kRmCorridorM
+                : LengthUnits.metresToFeet(kRmCorridorM).floorToDouble(),
+            divisions: u.isMetric
+                ? (kRmCorridorM * 2).round()
+                : LengthUnits.metresToFeet(kRmCorridorM).floor(),
+            onChanged: (double v) => controller.moveNode(i, f.distToMetres(v)),
             semanticValue: (double v) =>
-                '${rmMeters((v * 2).roundToDouble() / 2)} from the AP',
+                '${u.isMetric ? rmMeters((v * 2).roundToDouble() / 2) : '${v.round()} ft'} from the AP',
           ),
       ],
     );

@@ -53,6 +53,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'devices_disagree_controller.dart';
 import 'devices_disagree_controls.dart';
 import 'devices_disagree_parts.dart';
@@ -71,7 +73,13 @@ class DevicesDisagreeScreen extends StatefulWidget {
   State<DevicesDisagreeScreen> createState() => _DevicesDisagreeScreenState();
 }
 
-class _DevicesDisagreeScreenState extends State<DevicesDisagreeScreen> {
+class _DevicesDisagreeScreenState extends State<DevicesDisagreeScreen>
+    with UnitSystemFollower<DevicesDisagreeScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   final DevicesDisagreeController _controller = DevicesDisagreeController();
 
   @override
@@ -83,6 +91,7 @@ class _DevicesDisagreeScreenState extends State<DevicesDisagreeScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied). The readouts are on the stage.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: kDevicesDisagreeTitle,
     stage: DevicesDisagreeStage(controller: _controller),
     controls: DevicesDisagreeControls(controller: _controller),
@@ -96,6 +105,7 @@ class _DevicesDisagreeScreenState extends State<DevicesDisagreeScreen> {
         title: const Text(kDevicesDisagreeTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.devicesDisagree,
             builder: _presenter,

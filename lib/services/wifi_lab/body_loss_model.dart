@@ -54,6 +54,8 @@ import 'dart:math' as math;
 
 import '../../data/channel_frequency_data.dart';
 import 'rate_vs_range_math.dart';
+import '../../units/length_format.dart';
+import '../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kBodyLossToolId = 'body-loss';
@@ -521,8 +523,14 @@ abstract final class BlFormat {
 
   static String deg(double v) => '${v.round() % 360}°';
 
-  static String dist(double m) =>
-      m < 10 ? '${m.toStringAsFixed(1)} m' : '${m.round()} m';
+  /// A distance in metres, in [u]: tenths under 10, whole above.
+  static String dist(double m, [UnitSystem u = UnitSystem.metric]) {
+    final LengthFormat f = LengthFormat(u);
+    final double v = f.distValue(m);
+    return v < 10
+        ? '${v.toStringAsFixed(1)} ${f.distUnit}'
+        : '${v.round()} ${f.distUnit}';
+  }
 
   static String people(int k) => k == 1 ? '1 person' : '$k people';
 }

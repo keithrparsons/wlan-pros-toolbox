@@ -48,6 +48,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'fspl_simulator_model.dart';
 import 'fspl_simulator_panels.dart';
 import 'fspl_simulator_stage.dart';
@@ -64,7 +66,13 @@ class FsplSimulatorScreen extends StatefulWidget {
   State<FsplSimulatorScreen> createState() => _FsplSimulatorScreenState();
 }
 
-class _FsplSimulatorScreenState extends State<FsplSimulatorScreen> {
+class _FsplSimulatorScreenState extends State<FsplSimulatorScreen>
+    with UnitSystemFollower<FsplSimulatorScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _model.setUnits(system);
+  }
+
   final FsplSimModel _model = FsplSimModel();
   bool _sheetOpen = false;
 
@@ -76,6 +84,7 @@ class _FsplSimulatorScreenState extends State<FsplSimulatorScreen> {
 
   /// The presenter layout over this screen's model (shared, not copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'FSPL Simulator',
     stage: FsplStage(model: _model, chartHeight: 0),
     controls: Column(
@@ -101,6 +110,7 @@ class _FsplSimulatorScreenState extends State<FsplSimulatorScreen> {
         title: const Text('FSPL Simulator'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.fsplSimulator,
             builder: _presenter,

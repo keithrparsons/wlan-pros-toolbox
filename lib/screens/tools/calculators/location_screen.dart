@@ -56,6 +56,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'location_controller.dart';
 import 'location_controls.dart';
 import 'location_parts.dart';
@@ -75,7 +77,13 @@ class LocationScreen extends StatefulWidget {
   State<LocationScreen> createState() => _LocationScreenState();
 }
 
-class _LocationScreenState extends State<LocationScreen> {
+class _LocationScreenState extends State<LocationScreen>
+    with UnitSystemFollower<LocationScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final LocationController _controller =
       widget.controller ?? LocationController();
 
@@ -86,6 +94,7 @@ class _LocationScreenState extends State<LocationScreen> {
   }
 
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: LocationStage(controller: _controller),
     controls: LocationControls(controller: _controller),
@@ -99,6 +108,7 @@ class _LocationScreenState extends State<LocationScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.locationRssiFtm,
             builder: _presenter,
@@ -175,7 +185,8 @@ class _AboutCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Illustrative values: the shadowing sigma, the power each AP '
-            'radiates and the blocked-path extra distance. The 1 to 2 m '
+            'radiates and the blocked-path extra distance. The '
+            '${locVendorRange(UnitSystemScope.systemOf(context))} '
             'timing accuracy is from a vendor developer document. Real '
             'systems also face AP position errors, clock offsets, antennas and '
             'floors above and below.',

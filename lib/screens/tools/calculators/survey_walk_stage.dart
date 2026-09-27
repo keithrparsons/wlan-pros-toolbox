@@ -21,6 +21,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'roaming_walk_painters.dart' show FloorMapping;
 import 'roaming_walk_palette.dart';
 import 'roaming_walk_parts.dart';
@@ -140,7 +142,9 @@ class _FloorCard extends StatelessWidget {
     final SurveyWalkResult r = c.result;
     final SurveyWalkConfig cfg = c.config;
     final StringBuffer b = StringBuffer(
-      'Floor plan, 60 by 20 meters, a corridor with rooms either side. ',
+      'Floor plan, ${LengthFormat(c.units).distNumber(kFloorWidthM, decimals: 0)} '
+      'by ${LengthFormat(c.units).distSpoken(kFloorDepthM, decimals: 0)}, a '
+      'corridor with rooms either side. ',
     );
     if (c.drawing) {
       b.write(
@@ -151,8 +155,9 @@ class _FloorCard extends StatelessWidget {
     }
     b.write(
       'Path ${c.pathPreset.label.toLowerCase()}, '
-      '${r.plan.lengthM.toStringAsFixed(0)} meters. Walker at '
-      '${c.walkerS.toStringAsFixed(1)} meters. ',
+      '${LengthFormat(c.units).distSpoken(r.plan.lengthM, decimals: 0)}. '
+      'Walker at '
+      '${LengthFormat(c.units).distSpoken(c.walkerS, decimals: 1)}. ',
     );
     if (cfg.effectiveType == SurveyType.active) {
       final int? s = r.servingApAt(c.timeS);
@@ -236,7 +241,11 @@ class _FloorCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const RwSectionLabel('Floor plan, seen from above (60 m x 20 m)'),
+          RwSectionLabel(
+            'Floor plan, seen from above '
+            '(${LengthFormat(UnitSystemScope.systemOf(context)).dist(kFloorWidthM, decimals: 0)} x '
+            '${LengthFormat(UnitSystemScope.systemOf(context)).dist(kFloorDepthM, decimals: 0)})',
+          ),
           if (!fill) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(
@@ -587,6 +596,7 @@ class _SignalCard extends StatelessWidget {
               timeS: c.timeS,
               shown: ch,
               style: style,
+              units: c.units,
             ),
           ),
         ),
@@ -686,7 +696,7 @@ class _NowStrip extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${fmtM(spacing)} vs ${fmtM(cfg.guessRangeM)}',
+                    '${fmtM(spacing, UnitSystemScope.systemOf(context))} vs ${fmtM(cfg.guessRangeM, UnitSystemScope.systemOf(context))}',
                     style: sc
                         .headlineStyle(mono.outputLarge)
                         .copyWith(color: colors.textAccent),
@@ -735,7 +745,10 @@ class _NowStrip extends StatelessWidget {
               '${c.timeS.toStringAsFixed(1)} of '
                   '${r.durationS.toStringAsFixed(1)} s',
             ),
-            stat('Largest position error', fmtM(r.maxErrorM)),
+            stat(
+              'Largest position error',
+              fmtM(r.maxErrorM, UnitSystemScope.systemOf(context)),
+            ),
           ],
         ),
       ),

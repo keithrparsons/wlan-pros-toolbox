@@ -20,6 +20,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/devices_disagree_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kDevicesDisagreeToolId = 'devices-disagree';
@@ -53,12 +55,22 @@ abstract final class DdFormat {
     return v > 0 ? '+$s dB' : '$s dB';
   }
 
-  static String meters(double m) =>
-      '${_n(m, m == m.roundToDouble() ? 0 : 1)} m';
+  /// AP distance: whole metres (a tenth when it has one), or whole feet.
+  static String meters(double m, [UnitSystem u = UnitSystem.metric]) {
+    if (u.isMetric) return '${_n(m, m == m.roundToDouble() ? 0 : 1)} m';
+    return '${_n(LengthUnits.metresToFeet(m), 0)} ft';
+  }
 
-  static String cm(double m) => '${_n(m * 100, 0)} cm';
+  /// Device spacing: whole cm, or inches to a tenth.
+  static String cm(double m, [UnitSystem u = UnitSystem.metric]) => u.isMetric
+      ? '${_n(m * 100, 0)} cm'
+      : '${_n(LengthUnits.metresToInches(m), 1)} in';
 
-  static String cmPrecise(double m) => '${_n(m * 100, 1)} cm';
+  /// Half a wavelength: cm to a tenth, or inches to a hundredth.
+  static String cmPrecise(double m, [UnitSystem u = UnitSystem.metric]) =>
+      u.isMetric
+      ? '${_n(m * 100, 1)} cm'
+      : '${_n(LengthUnits.metresToInches(m), 2)} in';
 }
 
 class DevicesDisagreeController extends ChangeNotifier {
@@ -145,9 +157,33 @@ class DevicesDisagreeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Up and Down: the AP distance one meter.
-  void nudgeDistance(double deltaM) =>
-      distanceM = (_config.distanceM + deltaM).roundToDouble();
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The model stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
+  /// Snaps an AP distance to a whole metre, or a whole foot, inside the
+  /// model's range.
+  double snapDistance(double m) {
+    final LengthFormat f = LengthFormat(_units);
+    final double lo = f.distValue(kMinDistanceM).ceilToDouble();
+    final double hi = f.distValue(kMaxDistanceM).floorToDouble();
+    return f.distToMetres(f.distValue(m).roundToDouble().clamp(lo, hi));
+  }
+
+  /// Up and Down: the AP distance one metre, or one foot.
+  void nudgeDistance(double delta) {
+    final LengthFormat f = LengthFormat(_units);
+    distanceM = snapDistance(
+      f.distToMetres(f.distValue(_config.distanceM).roundToDouble() + delta),
+    );
+  }
 
   // ── Presenter keys ────────────────────────────────────────────────────────
 
@@ -193,12 +229,12 @@ class DevicesDisagreeController extends ChangeNotifier {
     final StringBuffer b = StringBuffer()
       ..writeln('$kDevicesDisagreeTitle (WLAN Pros Toolbox, teaching model)')
       ..writeln(
-        'Band ${c.band.label}, AP ${DdFormat.meters(c.distanceM)} away, '
+        'Band ${c.band.label}, AP ${DdFormat.meters(c.distanceM, _units)} away, '
         'true power ${DdFormat.dbmPrecise(r.trueDbm)}',
       )
       ..writeln(
         'Fading ${c.fadingOn ? 'on' : 'off'}, devices '
-        '${DdFormat.cm(c.spacingM)} apart, sample set ${c.seed}',
+        '${DdFormat.cm(c.spacingM, _units)} apart, sample set ${c.seed}',
       );
     for (int i = 0; i < r.traces.length; i++) {
       final DeviceTrace t = r.traces[i];

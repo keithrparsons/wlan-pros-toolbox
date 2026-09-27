@@ -21,6 +21,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/band_steering_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kBandSteeringToolId = 'band-steering';
@@ -54,6 +56,17 @@ const String kBsQuestionText =
     'move to 5 GHz?';
 
 class BandSteeringController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The walk stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   BandSteeringController({BsConfig initial = const BsConfig()})
     : _config = initial,
       _walk = simulateWalk(initial) {
@@ -295,7 +308,8 @@ class BandSteeringController extends ChangeNotifier {
         '${c.randomScanAddress ? 'on' : 'off'}',
       )
       ..writeln(
-        'At ${s.distanceM.toStringAsFixed(0)} m from the AP: 2.4 GHz '
+        'At ${LengthFormat(_units).dist(s.distanceM, decimals: 0)} from the '
+        'AP: 2.4 GHz '
         '${bsDbm(s.rssi24)}, 5 GHz ${bsDbm(s.rssi5)}',
       )
       ..writeln('On: ${s.band?.label ?? 'not connected'}')

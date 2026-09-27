@@ -196,7 +196,7 @@ class _SampleButtons extends StatelessWidget {
       label: 'Grid',
       semanticLabel:
           'Place a grid of samples every '
-          '${c.spacingM.toStringAsFixed(0)} meters',
+          '${c.lf.distSpoken(c.spacingM, decimals: 0)}',
       onPressed: c.useGrid,
     );
     final Widget walk = HmOutlineButton(
@@ -204,18 +204,23 @@ class _SampleButtons extends StatelessWidget {
       label: compact ? 'Walk' : 'Corridor walk',
       semanticLabel:
           'Walk the corridor with a sample every '
-          '${c.spacingM.toStringAsFixed(0)} meters',
+          '${c.lf.distSpoken(c.spacingM, decimals: 0)}',
       onPressed: c.useWalk,
     );
     final Widget spacing = HmSlider(
       label: compact ? 'Spacing' : 'Grid and walk spacing',
-      valueText: '${c.spacingM.toStringAsFixed(0)} m',
-      value: c.spacingM,
-      min: kHmMinSpacingM,
-      max: kHmMaxSpacingM,
-      divisions: (kHmMaxSpacingM - kHmMinSpacingM).round(),
-      onChanged: (double v) => c.spacingM = v,
-      semanticValue: (double v) => '${v.toStringAsFixed(0)} meters',
+      valueText: c.whole(c.spacingM),
+      // Whole metres, or whole feet.
+      value: c.lf.distValue(c.spacingM),
+      min: (c.lf.distValue(kHmMinSpacingM) - 1e-9).ceilToDouble(),
+      max: (c.lf.distValue(kHmMaxSpacingM) + 1e-9).floorToDouble(),
+      divisions:
+          ((c.lf.distValue(kHmMaxSpacingM) + 1e-9).floorToDouble() -
+                  (c.lf.distValue(kHmMinSpacingM) - 1e-9).ceilToDouble())
+              .round(),
+      onChanged: (double v) => c.spacingM = c.lf.distToMetres(v),
+      semanticValue: (double v) =>
+          '${v.toStringAsFixed(0)} ${c.lf.distUnitSpoken}',
     );
     final Widget tap = AppToggle<HmTapAction>(
       value: c.tapAction,
@@ -304,23 +309,33 @@ class _InspectorFields extends StatelessWidget {
       children: <Widget>[
         HmSlider(
           label: 'Inspected cell, across',
-          valueText: q == null ? 'none' : '${at.x.toStringAsFixed(2)} m',
+          // Cell centres; the slider stays on the 0.5 m cell grid, the
+          // reading is in the unit on screen.
+          valueText: q == null
+              ? 'none'
+              : c.lf.dist(at.x, decimals: 2, keepZeros: true),
           value: at.x,
           min: kHmCellM / 2,
           max: f.widthM - kHmCellM / 2,
           divisions: (f.widthM / kHmCellM).round() - 1,
           onChanged: (double v) => c.inspect((x: v, y: at.y)),
-          semanticValue: (double v) => '${v.toStringAsFixed(2)} meters',
+          semanticValue: (double v) =>
+              '${c.lf.distValue(v).toStringAsFixed(2)} ${c.lf.distUnitSpoken}',
         ),
         HmSlider(
           label: 'Inspected cell, down',
-          valueText: q == null ? 'none' : '${at.y.toStringAsFixed(2)} m',
+          // Cell centres; the slider stays on the 0.5 m cell grid, the
+          // reading is in the unit on screen.
+          valueText: q == null
+              ? 'none'
+              : c.lf.dist(at.y, decimals: 2, keepZeros: true),
           value: at.y,
           min: kHmCellM / 2,
           max: f.depthM - kHmCellM / 2,
           divisions: (f.depthM / kHmCellM).round() - 1,
           onChanged: (double v) => c.inspect((x: at.x, y: v)),
-          semanticValue: (double v) => '${v.toStringAsFixed(2)} meters',
+          semanticValue: (double v) =>
+              '${c.lf.distValue(v).toStringAsFixed(2)} ${c.lf.distUnitSpoken}',
         ),
       ],
     );
@@ -356,8 +371,8 @@ class _ReadoutsCard extends StatelessWidget {
             value: m.maxErrorDb == null
                 ? 'no data'
                 : '${fmtSignedDb(m.maxErrorDb!)} at '
-                      '${m.maxErrorCell!.x.toStringAsFixed(1)}, '
-                      '${m.maxErrorCell!.y.toStringAsFixed(1)} m',
+                      '${c.lf.distValue(m.maxErrorCell!.x).toStringAsFixed(1)}, '
+                      '${c.lf.dist(m.maxErrorCell!.y, decimals: 1, keepZeros: true)}',
           ),
           HmRow(
             label: 'Floor with no data (white)',
@@ -414,7 +429,9 @@ class _MethodFields extends StatelessWidget {
       onChanged: (HmMethod m) => c.method = m,
     );
     final Widget power = HmSlider(
-      label: idw || compact ? 'Power (p)' : 'Power (p): not used by nearest neighbor',
+      label: idw || compact
+          ? 'Power (p)'
+          : 'Power (p): not used by nearest neighbor',
       valueText: fmtPower(s.power),
       value: s.power,
       min: kHmMinPower,
@@ -425,13 +442,18 @@ class _MethodFields extends StatelessWidget {
     );
     final Widget range = HmSlider(
       label: 'Guess range',
-      valueText: '${s.guessRangeM.toStringAsFixed(0)} m',
-      value: s.guessRangeM,
-      min: kHmMinGuessRangeM,
-      max: kHmMaxGuessRangeM,
-      divisions: (kHmMaxGuessRangeM - kHmMinGuessRangeM).round(),
-      onChanged: (double v) => c.guessRangeM = v,
-      semanticValue: (double v) => '${v.toStringAsFixed(0)} meters',
+      valueText: c.whole(s.guessRangeM),
+      // Whole metres, or whole feet.
+      value: c.lf.distValue(s.guessRangeM),
+      min: (c.lf.distValue(kHmMinGuessRangeM) - 1e-9).ceilToDouble(),
+      max: (c.lf.distValue(kHmMaxGuessRangeM) + 1e-9).floorToDouble(),
+      divisions:
+          ((c.lf.distValue(kHmMaxGuessRangeM) + 1e-9).floorToDouble() -
+                  (c.lf.distValue(kHmMinGuessRangeM) - 1e-9).ceilToDouble())
+              .round(),
+      onChanged: (double v) => c.guessRangeM = c.lf.distToMetres(v),
+      semanticValue: (double v) =>
+          '${v.toStringAsFixed(0)} ${c.lf.distUnitSpoken}',
     );
     final Widget domain = AppToggle<HmDomain>(
       value: s.domain,
@@ -655,8 +677,10 @@ class _LessonButtons extends StatelessWidget {
                 icon: Icons.show_chart_rounded,
                 label: 'Spacing experiment',
                 semanticLabel:
-                    'Run the spacing experiment: grids at 1, 2, 3, 5, 7 and '
-                    '10 meters',
+                    'Run the spacing experiment: grids at '
+                    '${c.experimentSpacingsShown.take(5).map((double v) => v.toStringAsFixed(0)).join(', ')} and '
+                    '${c.experimentSpacingsShown.last.toStringAsFixed(0)} '
+                    '${c.lf.distUnitSpoken}',
                 onPressed: c.runExperiment,
               ),
             ),
@@ -682,7 +706,13 @@ class _WorkedExampleCard extends StatelessWidget {
     final PresenterScale sc = PresenterMode.scaleOf(context);
     final HmSettings s = c.settings;
     final bool nearest = s.method == HmMethod.nearest;
-    final List<double> w = HmWorkedExample.weights(s.power);
+    // Imperial shows 5, 10 and 15 ft: the same 1 : 2 : 3 ratios as 2, 4 and
+    // 6 m, so the shares and the result are the same; the raw weights are
+    // computed from the distances on screen so the arithmetic checks.
+    final List<double> ds = c.units.isMetric
+        ? HmWorkedExample.distancesM
+        : const <double>[5, 10, 15];
+    final List<double> w = idwWeights(ds, s.power);
     final double sw = w.fold(0, (double a, double b) => a + b);
     final List<double> shares = nearest
         ? const <double>[1, 0, 0]
@@ -704,7 +734,9 @@ class _WorkedExampleCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           Semantics(
             label:
-                'A cell 2, 4 and 6 meters from samples of minus 55, minus 65 '
+                'A cell ${ds[0].toStringAsFixed(0)}, ${ds[1].toStringAsFixed(0)} '
+                'and ${ds[2].toStringAsFixed(0)} ${c.lf.distUnitSpoken} from '
+                'samples of minus 55, minus 65 '
                 'and minus 70 dBm. Line thickness shows each weight.',
             excludeSemantics: true,
             child: SizedBox(
@@ -718,6 +750,8 @@ class _WorkedExampleCard extends StatelessWidget {
                   label: colors.textSecondary,
                   sc: sc,
                   font: mono.inlineCode,
+                  distancesShown: ds,
+                  unitLabel: c.lf.distUnit,
                 ),
               ),
             ),
@@ -726,7 +760,7 @@ class _WorkedExampleCard extends StatelessWidget {
             HmRow(
               label:
                   '${HmWorkedExample.valuesDbm[i].toStringAsFixed(0)} dBm at '
-                  '${HmWorkedExample.distancesM[i].toStringAsFixed(0)} m',
+                  '${ds[i].toStringAsFixed(0)} ${c.lf.distUnit}',
               value: nearest
                   ? (i == 0 ? 'weight 1 (nearest)' : 'weight 0')
                   : 'weight ${_fmtWeight(w[i])} '
