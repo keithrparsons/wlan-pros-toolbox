@@ -117,7 +117,7 @@ void main() {
     });
 
     test('a roam back after more than 5 s is not a ping-pong', () {
-      // Down the corridor and back, iPhone values: the client returns to
+      // Down the corridor and back, transmitting-phone values: the client returns to
       // AP 1 far later than 5 s after leaving it.
       final RoamWalkResult r = simulateRoamWalk(
         RoamWalkConfig(
@@ -179,20 +179,20 @@ void main() {
       double below(double trigger) => simulateRoamWalk(
         RoamWalkConfig(triggerDbm: trigger, deltaDb: 12),
       ).totals.secondsBelowWeak;
-      final double iphone = below(-70);
-      final double mac = below(-75);
+      final double phone = below(-70);
+      final double laptop = below(-75);
       final double sticky = below(-85);
-      expect(mac, greaterThan(iphone));
-      expect(sticky, greaterThan(mac));
+      expect(laptop, greaterThan(phone));
+      expect(sticky, greaterThan(laptop));
     });
 
-    test('the default iPhone walk roams twice, the sticky one never', () {
-      final RoamWalkResult iphone = simulateRoamWalk(
+    test('the default phone walk roams twice, the sticky one never', () {
+      final RoamWalkResult phone = simulateRoamWalk(
         RoamWalkConfig(shadowSigmaDb: 0),
       );
-      expect(iphone.totals.roams, 2);
+      expect(phone.totals.roams, 2);
       expect(
-        iphone.events.map((RoamEvent e) => (e.fromAp, e.toAp)).toList(),
+        phone.events.map((RoamEvent e) => (e.fromAp, e.toAp)).toList(),
         <(int, int)>[(0, 1), (1, 2)],
       );
       final RoamWalkResult sticky = simulateRoamWalk(
@@ -309,25 +309,25 @@ void main() {
               useFt: ft,
             ),
           );
-      final RoamWalkResult iphone = walk(ClientPreset.iphoneTx);
+      final RoamWalkResult phone = walk(ClientPreset.phoneTx);
       expect(
-        iphone.events.map((RoamEvent e) => e.timeS.toStringAsFixed(1)),
+        phone.events.map((RoamEvent e) => e.timeS.toStringAsFixed(1)),
         <String>['17.7', '32.0'],
       );
-      expect(iphone.totals.secondsBelowWeak.toStringAsFixed(1), '0.2');
+      expect(phone.totals.secondsBelowWeak.toStringAsFixed(1), '0.2');
       expect(
-        walk(ClientPreset.mac).totals.secondsBelowWeak.toStringAsFixed(1),
+        walk(ClientPreset.laptop).totals.secondsBelowWeak.toStringAsFixed(1),
         '11.8',
       );
       final RoamWalkResult sticky = walk(ClientPreset.sticky);
       expect(sticky.totals.roams, 0);
       expect(sticky.totals.secondsBelowWeak.toStringAsFixed(1), '23.7');
-      final RoamEvent e = iphone.events.first;
+      final RoamEvent e = phone.events.first;
       expect(e.cost.scanMs, 250);
       expect(e.cost.authMs, 101);
       expect(e.cost.frames, 17);
       final RoamEvent fast = walk(
-        ClientPreset.iphoneTx,
+        ClientPreset.phoneTx,
         k: true,
         ft: true,
       ).events.first;
@@ -347,11 +347,11 @@ void main() {
     });
 
     test('presets carry the brief §3 values', () {
-      expect(ClientPreset.iphoneTx.triggerDbm, -70);
-      expect(ClientPreset.iphoneTx.deltaDb, 8);
-      expect(ClientPreset.iphoneIdle.deltaDb, 12);
-      expect(ClientPreset.mac.triggerDbm, -75);
-      expect(ClientPreset.mac.deltaDb, 12);
+      expect(ClientPreset.phoneTx.triggerDbm, -70);
+      expect(ClientPreset.phoneTx.deltaDb, 8);
+      expect(ClientPreset.phoneIdle.deltaDb, 12);
+      expect(ClientPreset.laptop.triggerDbm, -75);
+      expect(ClientPreset.laptop.deltaDb, 12);
       expect(ClientPreset.sticky.published, isFalse);
       expect(ClientPreset.jumpy.published, isFalse);
       expect(ClientPreset.matching(-65, 2), ClientPreset.jumpy);
