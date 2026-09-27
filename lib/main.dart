@@ -40,6 +40,7 @@ import 'services/network/pi_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'units/unit_system.dart';
 
 Future<void> main() async {
   // Binding up first so the async asset-manifest load below can run before the
@@ -312,25 +313,50 @@ Future<void> main() async {
   final ThemeController themeController = ThemeController();
   await themeController.load();
 
-  runApp(ToolboxApp(themeController: themeController));
+  // Length units for the Wi-Fi Classroom tools (Keith, 2026-09-27). Default
+  // metric; the persisted pick loads before the first frame. load() never
+  // throws.
+  final UnitSystemController unitsController = UnitSystemController();
+  await unitsController.load();
+
+  runApp(
+    ToolboxApp(
+      themeController: themeController,
+      unitsController: unitsController,
+    ),
+  );
 }
 
 class ToolboxApp extends StatelessWidget {
-  const ToolboxApp({super.key, required this.themeController});
+  const ToolboxApp({
+    super.key,
+    required this.themeController,
+    this.unitsController,
+  });
 
   /// Owns the §8.20.5 ThemeMode (System / Light / Dark). Exposed via the
   /// inherited [ThemeControllerScope] so the Appearance toggle can drive it.
   final ThemeController themeController;
 
+  /// The app-wide metric / imperial pick for lengths, exposed through
+  /// [UnitSystemScope]. Optional so existing tests that build a bare
+  /// ToolboxApp keep working; they get a fresh metric controller.
+  final UnitSystemController? unitsController;
+
+  static final UnitSystemController _fallbackUnits = UnitSystemController();
+
   @override
   Widget build(BuildContext context) {
-    return ThemeControllerScope(
-      controller: themeController,
-      child: ListenableBuilder(
-        listenable: themeController,
-        builder: (BuildContext context, Widget? _) {
-          return _buildApp(themeController.mode);
-        },
+    return UnitSystemScope(
+      controller: unitsController ?? _fallbackUnits,
+      child: ThemeControllerScope(
+        controller: themeController,
+        child: ListenableBuilder(
+          listenable: themeController,
+          builder: (BuildContext context, Widget? _) {
+            return _buildApp(themeController.mode);
+          },
+        ),
       ),
     );
   }
