@@ -6,9 +6,11 @@
 // without either owning the other. Math comes from FsplMath; this file only
 // wires inputs to it.
 //
-// DESIGN TARGETS: the -67 and -70 dBm reference lines are read from the
-// Signal Thresholds tool's per-application table (the VoIP and HD video rows),
-// so the two tools cannot drift apart.
+// DESIGN TARGETS: the default -67 and -70 dBm reference lines are read from
+// the Signal Thresholds tool's per-application table (the VoIP and HD video
+// rows), so the two tools cannot drift apart. Since 2026-09-27 the user can
+// edit, add and remove them (up to four), and the pick persists app-wide;
+// see fspl_simulator_targets.dart.
 //
 // ASCII only, no em dashes (GL-004).
 
@@ -23,6 +25,19 @@ import '../../../units/unit_system.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
 import '../reference/signal_thresholds_screen.dart';
 import 'fspl_simulator_chart.dart';
+import 'fspl_simulator_targets.dart';
+
+export 'fspl_simulator_targets.dart'
+    show
+        FsplDesignTarget,
+        FsplTargetRow,
+        FsplTargetStore,
+        fsplTargetValueText,
+        kFsplMaxTargets,
+        kFsplTargetError,
+        kFsplTargetLabelMax,
+        kFsplTargetMaxDbm,
+        kFsplTargetMinDbm;
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kFsplSimulatorToolId = 'fspl-simulator';
@@ -76,15 +91,7 @@ const Map<WifiBand, (CurveStroke, CurveMarker)> kFsplBandLook =
       WifiBand.band6: (CurveStroke.dotted, CurveMarker.triangle),
     };
 
-/// A horizontal design-target line.
-@immutable
-class FsplDesignTarget {
-  const FsplDesignTarget(this.dbm, this.label);
-  final double dbm;
-  final String label;
-}
-
-/// The -67 and -70 dBm design targets, read from the Signal Thresholds tool
+/// The default -67 and -70 dBm design targets, read from the Signal Thresholds tool
 /// (VoIP / Real-time and Video streaming (HD) rows) rather than hard-coded.
 List<FsplDesignTarget> fsplDesignTargets() {
   final List<FsplDesignTarget> out = <FsplDesignTarget>[];
@@ -154,7 +161,23 @@ abstract final class FsplFormat {
 }
 
 class FsplSimModel extends ChangeNotifier {
-  FsplSimModel();
+  /// [store] defaults to the app-wide [FsplTargetStore.instance]. When it has
+  /// already loaded (main.dart loads it before the first frame) the saved
+  /// lines apply at once; otherwise the defaults show until the load lands,
+  /// unless the user has edited a line by then.
+  FsplSimModel({FsplTargetStore? store})
+    : _store = store ?? FsplTargetStore.instance {
+    if (_store.isLoaded) {
+      _rows = _rowsFrom(_store.saved ?? defaultTargets);
+    } else {
+      _rows = _rowsFrom(defaultTargets);
+      _store.load().then((_) {
+        if (_disposed || _targetsTouched) return;
+        _rows = _rowsFrom(_store.saved ?? defaultTargets);
+        _changed();
+      });
+    }
+  }
 
   static const double rssiMin = -120;
   static const double rssiMax = 0;
@@ -186,8 +209,28 @@ class FsplSimModel extends ChangeNotifier {
   WifiBand _measuredBand = WifiBand.band5;
 
   int _revision = 0;
+  bool _disposed = false;
 
-  final List<FsplDesignTarget> targets = fsplDesignTargets();
+  final FsplTargetStore _store;
+
+  /// The Signal Thresholds defaults (-67 voice, -70 HD video).
+  final List<FsplDesignTarget> defaultTargets =
+      List<FsplDesignTarget>.unmodifiable(fsplDesignTargets());
+
+  late List<FsplTargetRow> _rows;
+  int _nextRowId = 0;
+  bool _targetsTouched = false;
+
+  List<FsplTargetRow> _rowsFrom(List<FsplDesignTarget> ts) => <FsplTargetRow>[
+    for (final FsplDesignTarget t in ts)
+      FsplTargetRow(id: _nextRowId++, valueText: t.valueText, label: t.label),
+  ];
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   // ── Getters ─────────────────────────────────────────────────────────────
 
@@ -225,6 +268,43 @@ class FsplSimModel extends ChangeNotifier {
 
   /// Bumped on every change that alters what the chart draws.
   int get revision => _revision;
+
+  /// The design-target lines as typed, in the order the user set them.
+  List<FsplTargetRow> get targetRows => List<FsplTargetRow>.unmodifiable(_rows);
+
+  /// The lines that draw: every row whose value is valid.
+  List<FsplDesignTarget> get targets => <FsplDesignTarget>[
+    for (final FsplTargetRow r in _rows)
+      if (r.target != null) r.target!,
+  ];
+
+  /// True while another line can be added.
+  bool get canAddTarget => _rows.length < kFsplMaxTargets;
+
+  /// True when the lines are exactly the Signal Thresholds defaults, so
+  /// Reset has nothing to do.
+  bool get targetsAreDefault =>
+      _rows.length == defaultTargets.length &&
+      listEquals(targets, defaultTargets);
+
+  /// "Reset to -67 voice / -70 HD video", built from the defaults.
+  String get resetTargetsLabel =>
+      'Reset to ${defaultTargets.map((FsplDesignTarget t) => '${t.valueText} ${t.label}').join(' / ')}';
+
+  /// The error under row [id]'s value field, or null. An empty value is not
+  /// an error: the row is waiting for a number and draws nothing.
+  String? targetError(int id) {
+    final FsplTargetRow? r = _row(id);
+    if (r == null || r.valueText.trim().isEmpty) return null;
+    return r.error;
+  }
+
+  FsplTargetRow? _row(int id) {
+    for (final FsplTargetRow r in _rows) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
 
   bool isEnabled(WifiBand b) => _enabled.contains(b);
   int channel(WifiBand b) => _channel[b]!;
@@ -328,6 +408,70 @@ class FsplSimModel extends ChangeNotifier {
     if (rssi != null) _rssiText = rssi;
     if (dist != null) _distText = dist;
     _changed();
+  }
+
+  // ── Design targets ──────────────────────────────────────────────────────
+
+  void _targetsChanged() {
+    _targetsTouched = true;
+    _changed();
+    final List<FsplDesignTarget> t = targets;
+    // Back at the defaults (and nothing half-typed): forget the saved copy so
+    // the defaults keep following Signal Thresholds.
+    if (_rows.length == t.length && listEquals(t, defaultTargets)) {
+      _store.clear();
+    } else {
+      _store.save(t);
+    }
+  }
+
+  void setTargetValueText(int id, String text) {
+    final int i = _rows.indexWhere((FsplTargetRow r) => r.id == id);
+    if (i < 0 || _rows[i].valueText == text) return;
+    _rows = <FsplTargetRow>[..._rows]..[i] = _rows[i].copyWith(valueText: text);
+    _targetsChanged();
+  }
+
+  void setTargetLabel(int id, String label) {
+    final int i = _rows.indexWhere((FsplTargetRow r) => r.id == id);
+    if (i < 0) return;
+    final String clipped = label.length > kFsplTargetLabelMax
+        ? label.substring(0, kFsplTargetLabelMax)
+        : label;
+    if (_rows[i].label == clipped) return;
+    _rows = <FsplTargetRow>[..._rows]..[i] = _rows[i].copyWith(label: clipped);
+    _targetsChanged();
+  }
+
+  /// Adds an empty line (it draws once a value is typed). Returns its id, or
+  /// null at the cap.
+  int? addTarget() {
+    if (!canAddTarget) return null;
+    final FsplTargetRow r = FsplTargetRow(
+      id: _nextRowId++,
+      valueText: '',
+      label: '',
+    );
+    _rows = <FsplTargetRow>[..._rows, r];
+    _targetsChanged();
+    return r.id;
+  }
+
+  void removeTarget(int id) {
+    final int before = _rows.length;
+    _rows = <FsplTargetRow>[
+      for (final FsplTargetRow r in _rows)
+        if (r.id != id) r,
+    ];
+    if (_rows.length != before) _targetsChanged();
+  }
+
+  /// Restores -67 voice and -70 HD video and forgets the saved lines.
+  void resetTargets() {
+    _rows = _rowsFrom(defaultTargets);
+    _targetsTouched = true;
+    _changed();
+    _store.clear();
   }
 
   void setMeasuredBand(WifiBand b) {
@@ -474,15 +618,12 @@ class FsplSimModel extends ChangeNotifier {
     return out;
   }
 
+  /// The design targets as chart lines (Received view only). The painter
+  /// places the labels so close values do not print over each other.
   List<FsplRefLine> refLines() => _view == FsplView.received
       ? <FsplRefLine>[
-          for (int i = 0; i < targets.length; i++)
-            FsplRefLine(
-              y: targets[i].dbm,
-              label:
-                  '${FsplFormat.n(targets[i].dbm, 0)} dBm ${targets[i].label}',
-              labelBelow: i > 0,
-            ),
+          for (final FsplDesignTarget t in targets)
+            FsplRefLine(y: t.dbm, label: t.displayLabel),
         ]
       : const <FsplRefLine>[];
 

@@ -73,7 +73,7 @@ class FsplStage extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           _legend(
             context,
-            showRefs: refs.isNotEmpty && bands.isNotEmpty,
+            refs: bands.isNotEmpty ? refs : const <FsplRefLine>[],
             showMeasured: mark != null,
           ),
           const SizedBox(height: AppSpacing.xxs),
@@ -253,9 +253,14 @@ class FsplStage extends StatelessWidget {
               '${model.unit}',
         )
         .join(', ');
+    final List<FsplRefLine> refs = model.refLines();
+    final String targets = refs.isEmpty
+        ? ''
+        : ' ${refs.length == 1 ? 'Design target' : 'Design targets'}: '
+              '${refs.map((FsplRefLine r) => r.label).join(', ')}.';
     return '$what against distance, ${model.minLabel} to ${model.rangeLabel}, '
         '${model.logScale ? 'log' : 'linear'} scale. '
-        'Cursor at ${model.dist(model.cursorM)}: $at.';
+        'Cursor at ${model.dist(model.cursorM)}: $at.$targets';
   }
 
   FsplChartStyle _chartStyle(BuildContext context) {
@@ -353,7 +358,7 @@ class FsplStage extends StatelessWidget {
 
   Widget _legend(
     BuildContext context, {
-    required bool showRefs,
+    required List<FsplRefLine> refs,
     required bool showMeasured,
   }) {
     final AppColorScheme colors = context.colors;
@@ -364,9 +369,13 @@ class FsplStage extends StatelessWidget {
       children: <Widget>[
         SizedBox(width: 28 * k, height: 14 * k, child: swatch),
         const SizedBox(width: AppSpacing.xxs),
-        Text(
-          label,
-          style: text.bodySmall?.copyWith(color: colors.textSecondary),
+        // Flexible: a long list of user labels wraps inside the legend
+        // instead of running off a phone.
+        Flexible(
+          child: Text(
+            label,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
         ),
       ],
     );
@@ -382,7 +391,7 @@ class FsplStage extends StatelessWidget {
               FsplBandSample(band: model.bands.first, model: true),
               'Indoor model, n = ${FsplFormat.n(model.exponent)}',
             ),
-          if (showRefs)
+          if (refs.isNotEmpty)
             item(
               CustomPaint(
                 painter: FsplStrokeSamplePainter(
@@ -394,7 +403,10 @@ class FsplStage extends StatelessWidget {
                   scale: k,
                 ),
               ),
-              'Design target',
+              // One swatch: every target line is drawn the same way, and the
+              // user's labels say which is which.
+              '${refs.length == 1 ? 'Design target' : 'Design targets'}: '
+              '${refs.map((FsplRefLine r) => r.label).join(', ')}',
             ),
           if (showMeasured)
             item(

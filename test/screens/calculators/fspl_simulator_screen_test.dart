@@ -347,10 +347,11 @@ void main() {
     WidgetTester tester,
   ) async {
     await _pump(tester);
-    expect(find.text('Design target'), findsOneWidget);
+    const String legend = 'Design targets: -67 dBm voice, -70 dBm HD video';
+    expect(find.text(legend), findsOneWidget);
     await tester.tap(find.text('Path loss').first);
     await tester.pumpAndSettle();
-    expect(find.text('Design target'), findsNothing);
+    expect(find.text(legend), findsNothing);
     expect(
       find.text('Free-space path loss (dB) vs distance, log scale'),
       findsOneWidget,

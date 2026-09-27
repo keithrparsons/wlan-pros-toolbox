@@ -56,20 +56,13 @@ class FsplSeries {
   final double? cursorValue;
 }
 
-/// A horizontal reference line (a design target such as -67 dBm).
+/// A horizontal reference line (a design target such as -67 dBm). The
+/// painter places its label (see [FsplChartPainter.layoutRefLabels]).
 @immutable
 class FsplRefLine {
-  const FsplRefLine({
-    required this.y,
-    required this.label,
-    this.labelBelow = false,
-  });
+  const FsplRefLine({required this.y, required this.label});
   final double y;
   final String label;
-
-  /// Put the label under the line instead of over it, so two close lines do
-  /// not print on top of each other.
-  final bool labelBelow;
 }
 
 /// A user-entered measurement and the free-space value at the same distance.
@@ -262,7 +255,11 @@ class FsplChartPainter extends CustomPainter {
 
     canvas.save();
     canvas.clipRect(p.inflate(2));
-    for (final FsplRefLine r in refLines) {
+    final List<FsplRefLine> shownRefs = <FsplRefLine>[
+      for (final FsplRefLine r in refLines)
+        if (r.y >= yMin && r.y <= yMax) r,
+    ];
+    for (final FsplRefLine r in shownRefs) {
       _refLine(canvas, g, p, r);
     }
     // Models first so the free-space curves sit on top.
@@ -272,6 +269,8 @@ class FsplChartPainter extends CustomPainter {
     for (final FsplSeries s in series.where((FsplSeries s) => !s.isModel)) {
       _series(canvas, g, s);
     }
+    // Labels after the curves, knocked out, so a label is always legible.
+    _refLabels(canvas, g, p, shownRefs);
     canvas.restore();
 
     if (emptyMessage != null) {
@@ -519,7 +518,6 @@ class FsplChartPainter extends CustomPainter {
   // ── Reference lines ──────────────────────────────────────────────────────
 
   void _refLine(Canvas canvas, FsplChartGeometry g, Rect p, FsplRefLine r) {
-    if (r.y < yMin || r.y > yMax) return;
     final double y = g.yFor(r.y);
     final Paint paint = Paint()
       ..color = style.refLine
@@ -529,17 +527,86 @@ class FsplChartPainter extends CustomPainter {
       ..moveTo(p.left, y)
       ..lineTo(p.right, y);
     canvas.drawPath(_dash(line, 4, 4), paint);
-    // Labels sit at the left (near) end: in the received view the curves
-    // are strongest there, far above the targets, so the label covers no
-    // curve. Close lines put one label over and one under.
-    _text(
-      canvas,
-      r.label,
-      style.refLabel,
-      Offset(p.left + 6, r.labelBelow ? y + 2 : y - 2),
-      anchor: Offset(0, r.labelBelow ? 0 : 1),
-      knockout: true,
+  }
+
+  // Labels sit at the left (near) end: in the received view the curves are
+  // strongest there, far above the targets, so a label covers no curve.
+  void _refLabels(
+    Canvas canvas,
+    FsplChartGeometry g,
+    Rect p,
+    List<FsplRefLine> refs,
+  ) {
+    if (refs.isEmpty) return;
+    final List<TextPainter> tps = <TextPainter>[
+      for (final FsplRefLine r in refs) _layout(r.label, style.refLabel),
+    ];
+    final List<double> tops = layoutRefLabels(
+      lineYs: <double>[for (final FsplRefLine r in refs) g.yFor(r.y)],
+      heights: <double>[for (final TextPainter tp in tps) tp.height],
+      top: p.top,
+      // Clear of the cursor's drag handle at the foot of the plot.
+      bottom: p.bottom - style.scale.markerSize(5) - 2,
     );
+    for (int i = 0; i < refs.length; i++) {
+      final Offset o = Offset(p.left + 6, tops[i]);
+      canvas.drawRect(
+        Rect.fromLTWH(o.dx - 3, o.dy, tps[i].width + 6, tps[i].height),
+        Paint()..color = style.surface,
+      );
+      tps[i].paint(canvas, o);
+    }
+  }
+
+  /// Where each design-target label's top edge goes, in canvas pixels, given
+  /// each line's pixel y and each label's height. Returned in input order.
+  ///
+  /// Working from the top line down, a label sits just over its line when
+  /// that clears the label above it, else just under its line, else directly
+  /// under the label above (a stack, in the same order as the lines, and
+  /// every label carries its own dBm value so the stack stays readable). A
+  /// stack that runs off the bottom of the plot is pushed back up. Far-apart
+  /// lines each get their label over the line; the default -67 and -70 pair
+  /// on a normal chart reads -67 over and -70 under, as it always has.
+  static List<double> layoutRefLabels({
+    required List<double> lineYs,
+    required List<double> heights,
+    required double top,
+    required double bottom,
+    double gap = 2,
+    double offset = 2,
+  }) {
+    final int n = lineYs.length;
+    final List<int> order = List<int>.generate(n, (int i) => i)
+      ..sort((int a, int b) {
+        final int c = lineYs[a].compareTo(lineYs[b]);
+        return c != 0 ? c : a.compareTo(b);
+      });
+    final List<double> tops = List<double>.filled(n, 0);
+    double prevBottom = double.negativeInfinity;
+    for (final int i in order) {
+      final double h = heights[i];
+      final double above = lineYs[i] - offset - h;
+      final double below = lineYs[i] + offset;
+      final double floor = prevBottom + gap;
+      double t;
+      if (above >= floor && above >= top) {
+        t = above;
+      } else if (below >= floor) {
+        t = below;
+      } else {
+        t = floor;
+      }
+      tops[i] = t;
+      prevBottom = t + h;
+    }
+    // Push back up from the bottom edge.
+    double limit = bottom;
+    for (final int i in order.reversed) {
+      if (tops[i] + heights[i] > limit) tops[i] = limit - heights[i];
+      limit = tops[i] - gap;
+    }
+    return tops;
   }
 
   // ── Cursor ───────────────────────────────────────────────────────────────

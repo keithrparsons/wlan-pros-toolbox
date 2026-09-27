@@ -42,6 +42,7 @@ import 'services/network/wifi_details_bridge.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'units/unit_system.dart';
+import 'screens/tools/calculators/fspl_simulator_targets.dart';
 
 Future<void> main() async {
   // Binding up first so the async asset-manifest load below can run before the
@@ -328,6 +329,10 @@ Future<void> main() async {
   // throws.
   final UnitSystemController unitsController = UnitSystemController();
   await unitsController.load();
+
+  // FSPL Simulator design targets (Keith, 2026-09-27): the teacher's own
+  // lines load before the first frame, the same way. load() never throws.
+  await FsplTargetStore.instance.load();
 
   runApp(
     ToolboxApp(
