@@ -5,8 +5,12 @@
 // 'roaming' and 'roaming-log' tools, the fresh state, Step and the readouts,
 // Play and Pause, reduced motion, a preset that ping-pongs showing its
 // verdict word, drawing a path, the stage and controls as separate widgets,
-// the copy text, and phone and desktop widths in both themes laying out with
+// the copy text, no product or operating-system name used as a device (the
+// DO-NOT-PRINT list below, swept over the screen, copy text, help and Field
+// Manual entry), and phone and desktop widths in both themes laying out with
 // no sideways scroll.
+
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +21,34 @@ import 'package:wlan_pros_toolbox/screens/tools/calculators/roaming_walk_screen.
 import 'package:wlan_pros_toolbox/screens/tools/calculators/roaming_walk_stage.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/roaming_walk_engine.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+
+import '../../support/shipped_help_copy.dart';
+
+/// DO-NOT-PRINT: product and operating-system names used as the device
+/// (Keith, 2026-09-27: "generic names there too, no iPhone or Mac").
+/// Case-sensitive whole words, so "MAC" the address is not "Mac". Source
+/// citations are exempt (Keith, 2026-09-27: "Citations can stay, they
+/// credit the source"): the help `source` field is left out of the sweep, and
+/// the on-screen source note names only the publisher and its document.
+final List<RegExp> _doNotPrint = <String>[
+  'iPhone',
+  'iPad',
+  'Mac',
+  'macOS',
+  'Android',
+  'Windows',
+].map((String w) => RegExp('\\b$w\\b')).toList();
+
+List<String> _hits(Iterable<String> texts) => <String>[
+  for (final String t in texts)
+    for (final RegExp r in _doNotPrint)
+      if (r.hasMatch(t)) '${r.pattern} in "$t"',
+];
+
+List<String> _screenText(WidgetTester tester) => <String>[
+  for (final Element e in find.byType(RichText).evaluate())
+    (e.widget as RichText).text.toPlainText(),
+];
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -176,16 +208,21 @@ void main() {
     (WidgetTester tester) async {
       await _pump(tester);
       expect(find.text('-70 dBm'), findsWidgets);
-      await _tap(tester, find.text('iPhone, transmitting'));
-      await tester.tap(find.text('Mac').last);
+      await _tap(tester, find.text('Phone, transmitting'));
+      await tester.tap(find.text('Laptop').last);
       await tester.pumpAndSettle();
       expect(find.text('-75 dBm'), findsOneWidget);
-      expect(find.textContaining('Published by Apple'), findsOneWidget);
-      await _tap(tester, find.text('Mac'));
+      expect(
+        find.text('Source: Apple, Wi-Fi roaming support in Apple devices.'),
+        findsOneWidget,
+      );
+      await _tap(tester, find.text('Laptop'));
       await tester.tap(find.text('Illustrative sticky').last);
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('Illustrative: Android and Windows'),
+        find.text(
+          'Illustrative: other client platforms publish no roam thresholds.',
+        ),
         findsOne,
       );
       // Moving the trigger off every preset makes the client Custom.
@@ -261,6 +298,74 @@ void main() {
     expect(text, contains('Roams: 0'));
     expect(text, contains('23.7 s (weak signal)'));
     expect(text, isNot(contains('\u2014')));
+  });
+
+  group('no product or operating-system name as the device', () {
+    test('preset labels', () {
+      expect(
+        _hits(ClientPreset.values.map((ClientPreset p) => p.label)),
+        isEmpty,
+      );
+      expect(
+        ClientPreset.values.map((ClientPreset p) => p.label).take(3),
+        <String>['Phone, transmitting', 'Phone, idle', 'Laptop'],
+      );
+    });
+
+    for (final ClientPreset p in ClientPreset.values) {
+      testWidgets('screen and copy text, ${p.label}', (
+        WidgetTester tester,
+      ) async {
+        await _pump(
+          tester,
+          width: 1280,
+          initial: RoamWalkConfig(triggerDbm: p.triggerDbm, deltaDb: p.deltaDb),
+        );
+        final Finder step = find.text('Step 1 s');
+        await tester.ensureVisible(step);
+        for (int i = 0; i < 20; i++) {
+          await tester.tap(step);
+          await tester.pump();
+        }
+        await tester.pumpAndSettle();
+        expect(_hits(_screenText(tester)), isEmpty);
+        final RoamingWalkController c = RoamingWalkController(
+          vsync: const TestVSync(),
+          initial: RoamWalkConfig(triggerDbm: p.triggerDbm, deltaDb: p.deltaDb),
+        );
+        addTearDown(c.dispose);
+        expect(_hits(<String>[c.copyText()]), isEmpty);
+      });
+    }
+
+    test('help entry, every field but the source citation', () {
+      final String source =
+          (shippedHelpTools()[kRoamingWalkToolId]
+                  as Map<String, dynamic>)['source']
+              as String;
+      // The citation stays and keeps crediting the publisher.
+      expect(source, contains('Apple, Wi-Fi roaming support in Apple devices'));
+      final List<String> prose = shippedHelpProse(
+        kRoamingWalkToolId,
+      ).where((String t) => t != source).toList();
+      expect(prose.length, greaterThanOrEqualTo(kMinHelpProseStrings));
+      expect(_hits(prose), isEmpty);
+    });
+
+    test('Field Manual entry', () {
+      final String manual = File(
+        '${helpPackageRoot()}/assets/guides/field-manual.md',
+      ).readAsStringSync();
+      final int start = manual.indexOf('### Roaming Walk\n');
+      expect(start, isNonNegative);
+      final int next = manual.indexOf('\n### ', start + 1);
+      final String section = manual.substring(
+        start,
+        next < 0 ? manual.length : next,
+      );
+      expect(section, contains('phone transmitting -70/8'));
+      expect(_hits(section.split('\n')), isEmpty);
+    });
   });
 
   for (final String themeName in <String>['dark', 'light']) {

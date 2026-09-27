@@ -94,10 +94,17 @@ enum RoamBand {
 }
 
 /// Client roam behavior presets (brief §3).
+///
+/// The labels are generic device types (Keith, 2026-09-27: no product,
+/// vendor or operating-system names anywhere a user sees). The published
+/// values are Apple's, "Wi-Fi roaming support in Apple devices": [phoneTx]
+/// and [phoneIdle] are its iPhone numbers, [laptop] its Mac numbers. The
+/// screen credits that source as a citation (Keith, 2026-09-27: citations
+/// stay) but never names the device.
 enum ClientPreset {
-  iphoneTx('iPhone, transmitting', -70, 8, published: true),
-  iphoneIdle('iPhone, idle', -70, 12, published: true),
-  mac('Mac', -75, 12, published: true),
+  phoneTx('Phone, transmitting', -70, 8, published: true),
+  phoneIdle('Phone, idle', -70, 12, published: true),
+  laptop('Laptop', -75, 12, published: true),
   sticky('Illustrative sticky', -85, 12, published: false),
   jumpy('Illustrative jumpy', -65, 2, published: false);
 

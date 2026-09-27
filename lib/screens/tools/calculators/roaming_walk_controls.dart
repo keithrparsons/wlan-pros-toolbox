@@ -620,9 +620,11 @@ class _ClientCard extends StatelessWidget {
             p == null
                 ? 'Custom values.'
                 : p.published
-                ? 'Published by Apple (Wi-Fi roaming support in Apple devices).'
-                : 'Illustrative: Android and Windows publish no roam '
-                      'trigger numbers.',
+                // The published presets credit their source (Keith,
+                // 2026-09-27: citations stay); the devices stay generic.
+                ? 'Source: Apple, Wi-Fi roaming support in Apple devices.'
+                : 'Illustrative: other client platforms publish no roam '
+                      'thresholds.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -969,7 +971,7 @@ class _FloorSetupCard extends StatelessWidget {
             icon: Icons.info_outline,
             message:
                 'RSSI = EIRP - FSPL(1 m) - 10 n log10(d) + shadowing. '
-                'Designing to -67 dBm overlap still leaves an iPhone on its '
+                'Designing to -67 dBm overlap still leaves a phone on its '
                 'AP down to -70 dBm, so it holds on longer than the design '
                 'drawing suggests.',
           ),

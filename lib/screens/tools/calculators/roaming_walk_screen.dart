@@ -2,8 +2,9 @@
 //
 // A client walks across a floor of APs. It holds its AP until the signal
 // falls below its trigger, then moves only to an AP that is delta stronger,
-// and every roam costs a gap that is mostly scanning. Presets for iPhone and
-// Mac (Apple's published values) and two illustrative clients show a sticky
+// and every roam costs a gap that is mostly scanning. Presets for a phone and
+// a laptop (Apple's published iPhone and Mac values, with generic labels on
+// screen) and two illustrative clients show a sticky
 // client and a ping-pong one; 802.11k, PMK caching and FT change the gap.
 //
 // CLEAN-ROOM BUILD (2026-09-25) from the Wi-Fi Classroom wave 3 research brief §3,
