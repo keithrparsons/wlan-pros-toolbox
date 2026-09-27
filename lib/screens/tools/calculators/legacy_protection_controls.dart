@@ -641,9 +641,10 @@ class _Inputs extends StatelessWidget {
               ...warnings,
               const SizedBox(height: AppSpacing.xs),
               Text(
+                // Keith confirmed this default 2026-09-27.
                 'Default: CTS-to-self at 1 Mb/s long preamble, the worst '
-                'case the standard allows. A provisional default, not yet '
-                'confirmed. Up and Down in Present mode step the rate.',
+                'case the standard allows. Up and Down in Present mode step '
+                'the rate.',
                 style: note,
               ),
             ],
@@ -777,8 +778,7 @@ class _SenderInputs extends StatelessWidget {
           _OfdmContrast(controller: m, compact: true),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Protection default: CTS-to-self at 1 Mb/s long preamble, a '
-            'provisional default, not yet confirmed.',
+            'Protection default: CTS-to-self at 1 Mb/s long preamble.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ],
