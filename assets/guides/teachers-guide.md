@@ -8,9 +8,9 @@ This guide covers how to present it, what each tool teaches, and a few lesson se
 
 **Use a computer or a tablet.** The simulators are designed for a large screen. On a phone they open behind a short notice that says so, with a Continue anyway button. The guided lessons and the handouts work on any screen.
 
-**No Internet needed.** The simulators compute everything on the device, and the lessons and handouts are built into the app, so a room with poor Wi-Fi does not stop the lesson. (It is a good room to teach Wi-Fi in.)
+**No Internet needed.** The simulators compute everything on the device, and the lessons and handouts are built into the app, so a room with poor Wi-Fi does not stop the lesson.
 
-**Set the scene first.** Open a tool, set it up the way you want to start (a wall material, a channel plan, a number of stations), then press Present. Presenter mode opens the same scene you set up, and when you exit it, your settings are still there.
+**Set the scene first.** Open a tool, press the 'Present' button on the top right to have it go full screen. Then set it up the way you want to start (a wall material, a channel plan, a number of stations). I've found it easier to set the various options while already in Presenter mode.
 
 ## Presenting
 
@@ -32,7 +32,7 @@ Present gives you one screen with no scrolling: the animation fills about two-th
 
 A few tools add their own keys, and ? always lists them: 1 to 4 switch modes in Fourier and FFT, D fires a radar event in DFS and Radar, Left takes a message back in the 802.1X ladder, and N draws new traffic in Multi-Link Operation. The newer simulators add a few more, such as P to reveal the answer after the room has guessed, and ? lists them in every tool. Tools that do not animate simply ignore Space and the Right arrow.
 
-The bar at the top (title, a light and dark switch, and Exit) hides itself when the mouse is still and comes back when you move it. If the projector washes out the dark theme, switch to light.
+The bar at the top (title, a light and dark switch, and Exit) hides itself when the mouse is still and comes back when you move it. If the projector washes out the dark theme, switch to light mode.
 
 ## A teaching pattern that works: predict, then reveal
 
@@ -45,6 +45,8 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 - **Antenna Fundamentals.** A read-along lesson on what an antenna does (it shapes where the energy goes; it does not add power), gain against beamwidth, polarization, downtilt, and how to read a radiation pattern. Pair it with Antenna Pattern.
 - **Spectrum Analysis.** A read-along lesson on why a spectrum analyzer sees energy a Wi-Fi adapter cannot, how the instrument works, and the signatures of common interferers. Pair it with the Swept vs FFT race in Fourier and FFT.
 - **Find My, Explained.** How Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip.
+
+We will be adding more of these guided lessons in the future. If there are other lessons you like to teach your students, please contact Keith@wlanpros.com and he'll work with you to get your ideas incorporated into a future update.
 
 ### RF and Propagation
 
@@ -97,7 +99,7 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 
 ### Course Handouts
 
-Built-in, zoomable copies of my published reference cards: the 2.4, 5 and 6 GHz channel allocations (including the 6 GHz card with GVP), the MCS index, Troubleshooting Causes, the Bubble Diagram, and the four checklists. Put one on the projector while you talk through it, and students have the same card in their own copy of the app.
+Built-in, zoomable copies of WLAN Pros published reference cards: the 2.4, 5 and 6 GHz channel allocations (including the 6 GHz card with GVP), the MCS index, Troubleshooting Causes, the Bubble Diagram, and the four checklists. Put one on the projector while you talk through it, and students have the same card in their own copy of the app.
 
 ## Lesson sequences that work
 
