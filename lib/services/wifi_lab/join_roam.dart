@@ -48,7 +48,7 @@ import 'eap_ladder.dart';
 /// The three modes of the tool. Authenticate is the original spec 21 ladder,
 /// unchanged; Join and Roam are spec 21b.
 enum LadderMode {
-  join('Join'),
+  join('Associate'),
   authenticate('Authenticate'),
   roam('Roam');
 
@@ -138,7 +138,7 @@ enum JrClock {
   dhcp('DHCP'),
   addressCheck('Address check'),
   arpDns('ARP and DNS'),
-  later('After the join');
+  later('After association');
 
   const JrClock(this.label);
 
@@ -2220,7 +2220,7 @@ class _JrBuilder {
         fields: const <JrField>[('Answer', 'the address for the name')],
         description:
             'The answer arrives. Only now can the first useful packet go out: '
-            'the join is complete.',
+            'the association is complete.',
         ms: half,
       ),
     );
@@ -2255,7 +2255,7 @@ class _JrBuilder {
         pmfProtected: pmf,
         description:
             'Later, when traffic flows, the two sides set up Block Ack. Not '
-            'part of the join, and not counted in its time. $why',
+            'part of the association, and not counted in its time. $why',
         ms: c.frameMs,
       ),
     );

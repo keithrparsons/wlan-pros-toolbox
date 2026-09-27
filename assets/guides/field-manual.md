@@ -5307,11 +5307,11 @@ Runs one access point on a simulated one-hour clock and shows what Dynamic Frequ
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-### Joining a Network, Frame by Frame
+### Association, Frame by Frame
 
-Plays every frame a client sends and receives to join a Wi-Fi network, from the first scan to the first useful packet: the scan, Open System or SAE authentication, association, the EAP exchange for 802.1X, the 4-way handshake, DHCP, the address check, then ARP and DNS. A channel strip above the ladder shows the scan channel by channel, and a timeline under it shows how long each phase takes. It teaches the frames; to actually join this device to a network, use Join a Network.
+Plays every frame a client sends and receives to associate with a Wi-Fi network, from the first scan to the first useful packet: the scan, Open System or SAE authentication, association, the EAP exchange for 802.1X, the 4-way handshake, DHCP, the address check, then ARP and DNS. A channel strip above the ladder shows the scan channel by channel, and a timeline under it shows how long each phase takes. It teaches the frames; to actually join this device to a network, use Join a Network.
 
-**Why it's here.** Open System authentication and association are bookkeeping, not security, and the network is not usable after association: the keys come in the 4-way handshake, and the client still has no IP address until DHCP and an address check finish. Seeing each phase to scale shows where a slow join spends its time, which is often the scan and the address check, not the Wi-Fi security.
+**Why it's here.** Open System authentication and association are bookkeeping, not security, and the network is not usable after association: the keys come in the 4-way handshake, and the client still has no IP address until DHCP and an address check finish. Seeing each phase to scale shows where a slow association spends its time, which is often the scan and the address check, not the Wi-Fi security.
 
 **How to use**
 1. Pick the security (Open, OWE, WPA2-Personal, WPA3-Personal or 802.1X), the band and the scan type, then press Play, or use Step and Back to go one frame at a time. Blue arrows cross the air; sand, dashed arrows cross the wire. DHCP, ARP and DNS arrows are bridged: solid to the AP, dashed beyond it.
@@ -5389,7 +5389,7 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 - Capturing a roam yourself: put one capture adapter on each AP channel the roam involves, so every frame lands on some radio; a single adapter misses the frames on the other channel. It usually works, but sometimes the roam has to be repeated a few times to catch every frame.
 - Caution with FT: clients whose drivers do not understand the FT AKMs can fail to join a network that offers FT at all. Check the client mix before enabling it, and know whether the WLAN offers FT only or mixed (FT and non-FT AKMs side by side).
 - PMF (802.11w) protects deauthentication, disassociation and robust Action frames (such as the FT Action frames over the DS) once keys exist. Beacons, probes, authentication and association frames are never protected. 6 GHz requires WPA3 or OWE with PMF.
-- Joining a network frame by frame, from the scan through DHCP and the address check, is its own tool: Joining a Network, Frame by Frame.
+- Joining a network frame by frame, from the scan through DHCP and the address check, is its own tool: Association, Frame by Frame.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 

@@ -12,7 +12,7 @@
 //
 // MODES (spec 21b, 2026-09-26). Authenticate is the original ladder and its
 // state (config, sequence, skipped, current) is exactly as before. Roam is
-// the ladder's second mode. Join is its own tool, Joining a Network, Frame
+// the ladder's second mode. Join is its own tool, Association, Frame
 // by Frame (join-ladder, Keith 2026-09-26), which constructs this controller in Join
 // mode so it shares the engine rather than copying it. Join and Roam share
 // one JrConfig and one JrSequence; playback, Step, Back and Reset
@@ -421,7 +421,7 @@ class EapLadderController extends ChangeNotifier {
       ..writeln(
         roam
             ? '802.1X and EAP Ladder, Roam (WLAN Pros Toolbox)'
-            : 'Joining a Network, Frame by Frame (WLAN Pros Toolbox)',
+            : 'Association, Frame by Frame (WLAN Pros Toolbox)',
       )
       ..writeln(
         roam

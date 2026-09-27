@@ -66,7 +66,7 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'location-rssi-ftm',
     'repeater-mesh',
     'dfs-simulator',
-    // 2026-09-26: Joining a Network, Frame by Frame (spec 21b), its own tool
+    // 2026-09-26: Association, Frame by Frame (spec 21b), its own tool
     // by Keith's call, shelved beside the ladder whose engine it shares.
     'join-ladder',
     'eap-ladder',

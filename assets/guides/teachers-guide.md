@@ -36,7 +36,7 @@ Some tools add their own keys, and ? always lists them:
 |---|---|
 | Fourier and FFT | 1 to 4 switch modes; W changes the FFT window |
 | DFS and Radar | D fires a radar event |
-| 802.1X and EAP Ladder; Joining a Network, Frame by Frame | Left takes a message back |
+| 802.1X and EAP Ladder; Association, Frame by Frame | Left takes a message back |
 | Multi-Link Operation | N draws new traffic |
 | Uplink vs Downlink | P reveals the answer; M turns the AP down to match, and back |
 | Body Loss | Left and Right turn the holder; P reveals the answer |
@@ -101,7 +101,7 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 - **Roaming Walk.** A client walks a floor of APs, and the screen shows when it roams and what each roam costs. Up and Down move the roam trigger, so you can make a sticky client and a client that bounces between APs.
 - **DFS and Radar.** One AP on a simulated one-hour clock: the channel availability check, a radar event (press D), the move, and the 30-minute lockout.
 - **802.1X and EAP Ladder.** An 802.1X connection one message at a time across the client, the AP and the RADIUS server, for EAP-TLS, PEAP and EAP-TTLS. WPA2-Personal (PSK) and WPA3-Personal (SAE) are there for contrast: no RADIUS server and no EAP conversation. Right sends the next message; Left takes one back. Roam mode plays a roam instead of a first connection, so you can compare a full 802.1X reconnect with a fast roam.
-- **Joining a Network, Frame by Frame.** Every frame a client sends and receives to join a network, from the first scan to the first useful packet: authentication, association, the 4-way handshake, DHCP, then ARP and DNS, with a timeline of how long each phase takes. Right sends the next frame; Left takes one back.
+- **Association, Frame by Frame.** Every frame a client sends and receives to associate with a network, from the first scan to the first useful packet: authentication, association, the 4-way handshake, DHCP, then ARP and DNS, with a timeline of how long each phase takes. Right sends the next frame; Left takes one back.
 - **Adjacent Channels and AP Stacking.** Why a channel that does not overlap yours still hurts when the other radio is close: its transmit mask leaks into your channel, and distance is what saves you. Start with the question of two APs 30 cm apart. Up and Down move the neighbor.
 - **Band Steering.** Why a dual-band client so often stays on 2.4 GHz, and what an AP can and cannot do about it. The client chooses; the AP can only hide, refuse or suggest, and none of those stops the 2.4 GHz beacons. Space walks the client; Up and Down move it 5 m.
 - **Survey Walk.** Why walking speed matters in a site survey: a scanner visits one channel at a time, so each channel's samples land far apart when you walk fast. White on the map means no data, never no coverage. Up and Down change the walking pace.
@@ -136,8 +136,8 @@ These are starting points. Each takes about half an hour of demonstration and di
 - **Channels and the rules.** The 2.4, 5 and 6 GHz channel cards in Course Handouts, then Channel Planner, DFS and Radar, 6 GHz Power and PSD, and Adjacent Channels and AP Stacking. Suggested labs: Channel Planner, DFS and Radar, Adjacent Channels and AP Stacking.
 - **Designing a cell plan.** Channel Planner, then Roaming Walk, then DFS and Radar. Suggested labs: Channel Planner, Roaming Walk.
 - **Wi-Fi 6 and 7 features.** OFDMA Resource Units, Spatial Reuse, then Multi-Link Operation. Suggested labs: OFDMA Resource Units, Spatial Reuse, Multi-Link Operation.
-- **Joining a network, and roaming.** In 802.11 terms, joining is association: the scan, authentication, association and the 4-way handshake. Joining a Network, Frame by Frame, then the 802.1X ladder in roam mode, then Roaming Walk. Suggested labs: Joining a Network, Frame by Frame; Roaming Walk.
-- **Wi-Fi security modes.** Joining a Network, Frame by Frame for the 4-way handshake, then 802.1X and EAP Ladder run once for EAP-TLS and once for PEAP, then PSK and SAE for contrast. Suggested lab: 802.1X and EAP Ladder.
+- **Association and roaming.** The scan, authentication, association and the 4-way handshake, one frame at a time. Association, Frame by Frame, then the 802.1X ladder in roam mode, then Roaming Walk. Suggested labs: Association, Frame by Frame; Roaming Walk.
+- **Wi-Fi security modes.** Association, Frame by Frame for the 4-way handshake, then 802.1X and EAP Ladder run once for EAP-TLS and once for PEAP, then PSK and SAE for contrast. Suggested lab: 802.1X and EAP Ladder.
 - **Why clients misbehave.** Why Two Devices Disagree, then Uplink vs Downlink, then Band Steering. Suggested labs: Why Two Devices Disagree, Band Steering.
 - **Where the airtime goes.** Multicast at the Basic Rate, then Channel Utilization Meter, then Legacy Protection Cost. Suggested labs: Multicast at the Basic Rate, Legacy Protection Cost.
 - **Surveys and heat maps.** Survey Walk, then Heat Map Builder, then Predict, Then Measure. Suggested labs: Survey Walk; Heat Map Builder; Predict, Then Measure.

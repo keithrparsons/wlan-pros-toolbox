@@ -1,4 +1,4 @@
-// Render-proof capture for Joining a Network, Frame by Frame (join-ladder)
+// Render-proof capture for Association, Frame by Frame (join-ladder)
 // and the Roam mode of the 802.1X and EAP Ladder (NOT a golden, NOT a gate).
 // The `_render.dart` suffix keeps it out of the default `flutter test` run:
 //

@@ -68,7 +68,7 @@ void main() {
     final ToolEntry e = classroom.tools.firstWhere(
       (ToolEntry t) => t.id == kJoinLadderToolId,
     );
-    expect(e.title, 'Joining a Network, Frame by Frame');
+    expect(e.title, 'Association, Frame by Frame');
     expect(e.subgroup, 'Network Design and Security');
     expect(e.routeName, '/tools/join-ladder');
     expect(e.isLive, isTrue);
@@ -95,7 +95,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await _pump(tester);
-    expect(find.text('Joining a Network, Frame by Frame'), findsOneWidget);
+    expect(find.text('Association, Frame by Frame'), findsOneWidget);
     expect(find.text('Ready'), findsOneWidget);
     expect(find.byKey(JoinRoamStage.stripKey), findsOneWidget);
     expect(find.byKey(JoinRoamStage.timelineKey), findsOneWidget);
@@ -220,7 +220,7 @@ void main() {
     final EapLadderController c = EapLadderController(mode: LadderMode.join);
     addTearDown(c.dispose);
     final String text = c.copyText();
-    expect(text, startsWith('Joining a Network, Frame by Frame'));
+    expect(text, startsWith('Association, Frame by Frame'));
     expect(text, contains('(management) Probe Request'));
     expect(text, contains('(data) EAPOL-Key'));
     expect(text, contains('via AP'));

@@ -1,4 +1,4 @@
-// Joining a Network, Frame by Frame: Wi-Fi Classroom tool (join-ladder).
+// Association, Frame by Frame: Wi-Fi Classroom tool (join-ladder).
 //
 // NOT the 'join-network' tool (Join a Network, Networking Tools), which
 // really joins this device or a WLAN Pi to a network. This one teaches the
@@ -65,7 +65,7 @@ import 'eap_ladder_parts.dart';
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kJoinLadderToolId = 'join-ladder';
 
-const String _kTitle = 'Joining a Network, Frame by Frame';
+const String _kTitle = 'Association, Frame by Frame';
 
 class JoinLadderScreen extends StatefulWidget {
   const JoinLadderScreen({super.key, this.initial});
@@ -188,7 +188,7 @@ class _AboutCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Every phase time is a setting: no published measurement breaks '
-            'a typical join down by phase. The scan uses US 20 MHz channels, '
+            'a typical association down by phase. The scan uses US 20 MHz channels, '
             'one AP, and the Linux mac80211 dwell times as one real example. '
             'Channel changes, the DHCP client\'s own start-up delay and '
             'retries are not drawn.',

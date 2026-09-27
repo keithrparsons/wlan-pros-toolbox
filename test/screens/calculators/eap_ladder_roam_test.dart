@@ -60,7 +60,7 @@ void main() {
     expect(c.mode, LadderMode.authenticate);
     expect(find.text('Authenticate'), findsOneWidget);
     // No Join option: joining is its own tool.
-    expect(find.text('Join'), findsNothing);
+    expect(find.text('Associate'), findsNothing);
     await _tap(tester, find.text('Roam'));
     expect(c.mode, LadderMode.roam);
     expect(find.byType(JoinRoamStage), findsOneWidget);

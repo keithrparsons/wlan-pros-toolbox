@@ -2,7 +2,7 @@
 // settings over the shared EapLadderController.
 //
 // Roam is a mode of the 802.1X and EAP Ladder (eap-ladder). Join is its own
-// tool, Joining a Network, Frame by Frame (join-ladder, Keith 2026-09-26),
+// tool, Association, Frame by Frame (join-ladder, Keith 2026-09-26),
 // which drives the same controller in Join mode; both read these widgets, so
 // the two tools cannot drift apart.
 //

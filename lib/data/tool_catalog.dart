@@ -2946,9 +2946,9 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       // stay as they are.
       ToolEntry(
         id: 'join-ladder',
-        title: 'Joining a Network, Frame by Frame',
+        title: 'Association, Frame by Frame',
         description:
-            'Watch a client join a network frame by frame: scan, '
+            'Watch a client associate with a network frame by frame: scan, '
             'authentication, association, the 4-way handshake, DHCP and the '
             'address check',
         routeName: '/tools/join-ladder',
