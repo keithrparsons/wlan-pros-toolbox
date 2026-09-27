@@ -60,6 +60,7 @@ class _WallSlabControlsState extends State<WallSlabControls> {
   String? _mmError;
   UnitSystem? _units;
 
+  static final double _logMin = _log10(kWallMinMm);
   static final double _logMax = _log10(kWallMaxMm);
 
   LengthFormat get _f => LengthFormat(_units ?? UnitSystem.metric);
@@ -108,7 +109,7 @@ class _WallSlabControlsState extends State<WallSlabControls> {
   void _onBand(WifiBand b) =>
       _emit(widget.config.copyWith(band: b, channel: defaultChannelFor(b)));
 
-  /// The typed range as displayed: 0.1 to 50 cm, or 0.04 to 19.7 in.
+  /// The typed range as displayed: 1 to 50 cm, or 0.39 to 19.7 in.
   String get _minText => _f.smallNumberFromMm(kWallMinMm);
   String get _maxText => _f.smallNumberFromMm(kWallMaxMm);
 
@@ -133,13 +134,13 @@ class _WallSlabControlsState extends State<WallSlabControls> {
     );
   }
 
-  /// Slider position 0..1 on a log scale from 1 to 500 mm.
-  double _toSlider(double mm) => (_log10(mm) / _logMax).clamp(0.0, 1.0);
+  /// Slider position 0..1 on a log scale from 10 to 500 mm.
+  double _toSlider(double mm) => ((_log10(mm) - _logMin) / (_logMax - _logMin)).clamp(0.0, 1.0);
 
   /// Slider position to mm, snapped to what the readout prints in the unit
   /// on screen (0.01 cm under 2 cm, else 0.1 cm; the same in inches).
   double _fromSlider(double p) {
-    final double mm = math.pow(10, p * _logMax).toDouble();
+    final double mm = math.pow(10, _logMin + p * (_logMax - _logMin)).toDouble();
     return _f.snapMm(mm).clamp(kWallMinMm, kWallMaxMm);
   }
 
