@@ -2,7 +2,7 @@
 // presenter test with no overflow and no page scroll, and keyboard play
 // where the tool has it). Held at 1920x1080, 1440x900 and 1470x923 in both
 // themes, in the fullest state: the wave playing, the inside-wavelength view
-// on, and a metal wall (which adds the "too small to see" note) as well as
+// on, and a metal wall (which adds the "below the noise floor" note) as well as
 // a thin panel with the angle and TM set. The wave runs on a clock, so the
 // test pumps fixed durations rather than settling.
 

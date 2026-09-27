@@ -37,6 +37,22 @@ const double kWallMaxAngle = 80;
 /// the figure only says "nothing gets through" and the digits are noise.
 const double kLossDisplayCapDb = 150;
 
+/// Tx power bounds and default, dBm (Keith, 2026-09-27: "can we add a Tx
+/// power setting"). The level at the front face is taken as the Tx power:
+/// the tool has no distance, so free-space loss is not included.
+const double kWallTxMinDbm = 0;
+const double kWallTxMaxDbm = 30;
+const double kWallDefaultTxDbm = 20;
+
+/// Noise floor the drawing measures height from, dBm. Thermal noise kTB at
+/// 290 K is -174 dBm/Hz; over a 20 MHz channel that is -174 + 10 log10(20e6)
+/// = -101.0 dBm; a typical client receiver adds about a 6 dB noise figure,
+/// giving -95 dBm. Only the drawing uses it; every number is exact.
+const double kThermalNoiseDbmPerHz = -174;
+const double kWallNoiseBandwidthHz = 20e6;
+const double kWallNoiseFigureDb = 6;
+const double kWallNoiseFloorDbm = -95;
+
 /// Loss tangent above which the material is treated as a conductor for the
 /// readouts (no meaningful wavelength inside; the skin depth is shown).
 const double kConductorLossTangent = 10;
@@ -63,6 +79,7 @@ class WallConfig {
     this.thicknessMm = 102,
     this.angleDeg = 0,
     this.polarization = Polarization.te,
+    this.txPowerDbm = kWallDefaultTxDbm,
   });
 
   final WifiBand band;
@@ -71,6 +88,15 @@ class WallConfig {
   final double thicknessMm;
   final double angleDeg;
   final Polarization polarization;
+
+  /// Transmit power, dBm: the level the wave arrives at the front face with.
+  /// It moves no number in the physics, only the drawn heights and the level
+  /// behind the wall.
+  final double txPowerDbm;
+
+  /// Level just behind the wall, dBm: Tx power minus the transmission loss.
+  /// Free-space loss is not included.
+  double levelBehindDbm(SlabResult r) => txPowerDbm - r.transmissionLossDb;
 
   /// Channel center frequency, MHz.
   int get centerMHz => centerFrequencyMHzForBand(band, channel)!;
@@ -98,6 +124,7 @@ class WallConfig {
     double? thicknessMm,
     double? angleDeg,
     Polarization? polarization,
+    double? txPowerDbm,
   }) => WallConfig(
     band: band ?? this.band,
     channel: channel ?? this.channel,
@@ -105,6 +132,7 @@ class WallConfig {
     thicknessMm: thicknessMm ?? this.thicknessMm,
     angleDeg: angleDeg ?? this.angleDeg,
     polarization: polarization ?? this.polarization,
+    txPowerDbm: txPowerDbm ?? this.txPowerDbm,
   );
 
   @override
@@ -115,11 +143,19 @@ class WallConfig {
       other.material == material &&
       other.thicknessMm == thicknessMm &&
       other.angleDeg == angleDeg &&
-      other.polarization == polarization;
+      other.polarization == polarization &&
+      other.txPowerDbm == txPowerDbm;
 
   @override
-  int get hashCode =>
-      Object.hash(band, channel, material, thicknessMm, angleDeg, polarization);
+  int get hashCode => Object.hash(
+    band,
+    channel,
+    material,
+    thicknessMm,
+    angleDeg,
+    polarization,
+    txPowerDbm,
+  );
 }
 
 // ── Formatting ────────────────────────────────────────────────────────────
@@ -137,6 +173,9 @@ String fmtLossDb(double v) {
   }
   return '${fmt1(v)} dB';
 }
+
+/// A level in dBm, one decimal.
+String fmtDbm(double v) => '${fmt1(v)} dBm';
 
 /// Thickness in mm: one decimal below 20 mm when it has one, else whole.
 String fmtMm(double mm) {

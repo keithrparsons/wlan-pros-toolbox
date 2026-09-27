@@ -187,6 +187,7 @@ class WallSlabController extends ChangeNotifier {
       _result,
       400,
       showMaterialWavelength: _showMaterialWavelength,
+      txPowerDbm: _config.txPowerDbm,
     );
     double a2 = 0, b2 = 0, ab = 0;
     for (final Complex f in p.sample(241)) {
@@ -212,6 +213,7 @@ class WallSlabController extends ChangeNotifier {
         '${c.polarization.name.toUpperCase()}',
       )
       ..writeln('Channel ${c.channel}, ${c.centerMHz} MHz')
+      ..writeln('Tx power: ${fmtDbm(c.txPowerDbm)}')
       ..writeln(
         'Transmission loss: ${fmtLossDb(r.transmissionLossDb)} '
         '(absorption ${fmtLossDb(r.absorptionDb)}, reflection '
@@ -223,6 +225,15 @@ class WallSlabController extends ChangeNotifier {
         '(${fmtPct(r.reflectedPower)} of the power)',
       );
     }
+    final double behind = c.levelBehindDbm(r);
+    b.writeln(
+      behind.isFinite && behind > kWallNoiseFloorDbm
+          ? 'Behind the wall: ${fmtDbm(behind)} '
+                '(${fmt1(behind - kWallNoiseFloorDbm)} dB above a '
+                '${fmtDbm(kWallNoiseFloorDbm)} noise floor)'
+          : 'Behind the wall: below a ${fmtDbm(kWallNoiseFloorDbm)} noise '
+                'floor',
+    );
     b
       ..writeln('Wavelength in air: ${fmtLength(r.props.lambdaAir, _units)}')
       ..writeln('Same wall by band:');
