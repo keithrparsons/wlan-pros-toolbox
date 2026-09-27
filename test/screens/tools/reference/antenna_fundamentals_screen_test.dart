@@ -153,6 +153,30 @@ void main() {
       expect(find.text('The one idea'), findsOneWidget);
     });
 
+    // Keith, 2026-09-27: "could you have the last sentence - the 'rule'
+    // highlighted in green and bold so it stands out more?"
+    for (final bool light in <bool>[false, true]) {
+      testWidgets(
+        'the rule paragraph renders bold in the accent green (light: $light)',
+        (tester) async {
+          await tester.pumpWidget(_harness(light: light));
+          await tester.pump();
+          final Text rule = tester.widget<Text>(
+            find.textContaining('Here is the rule everything else hangs on'),
+          );
+          expect(rule.style?.fontWeight, FontWeight.w700);
+          expect(
+            rule.style?.color,
+            light ? const Color(0xFF5A7A1C) : const Color(0xFFA1CC3A),
+          );
+          final Text plain = tester.widget<Text>(
+            find.textContaining('Take the same radio'),
+          );
+          expect(plain.style?.fontWeight, isNot(FontWeight.w700));
+        },
+      );
+    }
+
     testWidgets('every section header is reachable by scrolling', (
       tester,
     ) async {
