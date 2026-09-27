@@ -138,7 +138,7 @@ class WallSlabController extends ChangeNotifier {
   void reset() => setConfig(initial);
 
   /// One presenter key press on the thickness: a fortieth of the 1 to
-  /// 50 cm log range (the slider's scale), rounded as the slider rounds, in
+  /// 100 cm log range (the slider's scale), rounded as the slider rounds, in
   /// the unit on screen.
   void stepThickness(int direction) {
     final double logMin = _log10(kWallMinMm);

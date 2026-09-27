@@ -5,7 +5,8 @@
 // over the same state. In presenter mode the wave fills the stage and the
 // loss, in headline type, stands under it beside the three-band table.
 //
-// What is drawn, left to right, at true scale:
+// What is drawn, left to right (the air at true scale, the wall NOT to
+// scale, see below):
 //   - in front of the wall: incident plus reflected, E = e^(-jkx) + R e^(jkx);
 //     its envelope shows the standing-wave ripple, nodes lambda/2 apart;
 //   - inside: the same wave, its height taken from the physics (the decay,
@@ -19,8 +20,17 @@
 // wave keeps the air wavelength: only its height changes. The optional
 // "Show wavelength inside the material" view draws the true lambda/sqrt(e')
 // with a note that the frequency is unchanged. In both views the inside
-// phase is laid out on the air scale (px per metre), so widening a thin
-// wall's band to stay visible never stretches the wave. See WallWaveProfile.
+// phase is laid out on the air scale (px per metre), so the wall band's
+// drawn width never stretches the wave. See WallWaveProfile.
+//
+// THE WALL IS NOT DRAWN TO SCALE (Keith, 2026-09-27: "at 1cm only one pixel
+// difference, at 1m the two vertical lines should be no more than 3X the
+// width of the word 'wall' ... I don't want the 'wall' to ever get very large
+// at all on the screen."). The band's width is set by [WallWaveProfile.
+// drawnWallPx]: 1 px of space between the edge lines at 1 cm, 3x the drawn
+// "Wall" label at 1 m, linear in log10(thickness) between, so 10 cm is
+// halfway. The air fills the rest. Every number still uses the true
+// thickness, and a caption under the plot says the wall is not to scale.
 //
 // MOTION (GL-003 §8.8): the phase advances on the controller's Ticker, one
 // cycle every [kWallSecondsPerCycle] seconds. It starts running only when reduced motion is
@@ -49,8 +59,33 @@ import 'wifi_through_a_wall_parts.dart';
 /// Air shown on each side of the wall, in free-space wavelengths.
 const double _kAirWavelengths = 1.5;
 
-/// Smallest drawn wall width, px, so a 1 mm sheet is still visible.
-const double _kMinWallPx = 3;
+/// The drawn wall at [kWallMaxMm] is this many times the "Wall" label's
+/// rendered width (Keith, 2026-09-27).
+const double kWallCapLabelWidths = 3;
+
+/// Space between the two wall edge lines at [kWallMinMm], logical px.
+const double kWallMinGapPx = 1;
+
+/// Inside the wall, a standing-wave ripple drawn shorter than this many px
+/// is averaged away (see [WallWaveProfile.insideHeightAt]).
+const double kWallRippleMinPx = 8;
+
+/// The caption under the plot, because the band is not to scale.
+const String kWallNotToScaleCaption = 'Wall thickness not drawn to scale';
+
+/// Rendered width of the stage's "Wall" label in [style], px. The painter
+/// and the tests measure it the same way, so the cap follows the presenter
+/// text scale.
+double wallLabelWidth(TextStyle style) {
+  final TextPainter tp = TextPainter(
+    text: TextSpan(text: 'Wall', style: style),
+    textDirection: TextDirection.ltr,
+    maxLines: 1,
+  )..layout();
+  final double w = tp.width;
+  tp.dispose();
+  return w;
+}
 
 class WallSlabStage extends StatefulWidget {
   const WallSlabStage({
@@ -174,6 +209,8 @@ class _WallSlabStageState extends State<WallSlabStage> {
           ),
           const SizedBox(height: AppSpacing.xs),
           _plot(context, height: widget.plotHeight),
+          const SizedBox(height: AppSpacing.xxs),
+          _notToScale(colors, text),
           if (widget.showWavelengthSwitch) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             _wavelengthSwitch(colors, text),
@@ -242,6 +279,8 @@ class _WallSlabStageState extends State<WallSlabStage> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Expanded(child: _plot(context)),
+          const SizedBox(height: AppSpacing.xxs),
+          _notToScale(colors, text),
           if (widget.showWavelengthSwitch) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             _wavelengthSwitch(colors, text),
@@ -372,6 +411,11 @@ class _WallSlabStageState extends State<WallSlabStage> {
                 'inside and behind the wall alike.',
     );
   }
+
+  Widget _notToScale(AppColorScheme colors, TextTheme text) => Text(
+    kWallNotToScaleCaption,
+    style: text.bodySmall?.copyWith(color: colors.textSecondary),
+  );
 
   Widget _wavelengthSwitch(AppColorScheme colors, TextTheme text) {
     return Column(
@@ -515,33 +559,45 @@ class WallWaveStyle {
 /// mapped to pixels. Pure and deterministic, so the tests can measure the
 /// drawn wavelength directly.
 ///
+/// The wall band's width is [drawnWallPx], not to scale. The air on each
+/// side is [_kAirWavelengths] free-space wavelengths at true scale and fills
+/// the rest of the width.
+///
 /// Front of the wall and behind it are the physics' field (SlabResult.fieldAt)
 /// on the air scale. Inside, the HEIGHT is the physics' |fieldAt| across the
-/// drawn band, while the PHASE advances on the air scale (px per metre of
-/// air) at either the air wavenumber (default: same wavelength everywhere)
-/// or the true inside wavenumber Re(q)/d (showMaterialWavelength). Because
-/// the phase uses the air scale in both cases, widening a thin wall's band to
-/// [_kMinWallPx] changes how much wave the band shows, never its wavelength.
-/// Behind the wall the wave continues from the phase the inside ended on, at
-/// height |T|, so the drawing is continuous at both faces.
+/// TRUE thickness, mapped onto the drawn band, while the PHASE advances on
+/// the air scale (px per metre of air) at either the air wavenumber (default:
+/// same wavelength everywhere) or the true inside wavenumber Re(q)/d
+/// (showMaterialWavelength). Because the phase uses the air scale in both
+/// cases, the band's drawn width changes how much wave the band shows, never
+/// its wavelength. Behind the wall the wave continues from the phase the
+/// inside ended on, at height |T|, so the drawing is continuous at both faces.
+///
+/// Squeezing a thick wall into a narrow band also squeezes the inside
+/// standing-wave ripple (period pi / Re(kz), from the wave bounced off the
+/// back face). Drawn a few px long it reads as a faster wave, the exact thing
+/// Keith's rule forbids, and below a pixel it aliases into fuzz. So when the
+/// drawn ripple is shorter than [kWallRippleMinPx], the inside height is
+/// |fieldAt| averaged over one ripple period: the ripple's mean, which the
+/// screen cannot resolve anyway. The window narrows to zero at each face, so
+/// the heights there are still exact and the drawing stays continuous.
 class WallWaveProfile {
   factory WallWaveProfile(
     SlabResult result,
     double width, {
     required bool showMaterialWavelength,
+    double edgeStrokePx = 1,
+    double labelWidthPx = 24,
   }) {
     final double lambda = result.props.lambdaAir;
-    final double d = result.thicknessM;
-    final double side = math.max(_kAirWavelengths * lambda, 0.15 * d);
-    final double pxPerM = width / (2 * side + d);
-    double wallPx = d * pxPerM;
-    double frontPx = side * pxPerM;
-    bool widened = false;
-    if (wallPx < _kMinWallPx) {
-      frontPx -= (_kMinWallPx - wallPx) / 2;
-      wallPx = _kMinWallPx;
-      widened = true;
-    }
+    final double side = _kAirWavelengths * lambda;
+    final double wallPx = drawnWallPx(
+      thicknessMm: result.thicknessM * 1000,
+      width: width,
+      edgeStrokePx: edgeStrokePx,
+      labelWidthPx: labelWidthPx,
+    );
+    final double frontPx = (width - wallPx) / 2;
     return WallWaveProfile._(
       result: result,
       width: width,
@@ -550,7 +606,6 @@ class WallWaveProfile {
       frontPx: frontPx,
       wallPx: wallPx,
       airPxPerM: frontPx / side,
-      widened: widened,
     );
   }
 
@@ -562,13 +617,37 @@ class WallWaveProfile {
     required this.frontPx,
     required this.wallPx,
     required this.airPxPerM,
-    required this.widened,
   }) : _k0z =
            2 *
            math.pi /
            result.props.lambdaAir *
            math.cos(result.angleDeg * math.pi / 180),
        _front = result.fieldAt(0);
+
+  /// Drawn width of the wall band, px, measured edge line centre to edge
+  /// line centre. At [kWallMinMm] the space between the two lines (each
+  /// [edgeStrokePx] wide) is [kWallMinGapPx]; at [kWallMaxMm] the band is
+  /// [kWallCapLabelWidths] x [labelWidthPx]; linear in log10(thickness)
+  /// between, clamped at both ends. Never wider than the cap, and never more
+  /// than a third of [width] on a very narrow stage.
+  static double drawnWallPx({
+    required double thicknessMm,
+    required double width,
+    double edgeStrokePx = 1,
+    double labelWidthPx = 24,
+  }) {
+    final double minPx = kWallMinGapPx + edgeStrokePx;
+    final double maxPx = math.max(
+      minPx,
+      math.min(kWallCapLabelWidths * labelWidthPx, width / 3),
+    );
+    final double lo = math.log(kWallMinMm);
+    final double hi = math.log(kWallMaxMm);
+    final double t = thicknessMm <= 0
+        ? 0
+        : ((math.log(thicknessMm) - lo) / (hi - lo)).clamp(0.0, 1.0);
+    return minPx + t * (maxPx - minPx);
+  }
 
   final SlabResult result;
   final double width;
@@ -584,8 +663,38 @@ class WallWaveProfile {
   /// Pixels per metre of air (both sides).
   final double airPxPerM;
 
-  /// Whether the wall band was widened to stay visible.
-  final bool widened;
+  /// Inside standing-wave ripple period along the normal, true metres
+  /// (pi / Re(kz)), or 0 for a zero-thickness wall.
+  double get ripplePeriodM {
+    final double d = result.thicknessM;
+    if (d == 0 || result.q.re == 0) return 0;
+    return math.pi * d / result.q.re.abs();
+  }
+
+  /// Whether the inside ripple is averaged: the wall holds at least one
+  /// ripple and it would be drawn shorter than [kWallRippleMinPx].
+  bool get rippleAveraged {
+    final double d = result.thicknessM;
+    if (d == 0 || wallPx == 0) return false;
+    // A wall thinner than one ripple holds no ripple to squeeze.
+    return ripplePeriodM < d && ripplePeriodM / d * wallPx < kWallRippleMinPx;
+  }
+
+  /// Drawn height at true depth [x] (0..d) inside the wall: |fieldAt(x)|, or
+  /// its mean over one ripple period centred on [x] when [rippleAveraged],
+  /// the window shrinking to zero at each face.
+  double insideHeightAt(double x) {
+    if (!rippleAveraged) return result.fieldAt(x).abs;
+    final double d = result.thicknessM;
+    final double h = math.min(ripplePeriodM / 2, math.min(x, d - x));
+    if (h <= 0) return result.fieldAt(x).abs;
+    const int n = 16;
+    double sum = 0;
+    for (int i = 0; i < n; i++) {
+      sum += result.fieldAt(x - h + 2 * h * (i + 0.5) / n).abs;
+    }
+    return sum / n;
+  }
 
   final double _k0z;
   final Complex _front;
@@ -609,7 +718,7 @@ class WallWaveProfile {
     final double d = result.thicknessM;
     if (px <= frontPx + wallPx) {
       final double u = px - frontPx;
-      final double mag = result.fieldAt(wallPx == 0 ? 0 : u / wallPx * d).abs;
+      final double mag = insideHeightAt(wallPx == 0 ? 0 : u / wallPx * d);
       return Complex.polar(mag, _psi0 - insideWavenumber * (u / airPxPerM));
     }
     final double xBehind = (px - frontPx - wallPx) / airPxPerM;
@@ -628,6 +737,8 @@ class WallPhasorCache {
   SlabResult? _for;
   int _n = 0;
   bool? _mode;
+  double _edge = 0;
+  double _labelW = 0;
   List<Complex> _phasors = const <Complex>[];
   WallWaveProfile? _profile;
 }
@@ -652,25 +763,32 @@ class WallWavePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
     final int n = size.width.ceil() + 1;
+    final double k = style.scale.stroke;
+    final double labelW = wallLabelWidth(style.label);
     if (!identical(cache._for, result) ||
         cache._n != n ||
-        cache._mode != showMaterialWavelength) {
+        cache._mode != showMaterialWavelength ||
+        cache._edge != k ||
+        cache._labelW != labelW) {
       final WallWaveProfile prof = WallWaveProfile(
         result,
         size.width,
         showMaterialWavelength: showMaterialWavelength,
+        edgeStrokePx: k,
+        labelWidthPx: labelW,
       );
       cache
         .._profile = prof
         .._phasors = prof.sample(n)
         .._for = result
         .._n = n
-        .._mode = showMaterialWavelength;
+        .._mode = showMaterialWavelength
+        .._edge = k
+        .._labelW = labelW;
     }
     final WallWaveProfile g = cache._profile!;
     final List<Complex> ph = cache._phasors;
 
-    final double k = style.scale.stroke;
     final double labelBand = 20 * style.scale.text;
     final double top = labelBand;
     final double plotH = size.height - labelBand - AppSpacing.xxs;
@@ -678,8 +796,14 @@ class WallWavePainter extends CustomPainter {
     // Amplitude 2 (full standing-wave peak) reaches just inside the edge.
     final double yScale = plotH / 2 / 2.15;
 
-    // Wall band.
-    final Rect wall = Rect.fromLTWH(g.frontPx, 0, g.wallPx, size.height);
+    // Wall band, under the label band so the "Wall" label sits above it at
+    // every thickness, even a 1 px gap.
+    final Rect wall = Rect.fromLTWH(
+      g.frontPx,
+      labelBand,
+      g.wallPx,
+      size.height - labelBand,
+    );
     canvas.drawRect(wall, Paint()..color = style.wallFill);
     final Paint edge = Paint()
       ..color = style.wallEdge
@@ -743,9 +867,20 @@ class WallWavePainter extends CustomPainter {
     // Region labels.
     _label(canvas, 'In front', 0, g.frontPx, TextAlign.left);
     _label(canvas, 'Behind', g.frontPx + g.wallPx, size.width, TextAlign.right);
-    if (g.wallPx >= 44) {
-      _label(canvas, 'Wall', g.frontPx, g.frontPx + g.wallPx, TextAlign.center);
-    }
+    _wallLabel(canvas, g.frontPx + g.wallPx / 2);
+  }
+
+  /// "Wall", centred over the band. The band is at most 3x this label wide
+  /// and the air on each side is far wider, so it never meets "In front" or
+  /// "Behind".
+  void _wallLabel(Canvas canvas, double centreX) {
+    final TextPainter tp = TextPainter(
+      text: TextSpan(text: 'Wall', style: style.label),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    tp.paint(canvas, Offset(centreX - tp.width / 2, AppSpacing.xxs / 2));
+    tp.dispose();
   }
 
   void _dashedH(Canvas canvas, double y, double width, Paint p, double k) {

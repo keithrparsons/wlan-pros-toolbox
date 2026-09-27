@@ -5,11 +5,15 @@
 // the height of the wave, NOT the frequency."
 //
 // Default view: the drawn phase period inside the wall equals the air period,
-// for a normal wall and for a thin wall whose band is widened to stay
-// visible. Optional "Show wavelength inside the material" view: the drawn
-// inside period is the air period x 1/sqrt(e'), whether or not the band was
-// widened (the widening used to stretch it). Heights still come from the
-// physics: the drawn magnitude equals |fieldAt| at the faces and |T| behind.
+// at any drawn band width. Optional "Show wavelength inside the material"
+// view: the drawn inside period is the air period x 1/sqrt(e'), whatever the
+// band width. Heights still come from the physics: the drawn magnitude
+// equals |fieldAt| at the faces and |T| behind.
+//
+// The band is NOT to scale (Keith, 2026-09-27: "at 1cm only one pixel
+// difference, at 1m the two vertical lines should be no more than 3X the
+// width of the word 'wall'"): 1 px between the edge lines at 1 cm, 3x the
+// "Wall" label at 1 m, linear in log10(thickness) between.
 
 import 'dart:math' as math;
 
@@ -77,8 +81,8 @@ SlabResult _lossless(double eps, double mm) => WallSlab.computeFor(
 );
 
 void main() {
-  // 102 mm concrete fills ~100 px at 390; 1 mm plasterboard at 2.4 GHz is
-  // ~1 px true scale, so its band is widened to 3 px.
+  // The band is drawn on the log scale, so these span it: 1 cm (the floor,
+  // a 2 px band) to 1 m (the cap).
   final Map<String, SlabResult> walls = <String, SlabResult>{
     'concrete 102 mm, 5.5 GHz': WallSlab.compute(
       material: WallMaterial.concrete,
@@ -90,10 +94,15 @@ void main() {
       fGhz: 2.437,
       thicknessM: 0.0127,
     ),
-    'plasterboard 1 mm, 2.437 GHz (widened)': WallSlab.compute(
+    'plasterboard 10 mm, 2.437 GHz (1 px gap)': WallSlab.compute(
       material: WallMaterial.plasterboard,
       fGhz: 2.437,
-      thicknessM: 0.001,
+      thicknessM: 0.01,
+    ),
+    'concrete 1 m, 2.437 GHz (cap)': WallSlab.compute(
+      material: WallMaterial.concrete,
+      fGhz: 2.437,
+      thicknessM: 1,
     ),
     'concrete 102 mm, 5.5 GHz, 50 deg TM': WallSlab.compute(
       material: WallMaterial.concrete,
@@ -104,21 +113,111 @@ void main() {
     ),
   };
 
-  test('the 1 mm wall really is widened at phone width', () {
-    final WallWaveProfile p = WallWaveProfile(
-      walls['plasterboard 1 mm, 2.437 GHz (widened)']!,
-      390,
-      showMaterialWavelength: false,
-    );
-    expect(p.widened, isTrue);
-    expect(
-      WallWaveProfile(
-        walls['concrete 102 mm, 5.5 GHz']!,
+  group('drawn wall width, not to scale', () {
+    for (final double width in <double>[390, 1280]) {
+      for (final double stroke in <double>[1, 2]) {
+        test('1 cm: exactly 1 px between the edge lines, '
+            '$width px, stroke $stroke', () {
+          final double w = WallWaveProfile.drawnWallPx(
+            thicknessMm: 10,
+            width: width,
+            edgeStrokePx: stroke,
+            labelWidthPx: 26,
+          );
+          // Lines of width `stroke` centred on each edge leave w - stroke.
+          expect(w - stroke, closeTo(1, 1e-12));
+        });
+        test('1 m: 3x the label, and never wider, $width px, '
+            'stroke $stroke', () {
+          double at(double mm) => WallWaveProfile.drawnWallPx(
+            thicknessMm: mm,
+            width: width,
+            edgeStrokePx: stroke,
+            labelWidthPx: 26,
+          );
+          expect(at(1000), closeTo(78, 1e-9));
+          expect(at(5000), closeTo(78, 1e-9));
+        });
+      }
+    }
+
+    test('10 cm sits halfway, and the width rises with log thickness', () {
+      double at(double mm) => WallWaveProfile.drawnWallPx(
+        thicknessMm: mm,
+        width: 800,
+        labelWidthPx: 30,
+      );
+      expect(at(100), closeTo((at(10) + at(1000)) / 2, 1e-9));
+      double prev = at(10);
+      for (int i = 1; i <= 200; i++) {
+        final double mm = 10 * math.pow(100, i / 200).toDouble();
+        final double w = at(mm);
+        expect(w, greaterThan(prev));
+        prev = w;
+      }
+    });
+
+    test('the cap is 3x the Wall label as the painter measures it', () {
+      const TextStyle big = TextStyle(fontSize: 22);
+      const TextStyle small = TextStyle(fontSize: 11);
+      final double capBig = WallWaveProfile.drawnWallPx(
+        thicknessMm: 1000,
+        width: 2000,
+        labelWidthPx: wallLabelWidth(big),
+      );
+      expect(capBig, closeTo(3 * wallLabelWidth(big), 1e-9));
+      expect(wallLabelWidth(big), greaterThan(wallLabelWidth(small)));
+    });
+
+    test('a squeezed low-loss wall shows no ripple faster than the wave', () {
+      // 1 m of glass at 2.4 GHz: the true inside ripple is ~2.5 cm, which
+      // would draw at ~2 px in a 78 px band and read as a faster wave.
+      final SlabResult r = WallSlab.compute(
+        material: WallMaterial.glass,
+        fGhz: 2.437,
+        thicknessM: 1,
+      );
+      final WallWaveProfile p = WallWaveProfile(
+        r,
+        1280,
+        showMaterialWavelength: false,
+        labelWidthPx: 26,
+      );
+      expect(p.rippleAveraged, isTrue);
+      // The drawn height across the band, one sample per px, never turns
+      // round more often than once per kWallRippleMinPx.
+      final List<double> hs = <double>[
+        for (double u = 0; u <= p.wallPx; u += 1)
+          p.phasorAtPx(p.frontPx + u).abs,
+      ];
+      int turns = 0;
+      for (int i = 1; i < hs.length - 1; i++) {
+        if ((hs[i] - hs[i - 1]) * (hs[i + 1] - hs[i]) < 0) turns++;
+      }
+      expect(turns, lessThan(hs.length / kWallRippleMinPx));
+    });
+
+    test('a thin wall keeps the exact height (ripple drawn long enough)', () {
+      final WallWaveProfile p = WallWaveProfile(
+        walls['plasterboard 12.7 mm, 2.437 GHz']!,
         390,
         showMaterialWavelength: false,
-      ).widened,
-      isFalse,
-    );
+      );
+      expect(p.rippleAveraged, isFalse);
+    });
+
+    test('the air fills the rest, on the air scale', () {
+      final WallWaveProfile p = WallWaveProfile(
+        walls['concrete 1 m, 2.437 GHz (cap)']!,
+        390,
+        showMaterialWavelength: false,
+        labelWidthPx: 26,
+      );
+      expect(p.wallPx, closeTo(78, 1e-9));
+      expect(p.frontPx, closeTo((390 - 78) / 2, 1e-9));
+      expect(p.side, closeTo(1.5 * p.result.props.lambdaAir, 1e-12));
+      expect(p.airPxPerM, closeTo(p.frontPx / p.side, 1e-9));
+    });
   });
 
   group('DEFAULT: drawn period inside equals the air period', () {
@@ -146,7 +245,7 @@ void main() {
   });
 
   group('TOGGLE ON: inside/air period ratio = 1/sqrt(e\'), band or not', () {
-    for (final double mm in <double>[1, 12.7, 102]) {
+    for (final double mm in <double>[10, 12.7, 102, 1000]) {
       for (final double eps in <double>[2.73, 6.31]) {
         test('lossless e\' = $eps, $mm mm', () {
           final WallWaveProfile p = WallWaveProfile(
@@ -204,12 +303,21 @@ void main() {
           final Complex startOut = p.phasorAtPx(p.frontPx + p.wallPx + 1e-9);
           expect((endIn - startOut).abs, lessThan(1e-6));
           expect(p.phasorAtPx(p.width).abs, closeTo(r.t.abs, 1e-12));
-          // Mid-wall height is |fieldAt| at the matching depth.
+          // Mid-wall height is |fieldAt| at the matching depth, or its mean
+          // over one ripple period when the ripple is too short to draw.
           final double mid = p.frontPx + p.wallPx / 2;
-          expect(
-            p.phasorAtPx(mid).abs,
-            closeTo(r.fieldAt(r.thicknessM / 2).abs, 1e-12),
-          );
+          final double dm = r.thicknessM / 2;
+          double want = r.fieldAt(dm).abs;
+          if (p.rippleAveraged) {
+            final double h = p.ripplePeriodM / 2;
+            double sum = 0;
+            const int n = 4000;
+            for (int i = 0; i < n; i++) {
+              sum += r.fieldAt(dm - h + 2 * h * (i + 0.5) / n).abs;
+            }
+            want = sum / n;
+          }
+          expect(p.phasorAtPx(mid).abs, closeTo(want, 2e-3));
           // In front it is the physics' field itself.
           final double x = -p.side / 3;
           final Complex f = r.fieldAt(x);

@@ -113,12 +113,12 @@ void main() {
     await tester.ensureVisible(field);
     await tester.enterText(field, '0');
     await tester.pump();
-    expect(find.text('Enter a thickness from 1 to 50 cm'), findsOneWidget);
+    expect(find.text('Enter a thickness from 1 to 100 cm'), findsOneWidget);
     expect(_valueOf(tester, 'Transmission loss'), '14.3 dB');
 
     await tester.enterText(field, '1,27');
     await tester.pump();
-    expect(find.text('Enter a thickness from 1 to 50 cm'), findsNothing);
+    expect(find.text('Enter a thickness from 1 to 100 cm'), findsNothing);
     expect(find.textContaining('1.27 cm'), findsWidgets);
   });
 
@@ -188,7 +188,7 @@ void main() {
             tester,
             width: w,
             theme: themeName == 'dark' ? AppTheme.dark() : AppTheme.light(),
-            initial: WallConfig(material: m, thicknessMm: 500),
+            initial: WallConfig(material: m, thicknessMm: 1000),
           );
           expect(tester.takeException(), isNull);
           // No sideways scroll on the screen. A text field scrolls its own

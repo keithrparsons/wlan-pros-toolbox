@@ -726,8 +726,8 @@
       "purpose": "Sends one wave through one wall and shows three things at once: part of the wave reflects off the face, the wave gets smaller as the material absorbs it, and the same wave continues behind the wall, smaller. The frequency never changes. The numbers come from the ITU-R P.2040 building-material model.",
       "whyHere": "Wall loss is usually quoted as one number per material, and 6 GHz is usually said to lose more. This shows where the number comes from and splits it into absorption and reflection. Concrete does lose more at 6 GHz, but a thin panel such as glass or plasterboard can lose less at a higher frequency, because the echoes from its two faces can cancel.",
       "howToUse": [
-        "Pick a band and channel, then a material and a thickness. Type the thickness or drag the slider; the slider is logarithmic from 1 to 50 cm.",
-        "Watch the wave. In front of the wall the incident and reflected waves overlap into a ripple with peaks every half wavelength. Inside, the same wave shrinks in height as it goes. Behind, the same wave continues, smaller. Turn on Show wavelength inside the material to see the shorter wavelength inside: the frequency stays the same, but the wave travels slower in the material, so each cycle takes up less distance. Pause stops the animation; with reduced motion on it starts frozen.",
+        "Pick a band and channel, then a material and a thickness. Type the thickness or drag the slider; the slider is logarithmic from 1 cm to 1 m.",
+        "Watch the wave. In front of the wall the incident and reflected waves overlap into a ripple with peaks every half wavelength. Inside, the same wave shrinks in height as it goes. Behind, the same wave continues, smaller. The wall is not drawn to scale: it widens with thickness but stays small, and every number uses the true thickness. Turn on Show wavelength inside the material to see the shorter wavelength inside: the frequency stays the same, but the wave travels slower in the material, so each cycle takes up less distance. Pause stops the animation; with reduced motion on it starts frozen.",
         "Read the loss and its two parts, then compare the same wall at 2.4, 5.5 and 6.5 GHz. The measured values card puts published measurements beside the model, names the source and says how far apart they are. Set the angle of arrival and TE or TM to see how a glancing wave reflects more.",
         "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the wave, R returns to the opening wall, Up and Down change the thickness, F switches full screen, ? lists the keys and Esc exits."
       ],
@@ -745,7 +745,7 @@
         {
           "name": "Thickness",
           "unit": "cm (metric) or in (imperial)",
-          "range": "1 to 50 cm (0.39 to 19.7 in)"
+          "range": "1 to 100 cm (0.39 to 39.4 in)"
         },
         {
           "name": "Angle of arrival",

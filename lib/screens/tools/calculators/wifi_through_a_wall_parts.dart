@@ -28,7 +28,7 @@ const String kWifiThroughAWallToolId = 'wifi-through-a-wall';
 
 /// Thickness bounds, mm (spec).
 const double kWallMinMm = 10;
-const double kWallMaxMm = 500;
+const double kWallMaxMm = 1000;
 
 /// Incidence angle bound, degrees (spec).
 const double kWallMaxAngle = 80;
