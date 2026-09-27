@@ -113,12 +113,12 @@ void main() {
     await tester.ensureVisible(field);
     await tester.enterText(field, '0');
     await tester.pump();
-    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsOneWidget);
+    expect(find.text('Enter a thickness from 1 to 50 cm'), findsOneWidget);
     expect(_valueOf(tester, 'Transmission loss'), '14.3 dB');
 
     await tester.enterText(field, '1,27');
     await tester.pump();
-    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsNothing);
+    expect(find.text('Enter a thickness from 1 to 50 cm'), findsNothing);
     expect(find.textContaining('1.27 cm'), findsWidgets);
   });
 

@@ -137,17 +137,20 @@ class WallSlabController extends ChangeNotifier {
   /// Back to the opening wall, paused view intact (presenter R).
   void reset() => setConfig(initial);
 
-  /// One presenter key press on the thickness: a fortieth of the 0.1 to
+  /// One presenter key press on the thickness: a fortieth of the 1 to
   /// 50 cm log range (the slider's scale), rounded as the slider rounds, in
   /// the unit on screen.
   void stepThickness(int direction) {
+    final double logMin = _log10(kWallMinMm);
     final double logMax = _log10(kWallMaxMm);
-    final double p = (_log10(_config.thicknessMm) / logMax + direction / 40)
+    final double p =
+        ((_log10(_config.thicknessMm) - logMin) / (logMax - logMin) +
+                direction / 40)
         .clamp(0.0, 1.0);
     final LengthFormat f = LengthFormat(_units);
-    double mm = f.snapMm(math.pow(10, p * logMax).toDouble());
+    double mm = f.snapMm(math.pow(10, logMin + p * (logMax - logMin)).toDouble());
     // Always move at least one display step, so a press is never lost to
-    // rounding near 1 mm.
+    // rounding near 1 cm.
     if ((mm - _config.thicknessMm).abs() < 1e-9) {
       // One displayed step: 0.01 or 0.1 cm, 0.01 or 0.1 in.
       final double shown = f.smallValueFromMm(mm);

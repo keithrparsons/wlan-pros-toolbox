@@ -99,7 +99,7 @@ void main() {
 
     // A different tool, opened afterwards, is already imperial.
     await _pump(tester, c, const WifiThroughAWallScreen());
-    expect(find.textContaining('(in, 0.04 to 19.7)'), findsOneWidget);
+    expect(find.textContaining('(in, 0.39 to 19.7)'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
   });
@@ -111,28 +111,32 @@ void main() {
     await _pump(tester, c, const WifiThroughAWallScreen());
     final Finder field = find.byType(TextField);
     await tester.ensureVisible(field);
-    expect(find.textContaining('(cm, 0.1 to 50)'), findsOneWidget);
+    expect(find.textContaining('(cm, 1 to 50)'), findsOneWidget);
     expect(tester.widget<TextField>(field).controller!.text, '10.2');
 
     await tester.enterText(field, '20');
     await tester.pump();
     expect(find.textContaining('Concrete, 20 cm'), findsWidgets);
 
+    // Below the 1 cm floor is rejected too (Keith, 2026-09-27: 1 to 50 cm).
+    await tester.enterText(field, '0.5');
+    await tester.pump();
+    expect(find.text('Enter a thickness from 1 to 50 cm'), findsOneWidget);
     await tester.enterText(field, '51');
     await tester.pump();
-    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsOneWidget);
+    expect(find.text('Enter a thickness from 1 to 50 cm'), findsOneWidget);
 
     // Flip: the field rewrites itself in inches, and typed inches land.
     await c.setSystem(UnitSystem.imperial);
     await tester.pump();
     expect(tester.widget<TextField>(field).controller!.text, '7.9');
-    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsNothing);
+    expect(find.text('Enter a thickness from 1 to 50 cm'), findsNothing);
     await tester.enterText(field, '8');
     await tester.pump();
     expect(find.textContaining('Concrete, 8 in'), findsWidgets);
     await tester.enterText(field, '20');
     await tester.pump();
-    expect(find.text('Enter a thickness from 0.04 to 19.7 in'), findsOneWidget);
+    expect(find.text('Enter a thickness from 0.39 to 19.7 in'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
   });

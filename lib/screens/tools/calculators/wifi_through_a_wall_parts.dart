@@ -27,7 +27,7 @@ import '../../../units/unit_system.dart';
 const String kWifiThroughAWallToolId = 'wifi-through-a-wall';
 
 /// Thickness bounds, mm (spec).
-const double kWallMinMm = 1;
+const double kWallMinMm = 10;
 const double kWallMaxMm = 500;
 
 /// Incidence angle bound, degrees (spec).
