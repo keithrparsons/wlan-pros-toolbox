@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 
 import 'data/antenna_fundamentals_diagrams.dart';
+import 'data/find_my_diagrams.dart';
 import 'data/connector_diagrams.dart';
 import 'data/connector_photos.dart';
 import 'data/connector_sections.dart';
@@ -103,6 +104,15 @@ Future<void> main() async {
     await AntennaFundamentalsDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → diagram bands omitted. No crash.
+  }
+
+  // Same convention for the Find My, Explained lesson figures
+  // (assets/tool-diagrams/find-my/<slug>.svg). A missing manifest omits the
+  // figures; the lesson text and captions still read. Never blocks startup.
+  try {
+    await FindMyDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → figures omitted. No crash.
   }
 
   // Same convention for the single "where you test throughput changes the

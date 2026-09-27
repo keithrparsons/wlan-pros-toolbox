@@ -6,7 +6,8 @@
 // hands the raw string to SvgPicture.string (the same parser the app uses),
 // pumps it, and asserts a non-empty render with no parse exception. It also
 // guards the two structural invariants this lane is responsible for:
-//   - the antenna-fundamentals g1-g7 carry NO <marker> defs or refs
+//   - the antenna-fundamentals g1-g7 (and, since 2026-09-27, the Find My,
+//     Explained figures) carry NO <marker> defs or refs
 //     (all converted to inline-path arrowheads across the two graphics lanes).
 
 import 'dart:io';
@@ -36,6 +37,17 @@ const List<String> _convertedDiagrams = <String>[
   'assets/tool-diagrams/antenna-fundamentals/g5-coverage-floorplan.svg',
   'assets/tool-diagrams/antenna-fundamentals/g6-downtilt.svg',
   'assets/tool-diagrams/antenna-fundamentals/g7-polarization.svg',
+  // Find My, Explained (2026-09-27): drawn with triangle arrowheads from the
+  // start (tool/find_my_diagrams.py), never with <marker>.
+  'assets/tool-diagrams/find-my/cover-people-devices-items.svg',
+  'assets/tool-diagrams/find-my/f1-find-my-network.svg',
+  'assets/tool-diagrams/find-my/f2-rotating-ids.svg',
+  'assets/tool-diagrams/find-my/f3-where-the-dot-comes-from.svg',
+  'assets/tool-diagrams/find-my/f4-three-radios.svg',
+  'assets/tool-diagrams/find-my/f5-app-parts.svg',
+  'assets/tool-diagrams/find-my/f6-phone-dies.svg',
+  'assets/tool-diagrams/find-my/f7-lost-luggage.svg',
+  'assets/tool-diagrams/find-my/f8-unwanted-tracker.svg',
 ];
 
 Future<void> _expectRenders(WidgetTester tester, String path) async {
@@ -82,7 +94,8 @@ void main() {
   });
 
   group('structural invariants', () {
-    test('g1-g7 carry no <marker> defs or marker-* refs', () {
+    test('antenna g1-g7 and the Find My figures carry no <marker> defs or '
+        'marker-* refs', () {
       for (final String path in _convertedDiagrams) {
         final String svg = File(path).readAsStringSync();
         expect(svg.contains('<marker'), isFalse, reason: '$path has <marker> def');

@@ -87,8 +87,14 @@ void main() {
     WidgetTester tester,
   ) async {
     await _open(tester);
+    // Keith confirmed the 1 Mb/s long-preamble default on 2026-09-27, so it
+    // no longer carries the provisional label. The mode-3 readout still does.
     expect(
       find.textContaining('A provisional default, not yet confirmed'),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('the worst case the standard allows'),
       findsOneWidget,
     );
     expect(

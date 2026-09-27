@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" width="760" height="160" role="img" aria-label="A phone with signal, with a flat battery, and switched off">
+<rect x="10" y="10" width="236" height="140" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>
+<rect x="30" y="32" width="70" height="30" rx="5" fill="none" stroke="#E5E5E5" stroke-width="2.5"/>
+<rect x="100" y="41" width="5" height="12" rx="1" fill="#E5E5E5"/>
+<rect x="34" y="36" width="62" height="22" rx="2" fill="#A2CC3A"/>
+<text x="30" y="95.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">On, with signal</text>
+<text x="30" y="116.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">Reports itself directly,</text>
+<text x="30" y="136.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">GPS, Wi-Fi and cell.</text>
+<rect x="262" y="10" width="236" height="140" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>
+<rect x="282" y="32" width="70" height="30" rx="5" fill="none" stroke="#E5E5E5" stroke-width="2.5"/>
+<rect x="352" y="41" width="5" height="12" rx="1" fill="#E5E5E5"/>
+<rect x="286" y="36" width="8" height="22" rx="2" fill="#F26E6E"/>
+<text x="282" y="95.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">Battery flat</text>
+<text x="282" y="116.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">Power reserve: findable</text>
+<text x="282" y="136.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">for up to 5 hours.</text>
+<rect x="514" y="10" width="236" height="140" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>
+<circle cx="556" cy="47" r="15" fill="none" stroke="#E5E5E5" stroke-width="2.5"/>
+<line x1="556" y1="29" x2="556" y2="45" stroke="#E5E5E5" stroke-width="2.5" stroke-linecap="round"/>
+<text x="534" y="95.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">Switched off</text>
+<text x="534" y="116.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">Findable for up to 24 hours</text>
+<text x="534" y="136.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">through the Find My network.</text>
+</svg>

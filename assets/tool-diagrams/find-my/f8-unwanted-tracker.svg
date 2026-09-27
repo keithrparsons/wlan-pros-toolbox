@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 388" width="760" height="388" role="img" aria-label="What to do when you get an unknown tracker alert">
+<rect x="130" y="10" width="500" height="62" rx="12" fill="#3A3A3A"/>
+<text x="380" y="37.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600">"AirTag Found Moving With You"</text>
+<text x="380" y="59.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="400">on iPhone, or an unknown tracker alert on Android</text>
+<line x1="380" y1="76" x2="380.0" y2="88.0" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/><path d="M380.00 98.00 L375.00 88.00 L385.00 88.00 Z" fill="#9C9C9C"/>
+<rect x="130" y="102" width="500" height="62" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>
+<text x="380" y="129.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600">Find it</text>
+<text x="380" y="151.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">Tap the alert, then Play Sound, or Find Nearby if offered</text>
+<line x1="380" y1="168" x2="380.0" y2="180.0" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/><path d="M380.00 190.00 L375.00 180.00 L385.00 180.00 Z" fill="#9C9C9C"/>
+<rect x="130" y="194" width="500" height="62" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>
+<text x="380" y="221.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600">Identify it</text>
+<text x="380" y="243.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">Hold your phone's top to the white side. Screenshot the page.</text>
+<line x1="300" y1="260" x2="209.63" y2="285.3" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/><path d="M200.00 288.00 L208.28 280.49 L210.98 290.12 Z" fill="#9C9C9C"/>
+<line x1="460" y1="260" x2="550.37" y2="285.3" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/><path d="M560.00 288.00 L549.02 290.12 L551.72 280.49 Z" fill="#9C9C9C"/>
+<rect x="10" y="292" width="360" height="86" rx="12" fill="none" stroke="#F26E6E" stroke-width="2"/>
+<text x="190" y="323.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600">Feel unsafe?</text>
+<text x="190" y="348.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">Go somewhere public and contact police first</text>
+<rect x="390" y="292" width="360" height="86" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>
+<text x="570" y="323.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600">Otherwise, disable it</text>
+<text x="570" y="346.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">Follow "Instructions to Disable":</text>
+<text x="570" y="366.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">take the battery out</text>
+</svg>

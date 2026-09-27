@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · covers 223 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (50 tools)
-  - Guided Lessons (2)
+- **Wi-Fi Classroom** (51 tools)
+  - Guided Lessons (3)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (50 tools)
+# Wi-Fi Classroom (51 tools)
 
-Tools for teaching Wi-Fi, all of them ours. Two guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (2)
+## Guided Lessons (3)
 
 
 ### Antenna Fundamentals
@@ -3863,6 +3863,25 @@ A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum a
 - Cordless phones split two ways: the 2.4 GHz analog kind interferes, but DECT 6.0 at 1.9 GHz does not touch any Wi-Fi band. Baby monitors vary by model for the same reason.
 - Tool details are kept to confirmed capabilities only; pricing is deliberately left out because it moves and varies by region. Oscium now owns MetaGeek, so the Wi-Spy and Chanalyzer line is one product family.
 - The 6 GHz band being the cleanest is a current condition, not a permanent property; it will erode as adoption grows.
+
+
+### Find My, Explained
+
+A read-along lesson on how Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip. Find My is one app that finds three kinds of things: people who choose to share where they are, devices like your iPhone, iPad, Mac, Apple Watch and AirPods, and items like AirTags. The lesson carries eight figures, step-by-step settings for iOS 27 and watchOS 27, and a travel checklist.
+
+**Why it's here.** It answers the question Wi-Fi people get asked constantly by people who are not technical: how does Find My work? It also carries the Wi-Fi angle. When you see your bag on the map, you are looking at the location of the phone that heard it, not a reading from the tag. Indoors, and in airports especially, GPS is weak, and the phone leans on the Wi-Fi networks around it. Figure 3 shows how the finder's GPS, Wi-Fi and cell positioning become your dot.
+
+**How to use**
+1. Read top to bottom. It starts with the one idea that explains most of it: an AirTag cannot tell anyone where it is, and any Apple device that passes by quietly reports its own location, sealed so that only you can read it. Then it covers the three radios, the app, sharing, a phone that dies, lost luggage, a tracker that isn't yours, and six things people get wrong.
+2. Tap a figure to open it full screen, then pinch to zoom.
+3. Appendix A has the step-by-step settings, one task per card. Appendix B is the travel checklist: tick the items off before a trip. The ticks are not saved when you leave the lesson.
+
+**Field notes**
+- Written for iOS 27 and watchOS 27. Button names can shift slightly between software updates.
+- Figures Apple does not publish, such as Bluetooth range and how often a tag's location updates, are deliberately left out. Figure 4 is not to scale.
+- How the finder's GPS, Wi-Fi and cell positioning combine into your dot is our explanation, not Apple's wording.
+- Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
+- The lesson is independent and isn't affiliated with or endorsed by Apple.
 
 
 ## RF and Propagation (10)

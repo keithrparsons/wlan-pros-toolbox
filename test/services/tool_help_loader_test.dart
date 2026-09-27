@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 227;
+const int _expectedEntryCount = 228;
 
 const String _fixture = '''
 {
@@ -477,6 +477,10 @@ void main() {
       // of wifi-lab/preview (cbe1f8fd), which counted 218. 218 + 1 = 219.
       // Counted off the file, not derived: `len(json['tools'])` returned 219
       // and the id appears exactly once.
+      // 2026-09-27: the Find My, Explained Guided Lesson added ONE entry,
+      // find-my-explained, on top of wifi-lab/preview (ce5cd564), which
+      // counted 227. 227 + 1 = 228. Counted off the file: `len(json['tools'])`
+      // returned 228.
       expect(store.count, _expectedEntryCount);
     });
 

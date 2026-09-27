@@ -2533,6 +2533,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Find My, Explained (2026-09-27, Keith) — a read-along lesson for the
+      // question Wi-Fi people get asked constantly: how does Find My work? The
+      // approved print guide rendered verbatim, with its eight figures, the
+      // step-by-step settings and the travel checklist. Shelved third: the two
+      // RF lessons above are for Wi-Fi pros, this one is for their users.
+      ToolEntry(
+        id: 'find-my-explained',
+        title: 'Find My, Explained',
+        description:
+            'How Apple finds your people, your phone and your things, '
+            'including the AirTag in your suitcase, and what to turn on '
+            'before your next trip',
+        routeName: '/tools/find-my-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

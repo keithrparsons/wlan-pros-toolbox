@@ -2650,6 +2650,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'metageek',
     'rf explorer',
   ],
+  // Find My, Explained (Guided Lesson). The words a non-technical person uses
+  // when they ask how Find My works, plus the Wi-Fi positioning angle.
+  'find-my-explained': <String>[
+    'find my',
+    'airtag',
+    'air tag',
+    'apple',
+    'tracker',
+    'lost luggage',
+    'lost bag',
+    'precision finding',
+    'ultra wideband',
+    'uwb',
+    'bluetooth',
+    'nfc',
+    'location sharing',
+    'wi-fi positioning',
+    'unwanted tracking',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" width="700" height="250" role="img" aria-label="Three pins on a map: People, Devices, Items">
+<path d="M0 30H700M0 125H700M0 220H700M90 0V250M260 0V250M440 0V250M610 0V250" fill="none" stroke="#3A3A3A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M30 215 C120 190 150 170 175 150 S300 150 350 140 S470 100 525 95 S640 60 680 55" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="175" cy="150" r="34" fill="#A2CC3A" opacity="0.15"/>
+<circle cx="175" cy="150" r="20" fill="#A2CC3A" opacity="0.3"/>
+<circle cx="350" cy="140" r="34" fill="#A2CC3A" opacity="0.15"/>
+<circle cx="350" cy="140" r="20" fill="#A2CC3A" opacity="0.3"/>
+<circle cx="525" cy="95" r="34" fill="#A2CC3A" opacity="0.15"/>
+<circle cx="525" cy="95" r="20" fill="#A2CC3A" opacity="0.3"/>
+<circle cx="175" cy="150" r="11" fill="#A2CC3A"/>
+<rect x="342" y="127" width="16" height="26" rx="3" fill="#A2CC3A"/>
+<circle cx="525" cy="95" r="11" fill="none" stroke="#A2CC3A" stroke-width="3"/>
+<circle cx="525" cy="95" r="5" fill="#A2CC3A"/>
+<text x="175" y="206.3" font-family="IBM Plex Sans" font-size="18" fill="#E5E5E5" text-anchor="middle" font-weight="600">People</text>
+<text x="350" y="196.3" font-family="IBM Plex Sans" font-size="18" fill="#E5E5E5" text-anchor="middle" font-weight="600">Devices</text>
+<text x="525" y="151.3" font-family="IBM Plex Sans" font-size="18" fill="#E5E5E5" text-anchor="middle" font-weight="600">Items</text>
+</svg>
