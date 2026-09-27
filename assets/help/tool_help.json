@@ -6679,6 +6679,28 @@
       ],
       "source": "Condensed teaching copy based on Keith Parsons' spectrum-analysis notes; the nine signature cards were drawn to the classic interferer signatures."
     },
+    "find-my-explained": {
+      "name": "Find My, Explained",
+      "category": "Wi-Fi Classroom",
+      "purpose": "A read-along lesson on how Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip. Find My is one app that finds three kinds of things: people who choose to share where they are, devices like your iPhone, iPad, Mac, Apple Watch and AirPods, and items like AirTags. The lesson carries eight figures, step-by-step settings for iOS 27 and watchOS 27, and a travel checklist.",
+      "whyHere": "It answers the question Wi-Fi people get asked constantly by people who are not technical: how does Find My work? It also carries the Wi-Fi angle. When you see your bag on the map, you are looking at the location of the phone that heard it, not a reading from the tag. Indoors, and in airports especially, GPS is weak, and the phone leans on the Wi-Fi networks around it. Figure 3 shows how the finder's GPS, Wi-Fi and cell positioning become your dot.",
+      "howToUse": [
+        "Read top to bottom. It starts with the one idea that explains most of it: an AirTag cannot tell anyone where it is, and any Apple device that passes by quietly reports its own location, sealed so that only you can read it. Then it covers the three radios, the app, sharing, a phone that dies, lost luggage, a tracker that isn't yours, and six things people get wrong.",
+        "Tap a figure to open it full screen, then pinch to zoom.",
+        "Appendix A has the step-by-step settings, one task per card. Appendix B is the travel checklist: tick the items off before a trip. The ticks are not saved when you leave the lesson."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Written for iOS 27 and watchOS 27. Button names can shift slightly between software updates.",
+        "Figures Apple does not publish, such as Bluetooth range and how often a tag's location updates, are deliberately left out. Figure 4 is not to scale.",
+        "How the finder's GPS, Wi-Fi and cell positioning combine into your dot is our explanation, not Apple's wording.",
+        "Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.",
+        "The lesson is independent and isn't affiliated with or endorsed by Apple."
+      ],
+      "source": "The WLAN Pros print guide Find My, Explained (September 2026), checked against Apple's support pages on 27 September 2026. The full source list is the last section of the lesson."
+    },
     "cloud-tool-trust": {
       "name": "Cloud Tool Trust",
       "category": "Quick Reference",

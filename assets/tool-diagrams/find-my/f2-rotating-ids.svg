@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 204" width="640" height="204" role="img" aria-label="Four rotating IDs over one hour">
+<text x="10" y="27.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">The tag's ID changes about every 15 minutes</text>
+<rect x="10" y="52" width="130" height="34" rx="6" fill="#3A3A3A"/>
+<text x="75" y="75.6" font-family="DM Mono" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="400">7F3A…</text>
+<line x1="10" y1="100" x2="10" y2="112" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="10" y="132.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">9:00</text>
+<rect x="165" y="52" width="130" height="34" rx="6" fill="#3A3A3A"/>
+<text x="230" y="75.6" font-family="DM Mono" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="400">C019…</text>
+<line x1="165" y1="100" x2="165" y2="112" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="165" y="132.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">9:15</text>
+<rect x="320" y="52" width="130" height="34" rx="6" fill="#3A3A3A"/>
+<text x="385" y="75.6" font-family="DM Mono" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="400">5B8E…</text>
+<line x1="320" y1="100" x2="320" y2="112" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="320" y="132.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">9:30</text>
+<rect x="475" y="52" width="130" height="34" rx="6" fill="#3A3A3A"/>
+<text x="540" y="75.6" font-family="DM Mono" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="400">E24D…</text>
+<line x1="475" y1="100" x2="475" y2="112" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="475" y="132.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">9:45</text>
+<line x1="10" y1="106" x2="630" y2="106" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="10" y="166.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">An eavesdropper sees four unrelated codes.</text>
+<text x="10" y="193.2" font-family="IBM Plex Sans" font-size="15" fill="#A2CC3A" text-anchor="start" font-weight="600">Only your devices know they are the same tag.</text>
+</svg>

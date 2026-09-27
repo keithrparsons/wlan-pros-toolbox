@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Find My, Explained: an AirTag disc (lower left) whispering "I'm here"
+         as two broadcast arcs (upper right), the lesson's one idea. Distinct
+         by silhouette from the location pins (ip-geo, my-current-location) and
+         the two-circle Where Am I? glyph. -->
+    <circle cx="9" cy="15" r="6"/>
+    <circle cx="9" cy="15" r="1.4" fill="currentColor" stroke="none"/>
+    <path d="M11.3 6.3 A9 9 0 0 1 17.7 12.7"/>
+    <path d="M12.2 2.9 A12.5 12.5 0 0 1 21.1 11.8"/>
+  </g>
+</svg>
