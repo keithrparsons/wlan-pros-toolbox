@@ -24,6 +24,8 @@ import 'package:flutter/scheduler.dart';
 import '../../../services/wifi_lab/complex.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'wifi_through_a_wall_parts.dart';
 import 'wifi_through_a_wall_stage.dart' show WallWaveProfile;
 
@@ -45,6 +47,7 @@ class WallSlabController extends ChangeNotifier {
   SlabResult _result;
   bool _playing = false;
   bool _showMaterialWavelength = false;
+  UnitSystem _units = UnitSystem.metric;
   bool _motionDecided = false;
   double _phase = 0;
 
@@ -79,6 +82,15 @@ class WallSlabController extends ChangeNotifier {
 
   /// The wave's phase, radians, 0 to 2 pi.
   double get phase => _phase;
+
+  /// Length units on screen. The wall stays in mm.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    _notify();
+  }
 
   // ── Mutators ───────────────────────────────────────────────────────────
 
@@ -125,18 +137,22 @@ class WallSlabController extends ChangeNotifier {
   /// Back to the opening wall, paused view intact (presenter R).
   void reset() => setConfig(initial);
 
-  /// One presenter key press on the thickness: a fortieth of the 1 to
-  /// 500 mm log range (the slider's scale), rounded as the slider rounds.
+  /// One presenter key press on the thickness: a fortieth of the 0.1 to
+  /// 50 cm log range (the slider's scale), rounded as the slider rounds, in
+  /// the unit on screen.
   void stepThickness(int direction) {
     final double logMax = _log10(kWallMaxMm);
     final double p = (_log10(_config.thicknessMm) / logMax + direction / 40)
         .clamp(0.0, 1.0);
-    double mm = math.pow(10, p * logMax).toDouble();
-    mm = mm < 10 ? (mm * 10).roundToDouble() / 10 : mm.roundToDouble();
+    final LengthFormat f = LengthFormat(_units);
+    double mm = f.snapMm(math.pow(10, p * logMax).toDouble());
     // Always move at least one display step, so a press is never lost to
     // rounding near 1 mm.
-    if (mm == _config.thicknessMm) {
-      mm += direction * (mm < 10 ? 0.1 : 1);
+    if ((mm - _config.thicknessMm).abs() < 1e-9) {
+      // One displayed step: 0.01 or 0.1 cm, 0.01 or 0.1 in.
+      final double shown = f.smallValueFromMm(mm);
+      final double step = shown < 2 ? 0.01 : 0.1;
+      mm = f.smallToMm(shown + direction * step);
     }
     setConfig(_config.copyWith(thicknessMm: mm.clamp(kWallMinMm, kWallMaxMm)));
   }
@@ -188,7 +204,7 @@ class WallSlabController extends ChangeNotifier {
     final StringBuffer b = StringBuffer()
       ..writeln('Wi-Fi Through a Wall (ITU-R P.2040-4 model)')
       ..writeln(
-        '${c.material.label}, ${fmtMm(c.thicknessMm)} mm, '
+        '${c.material.label}, ${fmtThickness(c.thicknessMm, _units)}, '
         '${c.angleDeg.toStringAsFixed(0)} deg, '
         '${c.polarization.name.toUpperCase()}',
       )
@@ -205,7 +221,7 @@ class WallSlabController extends ChangeNotifier {
       );
     }
     b
-      ..writeln('Wavelength in air: ${fmtLength(r.props.lambdaAir)}')
+      ..writeln('Wavelength in air: ${fmtLength(r.props.lambdaAir, _units)}')
       ..writeln('Same wall by band:');
     for (final double f in kComparisonGhz) {
       b.writeln('  $f GHz: ${fmtLossDb(c.resultAt(f).transmissionLossDb)}');

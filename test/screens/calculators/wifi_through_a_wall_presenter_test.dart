@@ -175,7 +175,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(PresenterLayout.stageKey),
-        matching: find.textContaining('230 mm brick'),
+        matching: find.textContaining('23 cm brick'),
       ),
       findsOneWidget,
     );

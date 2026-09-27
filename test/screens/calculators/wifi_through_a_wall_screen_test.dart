@@ -113,25 +113,25 @@ void main() {
     await tester.ensureVisible(field);
     await tester.enterText(field, '0');
     await tester.pump();
-    expect(find.text('Enter a thickness from 1 to 500 mm'), findsOneWidget);
+    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsOneWidget);
     expect(_valueOf(tester, 'Transmission loss'), '14.3 dB');
 
-    await tester.enterText(field, '12,7');
+    await tester.enterText(field, '1,27');
     await tester.pump();
-    expect(find.text('Enter a thickness from 1 to 500 mm'), findsNothing);
-    expect(find.textContaining('12.7 mm'), findsWidgets);
+    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsNothing);
+    expect(find.textContaining('1.27 cm'), findsWidgets);
   });
 
   testWidgets('measured card: action sets the specimen thickness', (
     WidgetTester tester,
   ) async {
     await _pump(tester);
-    final Finder use = find.text('Set the wall to 203 mm');
+    final Finder use = find.text('Set the wall to 20.3 cm');
     await tester.ensureVisible(use);
     await tester.tap(use);
     await tester.pumpAndSettle();
-    expect(find.text('Set the wall to 203 mm'), findsNothing);
-    expect(find.text('Set the wall to 102 mm'), findsOneWidget);
+    expect(find.text('Set the wall to 20.3 cm'), findsNothing);
+    expect(find.text('Set the wall to 10.2 cm'), findsOneWidget);
     expect(find.textContaining('Disagrees: measured is'), findsWidgets);
   });
 

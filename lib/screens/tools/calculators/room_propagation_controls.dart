@@ -28,6 +28,8 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'room_propagation_controller.dart';
 import 'wifi_through_a_wall_parts.dart'
@@ -214,7 +216,7 @@ class _SignalCard extends StatelessWidget {
       _SwitchRow(
         title: 'Fresnel zone to the client',
         subtitle:
-            'Radius ${_C.cm(c.fresnelMidRadiusM, 0)} at the middle of the '
+            'Radius ${c.small(c.fresnelMidRadiusM, 0)} at the middle of the '
             'path. Keep it clear of walls and edges.',
         value: c.showFresnel,
         onChanged: (bool v) => c.showFresnel = v,
@@ -292,8 +294,8 @@ class _SignalCard extends StatelessWidget {
           if (!presenter) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(
-              'Wavelength ${_C.cm(c.lambda)}, half wavelength '
-              '${_C.cm(c.lambda / 2)}.',
+              'Wavelength ${c.small(c.lambda)}, half wavelength '
+              '${c.small(c.lambda / 2)}.',
               style: _hint(context),
             ),
           ],
@@ -452,31 +454,36 @@ class _PositionsCard extends StatelessWidget {
           const WallSectionLabel('Positions'),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'The same as dragging on the plan. Meters from the top-left '
+            'The same as dragging on the plan. '
+            '${c.units.isMetric ? 'Meters' : 'Feet'} from the top-left '
             'corner.',
             style: _hint(context),
           ),
           const SizedBox(height: AppSpacing.xs),
           _PosSlider(
             label: 'AP across',
+            units: c.units,
             value: c.ap.x,
             max: c.widthM,
             onChanged: (double v) => c.moveAp(P2(v, c.ap.y)),
           ),
           _PosSlider(
             label: 'AP down',
+            units: c.units,
             value: c.ap.y,
             max: c.heightM,
             onChanged: (double v) => c.moveAp(P2(c.ap.x, v)),
           ),
           _PosSlider(
             label: 'Client across',
+            units: c.units,
             value: c.client.x,
             max: c.widthM,
             onChanged: (double v) => c.moveClient(P2(v, c.client.y)),
           ),
           _PosSlider(
             label: 'Client down',
+            units: c.units,
             value: c.client.y,
             max: c.heightM,
             onChanged: (double v) => c.moveClient(P2(c.client.x, v)),
@@ -493,18 +500,24 @@ class _PosSlider extends StatelessWidget {
     required this.value,
     required this.max,
     required this.onChanged,
+    required this.units,
   });
 
   final String label;
+
+  /// Metres; the slider and the readout work in the unit on screen.
   final double value;
   final double max;
   final ValueChanged<double> onChanged;
+  final UnitSystem units;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    final LengthFormat f = LengthFormat(units);
+    final double shownMax = f.distValue(max);
     return Row(
       children: <Widget>[
         SizedBox(
@@ -517,20 +530,23 @@ class _PosSlider extends StatelessWidget {
           ),
         ),
         Expanded(
+          // A tenth of a metre, or a tenth of a foot, per step.
           child: Slider(
-            value: value.clamp(0.0, max),
-            max: max,
-            onChanged: (double v) => onChanged((v * 10).roundToDouble() / 10),
+            value: f.distValue(value).clamp(0.0, shownMax),
+            max: shownMax,
+            onChanged: (double v) =>
+                onChanged(f.distToMetres((v * 10).roundToDouble() / 10)),
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
             semanticFormatterCallback: (double v) =>
-                '$label ${v.toStringAsFixed(1)} meters',
+                '$label ${v.toStringAsFixed(1)} ${f.distUnitSpoken}',
           ),
         ),
         SizedBox(
-          width: 56,
+          // Room for "65.6 ft", the widest reading (20 m in feet).
+          width: AppSpacing.xxl + AppSpacing.sm,
           child: Text(
-            '${value.toStringAsFixed(1)} m',
+            '${f.distValue(value).toStringAsFixed(1)} ${f.distUnit}',
             textAlign: TextAlign.right,
             style: mono.inlineCode.copyWith(color: colors.textPrimary),
           ),
@@ -550,16 +566,27 @@ class _WallsCard extends StatefulWidget {
 }
 
 class _WallsCardState extends State<_WallsCard> {
+  // The field holds the thickness in the unit on screen (cm or in); the
+  // walls stay in mm.
   late final TextEditingController _mm;
   String? _mmError;
   int? _lastSelected;
+  UnitSystem _units = UnitSystem.metric;
 
   RoomPropagationController get c => widget.c;
+
+  LengthFormat get _f => LengthFormat(_units);
+
+  String _fieldText(double mm) => _f.smallNumberFromMm(mm);
+
+  String get _minText => _f.smallNumberFromMm(kRoomWallMinMm);
+  String get _maxText => _f.smallNumberFromMm(kRoomWallMaxMm);
 
   @override
   void initState() {
     super.initState();
-    _mm = TextEditingController(text: _C.fmtMm(c.editThicknessMm));
+    _units = c.units;
+    _mm = TextEditingController(text: _fieldText(c.editThicknessMm));
     _lastSelected = c.selectedWall;
   }
 
@@ -573,9 +600,16 @@ class _WallsCardState extends State<_WallsCard> {
     // Mirror the thickness when the selection changes or it was set
     // elsewhere, unless the field already says the same number.
     final double? typed = tryParseFlexibleDouble(_mm.text);
-    if (_lastSelected != c.selectedWall ||
-        (typed != c.editThicknessMm && _mmError == null)) {
-      _mm.text = _C.fmtMm(c.editThicknessMm);
+    final double? typedMm = typed == null ? null : _f.smallToMm(typed);
+    final bool unitsFlipped = _units != c.units;
+    _units = c.units;
+    if (unitsFlipped ||
+        _lastSelected != c.selectedWall ||
+        (_mmError == null &&
+            (typedMm == null ||
+                (typedMm - c.editThicknessMm).abs() > 1e-6 &&
+                    _fieldText(c.editThicknessMm) != _mm.text))) {
+      _mm.text = _fieldText(c.editThicknessMm);
       _mmError = null;
     }
     _lastSelected = c.selectedWall;
@@ -588,17 +622,19 @@ class _WallsCardState extends State<_WallsCard> {
   }
 
   void _onMm(String raw) {
+    // Typed in the unit on screen; bounds are the displayed bounds.
     final double? v = tryParseFlexibleDouble(raw);
-    if (v == null || v < kRoomWallMinMm || v > kRoomWallMaxMm) {
+    if (v == null ||
+        v < double.parse(_minText) - 1e-9 ||
+        v > double.parse(_maxText) + 1e-9) {
       setState(
         () => _mmError =
-            'Enter a thickness from ${kRoomWallMinMm.toStringAsFixed(0)} to '
-            '${kRoomWallMaxMm.toStringAsFixed(0)} mm',
+            'Enter a thickness from $_minText to $_maxText ${_f.smallUnit}',
       );
       return;
     }
     setState(() => _mmError = null);
-    c.setThicknessMm(v);
+    c.setThicknessMm(_f.smallToMm(v).clamp(kRoomWallMinMm, kRoomWallMaxMm));
   }
 
   @override
@@ -659,7 +695,7 @@ class _WallsCardState extends State<_WallsCard> {
                       'draw.'
                 : 'Material and thickness below change this wall. It runs '
                       'from ${_pt(sel.a)} to ${_pt(sel.b)}, '
-                      '${sel.length.toStringAsFixed(1)} m.',
+                      '${c.coord(sel.length)} ${c.lf.distUnit}.',
             style: _hint(context),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -678,8 +714,8 @@ class _WallsCardState extends State<_WallsCard> {
           const SizedBox(height: AppSpacing.sm),
           LabeledField(
             label: 'Thickness',
-            hint: '(mm, 1 to 500)',
-            semanticLabel: 'Wall thickness in millimeters',
+            hint: '(${_f.smallUnit}, $_minText to $_maxText)',
+            semanticLabel: 'Wall thickness in ${_f.smallUnitSpoken}',
             field: TextField(
               controller: _mm,
               keyboardType: const TextInputType.numberWithOptions(
@@ -696,7 +732,7 @@ class _WallsCardState extends State<_WallsCard> {
               cursorColor: colors.textAccent,
               decoration: InputDecoration(
                 errorText: _mmError,
-                suffixText: 'mm',
+                suffixText: _f.smallUnit,
               ),
             ),
           ),
@@ -742,8 +778,7 @@ class _WallsCardState extends State<_WallsCard> {
     );
   }
 
-  static String _pt(P2 p) =>
-      '(${p.x.toStringAsFixed(1)}, ${p.y.toStringAsFixed(1)})';
+  String _pt(P2 p) => '(${c.coord(p.x)}, ${c.coord(p.y)})';
 }
 
 // ── Readouts ──────────────────────────────────────────────────────────────
@@ -863,7 +898,7 @@ class _ClientCard extends StatelessWidget {
           WallRow(
             label: 'Distance to AP',
             value:
-                '${r.distanceM.toStringAsFixed(2)} m, '
+                '${c.lf.dist(r.distanceM, decimals: 2, keepZeros: true)}, '
                 '${c.freqMHz} MHz',
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -880,7 +915,7 @@ class _ClientCard extends StatelessWidget {
               label: 'wall ${w.wallIndex + 1}',
               value:
                   '${c.walls[w.wallIndex].material.label} '
-                  '${_C.fmtMm(c.walls[w.wallIndex].thicknessMm)} mm at '
+                  '${c.thick(c.walls[w.wallIndex].thicknessMm)} at '
                   '${w.angleDeg.toStringAsFixed(0)} deg: '
                   '${_C.lossDb(w.lossDb)}',
               indent: true,
@@ -962,7 +997,8 @@ extension on _ClientCard {
           ),
           Text(
             'Local average ${_C.dbm(c.clientAverageDbm)} (the map). '
-            '${r.distanceM.toStringAsFixed(2)} m from the AP, '
+            '${c.lf.dist(r.distanceM, decimals: 2, keepZeros: true)} from the '
+            'AP, '
             '${c.freqMHz} MHz.',
             style: _hint(context),
           ),

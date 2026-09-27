@@ -97,11 +97,11 @@ class _WallSlabStageState extends State<WallSlabStage> {
     final WallConfig cfg = _c.config;
     final SlabResult r = _c.result;
     final double ampBehind = r.t.abs;
-    return 'Wave through ${fmtMm(cfg.thicknessMm)} mm of '
+    return 'Wave through ${fmtThickness(cfg.thicknessMm, _c.units)} of '
         '${cfg.material.label.toLowerCase()} at ${cfg.centerMHz} MHz. '
         'In front, the reflected wave makes a ripple of '
         '${r.standingWaveRippleDb <= 40 ? '${fmt1(r.standingWaveRippleDb)} dB' : 'full nulls'}. '
-        '${_c.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial)} instead of ${fmtLength(r.props.lambdaAir)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
+        '${_c.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial, _c.units)} instead of ${fmtLength(r.props.lambdaAir, _c.units)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
         'Behind, the amplitude is ${fmtPct(ampBehind)} of the incident '
         'amplitude: ${fmtLossDb(r.transmissionLossDb)} of loss.';
   }
@@ -319,7 +319,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
             ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
-              '${fmtMm(cfg.thicknessMm)} mm '
+              '${fmtThickness(cfg.thicknessMm, _c.units)} '
               '${cfg.material.label.toLowerCase()}, ${cfg.centerMHz} MHz',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),

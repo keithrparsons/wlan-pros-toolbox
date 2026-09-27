@@ -20,6 +20,8 @@ import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kWifiThroughAWallToolId = 'wifi-through-a-wall';
@@ -142,8 +144,18 @@ String fmtMm(double mm) {
   return mm.toStringAsFixed(0);
 }
 
-/// A length in metres, in the unit a student reads easily.
-String fmtLength(double m) {
+/// Wall thickness for display, with its unit: cm in metric (Keith,
+/// 2026-09-27: "most walls are measured in cm"), inches in imperial.
+/// "10.2 cm", "0.25 cm", "4 in", "19.7 in".
+String fmtThickness(double mm, UnitSystem u) => LengthFormat(u).smallFromMm(mm);
+
+/// A length in metres, in the unit a student reads easily. Imperial shows
+/// inches down to a tenth of an inch; below that (a metal's skin depth)
+/// there is no inch a student reads, so it stays in mm, µm or nm.
+String fmtLength(double m, [UnitSystem u = UnitSystem.metric]) {
+  if (!u.isMetric && m >= LengthUnits.inchesToMetres(0.1)) {
+    return LengthFormat(u).small(m);
+  }
   if (m >= 0.1) return '${(m * 100).toStringAsFixed(1)} cm';
   if (m >= 0.01) return '${(m * 100).toStringAsFixed(2)} cm';
   if (m >= 0.001) return '${(m * 1000).toStringAsFixed(1)} mm';
@@ -162,12 +174,14 @@ String fmtThousands(double v) {
   return b.toString();
 }
 
-/// A rate in dB/m: one decimal below 1000, grouped above, in millions past
-/// a million (metal).
-String fmtRate(double v) {
-  if (v < 1000) return '${fmt1(v)} dB/m';
-  if (v < 1e6) return '${fmtThousands(v)} dB/m';
-  return 'about ${fmt1(v / 1e6)} million dB/m';
+/// A rate given in dB/m: one decimal below 1000, grouped above, in millions
+/// past a million (metal). Imperial shows dB/ft (the rate times 0.3048).
+String fmtRate(double v, [UnitSystem u = UnitSystem.metric]) {
+  final String unit = u.isMetric ? 'dB/m' : 'dB/ft';
+  final double r = u.isMetric ? v : v * LengthUnits.metresPerFoot;
+  if (r < 1000) return '${fmt1(r)} $unit';
+  if (r < 1e6) return '${fmtThousands(r)} $unit';
+  return 'about ${fmt1(r / 1e6)} million $unit';
 }
 
 /// Percent with sensible precision.

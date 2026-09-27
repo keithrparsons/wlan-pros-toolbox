@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/room_propagation_model.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../theme/app_coverage_ramp.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Meters to pixels for a plan drawn from its top-left corner.
 class PlanTransform {
@@ -106,6 +108,7 @@ class PlanOverlayData {
     required this.showShadows,
     required this.showCloseUpBox,
     required this.draft,
+    this.units = UnitSystem.metric,
   });
 
   final double widthM;
@@ -119,6 +122,9 @@ class PlanOverlayData {
   final bool showShadows;
   final bool showCloseUpBox;
   final (P2, P2)? draft;
+
+  /// Units for the draft wall's length label.
+  final UnitSystem units;
 }
 
 /// Walls, doorways, markers and the optional overlays.
@@ -349,7 +355,7 @@ class PlanOverlayPainter extends CustomPainter {
       _pill(
         canvas,
         Offset.lerp(a, b, 0.5)!,
-        '${len.toStringAsFixed(1)} m',
+        LengthFormat(data.units).dist(len, decimals: 1, keepZeros: true),
         above: true,
       );
     }
@@ -460,7 +466,11 @@ class RipplePainter extends CustomPainter {
     required this.rulerNormal,
     required this.labelStyle,
     required this.revision,
+    this.units = UnitSystem.metric,
   });
+
+  /// Units for the ruler label.
+  final UnitSystem units;
 
   final FieldGrid? grid;
   final List<RoomWall> walls;
@@ -533,7 +543,8 @@ class RipplePainter extends CustomPainter {
     final TextPainter tp = TextPainter(
       text: TextSpan(
         text:
-            'ticks every half wavelength, ${(half * 100).toStringAsFixed(1)} cm',
+            'ticks every half wavelength, '
+            '${units.isMetric ? '${(half * 100).toStringAsFixed(1)} cm' : LengthFormat(units).small(half)}',
         style: labelStyle.copyWith(color: AppCoverageRamp.viewportText),
       ),
       textDirection: TextDirection.ltr,
@@ -552,6 +563,7 @@ class RipplePainter extends CustomPainter {
       !identical(old.grid, grid) ||
       old.client != client ||
       old.lambda != lambda ||
+      old.units != units ||
       old.rulerNormal != rulerNormal ||
       old.walls != walls;
 }
