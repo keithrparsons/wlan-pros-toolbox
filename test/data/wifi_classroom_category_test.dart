@@ -15,7 +15,13 @@ import 'package:wlan_pros_toolbox/router/app_router.dart';
 
 /// Shelf -> tool ids, in the order the screen must show them.
 const Map<String, List<String>> _teachingOrder = <String, List<String>>{
-  'Guided Lessons': <String>['antenna-fundamentals', 'spectrum-analysis'],
+  'Guided Lessons': <String>[
+    'antenna-fundamentals',
+    'spectrum-analysis',
+    // 2026-09-27: Find My, Explained, the lesson for the people Wi-Fi pros
+    // get asked about Find My by.
+    'find-my-explained',
+  ],
   'RF and Propagation': <String>[
     'fspl-simulator',
     'wifi-through-a-wall',
@@ -138,8 +144,12 @@ void main() {
 
   test('the 13 lessons and handouts left educational-resources; Ham Radio '
       'Study Resources stayed', () {
+    // find-my-explained was built in the Classroom (2026-09-27) and never
+    // lived in Educational Resources, so it is not one of the 13 that moved.
     final Set<String> moved = <String>{
-      ..._teachingOrder['Guided Lessons']!,
+      ..._teachingOrder['Guided Lessons']!.where(
+        (String id) => id != 'find-my-explained',
+      ),
       ..._teachingOrder['Course Handouts']!,
     };
     expect(moved, hasLength(13));
@@ -178,7 +188,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(50));
+    expect(classroom.tools, hasLength(51));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

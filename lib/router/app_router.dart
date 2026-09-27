@@ -125,6 +125,7 @@ import '../screens/tools/reference/coax_cable_screen.dart';
 import '../screens/tools/reference/ethernet_cable_screen.dart';
 import '../screens/tools/reference/antenna_connectors_screen.dart';
 import '../screens/tools/reference/antenna_fundamentals_screen.dart';
+import '../screens/tools/reference/find_my_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -736,6 +737,12 @@ class AppRouter {
   /// permanent (route, catalog, diagram lookup, help, tests).
   static const String antennaFundamentals = '/tools/antenna-fundamentals';
 
+  /// Find My, Explained — a Wi-Fi Classroom Guided Lesson: how Apple's Find My
+  /// network locates people, devices and AirTags, the settings, and a travel
+  /// checklist. The id `find-my-explained` is permanent (route, catalog,
+  /// diagram lookup, help, tests).
+  static const String findMyExplained = '/tools/find-my-explained';
+
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
   /// interference (a nine-card signature gallery), and how to mitigate it. An
@@ -1086,6 +1093,7 @@ class AppRouter {
     ),
     antennaConnectors: (_) => const AntennaConnectorsScreen(),
     antennaFundamentals: (_) => const AntennaFundamentalsScreen(),
+    findMyExplained: (_) => const FindMyExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

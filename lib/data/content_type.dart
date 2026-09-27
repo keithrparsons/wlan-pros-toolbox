@@ -73,6 +73,7 @@ const Set<String> _guideIds = <String>{
   // simulators' "Tool" chip and calculator glyph.
   'antenna-fundamentals',
   'spectrum-analysis',
+  'find-my-explained',
 };
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.
