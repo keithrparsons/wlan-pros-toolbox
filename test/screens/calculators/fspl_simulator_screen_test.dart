@@ -287,6 +287,62 @@ void main() {
     );
   });
 
+  // Keith, 2026-09-27: toggle the distance axis between log (straight
+  // lines) and linear (the familiar curve).
+  test('chart geometry maps distance linearly or logarithmically', () {
+    const Size size = Size(412, 236);
+    const FsplChartGeometry logG = FsplChartGeometry(
+      size: size,
+      maxDistanceM: 100,
+      yMin: 40,
+      yMax: 100,
+    );
+    const FsplChartGeometry linG = FsplChartGeometry(
+      size: size,
+      maxDistanceM: 100,
+      yMin: 40,
+      yMax: 100,
+      logDistance: false,
+    );
+    final Rect p = logG.plot;
+    // Log: 10 m is halfway across 1 m to 100 m. Linear: 50 m is.
+    expect(logG.xFor(10), closeTo(p.left + p.width / 2, 1e-6));
+    expect(linG.xFor(50), closeTo(p.left + p.width / 2, 1e-6));
+    expect(linG.xFor(100), closeTo(p.right, 1e-6));
+    // Round trips, and the linear inverse never goes below 1 m.
+    expect(linG.distanceAt(linG.xFor(37)), closeTo(37, 1e-6));
+    expect(logG.distanceAt(logG.xFor(37)), closeTo(37, 1e-6));
+    expect(linG.distanceAt(p.left), 1);
+  });
+
+  testWidgets('the Log / Linear toggle switches the axis and the caption', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester);
+    expect(
+      find.text('Received power (dBm) vs distance, log scale'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Linear').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Received power (dBm) vs distance, linear scale'),
+      findsOneWidget,
+    );
+    final FsplChartPainter painter = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((CustomPaint c) => c.painter)
+        .whereType<FsplChartPainter>()
+        .first;
+    expect(painter.logDistance, isFalse);
+    await tester.tap(find.text('Log').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Received power (dBm) vs distance, log scale'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('path loss view drops the design targets from the legend', (
     WidgetTester tester,
   ) async {

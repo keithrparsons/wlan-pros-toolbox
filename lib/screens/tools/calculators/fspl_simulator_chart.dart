@@ -133,6 +133,7 @@ class FsplChartGeometry {
     required this.yMin,
     required this.yMax,
     this.padScale = 1,
+    this.logDistance = true,
   });
 
   static const double padLeft = 40;
@@ -150,6 +151,10 @@ class FsplChartGeometry {
   /// elsewhere), so larger tick labels never run off the plot.
   final double padScale;
 
+  /// True: log distance axis (decades). False: linear axis from 0 to
+  /// [maxDistanceM]; the same dB values then draw as the familiar curve.
+  final bool logDistance;
+
   Rect get plot => Rect.fromLTRB(
     padLeft * padScale,
     padTop * padScale,
@@ -161,9 +166,10 @@ class FsplChartGeometry {
 
   double xFor(double distanceM) {
     final Rect p = plot;
-    final double t =
-        (_log10(distanceM) - _log10(minDistanceM)) /
-        (_log10(maxDistanceM) - _log10(minDistanceM));
+    final double t = logDistance
+        ? (_log10(distanceM) - _log10(minDistanceM)) /
+              (_log10(maxDistanceM) - _log10(minDistanceM))
+        : distanceM / maxDistanceM;
     return p.left + t.clamp(0.0, 1.0) * p.width;
   }
 
@@ -177,6 +183,9 @@ class FsplChartGeometry {
   double distanceAt(double x) {
     final Rect p = plot;
     final double t = ((x - p.left) / p.width).clamp(0.0, 1.0);
+    if (!logDistance) {
+      return math.max(minDistanceM, t * maxDistanceM);
+    }
     final double lg =
         _log10(minDistanceM) +
         t * (_log10(maxDistanceM) - _log10(minDistanceM));
@@ -198,8 +207,11 @@ class FsplChartPainter extends CustomPainter {
     required this.revision,
     this.measured,
     this.emptyMessage,
+    this.logDistance = true,
   });
 
+  /// See [FsplChartGeometry.logDistance].
+  final bool logDistance;
   final double maxDistanceM;
   final double yMin;
   final double yMax;
@@ -225,6 +237,7 @@ class FsplChartPainter extends CustomPainter {
       yMin: yMin,
       yMax: yMax,
       padScale: style.scale.text,
+      logDistance: logDistance,
     );
     final Rect p = g.plot;
     _grid(canvas, g, p);
@@ -277,26 +290,54 @@ class FsplChartPainter extends CustomPainter {
     final Paint minor = Paint()
       ..color = style.grid
       ..strokeWidth = 1;
-    final Paint major = Paint()
+    final Paint majorPaint = Paint()
       ..color = style.axis
       ..strokeWidth = 1;
 
-    // Distance: decades major, 2..9 minor.
-    for (double decade = 1; decade <= maxDistanceM; decade *= 10) {
-      final double x = g.xFor(decade);
-      canvas.drawLine(Offset(x, p.top), Offset(x, p.bottom), major);
-      _text(
-        canvas,
-        _distanceTick(decade),
-        style.axisLabel,
-        Offset(x, p.bottom + 4),
-        anchor: Offset(decade == 1 ? 0 : (decade >= maxDistanceM ? 1 : 0.5), 0),
-      );
-      for (int k = 2; k <= 9; k++) {
-        final double d = decade * k;
-        if (d >= maxDistanceM) break;
-        final double xm = g.xFor(d);
-        canvas.drawLine(Offset(xm, p.top), Offset(xm, p.bottom), minor);
+    if (!logDistance) {
+      // Linear distance: a major line and label every fifth of the range
+      // (20 m on 100 m, 200 m on 1 km), a minor line every tenth.
+      final double major = maxDistanceM / 5;
+      final double minorStep = maxDistanceM / 10;
+      for (double d = 0; d <= maxDistanceM + 1e-9; d += minorStep) {
+        final double x = g.xFor(d);
+        final bool isMajor = (d / major - (d / major).round()).abs() < 1e-6;
+        canvas.drawLine(
+          Offset(x, p.top),
+          Offset(x, p.bottom),
+          isMajor ? majorPaint : minor,
+        );
+        if (isMajor) {
+          _text(
+            canvas,
+            d == 0 ? '0' : _distanceTick(d),
+            style.axisLabel,
+            Offset(x, p.bottom + 4),
+            anchor: Offset(d == 0 ? 0 : (d >= maxDistanceM ? 1 : 0.5), 0),
+          );
+        }
+      }
+    } else {
+      // Distance: decades major, 2..9 minor.
+      for (double decade = 1; decade <= maxDistanceM; decade *= 10) {
+        final double x = g.xFor(decade);
+        canvas.drawLine(Offset(x, p.top), Offset(x, p.bottom), majorPaint);
+        _text(
+          canvas,
+          _distanceTick(decade),
+          style.axisLabel,
+          Offset(x, p.bottom + 4),
+          anchor: Offset(
+            decade == 1 ? 0 : (decade >= maxDistanceM ? 1 : 0.5),
+            0,
+          ),
+        );
+        for (int k = 2; k <= 9; k++) {
+          final double d = decade * k;
+          if (d >= maxDistanceM) break;
+          final double xm = g.xFor(d);
+          canvas.drawLine(Offset(xm, p.top), Offset(xm, p.bottom), minor);
+        }
       }
     }
 
@@ -322,8 +363,9 @@ class FsplChartPainter extends CustomPainter {
     );
   }
 
-  static String _distanceTick(double d) =>
-      d >= 1000 ? '1 km' : '${d.round()} m';
+  static String _distanceTick(double d) => d >= 1000
+      ? '${(d / 1000).toStringAsFixed(d % 1000 == 0 ? 0 : 1)} km'
+      : '${d.round()} m';
 
   // ── Series ───────────────────────────────────────────────────────────────
 
@@ -552,6 +594,7 @@ class FsplChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(FsplChartPainter old) =>
       old.revision != revision ||
+      old.logDistance != logDistance ||
       old.cursorDistanceM != cursorDistanceM ||
       old.style != style;
 }
