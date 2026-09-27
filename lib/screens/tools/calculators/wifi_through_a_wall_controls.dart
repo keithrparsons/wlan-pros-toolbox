@@ -236,6 +236,37 @@ class _WallSlabControlsState extends State<WallSlabControls> {
               onChanged: (int ch) => _emit(c.copyWith(channel: ch)),
             ),
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: <Widget>[
+              const WallSectionLabel('Tx power'),
+              const Spacer(),
+              Text(
+                '${c.txPowerDbm.toStringAsFixed(0)} dBm',
+                style: mono.inlineCode.copyWith(color: colors.textPrimary),
+              ),
+            ],
+          ),
+          Slider(
+            value: c.txPowerDbm,
+            min: kWallTxMinDbm,
+            max: kWallTxMaxDbm,
+            // Whole dBm, rounded here rather than with `divisions` (no tick
+            // dots), as the angle slider does.
+            onChanged: (double v) =>
+                _emit(c.copyWith(txPowerDbm: v.roundToDouble())),
+            activeColor: colors.primary,
+            inactiveColor: colors.disabledFill,
+            label: '${c.txPowerDbm.toStringAsFixed(0)} dBm',
+            semanticFormatterCallback: (double v) =>
+                'Tx power ${v.toStringAsFixed(0)} dBm',
+          ),
+          if (!presenter)
+            Text(
+              'The wave reaches the wall at this level. Distance loss is not '
+              'included.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
           const SizedBox(height: AppSpacing.md),
           const WallSectionLabel('The wall'),
           const SizedBox(height: AppSpacing.xs),
@@ -393,6 +424,10 @@ class WallSlabReadouts extends StatelessWidget {
             indent: true,
           ),
           WallRow(
+            label: 'Level behind the wall',
+            value: _behind(config.levelBehindDbm(r), config.txPowerDbm),
+          ),
+          WallRow(
             label: 'Reflection',
             value: r.reflectedPower <= 0
                 ? 'none (no power reflected)'
@@ -425,6 +460,16 @@ class WallSlabReadouts extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The level behind the wall for the readout, dBm, or below the floor.
+String _behind(double dbm, double tx) {
+  if (!dbm.isFinite || dbm <= kWallNoiseFloorDbm) {
+    return 'below the ${fmtDbm(kWallNoiseFloorDbm)} noise floor (Tx '
+        '${fmtDbm(tx)})';
+  }
+  return '${fmtDbm(dbm)}, ${fmt1(dbm - kWallNoiseFloorDbm)} dB above the '
+      '${fmtDbm(kWallNoiseFloorDbm)} noise floor (Tx ${fmtDbm(tx)})';
 }
 
 // ── All three bands ───────────────────────────────────────────────────────

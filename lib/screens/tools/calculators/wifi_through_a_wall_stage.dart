@@ -9,10 +9,28 @@
 // scale, see below):
 //   - in front of the wall: incident plus reflected, E = e^(-jkx) + R e^(jkx);
 //     its envelope shows the standing-wave ripple, nodes lambda/2 apart;
-//   - inside: the same wave, its height taken from the physics (the decay,
-//     including the part bounced off the back face);
-//   - behind: the same wave again, height |T|.
+//   - inside: the same wave, its height a straight ramp in dB from the
+//     front face to the back face;
+//   - behind: the same wave again, at the level Tx power minus the loss.
 // The field is the tangential E; SlabResult.fieldAt owns that math.
+//
+// HEIGHT IS dB ABOVE THE NOISE FLOOR (Keith, 2026-09-27: "a concrete wall
+// perhaps 2' thick and still want to see the wave form on the right not
+// turn into a flatline. Since that is what happens in the real world").
+// With the height linear in field, 64 dB of loss drew as a flat line. Now
+// height = max(0, (P - floor) / (Ptx - floor)) with P = Ptx + 20 log10 |E|:
+// 1 is the Tx power (the incident wave), 0 is the noise floor
+// ([kWallNoiseFloorDbm]). The standing wave in front is mapped the same way.
+// Only the drawing changes; every number stays exact.
+//
+// NO RIPPLE INSIDE THE WALL (Keith, 2026-09-27: "Why is the radio wave
+// changing frequency inside the wall?"). The true inside field carries a
+// standing-wave ripple from the wave bounced off the back face. Drawn in a
+// band squeezed to a few dozen px, it made the wave wiggle 3 or 4 times
+// inside the wall, which reads as a higher frequency. Inside, the drawn
+// level is a straight line in dB between the exact levels at the two faces:
+// the decay in dB is linear in depth, so the height is a straight ramp and
+// the wave stays continuous at both faces.
 //
 // FREQUENCY NEVER CHANGES (Keith, 2026-09-25: "The only thing that changes
 // is the height of the wave, NOT the frequency."). A snapshot of a wave with
@@ -66,12 +84,18 @@ const double kWallCapLabelWidths = 3;
 /// Space between the two wall edge lines at [kWallMinMm], logical px.
 const double kWallMinGapPx = 1;
 
-/// Inside the wall, a standing-wave ripple drawn shorter than this many px
-/// is averaged away (see [WallWaveProfile.insideHeightAt]).
-const double kWallRippleMinPx = 8;
+/// The incident wave's drawn height (the Tx power) as a fraction of the
+/// half-height of the plot. 0.6 is 29% taller than the old 1 / 2.15 (Keith,
+/// 2026-09-27: "perhaps 20%-30% higher"). The tallest standing-wave peak,
+/// +6 dB at Tx 0 dBm, is 1.064 x this, so it never clips.
+const double kWallIncidentHalfFraction = 0.6;
 
 /// The caption under the plot, because the band is not to scale.
 const String kWallNotToScaleCaption = 'Wall thickness not drawn to scale';
+
+/// The caption saying what the height means.
+const String kWallHeightCaption =
+    'Height shows signal above the noise floor (dB)';
 
 /// Rendered width of the stage's "Wall" label in [style], px. The painter
 /// and the tests measure it the same way, so the cap follows the presenter
@@ -131,14 +155,25 @@ class _WallSlabStageState extends State<WallSlabStage> {
   String _semantic() {
     final WallConfig cfg = _c.config;
     final SlabResult r = _c.result;
-    final double ampBehind = r.t.abs;
+    final double behind = cfg.levelBehindDbm(r);
     return 'Wave through ${fmtThickness(cfg.thicknessMm, _c.units)} of '
         '${cfg.material.label.toLowerCase()} at ${cfg.centerMHz} MHz. '
         'In front, the reflected wave makes a ripple of '
         '${r.standingWaveRippleDb <= 40 ? '${fmt1(r.standingWaveRippleDb)} dB' : 'full nulls'}. '
         '${_c.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial, _c.units)} instead of ${fmtLength(r.props.lambdaAir, _c.units)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
-        'Behind, the amplitude is ${fmtPct(ampBehind)} of the incident '
-        'amplitude: ${fmtLossDb(r.transmissionLossDb)} of loss.';
+        'Behind, ${fmtLossDb(r.transmissionLossDb)} of loss takes '
+        '${fmtDbm(cfg.txPowerDbm)} to ${_behindText(behind)}. The height '
+        'shows signal above a ${fmtDbm(kWallNoiseFloorDbm)} noise floor.';
+  }
+
+  /// The level behind the wall in words: dBm and dB above the floor, or
+  /// below the floor.
+  static String _behindText(double dbm) {
+    if (!dbm.isFinite || dbm <= kWallNoiseFloorDbm) {
+      return 'below the ${fmtDbm(kWallNoiseFloorDbm)} noise floor';
+    }
+    return '${fmtDbm(dbm)}, ${fmt1(dbm - kWallNoiseFloorDbm)} dB above the '
+        'noise floor';
   }
 
   Widget _plot(BuildContext context, {double? height}) {
@@ -163,6 +198,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
               phase: _c.phase,
               cache: _cache,
               showMaterialWavelength: _c.showMaterialWavelength,
+              txPowerDbm: _c.config.txPowerDbm,
               style: WallWaveStyle(
                 wave: colors.textAccent,
                 envelope: colors.textTertiary,
@@ -190,7 +226,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final SlabResult r = _c.result;
-    final double ampBehind = r.t.abs;
+    final double behind = _c.config.levelBehindDbm(r);
 
     return WallCard(
       child: Column(
@@ -232,20 +268,16 @@ class _WallSlabStageState extends State<WallSlabStage> {
                 TextSpan(
                   text:
                       ' of loss. Reflected back: ${fmtPct(r.reflectedPower)} '
-                      'of the power.',
+                      'of the power. Behind the wall: '
+                      '${_behindText(behind)}.',
                 ),
               ],
             ),
             style: text.bodyMedium?.copyWith(color: colors.textPrimary),
           ),
-          if (ampBehind < 0.02) ...<Widget>[
+          if (_belowFloor(behind)) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
-            const WallNote(
-              icon: Icons.visibility_off_outlined,
-              message:
-                  'Behind the wall the wave is too small to see at this '
-                  'scale, but not zero: the loss above is how much smaller.',
-            ),
+            _belowFloorNote(),
           ],
           const SizedBox(height: AppSpacing.xs),
           _motionNote(context),
@@ -259,8 +291,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
   Widget _presenter(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final SlabResult r = _c.result;
-    final double ampBehind = r.t.abs;
+    final double behind = _c.config.levelBehindDbm(_c.result);
 
     final Widget wave = WallCard(
       child: Column(
@@ -287,14 +318,9 @@ class _WallSlabStageState extends State<WallSlabStage> {
           ],
           const SizedBox(height: AppSpacing.xs),
           _legend(context),
-          if (ampBehind < 0.02) ...<Widget>[
+          if (_belowFloor(behind)) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
-            const WallNote(
-              icon: Icons.visibility_off_outlined,
-              message:
-                  'Behind the wall the wave is too small to see at this '
-                  'scale, but not zero.',
-            ),
+            _belowFloorNote(),
           ],
           const SizedBox(height: AppSpacing.xs),
           _motionNote(context),
@@ -356,10 +382,15 @@ class _WallSlabStageState extends State<WallSlabStage> {
               'Reflected back: ${fmtPct(r.reflectedPower)} of the power.',
               style: text.bodyMedium?.copyWith(color: colors.textPrimary),
             ),
+            Text(
+              'Behind: ${_behindText(cfg.levelBehindDbm(r))}.',
+              style: text.bodyMedium?.copyWith(color: colors.textPrimary),
+            ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
               '${fmtThickness(cfg.thicknessMm, _c.units)} '
-              '${cfg.material.label.toLowerCase()}, ${cfg.centerMHz} MHz',
+              '${cfg.material.label.toLowerCase()}, ${cfg.centerMHz} MHz, '
+              'Tx ${fmtDbm(cfg.txPowerDbm)}',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
           ],
@@ -385,7 +416,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
           _legendItem(
             context,
             _dashed(colors.border, k),
-            'Incident peak, for scale',
+            'Tx power (the incident wave)',
           ),
         ],
       ),
@@ -413,8 +444,19 @@ class _WallSlabStageState extends State<WallSlabStage> {
   }
 
   Widget _notToScale(AppColorScheme colors, TextTheme text) => Text(
-    kWallNotToScaleCaption,
+    '$kWallHeightCaption. $kWallNotToScaleCaption.',
     style: text.bodySmall?.copyWith(color: colors.textSecondary),
+  );
+
+  static bool _belowFloor(double dbm) =>
+      !dbm.isFinite || dbm <= kWallNoiseFloorDbm;
+
+  Widget _belowFloorNote() => WallNote(
+    icon: Icons.visibility_off_outlined,
+    message:
+        'Behind the wall the line is flat: the signal is below the '
+        '${fmtDbm(kWallNoiseFloorDbm)} noise floor. It is not zero, and the '
+        'loss above is exact.',
   );
 
   Widget _wavelengthSwitch(AppColorScheme colors, TextTheme text) {
@@ -555,37 +597,39 @@ class WallWaveStyle {
   );
 }
 
-/// What the stage draws: complex field phasors along the wall normal,
-/// mapped to pixels. Pure and deterministic, so the tests can measure the
-/// drawn wavelength directly.
+/// What the stage draws: phasors whose angle is the wave's phase and whose
+/// length is the drawn height, along the wall normal, mapped to pixels. Pure
+/// and deterministic, so the tests can measure the drawn wavelength and
+/// height directly.
 ///
 /// The wall band's width is [drawnWallPx], not to scale. The air on each
 /// side is [_kAirWavelengths] free-space wavelengths at true scale and fills
 /// the rest of the width.
 ///
-/// Front of the wall and behind it are the physics' field (SlabResult.fieldAt)
-/// on the air scale. Inside, the HEIGHT is the physics' |fieldAt| across the
-/// TRUE thickness, mapped onto the drawn band, while the PHASE advances on
-/// the air scale (px per metre of air) at either the air wavenumber (default:
-/// same wavelength everywhere) or the true inside wavenumber Re(q)/d
+/// HEIGHT: [heightForDbm] of the level [levelDbmAtPx], so 1 is the Tx power
+/// and 0 the noise floor. In front the level is Ptx + 20 log10 |fieldAt|,
+/// the standing wave included. Inside it is a straight line in dB from the
+/// exact level at the front face to the exact level at the back face, so the
+/// height is a straight ramp with no ripple at any thickness. Behind it is
+/// Ptx minus the transmission loss.
+///
+/// PHASE: one carrier. In front it is the incident wave's phase, -k x, so
+/// the drawn wave is a clean sinusoid under the envelope (the standing
+/// wave's own phase advances unevenly, and under a dB height that drew as
+/// flat-topped, warped cycles). Inside, it advances on the air
+/// scale (px per metre of air) at either the air wavenumber (default: same
+/// wavelength everywhere) or the true inside wavenumber Re(q)/d
 /// (showMaterialWavelength). Because the phase uses the air scale in both
 /// cases, the band's drawn width changes how much wave the band shows, never
 /// its wavelength. Behind the wall the wave continues from the phase the
-/// inside ended on, at height |T|, so the drawing is continuous at both faces.
-///
-/// Squeezing a thick wall into a narrow band also squeezes the inside
-/// standing-wave ripple (period pi / Re(kz), from the wave bounced off the
-/// back face). Drawn a few px long it reads as a faster wave, the exact thing
-/// Keith's rule forbids, and below a pixel it aliases into fuzz. So when the
-/// drawn ripple is shorter than [kWallRippleMinPx], the inside height is
-/// |fieldAt| averaged over one ripple period: the ripple's mean, which the
-/// screen cannot resolve anyway. The window narrows to zero at each face, so
-/// the heights there are still exact and the drawing stays continuous.
+/// inside ended on, so the drawing is continuous at both faces.
 class WallWaveProfile {
   factory WallWaveProfile(
     SlabResult result,
     double width, {
     required bool showMaterialWavelength,
+    double txPowerDbm = kWallDefaultTxDbm,
+    double noiseFloorDbm = kWallNoiseFloorDbm,
     double edgeStrokePx = 1,
     double labelWidthPx = 24,
   }) {
@@ -602,6 +646,8 @@ class WallWaveProfile {
       result: result,
       width: width,
       showMaterialWavelength: showMaterialWavelength,
+      txPowerDbm: txPowerDbm,
+      noiseFloorDbm: noiseFloorDbm,
       side: side,
       frontPx: frontPx,
       wallPx: wallPx,
@@ -613,6 +659,8 @@ class WallWaveProfile {
     required this.result,
     required this.width,
     required this.showMaterialWavelength,
+    required this.txPowerDbm,
+    required this.noiseFloorDbm,
     required this.side,
     required this.frontPx,
     required this.wallPx,
@@ -649,9 +697,30 @@ class WallWaveProfile {
     return minPx + t * (maxPx - minPx);
   }
 
+  /// Field magnitude relative to the incident wave, in dB, floored so a
+  /// metal wall's underflowed zero stays a finite (very low) number.
+  static double fieldDb(double magnitude) {
+    if (magnitude <= 0 || !magnitude.isFinite) return -1e4;
+    return math.max(-1e4, 20 * math.log(magnitude) / math.ln10);
+  }
+
+  /// Drawn height for a level: 0 at [noiseFloorDbm] and below, 1 at
+  /// [txPowerDbm] (the incident wave), linear in dB.
+  static double heightForDbm(
+    double dbm, {
+    required double txPowerDbm,
+    double noiseFloorDbm = kWallNoiseFloorDbm,
+  }) => math.max(0, (dbm - noiseFloorDbm) / (txPowerDbm - noiseFloorDbm));
+
   final SlabResult result;
   final double width;
   final bool showMaterialWavelength;
+
+  /// Tx power, dBm: drawn at height 1.
+  final double txPowerDbm;
+
+  /// Noise floor, dBm: drawn at height 0.
+  final double noiseFloorDbm;
 
   /// Air shown on each side, metres.
   final double side;
@@ -663,41 +732,35 @@ class WallWaveProfile {
   /// Pixels per metre of air (both sides).
   final double airPxPerM;
 
-  /// Inside standing-wave ripple period along the normal, true metres
-  /// (pi / Re(kz)), or 0 for a zero-thickness wall.
-  double get ripplePeriodM {
-    final double d = result.thicknessM;
-    if (d == 0 || result.q.re == 0) return 0;
-    return math.pi * d / result.q.re.abs();
-  }
-
-  /// Whether the inside ripple is averaged: the wall holds at least one
-  /// ripple and it would be drawn shorter than [kWallRippleMinPx].
-  bool get rippleAveraged {
-    final double d = result.thicknessM;
-    if (d == 0 || wallPx == 0) return false;
-    // A wall thinner than one ripple holds no ripple to squeeze.
-    return ripplePeriodM < d && ripplePeriodM / d * wallPx < kWallRippleMinPx;
-  }
-
-  /// Drawn height at true depth [x] (0..d) inside the wall: |fieldAt(x)|, or
-  /// its mean over one ripple period centred on [x] when [rippleAveraged],
-  /// the window shrinking to zero at each face.
-  double insideHeightAt(double x) {
-    if (!rippleAveraged) return result.fieldAt(x).abs;
-    final double d = result.thicknessM;
-    final double h = math.min(ripplePeriodM / 2, math.min(x, d - x));
-    if (h <= 0) return result.fieldAt(x).abs;
-    const int n = 16;
-    double sum = 0;
-    for (int i = 0; i < n; i++) {
-      sum += result.fieldAt(x - h + 2 * h * (i + 0.5) / n).abs;
-    }
-    return sum / n;
-  }
-
   final double _k0z;
   final Complex _front;
+
+  /// Exact level at the front face and behind the wall, dBm.
+  double get frontFaceDbm => txPowerDbm + fieldDb(_front.abs);
+  double get behindDbm => txPowerDbm + fieldDb(result.t.abs);
+
+  /// Whether the level behind the wall is at or below the noise floor, so
+  /// the drawn wave there is flat.
+  bool get belowFloorBehind => behindDbm <= noiseFloorDbm;
+
+  /// Level at pixel column [px], dBm (see the class doc).
+  double levelDbmAtPx(double px) {
+    if (px < frontPx) {
+      return txPowerDbm + fieldDb(result.fieldAt((px - frontPx) / airPxPerM).abs);
+    }
+    if (px <= frontPx + wallPx) {
+      final double f = wallPx == 0 ? 1 : (px - frontPx) / wallPx;
+      return frontFaceDbm + f * (behindDbm - frontFaceDbm);
+    }
+    return behindDbm;
+  }
+
+  /// Drawn height at pixel column [px]: 1 at the Tx power, 0 at the floor.
+  double heightAtPx(double px) => heightForDbm(
+    levelDbmAtPx(px),
+    txPowerDbm: txPowerDbm,
+    noiseFloorDbm: noiseFloorDbm,
+  );
 
   /// Phase wavenumber inside the band, rad per metre of AIR scale.
   double get insideWavenumber {
@@ -705,25 +768,25 @@ class WallWaveProfile {
     return result.q.re / result.thicknessM;
   }
 
-  double get _psi0 => _front.arg;
+  /// Carrier phase at the front face: the incident wave's, 0.
+  double get _psi0 => 0;
 
   /// Phase at the back face of the drawn band.
   double get _psiEnd => _psi0 - insideWavenumber * (wallPx / airPxPerM);
 
-  /// The drawn phasor at pixel column [px] (0..width).
-  Complex phasorAtPx(double px) {
-    if (px < frontPx) {
-      return result.fieldAt((px - frontPx) / airPxPerM);
-    }
-    final double d = result.thicknessM;
+  /// The wave's phase at pixel column [px].
+  double phaseAtPx(double px) {
+    if (px < frontPx) return -_k0z * ((px - frontPx) / airPxPerM);
     if (px <= frontPx + wallPx) {
-      final double u = px - frontPx;
-      final double mag = insideHeightAt(wallPx == 0 ? 0 : u / wallPx * d);
-      return Complex.polar(mag, _psi0 - insideWavenumber * (u / airPxPerM));
+      return _psi0 - insideWavenumber * ((px - frontPx) / airPxPerM);
     }
-    final double xBehind = (px - frontPx - wallPx) / airPxPerM;
-    return Complex.polar(result.t.abs, _psiEnd - _k0z * xBehind);
+    return _psiEnd - _k0z * ((px - frontPx - wallPx) / airPxPerM);
   }
+
+  /// The drawn phasor at pixel column [px] (0..width): length
+  /// [heightAtPx], angle [phaseAtPx].
+  Complex phasorAtPx(double px) =>
+      Complex.polar(heightAtPx(px), phaseAtPx(px));
 
   /// [n] evenly spaced phasors across the width.
   List<Complex> sample(int n) => <Complex>[
@@ -737,6 +800,7 @@ class WallPhasorCache {
   SlabResult? _for;
   int _n = 0;
   bool? _mode;
+  double _tx = double.nan;
   double _edge = 0;
   double _labelW = 0;
   List<Complex> _phasors = const <Complex>[];
@@ -751,6 +815,7 @@ class WallWavePainter extends CustomPainter {
     required this.style,
     required this.cache,
     this.showMaterialWavelength = false,
+    this.txPowerDbm = kWallDefaultTxDbm,
   });
 
   final SlabResult result;
@@ -758,6 +823,7 @@ class WallWavePainter extends CustomPainter {
   final WallWaveStyle style;
   final WallPhasorCache cache;
   final bool showMaterialWavelength;
+  final double txPowerDbm;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -768,12 +834,14 @@ class WallWavePainter extends CustomPainter {
     if (!identical(cache._for, result) ||
         cache._n != n ||
         cache._mode != showMaterialWavelength ||
+        cache._tx != txPowerDbm ||
         cache._edge != k ||
         cache._labelW != labelW) {
       final WallWaveProfile prof = WallWaveProfile(
         result,
         size.width,
         showMaterialWavelength: showMaterialWavelength,
+        txPowerDbm: txPowerDbm,
         edgeStrokePx: k,
         labelWidthPx: labelW,
       );
@@ -783,6 +851,7 @@ class WallWavePainter extends CustomPainter {
         .._for = result
         .._n = n
         .._mode = showMaterialWavelength
+        .._tx = txPowerDbm
         .._edge = k
         .._labelW = labelW;
     }
@@ -793,8 +862,9 @@ class WallWavePainter extends CustomPainter {
     final double top = labelBand;
     final double plotH = size.height - labelBand - AppSpacing.xxs;
     final double midY = top + plotH / 2;
-    // Amplitude 2 (full standing-wave peak) reaches just inside the edge.
-    final double yScale = plotH / 2 / 2.15;
+    // Height 1 (the Tx power) at [kWallIncidentHalfFraction] of the half
+    // height; the tallest standing-wave peak is at most 1.064 of it.
+    final double yScale = plotH / 2 * kWallIncidentHalfFraction;
 
     // Wall band, under the label band so the "Wall" label sits above it at
     // every thickness, even a 1 px gap.
@@ -811,7 +881,7 @@ class WallWavePainter extends CustomPainter {
     canvas.drawLine(wall.topLeft, wall.bottomLeft, edge);
     canvas.drawLine(wall.topRight, wall.bottomRight, edge);
 
-    // Zero axis and the incident-amplitude reference (+/-1).
+    // Zero axis (the noise floor) and the Tx-power reference (+/-1).
     canvas.drawLine(
       Offset(0, midY),
       Offset(size.width, midY),
@@ -913,5 +983,6 @@ class WallWavePainter extends CustomPainter {
       old.phase != phase ||
       old.result != result ||
       old.style != style ||
-      old.showMaterialWavelength != showMaterialWavelength;
+      old.showMaterialWavelength != showMaterialWavelength ||
+      old.txPowerDbm != txPowerDbm;
 }

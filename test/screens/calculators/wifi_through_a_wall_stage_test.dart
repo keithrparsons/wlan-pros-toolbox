@@ -7,8 +7,9 @@
 // Default view: the drawn phase period inside the wall equals the air period,
 // at any drawn band width. Optional "Show wavelength inside the material"
 // view: the drawn inside period is the air period x 1/sqrt(e'), whatever the
-// band width. Heights still come from the physics: the drawn magnitude
-// equals |fieldAt| at the faces and |T| behind.
+// band width. Heights are dB above the noise floor (Keith, 2026-09-27): the
+// drawn magnitude is (P - floor) / (Ptx - floor) with P = Ptx + 20 log10
+// |fieldAt| in front, a straight dB ramp inside, Ptx - loss behind.
 //
 // The band is NOT to scale (Keith, 2026-09-27: "at 1cm only one pixel
 // difference, at 1m the two vertical lines should be no more than 3X the
@@ -169,43 +170,6 @@ void main() {
       expect(wallLabelWidth(big), greaterThan(wallLabelWidth(small)));
     });
 
-    test('a squeezed low-loss wall shows no ripple faster than the wave', () {
-      // 1 m of glass at 2.4 GHz: the true inside ripple is ~2.5 cm, which
-      // would draw at ~2 px in a 78 px band and read as a faster wave.
-      final SlabResult r = WallSlab.compute(
-        material: WallMaterial.glass,
-        fGhz: 2.437,
-        thicknessM: 1,
-      );
-      final WallWaveProfile p = WallWaveProfile(
-        r,
-        1280,
-        showMaterialWavelength: false,
-        labelWidthPx: 26,
-      );
-      expect(p.rippleAveraged, isTrue);
-      // The drawn height across the band, one sample per px, never turns
-      // round more often than once per kWallRippleMinPx.
-      final List<double> hs = <double>[
-        for (double u = 0; u <= p.wallPx; u += 1)
-          p.phasorAtPx(p.frontPx + u).abs,
-      ];
-      int turns = 0;
-      for (int i = 1; i < hs.length - 1; i++) {
-        if ((hs[i] - hs[i - 1]) * (hs[i + 1] - hs[i]) < 0) turns++;
-      }
-      expect(turns, lessThan(hs.length / kWallRippleMinPx));
-    });
-
-    test('a thin wall keeps the exact height (ripple drawn long enough)', () {
-      final WallWaveProfile p = WallWaveProfile(
-        walls['plasterboard 12.7 mm, 2.437 GHz']!,
-        390,
-        showMaterialWavelength: false,
-      );
-      expect(p.rippleAveraged, isFalse);
-    });
-
     test('the air fills the rest, on the air scale', () {
       final WallWaveProfile p = WallWaveProfile(
         walls['concrete 1 m, 2.437 GHz (cap)']!,
@@ -281,51 +245,136 @@ void main() {
     });
   });
 
-  group('heights still come from the physics', () {
+  group('heights are dB above the noise floor', () {
+    double h(double dbm, double tx) =>
+        WallWaveProfile.heightForDbm(dbm, txPowerDbm: tx);
+    double db(double v) => 20 * math.log(v) / math.ln10;
+
+    test('the mapping: 1 at Tx, 0 at the floor and below, linear in dB', () {
+      for (final double tx in <double>[0, 20, 30]) {
+        expect(h(tx, tx), closeTo(1, 1e-12));
+        expect(h(kWallNoiseFloorDbm, tx), 0);
+        expect(h(kWallNoiseFloorDbm - 40, tx), 0);
+        expect(
+          h((tx + kWallNoiseFloorDbm) / 2, tx),
+          closeTo(0.5, 1e-12),
+        );
+      }
+    });
+
+    test('the floor is thermal noise in 20 MHz plus a 6 dB noise figure', () {
+      final double thermal =
+          kThermalNoiseDbmPerHz +
+          10 * math.log(kWallNoiseBandwidthHz) / math.ln10;
+      expect(thermal, closeTo(-101.0, 0.05));
+      expect(thermal + kWallNoiseFigureDb, closeTo(kWallNoiseFloorDbm, 0.05));
+    });
+
     for (final bool mode in <bool>[false, true]) {
       for (final MapEntry<String, SlabResult> w in walls.entries) {
-        test('${w.key}, material wavelength $mode', () {
-          final SlabResult r = w.value;
-          final WallWaveProfile p = WallWaveProfile(
-            r,
-            390,
-            showMaterialWavelength: mode,
-          );
-          // Continuous at the front face, |T| at the back face and behind.
-          final Complex before = p.phasorAtPx(p.frontPx - 1e-9);
-          final Complex after = p.phasorAtPx(p.frontPx + 1e-9);
-          expect((before - after).abs, lessThan(1e-6));
-          expect(
-            p.phasorAtPx(p.frontPx + p.wallPx).abs,
-            closeTo(r.t.abs, 1e-9),
-          );
-          final Complex endIn = p.phasorAtPx(p.frontPx + p.wallPx);
-          final Complex startOut = p.phasorAtPx(p.frontPx + p.wallPx + 1e-9);
-          expect((endIn - startOut).abs, lessThan(1e-6));
-          expect(p.phasorAtPx(p.width).abs, closeTo(r.t.abs, 1e-12));
-          // Mid-wall height is |fieldAt| at the matching depth, or its mean
-          // over one ripple period when the ripple is too short to draw.
-          final double mid = p.frontPx + p.wallPx / 2;
-          final double dm = r.thicknessM / 2;
-          double want = r.fieldAt(dm).abs;
-          if (p.rippleAveraged) {
-            final double h = p.ripplePeriodM / 2;
-            double sum = 0;
-            const int n = 4000;
-            for (int i = 0; i < n; i++) {
-              sum += r.fieldAt(dm - h + 2 * h * (i + 0.5) / n).abs;
+        for (final double tx in <double>[0, 20, 30]) {
+          test('${w.key}, material wavelength $mode, Tx $tx dBm', () {
+            final SlabResult r = w.value;
+            final WallWaveProfile p = WallWaveProfile(
+              r,
+              390,
+              showMaterialWavelength: mode,
+              txPowerDbm: tx,
+            );
+            // Continuous at both faces.
+            final Complex before = p.phasorAtPx(p.frontPx - 1e-9);
+            final Complex after = p.phasorAtPx(p.frontPx + 1e-9);
+            expect((before - after).abs, lessThan(1e-6));
+            final Complex endIn = p.phasorAtPx(p.frontPx + p.wallPx);
+            final Complex startOut = p.phasorAtPx(
+              p.frontPx + p.wallPx + 1e-9,
+            );
+            expect((endIn - startOut).abs, lessThan(1e-6));
+            // Behind: Tx minus the exact transmission loss.
+            final double behind = tx - r.transmissionLossDb;
+            expect(p.behindDbm, closeTo(behind, 1e-9));
+            expect(p.phasorAtPx(p.width).abs, closeTo(h(behind, tx), 1e-12));
+            // In front: Ptx + 20 log10 |fieldAt|; the carrier is the
+            // incident wave's phase, -k x.
+            final double x = -p.side / 3;
+            final Complex f = r.fieldAt(x);
+            final Complex g = p.phasorAtPx(p.frontPx + x * p.airPxPerM);
+            expect(g.abs, closeTo(h(tx + db(f.abs), tx), 1e-9));
+            if (g.abs > 1e-9) {
+              final double k0z =
+                  2 *
+                  math.pi /
+                  r.props.lambdaAir *
+                  math.cos(r.angleDeg * math.pi / 180);
+              final double want = -k0z * x;
+              final double dph = math.atan2(
+                math.sin(g.arg - want),
+                math.cos(g.arg - want),
+              );
+              expect(dph, closeTo(0, 1e-9));
             }
-            want = sum / n;
-          }
-          expect(p.phasorAtPx(mid).abs, closeTo(want, 2e-3));
-          // In front it is the physics' field itself.
-          final double x = -p.side / 3;
-          final Complex f = r.fieldAt(x);
-          final Complex g = p.phasorAtPx(p.frontPx + x * p.airPxPerM);
-          expect((f - g).abs, lessThan(1e-9));
-        });
+            // Inside: a straight ramp in dB between the exact face levels.
+            final double front = tx + db(r.fieldAt(0).abs);
+            for (final double frac in <double>[0.25, 0.5, 0.75]) {
+              expect(
+                p.levelDbmAtPx(p.frontPx + frac * p.wallPx),
+                closeTo(front + frac * (behind - front), 1e-6),
+              );
+            }
+          });
+        }
       }
     }
+
+    test('2 ft concrete at 5.5 GHz, Tx 20: still visible behind', () {
+      final SlabResult r = WallSlab.compute(
+        material: WallMaterial.concrete,
+        fGhz: 5.5,
+        thicknessM: 0.61,
+      );
+      final WallWaveProfile p = WallWaveProfile(
+        r,
+        1280,
+        showMaterialWavelength: false,
+        txPowerDbm: 20,
+      );
+      // Linear field would draw |T| ~ 1e-4 of the incident: a flat line.
+      expect(r.t.abs, lessThan(1e-3));
+      expect(p.belowFloorBehind, isFalse);
+      expect(p.heightAtPx(p.width), greaterThan(0.3));
+    });
+
+    test('below the floor draws flat, and says so', () {
+      final SlabResult r = WallSlab.compute(
+        material: WallMaterial.concrete,
+        fGhz: 6.5,
+        thicknessM: 1,
+      );
+      final WallWaveProfile p = WallWaveProfile(
+        r,
+        1280,
+        showMaterialWavelength: false,
+        txPowerDbm: 0,
+      );
+      expect(p.belowFloorBehind, isTrue);
+      expect(p.heightAtPx(p.width), 0);
+    });
+
+    test('Tx power moves the height behind, never the loss', () {
+      final SlabResult r = WallSlab.compute(
+        material: WallMaterial.concrete,
+        fGhz: 5.5,
+        thicknessM: 0.3,
+      );
+      double behindAt(double tx) => WallWaveProfile(
+        r,
+        700,
+        showMaterialWavelength: false,
+        txPowerDbm: tx,
+      ).heightAtPx(700);
+      expect(behindAt(30), greaterThan(behindAt(20)));
+      expect(behindAt(20), greaterThan(behindAt(0)));
+    });
   });
 
   testWidgets('the wavelength switch is off by default and toggles', (

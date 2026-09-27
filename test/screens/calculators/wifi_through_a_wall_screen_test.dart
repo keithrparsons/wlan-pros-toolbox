@@ -10,9 +10,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/data/channel_frequency_data.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_parts.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_stage.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/wall_slab_physics.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
@@ -159,6 +161,75 @@ void main() {
       ),
     );
     expect(find.textContaining('LESS than 2.4 GHz'), findsOneWidget);
+  });
+
+  testWidgets('Tx power: 0 to 30 dBm, default 20, drives the drawing, the '
+      'level behind and the copy text, never the loss', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester);
+    final Finder tx = find.byWidgetPredicate(
+      (Widget w) => w is Slider && w.max == kWallTxMaxDbm,
+    );
+    expect(tx, findsOneWidget);
+    final Slider s = tester.widget<Slider>(tx);
+    expect(s.min, 0);
+    expect(s.max, 30);
+    expect(s.value, 20);
+    expect(find.text('20 dBm'), findsOneWidget);
+    // 102 mm concrete at 5.5 GHz: 14.3 dB, so 5.7 dBm behind.
+    expect(_valueOf(tester, 'Level behind the wall'), startsWith('5.7 dBm'));
+
+    await tester.ensureVisible(tx);
+    s.onChanged!(29.6);
+    await tester.pumpAndSettle();
+    expect(find.text('30 dBm'), findsOneWidget);
+    expect(_valueOf(tester, 'Transmission loss'), '14.3 dB');
+    expect(_valueOf(tester, 'Level behind the wall'), startsWith('15.7 dBm'));
+    final WallSlabController c = tester
+        .widget<WallSlabStage>(find.byType(WallSlabStage))
+        .controller;
+    expect(c.config.txPowerDbm, 30);
+    final Finder painter = find.byWidgetPredicate(
+      (Widget w) => w is CustomPaint && w.painter is WallWavePainter,
+    );
+    expect(
+      (tester.widget<CustomPaint>(painter).painter! as WallWavePainter)
+          .txPowerDbm,
+      30,
+    );
+    expect(c.copyText(), contains('Tx power: 30.0 dBm'));
+    expect(c.copyText(), contains('Behind the wall: 15.7 dBm'));
+    expect(
+      find.textContaining('Height shows signal above the noise floor (dB)'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('below the noise floor: flat behind, and a note says so', (
+    WidgetTester tester,
+  ) async {
+    await _pump(
+      tester,
+      initial: const WallConfig(
+        band: WifiBand.band6,
+        channel: 117,
+        thicknessMm: 1000,
+        txPowerDbm: 0,
+      ),
+    );
+    expect(
+      find.textContaining('the signal is below the -95.0 dBm noise floor'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('2 ft concrete at 5.5 GHz, Tx 20: above the floor, no note', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester, initial: const WallConfig(thicknessMm: 610));
+    expect(find.textContaining('the signal is below'), findsNothing);
+    expect(_valueOf(tester, 'Level behind the wall'), startsWith('-57.8 dBm'));
   });
 
   testWidgets('metal renders capped numbers, no NaN', (
