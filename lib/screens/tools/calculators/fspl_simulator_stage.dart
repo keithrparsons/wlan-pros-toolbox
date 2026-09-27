@@ -142,6 +142,14 @@ class FsplStage extends StatelessWidget {
           ],
           onChanged: model.setRange,
         ),
+        // Keith, 2026-09-27: log shows the straight 6 dB-per-doubling lines;
+        // linear shows the curve people are used to. Same numbers either way.
+        AppToggle<bool>(
+          semanticLabel: 'Distance scale',
+          value: model.logScale,
+          items: const <AppToggleItem<bool>>[(true, 'Log'), (false, 'Linear')],
+          onChanged: model.setLogScale,
+        ),
       ],
     );
   }
@@ -151,8 +159,8 @@ class FsplStage extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     return Text(
       model.view == FsplView.received
-          ? 'Received power (dBm) vs distance, log scale'
-          : 'Free-space path loss (dB) vs distance, log scale',
+          ? 'Received power (dBm) vs distance, ${model.logScale ? 'log' : 'linear'} scale'
+          : 'Free-space path loss (dB) vs distance, ${model.logScale ? 'log' : 'linear'} scale',
       style: text.bodySmall?.copyWith(color: colors.textTertiary),
     );
   }
@@ -183,6 +191,7 @@ class FsplStage extends StatelessWidget {
                 yMin: yr.min,
                 yMax: yr.max,
                 padScale: style.scale.text,
+                logDistance: model.logScale,
               );
               void moveTo(Offset local) {
                 if (bands.isEmpty) return;
@@ -200,6 +209,7 @@ class FsplStage extends StatelessWidget {
                   size: size,
                   painter: FsplChartPainter(
                     maxDistanceM: model.range.maxM,
+                    logDistance: model.logScale,
                     yMin: yr.min,
                     yMax: yr.max,
                     yStep: yr.step,
@@ -238,7 +248,8 @@ class FsplStage extends StatelessWidget {
               '${model.unit}',
         )
         .join(', ');
-    return '$what against distance, 1 m to ${model.range.label}, log scale. '
+    return '$what against distance, 1 m to ${model.range.label}, '
+        '${model.logScale ? 'log' : 'linear'} scale. '
         'Cursor at ${FsplFormat.dist(model.cursorM)}: $at.';
   }
 
@@ -293,20 +304,36 @@ class FsplStage extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Slider(
-            value: FsplMath.log10(model.cursorM).clamp(0.0, maxLg),
-            min: 0,
-            max: maxLg,
-            divisions: (maxLg * 50).round(),
-            onChanged: model.bands.isEmpty
-                ? null
-                : (double v) => model.setCursor(math.pow(10, v).toDouble()),
-            activeColor: colors.primary,
-            inactiveColor: colors.disabledFill,
-            label: FsplFormat.dist(model.cursorM),
-            semanticFormatterCallback: (double v) =>
-                'Cursor distance ${FsplFormat.dist(math.pow(10, v).toDouble())}',
-          ),
+          // The slider follows the axis: log steps on the log scale, metre
+          // steps on the linear one, so dragging matches the chart.
+          child: model.logScale
+              ? Slider(
+                  value: FsplMath.log10(model.cursorM).clamp(0.0, maxLg),
+                  min: 0,
+                  max: maxLg,
+                  divisions: (maxLg * 50).round(),
+                  onChanged: model.bands.isEmpty
+                      ? null
+                      : (double v) =>
+                            model.setCursor(math.pow(10, v).toDouble()),
+                  activeColor: colors.primary,
+                  inactiveColor: colors.disabledFill,
+                  label: FsplFormat.dist(model.cursorM),
+                  semanticFormatterCallback: (double v) =>
+                      'Cursor distance ${FsplFormat.dist(math.pow(10, v).toDouble())}',
+                )
+              : Slider(
+                  value: model.cursorM.clamp(1.0, model.range.maxM),
+                  min: 1,
+                  max: model.range.maxM,
+                  divisions: (model.range.maxM - 1).round(),
+                  onChanged: model.bands.isEmpty ? null : model.setCursor,
+                  activeColor: colors.primary,
+                  inactiveColor: colors.disabledFill,
+                  label: FsplFormat.dist(model.cursorM),
+                  semanticFormatterCallback: (double v) =>
+                      'Cursor distance ${FsplFormat.dist(v)}',
+                ),
         ),
       ],
     );

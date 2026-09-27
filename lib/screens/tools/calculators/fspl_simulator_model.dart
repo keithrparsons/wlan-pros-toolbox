@@ -139,6 +139,10 @@ class FsplSimModel extends ChangeNotifier {
   double _otherLossDb = 0;
 
   bool _indoor = false;
+
+  // Keith, 2026-09-27: toggle the distance axis between log (straight lines,
+  // 6 dB per doubling) and linear (the familiar curve). Log stays the default.
+  bool _logScale = true;
   double _exponent = 3.0;
 
   String _rssiText = '';
@@ -159,6 +163,7 @@ class FsplSimModel extends ChangeNotifier {
   double get rxGainDbi => _rxGainDbi;
   double get otherLossDb => _otherLossDb;
   bool get indoor => _indoor;
+  bool get logScale => _logScale;
   double get exponent => _exponent;
   String get rssiText => _rssiText;
   String get distText => _distText;
@@ -195,6 +200,11 @@ class FsplSimModel extends ChangeNotifier {
 
   void setView(FsplView v) {
     _view = v;
+    _changed();
+  }
+
+  void setLogScale(bool v) {
+    _logScale = v;
     _changed();
   }
 
