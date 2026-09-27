@@ -109,12 +109,12 @@ class _WallSlabControlsState extends State<WallSlabControls> {
   void _onBand(WifiBand b) =>
       _emit(widget.config.copyWith(band: b, channel: defaultChannelFor(b)));
 
-  /// The typed range as displayed: 1 to 50 cm, or 0.39 to 19.7 in.
+  /// The typed range as displayed: 1 to 100 cm, or 0.39 to 39.4 in.
   String get _minText => _f.smallNumberFromMm(kWallMinMm);
   String get _maxText => _f.smallNumberFromMm(kWallMaxMm);
 
   /// Typed text is read in the unit on screen. The bounds are the displayed
-  /// (rounded) bounds, so "19.7 in" is accepted and clamped to 500 mm.
+  /// (rounded) bounds, so "39.4 in" is accepted and clamped to 1000 mm.
   void _onMmText(String raw) {
     final double? v = tryParseFlexibleDouble(raw);
     final double lo = double.parse(_minText);
@@ -134,7 +134,7 @@ class _WallSlabControlsState extends State<WallSlabControls> {
     );
   }
 
-  /// Slider position 0..1 on a log scale from 10 to 500 mm.
+  /// Slider position 0..1 on a log scale from 10 to 1000 mm.
   double _toSlider(double mm) => ((_log10(mm) - _logMin) / (_logMax - _logMin)).clamp(0.0, 1.0);
 
   /// Slider position to mm, snapped to what the readout prints in the unit
