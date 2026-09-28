@@ -7,21 +7,29 @@
 //
 // What is drawn, left to right (the air at true scale, the wall NOT to
 // scale, see below):
-//   - in front of the wall: incident plus reflected, E = e^(-jkx) + R e^(jkx);
-//     its envelope shows the standing-wave ripple, nodes lambda/2 apart;
+//   - in front of the wall: the incident wave only, held at the Tx power
+//     (Keith, 2026-09-28: "the input should be fix and not moving"). The
+//     reflected wave's standing-wave ripple is real but not drawn;
 //   - inside: the same wave, its height a straight ramp in dB from the
 //     front face to the back face;
 //   - behind: the same wave again, at the level Tx power minus the loss.
 // The field is the tangential E; SlabResult.fieldAt owns that math.
 //
-// HEIGHT IS dB ABOVE THE NOISE FLOOR (Keith, 2026-09-27: "a concrete wall
-// perhaps 2' thick and still want to see the wave form on the right not
-// turn into a flatline. Since that is what happens in the real world").
-// With the height linear in field, 64 dB of loss drew as a flat line. Now
-// height = max(0, (P - floor) / (Ptx - floor)) with P = Ptx + 20 log10 |E|:
-// 1 is the Tx power (the incident wave), 0 is the noise floor
-// ([kWallNoiseFloorDbm]). The standing wave in front is mapped the same way.
-// Only the drawing changes; every number stays exact.
+// HEIGHT IS LINEAR IN dBm, ZERO AT 0 dBm, WITH A SQUEEZED TAIL (Keith,
+// 2026-09-28). The earlier mapping ran from the Tx power down to the -95 dBm
+// noise floor, 115 dB, so a stud wall's 1.5 dB moved the wave about 1%
+// (Keith: "the graphical image doesn't show any drop in amplitude after
+// going through the wall"). His rule: "The height should change in
+// proportion to the size of loss in dB. So 20dB on the left, going through
+// a 5dB wall should end up with 15dB on the right side, or about 25%
+// smaller wave form on the right." So the height is the level in dBm over
+// [kWallScaleTopDbm] (the Tx power, or 10 dBm at the least): 20 dBm draws 1,
+// 15 dBm 0.75. His 2026-09-27 ruling still holds ("a concrete wall perhaps
+// 2' thick and still want to see the wave form on the right not turn into
+// a flatline"), and he chose to keep it on 2026-09-28: below 0 dBm the
+// bottom [kWallTailHeight] of the height carries everything down to the
+// noise floor ([kWallNoiseFloorDbm]), linear in dB. The drawn height is the
+// larger of the two, so it is continuous. Only the drawing changes; every number stays exact.
 //
 // NO RIPPLE INSIDE THE WALL (Keith, 2026-09-27: "Why is the radio wave
 // changing frequency inside the wall?"). The true inside field carries a
@@ -94,16 +102,25 @@ const double kWallMinGapPx = 1;
 
 /// The incident wave's drawn height (the Tx power) as a fraction of the
 /// half-height of the plot. 0.6 is 29% taller than the old 1 / 2.15 (Keith,
-/// 2026-09-27: "perhaps 20%-30% higher"). The tallest standing-wave peak,
-/// +6 dB at Tx 0 dBm, is 1.064 x this, so it never clips.
+/// 2026-09-27: "perhaps 20%-30% higher"). Nothing draws taller than the Tx
+/// power, since the front is held at it.
 const double kWallIncidentHalfFraction = 0.6;
+
+/// The squeezed tail: 0 dBm draws at this height, and the noise floor at 0.
+const double kWallTailHeight = 0.1;
+
+/// The lowest level drawn at height 1, dBm. The Tx power is drawn at 1 when
+/// it is at least this; a weaker Tx power draws shorter, in proportion.
+const double kWallScaleTopMinDbm = 10;
 
 /// The caption under the plot, because the band is not to scale.
 const String kWallNotToScaleCaption = 'Wall thickness not drawn to scale';
 
 /// The caption saying what the height means.
 const String kWallHeightCaption =
-    'Height shows signal above the noise floor (dB)';
+    'Height shows the signal in dBm: 5 dB less at 20 dBm is a wave 25% '
+    'shorter. Signals under 0 dBm are squeezed into the bottom tenth, down '
+    'to the noise floor, so they stay visible';
 
 /// Rendered width of the stage's "Wall" label in [style], px. The painter
 /// and the tests measure it the same way, so the cap follows the presenter
@@ -165,12 +182,12 @@ class _WallSlabStageState extends State<WallSlabStage> {
         : 'a ${cfg.preset.label.toLowerCase()}, '
               '${fmtLayers(cfg.layers, _c.units)}';
     return 'Wave through $wall, at ${cfg.centerMHz} MHz. '
-        'In front, the reflected wave makes a ripple of '
-        '${r.standingWaveRippleDb <= 40 ? '${fmt1(r.standingWaveRippleDb)} dB' : 'full nulls'}. '
+        'In front, the wave holds steady at the Tx power. '
         'Inside, the wave keeps the same frequency and shrinks in height. '
         'Behind, ${fmtLossDb(r.transmissionLossDb)} of loss takes '
         '${fmtDbm(cfg.txPowerDbm)} to ${_behindText(behind)}. The height '
-        'shows signal above a ${fmtDbm(kWallNoiseFloorDbm)} noise floor.';
+        'is the signal in dBm, and signals under 0 dBm are squeezed into the '
+        'bottom tenth, down to a ${fmtDbm(kWallNoiseFloorDbm)} noise floor.';
   }
 
   /// The level behind the wall in words: dBm and dB above the floor, or
@@ -582,10 +599,11 @@ class WallWaveStyle {
 /// side is [_kAirWavelengths] free-space wavelengths at true scale and fills
 /// the rest of the width.
 ///
-/// HEIGHT: [heightForDbm] of the level [levelDbmAtPx], so 1 is the Tx power
-/// and 0 the noise floor. In front the level is Ptx + 20 log10 |fieldAt|,
-/// the standing wave included. Inside it is a straight line in dB from the
-/// exact level at the front face to the exact level at the back face, so the
+/// HEIGHT: [heightForDbm] of the level [levelDbmAtPx]: linear in dBm, 1 at
+/// the Tx power (10 dBm at the least), a squeezed tail under 0 dBm, and 0 at
+/// the noise floor. In front the level is Ptx, held steady (the
+/// reflected wave is not drawn). Inside it is a straight line in dB from Ptx
+/// at the front face to the exact level at the back face, so the
 /// height is a straight ramp with no ripple at any thickness. Behind it is
 /// Ptx minus the transmission loss.
 ///
@@ -644,8 +662,7 @@ class WallWaveProfile {
            2 *
            math.pi /
            result.lambdaAir *
-           math.cos(result.angleDeg * math.pi / 180),
-       _front = result.fieldAt(0);
+           math.cos(result.angleDeg * math.pi / 180);
 
   /// Drawn width of the wall band, px, measured edge line centre to edge
   /// line centre. At [kWallMinMm] the space between the two lines (each
@@ -679,13 +696,21 @@ class WallWaveProfile {
     return math.max(-1e4, 20 * math.log(magnitude) / math.ln10);
   }
 
-  /// Drawn height for a level: 0 at [noiseFloorDbm] and below, 1 at
-  /// [txPowerDbm] (the incident wave), linear in dB.
+  /// Drawn height for a level: dbm / top, where top is [txPowerDbm] or
+  /// [kWallScaleTopMinDbm] if higher, so 20 dBm of 20 draws 1 and 15 dBm
+  /// draws 0.75; or the squeezed tail, [kWallTailHeight] at 0 dBm falling
+  /// linearly in dB to 0 at [noiseFloorDbm], whichever is larger; 0 at the
+  /// floor and below.
   static double heightForDbm(
     double dbm, {
     required double txPowerDbm,
     double noiseFloorDbm = kWallNoiseFloorDbm,
-  }) => math.max(0, (dbm - noiseFloorDbm) / (txPowerDbm - noiseFloorDbm));
+  }) {
+    if (!(dbm > noiseFloorDbm)) return 0;
+    final double top = math.max(txPowerDbm, kWallScaleTopMinDbm);
+    final double tail = kWallTailHeight * (dbm - noiseFloorDbm) / -noiseFloorDbm;
+    return math.max(dbm / top, tail);
+  }
 
   final WallTransmission result;
   final double width;
@@ -707,10 +732,9 @@ class WallWaveProfile {
   final double airPxPerM;
 
   final double _k0z;
-  final Complex _front;
 
   /// Exact level at the front face and behind the wall, dBm.
-  double get frontFaceDbm => txPowerDbm + fieldDb(_front.abs);
+  double get frontFaceDbm => txPowerDbm;
   double get behindDbm => txPowerDbm + fieldDb(result.t.abs);
 
   /// Whether the level behind the wall is at or below the noise floor, so
@@ -719,9 +743,7 @@ class WallWaveProfile {
 
   /// Level at pixel column [px], dBm (see the class doc).
   double levelDbmAtPx(double px) {
-    if (px < frontPx) {
-      return txPowerDbm + fieldDb(result.fieldAt((px - frontPx) / airPxPerM).abs);
-    }
+    if (px < frontPx) return txPowerDbm;
     if (px <= frontPx + wallPx) {
       final double f = wallPx == 0 ? 1 : (px - frontPx) / wallPx;
       return frontFaceDbm + f * (behindDbm - frontFaceDbm);
@@ -834,8 +856,7 @@ class WallWavePainter extends CustomPainter {
     final double top = labelBand;
     final double plotH = size.height - labelBand - AppSpacing.xxs;
     final double midY = top + plotH / 2;
-    // Height 1 (the Tx power) at [kWallIncidentHalfFraction] of the half
-    // height; the tallest standing-wave peak is at most 1.064 of it.
+    // Height 1 at [kWallIncidentHalfFraction] of the half height.
     final double yScale = plotH / 2 * kWallIncidentHalfFraction;
 
     // Wall band, under the label band so the "Wall" label sits above it at
@@ -877,8 +898,11 @@ class WallWavePainter extends CustomPainter {
     final Paint ref = Paint()
       ..color = style.reference
       ..strokeWidth = 1.5 * k;
-    _dashedH(canvas, midY - yScale, size.width, ref, k);
-    _dashedH(canvas, midY + yScale, size.width, ref, k);
+    final double txY =
+        yScale *
+        WallWaveProfile.heightForDbm(txPowerDbm, txPowerDbm: txPowerDbm);
+    _dashedH(canvas, midY - txY, size.width, ref, k);
+    _dashedH(canvas, midY + txY, size.width, ref, k);
 
     // Envelope |f(x)|, above and below.
     final Paint env = Paint()

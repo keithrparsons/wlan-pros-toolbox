@@ -301,7 +301,7 @@ void main() {
     expect(c.copyText(), contains('Tx power: 30.0 dBm'));
     expect(c.copyText(), contains('Behind the wall: 15.7 dBm'));
     expect(
-      find.textContaining('Height shows signal above the noise floor (dB)'),
+      find.textContaining('Height shows the signal in dBm'),
       findsOneWidget,
     );
   });
