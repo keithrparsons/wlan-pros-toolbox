@@ -62,6 +62,7 @@ import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/join_ladder_screen.dart';
 import '../screens/tools/calculators/wpa2_password_screen.dart';
 import '../screens/tools/calculators/poe_half_strength_screen.dart';
+import '../screens/tools/calculators/dhcp_exhaustion_screen.dart';
 import '../screens/tools/calculators/phy_preamble_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/measure_wall_screen.dart';
@@ -448,6 +449,10 @@ class AppRouter {
   // AP keeps on an 802.3af, 802.3at or 802.3bt port; pure on-device model,
   // all platforms incl. web.
   static const String poeHalfStrength = '/tools/poe-half-strength';
+  // Wi-Fi Classroom (2026-09-27). DHCP pool exhaustion over a conference
+  // morning: lease time, arrivals, private-address rotation; pure on-device
+  // model, all platforms incl. web.
+  static const String dhcpExhaustion = '/tools/dhcp-exhaustion';
   // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
@@ -982,6 +987,7 @@ class AppRouter {
     wpa2Password: (_) => const Wpa2PasswordScreen(),
     poeHalfStrength: (_) => const PoeHalfStrengthScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
+    dhcpExhaustion: (_) => const DhcpExhaustionScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
     boxVsHand: (_) => const BoxVsHandScreen(),
     maidenhead: (_) => const MaidenheadScreen(),

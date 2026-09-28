@@ -1148,6 +1148,78 @@
       ],
       "source": "IEEE 802.11 (Open System and SAE authentication, association, the 4-way handshake, PMKSA caching, Fast BSS Transition); IEEE 802.1X (EAPOL); RFC 3748 (EAP); RFC 3579 (RADIUS support for EAP); RFC 5216 (EAP-TLS); RFC 5281 (EAP-TTLS); RFC 2759 (MS-CHAP-V2); RFC 2548 (MS-MPPE key attributes); Microsoft [MS-PEAP] for PEAPv0. RFC 5169 (EAP round trips). Linux net/mac80211/scan.c (scan dwell). Mishra, Shin and Arbaugh, ACM SIGCOMM CCR 33(2), 2003. Computed on your device."
     },
+    "dhcp-exhaustion": {
+      "name": "Conference Wi-Fi Runs Out of Addresses",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Follows the DHCP (Dynamic Host Configuration Protocol) address pool through a conference morning, 07:00 to 13:00. People arrive, put devices on the Wi-Fi, stay a while and leave. Each device borrows an IP (Internet Protocol) address for a lease time. Set the lease and watch the pool: with a long lease it runs dry mid-morning while the hall is half empty, and with a short one it holds.",
+      "whyHere": "When an event network runs out of addresses, devices still associate and show full bars, and nothing loads, so the call is usually that the Wi-Fi is down and more APs are needed. The radio is fine. A device that walks out sends nothing, so its address stays taken until its lease runs out, and the pool has to cover everyone who arrived within one lease time, not just the people in the room. Devices that rotate their private MAC (media access control) address on open networks come back looking like new devices and take a second address. Association, Frame by Frame shows one DHCP exchange; this tool is what happens to the pool when hundreds of them pile up.",
+      "howToUse": [
+        "Read the top card: whether the pool ran dry and when, and one sentence saying why.",
+        "Press Play the morning, +10 min, or drag Time to move through the morning. On the chart the solid line is addresses taken (in use or still held), the dashed line is devices in the hall, the dotted line is the pool, and the shaded area is devices with no address. The pool grid shows every address at that moment: solid in use, hatched still held for a device that left, cross-hatched still held for an old private address, outlined free.",
+        "Change the lease time and watch the dry time move or disappear. Turn on private-address rotation and set the two assumptions: the share of devices that rotate and how often a rotating device comes back as new.",
+        "Change the pool (subnet /24 to /19, and the reserved addresses) and the crowd (people over the morning, devices each, average stay). All crowd numbers are illustrative; set them to your event.",
+        "Predict, then reveal: Ask the class loads the defaults and stops at the first device with no address (the Wi-Fi seems down mid-morning: what fixes it?); pick an answer, then press Reveal.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the morning, the Right arrow moves 10 minutes, R resets, Up and Down change the lease time, M turns private-address rotation on or off, P asks, reveals and closes the question, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Lease time",
+          "unit": "choice",
+          "range": "5 min to 8 days; default 1 day"
+        },
+        {
+          "name": "Devices rotate their private address on this open network",
+          "unit": "switch",
+          "range": "Off (default) or On"
+        },
+        {
+          "name": "Share of devices that rotate",
+          "unit": "%",
+          "range": "0 to 100; default 50 (assumption; used only with rotation on)"
+        },
+        {
+          "name": "A rotating device comes back as new every",
+          "unit": "minutes",
+          "range": "15 to 240; default 60 (assumption; used only with rotation on)"
+        },
+        {
+          "name": "Subnet",
+          "unit": "prefix",
+          "range": "/24 (default), /23, /22, /21, /20 or /19"
+        },
+        {
+          "name": "Reserved: gateway, servers, printers",
+          "unit": "addresses",
+          "range": "0 to 100; default 10 (illustrative)"
+        },
+        {
+          "name": "People over the morning",
+          "unit": "count",
+          "range": "50 to 5,000; default 250 (illustrative)"
+        },
+        {
+          "name": "Devices each person puts on the Wi-Fi",
+          "unit": "devices",
+          "range": "1.0 to 3.0; default 1.5 (illustrative)"
+        },
+        {
+          "name": "Average stay",
+          "unit": "minutes",
+          "range": "15 to 360; default 90 (illustrative)"
+        }
+      ],
+      "algorithm": "Pool = 2^(32 - prefix) - 2 usable addresses, minus the reserved ones. Devices = people x devices each, arriving in half-hour shares of 4, 8, 14, 16, 10, 8, 8, 8, 7, 6, 6 and 5% from 07:00 (illustrative: a rush before a 09:00 keynote, then a trickle), spread evenly inside each half hour. Each device stays between half and one and a half times the average stay, on a fixed sequence rather than random draws, so the same settings give the same morning. Every minute: leases that ran out go back to the pool; devices that left, or rotated to a new address, stop renewing; new clients ask for an address and get the lowest free one, first come first served, or wait with none. RFC 2131 lease rules: a device that stays renews at T1, half the lease, so it keeps its address; the server keys each lease to the client's hardware address, so a rotated address is a new client; a device that leaves sends nothing, so its address is free one lease after its last renewal. With rotation on, the chosen share of devices comes back as a new client every chosen interval while in the hall, the first time somewhere inside the first interval.",
+      "example": "Defaults (/24 with 10 reserved = 244 addresses, 1-day lease, 250 people with 1.5 devices each = 375 devices, 90-minute average stay): the pool runs dry at 10:18. At that moment only 113 devices are in the hall; 112 addresses are in use and 132 are still held for devices that already left. Up to 74 devices go without an address. With a 30-minute lease the same morning holds, at most 170 of 244 addresses taken. A 2-hour lease holds (peak 232) until rotation is turned on, and then it runs dry at 09:21. A /23 holds even with the 1-day lease.",
+      "fieldNotes": [
+        "A device with no address still associates and shows full signal. Adding APs or a faster internet line adds no addresses.",
+        "No device maker publishes how often a device rotates its private address, so the share and interval here are assumptions. One platform maker documents rotating as the default on open and captive-portal networks.",
+        "Some devices do send a release when they leave a network on purpose; walking out of range sends nothing. This tool assumes nothing is released early.",
+        "Not modeled: servers that give short leases to new clients or a different lease per network, captive sign-in pages, and IPv6 (Internet Protocol version 6) addressing, which does not draw from this pool.",
+        "Illustrative: the crowd, the arrival shape, the stay and the reserved addresses. Set them to your event.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "RFC 2131 (Dynamic Host Configuration Protocol): sections 3.1, 3.2, 3.3 and 4.4.5 for leases, client identity, release and renewal (T1 defaults to half the lease). Private-address rotation on open networks from a client platform maker's security guide, as cited in the Wi-Fi Classroom research brief. Computed on your device."
+    },
     "join-ladder": {
       "name": "Association, Frame by Frame",
       "category": "Wi-Fi Classroom",
