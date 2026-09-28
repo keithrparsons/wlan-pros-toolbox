@@ -2713,6 +2713,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Signals and PHY',
       ),
+      // A Frame's Journey (2026-09-27): the bottom layer of Down the Stack
+      // opened up, the laptop's air frame bit by bit: RF, radiotap, FCS,
+      // SIFS, ACK and the retry. Shares its frame model with down-the-stack.
+      ToolEntry(
+        id: 'frame-journey',
+        title: 'A Frame\'s Journey',
+        description:
+            'Follow one frame from the sending radio to the receiving one: '
+            'bits to RF, the FCS check, SIFS and the ACK, and what one '
+            'flipped bit does',
+        routeName: '/tools/frame-journey',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
       // ── Airtime and Access ──
       ToolEntry(
         id: 'medium-access-simulator',
@@ -2939,6 +2953,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
             'Start an AP on a DFS channel, trigger radar and watch the '
             'listen-first check, the channel move and the 30-minute block',
         routeName: '/tools/dfs-simulator',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
+      // Down the Stack, Across the Air, Up the Other Side (2026-09-27, Keith's
+      // way of teaching the stack): encapsulation, the air hop, IPs end to
+      // end and MACs per hop, and the four To DS / From DS cases. Shelved
+      // beside the frame ladders. Shares its model with frame-journey.
+      ToolEntry(
+        id: 'down-the-stack',
+        title: 'Down the Stack, Across the Air, Up the Other Side',
+        description:
+            'Watch data gain a port, an IP address and a MAC address on the '
+            'way down, cross the air as RF and climb back up, and see which '
+            'addresses change on every hop and why a Wi-Fi frame can carry '
+            'four',
+        routeName: '/tools/down-the-stack',
         isLive: true,
         subgroup: 'Network Design and Security',
       ),

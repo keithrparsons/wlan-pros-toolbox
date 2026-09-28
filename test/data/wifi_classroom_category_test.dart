@@ -40,6 +40,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'ofdma-simulator',
     'mimo-beamforming',
     'phy-preamble',
+    // 2026-09-27: A Frame's Journey, the air hop bit by bit, after the
+    // preamble it points to.
+    'frame-journey',
   ],
   'Airtime and Access': <String>[
     'medium-access-simulator',
@@ -66,6 +69,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'location-rssi-ftm',
     'repeater-mesh',
     'dfs-simulator',
+    // 2026-09-27: Down the Stack, Across the Air, Up the Other Side, beside
+    // the frame ladders.
+    'down-the-stack',
     // 2026-09-26: Association, Frame by Frame (spec 21b), its own tool
     // by Keith's call, shelved beside the ladder whose engine it shares.
     'join-ladder',
@@ -111,13 +117,13 @@ void main() {
     );
   });
 
-  test('all 37 simulators are in wifi-classroom and none remain in '
+  test('all 39 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(37));
+    expect(sims, hasLength(39));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -188,7 +194,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(51));
+    expect(classroom.tools, hasLength(53));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
