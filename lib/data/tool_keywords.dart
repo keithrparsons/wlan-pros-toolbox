@@ -1842,6 +1842,32 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   // Wi-Fi Classroom (2026-09-26). Spec 34's keyword list plus the terms the
   // tool teaches.
+  // Wi-Fi Classroom (2026-09-27). Candidate 6 of the classroom research
+  // brief: the words a student types about Wi-Fi passwords and WPA3.
+  'wpa2-password': <String>[
+    'password',
+    'passphrase',
+    'wi-fi password',
+    'long password',
+    'password length',
+    'wpa2',
+    'wpa3',
+    'wpa2-personal',
+    'wpa3-personal',
+    'psk',
+    'pre-shared key',
+    'sae',
+    'simultaneous authentication of equals',
+    'transition mode',
+    'offline guessing',
+    'dictionary attack',
+    '4-way handshake',
+    'forward secrecy',
+    'security',
+    'wi-fi lab',
+    'wi-fi classroom',
+    'simulator',
+  ],
   'body-loss': <String>[
     'body loss',
     'human body',

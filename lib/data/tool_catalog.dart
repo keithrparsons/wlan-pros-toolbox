@@ -3124,6 +3124,17 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      ToolEntry(
+        id: 'wpa2-password',
+        title: 'Why a Long Wi-Fi Password Matters More on WPA2',
+        description:
+            'See where a password guess is checked on WPA2, WPA3 and WPA3 '
+            'transition mode, and how length grows the number of possible '
+            'passwords',
+        routeName: '/tools/wpa2-password',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       // ── Course Handouts ── the WLAN Pros printed cards and checklists (PDF),
       // moved in from Educational Resources 2026-09-26. Ids, routes, assets and
       // help entries unchanged.

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 235 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 236 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,12 +37,12 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (62 tools)
+- **Wi-Fi Classroom** (63 tools)
   - Guided Lessons (10)
   - RF and Propagation (12)
   - Signals and PHY (6)
   - Airtime and Access (10)
-  - Network Design and Security (13)
+  - Network Design and Security (14)
   - Course Handouts (11)
 
 ---
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (62 tools)
+# Wi-Fi Classroom (63 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -5176,7 +5176,7 @@ Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A 
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Network Design and Security (13)
+## Network Design and Security (14)
 
 
 ### Channel Planner
@@ -5692,6 +5692,42 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
+### Why a Long Wi-Fi Password Matters More on WPA2
+
+Shows where a password guess gets checked on three kinds of home or small-office Wi-Fi network, all with the same short password: WPA2-Personal (WPA: Wi-Fi Protected Access, here with a pre-shared key, PSK), WPA3-Personal with SAE (Simultaneous Authentication of Equals), and WPA3 transition mode, which lets WPA2-only devices associate with the same password. A drawing puts a device, your AP (access point) and an attacker's computer side by side, and highlights the path each guess takes. Readouts give the number of possible passwords for the length and characters you choose, where each guess is checked, what sets the pace, whether the AP sees the guessing, and what happens to recorded traffic if the password is learned later. It never shows a time to crack.
+
+**Why it's here.** It corrects two beliefs: that any password is fine because Wi-Fi is encrypted, and that WPA3 is just a new label. On WPA2-Personal, anyone in range who records one association can test guesses on their own computer, limited only by that computer, and the AP never sees a guess, so the password's length is the whole defense. On WPA3-Personal, a recording gives nothing to check a guess against: each guess has to be a live exchange with the AP, and each wrong one is a failed authentication the AP can notice and limit. Transition mode keeps the WPA2 door open, so a short password stays exposed to offline guessing for as long as it runs.
+
+**How to use**
+1. Pick the network security: WPA2, WPA3 or Transition. The password stays the same on all three, so the only thing that changes is where a guess can be checked.
+2. Press Try one guess, or Keep guessing, and watch the dot. On WPA2 and in transition mode it loops inside the attacker's computer and the AP's count of failed attempts stays at 0. On WPA3 it travels to the AP and back, and the AP logs every one. The pace on screen is slowed down so you can follow it; it is not a speed.
+3. Change the password's length (8 to 63 characters) and the characters it is drawn from. The number of possible passwords is characters to the power of length: each extra character multiplies it by the number of characters in play.
+4. Predict, then reveal uses the Wi-Fi Alliance's own example: a password that is one of 5,000, picked at random, with the attacker holding the list. How much of the list can they try on WPA2, and on WPA3?
+5. To see the frames themselves, open Association, Frame by Frame on the WPA2 4-way handshake or the WPA3 SAE exchange from the links under the explainer.
+6. On a computer or tablet, Present opens the tool full screen for a projector: Space keeps guessing or stops, the Right arrow tries one guess, 1, 2 and 3 choose WPA2, WPA3 or transition mode, Up and Down change the password length, R resets, P reveals the answer, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Network security | choice | WPA2-Personal, WPA3-Personal (SAE) or WPA3 transition mode; default WPA2-Personal. Changing it starts the counts over |
+| Password length | characters | 8 to 63, the limits for a WPA password; default 8 |
+| Characters | choice | Lowercase letters (26), lowercase letters and digits (36), upper and lowercase letters and digits (62), or any keyboard character (95); default lowercase letters |
+
+**How it works.** Possible passwords = characters in play ^ length, counted exactly (shown in full up to 18 digits, then as about m x 10^n with the digit count). Where a guess is checked follows IEEE 802.11 and the Wi-Fi Alliance: on WPA2-Personal the keys come from the password, the network name and values sent in the clear during the 4-way handshake, so one recorded association lets each guess be checked offline; SAE is resistant to offline dictionary attacks, so on WPA3-Personal each guess is one live exchange with the AP; in transition mode the password is also used by WPA2-only devices, so it can be found offline from one of their associations. Failed attempts the AP logs = guesses tried on WPA3, and 0 otherwise. In the prediction, the chance of having found a password picked at random after g different guesses out of N is g / N. No time or rate is computed anywhere.
+
+**Example.** A password of 8 lowercase letters has 26 ^ 8 = 208,827,064,576 possibilities. One more letter makes it 5,429,503,678,976, 26 times as many; at 12 letters it is 95,428,956,661,682,176. Using any keyboard character at 8 characters gives 6,634,204,312,890,625. In the Wi-Fi Alliance's example of 5,000 possible passwords, WPA2 lets the attacker test all 5,000 offline and find it for certain, while on WPA3 the chance reaches 50% only after 2,500 live attempts at the AP.
+
+**Field notes**
+- No time to crack appears anywhere in this tool. How fast offline guessing runs depends entirely on the attacker's hardware, so any figure would be invented.
+- The count of possible passwords assumes the password was picked at random. A word, a name, a date or a keyboard pattern is on every guess list and falls long before the count runs out.
+- WPA3 does not make the password irrelevant. The Wi-Fi Alliance still says it should be complex enough not to be easily guessed, because live guessing is still possible; it just has to go through the AP.
+- Transition mode is for moving a network from WPA2 to WPA3. Once every device supports WPA3, turning transition mode off closes the WPA2 door. If transition mode does not meet a network's needs, the Wi-Fi Alliance recommends separate network names (SSIDs, service set identifiers) with different passwords, on separated network segments.
+- Forward secrecy: on WPA3, traffic recorded earlier stays unreadable even if the password is learned later. On WPA2-Personal, the password and a recorded 4-way handshake give the keys to that session.
+- This tool leaves out WPA2-Enterprise and WPA3-Enterprise (802.1X), which do not use a shared password; the 802.1X and EAP Ladder covers them. It also leaves out attacks on particular products, and it names no tools and gives no steps.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
 ## Course Handouts (11)
 
 Every handout on this shelf opens in the shared PDF viewer, which carries a permanent "Share or download" button in its top bar, so any handout can be saved, printed, or AirDropped as a full-resolution PDF for the class.
@@ -5867,6 +5903,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 
