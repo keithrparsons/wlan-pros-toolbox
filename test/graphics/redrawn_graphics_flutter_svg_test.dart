@@ -7,7 +7,7 @@
 // pumps it, and asserts a non-empty render with no parse exception. It also
 // guards the two structural invariants this lane is responsible for:
 //   - the antenna-fundamentals g1-g7 (and, since 2026-09-27, the Find My,
-//     Explained figures) carry NO <marker> defs or refs
+//     Explained and Starlink, Explained figures) carry NO <marker> defs or refs
 //     (all converted to inline-path arrowheads across the two graphics lanes).
 
 import 'dart:io';
@@ -48,6 +48,18 @@ const List<String> _convertedDiagrams = <String>[
   'assets/tool-diagrams/find-my/f6-phone-dies.svg',
   'assets/tool-diagrams/find-my/f7-lost-luggage.svg',
   'assets/tool-diagrams/find-my/f8-unwanted-tracker.svg',
+  // Starlink, Explained (2026-09-27): the print guide's Figure 3 used a
+  // <marker> arrowhead; tool/starlink_diagrams.py draws triangles instead.
+  'assets/tool-diagrams/starlink/cover-dish-satellite-gateway.svg',
+  'assets/tool-diagrams/starlink/f1-orbits-to-scale.svg',
+  'assets/tool-diagrams/starlink/f2-first-1300-km.svg',
+  'assets/tool-diagrams/starlink/f3-data-path.svg',
+  'assets/tool-diagrams/starlink/f4-latency.svg',
+  'assets/tool-diagrams/starlink/f5-phased-array.svg',
+  'assets/tool-diagrams/starlink/f6-dishes-to-scale.svg',
+  'assets/tool-diagrams/starlink/f7-shared-capacity.svg',
+  'assets/tool-diagrams/starlink/f8-tree-drops.svg',
+  'assets/tool-diagrams/starlink/f9-two-links.svg',
 ];
 
 Future<void> _expectRenders(WidgetTester tester, String path) async {

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Starlink, Explained added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
-  - Guided Lessons (3)
+- **Wi-Fi Classroom** (52 tools)
+  - Guided Lessons (4)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
-Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (3)
+## Guided Lessons (4)
 
 
 ### Antenna Fundamentals
@@ -3883,6 +3883,24 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 - Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
 - The lesson is independent and isn't affiliated with or endorsed by Apple.
 
+
+### Starlink, Explained
+
+A read-along lesson on how internet from space reaches your house or RV, how high the satellites are, and why the Wi-Fi inside matters as much as the sky above. A flat dish talks to whichever Starlink satellite is overhead, the satellite passes your data down to a Starlink ground station called a gateway, and from there it travels over ordinary fiber to the rest of the internet. The lesson carries nine figures, step-by-step tasks in the Starlink app, and a checklist to work through before you blame Starlink.
+
+**Why it's here.** Wi-Fi people get asked about Starlink by friends, family and RV owners who are not technical, and the complaint is usually a slow back bedroom. The lesson carries the Wi-Fi angle: an ordinary speed-test app on a phone measures two links at once, the satellite link and the Wi-Fi, so a slow room is often the Wi-Fi and not the satellites. Figure 9 shows the two links, and Appendix B starts with the link you control.
+
+**How to use**
+1. Read top to bottom. It starts with the one idea that explains most of it: your speed depends on the sky the dish can see, how many neighbors share the satellites above you, and the Wi-Fi between the Starlink router and your device. Then it covers orbit heights, the path your data takes, latency, the dish, why speeds change, plans for homes and RVs, trees and weather, the Wi-Fi inside, and six things people get wrong.
+2. Tap a figure to open it full screen, then pinch to zoom. Figures 1, 2, 4 and 6 are drawn to scale; the zoomed part of Figure 4 is not.
+3. Appendix A has four tasks in the Starlink app, one per card. Appendix B is the checklist to work down when something feels slow. The ticks are not saved when you leave the lesson.
+
+**Field notes**
+- Plan names and rules are the US ones as of 27 September 2026, from Starlink's own pages. Prices are left out on purpose. Check starlink.com before you buy.
+- Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
+- Starlink's router coverage figures are Starlink's own, not a measurement.
+- The Wi-Fi Calling note is T-Mobile's rule only; other carriers publish their own.
+- The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
 
 ## RF and Propagation (10)
 

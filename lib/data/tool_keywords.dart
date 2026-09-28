@@ -2669,6 +2669,24 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi positioning',
     'unwanted tracking',
   ],
+  // Starlink, Explained (Guided Lesson). The words a non-technical person
+  // uses when they ask about Starlink, plus the Wi-Fi-inside angle.
+  'starlink-explained': <String>[
+    'starlink',
+    'satellite internet',
+    'leo',
+    'low earth orbit',
+    'geostationary',
+    'latency',
+    'dish',
+    'phased array',
+    'rv',
+    'roam',
+    'obstruction',
+    'bypass mode',
+    'starlink router',
+    'mesh',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

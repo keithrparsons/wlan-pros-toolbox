@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Starlink, Explained: a satellite (body and two solar panels) across
+         the top, and a flat dish on a short mast below it, tilted up toward
+         the sky: the lesson's first idea, a flat dish talking to whichever
+         satellite is overhead. Distinct by silhouette from the antenna aerial
+         (antenna-fundamentals), the tag-and-arcs of find-my-explained and the
+         location pins. -->
+    <rect x="10.5" y="2" width="3" height="7" rx="1"/>
+    <rect x="2" y="3" width="6.5" height="5" rx="1"/>
+    <rect x="15.5" y="3" width="6.5" height="5" rx="1"/>
+    <path d="M5.25 3 V8 M18.75 3 V8 M8.5 5.5 H10.5 M13.5 5.5 H15.5"/>
+    <path d="M3 16 L13 11 L14 13 L4 18 Z"/>
+    <path d="M9 15.5 V21 M6 21 H12"/>
+  </g>
+</svg>

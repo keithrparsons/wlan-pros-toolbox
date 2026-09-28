@@ -6712,6 +6712,28 @@
       ],
       "source": "The WLAN Pros print guide Find My, Explained (September 2026), checked against Apple's support pages on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "starlink-explained": {
+      "name": "Starlink, Explained",
+      "category": "Wi-Fi Classroom",
+      "purpose": "A read-along lesson on how internet from space reaches your house or RV, how high the satellites are, and why the Wi-Fi inside matters as much as the sky above. A flat dish talks to whichever Starlink satellite is overhead, the satellite passes your data down to a Starlink ground station called a gateway, and from there it travels over ordinary fiber to the rest of the internet. The lesson carries nine figures, step-by-step tasks in the Starlink app, and a checklist to work through before you blame Starlink.",
+      "whyHere": "Wi-Fi people get asked about Starlink by friends, family and RV owners who are not technical, and the complaint is usually a slow back bedroom. The lesson carries the Wi-Fi angle: an ordinary speed-test app on a phone measures two links at once, the satellite link and the Wi-Fi, so a slow room is often the Wi-Fi and not the satellites. Figure 9 shows the two links, and Appendix B starts with the link you control.",
+      "howToUse": [
+        "Read top to bottom. It starts with the one idea that explains most of it: your speed depends on the sky the dish can see, how many neighbors share the satellites above you, and the Wi-Fi between the Starlink router and your device. Then it covers orbit heights, the path your data takes, latency, the dish, why speeds change, plans for homes and RVs, trees and weather, the Wi-Fi inside, and six things people get wrong.",
+        "Tap a figure to open it full screen, then pinch to zoom. Figures 1, 2, 4 and 6 are drawn to scale; the zoomed part of Figure 4 is not.",
+        "Appendix A has four tasks in the Starlink app, one per card. Appendix B is the checklist to work down when something feels slow. The ticks are not saved when you leave the lesson."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Plan names and rules are the US ones as of 27 September 2026, from Starlink's own pages. Prices are left out on purpose. Check starlink.com before you buy.",
+        "Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.",
+        "Starlink's router coverage figures are Starlink's own, not a measurement.",
+        "The Wi-Fi Calling note is T-Mobile's rule only; other carriers publish their own.",
+        "The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX."
+      ],
+      "source": "The WLAN Pros print guide Starlink, Explained (September 2026), checked against Starlink's help and legal pages on 27 September 2026. The full source list is the last section of the lesson."
+    },
     "cloud-tool-trust": {
       "name": "Cloud Tool Trust",
       "category": "Quick Reference",
