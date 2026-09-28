@@ -80,6 +80,8 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 
 - **Mesh, Extenders and Wired Access Points, Explained.** Three ways to fix a dead zone, and the one question that decides between them: how does the new box talk to the main one? One radio taking turns, where to put an extender, five setups for one far room, and four ways to build the link back. Pair it with Repeaters and Mesh Backhaul, the model its numbers come from.
 
+- **Is Your Router Too Old?.** A router is too old when it stops getting security fixes, not when it stops working: the three stages, the five-minute check, who updates the box, keep, update or replace, the 2026 US router rule, and what to look for in the next one.
+
 ### RF and Propagation
 
 - **FSPL Simulator.** Free-space path loss against distance for 2.4, 5 and 6 GHz on one chart, with a Why panel that splits each band's loss into the part every band shares and the part that changes with frequency. Up and Down double and halve the distance, so each press shows the 6 dB per doubling rule. Log and Linear switch the distance axis: on log the bands are straight lines, on linear they are the curve students usually expect.

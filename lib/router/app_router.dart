@@ -150,6 +150,7 @@ import '../screens/tools/reference/smart_home_radios_explained_screen.dart';
 import '../screens/tools/reference/cameras_doorbells_explained_screen.dart';
 import '../screens/tools/reference/devices_to_internet_explained_screen.dart';
 import '../screens/tools/reference/mesh_extenders_explained_screen.dart';
+import '../screens/tools/reference/router_too_old_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -883,6 +884,12 @@ class AppRouter {
   static const String meshExtendersExplained =
       '/tools/mesh-extenders-explained';
 
+  /// Is Your Router Too Old?: a Wireless Classroom Guided Lesson on security
+  /// fixes and end of life, the five-minute check, who updates the box, the 2026
+  /// US router rule, and what to buy next. The id `router-too-old-explained` is
+  /// permanent (route, catalog, help, tests).
+  static const String routerTooOldExplained = '/tools/router-too-old-explained';
+
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
   /// interference (a nine-card signature gallery), and how to mitigate it. An
@@ -1258,6 +1265,7 @@ class AppRouter {
     camerasDoorbellsExplained: (_) => const CamerasDoorbellsExplainedScreen(),
     devicesToInternetExplained: (_) => const DevicesToInternetExplainedScreen(),
     meshExtendersExplained: (_) => const MeshExtendersExplainedScreen(),
+    routerTooOldExplained: (_) => const RouterTooOldExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

@@ -7393,6 +7393,29 @@
       ],
       "source": "The WLAN Pros print guide Mesh, Extenders and Wired Access Points, Explained (September 2026), with speeds from the Toolbox's Repeaters and Mesh Backhaul model. The full source list is the last section of the lesson."
     },
+    "router-too-old-explained": {
+      "name": "Is Your Router Too Old?",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on how to tell in five minutes whether your router still gets security fixes, and what to do if it doesn't. A router's age isn't counted in years. It's counted by whether it still gets fixes. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures: what the router does, the three stages of its life, the five-minute check, who updates it, keep, update or replace, what the 2026 US router rule means for the one you own, and what to look for in the next one.",
+      "whyHere": "Wi-Fi people get asked whether an old router needs replacing, and since 2026 whether the new US rule makes it illegal. The lesson gives the test that matters: a router that no longer gets fixes can still stream movies, and the FBI has warned that criminals take over routers like that and use them as a disguise. Figure 6 turns the five-minute check into keep, update or replace.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer and the one idea to remember, then covers what your router does, when a router gets too old, the five-minute check, who updates it, keep, update or replace, the 2026 rule, what to look for in the next one, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 4 is the five-minute check. The appendix, Do this now, is about fifteen minutes in the router's app or settings: update it, lock it down, and write it down. Steps 5 and 8 have an Open button for Mesh, Extenders and Wired Access Points, Explained, where the guide names it.",
+        "At the end, Take it with you names the free PDF guide the lesson follows, for printing and keeping next to the router.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026. The 2026 rule is the US one, from the FCC's own notices; the date makers may keep fixing routers approved before the rule, at least 1 January 2029, is from FCC Public Notice DA 26-454.",
+        "The FBI warning is its Public Service Announcement I-050725-PSA of 7 May 2025, on criminals using end-of-life routers.",
+        "The lesson names no router maker or model on purpose. Menus differ by maker, so a setting may have another name, such as Administration or Advanced.",
+        "The lesson is independent and isn't affiliated with any router maker or provider."
+      ],
+      "source": "The WLAN Pros print guide Is Your Router Too Old? (September 2026), checked against the FBI, the FCC, the FTC, Apple and the Wi-Fi Alliance. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

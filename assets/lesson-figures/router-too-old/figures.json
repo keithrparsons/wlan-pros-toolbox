@@ -1,0 +1,125 @@
+{
+  "source": "router-too-old-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        200.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        720.0,
+        218.0
+      ],
+      "caption": "**Figure 1. Same box, different answer.** Both routers still make Wi-Fi. Only one still gets security fixes, and they look exactly alike.",
+      "alt": "Figure 1. Same box, different answer. Both routers still make Wi-Fi. Only one still gets security fixes, and they look exactly alike."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        720.0,
+        240.0
+      ],
+      "caption": "**Figure 2. The front door.** Everything your devices send or receive passes through the router. That's why an old router matters more than an old gadget.",
+      "alt": "Figure 2. The front door. Everything your devices send or receive passes through the router. That's why an old router matters more than an old gadget."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        720.0,
+        180.0
+      ],
+      "caption": "**Figure 3. Three stages.** In the last stage the router still turns on and still makes Wi-Fi. It looks exactly the same. It just stopped getting fixes.",
+      "alt": "Figure 3. Three stages. In the last stage the router still turns on and still makes Wi-Fi. It looks exactly the same. It just stopped getting fixes."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        720.0,
+        210.0
+      ],
+      "caption": "**Figure 4. Four steps, about five minutes.** Start with the label on the router. End with automatic updates turned on.",
+      "alt": "Figure 4. Four steps, about five minutes. Start with the label on the router. End with automatic updates turned on."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        720.0,
+        230.0
+      ],
+      "caption": "**Figure 5. Two boxes, two jobs.** Many homes have both. Check each one.",
+      "alt": "Figure 5. Two boxes, two jobs. Many homes have both. Check each one."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        720.0,
+        300.0
+      ],
+      "caption": "**Figure 6. Three answers.** The first question decides it. Age, speed and looks don't come into it.",
+      "alt": "Figure 6. Three answers. The first question decides it. Age, speed and looks don't come into it."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        720.0,
+        236.0
+      ],
+      "caption": "**Figure 7. How long updates are allowed.** The US lets makers keep fixing routers it approved before the rule, until at least 2029. Whether your maker does is still up to them.",
+      "alt": "Figure 7. How long updates are allowed. The US lets makers keep fixing routers it approved before the rule, until at least 2029. Whether your maker does is still up to them."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        720.0,
+        176.0
+      ],
+      "caption": "**Figure 8. Five things to look for.** Tick all five before you buy. The list below says what each one means.",
+      "alt": "Figure 8. Five things to look for. Tick all five before you buy. The list below says what each one means."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        720.0,
+        222.0
+      ],
+      "caption": "**Figure 9. Which radio bands each Wi-Fi generation uses.** A filled dot means it uses that band. Wi-Fi 6E and 7 add the newest band, called 6 GHz. Your phone or laptop needs 6E or 7 too to use it.",
+      "alt": "Figure 9. Which radio bands each Wi-Fi generation uses. A filled dot means it uses that band. Wi-Fi 6E and 7 add the newest band, called 6 GHz. Your phone or laptop needs 6E or 7 too to use it."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        720.0,
+        382.0
+      ],
+      "caption": "**Figure 10. What's true, in pictures.** Each numbered panel goes with the myth of the same number below.",
+      "alt": "Figure 10. What's true, in pictures. Each numbered panel goes with the myth of the same number below."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        720.0,
+        300.0
+      ],
+      "caption": "**Figure 11. The two switches that matter most.** Automatic updates on, remote management off. Every maker's screen looks different, so the menu may have another name, such as Administration or Advanced.",
+      "alt": "Figure 11. The two switches that matter most. Automatic updates on, remote management off. Every maker's screen looks different, so the menu may have another name, such as Administration or Advanced."
+    }
+  ]
+}

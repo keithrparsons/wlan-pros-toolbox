@@ -635,6 +635,7 @@ flutter:
     - assets/lesson-figures/cameras-doorbells/
     - assets/lesson-figures/devices-to-internet/
     - assets/lesson-figures/mesh-extenders/
+    - assets/lesson-figures/router-too-old/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2

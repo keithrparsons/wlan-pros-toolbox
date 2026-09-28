@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 247 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 248 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (74 tools)
-  - Guided Lessons (15)
+- **Wireless Classroom** (75 tools)
+  - Guided Lessons (16)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (74 tools)
+# Wireless Classroom (75 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (15)
+## Guided Lessons (16)
 
 
 ### Antenna Fundamentals
@@ -4045,6 +4045,26 @@ A read-along lesson on the three kinds of gear sold to fix a dead zone: extender
 - The speeds are from the Classroom model, one long open hallway with typical settings, as the guide says. Your walls and your gear will change every number; the pattern stays the same.
 - Google, Ofcom, the MoCA Alliance and the Wi-Fi Alliance are cited from their own published pages, read 27 September 2026.
 - The lesson is independent and isn't affiliated with any maker or provider.
+
+
+### Is Your Router Too Old?
+
+A read-along lesson on how to tell in five minutes whether your router still gets security fixes, and what to do if it doesn't. A router's age isn't counted in years. It's counted by whether it still gets fixes. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures: what the router does, the three stages of its life, the five-minute check, who updates it, keep, update or replace, what the 2026 US router rule means for the one you own, and what to look for in the next one.
+
+**Why it's here.** Wi-Fi people get asked whether an old router needs replacing, and since 2026 whether the new US rule makes it illegal. The lesson gives the test that matters: a router that no longer gets fixes can still stream movies, and the FBI has warned that criminals take over routers like that and use them as a disguise. Figure 6 turns the five-minute check into keep, update or replace.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea to remember, then covers what your router does, when a router gets too old, the five-minute check, who updates it, keep, update or replace, the 2026 rule, what to look for in the next one, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 4 is the five-minute check. The appendix, Do this now, is about fifteen minutes in the router's app or settings: update it, lock it down, and write it down. Steps 5 and 8 have an Open button for Mesh, Extenders and Wired Access Points, Explained, where the guide names it.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing and keeping next to the router.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026. The 2026 rule is the US one, from the FCC's own notices; the date makers may keep fixing routers approved before the rule, at least 1 January 2029, is from FCC Public Notice DA 26-454.
+- The FBI warning is its Public Service Announcement I-050725-PSA of 7 May 2025, on criminals using end-of-life routers.
+- The lesson names no router maker or model on purpose. Menus differ by maker, so a setting may have another name, such as Administration or Advanced.
+- The lesson is independent and isn't affiliated with any router maker or provider.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

@@ -2743,6 +2743,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Is Your Router Too Old? (2026-09-28, Keith approved the guide): the
+      // explainer post turned Guided Lesson on the 1.11.0 framework, word for
+      // word from the final guide with its 11 figures. Shelved with the other
+      // lessons for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'router-too-old-explained',
+        title: 'Is Your Router Too Old?',
+        description:
+            'How to tell in five minutes whether your router still gets '
+            'security fixes, what the 2026 router rule means for the one you '
+            'own, and what to look for in the next one',
+        routeName: '/tools/router-too-old-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

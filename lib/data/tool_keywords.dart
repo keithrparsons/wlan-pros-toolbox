@@ -3231,6 +3231,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'powerline',
     'easymesh',
   ],
+  // Is Your Router Too Old? (Guided Lesson). What people ask about an old
+  // router, plus the terms the lesson teaches.
+  'router-too-old-explained': <String>[
+    'router too old',
+    'old router',
+    'replace router',
+    'router end of life',
+    'end of life',
+    'security updates',
+    'firmware',
+    'firmware update',
+    'automatic updates',
+    'router ban',
+    'fcc router rule',
+    'remote management',
+    'wps',
+    'wpa3',
+    'new router',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',
