@@ -217,6 +217,37 @@ void main() {
       );
     });
 
+    test('every English measurement is metric first, imperial in parentheses',
+        () {
+      // Keith, 2026-09-28: metric first with imperial in parentheses.
+      final RegExp metric =
+          RegExp(r'(\d[\d,.]* ?(km|cm|m)\b|centimeters)');
+      for (final GlossaryTerm t in _loadReal().all) {
+        for (final RegExpMatch m in metric.allMatches(t.definition)) {
+          final String after = t.definition.substring(m.end);
+          // NFC's "a few centimeters apart, about 4 cm (1.5 inches)" gives
+          // the figure right after, so that phrase leads into its own pair.
+          expect(
+            after.startsWith(' (') || after.startsWith(' apart, about '),
+            isTrue,
+            reason: '${t.id}: "${m.group(0)}" has no imperial figure after it',
+          );
+        }
+      }
+      final GlossaryService real = _loadReal();
+      expect(real.byId('leo-satellite')!.definition,
+          contains('2,000 km (1,240 miles) up'));
+      expect(real.byId('geostationary-satellite')!.definition,
+          contains('35,786 km (22,236 miles) up'));
+      expect(real.byId('uwb')!.definition,
+          contains('a few centimeters (an inch or two)'));
+      expect(
+        real.byId('geostationary-satellite')!
+            .definitionFor(GlossaryLanguage.de),
+        contains('35.786 km (22.236 Meilen)'),
+      );
+    });
+
     test('the 30 wireless additions come after the 93 Wi-Fi terms', () {
       final List<GlossaryTerm> all = _loadReal().all;
       expect(all[92].category, 'Performance & Troubleshooting');

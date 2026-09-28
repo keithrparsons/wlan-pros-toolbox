@@ -1493,12 +1493,12 @@
       "term": "UWB",
       "abbr": "Ultra-Wideband",
       "category": "Short-Range Radio",
-      "definition": "Radio that spreads a faint signal over a wide slice of the airwaves. Its trick is timing. It can measure distance closely, often to a few centimeters. With the right antennas it can also tell direction, which is how some item trackers point you right to your keys.",
+      "definition": "Radio that spreads a faint signal over a wide slice of the airwaves. Its trick is timing. It can measure distance closely, often to a few centimeters (an inch or two). With the right antennas it can also tell direction, which is how some item trackers point you right to your keys.",
       "definitions": {
-        "es": "Radio que reparte una señal débil sobre una franja ancha del espectro. Su truco está en medir el tiempo. Puede medir distancias con precisión, a menudo de unos pocos centímetros. Con las antenas adecuadas también puede saber la dirección, que es como algunos localizadores de objetos te llevan directo a tus llaves.",
-        "fr": "Une radio qui étale un signal faible sur une large tranche des ondes. Son astuce, c'est la mesure du temps. Elle peut mesurer une distance avec précision, souvent à quelques centimètres près. Avec les bonnes antennes, elle peut aussi trouver la direction : c'est ainsi que certains traceurs d'objets vous guident droit vers vos clés.",
-        "it": "Radio che distribuisce un segnale debole su un'ampia fetta dell'etere. Il suo trucco è la misura del tempo. Può misurare le distanze con precisione, spesso a pochi centimetri. Con le antenne giuste può anche capire la direzione, ed è così che alcuni localizzatori di oggetti ti portano dritto alle chiavi.",
-        "de": "Funk, der ein schwaches Signal über einen breiten Ausschnitt der Funkwellen verteilt. Sein Trick ist die Zeitmessung. Er kann Entfernungen genau messen, oft auf wenige Zentimeter. Mit den passenden Antennen erkennt er auch die Richtung. So führen dich manche Tracker direkt zu deinen Schlüsseln."
+        "es": "Radio que reparte una señal débil sobre una franja ancha del espectro. Su truco está en medir el tiempo. Puede medir distancias con precisión, a menudo de unos pocos centímetros (una o dos pulgadas). Con las antenas adecuadas también puede saber la dirección, que es como algunos localizadores de objetos te llevan directo a tus llaves.",
+        "fr": "Une radio qui étale un signal faible sur une large tranche des ondes. Son astuce, c'est la mesure du temps. Elle peut mesurer une distance avec précision, souvent à quelques centimètres près (un ou deux pouces). Avec les bonnes antennes, elle peut aussi trouver la direction : c'est ainsi que certains traceurs d'objets vous guident droit vers vos clés.",
+        "it": "Radio che distribuisce un segnale debole su un'ampia fetta dell'etere. Il suo trucco è la misura del tempo. Può misurare le distanze con precisione, spesso a pochi centimetri (un pollice o due). Con le antenne giuste può anche capire la direzione, ed è così che alcuni localizzatori di oggetti ti portano dritto alle chiavi.",
+        "de": "Funk, der ein schwaches Signal über einen breiten Ausschnitt der Funkwellen verteilt. Sein Trick ist die Zeitmessung. Er kann Entfernungen genau messen, oft auf wenige Zentimeter (ein, zwei Zoll). Mit den passenden Antennen erkennt er auch die Richtung. So führen dich manche Tracker direkt zu deinen Schlüsseln."
       },
       "translation_status": "draft-needs-review"
     },
@@ -1577,12 +1577,12 @@
       "term": "Low Earth Orbit Satellite",
       "abbr": "LEO",
       "category": "Location & Satellite",
-      "definition": "A satellite flying low, a few hundred to 2,000 km up, and circling the Earth in about 90 minutes. Being close means short delay, so video calls work. Each one crosses the sky in a few minutes, so a service needs a whole fleet of them. Broadband services like Starlink use thousands.",
+      "definition": "A satellite flying low, a few hundred to 2,000 km (1,240 miles) up, and circling the Earth in about 90 minutes. Being close means short delay, so video calls work. Each one crosses the sky in a few minutes, so a service needs a whole fleet of them. Broadband services like Starlink use thousands.",
       "definitions": {
-        "es": "Un satélite que vuela bajo, a entre unos cientos y 2.000 km de altura, y da la vuelta a la Tierra en unos 90 minutos. Estar cerca significa poco retardo, así que las videollamadas funcionan. Cada uno cruza el cielo en unos pocos minutos, así que un servicio necesita toda una flota. Los servicios de banda ancha como Starlink usan miles.",
-        "fr": "Un satellite qui vole bas, entre quelques centaines et 2 000 km d'altitude, et fait le tour de la Terre en environ 90 minutes. Être proche veut dire peu de délai, donc les appels vidéo fonctionnent. Chacun traverse le ciel en quelques minutes, donc un service a besoin de toute une flotte. Les services haut débit comme Starlink en utilisent des milliers.",
-        "it": "Un satellite che vola basso, tra qualche centinaio e 2.000 km di quota, e fa il giro della Terra in circa 90 minuti. Stare vicino vuol dire poco ritardo, quindi le videochiamate funzionano. Ognuno attraversa il cielo in pochi minuti, quindi a un servizio serve un'intera flotta. I servizi a banda larga come Starlink ne usano migliaia.",
-        "de": "Ein Satellit, der niedrig fliegt, einige hundert bis 2.000 km hoch, und die Erde in etwa 90 Minuten umrundet. Die Nähe bedeutet wenig Verzögerung, also funktionieren Videoanrufe. Jeder zieht in wenigen Minuten über den Himmel, also braucht ein Dienst eine ganze Flotte. Breitbanddienste wie Starlink nutzen Tausende."
+        "es": "Un satélite que vuela bajo, a entre unos cientos y 2.000 km (1.240 millas) de altura, y da la vuelta a la Tierra en unos 90 minutos. Estar cerca significa poco retardo, así que las videollamadas funcionan. Cada uno cruza el cielo en unos pocos minutos, así que un servicio necesita toda una flota. Los servicios de banda ancha como Starlink usan miles.",
+        "fr": "Un satellite qui vole bas, entre quelques centaines et 2 000 km (1 240 miles) d'altitude, et fait le tour de la Terre en environ 90 minutes. Être proche veut dire peu de délai, donc les appels vidéo fonctionnent. Chacun traverse le ciel en quelques minutes, donc un service a besoin de toute une flotte. Les services haut débit comme Starlink en utilisent des milliers.",
+        "it": "Un satellite che vola basso, tra qualche centinaio e 2.000 km (1.240 miglia) di quota, e fa il giro della Terra in circa 90 minuti. Stare vicino vuol dire poco ritardo, quindi le videochiamate funzionano. Ognuno attraversa il cielo in pochi minuti, quindi a un servizio serve un'intera flotta. I servizi a banda larga come Starlink ne usano migliaia.",
+        "de": "Ein Satellit, der niedrig fliegt, einige hundert bis 2.000 km (1.240 Meilen) hoch, und die Erde in etwa 90 Minuten umrundet. Die Nähe bedeutet wenig Verzögerung, also funktionieren Videoanrufe. Jeder zieht in wenigen Minuten über den Himmel, also braucht ein Dienst eine ganze Flotte. Breitbanddienste wie Starlink nutzen Tausende."
       },
       "translation_status": "draft-needs-review"
     },
@@ -1591,12 +1591,12 @@
       "term": "Geostationary Satellite",
       "abbr": "GEO",
       "category": "Location & Satellite",
-      "definition": "A satellite about 35,786 km up, where one trip around the Earth takes exactly a day. From the ground it seems to hang still in the sky, and one can cover about a third of the planet. The long trip up and back adds about half a second of delay, which you notice on calls.",
+      "definition": "A satellite about 35,786 km (22,236 miles) up, where one trip around the Earth takes exactly a day. From the ground it seems to hang still in the sky, and one can cover about a third of the planet. The long trip up and back adds about half a second of delay, which you notice on calls.",
       "definitions": {
-        "es": "Un satélite a unos 35.786 km de altura, donde una vuelta a la Tierra dura exactamente un día. Desde el suelo parece quieto en el cielo, y uno solo puede cubrir cerca de un tercio del planeta. El largo viaje de ida y vuelta añade cerca de medio segundo de retardo, que se nota en las llamadas.",
-        "fr": "Un satellite à environ 35 786 km d'altitude, là où un tour de la Terre prend exactement un jour. Depuis le sol, il semble immobile dans le ciel, et un seul peut couvrir environ un tiers de la planète. Le long aller-retour ajoute environ une demi-seconde de délai, qu'on remarque pendant les appels.",
-        "it": "Un satellite a circa 35.786 km di quota, dove un giro della Terra dura esattamente un giorno. Da terra sembra fermo nel cielo, e uno solo può coprire circa un terzo del pianeta. Il lungo viaggio di andata e ritorno aggiunge circa mezzo secondo di ritardo, che si nota nelle chiamate.",
-        "de": "Ein Satellit in etwa 35.786 km Höhe, wo eine Runde um die Erde genau einen Tag dauert. Vom Boden aus scheint er still am Himmel zu stehen, und einer kann etwa ein Drittel der Erde abdecken. Der lange Weg hinauf und zurück bringt etwa eine halbe Sekunde Verzögerung, die man bei Anrufen merkt."
+        "es": "Un satélite a unos 35.786 km (22.236 millas) de altura, donde una vuelta a la Tierra dura exactamente un día. Desde el suelo parece quieto en el cielo, y uno solo puede cubrir cerca de un tercio del planeta. El largo viaje de ida y vuelta añade cerca de medio segundo de retardo, que se nota en las llamadas.",
+        "fr": "Un satellite à environ 35 786 km (22 236 miles) d'altitude, là où un tour de la Terre prend exactement un jour. Depuis le sol, il semble immobile dans le ciel, et un seul peut couvrir environ un tiers de la planète. Le long aller-retour ajoute environ une demi-seconde de délai, qu'on remarque pendant les appels.",
+        "it": "Un satellite a circa 35.786 km (22.236 miglia) di quota, dove un giro della Terra dura esattamente un giorno. Da terra sembra fermo nel cielo, e uno solo può coprire circa un terzo del pianeta. Il lungo viaggio di andata e ritorno aggiunge circa mezzo secondo di ritardo, che si nota nelle chiamate.",
+        "de": "Ein Satellit in etwa 35.786 km (22.236 Meilen) Höhe, wo eine Runde um die Erde genau einen Tag dauert. Vom Boden aus scheint er still am Himmel zu stehen, und einer kann etwa ein Drittel der Erde abdecken. Der lange Weg hinauf und zurück bringt etwa eine halbe Sekunde Verzögerung, die man bei Anrufen merkt."
       },
       "translation_status": "draft-needs-review"
     },
