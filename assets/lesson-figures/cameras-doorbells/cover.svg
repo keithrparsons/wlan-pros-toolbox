@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 190" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="700" height="190">
+      <!-- doorbell -->
+      <g transform="translate(21.5 68.5) scale(2.625)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7.5" y="2.5" width="9" height="19" rx="3"/><circle cx="12" cy="6.8" r="1.5" fill="#111111" stroke="none"/><circle cx="12" cy="15.5" r="2.5"/></g>
+      <!-- Wi-Fi arcs centred (72,100), clear of the doorbell -->
+      <g transform="rotate(90 91.3 99.9) translate(76.3 84.9) scale(1.25)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
+      <!-- the box -->
+      <g transform="translate(158.2 63.2) scale(3.06667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
+      <!-- upload, box to cloud; tip stops 10 short of the cloud -->
+      <line x1="252" y1="100" x2="378" y2="100" stroke="#2B5C8A" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="392,100 378,92 378,108" fill="#2B5C8A"/>
+      <!-- the cloud -->
+      <g transform="translate(412 56) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
+      <!-- labels -->
+      <text x="53" y="152" text-anchor="middle">your camera</text>
+      <text x="195" y="145" text-anchor="middle">the box</text>
+      <text x="315" y="84" text-anchor="middle" fill="#2B5C8A" font-weight="600">upload</text>
+      <text x="452" y="150" text-anchor="middle">the cloud</text>
+    </svg>

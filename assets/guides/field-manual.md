@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 244 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 245 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (71 tools)
-  - Guided Lessons (12)
+- **Wireless Classroom** (72 tools)
+  - Guided Lessons (13)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (71 tools)
+# Wireless Classroom (72 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (12)
+## Guided Lessons (13)
 
 
 ### Antenna Fundamentals
@@ -3985,6 +3985,28 @@ A read-along lesson on the four names on smart home boxes: Wi-Fi, Thread, Zigbee
 - Figure 3 is marked as a simplified picture, not to scale. The lesson gives no channel numbers for Wi-Fi, Thread or Zigbee.
 - Some newer smart plugs have a 5 GHz radio too. The lesson's advice is for the ones whose box says 2.4 GHz only.
 - The lesson recommends no brand of hub. It is independent and isn't affiliated with any standards body or device maker.
+
+
+### Cameras, Doorbells and Baby Monitors, Explained
+
+A read-along lesson on security cameras, video doorbells and Wi-Fi baby monitors. Most gadgets in a home pull things in. A camera pushes video out, often all day, so it is judged by what it can send from the spot where it hangs. The lesson covers upload against download, how many cameras a line can carry, signal at the door, which Wi-Fi lane, wired cameras, where the video goes, baby monitors, keeping strangers out, and what to do when the Wi-Fi is cut on purpose. It follows the free PDF guide of the same name, word for word, with its 11 figures and a half-hour appendix.
+
+**Why it's here.** Wi-Fi people get asked why a doorbell drops offline or a clip starts late. The answer is usually the Wi-Fi hop or the upload, not the camera. The outside wall is the hardest one for Wi-Fi to cross, a camera with one bar sends slowly and keeps the Wi-Fi busy for everyone else, and a cable to an access point just inside the front wall does most of the good of a cable to the camera. Figure 3 shows the path from a back-of-house router to the front door.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea to remember, then covers why the camera sends, how many cameras your line can carry, signal at the door, which Wi-Fi lane, wired cameras and doorbells, where the video goes, baby monitors, keeping strangers out, when the Wi-Fi is cut on purpose, and five things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 3 and the appendix each have an Open button for Network Quality, where the guide says to read your upload row. Step 4 has the fixes for signal at the door, gentlest first.
+4. The appendix, Do this now, is four tasks for one camera at a time: check the upload, check the signal where it hangs, lock it down, and test recording without the internet.
+5. At the end, Take it with you names the free PDF guide the lesson follows, for printing or handing to a neighbor with a new doorbell.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The per-camera upload figure, about 3 megabits a second for one maker's best-quality camera, is that maker's published number, not a rating. Figure 2 is marked not to scale.
+- Checked in September 2026. Camera plans, apps and rules change, so check the ones you rely on.
+- The baby monitor cord distance, at least 1 m (3 feet) from any part of the crib, is the US Consumer Product Safety Commission's.
+- Jammer rules are the US ones, from the FCC. The police warnings are as reported by PCWorld and NBC Los Angeles.
+- The lesson is independent and isn't affiliated with any camera maker.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

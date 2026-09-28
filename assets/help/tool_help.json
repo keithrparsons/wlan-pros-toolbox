@@ -7324,6 +7324,31 @@
       ],
       "source": "The WLAN Pros print guide Smart Home Radios, Explained (September 2026), checked against the Connectivity Standards Alliance, the Thread Group, Google Home Help and Apple Support. The full source list is the last section of the lesson."
     },
+    "cameras-doorbells-explained": {
+      "name": "Cameras, Doorbells and Baby Monitors, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on security cameras, video doorbells and Wi-Fi baby monitors. Most gadgets in a home pull things in. A camera pushes video out, often all day, so it is judged by what it can send from the spot where it hangs. The lesson covers upload against download, how many cameras a line can carry, signal at the door, which Wi-Fi lane, wired cameras, where the video goes, baby monitors, keeping strangers out, and what to do when the Wi-Fi is cut on purpose. It follows the free PDF guide of the same name, word for word, with its 11 figures and a half-hour appendix.",
+      "whyHere": "Wi-Fi people get asked why a doorbell drops offline or a clip starts late. The answer is usually the Wi-Fi hop or the upload, not the camera. The outside wall is the hardest one for Wi-Fi to cross, a camera with one bar sends slowly and keeps the Wi-Fi busy for everyone else, and a cable to an access point just inside the front wall does most of the good of a cable to the camera. Figure 3 shows the path from a back-of-house router to the front door.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer and the one idea to remember, then covers why the camera sends, how many cameras your line can carry, signal at the door, which Wi-Fi lane, wired cameras and doorbells, where the video goes, baby monitors, keeping strangers out, when the Wi-Fi is cut on purpose, and five things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 3 and the appendix each have an Open button for Network Quality, where the guide says to read your upload row. Step 4 has the fixes for signal at the door, gentlest first.",
+        "The appendix, Do this now, is four tasks for one camera at a time: check the upload, check the signal where it hangs, lock it down, and test recording without the internet.",
+        "At the end, Take it with you names the free PDF guide the lesson follows, for printing or handing to a neighbor with a new doorbell.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The per-camera upload figure, about 3 megabits a second for one maker's best-quality camera, is that maker's published number, not a rating. Figure 2 is marked not to scale.",
+        "Checked in September 2026. Camera plans, apps and rules change, so check the ones you rely on.",
+        "The baby monitor cord distance, at least 1 m (3 feet) from any part of the crib, is the US Consumer Product Safety Commission's.",
+        "Jammer rules are the US ones, from the FCC. The police warnings are as reported by PCWorld and NBC Los Angeles.",
+        "The lesson is independent and isn't affiliated with any camera maker."
+      ],
+      "source": "The WLAN Pros print guide Cameras, Doorbells and Baby Monitors, Explained (September 2026), checked against the FCC, the FTC, the US Consumer Product Safety Commission and Google Nest Help. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

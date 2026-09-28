@@ -89,6 +89,43 @@ void main() {
       );
     });
 
+    test(
+      'an appendix that opens with a lede still splits into task slides',
+      () {
+        // Cameras, Doorbells: "Do this now" opens with a lede, then three tasks
+        // with an Open button after the first. The lede must not take the
+        // stage alone and leave every task in the side panel.
+        const LessonStep step = LessonStep(
+          number: 'A',
+          title: 'Do this now',
+          blocks: <LessonBlock>[
+            LessonLede('Half an hour, one camera at a time.'),
+            LessonTask(title: 'One', steps: <String>['Tap {{A}}.']),
+            LessonToolLink('net-quality'),
+            LessonTask(title: 'Two', steps: <String>['Tap {{B}}.']),
+            LessonTask(title: 'Three', steps: <String>['Tap {{C}}.']),
+          ],
+        );
+        expect(GuidedLessonController.slidesFor(step), <List<int>>[
+          <int>[0, 1, 2, 3],
+          <int>[4],
+        ]);
+        // A lede beside a figure is an ordinary step: one slide, stage kinds.
+        const LessonStep withFigure = LessonStep(
+          number: '1',
+          title: 'Figure',
+          blocks: <LessonBlock>[
+            LessonLede('A lede.'),
+            _fig,
+            LessonTask(title: 'One'),
+          ],
+        );
+        expect(GuidedLessonController.slidesFor(withFigure), <List<int>>[
+          <int>[0, 1],
+        ]);
+      },
+    );
+
     test('Space reveals the next fact, then hides them all; R resets', () {
       final GuidedLessonController c = GuidedLessonController(_lesson);
       addTearDown(c.dispose);

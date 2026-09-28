@@ -3172,6 +3172,26 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'smart plug won\'t connect',
     'home automation',
   ],
+  // Cameras, Doorbells and Baby Monitors, Explained (Guided Lesson). What
+  // people ask when a camera lags or drops, plus the terms the lesson teaches.
+  'cameras-doorbells-explained': <String>[
+    'security camera',
+    'doorbell camera',
+    'video doorbell',
+    'baby monitor',
+    'camera',
+    'upload speed',
+    'upload',
+    'camera offline',
+    'doorbell offline',
+    'wi-fi jammer',
+    'jammer',
+    'cloud recording',
+    'memory card',
+    'home recorder',
+    'ethernet camera',
+    'poe camera',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',
