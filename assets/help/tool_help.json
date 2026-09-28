@@ -7530,7 +7530,7 @@
       "howToUse": [
         "In part 1, pick Off, Fixed or Rotating. Each scene says Can be matched or Can't be matched in words, and the filter row says Let in or Turned away. On a keyboard, Tab to a control and use the Left and Right arrow keys.",
         "Answer the Predict, then reveal question before you open it. Show me on Fixed sets the control to the case the answer describes.",
-        "In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. The lesson has no Present mode; it reads as a page on any screen."
+        "In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. Section 8 has three things people get wrong. Each myth hides its fact until you tap Reveal the fact. The lesson has no Present mode; it reads as a page on any screen."
       ],
       "inputs": [],
       "algorithm": null,
@@ -7551,7 +7551,7 @@
       "howToUse": [
         "Read the short answer, then pick a network type in Try it. The rows update at once: Can read it, Can see it, or Sealed, each with a line saying why. On a keyboard, Tab to the control and use the Left and Right arrow keys.",
         "Pick Password to turn on the second control, then compare WPA2 and WPA3. The person next to you was given the same password, so WPA2-Personal reads like Open to them once they record you joining, and WPA3-Personal does not.",
-        "Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. The lesson has no Present mode; it reads as a page on any screen."
+        "Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. Each myth hides its fact until you tap Reveal the fact. The lesson has no Present mode; it reads as a page on any screen."
       ],
       "inputs": [],
       "algorithm": null,

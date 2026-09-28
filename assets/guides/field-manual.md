@@ -4109,7 +4109,7 @@ A guided lesson on what the person next to you on public Wi-Fi can see. One cont
 **How to use**
 1. Read the short answer, then pick a network type in Try it. The rows update at once: Can read it, Can see it, or Sealed, each with a line saying why. On a keyboard, Tab to the control and use the Left and Right arrow keys.
 2. Pick Password to turn on the second control, then compare WPA2 and WPA3. The person next to you was given the same password, so WPA2-Personal reads like Open to them once they record you joining, and WPA3-Personal does not.
-3. Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. The lesson has no Present mode; it reads as a page on any screen.
+3. Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. Each myth hides its fact until you tap Reveal the fact. The lesson has no Present mode; it reads as a page on any screen.
 
 **Field notes**
 - The listener is fixed: someone on the same network who only records the air, and on a password network was given the same password. A stranger without the password reads nothing on WPA2- or WPA3-Personal.
@@ -4126,7 +4126,7 @@ A guided lesson in two parts. Part 1 is your phone's private Wi-Fi address: one 
 **How to use**
 1. In part 1, pick Off, Fixed or Rotating. Each scene says Can be matched or Can't be matched in words, and the filter row says Let in or Turned away. On a keyboard, Tab to a control and use the Left and Right arrow keys.
 2. Answer the Predict, then reveal question before you open it. Show me on Fixed sets the control to the case the answer describes.
-3. In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. The lesson has no Present mode; it reads as a page on any screen.
+3. In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. Section 8 has three things people get wrong. Each myth hides its fact until you tap Reveal the fact. The lesson has no Present mode; it reads as a page on any screen.
 
 **Field notes**
 - Every address is illustrative. The hardware address is from the IETF documentation range (RFC 7042), so it belongs to no real device, and the private addresses have the locally administered bit set, as real ones do.
