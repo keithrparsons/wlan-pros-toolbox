@@ -4925,7 +4925,7 @@
     "wifi-glossary": {
       "name": "Wi-Fi Glossary",
       "category": "Quick Reference",
-      "purpose": "Plain-language definitions of 93 Wi-Fi terms across 8 categories: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Each entry pairs the full term with its companion identifier, where it has one, and a definition written for working engineers. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
+      "purpose": "Plain-language definitions of 93 Wi-Fi terms across 8 categories: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Each entry pairs the full term with its companion identifier, where it has one, and a short plain-language definition that makes sense on its own. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
       "whyHere": "For when a term in a spec sheet, a log, or a standards document is the one thing standing between you and understanding what's going on. It tells you what CCI, DFS, FSPL, or OFDMA actually mean in Wi-Fi terms, and it pairs the IEEE generation number with the Wi-Fi Alliance name so 802.11ax and Wi-Fi 6 read as one thing.",
       "howToUse": [
         "Browse the terms grouped by category, arranged so related ideas sit together rather than alphabetically.",

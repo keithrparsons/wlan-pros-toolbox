@@ -2138,7 +2138,7 @@ Plain-language definitions of 93 Wi-Fi terms a working engineer meets, grouped b
 
 **How to use**
 1. Browse the terms grouped by category, or type in the search box to filter live.
-2. Each entry shows the full term, its abbreviation when it has one, and a definition written for working engineers.
+2. Each entry shows the full term, its abbreviation when it has one, and a short plain-language definition that makes sense on its own.
 3. Use the copy action to grab the current view (the filtered subset when searching, otherwise the full list).
 
 **Field notes**
