@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 233 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 234 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,9 +37,9 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (60 tools)
+- **Wi-Fi Classroom** (61 tools)
   - Guided Lessons (9)
-  - RF and Propagation (11)
+  - RF and Propagation (12)
   - Signals and PHY (6)
   - Airtime and Access (10)
   - Network Design and Security (13)
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (60 tools)
+# Wi-Fi Classroom (61 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -3999,7 +3999,40 @@ A read-along lesson with one step-through, on why a hotel, airport or airplane n
 - Left out: paid tiers, session time limits beyond a mention, and networks that block the Wi-Fi Calling tunnel even after the sign-in.
 
 
-## RF and Propagation (11)
+## RF and Propagation (12)
+
+
+### Decibels in Your Head: the Rules of 3 and 10
+
+Shows why a few dB is a big change. One dB (decibel) slider moves a signal from -80 to -60 dBm (decibels relative to one milliwatt) against a fixed -70 dBm reference. Above the slider's dB ruler, a linear bar shows the same power in milliwatts, full length at -60 dBm, and a line joins each whole dB to its place on the bar. The readouts give the power of both, the difference as a ratio, and that ratio built from the rules of 3 and 10 beside the exact figure.
+
+**Why it's here.** dB is a ratio, so equal steps in dB are equal multiplications of power. +3 dB doubles the power and +10 dB multiplies it by ten. That makes -67 dBm about twice the power of -70 dBm, which the dBm numbers hide. Together the two rules reach any whole number of dB, so a signal difference can be read in your head. This is the dBm-to-milliwatt arithmetic in the CWNA (Certified Wireless Network Administrator) exam objectives.
+
+**How to use**
+1. Predict, then reveal asks: is -67 dBm a little or a lot stronger than -70 dBm? Decide, reveal the answer, then press Show -67 dBm against -70 dBm to see the bar double.
+2. Move the Signal level slider. Every 3 dB up doubles the linear bar, and every 10 dB up makes it ten times longer. At -80 dBm the bar is 1% of its length, at -70 dBm 10%, and at -60 dBm all of it.
+3. The step buttons add or take away 3 dB or 10 dB, one rule at a time. A step that would leave the -80 to -60 dBm range is turned off.
+4. Read the rules path. +1 dB, for example, is +10 -3 -3 -3: ten times, then halved three times, 1.25x against the exact 1.259x.
+5. On a computer or tablet, Present opens the tool full screen for a projector: Up and Down move the signal 1 dB, Right adds 3 dB and Left takes 3 dB away, Page Up and Page Down move 10 dB, Space shows -67 dBm against -70 dBm, P reveals the answer, R resets, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Signal level | dBm | -80 to -60 in whole dB; default -70, the same as the reference |
+| Reference | dBm | Fixed at -70 |
+
+**How it works.** Power in milliwatts = 10^(dBm / 10), the dBm / Watt Converter's formula; picowatts (pW, trillionths of a watt) = milliwatts x 10^9. The power ratio of a difference of D dB = 10^(D / 10), so +3 dB = 10^0.3 = 1.995 and +10 dB = 10 exactly. The rules path writes D as 10a + 3b with the fewest steps (10 and 3 share no factor, so every whole D has one) and estimates the ratio as 10^a x 2^b. The linear bar's length is the signal's milliwatts divided by the milliwatts of -60 dBm.
+
+**Example.** -70 dBm is 100 pW. -67 dBm is 199.5 pW: +3 dB, 1.995 times the power, about double. -60 dBm is 1,000 pW, ten times the reference. -69 dBm is +1 dB: +10 -3 -3 -3 by the rules, x10 /2 /2 /2 = 1.25x, against the exact 1.259x.
+
+**Field notes**
+- +3 dB is 1.995 times the power, so say about double. +10 dB is exactly ten times.
+- The same rules hold for losses: -3 dB halves the power and -10 dB leaves a tenth of it.
+- dB compares two powers, and dBm is one power compared with one milliwatt. The difference between two dBm levels is in dB.
+- For a level outside -80 to -60 dBm, or a conversion to watts, use the dBm / Watt Converter. The dB Reference lists the common ratios in a table.
+- Every number here is arithmetic. Nothing is measured and nothing is illustrative.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### FSPL Simulator
@@ -5813,6 +5846,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 

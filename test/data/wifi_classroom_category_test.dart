@@ -49,6 +49,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'wifi-calling-explained',
   ],
   'RF and Propagation': <String>[
+    // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
+    // the dB arithmetic every tool after it assumes.
+    'db-rules',
     'fspl-simulator',
     'wifi-through-a-wall',
     // 2026-09-27: How to Measure Wall Attenuation, beside the wall tool.
@@ -145,13 +148,13 @@ void main() {
     );
   });
 
-  test('all 40 simulators are in wifi-classroom and none remain in '
+  test('all 41 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(40));
+    expect(sims, hasLength(41));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -227,7 +230,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(60));
+    expect(classroom.tools, hasLength(61));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
