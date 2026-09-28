@@ -27,7 +27,7 @@ small eyebrow over each section. Everything else carries over:
   div.myth                      LessonMyth (tap to reveal)
   ol.steps / ul / ul.src(-list) LessonSteps / LessonBullets / LessonSourceList
   ul.tips (li: <b>lead</b>rest) LessonCards, one per tip
-  div.two / div.three of .card  LessonCards
+  div.two/.three/.cards of .card  LessonCards (title from h3 or b.t)
   div.task (h3 or b.t title)    LessonTask
 
 Inline: <b> -> **bold**, <i> -> __italic__, <span class="path"> and
@@ -244,6 +244,7 @@ def parse_guide(src: str, slug: str, asset_root: str):
 
     steps: list[dict] = []
     page_steps: dict[int, list[int]] = {}
+    page_starts: dict[int, list[int]] = {}
     eyebrow = ""
     body_n = 0
     appendix_seen = 0
@@ -288,6 +289,7 @@ def parse_guide(src: str, slug: str, asset_root: str):
                 started_here = True
                 if page_no is not None:
                     page_steps.setdefault(page_no, []).append(len(steps) - 1)
+                    page_starts.setdefault(page_no, []).append(len(steps) - 1)
                 continue
             if page_no is not None and steps and not started_here:
                 page_steps.setdefault(page_no, [])
@@ -342,14 +344,14 @@ def parse_guide(src: str, slug: str, asset_root: str):
                 add({"kind": "cards", "cards": cards})
             elif tag == "ul":
                 add({"kind": "bullets", "items": [inline(li) for li in el.xpath("./li")]})
-            elif tag == "div" and cl & {"two", "three"}:
+            elif tag == "div" and cl & {"two", "three", "cards"}:
                 cards = []
                 for c in el:
                     if not isinstance(c.tag, str):
                         continue
                     if "card" not in classes(c):
                         raise ConvertError(f"grid holds a non-card: {lhtml.tostring(c)[:100]!r}")
-                    h3 = c.xpath("./h3")
+                    h3 = c.xpath("./h3") or c.xpath('./b[@class="t"]')
                     ps = c.xpath("./p")
                     cards.append({
                         "title": inline(h3[0]) if h3 else None,
@@ -389,10 +391,11 @@ def parse_guide(src: str, slug: str, asset_root: str):
         "cover": cover_svg,
         "steps": steps,
         "page_steps": page_steps,
+        "page_starts": page_starts,
     }
 
 
-_CALLOUT_SKIP = {"lbl", "lab", "who", "attr", "ct"}
+_CALLOUT_SKIP = {"lbl", "lab", "who", "attr", "ct", "spk"}
 
 
 def _callout_body(el) -> str:
@@ -438,7 +441,9 @@ def parse_callout(el, cl: set[str]) -> dict:
     if ol:
         b["steps"] = [inline(li) for li in ol[0].xpath("./li")]
     if kind == "quote":
-        lab = el.xpath('./div[@class="lab"]')
+        # The speaker label: div.lab, or p.spk / span.spk (the figure-kit
+        # guides of 2026-09-28: Travel Routers, Captive Portals).
+        lab = el.xpath('./div[@class="lab"]') or el.xpath('./*[@class="spk"]')
         who = el.xpath('./*[@class="who"]')
         attr = el.xpath('./*[@class="attr"]')
         small = el.xpath('./p[@class="small"]')
@@ -497,9 +502,14 @@ def fix_page_refs(g: dict) -> list[str]:
         idx = g["page_steps"].get(page)
         if not idx:
             raise ConvertError(f"a reference to page {page}, which has no step")
-        # A page that starts a new section belongs to that section; a page
-        # that only continues one belongs to the one it continues.
-        return g["steps"][idx[-1] if len(idx) == 1 else idx[1]]
+        # A page that starts a new section belongs to the first section that
+        # starts on it; a page that only continues one belongs to the one it
+        # continues. (Until 2026-09-28 this took the page's second entry
+        # whenever it had two, which picks the wrong step for a page that
+        # opens with a heading and starts another lower down: Travel
+        # Routers' "the VPN note on page 13".)
+        starts = g["page_starts"].get(page)
+        return g["steps"][starts[0] if starts else idx[0]]
 
     def fix(s: str) -> str:
         def sub(m: re.Match) -> str:

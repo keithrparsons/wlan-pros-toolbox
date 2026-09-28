@@ -155,13 +155,62 @@ def outer_svgs(block: str) -> list[str]:
     return out
 
 
+# The gap between two panels of one figure: the guide's
+# `.fig svg + svg { margin-top: var(--space-sm) }`, 16 CSS px, in the panels'
+# own units. A figure's content box on the 210 mm page is 793.7 px less two
+# 0.75 in margins (72 px each), 16 px padding each side and a 1 px border
+# each side: 615.7 px.
+FIG_CONTENT_PX = 615.7
+PANEL_GAP_PX = 16.0
+
+
+def stack_panels(panels: list[str]) -> tuple[str, str]:
+    """Two or more <svg> panels drawn one above the other in one figure
+    (Wi-Fi and Health, Figures 2 and 9: (a) and (b)), as one <svg> holding
+    each panel as a nested <svg> at its offset. nested_svgs_to_groups then
+    places each as a group. Returns the markup and a note for the log."""
+    roots = [parse_svg(p) for p in panels]
+    sizes = []
+    for r in roots:
+        vb = r.get("viewBox")
+        if not vb:
+            raise ExtractError("figure panel <svg> has no viewBox")
+        sizes.append(tuple(float(v) for v in re.split(r"[\s,]+", vb.strip())))
+    widths = {sz[2] for sz in sizes}
+    if len(widths) != 1:
+        raise ExtractError(f"stacked panels differ in width: {sorted(widths)}")
+    w = widths.pop()
+    gap = PANEL_GAP_PX * w / FIG_CONTENT_PX
+    top = etree.Element(NS + "svg", nsmap={None: SVG_NS})
+    y = 0.0
+    labels = []
+    for r, (_, _, pw, ph) in zip(roots, sizes):
+        if r.get("aria-label"):
+            labels.append(r.get("aria-label"))
+        for k, v in (("x", "0"), ("y", fmt(y)), ("width", fmt(pw)), ("height", fmt(ph))):
+            r.set(k, v)
+        top.append(r)
+        y += ph + gap
+    top.set("viewBox", f"0 0 {fmt(w)} {fmt(y - gap)}")
+    if labels:
+        top.set("aria-label", " ".join(labels))
+    note = (f"{len(panels)} panels stacked into one drawing, {fmt(gap)}-unit gap "
+            "(16 CSS px at the printed figure's width)")
+    return etree.tostring(top, encoding="unicode"), note
+
+
 def find_figures(src: str) -> list[dict]:
-    """Every <div class="fig ..."> block: its <svg>, caption HTML and number."""
+    """Every <div class="fig ..."> block: its <svg>, caption HTML and number.
+    A figure of several stacked <svg> panels is returned as one <svg>."""
     out = []
     for m in re.finditer(r'<div class="fig\b[^"]*"[^>]*>', src):
         block = src[m.start() : _balanced_div(src, m.start())]
         svgs = outer_svgs(block)
         cap = re.search(r'<(div|p) class="cap"[^>]*>(.*?)</\1>', block, re.S)
+        stacked = None
+        if len(svgs) > 1:
+            markup, stacked = stack_panels(svgs)
+            svgs = [markup]
         if len(svgs) != 1:
             raise ExtractError(
                 f"figure block at {m.start()} has {len(svgs)} <svg>, expected 1"
@@ -172,7 +221,8 @@ def find_figures(src: str) -> list[dict]:
         num = re.match(r"\*\*Figure (\d+)\.", caption)
         if not num:
             raise ExtractError(f'caption does not start "Figure N.": {caption!r}')
-        out.append({"n": int(num.group(1)), "svg": svgs[0], "caption": caption})
+        out.append({"n": int(num.group(1)), "svg": svgs[0], "caption": caption,
+                    "stacked": stacked})
     numbers = [f["n"] for f in out]
     if numbers != list(range(1, len(out) + 1)):
         raise ExtractError(f"figure numbers are not 1..{len(out)}: {numbers}")
@@ -618,7 +668,13 @@ def _marker_context(marker: etree._Element) -> dict[str, str]:
     return out
 
 
-def expand_markers(root: etree._Element) -> int:
+# Every id="..." in the guide being extracted: an arrowhead reference to an
+# id that exists somewhere must still fail loudly if it cannot be resolved.
+_GUIDE_IDS: set[str] = set()
+
+
+def expand_markers(root: etree._Element, notes: list[str] | None = None,
+                   where: str = "") -> int:
     ids = _ids(root)
     n = 0
     for el in list(root.iter()):
@@ -632,6 +688,13 @@ def expand_markers(root: etree._Element) -> int:
             if ref is None:  # "none"
                 continue
             marker = ids.get(ref)
+            if marker is None and notes is not None and ref not in _GUIDE_IDS:
+                # No element anywhere in the guide has this id (Satellite
+                # Texting, Figure 3, 'ah-8A5A00'), so the PDF draws no
+                # arrowhead here either. Match it, and say so.
+                notes.append(f"{where}: WARNING {attr} points at {ref!r}, which the guide "
+                             "never defines; the PDF draws no arrowhead there, nor does the lesson")
+                continue
             if marker is None or local(marker) != "marker":
                 raise ExtractError(f"{attr} points at a missing marker: {ref!r}")
             (sp, sa), (ep, ea) = element_ends(el)
@@ -774,7 +837,7 @@ def convert(
     nested = nested_svgs_to_groups(root)
     uses = inline_uses(root)
     drop_symbols(root)
-    markers = expand_markers(root)
+    markers = expand_markers(root, notes, where)
     colors = resolve_current_color(root, base_color)
     tidy(root)
     root.set("width", fmt(w))
@@ -810,6 +873,8 @@ def extract(guide: Path, slug: str, replacements=()) -> tuple[dict[str, str], li
     manifest: list[dict] = []
     variables = root_vars(src)
     sprite = find_sprite(src)
+    _GUIDE_IDS.clear()
+    _GUIDE_IDS.update(re.findall(r'\bid="([^"]+)"', src))
     cover = find_cover(src)
     if cover:
         svg, info = convert(cover, COVER_COLOR, replacements, "cover", variables, sprite)
@@ -823,6 +888,8 @@ def extract(guide: Path, slug: str, replacements=()) -> tuple[dict[str, str], li
             )
         except ExtractError as e:
             raise ExtractError(f"Figure {f['n']}: {e}") from e
+        if f.get("stacked"):
+            info["notes"].insert(0, f"Figure {f['n']}: {f['stacked']}")
         files[name] = svg
         manifest.append(
             {
