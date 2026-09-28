@@ -6,9 +6,11 @@
 //
 // The drawn phase period inside the wall equals the air period, at any drawn
 // band width, for a single slab and for a layered wall. (The optional "Show
-// wavelength inside the material" view was removed on 2026-09-27.) Heights are dB above the noise floor (Keith, 2026-09-27): the
-// drawn magnitude is (P - floor) / (Ptx - floor) with P = Ptx + 20 log10
-// |fieldAt| in front, a straight dB ramp inside, Ptx - loss behind.
+// wavelength inside the material" view was removed on 2026-09-27.) Heights are linear in dBm with zero at 0 dBm (Keith, 2026-09-28:
+// "20dB on the left, going througha 5dB wall should end up with 15dB on the
+// right side, or about 25% smaller wave form"), with a squeezed tail under
+// 0 dBm down to the noise floor. The front holds at Ptx ("the input should
+// be fix and not moving"), a straight dB ramp inside, Ptx - loss behind.
 //
 // The band is NOT to scale (Keith, 2026-09-27: "at 1cm only one pixel
 // difference, at 1m the two vertical lines should be no more than 3X the
@@ -204,18 +206,34 @@ void main() {
     }
   });
 
-  group('heights are dB above the noise floor', () {
+  group('heights are linear in dBm, zero at 0 dBm, squeezed tail', () {
     double h(double dbm, double tx) =>
         WallWaveProfile.heightForDbm(dbm, txPowerDbm: tx);
-    double db(double v) => 20 * math.log(v) / math.ln10;
 
-    test('the mapping: 1 at Tx, 0 at the floor and below, linear in dB', () {
+    test("Keith's rule: 20 dBm through a 5 dB wall draws 25% shorter", () {
+      expect(h(20, 20), closeTo(1, 1e-12));
+      expect(h(15, 20), closeTo(0.75, 1e-12));
+      expect(h(10, 20), closeTo(0.5, 1e-12));
+      expect(h(30, 30), closeTo(1, 1e-12));
+      expect(h(15, 30), closeTo(0.5, 1e-12));
+    });
+
+    test('the tail: 0.1 at 0 dBm, 0 at the floor and below, continuous', () {
       for (final double tx in <double>[0, 20, 30]) {
-        expect(h(tx, tx), closeTo(1, 1e-12));
+        expect(h(0, tx), closeTo(kWallTailHeight, 1e-12));
         expect(h(kWallNoiseFloorDbm, tx), 0);
         expect(h(kWallNoiseFloorDbm - 40, tx), 0);
-        expect(h((tx + kWallNoiseFloorDbm) / 2, tx), closeTo(0.5, 1e-12));
+        expect(h(kWallNoiseFloorDbm / 2, tx), closeTo(0.05, 1e-12));
+        for (double d = kWallNoiseFloorDbm; d < tx; d += 0.25) {
+          expect((h(d + 0.25, tx) - h(d, tx)).abs(), lessThan(0.05));
+          expect(h(d + 0.25, tx), greaterThanOrEqualTo(h(d, tx)));
+        }
       }
+    });
+
+    test('a Tx power under 10 dBm draws shorter, in proportion', () {
+      expect(h(5, 5), closeTo(0.5, 1e-12));
+      expect(h(0, 0), closeTo(kWallTailHeight, 1e-12));
     });
 
     test('the floor is thermal noise in 20 MHz plus a 6 dB noise figure', () {
@@ -243,12 +261,14 @@ void main() {
             final double behind = tx - r.transmissionLossDb;
             expect(p.behindDbm, closeTo(behind, 1e-9));
             expect(p.phasorAtPx(p.width).abs, closeTo(h(behind, tx), 1e-12));
-            // In front: Ptx + 20 log10 |fieldAt|; the carrier is the
+            // In front: held at Ptx at every column; the carrier is the
             // incident wave's phase, -k x.
+            for (final double fx in <double>[0, 0.2, 0.5, 0.9]) {
+              expect(p.levelDbmAtPx(fx * p.frontPx), tx);
+            }
             final double x = -p.side / 3;
-            final Complex f = r.fieldAt(x);
             final Complex g = p.phasorAtPx(p.frontPx + x * p.airPxPerM);
-            expect(g.abs, closeTo(h(tx + db(f.abs), tx), 1e-9));
+            expect(g.abs, closeTo(h(tx, tx), 1e-9));
             if (g.abs > 1e-9) {
               final double k0z =
                   2 *
@@ -262,8 +282,8 @@ void main() {
               );
               expect(dph, closeTo(0, 1e-9));
             }
-            // Inside: a straight ramp in dB between the exact face levels.
-            final double front = tx + db(r.fieldAt(0).abs);
+            // Inside: a straight ramp in dB from Ptx to the level behind.
+            final double front = tx;
             for (final double frac in <double>[0.25, 0.5, 0.75]) {
               expect(
                 p.levelDbmAtPx(p.frontPx + frac * p.wallPx),
@@ -283,9 +303,14 @@ void main() {
       );
       final WallWaveProfile p = WallWaveProfile(r, 1280, txPowerDbm: 20);
       // Linear field would draw |T| ~ 1e-4 of the incident: a flat line.
+      // The squeezed tail keeps a wave (Keith kept this on 2026-09-28).
       expect(r.t.abs, lessThan(1e-3));
       expect(p.belowFloorBehind, isFalse);
-      expect(p.heightAtPx(p.width), greaterThan(0.3));
+      expect(p.heightAtPx(p.width), greaterThan(0.02));
+      expect(
+        p.heightAtPx(p.width),
+        closeTo(kWallTailHeight * (p.behindDbm + 95) / 95, 1e-9),
+      );
     });
 
     test('below the floor draws flat, and says so', () {
