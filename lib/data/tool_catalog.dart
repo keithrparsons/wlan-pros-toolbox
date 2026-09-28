@@ -2549,6 +2549,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Why the TV and the Printer Vanish on Guest Wi-Fi (2026-09-27, Keith
+      // approved Pax's candidate 11): Multicast DNS is link-local (RFC
+      // 6762), so a guest network or client isolation stops discovery. One
+      // control: same network / guest network / client isolation. No
+      // product names on screen.
+      ToolEntry(
+        id: 'guest-discovery',
+        title: 'Why the TV and the Printer Vanish on Guest Wi-Fi',
+        description:
+            'Why screen casting and printing find nothing on a guest '
+            'network: follow the discovery question to the edge of the '
+            'network, where it stops',
+        routeName: '/tools/guest-discovery',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

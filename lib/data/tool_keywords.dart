@@ -2669,6 +2669,30 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi positioning',
     'unwanted tracking',
   ],
+  // Why the TV and the Printer Vanish on Guest Wi-Fi (Guided Lesson). The
+  // symptom words a host or guest uses, the standards terms a pro searches,
+  // and the brand names people type for the features. The brand names are
+  // search terms only; the lesson itself names no product.
+  'guest-discovery': <String>[
+    'guest network',
+    'guest wi-fi',
+    'screen casting',
+    'screen mirroring',
+    'printer not found',
+    'tv not found',
+    'mdns',
+    'multicast dns',
+    'bonjour',
+    'airplay',
+    'airprint',
+    'chromecast',
+    'client isolation',
+    'ap isolation',
+    'mdns gateway',
+    'mdns reflector',
+    'vlan',
+    'rfc 6762',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

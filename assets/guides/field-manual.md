@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Why the TV and the Printer Vanish on Guest Wi-Fi added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
-  - Guided Lessons (3)
+- **Wi-Fi Classroom** (52 tools)
+  - Guided Lessons (4)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
-Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (3)
+## Guided Lessons (4)
 
 
 ### Antenna Fundamentals
@@ -3882,6 +3882,25 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 - How the finder's GPS, Wi-Fi and cell positioning combine into your dot is our explanation, not Apple's wording.
 - Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
 - The lesson is independent and isn't affiliated with or endorsed by Apple.
+
+
+### Why the TV and the Printer Vanish on Guest Wi-Fi
+
+A read-along lesson with one step-through, on why screen casting and printing find nothing from a guest network. A phone finds the TV or the printer with Multicast DNS (mDNS): one question sent to every device on the local network segment at once, addressed to 224.0.0.251 (FF02::FB for IPv6) on UDP port 5353. RFC 6762 defines that address as link-local, so the question never leaves the segment. The step-through follows the question from the phone, with one control: same network, guest network, or client isolation.
+
+**Why it's here.** It answers a call Wi-Fi people get from hosts and guests: the TV is broken, or the Wi-Fi is broken. Neither is. The guest network is a separate segment, and the discovery question stops at its edge. Client isolation stops it too, even on one network, because the access point will not pass traffic from one wireless device to another.
+
+**How to use**
+1. Read top to bottom. The step-through is in section 2, why the question stays local is in section 3, and what to do about it is in section 5.
+2. Pick Same, Guest or Isolation, then press Step. Step 1 shows the question and its address. Step 2 follows it to every device and marks where it stops. Step 3 shows what the phone's list finds. Back takes one step back and Reset returns to step 1.
+3. Switch at any step to compare. With Same, the phone is on the main network with the TV and the printer. On the same network the TV and the printer both answer. On the guest network the question stops at the router between the two networks. With client isolation the phone is on the same network as the TV, and the question still stops at the access point.
+4. The phone's internet works in all three. Discovery failing does not mean the Wi-Fi is broken.
+
+**Field notes**
+- Some networks run an mDNS gateway, also called a reflector, that repeats discovery questions and answers between segments (VLANs, virtual local area networks) under rules the administrator sets. It is the generic fix when the TV has to sit on a different segment from the people casting to it.
+- Exactly what client isolation blocks is set differently from one product to the next. The lesson shows it stopping the question at the access point.
+- A simplified picture: one access point, one router, one TV and one printer, all on Wi-Fi. A wired printer on the same segment, and how each kind of device names and shows what it finds, are left out.
+- The lesson names no product. The TV, the printer and screen casting stand in for whatever the room has.
 
 
 ## RF and Propagation (10)

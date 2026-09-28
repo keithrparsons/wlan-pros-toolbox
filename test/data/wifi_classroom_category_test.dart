@@ -21,6 +21,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Find My, Explained, the lesson for the people Wi-Fi pros
     // get asked about Find My by.
     'find-my-explained',
+    // 2026-09-27: Why the TV and the Printer Vanish on Guest Wi-Fi (Pax
+    // candidate 11).
+    'guest-discovery',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -86,6 +89,13 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
   ],
 };
 
+/// Guided Lessons built in the Classroom rather than moved in from
+/// Educational Resources.
+const Set<String> _builtInClassroom = <String>{
+  'find-my-explained',
+  'guest-discovery',
+};
+
 const Set<String> _simulatorShelves = <String>{
   'RF and Propagation',
   'Signals and PHY',
@@ -144,11 +154,11 @@ void main() {
 
   test('the 13 lessons and handouts left educational-resources; Ham Radio '
       'Study Resources stayed', () {
-    // find-my-explained was built in the Classroom (2026-09-27) and never
-    // lived in Educational Resources, so it is not one of the 13 that moved.
+    // Lessons built in the Classroom (2026-09-27 on) never lived in
+    // Educational Resources, so they are not among the 13 that moved.
     final Set<String> moved = <String>{
       ..._teachingOrder['Guided Lessons']!.where(
-        (String id) => id != 'find-my-explained',
+        (String id) => !_builtInClassroom.contains(id),
       ),
       ..._teachingOrder['Course Handouts']!,
     };
@@ -188,7 +198,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(51));
+    expect(classroom.tools, hasLength(52));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

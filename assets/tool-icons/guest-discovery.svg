@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Why the TV and the Printer Vanish on Guest Wi-Fi: a device (left)
+         calls out in two sideways arcs, the discovery question, and the
+         arcs stop at a solid wall (right): the edge of the segment. Distinct
+         from the upward Wi-Fi fans (join-network, wifi-vs-internet) because
+         the arcs open sideways, and from find-my-explained (a disc with arcs
+         at upper right) by the wall. -->
+    <circle cx="5" cy="12" r="2"/>
+    <path d="M9 8 A5.7 5.7 0 0 1 9 16"/>
+    <path d="M12.5 5.5 A9 9 0 0 1 12.5 18.5"/>
+    <path d="M19 3.5 V20.5"/>
+  </g>
+</svg>
