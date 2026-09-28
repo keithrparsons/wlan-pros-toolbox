@@ -26,8 +26,8 @@
 // A-MPDU arrangement IS the aggregate the time view draws: its PSDU bytes
 // equal AirtimeResult.psduBytes, and its PPDU time equals ppduTenths.
 //
-// LEFT OUT, and said so in help: A-MSDU and A-MPDU maximum lengths (not in
-// the app's sources, so not checked), the HT Control field, security header
+// LIMITS: the per-PHY maxima Pax pinned (end of this file). LEFT OUT, and
+// said so in help: the limits Pax could not pin, the HT Control field, security header
 // and MIC shown as one block, a damaged delimiter (the receiver hunting for
 // the next delimiter signature), and the retry's own framing (the resent
 // bytes are timed as a new PPDU of exactly those bytes).
@@ -142,6 +142,18 @@ class StructureUnit {
       .fold<int>(0, (int a, StructurePart p) => a + p.bytes);
 
   bool holdsMsdu(int m) => m >= firstMsdu && m < firstMsdu + msduCount;
+
+  /// The A-MSDU inside this MPDU: its subframe headers, MSDUs and padding,
+  /// without the MAC header, security bytes or FCS. For a plain MPDU, just
+  /// the MSDU.
+  int get amsduBytes => parts
+      .where(
+        (StructurePart p) =>
+            p.kind == StructurePartKind.subframeHeader ||
+            p.kind == StructurePartKind.msdu ||
+            p.kind == StructurePartKind.amsduPadding,
+      )
+      .fold<int>(0, (int a, StructurePart p) => a + p.bytes);
 }
 
 /// What one corrupted MSDU costs.
@@ -370,3 +382,193 @@ AggregateStructure buildAggregateStructure(
 
 /// Bytes of padding that bring [n] up to a multiple of [align].
 int _padTo(int n, int align) => (align - n % align) % align;
+
+// ── Limits from the standard (1.11.0 follow-up) ─────────────────────────────
+//
+// Source: Pax, myPKA Deliverables/2026-09-27-classroom-interferer-and-ds-
+// sources/RESEARCH-BRIEF.md Part 3. Only the values Pax marks as held (two
+// sources agree) are checked. Not checked, and said so in help: the HE
+// Maximum MPDU Length (one source or inference per band), the smaller
+// A-MPDU limit an HE receiver advertises in 2.4 and 6 GHz, and everything
+// EHT (not modeled here; its A-MPDU maximum is disputed, 15,523,198 vs
+// 15,523,200).
+
+/// The pinned caps, octets unless named otherwise.
+class AggregationLimits {
+  AggregationLimits._();
+
+  /// HT Maximum A-MSDU Length, the two values the 1-bit field selects.
+  static const List<int> htAmsdu = <int>[3839, 7935];
+
+  /// HT delimiter MPDU Length is 12 bits: an MPDU in an HT A-MPDU is at
+  /// most 2^12 - 1 octets.
+  static const int htMpduInAmpdu = 4095;
+
+  /// VHT Maximum MPDU Length, field values 0, 1, 2.
+  static const List<int> vhtMpdu = <int>[3895, 7991, 11454];
+
+  /// Maximum A-MPDU length, 2^(13 + exponent) - 1 at the largest exponent.
+  static const int htAmpdu = 65535;
+  static const int vhtAmpdu = 1048575;
+
+  /// HE PSDU maximum, which an HE A-MPDU cannot exceed.
+  static const int hePsdu = 6500631;
+
+  /// aPPDUMaxTime, us: HT-mixed, VHT and HE.
+  static const int ppduMaxTimeUs = AirtimeConstants.maxPpduUs;
+
+  /// Delimiter MPDU Length field width, bits.
+  static const int htDelimiterLengthBits = 12;
+  static const int vhtDelimiterLengthBits = 14;
+
+  /// The largest A-MSDU an HT A-MPDU can carry: the 4,095-octet MPDU less
+  /// the MAC header, the security bytes and the FCS. 4,065 unencrypted.
+  static int htAmsduInAmpdu(int encryptionBytes) =>
+      htMpduInAmpdu -
+      AggregationConstants.macHeaderBytes -
+      AggregationConstants.fcsBytes -
+      encryptionBytes;
+}
+
+/// How a value stands against a limit.
+enum LimitVerdict {
+  /// Within the cap at every setting.
+  ok,
+
+  /// Within the cap only if the receiver advertises a larger setting.
+  needsLargerSetting,
+
+  /// Over the largest value the standard allows.
+  exceeds,
+}
+
+enum AggregationLimitKind {
+  htAmsdu('A-MSDU length (HT)'),
+  htMpduInAmpdu('MPDU length in an HT A-MPDU'),
+  vhtMpdu('MPDU length (VHT)'),
+  ampdu('A-MPDU length'),
+  ppduTime('PPDU duration');
+
+  const AggregationLimitKind(this.label);
+
+  final String label;
+}
+
+/// One limit, the value it is measured on, and the verdict.
+class AggregationLimitCheck {
+  const AggregationLimitCheck({
+    required this.kind,
+    required this.value,
+    required this.cap,
+    required this.settings,
+    required this.verdict,
+  });
+
+  final AggregationLimitKind kind;
+
+  /// Octets, or tenths of a us for [AggregationLimitKind.ppduTime].
+  final int value;
+
+  /// The largest value allowed (the top setting where there are several).
+  final int cap;
+
+  /// Every setting a receiver can advertise, ascending; just [cap] when
+  /// the limit has one value.
+  final List<int> settings;
+
+  final LimitVerdict verdict;
+
+  /// The smallest advertised setting that fits, or null when none does.
+  int? get smallestFitting {
+    for (final int s in settings) {
+      if (value <= s) return s;
+    }
+    return null;
+  }
+}
+
+AggregationLimitCheck _tiers(
+  AggregationLimitKind kind,
+  int value,
+  List<int> settings,
+) {
+  final LimitVerdict v = value > settings.last
+      ? LimitVerdict.exceeds
+      : value > settings.first
+      ? LimitVerdict.needsLargerSetting
+      : LimitVerdict.ok;
+  return AggregationLimitCheck(
+    kind: kind,
+    value: value,
+    cap: settings.last,
+    settings: settings,
+    verdict: v,
+  );
+}
+
+AggregationLimitCheck _single(AggregationLimitKind kind, int value, int cap) =>
+    _tiers(kind, value, <int>[cap]);
+
+/// HT A-MSDU length against 3,839 / 7,935.
+AggregationLimitCheck checkHtAmsdu(int amsduBytes) =>
+    _tiers(AggregationLimitKind.htAmsdu, amsduBytes, AggregationLimits.htAmsdu);
+
+/// An MPDU inside an HT A-MPDU against the 12-bit delimiter's 4,095.
+AggregationLimitCheck checkHtMpduInAmpdu(int mpduBytes) => _single(
+  AggregationLimitKind.htMpduInAmpdu,
+  mpduBytes,
+  AggregationLimits.htMpduInAmpdu,
+);
+
+/// A VHT MPDU against 3,895 / 7,991 / 11,454.
+AggregationLimitCheck checkVhtMpdu(int mpduBytes) =>
+    _tiers(AggregationLimitKind.vhtMpdu, mpduBytes, AggregationLimits.vhtMpdu);
+
+/// The A-MPDU (the PSDU) against the PHY's maximum, or null for a PHY
+/// with no pinned cap (Legacy has no A-MPDU).
+AggregationLimitCheck? checkAmpdu(AirtimePhy phy, int psduBytes) {
+  final int? cap = switch (phy) {
+    AirtimePhy.ht => AggregationLimits.htAmpdu,
+    AirtimePhy.vht => AggregationLimits.vhtAmpdu,
+    AirtimePhy.he => AggregationLimits.hePsdu,
+    AirtimePhy.legacy => null,
+  };
+  return cap == null
+      ? null
+      : _single(AggregationLimitKind.ampdu, psduBytes, cap);
+}
+
+/// Preamble plus data against aPPDUMaxTime, 5.484 ms (HT, VHT, HE).
+AggregationLimitCheck? checkPpduTime(AirtimePhy phy, int ppduTenths) =>
+    phy == AirtimePhy.legacy
+    ? null
+    : _single(
+        AggregationLimitKind.ppduTime,
+        ppduTenths,
+        AggregationLimits.ppduMaxTimeUs * 10,
+      );
+
+/// Every pinned limit that applies to [st]. [ppduTenths] is the PSDU's
+/// preamble plus data, or null when the scenario has no valid airtime.
+List<AggregationLimitCheck> checkAggregationLimits(
+  AggregateStructure st, {
+  int? ppduTenths,
+}) {
+  final AirtimePhy phy = st.scenario.phy;
+  final StructureUnit u = st.units.first; // every unit is the same size
+  final List<AggregationLimitCheck> out = <AggregationLimitCheck>[];
+  if (phy == AirtimePhy.ht) {
+    if (st.kind.usesAmsdu) out.add(checkHtAmsdu(u.amsduBytes));
+    if (st.inAmpdu) out.add(checkHtMpduInAmpdu(u.mpduBytes));
+  }
+  if (phy == AirtimePhy.vht) out.add(checkVhtMpdu(u.mpduBytes));
+  if (st.inAmpdu) {
+    final AggregationLimitCheck? a = checkAmpdu(phy, st.psduBytes);
+    if (a != null) out.add(a);
+  }
+  if (ppduTenths != null) {
+    final AggregationLimitCheck? t = checkPpduTime(phy, ppduTenths);
+    if (t != null) out.add(t);
+  }
+  return out;
+}

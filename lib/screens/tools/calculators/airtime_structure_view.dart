@@ -45,7 +45,7 @@ import 'airtime_anatomy_model.dart';
 import 'airtime_anatomy_stage.dart';
 
 /// Cells per row in the PSDU and bitmap grids.
-int _perRow(double width) => width >= 480 ? 16 : 8;
+int _perRow(double width) => width >= 440 ? 16 : 8;
 
 class AirtimeStructureView extends StatelessWidget {
   const AirtimeStructureView({super.key, required this.model});
@@ -90,6 +90,8 @@ class AirtimeStructureView extends StatelessWidget {
           _StructureInputs(model: model),
           gap,
           _LinkLine(model: model, mono: mono),
+          const SizedBox(height: AppSpacing.xs),
+          _Limits(model: model, mono: mono),
           gap,
           _SubTitle(_psduTitle(st)),
           const SizedBox(height: AppSpacing.xs),
@@ -107,8 +109,16 @@ class AirtimeStructureView extends StatelessWidget {
             unit: st.units[shownUnit],
             corruptedMsdu: bad?.corruptedMsdu,
           ),
+          if (st.inAmpdu) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(_delimiterNote(st.scenario.phy), style: note),
+          ],
           gap,
-          _SubTitle(st.usesBlockAck ? 'Block Ack bitmap' : 'Acknowledgment'),
+          _SubTitle(
+            st.usesBlockAck
+                ? 'Block Ack bitmap, one bit per MPDU'
+                : 'Acknowledgment',
+          ),
           const SizedBox(height: AppSpacing.xs),
           _AckRow(structure: st, outcome: bad, mono: mono),
           gap,
@@ -173,7 +183,9 @@ extension on AirtimeStructureView {
                     ),
                     gap,
                     _SubTitle(
-                      st.usesBlockAck ? 'Block Ack bitmap' : 'Acknowledgment',
+                      st.usesBlockAck
+                          ? 'Block Ack bitmap, one bit per MPDU'
+                          : 'Acknowledgment',
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     _AckRow(structure: st, outcome: bad, mono: mono),
@@ -187,6 +199,8 @@ extension on AirtimeStructureView {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     _Outcome(model: model, mono: mono),
+                    gap,
+                    _Limits(model: model, mono: mono),
                     gap,
                     _Compare(model: model, mono: mono),
                   ],
@@ -864,13 +878,20 @@ class _AckRow extends StatelessWidget {
         const SizedBox(height: AppSpacing.xxs),
         Text(
           o == null
-              ? 'One bit per A-MPDU subframe, 1 for received. Every '
-                    'subframe has its own FCS, so the receiver can say which '
-                    'arrived.'
+              ? 'One bit per MPDU, 1 for received. Every A-MPDU subframe '
+                    'has its own FCS, so the receiver can say which arrived.'
+                    '${structure.msdusPerMpdu > 1 ? ' An A-MSDU is one MPDU, so one bit covers all of its MSDUs.' : ''}'
               : 'Bit ${o.failedUnit + 1} is 0: that subframe failed its own '
                     'FCS. The other ${n - 1} are acknowledged and not sent '
                     'again.',
           style: text.bodySmall?.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          'This Block Ack covers up to 64 MPDUs, the compressed bitmap HT '
+          'introduced. HE raised it to 256 MPDUs, EHT (Wi-Fi 7) to 512 or '
+          '1,024.',
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ],
     );
@@ -994,6 +1015,129 @@ class _Outcome extends StatelessWidget {
         ),
         child: body,
       ),
+    );
+  }
+}
+
+// ── Limits ─────────────────────────────────────────────────────────────────
+
+/// The 4-byte MPDU delimiter's fields. The length field's width is why an
+/// HT A-MPDU cannot carry an MPDU over 4,095 bytes.
+String _delimiterNote(AirtimePhy phy) => phy == AirtimePhy.ht
+    ? 'The 4-byte delimiter holds a 12-bit MPDU Length (so an MPDU in an HT '
+          'A-MPDU is at most 4,095 bytes), an 8-bit CRC and the signature '
+          '0x4E.'
+    : 'The 4-byte delimiter holds an EOF bit, a 14-bit MPDU Length (12 bits '
+          'in HT), an 8-bit CRC and the signature 0x4E.';
+
+String _limitValue(AggregationLimitCheck c) =>
+    c.kind == AggregationLimitKind.ppduTime
+    ? '${formatTenthsUs(c.value)} µs'
+    : '${_bytes(c.value)} bytes';
+
+String _limitCap(AggregationLimitCheck c) =>
+    c.kind == AggregationLimitKind.ppduTime
+    ? '${formatTenthsUs(c.cap)} µs'
+    : '${_bytes(c.cap)} bytes';
+
+String _limitLine(AggregationLimitCheck c) {
+  final String v = _limitValue(c);
+  switch (c.verdict) {
+    case LimitVerdict.ok:
+      return '${c.kind.label}: $v, within ${_limitCap(c)}.';
+    case LimitVerdict.needsLargerSetting:
+      return '${c.kind.label}: $v. Too long for a receiver advertising '
+          '${_bytes(c.settings.first)}; it needs one advertising '
+          '${_bytes(c.smallestFitting!)}.';
+    case LimitVerdict.exceeds:
+      return '${c.kind.label}: $v, over the maximum of ${_limitCap(c)}.';
+  }
+}
+
+/// What is not pinned for this PHY, so the list never implies a limit was
+/// checked when it was not. Null when every limit that applies is checked.
+String? _notChecked(AirtimePhy phy) => phy == AirtimePhy.he
+    ? 'Not checked for HE: the Maximum MPDU Length, and the smaller A-MPDU '
+          'limit a receiver can advertise.'
+    : null;
+
+class _Limits extends StatelessWidget {
+  const _Limits({required this.model, required this.mono});
+
+  final AirtimeAnatomyModel model;
+  final AppMonoText mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppColorScheme colors = context.colors;
+    final List<AggregationLimitCheck> checks = model.limits;
+    final String? unchecked = _notChecked(model.scenario(model.editing).phy);
+    if (checks.isEmpty && unchecked == null) return const SizedBox.shrink();
+
+    Widget row(AggregationLimitCheck c) {
+      final (IconData icon, Color color, String word) = switch (c.verdict) {
+        LimitVerdict.ok => (
+          Icons.check_rounded,
+          colors.textSecondary,
+          'Within limit',
+        ),
+        LimitVerdict.needsLargerSetting => (
+          Icons.warning_amber_rounded,
+          colors.statusWarning,
+          'Depends on the receiver',
+        ),
+        LimitVerdict.exceeds => (
+          Icons.error_outline_rounded,
+          colors.statusDanger,
+          'Over the maximum',
+        ),
+      };
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.xxs),
+        child: MergeSemantics(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(icon, size: AppSpacing.md, color: color),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: <InlineSpan>[
+                      if (c.verdict != LimitVerdict.ok)
+                        TextSpan(
+                          text: '$word. ',
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      TextSpan(text: _limitLine(c)),
+                    ],
+                  ),
+                  style: text.bodySmall?.copyWith(color: colors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const _SubTitle('Limits from the standard'),
+        for (final AggregationLimitCheck c in checks) row(c),
+        if (unchecked != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            unchecked,
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ],
     );
   }
 }

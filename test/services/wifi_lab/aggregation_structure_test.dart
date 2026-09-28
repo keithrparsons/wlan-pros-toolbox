@@ -254,4 +254,136 @@ void main() {
       expect(retry, lessThan(r.ppduTenths));
     });
   });
+
+  group('limits Pax pinned (RESEARCH-BRIEF Part 3)', () {
+    void trips(AggregationLimitCheck Function(int) f, int cap) {
+      expect(f(cap).verdict, isNot(LimitVerdict.exceeds), reason: '$cap');
+      expect(f(cap + 1).verdict, LimitVerdict.exceeds, reason: '${cap + 1}');
+    }
+
+    test('HT A-MSDU: 3,839, then 7,935', () {
+      trips(checkHtAmsdu, 7935);
+      expect(checkHtAmsdu(3839).verdict, LimitVerdict.ok);
+      expect(checkHtAmsdu(3840).verdict, LimitVerdict.needsLargerSetting);
+      expect(checkHtAmsdu(3840).smallestFitting, 7935);
+    });
+
+    test('VHT MPDU: 3,895, 7,991, 11,454', () {
+      trips(checkVhtMpdu, 11454);
+      expect(checkVhtMpdu(3895).verdict, LimitVerdict.ok);
+      expect(checkVhtMpdu(3896).smallestFitting, 7991);
+      expect(checkVhtMpdu(7992).smallestFitting, 11454);
+      expect(checkVhtMpdu(11455).smallestFitting, isNull);
+    });
+
+    test('an MPDU in an HT A-MPDU: 4,095 (12-bit length field)', () {
+      trips(checkHtMpduInAmpdu, 4095);
+      expect(
+        (1 << AggregationLimits.htDelimiterLengthBits) - 1,
+        AggregationLimits.htMpduInAmpdu,
+      );
+    });
+
+    test('A-MPDU: HT 65,535, VHT 1,048,575, HE 6,500,631', () {
+      trips((int b) => checkAmpdu(AirtimePhy.ht, b)!, 65535);
+      trips((int b) => checkAmpdu(AirtimePhy.vht, b)!, 1048575);
+      trips((int b) => checkAmpdu(AirtimePhy.he, b)!, 6500631);
+      expect(checkAmpdu(AirtimePhy.legacy, 1 << 30), isNull);
+    });
+
+    test('PPDU duration: 5.484 ms for HT, VHT and HE', () {
+      for (final AirtimePhy phy in <AirtimePhy>[
+        AirtimePhy.ht,
+        AirtimePhy.vht,
+        AirtimePhy.he,
+      ]) {
+        trips((int t) => checkPpduTime(phy, t)!, 54840);
+      }
+      expect(checkPpduTime(AirtimePhy.legacy, 1 << 30), isNull);
+    });
+
+    test('an A-MSDU inside an HT A-MPDU caps at 4,065', () {
+      expect(AggregationLimits.htAmsduInAmpdu(0), 4065);
+      // Three 1,339-byte MSDUs: 1,356 + 1,356 + 1,353 = 4,065 exactly.
+      AirtimeScenario ht(int payload) => AirtimeScenario(
+        phy: AirtimePhy.ht,
+        widthMhz: 40,
+        mcs: 7,
+        payloadBytes: payload,
+        framesAggregated: 2,
+        encryptionBytes: 0,
+      );
+      AggregationLimitCheck mpduCheck(int payload) {
+        final AggregateStructure a = buildAggregateStructure(
+          ht(payload),
+          AggregationKind.ampduOfAmsdus,
+          msdusPerAmsdu: 3,
+        );
+        expect(a.inAmpdu, isTrue);
+        return checkAggregationLimits(a).firstWhere(
+          (AggregationLimitCheck c) =>
+              c.kind == AggregationLimitKind.htMpduInAmpdu,
+        );
+      }
+
+      final AggregateStructure at = buildAggregateStructure(
+        ht(1339),
+        AggregationKind.ampduOfAmsdus,
+        msdusPerAmsdu: 3,
+      );
+      expect(at.units.first.amsduBytes, 4065);
+      expect(at.units.first.mpduBytes, 4095);
+      expect(mpduCheck(1339).verdict, isNot(LimitVerdict.exceeds));
+      // One byte more per MSDU: the A-MSDU is 4,066, the MPDU 4,096.
+      expect(mpduCheck(1340).value, 4096);
+      expect(mpduCheck(1340).verdict, LimitVerdict.exceeds);
+      // The same A-MSDU sent on its own is inside HT's 7,935 cap.
+      final AggregateStructure alone = buildAggregateStructure(
+        ht(1340).copyWith(framesAggregated: 1),
+        AggregationKind.amsdu,
+        msdusPerAmsdu: 3,
+      );
+      expect(alone.inAmpdu, isFalse);
+      final List<AggregationLimitCheck> c = checkAggregationLimits(alone);
+      expect(c.single.kind, AggregationLimitKind.htAmsdu);
+      expect(c.single.verdict, LimitVerdict.needsLargerSetting);
+    });
+
+    test('the default HT 64-frame A-MPDU is over 65,535 and says so', () {
+      final AggregateStructure a = buildAggregateStructure(
+        AirtimeScenario(
+          phy: AirtimePhy.ht,
+          widthMhz: 40,
+          mcs: 7,
+          framesAggregated: 64,
+        ),
+        AggregationKind.ampdu,
+      );
+      final AggregationLimitCheck amp = checkAggregationLimits(a).firstWhere(
+        (AggregationLimitCheck c) => c.kind == AggregationLimitKind.ampdu,
+      );
+      expect(amp.value, 64 * 1552);
+      expect(amp.verdict, LimitVerdict.exceeds);
+    });
+
+    test('HE 32 aggregated is inside every checked limit', () {
+      final AirtimeResult r = computeAirtime(he32);
+      final AggregateStructure a = buildAggregateStructure(
+        he32,
+        AggregationKind.ampdu,
+      );
+      final List<AggregationLimitCheck> c = checkAggregationLimits(
+        a,
+        ppduTenths: r.ppduTenths,
+      );
+      expect(c.map((AggregationLimitCheck x) => x.kind), <AggregationLimitKind>[
+        AggregationLimitKind.ampdu,
+        AggregationLimitKind.ppduTime,
+      ]);
+      expect(
+        c.every((AggregationLimitCheck x) => x.verdict == LimitVerdict.ok),
+        isTrue,
+      );
+    });
+  });
 }

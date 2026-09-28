@@ -100,6 +100,19 @@ class AirtimeAnatomyModel extends ChangeNotifier {
         msdusPerAmsdu: _msdusPerAmsdu,
       );
 
+  /// The pinned per-PHY limits for [structure]. The PPDU duration is
+  /// checked whenever the scenario has an airtime (the time view's Check
+  /// passes, or refuses only for length).
+  List<AggregationLimitCheck> get limits {
+    final AirtimeResult r = result(_editing);
+    final bool timed = r.check.isOk || r.check == AirtimeCheck.ppduTooLong;
+    final AggregateStructure st = structure;
+    return checkAggregationLimits(
+      st,
+      ppduTenths: timed ? ppduTenthsForPsdu(r, st.psduBytes) : null,
+    );
+  }
+
   /// The corrupted MSDU, clamped to the current structure, or null.
   int? get corruptedMsdu {
     final int? c = _corrupted;
