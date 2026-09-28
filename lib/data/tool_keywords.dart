@@ -1111,6 +1111,36 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   // Wi-Fi Classroom (2026-09-25). What the simulator shows, in the words a student
   // would search with.
+  // Wi-Fi Classroom (2026-09-27). Voice Priority, End to End: what a student
+  // types when calls break up on Wi-Fi while someone downloads.
+  'voice-priority': <String>[
+    'voice priority',
+    'qos',
+    'quality of service',
+    'dscp',
+    'ef',
+    'expedited forwarding',
+    'dscp 46',
+    'wmm',
+    'wi-fi multimedia',
+    'user priority',
+    'up 6',
+    'access category',
+    'ac_vo',
+    'voice queue',
+    'best effort',
+    'rfc 8325',
+    'dscp to up',
+    'qos mapping',
+    'end to end qos',
+    'tunnel',
+    'wi-fi calling',
+    'voip',
+    'call quality',
+    'edca',
+    'wi-fi classroom',
+    'simulator',
+  ],
   'medium-access-simulator': <String>[
     'csma/ca',
     'csma',

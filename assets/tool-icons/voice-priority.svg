@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the priority mark: a tag, carried forward hop to hop -->
+    <path d="M3 4.5 H11 L16 9.5 L11 14.5 H3 Z"/>
+    <circle cx="6.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/>
+    <path d="M18.5 9.5 H21"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="9" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
