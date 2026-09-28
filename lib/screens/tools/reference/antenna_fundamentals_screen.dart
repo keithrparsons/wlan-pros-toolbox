@@ -1566,7 +1566,7 @@ class _AntennaDiagramBand extends StatelessWidget {
     'g2-omni-donut': 760 / 460,
     'g3-polar-plot-anatomy': 780 / 520,
     'g4-pattern-comparison': 880 / 360,
-    'g5-coverage-floorplan': 880 / 560,
+    'g5-coverage-floorplan': 880 / 580,
     'g6-downtilt': 820 / 440,
     'g7-polarization': 820 / 520,
   };

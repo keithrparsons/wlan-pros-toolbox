@@ -6,9 +6,10 @@
 // font has it. Such glyphs are drawn as <path> geometry instead.
 //
 // The Starlink screen test already checks its own folder. This one covers
-// every folder the four redrawn Guided Lessons ship, so a lesson that lacks
-// its own guard (Find My shipped "7F3A…" and "Items › your tag › paste" as
-// <text>) is caught here.
+// every folder the Guided Lessons ship, so a lesson that lacks its own guard
+// (Find My shipped "7F3A…" and "Items › your tag › paste" as <text>;
+// Antenna Fundamentals shipped degree signs, arrows, "≈", "·" and the
+// minus and en dashes) is caught here.
 
 import 'dart:io';
 
@@ -19,6 +20,7 @@ const List<String> _lessonFolders = <String>[
   'assets/tool-diagrams/home-internet',
   'assets/tool-diagrams/wifi-calling',
   'assets/tool-diagrams/find-my',
+  'assets/tool-diagrams/antenna-fundamentals',
 ];
 
 void main() {
