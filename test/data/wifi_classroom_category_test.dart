@@ -114,6 +114,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Why a Long Wi-Fi Password Matters More on WPA2, after the
     // ladders whose PSK and SAE frames it links to.
     'wpa2-password',
+    // 2026-09-27: PoE: Why the New AP Runs at Half Strength, the power side
+    // of a deployment.
+    'poe-half-strength',
   ],
   'Course Handouts': <String>[
     'channel-allocations-24ghz',
@@ -155,13 +158,13 @@ void main() {
     );
   });
 
-  test('all 42 simulators are in wifi-classroom and none remain in '
+  test('all 43 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(42));
+    expect(sims, hasLength(43));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -237,7 +240,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(63));
+    expect(classroom.tools, hasLength(64));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

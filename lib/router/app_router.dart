@@ -60,6 +60,7 @@ import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/join_ladder_screen.dart';
 import '../screens/tools/calculators/wpa2_password_screen.dart';
+import '../screens/tools/calculators/poe_half_strength_screen.dart';
 import '../screens/tools/calculators/phy_preamble_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/measure_wall_screen.dart';
@@ -438,6 +439,10 @@ class AppRouter {
   // number of possible passwords; no crack times. Pure on-device model, all
   // platforms incl. web.
   static const String wpa2Password = '/tools/wpa2-password';
+  // Wi-Fi Classroom (2026-09-27). Which radios and streams a generic Wi-Fi 7
+  // AP keeps on an 802.3af, 802.3at or 802.3bt port; pure on-device model,
+  // all platforms incl. web.
+  static const String poeHalfStrength = '/tools/poe-half-strength';
   // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
@@ -969,6 +974,7 @@ class AppRouter {
     legacyProtection: (_) => const LegacyProtectionScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     wpa2Password: (_) => const Wpa2PasswordScreen(),
+    poeHalfStrength: (_) => const PoeHalfStrengthScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
     boxVsHand: (_) => const BoxVsHandScreen(),
