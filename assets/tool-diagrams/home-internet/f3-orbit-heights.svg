@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 170" width="700" height="170" role="img" aria-label="Height above the Earth to scale: low-orbit satellites near the surface, GPS partway, high orbit at the far end">
+<rect x="40" y="70" width="6" height="60" rx="0" fill="#A1CC3A"/>
+<text x="40" y="150" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="start" font-weight="400">Earth's surface</text>
+<line x1="46" y1="100" x2="664" y2="100" stroke="#3A3A3A" stroke-width="2" stroke-linecap="butt"/>
+<circle cx="54.3" cy="100" r="5" fill="#A1CC3A" stroke="#E5E5E5" stroke-width="1.5"/>
+<circle cx="56.5" cy="100" r="5" fill="#9C9C9C" stroke="#E5E5E5" stroke-width="1.5"/>
+<line x1="55.3" y1="94" x2="120" y2="40" stroke="#9C9C9C" stroke-width="1" stroke-linecap="round"/>
+<text x="124" y="36" font-family="IBM Plex Sans" font-size="12.5" fill="#E5E5E5" text-anchor="start" font-weight="600">Starlink, about 480 km (300 miles)</text>
+<line x1="57.5" y1="106" x2="120" y2="132" stroke="#9C9C9C" stroke-width="1" stroke-linecap="round"/>
+<text x="124" y="136" font-family="IBM Plex Sans" font-size="12.5" fill="#E5E5E5" text-anchor="start" font-weight="600">Amazon Leo, 590 to 630 km (370 to 390 miles)</text>
+<circle cx="394.8" cy="100" r="5" fill="#9C9C9C" stroke="#E5E5E5" stroke-width="1.5"/>
+<text x="394.8" y="84" font-family="IBM Plex Sans" font-size="12.5" fill="#E5E5E5" text-anchor="middle" font-weight="400">GPS, 20,200 km</text>
+<circle cx="664" cy="100" r="7" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="2"/>
+<text x="664" y="80" font-family="IBM Plex Sans" font-size="12.5" fill="#E5E5E5" text-anchor="end" font-weight="600">High-orbit satellite</text>
+<text x="664" y="124" font-family="IBM Plex Sans" font-size="12.5" fill="#E5E5E5" text-anchor="end" font-weight="400">35,786 km (22,236 miles)</text>
+</svg>

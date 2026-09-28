@@ -2643,6 +2643,23 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Home Internet, Explained (2026-09-27, Keith) — the home-internet
+      // explainer post turned Guided Lesson, on the Find My pattern: the
+      // reviewed print guide rendered verbatim, with its six figures, the
+      // side-by-side comparison, the decision list and the check, challenge,
+      // test appendix. Shelved after Find My, the other lesson written for the
+      // people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'home-internet-explained',
+        title: 'Home Internet, Explained',
+        description:
+            'Fiber, cable, DSL, 5G and satellite: how each one reaches your '
+            'house, what to check before you sign up, and why your Wi-Fi is a '
+            'separate question',
+        routeName: '/tools/home-internet-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

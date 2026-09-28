@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 226" width="700" height="226" role="img" aria-label="Download and upload bars for fiber, cable, 5G home and DSL">
+<text x="20" y="20" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="start" font-weight="400">Down arrow: download. Up arrow: upload. Widths show the usual balance, not exact speeds.</text>
+<rect x="55" y="45" width="30" height="120" rx="4" fill="#A1CC3A"/>
+<path d="M70 181 l-10 -10 h20 z" fill="#A1CC3A" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="105" y="45" width="30" height="120" rx="4" fill="#E5E5E5"/>
+<path d="M120 31 l-10 10 h20 z" fill="#E5E5E5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="95" y="198" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="middle" font-weight="400">often equal</text>
+<text x="95" y="216" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="middle" font-weight="600">Fiber</text>
+<rect x="235" y="45" width="30" height="120" rx="4" fill="#A1CC3A"/>
+<path d="M250 181 l-10 -10 h20 z" fill="#A1CC3A" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="285" y="135" width="30" height="30" rx="4" fill="#E5E5E5"/>
+<path d="M300 121 l-10 10 h20 z" fill="#E5E5E5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="275" y="198" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="middle" font-weight="400">upload much smaller</text>
+<text x="275" y="216" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="middle" font-weight="600">Cable</text>
+<rect x="415" y="45" width="30" height="120" rx="4" fill="#A1CC3A"/>
+<path d="M430 181 l-10 -10 h20 z" fill="#A1CC3A" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="465" y="151" width="30" height="14" rx="4" fill="#E5E5E5"/>
+<path d="M480 137 l-10 10 h20 z" fill="#E5E5E5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="455" y="198" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="middle" font-weight="400">about a tenth</text>
+<text x="455" y="216" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="middle" font-weight="600">5G home</text>
+<rect x="580" y="115" width="30" height="50" rx="4" fill="#A1CC3A"/>
+<path d="M595 181 l-10 -10 h20 z" fill="#A1CC3A" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="630" y="148" width="30" height="17" rx="4" fill="#E5E5E5"/>
+<path d="M645 134 l-10 10 h20 z" fill="#E5E5E5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="620" y="198" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="middle" font-weight="400">low both ways</text>
+<text x="620" y="216" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="middle" font-weight="600">DSL</text>
+</svg>

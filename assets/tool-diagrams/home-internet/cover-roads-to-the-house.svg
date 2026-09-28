@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" width="700" height="250" role="img" aria-label="Five kinds of line running into one house">
+<path d="M0 50H700M0 100H700M0 150H700M0 200H700" fill="none" stroke="#3A3A3A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20 40 C220 40 300 120 470 130" fill="none" stroke="#A1CC3A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20 90 C200 90 300 130 470 138" fill="none" stroke="#E5E5E5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20 140 C200 140 300 142 470 146" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20 190 C200 190 300 160 470 154" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20 235 C200 235 320 175 470 162" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M470 130 L560 70 L650 130 Z" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="484" y="130" width="152" height="110" rx="0" fill="none" stroke="#E5E5E5" stroke-width="3"/>
+<rect x="478" y="124" width="40" height="30" rx="5" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="2"/>
+<rect x="570" y="170" width="44" height="26" rx="5" fill="rgba(162,204,58,0.08)" stroke="#A1CC3A" stroke-width="2.5"/>
+<path d="M578 160 a16 16 0 0 1 28 0" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M572 152 a26 26 0 0 1 40 0" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
