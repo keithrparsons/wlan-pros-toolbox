@@ -104,7 +104,7 @@ void main() {
         'the measuring tools named, Present and its keys', () {
       final Map<String, dynamic> h = _help();
       expect(h['name'], 'Why a Busy Line Lags');
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       final String all = jsonEncode(h);
       for (final String spelled in <String>[
         'smart queue management (SQM)',

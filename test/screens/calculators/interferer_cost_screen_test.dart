@@ -187,7 +187,7 @@ void main() {
     expect(t, contains('Spectrum Analysis'));
     expect(t, contains('Swept vs FFT race'));
     expect(t, contains("Keith's field observation"));
-    expect(t, contains('The Wi-Fi Classroom is designed for tablets'));
+    expect(t, contains('The Wireless Classroom is designed for tablets'));
     // Frame loss is not the headline: the why leads with waiting.
     expect(_help()['whyHere'] as String, startsWith('Many people assume'));
   });

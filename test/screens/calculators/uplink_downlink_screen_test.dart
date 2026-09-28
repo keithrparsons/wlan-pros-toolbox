@@ -156,7 +156,7 @@ void main() {
     test('help: Present and the keys, the Link Budget pointer, and MCS, LPI '
         'and GVP spelled out where they first appear', () {
       final Map<String, dynamic> h = _help();
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       final String all = <String>[
         h['purpose'] as String,
         h['whyHere'] as String,

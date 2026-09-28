@@ -190,7 +190,7 @@ void main() {
     test('help: MCS spelled out at first use, the losses illustrative and '
         'not measured, Present and the keys', () {
       final Map<String, dynamic> h = _help();
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       final String all = _helpText();
       final int first = all.indexOf('MCS');
       expect(first, greaterThanOrEqualTo(0));
@@ -219,7 +219,7 @@ void main() {
       expect(
         (h['fieldNotes'] as List<dynamic>).cast<String>(),
         contains(
-          'The Wi-Fi Classroom is designed for tablets and computers, and on '
+          'The Wireless Classroom is designed for tablets and computers, and on '
           'a phone some views are cramped.',
         ),
       );

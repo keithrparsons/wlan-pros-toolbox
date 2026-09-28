@@ -450,7 +450,7 @@ void main() {
     );
     expect(
       all,
-      contains('The Wi-Fi Classroom is designed for tablets and computers'),
+      contains('The Wireless Classroom is designed for tablets and computers'),
     );
 
     // "at 55 m 2.4 GHz arrives at -78.4 dBm and 5 GHz at -88.5 dBm"

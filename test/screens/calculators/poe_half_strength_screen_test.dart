@@ -143,7 +143,7 @@ void main() {
     test('help: acronyms spelled out, Present and the keys, both vendor '
         'guides cited, vendors differ, 802.3af illustrative', () {
       final Map<String, dynamic> h = _help();
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       expect(h['name'], kPoeHalfStrengthTitle);
       final String all = _helpText();
       for (final (String acr, String long) in <(String, String)>[

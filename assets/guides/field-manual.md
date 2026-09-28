@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 242 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 242 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,7 +37,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (69 tools)
+- **Wireless Classroom** (69 tools)
   - Guided Lessons (10)
   - RF and Propagation (12)
   - Signals and PHY (7)
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (69 tools)
+# Wireless Classroom (69 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -3856,7 +3856,7 @@ A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum a
 **Why it's here.** This is the spectrum-analysis companion to the rest of the toolbox: when a Wi-Fi scan shows a clean channel but performance is poor, the cause is usually a non-Wi-Fi interferer that only a spectrum analyzer can see. This module teaches you to recognize those interferers by their waterfall shape and to pick a fix. It is an in-app reference, alongside Antenna Fundamentals.
 
 **How to use**
-1. Open the module from the Wi-Fi Classroom (Guided Lessons), then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi adapter) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.
+1. Open the module from the Wireless Classroom (Guided Lessons), then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi adapter) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.
 2. On Fingerprinting interferers, swipe through the nine signature cards and tap any card to zoom in. The caption under each card is its waterfall fingerprint.
 3. On The knobs, tap the Wi-Fi Glossary link to resolve any term in one tap.
 
@@ -4053,7 +4053,7 @@ Shows why a few dB is a big change. One dB (decibel) slider moves a signal from 
 - dB compares two powers, and dBm is one power compared with one milliwatt. The difference between two dBm levels is in dB.
 - For a level outside -80 to -60 dBm, or a conversion to watts, use the dBm / Watt Converter. The dB Reference lists the common ratios in a table.
 - Every number here is arithmetic. Nothing is measured and nothing is illustrative.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### FSPL Simulator
@@ -4094,7 +4094,7 @@ Draws free-space path loss, or the received power it leaves, against distance fo
 - The indoor overlay is a model with an exponent you choose, not a measurement. n = 2 reproduces free space.
 - The aperture term assumes an isotropic (0 dBi) receive antenna. A higher-gain antenna has a larger effective area and wins some of the difference back.
 - Measured points are typed in by hand. Nothing is read from the Wi-Fi adapter.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Wi-Fi Through a Wall
@@ -4133,7 +4133,7 @@ Sends one wave through one wall and shows three things at once: part of the wave
 - NIST has no data between 2.0 and 3.0 GHz, so its lowest point here is 2.0 GHz, not 2.4.
 - Free-space loss is a separate effect: with the same antennas it rises about 7.2 dB from 2.4 to 5.5 GHz and 8.7 dB from 2.4 to 6.5 GHz with no wall at all. The Free Space Path Loss calculator covers it.
 - The drawing is slowed to one cycle every 2 seconds and shows the field along a line straight through the wall. It keeps one wavelength everywhere, because the frequency never changes; only the height of the wave changes. The height is in dB, so the ripple in front looks smaller than it would on a linear scale, and the ripple inside the wall from waves bounced off inner faces is not drawn.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### How to Measure Wall Attenuation
@@ -4178,7 +4178,7 @@ Walks through measuring a real wall the field way, and shows why the method work
 - The wall's own thickness also adds distance between the two spots, so even readings right against both faces keep a small free-space error.
 - Left out: the reflection off the near face of the wall, which makes readings close to it rise and fall over a short distance; paths around the wall through doors and other rooms; and the laptop's own body and antenna pattern. Several readings over a small area, averaged, are how a field measurement handles the first.
 - For how the wall itself takes the loss, see Wi-Fi Through a Wall. For comparing a predicted wall with a measured one, see Predict, Then Measure.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Multipath Simulator
@@ -4217,7 +4217,7 @@ Shows why the signal changes when you move a few centimeters. A receiver hears t
 - A 2 m track at 2.4 GHz holds only a few dozen fades, so the histogram wanders around the Rayleigh curve. Longer tracks or new layouts average it out.
 - Layouts are seeded, so the same settings give the same room every time.
 - Only the delay list changes much when the reflectors move further away; the pattern along 2 m looks the same at any distance.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Why Two Devices Disagree
@@ -4261,7 +4261,7 @@ Shows why two devices at the same spot, hearing the same AP, report different si
 - 802.11k defines RCPI (received channel power indicator) as a standardized measurement of received power, which helps comparability where devices report it. This tool shows RCPI as a concept only and does not compute RCPI values.
 - An offset calibrates a device. It does not correct how the device is held, the person holding it, or fading at the spot, so a corrected reading still moves.
 - Runs are seeded: the same settings and sample set give the same readings every time.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Room Propagation
@@ -4299,7 +4299,7 @@ Puts an AP, walls and doorways on a floor plan and colors the plan by received p
 - Reflections stop at two bounces, and reflected paths pass through walls without diffraction. Real rooms add many more weak paths.
 - The map is the average over a few centimeters. At one exact spot the signal can sit well above or below it, which the close-up shows: that is why RSSI jumps when you move a phone a little.
 - The map is computed on your device, in the background where the platform allows. With two bounces and many walls it takes a moment; the plan says Computing while it works.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Antenna Pattern
@@ -4344,7 +4344,7 @@ Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet pr
 - The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.
 - Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.
 - NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Rate vs Range
@@ -4384,7 +4384,7 @@ Draws an AP from above with one ring per MCS: inside a ring, a client has enough
 - The path-loss exponent is a model with a chosen value, not a measurement. Walls, people and furniture make real rings uneven.
 - The width is held fixed. A real AP may send a narrower transmission to a far client, which reaches as far as the 20 MHz rings.
 - The beacon bar counts beacons only, as time on the air. It leaves out probe responses, the wait for the medium, and other APs on the same channel, all of which the SSID Airtime tool can add.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### 6 GHz Power and PSD
@@ -4422,7 +4422,7 @@ Plots the most EIRP each 6 GHz device class may radiate, and the SNR it leaves a
 - The LPI client limit of 24 dBm and -1 dBm/MHz is a flat number, not tied to the AP. It only happens to sit 6 dB under the LPI AP. Fixed client devices are exempt from the 6 dB rule, VLP has no client class, and the EU has no client offset.
 - Path loss is taken at one frequency for every width so that only the width changes between columns. The MCS shown is the typical figure from this app's Signal Thresholds table, not a guarantee.
 - The PSD rule applies to any 1 MHz of the real emission. An HE 20 MHz transmission fills about 18.9 MHz, so a device exactly at the PSD limit radiates about 0.2 dB less than shown. That difference is too small to change the lesson.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Uplink vs Downlink
@@ -4463,7 +4463,7 @@ Shows both directions of one Wi-Fi link at once, from above. The downlink runs f
 - Both ends use the same receiver floors, the conformance minimums for each MCS. Real radios do better, and many APs gain more on receive from extra antennas and receive chains, which this model leaves out.
 - A client's bars come from the downlink only. They cannot tell you whether the AP hears the client.
 - For one direction in detail, with cable losses and fade margin, use the Link Budget tool.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Body Loss
@@ -4503,7 +4503,7 @@ Shows what people cost a Wi-Fi signal, from above. An auditorium floor holds one
 - A survey walked in an empty building measures a building nobody uses that way. Leave margin for the people who will fill it.
 - Only people on the straight line count here. Real signals also arrive by reflections around a crowd, which this model leaves out, so it shows the direct path only.
 - For walls and building materials rather than people, use RF Attenuation (RF: radio frequency) and Wi-Fi Through a Wall.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ## Signals and PHY (7)
@@ -4542,7 +4542,7 @@ Shows how bits become a radio wave. Each group of bits picks one point on the I/
 - The required EVM table is the 802.11 transmitter accuracy requirement: how cleanly a radio must build each point. It is not a receiver sensitivity threshold. Meets or misses compares the limit with the EVM the current SNR produces.
 - Changing the modulation, the SNR, the bit source or the message clears the received points and counts, so every reading belongs to one setting.
 - Measured EVM from a handful of symbols wanders. Send a few hundred and it settles close to the theoretical value.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Fourier and FFT
@@ -4593,7 +4593,7 @@ Shows that any signal is a sum of sines, and how a spectrum analyzer and a Wi-Fi
 - Real analyzers with digital RBW filters, or FFT-assisted sweeps, sweep faster than the formula. A real FFT analyzer also has a real-time bandwidth limit; the one here covers the whole span with no gaps.
 - The waterfalls use the analyzer color scale from dark blue at the noise floor (-95 dBm) through green, yellow and red to white at -30 dBm, with the scale drawn under them.
 - In the OFDM teaching view the same 16 subcarriers are kept when you switch to HE, so they span a quarter of the width. Real HE fills the same 20 MHz channel with 4 times as many subcarriers. The carrier frequency never changes.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### OFDMA Resource Units
@@ -4632,7 +4632,7 @@ Shows how 802.11ax OFDMA splits one channel into resource units (RUs) so an acce
 - The channel strip draws RUs in tone-plan order with every 26-tone slot the same width. Guard, DC and leftover tones are not drawn, and positions are logical, not exact subcarrier numbers.
 - Real access points also schedule, send buffer status reports and sound the channel. None of that is modeled here.
 - With one client on a full-channel RU, OFDMA is slightly slower than single user: the longer preamble and the triggered acknowledgment cost time and there is no one to share them with.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### MIMO and Beamforming
@@ -4674,7 +4674,7 @@ Shows how many spatial streams an access point and a client can use, what the le
 - A wider channel makes the report bigger, but the report also travels over the wider channel, so in this estimate its airtime stays the same. More antennas and more streams are what make sounding cost more.
 - Our measurement, not a model output: in one 802.11ax capture from a nearby sniffer, beamformed downlink frames failed their frame check 50.8% of the time against 5.1% for frames that were not beamformed, at matched signal strength (14,825 and 6,891 frames). The client received those frames; the sniffer was off the beam.
 - A capture on the AP sees more than a capture on a laptop: the AP knows what it sent and is the intended receiver for the uplink.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### PHY Preamble Reference
@@ -4713,7 +4713,7 @@ Draws the preamble of every Wi-Fi PPDU format to scale in microseconds: Legacy (
 - The BSS color moves with the HE PPDU type (HE-SIG-A1 B8-B13 in SU, B5-B10 in MU, B1-B6 in TB) and is fixed in EHT at U-SIG-1 B7-B12.
 - The LTF size and guard interval pairs offered are the brief's EHT list; 1x is not offered. LTF counts follow the Airtime Anatomy table. Durations are per field and do not change with width. The packet extension and the 2.4 GHz signal extension come after the data and are not drawn.
 - HE-SIG-B and EHT-SIG symbol counts depend on the users and the SIG MCS, so here they are a setting, not computed.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### A Frame's Journey
@@ -4750,7 +4750,7 @@ Follows one frame across one hop, from the sending radio's NIC (network interfac
 - The FCS is a real CRC-32 over this frame's bytes, so the values shown are what a receiver computes for them. The Duration field, the sequence number, the MAC addresses and the data are illustrative.
 - The radiotap timer value and the MCS (modulation and coding scheme) are illustrative; the channel and the signal level follow the band and the distance. Radiotap also exists on the sending side when a tool injects frames, and the driver removes it before the frame goes out.
 - Not modeled: the preamble (see PHY Preamble), how bits are coded onto subcarriers, the ACK timeout value, the backoff before the retry, retry limits, block acknowledgment for aggregated frames, and encryption.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### The Number on the Box vs the Number in Your Hand
@@ -4785,7 +4785,7 @@ Shows why the speed class printed on a router box is not what one device gets. T
 - The 5 m default distance is an illustrative choice. No measured home stands behind it.
 - The tool also leaves out Multi-Link Operation, where a Wi-Fi 7 client and router use more than one band at once. The Multi-Link Operation simulator shows it.
 - For the rate at every MCS, width and stream count, see the MCS Index and the Throughput Calculator. For how the rate falls with distance, see Rate vs Range.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ## Airtime and Access (12)
@@ -4823,7 +4823,7 @@ Shows how Wi-Fi stations share one channel. Each station waits for a quiet mediu
 - Only uplink is modeled: every station sends to the AP, and the AP answers only with ACK or CTS. Rate adaptation and the NAV reset rule are not modeled.
 - RTS/CTS removes most hidden-node data collisions, not all of them. A hidden station whose own RTS overlaps the AP's CTS never hears that CTS, so it can still talk over the data frame that follows.
 - Runs are seeded, so the same settings give the same run every time.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Voice Priority, End to End
@@ -4860,7 +4860,7 @@ Follows one voice packet toward a phone on Wi-Fi and shows which of the AP's fou
 - The Wi-Fi hop uses the Medium Access Simulator's simplifications: legacy 54 Mbps timing, one frame size for every frame, no aggregation, and the default client EDCA settings; an AP's own settings can differ. Inside one AP the standard gives the higher queue the win when two of its queues finish counting down together; here the download and the call contend as two transmitters.
 - Illustrative: a voice packet every 20 ms, and how many download frames sit ahead in Best effort, which depends on the AP's buffer. Wired hops add delay too, and the tool does not put a number on them.
 - Not modeled: the call's upstream direction, where the phone picks the user priority itself, and how the AP maps the upstream frame back to a DSCP.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Airtime Anatomy
@@ -4914,7 +4914,7 @@ Draws one transmit opportunity (TXOP) to scale, microsecond by microsecond: the 
 - The Block Ack bitmap counts MPDUs, one bit each: 64 in the compressed Block Ack since HT, 256 in HE, 512 or 1,024 in EHT. A 1,024-bit bitmap is not new in Wi-Fi 7: the original Basic Block Ack had one, for 64 MSDUs of up to 16 fragments each. What EHT added is 1,024 MPDUs.
 - Every A-MPDU subframe pads to 4 bytes, the last one included, as the time view counts it. The security header and MIC (message integrity check) are drawn as one block, the HT Control field is left out, and a damaged delimiter, where the receiver searches for the next one, is not modeled.
 - A resend is timed as preamble plus data for exactly the resent bytes. The new wait, the larger contention window after a failure and the acknowledgment are not added.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Airtime Fairness
@@ -4947,7 +4947,7 @@ Shows why one slow client drags every fast client down under plain Wi-Fi content
 - The 40 µs preamble is one teaching value for HT, VHT and HE. Real preambles vary with the PHY, the number of streams and the frame format.
 - The limits on how many frames or bytes one aggregate may carry are not enforced.
 - Airtime fairness costs the slow client throughput. That is the point: it stops paying for its slow turns with everyone else's time.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Rate Adaptation
@@ -4986,7 +4986,7 @@ Runs one Wi-Fi link frame by frame under Minstrel-style rate control, the kind L
 - Delivered throughput is far below the PHY rate here because every frame waits, sends a preamble and waits for its ACK on its own. Aggregation (A-MPDU) and Block Ack, which real links use, are left out.
 - There is one station, so there are no collisions, and backoff is the mean rather than a random draw. The Medium Access Simulator shows contention.
 - The ACK timeout is SIFS + slot + a receive delay of about 20 to 25 µs. The sources disagree on the exact constant, so it is a setting.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### What an Interferer Costs (and how a NIC hears the air)
@@ -5029,7 +5029,7 @@ Shows how a Wi-Fi radio, the network interface card (NIC) in a laptop or an acce
 - Waiting is decided at the sender and a frame's survival at its receiver. This tool puts both at your radio, so one level drives both.
 - Left out: collisions between two Wi-Fi radios that start at the same moment, the hidden-node case beyond the illustrative curve, Bluetooth's adaptive hopping (which avoids busy channels), rate adaptation lowering the rate after failed frames, secondary channels, and the 802.11ax per-20 MHz rules. The Spatial Reuse tool shows how BSS coloring can relax -82 dBm.
 - To see these interferers on a screen, open the Spectrum Analysis lesson (its interferer gallery) and the Swept vs FFT race in Fourier and FFT, which shows how a swept analyzer and a real-time fast Fourier transform (FFT) analyzer catch an oven's bursts and Bluetooth's hops.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Spatial Reuse
@@ -5072,7 +5072,7 @@ Two BSSs share one channel along a line: AP A with client A, AP B with client B.
 - Only AP B decides. AP A already holds the air, and uplink frames and clients' own deferral are left out.
 - Airtime ignores backoff, ACKs and rate changes; it counts one equal-length frame per BSS.
 - The -82 and -62 dBm thresholds and the per-20 MHz comparison match the Channel Planner, so the two tools agree.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Power Save
@@ -5117,7 +5117,7 @@ Puts a client and its AP on a timeline and shows how the client saves battery: b
 - The battery figures in the Currents card are one vendor example, not a general truth: a Silicon Labs SiWx917 tested by Novus Labs in a study Silicon Labs commissioned averaged about 90 µA at DTIM 10 and 49 µA with a 30 s TWT. The simulator does not use them.
 - The frame-exchange durations, the traffic patterns and the currents are illustrative. Real clients also stay awake a while after traffic, retry, scan and roam, and APs limit how long they hold frames; none of that is modeled.
 - The TIM here is set whenever any frame waits for the client; the finer U-APSD rules for which access categories the TIM covers are not modeled.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Multicast at the Basic Rate
@@ -5159,7 +5159,7 @@ Shows what multicast and broadcast data cost the channel. They go at a basic rat
 - One AP, no other traffic, no collisions and no retries. Beacons are drawn as markers; their own airtime is what SSID Airtime shows.
 - A unicast copy to a dozing client waits for that client to wake, which this tool does not draw: the power save switch holds multicast only.
 - The 802.11b timing (192 µs long preamble, 20 µs slot) uses the standard's well-known values; IEEE 802.11 itself was not re-read for this tool.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Channel Utilization Meter
@@ -5207,7 +5207,7 @@ Shows the number an AP reports as channel utilization, and what it does and does
 - The many-sender points are from Bianchi (2000), IEEE Journal on Selected Areas in Communications 18(3), read off the paper's figure: about 0.8 of the channel at 5 stations and 0.55 at 50 for basic access, and about 0.83 with RTS/CTS (request to send / clear to send). Those use 1 Mbps parameters: the shape transfers, the exact numbers do not.
 - Simplifications: every station hears every other (no hidden nodes); after a collision every station waits the ACK timeout instead of the extended interframe space; a new frame always draws a backoff; the neighbor network sends the same frames at the same rate; non-Wi-Fi bursts never land on top of a frame; beacons' own airtime is left out (SSID Airtime shows it).
 - The neighbor's airtime and the non-Wi-Fi burst pattern are illustrative, chosen to show the effect, not measured.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Legacy Protection Cost
@@ -5253,7 +5253,7 @@ Shows what one old 802.11b device costs a modern network while it sends nothing.
 - The ERP element is element 42 in 802.11g-2003, clause 7.3.2.13; its clause number in the current edition was not verified and is not shown.
 - One sender, no collisions, no retries, and the old device sends nothing. Its own slow traffic is what Airtime Fairness shows.
 - The network is open (no encryption bytes) so the data frame matches the 254 µs worked example; with 16 bytes of encryption it would take one more symbol, 258 µs.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Multi-Link Operation
@@ -5292,7 +5292,7 @@ Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A 
 - Intel's Linux driver leaves EMLSR for reasons that include low signal, Bluetooth coexistence, channel load, link usage and missed beacons, and after some of them it will not re-enter for 300 or 600 seconds.
 - EMLMR (moving extra radio chains to one link) is described but not simulated.
 - Not modeled: collisions, retries, uplink traffic, more than one frame or A-MPDU per exchange, and EHT (320 MHz, 4096-QAM). HE timing stands in for EHT. With EMLSR switched off, the model keeps the least busy link; a real driver picks by its own rules.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ## Network Design and Security (17)
@@ -5335,7 +5335,7 @@ Place 2 to 12 access points on a floor, give each a channel and width, and see w
 - On a secondary channel, deferring means the AP sends on fewer 20 MHz pieces rather than waiting. The Lab counts it as sharing to keep the picture simple.
 - 1/N airtime is an even split among APs that all hear each other. Clients, retries, traffic load and APs that hear only part of the group change the real share.
 - One wall type with one loss. For real materials use the RF Attenuation tool.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Adjacent Channels and AP Stacking
@@ -5382,7 +5382,7 @@ Shows why a channel that does not overlap yours still hurts when the other trans
 - For a 20 MHz neighbor, the mask is flat at -40 dBr past 30 MHz (1.5 channel widths) from its center, so a second empty channel buys nothing more from the mask. A wider neighbor's mask keeps falling until 1.5 times its width from its center, so there each extra empty channel still helps. Distance always helps.
 - Below 1 m the path is taken as free space. At 30 cm the antennas are only a few wavelengths apart, so treat those numbers as rough.
 - Walls, antenna patterns and fading are left out. For which channels overlap on paper and who shares airtime, open Channel Planner.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Roaming Walk
@@ -5417,7 +5417,7 @@ Walks a client across a floor of access points and shows when it roams and what 
 - Because scanning dominates, 802.11k shortens a slow roam more than FT does. FT and PMK caching shorten only the authentication.
 - 802.11v lets the AP suggest a better AP; the client still decides. The model does not simulate it.
 - Real clients average their readings, scan on their own schedule and weigh more than signal strength.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Band Steering
@@ -5459,7 +5459,7 @@ Shows why a dual-band client so often stays on 2.4 GHz, and what an AP can and c
 - A client using PMF (Protected Management Frames, 802.11w) ignores an unprotected deauthentication from anyone but its AP. The AP's own deauthentication is protected and still works, so the tool applies it to every client.
 - The AP deauthenticates only a client it has matched on 5 GHz, the same test probe suppression and authentication refusal use. A client that stops scanning before it can hear 5 GHz is never matched, so it is never deauthenticated.
 - Platforms document scanning from random MAC (media access control) addresses when not connected; that is what the random-address switch models.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Survey Walk
@@ -5499,7 +5499,7 @@ Walks a site survey down a corridor-and-rooms floor and shows why walking speed 
 - Whether real survey apps stamp each channel or each cycle is not published, and neither is how they place samples between clicks.
 - Counting 20 MHz channels in the US, 2.4 + 5 + 6 GHz is 11 + 25 + 59 = 95. At 250 ms per channel on one radio that is almost 24 s per cycle.
 - This is a teaching model: the walls are drawn but not modeled, and every timing that is not a common default is marked illustrative.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Heat Map Builder
@@ -5538,7 +5538,7 @@ Builds a heat map from survey samples you place on a floor, so you can see which
 - IDW can never predict a value outside the range of its samples, so it cannot show signal falling off past the last sample. A path-loss model can, but only for distance: it cannot see a wall no one measured across.
 - Closer samples help until noise on single readings dominates. Averaging several readings per point, or moving through the fades while measuring, brings the error back down.
 - This is a teaching model: the truth is a log-distance model with wall losses, the noise is illustrative, and real maps also carry antenna, adapter and position errors.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Predict, Then Measure
@@ -5575,7 +5575,7 @@ Tests a predictive design against the building with an AP on a stick (APoS): a t
 - Capture on both sides of what you care about. A sample inside a room tells you nothing about its wall unless another sample sits on the other side of it.
 - A design that looks right everywhere is still a model. An AP-on-a-stick walk tests the walls it crosses and nothing else.
 - This is a teaching model: straight-line wall losses only, no doors, reflections or floors above and below.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Where Am I? Signal Strength vs Round-Trip Timing
@@ -5613,7 +5613,7 @@ Finds a device on a floor of 3 to 6 APs two ways and shows how far off each one 
 - A signal-strength distance error is a factor, not a fixed number of meters: at n = 3 the same one sigma of 6 dB that stretches a 5 m reading to 7.9 m stretches a 20 m reading to 31.7 m.
 - When the direct path is blocked, the first signal to arrive at the device is a reflection that travelled farther, so timing reads long, never short.
 - This is a teaching model: the log-distance model, the shadowing, the power each AP radiates and the blocked-path distance are illustrative, and real location systems also face AP position errors, clock offsets and floors above and below.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Repeaters and Mesh Backhaul
@@ -5651,7 +5651,7 @@ Shows what relaying costs. A corridor holds the root AP, one to three relays (a 
 - The dedicated backhaul gives every hop a channel of its own. With two or more relays sharing one backhaul channel, those backhaul hops would take turns again.
 - The efficiency factor, the forwarding delay, the 20 dBm EIRP, the path-loss exponent and the channel widths are illustrative, chosen to show the effect, not measured. Traffic flows one way, with no neighbors, collisions or retries.
 - The delay counts only the forwarding delay at each hop, not the time a frame waits for the shared channel.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Why a Busy Line Lags
@@ -5684,7 +5684,7 @@ Shows why a video call stutters when someone else in the house uploads. A chart 
 - The busy figures are read by eye from the bars of the FCC's chart and are approximate. The FCC measured in its 2022 test period and published in 2024. Under download load its bars differ, and one cable provider reached about 380 ms there.
 - Left out: the Wi-Fi hop, queues inside the provider's network and at the far end, jitter, and packet loss. One upload, one call, one line. The 20-second timing and the 0.8 s fill time are illustrative.
 - To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Test My Connection (its loaded responsiveness check). The tool's About card opens both.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### DFS and Radar
@@ -5722,7 +5722,7 @@ Runs one access point on a simulated one-hour clock and shows what Dynamic Frequ
 - Channel 144 is DFS in the US and is not in the EU plan: it crosses the 5725 MHz edge.
 - The AP's 1 s move and the clients' rejoin delays are illustrative. Real APs differ, and some block only the part of a wide channel that saw the radar.
 - Not modeled: off-channel CAC in the EU, a second radio that listens while the first serves, and radar signal levels. The detection threshold is shown for context only.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Down the Stack, Across the Air, Up the Other Side
@@ -5760,7 +5760,7 @@ Animates the protocol stack the way it is taught in a classroom. A laptop on Wi-
 - The drawing shows the OSI (Open Systems Interconnection) layers 7, 4, 3, 2 and 1 and leaves out 5 and 6.
 - Left out: the ARP exchange itself, the ACK (acknowledgment), the PHY (physical layer) preamble, encryption, aggregation, VLAN (virtual LAN) tags and IPv6. A Frame's Journey opens up the air hop: the FCS check, SIFS (short interframe space) and the ACK.
 - A mesh network built on 802.11s can carry up to six addresses using its Mesh Control field; the four-address case here is the plain one. Frames that carry several packets at once (an A-MSDU, aggregate MAC service data unit) fill Addresses 3 and 4 differently.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Conference Wi-Fi Runs Out of Addresses
@@ -5801,7 +5801,7 @@ Follows the DHCP (Dynamic Host Configuration Protocol) address pool through a co
 - Some devices do send a release when they leave a network on purpose; walking out of range sends nothing. This tool assumes nothing is released early.
 - Not modeled: servers that give short leases to new clients or a different lease per network, captive sign-in pages, and IPv6 (Internet Protocol version 6) addressing, which does not draw from this pool.
 - Illustrative: the crowd, the arrival shape, the stay and the reserved addresses. Set them to your event.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Association, Frame by Frame
@@ -5841,7 +5841,7 @@ Plays every frame a client sends and receives to associate with a Wi-Fi network,
 - With Detecting Network Attachment (DNAv4), a real client often skips the four DHCP messages and asks only to keep its old address. The ladder keeps them so the two address checks compare side by side.
 - Not drawn: channel changes, retries, the DHCP client's own start-up delay, IPv6, and 802.11ai (FILS) fast initial link setup. The DNS server is drawn on the wired LAN lane with the DHCP server and the gateway.
 - Roaming between APs, frame by frame, is in the 802.1X and EAP Ladder: switch its Mode to Roam.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### 802.1X and EAP Ladder
@@ -5887,7 +5887,7 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 - Caution with FT: clients whose drivers do not understand the FT AKMs can fail to join a network that offers FT at all. Check the client mix before enabling it, and know whether the WLAN offers FT only or mixed (FT and non-FT AKMs side by side).
 - PMF (802.11w) protects deauthentication, disassociation and robust Action frames (such as the FT Action frames over the DS) once keys exist. Beacons, probes, authentication and association frames are never protected. 6 GHz requires WPA3 or OWE with PMF.
 - Joining a network frame by frame, from the scan through DHCP and the address check, is its own tool: Association, Frame by Frame.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### PoE: Why the New AP Runs at Half Strength
@@ -5921,7 +5921,7 @@ Shows what a new Wi-Fi 7 AP (access point) does on each kind of PoE (Power over 
 - A 2x2 client uses at most two streams, so one phone alone may notice little. What the AP loses is the streams it could share among many clients at once and, with a radio off, a whole band.
 - A light on the AP proves power, not enough power. Check the AP's own power status and the power the switch has granted the port.
 - Some APs with two Ethernet ports can combine two 802.3at feeds for full function; the guide this model follows says so of its AP. This tool leaves that out, along with IoT (Internet of Things), Bluetooth and scanning radios, and cable shorter than the 100 m the standard's figures assume.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ### Why a Long Wi-Fi Password Matters More on WPA2
@@ -5957,7 +5957,7 @@ Shows where a password guess gets checked on three kinds of home or small-office
 - Transition mode is for moving a network from WPA2 to WPA3. Once every device supports WPA3, turning transition mode off closes the WPA2 door. If transition mode does not meet a network's needs, the Wi-Fi Alliance recommends separate network names (SSIDs, service set identifiers) with different passwords, on separated network segments.
 - Forward secrecy: on WPA3, traffic recorded earlier stays unreadable even if the password is learned later. On WPA2-Personal, the password and a recorded 4-way handshake give the keys to that session.
 - This tool leaves out WPA2-Enterprise and WPA3-Enterprise (802.1X), which do not use a shared password; the 802.1X and EAP Ladder covers them. It also leaves out attacks on particular products, and it names no tools and gives no steps.
-- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
 ## Course Handouts (11)

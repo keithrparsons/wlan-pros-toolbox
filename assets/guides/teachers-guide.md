@@ -1,6 +1,6 @@
-# Wi-Fi Classroom · Teacher's Guide
+# Wireless Classroom · Teacher's Guide
 
-The Wi-Fi Classroom is the part of the WLAN Pros Toolbox built for teaching. It holds interactive simulators, four guided lessons, and the course handouts I use in class. It ships in the same free app your students already have, so whatever you show on the projector, they can open on their own laptop or tablet after class and work through at their own pace.
+The Wireless Classroom is the part of the WLAN Pros Toolbox built for teaching. It holds interactive simulators, four guided lessons, and the course handouts I use in class. It ships in the same free app your students already have, so whatever you show on the projector, they can open on their own laptop or tablet after class and work through at their own pace.
 
 This guide covers how to present it, what each tool teaches, and a few lesson sequences that work well.
 
@@ -8,7 +8,7 @@ This guide covers how to present it, what each tool teaches, and a few lesson se
 
 **Use a computer or a tablet.** The simulators are designed for a large screen. On a phone they open behind a short notice that says so, with a Continue anyway button. The guided lessons and the handouts work on any screen.
 
-**No Internet needed during class.** The simulators compute everything on the device, and the lessons and handouts are built into the app, so a room with poor Wi-Fi does not stop the lesson. Install or update the app before class, and open the Wi-Fi Classroom once to check it is all there.
+**No Internet needed during class.** The simulators compute everything on the device, and the lessons and handouts are built into the app, so a room with poor Wi-Fi does not stop the lesson. Install or update the app before class, and open the Wireless Classroom once to check it is all there.
 
 **Set the scene first.** Open a tool, press the 'Present' button on the top right to have it go full screen. Then set it up the way you want to start (a wall material, a channel plan, a number of stations). I've found it easier to set the various options while already in Presenter mode.
 
@@ -159,7 +159,7 @@ The simulators are built from the IEEE 802.11 standard, ITU recommendations and 
 
 ## After class
 
-Students have the same app. Point them to the Wi-Fi Classroom on a laptop or tablet, and suggest they repeat the demonstrations you did, changing one control at a time. The handouts give them the cards to keep, and the Field Manual in the app documents every tool in detail.
+Students have the same app. Point them to the Wireless Classroom on a laptop or tablet, and suggest they repeat the demonstrations you did, changing one control at a time. The handouts give them the cards to keep, and the Field Manual in the app documents every tool in detail.
 
 For homework, assign the student version of one lab from the day's sequence. Ask for the predictions they wrote down and one sentence on what surprised them.
 

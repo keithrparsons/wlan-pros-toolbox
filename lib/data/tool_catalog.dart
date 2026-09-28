@@ -2488,7 +2488,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // mode, help entries and the keyword index are unchanged.
   ToolCategory(
     id: 'wifi-classroom',
-    title: 'Wi-Fi Classroom',
+    title: 'Wireless Classroom',
     summary: 'Interactive simulators for teaching Wi-Fi',
     icon: Icons.cast_for_education_outlined,
     exampleToolTitles: <String>[

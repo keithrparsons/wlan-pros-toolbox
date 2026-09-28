@@ -146,7 +146,7 @@ void main() {
         'points to the dBm / Watt Converter and dB Reference, Present and the '
         'keys', () {
       final Map<String, dynamic> h = _help();
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       final String all = _helpText();
       for (final (String short, String long) in <(String, String)>[
         ('dB', 'decibel'),
@@ -183,7 +183,7 @@ void main() {
       expect(
         (h['fieldNotes'] as List<dynamic>).cast<String>(),
         contains(
-          'The Wi-Fi Classroom is designed for tablets and computers, and on '
+          'The Wireless Classroom is designed for tablets and computers, and on '
           'a phone some views are cramped.',
         ),
       );

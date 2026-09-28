@@ -196,7 +196,7 @@ Most of it is aimed at people who do this for a living. For everyone else, the g
 
 This section also holds the full Field Manual, which is the deep version of this guide for people who want the professional detail.
 
-### Wi-Fi Classroom: learn it by watching it happen
+### Wireless Classroom: learn it by watching it happen
 
 This is our own teaching material, built for a class or for one curious person. It opens with two read-along lessons, Antenna Fundamentals and Spectrum Analysis, and closes with the printed WLAN Pros course handouts: channel charts, the MCS card, the bubble diagram and the design checklists.
 

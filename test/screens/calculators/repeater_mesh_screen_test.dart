@@ -108,7 +108,7 @@ void main() {
         'radio on one channel', () {
       final Map<String, dynamic> h = _help();
       expect(h['name'], 'Repeaters and Mesh Backhaul');
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       final String all = <String>[
         h['purpose'] as String,
         h['whyHere'] as String,

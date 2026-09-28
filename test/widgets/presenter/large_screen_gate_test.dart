@@ -359,7 +359,7 @@ void main() {
       expect(
         notes.any(
           (dynamic n) => (n as String).contains(
-            'The Wi-Fi Classroom is designed for tablets and computers',
+            'The Wireless Classroom is designed for tablets and computers',
           ),
         ),
         isTrue,
