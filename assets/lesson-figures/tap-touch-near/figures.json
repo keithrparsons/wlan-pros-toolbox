@@ -1,0 +1,125 @@
+{
+  "source": "tap-touch-near-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        640.0,
+        346.0
+      ],
+      "caption": null,
+      "alt": "A phone held almost touching a store's card reader, and a phone whose screen arrow points to a set of keys."
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        640.0,
+        218.0
+      ],
+      "caption": "**Figure 1. The card runs on the reader's power.** The green arrow is the power going in. Only then can the chip answer.",
+      "alt": "The reader sends power to the card, and only then does the card's chip answer."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        640.0,
+        262.0
+      ],
+      "caption": "**Figure 2. How close is close.** Only a card inside the green tap zone wakes up. Roughly to scale.",
+      "alt": "A ruler from the reader. Only a card inside the first few centimeters wakes up. At a hand's width or a foot it stays asleep."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        640.0,
+        388.0
+      ],
+      "caption": "**Figure 3. The store gets a stand-in, not your card number.** Follow the green tags from your phone to your bank. Simplified.",
+      "alt": "Your phone sends a stand-in number to the store; only your bank can match it to your real card."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        640.0,
+        440.0
+      ],
+      "caption": "**Figure 4. A code that works once.** Each real tap sends a new code. A copy played back later is turned down, because the bank has already seen that code. Simplified.",
+      "alt": "Monday and Tuesday taps each send a different code and are approved. A copy of Monday's code is turned down."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        640.0,
+        420.0
+      ],
+      "caption": "**Figure 5. Swipe versus tap.** A swipe sends the same data every time, so a copy works again. A tap or chip sends a new code.",
+      "alt": "Swiping sends the same data each time, so a copy works again. Tapping or inserting sends a new code each time."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        640.0,
+        364.0
+      ],
+      "caption": "**Figure 6. Why a hidden reader gets nothing useful.** Read left to right: even a thief close enough to read your card gets a code the bank won't take again.",
+      "alt": "A thief must hold a reader almost touching your card, gets one code that works once, and the bank turns it down."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        640.0,
+        330.0
+      ],
+      "caption": "**Figure 7. Three cards, built three ways.** A bank card is built for a tap. A passport book has shielding in its cover. A passport card is made to be read from farther away, so it comes with its own sleeve.",
+      "alt": "A bank card needs no shield. A passport book is shielded when closed. A passport card should stay in its sleeve."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        640.0,
+        344.0
+      ],
+      "caption": "**Figure 8. The real risks, and what to do.** None of them is about the tap radio.",
+      "alt": "Three real risks, a skimmer at the pump, a lost phone and a scam caller, each with the fix."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        640.0,
+        440.0
+      ],
+      "caption": "**Figure 9. Your phone points the way.** It times a quick ping and reply with the tracker, then shows an arrow. Not to scale.",
+      "alt": "The phone pings the tracker on your keys, times the reply, and shows an arrow pointing to them."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        640.0,
+        468.0
+      ],
+      "caption": "**Figure 10. Two ways to judge distance.** Most Bluetooth gear guesses by how loud the signal sounds. Ultra Wideband times it, which is far more exact. Not to scale.",
+      "alt": "Bluetooth guesses from loudness, giving a wide circle. Ultra Wideband times a ping and reply, giving an exact spot."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        640.0,
+        420.0
+      ],
+      "caption": "**Figure 11. The car checks the timing.** A signal passed along from far away takes too long, so the car stays locked. Not to scale.",
+      "alt": "At the car, the phone's quick reply unlocks it. A signal relayed from indoors takes too long, so the car stays locked."
+    }
+  ]
+}

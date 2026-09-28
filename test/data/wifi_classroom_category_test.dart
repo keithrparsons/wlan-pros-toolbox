@@ -36,6 +36,13 @@ const Set<String> _builtInClassroom = <String>{
   'where-your-phone-is-explained',
   'analog-vs-digital-explained',
   'scales-and-ratios-explained',
+  'tap-touch-near-explained',
+  'satellite-texting-explained',
+  'wifi-on-planes-explained',
+  'wifi-and-health-explained',
+  'travel-routers-explained',
+  'mobile-hotspots-explained',
+  'captive-portals-explained',
 };
 
 /// Shelf -> tool ids, in the order the screen must show them.
@@ -96,6 +103,20 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-28: Scales and Ratios, Explained, the explainer guide turned
     // Guided Lesson.
     'scales-and-ratios-explained',
+    // 2026-09-28: Tap, Touch and Near, Explained, an explainer guide turned lesson.
+    'tap-touch-near-explained',
+    // 2026-09-28: Satellite Texting, Explained, an explainer guide turned lesson.
+    'satellite-texting-explained',
+    // 2026-09-28: Wi-Fi on Planes, Explained, an explainer guide turned lesson.
+    'wifi-on-planes-explained',
+    // 2026-09-28: Wi-Fi and Your Health, Explained, an explainer guide turned lesson.
+    'wifi-and-health-explained',
+    // 2026-09-28: Travel Routers, Explained, an explainer guide turned lesson.
+    'travel-routers-explained',
+    // 2026-09-28: Mobile Hotspots, Explained, an explainer guide turned lesson.
+    'mobile-hotspots-explained',
+    // 2026-09-28: Captive Portals, Explained, an explainer guide turned lesson.
+    'captive-portals-explained',
   ],
   'RF and Propagation': <String>[
     // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
@@ -299,7 +320,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(81));
+    expect(classroom.tools, hasLength(88));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

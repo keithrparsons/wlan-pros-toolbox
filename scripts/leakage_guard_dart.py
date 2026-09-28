@@ -58,6 +58,18 @@ def mask_product_names(line):
     return PIXEL_PRODUCT.sub("Pxl", line)
 
 
+# A phone named with an article before it ("Try the demo on a Pixel", "an
+# iPhone or a Pixel") is the product too; the specialist is never "a Pixel".
+# Mirrors the article rule in leakage-guard.sh (2026-09-28).
+PIXEL_ARTICLE = re.compile(r"(?<=\b[Aa] )Pixel\b|(?<=\b[Aa]n )Pixel\b")
+_mask_product_forms = mask_product_names
+
+
+def mask_product_names(line):  # noqa: F811 - extends the rule above
+    """Product forms above, then the article form."""
+    return PIXEL_ARTICLE.sub("Pxl", _mask_product_forms(line))
+
+
 def strip_comments(src):
     """Return src with // /// and /* */ comments replaced by spaces (newlines
     preserved so line numbers are stable), while keeping string-literal content.

@@ -27,7 +27,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/tool_catalog.dart';
 import '../../screens/tools/reference/lesson_parts.dart'
-    hide LessonCallout, LessonMyth;
+    hide LessonCallout;
 import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import 'guided_lesson.dart';

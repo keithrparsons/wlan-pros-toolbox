@@ -1,0 +1,115 @@
+{
+  "source": "wifi-and-health-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        760.0,
+        260.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        760.0,
+        420.0
+      ],
+      "caption": "**Figure 1. The range of energy, from radio to X-rays.** Energy rises from left to right. Wi-Fi sits in the microwave band. The dividing line falls in the ultraviolet, and too much of that burns skin. Not to scale.",
+      "alt": "Figure 1. The range of energy, from radio to X-rays. Energy rises from left to right. Wi-Fi sits in the microwave band. The dividing line falls in the ultraviolet, and too much of that burns skin. Not to scale."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        395.75
+      ],
+      "caption": "**Figure 2. The same four powers, drawn two ways.** (a) On an ordinary ruler the oven fills the width. The router, phone and Wi-Fi cap are too thin to see. (b) Each step to the right is ten times the one before. On this scale the oven looks close. On a ruler it's thousands of times the router. Every bar ends at its value.",
+      "alt": "Figure 2. The same four powers, drawn two ways. (a) On an ordinary ruler the oven fills the width. The router, phone and Wi-Fi cap are too thin to see. (b) Each step to the right is ten times the one before. On this scale the oven looks close. On a ruler it's thousands of times the router. Every bar ends at its value."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        760.0,
+        500.0
+      ],
+      "caption": "**Figure 3. Thousands of times the power, kept in a box.** Left, the oven's energy bounces around inside its metal box. Right, a router's tenth of a watt spreads out into the room. Not to scale.",
+      "alt": "Figure 3. Thousands of times the power, kept in a box. Left, the oven's energy bounces around inside its metal box. Right, a router's tenth of a watt spreads out into the room. Not to scale."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        384.0
+      ],
+      "caption": "**Figure 4. The same power, spread over more area.** Twice as far away, the power covers four squares. So each square gets a quarter. Not to scale.",
+      "alt": "Figure 4. The same power, spread over more area. Twice as far away, the power covers four squares. So each square gets a quarter. Not to scale."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        760.0,
+        330.0
+      ],
+      "caption": "**Figure 5. Walls soak up signal too.** Top, open air. Bottom, the same distance through a wall: less reaches the far side. Not to scale.",
+      "alt": "Figure 5. Walls soak up signal too. Top, open air. Bottom, the same distance through a wall: less reaches the far side. Not to scale."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        224.0
+      ],
+      "caption": "**Figure 6. How much of the public limit a router reaches.** A router sending nonstop, with no walls in the way. Distances to scale.",
+      "alt": "Figure 6. How much of the public limit a router reaches. A router sending nonstop, with no walls in the way. Distances to scale."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        760.0,
+        244.0
+      ],
+      "caption": "**Figure 7. A real router sends in short bursts.** Top, the math on this page. Bottom, a real router, sending only when there's data to move. Not to scale.",
+      "alt": "Figure 7. A real router sends in short bursts. Top, the math on this page. Bottom, a real router, sending only when there's data to move. Not to scale."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        184.0
+      ],
+      "caption": "**Figure 8. The safety margin.** The public limit is a fiftieth of the level that warms the body. Each bar is drawn to scale.",
+      "alt": "Figure 8. The safety margin. The public limit is a fiftieth of the level that warms the body. Each bar is drawn to scale."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        760.0,
+        507.75
+      ],
+      "caption": "**Figure 9. Figured and measured, against the public limit.** (a) On an ordinary ruler, only the limit shows. (b) Each step to the right is ten times the one before. Classroom values are rounded, so they are shown as \"about.\"",
+      "alt": "Figure 9. Figured and measured, against the public limit. (a) On an ordinary ruler, only the limit shows. (b) Each step to the right is ten times the one before. Classroom values are rounded, so they are shown as \"about.\""
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        400.0
+      ],
+      "caption": "**Figure 10. A shelf across the room.** The same router, moved from beside the sofa to a shelf on the far wall.",
+      "alt": "Figure 10. A shelf across the room. The same router, moved from beside the sofa to a shelf on the far wall."
+    }
+  ]
+}

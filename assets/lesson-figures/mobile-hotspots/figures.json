@@ -1,0 +1,235 @@
+{
+  "source": "mobile-hotspots-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": null,
+      "alt": "A cell tower sends signal to a small mobile hotspot, which makes Wi-Fi for a laptop, a tablet and a phone"
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        616.0,
+        404.0
+      ],
+      "caption": "**Figure 1. Two radios in one box.** The cell radio brings the internet in. The Wi-Fi radio hands it out to your laptop, tablet and phone.",
+      "alt": "Inside a hotspot: a cell radio talks to the tower, a Wi-Fi radio talks to your devices, and the box shares one connection between them"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        616.0,
+        210.0
+      ],
+      "caption": "**Figure 2. One chain, three links.** The tower is far away. Your laptop is close. The hotspot sits in the middle and joins them.",
+      "alt": "The internet reaches the cell tower by wire. The tower reaches the hotspot by a long cell link. The hotspot reaches your laptop by short Wi-Fi."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 3. Same job, two kinds.** A pocket hotspot needs its own cell service, on a SIM card or a built-in eSIM, and has its own battery. Your phone's hotspot shares the phone's.",
+      "alt": "A pocket hotspot has its own cell service and battery. Your phone's hotspot uses your phone's plan and battery."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 4. Turn it on, then join it.** On an iPhone the setting is called Personal Hotspot. On Android it's called Wi-Fi hotspot.",
+      "alt": "On the phone, turn the hotspot on and note its password. On the laptop, pick the phone's name from the Wi-Fi list."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        616.0,
+        270.0
+      ],
+      "caption": "**Figure 5. Out and back.** Your laptop asks. The hotspot passes it to the tower, and the tower sends it through the phone company's network to the website. The page comes back the same way.",
+      "alt": "Your request goes from the laptop over Wi-Fi to the hotspot, over the cell link to the tower, then on to the website. The answer comes back the same way."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        616.0,
+        214.0
+      ],
+      "caption": "**Figure 6. One short link, one long one.** Wi-Fi only has to cross the table. The cell link has to reach a tower that may be across town.",
+      "alt": "The Wi-Fi link runs a few steps across the table. The cell link runs across town to a tower."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        616.0,
+        220.0
+      ],
+      "caption": "**Figure 7. The narrow part wins.** When you sit near the hotspot, the narrow part is usually the cell link, not the Wi-Fi.",
+      "alt": "The Wi-Fi link is wide. The cell link is usually the narrow part, and your speed can be no faster than the narrowest part."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 8. Where you are matters.** Close to a tower with a clear view, the signal is strong. Far away, or behind walls, it's weak and slower.",
+      "alt": "Near the tower with a clear view, the hotspot gets a strong signal and runs faster. Far away or deep indoors, the signal is weak and it runs slower."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 9. A tower is shared.** Everyone near a tower shares it. At a game or a busy airport, there is less to go around, so many people slow down.",
+      "alt": "When few people use the tower, there is plenty to go around. When a crowd shares it, each person gets less, even with full bars."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        616.0,
+        200.0
+      ],
+      "caption": "**Figure 10. Some data waits its turn.** On some plans, when the network is busy, your data gets lower priority, so it can be slower. When it's quiet, there's no line.",
+      "alt": "When the network is busy, some plans put your data behind other traffic, so it waits its turn."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        616.0,
+        268.0
+      ],
+      "caption": "**Figure 11. Check the hotspot line.** Some plans limit hotspot data or charge extra for it. Check your plan, or ask your carrier.",
+      "alt": "Your plan may treat hotspot data differently from phone data. It can be included, limited, or cost extra. Check the hotspot line."
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        616.0,
+        288.0
+      ],
+      "caption": "**Figure 12. Turn on data saver.** Turn it on for the hotspot's network, on the device that joins it. It's called Low Data Mode on an iPhone or iPad, and Metered connection on a Windows laptop. It holds back many updates and backups, but not everything.",
+      "alt": "With data saver off, a laptop may run big updates, backups and photo sync over your hotspot. Turn data saver on for the hotspot's network and they wait."
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        616.0,
+        270.0
+      ],
+      "caption": "**Figure 13. Plug it in for long use.** On battery, a hotspot runs down fast. When it's plugged in, keep it cool and in the open. On Android, you can also set it to turn off when no one is using it.",
+      "alt": "A hotspot on battery runs down fast. Plugged in, it keeps going."
+    },
+    {
+      "n": 14,
+      "file": "fig-14.svg",
+      "viewBox": [
+        616.0,
+        270.0
+      ],
+      "caption": "**Figure 14. Keep it cool.** When a phone gets too hot, charging slows and its cell signal can weaken. Keep it out of the sun and out of a hot car.",
+      "alt": "In the sun or a hot car, the hotspot gets too hot: charging slows, and the cell signal can weaken. In the shade with air around it, it stays cool."
+    },
+    {
+      "n": 15,
+      "file": "fig-15.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": "**Figure 15. Near a window.** Walls and roofs weaken cell signal. A window often lets more of it in, so try a few.",
+      "alt": "Cell signal comes in best through a window. A hotspot by the window gets a stronger signal than one deep inside the house."
+    },
+    {
+      "n": 16,
+      "file": "fig-16.svg",
+      "viewBox": [
+        616.0,
+        212.0
+      ],
+      "caption": "**Figure 16. Not in a bag.** Give it air. A bag traps heat, and heat slows it down.",
+      "alt": "Out in the open, a hotspot stays cooler. Zipped in a bag, it traps heat, and a hot hotspot slows down."
+    },
+    {
+      "n": 17,
+      "file": "fig-17.svg",
+      "viewBox": [
+        616.0,
+        318.0
+      ],
+      "caption": "**Figure 17. Three ways to share.** Wi-Fi reaches several devices. A cable or Bluetooth reaches one.",
+      "alt": "A phone can share its data three ways: Wi-Fi for several devices, a USB cable to one laptop, or Bluetooth to one nearby device."
+    },
+    {
+      "n": 18,
+      "file": "fig-18.svg",
+      "viewBox": [
+        616.0,
+        200.0
+      ],
+      "caption": "**Figure 18. Your hotspot has a name.** Anyone nearby can see it. On an iPhone, it is the phone's name: change it in Settings, General, About, Name. On Android, tap the hotspot name to change it.",
+      "alt": "The hotspot shows up by name, and anyone nearby can see it. You can change the name."
+    },
+    {
+      "n": 19,
+      "file": "fig-19.svg",
+      "viewBox": [
+        616.0,
+        290.0
+      ],
+      "caption": "**Figure 19. Use a strong password.** Some phones let you pick no password at all. Don't. Use at least eight characters, and longer is better.",
+      "alt": "With a strong password, only your devices join. With no password, anyone nearby can join and use your data."
+    },
+    {
+      "n": 20,
+      "file": "fig-20.svg",
+      "viewBox": [
+        616.0,
+        270.0
+      ],
+      "caption": "**Figure 20. Turn it off when you're done.** A device that joined before may join again by itself and use your data. Turning the hotspot off stops that.",
+      "alt": "Left on, the hotspot drains the battery and your laptop may rejoin it and use data. Turned off, nothing joins."
+    },
+    {
+      "n": 21,
+      "file": "fig-21.svg",
+      "viewBox": [
+        616.0,
+        346.0
+      ],
+      "caption": "**Figure 21. Different jobs.** A hotspot is for places with no Wi-Fi. A travel router shares Wi-Fi that is already there, like the hotel's. __Travel Routers, Explained__ covers it.",
+      "alt": "A mobile hotspot brings its own internet from the cell network. A travel router shares internet that is already there, like the hotel's Wi-Fi."
+    },
+    {
+      "n": 22,
+      "file": "fig-22.svg",
+      "viewBox": [
+        616.0,
+        210.0
+      ],
+      "caption": "**Figure 22. Four habits that help.** Each one makes a hotspot work better, and each has its own page earlier in this guide.",
+      "alt": "Four habits: keep it near a window, plug it in, use a strong password, and turn it off when you are done."
+    }
+  ]
+}

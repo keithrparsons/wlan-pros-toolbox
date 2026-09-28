@@ -25,7 +25,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../screens/tools/reference/lesson_parts.dart'
-    hide LessonCallout, LessonMyth;
+    hide LessonCallout;
 import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import '../presenter/presenter.dart';

@@ -425,7 +425,10 @@ class LessonCallout extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(title, style: base.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      title,
+                      style: base.copyWith(fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: AppSpacing.xxs),
                     LessonRich(body, style: base),
                   ],
@@ -439,61 +442,9 @@ class LessonCallout extends StatelessWidget {
   }
 }
 
-/// A myth and the fact that corrects it. The words Myth and Fact carry the
-/// meaning; the fills only echo them.
-class LessonMyth extends StatelessWidget {
-  const LessonMyth({super.key, required this.myth, required this.fact});
-
-  final String myth;
-  final String fact;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    Widget half(String label, Color labelColor, String body, Color fill) {
-      return Container(
-        color: fill,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              label,
-              style: (Theme.of(context).textTheme.labelSmall ??
-                      const TextStyle())
-                  .copyWith(
-                    color: labelColor,
-                    fontFamily: 'DM Mono',
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.0,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.xxs),
-            LessonRich(body, style: lessonBody(context)),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          half('Myth', colors.statusDanger, myth, colors.statusDangerFill),
-          half('Fact', colors.textAccent, fact, colors.surface1),
-        ],
-      ),
-    );
-  }
-}
+// A myth and its fact: the GL-003 §12.10-2 stacked pair is LessonMythView in
+// lib/widgets/lesson/lesson_blocks.dart. The red two-panel LessonMyth that
+// lived here was retired on 2026-09-28 (§12.2-4: no red in a myth).
 
 /// A bulleted sources list in the small register.
 class LessonSources extends StatelessWidget {
@@ -519,7 +470,10 @@ class LessonSources extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 ExcludeSemantics(
-                  child: Text('•  ', style: s.copyWith(color: colors.textAccent)),
+                  child: Text(
+                    '•  ',
+                    style: s.copyWith(color: colors.textAccent),
+                  ),
                 ),
                 // A source may name a book in italics (__Title__).
                 Expanded(child: LessonRich(item, style: s)),

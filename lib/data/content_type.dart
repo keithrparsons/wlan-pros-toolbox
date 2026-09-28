@@ -93,6 +93,13 @@ const Set<String> _guideIds = <String>{
   'where-your-phone-is-explained',
   'analog-vs-digital-explained',
   'scales-and-ratios-explained',
+  'tap-touch-near-explained',
+  'satellite-texting-explained',
+  'wifi-on-planes-explained',
+  'wifi-and-health-explained',
+  'travel-routers-explained',
+  'mobile-hotspots-explained',
+  'captive-portals-explained',
 };
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.

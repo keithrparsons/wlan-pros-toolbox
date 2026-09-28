@@ -1,0 +1,125 @@
+{
+  "source": "wifi-on-planes-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        760.0,
+        322.0
+      ],
+      "caption": null,
+      "alt": "A plane's Wi-Fi reaches the internet through a satellite and a ground station, shared by everyone on board"
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        760.0,
+        500.0
+      ],
+      "caption": "**Figure 1. One switch, three radios.** Keep cellular off in the air. Turn Wi-Fi and Bluetooth back on only if the airline allows it.",
+      "alt": "Airplane mode turns off cellular, Wi-Fi and Bluetooth; in the air, cellular stays off and Wi-Fi and Bluetooth may come back on"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        216.0
+      ],
+      "caption": "**Figure 2. Your phone remembers your last flight.** Left, last time: you turned Wi-Fi back on. Right, this time: airplane mode leaves it on.",
+      "alt": "Your phone remembers: if you turned Wi-Fi on last flight, airplane mode may leave it on next time"
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        760.0,
+        232.0
+      ],
+      "caption": "**Figure 3. What to look for.** Signal bars, or 5G or LTE next to the carrier name, mean cellular is still on.",
+      "alt": "Good: airplane symbol, no signal bars, no carrier name. Not yet: signal bars and a carrier name mean cellular is on"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        470.0
+      ],
+      "caption": "**Figure 4. A phone in the air sees too many towers.** On the ground, hills and buildings limit how many towers your phone reaches. Up high, nothing is in the way. Not to scale.",
+      "alt": "On the ground a phone reaches a few towers; up in the air it reaches many at once"
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        760.0,
+        530.0
+      ],
+      "caption": "**Figure 5. Three ways down to the ground.** Towers work over land. Satellites also work over oceans. The far-away satellite adds the most delay. Not to scale.",
+      "alt": "Three ways down: towers over land, a low close satellite, and a far-away satellite with the longest delay"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        640.0
+      ],
+      "caption": "**Figure 6. The long way round.** Your message and its reply each go up to the satellite and back down. Follow the numbers 1 to 4. Not to scale.",
+      "alt": "Your message goes up to a far-away satellite and down to the ground, and the reply makes the same trip back: four long trips"
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        760.0,
+        540.0
+      ],
+      "caption": "**Figure 7. Everyone on board shares the link.** The same link, cut into a few wide lanes at home and many thin slices on a plane. Not to scale.",
+      "alt": "At home a few people share the link in wide lanes; on a plane everyone on board shares one link in thin slices"
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        598.0
+      ],
+      "caption": "**Figure 8. Small jobs fit in your slice. Big ones don't.** Each bar is how much of the link a job needs; the dashed line is your share. Not to scale.",
+      "alt": "Message apps and email fit inside your slice of the shared link; web pages are slower; video calls and big downloads need more than your slice"
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        760.0,
+        416.0
+      ],
+      "caption": "**Figure 9. How the sign-in page appears.** Your phone checks whether it's online. The plane's network answers with its sign-in page instead.",
+      "alt": "Join the plane's Wi-Fi; your phone asks for a test page; the plane answers with its sign-in page"
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        440.0
+      ],
+      "caption": "**Figure 10. Open a browser; don't tap Cancel.** Left: going to any web page brings up the sign-in page. Right: on an iPhone, Cancel disconnects you.",
+      "alt": "If the sign-in page does not appear, open a browser and go to any page. On an iPhone, do not tap Cancel"
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        760.0,
+        330.0
+      ],
+      "caption": "**Figure 11. Do the heavy lifting on the ground.** Left, on a fast connection before you board. Right, on the shared link in the air.",
+      "alt": "Before you board, on a fast connection: download, pair earbuds, finish updates. In the air: check your screen and text instead of calling"
+    }
+  ]
+}

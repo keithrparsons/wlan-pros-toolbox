@@ -1,0 +1,215 @@
+{
+  "source": "travel-routers-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": null,
+      "alt": "Hotel Wi-Fi reaches one travel router, which makes its own Wi-Fi for four devices"
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 1. Two jobs, one box.** It joins the hotel Wi-Fi, just like a phone would. Then it makes a Wi-Fi network that belongs to you.",
+      "alt": "Job one: the travel router joins the hotel Wi-Fi. Job two: it makes your own Wi-Fi for your devices."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        616.0,
+        306.0
+      ],
+      "caption": "**Figure 2. Your Wi-Fi is a few steps away.** The hotel's Wi-Fi often comes from down the hall. Your own Wi-Fi comes from the desk, right next to you.",
+      "alt": "The hotel access point is down the hall, behind a wall. The travel router sits on the desk, a few steps from your devices."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        616.0,
+        460.0
+      ],
+      "caption": "**Figure 3. One radio for each job.** The top radio joins the hotel. The bottom radio runs your own Wi-Fi. In the middle, the box sends everything out as if it were one device.",
+      "alt": "Inside the box: one radio talks to the hotel, one radio talks to your devices, and in between everything leaves as one device"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        616.0,
+        352.0
+      ],
+      "caption": "**Figure 4. Sign in once, not on every device.** Only the travel router meets each new hotel. Your devices see the same network every trip, so they join on their own.",
+      "alt": "Without a travel router, every device signs in at every hotel. With one, only the router signs in and your devices join by themselves."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        616.0,
+        240.0
+      ],
+      "caption": "**Figure 5. Help for gadgets with no browser.** A TV stick or a game console can struggle with a sign-in page. On your own Wi-Fi, it never sees one.",
+      "alt": "A TV or game console alone cannot open a hotel sign-in page. Behind a travel router, it joins your Wi-Fi with no sign-in."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        616.0,
+        344.0
+      ],
+      "caption": "**Figure 6. The hotel counts one.** Usually, every device behind the travel router shares that one spot. The limit shown is an example. If a hotel still blocks it, ask the front desk.",
+      "alt": "With a limit of two devices, three of five are locked out. With a travel router, the hotel counts one and all five get online."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        616.0,
+        246.0
+      ],
+      "caption": "**Figure 7. One on the list, many in the room.** The hotel sees one device. Everything you carry sits behind it.",
+      "alt": "The hotel's list shows one device in your room. Behind it sit five of your devices."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        616.0,
+        344.0
+      ],
+      "caption": "**Figure 8. Your devices stay on your side.** On hotel Wi-Fi, your devices may share a network with strangers. Many hotels keep guests apart, but you can't tell which. Behind the travel router, your devices sit on your own network.",
+      "alt": "On hotel Wi-Fi alone, your devices sit among strangers' devices. Behind a travel router, they sit on your own network and strangers stay outside."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        616.0,
+        240.0
+      ],
+      "caption": "**Figure 9. Three steps, done once.** Give your network a name and a password, then join each device to it. After that, they join by themselves.",
+      "alt": "Three steps at home: plug it in, give it your own name and password, then join each device once."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        616.0,
+        180.0
+      ],
+      "caption": "**Figure 10. Three things to pack.** The travel router, its power cord, and a short network cable in case the room has a wall jack.",
+      "alt": "Pack three things: the travel router, its power cord, and a short network cable."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        616.0,
+        240.0
+      ],
+      "caption": "**Figure 11. Pick the hotel network.** On your phone, open the travel router's settings. Choose the hotel's network from the list, and the router joins it.",
+      "alt": "From your phone, open the travel router's settings and pick the hotel network. The travel router joins it."
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        616.0,
+        286.0
+      ],
+      "caption": "**Figure 12. One sign-in covers everyone.** Open a web page on a phone joined to your travel router. The hotel's page shows up. Accept it once, and every device is online.",
+      "alt": "Open a web page on a device joined to your travel router. The hotel sign-in page appears. Accept it once and every device is online."
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        616.0,
+        344.0
+      ],
+      "caption": "**Figure 13. A cable is steadier.** The cable carries the hotel side. The travel router's Wi-Fi then works only for you and your devices.",
+      "alt": "Over Wi-Fi, the travel router reaches a far, shared hotel signal. With a cable to the wall jack, the hotel side is steady and the router's Wi-Fi is all yours."
+    },
+    {
+      "n": 14,
+      "file": "fig-14.svg",
+      "viewBox": [
+        616.0,
+        230.0
+      ],
+      "caption": "**Figure 14. Use the internet port.** The cable from the wall goes into the port meant for the internet. The jack may show the same sign-in page as the Wi-Fi.",
+      "alt": "Run the cable from the wall jack to the travel router's internet port. The router's Wi-Fi then serves your devices."
+    },
+    {
+      "n": 15,
+      "file": "fig-15.svg",
+      "viewBox": [
+        616.0,
+        200.0
+      ],
+      "caption": "**Figure 15. Slow in, slow out.** The travel router shares what the hotel gives. It can make things steadier, but not faster.",
+      "alt": "A slow hotel line stays slow. The travel router passes on the same speed; it cannot make the line wider."
+    },
+    {
+      "n": 16,
+      "file": "fig-16.svg",
+      "viewBox": [
+        616.0,
+        290.0
+      ],
+      "caption": "**Figure 16. Check for two radios.** A one-radio model takes turns talking to the hotel and to you, so it runs slower.",
+      "alt": "A one-radio model uses the same radio for the hotel and for you, taking turns. A two-radio model gives each job its own radio."
+    },
+    {
+      "n": 17,
+      "file": "fig-17.svg",
+      "viewBox": [
+        616.0,
+        318.0
+      ],
+      "caption": "**Figure 17. Known beats nearby.** Your devices usually pick the network they know. To put one on the hotel Wi-Fi, turn the travel router off, or tell that device to forget your network.",
+      "alt": "With the travel router on, your phone stays on the network it knows. Turn the router off and the phone joins the hotel Wi-Fi."
+    },
+    {
+      "n": 18,
+      "file": "fig-18.svg",
+      "viewBox": [
+        616.0,
+        250.0
+      ],
+      "caption": "**Figure 18. The wall works both ways.** Other guests can't reach your devices. Your devices also may not find things on the hotel network, like a room TV you cast video to, because they are on a different network.",
+      "alt": "The travel router is a wall that works both ways: other guests cannot reach your phone, and your phone cannot reach the hotel's room TV."
+    },
+    {
+      "n": 19,
+      "file": "fig-19.svg",
+      "viewBox": [
+        616.0,
+        180.0
+      ],
+      "caption": "**Figure 19. One tunnel for every device.** Set up on the router, the VPN covers everything behind it.",
+      "alt": "With a VPN on the travel router, everything your devices send crosses the hotel network scrambled, on its way to the VPN service."
+    },
+    {
+      "n": 20,
+      "file": "fig-20.svg",
+      "viewBox": [
+        616.0,
+        430.0
+      ],
+      "caption": "**Figure 20. Two easy wins.** Set it up before you leave, and keep it where your devices can hear it.",
+      "alt": "Set it up at home, not late at night in a hotel. Put it out in the open, not in a bag or a drawer."
+    }
+  ]
+}

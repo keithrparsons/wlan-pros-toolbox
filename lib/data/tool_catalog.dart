@@ -2833,6 +2833,90 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Tap, Touch and Near, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: the phone's two short-range radios: NFC for a tap, Ultra Wideband for finding things.
+      ToolEntry(
+        id: 'tap-touch-near-explained',
+        title: 'Tap, Touch and Near, Explained',
+        description:
+            'What happens when you tap to pay, whether your wallet needs a '
+            'shield, and how your phone finds your keys',
+        routeName: '/tools/tap-touch-near-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Satellite Texting, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: how a phone texts through a satellite with no cell signal, and why it is a backup.
+      ToolEntry(
+        id: 'satellite-texting-explained',
+        title: 'Satellite Texting, Explained',
+        description:
+            'How your phone can send a text with no cell signal, why it '
+            'needs open sky, and what to set up before you go',
+        routeName: '/tools/satellite-texting-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Wi-Fi on Planes, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: what airplane mode turns off, why plane Wi-Fi is slow, and signing in at your seat.
+      ToolEntry(
+        id: 'wifi-on-planes-explained',
+        title: 'Wi-Fi on Planes, Explained',
+        description:
+            'What airplane mode turns off, why plane Wi-Fi feels slow, and '
+            'how to get online in your seat',
+        routeName: '/tools/wifi-on-planes-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Wi-Fi and Your Health, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: how much power Wi-Fi sends, how fast it fades, and what health agencies say.
+      ToolEntry(
+        id: 'wifi-and-health-explained',
+        title: 'Wi-Fi and Your Health, Explained',
+        description:
+            'How much power Wi-Fi sends, how fast it fades with distance, '
+            'and what health agencies say about it',
+        routeName: '/tools/wifi-and-health-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Travel Routers, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: one small box that joins the hotel Wi-Fi and gives your devices a network they know.
+      ToolEntry(
+        id: 'travel-routers-explained',
+        title: 'Travel Routers, Explained',
+        description:
+            'How one small box joins the hotel Wi-Fi for you and gives all '
+            'your devices a network they already know',
+        routeName: '/tools/travel-routers-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Mobile Hotspots, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: cell signal in, Wi-Fi out: what makes a hotspot fast or slow and how to use it well.
+      ToolEntry(
+        id: 'mobile-hotspots-explained',
+        title: 'Mobile Hotspots, Explained',
+        description:
+            'How a small box, or your phone, turns cell signal into Wi-Fi, '
+            'what makes it fast or slow, and how to use it well',
+        routeName: '/tools/mobile-hotspots-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Captive Portals, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: the Wi-Fi sign-in page for the person holding the phone; the network side is in Connected, No Internet: Captive Portals.
+      ToolEntry(
+        id: 'captive-portals-explained',
+        title: 'Captive Portals, Explained',
+        description:
+            'What that Wi-Fi sign-in page is, why it shows up, and what to '
+            'do when it doesn\'t',
+        routeName: '/tools/captive-portals-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

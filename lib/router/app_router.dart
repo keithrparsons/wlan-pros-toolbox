@@ -157,6 +157,13 @@ import '../screens/tools/reference/how_gps_works_explained_screen.dart';
 import '../screens/tools/reference/where_your_phone_is_explained_screen.dart';
 import '../screens/tools/reference/analog_vs_digital_explained_screen.dart';
 import '../screens/tools/reference/scales_and_ratios_explained_screen.dart';
+import '../screens/tools/reference/tap_touch_near_explained_screen.dart';
+import '../screens/tools/reference/satellite_texting_explained_screen.dart';
+import '../screens/tools/reference/wifi_on_planes_explained_screen.dart';
+import '../screens/tools/reference/wifi_and_health_explained_screen.dart';
+import '../screens/tools/reference/travel_routers_explained_screen.dart';
+import '../screens/tools/reference/mobile_hotspots_explained_screen.dart';
+import '../screens/tools/reference/captive_portals_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -919,6 +926,34 @@ class AppRouter {
   /// US router rule, and what to buy next. The id `router-too-old-explained` is
   /// permanent (route, catalog, help, tests).
   static const String routerTooOldExplained = '/tools/router-too-old-explained';
+  /// Tap, Touch and Near, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `tap-touch-near-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String tapTouchNearExplained = '/tools/tap-touch-near-explained';
+  /// Satellite Texting, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `satellite-texting-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String satelliteTextingExplained = '/tools/satellite-texting-explained';
+  /// Wi-Fi on Planes, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `wifi-on-planes-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String wifiOnPlanesExplained = '/tools/wifi-on-planes-explained';
+  /// Wi-Fi and Your Health, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `wifi-and-health-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String wifiAndHealthExplained = '/tools/wifi-and-health-explained';
+  /// Travel Routers, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `travel-routers-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String travelRoutersExplained = '/tools/travel-routers-explained';
+  /// Mobile Hotspots, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `mobile-hotspots-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String mobileHotspotsExplained = '/tools/mobile-hotspots-explained';
+  /// Captive Portals, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `captive-portals-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String captivePortalsExplained = '/tools/captive-portals-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1302,6 +1337,13 @@ class AppRouter {
     whereYourPhoneIsExplained: (_) => const WhereYourPhoneIsExplainedScreen(),
     analogVsDigitalExplained: (_) => const AnalogVsDigitalExplainedScreen(),
     scalesAndRatiosExplained: (_) => const ScalesAndRatiosExplainedScreen(),
+    tapTouchNearExplained: (_) => const TapTouchNearExplainedScreen(),
+    satelliteTextingExplained: (_) => const SatelliteTextingExplainedScreen(),
+    wifiOnPlanesExplained: (_) => const WifiOnPlanesExplainedScreen(),
+    wifiAndHealthExplained: (_) => const WifiAndHealthExplainedScreen(),
+    travelRoutersExplained: (_) => const TravelRoutersExplainedScreen(),
+    mobileHotspotsExplained: (_) => const MobileHotspotsExplainedScreen(),
+    captivePortalsExplained: (_) => const CaptivePortalsExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

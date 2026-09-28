@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 254 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 261 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (81 tools)
-  - Guided Lessons (22)
+- **Wireless Classroom** (88 tools)
+  - Guided Lessons (29)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (81 tools)
+# Wireless Classroom (88 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (22)
+## Guided Lessons (29)
 
 
 ### Antenna Fundamentals
@@ -3946,6 +3946,140 @@ A read-along lesson on how internet from space reaches your house or RV, how hig
 - Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
 - The Wi-Fi Calling line is general: some carriers don't support it over satellite internet. T-Mobile's page is the one in the sources; other carriers publish their own.
 - The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
+
+### Tap, Touch and Near, Explained
+
+A read-along lesson on the two short-range radios in a phone: NFC (near field communication), the one that works when you tap to pay, and Ultra Wideband (UWB), the one that measures how far away something is. It covers why a tap has to be a tap, what a tap sends to the store, whether a wallet needs a shield, where the real risk is, and how a phone points the way to your keys or opens a car. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.
+
+**Why it's here.** It answers questions Wi-Fi people get asked by people who aren't technical: is tapping to pay safe, and do I need a blocking wallet? The short answers are yes and, for bank cards, no. Each payment sends a code that works only once, and a card has to be within a hand's width of the reader to wake up at all.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then the two radios, what a tap sends, the wallet question, the real risks, finding your keys, and four things people get wrong with the habits worth keeping. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 has the one Stop box in the lesson: never share a code your bank texts you.
+4. Step 6 has Open buttons for Find My, Explained and Bluetooth, Explained when those lessons are in the app.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Tap, Touch and Near, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026 against sources that include Visa, EMVCo, Apple, Google, the FTC and the FiRa Consortium. The full source list is the last step of the lesson.
+- The lesson is independent and isn't affiliated with or endorsed by any company named in it.
+
+
+### Satellite Texting, Explained
+
+A read-along lesson on how many newer phones send a text through a satellite when there's no cell signal and no Wi-Fi: how the text reaches the satellite, why the phone needs a clear view of the sky, how to hold the phone and wait, why it's a backup and not a promise, and what to set up before you go. The lesson follows the free PDF guide of the same name, word for word, with its 8 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked before a trip into the backcountry: will my phone work out there? The one idea under it is distance. The satellite is far away and the phone's antenna is small, so the phone sends a few words at a time, slowly, and only with open sky above it.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then how a text reaches a satellite, why it needs the sky, holding the phone and waiting, the limits, setting it up before you go, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 has the one Stop box in the lesson: don't make satellite texting your only way to get help.
+4. Step 6 has the setup list and the steps to try the demo on an iPhone and on a Pixel phone while you still have signal.
+5. The last step has Open buttons for How GPS Works, Explained, Starlink, Explained and Weak Cell Signal at Home, Explained when those lessons are in the app.
+6. The last row, Take it with you, names the free PDF guide the lesson follows, Satellite Texting, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+7. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026 against Apple, Google, Verizon and T-Mobile support pages. Phones, countries and plans change every few months, so check your carrier and your phone maker before a trip.
+- The lesson is independent and isn't affiliated with any phone maker, carrier or satellite company.
+
+
+### Wi-Fi on Planes, Explained
+
+A read-along lesson on Wi-Fi in the air: what airplane mode turns off, why the rule exists, how the internet reaches a plane by ground towers or satellites, why it feels slow when everyone on board shares one link, and how to get online in your seat when the sign-in page won't appear. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by everyone who flies: why is plane Wi-Fi so slow? Everyone on board shares one link to the ground, and often that link goes through a satellite far out in space, so small jobs fit in your slice and big ones don't.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what airplane mode turns off, why the rule exists, how the internet reaches a plane, why it feels slow, getting online in your seat, four things people get wrong, and tips for your next flight. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 6 covers what to do when the sign-in page won't appear: open a web browser and go to any web page, and on an iPhone don't tap Cancel.
+4. The last row, Take it with you, names the free PDF guide the lesson follows, Wi-Fi on Planes, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026. Airline Wi-Fi offers and phone menus change often. The full source list is the last step of the lesson.
+- When the crew gives an instruction about devices, follow it.
+
+
+### Wi-Fi and Your Health, Explained
+
+A read-along lesson on the numbers behind the question: how much power a Wi-Fi router sends (about a tenth of a watt), how fast the signal fades as it spreads, how far below the safety limits it measures in real homes and schools, how the limits are set, and what health agencies say. The lesson follows the free PDF guide of the same name, word for word, with its 10 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by family, parents and clients: is Wi-Fi safe to have in the house? The lesson answers with power numbers in plain words. A router sends about a tenth of a watt, the signal fades fast as it spreads, and measurements in homes and schools come out far below the limits.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then radio waves against X-rays, a tenth of a watt, why distance matters so much, how far below the limit, how the limits are set, what was measured and what agencies say, four things people get wrong, and what to do if you want less exposure anyway. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 7 quotes the UK Health Security Agency and the World Health Organization in their own words, with the date each page carries.
+4. Step 9 has the choices for anyone who wants less exposure anyway, and the one Caution in the lesson: turning Wi-Fi off at night also stops the cameras and doorbells that depend on it.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Wi-Fi and Your Health, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026. Agency pages are quoted as they read that day.
+- The lesson explains the power numbers in plain words. It isn't medical advice. For a question about your own health, ask your doctor.
+- Phones held to your head are a different question from Wi-Fi, and the lesson doesn't cover them.
+
+
+### Travel Routers, Explained
+
+A read-along lesson on the travel router, a small box you pack in your bag that joins the hotel Wi-Fi for you and then makes your own Wi-Fi in the room: its two jobs and two radios, why your devices remember one network, the hotel's device limit, a network of your own, setup at home, joining and signing in at the hotel, a wired jack in the room, when it doesn't help, and a VPN (virtual private network) on the router. The lesson follows the free PDF guide of the same name, word for word, with its 20 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by travelers: is a travel router worth packing? The one idea under it is that your devices join a network they already know. The box signs in to the hotel once, so the hotel usually counts one device, and every phone, laptop and tablet joins a network it already knows, just like at home.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what it is, why it helps, what you do at home and at the hotel, when it doesn't help, two surprises, a VPN on the router, four things people get wrong, and tips. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 7 has the setup steps to do at home, before the trip.
+4. Steps 1 and 8 have an Open button for Captive Portals, Explained, which covers the hotel sign-in page itself.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Travel Routers, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any router maker or hotel company.
+- The travel router keeps other guests away from your devices. It doesn't hide what you do online from the hotel.
+
+
+### Mobile Hotspots, Explained
+
+A read-along lesson on the mobile hotspot, which takes the cell signal a phone uses and turns it into Wi-Fi: the two kinds (a pocket box or your phone), how a web page makes the round trip, what decides the speed, a busy network, data and your plan, battery and heat, where to put it, other ways to share, keeping it private, and how it compares with a travel router. The lesson follows the free PDF guide of the same name, word for word, with its 22 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by travelers and people working away from home: why is my hotspot slow? A laptop's Wi-Fi bars show only the short link to the hotspot. The speed is decided by the cell signal where the hotspot sits and by how many people share the tower.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what it is, how it works, speed, data, battery and heat, where to put it, other ways to share, keeping it private, hotspot or travel router, four good habits, four things people get wrong, and tips. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 9 covers where to put the hotspot: where the cell signal is best, watching the cell bars on the hotspot itself.
+4. Open buttons for Travel Routers, Explained, Phone Data Abroad, Explained, Weak Cell Signal at Home, Explained and Home Internet, Explained follow the steps that name them, when those lessons are in the app.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Mobile Hotspots, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any phone, carrier or hotspot maker.
+
+
+### Captive Portals, Explained
+
+A read-along lesson on the Wi-Fi sign-in page, also called a captive portal: why it sits between the Wi-Fi and the internet, how your phone notices it, what to do when the page doesn't show up, why it comes back, what the network can see, how to stay safe on it, and what to do with a device that has no screen. The lesson follows the free PDF guide of the same name, word for word, with its 15 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked in every hotel, airport and cafe: the Wi-Fi says connected, so why won't anything load? Joining the Wi-Fi and reaching the internet are two steps, and the sign-in page sits between them. This lesson is written for the person holding the phone. For the network side, how a network announces its sign-in page and how a device checks for it, see Connected, No Internet: Captive Portals.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what it is, how your phone notices, what to do when the page doesn't show up, why it comes back, what the network can see, staying safe, devices with no screen, five things people get wrong, and tips for your next trip. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 4 has the steps to try when the page never pops up, and what to do if you use a VPN (virtual private network) or private DNS.
+4. Step 7 has the one Stop box in the lesson: never type your email password into a sign-in page.
+5. Steps 1 and 8 have Open buttons for Wi-Fi on Planes, Explained and Travel Routers, Explained when those lessons are in the app.
+6. The last row, Take it with you, names the free PDF guide the lesson follows, Captive Portals, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+7. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The lesson is independent and isn't affiliated with or endorsed by any hotel, airline, phone maker or government agency. Companies are named only as sources.
+- A real sign-in page is a gate, not a window into your secure pages. Still, type only what the place needs.
+
 
 ### Bluetooth, Explained
 
@@ -4220,7 +4354,7 @@ A guided lesson on what the person next to you on public Wi-Fi can see. One cont
 **How to use**
 1. Read the short answer, then pick a network type in Try it. The rows update at once: Can read it, Can see it, or Sealed, each with a line saying why. On a keyboard, Tab to the control and use the Left and Right arrow keys.
 2. Pick Password to turn on the second control, then compare WPA2 and WPA3. The person next to you was given the same password, so WPA2-Personal reads like Open to them once they record you joining, and WPA3-Personal does not.
-3. Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. The lesson has no Present mode; it reads as a page on any screen.
+3. Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. Each myth hides its fact until you tap Reveal the fact. The lesson has no Present mode; it reads as a page on any screen.
 
 **Field notes**
 - The listener is fixed: someone on the same network who only records the air, and on a password network was given the same password. A stranger without the password reads nothing on WPA2- or WPA3-Personal.
@@ -4237,7 +4371,7 @@ A guided lesson in two parts. Part 1 is your phone's private Wi-Fi address: one 
 **How to use**
 1. In part 1, pick Off, Fixed or Rotating. Each scene says Can be matched or Can't be matched in words, and the filter row says Let in or Turned away. On a keyboard, Tab to a control and use the Left and Right arrow keys.
 2. Answer the Predict, then reveal question before you open it. Show me on Fixed sets the control to the case the answer describes.
-3. In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. The lesson has no Present mode; it reads as a page on any screen.
+3. In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. Section 8 has three things people get wrong. Each myth hides its fact until you tap Reveal the fact. The lesson has no Present mode; it reads as a page on any screen.
 
 **Field notes**
 - Every address is illustrative. The hardware address is from the IETF documentation range (RFC 7042), so it belongs to no real device, and the private addresses have the locally administered bit set, as real ones do.
@@ -6382,6 +6516,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 
