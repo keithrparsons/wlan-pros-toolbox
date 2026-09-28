@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 232 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 233 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,10 +37,10 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (59 tools)
+- **Wi-Fi Classroom** (60 tools)
   - Guided Lessons (9)
   - RF and Propagation (11)
-  - Signals and PHY (5)
+  - Signals and PHY (6)
   - Airtime and Access (10)
   - Network Design and Security (13)
   - Course Handouts (11)
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (59 tools)
+# Wi-Fi Classroom (60 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4452,7 +4452,7 @@ Shows what people cost a Wi-Fi signal, from above. An auditorium floor holds one
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Signals and PHY (5)
+## Signals and PHY (6)
 
 
 ### Modulation Simulator
@@ -4659,6 +4659,41 @@ Draws the preamble of every Wi-Fi PPDU format to scale in microseconds: Legacy (
 - The BSS color moves with the HE PPDU type (HE-SIG-A1 B8-B13 in SU, B5-B10 in MU, B1-B6 in TB) and is fixed in EHT at U-SIG-1 B7-B12.
 - The LTF size and guard interval pairs offered are the brief's EHT list; 1x is not offered. LTF counts follow the Airtime Anatomy table. Durations are per field and do not change with width. The packet extension and the 2.4 GHz signal extension come after the data and are not drawn.
 - HE-SIG-B and EHT-SIG symbol counts depend on the users and the SIG MCS, so here they are a setting, not computed.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### The Number on the Box vs the Number in Your Hand
+
+Shows why the speed class printed on a router box is not what one device gets. Three bars share one scale. The first is the number on the box of a BE19000-class router: 18,656 Mbps (megabits per second), every radio added at its maximum. The second is the best case for one client, a 2x2 phone by default: one link, two spatial streams. The third is an estimate for that client at a stated distance and channel width.
+
+**Why it's here.** A router's class name adds up its 6 GHz, 5 GHz and 2.4 GHz radios, each at its widest channel, its top MCS (modulation and coding scheme, the data-rate step) and four spatial streams. A phone uses one of those links with its own two streams, so its best case is under a third of the box number, and only close to the router. Distance lowers it again. The stream count sets the ceiling: a 2x2 laptop and a 2x2 phone reach the same one.
+
+**How to use**
+1. Press Show the next step to walk from the box, to the best case for the client, to the estimate at a distance. Each new bar starts at the length of the bar above it and shrinks. Back a step goes the other way.
+2. Choose the client: a 2x2 phone (the default), a 2x2 laptop, or a 4-stream reference client as big as the router. The phone and the laptop give the same bars. The 4-stream reference still reaches only the one fastest link.
+3. Set the distance and the 6 GHz channel width for the third step. Far enough out, a narrower channel beats a wider one, because a wider channel needs a stronger signal for the same MCS.
+4. On a computer or tablet, Present opens the tool full screen for a projector: Right shows the next step and Left the one before, Space jumps between the box and the hand, Up and Down change the client, R resets, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Client | streams | A 2x2 phone (default), a 2x2 laptop, or a 4-stream reference client |
+| Step | step | On the box, best case, at a distance; default on the box |
+| Distance from the router | m or ft | 1 to 60 m (3 to 197 ft); default 5 m (illustrative) |
+| Channel width, 6 GHz | MHz | 20, 40, 80, 160 or 320; default 320, the best case's own width |
+
+**How it works.** Box = 11,520 + 5,760 + 1,376 = 18,656 Mbps, the published figures for a BE19000-class router's 6 GHz, 5 GHz and 2.4 GHz radios; the class name rounds the sum up to the next thousand. The app's own PHY (physical layer) rate math, the Throughput Calculator's data subcarriers x bits per symbol x streams / symbol time for 802.11be with the 0.8 microsecond guard interval, gives 11,529, 5,765 and 1,376 Mbps for four streams at 320, 160 and 40 MHz and MCS 13: the same figures to within 0.1%. Best case = that formula for the fastest radio (6 GHz, 320 MHz, MCS 13) with the client's streams, never more than the router's four. Step 3: received level = 20 dBm EIRP (effective isotropic radiated power) - path loss, with a 0 dBi client antenna (decibels over an isotropic antenna); path loss = free-space path loss at 1 m + 10 x 3 x log10(d) at 6135 MHz (6 GHz channel 37). The MCS is the highest whose 802.11be minimum receiver sensitivity at the chosen width the level meets (the Rate vs Range table). Estimate = the PHY rate at that MCS x 0.80, the Throughput Calculator factor for 802.11be.
+
+**Example.** With the defaults, the box says 18,656 Mbps. A 2x2 phone's best case is 5,765 Mbps, 31% of the box. At 5 m on a 320 MHz channel the phone receives -49.2 dBm, which supports MCS 7: a PHY rate of 2,882 Mbps and an estimate of 2,306 Mbps, 12% of the box. At 20 m a 160 MHz channel (MCS 2, estimate 346 Mbps) beats a 320 MHz channel (MCS 0, estimate 231 Mbps).
+
+**Field notes**
+- The class number is a sum of radios, and no single device sees it. Read the per-band figures on the datasheet, then halve the fastest one for a 2x2 client.
+- The best case assumes the client supports 320 MHz channels and 4096-QAM (quadrature amplitude modulation). If it supports less, its best case is lower.
+- The 0.80 factor is the Throughput Calculator's estimate and is favorable, so a speed test usually reads lower. Other clients sharing the airtime, walls and interference are left out, and the client is assumed to keep all its streams at a distance, so step 3 is an upper limit for this client.
+- The 5 m default distance is an illustrative choice. No measured home stands behind it.
+- The tool also leaves out Multi-Link Operation, where a Wi-Fi 7 client and router use more than one band at once. The Multi-Link Operation simulator shows it.
+- For the rate at every MCS, width and stream count, see the MCS Index and the Throughput Calculator. For how the rate falls with distance, see Rate vs Range.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
@@ -5778,6 +5813,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 

@@ -2819,6 +2819,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Signals and PHY',
       ),
+      // 2026-09-27: candidate 4 of the 1.11.0 Classroom set, after the PHY
+      // tools whose streams, widths and MCS it adds up.
+      ToolEntry(
+        id: 'box-vs-hand',
+        title: 'The Number on the Box vs the Number in Your Hand',
+        description:
+            'Why a BE19000-class router does not give your phone 19 Gbps: the '
+            'box adds every radio, your 2x2 device uses one link',
+        routeName: '/tools/box-vs-hand',
+        isLive: true,
+        subgroup: 'Signals and PHY',
+      ),
       // ── Airtime and Access ──
       ToolEntry(
         id: 'medium-access-simulator',

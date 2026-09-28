@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the box: a tall bar, the class number -->
+    <rect x="3" y="3" width="7" height="14" rx="2"/>
+    <path d="M6.5 6.5 V13.5"/>
+    <!-- the hand: a phone, much shorter, with a short bar -->
+    <rect x="14.5" y="9" width="7" height="8" rx="2"/>
+    <path d="M18 12 V14"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="12" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>
