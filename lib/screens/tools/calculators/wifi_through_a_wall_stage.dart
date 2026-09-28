@@ -1,6 +1,6 @@
 // The stage for "Wi-Fi Through a Wall": the wave drawn along the wall's
 // normal, animated in phase. It reads the shared WallSlabController (wall,
-// play state, view toggle, phase) and holds no inputs of its own, so the
+// play state, phase) and holds no inputs of its own, so the
 // presenter layout (lib/widgets/presenter/) places it beside WallSlabControls
 // over the same state. In presenter mode the wave fills the stage and the
 // loss, in headline type, stands under it beside the three-band table.
@@ -34,12 +34,17 @@
 //
 // FREQUENCY NEVER CHANGES (Keith, 2026-09-25: "The only thing that changes
 // is the height of the wave, NOT the frequency."). A snapshot of a wave with
-// a shorter wavelength reads as a higher frequency, so by DEFAULT the inside
-// wave keeps the air wavelength: only its height changes. The optional
-// "Show wavelength inside the material" view draws the true lambda/sqrt(e')
-// with a note that the frequency is unchanged. In both views the inside
-// phase is laid out on the air scale (px per metre), so the wall band's
-// drawn width never stretches the wave. See WallWaveProfile.
+// a shorter wavelength reads as a higher frequency, so the inside wave keeps
+// the air wavelength: only its height changes. The inside phase is laid out
+// on the air scale (px per metre), so the wall band's drawn width never
+// stretches the wave. See WallWaveProfile. (The optional "Show wavelength
+// inside the material" view was removed on 2026-09-27, Keith: "remove show
+// wavelength inside material toggle".)
+//
+// LAYERS (Keith, 2026-09-27: real walls, "a drywall with two plasterboards
+// and an air gap"). The band is split into the wall's layers in equal
+// shares, NOT to scale, solid layers filled and air left open; the layer
+// strip under the plot names each layer and its true thickness.
 //
 // THE WALL IS NOT DRAWN TO SCALE (Keith, 2026-09-27: "at 1cm only one pixel
 // difference, at 1m the two vertical lines should be no more than 3X the
@@ -62,10 +67,13 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/complex.dart';
+import '../../../services/wifi_lab/wall_multilayer_physics.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
+import '../../../units/unit_system.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
@@ -116,19 +124,14 @@ class WallSlabStage extends StatefulWidget {
     super.key,
     required this.controller,
     this.plotHeight = 200,
-    this.showWavelengthSwitch = true,
   });
 
-  /// The shared state: wall, play state, view toggle and phase.
+  /// The shared state: wall, play state and phase.
   final WallSlabController controller;
 
   /// Plot height, px. Ignored in presenter mode, where the plot fills the
   /// stage.
   final double plotHeight;
-
-  /// False hides the "Show wavelength inside the material" switch (a
-  /// presenter can own it elsewhere).
-  final bool showWavelengthSwitch;
 
   @override
   State<WallSlabStage> createState() => _WallSlabStageState();
@@ -154,13 +157,17 @@ class _WallSlabStageState extends State<WallSlabStage> {
 
   String _semantic() {
     final WallConfig cfg = _c.config;
-    final SlabResult r = _c.result;
+    final WallTransmission r = _c.result;
     final double behind = cfg.levelBehindDbm(r);
-    return 'Wave through ${fmtThickness(cfg.thicknessMm, _c.units)} of '
-        '${cfg.material.label.toLowerCase()} at ${cfg.centerMHz} MHz. '
+    final String wall = cfg.isCustom
+        ? '${fmtThickness(cfg.wallMm, _c.units)} of '
+              '${cfg.material.label.toLowerCase()}'
+        : 'a ${cfg.preset.label.toLowerCase()}, '
+              '${fmtLayers(cfg.layers, _c.units)}';
+    return 'Wave through $wall, at ${cfg.centerMHz} MHz. '
         'In front, the reflected wave makes a ripple of '
         '${r.standingWaveRippleDb <= 40 ? '${fmt1(r.standingWaveRippleDb)} dB' : 'full nulls'}. '
-        '${_c.showMaterialWavelength ? 'Inside, the same frequency packs into a shorter wavelength, ${fmtLength(r.props.lambdaInMaterial, _c.units)} instead of ${fmtLength(r.props.lambdaAir, _c.units)} in air, and the wave shrinks in height. ' : 'Inside, the wave keeps the same frequency and shrinks in height. '}'
+        'Inside, the wave keeps the same frequency and shrinks in height. '
         'Behind, ${fmtLossDb(r.transmissionLossDb)} of loss takes '
         '${fmtDbm(cfg.txPowerDbm)} to ${_behindText(behind)}. The height '
         'shows signal above a ${fmtDbm(kWallNoiseFloorDbm)} noise floor.';
@@ -197,7 +204,9 @@ class _WallSlabStageState extends State<WallSlabStage> {
               result: _c.result,
               phase: _c.phase,
               cache: _cache,
-              showMaterialWavelength: _c.showMaterialWavelength,
+              layerIsAir: <bool>[
+                for (final WallLayer l in _c.config.layers) l.isAir,
+              ],
               txPowerDbm: _c.config.txPowerDbm,
               style: WallWaveStyle(
                 wave: colors.textAccent,
@@ -225,7 +234,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
   Widget _phone(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final SlabResult r = _c.result;
+    final WallTransmission r = _c.result;
     final double behind = _c.config.levelBehindDbm(r);
 
     return WallCard(
@@ -247,10 +256,8 @@ class _WallSlabStageState extends State<WallSlabStage> {
           _plot(context, height: widget.plotHeight),
           const SizedBox(height: AppSpacing.xxs),
           _notToScale(colors, text),
-          if (widget.showWavelengthSwitch) ...<Widget>[
-            const SizedBox(height: AppSpacing.xxs),
-            _wavelengthSwitch(colors, text),
-          ],
+          const SizedBox(height: AppSpacing.xs),
+          WallLayersStrip(layers: _c.config.layers, units: _c.units),
           const SizedBox(height: AppSpacing.xs),
           _legend(context),
           const SizedBox(height: AppSpacing.xs),
@@ -312,10 +319,8 @@ class _WallSlabStageState extends State<WallSlabStage> {
           Expanded(child: _plot(context)),
           const SizedBox(height: AppSpacing.xxs),
           _notToScale(colors, text),
-          if (widget.showWavelengthSwitch) ...<Widget>[
-            const SizedBox(height: AppSpacing.xxs),
-            _wavelengthSwitch(colors, text),
-          ],
+          const SizedBox(height: AppSpacing.xs),
+          WallLayersStrip(layers: _c.config.layers, units: _c.units),
           const SizedBox(height: AppSpacing.xs),
           _legend(context),
           if (_belowFloor(behind)) ...<Widget>[
@@ -358,7 +363,7 @@ class _WallSlabStageState extends State<WallSlabStage> {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final SlabResult r = _c.result;
+    final WallTransmission r = _c.result;
     final WallConfig cfg = _c.config;
     return WallCard(
       child: Semantics(
@@ -388,9 +393,13 @@ class _WallSlabStageState extends State<WallSlabStage> {
             ),
             const SizedBox(height: AppSpacing.xxs),
             Text(
-              '${fmtThickness(cfg.thicknessMm, _c.units)} '
-              '${cfg.material.label.toLowerCase()}, ${cfg.centerMHz} MHz, '
-              'Tx ${fmtDbm(cfg.txPowerDbm)}',
+              cfg.isCustom
+                  ? '${fmtThickness(cfg.wallMm, _c.units)} '
+                        '${cfg.material.label.toLowerCase()}, '
+                        '${cfg.centerMHz} MHz, Tx ${fmtDbm(cfg.txPowerDbm)}'
+                  : '${cfg.preset.label}, '
+                        '${fmtThickness(cfg.wallMm, _c.units)}, '
+                        '${cfg.centerMHz} MHz, Tx ${fmtDbm(cfg.txPowerDbm)}',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
           ],
@@ -458,39 +467,6 @@ class _WallSlabStageState extends State<WallSlabStage> {
         '${fmtDbm(kWallNoiseFloorDbm)} noise floor. It is not zero, and the '
         'loss above is exact.',
   );
-
-  Widget _wavelengthSwitch(AppColorScheme colors, TextTheme text) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        MergeSemantics(
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Show wavelength inside the material',
-                  style: text.bodyMedium?.copyWith(color: colors.textPrimary),
-                ),
-              ),
-              Switch(
-                value: _c.showMaterialWavelength,
-                onChanged: _c.setShowMaterialWavelength,
-              ),
-            ],
-          ),
-        ),
-        Text(
-          PresenterMode.isActive(context)
-              ? 'Frequency never changes. Inside, slower travel packs the '
-                    'same frequency into a shorter wavelength.'
-              : 'Frequency never changes. Inside a material the wave travels '
-                    'slower, so the same frequency packs into a shorter '
-                    'wavelength.',
-          style: text.bodySmall?.copyWith(color: colors.textSecondary),
-        ),
-      ],
-    );
-  }
 
   Widget _playButton(AppColorScheme colors) {
     final bool p = _c.playing;
@@ -616,24 +592,25 @@ class WallWaveStyle {
 /// PHASE: one carrier. In front it is the incident wave's phase, -k x, so
 /// the drawn wave is a clean sinusoid under the envelope (the standing
 /// wave's own phase advances unevenly, and under a dB height that drew as
-/// flat-topped, warped cycles). Inside, it advances on the air
-/// scale (px per metre of air) at either the air wavenumber (default: same
-/// wavelength everywhere) or the true inside wavenumber Re(q)/d
-/// (showMaterialWavelength). Because the phase uses the air scale in both
-/// cases, the band's drawn width changes how much wave the band shows, never
+/// flat-topped, warped cycles). Inside, it advances on the air scale (px per
+/// metre of air) at the air wavenumber: the same wavelength everywhere,
+/// because the frequency never changes. Because the phase uses the air
+/// scale, the band's drawn width changes how much wave the band shows, never
 /// its wavelength. Behind the wall the wave continues from the phase the
 /// inside ended on, so the drawing is continuous at both faces.
+///
+/// It reads only [WallTransmission], so a layered wall and a single slab
+/// draw the same way.
 class WallWaveProfile {
   factory WallWaveProfile(
-    SlabResult result,
+    WallTransmission result,
     double width, {
-    required bool showMaterialWavelength,
     double txPowerDbm = kWallDefaultTxDbm,
     double noiseFloorDbm = kWallNoiseFloorDbm,
     double edgeStrokePx = 1,
     double labelWidthPx = 24,
   }) {
-    final double lambda = result.props.lambdaAir;
+    final double lambda = result.lambdaAir;
     final double side = _kAirWavelengths * lambda;
     final double wallPx = drawnWallPx(
       thicknessMm: result.thicknessM * 1000,
@@ -645,7 +622,6 @@ class WallWaveProfile {
     return WallWaveProfile._(
       result: result,
       width: width,
-      showMaterialWavelength: showMaterialWavelength,
       txPowerDbm: txPowerDbm,
       noiseFloorDbm: noiseFloorDbm,
       side: side,
@@ -658,7 +634,6 @@ class WallWaveProfile {
   WallWaveProfile._({
     required this.result,
     required this.width,
-    required this.showMaterialWavelength,
     required this.txPowerDbm,
     required this.noiseFloorDbm,
     required this.side,
@@ -668,7 +643,7 @@ class WallWaveProfile {
   }) : _k0z =
            2 *
            math.pi /
-           result.props.lambdaAir *
+           result.lambdaAir *
            math.cos(result.angleDeg * math.pi / 180),
        _front = result.fieldAt(0);
 
@@ -712,9 +687,8 @@ class WallWaveProfile {
     double noiseFloorDbm = kWallNoiseFloorDbm,
   }) => math.max(0, (dbm - noiseFloorDbm) / (txPowerDbm - noiseFloorDbm));
 
-  final SlabResult result;
+  final WallTransmission result;
   final double width;
-  final bool showMaterialWavelength;
 
   /// Tx power, dBm: drawn at height 1.
   final double txPowerDbm;
@@ -762,11 +736,9 @@ class WallWaveProfile {
     noiseFloorDbm: noiseFloorDbm,
   );
 
-  /// Phase wavenumber inside the band, rad per metre of AIR scale.
-  double get insideWavenumber {
-    if (!showMaterialWavelength || result.thicknessM == 0) return _k0z;
-    return result.q.re / result.thicknessM;
-  }
+  /// Phase wavenumber inside the band, rad per metre of AIR scale: the air
+  /// wavenumber, so the drawn wavelength never changes.
+  double get insideWavenumber => _k0z;
 
   /// Carrier phase at the front face: the incident wave's, 0.
   double get _psi0 => 0;
@@ -797,9 +769,8 @@ class WallWaveProfile {
 /// Sampled drawn phasors for one result, width and view. Owned by the
 /// stage's state so each animation frame only rotates them.
 class WallPhasorCache {
-  SlabResult? _for;
+  WallTransmission? _for;
   int _n = 0;
-  bool? _mode;
   double _tx = double.nan;
   double _edge = 0;
   double _labelW = 0;
@@ -814,15 +785,19 @@ class WallWavePainter extends CustomPainter {
     required this.phase,
     required this.style,
     required this.cache,
-    this.showMaterialWavelength = false,
+    this.layerIsAir = const <bool>[false],
     this.txPowerDbm = kWallDefaultTxDbm,
   });
 
-  final SlabResult result;
+  final WallTransmission result;
   final double phase;
   final WallWaveStyle style;
   final WallPhasorCache cache;
-  final bool showMaterialWavelength;
+
+  /// One entry per layer, front to back: true for an air gap. The band is
+  /// split into equal shares, not to scale.
+  final List<bool> layerIsAir;
+
   final double txPowerDbm;
 
   @override
@@ -833,14 +808,12 @@ class WallWavePainter extends CustomPainter {
     final double labelW = wallLabelWidth(style.label);
     if (!identical(cache._for, result) ||
         cache._n != n ||
-        cache._mode != showMaterialWavelength ||
         cache._tx != txPowerDbm ||
         cache._edge != k ||
         cache._labelW != labelW) {
       final WallWaveProfile prof = WallWaveProfile(
         result,
         size.width,
-        showMaterialWavelength: showMaterialWavelength,
         txPowerDbm: txPowerDbm,
         edgeStrokePx: k,
         labelWidthPx: labelW,
@@ -850,7 +823,6 @@ class WallWavePainter extends CustomPainter {
         .._phasors = prof.sample(n)
         .._for = result
         .._n = n
-        .._mode = showMaterialWavelength
         .._tx = txPowerDbm
         .._edge = k
         .._labelW = labelW;
@@ -874,12 +846,25 @@ class WallWavePainter extends CustomPainter {
       g.wallPx,
       size.height - labelBand,
     );
-    canvas.drawRect(wall, Paint()..color = style.wallFill);
+    // Layers in equal shares (not to scale): solid layers filled, air left
+    // open, a line at every face.
     final Paint edge = Paint()
       ..color = style.wallEdge
       ..strokeWidth = k;
-    canvas.drawLine(wall.topLeft, wall.bottomLeft, edge);
-    canvas.drawLine(wall.topRight, wall.bottomRight, edge);
+    final int layers = math.max(1, layerIsAir.length);
+    final double share = wall.width / layers;
+    for (int i = 0; i < layers; i++) {
+      final bool air = i < layerIsAir.length && layerIsAir[i];
+      if (air) continue;
+      canvas.drawRect(
+        Rect.fromLTWH(wall.left + i * share, wall.top, share, wall.height),
+        Paint()..color = style.wallFill,
+      );
+    }
+    for (int i = 0; i <= layers; i++) {
+      final double x = wall.left + i * share;
+      canvas.drawLine(Offset(x, wall.top), Offset(x, wall.bottom), edge);
+    }
 
     // Zero axis (the noise floor) and the Tx-power reference (+/-1).
     canvas.drawLine(
@@ -983,6 +968,82 @@ class WallWavePainter extends CustomPainter {
       old.phase != phase ||
       old.result != result ||
       old.style != style ||
-      old.showMaterialWavelength != showMaterialWavelength ||
+      !listEquals(old.layerIsAir, layerIsAir) ||
       old.txPowerDbm != txPowerDbm;
+}
+
+/// The wall's layers, front to back, drawn small and NOT to scale: one box
+/// per layer in equal shares, each naming its material and true thickness.
+/// Solid layers are filled; an air gap is open and says Air, so the kind of
+/// layer never rests on the fill alone.
+class WallLayersStrip extends StatelessWidget {
+  const WallLayersStrip({super.key, required this.layers, required this.units});
+
+  final List<WallLayer> layers;
+  final UnitSystem units;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final AppMonoText mono =
+        Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
+    return Semantics(
+      label:
+          'Layers, front to back, not to scale: ${fmtLayers(layers, units)}',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            layers.length == 1
+                ? 'One layer (not to scale)'
+                : 'Layers, front to back (not to scale)',
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Row(
+            children: <Widget>[
+              for (int i = 0; i < layers.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(width: AppSpacing.xxs),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxs,
+                      vertical: AppSpacing.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: layers[i].isAir ? colors.surface1 : colors.surface3,
+                      borderRadius: BorderRadius.circular(AppRadius.control),
+                      border: Border.all(color: colors.borderStrong),
+                    ),
+                    child: Column(
+                      children: <Widget>[
+                        Text(
+                          layers[i].label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelSmall?.copyWith(
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          fmtThickness(layers[i].thicknessMm, units),
+                          maxLines: 1,
+                          style: mono.inlineCode.copyWith(
+                            color: colors.textSecondary,
+                            fontSize: text.labelSmall?.fontSize,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -5,7 +5,8 @@
 // the stage. In presenter mode WallSlabControls drops its explanatory prose
 // and folds the angle and polarization into a PresenterDisclosure.
 //
-//   WallSlabControls   band, channel, material, thickness, angle, TE/TM
+//   WallSlabControls   band, channel, Tx power, the wall (a real-wall preset
+//                      or one material at a thickness), angle, TE/TM
 //   WallSlabReadouts   loss (split into absorption and reflection),
 //                      reflection, attenuation rate, wavelengths
 //   WallBandsCard      the same wall at 2.4, 5.5 and 6.5 GHz
@@ -23,6 +24,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../data/channel_frequency_data.dart';
+import '../../../services/wifi_lab/wall_multilayer_physics.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -135,12 +137,15 @@ class _WallSlabControlsState extends State<WallSlabControls> {
   }
 
   /// Slider position 0..1 on a log scale from 10 to 1000 mm.
-  double _toSlider(double mm) => ((_log10(mm) - _logMin) / (_logMax - _logMin)).clamp(0.0, 1.0);
+  double _toSlider(double mm) =>
+      ((_log10(mm) - _logMin) / (_logMax - _logMin)).clamp(0.0, 1.0);
 
   /// Slider position to mm, snapped to what the readout prints in the unit
   /// on screen (0.01 cm under 2 cm, else 0.1 cm; the same in inches).
   double _fromSlider(double p) {
-    final double mm = math.pow(10, _logMin + p * (_logMax - _logMin)).toDouble();
+    final double mm = math
+        .pow(10, _logMin + p * (_logMax - _logMin))
+        .toDouble();
     return _f.snapMm(mm).clamp(kWallMinMm, kWallMaxMm);
   }
 
@@ -151,7 +156,7 @@ class _WallSlabControlsState extends State<WallSlabControls> {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final WallConfig c = widget.config;
-    final MaterialProperties p = c.result.props;
+    final MaterialProperties p = MaterialProperties.of(c.material, c.fGhz);
     final bool presenter = PresenterMode.isActive(context);
 
     final List<Widget> angle = <Widget>[
@@ -203,6 +208,43 @@ class _WallSlabControlsState extends State<WallSlabControls> {
       ],
     ];
 
+    // Tx power: inline on the phone; in presenter mode it folds in with the
+    // angle and polarization (all set once per lesson), so the panel keeps
+    // the Wall list and the thickness in view on a 1440x900 projector.
+    final List<Widget> tx = <Widget>[
+      const SizedBox(height: AppSpacing.sm),
+      Row(
+        children: <Widget>[
+          const WallSectionLabel('Tx power'),
+          const Spacer(),
+          Text(
+            '${c.txPowerDbm.toStringAsFixed(0)} dBm',
+            style: mono.inlineCode.copyWith(color: colors.textPrimary),
+          ),
+        ],
+      ),
+      Slider(
+        value: c.txPowerDbm,
+        min: kWallTxMinDbm,
+        max: kWallTxMaxDbm,
+        // Whole dBm, rounded here rather than with `divisions` (no tick
+        // dots), as the angle slider does.
+        onChanged: (double v) =>
+            _emit(c.copyWith(txPowerDbm: v.roundToDouble())),
+        activeColor: colors.primary,
+        inactiveColor: colors.disabledFill,
+        label: '${c.txPowerDbm.toStringAsFixed(0)} dBm',
+        semanticFormatterCallback: (double v) =>
+            'Tx power ${v.toStringAsFixed(0)} dBm',
+      ),
+      if (!presenter)
+        Text(
+          'The wave reaches the wall at this level. Distance loss is not '
+          'included.',
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
+    ];
+
     return WallCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -236,116 +278,123 @@ class _WallSlabControlsState extends State<WallSlabControls> {
               onChanged: (int ch) => _emit(c.copyWith(channel: ch)),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: <Widget>[
-              const WallSectionLabel('Tx power'),
-              const Spacer(),
-              Text(
-                '${c.txPowerDbm.toStringAsFixed(0)} dBm',
-                style: mono.inlineCode.copyWith(color: colors.textPrimary),
-              ),
-            ],
-          ),
-          Slider(
-            value: c.txPowerDbm,
-            min: kWallTxMinDbm,
-            max: kWallTxMaxDbm,
-            // Whole dBm, rounded here rather than with `divisions` (no tick
-            // dots), as the angle slider does.
-            onChanged: (double v) =>
-                _emit(c.copyWith(txPowerDbm: v.roundToDouble())),
-            activeColor: colors.primary,
-            inactiveColor: colors.disabledFill,
-            label: '${c.txPowerDbm.toStringAsFixed(0)} dBm',
-            semanticFormatterCallback: (double v) =>
-                'Tx power ${v.toStringAsFixed(0)} dBm',
-          ),
-          if (!presenter)
-            Text(
-              'The wave reaches the wall at this level. Distance loss is not '
-              'included.',
-              style: text.bodySmall?.copyWith(color: colors.textTertiary),
-            ),
+          if (!presenter) ...tx,
           const SizedBox(height: AppSpacing.md),
           const WallSectionLabel('The wall'),
           const SizedBox(height: AppSpacing.xs),
-          // Ten materials: GL-003 §8.14 routes 4+ options to AppSelect.
+          // Seven walls: GL-003 §8.14 routes 4+ options to AppSelect.
           LabeledField(
-            label: 'Material (ITU-R P.2040 Table 3)',
-            semanticLabel: 'Material',
-            field: AppSelect<WallMaterial>(
-              value: c.material,
-              semanticLabel: 'Material',
-              items: <AppSelectItem<WallMaterial>>[
-                for (final WallMaterial m in WallMaterial.values) (m, m.label),
+            label: 'Wall',
+            semanticLabel: 'Wall',
+            field: AppSelect<WallPreset>(
+              value: c.preset,
+              semanticLabel: 'Wall',
+              items: <AppSelectItem<WallPreset>>[
+                for (final WallPreset w in WallPreset.values) (w, w.label),
               ],
-              onChanged: (WallMaterial m) => _emit(c.copyWith(material: m)),
+              onChanged: (WallPreset w) => _emit(c.copyWith(preset: w)),
             ),
           ),
-          if (!presenter) const SizedBox(height: AppSpacing.xxs),
-          if (!presenter)
+          if (!presenter) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
             Text(
-              'At ${c.centerMHz} MHz: relative permittivity '
-              '${_eps(p.epsReal)}, conductivity ${_sigma(p.sigma)} S/m. '
-              'Table 3 range ${_ghz(c.material.minGhz)} to '
-              '${_ghz(c.material.maxGhz)} GHz.',
+              c.isCustom
+                  ? c.preset.note
+                  : '${c.preset.note} Layers: '
+                        '${fmtLayers(c.layers, _units ?? UnitSystem.metric)}.',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
-          const SizedBox(height: AppSpacing.sm),
-          LabeledField(
-            label: 'Thickness',
-            hint: '(${_f.smallUnit}, $_minText to $_maxText)',
-            semanticLabel: 'Thickness in ${_f.smallUnitSpoken}',
-            field: TextField(
-              controller: _mmCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: unsignedDecimalFormatters,
-              onChanged: _onMmText,
-              textInputAction: TextInputAction.done,
-              autocorrect: false,
-              enableSuggestions: false,
-              style: mono.inlineCode.copyWith(
-                fontSize: AppTextSize.fieldNumeric,
-              ),
-              cursorColor: colors.textAccent,
-              decoration: InputDecoration(
-                errorText: _mmError,
-                suffixText: _f.smallUnit,
-              ),
-            ),
-          ),
-          Slider(
-            value: _toSlider(c.thicknessMm),
-            onChanged: (double v) {
-              setState(() => _mmError = null);
-              _emit(c.copyWith(thicknessMm: _fromSlider(v)));
-            },
-            activeColor: colors.primary,
-            inactiveColor: colors.disabledFill,
-            semanticFormatterCallback: (double v) =>
-                'Thickness ${_f.smallSpokenFromMm(_fromSlider(v))}',
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            child: ExcludeSemantics(
-              child: Row(
-                children: <Widget>[
-                  Text(_f.smallFromMm(kWallMinMm), style: _tick(text, colors)),
-                  const Spacer(),
-                  Text(_f.smallFromMm(kWallMaxMm), style: _tick(text, colors)),
+          ],
+          if (c.isCustom) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            // Ten materials: GL-003 §8.14 routes 4+ options to AppSelect.
+            LabeledField(
+              label: 'Material (ITU-R P.2040 Table 3)',
+              semanticLabel: 'Material',
+              field: AppSelect<WallMaterial>(
+                value: c.material,
+                semanticLabel: 'Material',
+                items: <AppSelectItem<WallMaterial>>[
+                  for (final WallMaterial m in WallMaterial.values)
+                    (m, m.label),
                 ],
+                onChanged: (WallMaterial m) => _emit(c.copyWith(material: m)),
               ),
             ),
-          ),
+            if (!presenter) const SizedBox(height: AppSpacing.xxs),
+            if (!presenter)
+              Text(
+                'At ${c.centerMHz} MHz: relative permittivity '
+                '${_eps(p.epsReal)}, conductivity ${_sigma(p.sigma)} S/m. '
+                'Table 3 range ${_ghz(c.material.minGhz)} to '
+                '${_ghz(c.material.maxGhz)} GHz.',
+                style: text.bodySmall?.copyWith(color: colors.textTertiary),
+              ),
+            const SizedBox(height: AppSpacing.sm),
+            LabeledField(
+              label: 'Thickness',
+              hint: '(${_f.smallUnit}, $_minText to $_maxText)',
+              semanticLabel: 'Thickness in ${_f.smallUnitSpoken}',
+              field: TextField(
+                controller: _mmCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: unsignedDecimalFormatters,
+                onChanged: _onMmText,
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                enableSuggestions: false,
+                style: mono.inlineCode.copyWith(
+                  fontSize: AppTextSize.fieldNumeric,
+                ),
+                cursorColor: colors.textAccent,
+                decoration: InputDecoration(
+                  errorText: _mmError,
+                  suffixText: _f.smallUnit,
+                ),
+              ),
+            ),
+            Slider(
+              value: _toSlider(c.thicknessMm),
+              onChanged: (double v) {
+                setState(() => _mmError = null);
+                _emit(c.copyWith(thicknessMm: _fromSlider(v)));
+              },
+              activeColor: colors.primary,
+              inactiveColor: colors.disabledFill,
+              semanticFormatterCallback: (double v) =>
+                  'Thickness ${_f.smallSpokenFromMm(_fromSlider(v))}',
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              child: ExcludeSemantics(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      _f.smallFromMm(kWallMinMm),
+                      style: _tick(text, colors),
+                    ),
+                    const Spacer(),
+                    Text(
+                      _f.smallFromMm(kWallMaxMm),
+                      style: _tick(text, colors),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
           if (presenter)
             // Set once per lesson: folded so the panel fits a projector.
             PresenterDisclosure(
-              title: 'Angle of arrival and polarization',
-              children: angle,
+              title: 'Tx power, angle of arrival and polarization',
+              children: <Widget>[
+                ...tx,
+                const SizedBox(height: AppSpacing.sm),
+                ...angle,
+              ],
             )
           else
             ...angle,
@@ -378,8 +427,15 @@ class WallSlabReadouts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SlabResult r = config.result;
-    final MaterialProperties p = r.props;
+    final WallTransmission r = config.result;
+    final UnitSystem units = UnitSystemScope.systemOf(context);
+    // Material readouts (attenuation rate, wavelength inside) describe one
+    // material, so only a custom wall shows them; a real wall lists its
+    // layers instead.
+    final MaterialProperties p = MaterialProperties.of(
+      config.material,
+      config.fGhz,
+    );
     final bool conductor = p.lossTangent > kConductorLossTangent;
     final double ripple = r.standingWaveRippleDb;
 
@@ -434,27 +490,35 @@ class WallSlabReadouts extends StatelessWidget {
                 : '${fmt1(r.reflectionDb)} dB (${fmtPct(r.reflectedPower)} '
                       'of the power)',
           ),
-          WallRow(label: 'Attenuation rate', value: rate),
-          WallRow(
-            label: 'Wavelength in air',
-            value: fmtLength(p.lambdaAir, UnitSystemScope.systemOf(context)),
-          ),
-          WallRow(label: 'Wavelength inside', value: inside),
+          if (config.isCustom) ...<Widget>[
+            WallRow(label: 'Attenuation rate', value: rate),
+            WallRow(
+              label: 'Wavelength in air',
+              value: fmtLength(r.lambdaAir, units),
+            ),
+            WallRow(label: 'Wavelength inside', value: inside),
+          ] else ...<Widget>[
+            WallRow(label: 'Layers', value: fmtLayers(config.layers, units)),
+            WallRow(
+              label: 'Wavelength in air',
+              value: fmtLength(r.lambdaAir, units),
+            ),
+          ],
           WallRow(
             label: 'Ripple in front',
             value: ripple <= 40
                 ? '${fmt1(ripple)} dB, peaks every '
-                      '${fmtLength(p.lambdaAir / 2, UnitSystemScope.systemOf(context))}'
-                : 'full nulls, every ${fmtLength(p.lambdaAir / 2, UnitSystemScope.systemOf(context))}',
+                      '${fmtLength(r.lambdaAir / 2, units)}'
+                : 'full nulls, every ${fmtLength(r.lambdaAir / 2, units)}',
           ),
           const SizedBox(height: AppSpacing.xs),
           const WallNote(
             icon: Icons.info_outline,
             message:
                 'Absorption is the decay along the path inside the wall. '
-                'Reflection is what the two faces send back, including the '
-                'way their echoes add or cancel in a thin wall. The two add '
-                'up to the total before rounding.',
+                'Reflection is what the faces send back, including the way '
+                'their echoes add or cancel in a thin wall or across an air '
+                'gap. The two add up to the total before rounding.',
           ),
         ],
       ),
@@ -485,7 +549,7 @@ class WallBandsCard extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
-    final List<SlabResult> rs = <SlabResult>[
+    final List<WallTransmission> rs = <WallTransmission>[
       for (final double f in kComparisonGhz) config.resultAt(f),
     ];
     final double lo = rs.first.transmissionLossDb;
@@ -504,12 +568,17 @@ class WallBandsCard extends StatelessWidget {
           '${fmt1(absShare)} dB of that difference is absorption: the '
           'material soaks up more energy per centimeter at higher frequency.';
     } else if (hi <= lo - 0.05) {
-      story =
-          'Here 6.5 GHz loses ${fmt1(lo - hi)} dB LESS than 2.4 GHz. That is '
-          'thin-slab resonance: when the wall is close to a whole number of '
-          'half wavelengths thick inside, the echoes from its two faces '
-          'cancel and more gets through. Thin panels do not always lose more '
-          'at higher frequency.';
+      story = config.layers.length > 1
+          ? 'Here 6.5 GHz loses ${fmt1(lo - hi)} dB LESS than 2.4 GHz. That '
+                'is resonance: the echoes from the layers\' faces add or '
+                'cancel depending on how the layer and gap thicknesses '
+                'compare with the wavelength, so a layered wall does not '
+                'always lose more at higher frequency.'
+          : 'Here 6.5 GHz loses ${fmt1(lo - hi)} dB LESS than 2.4 GHz. That '
+                'is thin-slab resonance: when the wall is close to a whole '
+                'number of half wavelengths thick inside, the echoes from its '
+                'two faces cancel and more gets through. Thin panels do not '
+                'always lose more at higher frequency.';
     } else {
       story = 'Here the three bands lose about the same.';
     }
@@ -541,7 +610,7 @@ class WallBandsCard extends StatelessWidget {
           const WallSectionLabel('All three bands, same wall'),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            '${config.material.label}, ${fmtThickness(config.thicknessMm, UnitSystemScope.systemOf(context))}, '
+            '${config.wallName}, ${fmtThickness(config.wallMm, UnitSystemScope.systemOf(context))}, '
             '${config.angleDeg.toStringAsFixed(0)} deg, '
             '${config.polarization.name.toUpperCase()}. Loss in dB.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
@@ -603,7 +672,8 @@ class WallMeasuredCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final List<MeasuredSpecimen> specimens = measuredFor(config.material);
+    final WallMaterial material = config.measuredMaterial;
+    final List<MeasuredSpecimen> specimens = measuredFor(material);
 
     return WallCard(
       child: Column(
@@ -614,12 +684,13 @@ class WallMeasuredCard extends StatelessWidget {
           Text(
             specimens.isEmpty
                 ? 'The research behind this tool found no published '
-                      'measurement for ${config.material.label.toLowerCase()} '
+                      'measurement for ${material.label.toLowerCase()} '
                       'in these bands, so only the P.2040 model is shown.'
-                : 'Each source on its own, never averaged. P.2040 is '
-                      'computed for the same thickness, head on. NIST\'s '
-                      'lowest point is 2.0 GHz: it has no data from 2.0 to '
-                      '3.0 GHz.',
+                : '${config.isCustom ? '' : 'Published measurements of ${material.label.toLowerCase()}, the main material of this wall. '}'
+                      'Each source on its own, never averaged. P.2040 is '
+                      'computed for one solid slab of the specimen\'s '
+                      'thickness, head on. NIST\'s lowest point is 2.0 GHz: '
+                      'it has no data from 2.0 to 3.0 GHz.',
             style: text.bodySmall?.copyWith(color: colors.textSecondary),
           ),
           for (final MeasuredSpecimen s in specimens) ...<Widget>[
@@ -649,9 +720,9 @@ class _Specimen extends StatelessWidget {
   final WallConfig config;
   final ValueChanged<double> onUseThickness;
 
-  /// Model thickness: the specimen's, or the user's wall when the source
+  /// Model thickness: the specimen's, or the wall's total when the source
   /// states none (3GPP).
-  double get _modelM => specimen.thicknessM ?? config.thicknessM;
+  double get _modelM => specimen.thicknessM ?? config.wallMm / 1000;
 
   double _model(double fGhz) => WallSlab.compute(
     material: specimen.material,
@@ -780,8 +851,13 @@ class _Specimen extends StatelessWidget {
     ];
     final bool noThickness = specimen.thicknessM == null;
     final double? t = specimen.thicknessM;
+    // On a real wall the action switches to one material at the specimen's
+    // thickness; on a custom wall it is hidden once the wall already is.
     final bool canUse =
-        t != null && (t * 1000 - config.thicknessMm).abs() > 1e-9;
+        t != null &&
+        (!config.isCustom ||
+            config.material != specimen.material ||
+            (t * 1000 - config.thicknessMm).abs() > 1e-9);
 
     final TextStyle head = text.labelMedium!.copyWith(
       color: colors.textTertiary,
@@ -802,7 +878,7 @@ class _Specimen extends StatelessWidget {
     );
 
     final String modelHead = noThickness
-        ? 'P.2040 (${fmtThickness(config.thicknessMm, UnitSystemScope.systemOf(context))})'
+        ? 'P.2040 (${fmtThickness(config.wallMm, UnitSystemScope.systemOf(context))})'
         : 'P.2040';
 
     final StringBuffer sem = StringBuffer(
@@ -868,7 +944,7 @@ class _Specimen extends StatelessWidget {
           noThickness
               ? '3GPP gives one loss per material class and no thickness, so '
                     'no model value is like-for-like. The P.2040 column is '
-                    'your ${fmtThickness(config.thicknessMm, UnitSystemScope.systemOf(context))} wall, for scale.'
+                    'one ${fmtThickness(config.wallMm, UnitSystemScope.systemOf(context))} slab, for scale.'
               : _verdict(models),
           style: text.bodySmall?.copyWith(color: colors.textSecondary),
         ),

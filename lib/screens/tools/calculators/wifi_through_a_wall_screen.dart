@@ -2,21 +2,28 @@
 //
 // One wave, one wall. Part of the wave reflects off the face and the
 // amplitude decays through the wall; the frequency never changes, so the
-// drawn wave keeps one wavelength everywhere unless the optional "Show
-// wavelength inside the material" view is on. Then the per-band story: concrete loses more
-// at 6 GHz than at 2.4 GHz, but thin panels do not lose monotonically more at
-// higher frequency, because of thin-slab resonance.
+// drawn wave keeps one wavelength everywhere. Then the per-band story:
+// concrete loses more at 6 GHz than at 2.4 GHz, but thin panels and layered
+// walls do not lose monotonically more at higher frequency, because of
+// resonance.
+//
+// REAL WALLS (Keith, 2026-09-27): the Wall list offers real walls built from
+// P.2040 layers (an interior stud wall is plasterboard, air, plasterboard),
+// computed with the P.2040 multilayer method in
+// lib/services/wifi_lab/wall_multilayer_physics.dart, plus "One material,
+// any thickness" with the original material and thickness controls.
 //
 // CLEAN-ROOM BUILD (2026-09-25) from ITU-R P.2040-4 as set out in myPKA
 // Deliverables/2026-09-25-wifi-lab-research/brief.md §6.3-§6.4, per
 // Deliverables/2026-09-25-wifi-lab-cleanroom/specs/12-wall-slab.md. All math
-// lives in lib/services/wifi_lab/wall_slab_physics.dart.
+// lives in lib/services/wifi_lab/wall_slab_physics.dart and
+// wall_multilayer_physics.dart.
 //
 // This is NOT the 'rf-attenuation' tool, which is untouched; whether its
 // numbers change is Keith's decision (spec).
 //
 // STRUCTURE: one WallSlabController (wifi_through_a_wall_controller.dart)
-// holds the wall, the play state, the view toggle and the phase; the screen
+// holds the wall, the play state and the phase; the screen
 // creates and disposes it and composes separate widgets over it:
 //   WallSlabStage     the animated wave (wifi_through_a_wall_stage.dart)
 //   WallSlabControls  the inputs      (wifi_through_a_wall_controls.dart)
@@ -27,18 +34,21 @@
 // States (SOP-007 §5):
 //   - running     -> the wave animates (default unless reduced motion is on)
 //   - paused      -> Pause, app backgrounded, or reduced motion at open
-//   - error       -> thickness field outside 1-500 mm or unparseable: inline
-//                    error text, the last valid wall stays on screen
+//   - error       -> thickness field outside 1 to 100 cm or unparseable:
+//                    inline error text, the last valid wall stays on screen
 //   - empty       -> a material with no measured data: the measured card says
 //                    so instead of showing an empty table
-//   - disabled    -> "Set the wall to N mm" is hidden when the wall is
-//                    already that thick
+//   - disabled    -> "Set the wall to N cm" is hidden when the wall is
+//                    already that material at that thickness; the material
+//                    and thickness controls are absent on a real wall, whose
+//                    layers are fixed
 //   - interactive -> themed Material controls with the global focus ring;
 //                    the plot and tables carry worded Semantics labels
 
 import 'package:flutter/material.dart';
 
 import '../../../router/app_router.dart';
+import '../../../services/wifi_lab/wall_multilayer_physics.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
@@ -56,7 +66,7 @@ export 'wifi_through_a_wall_parts.dart' show kWifiThroughAWallToolId;
 class WifiThroughAWallScreen extends StatefulWidget {
   const WifiThroughAWallScreen({super.key, this.initial = const WallConfig()});
 
-  /// Starting wall. Defaults to 102 mm concrete on channel 100.
+  /// Starting wall. Defaults to the interior stud wall on channel 100.
   final WallConfig initial;
 
   @override
@@ -102,6 +112,14 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
     if (state != AppLifecycleState.resumed) _controller.setPlaying(false);
   }
 
+  /// A measured specimen's "Set the wall" action: one material (the one
+  /// the card is showing) at the specimen's thickness.
+  static WallConfig _useSpecimen(WallConfig c, double mm) => c.copyWith(
+    preset: WallPreset.custom,
+    material: c.measuredMaterial,
+    thicknessMm: mm,
+  );
+
   /// The presenter layout over this screen's controller (shared, not
   /// copied). The loss and the three-band table are on the stage; the
   /// detailed readouts and the measured values fold into the panel.
@@ -128,7 +146,7 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
                 WallMeasuredCard(
                   config: c,
                   onUseThickness: (double mm) =>
-                      _controller.setConfig(c.copyWith(thicknessMm: mm)),
+                      _controller.setConfig(_useSpecimen(c, mm)),
                 ),
               ],
             ),
@@ -201,7 +219,7 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
                               WallMeasuredCard(
                                 config: c,
                                 onUseThickness: (double mm) => _controller
-                                    .setConfig(c.copyWith(thicknessMm: mm)),
+                                    .setConfig(_useSpecimen(c, mm)),
                               ),
                             ],
                           );
@@ -278,10 +296,8 @@ class _ExplainerCard extends StatelessWidget {
             icon: Icons.graphic_eq,
             message:
                 'Same frequency everywhere: in front of, inside and behind '
-                'the wall the wave cycles at the channel frequency. The wave '
-                'does travel slower inside, so the same frequency packs into '
-                'a shorter wavelength there; switch on Show wavelength inside '
-                'the material to see it.',
+                'the wall the wave cycles at the channel frequency. Only its '
+                'height changes.',
           ),
           SizedBox(height: AppSpacing.xs),
           WallNote(

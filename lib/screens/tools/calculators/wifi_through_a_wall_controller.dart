@@ -3,9 +3,8 @@
 // presenter layout (lib/widgets/presenter/), so a wall set on the normal
 // screen is the wall the room sees.
 //
-// It holds the wall (WallConfig), the play state, the optional "Show
-// wavelength inside the material" view, and the wave's phase with the Ticker
-// that advances it. THE CLOCK is constructed here directly, not from a
+// It holds the wall (WallConfig), the play state, and the wave's phase with
+// the Ticker that advances it. THE CLOCK is constructed here directly, not from a
 // widget's TickerProvider: a route under the presenter route is muted, and a
 // wave started on the phone screen must keep moving when the instructor
 // presents it. The painter's phasor cache is NOT here: each stage view owns
@@ -22,6 +21,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/complex.dart';
+import '../../../services/wifi_lab/wall_multilayer_physics.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
 import '../../../units/length_format.dart';
@@ -44,9 +44,8 @@ class WallSlabController extends ChangeNotifier {
   final WallConfig initial;
 
   WallConfig _config;
-  SlabResult _result;
+  WallTransmission _result;
   bool _playing = false;
-  bool _showMaterialWavelength = false;
   UnitSystem _units = UnitSystem.metric;
   bool _motionDecided = false;
   double _phase = 0;
@@ -72,13 +71,9 @@ class WallSlabController extends ChangeNotifier {
 
   /// One result per wall, so the painter's phasor cache survives the
   /// animation frames (which change only the phase).
-  SlabResult get result => _result;
+  WallTransmission get result => _result;
 
   bool get playing => _playing;
-
-  /// Draw the true (shorter) wavelength inside the material. Off by default:
-  /// a shorter drawn wavelength reads as a higher frequency, which is wrong.
-  bool get showMaterialWavelength => _showMaterialWavelength;
 
   /// The wave's phase, radians, 0 to 2 pi.
   double get phase => _phase;
@@ -101,13 +96,6 @@ class WallSlabController extends ChangeNotifier {
     if (c == _config) return;
     _config = c;
     _result = c.result;
-    if (!_playing) _phase = _brightestPhase();
-    _notify();
-  }
-
-  void setShowMaterialWavelength(bool v) {
-    if (v == _showMaterialWavelength) return;
-    _showMaterialWavelength = v;
     if (!_playing) _phase = _brightestPhase();
     _notify();
   }
@@ -160,14 +148,32 @@ class WallSlabController extends ChangeNotifier {
     setConfig(_config.copyWith(thicknessMm: mm.clamp(kWallMinMm, kWallMaxMm)));
   }
 
+  /// One presenter key press through the wall list: the next (+1) or
+  /// previous (-1) wall in [WallPreset] order, stopping at the ends.
+  void stepWall(int direction) {
+    final List<WallPreset> all = WallPreset.values;
+    final int i = (_config.preset.index + direction).clamp(0, all.length - 1);
+    setConfig(_config.copyWith(preset: all[i]));
+  }
+
+  /// Up and Down: on a custom wall they change its thickness; on a real
+  /// wall, whose layers are fixed, they step through the walls.
+  void _stepMain(int direction) {
+    if (_config.isCustom) {
+      stepThickness(direction);
+    } else {
+      stepWall(direction);
+    }
+  }
+
   /// Presenter keyboard: Space plays or pauses the wave, R returns to the
-  /// opening wall, Up and Down change the thickness.
+  /// opening wall, Up and Down change the wall (see [_stepMain]).
   PresenterActions get presenterActions => PresenterActions(
     playPause: togglePlay,
     reset: reset,
-    sliderDown: () => stepThickness(-1),
-    sliderUp: () => stepThickness(1),
-    sliderLabel: 'Wall thickness',
+    sliderDown: () => _stepMain(-1),
+    sliderUp: () => _stepMain(1),
+    sliderLabel: 'Wall type, or thickness for one material',
   );
 
   // ── Clock ──────────────────────────────────────────────────────────────
@@ -186,7 +192,6 @@ class WallSlabController extends ChangeNotifier {
     final WallWaveProfile p = WallWaveProfile(
       _result,
       400,
-      showMaterialWavelength: _showMaterialWavelength,
       txPowerDbm: _config.txPowerDbm,
     );
     double a2 = 0, b2 = 0, ab = 0;
@@ -204,14 +209,20 @@ class WallSlabController extends ChangeNotifier {
 
   String copyText() {
     final WallConfig c = _config;
-    final SlabResult r = _result;
+    final WallTransmission r = _result;
     final StringBuffer b = StringBuffer()
       ..writeln('Wi-Fi Through a Wall (ITU-R P.2040-4 model)')
       ..writeln(
-        '${c.material.label}, ${fmtThickness(c.thicknessMm, _units)}, '
+        '${c.wallName}, ${fmtThickness(c.wallMm, _units)}, '
         '${c.angleDeg.toStringAsFixed(0)} deg, '
         '${c.polarization.name.toUpperCase()}',
-      )
+      );
+    if (!c.isCustom) {
+      b.writeln(
+        'Layers, front to back: ${fmtLayers(c.layers, _units)}',
+      );
+    }
+    b
       ..writeln('Channel ${c.channel}, ${c.centerMHz} MHz')
       ..writeln('Tx power: ${fmtDbm(c.txPowerDbm)}')
       ..writeln(
@@ -235,7 +246,7 @@ class WallSlabController extends ChangeNotifier {
                 'floor',
     );
     b
-      ..writeln('Wavelength in air: ${fmtLength(r.props.lambdaAir, _units)}')
+      ..writeln('Wavelength in air: ${fmtLength(r.lambdaAir, _units)}')
       ..writeln('Same wall by band:');
     for (final double f in kComparisonGhz) {
       b.writeln('  $f GHz: ${fmtLossDb(c.resultAt(f).transmissionLossDb)}');

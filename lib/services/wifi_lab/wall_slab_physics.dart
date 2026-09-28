@@ -154,8 +154,58 @@ class MaterialProperties {
       lambdaAir / (2 * math.pi * epsComplex.sqrt().im.abs());
 }
 
+/// What a wall does to one plane wave: the part every wall result shares,
+/// whether it is one homogeneous slab ([SlabResult]) or a stack of layers
+/// (MultilayerResult, wall_multilayer_physics.dart). The stage draws from
+/// this alone, so a layered wall and a single slab draw the same way.
+abstract interface class WallTransmission {
+  /// Frequency, GHz.
+  double get fGhz;
+
+  /// Free-space wavelength, m.
+  double get lambdaAir;
+
+  /// Total wall thickness, m.
+  double get thicknessM;
+
+  /// Angle of incidence from the wall normal, degrees.
+  double get angleDeg;
+
+  Polarization get polarization;
+
+  /// Wall reflection coefficient, referenced at the front face.
+  Complex get r;
+
+  /// Wall transmission coefficient, front face to back face.
+  Complex get t;
+
+  /// Loss from absorption along the path inside, dB (>= 0).
+  double get absorptionDb;
+
+  /// Loss from reflection at the faces and the interference between them,
+  /// dB. A lossy wall near resonance can make it a fraction of a dB negative.
+  double get reflectionPartDb;
+
+  /// Total transmission loss, dB = absorption + reflection part.
+  double get transmissionLossDb;
+
+  /// Reflected power |R|^2.
+  double get reflectedPower;
+
+  /// Reflected power relative to incident, dB (<= 0).
+  double get reflectionDb;
+
+  /// Standing-wave ripple in front of the wall, dB.
+  double get standingWaveRippleDb;
+
+  /// Tangential E-field phasor at [x] metres along the wall normal, OUTSIDE
+  /// the wall: x <= 0 in front (x = 0 is the front face), x >= thickness
+  /// behind. The incident wave has amplitude 1 and phase 0 at the front face.
+  Complex fieldAt(double x);
+}
+
 /// One wall, one frequency, one angle, one polarization: the P.2040 result.
-class SlabResult {
+class SlabResult implements WallTransmission {
   SlabResult._({
     required this.props,
     required this.thicknessM,
@@ -170,9 +220,18 @@ class SlabResult {
   });
 
   final MaterialProperties props;
+  @override
   final double thicknessM;
+  @override
   final double angleDeg;
+  @override
   final Polarization polarization;
+
+  @override
+  double get fGhz => props.fGhz;
+
+  @override
+  double get lambdaAir => props.lambdaAir;
 
   /// Single-face reflection coefficient R' (Eq. 37a or 37b).
   final Complex interfaceR;
@@ -181,33 +240,41 @@ class SlabResult {
   final Complex q;
 
   /// Slab reflection coefficient R (Eq. 43a).
+  @override
   final Complex r;
 
   /// Slab transmission coefficient T (Eq. 43b).
+  @override
   final Complex t;
 
   /// Loss from absorption along the path inside, dB (>= 0).
+  @override
   final double absorptionDb;
 
   /// Loss from reflection at the two faces and the interference between
   /// them, dB. Usually >= 0; a lossy slab near resonance can make it a
   /// fraction of a dB negative.
+  @override
   final double reflectionPartDb;
 
   /// Total transmission loss, dB = absorption + reflection part.
+  @override
   double get transmissionLossDb => absorptionDb + reflectionPartDb;
 
   /// Reflected power |R|^2.
+  @override
   double get reflectedPower => r.abs2;
 
   /// Transmitted power |T|^2 (may underflow to 0 for metal).
   double get transmittedPower => t.abs2;
 
   /// Reflected power relative to incident, dB (<= 0). -infinity when R = 0.
+  @override
   double get reflectionDb => 10 * math.log(reflectedPower) / math.ln10;
 
   /// Standing-wave ripple in front of the wall, dB: 20·log10((1+|R|)/(1-|R|)).
   /// Infinite when |R| reaches 1 (full nulls).
+  @override
   double get standingWaveRippleDb {
     final double g = r.abs;
     if (g >= 1) return double.infinity;
@@ -234,6 +301,10 @@ class SlabResult {
   /// the H-field ratio, which for tangential E carries the opposite sign, so
   /// TM flips the sign of R' and R here. T depends only on R'^2 and is the
   /// same either way; at normal incidence TE and TM then draw identically.
+  ///
+  /// Unlike the [WallTransmission] contract, a single slab also answers
+  /// inside the wall (0 < x < d).
+  @override
   Complex fieldAt(double x) {
     final double k0z = _k0 * _cosTheta;
     final bool flip = polarization == Polarization.tm;
