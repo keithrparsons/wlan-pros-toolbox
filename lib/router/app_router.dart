@@ -37,6 +37,7 @@ import '../screens/tools/calculators/modulation_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_anatomy_screen.dart';
 import '../screens/tools/calculators/medium_access_simulator_screen.dart';
 import '../screens/tools/calculators/db_rules_screen.dart';
+import '../screens/tools/calculators/voice_priority_screen.dart';
 import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
 import '../screens/tools/calculators/devices_disagree_screen.dart';
@@ -304,6 +305,10 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). Pure-Dart DCF/EDCA contention engine; all
   // platforms incl. web.
   static const String mediumAccessSimulator = '/tools/medium-access-simulator';
+  // Wi-Fi Classroom (2026-09-27). Voice priority end to end: where a call's
+  // EF marking is lost on the way to the phone, and the queue it lands in;
+  // reuses the Medium Access Simulator's engine; all platforms incl. web.
+  static const String voicePriority = '/tools/voice-priority';
   // Wi-Fi Classroom (2026-09-25). Friis / FSPL curves, pure on-device math; all
   // platforms incl. web.
   static const String dbRules = '/tools/db-rules';
@@ -938,6 +943,7 @@ class AppRouter {
     modulationSimulator: (_) => const ModulationSimulatorScreen(),
     mediumAccessSimulator: (_) => const MediumAccessSimulatorScreen(),
     dbRules: (_) => const DbRulesScreen(),
+    voicePriority: (_) => const VoicePriorityScreen(),
     fsplSimulator: (_) => const FsplSimulatorScreen(),
     airtimeFairness: (_) => const AirtimeFairnessScreen(),
     airtimeAnatomy: (_) => const AirtimeAnatomyScreen(),

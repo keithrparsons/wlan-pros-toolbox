@@ -2871,6 +2871,20 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Airtime and Access',
       ),
+      // Voice Priority, End to End (2026-09-27, research brief candidate 3):
+      // whether a call's EF marking survives every hop to the Voice queue.
+      // Beside the simulator whose EDCA engine it reuses.
+      ToolEntry(
+        id: 'voice-priority',
+        title: 'Voice Priority, End to End',
+        description:
+            'Follow a voice packet to the phone and see where its priority '
+            'mark is lost: at the tunnel, the provider or the AP, the call '
+            'waits in Best effort behind the download',
+        routeName: '/tools/voice-priority',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
       ToolEntry(
         id: 'airtime-anatomy',
         title: 'Airtime Anatomy',

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 237 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 238 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,11 +37,11 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (64 tools)
+- **Wi-Fi Classroom** (65 tools)
   - Guided Lessons (10)
   - RF and Propagation (12)
   - Signals and PHY (6)
-  - Airtime and Access (10)
+  - Airtime and Access (11)
   - Network Design and Security (15)
   - Course Handouts (11)
 
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (64 tools)
+# Wi-Fi Classroom (65 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4751,7 +4751,7 @@ Shows why the speed class printed on a router box is not what one device gets. T
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Airtime and Access (10)
+## Airtime and Access (11)
 
 
 ### Medium Access Simulator
@@ -4786,6 +4786,43 @@ Shows how Wi-Fi stations share one channel. Each station waits for a quiet mediu
 - Only uplink is modeled: every station sends to the AP, and the AP answers only with ACK or CTS. Rate adaptation and the NAV reset rule are not modeled.
 - RTS/CTS removes most hidden-node data collisions, not all of them. A hidden station whose own RTS overlaps the AP's CTS never hears that CTS, so it can still talk over the data frame that follows.
 - Runs are seeded, so the same settings give the same run every time.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### Voice Priority, End to End
+
+Follows one voice packet toward a phone on Wi-Fi and shows which of the AP's four queues it waits in. The caller's app marks the packet EF (Expedited Forwarding), a DSCP (Differentiated Services Code Point) value. The access point (AP) turns the DSCP into an 802.11 user priority (UP), and the UP picks one of the four WMM (Wi-Fi Multimedia) queues, or access categories. The call gets the Voice queue only if EF survives every hop before the AP and the AP maps it to UP 6.
+
+**Why it's here.** Turning on WMM does not make calls good, and a priority mark set on your own network does not carry across the internet. The AP chooses the queue from the mark it receives, so a tunnel that does not copy the mark outward, a provider that resets it, or an AP that ignores it all put the call in Best effort, behind whatever else is downloading. The Medium Access Simulator shows how the four queues contend for the air; this tool is about whether the mark gets there, and it reuses that simulator's engine for the wait on the Wi-Fi hop.
+
+**How to use**
+1. Read the top card: the queue the call waits in, and one sentence saying why.
+2. Pick where the marking is lost: nowhere, at the AP mapping, at the tunnel, or at the internet provider. The path shows the mark each hop passes on, and the hop that loses it says Marking lost here. Press Send the packet, or Next hop, to move the packet toward the phone.
+3. Read the AP's four queues and the Wait on the Wi-Fi hop bars. With the download running, the call in Best effort sits behind the download's frames and waits far longer than in Voice. Turn the download off and the queues come out within a tenth of a millisecond of each other.
+4. Switch the AP mapping to Top three bits to see the older default: EF (46, binary 101110) becomes UP 5, the Video queue, even when nothing on the path loses the mark. Change how many download frames sit ahead in Best effort (illustrative).
+5. Predict, then reveal: Ask the class loads the question (the provider resets the mark while a download runs: which queue does the call wait in?) and hides the answer on the stage; pick an answer, then press Reveal.
+6. On a computer or tablet, Present opens this simulator full screen for a projector: Space sends the packet or pauses, the Right arrow moves it one hop, R resets, Up and Down move where the marking is lost, D starts or stops the download, M switches the AP mapping, P asks, reveals and closes the question, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Where the marking is lost | choice | Nowhere (default), at the AP mapping, at the tunnel, or at the internet provider |
+| How the AP maps DSCP to user priority | choice | RFC 8325 table (default, recommended) or top three bits (older default) |
+| A download is running | switch | On (default) or Off |
+| Download frames ahead in Best effort | frames | 0 to 256; default 64 (illustrative; used only when the call lands in Best effort while a download runs) |
+
+**How it works.** The packet leaves the caller's app marked EF (46). The tunnel gateway copies the mark to the outer header, or leaves the outer mark at 0 when the loss is at the tunnel, and then no later hop can see EF. The internet provider passes the mark, or resets it to 0 when the loss is there. The home router and switch pass it unchanged. The AP maps the DSCP it sees to a user priority: the RFC 8325 table sends EF to UP 6 and 0 to UP 0; the top-three-bits mapping sends EF to UP 5; when the loss is at the AP mapping, the AP sends every frame as UP 0. UP 6 and 7 are Voice (AC_VO), 4 and 5 Video (AC_VI), 0 and 3 Best effort (AC_BE), 1 and 2 Background (AC_BK). The wait on the Wi-Fi hop comes from the Medium Access Simulator's engine, unchanged: legacy OFDM timing, 1,500-byte frames at 54 Mbps and the default client EDCA (Enhanced Distributed Channel Access) settings, with a voice flow of one packet every 20 ms (illustrative) and, while the download runs, a best-effort flow that always has a frame. Each run is seeded and covers 2 s of air time. In Voice or Video the call has its own queue, so its wait is the engine's mean time from the head of its queue to the ACK. In Best effort the call shares the download's queue, so it waits for the frames ahead to leave, one best-effort frame time each, then for its own turn: wait = (frames ahead + 1) x the mean best-effort frame time.
+
+**Example.** Defaults (nothing lost, RFC 8325 mapping, download running, 64 frames ahead): the call gets UP 6, Voice, and waits 0.48 ms on the Wi-Fi hop. With the loss at the internet provider, the AP sees 0 and the call lands in Best effort: 65 x 0.398 ms = 25.9 ms, 54 times as long. With nothing lost and the top-three-bits mapping, the call gets UP 5, Video, and waits 0.59 ms. With the download off, the three queues wait 0.30, 0.32 and 0.36 ms.
+
+**Field notes**
+- RFC 8325 notes that the common default of copying the top three DSCP bits puts EF in the Video queue, and recommends mapping EF to UP 6. The DSCP / QoS Markings card holds its full table.
+- Whether a tunnel copies the inner mark to its outer header is set by the device and its configuration (RFC 4301), so on a real network it depends on the device. Wi-Fi Calling and VPN (virtual private network) traffic both travel in tunnels.
+- A network you do not run may re-mark or ignore the DSCP at its boundary (RFC 2475). RFC 8325 calls resetting untrusted marks bleaching.
+- The Wi-Fi hop uses the Medium Access Simulator's simplifications: legacy 54 Mbps timing, one frame size for every frame, no aggregation, and the default client EDCA settings; an AP's own settings can differ. Inside one AP the standard gives the higher queue the win when two of its queues finish counting down together; here the download and the call contend as two transmitters.
+- Illustrative: a voice packet every 20 ms, and how many download frames sit ahead in Best effort, which depends on the AP's buffer. Wired hops add delay too, and the tool does not put a number on them.
+- Not modeled: the call's upstream direction, where the phone picks the user priority itself, and how the AP maps the upstream frame back to a DSCP.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
@@ -5937,6 +5974,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 
