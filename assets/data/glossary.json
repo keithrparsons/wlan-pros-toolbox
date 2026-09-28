@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "title": "Wi-Fi Glossary",
+  "title": "Wireless Glossary",
   "source": "WLAN Pros curated edition",
-  "term_count": 93,
+  "term_count": 123,
   "terms": [
     {
       "id": "2-4-ghz-band",
@@ -1303,6 +1303,426 @@
         "fr": "Un endroit où le signal Wi-Fi est trop faible, ou absent, pour être utilisé. C'est l'une des découvertes les plus courantes lors d'une étude et l'une des plaintes les plus courantes.",
         "it": "Un punto dove il segnale Wi-Fi è troppo debole, o manca, per poterlo usare. È una delle scoperte più comuni in un sopralluogo e una delle lamentele più comuni.",
         "de": "Eine Stelle, an der das WLAN-Signal zu schwach ist oder ganz fehlt, um es zu nutzen. Das ist einer der häufigsten Befunde bei einer Messung und eine der häufigsten Beschwerden."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "sim",
+      "term": "SIM",
+      "abbr": "Subscriber Identity Module",
+      "category": "Cellular",
+      "definition": "The small chip card that tells a phone company which account a phone belongs to. Move the SIM to another phone and your number goes with it.",
+      "definitions": {
+        "es": "La pequeña tarjeta con chip que le dice a la compañía telefónica a qué cuenta pertenece un teléfono. Si pasas la SIM a otro teléfono, tu número se va con ella.",
+        "fr": "La petite carte à puce qui indique à l'opérateur à quel compte appartient un téléphone. Mettez la SIM dans un autre téléphone et votre numéro la suit.",
+        "it": "La piccola scheda con chip che dice all'operatore telefonico a quale account appartiene un telefono. Sposta la SIM su un altro telefono e il tuo numero va con lei.",
+        "de": "Die kleine Chipkarte, die dem Mobilfunkanbieter sagt, zu welchem Konto ein Handy gehört. Steckst du die SIM in ein anderes Handy, geht deine Nummer mit."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "esim",
+      "term": "eSIM",
+      "abbr": "Embedded SIM",
+      "category": "Cellular",
+      "definition": "A phone company account chip built into the phone, instead of a card you pull out. You add a plan by scanning a QR code or through the carrier's app. One phone can hold several plans, which is handy when you travel.",
+      "definitions": {
+        "es": "Un chip de cuenta de la compañía telefónica integrado en el teléfono, en lugar de una tarjeta que se saca. Añades un plan escaneando un código QR o desde la app del operador. Un teléfono puede guardar varios planes, algo práctico cuando viajas.",
+        "fr": "Une puce de compte d'opérateur intégrée au téléphone, au lieu d'une carte qu'on retire. Vous ajoutez un forfait en scannant un code QR ou dans l'appli de l'opérateur. Un téléphone peut contenir plusieurs forfaits, ce qui est pratique en voyage.",
+        "it": "Un chip dell'account dell'operatore integrato nel telefono, invece di una scheda da estrarre. Aggiungi un piano inquadrando un codice QR o dall'app dell'operatore. Un telefono può contenere più piani, cosa comoda quando viaggi.",
+        "de": "Ein Konto-Chip des Mobilfunkanbieters, der fest im Handy verbaut ist, statt einer Karte zum Herausnehmen. Einen Tarif fügst du hinzu, indem du einen QR-Code scannst oder die App des Anbieters nutzt. Ein Handy kann mehrere Tarife speichern, was auf Reisen praktisch ist."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "lte",
+      "term": "LTE",
+      "abbr": "Long Term Evolution",
+      "category": "Cellular",
+      "definition": "The 4G cell standard most phones still use much of the time. It carries your data, and on most networks today your voice calls too.",
+      "definitions": {
+        "es": "El estándar celular 4G que la mayoría de los teléfonos todavía usan buena parte del tiempo. Lleva tus datos y, en la mayoría de las redes actuales, también tus llamadas de voz.",
+        "fr": "La norme cellulaire 4G que la plupart des téléphones utilisent encore une bonne partie du temps. Elle transporte vos données et, sur la plupart des réseaux aujourd'hui, vos appels vocaux aussi.",
+        "it": "Lo standard cellulare 4G che la maggior parte dei telefoni usa ancora buona parte del tempo. Porta i tuoi dati e, oggi sulla maggior parte delle reti, anche le tue chiamate vocali.",
+        "de": "Der 4G-Mobilfunkstandard, den die meisten Handys noch einen Großteil der Zeit nutzen. Er trägt deine Daten und in den meisten Netzen heute auch deine Sprachanrufe."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "5g",
+      "term": "5G",
+      "abbr": "Fifth Generation Cellular",
+      "category": "Cellular",
+      "definition": "The fifth generation of cell service. It runs on low, middle and high bands. Low-band 5G reaches far but can feel like good 4G. Mid-band is the sweet spot in many cities: much faster, with decent range. High-band 5G, often called mmWave, is the fastest, but its signal doesn't reach far and walls stop it.",
+      "definitions": {
+        "es": "La quinta generación del servicio celular. Funciona en bandas bajas, medias y altas. El 5G de banda baja llega lejos, pero puede parecer un buen 4G. La banda media es el punto ideal en muchas ciudades: mucho más rápida y con un alcance razonable. El 5G de banda alta, a menudo llamado mmWave, es el más rápido, pero su señal no llega lejos y las paredes la detienen.",
+        "fr": "La cinquième génération du service cellulaire. Elle fonctionne sur des bandes basses, moyennes et hautes. La 5G en bande basse porte loin, mais peut ressembler à une bonne 4G. La bande moyenne est le bon compromis dans beaucoup de villes : bien plus rapide, avec une portée correcte. La 5G en bande haute, souvent appelée mmWave, est la plus rapide, mais son signal ne va pas loin et les murs l'arrêtent.",
+        "it": "La quinta generazione del servizio cellulare. Funziona su bande basse, medie e alte. Il 5G in banda bassa arriva lontano, ma può sembrare un buon 4G. La banda media è il punto giusto in molte città: molto più veloce, con una portata discreta. Il 5G in banda alta, spesso chiamato mmWave, è il più veloce, ma il suo segnale non arriva lontano e i muri lo fermano.",
+        "de": "Die fünfte Generation des Mobilfunks. Sie läuft auf niedrigen, mittleren und hohen Bändern. 5G im niedrigen Band reicht weit, kann sich aber wie gutes 4G anfühlen. Das mittlere Band ist in vielen Städten der beste Kompromiss: viel schneller, mit ordentlicher Reichweite. 5G im hohen Band, oft mmWave genannt, ist am schnellsten, aber sein Signal reicht nicht weit und Wände halten es auf."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "cell-booster",
+      "term": "Cell Booster",
+      "abbr": "Signal Booster",
+      "category": "Cellular",
+      "definition": "A kit that picks up a weak cell signal with an antenna outside, makes it stronger and sends it out again inside. It needs some signal outside to work with. In the US it must be an FCC-approved model, and you register it with your carrier.",
+      "definitions": {
+        "es": "Un equipo que capta una señal celular débil con una antena exterior, la hace más fuerte y la vuelve a emitir dentro. Necesita algo de señal fuera para funcionar. En EE. UU. tiene que ser un modelo aprobado por la FCC y hay que registrarlo con el operador.",
+        "fr": "Un kit qui capte un signal cellulaire faible avec une antenne dehors, le renforce et le réémet à l'intérieur. Il lui faut un peu de signal dehors pour fonctionner. Aux États-Unis, ce doit être un modèle approuvé par la FCC, et vous devez le déclarer à votre opérateur.",
+        "it": "Un kit che capta un segnale cellulare debole con un'antenna esterna, lo rende più forte e lo ritrasmette all'interno. Ha bisogno di un po' di segnale all'esterno per funzionare. Negli Stati Uniti deve essere un modello approvato dalla FCC, e va registrato presso il proprio operatore.",
+        "de": "Ein Set, das ein schwaches Mobilfunksignal mit einer Außenantenne auffängt, verstärkt und drinnen wieder aussendet. Es braucht draußen etwas Signal, mit dem es arbeiten kann. In den USA muss es ein von der FCC zugelassenes Modell sein, und du meldest es bei deinem Anbieter an."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "data-roaming",
+      "term": "Data Roaming",
+      "abbr": null,
+      "category": "Cellular",
+      "definition": "Using another phone company's network when you're away from your own, most often in another country. It can cost a lot. Check your plan before you land.",
+      "definitions": {
+        "es": "Usar la red de otra compañía telefónica cuando estás lejos de la tuya, casi siempre en otro país. Puede salir muy caro. Revisa tu plan antes de aterrizar.",
+        "fr": "Utiliser le réseau d'un autre opérateur quand vous êtes loin du vôtre, le plus souvent dans un autre pays. Cela peut coûter cher. Vérifiez votre forfait avant d'atterrir.",
+        "it": "Usare la rete di un altro operatore telefonico quando sei lontano dalla tua, di solito in un altro paese. Può costare molto. Controlla il tuo piano prima di atterrare.",
+        "de": "Das Netz eines anderen Mobilfunkanbieters nutzen, wenn du nicht im eigenen bist, meistens im Ausland. Das kann teuer werden. Prüfe deinen Tarif, bevor du landest."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "e911",
+      "term": "E911",
+      "abbr": "Enhanced 911",
+      "category": "Cellular",
+      "definition": "The 911 system for phones. On a cell call, your carrier sends the emergency center your number and its best guess at your location, from GPS and nearby towers. That guess is weaker indoors. On a Wi-Fi call, it may rely on the emergency address you saved with your carrier. Keep that address current, and always say where you are first.",
+      "definitions": {
+        "es": "El sistema 911 para teléfonos. En una llamada celular, tu operador envía al centro de emergencias tu número y su mejor estimación de tu ubicación, a partir del GPS y de las torres cercanas. Esa estimación es peor en interiores. En una llamada por Wi-Fi, puede depender de la dirección de emergencia que guardaste con tu operador. Mantén esa dirección al día y di siempre primero dónde estás.",
+        "fr": "Le système 911 pour les téléphones. Lors d'un appel cellulaire, votre opérateur envoie au centre d'urgence votre numéro et sa meilleure estimation de votre position, à partir du GPS et des antennes-relais proches. Cette estimation est moins bonne à l'intérieur. Lors d'un appel Wi-Fi, il peut s'appuyer sur l'adresse d'urgence que vous avez enregistrée auprès de votre opérateur. Gardez cette adresse à jour, et dites toujours d'abord où vous êtes.",
+        "it": "Il sistema 911 per i telefoni. In una chiamata cellulare, il tuo operatore invia al centro di emergenza il tuo numero e la sua stima migliore della tua posizione, dal GPS e dalle torri vicine. Quella stima è meno precisa al chiuso. In una chiamata Wi-Fi, può basarsi sull'indirizzo di emergenza che hai registrato presso il tuo operatore. Tieni aggiornato quell'indirizzo e di' sempre prima dove ti trovi.",
+        "de": "Das 911-System für Handys. Bei einem Mobilfunkanruf schickt dein Anbieter der Notrufzentrale deine Nummer und seine beste Schätzung deines Standorts, aus GPS und nahen Funkmasten. Drinnen ist diese Schätzung schlechter. Bei einem WLAN-Anruf stützt es sich unter Umständen auf die Notfalladresse, die du bei deinem Anbieter hinterlegt hast. Halte diese Adresse aktuell, und sag immer zuerst, wo du bist."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "wi-fi-calling",
+      "term": "Wi-Fi Calling",
+      "abbr": null,
+      "category": "Cellular",
+      "definition": "Making normal phone calls and texts over a Wi-Fi network instead of the cell network. It's a big help where cell signal is weak and Wi-Fi is good. Your number and your phone app stay the same.",
+      "definitions": {
+        "es": "Hacer llamadas y enviar mensajes de texto normales a través de una red Wi-Fi en lugar de la red celular. Ayuda mucho donde la señal celular es débil y el Wi-Fi es bueno. Tu número y la app de teléfono siguen siendo los mismos.",
+        "fr": "Passer des appels et envoyer des SMS normaux via un réseau Wi-Fi au lieu du réseau cellulaire. C'est très utile là où le signal cellulaire est faible et le Wi-Fi est bon. Votre numéro et votre appli d'appels restent les mêmes.",
+        "it": "Fare normali chiamate e inviare SMS attraverso una rete Wi-Fi invece della rete cellulare. È di grande aiuto dove il segnale cellulare è debole e il Wi-Fi è buono. Il tuo numero e l'app del telefono restano gli stessi.",
+        "de": "Normale Telefonate und SMS über ein WLAN statt über das Mobilfunknetz. Das hilft sehr, wo das Mobilfunksignal schwach und das WLAN gut ist. Deine Nummer und deine Telefon-App bleiben gleich."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "personal-hotspot",
+      "term": "Personal Hotspot",
+      "abbr": "Tethering",
+      "category": "Cellular",
+      "definition": "Sharing your phone's cell data with a laptop or tablet. Most people do it by turning the phone into a small Wi-Fi network, and some phones can also share over a USB cable or Bluetooth. It uses your data plan, and some plans limit or slow hotspot data.",
+      "definitions": {
+        "es": "Compartir los datos celulares de tu teléfono con un portátil o una tableta. La mayoría lo hace convirtiendo el teléfono en una pequeña red Wi-Fi, y algunos teléfonos también pueden compartirlos por cable USB o Bluetooth. Usa tu plan de datos, y algunos planes limitan o ralentizan los datos compartidos.",
+        "fr": "Partager les données cellulaires de votre téléphone avec un ordinateur portable ou une tablette. La plupart des gens le font en transformant le téléphone en petit réseau Wi-Fi, et certains téléphones peuvent aussi partager par câble USB ou en Bluetooth. Cela utilise votre forfait, et certains forfaits limitent ou ralentissent les données partagées.",
+        "it": "Condividere i dati cellulari del telefono con un portatile o un tablet. Quasi tutti lo fanno trasformando il telefono in una piccola rete Wi-Fi, e alcuni telefoni possono condividere anche via cavo USB o Bluetooth. Usa il tuo piano dati, e alcuni piani limitano o rallentano i dati condivisi.",
+        "de": "Die Mobilfunkdaten deines Handys mit einem Laptop oder Tablet teilen. Meistens macht das Handy dafür ein kleines WLAN auf, und manche Handys können auch per USB-Kabel oder Bluetooth teilen. Das geht von deinem Datenvolumen ab, und manche Tarife begrenzen oder drosseln Hotspot-Daten."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "bluetooth",
+      "term": "Bluetooth",
+      "abbr": null,
+      "category": "Short-Range Radio",
+      "definition": "Short-range radio for linking gadgets to each other: earbuds, speakers, watches, keyboards and cars. It uses the same 2.4 GHz band as Wi-Fi. Most earbuds and keyboards work across a room, about 10 m (33 feet). Some Bluetooth gear reaches much farther. Bodies and walls cut the range fast.",
+      "definitions": {
+        "es": "Radio de corto alcance para conectar aparatos entre sí: auriculares, altavoces, relojes, teclados y coches. Usa la misma banda de 2,4 GHz que el Wi-Fi. La mayoría de los auriculares y teclados funcionan a lo ancho de una habitación, unos 10 m (33 pies). Algunos equipos Bluetooth llegan mucho más lejos. Los cuerpos y las paredes reducen el alcance rápidamente.",
+        "fr": "Radio à courte portée pour relier des gadgets entre eux : écouteurs, enceintes, montres, claviers et voitures. Elle utilise la même bande 2,4 GHz que le Wi-Fi. La plupart des écouteurs et claviers fonctionnent d'un bout à l'autre d'une pièce, environ 10 m (33 pieds). Certains appareils Bluetooth portent beaucoup plus loin. Les corps et les murs réduisent vite la portée.",
+        "it": "Radio a corto raggio per collegare dispositivi tra loro: auricolari, altoparlanti, orologi, tastiere e auto. Usa la stessa banda a 2,4 GHz del Wi-Fi. La maggior parte di auricolari e tastiere funziona da una parte all'altra di una stanza, circa 10 m (33 piedi). Alcuni apparecchi Bluetooth arrivano molto più lontano. Corpi e muri riducono in fretta la portata.",
+        "de": "Funk mit kurzer Reichweite, um Geräte miteinander zu verbinden: Ohrhörer, Lautsprecher, Uhren, Tastaturen und Autos. Er nutzt dasselbe 2,4-GHz-Band wie WLAN. Die meisten Ohrhörer und Tastaturen funktionieren quer durch einen Raum, etwa 10 m (33 Fuß). Manche Bluetooth-Geräte reichen viel weiter. Körper und Wände verkürzen die Reichweite schnell."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "bluetooth-le",
+      "term": "Bluetooth LE",
+      "abbr": "Bluetooth Low Energy",
+      "category": "Short-Range Radio",
+      "definition": "A low-power kind of Bluetooth for small gadgets that run for months or years on a coin battery, like item trackers, sensors and fitness bands. It sends small bits of data now and then.",
+      "definitions": {
+        "es": "Un tipo de Bluetooth de bajo consumo para aparatos pequeños que funcionan meses o años con una pila de botón, como localizadores de objetos, sensores y pulseras de actividad. Envía pequeños datos de vez en cuando.",
+        "fr": "Une forme de Bluetooth à basse consommation pour les petits gadgets qui tiennent des mois ou des années sur une pile bouton, comme les traceurs d'objets, les capteurs et les bracelets d'activité. Il envoie de petits bouts de données de temps en temps.",
+        "it": "Un tipo di Bluetooth a basso consumo per piccoli dispositivi che funzionano per mesi o anni con una batteria a bottone, come localizzatori di oggetti, sensori e braccialetti fitness. Invia piccole quantità di dati ogni tanto.",
+        "de": "Eine stromsparende Art von Bluetooth für kleine Geräte, die Monate oder Jahre mit einer Knopfzelle laufen, etwa Tracker für Gegenstände, Sensoren und Fitnessarmbänder. Es sendet ab und zu kleine Datenmengen."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "le-audio",
+      "term": "LE Audio",
+      "abbr": "Bluetooth Low Energy Audio",
+      "category": "Short-Range Radio",
+      "definition": "The newer way Bluetooth sends sound. It uses a sound format called LC3 that sounds good while using less data. It adds Auracast, which lets one phone or TV send sound to many earbuds or hearing aids at once.",
+      "definitions": {
+        "es": "La forma más nueva en que Bluetooth envía sonido. Usa un formato de sonido llamado LC3 que suena bien y usa menos datos. Añade Auracast, que permite que un teléfono o un televisor envíe sonido a muchos auriculares o audífonos a la vez.",
+        "fr": "La nouvelle façon dont le Bluetooth transmet le son. Elle utilise un format audio appelé LC3, qui sonne bien tout en utilisant moins de données. Elle ajoute Auracast, qui permet à un téléphone ou une télé d'envoyer le son à beaucoup d'écouteurs ou d'appareils auditifs à la fois.",
+        "it": "Il modo più nuovo in cui il Bluetooth trasmette il suono. Usa un formato audio chiamato LC3 che suona bene usando meno dati. Aggiunge Auracast, che permette a un telefono o a una TV di mandare il suono a molti auricolari o apparecchi acustici insieme.",
+        "de": "Die neuere Art, wie Bluetooth Ton überträgt. Sie nutzt ein Tonformat namens LC3, das gut klingt und dabei weniger Daten braucht. Dazu kommt Auracast, mit dem ein Handy oder Fernseher Ton an viele Ohrhörer oder Hörgeräte gleichzeitig senden kann."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "nfc",
+      "term": "NFC",
+      "abbr": "Near Field Communication",
+      "category": "Short-Range Radio",
+      "definition": "Radio for a tap. It works only when two devices are a few centimeters apart, about 4 cm (1.5 inches). It's what makes tap-to-pay, badge readers and tap-to-pair work. The short range helps keep it safe, but your card or phone wallet adds its own security too.",
+      "definitions": {
+        "es": "Radio para un toque. Solo funciona cuando dos dispositivos están a pocos centímetros, unos 4 cm (1,5 pulgadas). Es lo que hace funcionar el pago con un toque, los lectores de tarjetas de acceso y el emparejamiento con un toque. El corto alcance ayuda a que sea seguro, pero tu tarjeta o la cartera del teléfono también añaden su propia seguridad.",
+        "fr": "Une radio pour un simple contact. Elle ne fonctionne que si deux appareils sont à quelques centimètres, environ 4 cm (1,5 pouce). C'est ce qui fait marcher le paiement sans contact, les lecteurs de badge et l'appairage par contact. La courte portée aide à la sécurité, mais votre carte ou le portefeuille de votre téléphone ajoute aussi sa propre sécurité.",
+        "it": "Radio per un tocco. Funziona solo quando due dispositivi sono a pochi centimetri, circa 4 cm (1,5 pollici). È ciò che fa funzionare il pagamento con un tocco, i lettori di badge e l'abbinamento con un tocco. La corta portata aiuta la sicurezza, ma anche la tua carta o il wallet del telefono aggiunge la sua.",
+        "de": "Funk für eine Berührung. Er funktioniert nur, wenn zwei Geräte wenige Zentimeter auseinander sind, etwa 4 cm (1,5 Zoll). Damit funktionieren kontaktloses Bezahlen, Ausweisleser und Koppeln per Antippen. Die kurze Reichweite hilft bei der Sicherheit, aber deine Karte oder die Wallet im Handy bringt auch eigene Sicherheit mit."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "uwb",
+      "term": "UWB",
+      "abbr": "Ultra-Wideband",
+      "category": "Short-Range Radio",
+      "definition": "Radio that spreads a faint signal over a wide slice of the airwaves. Its trick is timing. It can measure distance closely, often to a few centimeters. With the right antennas it can also tell direction, which is how some item trackers point you right to your keys.",
+      "definitions": {
+        "es": "Radio que reparte una señal débil sobre una franja ancha del espectro. Su truco está en medir el tiempo. Puede medir distancias con precisión, a menudo de unos pocos centímetros. Con las antenas adecuadas también puede saber la dirección, que es como algunos localizadores de objetos te llevan directo a tus llaves.",
+        "fr": "Une radio qui étale un signal faible sur une large tranche des ondes. Son astuce, c'est la mesure du temps. Elle peut mesurer une distance avec précision, souvent à quelques centimètres près. Avec les bonnes antennes, elle peut aussi trouver la direction : c'est ainsi que certains traceurs d'objets vous guident droit vers vos clés.",
+        "it": "Radio che distribuisce un segnale debole su un'ampia fetta dell'etere. Il suo trucco è la misura del tempo. Può misurare le distanze con precisione, spesso a pochi centimetri. Con le antenne giuste può anche capire la direzione, ed è così che alcuni localizzatori di oggetti ti portano dritto alle chiavi.",
+        "de": "Funk, der ein schwaches Signal über einen breiten Ausschnitt der Funkwellen verteilt. Sein Trick ist die Zeitmessung. Er kann Entfernungen genau messen, oft auf wenige Zentimeter. Mit den passenden Antennen erkennt er auch die Richtung. So führen dich manche Tracker direkt zu deinen Schlüsseln."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "thread",
+      "term": "Thread",
+      "abbr": null,
+      "category": "Short-Range Radio",
+      "definition": "A low-power network for smart home gadgets. Plugged-in devices pass messages along for the battery ones, so coverage gets better as you add gear. A small bridge called a border router links it to the rest of your home network. It's often built into a smart speaker, TV box or Wi-Fi router.",
+      "definitions": {
+        "es": "Una red de bajo consumo para aparatos del hogar inteligente. Los dispositivos enchufados pasan los mensajes de los que van a pilas, así que la cobertura mejora a medida que añades equipos. Un pequeño puente llamado border router la une al resto de la red de tu casa. Suele venir integrado en un altavoz inteligente, un reproductor para la tele o un router Wi-Fi.",
+        "fr": "Un réseau basse consommation pour les gadgets de maison connectée. Les appareils branchés sur le secteur relaient les messages pour ceux qui fonctionnent sur pile, donc la couverture s'améliore à mesure que vous ajoutez du matériel. Un petit pont appelé border router le relie au reste de votre réseau domestique. Il est souvent intégré à une enceinte connectée, un boîtier TV ou un routeur Wi-Fi.",
+        "it": "Una rete a basso consumo per i dispositivi della casa smart. I dispositivi collegati alla presa passano i messaggi per quelli a batteria, quindi la copertura migliora man mano che aggiungi apparecchi. Un piccolo ponte chiamato border router la collega al resto della rete di casa. Spesso è integrato in uno smart speaker, un box TV o un router Wi-Fi.",
+        "de": "Ein stromsparendes Netz für Smart-Home-Geräte. Geräte am Stromnetz reichen Nachrichten für die batteriebetriebenen weiter, also wird die Abdeckung besser, je mehr Geräte du hinzufügst. Eine kleine Brücke namens Border Router verbindet es mit dem Rest deines Heimnetzes. Sie steckt oft in einem smarten Lautsprecher, einer TV-Box oder einem WLAN-Router."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "zigbee",
+      "term": "Zigbee",
+      "abbr": null,
+      "category": "Short-Range Radio",
+      "definition": "An older low-power network for smart home gadgets, common in bulbs, plugs and sensors. Devices pass messages along for each other. It needs its own hub to reach your phone and the internet, and it uses the same 2.4 GHz band as Wi-Fi.",
+      "definitions": {
+        "es": "Una red de bajo consumo más antigua para aparatos del hogar inteligente, común en bombillas, enchufes y sensores. Los dispositivos se pasan los mensajes unos a otros. Necesita su propio hub para llegar a tu teléfono y a internet, y usa la misma banda de 2,4 GHz que el Wi-Fi.",
+        "fr": "Un réseau basse consommation plus ancien pour les gadgets de maison connectée, courant dans les ampoules, prises et capteurs. Les appareils se relaient les messages. Il lui faut son propre hub pour atteindre votre téléphone et Internet, et il utilise la même bande 2,4 GHz que le Wi-Fi.",
+        "it": "Una rete a basso consumo più vecchia per i dispositivi della casa smart, comune in lampadine, prese e sensori. I dispositivi si passano i messaggi a vicenda. Ha bisogno di un suo hub per arrivare al telefono e a internet, e usa la stessa banda a 2,4 GHz del Wi-Fi.",
+        "de": "Ein älteres stromsparendes Netz für Smart-Home-Geräte, verbreitet in Lampen, Steckdosen und Sensoren. Die Geräte reichen Nachrichten füreinander weiter. Es braucht einen eigenen Hub, um dein Handy und das Internet zu erreichen, und es nutzt dasselbe 2,4-GHz-Band wie WLAN."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "matter",
+      "term": "Matter",
+      "abbr": null,
+      "category": "Short-Range Radio",
+      "definition": "A shared language for smart home gadgets, backed by Apple, Google, Amazon, Samsung and many others. A Matter device is meant to work with more than one brand's app. It runs over Wi-Fi, a network cable, or Thread, a low-power smart home network. You still need a Matter hub or app, and not every app supports every kind of device.",
+      "definitions": {
+        "es": "Un idioma común para aparatos del hogar inteligente, respaldado por Apple, Google, Amazon, Samsung y muchos otros. Un dispositivo Matter está pensado para funcionar con la app de más de una marca. Funciona sobre Wi-Fi, un cable de red o Thread, una red de bajo consumo para el hogar inteligente. Sigues necesitando un hub o una app Matter, y no todas las apps admiten todos los tipos de dispositivo.",
+        "fr": "Un langage commun pour les gadgets de maison connectée, soutenu par Apple, Google, Amazon, Samsung et beaucoup d'autres. Un appareil Matter est conçu pour marcher avec l'appli de plus d'une marque. Il fonctionne en Wi-Fi, par câble réseau ou sur Thread, un réseau basse consommation pour la maison connectée. Il vous faut quand même un hub ou une appli Matter, et toutes les applis ne prennent pas en charge tous les types d'appareils.",
+        "it": "Una lingua comune per i dispositivi della casa smart, sostenuta da Apple, Google, Amazon, Samsung e molti altri. Un dispositivo Matter è pensato per funzionare con l'app di più di una marca. Funziona su Wi-Fi, su un cavo di rete o su Thread, una rete a basso consumo per la casa smart. Serve comunque un hub o un'app Matter, e non tutte le app supportano ogni tipo di dispositivo.",
+        "de": "Eine gemeinsame Sprache für Smart-Home-Geräte, unterstützt von Apple, Google, Amazon, Samsung und vielen anderen. Ein Matter-Gerät soll mit der App von mehr als einer Marke funktionieren. Es läuft über WLAN, ein Netzwerkkabel oder Thread, ein stromsparendes Smart-Home-Netz. Du brauchst trotzdem einen Matter-Hub oder eine Matter-App, und nicht jede App unterstützt jede Geräteart."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "gps",
+      "term": "GPS",
+      "abbr": "Global Positioning System",
+      "category": "Location & Satellite",
+      "definition": "The US system of satellites that tells your device where it is. Your device listens for timing signals from at least 4 satellites and works out its position from how long each signal took to arrive. It only listens. It never sends anything back.",
+      "definitions": {
+        "es": "El sistema de satélites de EE. UU. que le dice a tu dispositivo dónde está. Tu dispositivo escucha señales de tiempo de al menos 4 satélites y calcula su posición según cuánto tardó en llegar cada señal. Solo escucha. Nunca envía nada de vuelta.",
+        "fr": "Le système de satellites américain qui indique à votre appareil où il se trouve. Votre appareil écoute des signaux horaires d'au moins 4 satellites et calcule sa position d'après le temps mis par chaque signal pour arriver. Il ne fait qu'écouter. Il n'envoie jamais rien en retour.",
+        "it": "Il sistema di satelliti degli Stati Uniti che dice al tuo dispositivo dove si trova. Il dispositivo ascolta segnali orari da almeno 4 satelliti e calcola la sua posizione da quanto ha impiegato ogni segnale ad arrivare. Ascolta soltanto. Non invia mai niente indietro.",
+        "de": "Das US-Satellitensystem, das deinem Gerät sagt, wo es ist. Dein Gerät hört Zeitsignale von mindestens 4 Satelliten und berechnet seine Position daraus, wie lange jedes Signal unterwegs war. Es hört nur zu. Es sendet nie etwas zurück."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "gnss",
+      "term": "GNSS",
+      "abbr": "Global Navigation Satellite System",
+      "category": "Location & Satellite",
+      "definition": "The general name for satellite location systems. GPS is the US one. Europe runs Galileo, Russia runs GLONASS and China runs BeiDou. Most phones listen to several at once, which gives a faster, better fix.",
+      "definitions": {
+        "es": "El nombre general de los sistemas de localización por satélite. GPS es el de EE. UU. Europa tiene Galileo, Rusia tiene GLONASS y China tiene BeiDou. La mayoría de los teléfonos escuchan varios a la vez, lo que da una posición más rápida y mejor.",
+        "fr": "Le nom général des systèmes de localisation par satellite. Le GPS est celui des États-Unis. L'Europe exploite Galileo, la Russie GLONASS et la Chine BeiDou. La plupart des téléphones en écoutent plusieurs à la fois, ce qui donne une position plus rapide et meilleure.",
+        "it": "Il nome generale dei sistemi di localizzazione satellitare. GPS è quello degli Stati Uniti. L'Europa gestisce Galileo, la Russia GLONASS e la Cina BeiDou. La maggior parte dei telefoni ne ascolta diversi insieme, e così ottiene una posizione più rapida e migliore.",
+        "de": "Der Oberbegriff für Satelliten-Ortungssysteme. GPS ist das der USA. Europa betreibt Galileo, Russland GLONASS und China BeiDou. Die meisten Handys hören mehrere gleichzeitig, was eine schnellere, bessere Positionsbestimmung ergibt."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "leo-satellite",
+      "term": "Low Earth Orbit Satellite",
+      "abbr": "LEO",
+      "category": "Location & Satellite",
+      "definition": "A satellite flying low, a few hundred to 2,000 km up, and circling the Earth in about 90 minutes. Being close means short delay, so video calls work. Each one crosses the sky in a few minutes, so a service needs a whole fleet of them. Broadband services like Starlink use thousands.",
+      "definitions": {
+        "es": "Un satélite que vuela bajo, a entre unos cientos y 2.000 km de altura, y da la vuelta a la Tierra en unos 90 minutos. Estar cerca significa poco retardo, así que las videollamadas funcionan. Cada uno cruza el cielo en unos pocos minutos, así que un servicio necesita toda una flota. Los servicios de banda ancha como Starlink usan miles.",
+        "fr": "Un satellite qui vole bas, entre quelques centaines et 2 000 km d'altitude, et fait le tour de la Terre en environ 90 minutes. Être proche veut dire peu de délai, donc les appels vidéo fonctionnent. Chacun traverse le ciel en quelques minutes, donc un service a besoin de toute une flotte. Les services haut débit comme Starlink en utilisent des milliers.",
+        "it": "Un satellite che vola basso, tra qualche centinaio e 2.000 km di quota, e fa il giro della Terra in circa 90 minuti. Stare vicino vuol dire poco ritardo, quindi le videochiamate funzionano. Ognuno attraversa il cielo in pochi minuti, quindi a un servizio serve un'intera flotta. I servizi a banda larga come Starlink ne usano migliaia.",
+        "de": "Ein Satellit, der niedrig fliegt, einige hundert bis 2.000 km hoch, und die Erde in etwa 90 Minuten umrundet. Die Nähe bedeutet wenig Verzögerung, also funktionieren Videoanrufe. Jeder zieht in wenigen Minuten über den Himmel, also braucht ein Dienst eine ganze Flotte. Breitbanddienste wie Starlink nutzen Tausende."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "geostationary-satellite",
+      "term": "Geostationary Satellite",
+      "abbr": "GEO",
+      "category": "Location & Satellite",
+      "definition": "A satellite about 35,786 km up, where one trip around the Earth takes exactly a day. From the ground it seems to hang still in the sky, and one can cover about a third of the planet. The long trip up and back adds about half a second of delay, which you notice on calls.",
+      "definitions": {
+        "es": "Un satélite a unos 35.786 km de altura, donde una vuelta a la Tierra dura exactamente un día. Desde el suelo parece quieto en el cielo, y uno solo puede cubrir cerca de un tercio del planeta. El largo viaje de ida y vuelta añade cerca de medio segundo de retardo, que se nota en las llamadas.",
+        "fr": "Un satellite à environ 35 786 km d'altitude, là où un tour de la Terre prend exactement un jour. Depuis le sol, il semble immobile dans le ciel, et un seul peut couvrir environ un tiers de la planète. Le long aller-retour ajoute environ une demi-seconde de délai, qu'on remarque pendant les appels.",
+        "it": "Un satellite a circa 35.786 km di quota, dove un giro della Terra dura esattamente un giorno. Da terra sembra fermo nel cielo, e uno solo può coprire circa un terzo del pianeta. Il lungo viaggio di andata e ritorno aggiunge circa mezzo secondo di ritardo, che si nota nelle chiamate.",
+        "de": "Ein Satellit in etwa 35.786 km Höhe, wo eine Runde um die Erde genau einen Tag dauert. Vom Boden aus scheint er still am Himmel zu stehen, und einer kann etwa ein Drittel der Erde abdecken. Der lange Weg hinauf und zurück bringt etwa eine halbe Sekunde Verzögerung, die man bei Anrufen merkt."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "modem",
+      "term": "Modem",
+      "abbr": null,
+      "category": "Home Internet",
+      "definition": "The box that links your home to your internet provider. On cable or DSL it's a true modem. On fiber, the first box is usually an ONT, which turns the light into a normal network signal. On cell home internet, the modem sits inside the provider's box. Many providers put the modem, a router and a Wi-Fi access point all in one box.",
+      "definitions": {
+        "es": "La caja que conecta tu casa con tu proveedor de internet. En cable o DSL es un módem de verdad. En fibra, la primera caja suele ser una ONT, que convierte la luz en una señal de red normal. En el internet celular para el hogar, el módem va dentro de la caja del proveedor. Muchos proveedores ponen el módem, un router y un punto de acceso Wi-Fi en una sola caja.",
+        "fr": "Le boîtier qui relie votre maison à votre fournisseur d'accès à Internet. Sur le câble ou le DSL, c'est un vrai modem. Sur la fibre, le premier boîtier est généralement un ONT, qui transforme la lumière en signal réseau normal. Avec l'Internet cellulaire à domicile, le modem est à l'intérieur du boîtier du fournisseur. Beaucoup de fournisseurs mettent le modem, un routeur et un point d'accès Wi-Fi dans un seul boîtier.",
+        "it": "La scatola che collega la tua casa al fornitore di internet. Su cavo o DSL è un vero modem. Sulla fibra, la prima scatola di solito è un ONT, che trasforma la luce in un normale segnale di rete. Con l'internet di casa via rete cellulare, il modem sta dentro la scatola del fornitore. Molti fornitori mettono il modem, un router e un access point Wi-Fi in una sola scatola.",
+        "de": "Die Box, die dein Zuhause mit deinem Internetanbieter verbindet. Bei Kabel oder DSL ist sie ein echtes Modem. Bei Glasfaser ist die erste Box meist ein ONT, das das Licht in ein normales Netzwerksignal umwandelt. Bei Mobilfunk-Internet für zu Hause steckt das Modem in der Box des Anbieters. Viele Anbieter packen das Modem, einen Router und einen WLAN-Access-Point in eine Box."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "router",
+      "term": "Router",
+      "abbr": null,
+      "category": "Home Internet",
+      "definition": "The box that joins two networks and passes traffic between them. At home it sits between your internet line and your home network, and it hands out addresses to your devices. A router is not an access point. Many home boxes do both jobs, which is where the mix-up comes from.",
+      "definitions": {
+        "es": "La caja que une dos redes y pasa el tráfico entre ellas. En casa se sitúa entre tu línea de internet y tu red doméstica, y reparte direcciones a tus dispositivos. Un router no es un punto de acceso. Muchas cajas domésticas hacen los dos trabajos, y de ahí viene la confusión.",
+        "fr": "Le boîtier qui relie deux réseaux et fait passer le trafic entre eux. À la maison, il se place entre votre ligne Internet et votre réseau domestique, et il distribue des adresses à vos appareils. Un routeur n'est pas un point d'accès. Beaucoup de boîtiers domestiques font les deux, d'où la confusion.",
+        "it": "La scatola che unisce due reti e passa il traffico tra loro. In casa sta tra la tua linea internet e la tua rete domestica, e assegna gli indirizzi ai tuoi dispositivi. Un router non è un access point. Molte scatole di casa fanno entrambe le cose, ed è da qui che nasce la confusione.",
+        "de": "Die Box, die zwei Netze verbindet und den Verkehr zwischen ihnen weiterreicht. Zu Hause sitzt sie zwischen deinem Internetanschluss und deinem Heimnetz und verteilt Adressen an deine Geräte. Ein Router ist kein Access Point. Viele Heimgeräte machen beides, und daher kommt die Verwechslung."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "ip-address",
+      "term": "IP Address",
+      "abbr": "Internet Protocol Address",
+      "category": "Home Internet",
+      "definition": "The address a device uses on a network, like 192.168.1.20. Your home network gives each device a private one. Your internet provider usually gives your home one public address that the whole house shares.",
+      "definitions": {
+        "es": "La dirección que usa un dispositivo en una red, como 192.168.1.20. Tu red doméstica le da a cada dispositivo una privada. Tu proveedor de internet suele darle a tu casa una sola dirección pública que comparte toda la casa.",
+        "fr": "L'adresse qu'un appareil utilise sur un réseau, comme 192.168.1.20. Votre réseau domestique donne à chaque appareil une adresse privée. Votre fournisseur d'accès donne en général à votre foyer une seule adresse publique que toute la maison partage.",
+        "it": "L'indirizzo che un dispositivo usa su una rete, come 192.168.1.20. La rete di casa dà a ogni dispositivo un indirizzo privato. Il fornitore di internet di solito dà alla tua casa un solo indirizzo pubblico, condiviso da tutta la casa.",
+        "de": "Die Adresse, die ein Gerät in einem Netz nutzt, etwa 192.168.1.20. Dein Heimnetz gibt jedem Gerät eine private. Dein Internetanbieter gibt deinem Zuhause meist eine öffentliche Adresse, die sich das ganze Haus teilt."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "dsl",
+      "term": "DSL",
+      "abbr": "Digital Subscriber Line",
+      "category": "Home Internet",
+      "definition": "Internet over the old copper phone line. The farther you are from the phone company's equipment, the slower it gets. Many phone companies are shutting it down and moving people to fiber.",
+      "definitions": {
+        "es": "Internet por la antigua línea telefónica de cobre. Cuanto más lejos estás del equipo de la compañía telefónica, más lento va. Muchas compañías telefónicas lo están apagando y pasando a la gente a la fibra.",
+        "fr": "Internet par la vieille ligne téléphonique en cuivre. Plus vous êtes loin de l'équipement de l'opérateur, plus c'est lent. Beaucoup d'opérateurs l'arrêtent et font passer leurs clients à la fibre.",
+        "it": "Internet sulla vecchia linea telefonica in rame. Più sei lontano dagli apparati della compagnia telefonica, più va lento. Molte compagnie telefoniche lo stanno spegnendo e passano le persone alla fibra.",
+        "de": "Internet über die alte Telefonleitung aus Kupfer. Je weiter du von der Technik der Telefongesellschaft entfernt bist, desto langsamer wird es. Viele Telefongesellschaften schalten es ab und bringen die Leute auf Glasfaser."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "cable-internet",
+      "term": "Cable Internet",
+      "abbr": "DOCSIS",
+      "category": "Home Internet",
+      "definition": "Internet over the same coax cable that brings cable TV. Downloads can be fast. Uploads are usually much slower, and neighbors share the line, so it can slow down in the evening.",
+      "definitions": {
+        "es": "Internet por el mismo cable coaxial que trae la televisión por cable. Las descargas pueden ser rápidas. Las subidas suelen ser mucho más lentas, y los vecinos comparten la línea, así que puede ir más lento por la noche.",
+        "fr": "Internet par le même câble coaxial que la télévision par câble. Les téléchargements peuvent être rapides. Les envois sont en général bien plus lents, et les voisins partagent la ligne, donc ça peut ralentir le soir.",
+        "it": "Internet sullo stesso cavo coassiale che porta la TV via cavo. I download possono essere veloci. Gli upload di solito sono molto più lenti, e i vicini condividono la linea, quindi la sera può rallentare.",
+        "de": "Internet über dasselbe Koaxialkabel, das das Kabelfernsehen bringt. Downloads können schnell sein. Uploads sind meist viel langsamer, und Nachbarn teilen sich die Leitung, also kann es abends langsamer werden."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "fiber-internet",
+      "term": "Fiber Internet",
+      "abbr": "FTTH",
+      "category": "Home Internet",
+      "definition": "Internet over thin glass strands that carry light. It's the fastest and steadiest home internet, and upload is often as fast as download. A small box on your wall, called an ONT, turns the light into a normal network signal.",
+      "definitions": {
+        "es": "Internet por finos hilos de vidrio que llevan luz. Es el internet doméstico más rápido y estable, y la subida suele ser tan rápida como la bajada. Una cajita en la pared, llamada ONT, convierte la luz en una señal de red normal.",
+        "fr": "Internet par de fins brins de verre qui transportent de la lumière. C'est l'accès à domicile le plus rapide et le plus stable, et l'envoi est souvent aussi rapide que le téléchargement. Un petit boîtier au mur, appelé ONT, transforme la lumière en signal réseau normal.",
+        "it": "Internet su sottili fili di vetro che portano luce. È l'internet di casa più veloce e stabile, e spesso l'upload è veloce quanto il download. Una scatoletta sul muro, chiamata ONT, trasforma la luce in un normale segnale di rete.",
+        "de": "Internet über dünne Glasfasern, die Licht tragen. Es ist das schnellste und stabilste Internet für zu Hause, und der Upload ist oft so schnell wie der Download. Eine kleine Box an der Wand, ONT genannt, wandelt das Licht in ein normales Netzwerksignal um."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "fixed-wireless-access",
+      "term": "Fixed Wireless Access",
+      "abbr": "FWA",
+      "category": "Home Internet",
+      "definition": "Home internet that arrives over a radio link instead of a wire, from a cell tower (like 5G home internet) or an antenna on a nearby tower. A box by a window picks it up and shares it with your house. Speed depends on your signal to the tower.",
+      "definitions": {
+        "es": "Internet para el hogar que llega por un enlace de radio en lugar de por cable, desde una torre de telefonía celular (como el internet 5G para el hogar) o desde una antena en una torre cercana. Una caja junto a una ventana lo capta y lo comparte con tu casa. La velocidad depende de tu señal hasta la torre.",
+        "fr": "Un accès Internet à domicile qui arrive par une liaison radio au lieu d'un fil, depuis une antenne-relais cellulaire (comme l'Internet 5G à domicile) ou une antenne sur un pylône voisin. Un boîtier près d'une fenêtre le capte et le partage avec la maison. Le débit dépend de votre signal vers l'antenne.",
+        "it": "Internet di casa che arriva tramite un collegamento radio invece che su un filo, da una torre cellulare (come l'internet 5G per la casa) o da un'antenna su una torre vicina. Una scatola vicino a una finestra lo capta e lo condivide con la casa. La velocità dipende dal segnale verso la torre.",
+        "de": "Internet für zu Hause, das über eine Funkstrecke statt über ein Kabel ankommt, von einem Mobilfunkmast (wie 5G-Internet für zu Hause) oder einer Antenne auf einem Mast in der Nähe. Eine Box am Fenster empfängt es und teilt es mit dem ganzen Haus. Das Tempo hängt von deinem Signal zum Mast ab."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "vpn",
+      "term": "VPN",
+      "abbr": "Virtual Private Network",
+      "category": "Home Internet",
+      "definition": "A locked tunnel for your internet traffic, from your device to a VPN server. The hotel Wi-Fi, the coffee shop and your internet provider can't see what goes through it. The VPN company can, so pick one you trust. It changes where your traffic seems to come from. It doesn't make you anonymous.",
+      "definitions": {
+        "es": "Un túnel cerrado para tu tráfico de internet, desde tu dispositivo hasta un servidor VPN. El Wi-Fi del hotel, la cafetería y tu proveedor de internet no pueden ver lo que pasa por él. La empresa de VPN sí puede, así que elige una de confianza. Cambia el lugar del que parece venir tu tráfico. No te hace anónimo.",
+        "fr": "Un tunnel verrouillé pour votre trafic Internet, de votre appareil jusqu'à un serveur VPN. Le Wi-Fi de l'hôtel, le café et votre fournisseur d'accès ne peuvent pas voir ce qui passe dedans. La société de VPN, elle, le peut, alors choisissez-en une de confiance. Il change l'endroit d'où votre trafic semble venir. Il ne vous rend pas anonyme.",
+        "it": "Un tunnel chiuso a chiave per il tuo traffico internet, dal tuo dispositivo a un server VPN. Il Wi-Fi dell'hotel, il bar e il tuo fornitore di internet non possono vedere cosa ci passa dentro. L'azienda della VPN invece sì, quindi scegline una di cui ti fidi. Cambia il luogo da cui il tuo traffico sembra arrivare. Non ti rende anonimo.",
+        "de": "Ein verschlossener Tunnel für deinen Internetverkehr, von deinem Gerät zu einem VPN-Server. Das Hotel-WLAN, das Café und dein Internetanbieter können nicht sehen, was hindurchgeht. Der VPN-Anbieter kann es, also wähle einen, dem du vertraust. Es ändert, woher dein Verkehr zu kommen scheint. Es macht dich nicht anonym."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
+      "id": "wps",
+      "term": "WPS",
+      "abbr": "Wi-Fi Protected Setup",
+      "category": "Home Internet",
+      "definition": "A shortcut for joining a Wi-Fi network by pressing a button on the router or typing a PIN. The PIN method is the one to avoid. Someone within reach of your Wi-Fi can guess the PIN and recover your password. Turn WPS off if your router lets you.",
+      "definitions": {
+        "es": "Un atajo para conectarse a una red Wi-Fi pulsando un botón del router o escribiendo un PIN. El método del PIN es el que hay que evitar. Alguien al alcance de tu Wi-Fi puede adivinar el PIN y recuperar tu contraseña. Desactiva WPS si tu router lo permite.",
+        "fr": "Un raccourci pour se connecter à un réseau Wi-Fi en appuyant sur un bouton du routeur ou en tapant un code PIN. C'est la méthode du PIN qu'il faut éviter. Quelqu'un à portée de votre Wi-Fi peut deviner le PIN et récupérer votre mot de passe. Désactivez le WPS si votre routeur le permet.",
+        "it": "Una scorciatoia per collegarsi a una rete Wi-Fi premendo un pulsante sul router o digitando un PIN. Il metodo del PIN è quello da evitare. Qualcuno alla portata del tuo Wi-Fi può indovinare il PIN e recuperare la tua password. Disattiva il WPS se il router lo consente.",
+        "de": "Eine Abkürzung, um einem WLAN beizutreten, indem du eine Taste am Router drückst oder eine PIN eingibst. Die PIN-Methode solltest du meiden. Jemand in Reichweite deines WLANs kann die PIN erraten und dein Passwort herausfinden. Schalte WPS aus, wenn dein Router das erlaubt."
       },
       "translation_status": "draft-needs-review"
     }

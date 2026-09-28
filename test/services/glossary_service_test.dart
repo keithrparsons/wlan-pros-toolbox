@@ -2,7 +2,7 @@
 // category grouping in FILE ORDER (never alphabetized), and case-insensitive
 // free-text search across term / abbr / definition. Most tests use a small
 // in-memory fixture; the last group loads the REAL bundled asset to prove all
-// 93 terms parse and group into the 8 curated categories in the expected order.
+// 123 terms parse and group into the 12 curated categories in the expected order.
 
 import 'dart:convert';
 import 'dart:io';
@@ -137,11 +137,11 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses all 93 terms', () {
-      expect(_loadReal().count, 93);
+    test('parses all 123 terms', () {
+      expect(_loadReal().count, 123);
     });
 
-    test('groups into the 8 curated categories in the expected order', () {
+    test('groups into the 12 curated categories in the expected order', () {
       final GlossaryService real = _loadReal();
       const List<String> expected = <String>[
         'Bands & Spectrum',
@@ -152,8 +152,13 @@ void main() {
         'Access Points, Networks & Roaming',
         'Security',
         'Performance & Troubleshooting',
+        // Wireless Glossary additions (2026-09-28): 30 non-Wi-Fi terms.
+        'Cellular',
+        'Short-Range Radio',
+        'Location & Satellite',
+        'Home Internet',
       ];
-      expect(real.categoryCount, 8);
+      expect(real.categoryCount, 12);
       expect(real.categoriesInOrder, expected);
       // grouped() must report the same order.
       expect(
@@ -162,12 +167,12 @@ void main() {
       );
     });
 
-    test('every term lands in exactly one group; counts sum to 93', () {
+    test('every term lands in exactly one group; counts sum to 123', () {
       final GlossaryService real = _loadReal();
       final int sum = real
           .grouped()
           .fold<int>(0, (int acc, GlossaryGroup g) => acc + g.count);
-      expect(sum, 93);
+      expect(sum, 123);
     });
 
     test('spot-check: RSSI carries its full-name expansion in abbr', () {
@@ -187,6 +192,43 @@ void main() {
       // more than one sentence).
       expect(fspl.definition.contains('.'), isTrue);
       expect(fspl.definition.length, greaterThan(80));
+    });
+
+    test('spot-check: Router is a Home Internet term that is not an AP', () {
+      final GlossaryTerm? router = _loadReal().byId('router');
+      expect(router, isNotNull);
+      expect(router!.term, 'Router');
+      expect(router.abbr, isNull);
+      expect(router.category, 'Home Internet');
+      expect(router.definition, contains('A router is not an access point.'));
+    });
+
+    test('the 30 wireless additions come after the 93 Wi-Fi terms', () {
+      final List<GlossaryTerm> all = _loadReal().all;
+      expect(all[92].category, 'Performance & Troubleshooting');
+      expect(all[93].id, 'sim');
+      expect(all.last.id, 'wps');
+    });
+
+    test('German says WLAN for the technology in the wireless additions', () {
+      // Keith, 2026-09-28: German uses WLAN for the technology and keeps
+      // Wi-Fi only in proper names. None of the 30 additions names one in DE.
+      const List<String> ids = <String>[
+        'e911', 'wi-fi-calling', 'personal-hotspot', 'bluetooth', 'thread',
+        'zigbee', 'matter', 'modem', 'vpn', 'wps',
+      ];
+      final GlossaryService real = _loadReal();
+      for (final String id in ids) {
+        final String de = real.byId(id)!.definitionFor(GlossaryLanguage.de);
+        expect(de, contains('WLAN'), reason: '$id DE lacks WLAN');
+        expect(de, isNot(contains('Wi-Fi')), reason: '$id DE says Wi-Fi');
+        // ES keeps "Wi-Fi" spelled exactly so.
+        expect(
+          real.byId(id)!.definitionFor(GlossaryLanguage.es),
+          contains('Wi-Fi'),
+          reason: '$id ES lost Wi-Fi',
+        );
+      }
     });
   });
 
@@ -285,7 +327,7 @@ void main() {
     test('DATA INTEGRITY: every real term has all five languages, none empty',
         () {
       final GlossaryService real = _loadReal();
-      expect(real.count, 93);
+      expect(real.count, 123);
       for (final GlossaryTerm t in real.all) {
         // English (the canonical definition) is non-empty.
         expect(
@@ -323,7 +365,7 @@ void main() {
       expect(doc['languages'], <String>['en', 'es', 'fr', 'it', 'de']);
       // Every term carries the same per-term flag.
       final List<dynamic> terms = doc['terms'] as List<dynamic>;
-      expect(terms.length, 93);
+      expect(terms.length, 123);
       for (final dynamic row in terms) {
         final Map<String, dynamic> m = row as Map<String, dynamic>;
         expect(
