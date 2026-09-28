@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 251;
+const int _expectedEntryCount = 252;
 
 const String _fixture = '''
 {
@@ -546,6 +546,10 @@ void main() {
       // analog-vs-digital-explained, on top of wifi-lab/lessons-110-b, which counted 250.
       // 250 + 1 = 251. Counted off the file: `len(json['tools'])`
       // returned 251.
+      // 2026-09-28: the Scales and Ratios, Explained Guided Lesson added ONE entry,
+      // scales-and-ratios-explained, on top of wifi-lab/lessons-110-b, which counted 251.
+      // 251 + 1 = 252. Counted off the file: `len(json['tools'])`
+      // returned 252.
       expect(store.count, _expectedEntryCount);
     });
 

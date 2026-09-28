@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 247 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 248 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (74 tools)
-  - Guided Lessons (15)
+- **Wireless Classroom** (75 tools)
+  - Guided Lessons (16)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (74 tools)
+# Wireless Classroom (75 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (15)
+## Guided Lessons (16)
 
 
 ### Antenna Fundamentals
@@ -4049,6 +4049,27 @@ A read-along lesson on what analog and digital mean, and why your Wi-Fi slows do
 - Figure 10 is a sketch, not a measurement.
 - The Keith's note quotes Fix Your Own Wi-Fi (WLAN Pros, in preparation, 2026), chapter 5.
 - Company names appear only where their own documents are the source. The lesson is independent and isn't affiliated with any maker or broadcaster.
+
+
+### Scales and Ratios, Explained
+
+A read-along lesson on the tiny and huge numbers behind Wi-Fi, turned into things you can hold, see and picture: a foot of wire for a nanosecond, a stack of money for decibels, a ruler for a radio wave, and jars for bytes. No math is needed. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.
+
+**Why it's here.** Wi-Fi people use numbers every day that are too small or too big to picture, and the people they teach stop listening at the first one. Each step here gives one picture to keep: light goes about a foot in a nanosecond, adding 3 dB about doubles the power and adding 10 dB makes it ten times bigger, a signal can arrive a billion times weaker than it left and still work, and a 100 Mbps plan moves about 12 megabytes a second. Figure 11 collects four of them.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then a nanosecond you can hold, Wi-Fi keeping time in tiny steps, near and far, power and the rule of 3s and 10s, why distance costs so much, how big a radio wave is, bits and bytes, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Figure 8 is drawn at actual size on the printed guide. On a screen it is fitted to the width, so its caption says so.
+4. The last step names three companion guides. Each has an Open button that takes you to its Guided Lesson.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+6. Take it with you, at the end of the lesson, names the free PDF guide it follows, Scales and Ratios, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Gathered on 28 September 2026.
+- Figure 1 is not actual size, and Figure 2 is not to scale. Figure 4 uses three zoom levels, each with its own scale bar.
+- Adding 3 dB about doubles the power; the lesson says so, and says it is close enough for any Wi-Fi math.
+- Real downloads are slower than the divide-by-8 figure. Other devices share the connection, and every message carries a little extra.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

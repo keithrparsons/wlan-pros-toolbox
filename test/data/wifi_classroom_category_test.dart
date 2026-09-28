@@ -29,6 +29,7 @@ const Set<String> _builtInClassroom = <String>{
   'how-gps-works-explained',
   'where-your-phone-is-explained',
   'analog-vs-digital-explained',
+  'scales-and-ratios-explained',
 };
 
 /// Shelf -> tool ids, in the order the screen must show them.
@@ -71,6 +72,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-28: Analog vs Digital, Explained, the explainer guide turned
     // Guided Lesson.
     'analog-vs-digital-explained',
+    // 2026-09-28: Scales and Ratios, Explained, the explainer guide turned
+    // Guided Lesson.
+    'scales-and-ratios-explained',
   ],
   'RF and Propagation': <String>[
     // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
@@ -275,7 +279,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(74));
+    expect(classroom.tools, hasLength(75));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

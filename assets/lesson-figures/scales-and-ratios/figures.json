@@ -1,0 +1,125 @@
+{
+  "source": "scales-and-ratios-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        536.0,
+        212.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        784.0,
+        306.0
+      ],
+      "caption": "**Figure 1. A nanosecond, as a length.** Light travels about a foot in a billionth of a second. The drawing is not actual size.",
+      "alt": "Figure 1. A nanosecond, as a length. Light travels about a foot in a billionth of a second. The drawing is not actual size."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        784.0,
+        538.0
+      ],
+      "caption": "**Figure 2. A long trip is a lot of nanoseconds.** Lay Hopper's wires end to end up to a satellite, and each one adds a nanosecond. Not to scale.",
+      "alt": "Figure 2. A long trip is a lot of nanoseconds. Lay Hopper's wires end to end up to a satellite, and each one adds a nanosecond. Not to scale."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        784.0,
+        412.0
+      ],
+      "caption": "**Figure 3. In the time between two beacons, light could travel past a GPS satellite.** The lime gap on top and the lime bar below are the same moment. Drawn to a normal, ruler-style scale.",
+      "alt": "Figure 3. In the time between two beacons, light could travel past a GPS satellite. The lime gap on top and the lime bar below are the same moment. Drawn to a normal, ruler-style scale."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        320.0
+      ],
+      "caption": "**Figure 4. Three distances, three zoom levels.** No single drawing can show all three to one scale. Each panel has its own scale bar.",
+      "alt": "Figure 4. Three distances, three zoom levels. No single drawing can show all three to one scale. Each panel has its own scale bar."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        784.0,
+        446.0
+      ],
+      "caption": "**Figure 5. Decibels as money, starting from $100.** Add 3 dB and your money about doubles. Add 10 dB and it grows ten times.",
+      "alt": "Figure 5. Decibels as money, starting from $100. Add 3 dB and your money about doubles. Add 10 dB and it grows ten times."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        784.0,
+        370.0
+      ],
+      "caption": "**Figure 6. Weak on arrival is normal.** The signal thins out with every wall and every foot. The bar below shows how big a billion to one is.",
+      "alt": "Figure 6. Weak on arrival is normal. The signal thins out with every wall and every foot. The bar below shows how big a billion to one is."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        784.0,
+        306.0
+      ],
+      "caption": "**Figure 7. The same power, spread over more area.** Double the distance and the signal covers four times the area. Each spot gets a quarter as much.",
+      "alt": "Figure 7. The same power, spread over more area. Double the distance and the signal covers four times the area. Each spot gets a quarter as much."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        160.0,
+        102.2
+      ],
+      "caption": "**Figure 8. One wave from each Wi-Fi band.** The bands with smaller waves have more room for data, but they fade faster through walls.",
+      "alt": "Figure 8. One wave from each Wi-Fi band. The bands with smaller waves have more room for data, but they fade faster through walls."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        784.0,
+        334.0
+      ],
+      "caption": "**Figure 9. Eight bits fill one byte.** Pour a second of a 100 Mbps plan into byte jars and you fill about 12 of them.",
+      "alt": "Figure 9. Eight bits fill one byte. Pour a second of a 100 Mbps plan into byte jars and you fill about 12 of them."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        246.0
+      ],
+      "caption": "**Figure 10. Why a download takes longer than you think.** A 100 Mbps plan moves a movie in minutes, not seconds. Drawn to a normal, ruler-style scale.",
+      "alt": "Figure 10. Why a download takes longer than you think. A 100 Mbps plan moves a movie in minutes, not seconds. Drawn to a normal, ruler-style scale."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        784.0,
+        298.0
+      ],
+      "caption": "**Figure 11. Four pictures to keep.** The four ideas from this guide worth remembering.",
+      "alt": "Figure 11. Four pictures to keep. The four ideas from this guide worth remembering."
+    }
+  ]
+}

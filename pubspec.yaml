@@ -635,6 +635,7 @@ flutter:
     - assets/lesson-figures/how-gps-works/
     - assets/lesson-figures/where-your-phone-is/
     - assets/lesson-figures/analog-vs-digital/
+    - assets/lesson-figures/scales-and-ratios/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2
