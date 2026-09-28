@@ -2489,7 +2489,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   ToolCategory(
     id: 'wifi-classroom',
     title: 'Wireless Classroom',
-    summary: 'Interactive simulators for teaching Wi-Fi',
+    summary: 'Interactive simulators for teaching wireless',
     icon: Icons.cast_for_education_outlined,
     exampleToolTitles: <String>[
       'FSPL Simulator',
