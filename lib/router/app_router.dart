@@ -57,6 +57,7 @@ import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/join_ladder_screen.dart';
 import '../screens/tools/calculators/phy_preamble_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
+import '../screens/tools/calculators/measure_wall_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import '../screens/tools/calculators/room_propagation_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
@@ -314,6 +315,7 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). ITU-R P.2040 wall slab model, pure on-device
   // math; all platforms incl. web.
   static const String wifiThroughAWall = '/tools/wifi-through-a-wall';
+  static const String measureWall = '/tools/measure-wall';
   // Wi-Fi Classroom (2026-09-25). Image-ray room model with ITU-R P.2040 walls and
   // P.526 diffraction, computed on device (background isolate where
   // supported); all platforms incl. web.
@@ -890,6 +892,7 @@ class AppRouter {
     devicesDisagree: (_) => const DevicesDisagreeScreen(),
     fourierFft: (_) => const FourierFftScreen(),
     wifiThroughAWall: (_) => const WifiThroughAWallScreen(),
+    measureWall: (_) => const MeasureWallScreen(),
     roomPropagation: (_) => const RoomPropagationScreen(),
     sixGhzPsd: (_) => const SixGhzPsdScreen(),
     mimoBeamforming: (_) => const MimoBeamformingScreen(),

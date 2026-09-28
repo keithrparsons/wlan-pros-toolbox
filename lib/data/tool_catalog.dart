@@ -2601,6 +2601,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'RF and Propagation',
       ),
+      // How to Measure Wall Attenuation (2026-09-27, Keith's method), beside
+      // the wall tool whose materials it reuses.
+      ToolEntry(
+        id: 'measure-wall',
+        title: 'How to Measure Wall Attenuation',
+        description:
+            'Measure a wall the field way: readings on both sides, averaged, '
+            'and why the source must stand far from the wall',
+        routeName: '/tools/measure-wall',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
       ToolEntry(
         id: 'multipath-simulator',
         title: 'Multipath Simulator',

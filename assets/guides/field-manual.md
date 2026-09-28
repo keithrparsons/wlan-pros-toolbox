@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 226 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 227 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,9 +37,9 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (53 tools)
+- **Wi-Fi Classroom** (54 tools)
   - Guided Lessons (5)
-  - RF and Propagation (10)
+  - RF and Propagation (11)
   - Signals and PHY (5)
   - Airtime and Access (10)
   - Network Design and Security (12)
@@ -3818,7 +3818,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (53 tools)
+# Wi-Fi Classroom (54 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -3919,7 +3919,9 @@ A guided lesson in two parts. Part 1 is your phone's private Wi-Fi address: one 
 - Left out: other ways to recognize a device besides its address, the router's own settings for private addresses, and how networks that need a steady address (reservations, parental controls) cope with Rotating.
 
 
-## RF and Propagation (10)
+## RF and Propagation (11)
+
+## RF and Propagation (11)
 
 
 ### FSPL Simulator
@@ -3996,6 +3998,51 @@ Sends one wave through one wall and shows three things at once: part of the wave
 - NIST has no data between 2.0 and 3.0 GHz, so its lowest point here is 2.0 GHz, not 2.4.
 - Free-space loss is a separate effect: with the same antennas it rises about 7.2 dB from 2.4 to 5.5 GHz and 8.7 dB from 2.4 to 6.5 GHz with no wall at all. The Free Space Path Loss calculator covers it.
 - The drawing is slowed to one cycle every 2 seconds and shows the field along a line straight through the wall. By default it keeps one wavelength everywhere, because the frequency never changes; only the height of the wave changes. The height is in dB, so the ripple in front looks smaller than it would on a linear scale, and the small ripple inside the wall from the wave bounced off the back face is not drawn.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### How to Measure Wall Attenuation
+
+Walks through measuring a real wall the field way, and shows why the method works. A side view holds an RF (radio frequency) source, such as a hotspot or a small AP (access point), a wall, and a person holding a laptop locked to one channel. Take a series of readings close to the near side of the wall, then close to the far side, and the difference of the two averages is the wall attenuation. The live readout splits that measured number into three parts: the true wall loss, the free-space error from where the readings were taken, and the fading left in the averages.
+
+**Why it's here.** The far reading is farther from the source than the near reading, so it carries extra free-space path loss (FSPL) on top of the wall. Close to the source the free-space curve is steep, so that extra loss is large: with the source 2 m from the wall and readings 1 m either side, the far reading is 3 m from the source and the near one 1 m, and the measurement reads 20 log10(3 / 1) = 9.5 dB too high before the wall is even counted. With the source 4 m or more away and both readings close to the wall, the two spots are at almost the same distance, and the difference is almost all wall.
+
+**How to use**
+1. Drag the person with the laptop to either side of the wall, or tap a spot in the room. Where the laptop stands on each side is where that side's readings are taken. Go to the far side (or near side) switches sides and keeps each side's spot.
+2. Drag the RF source to change its distance from the wall, or use the Source to wall slider. Watch the free-space error grow as the source comes close.
+3. Take new readings draws a fresh series on the side the laptop is on. The short ticks on the stage are the readings, the long tick is their average, and the average is what gets subtracted.
+4. The scenes set the geometry in one press: Tight (source 4 m away, readings 10 cm from the wall), Loose (readings 1 m from the wall) and Source too close (source 1 m away).
+5. Choose the band, the material and the thickness of the wall. The band locks the laptop to one channel, shown under the stage. The materials are the ones in Wi-Fi Through a Wall.
+6. Set how many readings each series takes and the fading spread. The spread is illustrative; set it to 0 to see the geometry error alone.
+7. Predict, then reveal asks: source 2 m from the wall, readings 1 m either side of it; is the measured wall loss too high, too low, or right? Reveal the answer, then press Show it to put that scene on the stage.
+8. On a computer or tablet, Present opens the tool full screen for a projector: Right and Left move the laptop away from and toward the source (crossing the wall at a face), Space takes new readings, S switches sides, Up and Down move the source, P reveals the answer, R resets, F switches full screen, ? lists the keys and Esc exits.
+9. Every length follows the metric or imperial switch.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Source to wall | m (metric) or ft (imperial) | 0.5 to 15 m (1.6 to 49.2 ft); default 4 m |
+| Laptop side | side | Near side or Far side; default Near |
+| Near reading, in front of the wall | cm or m (in or ft) | 5 cm up to 10 cm short of the source; default 1 m |
+| Far reading, behind the wall | cm or m (in or ft) | 5 cm to 5 m; default 1 m |
+| Band | GHz | 2.4, 5 or 6; default 5. The laptop is locked to channel 6 (2437 MHz), 100 (5500 MHz) or 117 (6535 MHz) |
+| Material | ITU-R P.2040 Table 3 | concrete, brick, plasterboard, wood, glass, ceiling board, chipboard, plywood, marble, metal; default concrete |
+| Thickness | cm (metric) or in (imperial) | 1 to 100 cm (0.39 to 39.4 in); default 10.2 cm |
+| Readings per side | readings | 1 to 30; default 10 |
+| Fading spread, standard deviation | dB | 0 to 6; default 2 (illustrative) |
+
+**How it works.** The source radiates 20 dBm with 0 dBi antennas at both ends (decibels over an isotropic antenna). The level at a distance d from the source is 20 dBm - FSPL(d), with FSPL = 20 log10(4 pi d / wavelength), the FSPL Simulator's exact form; behind the wall the true wall loss is subtracted as well. The wall loss is Wi-Fi Through a Wall's ITU-R P.2040 slab model for the chosen material and thickness, head on. With the source D from the near face of a wall t thick, the near reading a_n in front of it and the far reading a_f behind it, the near spot is D - a_n from the source and the far spot D + t + a_f. Each reading is the model level plus a random draw with the chosen standard deviation (illustrative), from a fixed seed, so the same settings give the same readings. Measured wall attenuation = the near average - the far average = true wall loss + 20 log10(far / near) + the fading left in the averages. The middle term is the free-space error; it does not depend on the channel, because the frequency part of FSPL is the same at both spots and cancels. For a wall of no thickness and equal gaps a it is 20 log10((D + a) / (D - a)). The laptop reads nothing below a -95 dBm noise floor (thermal noise in 20 MHz, -101 dBm, plus a 6 dB noise figure); if the far side is below it, the wall cannot be measured. The near reading stays at least 10 cm from the source, where the free-space formula still applies in this model.
+
+**Example.** At 5 GHz (channel 100, 5500 MHz), with 10.2 cm of concrete and the source 4 m from the wall, the true wall loss is 14.3 dB. With readings 1 m either side, the near average is -36.7 dBm and the far average -55.9 dBm, so the measured wall attenuation is 19.2 dB: 4.6 dB from the geometry, 20 log10(5.1 / 3.0), and 0.3 dB from the fading. Move both readings to 10 cm from the wall and the measurement is 15.2 dB, with the geometry error down to 0.6 dB. With a wall of no thickness, the same 10 cm readings give 20 log10(4.1 / 3.9) = 0.4 dB.
+
+**Field notes**
+- Lock the measuring device to one channel for both series, so every reading is of the same signal.
+- Put the source 4 m or more from the wall and take the readings close to it on both sides. The two spots then sit at almost the same distance from the source, and the difference is almost all wall.
+- Average a series on each side rather than trusting one reading. The fading spread in this tool is an illustrative setting, not a measurement.
+- The wall's own thickness also adds distance between the two spots, so even readings right against both faces keep a small free-space error.
+- Left out: the reflection off the near face of the wall, which makes readings close to it rise and fall over a short distance; paths around the wall through doors and other rooms; and the laptop's own body and antenna pattern. Several readings over a small area, averaged, are how a field measurement handles the first.
+- For how the wall itself takes the loss, see Wi-Fi Through a Wall. For comparing a predicted wall with a measured one, see Predict, Then Measure.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 

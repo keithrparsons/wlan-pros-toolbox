@@ -1305,6 +1305,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi classroom',
     'simulator',
   ],
+  // 2026-09-27: How to Measure Wall Attenuation (Keith's method).
+  'measure-wall': <String>[
+    'measure wall',
+    'measure wall attenuation',
+    'wall attenuation',
+    'wall loss',
+    'measuring a wall',
+    'penetration loss',
+    'attenuation measurement',
+    'near side far side',
+    'average readings',
+    'fspl',
+    'free space path loss',
+    'source distance',
+    'locked channel',
+    'survey',
+    'wi-fi classroom',
+    'wi-fi lab',
+  ],
   // Wi-Fi Classroom (2026-09-25). What the room simulator shows, in the words a
   // student would search with.
   'room-propagation': <String>[
