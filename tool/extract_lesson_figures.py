@@ -24,6 +24,8 @@ shows what the PDF shows:
   * font-family lists ("IBM Plex Sans, sans-serif"): reduced to the first
     family, which the app bundles.
   * class, role, aria-* and id attributes that nothing references: dropped.
+  * a valueless HTML data attribute (`<g data-nocheck>`, a build-check
+    marker) is legal HTML and illegal XML; it is dropped before parsing.
 
 Nothing is recolored and no label is changed, with one exception you ask
 for by name: a label that points at a printed page ("(page 6)") means
@@ -43,6 +45,12 @@ USAGE
     --out DIR   the asset root (default assets/lesson-figures)
     --check     extract into memory and report, write nothing
     --replace   OLD=NEW: replace OLD with NEW inside figure <text> labels
+    --symbols FILE  an HTML or SVG file holding <symbol id="..."> definitions
+                for a guide whose figures <use> an id the guide never defines
+                (its sprite was lost in a rebuild). Only ids missing from the
+                guide are taken from FILE, and each one is printed per figure;
+                put them in your report. Without it, such a <use> stops the
+                script.
 
 Then add `- assets/lesson-figures/<slug>/` to pubspec.yaml and point the
 lesson's LessonFigure blocks at `assets/lesson-figures/<slug>/fig-NN.svg`.
@@ -184,9 +192,23 @@ def _entities_to_numeric(s: str) -> str:
     return re.sub(r"&([A-Za-z][A-Za-z0-9]*);", sub, s)
 
 
+_VALUELESS_DATA_ATTR = re.compile(r"(<[^<>]*?)\s+data-[\w-]+(?=[\s/>])(?!\s*=)")
+
+
+def _drop_valueless_data_attrs(markup: str) -> str:
+    """`<g data-nocheck>` is HTML, not XML. Drop every valueless data-*
+    attribute (repeat until none is left: a tag may carry two)."""
+    while True:
+        new = _VALUELESS_DATA_ATTR.sub(r"\1", markup)
+        if new == markup:
+            return new
+        markup = new
+
+
 def parse_svg(markup: str) -> etree._Element:
     if "xmlns=" not in markup.split(">", 1)[0]:
         markup = markup.replace("<svg", f'<svg xmlns="{SVG_NS}"', 1)
+    markup = _drop_valueless_data_attrs(markup)
     try:
         return etree.fromstring(_entities_to_numeric(markup).encode("utf-8"))
     except etree.XMLSyntaxError as e:
@@ -356,12 +378,28 @@ def _ref(value: str | None) -> str | None:
     return m.group(1) if m else None
 
 
-def inline_uses(root: etree._Element) -> int:
+def load_symbols(path: Path) -> dict[str, etree._Element]:
+    """Every <symbol id="..."> in an HTML or SVG file, parsed as SVG."""
+    src = path.read_text(encoding="utf-8")
+    out: dict[str, etree._Element] = {}
+    for m in re.finditer(r'<symbol\b[^>]*\bid="([^"]+)"[^>]*>.*?</symbol>', src, re.S):
+        wrapped = f'<svg xmlns="{SVG_NS}">{m.group(0)}</svg>'
+        out[m.group(1)] = parse_svg(wrapped)[0]
+    if not out:
+        raise ExtractError(f"--symbols {path.name}: no <symbol id=...> found")
+    return out
+
+
+def inline_uses(root: etree._Element, symbols=None, notes=None, where="") -> int:
     ids = _ids(root)
     n = 0
+    supplied: set[str] = set()
     for use in list(root.iter(NS + "use")):
         ref = _ref(use.get("href") or use.get("{%s}href" % XLINK_NS))
         target = ids.get(ref) if ref else None
+        if target is None and ref and symbols and ref in symbols:
+            target = symbols[ref]
+            supplied.add(ref)
         if target is None:
             raise ExtractError(f"<use> points at a missing id: {ref!r}")
         g = etree.Element(NS + "g")
@@ -373,18 +411,43 @@ def inline_uses(root: etree._Element) -> int:
         t = use.get("transform", "")
         if tx or ty:
             t = (t + " " if t else "") + f"translate({fmt(tx)},{fmt(ty)})"
-        if t:
-            g.set("transform", t)
         clone = copy.deepcopy(target)
         for el in clone.iter():
             if isinstance(el.tag, str) and "id" in el.attrib:
                 del el.attrib["id"]
         if local(clone) == "symbol":
+            vb = clone.attrib.pop("viewBox", None)
+            par = clone.attrib.pop("preserveAspectRatio", "xMidYMid meet").split()
             clone.tag = NS + "g"
-            clone.attrib.pop("viewBox", None)
+            uw, uh = use.get("width"), use.get("height")
+            if vb and uw is not None and uh is not None:
+                # SVG 2 §5.6.1: the <use> width/height is the symbol's
+                # viewport, and its viewBox maps into it per
+                # preserveAspectRatio (default xMidYMid meet).
+                vx, vy, vw, vh = (float(v) for v in re.split(r"[\s,]+", vb.strip()))
+                w, h = num(uw), num(uh)
+                align = par[0] if par else "xMidYMid"
+                if align == "none":
+                    sx, sy, ox, oy = w / vw, h / vh, 0.0, 0.0
+                elif align == "xMidYMid" and (len(par) < 2 or par[1] == "meet"):
+                    sx = sy = min(w / vw, h / vh)
+                    ox, oy = (w - vw * sx) / 2, (h - vh * sy) / 2
+                else:
+                    raise ExtractError(f"<symbol> preserveAspectRatio {' '.join(par)!r} not supported")
+                t = (t + " " if t else "") + (
+                    f"translate({fmt(ox - vx * sx)},{fmt(oy - vy * sy)}) "
+                    f"scale({fmt(sx)}" + ("" if sx == sy else f",{fmt(sy)}") + ")"
+                )
+        if t:
+            g.set("transform", t)
         g.append(clone)
         use.getparent().replace(use, g)
         n += 1
+    if supplied and notes is not None:
+        notes.append(
+            f"{where}: <symbol> not in the guide, taken from --symbols: "
+            + ", ".join(sorted(supplied))
+        )
     return n
 
 
@@ -530,7 +593,7 @@ def replace_labels(root, replacements: list[tuple[str, str]], where: str) -> lis
     return notes
 
 
-def convert(markup: str, base_color: str, replacements=(), where="") -> tuple[str, dict]:
+def convert(markup: str, base_color: str, replacements=(), where="", symbols=None) -> tuple[str, dict]:
     root = parse_svg(markup)
     notes = replace_labels(root, list(replacements), where)
     alt = root.get("aria-label")
@@ -538,7 +601,7 @@ def convert(markup: str, base_color: str, replacements=(), where="") -> tuple[st
     if not vb:
         raise ExtractError("figure <svg> has no viewBox")
     _, _, w, h = (float(v) for v in re.split(r"[\s,]+", vb.strip()))
-    uses = inline_uses(root)
+    uses = inline_uses(root, symbols, notes, where)
     markers = expand_markers(root)
     colors = resolve_current_color(root, base_color)
     tidy(root)
@@ -566,19 +629,19 @@ def convert(markup: str, base_color: str, replacements=(), where="") -> tuple[st
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def extract(guide: Path, slug: str, replacements=()) -> tuple[dict[str, str], list[dict]]:
+def extract(guide: Path, slug: str, replacements=(), symbols=None) -> tuple[dict[str, str], list[dict]]:
     src = guide.read_text(encoding="utf-8")
     files: dict[str, str] = {}
     manifest: list[dict] = []
     cover = find_cover(src)
     if cover:
-        svg, info = convert(cover, COVER_COLOR, replacements, "cover")
+        svg, info = convert(cover, COVER_COLOR, replacements, "cover", symbols)
         files["cover.svg"] = svg
         manifest.append({"n": 0, "file": "cover.svg", "caption": None, "alt": info["ariaLabel"], **info})
     for f in find_figures(src):
         name = f"fig-{f['n']:02d}.svg"
         try:
-            svg, info = convert(f["svg"], FIGURE_COLOR, replacements, f"Figure {f['n']}")
+            svg, info = convert(f["svg"], FIGURE_COLOR, replacements, f"Figure {f['n']}", symbols)
         except ExtractError as e:
             raise ExtractError(f"Figure {f['n']}: {e}") from e
         files[name] = svg
@@ -601,6 +664,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--out", type=Path, default=Path("assets/lesson-figures"))
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--replace", action="append", default=[], metavar="OLD=NEW")
+    ap.add_argument("--symbols", type=Path, metavar="FILE")
     a = ap.parse_args(argv)
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", a.slug):
         print(f"slug must be lowercase-hyphenated: {a.slug!r}", file=sys.stderr)
@@ -612,7 +676,8 @@ def main(argv: list[str]) -> int:
             return 1
         pairs.append(tuple(r.split("=", 1)))
     try:
-        files, manifest = extract(a.guide, a.slug, pairs)
+        symbols = load_symbols(a.symbols) if a.symbols else None
+        files, manifest = extract(a.guide, a.slug, pairs, symbols)
     except ExtractError as e:
         print(f"extract_lesson_figures: {a.guide.name}: {e}", file=sys.stderr)
         return 1

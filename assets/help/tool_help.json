@@ -7278,6 +7278,29 @@
       ],
       "source": "The WLAN Pros print guide Home Internet, Explained (September 2026), reviewed with a second opinion and checked against the FCC, provider and standards sources on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "phone-data-abroad-explained": {
+      "name": "Phone Data Abroad, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on how to land in another country with your phone working, and no surprise bill when you get home. There are three ways to get data abroad: roaming with your own carrier, a travel eSIM, or a local SIM. Most phones can hold two plans at once, so your home plan can stay on for calls and texts while a second plan carries your data. The lesson follows the free PDF guide of the same name, word for word, with its 13 figures and a four-stop checklist for the trip.",
+      "whyHere": "Wi-Fi people get asked about phones abroad by friends, family and colleagues before every trip. The lesson carries the Wi-Fi angle too: hotel, airport and ship Wi-Fi is often the cheapest data on a trip and the least predictable, full Wi-Fi bars only mean the Wi-Fi part worked, and nothing loads until you finish the sign-in page. Figure 11 shows that sign-in step.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer and the one idea behind it, then covers what a SIM does, whether your phone is unlocked, the three ways to get data, roaming with your own carrier, travel eSIMs and local SIMs, keeping your own number, the switches that matter, hotel, airport and ship Wi-Fi, which one to pick for a trip, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Figure 10 shows which switch stops what, and Figure 13 is the checklist: four stops, two small jobs at each one. Step 7 has an Open button for Wi-Fi Calling, Explained, which the guide names for calls home over hotel Wi-Fi.",
+        "At the end, Take it with you names the free PDF guide the lesson follows, for printing or reading on a trip.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Carrier prices and plans change often. The lesson's carrier details were checked on each company's own pages in September 2026, so read your carrier's current travel page before you go.",
+        "Prices are left out on purpose. Figure 6 shows how a daily fee adds up, not what any carrier charges.",
+        "Settings paths are given for iPhone and, more loosely, for Android, where menus differ by maker.",
+        "The lesson names no travel eSIM company and recommends none. It is independent and isn't affiliated with any carrier, phone maker or eSIM seller."
+      ],
+      "source": "The WLAN Pros print guide Phone Data Abroad, Explained (September 2026), checked against Apple, Google, Samsung, AT&T, Verizon, T-Mobile, the FCC, the European Commission and the FTC. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

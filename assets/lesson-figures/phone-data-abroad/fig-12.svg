@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 350" font-family="IBM Plex Sans" font-size="12" fill="#111111" width="760" height="350">
+    <!-- Q1 -->
+    <rect x="20" y="20" width="200" height="60" rx="10" fill="#1A1A1A"/>
+    <text x="120" y="46" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">Is your phone</text>
+    <text x="120" y="64" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">unlocked?</text>
+    <!-- Q2 -->
+    <rect x="290" y="20" width="210" height="60" rx="10" fill="#1A1A1A"/>
+    <text x="395" y="46" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">Do you need a local</text>
+    <text x="395" y="64" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">phone number?</text>
+    <!-- Q3 -->
+    <rect x="290" y="150" width="210" height="60" rx="10" fill="#1A1A1A"/>
+    <text x="395" y="176" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">Over a week, or</text>
+    <text x="395" y="194" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">lots of data?</text>
+    <!-- arrows and labels -->
+    <path d="M224 50 H282" stroke="#444444" stroke-width="2.5"/><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(282,50) rotate(360) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="252" y="41" text-anchor="middle" fill="#2F5E00" font-weight="600" font-size="13">Yes</text>
+    <path d="M504 50 H552" stroke="#444444" stroke-width="2.5"/><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(552,50) rotate(360) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="528" y="41" text-anchor="middle" fill="#2F5E00" font-weight="600" font-size="13">Yes</text>
+    <path d="M395 84 V142" stroke="#444444" stroke-width="2.5"/><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(395,142) rotate(90) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="405" y="118" fill="#111111" font-weight="600" font-size="13">No</text>
+    <path d="M504 180 H552" stroke="#444444" stroke-width="2.5"/><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(552,180) rotate(360) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="528" y="171" text-anchor="middle" fill="#2F5E00" font-weight="600" font-size="13">Yes</text>
+    <path d="M395 214 V262" stroke="#444444" stroke-width="2.5"/><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(395,262) rotate(90) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="405" y="243" fill="#111111" font-weight="600" font-size="13">No</text>
+    <path d="M120 84 V142" stroke="#444444" stroke-width="2.5"/><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(120,142) rotate(90) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="130" y="118" fill="#111111" font-weight="600" font-size="13">No</text>
+    <!-- A1 -->
+    <rect x="20" y="150" width="200" height="110" rx="10" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
+    <text x="36" y="174" font-weight="600" font-size="13">Your carrier's plan</text>
+    <text x="36" y="196" fill="#444444" font-size="13">The only one of the three</text>
+    <text x="36" y="213" fill="#444444" font-size="13">on a locked phone. Or ask</text>
+    <text x="36" y="230" fill="#444444" font-size="13">your carrier to unlock it</text>
+    <text x="36" y="247" fill="#444444" font-size="13">before you go.</text>
+    <!-- A2 -->
+    <rect x="560" y="20" width="180" height="90" rx="10" fill="#FFFFFF" stroke="#2B5C8A" stroke-width="2"/>
+    <text x="576" y="44" font-weight="600" font-size="13">A local SIM or eSIM</text>
+    <text x="576" y="66" fill="#444444" font-size="13">Keep your home line on</text>
+    <text x="576" y="83" fill="#444444" font-size="13">as the second line, for</text>
+    <text x="576" y="100" fill="#444444" font-size="13">calls and texts.</text>
+    <!-- A3 -->
+    <rect x="560" y="140" width="180" height="90" rx="10" fill="#FFFFFF" stroke="#2F5E00" stroke-width="2.5"/>
+    <text x="576" y="164" font-weight="600" font-size="13" fill="#2F5E00">A travel eSIM</text>
+    <text x="576" y="186" fill="#444444" font-size="13">For data. Keep your home</text>
+    <text x="576" y="203" fill="#444444" font-size="13">line on for calls and texts,</text>
+    <text x="576" y="220" fill="#444444" font-size="13">with its Data Roaming off.</text>
+    <!-- A4 -->
+    <rect x="290" y="270" width="450" height="70" rx="10" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
+    <text x="306" y="294" font-weight="600" font-size="13">Either works for a short trip with light use</text>
+    <text x="306" y="314" fill="#444444" font-size="13">Compare your carrier's price for those days with a travel eSIM for the</text>
+    <text x="306" y="331" fill="#444444" font-size="13">same days. Check first whether your plan already includes some roaming.</text>
+  </svg>

@@ -30,6 +30,17 @@ Inline: <b> -> **bold**, <i> -> __italic__, <span class="path"> -> {{UI name}}.
 A quotation's title gets its first letter capitalized, as the guide's CSS
 (::first-letter) shows it.
 
+LINKS. The guide's words stay as they are; an Open button (LessonToolLink)
+goes after the block that names another lesson or tool. Ask for each one:
+
+    --link "Wi-Fi Calling, Explained=wifi-calling-explained"
+    --link "Check My Connection=test-my-connection|/tools/test-my-connection|Test My Connection"
+
+The button follows the first block in each step whose text contains the
+phrase (once per step). A tool with no catalog tile needs its route and
+title after the id. Every placement is printed; a phrase found nowhere
+stops the script.
+
 THE ONE TEXT CHANGE. A reference to a printed page ("(page 10)", "on page
 11") cannot work in a lesson, so it becomes the lesson step that carries that
 page ("(step 9)", "in step 10"). Every such change is printed; put them in
@@ -65,15 +76,16 @@ def classes(el) -> set[str]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def inline(el, skip=lambda e: False) -> str:
-    """The element's inline content as lesson markup."""
+def inline(el, skip=lambda e: False, paras=()) -> str:
+    """The element's inline content as lesson markup. [paras] are block
+    children (a callout's one <p>) whose words are read as inline text."""
     out: list[str] = []
     if el.text:
         out.append(el.text)
     for c in el:
         if not skip(c):
             tag = c.tag if isinstance(c.tag, str) else ""
-            inner = inline(c, skip)
+            inner = inline(c, skip, paras)
             if tag in ("b", "strong"):
                 out.append(f"**{inner}**" if inner.strip() else inner)
             elif tag in ("i", "em"):
@@ -84,6 +96,8 @@ def inline(el, skip=lambda e: False) -> str:
                 out.append(" ")
             elif tag in ("span", "q", "sub", "sup", "a", ""):
                 out.append(inner)
+            elif any(c is p for p in paras):
+                out.append(f" {inner} ")
             else:
                 raise ConvertError(f"unexpected <{tag}> inside text: {lhtml.tostring(c)[:120]!r}")
         if c.tail:
@@ -183,6 +197,13 @@ def emit_block(b: dict, ind: int) -> str:
             t = f"{q}    title: {dstr(c['title'], ind + 11)},\n" if c.get("title") else ""
             cards += f"{q}  LessonCardData(\n{t}{q}    body: {dstr(c['body'], ind + 10)},\n{q}  ),\n"
         return f"{p}LessonCards(<LessonCardData>[\n{cards}{q}]),"
+    if k == "link":
+        if b.get("route"):
+            return (
+                f"{p}LessonToolLink(\n{q}'{b['toolId']}',\n"
+                f"{q}route: '{b['route']}',\n{q}title: {dstr(b['title'], ind + 9)},\n{p}),"
+            )
+        return f"{p}LessonToolLink('{b['toolId']}'),"
     if k == "task":
         s = f"{p}LessonTask(\n{q}title: {dstr(b['title'], ind + 9)},\n"
         if b.get("why"):
@@ -318,13 +339,11 @@ def parse_guide(src: str, slug: str, asset_root: str):
                         continue
                     if "card" not in classes(c):
                         raise ConvertError(f"grid holds a non-card: {lhtml.tostring(c)[:100]!r}")
-                    h3 = c.xpath("./h3")
-                    ps = c.xpath("./p")
-                    cards.append({
-                        "title": inline(h3[0]) if h3 else None,
-                        "body": " ".join(inline(p) for p in ps),
-                    })
+                    cards.append(parse_card(c))
                 add({"kind": "cards", "cards": cards})
+            elif tag == "div" and cl == {"card"}:
+                # A card on its own, outside a grid: a one-card row.
+                add({"kind": "cards", "cards": [parse_card(el)]})
             elif tag == "div" and "task" in cl:
                 h3 = el.xpath("./h3")[0]
                 why = el.xpath('./div[@class="why"]')
@@ -355,23 +374,56 @@ def parse_guide(src: str, slug: str, asset_root: str):
     }
 
 
+# A quotation's source line. The guides mark it three ways, all styled alike
+# by the shared CSS (.callout.quote .who, .from, .src, p.who).
+_ATTRIBUTION = {"who", "from", "src"}
+
+
+def parse_card(c) -> dict:
+    for k in c:
+        if isinstance(k.tag, str) and k.tag not in ("h3", "p"):
+            raise ConvertError(f"card holds <{k.tag}>: {lhtml.tostring(c)[:100]!r}")
+    h3 = c.xpath("./h3")
+    ps = c.xpath("./p")
+    return {
+        "title": inline(h3[0]) if h3 else None,
+        "body": " ".join(inline(p) for p in ps),
+    }
+
+
 def parse_callout(el, cl: set[str]) -> dict:
     kind = "stop" if "danger" in cl else "caution" if "caution" in cl else "quote" if "quote" in cl else "note"
     t = el.xpath('./b[@class="t"]')
     title = inline(t[0]) if t else None
     speaker = el.xpath('./div[@class="lab"]')
-    who = el.xpath('./div[@class="who"]')
+    who = [c for c in el if isinstance(c.tag, str) and classes(c) & _ATTRIBUTION]
     ol = el.xpath('./ol[contains(@class,"steps")]')
+    # The quoted words may sit loose in the box, or in one <p>, <q> or
+    # <div class="qt"> (the shared CSS shows all three as the body). Two
+    # paragraphs would lose their break in a single body string: refuse.
+    paras = [
+        c for c in el
+        if isinstance(c.tag, str)
+        and (c.tag == "p" or (c.tag == "div" and "qt" in classes(c)))
+        and not classes(c) & _ATTRIBUTION
+    ]
+    if len(paras) > 1:
+        raise ConvertError(f"callout with {len(paras)} paragraphs: {lhtml.tostring(el)[:120]!r}")
+    if len(who) > 1:
+        raise ConvertError(f"callout with {len(who)} source lines: {lhtml.tostring(el)[:120]!r}")
     body = inline(
         el,
         skip=lambda e: (e.tag == "b" and "t" in classes(e))
         or (e.tag == "ol" and "steps" in classes(e))
-        or bool(classes(e) & {"lbl", "lab", "who"}),
+        or bool(classes(e) & ({"lbl", "lab"} | _ATTRIBUTION)),
+        paras=paras,
     )
     b = {"kind": "callout", "callout": kind, "title": title, "body": body}
     if ol:
         b["steps"] = [inline(li) for li in ol[0].xpath("./li")]
     if kind == "quote":
+        if not speaker or not who:
+            raise ConvertError(f"quote callout with no label or no source line: {lhtml.tostring(el)[:120]!r}")
         b["speaker"] = inline(speaker[0])
         b["attribution"] = inline(who[0])
         b["title"] = cap_first(title) if title else None
@@ -384,7 +436,8 @@ def parse_callout(el, cl: set[str]) -> dict:
 # Page references
 # ─────────────────────────────────────────────────────────────────────────────
 
-_PAGE = re.compile(r"\b(on |at )?page (\d+)\b")
+_PAGE = re.compile(r"\b(on |at )?pages? (\d+(?:(?:, | and | to | or )\d+)*)\b")
+_PAGE_SEP = re.compile(r"(, | and | to | or )")
 
 
 def fix_page_refs(g: dict) -> list[str]:
@@ -400,10 +453,20 @@ def fix_page_refs(g: dict) -> list[str]:
 
     def fix(s: str) -> str:
         def sub(m: re.Match) -> str:
-            st = step_for(int(m.group(2)))
             pre = {"on ": "in ", "at ": "in "}.get(m.group(1) or "", "")
-            new = f"{pre}step {st['number']}"
-            changes.append(f'"{m.group(0)}" -> "{new}" ({st["title"]})')
+            # "pages 5 to 7, 11" maps number by number ("steps 4 to 6, 10");
+            # if every page lands in one step it reads "step N".
+            parts = _PAGE_SEP.split(m.group(2))
+            nums = [step_for(int(x)) for x in parts[0::2]]
+            if len({st["number"] for st in nums}) == 1:
+                new = f"{pre}step {nums[0]['number']}"
+            else:
+                out = []
+                for i, x in enumerate(parts):
+                    out.append(nums[i // 2]["number"] if i % 2 == 0 else x)
+                new = f"{pre}steps {''.join(out)}"
+            titles = "; ".join(dict.fromkeys(st["title"] for st in nums))
+            changes.append(f'"{m.group(0)}" -> "{new}" ({titles})')
             return new
 
         return _PAGE.sub(sub, s)
@@ -419,6 +482,62 @@ def fix_page_refs(g: dict) -> list[str]:
             for c in b.get("cards", []):
                 c["body"] = fix(c["body"])
     return changes
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Links
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def block_plain(b: dict) -> str:
+    parts: list[str] = []
+    for key in ("text", "speaker", "title", "body", "caption", "why", "after", "myth", "fact", "attribution"):
+        if isinstance(b.get(key), str):
+            parts.append(b[key])
+    for key in ("items", "steps"):
+        if isinstance(b.get(key), list):
+            parts.extend(b[key])
+    for c in b.get("cards", []):
+        parts.extend([c.get("title") or "", c["body"]])
+    return re.sub(r"\*\*|__|\{\{|\}\}", "", " ".join(parts))
+
+
+def parse_link(spec: str) -> tuple[str, dict]:
+    if "=" not in spec:
+        raise ConvertError(f"--link needs PHRASE=TOOL_ID: {spec!r}")
+    phrase, target = spec.rsplit("=", 1)
+    fields = target.split("|")
+    if len(fields) == 1:
+        return phrase, {"kind": "link", "toolId": fields[0]}
+    if len(fields) == 3:
+        return phrase, {"kind": "link", "toolId": fields[0], "route": fields[1], "title": fields[2]}
+    raise ConvertError(f"--link target is TOOL_ID or TOOL_ID|ROUTE|TITLE: {spec!r}")
+
+
+def add_links(g: dict, specs: list[str]) -> list[str]:
+    placed: list[str] = []
+    for spec in specs:
+        phrase, link = parse_link(spec)
+        found = False
+        for st in g["steps"]:
+            blocks = st["blocks"]
+            for i, b in enumerate(blocks):
+                if b["kind"] != "link" and phrase in block_plain(b):
+                    # After the block, and after any link already placed
+                    # there, so links keep the order they were asked for.
+                    j = i + 1
+                    while j < len(blocks) and blocks[j]["kind"] == "link":
+                        j += 1
+                    blocks.insert(j, dict(link))
+                    found = True
+                    placed.append(
+                        f'Open {link["toolId"]} after the {b["kind"]} in step '
+                        f'{st["number"]} ({st["title"]}) that names "{phrase}"'
+                    )
+                    break
+        if not found:
+            raise ConvertError(f"--link phrase not in the guide: {phrase!r}")
+    return placed
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -508,11 +627,13 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--route", required=True)
     ap.add_argument("--asset-root", default="assets/lesson-figures")
     ap.add_argument("--out", type=Path, default=Path("lib/screens/tools/reference/lessons"))
+    ap.add_argument("--link", action="append", default=[], metavar="PHRASE=TOOL_ID[|ROUTE|TITLE]")
     ap.add_argument("--json", action="store_true", help="also print the parsed lesson as JSON")
     a = ap.parse_args(argv)
     try:
         g = parse_guide(a.guide.read_text(encoding="utf-8"), a.slug, a.asset_root)
         changes = fix_page_refs(g)
+        links = add_links(g, a.link)
     except (ConvertError, X.ExtractError) as e:
         print(f"guide_to_lesson: {a.guide.name}: {e}", file=sys.stderr)
         return 1
@@ -523,6 +644,8 @@ def main(argv: list[str]) -> int:
     print(f"{a.slug}: {len(g['steps'])} steps, {nblocks} blocks -> {path}")
     for c in changes:
         print(f"  text change: {c}")
+    for c in links:
+        print(f"  link: {c}")
     if a.json:
         print(json.dumps(g["steps"], indent=1, ensure_ascii=False, default=str))
     return 0
