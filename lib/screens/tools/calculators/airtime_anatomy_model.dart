@@ -102,10 +102,10 @@ class AirtimeAnatomyModel extends ChangeNotifier {
 
   /// The pinned per-PHY limits for [structure]. The PPDU duration is
   /// checked whenever the scenario has an airtime (the time view's Check
-  /// passes, or refuses only for length).
+  /// passes, or refuses only for a duration or size limit).
   List<AggregationLimitCheck> get limits {
     final AirtimeResult r = result(_editing);
-    final bool timed = r.check.isOk || r.check == AirtimeCheck.ppduTooLong;
+    final bool timed = r.check.hasAirtime;
     final AggregateStructure st = structure;
     return checkAggregationLimits(
       st,

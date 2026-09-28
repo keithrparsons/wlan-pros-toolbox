@@ -19,12 +19,24 @@
 //   5. Control frames at the chosen legacy rate; short slot (9 us).
 //   6. The Check does not catch every VHT MCS exclusion.
 //
+// ONE ADDITION TO THE SHEET'S CHECK (Keith, 2026-09-27, "yes refuse it
+// too"). After the sheet's own rows, the Check refuses an aggregate the
+// frame-structure view marks over a pinned maximum: the A-MPDU length per
+// PHY, and the MPDU caps where pinned (an MPDU inside an HT A-MPDU, a VHT
+// MPDU). It calls the structure view's own limit functions
+// (aggregation_structure.dart) on the A-MPDU the time view draws, so the two
+// views cannot disagree. The arithmetic is untouched: a refused scenario
+// keeps every number, as a PPDU over 5.484 ms already did. The time view
+// never draws an A-MSDU, so the A-MSDU cap does not apply to it.
+//
 // ARITHMETIC. Every duration is a whole number of TENTHS of a microsecond
 // (all inputs are multiples of 0.1 us), and every ceiling is taken on
 // integers: the coding rate is kept as a fraction, so N_DBPS is exact and a
 // ceiling can never tip over on a floating-point residue. Where the sheet
 // writes CEILING(3.6 x N_SYM / 4) this computes ceil(9 x N_SYM / 10), the
 // same number. Results are exposed as doubles in microseconds.
+
+import 'aggregation_structure.dart';
 
 /// Frequency band. Sets SIFS and the 2.4 GHz signal extension.
 enum AirtimeBand {
@@ -404,13 +416,34 @@ enum AirtimeCheck {
   htLimits('HT: MCS 0-7, up to 4 streams, 20/40 MHz'),
   vhtMcsLimit('VHT: MCS 0-9'),
   invalidCombination('Not a valid MCS/width/stream combination'),
-  ppduTooLong('PPDU exceeds 5.484 ms: send fewer frames');
+  ppduTooLong('PPDU exceeds 5.484 ms: send fewer frames'),
+
+  /// The A-MPDU is longer than the PHY's pinned maximum.
+  /// [AirtimeResult.checkMessage] carries the numbers.
+  ampduTooLong(
+    'A-MPDU (aggregate MPDU) exceeds the maximum length: send '
+    'fewer frames',
+  ),
+
+  /// An MPDU is longer than its pinned maximum.
+  /// [AirtimeResult.checkMessage] carries the numbers.
+  mpduTooLong('MPDU exceeds the maximum length: send a smaller payload');
 
   const AirtimeCheck(this.message);
 
+  /// The generic reason. Prefer [AirtimeResult.checkMessage], which names
+  /// the size and the cap for a size refusal.
   final String message;
 
   bool get isOk => this == AirtimeCheck.ok;
+
+  /// True when the arithmetic is valid and only a limit refuses it (the
+  /// PPDU duration, or a size cap), so the numbers still mean something.
+  bool get hasAirtime =>
+      this == AirtimeCheck.ok ||
+      this == AirtimeCheck.ppduTooLong ||
+      this == AirtimeCheck.ampduTooLong ||
+      this == AirtimeCheck.mpduTooLong;
 }
 
 /// The seven rows of "The TXOP, in order", which the timeline draws.
@@ -488,6 +521,7 @@ class AirtimeResult {
     required this.usesBlockAck,
     required this.segments,
     required this.check,
+    this.sizeRefusal,
   });
 
   final AirtimeScenario scenario;
@@ -540,6 +574,27 @@ class AirtimeResult {
   final List<TxopSegment> segments;
 
   final AirtimeCheck check;
+
+  /// The pinned limit the aggregate breaks, when [check] is
+  /// [AirtimeCheck.ampduTooLong] or [AirtimeCheck.mpduTooLong]; else null.
+  final AggregationLimitCheck? sizeRefusal;
+
+  /// The Check in words. For a size refusal it names the size, the PHY and
+  /// the cap; otherwise it is [AirtimeCheck.message].
+  String get checkMessage {
+    final AggregationLimitCheck? c = sizeRefusal;
+    if (c == null) return check.message;
+    final String what = c.kind == AggregationLimitKind.ampdu
+        ? 'A-MPDU (aggregate MPDU)'
+        : c.kind == AggregationLimitKind.htMpduInAmpdu
+        ? 'Each MPDU in the A-MPDU (aggregate MPDU)'
+        : 'Each MPDU';
+    final String fix = c.kind == AggregationLimitKind.ampdu
+        ? 'send fewer frames'
+        : 'send a smaller payload';
+    return '$what is ${_thousands(c.value)} bytes, over the '
+        '${scenario.phy.label} maximum of ${_thousands(c.cap)} bytes: $fix';
+  }
 
   // ── Derived rows ──────────────────────────────────────────────────────────
 
@@ -811,7 +866,8 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
     start += d;
   }
 
-  // Check, in the sheet's order.
+  // Check, in the sheet's order, then the standard's size limits.
+  AggregationLimitCheck? sizeRefusal;
   final AirtimeCheck check;
   if (s.band == AirtimeBand.ghz6 && !he) {
     check = AirtimeCheck.sixGhzRequiresHe;
@@ -829,7 +885,12 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
   } else if (ppdu > AirtimeConstants.maxPpduUs * 10) {
     check = AirtimeCheck.ppduTooLong;
   } else {
-    check = AirtimeCheck.ok;
+    sizeRefusal = timeViewSizeRefusal(s);
+    check = sizeRefusal == null
+        ? AirtimeCheck.ok
+        : sizeRefusal.kind == AggregationLimitKind.ampdu
+        ? AirtimeCheck.ampduTooLong
+        : AirtimeCheck.mpduTooLong;
   }
 
   return AirtimeResult._(
@@ -859,6 +920,7 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
     usesBlockAck: blockAck,
     segments: List<TxopSegment>.unmodifiable(segments),
     check: check,
+    sizeRefusal: sizeRefusal,
   );
 }
 
@@ -906,6 +968,17 @@ String _fmtTenths(int tenths) {
   final String sign = tenths < 0 ? '-' : '';
   final int a = tenths.abs();
   return '$sign${a ~/ 10}.${a % 10}';
+}
+
+/// 99328 -> "99,328".
+String _thousands(int n) {
+  final String d = n.abs().toString();
+  final StringBuffer b = StringBuffer(n < 0 ? '-' : '');
+  for (int i = 0; i < d.length; i++) {
+    if (i > 0 && (d.length - i) % 3 == 0) b.write(',');
+    b.write(d[i]);
+  }
+  return b.toString();
 }
 
 String _fmtRational(int num, int den) {

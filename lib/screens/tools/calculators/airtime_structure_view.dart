@@ -459,7 +459,7 @@ class _LinkLine extends StatelessWidget {
     final String line;
     if (!r.check.isOk) {
       line =
-          'No airtime for this scenario: ${r.check.message}. The bytes '
+          'No airtime for this scenario: ${r.checkMessage}. The bytes '
           'below still hold.';
     } else if (same) {
       line =

@@ -378,4 +378,72 @@ void main() {
       }
     });
   });
+
+  // Keith, 2026-09-27: "This is for 5GHz only, 6GHz works differently." The
+  // gap narrowing with width is the 5 GHz rule, and the model enforces it
+  // whatever width a config carries, not only the controller.
+  group('width scaling is the 5 GHz rule only', () {
+    test('5 GHz: the gap is 20, 17, 14, 11 dB at 20, 40, 80, 160 MHz', () {
+      final Map<int, double> gap = <int, double>{
+        for (final int w in kIcWidthsMHz)
+          w: computeInterfererCost(
+            IcConfig(channel: IcChannel.ch36, widthMHz: w),
+          ).gapDb,
+      };
+      expect(gap, <int, double>{20: 20, 40: 17, 80: 14, 160: 11});
+      expect(
+        computeInterfererCost(
+          const IcConfig(channel: IcChannel.ch36, widthMHz: 40),
+        ).widthScaled,
+        isTrue,
+      );
+      expect(
+        computeInterfererCost(
+          const IcConfig(channel: IcChannel.ch36),
+        ).widthScaled,
+        isFalse,
+      );
+    });
+
+    test('a channel outside 5 GHz keeps the 20 MHz values at any width', () {
+      for (final IcChannel ch in IcChannel.values.where(
+        (IcChannel c) => !c.is5GHz,
+      )) {
+        for (final int w in kIcWidthsMHz) {
+          final IcResult r = computeInterfererCost(
+            IcConfig(channel: ch, widthMHz: w),
+          );
+          expect(r.preambleDetectDbm, -82, reason: '${ch.label} $w MHz');
+          expect(r.gapDb, 20, reason: '${ch.label} $w MHz');
+          expect(r.widthScaled, isFalse, reason: '${ch.label} $w MHz');
+          expect(
+            r.sources[IcSource.wifiNeighbor]!.thresholdDbm,
+            -82,
+            reason: '${ch.label} $w MHz',
+          );
+        }
+      }
+    });
+
+    test('no 6 GHz state shows the width-scaled gap', () {
+      // The tool offers no 6 GHz channel (6 GHz works differently and is
+      // not modeled). Every state with a scaled gap is a 5 GHz state.
+      expect(
+        IcChannel.values.where(
+          (IcChannel c) => c.centerMHz >= 5925 && c.centerMHz <= 7125,
+        ),
+        isEmpty,
+      );
+      for (final IcChannel ch in IcChannel.values) {
+        for (final int w in kIcWidthsMHz) {
+          final IcResult r = computeInterfererCost(
+            IcConfig(channel: ch, widthMHz: w),
+          );
+          if (r.widthScaled || r.gapDb != 20) {
+            expect(ch.is5GHz, isTrue, reason: '${ch.label} $w MHz');
+          }
+        }
+      }
+    });
+  });
 }

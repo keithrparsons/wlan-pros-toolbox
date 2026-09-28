@@ -940,8 +940,7 @@ class _BeaconInspector extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxs),
             Text(
               'Readout only, not animated: which 802.11n frames need a '
-              'protection frame in mode 3 is not verified. Including this '
-              'readout is a provisional default, not yet confirmed.',
+              'protection frame in mode 3 is not verified.',
               style: note,
             ),
           ],

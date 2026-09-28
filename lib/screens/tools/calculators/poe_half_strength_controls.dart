@@ -85,7 +85,7 @@ class PoeHalfStrengthControls extends StatelessWidget {
                   : 'Two radios keep four streams each; this model turns off '
                         '2.4 GHz.')
             : 'Applies only on an 802.3at port. On ${c.port.standard} the AP '
-                  '${c.port == PhPort.bt ? 'has all the power it needs' : 'runs no Wi-Fi radio in this model'}.',
+                  '${c.port == PhPort.bt ? 'has all the power it needs' : 'runs a reduced set in this model (illustrative)'}.',
         style: small(),
       ),
       if (prose) ...<Widget>[

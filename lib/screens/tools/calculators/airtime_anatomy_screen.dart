@@ -76,7 +76,7 @@ class _AirtimeAnatomyScreenState extends State<AirtimeAnatomyScreen> {
         '${s.rtsCts ? ', RTS/CTS' : ''}',
       );
       if (!r.check.isOk) {
-        b.writeln('Check: ${r.check.message}');
+        b.writeln('Check: ${r.checkMessage}');
         continue;
       }
       for (final TxopSegment seg in r.segments) {
@@ -89,7 +89,7 @@ class _AirtimeAnatomyScreenState extends State<AirtimeAnatomyScreen> {
       b.writeln(
         'Efficiency vs PHY rate: ${(r.efficiency * 100).toStringAsFixed(1)} %',
       );
-      b.writeln('Check: ${r.check.message}');
+      b.writeln('Check: ${r.checkMessage}');
     }
     if (_model.view == AirtimeView.structure) {
       final AggregateStructure st = _model.structure;

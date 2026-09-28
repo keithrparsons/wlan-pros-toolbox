@@ -572,3 +572,23 @@ List<AggregationLimitCheck> checkAggregationLimits(
   }
   return out;
 }
+
+/// The first pinned size limit that the time view's aggregate exceeds, or
+/// null when it is inside every one. The time view draws the A-MPDU
+/// arrangement (a single MPDU for Legacy, and for HT with one frame), and
+/// this runs the structure view's own [checkAggregationLimits] on exactly
+/// that, so the two views cannot disagree. Duration is left to the time
+/// view's own PPDU row. Only [LimitVerdict.exceeds] refuses: a size that
+/// fits a larger receiver setting is allowed.
+AggregationLimitCheck? timeViewSizeRefusal(AirtimeScenario s) {
+  final AggregateStructure st = buildAggregateStructure(
+    s,
+    s.phy == AirtimePhy.legacy
+        ? AggregationKind.singleMpdu
+        : AggregationKind.ampdu,
+  );
+  for (final AggregationLimitCheck c in checkAggregationLimits(st)) {
+    if (c.verdict == LimitVerdict.exceeds) return c;
+  }
+  return null;
+}

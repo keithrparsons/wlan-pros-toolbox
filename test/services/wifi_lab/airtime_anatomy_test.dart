@@ -7,6 +7,7 @@
 // from this code.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/aggregation_structure.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/airtime_anatomy.dart';
 
 AirtimeResult _run(AirtimePreset p) => computeAirtime(p.scenario);
@@ -440,5 +441,91 @@ void main() {
     expect(formatTenthsUs(675), '67.5');
     expect(formatTenthsUs(504), '50.4');
     expect(formatTenthsUs(0), '0');
+  });
+
+  // Keith, 2026-09-27: "yes refuse it too". The time view's Check refuses
+  // any aggregate the structure view marks over a pinned maximum, using the
+  // same limit functions, so the two views cannot disagree.
+  group('the Check enforces the standard size limits', () {
+    const AirtimeScenario ht40 = AirtimeScenario(
+      phy: AirtimePhy.ht,
+      widthMhz: 40,
+      mcs: 7,
+    );
+
+    test('HT 64 x 1,500 bytes (99,328) is refused, with the reason', () {
+      final AirtimeResult r = computeAirtime(
+        ht40.copyWith(framesAggregated: 64),
+      );
+      // Well inside 5.484 ms, so only the size limit can refuse it.
+      expect(r.ppduTenths, 26920);
+      expect(r.psduBytes, 99328);
+      expect(r.check, AirtimeCheck.ampduTooLong);
+      expect(r.check.isOk, isFalse);
+      expect(r.check.hasAirtime, isTrue);
+      expect(
+        r.checkMessage,
+        'A-MPDU (aggregate MPDU) is 99,328 bytes, over the HT (802.11n) '
+        'maximum of 65,535 bytes: send fewer frames',
+      );
+    });
+
+    test('HT 32 x 1,500 bytes is under every cap and its numbers are '
+        'unchanged', () {
+      final AirtimeResult r = computeAirtime(
+        ht40.copyWith(framesAggregated: 32),
+      );
+      expect(r.check, AirtimeCheck.ok);
+      expect(r.checkMessage, 'OK');
+      // Pinned from the base commit 9fc55b06, before the size check.
+      expect(r.psduBytes, 49664);
+      expect(r.dataSymbols, 368);
+      expect(r.ppduTenths, 13680);
+      expect(r.totalTenths, 15265);
+    });
+
+    test('the four spreadsheet defaults still pass', () {
+      for (final AirtimePreset p in AirtimePreset.values) {
+        expect(_run(p).check, AirtimeCheck.ok, reason: p.label);
+      }
+    });
+
+    test('the time view refuses exactly when the structure view marks the '
+        'A-MPDU arrangement over a maximum', () {
+      for (final AirtimePhy phy in AirtimePhy.values) {
+        for (final int payload in <int>[64, 512, 1000, 1500, 2304]) {
+          for (final int n in <int>[1, 2, 16, 32, 64]) {
+            final AirtimeScenario s = AirtimeScenario(
+              band: phy == AirtimePhy.he ? AirtimeBand.ghz6 : AirtimeBand.ghz5,
+              phy: phy,
+              widthMhz: phy == AirtimePhy.legacy
+                  ? 20
+                  : phy == AirtimePhy.ht
+                  ? 40
+                  : 80,
+              mcs: phy == AirtimePhy.ht ? 7 : 9,
+              payloadBytes: payload,
+              framesAggregated: n,
+            );
+            final AirtimeResult r = computeAirtime(s);
+            if (r.check == AirtimeCheck.ppduTooLong) continue;
+            final AggregateStructure st = buildAggregateStructure(
+              s,
+              phy == AirtimePhy.legacy
+                  ? AggregationKind.singleMpdu
+                  : AggregationKind.ampdu,
+            );
+            final bool over = checkAggregationLimits(st).any(
+              (AggregationLimitCheck c) => c.verdict == LimitVerdict.exceeds,
+            );
+            expect(
+              r.check.isOk,
+              !over,
+              reason: '${phy.shortLabel} $payload B x $n: ${r.checkMessage}',
+            );
+          }
+        }
+      }
+    });
   });
 }

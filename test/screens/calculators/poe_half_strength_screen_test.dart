@@ -164,6 +164,8 @@ void main() {
       expect(h['source'], contains('Juniper Mist'));
       expect(h['source'], contains('Cisco Meraki'));
       expect(h['source'], contains('802.3af case is illustrative'));
+      expect(all, contains('vendors differ; this is one example'));
+      expect(all, isNot(contains('every Wi-Fi radio off')));
       expect(all, contains('Vendors cut different things'));
       expect(all, contains('leaves that out'));
       expect(all, contains('designed for tablets and computers'));
@@ -221,8 +223,12 @@ void main() {
       expect(find.text('8 of 12'), findsOneWidget);
 
       await _tap(tester, find.text('802.3af').first);
-      expect(find.text('0 of 12'), findsOneWidget);
+      expect(find.text('3 of 12'), findsOneWidget);
       expect(find.text(PhLabels.afIllustrative), findsOneWidget);
+      expect(find.textContaining('no Wi-Fi radio'), findsNothing);
+      expect(find.textContaining('USB port off'), findsWidgets);
+      expect(k.copyText(), contains('USB port off'));
+      expect(k.copyText(), contains('this is one example'));
     });
 
     testWidgets('predict, then reveal', (WidgetTester tester) async {

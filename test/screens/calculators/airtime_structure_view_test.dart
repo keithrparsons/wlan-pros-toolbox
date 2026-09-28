@@ -323,6 +323,22 @@ void main() {
     );
     expect(find.textContaining('Not checked for HE'), findsNothing);
     expect(find.textContaining('12-bit MPDU Length'), findsOneWidget);
+    // Keith, 2026-09-27: the time view refuses it too, in words, and the
+    // structure view keeps its duration row (the arithmetic still holds).
+    expect(
+      find.textContaining(
+        'A-MPDU (aggregate MPDU) is 99,328 bytes, over the HT (802.11n) '
+        'maximum of 65,535 bytes: send fewer frames',
+      ),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining(
+        'PPDU duration: 2984 µs, within 5484 µs',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

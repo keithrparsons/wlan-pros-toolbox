@@ -55,6 +55,12 @@ const double kIcEnergyDetectDbm = -62;
 /// Primary-channel preamble detect by PPDU width. 20 MHz is two sources; the
 /// 40/80/160 values are one source (Bejarano, Knightly, Park 2013). 320 MHz
 /// is omitted: -70 would be arithmetic from the pattern, pinned nowhere.
+///
+/// THE 5 GHz RULE ONLY (Keith, 2026-09-27: "This is for 5GHz only, 6GHz
+/// works differently"). The model applies this scaling only on a 5 GHz
+/// channel ([IcChannel.is5GHz]); anywhere else a Wi-Fi preamble is held to
+/// the 20 MHz -82 dBm, whatever width a config carries. The tool offers no
+/// 6 GHz channel, and no 6 GHz threshold is modeled or invented.
 const Map<int, double> kIcPreambleDetectByWidth = <int, double>{
   20: -82,
   40: -79,
@@ -124,6 +130,10 @@ enum IcChannel {
   final String label;
   final double centerMHz;
   final bool is24;
+
+  /// True inside the 5 GHz band (5150 to 5895 MHz), the only band where
+  /// the tool widens the channel and scales preamble detect with width.
+  bool get is5GHz => centerMHz >= 5150 && centerMHz <= 5895;
 
   /// "channel 11" / "5 GHz channel 36", for prose.
   String get prose => switch (this) {
@@ -445,12 +455,21 @@ class IcResult {
   double get areaRatio => distanceRatio * distanceRatio;
 
   IcSourceResult get selected => sources[config.source]!;
+
+  /// True when preamble detect is scaled for a channel wider than 20 MHz,
+  /// the 5 GHz rule, so the gap is narrower than 20 dB.
+  bool get widthScaled => preambleDetectDbm != kIcPreambleDetect20Dbm;
 }
 
 /// Preamble detect for a PPDU [widthMHz] wide.
 double icPreambleDetectDbm(int widthMHz) =>
     kIcPreambleDetectByWidth[widthMHz] ??
     (throw ArgumentError.value(widthMHz, 'widthMHz', 'no pinned threshold'));
+
+/// Preamble detect on your channel: the width-scaled value on 5 GHz, and
+/// the 20 MHz -82 dBm anywhere else (the width scaling is the 5 GHz rule).
+double icPreambleDetectOnChannel(IcChannel channel, int widthMHz) =>
+    channel.is5GHz ? icPreambleDetectDbm(widthMHz) : kIcPreambleDetect20Dbm;
 
 /// Distance in metres at which [eirpDbm] falls to [thresholdDbm] under the
 /// log-distance model PL = FSPL(1 m) + 10 n log10(d).
@@ -487,7 +506,7 @@ double icOnAirShare(IcConfig c, IcSource s) => switch (s) {
 };
 
 IcSourceResult icEvaluate(IcConfig c, IcSource s) {
-  final double pd = icPreambleDetectDbm(c.widthMHz);
+  final double pd = icPreambleDetectOnChannel(c.channel, c.widthMHz);
   final double threshold = s.isWifi ? pd : kIcEnergyDetectDbm;
   final double? level = icLevelInChannel(c, s);
   if (level == null) {
@@ -516,7 +535,7 @@ IcSourceResult icEvaluate(IcConfig c, IcSource s) {
 }
 
 IcResult computeInterfererCost(IcConfig c) {
-  final double pd = icPreambleDetectDbm(c.widthMHz);
+  final double pd = icPreambleDetectOnChannel(c.channel, c.widthMHz);
   return IcResult(
     config: c,
     preambleDetectDbm: pd,

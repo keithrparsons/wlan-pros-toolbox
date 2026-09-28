@@ -109,6 +109,7 @@ class InterfererCostStage extends StatelessWidget {
     );
 
     final String ratioLine =
+        '${r.widthScaled ? '${_widthRule(r)} ' : ''}'
         '${IcFormat.times(r.distanceRatio)} the distance, '
         '${IcFormat.times(r.areaRatio)} the area: '
         '10^(${r.gapDb.round()} / (10 x ${r.config.exponent.toStringAsFixed(1)})). '
@@ -344,6 +345,7 @@ class InterfererCostStage extends StatelessWidget {
         'illustrative. Preamble detect ${IcFormat.dbm(r.preambleDetectDbm)} '
         'for other Wi-Fi; energy detect -62 dBm for anything. The gap is '
         '${r.gapDb.round()} dB, ${r.gapPowerRatio.round()} times the power. '
+        '${r.widthScaled ? '${_widthRule(r)} ' : ''}'
         '$where';
   }
 
@@ -611,3 +613,9 @@ class IcCompareTable extends StatelessWidget {
     );
   }
 }
+
+/// The width scaling in words, labeled as the 5 GHz rule (Keith,
+/// 2026-09-27: "This is for 5GHz only, 6GHz works differently").
+String _widthRule(IcResult r) =>
+    'At ${r.config.widthMHz} MHz the gap narrows to ${r.gapDb.round()} dB. '
+    'This widening applies to 5 GHz.';
