@@ -16,9 +16,17 @@
 //                                    cellular each cycle and hands BOTH to this
 //                                    intent as one JSON; it splits the payload
 //                                    into the two App Group keys and posts the
-//                                    shared Darwin notification once.
-//   4. ShouldContinueMonitoringIntent — the loop gate the recursive "WLAN Pros
-//                                    Live" Shortcut checks each cycle.
+//                                    shared Darwin notification once. It ALSO
+//                                    RETURNS the loop verdict ("Continue" /
+//                                    "Stop"), so a current Shortcut needs one
+//                                    intent call per cycle, not two.
+//   4. ShouldContinueMonitoringIntent — the SAME loop gate as a standalone
+//                                    call, kept for the older published
+//                                    Shortcut generation that polls it after
+//                                    the delivery. Both read one source of
+//                                    truth (ShortcutsBridge.shouldContinue-
+//                                    Monitoring), so the two Shortcut
+//                                    generations stop identically.
 //
 // App Intents framework needs iOS 16+; the RF fields harvested by the Shortcut
 // need iOS 17+ ("Get Network Details"). The app's deployment target is 17.0, so
@@ -121,10 +129,35 @@ struct ReceiveLiveDetailsIntent: AppIntent {
   )
   var json: String
 
-  func perform() async throws -> some IntentResult & ReturnsValue<Bool> {
+  /// Stores the sample AND answers the loop gate in ONE round trip.
+  ///
+  /// Returns the literal string [ShortcutsBridge.continueVerdict] ("Continue")
+  /// while the app wants the Live loop to keep running, and
+  /// [ShortcutsBridge.stopVerdict] ("Stop") otherwise. The verdict is exactly
+  /// [ShortcutsBridge.shouldContinueMonitoring] — the same monitoring-active
+  /// flag AND 5-minute hard cap `ShouldContinueMonitoringIntent` reports, so
+  /// behaviour is unchanged; what changes is that the looping Shortcut no
+  /// longer needs a SECOND intent invocation per cycle to learn it.
+  ///
+  /// WHY A STRING AND NOT A BOOL. A String makes the version skew fail CLOSED.
+  /// A Shortcut built for this gate tests `If (result) is "Continue"`. Run that
+  /// same Shortcut against an OLDER build — one whose ReceiveLiveDetails still
+  /// returned a constant `true` — and the test does not match, so the loop
+  /// exits after one sample. The alternative (returning Bool) would match an
+  /// old build's constant `true` FOREVER, on a Shortcut that no longer polls
+  /// `ShouldContinueMonitoringIntent`: an unbounded loop with no cap and a dead
+  /// in-app Stop button. One quiet sample beats an unkillable stream.
+  ///
+  /// `ShouldContinueMonitoringIntent` REMAINS for the Shortcut generation that
+  /// still polls it. Both gates read the same source of truth, so a user on the
+  /// old Shortcut and a user on the new one get identical stop behaviour.
+  func perform() async throws -> some IntentResult & ReturnsValue<String> {
     let (wifiJson, cellularJson) = ReceiveLiveDetailsIntent.split(json)
     ShortcutsBridge.storeLive(wifiJson: wifiJson, cellularJson: cellularJson)
-    return .result(value: true)
+    let keepGoing = ShortcutsBridge.shouldContinueMonitoring()
+    return .result(
+      value: keepGoing ? ShortcutsBridge.continueVerdict : ShortcutsBridge.stopVerdict
+    )
   }
 
   /// Splits the combined Live JSON into (wifiJson, cellularJson) strings, each
