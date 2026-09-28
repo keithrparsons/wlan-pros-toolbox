@@ -151,6 +151,7 @@ import '../screens/tools/reference/wifi_on_planes_explained_screen.dart';
 import '../screens/tools/reference/wifi_and_health_explained_screen.dart';
 import '../screens/tools/reference/travel_routers_explained_screen.dart';
 import '../screens/tools/reference/mobile_hotspots_explained_screen.dart';
+import '../screens/tools/reference/captive_portals_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -866,6 +867,10 @@ class AppRouter {
   /// explainer guide. The id `mobile-hotspots-explained` is permanent (route, catalog,
   /// help, tests).
   static const String mobileHotspotsExplained = '/tools/mobile-hotspots-explained';
+  /// Captive Portals, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `captive-portals-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String captivePortalsExplained = '/tools/captive-portals-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1243,6 +1248,7 @@ class AppRouter {
     wifiAndHealthExplained: (_) => const WifiAndHealthExplainedScreen(),
     travelRoutersExplained: (_) => const TravelRoutersExplainedScreen(),
     mobileHotspotsExplained: (_) => const MobileHotspotsExplainedScreen(),
+    captivePortalsExplained: (_) => const CaptivePortalsExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 248 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 249 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (75 tools)
-  - Guided Lessons (16)
+- **Wireless Classroom** (76 tools)
+  - Guided Lessons (17)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (75 tools)
+# Wireless Classroom (76 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (16)
+## Guided Lessons (17)
 
 
 ### Antenna Fundamentals
@@ -4059,6 +4059,26 @@ A read-along lesson on the mobile hotspot, which takes the cell signal a phone u
 
 **Field notes**
 - The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any phone, carrier or hotspot maker.
+
+
+### Captive Portals, Explained
+
+A read-along lesson on the Wi-Fi sign-in page, also called a captive portal: why it sits between the Wi-Fi and the internet, how your phone notices it, what to do when the page doesn't show up, why it comes back, what the network can see, how to stay safe on it, and what to do with a device that has no screen. The lesson follows the free PDF guide of the same name, word for word, with its 15 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked in every hotel, airport and cafe: the Wi-Fi says connected, so why won't anything load? Joining the Wi-Fi and reaching the internet are two steps, and the sign-in page sits between them. This lesson is written for the person holding the phone. For the network side, how a network announces its sign-in page and how a device checks for it, see Connected, No Internet: Captive Portals.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what it is, how your phone notices, what to do when the page doesn't show up, why it comes back, what the network can see, staying safe, devices with no screen, five things people get wrong, and tips for your next trip. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 4 has the steps to try when the page never pops up, and what to do if you use a VPN (virtual private network) or private DNS.
+4. Step 7 has the one Stop box in the lesson: never type your email password into a sign-in page.
+5. Steps 1 and 8 have Open buttons for Wi-Fi on Planes, Explained and Travel Routers, Explained when those lessons are in the app.
+6. The last row, Take it with you, names the free PDF guide the lesson follows, Captive Portals, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+7. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The lesson is independent and isn't affiliated with or endorsed by any hotel, airline, phone maker or government agency. Companies are named only as sources.
+- A real sign-in page is a gate, not a window into your secure pages. Still, type only what the place needs.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

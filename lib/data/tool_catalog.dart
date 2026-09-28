@@ -2734,6 +2734,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Captive Portals, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: the Wi-Fi sign-in page for the person holding the phone; the network side is in Connected, No Internet: Captive Portals.
+      ToolEntry(
+        id: 'captive-portals-explained',
+        title: 'Captive Portals, Explained',
+        description:
+            'What that Wi-Fi sign-in page is, why it shows up, and what to '
+            'do when it doesn\'t',
+        routeName: '/tools/captive-portals-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

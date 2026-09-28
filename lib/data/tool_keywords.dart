@@ -3233,6 +3233,22 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'hotspot battery',
     'hotspot placement',
   ],
+  // Captive Portals, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'captive-portals-explained': <String>[
+    'captive portal',
+    'sign-in page',
+    'wi-fi login page',
+    'splash page',
+    'hotel wi-fi',
+    'airport wi-fi',
+    'cafe wi-fi',
+    'connected no internet',
+    'sign-in page won\'t appear',
+    'private wi-fi address',
+    'vpn',
+    'private dns',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',
