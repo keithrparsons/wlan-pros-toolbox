@@ -1122,6 +1122,52 @@
       ],
       "source": "Wi-Fi Classroom wave-5 research brief (2026-09-25): the Linux ath11k, ath12k and iwlwifi drivers and ieee80211_radiotap.h; the ns-3 HE-SIG header; the cloud9477 gr-ieee80211 and bastibl gr-ieee802-11 receivers; the Rohde & Schwarz IEEE 802.11be technology introduction; MathWorks WLAN Toolbox documentation; Keysight 89600B; OpenOFDM; a Linköping University 802.11n receiver thesis; patents US 10,917,220 and US 8,867,574. Clause numbers are secondhand. Computed on your device."
     },
+    "box-vs-hand": {
+      "name": "The Number on the Box vs the Number in Your Hand",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows why the speed class printed on a router box is not what one device gets. Three bars share one scale. The first is the number on the box of a BE19000-class router: 18,656 Mbps (megabits per second), every radio added at its maximum. The second is the best case for one client, a 2x2 phone by default: one link, two spatial streams. The third is an estimate for that client at a stated distance and channel width.",
+      "whyHere": "A router's class name adds up its 6 GHz, 5 GHz and 2.4 GHz radios, each at its widest channel, its top MCS (modulation and coding scheme, the data-rate step) and four spatial streams. A phone uses one of those links with its own two streams, so its best case is under a third of the box number, and only close to the router. Distance lowers it again. The stream count sets the ceiling: a 2x2 laptop and a 2x2 phone reach the same one.",
+      "howToUse": [
+        "Press Show the next step to walk from the box, to the best case for the client, to the estimate at a distance. Each new bar starts at the length of the bar above it and shrinks. Back a step goes the other way.",
+        "Choose the client: a 2x2 phone (the default), a 2x2 laptop, or a 4-stream reference client as big as the router. The phone and the laptop give the same bars. The 4-stream reference still reaches only the one fastest link.",
+        "Set the distance and the 6 GHz channel width for the third step. Far enough out, a narrower channel beats a wider one, because a wider channel needs a stronger signal for the same MCS.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Right shows the next step and Left the one before, Space jumps between the box and the hand, Up and Down change the client, R resets, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Client",
+          "unit": "streams",
+          "range": "A 2x2 phone (default), a 2x2 laptop, or a 4-stream reference client"
+        },
+        {
+          "name": "Step",
+          "unit": "step",
+          "range": "On the box, best case, at a distance; default on the box"
+        },
+        {
+          "name": "Distance from the router",
+          "unit": "m or ft",
+          "range": "1 to 60 m (3 to 197 ft); default 5 m (illustrative)"
+        },
+        {
+          "name": "Channel width, 6 GHz",
+          "unit": "MHz",
+          "range": "20, 40, 80, 160 or 320; default 320, the best case's own width"
+        }
+      ],
+      "algorithm": "Box = 11,520 + 5,760 + 1,376 = 18,656 Mbps, the published figures for a BE19000-class router's 6 GHz, 5 GHz and 2.4 GHz radios; the class name rounds the sum up to the next thousand. The app's own PHY (physical layer) rate math, the Throughput Calculator's data subcarriers x bits per symbol x streams / symbol time for 802.11be with the 0.8 microsecond guard interval, gives 11,529, 5,765 and 1,376 Mbps for four streams at 320, 160 and 40 MHz and MCS 13: the same figures to within 0.1%. Best case = that formula for the fastest radio (6 GHz, 320 MHz, MCS 13) with the client's streams, never more than the router's four. Step 3: received level = 20 dBm EIRP (effective isotropic radiated power) - path loss, with a 0 dBi client antenna (decibels over an isotropic antenna); path loss = free-space path loss at 1 m + 10 x 3 x log10(d) at 6135 MHz (6 GHz channel 37). The MCS is the highest whose 802.11be minimum receiver sensitivity at the chosen width the level meets (the Rate vs Range table). Estimate = the PHY rate at that MCS x 0.80, the Throughput Calculator factor for 802.11be.",
+      "example": "With the defaults, the box says 18,656 Mbps. A 2x2 phone's best case is 5,765 Mbps, 31% of the box. At 5 m on a 320 MHz channel the phone receives -49.2 dBm, which supports MCS 7: a PHY rate of 2,882 Mbps and an estimate of 2,306 Mbps, 12% of the box. At 20 m a 160 MHz channel (MCS 2, estimate 346 Mbps) beats a 320 MHz channel (MCS 0, estimate 231 Mbps).",
+      "fieldNotes": [
+        "The class number is a sum of radios, and no single device sees it. Read the per-band figures on the datasheet, then halve the fastest one for a 2x2 client.",
+        "The best case assumes the client supports 320 MHz channels and 4096-QAM (quadrature amplitude modulation). If it supports less, its best case is lower.",
+        "The 0.80 factor is the Throughput Calculator's estimate and is favorable, so a speed test usually reads lower. Other clients sharing the airtime, walls and interference are left out, and the client is assumed to keep all its streams at a distance, so step 3 is an upper limit for this client.",
+        "The 5 m default distance is an illustrative choice. No measured home stands behind it.",
+        "The tool also leaves out Multi-Link Operation, where a Wi-Fi 7 client and router use more than one band at once. The Multi-Link Operation simulator shows it.",
+        "For the rate at every MCS, width and stream count, see the MCS Index and the Throughput Calculator. For how the rate falls with distance, see Rate vs Range.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "The per-band figures (11,520, 5,760 and 1,376 Mbps) are from the published datasheet and product page of one BE19000-class router. Two phone makers' current specification pages list 2x2 MIMO (multiple input, multiple output) for their current phones. PHY rates are the Throughput Calculator's, the same as the MCS Index; receiver sensitivity and path loss are the Rate vs Range tool's. Everything is calculated on your device."
+    },
     "dfs-simulator": {
       "name": "DFS and Radar",
       "category": "Wi-Fi Classroom",

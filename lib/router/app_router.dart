@@ -20,6 +20,7 @@ import '../widgets/presenter/large_screen_gate.dart' show gateWifiLabRoutes;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/architectural_scale_screen.dart';
 import '../screens/tools/calculators/body_loss_screen.dart';
+import '../screens/tools/calculators/box_vs_hand_screen.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
 import '../screens/tools/calculators/channel_frequency_converter_screen.dart';
 import '../screens/tools/calculators/downtilt_screen.dart';
@@ -416,6 +417,7 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
+  static const String boxVsHand = '/tools/box-vs-hand';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -904,6 +906,7 @@ class AppRouter {
     eapLadder: (_) => const EapLadderScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
+    boxVsHand: (_) => const BoxVsHandScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),
     hamBandWavelengths: (_) => const HamBandWavelengthsScreen(),

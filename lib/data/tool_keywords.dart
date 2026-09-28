@@ -2128,6 +2128,31 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   // Wi-Fi Classroom (2026-09-25). What the preamble reference shows, in the words
   // a student would search with.
+  // Wi-Fi Classroom (2026-09-27). What a student types when the box number
+  // and the speed test disagree.
+  'box-vs-hand': <String>[
+    'box number',
+    'marketing speed',
+    'be19000',
+    'be-class',
+    'router speed class',
+    'aggregate throughput',
+    '19 gbps',
+    'wi-fi 7 speed',
+    'why is my wi-fi slower than the box',
+    'spatial streams',
+    '2x2',
+    '4x4',
+    'mimo',
+    'phy rate',
+    'real throughput',
+    'channel width',
+    '320 mhz',
+    'mcs',
+    'wi-fi lab',
+    'wi-fi classroom',
+    'simulator',
+  ],
   'phy-preamble': <String>[
     'preamble',
     'phy preamble',
