@@ -2709,6 +2709,23 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // How Your Devices Access the Internet, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 10
+      // figures. Distinct from the field plate How Your Devices Access the
+      // Internet. Shelved with the other lessons for the people Wi-Fi pros get
+      // asked by.
+      ToolEntry(
+        id: 'devices-to-internet-explained',
+        title: 'How Your Devices Access the Internet, Explained',
+        description:
+            'Wi-Fi and cellular are ways to reach the internet, not the '
+            'internet: follow the trip one hop at a time, and learn which hop '
+            'to blame when something is slow',
+        routeName: '/tools/devices-to-internet-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

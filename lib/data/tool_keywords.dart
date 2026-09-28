@@ -3192,6 +3192,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'ethernet camera',
     'poe camera',
   ],
+  // How Your Devices Access the Internet, Explained (Guided Lesson). What
+  // people say when something online is slow, plus the terms the lesson
+  // teaches.
+  'devices-to-internet-explained': <String>[
+    'slow internet',
+    'slow wi-fi',
+    'wi-fi or internet',
+    'is it my wi-fi',
+    'full bars no internet',
+    'signal bars',
+    'wi-fi vs internet',
+    'internet plan',
+    'faster plan',
+    'bottleneck',
+    'hotel wi-fi slow',
+    'cellular',
+    'check my connection',
+    'which road is slow',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="200">
+      <!-- road brackets -->
+      <g fill="none" stroke-width="2">
+        <path d="M40 80 V72 H264 V80" stroke="#7A9E26"/>
+        <path d="M282 80 V72 H700 V80" stroke="#2B5C8A"/>
+      </g>
+      <text x="152" y="44" text-anchor="middle" font-size="13.5" font-weight="700" fill="#2F5E00">Road 1: your Wi-Fi</text>
+      <text x="152" y="62" text-anchor="middle" font-size="12.5">the short hop through the air</text>
+      <text x="491" y="44" text-anchor="middle" font-size="13.5" font-weight="700" fill="#2B5C8A">Road 2: your internet</text>
+      <text x="491" y="62" text-anchor="middle" font-size="12.5">the long trip out to your provider and the world</text>
+      <!-- phone -->
+      <g transform="translate(16 90) scale(3.83333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+      <!-- arcs centred on (92,136) -->
+      <g transform="rotate(90 107.3 135.9) translate(87.3 115.9) scale(1.66667)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
+      <!-- box -->
+      <g transform="translate(180.2 99.2) scale(3.06667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
+      <!-- road 2 line -->
+      <line x1="282" y1="136" x2="586" y2="136" stroke="#2B5C8A" stroke-width="4" stroke-linecap="round"/>
+      <!-- cloud at (650,136) -->
+      <g transform="translate(610 92) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
+      <!-- labels -->
+      <text x="62" y="194" text-anchor="middle" font-size="12.5">your phone</text>
+      <text x="217" y="180" text-anchor="middle" font-weight="600" fill="#111111" font-size="12.5">the box on your wall</text>
+      <text x="434" y="158" text-anchor="middle" font-size="12.5">the feed you pay for</text>
+      <text x="650" y="186" text-anchor="middle" font-size="12.5">the internet</text>
+    </svg>

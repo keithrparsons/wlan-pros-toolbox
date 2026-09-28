@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 190" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="700" height="190">
+      <!-- phone -->
+      <g transform="translate(3.55 63.55) scale(4.12083)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+      <!-- Wi-Fi arcs, centred on the phone's right edge -->
+      <g transform="rotate(90 99.3 112.9) translate(79.3 92.9) scale(1.66667)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
+      <!-- the box -->
+      <g transform="translate(158.2 76.2) scale(3.06667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
+      <!-- the feed -->
+      <line x1="252" y1="113" x2="392" y2="113" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <!-- the internet -->
+      <g transform="translate(412 69) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
+      <!-- to the service -->
+      <line x1="514" y1="113" x2="594" y2="113" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <rect x="606" y="86" width="56" height="56" rx="12" fill="#A1CC3A"/>
+      <path d="M626 100 L648 114 L626 128 Z" fill="#1A1A1A"/>
+      <!-- labels -->
+      <text x="53" y="178" text-anchor="middle">your device</text>
+      <text x="195" y="160" text-anchor="middle">the box</text>
+      <text x="322" y="136" text-anchor="middle">the feed you pay for</text>
+      <text x="452" y="164" text-anchor="middle">the internet</text>
+      <text x="634" y="164" text-anchor="middle">what you wanted</text>
+    </svg>

@@ -153,7 +153,8 @@ def find_figures(src: str) -> list[dict]:
 
 
 def find_cover(src: str) -> str | None:
-    m = re.search(r'<div class="art">\s*(<svg\b.*?</svg>)', src, re.S)
+    # The cover art's div may carry attributes (data-op="1" on some guides).
+    m = re.search(r'<div class="art"[^>]*>\s*(<svg\b.*?</svg>)', src, re.S)
     return m.group(1) if m else None
 
 
