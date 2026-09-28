@@ -37,14 +37,25 @@ CI_PAT='by the team|by our team|reviewed by the team|keith-(reviewed|approved|co
 # Case-sensitive: internal machinery. Agent names are matched whole-word to limit
 # false positives; SOP/GL/WS refs, wikilinks, repo paths, and session-log mentions
 # are hard tells. \[\[(?!:) matches wikilinks but not POSIX [[: character classes.
-CS_PAT='SOP-[0-9]|GL-[0-9]|WS-[0-9]|\[\[[^:]|session-log|Deliverables/|Team Knowledge|myPKA|/Developer/|(^|[^A-Za-z])(Larry|Penn|Pax|Nolan|Mack|Silas|Felix|Vera|Iris|Charta|Pixel|Vex)([^A-Za-z]|$)'
+# WS- needs a leading word boundary (spelled as a character class, since BSD
+# grep -E has no \b guarantee): without it the FCC band name "AWS-1" matched its
+# last four characters (false positive, fixed 2026-09-28).
+CS_PAT='SOP-[0-9]|GL-[0-9]|(^|[^A-Za-z0-9_])WS-[0-9]|\[\[[^:]|session-log|Deliverables/|Team Knowledge|myPKA|/Developer/|(^|[^A-Za-z])(Larry|Penn|Pax|Nolan|Mack|Silas|Felix|Vera|Iris|Charta|Pixel|Vex)([^A-Za-z]|$)'
+
+# "Pixel" is also a Google product line. Product forms are masked out before
+# CS_PAT runs, so a verbatim citation ("Google Pixel Phone Help ... Pixel phone")
+# passes while the specialist's name used as a person ("Pixel drew", "ask Pixel",
+# "Pixel's") on the same line is still caught. A product form is "Pixel" preceded
+# by "Google", or followed by a digit ("Pixel 9", "Pixel 8a") or a product word.
+# Mirrors PIXEL_PRODUCT in leakage_guard_dart.py. Masked lines print with "Pxl".
+PIXEL_PRODUCT_SED='s/Google Pixel([^A-Za-z]|$)/Google Pxl\1/g; s/Pixel([ -]?[0-9])/Pxl\1/g; s/Pixel([[:space:]]+([Pp]hones?|Buds|Watch|Tablet|Fold|devices?))([^A-Za-z]|$)/Pxl\1\3/g'
 
 hits=0
 scanned=0
 
 while IFS= read -r f; do
   scanned=$((scanned + 1))
-  m="$( { grep -nEi "$CI_PAT" "$f"; grep -nE "$CS_PAT" "$f"; } 2>/dev/null )"
+  m="$( { grep -nEi "$CI_PAT" "$f"; sed -E "$PIXEL_PRODUCT_SED" "$f" | grep -nE "$CS_PAT"; } 2>/dev/null )"
   if [ -n "$m" ]; then
     echo "── ${f#"$ROOT"/}"
     printf '%s\n' "$m" | sed 's/^/   /'
