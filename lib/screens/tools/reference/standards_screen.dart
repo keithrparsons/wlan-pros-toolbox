@@ -154,10 +154,12 @@ class StandardsScreen extends StatefulWidget {
     StandardEntry(
       std: '802.11ac',
       generation: 'Wi-Fi 5',
-      // 2014 = Wi-Fi Alliance Wi-Fi CERTIFIED ac launch. IEEE 802.11ac ratified
-      // 2013 (see ieeeRatFootnote). WFA cert year applied consistently per
-      // Keith's Wave-2 decision.
-      year: 2014,
+      // 2013 = Wi-Fi Alliance Wi-Fi CERTIFIED ac launch, 2013-06-19 (WFA press
+      // release, "Wi-Fi CERTIFIED ac takes Wi-Fi performance to new heights").
+      // IEEE approved 802.11ac on 2013-12-11 (IEEE SA 802.11ac-2013). WFA cert
+      // year applied consistently per Keith's Wave-2 decision. Was 2014, a
+      // wrong launch year, corrected 2026-09-28 from Pax's SIAM glossary brief.
+      year: 2013,
       bands: '5',
       maxRate: '6.9 Gbps',
       mimo: '8×8 (DL MU-MIMO)',
@@ -218,8 +220,9 @@ class StandardsScreen extends StatefulWidget {
   /// values it justifies (audit-wave-2 rule 2: cite and pin together).
   static const String ieeeRatFootnote =
       'Year = Wi-Fi Alliance certification launch. IEEE ratification differs: '
-      '802.11ac ratified 2013 (Wi-Fi 5 certified 2014); 802.11ax ratified 2021 '
-      '(Wi-Fi 6 certified 2019, Wi-Fi 6E 2020); 802.11be approved 2024, '
+      '802.11ac ratified 2013 (Wi-Fi 5 certified from June 2013); '
+      '802.11ax ratified 2021 (Wi-Fi 6 certified 2019, Wi-Fi 6E 2020); '
+      '802.11be approved 2024, '
       'published 2025 (Wi-Fi 7 certified 2024).';
 
   @override

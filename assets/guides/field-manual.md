@@ -2092,7 +2092,7 @@ A PHY-layer comparison of every major 802.11 amendment from the original 802.11 
 - What it shows: one card per amendment with the IEEE designation, a Wi-Fi generation badge, year, and rows for Bands (GHz), Max PHY rate, MIMO, Channel width (MHz), and Modulation. An optional band filter (All / 2.4 / 5 / 6 GHz) narrows the list.
 - Two footnotes: (1) "Official Wi-Fi Alliance generation naming begins at Wi-Fi 4 (802.11n); earlier amendments are shown by their 802.11 names only"; (2) "Wi-Fi 7 certification began 2024; IEEE 802.11be was published 2025."
 - Max PHY rate is the theoretical aggregate ceiling; real-world throughput is typically 50 to 60% of it.
-- Provenance: the amendment facts (bands, MIMO, channel widths, modulation, max PHY rate) are ported from the IEEE 802.11 amendments; the Year column is the Wi-Fi Alliance certification year, footnoted separately against the IEEE ratification year. Key rows: 802.11ac = Wi-Fi 5 (2014, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2020, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 23.1 Gbps with MLO, 4K-QAM, up to 320 MHz).
+- Provenance: the amendment facts (bands, MIMO, channel widths, modulation, max PHY rate) are ported from the IEEE 802.11 amendments; the Year column is the Wi-Fi Alliance certification year, footnoted separately against the IEEE ratification year. Key rows: 802.11ac = Wi-Fi 5 (2013, 6.9 Gbps); 802.11ax = Wi-Fi 6 (2019) and Wi-Fi 6E (2020, adds 6 GHz); 802.11be = Wi-Fi 7 (2024, 23.1 Gbps with MLO, 4K-QAM, up to 320 MHz).
 
 ### MCS Index
 
