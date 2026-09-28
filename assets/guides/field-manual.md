@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 246 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 247 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (73 tools)
-  - Guided Lessons (14)
+- **Wireless Classroom** (74 tools)
+  - Guided Lessons (15)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (73 tools)
+# Wireless Classroom (74 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (14)
+## Guided Lessons (15)
 
 
 ### Antenna Fundamentals
@@ -4022,6 +4022,25 @@ A read-along lesson on the numbers behind the question: how much power a Wi-Fi r
 - Checked on 28 September 2026. Agency pages are quoted as they read that day.
 - The lesson explains the power numbers in plain words. It isn't medical advice. For a question about your own health, ask your doctor.
 - Phones held to your head are a different question from Wi-Fi, and the lesson doesn't cover them.
+
+
+### Travel Routers, Explained
+
+A read-along lesson on the travel router, a small box you pack in your bag that joins the hotel Wi-Fi for you and then makes your own Wi-Fi in the room: its two jobs and two radios, why your devices remember one network, the hotel's device limit, a network of your own, setup at home, joining and signing in at the hotel, a wired jack in the room, when it doesn't help, and a VPN (virtual private network) on the router. The lesson follows the free PDF guide of the same name, word for word, with its 20 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by travelers: is a travel router worth packing? The one idea under it is that your devices join a network they already know. The box signs in to the hotel once, so the hotel usually counts one device, and every phone, laptop and tablet joins a network it already knows, just like at home.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what it is, why it helps, what you do at home and at the hotel, when it doesn't help, two surprises, a VPN on the router, four things people get wrong, and tips. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 7 has the setup steps to do at home, before the trip.
+4. Steps 1 and 8 have an Open button for Captive Portals, Explained, which covers the hotel sign-in page itself.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Travel Routers, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any router maker or hotel company.
+- The travel router keeps other guests away from your devices. It doesn't hide what you do online from the hotel.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

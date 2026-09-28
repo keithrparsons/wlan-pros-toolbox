@@ -2710,6 +2710,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Travel Routers, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: one small box that joins the hotel Wi-Fi and gives your devices a network they know.
+      ToolEntry(
+        id: 'travel-routers-explained',
+        title: 'Travel Routers, Explained',
+        description:
+            'How one small box joins the hotel Wi-Fi for you and gives all '
+            'your devices a network they already know',
+        routeName: '/tools/travel-routers-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

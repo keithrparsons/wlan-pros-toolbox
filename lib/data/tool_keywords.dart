@@ -3203,6 +3203,22 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'icnirp',
     'fcc exposure',
   ],
+  // Travel Routers, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'travel-routers-explained': <String>[
+    'travel router',
+    'hotel wi-fi',
+    'hotel wifi',
+    'pocket router',
+    'portable router',
+    'device limit',
+    'sign-in page',
+    'captive portal',
+    'ethernet jack',
+    'vpn router',
+    'router mode',
+    'repeater',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',
