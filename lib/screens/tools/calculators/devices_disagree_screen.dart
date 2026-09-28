@@ -26,7 +26,8 @@
 //   - DdFloorPainter, DdStripPainter (devices_disagree_painters.dart)
 // The Present button (tablet and computer windows) puts the stage beside the
 // controls over the SAME controller (lib/widgets/presenter/). Keys: Space
-// re-samples, R resets, Up and Down move the AP a meter.
+// re-samples, R resets, Up and Down move the AP 1 m (1 ft when lengths are
+// imperial).
 //
 // LAYOUT: at 720 px and up the controls are a side panel; below it
 // everything stacks in one scroll (the large-screen notice, applied in the
