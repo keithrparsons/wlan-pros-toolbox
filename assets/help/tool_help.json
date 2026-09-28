@@ -7374,6 +7374,29 @@
       "source": "The WLAN Pros print guide How Your Phone Knows Where It Is, Explained (September 2026), checked against Apple and Google help pages and Android developer documentation. The full source list is the last section of the lesson.",
       "name": "How Your Phone Knows Where It Is, Explained"
     },
+    "analog-vs-digital-explained": {
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on what analog and digital mean, and why your Wi-Fi slows down while your TV just freezes. Analog keeps a smooth copy of something. Digital measures it again and again, and keeps only the numbers. Noise makes an analog signal worse a little at a time, a digital signal ignores noise until it can't and then fails all at once, and Wi-Fi sits in between: it slows down in steps to stay connected. The lesson follows the free PDF guide of the same name, word for word, with its 12 figures.",
+      "whyHere": "It answers a question Wi-Fi people get asked by people who are not technical, and carries the idea under every Wi-Fi rate: Wi-Fi sends digital data, but what leaves the antenna is always a smooth wave. Each small change in the wave's height and timing stands for a few bits, and as the signal weakens, Wi-Fi switches to a simpler, slower way of sending. Figure 10 draws the slope, the cliff and the staircase side by side, and the Modulation Simulator shows the same idea on the constellation.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then a smooth copy against a list of numbers, why a digital copy doesn't fade, why every radio wave is analog, three ways a signal fades, four things people get wrong, and what this means at home. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 7 has two things to do at home: move closer or clear the path so Wi-Fi climbs back up its staircase, and two tips for TV and music.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.",
+        "Take it with you, at the end of the lesson, names the free PDF guide it follows, Analog vs Digital, Explained from WLAN Pros, to print or share."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026. Music app settings change with updates.",
+        "Figure 10 is a sketch, not a measurement.",
+        "The Keith's note quotes Fix Your Own Wi-Fi (WLAN Pros, in preparation, 2026), chapter 5.",
+        "Company names appear only where their own documents are the source. The lesson is independent and isn't affiliated with any maker or broadcaster."
+      ],
+      "source": "The WLAN Pros print guide Analog vs Digital, Explained (October 2026). The full source list is the last section of the lesson.",
+      "name": "Analog vs Digital, Explained"
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

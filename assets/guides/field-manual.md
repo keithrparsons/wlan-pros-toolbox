@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 246 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 247 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (73 tools)
-  - Guided Lessons (14)
+- **Wireless Classroom** (74 tools)
+  - Guided Lessons (15)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (73 tools)
+# Wireless Classroom (74 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (14)
+## Guided Lessons (15)
 
 
 ### Antenna Fundamentals
@@ -4029,6 +4029,26 @@ A read-along lesson on how your phone finds itself indoors and out, and which sw
 - The 911 step describes calls in the US.
 - Figures 1 to 6 and 11 are not to scale.
 - Apple, iPhone, Google and Android are trademarks of their owners. The lesson is independent and isn't endorsed by them.
+
+
+### Analog vs Digital, Explained
+
+A read-along lesson on what analog and digital mean, and why your Wi-Fi slows down while your TV just freezes. Analog keeps a smooth copy of something. Digital measures it again and again, and keeps only the numbers. Noise makes an analog signal worse a little at a time, a digital signal ignores noise until it can't and then fails all at once, and Wi-Fi sits in between: it slows down in steps to stay connected. The lesson follows the free PDF guide of the same name, word for word, with its 12 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical, and carries the idea under every Wi-Fi rate: Wi-Fi sends digital data, but what leaves the antenna is always a smooth wave. Each small change in the wave's height and timing stands for a few bits, and as the signal weakens, Wi-Fi switches to a simpler, slower way of sending. Figure 10 draws the slope, the cliff and the staircase side by side, and the Modulation Simulator shows the same idea on the constellation.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then a smooth copy against a list of numbers, why a digital copy doesn't fade, why every radio wave is analog, three ways a signal fades, four things people get wrong, and what this means at home. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 7 has two things to do at home: move closer or clear the path so Wi-Fi climbs back up its staircase, and two tips for TV and music.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+5. Take it with you, at the end of the lesson, names the free PDF guide it follows, Analog vs Digital, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked on 28 September 2026. Music app settings change with updates.
+- Figure 10 is a sketch, not a measurement.
+- The Keith's note quotes Fix Your Own Wi-Fi (WLAN Pros, in preparation, 2026), chapter 5.
+- Company names appear only where their own documents are the source. The lesson is independent and isn't affiliated with any maker or broadcaster.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi
