@@ -2722,6 +2722,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Mobile Hotspots, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: cell signal in, Wi-Fi out: what makes a hotspot fast or slow and how to use it well.
+      ToolEntry(
+        id: 'mobile-hotspots-explained',
+        title: 'Mobile Hotspots, Explained',
+        description:
+            'How a small box, or your phone, turns cell signal into Wi-Fi, '
+            'what makes it fast or slow, and how to use it well',
+        routeName: '/tools/mobile-hotspots-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

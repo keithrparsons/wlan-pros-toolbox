@@ -3219,6 +3219,20 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'router mode',
     'repeater',
   ],
+  // Mobile Hotspots, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'mobile-hotspots-explained': <String>[
+    'mobile hotspot',
+    'personal hotspot',
+    'hotspot',
+    'tethering',
+    'cell data',
+    'data plan',
+    'usb tethering',
+    'bluetooth tethering',
+    'hotspot battery',
+    'hotspot placement',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

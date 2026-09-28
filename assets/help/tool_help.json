@@ -7389,6 +7389,27 @@
       ],
       "source": "The WLAN Pros print guide Travel Routers, Explained (September 2026). The full source list is the last section of the lesson."
     },
+    "mobile-hotspots-explained": {
+      "name": "Mobile Hotspots, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on the mobile hotspot, which takes the cell signal a phone uses and turns it into Wi-Fi: the two kinds (a pocket box or your phone), how a web page makes the round trip, what decides the speed, a busy network, data and your plan, battery and heat, where to put it, other ways to share, keeping it private, and how it compares with a travel router. The lesson follows the free PDF guide of the same name, word for word, with its 22 figures.",
+      "whyHere": "It answers a question Wi-Fi people get asked by travelers and people working away from home: why is my hotspot slow? A laptop's Wi-Fi bars show only the short link to the hotspot. The speed is decided by the cell signal where the hotspot sits and by how many people share the tower.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then what it is, how it works, speed, data, battery and heat, where to put it, other ways to share, keeping it private, hotspot or travel router, four good habits, four things people get wrong, and tips. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 9 covers where to put the hotspot: where the cell signal is best, watching the cell bars on the hotspot itself.",
+        "Open buttons for Travel Routers, Explained, Phone Data Abroad, Explained, Weak Cell Signal at Home, Explained and Home Internet, Explained follow the steps that name them, when those lessons are in the app.",
+        "The last row, Take it with you, names the free PDF guide the lesson follows, Mobile Hotspots, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any phone, carrier or hotspot maker."
+      ],
+      "source": "The WLAN Pros print guide Mobile Hotspots, Explained (September 2026). The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

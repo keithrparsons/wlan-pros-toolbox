@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 247 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 248 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (74 tools)
-  - Guided Lessons (15)
+- **Wireless Classroom** (75 tools)
+  - Guided Lessons (16)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (74 tools)
+# Wireless Classroom (75 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (15)
+## Guided Lessons (16)
 
 
 ### Antenna Fundamentals
@@ -4041,6 +4041,24 @@ A read-along lesson on the travel router, a small box you pack in your bag that 
 **Field notes**
 - The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any router maker or hotel company.
 - The travel router keeps other guests away from your devices. It doesn't hide what you do online from the hotel.
+
+
+### Mobile Hotspots, Explained
+
+A read-along lesson on the mobile hotspot, which takes the cell signal a phone uses and turns it into Wi-Fi: the two kinds (a pocket box or your phone), how a web page makes the round trip, what decides the speed, a busy network, data and your plan, battery and heat, where to put it, other ways to share, keeping it private, and how it compares with a travel router. The lesson follows the free PDF guide of the same name, word for word, with its 22 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by travelers and people working away from home: why is my hotspot slow? A laptop's Wi-Fi bars show only the short link to the hotspot. The speed is decided by the cell signal where the hotspot sits and by how many people share the tower.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what it is, how it works, speed, data, battery and heat, where to put it, other ways to share, keeping it private, hotspot or travel router, four good habits, four things people get wrong, and tips. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 9 covers where to put the hotspot: where the cell signal is best, watching the cell bars on the hotspot itself.
+4. Open buttons for Travel Routers, Explained, Phone Data Abroad, Explained, Weak Cell Signal at Home, Explained and Home Internet, Explained follow the steps that name them, when those lessons are in the app.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Mobile Hotspots, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The lesson names no brand to buy. It is independent and isn't affiliated with or endorsed by any phone, carrier or hotspot maker.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

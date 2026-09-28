@@ -86,6 +86,7 @@ const Set<String> _guideIds = <String>{
   'wifi-on-planes-explained',
   'wifi-and-health-explained',
   'travel-routers-explained',
+  'mobile-hotspots-explained',
 };
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.
