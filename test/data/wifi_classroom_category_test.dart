@@ -163,7 +163,7 @@ void main() {
 
   test('the section is titled Wi-Fi Classroom and sits right after '
       'Educational Resources', () {
-    expect(classroom.title, 'Wi-Fi Classroom');
+    expect(classroom.title, 'Wireless Classroom');
     final List<String> ids = kToolCategories
         .map((ToolCategory c) => c.id)
         .toList();

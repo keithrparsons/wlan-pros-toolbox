@@ -65,7 +65,7 @@ const String kLargeScreenNoticeTitle = 'Best on a larger screen';
 
 /// Notice body.
 const String kLargeScreenNoticeBody =
-    'The Wi-Fi Classroom is designed for a tablet or computer screen. On a phone '
+    'The Wireless Classroom is designed for a tablet or computer screen. On a phone '
     'some views will be cramped.';
 
 /// Primary action: show the tool anyway.

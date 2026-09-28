@@ -202,7 +202,7 @@ void main() {
         ...(e['fieldNotes'] as List<dynamic>).cast<String>(),
         e['source'] as String,
       ].join('\n');
-      expect(e['category'], 'Wi-Fi Classroom');
+      expect(e['category'], 'Wireless Classroom');
       int first(String s) => all.indexOf(s);
       expect(first('RSSI (received signal strength indicator)'), first('RSSI'));
       expect(first('RCPI (received channel power indicator)'), first('RCPI'));

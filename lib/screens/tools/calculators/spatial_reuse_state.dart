@@ -144,7 +144,7 @@ class SpatialReuseState extends ChangeNotifier {
         '${k.holds ? 'holds' : 'does not hold'} MCS ${k.targetMcs} '
         '(needs ${db(k.requiredSnrDb)} dB)';
     return <String>[
-      'Spatial Reuse (Wi-Fi Classroom)',
+      'Spatial Reuse (Wireless Classroom)',
       'AP A ${pos(s.layout.apA)}, client A ${pos(s.layout.clientA)}, '
           'client B ${pos(s.layout.clientB)}, AP B ${pos(s.layout.apB)}; '
           'n ${s.exponent.toStringAsFixed(1)}, ${s.widthMHz} MHz, '

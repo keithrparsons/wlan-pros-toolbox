@@ -1913,19 +1913,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Encoding & Formats',
       ),
-      // Wi-Fi Glossary — searchable, grouped plain-language definitions
-      // (offline bundled JSON). Carries its bespoke Tier-2 SVG icon
-      // (assets/tool-icons/wifi-glossary.svg), resolved by the <id>.svg
-      // convention in ToolAssets — no per-tool wiring needed.
+      // Wireless Glossary (renamed from Wi-Fi Glossary 2026-09-28, Keith) —
+      // searchable, grouped plain-language definitions (offline bundled JSON).
+      // The id and route stay `wifi-glossary`: the Spectrum Analysis cross-
+      // link, the help entry, the icon file and the tests all key on them.
+      // Carries its bespoke Tier-2 SVG icon (assets/tool-icons/
+      // wifi-glossary.svg), resolved by the <id>.svg convention in ToolAssets.
       ToolEntry(
         id: 'wifi-glossary',
-        title: 'Wi-Fi Glossary',
-        description: 'Plain-language definitions of 92 Wi-Fi terms',
+        title: 'Wireless Glossary',
+        description: 'Plain-language definitions of 123 wireless terms',
         routeName: '/tools/wifi-glossary',
         subgroup: 'Wi-Fi Standards & Terminology',
         isLive: true,
       ),
-      // Wi-Fi Authentication Glossary — sibling of the Wi-Fi Glossary,
+      // Wi-Fi Authentication Glossary — sibling of the Wireless Glossary,
       // searchable/grouped/offline, reusing WifiGlossaryScreen + GlossaryService
       // pointed at assets/data/wifi_auth_glossary.json. No bespoke <id>.svg yet,
       // so ToolRow shows the lime-bolt fallback (bespoke icon = follow-up).
@@ -2488,8 +2490,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
   // mode, help entries and the keyword index are unchanged.
   ToolCategory(
     id: 'wifi-classroom',
-    title: 'Wi-Fi Classroom',
-    summary: 'Interactive simulators for teaching Wi-Fi',
+    title: 'Wireless Classroom',
+    summary: 'Interactive simulators for teaching wireless',
     icon: Icons.cast_for_education_outlined,
     exampleToolTitles: <String>[
       'FSPL Simulator',

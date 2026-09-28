@@ -122,7 +122,7 @@ void main() {
     test('help: acronyms spelled out, Present and the keys, what it leaves '
         'out, the two linked tools, the spread illustrative', () {
       final Map<String, dynamic> h = _help();
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       final String all = <String>[
         h['purpose'] as String,
         h['whyHere'] as String,

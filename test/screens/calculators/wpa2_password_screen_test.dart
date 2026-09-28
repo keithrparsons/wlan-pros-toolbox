@@ -150,7 +150,7 @@ void main() {
     test('help: acronyms spelled out at first use, Present and the keys, '
         'the WFA source, what it leaves out', () {
       final Map<String, dynamic> h = _help();
-      expect(h['category'], 'Wi-Fi Classroom');
+      expect(h['category'], 'Wireless Classroom');
       expect(h['name'], kWpa2PasswordTitle);
       final String all = _helpText();
       for (final (String acr, String long) in <(String, String)>[

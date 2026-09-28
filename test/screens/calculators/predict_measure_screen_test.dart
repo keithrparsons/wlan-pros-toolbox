@@ -314,7 +314,7 @@ void main() {
       }
       expect(
         t,
-        contains('The Wi-Fi Classroom is designed for tablets and computers'),
+        contains('The Wireless Classroom is designed for tablets and computers'),
       );
     });
 

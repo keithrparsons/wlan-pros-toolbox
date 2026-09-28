@@ -1,9 +1,10 @@
-// Wi-Fi Glossary — a data-driven, searchable, grouped glossary of 92 Wi-Fi
-// terms, fully offline (bundled JSON asset).
+// Wireless Glossary (the Wi-Fi Glossary until 2026-09-28; class, file, id and
+// route keep the wifi- name) — a data-driven, searchable, grouped glossary of
+// 123 wireless terms, fully offline (bundled JSON asset).
 //
 // Mirrors the app's bundled-JSON reference pattern (Educational Resources /
 // Well-Known Ports): bundled asset → GlossaryService.fromJson → grouped list
-// screen. The 92 terms render in 8 category groups in curation order (never
+// screen. The 123 terms render in 12 category groups in curation order (never
 // alphabetized), each row showing the term, its companion identifier (abbr) and
 // its plain-language definition. A free-text search field filters the rendered
 // rows live, matching the app's other list/reference search UX (case-insensitive
@@ -49,7 +50,7 @@ import '../../../widgets/app_select.dart';
 import '../labeled_field.dart';
 import 'reference_row_semantics.dart';
 
-/// Asset path for the bundled Wi-Fi Glossary. Overridable in tests so a fixture
+/// Asset path for the bundled Wireless Glossary. Overridable in tests so a fixture
 /// string can stand in for the bundled asset.
 const String kWifiGlossaryAsset = 'assets/data/glossary.json';
 
@@ -63,19 +64,24 @@ class WifiGlossaryScreen extends StatefulWidget {
     super.key,
     this.service,
     this.assetPath = kWifiGlossaryAsset,
-    this.title = 'Wi-Fi Glossary',
+    this.title = 'Wireless Glossary',
+    this.termNoun = 'wireless',
   });
 
   /// Inject a pre-built service to bypass the asset load in widget tests.
   final GlossaryService? service;
 
   /// Bundled JSON asset to load when [service] is not injected. Defaults to the
-  /// Wi-Fi Glossary; the Authentication Glossary passes [kWifiAuthGlossaryAsset].
+  /// Wireless Glossary; the Authentication Glossary passes [kWifiAuthGlossaryAsset].
   final String assetPath;
 
   /// Screen title and the noun used in the load/empty copy and AT labels.
-  /// Defaults to "Wi-Fi Glossary".
+  /// Defaults to "Wireless Glossary".
   final String title;
+
+  /// The kind of term the intro counts ("123 wireless terms"). The
+  /// Authentication Glossary passes "Wi-Fi authentication".
+  final String termNoun;
 
   @override
   State<WifiGlossaryScreen> createState() => _WifiGlossaryScreenState();
@@ -108,9 +114,14 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
   }
 
   /// The screen title lower-cased for use mid-sentence in load/AT copy
-  /// (e.g. "Loading Wi-Fi glossary", "Could not load the Wi-Fi glossary"),
-  /// preserving the "Wi-Fi" capitalization.
-  String get _titleNoun => widget.title.replaceAll('Glossary', 'glossary');
+  /// (e.g. "Loading wireless glossary", "Could not load the Wi-Fi
+  /// authentication glossary"). A leading "Wi-Fi" keeps its capitals; any
+  /// other leading word is lower-cased.
+  String get _titleNoun {
+    final String noun = widget.title.replaceAll('Glossary', 'glossary');
+    if (noun.isEmpty || noun.startsWith('Wi-Fi')) return noun;
+    return noun[0].toLowerCase() + noun.substring(1);
+  }
 
   Future<void> _loadAsset() async {
     try {
@@ -261,10 +272,14 @@ class _WifiGlossaryScreenState extends State<WifiGlossaryScreen> {
                 edge + AppSpacing.sm,
               ),
               children: <Widget>[
-                _IntroCard(total: svc.count, categories: svc.categoryCount),
+                _IntroCard(
+                  total: svc.count,
+                  categories: svc.categoryCount,
+                  termNoun: widget.termNoun,
+                ),
                 const SizedBox(height: AppSpacing.sm),
-                // The picker only appears for a multilingual dataset (the Wi-Fi
-                // Glossary). The English-only Authentication Glossary renders
+                // The picker only appears for a multilingual dataset (the
+                // Wireless Glossary). The English-only Authentication Glossary renders
                 // without it, so it never promises translations it lacks.
                 if (svc.hasTranslations) ...<Widget>[
                   _LanguagePicker(
@@ -330,10 +345,15 @@ bool _abbrIsIdentifier(String abbr) =>
 
 /// One-line glossary intro + counts.
 class _IntroCard extends StatelessWidget {
-  const _IntroCard({required this.total, required this.categories});
+  const _IntroCard({
+    required this.total,
+    required this.categories,
+    required this.termNoun,
+  });
 
   final int total;
   final int categories;
+  final String termNoun;
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +367,7 @@ class _IntroCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
-        'Plain-language definitions of $total Wi-Fi terms across $categories '
+        'Plain-language definitions of $total $termNoun terms across $categories '
         'categories. Search by term, abbreviation, or any word in a definition.',
         style: text.labelMedium?.copyWith(color: colors.textSecondary),
       ),

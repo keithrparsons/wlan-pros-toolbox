@@ -1,5 +1,5 @@
 // Widget tests for the two bespoke Tier-2 icons added on feat/glossary-edu-icons:
-//   * the Wi-Fi Glossary TOOL icon (assets/tool-icons/wifi-glossary.svg),
+//   * the Wireless Glossary TOOL icon (assets/tool-icons/wifi-glossary.svg),
 //     resolved by the <id>.svg convention in ToolAssets and rendered by ToolRow;
 //   * the Educational Resources CATEGORY icon
 //     (assets/tool-icons/educational-resources.svg), wired via the new
@@ -29,7 +29,7 @@ ToolCategory _eduCategory() =>
 void main() {
   tearDown(ToolAssets.debugReset);
 
-  group('Wi-Fi Glossary tool icon', () {
+  group('Wireless Glossary tool icon', () {
     testWidgets(
       'ToolRow renders the bespoke SVG (not the bolt fallback) when bundled',
       (tester) async {

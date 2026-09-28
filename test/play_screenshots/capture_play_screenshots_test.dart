@@ -624,8 +624,8 @@ void main() {
     );
   });
 
-  // ── 8. Wi-Fi Glossary — the educational depth ───────────────────────────────
-  testWidgets('play-8 Wi-Fi Glossary', (tester) async {
+  // ── 8. Wireless Glossary — the educational depth ─────────────────────────────
+  testWidgets('play-8 Wireless Glossary', (tester) async {
     await _capture(
       tester,
       id: 'play-phone-8-glossary',

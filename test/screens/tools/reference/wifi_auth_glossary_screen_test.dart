@@ -48,6 +48,7 @@ Widget _harness(GlossaryService svc) => MaterialApp(
         service: svc,
         assetPath: kWifiAuthGlossaryAsset,
         title: 'Wi-Fi Authentication Glossary',
+        termNoun: 'Wi-Fi authentication',
       ),
     );
 
@@ -64,7 +65,8 @@ void main() {
       expect(entry.isLive, isTrue);
       expect(entry.subgroup, 'Security & Auth');
 
-      // It lives in the same category as the Wi-Fi Glossary (Quick Reference).
+      // It lives in the same category as the Wireless Glossary (Quick
+      // Reference).
       final ToolCategory cat = kToolCategories.firstWhere(
         (ToolCategory c) =>
             c.tools.any((ToolEntry t) => t.id == 'wifi-auth-glossary'),
@@ -72,7 +74,7 @@ void main() {
       expect(
         cat.tools.any((ToolEntry t) => t.id == 'wifi-glossary'),
         isTrue,
-        reason: 'auth glossary sits beside the wifi glossary',
+        reason: 'auth glossary sits beside the wireless glossary',
       );
     });
 
@@ -98,6 +100,11 @@ void main() {
 
       // AppBar carries the auth title.
       expect(find.text('Wi-Fi Authentication Glossary'), findsOneWidget);
+      // The intro counts authentication terms, not wireless ones.
+      expect(
+        find.textContaining('Wi-Fi authentication terms across'),
+        findsOneWidget,
+      );
 
       // A known term and its definition render.
       expect(

@@ -769,8 +769,9 @@ class AppRouter {
   /// `emergency-phrases` is permanent (route, catalog, asset, help, tests).
   static const String emergencyPhrases = '/tools/emergency-phrases';
 
-  /// Wi-Fi Glossary — 92 plain-language Wi-Fi term definitions, grouped by
-  /// category (offline bundled JSON). The id `wifi-glossary` is permanent
+  /// Wireless Glossary (the Wi-Fi Glossary until 2026-09-28) — 123
+  /// plain-language wireless term definitions, grouped by category (offline
+  /// bundled JSON). The id `wifi-glossary` is permanent
   /// (backs this route, the catalog entry, the asset, and tests).
   static const String wifiGlossary = '/tools/wifi-glossary';
 
@@ -1194,6 +1195,7 @@ class AppRouter {
     wifiAuthGlossary: (_) => const WifiGlossaryScreen(
       assetPath: kWifiAuthGlossaryAsset,
       title: 'Wi-Fi Authentication Glossary',
+      termNoun: 'Wi-Fi authentication',
     ),
     antennaConnectors: (_) => const AntennaConnectorsScreen(),
     antennaFundamentals: (_) => const AntennaFundamentalsScreen(),

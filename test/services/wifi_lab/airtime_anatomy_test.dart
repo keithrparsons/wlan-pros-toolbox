@@ -470,6 +470,50 @@ void main() {
       );
     });
 
+    // Keith, 2026-09-28, question I3: when an aggregate is over both the
+    // time limit and a size limit, the Check names both. The time test runs
+    // first, so before this the size limit went unmentioned.
+    test('HT 20 MHz MCS 0, 64 x 1,500 bytes breaks both limits and the '
+        'Check names both', () {
+      final AirtimeResult r = computeAirtime(
+        const AirtimeScenario(
+          phy: AirtimePhy.ht,
+          widthMhz: 20,
+          mcs: 0,
+          framesAggregated: 64,
+        ),
+      );
+      expect(r.ppduUs, greaterThan(5484));
+      expect(r.psduBytes, 99328);
+      expect(r.check, AirtimeCheck.ppduTooLong);
+      expect(r.check.hasAirtime, isTrue);
+      expect(r.exceedsTimeAndSize, isTrue);
+      expect(r.sizeRefusal!.kind, AggregationLimitKind.ampdu);
+      expect(
+        r.checkMessage,
+        'PPDU exceeds 5.484 ms, and the A-MPDU (aggregate MPDU) is 99,328 '
+        'bytes, over the HT (802.11n) maximum of 65,535 bytes: send fewer '
+        'frames',
+      );
+    });
+
+    test('over the time limit only: the Check names the time limit alone', () {
+      final AirtimeResult r = computeAirtime(
+        const AirtimeScenario(
+          phy: AirtimePhy.vht,
+          widthMhz: 20,
+          mcs: 0,
+          streams: 1,
+          guardInterval: GuardInterval.gi08,
+          framesAggregated: 16,
+        ),
+      );
+      expect(r.check, AirtimeCheck.ppduTooLong);
+      expect(r.sizeRefusal, isNull);
+      expect(r.exceedsTimeAndSize, isFalse);
+      expect(r.checkMessage, 'PPDU exceeds 5.484 ms: send fewer frames');
+    });
+
     test('HT 32 x 1,500 bytes is under every cap and its numbers are '
         'unchanged', () {
       final AirtimeResult r = computeAirtime(
@@ -508,7 +552,6 @@ void main() {
               framesAggregated: n,
             );
             final AirtimeResult r = computeAirtime(s);
-            if (r.check == AirtimeCheck.ppduTooLong) continue;
             final AggregateStructure st = buildAggregateStructure(
               s,
               phy == AirtimePhy.legacy
@@ -518,6 +561,17 @@ void main() {
             final bool over = checkAggregationLimits(st).any(
               (AggregationLimitCheck c) => c.verdict == LimitVerdict.exceeds,
             );
+            if (r.check == AirtimeCheck.ppduTooLong) {
+              // Over the time limit: the size refusal is still reported
+              // exactly when the structure view marks it (Keith, I3).
+              expect(
+                r.sizeRefusal != null,
+                over,
+                reason: '${phy.shortLabel} $payload B x $n: ${r.checkMessage}',
+              );
+              expect(r.exceedsTimeAndSize, over);
+              continue;
+            }
             expect(
               r.check.isOk,
               !over,

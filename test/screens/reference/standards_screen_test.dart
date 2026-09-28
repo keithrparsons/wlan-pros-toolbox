@@ -43,20 +43,23 @@ void main() {
       expect(wifi6e.hasBand6, isTrue);
     });
 
-    test('Wi-Fi generation years use the WFA certification year consistently',
-        () {
-      // Keith's Wave-2 decision (findings A+F). Wi-Fi 6 stays 2019, Wi-Fi 7
-      // stays 2024, and the IEEE ratification dates live in the footnote.
-      expect(byGen('Wi-Fi 4').year, 2009); // WFA cert = IEEE ratification
-      expect(byGen('Wi-Fi 5').year, 2014); // WFA cert (IEEE ratified 2013)
-      expect(byGen('Wi-Fi 6').year, 2019);
-      expect(byGen('Wi-Fi 6E').year, 2020);
-      expect(byGen('Wi-Fi 7').year, 2024);
-      // The convention is disclosed, and the IEEE dates are footnoted (cite+pin).
-      expect(StandardsScreen.ieeeRatFootnote, contains('Wi-Fi Alliance'));
-      expect(StandardsScreen.ieeeRatFootnote, contains('ratified 2013'));
-      expect(StandardsScreen.ieeeRatFootnote, contains('ratified 2021'));
-    });
+    test(
+      'Wi-Fi generation years use the WFA certification year consistently',
+      () {
+        // Keith's Wave-2 decision (findings A+F). Wi-Fi 6 stays 2019, Wi-Fi 7
+        // stays 2024, and the IEEE ratification dates live in the footnote.
+        expect(byGen('Wi-Fi 4').year, 2009); // WFA cert = IEEE ratification
+        // WFA cert launched 2013-06-19; IEEE approved 802.11ac 2013-12-11.
+        expect(byGen('Wi-Fi 5').year, 2013);
+        expect(byGen('Wi-Fi 6').year, 2019);
+        expect(byGen('Wi-Fi 6E').year, 2020);
+        expect(byGen('Wi-Fi 7').year, 2024);
+        // The convention is disclosed, and the IEEE dates are footnoted (cite+pin).
+        expect(StandardsScreen.ieeeRatFootnote, contains('Wi-Fi Alliance'));
+        expect(StandardsScreen.ieeeRatFootnote, contains('ratified 2013'));
+        expect(StandardsScreen.ieeeRatFootnote, contains('ratified 2021'));
+      },
+    );
 
     test('802.11be is Wi-Fi 7 on three bands with MLO', () {
       final StandardEntry wifi7 = byGen('Wi-Fi 7');
@@ -112,10 +115,20 @@ void main() {
     });
 
     test('pre-Wi-Fi-4 amendments show — for generation', () {
-      for (final String std in <String>['802.11', '802.11b', '802.11a', '802.11g']) {
-        final StandardEntry e = StandardsScreen.standards
-            .firstWhere((StandardEntry s) => s.std == std);
-        expect(e.generation, '—', reason: '$std should have no generation name');
+      for (final String std in <String>[
+        '802.11',
+        '802.11b',
+        '802.11a',
+        '802.11g',
+      ]) {
+        final StandardEntry e = StandardsScreen.standards.firstWhere(
+          (StandardEntry s) => s.std == std,
+        );
+        expect(
+          e.generation,
+          '—',
+          reason: '$std should have no generation name',
+        );
       }
     });
 
@@ -150,22 +163,31 @@ void main() {
         expect(find.text('802.11ax'), findsNWidgets(2));
         // Spec values render. RE-SOURCED 2026-07-11: was '46 Gbps (MLO)'.
         expect(find.text('23.1 Gbps'), findsOneWidget);
-        expect(find.text('46 Gbps (MLO)'), findsNothing,
-            reason: 'The ratified 802.11be-2024 cap is 8 streams (Table '
-                '9-417t), so 23.1 Gbps. 46 Gbps needed 16 streams.');
+        expect(
+          find.text('46 Gbps (MLO)'),
+          findsNothing,
+          reason:
+              'The ratified 802.11be-2024 cap is 8 streams (Table '
+              '9-417t), so 23.1 Gbps. 46 Gbps needed 16 streams.',
+        );
       });
     });
   });
 
-  testWidgets('renders without overflow at 320/375/768/1280 widths',
-      (tester) async {
+  testWidgets('renders without overflow at 320/375/768/1280 widths', (
+    tester,
+  ) async {
     for (final double width in <double>[320, 375, 768, 1280]) {
       await _withViewport(tester, Size(width, 1200), () async {
         await tester.pumpWidget(
           MaterialApp(theme: AppTheme.dark(), home: const StandardsScreen()),
         );
         await tester.pump();
-        expect(tester.takeException(), isNull, reason: 'overflow at ${width}px');
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'overflow at ${width}px',
+        );
       });
     }
   });
