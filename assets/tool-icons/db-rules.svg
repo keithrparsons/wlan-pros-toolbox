@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- top: the linear power bar -->
+    <path d="M3 4 H21"/>
+    <!-- evenly spaced dB steps below land at doubling distances above -->
+    <path d="M4 15 L4 4"/>
+    <path d="M9.5 15 L6.5 4"/>
+    <path d="M15 15 L10.5 4"/>
+    <path d="M20.5 15 L20.5 4"/>
+    <!-- bottom: the dB ruler, evenly spaced -->
+    <path d="M3 15 H21"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="9.5" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

@@ -2626,6 +2626,42 @@
       ],
       "source": "No primary source was read for any body-loss figure; every loss value is an illustrative setting. Receiver sensitivity per MCS and the log-distance path loss are the Rate vs Range tool's. Everything is calculated on your device."
     },
+    "db-rules": {
+      "name": "Decibels in Your Head: the Rules of 3 and 10",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows why a few dB is a big change. One dB (decibel) slider moves a signal from -80 to -60 dBm (decibels relative to one milliwatt) against a fixed -70 dBm reference. Above the slider's dB ruler, a linear bar shows the same power in milliwatts, full length at -60 dBm, and a line joins each whole dB to its place on the bar. The readouts give the power of both, the difference as a ratio, and that ratio built from the rules of 3 and 10 beside the exact figure.",
+      "whyHere": "dB is a ratio, so equal steps in dB are equal multiplications of power. +3 dB doubles the power and +10 dB multiplies it by ten. That makes -67 dBm about twice the power of -70 dBm, which the dBm numbers hide. Together the two rules reach any whole number of dB, so a signal difference can be read in your head. This is the dBm-to-milliwatt arithmetic in the CWNA (Certified Wireless Network Administrator) exam objectives.",
+      "howToUse": [
+        "Predict, then reveal asks: is -67 dBm a little or a lot stronger than -70 dBm? Decide, reveal the answer, then press Show -67 dBm against -70 dBm to see the bar double.",
+        "Move the Signal level slider. Every 3 dB up doubles the linear bar, and every 10 dB up makes it ten times longer. At -80 dBm the bar is 1% of its length, at -70 dBm 10%, and at -60 dBm all of it.",
+        "The step buttons add or take away 3 dB or 10 dB, one rule at a time. A step that would leave the -80 to -60 dBm range is turned off.",
+        "Read the rules path. +1 dB, for example, is +10 -3 -3 -3: ten times, then halved three times, 1.25x against the exact 1.259x.",
+        "On a computer or tablet, Present opens the tool full screen for a projector: Up and Down move the signal 1 dB, Right adds 3 dB and Left takes 3 dB away, Page Up and Page Down move 10 dB, Space shows -67 dBm against -70 dBm, P reveals the answer, R resets, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Signal level",
+          "unit": "dBm",
+          "range": "-80 to -60 in whole dB; default -70, the same as the reference"
+        },
+        {
+          "name": "Reference",
+          "unit": "dBm",
+          "range": "Fixed at -70"
+        }
+      ],
+      "algorithm": "Power in milliwatts = 10^(dBm / 10), the dBm / Watt Converter's formula; picowatts (pW, trillionths of a watt) = milliwatts x 10^9. The power ratio of a difference of D dB = 10^(D / 10), so +3 dB = 10^0.3 = 1.995 and +10 dB = 10 exactly. The rules path writes D as 10a + 3b with the fewest steps (10 and 3 share no factor, so every whole D has one) and estimates the ratio as 10^a x 2^b. The linear bar's length is the signal's milliwatts divided by the milliwatts of -60 dBm.",
+      "example": "-70 dBm is 100 pW. -67 dBm is 199.5 pW: +3 dB, 1.995 times the power, about double. -60 dBm is 1,000 pW, ten times the reference. -69 dBm is +1 dB: +10 -3 -3 -3 by the rules, x10 /2 /2 /2 = 1.25x, against the exact 1.259x.",
+      "fieldNotes": [
+        "+3 dB is 1.995 times the power, so say about double. +10 dB is exactly ten times.",
+        "The same rules hold for losses: -3 dB halves the power and -10 dB leaves a tenth of it.",
+        "dB compares two powers, and dBm is one power compared with one milliwatt. The difference between two dBm levels is in dB.",
+        "For a level outside -80 to -60 dBm, or a conversion to watts, use the dBm / Watt Converter. The dB Reference lists the common ratios in a table.",
+        "Every number here is arithmetic. Nothing is measured and nothing is illustrative.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "The rules of 3 and 10 for dBm-to-milliwatt conversion are objective 1.2.7 of CWNP's CWNA-109 exam objectives. The arithmetic is the definition of the decibel, 10 log10 of a power ratio, the same formula the dBm / Watt Converter uses. Everything is calculated on your device."
+    },
     "rate-adaptation": {
       "name": "Rate Adaptation",
       "category": "Wi-Fi Classroom",

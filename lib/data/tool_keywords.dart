@@ -1137,6 +1137,31 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'simulation',
   ],
   // Wi-Fi Classroom (2026-09-25). Terms not already in the title or description.
+  // Wi-Fi Classroom (2026-09-27). The words a student types when dB stops
+  // making sense.
+  'db-rules': <String>[
+    'decibel',
+    'db',
+    'dbm',
+    'rule of 3',
+    'rule of 10',
+    'rules of 3 and 10',
+    '3 db',
+    '10 db',
+    'double the power',
+    'half the power',
+    'milliwatt',
+    'mw',
+    'logarithm',
+    'log scale',
+    'ratio',
+    'dbm to mw',
+    'rssi',
+    'cwna',
+    'wi-fi lab',
+    'wi-fi classroom',
+    'simulator',
+  ],
   'fspl-simulator': <String>[
     'free space path loss',
     'friis',

@@ -35,6 +35,7 @@ import '../screens/tools/calculators/hear_frequency_screen.dart';
 import '../screens/tools/calculators/modulation_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_anatomy_screen.dart';
 import '../screens/tools/calculators/medium_access_simulator_screen.dart';
+import '../screens/tools/calculators/db_rules_screen.dart';
 import '../screens/tools/calculators/fspl_simulator_screen.dart';
 import '../screens/tools/calculators/airtime_fairness_screen.dart';
 import '../screens/tools/calculators/devices_disagree_screen.dart';
@@ -292,6 +293,7 @@ class AppRouter {
   static const String mediumAccessSimulator = '/tools/medium-access-simulator';
   // Wi-Fi Classroom (2026-09-25). Friis / FSPL curves, pure on-device math; all
   // platforms incl. web.
+  static const String dbRules = '/tools/db-rules';
   static const String fsplSimulator = '/tools/fspl-simulator';
   // Wi-Fi Classroom (2026-09-25). Pure-Dart packet vs airtime fairness model; all
   // platforms incl. web.
@@ -869,6 +871,7 @@ class AppRouter {
     hearFrequency: (_) => const HearFrequencyScreen(),
     modulationSimulator: (_) => const ModulationSimulatorScreen(),
     mediumAccessSimulator: (_) => const MediumAccessSimulatorScreen(),
+    dbRules: (_) => const DbRulesScreen(),
     fsplSimulator: (_) => const FsplSimulatorScreen(),
     airtimeFairness: (_) => const AirtimeFairnessScreen(),
     airtimeAnatomy: (_) => const AirtimeAnatomyScreen(),

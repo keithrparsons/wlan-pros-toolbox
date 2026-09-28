@@ -2550,6 +2550,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'Guided Lessons',
       ),
       // ── RF and Propagation ──
+      // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
+      // shelf: the decibel arithmetic every tool after it assumes.
+      ToolEntry(
+        id: 'db-rules',
+        title: 'Decibels in Your Head: the Rules of 3 and 10',
+        description:
+            'Why -67 dBm is twice -70 dBm: one dB slider and a linear '
+            'milliwatt bar that doubles every 3 dB and grows ten times every 10',
+        routeName: '/tools/db-rules',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(
         id: 'fspl-simulator',
