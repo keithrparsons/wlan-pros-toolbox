@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · PoE: Why the New AP Runs at Half Strength added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,12 +37,12 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
+- **Wi-Fi Classroom** (52 tools)
   - Guided Lessons (3)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
-  - Network Design and Security (12)
+  - Network Design and Security (13)
   - Course Handouts (11)
 
 ---
@@ -3818,7 +3818,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4916,7 +4916,7 @@ Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A 
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Network Design and Security (12)
+## Network Design and Security (13)
 
 
 ### Channel Planner
@@ -5393,6 +5393,40 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 - Caution with FT: clients whose drivers do not understand the FT AKMs can fail to join a network that offers FT at all. Check the client mix before enabling it, and know whether the WLAN offers FT only or mixed (FT and non-FT AKMs side by side).
 - PMF (802.11w) protects deauthentication, disassociation and robust Action frames (such as the FT Action frames over the DS) once keys exist. Beacons, probes, authentication and association frames are never protected. 6 GHz requires WPA3 or OWE with PMF.
 - Joining a network frame by frame, from the scan through DHCP and the address check, is its own tool: Association, Frame by Frame.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### PoE: Why the New AP Runs at Half Strength
+
+Shows what a new Wi-Fi 7 AP (access point) does on each kind of PoE (Power over Ethernet) switch port. One generic tri-band AP, with three radios (2.4, 5 and 6 GHz) of four spatial streams each and a need of about 29 W for full function, is plugged into an 802.3af, 802.3at or 802.3bt port. The drawing shows the power that reaches the AP against what it needs, which radios and streams stay live, and the power light, which is on every time.
+
+**Why it's here.** It corrects the belief that the light is on, so power is fine. A Wi-Fi 7 AP on a port that cannot supply its full power still boots and still lights up, then quietly runs with fewer streams or fewer radios. On an 802.3at port the AP modeled here gives up half its spatial streams, which is how a new AP ends up slower than the old one it replaced, with nothing on the front of it to say so.
+
+**How to use**
+1. Pick the switch port type: 802.3af, 802.3at or 802.3bt. Watch the stream marks on each radio and the power bar under the AP. The power light stays on in all three.
+2. On 802.3at, choose what the AP gives up: all three radios at 2x2 (6 of its 12 streams), or two radios at 4x4 with the third turned off (8 of 12). The vendor guide this model follows lists both.
+3. Read the numbers beside the drawing: streams live of 12, radios live of 3, and the power at the AP against the about 29 W it needs.
+4. Predict, then reveal asks: the new Wi-Fi 7 AP goes on last year's 802.3at switch and its power light comes on. Is it running at full strength?
+5. To add up the power for a whole switch, open PoE Budget; for every PoE class and type, open PoE Reference. Both are linked under the explainer.
+6. On a computer or tablet, Present opens the tool full screen for a projector: Up and Down or the Right arrow change the port type, 1, 2 and 3 pick 802.3af, 802.3at and 802.3bt, Space switches what the AP gives up on 802.3at, R resets, P reveals the answer, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Switch port type | choice | 802.3af (PoE), 802.3at (PoE+) or 802.3bt (PoE++, Type 3); default 802.3at |
+| What the AP gives up on 802.3at | choice | All three radios at 2x2, or two radios at 4x4 with 2.4 GHz off; default all three at 2x2. Applies only on 802.3at |
+
+**How it works.** Power at the AP is the most IEEE 802.3 guarantees at the powered device after the cable: 12.95 W for 802.3af (15.4 W from the switch), 25.5 W for 802.3at (30.0 W) and 51.0 W for 802.3bt Type 3 (60.0 W), the same figures as PoE Reference. The AP needs about 29 W for full function. At 29 W or more, every radio runs 4x4:4, 12 streams. On 802.3at the AP runs either three radios at 2x2:2 (6 streams) or two radios at 4x4:4 with 2.4 GHz off (8 streams). On 802.3af, which the vendor guides do not cover, this model runs no Wi-Fi radio (illustrative). The power light is on in every case. Nothing is computed from the watts beyond this comparison: the radio states come from the published behavior, not from a per-radio power figure.
+
+**Example.** On an 802.3bt port, 51.0 W reaches the AP and all 12 streams run. Move it to an 802.3at port: 25.5 W reaches it, 3.5 W short of the about 29 W it needs, and it runs three radios at 2x2, 6 of 12 streams, half strength, with the power light still on. Choose two radios at 4x4 instead and it keeps 8 of 12, with 2.4 GHz off.
+
+**Field notes**
+- Vendors cut different things at lower power. This tool models one generic AP on one published guide, so read your own AP's data sheet for what it does.
+- What a Wi-Fi 7 AP does on 802.3af is not in either guide. This tool shows every Wi-Fi radio off as an illustrative case, not a measured one.
+- A 2x2 client uses at most two streams, so one phone alone may notice little. What the AP loses is the streams it could share among many clients at once and, with a radio off, a whole band.
+- A light on the AP proves power, not enough power. Check the AP's own power status and the power the switch has granted the port.
+- Some APs with two Ethernet ports can combine two 802.3at feeds for full function; the guide this model follows says so of its AP. This tool leaves that out, along with IoT (Internet of Things), Bluetooth and scanning radios, and cable shorter than the 100 m the standard's figures assume.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 

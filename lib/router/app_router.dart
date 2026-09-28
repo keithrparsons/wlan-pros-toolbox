@@ -55,6 +55,7 @@ import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/join_ladder_screen.dart';
+import '../screens/tools/calculators/poe_half_strength_screen.dart';
 import '../screens/tools/calculators/phy_preamble_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
@@ -413,6 +414,10 @@ class AppRouter {
   // and DNS, on the eap-ladder engine; pure on-device model, all platforms.
   // Not joinNetwork (/tools/join-network), which really joins a network.
   static const String joinLadder = '/tools/join-ladder';
+  // Wi-Fi Classroom (2026-09-27). Which radios and streams a generic Wi-Fi 7
+  // AP keeps on an 802.3af, 802.3at or 802.3bt port; pure on-device model,
+  // all platforms incl. web.
+  static const String poeHalfStrength = '/tools/poe-half-strength';
   // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
@@ -902,6 +907,7 @@ class AppRouter {
     bandSteering: (_) => const BandSteeringScreen(),
     legacyProtection: (_) => const LegacyProtectionScreen(),
     eapLadder: (_) => const EapLadderScreen(),
+    poeHalfStrength: (_) => const PoeHalfStrengthScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
     maidenhead: (_) => const MaidenheadScreen(),

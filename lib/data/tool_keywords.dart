@@ -1767,6 +1767,31 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   // Wi-Fi Classroom (2026-09-26). Spec 34's keyword list plus the terms the
   // tool teaches.
+  // Wi-Fi Classroom (2026-09-27). Candidate 10 of the classroom research
+  // brief: the words a student types when a new AP underperforms on PoE.
+  'poe-half-strength': <String>[
+    'poe',
+    'power over ethernet',
+    'poe+',
+    'poe++',
+    '802.3af',
+    '802.3at',
+    '802.3bt',
+    'upoe',
+    'power budget',
+    'reduced functionality',
+    'underpowered',
+    'wi-fi 7',
+    'spatial streams',
+    '4x4',
+    '2x2',
+    'radio disabled',
+    'switch port',
+    'access point power',
+    'wi-fi lab',
+    'wi-fi classroom',
+    'simulator',
+  ],
   'body-loss': <String>[
     'body loss',
     'human body',

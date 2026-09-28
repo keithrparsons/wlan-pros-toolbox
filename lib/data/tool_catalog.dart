@@ -2965,6 +2965,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      ToolEntry(
+        id: 'poe-half-strength',
+        title: 'PoE: Why the New AP Runs at Half Strength',
+        description:
+            'Put a Wi-Fi 7 AP on an 802.3af, 802.3at or 802.3bt port and see '
+            'which radios and streams stay live while the power light stays on',
+        routeName: '/tools/poe-half-strength',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       // ── Course Handouts ── the WLAN Pros printed cards and checklists (PDF),
       // moved in from Educational Resources 2026-09-26. Ids, routes, assets and
       // help entries unchanged.
