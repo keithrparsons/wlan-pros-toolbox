@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the level meter -->
+    <rect x="3" y="8.5" width="18" height="6" rx="2"/>
+    <!-- preamble detect and energy detect, bracketed: the 20 dB gap -->
+    <path d="M8.5 16 V4 H15.5 V16"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="12" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

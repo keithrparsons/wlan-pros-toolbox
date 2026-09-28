@@ -2929,6 +2929,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Airtime and Access',
       ),
+      // What an Interferer Costs (2026-09-27): preamble detect -82 vs energy
+      // detect -62, and why a Wi-Fi neighbor costs more airtime than a
+      // microwave at the same level. Before Spatial Reuse, which relaxes -82.
+      ToolEntry(
+        id: 'interferer-cost',
+        title: 'What an Interferer Costs (and how a NIC hears the air)',
+        description:
+            'Why a Wi-Fi neighbor costs more airtime than a microwave at the '
+            'same level: preamble detect vs energy detect, and when you wait',
+        routeName: '/tools/interferer-cost',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
       ToolEntry(
         id: 'spatial-reuse',
         title: 'Spatial Reuse',

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 241 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 242 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,11 +37,11 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (68 tools)
+- **Wi-Fi Classroom** (69 tools)
   - Guided Lessons (10)
   - RF and Propagation (12)
   - Signals and PHY (7)
-  - Airtime and Access (11)
+  - Airtime and Access (12)
   - Network Design and Security (17)
   - Course Handouts (11)
 
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (68 tools)
+# Wi-Fi Classroom (69 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4788,7 +4788,7 @@ Shows why the speed class printed on a router box is not what one device gets. T
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Airtime and Access (11)
+## Airtime and Access (12)
 
 
 ### Medium Access Simulator
@@ -4986,6 +4986,49 @@ Runs one Wi-Fi link frame by frame under Minstrel-style rate control, the kind L
 - Delivered throughput is far below the PHY rate here because every frame waits, sends a preamble and waits for its ACK on its own. Aggregation (A-MPDU) and Block Ack, which real links use, are left out.
 - There is one station, so there are no collisions, and backoff is the mean rather than a random draw. The Medium Access Simulator shows contention.
 - The ACK timeout is SIFS + slot + a receive delay of about 20 to 25 µs. The sources disagree on the exact constant, so it is a setting.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### What an Interferer Costs (and how a NIC hears the air)
+
+Shows how a Wi-Fi radio, the network interface card (NIC) in a laptop or an access point (AP), decides the air is busy, and what each kind of interferer costs it. A level meter draws the two clear channel assessment (CCA) thresholds: preamble detect at -82 dBm, where the radio holds off for another Wi-Fi transmitter it can decode, and energy detect at -62 dBm, where it holds off for anything else. The 20 dB between them is 100 times the power. Bars show how far away the same transmitter still makes you wait, as Wi-Fi and as anything else, and a 60 ms sample of your channel shows when your radio waits and when it sends into the interferer. Four sources are side by side: a neighbor's AP on your channel, a microwave oven, Bluetooth, and an analog video sender.
+
+**Why it's here.** Many people assume the harm comes from non-Wi-Fi devices. Usually the bigger cost is how readily your own radio backs off for other Wi-Fi on its channel. A neighbor's AP at -80 dBm makes your radio wait every time it transmits; a microwave oven at -70 dBm in your channel does not, because it is under energy detect, and at that level it barely touches your frames. The same 20 dB means a Wi-Fi neighbor defers you from 10 times farther away in free space, and 4.6 times farther indoors (path-loss exponent 3). Non-Wi-Fi interference can still do real harm: a continuous analog video sender stays under energy detect, so nobody waits for it, and ruins most frames anyway. That is the tool's counterexample.
+
+**How to use**
+1. Start with the question at the top: a microwave oven and a neighbor's AP, both at -70 dBm. Pick an answer, then press Reveal to load that scene and read why.
+2. Pick a source: Wi-Fi AP (a neighbor on your channel), Microwave, Bluetooth or Video. Drag its level slider under the meter and watch the marker cross the thresholds. The meter's scale never moves.
+3. Read the verdict and the two costs: airtime lost waiting (deferral) and airtime lost to corrupted frames. The corrupted-frame shares are illustrative. The table underneath shows every source at its current level, side by side.
+4. Pick your AP's channel. The oven's peak lands in channel 11; on channel 6 and channel 1 it is weaker (illustrative), and on 5 GHz there is no oven and no Bluetooth. For the oven, pick 60 Hz or 50 Hz mains and watch its ON bursts in the 60 ms sample.
+5. On 5 GHz, pick a channel width of 20, 40, 80 or 160 MHz and watch preamble detect move from -82 to -79, -76 and -73 dBm while energy detect stays at -62.
+6. Set the path-loss exponent for the distance bars: 2.0 for free space, 3.0 for a typical indoor space, 3.5 for dense walls. Set the neighbor's airtime if you like; its default is illustrative.
+7. On a computer or tablet, Present opens the tool full screen for a projector: Up and Down move the selected source's level 1 dB, N picks the next source, C the next channel, R resets, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Source | - | Wi-Fi AP on your channel (default), microwave oven, Bluetooth or analog video sender |
+| Source level | dBm | -100 to -30. Defaults, all illustrative: Wi-Fi -78; oven -50 at its strongest frequency; Bluetooth -42 (a 4 dBm Class 2 radio 2 m away in free space, calculated); video sender -70 |
+| Your AP's channel | - | Channel 1, 6 or 11 in 2.4 GHz, or 5 GHz channel 36; default 11 |
+| Channel width | MHz | 20, 40, 80 or 160 on 5 GHz; 20 on 2.4 GHz; default 20. 320 MHz is left out: its threshold is not published in the sources used |
+| Mains power | Hz | 60 (default) or 50; the oven only |
+| Neighbor airtime | % | 10 to 80; default 30, illustrative |
+| Path-loss exponent | n | 2.0, 3.0 (default) or 3.5; the distances only |
+
+**How it works.** Preamble detect is -82 dBm for a 20 MHz physical layer protocol data unit (PPDU), -79 for 40 MHz, -76 for 80 MHz and -73 for 160 MHz: 3 dB more per doubling, which is the same -82 dBm in each 20 MHz. Energy detect is -62 dBm on the primary 20 MHz at every width. A Wi-Fi source is heard at or above preamble detect; any other source at or above energy detect. When a source is heard, your radio waits for all of its time on the air in your channel: that is the airtime lost waiting. When it is not heard, your radio sends into it, and the airtime lost to corrupted frames is its time on the air times the chance an overlapped frame fails. That chance is a logistic curve in the source's level, 1 / (1 + e^-((level - midpoint) / spread)), with midpoint and spread per source: Wi-Fi -86 and 2.5 dB, oven -55 and 2.5, Bluetooth -70 and 3, video -75 and 2.5, all illustrative. Time on the air in your channel: the neighbor's airtime; the oven 50%, one burst per mains cycle, 8.33 of 16.67 ms at 60 Hz and 10 of 20 ms at 50 Hz; Bluetooth 2 of 6 slots (illustrative) times 20 of 79 hop channels landing in your 20 MHz, 8.4%; the video sender 100%. The oven sits 0 dB below its peak on channel 11, 15 dB on channel 6 and 30 dB on channel 1 (both illustrative). Distances: the level of a 20 dBm transmitter (illustrative) is 20 - free-space loss at 1 m - 10 n log10(d); each distance is where that level meets a threshold. Their ratio is 10^(gap / 10n), independent of the transmitter.
+
+**Example.** Defaults, channel 11, n = 3.0: a 20 dBm transmitter reaches -82 dBm at 114 m (375 ft) and -62 dBm at 25 m (81 ft), 4.6 times the distance and 21.5 times the area. In free space the ratio is 10. The question's scene, both at -70 dBm: the neighbor is 12 dB above preamble detect, so your radio waits its whole 30% airtime; the oven is 8 dB under energy detect, so your radio never waits and loses about 0.1% of its airtime to corrupted frames (illustrative). The oven at -50 dBm is above energy detect and costs 50%, the ON half of every mains cycle. The video sender at -70 dBm costs no waiting and 88% to corrupted frames (illustrative).
+
+**Field notes**
+- The -82 and -62 dBm thresholds are the standard's minimum requirements (IEEE 802.11-2020, 17.3.10.6), not what chips do. A radio must call the air busy at or above them. Real chips often detect preambles lower, near -91 dBm by one vendor's account (about 4 dB above a -95 dBm noise floor), which makes the real gap wider than 20 dB.
+- The 40, 80 and 160 MHz preamble-detect values come from one source (Bejarano, Knightly and Park, IEEE Communications Magazine, 2013). The -82 and -62 values are confirmed by two.
+- The oven's timing and duty come from Airshark (Rayanchu, Patro and Banerjee, ACM IMC 2011), which measured a 16.66 ms cycle and a duty of 0.5, and agree with two older sources. Its peak, mostly 2.45 to 2.47 GHz, was measured on six ovens. How much weaker it is on channels 6 and 1 was not found in any source; those values are illustrative.
+- The corrupted-frame shares are illustrative. No per-rate curve of frame loss against interference level was found. The curve is shaped to agree with what Airshark measured on a good link: an oven cost almost nothing below about -60 dBm, Bluetooth never cost more than about a tenth of throughput, and an analog video camera cost 80% or more at -70 dBm.
+- Keith's field observation: an AP sitting on top of a running microwave oven, sending at high rates to its clients with no retries. That fits an AP on channel 1 or on 5 GHz, where the oven is weak or absent, and clients across the room hear the oven far weaker than the AP does.
+- Waiting is decided at the sender and a frame's survival at its receiver. This tool puts both at your radio, so one level drives both.
+- Left out: collisions between two Wi-Fi radios that start at the same moment, the hidden-node case beyond the illustrative curve, Bluetooth's adaptive hopping (which avoids busy channels), rate adaptation lowering the rate after failed frames, secondary channels, and the 802.11ax per-20 MHz rules. The Spatial Reuse tool shows how BSS coloring can relax -82 dBm.
+- To see these interferers on a screen, open the Spectrum Analysis lesson (its interferer gallery) and the Swept vs FFT race in Fourier and FFT, which shows how a swept analyzer and a real-time fast Fourier transform (FFT) analyzer catch an oven's bursts and Bluetooth's hops.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
@@ -6092,6 +6135,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 
