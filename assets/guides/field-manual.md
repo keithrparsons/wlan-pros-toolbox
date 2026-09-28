@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 243 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 244 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (70 tools)
-  - Guided Lessons (11)
+- **Wireless Classroom** (71 tools)
+  - Guided Lessons (12)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (70 tools)
+# Wireless Classroom (71 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (11)
+## Guided Lessons (12)
 
 
 ### Antenna Fundamentals
@@ -3964,6 +3964,26 @@ A read-along lesson on the two short-range radios in a phone: NFC (near field co
 **Field notes**
 - Checked on 28 September 2026 against sources that include Visa, EMVCo, Apple, Google, the FTC and the FiRa Consortium. The full source list is the last step of the lesson.
 - The lesson is independent and isn't affiliated with or endorsed by any company named in it.
+
+
+### Satellite Texting, Explained
+
+A read-along lesson on how many newer phones send a text through a satellite when there's no cell signal and no Wi-Fi: how the text reaches the satellite, why the phone needs a clear view of the sky, how to hold the phone and wait, why it's a backup and not a promise, and what to set up before you go. The lesson follows the free PDF guide of the same name, word for word, with its 8 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked before a trip into the backcountry: will my phone work out there? The one idea under it is distance. The satellite is far away and the phone's antenna is small, so the phone sends a few words at a time, slowly, and only with open sky above it.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then how a text reaches a satellite, why it needs the sky, holding the phone and waiting, the limits, setting it up before you go, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 has the one Stop box in the lesson: don't make satellite texting your only way to get help.
+4. Step 6 has the setup list and the steps to try the demo on an iPhone and on a Pixel while you still have signal.
+5. The last step has Open buttons for How GPS Works, Explained, Starlink, Explained and Weak Cell Signal at Home, Explained when those lessons are in the app.
+6. The last row, Take it with you, names the free PDF guide the lesson follows, Satellite Texting, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+7. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026 against Apple, Google, Verizon and T-Mobile support pages. Phones, countries and plans change every few months, so check your carrier and your phone maker before a trip.
+- The lesson is independent and isn't affiliated with any phone maker, carrier or satellite company.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

@@ -3152,6 +3152,22 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'digital car key',
     'find my keys',
   ],
+  // Satellite Texting, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'satellite-texting-explained': <String>[
+    'satellite texting',
+    'satellite messaging',
+    'emergency sos via satellite',
+    'sos',
+    'no signal',
+    'no service',
+    'messages via satellite',
+    't-satellite',
+    'direct to cell',
+    'off grid',
+    'hiking',
+    'backcountry',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

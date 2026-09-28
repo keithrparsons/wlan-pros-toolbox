@@ -2674,6 +2674,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Satellite Texting, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: how a phone texts through a satellite with no cell signal, and why it is a backup.
+      ToolEntry(
+        id: 'satellite-texting-explained',
+        title: 'Satellite Texting, Explained',
+        description:
+            'How your phone can send a text with no cell signal, why it '
+            'needs open sky, and what to set up before you go',
+        routeName: '/tools/satellite-texting-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

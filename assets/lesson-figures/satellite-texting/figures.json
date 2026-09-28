@@ -1,0 +1,95 @@
+{
+  "source": "satellite-texting-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        640.0,
+        366.0
+      ],
+      "caption": null,
+      "alt": "A phone with no cell signal sends a text up to a satellite, which passes it down to a ground station."
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        640.0,
+        534.0
+      ],
+      "caption": "**Figure 1. One text, up and back down.** The green legs are the trip through the air: the slow, fragile part. Not to scale.",
+      "alt": "A normal text goes from your phone to a nearby tower. A satellite text goes up to a satellite and back down to a ground station first."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        640.0,
+        534.0
+      ],
+      "caption": "**Figure 2. A long way for a faint signal.** The message goes up in small pieces, one after another. Not to scale.",
+      "alt": "A text travels from a phone with a tiny antenna to a satellite hundreds of miles away, sent a few words at a time."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        640.0,
+        518.0
+      ],
+      "caption": "**Figure 3. What's between you and the sky.** Open sky is best. Trees slow it down. Buildings and canyons can stop it.",
+      "alt": "Open sky works in about 30 seconds. Under trees it is slower. In a canyon or indoors it may not connect."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        640.0,
+        604.0
+      ],
+      "caption": "**Figure 4. The sky from where you stand.** Many satellites move across the sky. When one drops behind a hill, your phone waits for the next one. Not to scale.",
+      "alt": "Satellites move across the sky. You can reach one high overhead or low near the horizon, but not one hidden behind a hill."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        640.0,
+        548.0
+      ],
+      "caption": "**Figure 5. Hold it out in the open.** Left: what to do. Right: what loses the satellite.",
+      "alt": "Do: hold the phone in your hand outdoors and follow the arrow. Don't: leave it in a pocket or pack, or walk under trees."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        640.0,
+        338.0
+      ],
+      "caption": "**Figure 6. Text first.** Left: what can go by satellite. Right: what waits.",
+      "alt": "Short texts and, on some phones, your location go by satellite. Photos, video and calls wait for coverage."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        640.0,
+        460.0
+      ],
+      "caption": "**Figure 7. A backup, not a promise.** All four have to line up at once. Your plan with someone at home is the part that doesn't depend on the sky.",
+      "alt": "Satellite texting needs open sky, a phone that has it, a charged battery and time. So leave your route and return time with someone at home."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        640.0,
+        308.0
+      ],
+      "caption": "**Figure 8. Do it all before you lose signal.** The numbers match the steps below.",
+      "alt": "Six things to do at home while you still have a signal. Out of signal, all that is left is sending the text."
+    }
+  ]
+}
