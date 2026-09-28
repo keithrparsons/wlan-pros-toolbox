@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 245 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 246 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (72 tools)
-  - Guided Lessons (13)
+- **Wireless Classroom** (73 tools)
+  - Guided Lessons (14)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (72 tools)
+# Wireless Classroom (73 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (13)
+## Guided Lessons (14)
 
 
 ### Antenna Fundamentals
@@ -4007,6 +4007,28 @@ A read-along lesson on how your phone finds itself by listening to satellites, a
 - About 5 m (16 feet) outdoors is typical, not a promise. Near tall buildings or under trees the dot can be off by much more.
 - Figures 4, 5, 6, 10 and 13 are not to scale.
 - The lesson is independent and isn't affiliated with or endorsed by any government agency, satellite operator or phone maker.
+
+
+### How Your Phone Knows Where It Is, Explained
+
+A read-along lesson on how your phone finds itself indoors and out, and which switches are yours. Your phone listens for five kinds of clues (satellites, Wi-Fi, beacons, cell towers and its own motion sensors) and blends them into one best guess. Outdoors, satellites do much of the work. Indoors, Wi-Fi usually does. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures, the location switches on iPhone and Android, and the _nomap setting for your own router.
+
+**Why it's here.** It is the Wi-Fi half of the location story, and the question Wi-Fi people get asked most about it: how does my phone know where I am inside? The phone never joins the networks around it. It only hears them and looks them up on a map that phones walking past have already built. The two steps, building the map and using the map, are David Coleman's, and so is the name Fused Location Positioning (FLP) for the blending. Figure 3 shows the two steps, and Figure 4 shows the dot holding steady through a lobby door.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then the five kinds of clues, a map of Wi-Fi, blending it all, your switches, keeping your router off the maps, your location on a 911 call, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 has the switches for iPhone and for Android, one card each. Step 6 has the steps to add _nomap to your Wi-Fi name.
+4. Step 1 names the outdoor half of the story. Its Open button takes you to How GPS Works, Explained.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+6. Take it with you, at the end of the lesson, names the free PDF guide it follows, How Your Phone Knows Where It Is, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked on 28 September 2026. Apple and Google update their help pages often, and phone makers move menus, so check the steps on your own phone.
+- The two-step idea and the term Fused Location Positioning come from David Coleman's LinkedIn post on Wi-Fi positioning. The two Keith's notes are from Keith's LinkedIn post of 2026-08-10.
+- The 911 step describes calls in the US.
+- Figures 1 to 6 and 11 are not to scale.
+- Apple, iPhone, Google and Android are trademarks of their owners. The lesson is independent and isn't endorsed by them.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

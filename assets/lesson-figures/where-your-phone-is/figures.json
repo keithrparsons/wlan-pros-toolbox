@@ -1,0 +1,125 @@
+{
+  "source": "where-your-phone-is-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        616.0,
+        400.0
+      ],
+      "caption": null,
+      "alt": "Five kinds of clues flow into the phone and become one best guess: the blue dot"
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        616.0,
+        560.0
+      ],
+      "caption": "**Figure 1. Where each clue works.** Satellites outdoors, Wi-Fi in town, beacons in some stores, cell towers almost everywhere, and motion sensors in between. Not to scale.",
+      "alt": "Walking from a field into town and into a store, a different clue is strongest in each place"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        616.0,
+        500.0
+      ],
+      "caption": "**Figure 2. Why indoors is different.** Satellite signals are faint by the time they reach a roof. The Wi-Fi is inside with you. Not to scale.",
+      "alt": "Indoors, satellite signals are faint after the roof. The Wi-Fi access point is inside with you. The cell tower is far off."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        616.0,
+        464.0
+      ],
+      "caption": "**Figure 3. Building the map, using the map.** The phone never joins these networks. It only hears them. Two-step idea after David Coleman. Not to scale.",
+      "alt": "Step 1: phones that know where they are note the Wi-Fi they hear and send it to the map. Step 2: a phone indoors hears the same Wi-Fi, looks it up, and finds its spot"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        616.0,
+        344.0
+      ],
+      "caption": "**Figure 4. Through the lobby door.** Your phone leans on satellites outside and Wi-Fi inside, so the dot holds steady. Not to scale.",
+      "alt": "Walking in through a lobby door, the phone swaps satellites for Wi-Fi and the dot holds steady"
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        616.0,
+        560.0
+      ],
+      "caption": "**Figure 5. The circle around the dot.** The circle shows how sure your phone is. A small circle means it's confident. A big circle means it's guessing. Not to scale.",
+      "alt": "A small circle means the phone is sure. A big circle means it is guessing. Step toward a window or wait, and the circle shrinks"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 6. Precise location, on and off.** With it off, an app still knows your area, but not your door. Not to scale.",
+      "alt": "With precise location on, an app sees your door. With it off, the app sees only your area"
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        616.0,
+        250.0
+      ],
+      "caption": "**Figure 7. The Wi-Fi button in Control Center doesn't turn Wi-Fi off.** To turn Wi-Fi all the way off, go to {{Settings}} > {{Wi-Fi}}.",
+      "alt": "The Control Center Wi-Fi button only disconnects; the phone still hears Wi-Fi and uses it for location. Turning Wi-Fi off in Settings stops that"
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        616.0,
+        300.0
+      ],
+      "caption": "**Figure 8. One change to the name.** The password stays the same. Only the end of the name changes.",
+      "alt": "Add _nomap to the end of your Wi-Fi name and Apple and Google leave it off their maps"
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        616.0,
+        210.0
+      ],
+      "caption": "**Figure 9. A 911 call, in the US.** Your phone works out where it is, sends that spot with the call, and the call goes to the 911 center near you.",
+      "alt": "On a 911 call, the phone works out where it is and sends that spot with the call to the 911 center near you, even with location turned off"
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        616.0,
+        176.0
+      ],
+      "caption": "**Figure 10. Which way to call.** The phone's own dialer sends your spot with the call.",
+      "alt": "Call 911 from the phone's own dialer: it sends your spot. A messaging app may not"
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        616.0,
+        196.0
+      ],
+      "caption": "**Figure 11. Anyone walking by.** A passing phone can add your router to the map. Not to scale.",
+      "alt": "Any phone walking past your house can add your Wi-Fi to the map"
+    }
+  ]
+}

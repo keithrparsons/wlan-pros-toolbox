@@ -148,6 +148,7 @@ import '../screens/tools/reference/home_internet_explained_screen.dart';
 import '../screens/tools/reference/bluetooth_explained_screen.dart';
 import '../screens/tools/reference/weak_cell_signal_explained_screen.dart';
 import '../screens/tools/reference/how_gps_works_explained_screen.dart';
+import '../screens/tools/reference/where_your_phone_is_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -851,6 +852,10 @@ class AppRouter {
   /// phone finds itself from satellite time signals. The id
   /// `how-gps-works-explained` is permanent (route, catalog, help, tests).
   static const String howGpsWorksExplained = '/tools/how-gps-works-explained';
+  /// How Your Phone Knows Where It Is, Explained: a Wireless Classroom Guided
+  /// Lesson on Wi-Fi positioning and the location switches. The id
+  /// `where-your-phone-is-explained` is permanent (route, catalog, help, tests).
+  static const String whereYourPhoneIsExplained = '/tools/where-your-phone-is-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1225,6 +1230,7 @@ class AppRouter {
     bluetoothExplained: (_) => const BluetoothExplainedScreen(),
     weakCellSignalExplained: (_) => const WeakCellSignalExplainedScreen(),
     howGpsWorksExplained: (_) => const HowGpsWorksExplainedScreen(),
+    whereYourPhoneIsExplained: (_) => const WhereYourPhoneIsExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

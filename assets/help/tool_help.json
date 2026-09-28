@@ -7349,6 +7349,31 @@
       "source": "The WLAN Pros print guide How GPS Works, Explained (September 2026), checked against GPS.gov and the other sources listed in the last section of the lesson.",
       "name": "How GPS Works, Explained"
     },
+    "where-your-phone-is-explained": {
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on how your phone finds itself indoors and out, and which switches are yours. Your phone listens for five kinds of clues (satellites, Wi-Fi, beacons, cell towers and its own motion sensors) and blends them into one best guess. Outdoors, satellites do much of the work. Indoors, Wi-Fi usually does. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures, the location switches on iPhone and Android, and the _nomap setting for your own router.",
+      "whyHere": "It is the Wi-Fi half of the location story, and the question Wi-Fi people get asked most about it: how does my phone know where I am inside? The phone never joins the networks around it. It only hears them and looks them up on a map that phones walking past have already built. The two steps, building the map and using the map, are David Coleman's, and so is the name Fused Location Positioning (FLP) for the blending. Figure 3 shows the two steps, and Figure 4 shows the dot holding steady through a lobby door.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then the five kinds of clues, a map of Wi-Fi, blending it all, your switches, keeping your router off the maps, your location on a 911 call, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 5 has the switches for iPhone and for Android, one card each. Step 6 has the steps to add _nomap to your Wi-Fi name.",
+        "Step 1 names the outdoor half of the story. Its Open button takes you to How GPS Works, Explained.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.",
+        "Take it with you, at the end of the lesson, names the free PDF guide it follows, How Your Phone Knows Where It Is, Explained from WLAN Pros, to print or share."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026. Apple and Google update their help pages often, and phone makers move menus, so check the steps on your own phone.",
+        "The two-step idea and the term Fused Location Positioning come from David Coleman's LinkedIn post on Wi-Fi positioning. The two Keith's notes are from Keith's LinkedIn post of 2026-08-10.",
+        "The 911 step describes calls in the US.",
+        "Figures 1 to 6 and 11 are not to scale.",
+        "Apple, iPhone, Google and Android are trademarks of their owners. The lesson is independent and isn't endorsed by them."
+      ],
+      "source": "The WLAN Pros print guide How Your Phone Knows Where It Is, Explained (September 2026), checked against Apple and Google help pages and Android developer documentation. The full source list is the last section of the lesson.",
+      "name": "How Your Phone Knows Where It Is, Explained"
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

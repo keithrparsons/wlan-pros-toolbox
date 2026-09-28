@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 249;
+const int _expectedEntryCount = 250;
 
 const String _fixture = '''
 {
@@ -538,6 +538,10 @@ void main() {
       // how-gps-works-explained, on top of wifi-lab/lessons-110-b, which counted 248.
       // 248 + 1 = 249. Counted off the file: `len(json['tools'])`
       // returned 249.
+      // 2026-09-28: the How Your Phone Knows Where It Is, Explained Guided Lesson added ONE entry,
+      // where-your-phone-is-explained, on top of wifi-lab/lessons-110-b, which counted 249.
+      // 249 + 1 = 250. Counted off the file: `len(json['tools'])`
+      // returned 250.
       expect(store.count, _expectedEntryCount);
     });
 

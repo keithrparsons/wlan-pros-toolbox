@@ -221,7 +221,7 @@ def find_sprite(src: str) -> dict[str, str]:
 
 def caption_markup(fragment: str) -> str:
     """Caption HTML to lesson markup: **bold**, __italic__, {{UI name}}."""
-    s = re.sub(r'<span class="path">(.*?)</span>', r"{{\1}}", fragment, flags=re.S)
+    s = re.sub(r'<span class="(?:path|ui)">(.*?)</span>', r"{{\1}}", fragment, flags=re.S)
     s = re.sub(r"<(b|strong)\b[^>]*>(.*?)</\1>", r"**\2**", s, flags=re.S)
     s = re.sub(r"<(i|em)\b[^>]*>(.*?)</\1>", r"__\2__", s, flags=re.S)
     s = re.sub(r"<br\s*/?>", " ", s)

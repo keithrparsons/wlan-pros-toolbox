@@ -2700,6 +2700,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // How Your Phone Knows Where It Is, Explained (2026-09-28, Keith approved
+      // the guide, myPKA 74e13139): the explainer guide as a Guided Lesson on
+      // the shared framework, word for word, with the guide's own 11 figures.
+      // Shelved after its companion, How GPS Works.
+      ToolEntry(
+        id: 'where-your-phone-is-explained',
+        title: 'How Your Phone Knows Where It Is, Explained',
+        description:
+            'How your phone finds itself indoors and out, and which switches are yours',
+        routeName: '/tools/where-your-phone-is-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.
