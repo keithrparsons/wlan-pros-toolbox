@@ -2269,7 +2269,7 @@ Apple's own Wi-Fi support guidance distilled into four sections: recommended rou
 
 ### How Your Devices Access the Internet
 
-A reference plate drawing every hop between a device and the Internet, in order and to scale, so it is visible that Wi-Fi is only the first one.
+A reference plate drawing every hop between a device and the Internet, in order and to scale, so it is visible that Wi-Fi is only the first one. Beside it, one control shows the slowest link winning: pick which hop is slowest (the Wi-Fi link, a 100 Mbps switch port or the ISP (internet service provider) plan) and the end-to-end number equals that hop.
 
 **Why it's here.** This is the plate for the conversation that starts with the Wi-Fi is down. Wi-Fi is one hop of several, and most of what gets called a Wi-Fi problem happens somewhere past it: the router, the modem, the provider, or the service at the far end. Showing the whole chain in one picture settles the argument faster than explaining it does.
 
@@ -2277,20 +2277,22 @@ A reference plate drawing every hop between a device and the Internet, in order 
 1. Use it to locate a fault rather than to fix one. Work along the chain and ask which hop the evidence actually points at.
 2. Show it to someone who believes Wi-Fi and the Internet are the same thing. That is what it is for.
 3. Read the destination row at the bottom: every service shown there sits on the far side of the Internet, not on your Wi-Fi.
+4. Beside the plate (below it on a phone), Try it: the slowest link wins has one control, Make this hop the slowest: Wi-Fi, Switch or ISP plan. Each hop shows what it carries, the slowest one is marked in words, and End to end always equals it. The last line says what a faster Wi-Fi link would change.
 
 **Inputs**
 
 | Input | Unit | Range |
 |---|---|---|
-| None | - | Reference plate, read-only |
+| Make this hop the slowest | choice | Wi-Fi (the device far from the AP, MCS (modulation and coding scheme) 1); Switch (a 100 Mbps switch port; default); ISP plan (every other hop fast) |
 
-**How it works.** No calculation. The plate is a drawing of the path, in connection order, with the local network and the Internet marked as separate things.
+**How it works.** No calculation on the plate itself. The plate is a drawing of the path, in connection order, with the local network and the Internet marked as separate things. The panel beside the plate: end to end = the smallest hop. Wi-Fi link = the 802.11ax PHY (physical layer) rate at 5 GHz, 80 MHz, 2 spatial streams and a 0.8 µs guard interval (MCS 9 near the AP, MCS 1 far from it, MCS 11 at best) x 0.6 efficiency (illustrative), the Repeaters and Mesh Backhaul model. Switch port = line rate x 1448 / 1538, the TCP (transmission control protocol) payload of a full-size Ethernet frame: 94.1 Mb/s at 100 Mbps, 941.5 Mb/s at 1 Gbps. ISP plan = 300 Mb/s (illustrative).
 
-**Example.** A device shows full signal and nothing loads. Full signal means the first hop is healthy, which rules out the hop most people blame and points at everything after it.
+**Example.** A device shows full signal and nothing loads. Full signal means the first hop is healthy, which rules out the hop most people blame and points at everything after it. In the panel: a 100 Mbps switch port carries 94.1 Mb/s, so a Wi-Fi link carrying 576.4 Mb/s and a 300 Mb/s plan still give 94.1 Mb/s end to end, and the best Wi-Fi link here (720.6 Mb/s) leaves it at 94.1. With the device far from the AP, Wi-Fi is the slowest hop at 86.5 Mb/s; the best Wi-Fi link raises the total to 300 Mb/s and no further, because then the plan is the slowest hop.
 
 **Field notes**
 - The single most useful idea on the plate is that the local network is not the Internet. A device can be perfectly associated, with a strong signal and a valid address, and still reach nothing, because association and Internet access are different achievements.
 - Wi-Fi Information and Test My Connection answer those two halves separately.
+- The panel's Wi-Fi efficiency and its 300 Mb/s plan are illustrative; the Ethernet figures are arithmetic. CWNA-109 objective 6.6.1 lists LAN port speed and insufficient Internet or WAN bandwidth among the causes of insufficient throughput.
 
 ### macOS Menu-Bar Wi-Fi
 
@@ -2328,7 +2330,7 @@ The 802.11k/r/v fast-roaming protocols (what each does, what it requires) plus R
 
 ### Throughput Testing: Where You Test
 
-A reference plate showing how the placement of a test server decides what a throughput number actually measures: the Wi-Fi link, the local network, or the path out to the Internet.
+A reference plate showing how the placement of a test server decides what a throughput number actually measures: the Wi-Fi link, the local network, or the path out to the Internet. Beside it, one control shows the slowest link winning: pick which hop is slowest (the Wi-Fi link, a 100 Mbps switch port or the ISP (internet service provider) plan) and the end-to-end number equals that hop.
 
 **Why it's here.** Almost every argument about a disappointing speed test is really an argument about where the test server was. A number taken across the Internet includes the WAN, the provider and the far end, none of which are Wi-Fi, and it gets quoted as a Wi-Fi result anyway. Putting the test server in the right place is the difference between measuring the thing you are being asked to fix and measuring everything else.
 
@@ -2338,21 +2340,23 @@ A reference plate showing how the placement of a test server decides what a thro
 3. To measure the local network, put it across the switch fabric on the far side of the routing you care about.
 4. To measure the Internet path, use a public server and accept that the result includes everything in between.
 5. Say which of the three you measured when you report the number.
+6. Beside the plate (below it on a phone), Try it: the slowest link wins has one control, Make this hop the slowest: Wi-Fi, Switch or ISP plan. Each hop shows what it carries, the slowest one is marked in words, and End to end always equals it. The last line says what a faster Wi-Fi link would change.
 
 **Inputs**
 
 | Input | Unit | Range |
 |---|---|---|
-| None | - | Reference plate, read-only |
+| Make this hop the slowest | choice | Wi-Fi (the device far from the AP, MCS (modulation and coding scheme) 1); Switch (a 100 Mbps switch port; default); ISP plan (every other hop fast) |
 
-**How it works.** No calculation. The plate lays out the three common server placements against what each one includes and excludes.
+**How it works.** No calculation on the plate itself. The plate lays out the three common server placements against what each one includes and excludes. The panel beside the plate: end to end = the smallest hop. Wi-Fi link = the 802.11ax PHY (physical layer) rate at 5 GHz, 80 MHz, 2 spatial streams and a 0.8 µs guard interval (MCS 9 near the AP, MCS 1 far from it, MCS 11 at best) x 0.6 efficiency (illustrative), the Repeaters and Mesh Backhaul model. Switch port = line rate x 1448 / 1538, the TCP (transmission control protocol) payload of a full-size Ethernet frame: 94.1 Mb/s at 100 Mbps, 941.5 Mb/s at 1 Gbps. ISP plan = 300 Mb/s (illustrative).
 
-**Example.** A client associated at a 1,200 Mbps PHY rate tests at 94 Mbps against a public server and the Wi-Fi gets blamed. The same client against a server on the AP's own switch returns 700 Mbps. The Wi-Fi was never the limit; the 100 Mbps uplink was.
+**Example.** A client associated at a 1,200 Mbps PHY rate tests at 94 Mbps against a public server and the Wi-Fi gets blamed. The same client against a server on the AP's own switch returns 700 Mbps. The Wi-Fi was never the limit; the 100 Mbps uplink was. In the panel: a 100 Mbps switch port carries 94.1 Mb/s, so a Wi-Fi link carrying 576.4 Mb/s and a 300 Mb/s plan still give 94.1 Mb/s end to end, and the best Wi-Fi link here (720.6 Mb/s) leaves it at 94.1. With the device far from the AP, Wi-Fi is the slowest hop at 86.5 Mb/s; the best Wi-Fi link raises the total to 300 Mb/s and no further, because then the plan is the slowest hop.
 
 **Field notes**
 - A wired test server needs enough headroom not to become the bottleneck itself, which in practice means the wired path should have roughly an order of magnitude more capacity than the radio can use.
 - Test in both directions. Uplink and downlink fail differently and for different reasons.
 - A single number from a single spot is a data point, not a survey.
+- The panel's Wi-Fi efficiency and its 300 Mb/s plan are illustrative; the Ethernet figures are arithmetic. CWNA-109 objective 6.6.1 lists LAN port speed and insufficient Internet or WAN bandwidth among the causes of insufficient throughput.
 
 ### Wi-Fi Tools Comparison
 
