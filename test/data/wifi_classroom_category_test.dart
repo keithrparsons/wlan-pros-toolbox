@@ -13,6 +13,13 @@ import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/data/tool_subgroups.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 
+/// Guided Lessons built in the Classroom rather than moved from Educational
+/// Resources. One id per line, so parallel branches union cleanly at merge.
+const Set<String> _builtInClassroom = <String>{
+  'find-my-explained',
+  'wifi-calling-explained',
+};
+
 /// Shelf -> tool ids, in the order the screen must show them.
 const Map<String, List<String>> _teachingOrder = <String, List<String>>{
   'Guided Lessons': <String>[
@@ -21,6 +28,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Find My, Explained, the lesson for the people Wi-Fi pros
     // get asked about Find My by.
     'find-my-explained',
+    // 2026-09-27: Wi-Fi Calling, Explained, the next explainer post turned
+    // Guided Lesson.
+    'wifi-calling-explained',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -144,11 +154,12 @@ void main() {
 
   test('the 13 lessons and handouts left educational-resources; Ham Radio '
       'Study Resources stayed', () {
-    // find-my-explained was built in the Classroom (2026-09-27) and never
-    // lived in Educational Resources, so it is not one of the 13 that moved.
+    // find-my-explained and the lessons after it were built in the Classroom
+    // (2026-09-27) and never lived in Educational Resources, so they are not
+    // among the 13 that moved.
     final Set<String> moved = <String>{
       ..._teachingOrder['Guided Lessons']!.where(
-        (String id) => id != 'find-my-explained',
+        (String id) => !_builtInClassroom.contains(id),
       ),
       ..._teachingOrder['Course Handouts']!,
     };
@@ -188,7 +199,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(51));
+    expect(classroom.tools, hasLength(52));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

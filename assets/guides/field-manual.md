@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Wi-Fi Calling, Explained added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
-  - Guided Lessons (3)
+- **Wi-Fi Classroom** (52 tools)
+  - Guided Lessons (4)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
-Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (3)
+## Guided Lessons (4)
 
 
 ### Antenna Fundamentals
@@ -3882,6 +3882,24 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 - How the finder's GPS, Wi-Fi and cell positioning combine into your dot is our explanation, not Apple's wording.
 - Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
 - The lesson is independent and isn't affiliated with or endorsed by Apple.
+
+
+### Wi-Fi Calling, Explained
+
+A read-along lesson on what happens when your phone makes a call over Wi-Fi instead of the cell tower, when it helps, when it drops, what it means for emergency calls, and what to set up before your next trip. Wi-Fi Calling is not an app. It is your own phone company's calling service, reaching your phone over a Wi-Fi network and the internet instead of over a cell tower. The lesson carries eight figures, the settings for each kind of phone, and two checklists.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical: what is Wi-Fi Calling, and why did my call drop? It also carries the network owner's side. When Wi-Fi Calling is on, your phone builds a locked, private tunnel across the Wi-Fi you are on, through the internet, straight into your phone company. The hotel, the coffee shop and your own router carry the tunnel. They can't see inside it, but they still decide whether it connects and how well the call sounds. The section What your Wi-Fi owes a phone call covers the delay budget, the four traffic lanes of WMM (Wi-Fi Multimedia) and a router checklist.
+
+**How to use**
+1. Read top to bottom. It starts with the one idea that explains most of it: your phone builds a locked tunnel across the Wi-Fi, through the internet, into your phone company. Then it covers when the phone uses Wi-Fi, walking out the door mid-call, emergency calls at home and around the world, iPad, Mac and Apple Watch, calling home from abroad, app calls, what your Wi-Fi owes a call, and six things people get wrong.
+2. Tap a figure to open it full screen, then pinch to zoom.
+3. Appendix A has the settings, one card per kind of device. Appendix B has two checklists, one for home and one for before a trip abroad: tick the items off as you go. The ticks are not saved when you leave the lesson.
+
+**Field notes**
+- Carrier rules, prices and country lists change, so read your carrier's current page before you travel. The carrier details in the lesson were checked on 27 September 2026.
+- Figures no company publishes, such as battery cost or the exact signal level where a phone switches to Wi-Fi, are deliberately left out. The slices in Figure 8 are not to scale.
+- What happens to an emergency call over Wi-Fi depends on your carrier and your country. If you ever call for help over Wi-Fi, say where you are.
+- The lesson is independent and isn't affiliated with or endorsed by any carrier or device maker.
 
 
 ## RF and Propagation (10)

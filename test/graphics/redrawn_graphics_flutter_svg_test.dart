@@ -7,7 +7,8 @@
 // pumps it, and asserts a non-empty render with no parse exception. It also
 // guards the two structural invariants this lane is responsible for:
 //   - the antenna-fundamentals g1-g7 (and, since 2026-09-27, the Find My,
-//     Explained figures) carry NO <marker> defs or refs
+//     Explained and Wi-Fi Calling, Explained figures) carry NO <marker> defs
+//     or refs
 //     (all converted to inline-path arrowheads across the two graphics lanes).
 
 import 'dart:io';
@@ -48,6 +49,17 @@ const List<String> _convertedDiagrams = <String>[
   'assets/tool-diagrams/find-my/f6-phone-dies.svg',
   'assets/tool-diagrams/find-my/f7-lost-luggage.svg',
   'assets/tool-diagrams/find-my/f8-unwanted-tracker.svg',
+  // Wi-Fi Calling, Explained (2026-09-27): drawn with triangle arrowheads from
+  // the start (tool/wifi_calling_diagrams.py), never with <marker>.
+  'assets/tool-diagrams/wifi-calling/cover-two-roads.svg',
+  'assets/tool-diagrams/wifi-calling/f1-two-roads.svg',
+  'assets/tool-diagrams/wifi-calling/f2-when-wifi.svg',
+  'assets/tool-diagrams/wifi-calling/f3-walking-out.svg',
+  'assets/tool-diagrams/wifi-calling/f4-emergency-call.svg',
+  'assets/tool-diagrams/wifi-calling/f5-other-devices.svg',
+  'assets/tool-diagrams/wifi-calling/f6-abroad.svg',
+  'assets/tool-diagrams/wifi-calling/f7-vs-apps.svg',
+  'assets/tool-diagrams/wifi-calling/f8-what-wifi-owes.svg',
 ];
 
 Future<void> _expectRenders(WidgetTester tester, String path) async {
@@ -94,8 +106,8 @@ void main() {
   });
 
   group('structural invariants', () {
-    test('antenna g1-g7 and the Find My figures carry no <marker> defs or '
-        'marker-* refs', () {
+    test('antenna g1-g7 and the Find My and Wi-Fi Calling figures carry no '
+        '<marker> defs or marker-* refs', () {
       for (final String path in _convertedDiagrams) {
         final String svg = File(path).readAsStringSync();
         expect(svg.contains('<marker'), isFalse, reason: '$path has <marker> def');

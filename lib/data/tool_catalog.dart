@@ -2549,6 +2549,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Wi-Fi Calling, Explained (2026-09-27, Keith) — the next explainer
+      // post turned Guided Lesson, built exactly like find-my-explained: the
+      // reviewed print guide rendered verbatim, its eight figures, the
+      // settings for each phone and the two checklists. Shelved after Find My:
+      // both are for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'wifi-calling-explained',
+        title: 'Wi-Fi Calling, Explained',
+        description:
+            'What happens when your phone makes a call over Wi-Fi instead of '
+            'the cell tower, what it means for emergency calls, and what to '
+            'set up before your next trip',
+        routeName: '/tools/wifi-calling-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

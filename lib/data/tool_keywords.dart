@@ -2669,6 +2669,27 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi positioning',
     'unwanted tracking',
   ],
+  // Wi-Fi Calling, Explained (Guided Lesson). The words a non-technical person
+  // uses when they ask about calling over Wi-Fi, plus the network-owner angle.
+  'wifi-calling-explained': <String>[
+    'wi-fi calling',
+    'wifi calling',
+    'vowifi',
+    'voice over wi-fi',
+    'volte',
+    '4g calling',
+    'epdg',
+    'ipsec',
+    'e911',
+    'emergency address',
+    '911',
+    'calling abroad',
+    'roaming',
+    'whatsapp',
+    'facetime',
+    'wmm',
+    'call quality',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

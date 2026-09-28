@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 170" width="760" height="170" role="img" aria-label="Three outcomes of a Wi-Fi call made abroad: call home, call a local number, some countries">
+<rect x="10" y="15" width="235" height="150" rx="12" fill="none" stroke="#A2CC3A" stroke-width="2.5"/>
+<text x="127.5" y="48" font-family="IBM Plex Sans" font-size="15" fill="#A2CC3A" text-anchor="middle" font-weight="600">Call home</text>
+<text x="127.5" y="78" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">A Wi-Fi call back to a</text>
+<text x="127.5" y="96" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">number in your home country</text>
+<text x="127.5" y="126" font-family="IBM Plex Sans" font-size="20" fill="#A2CC3A" text-anchor="middle" font-weight="700">Usually free</text>
+<text x="127.5" y="150" font-family="IBM Plex Sans" font-size="11" fill="#9C9C9C" text-anchor="middle" font-weight="400">on many carriers, not all</text>
+<rect x="262" y="15" width="235" height="150" rx="12" fill="none" stroke="#E0A23A" stroke-width="2.5"/>
+<text x="379.5" y="48" font-family="IBM Plex Sans" font-size="15" fill="#E0A23A" text-anchor="middle" font-weight="600">Call a local number</text>
+<text x="379.5" y="78" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">A Wi-Fi call to a number</text>
+<text x="379.5" y="96" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">in the country you're visiting</text>
+<text x="379.5" y="126" font-family="IBM Plex Sans" font-size="20" fill="#E0A23A" text-anchor="middle" font-weight="700">Charged</text>
+<text x="379.5" y="150" font-family="IBM Plex Sans" font-size="11" fill="#9C9C9C" text-anchor="middle" font-weight="400">as an international call, or blocked</text>
+<rect x="515" y="15" width="235" height="150" rx="12" fill="#F26E6E" fill-opacity="0.12"/>
+<rect x="515" y="15" width="235" height="150" rx="12" fill="none" stroke="#F26E6E" stroke-width="2.5"/>
+<text x="632.5" y="48" font-family="IBM Plex Sans" font-size="15" fill="#F26E6E" text-anchor="middle" font-weight="600">Some countries</text>
+<text x="632.5" y="78" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">Your carrier switches the</text>
+<text x="632.5" y="96" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">feature off there entirely</text>
+<text x="632.5" y="126" font-family="IBM Plex Sans" font-size="20" fill="#F26E6E" text-anchor="middle" font-weight="700">Won't work</text>
+<text x="632.5" y="150" font-family="IBM Plex Sans" font-size="11" fill="#9C9C9C" text-anchor="middle" font-weight="400">check your carrier's list</text>
+</svg>

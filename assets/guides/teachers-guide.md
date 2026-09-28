@@ -1,6 +1,6 @@
 # Wi-Fi Classroom · Teacher's Guide
 
-The Wi-Fi Classroom is the part of the WLAN Pros Toolbox built for teaching. It holds interactive simulators, three guided lessons, and the course handouts I use in class. It ships in the same free app your students already have, so whatever you show on the projector, they can open on their own laptop or tablet after class and work through at their own pace.
+The Wi-Fi Classroom is the part of the WLAN Pros Toolbox built for teaching. It holds interactive simulators, four guided lessons, and the course handouts I use in class. It ships in the same free app your students already have, so whatever you show on the projector, they can open on their own laptop or tablet after class and work through at their own pace.
 
 This guide covers how to present it, what each tool teaches, and a few lesson sequences that work well.
 
@@ -60,6 +60,7 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 - **Antenna Fundamentals.** A read-along lesson on what an antenna does (it shapes where the energy goes; it does not add power), gain against beamwidth, polarization, downtilt, and how to read a radiation pattern. Pair it with Antenna Pattern.
 - **Spectrum Analysis.** A read-along lesson on why a spectrum analyzer sees energy a Wi-Fi adapter cannot, how the instrument works, and the signatures of common interferers. Pair it with the Swept vs FFT race in Fourier and FFT.
 - **Find My, Explained.** How Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip.
+- **Wi-Fi Calling, Explained.** What happens when your phone makes a call over Wi-Fi instead of the cell tower, when it helps, when it drops, what it means for emergency calls, and what to set up before your next trip.
 
 ### RF and Propagation
 

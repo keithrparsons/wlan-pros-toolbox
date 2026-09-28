@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import 'data/antenna_fundamentals_diagrams.dart';
 import 'data/find_my_diagrams.dart';
+import 'data/wifi_calling_diagrams.dart';
 import 'data/connector_diagrams.dart';
 import 'data/connector_photos.dart';
 import 'data/connector_sections.dart';
@@ -112,6 +113,14 @@ Future<void> main() async {
   // figures; the lesson text and captions still read. Never blocks startup.
   try {
     await FindMyDiagrams.ensureLoaded();
+  } catch (_) {
+    // Manifest unavailable → has() stays false → figures omitted. No crash.
+  }
+
+  // Same convention for the Wi-Fi Calling, Explained lesson figures
+  // (assets/tool-diagrams/wifi-calling/<slug>.svg). Never blocks startup.
+  try {
+    await WifiCallingDiagrams.ensureLoaded();
   } catch (_) {
     // Manifest unavailable → has() stays false → figures omitted. No crash.
   }

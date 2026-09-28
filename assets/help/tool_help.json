@@ -6712,6 +6712,27 @@
       ],
       "source": "The WLAN Pros print guide Find My, Explained (September 2026), checked against Apple's support pages on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "wifi-calling-explained": {
+      "name": "Wi-Fi Calling, Explained",
+      "category": "Wi-Fi Classroom",
+      "purpose": "A read-along lesson on what happens when your phone makes a call over Wi-Fi instead of the cell tower, when it helps, when it drops, what it means for emergency calls, and what to set up before your next trip. Wi-Fi Calling is not an app. It is your own phone company's calling service, reaching your phone over a Wi-Fi network and the internet instead of over a cell tower. The lesson carries eight figures, the settings for each kind of phone, and two checklists.",
+      "whyHere": "It answers a question Wi-Fi people get asked by people who are not technical: what is Wi-Fi Calling, and why did my call drop? It also carries the network owner's side. When Wi-Fi Calling is on, your phone builds a locked, private tunnel across the Wi-Fi you are on, through the internet, straight into your phone company. The hotel, the coffee shop and your own router carry the tunnel. They can't see inside it, but they still decide whether it connects and how well the call sounds. The section What your Wi-Fi owes a phone call covers the delay budget, the four traffic lanes of WMM (Wi-Fi Multimedia) and a router checklist.",
+      "howToUse": [
+        "Read top to bottom. It starts with the one idea that explains most of it: your phone builds a locked tunnel across the Wi-Fi, through the internet, into your phone company. Then it covers when the phone uses Wi-Fi, walking out the door mid-call, emergency calls at home and around the world, iPad, Mac and Apple Watch, calling home from abroad, app calls, what your Wi-Fi owes a call, and six things people get wrong.",
+        "Tap a figure to open it full screen, then pinch to zoom.",
+        "Appendix A has the settings, one card per kind of device. Appendix B has two checklists, one for home and one for before a trip abroad: tick the items off as you go. The ticks are not saved when you leave the lesson."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Carrier rules, prices and country lists change, so read your carrier's current page before you travel. The carrier details in the lesson were checked on 27 September 2026.",
+        "Figures no company publishes, such as battery cost or the exact signal level where a phone switches to Wi-Fi, are deliberately left out. The slices in Figure 8 are not to scale.",
+        "What happens to an emergency call over Wi-Fi depends on your carrier and your country. If you ever call for help over Wi-Fi, say where you are.",
+        "The lesson is independent and isn't affiliated with or endorsed by any carrier or device maker."
+      ],
+      "source": "The WLAN Pros print guide Wi-Fi Calling, Explained (September 2026), checked against each company's own pages on 27 September 2026. The full source list is the last section of the lesson."
+    },
     "cloud-tool-trust": {
       "name": "Cloud Tool Trust",
       "category": "Quick Reference",
