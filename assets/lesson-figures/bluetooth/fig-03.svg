@@ -2,27 +2,27 @@
     <!-- row 1 -->
     <text x="100" y="26" font-size="13" font-weight="600" fill="#444444">Phone in your hand, or a front pocket on the earbud's side</text>
     <g transform="translate(60,70)"><g transform="translate(-28 -28) scale(2.33333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g></g>
-    <path d="M90 70 H578" stroke="#7A9E26" stroke-width="7"/>
+    <path d="M90 70 H578" stroke="#7A9E26" stroke-width="7" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(578,70) rotate(360) scale(1.6) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><g transform="translate(606,70)"><g transform="translate(-20 -18) scale(1.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g><g transform="translate(0 1) translate(24 0) scale(-1 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g></g></g>
     <text x="638" y="75" font-weight="600" fill="#2F5E00">Clear path</text>
     <!-- row 2 -->
     <text x="100" y="126" font-size="13" font-weight="600" fill="#444444">Phone in a back pocket, earbud in the other ear: you are in the way</text>
     <g transform="translate(60,170)"><g transform="translate(-28 -28) scale(2.33333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g></g>
-    <path d="M90 170 H346" stroke="#7A9E26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M90 170 H346" stroke="#7A9E26" stroke-width="7" stroke-linecap="round" fill="none"/>
     <g transform="translate(380,174)"><g transform="translate(-30 -36) scale(2.5)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5 C5 16 8 13.5 12 13.5 C16 13.5 19 16 19 20.5"/></g></g>
-    <path d="M414 170 H578" stroke="#8A5A00" stroke-width="3" stroke-dasharray="7 6"/>
+    <path d="M414 170 H578" stroke="#8A5A00" stroke-width="3" stroke-dasharray="7 6" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(578,170) rotate(360) scale(1.6) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#8A5A00"/></g><g transform="translate(606,170)"><g transform="translate(-20 -18) scale(1.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g><g transform="translate(0 1) translate(24 0) scale(-1 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g></g></g>
     <text x="638" y="175" font-weight="600" fill="#8A5A00">Weaker</text>
     <!-- row 3 -->
     <text x="100" y="226" font-size="13" font-weight="600" fill="#444444">On a packed train: other people are in the way too</text>
     <g transform="translate(60,270)"><g transform="translate(-28 -28) scale(2.33333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g></g>
-    <path d="M90 270 H256" stroke="#7A9E26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M90 270 H256" stroke="#7A9E26" stroke-width="7" stroke-linecap="round" fill="none"/>
     <g transform="translate(290,274)"><g transform="translate(-30 -36) scale(2.5)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5 C5 16 8 13.5 12 13.5 C16 13.5 19 16 19 20.5"/></g></g>
-    <path d="M324 270 H346" stroke="#8A5A00" stroke-width="3" stroke-linecap="round"/>
+    <path d="M324 270 H346" stroke="#8A5A00" stroke-width="3" stroke-linecap="round" fill="none"/>
     <g transform="translate(380,274)"><g transform="translate(-30 -36) scale(2.5)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5 C5 16 8 13.5 12 13.5 C16 13.5 19 16 19 20.5"/></g></g>
-    <path d="M414 270 H436" stroke="#8A5A00" stroke-width="2" stroke-linecap="round"/>
+    <path d="M414 270 H436" stroke="#8A5A00" stroke-width="2" stroke-linecap="round" fill="none"/>
     <g transform="translate(470,274)"><g transform="translate(-30 -36) scale(2.5)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5 C5 16 8 13.5 12 13.5 C16 13.5 19 16 19 20.5"/></g></g>
-    <path d="M504 270 H578" stroke="#C0392B" stroke-width="1.6" stroke-dasharray="4 6"/>
+    <path d="M504 270 H578" stroke="#C0392B" stroke-width="1.6" stroke-dasharray="4 6" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(578,270) rotate(360) scale(1.6) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#C0392B"/></g><g transform="translate(606,270)"><g transform="translate(-20 -18) scale(1.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g><g transform="translate(0 1) translate(24 0) scale(-1 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g></g></g>
     <text x="638" y="275" font-weight="600" fill="#C0392B">Weakest</text>
   </svg>

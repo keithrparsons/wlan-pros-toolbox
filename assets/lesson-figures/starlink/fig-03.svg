@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 270" font-family="IBM Plex Sans" width="700" height="270">
-      <path d="M0 232 H700" stroke="#E5E5E5" stroke-width="2"/>
+      <path d="M0 232 H700" stroke="#E5E5E5" stroke-width="2" fill="none"/>
       <!-- satellite -->
 <g transform="translate(246 34) scale(2)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-45 12 12)"><rect x="10" y="10" width="4" height="4" rx="0.8"/><rect x="3" y="7" width="4.5" height="10" rx="0.8"/><rect x="16.5" y="7" width="4.5" height="10" rx="0.8"/><path d="M7.5 12 H10 M14 12 H16.5 M3 12 H7.5 M16.5 12 H21"/></g></g>
       <text x="270" y="28" font-size="13" fill="#1A1A1A" text-anchor="middle" font-weight="600">Satellite, about 480 km (300 miles) up</text>
@@ -20,8 +20,8 @@
       <!-- links -->
       <path d="M104 160 L250 71" stroke="#7A9E26" stroke-width="3" fill="none"/>
       <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(250,71) rotate(328.634) scale(2.1) translate(-8,-5)"><path d="M0 0 L10 5 L0 10 Z" fill="#7A9E26"/></g><path d="M288 70 L398 178" stroke="#7A9E26" stroke-width="3" fill="none"/>
-      <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(398,178) rotate(44.474) scale(2.1) translate(-8,-5)"><path d="M0 0 L10 5 L0 10 Z" fill="#7A9E26"/></g><path d="M476 222 H530" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="3 4"/>
-      <path d="M596 212 L636 164" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="3 4"/>
+      <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(398,178) rotate(44.474) scale(2.1) translate(-8,-5)"><path d="M0 0 L10 5 L0 10 Z" fill="#7A9E26"/></g><path d="M476 222 H530" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="3 4" fill="none"/>
+      <path d="M596 212 L636 164" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="3 4" fill="none"/>
       <text x="150" y="112" font-size="12" fill="#2F5E00" text-anchor="end">1. Up to</text>
       <text x="150" y="127" font-size="12" fill="#2F5E00" text-anchor="end">the satellite</text>
       <text x="366" y="124" font-size="12" fill="#2F5E00">2. Down to</text>

@@ -4,10 +4,10 @@
     <g font-size="11" fill="#444444" text-anchor="end">
       <text x="70" y="224" font-size="13">$0</text><text x="70" y="174" font-size="13">$50</text><text x="70" y="124" font-size="13">$100</text><text x="70" y="74" font-size="13">$150</text>
     </g>
-    <path d="M80 220 H740" stroke="#444444" stroke-width="1.5"/>
-    <path d="M80 170 H740 M80 70 H740" stroke="#9C9C9C" stroke-width="1"/>
+    <path d="M80 220 H740" stroke="#444444" stroke-width="1.5" fill="none"/>
+    <path d="M80 170 H740 M80 70 H740" stroke="#9C9C9C" stroke-width="1" fill="none"/>
     <!-- $100 reference line (drawn first; bars cover it) -->
-    <path d="M80 120 H740" stroke="#2B5C8A" stroke-width="2" stroke-dasharray="6 5"/>
+    <path d="M80 120 H740" stroke="#2B5C8A" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
     <rect x="84" y="99" width="176" height="16" fill="#F7F7F5"/>
     <text x="88" y="111" fill="#2B5C8A" font-weight="600" font-size="13">$100 monthly plan (Verizon)</text>
     <!-- bars: 3,7,10,14 days = 36,84,120,168 -->

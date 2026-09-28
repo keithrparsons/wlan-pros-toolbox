@@ -148,12 +148,12 @@
     <rect x="677.0" y="178" width="6" height="36" fill="#7A9E26"/>
     <text x="336" y="214" text-anchor="middle" font-size="13" fill="#111111" font-weight="600">busy: skipped</text>
     <!-- axis -->
-    <path d="M40 252 H708" stroke="#444444" stroke-width="1.5"/>
-    <path d="M40 252 V260" stroke="#444444" stroke-width="1.5"/><text x="40" y="275" text-anchor="middle" font-size="13" fill="#444444">2,400</text>
-    <path d="M200 252 V260" stroke="#444444" stroke-width="1.5"/><text x="200" y="275" text-anchor="middle" font-size="13" fill="#444444">2,420</text>
-    <path d="M360 252 V260" stroke="#444444" stroke-width="1.5"/><text x="360" y="275" text-anchor="middle" font-size="13" fill="#444444">2,440</text>
-    <path d="M520 252 V260" stroke="#444444" stroke-width="1.5"/><text x="520" y="275" text-anchor="middle" font-size="13" fill="#444444">2,460</text>
-    <path d="M680 252 V260" stroke="#444444" stroke-width="1.5"/><text x="680" y="275" text-anchor="middle" font-size="13" fill="#444444">2,480</text>
-    <path d="M708 252 V260" stroke="#444444" stroke-width="1.5"/>
+    <path d="M40 252 H708" stroke="#444444" stroke-width="1.5" fill="none"/>
+    <path d="M40 252 V260" stroke="#444444" stroke-width="1.5" fill="none"/><text x="40" y="275" text-anchor="middle" font-size="13" fill="#444444">2,400</text>
+    <path d="M200 252 V260" stroke="#444444" stroke-width="1.5" fill="none"/><text x="200" y="275" text-anchor="middle" font-size="13" fill="#444444">2,420</text>
+    <path d="M360 252 V260" stroke="#444444" stroke-width="1.5" fill="none"/><text x="360" y="275" text-anchor="middle" font-size="13" fill="#444444">2,440</text>
+    <path d="M520 252 V260" stroke="#444444" stroke-width="1.5" fill="none"/><text x="520" y="275" text-anchor="middle" font-size="13" fill="#444444">2,460</text>
+    <path d="M680 252 V260" stroke="#444444" stroke-width="1.5" fill="none"/><text x="680" y="275" text-anchor="middle" font-size="13" fill="#444444">2,480</text>
+    <path d="M708 252 V260" stroke="#444444" stroke-width="1.5" fill="none"/>
     <text x="374" y="292" text-anchor="middle" font-size="13" fill="#444444">Frequency, MHz. The whole band is 83.5 MHz wide.</text>
   </svg>

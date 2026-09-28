@@ -4,13 +4,13 @@
     <text x="26" y="60" fill="#444444" font-size="13">Buy it and install it.</text>
     <text x="26" y="78" fill="#444444" font-size="13">Label it "Travel."</text>
     <text x="26" y="96" fill="#444444" font-size="13">Leave the line switched off.</text>
-    <path d="M238 65 H258" stroke="#444444" stroke-width="2.5"/>
+    <path d="M238 65 H258" stroke="#444444" stroke-width="2.5" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(258,65) rotate(360) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><rect x="269" y="10" width="222" height="110" rx="10" fill="#FFFFFF" stroke="#2F5E00" stroke-width="2.5"/>
     <text x="285" y="36" font-weight="600" font-size="13" fill="#2F5E00">2. When you land</text>
     <text x="285" y="60" fill="#444444" font-size="13">Turn the travel line on.</text>
     <text x="285" y="78" fill="#444444" font-size="13">Make it your cellular data line.</text>
     <text x="285" y="96" fill="#444444" font-size="13">Keep your home line for calls.</text>
-    <path d="M497 65 H517" stroke="#444444" stroke-width="2.5"/>
+    <path d="M497 65 H517" stroke="#444444" stroke-width="2.5" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12" transform="translate(517,65) rotate(360) scale(1.4) translate(-14,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><rect x="528" y="10" width="222" height="110" rx="10" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
     <text x="544" y="36" font-weight="600" font-size="13">3. Back home</text>
     <text x="544" y="60" fill="#444444" font-size="13">Turn the travel line off.</text>

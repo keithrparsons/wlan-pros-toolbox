@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" width="700" height="250">
       <text x="175" y="20" font-size="13" fill="#1A1A1A" text-anchor="middle" font-weight="600">Quiet morning</text>
       <text x="525" y="20" font-size="13" fill="#1A1A1A" text-anchor="middle" font-weight="600">Busy evening</text>
-      <line x1="350" y1="10" x2="350" y2="240" stroke="#E5E5E5" stroke-width="2"/>
+      <line x1="350" y1="10" x2="350" y2="240" stroke="#E5E5E5" stroke-width="2" fill="none"/>
       <g transform="translate(157 26) scale(1.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-45 12 12)"><rect x="10" y="10" width="4" height="4" rx="0.8"/><rect x="3" y="7" width="4.5" height="10" rx="0.8"/><rect x="16.5" y="7" width="4.5" height="10" rx="0.8"/><path d="M7.5 12 H10 M14 12 H16.5 M3 12 H7.5 M16.5 12 H21"/></g></g>
       <g transform="translate(507 26) scale(1.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-45 12 12)"><rect x="10" y="10" width="4" height="4" rx="0.8"/><rect x="3" y="7" width="4.5" height="10" rx="0.8"/><rect x="16.5" y="7" width="4.5" height="10" rx="0.8"/><path d="M7.5 12 H10 M14 12 H16.5 M3 12 H7.5 M16.5 12 H21"/></g></g>
       <path d="M175 58 L86 140 L264 140 Z" fill="#A1CC3A" opacity=".18"/>

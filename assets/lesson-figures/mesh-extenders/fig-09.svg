@@ -25,13 +25,13 @@
       </g>
       <!-- yes arrows: gap before target, arrowhead short of box -->
       <g stroke="#444444" stroke-width="2.5" stroke-linecap="round">
-        <line x1="386" y1="44" x2="426" y2="44"/><line x1="386" y1="144" x2="426" y2="144"/><line x1="386" y1="244" x2="426" y2="244"/>
+        <line x1="386" y1="44" x2="426" y2="44" fill="none"/><line x1="386" y1="144" x2="426" y2="144" fill="none"/><line x1="386" y1="244" x2="426" y2="244" fill="none"/>
       </g>
       <g fill="#444444"><path d="M426 38 L436 44 L426 50 Z"/><path d="M426 138 L436 144 L426 150 Z"/><path d="M426 238 L436 244 L426 250 Z"/></g>
       <g font-size="11" font-weight="700" fill="#2F5E00"><text x="400" y="36" font-size="12.5">yes</text><text x="400" y="136" font-size="12.5">yes</text><text x="400" y="236" font-size="12.5">yes</text></g>
       <!-- no arrows down -->
       <g stroke="#444444" stroke-width="2.5" stroke-linecap="round">
-        <line x1="196" y1="80" x2="196" y2="98"/><line x1="196" y1="180" x2="196" y2="198"/><line x1="196" y1="280" x2="196" y2="284"/>
+        <line x1="196" y1="80" x2="196" y2="98" fill="none"/><line x1="196" y1="180" x2="196" y2="198" fill="none"/><line x1="196" y1="280" x2="196" y2="284" fill="none"/>
       </g>
       <g fill="#444444"><path d="M190 98 L196 107 L202 98 Z"/><path d="M190 198 L196 207 L202 198 Z"/><path d="M190 284 L196 292 L202 284 Z"/></g>
       <g font-size="11" font-weight="700" fill="#444444"><text x="206" y="96" font-size="12.5">no</text><text x="206" y="196" font-size="12.5">no</text><text x="206" y="291" font-size="12.5">no</text></g>

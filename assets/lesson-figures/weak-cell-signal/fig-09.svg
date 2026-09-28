@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 170" font-family="IBM Plex Sans" font-size="12.5" width="760" height="170">
   <rect x="70" y="60" width="10" height="44" rx="2" fill="#1A1A1A"/>
   <text x="75" y="126" text-anchor="middle" fill="#111111" font-weight="600" font-size="13">Outside antenna</text>
-  <path d="M88 82 H300" stroke="#444444" stroke-width="2.5"/>
+  <path d="M88 82 H300" stroke="#444444" stroke-width="2.5" fill="none"/>
   <rect x="306" y="62" width="90" height="40" rx="6" fill="#7A9E26"/>
   <text x="351" y="87" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">Amplifier</text>
-  <path d="M402 82 H640" stroke="#444444" stroke-width="2.5"/>
+  <path d="M402 82 H640" stroke="#444444" stroke-width="2.5" fill="none"/>
   <rect x="646" y="74" width="24" height="16" rx="3" fill="#1A1A1A"/>
   <text x="658" y="126" text-anchor="middle" fill="#111111" font-weight="600" font-size="13">Inside antenna</text>
   <!-- leak path back -->

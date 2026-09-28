@@ -11,10 +11,10 @@
       <!-- box -->
       <g transform="translate(144.8 86.8) scale(2.93333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
       <!-- feed -->
-      <line x1="234" y1="122" x2="420" y2="122" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <line x1="234" y1="122" x2="420" y2="122" stroke="#444444" stroke-width="4" stroke-linecap="round" fill="none"/>
       <!-- cloud (480,122) -->
       <g transform="translate(440 78) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
-      <line x1="542" y1="122" x2="608" y2="122" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <line x1="542" y1="122" x2="608" y2="122" stroke="#444444" stroke-width="4" stroke-linecap="round" fill="none"/>
       <rect x="620" y="97" width="50" height="50" rx="11" fill="#A1CC3A"/>
       <path d="M638 110 L658 122 L638 134 Z" fill="#1A1A1A"/>
       <!-- labels -->

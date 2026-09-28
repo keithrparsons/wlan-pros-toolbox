@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 230" font-family="IBM Plex Sans" width="700" height="230">
       <path d="M350 190 L180 80 A200 200 0 0 1 520 80 Z" fill="#A1CC3A" opacity=".10"/>
-      <path d="M350 190 L180 80" stroke="#9C9C9C" stroke-dasharray="4 4"/>
-      <path d="M350 190 L520 80" stroke="#9C9C9C" stroke-dasharray="4 4"/>
+      <path d="M350 190 L180 80" stroke="#9C9C9C" stroke-dasharray="4 4" fill="none"/>
+      <path d="M350 190 L520 80" stroke="#9C9C9C" stroke-dasharray="4 4" fill="none"/>
       <path d="M350 190 L250 40 L275 36 Z" fill="#7A9E26" opacity=".35"/>
       <path d="M350 190 L345 25 L372 26 Z" fill="#7A9E26" opacity=".6"/>
       <path d="M350 190 L452 42 L474 50 Z" fill="#7A9E26" opacity=".35"/>

@@ -5,7 +5,7 @@
         <text x="345" y="44" font-size="13" fill="#444444">Yes:</text>
         <rect x="380" y="15" width="300" height="46" rx="8" fill="#EEF5E0" stroke="#2F5E00" stroke-width="1.5"/>
         <text x="530" y="44" text-anchor="middle" font-weight="600" fill="#2F5E00">Take it</text>
-        <line x1="170" y1="63" x2="170" y2="75" stroke="#9C9C9C" stroke-width="2"/><path d="M164 73 L170 81 L176 73" fill="none" stroke="#9C9C9C" stroke-width="2"/>
+        <line x1="170" y1="63" x2="170" y2="75" stroke="#9C9C9C" stroke-width="2" fill="none"/><path d="M164 73 L170 81 L176 73" fill="none" stroke="#9C9C9C" stroke-width="2"/>
         <text x="182" y="76" font-size="12" fill="#444444">No</text>
         <rect x="20" y="85" width="300" height="46" rx="8" fill="#FFFFFF" stroke="#30302F" stroke-width="1.5"/>
         <text x="170" y="114" text-anchor="middle" font-weight="600">Cable at your address?</text>
@@ -13,7 +13,7 @@
         <rect x="380" y="85" width="300" height="46" rx="8" fill="#EEF5E0" stroke="#2F5E00" stroke-width="1.5"/>
         <text x="530" y="107" text-anchor="middle" font-weight="600" fill="#2F5E00">A good choice</text>
         <text x="530" y="124" text-anchor="middle" font-size="12" fill="#444444">check the upload speed</text>
-        <line x1="170" y1="133" x2="170" y2="145" stroke="#9C9C9C" stroke-width="2"/><path d="M164 143 L170 151 L176 143" fill="none" stroke="#9C9C9C" stroke-width="2"/>
+        <line x1="170" y1="133" x2="170" y2="145" stroke="#9C9C9C" stroke-width="2" fill="none"/><path d="M164 143 L170 151 L176 143" fill="none" stroke="#9C9C9C" stroke-width="2"/>
         <text x="182" y="146" font-size="12" fill="#444444">No</text>
         <rect x="20" y="155" width="300" height="80" rx="8" fill="#FFFFFF" stroke="#30302F" stroke-width="1.5"/>
         <text x="170" y="185" text-anchor="middle" font-weight="600">Try the radio options</text>

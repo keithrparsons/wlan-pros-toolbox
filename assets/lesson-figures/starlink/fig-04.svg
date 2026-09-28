@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" width="700" height="250">
       <g font-size="10.5" fill="#444444" text-anchor="middle">
-        <line x1="140" y1="22" x2="140" y2="30" stroke="#9C9C9C"/><text x="140" y="16" font-size="12">0 ms</text>
-        <line x1="355" y1="22" x2="355" y2="30" stroke="#9C9C9C"/><text x="355" y="16" font-size="12">300 ms</text>
-        <line x1="570" y1="22" x2="570" y2="30" stroke="#9C9C9C"/><text x="570" y="16" font-size="12">600 ms</text>
+        <line x1="140" y1="22" x2="140" y2="30" stroke="#9C9C9C" fill="none"/><text x="140" y="16" font-size="12">0 ms</text>
+        <line x1="355" y1="22" x2="355" y2="30" stroke="#9C9C9C" fill="none"/><text x="355" y="16" font-size="12">300 ms</text>
+        <line x1="570" y1="22" x2="570" y2="30" stroke="#9C9C9C" fill="none"/><text x="570" y="16" font-size="12">600 ms</text>
       </g>
       <text x="130" y="50" font-size="12.5" fill="#1A1A1A" text-anchor="end">Starlink</text>
       <rect x="140" y="36" width="18" height="22" fill="#7A9E26"/>

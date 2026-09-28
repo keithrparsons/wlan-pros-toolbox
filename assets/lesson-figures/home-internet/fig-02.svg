@@ -23,11 +23,11 @@
       <rect x="425" y="152" width="96" height="46" rx="6" fill="#1A1A1A"/>
       <text x="473" y="172" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="600">Provider's</text>
       <text x="473" y="188" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="600">box</text>
-      <line x1="521" y1="175" x2="552" y2="175" stroke="#1A1A1A" stroke-width="3"/>
+      <line x1="521" y1="175" x2="552" y2="175" stroke="#1A1A1A" stroke-width="3" fill="none"/>
       <rect x="552" y="152" width="86" height="46" rx="6" fill="#A1CC3A"/>
       <text x="595" y="180" text-anchor="middle" font-size="13" font-weight="600">Router</text>
       <g transform="translate(580 117) scale(1.25)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
-      <line x1="537" y1="120" x2="537" y2="166" stroke="#444444" stroke-width="1.5" stroke-dasharray="4 4"/><line x1="537" y1="184" x2="537" y2="250" stroke="#444444" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <line x1="537" y1="120" x2="537" y2="166" stroke="#444444" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/><line x1="537" y1="184" x2="537" y2="250" stroke="#444444" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
       <text x="473" y="232" text-anchor="middle" font-size="12" fill="#444444">The service</text>
       <text x="473" y="248" text-anchor="middle" font-size="12" fill="#444444">you pay for</text>
       <text x="595" y="232" text-anchor="middle" font-size="12" fill="#2F5E00" font-weight="600">Your Wi-Fi</text>

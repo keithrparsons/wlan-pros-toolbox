@@ -3,8 +3,8 @@
     <g transform="translate(90,135)"><rect x="-38" y="-72" width="76" height="144" rx="12" fill="#1A1A1A"/><rect x="-32" y="-63" width="64" height="124" rx="5" fill="#E6EEF6"/>
       <rect x="-22" y="-42" width="44" height="24" rx="4" fill="#444444"/><text y="-25" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="700">1</text>
       <rect x="-22" y="18" width="44" height="24" rx="4" fill="#2F5E00"/><text y="35" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="700">2</text></g>
-    <path d="M136 105 L318 72" stroke="#444444" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
-    <path d="M136 165 L318 198" stroke="#2F5E00" stroke-width="3" stroke-linecap="round"/>
+    <path d="M136 105 L318 72" stroke="#444444" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" fill="none"/>
+    <path d="M136 165 L318 198" stroke="#2F5E00" stroke-width="3" stroke-linecap="round" fill="none"/>
     <!-- line 1 box -->
     <rect x="330" y="12" width="420" height="118" rx="10" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
     <text x="348" y="38" font-weight="600" font-size="14">Line 1: your home number</text>

@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 240" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="240">
       <!-- row separators -->
-      <line x1="20" y1="82" x2="700" y2="82" stroke="#9C9C9C" stroke-width="1.5"/>
-      <line x1="20" y1="160" x2="700" y2="160" stroke="#9C9C9C" stroke-width="1.5"/>
+      <line x1="20" y1="82" x2="700" y2="82" stroke="#9C9C9C" stroke-width="1.5" fill="none"/>
+      <line x1="20" y1="160" x2="700" y2="160" stroke="#9C9C9C" stroke-width="1.5" fill="none"/>
       <!-- Row 1: wireless, cloud only (c=42) -->
       <g transform="translate(32 16) scale(2.16667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4 V12 M3 8 H6"/><path d="M6 5 L19 8 L18.2 13 L6 10.5 Z"/><circle cx="16.6" cy="10.3" r="1.2" fill="#111111" stroke="none"/><path d="M11 11.6 L10 16.5 H7"/></g>
       <g transform="rotate(90 109.1 41.9) translate(94.1 26.9) scale(1.25)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
       <g stroke="#C0392B" stroke-width="3.5" stroke-linecap="round">
-        <line x1="163" y1="32" x2="183" y2="52"/><line x1="183" y1="32" x2="163" y2="52"/>
+        <line x1="163" y1="32" x2="183" y2="52" fill="none"/><line x1="183" y1="32" x2="163" y2="52" fill="none"/>
       </g>
       <g transform="translate(256 18) scale(2)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
       <text x="340" y="38" font-weight="700" fill="#1A1A1A" font-size="12.5">Wireless, cloud recording only</text>
@@ -16,14 +16,14 @@
       <g transform="translate(79 110) scale(0.916667)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2.5 H17 A1.5 1.5 0 0 1 18.5 4 V20 A1.5 1.5 0 0 1 17 21.5 H7 A1.5 1.5 0 0 1 5.5 20 V13 L7 11.5 V9.5 L5.5 8 V4 A1.5 1.5 0 0 1 7 2.5 Z"/><path d="M10 5.5 V8 M13 5.5 V8 M16 5.5 V8"/></g>
       <g transform="rotate(90 109.1 120.9) translate(94.1 105.9) scale(1.25)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
       <g stroke="#C0392B" stroke-width="3.5" stroke-linecap="round">
-        <line x1="163" y1="111" x2="183" y2="131"/><line x1="183" y1="111" x2="163" y2="131"/>
+        <line x1="163" y1="111" x2="183" y2="131" fill="none"/><line x1="183" y1="111" x2="163" y2="131" fill="none"/>
       </g>
       <g transform="translate(256 97) scale(2)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
       <text x="340" y="117" font-weight="700" fill="#1A1A1A" font-size="12.5">Wireless, with a memory card</text>
       <text x="340" y="135" fill="#2F5E00" font-size="12.5">If it's set to record to its card, it keeps recording.</text>
       <!-- Row 3: wired (c=200) -->
       <g transform="translate(32 174) scale(2.16667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4 V12 M3 8 H6"/><path d="M6 5 L19 8 L18.2 13 L6 10.5 Z"/><circle cx="16.6" cy="10.3" r="1.2" fill="#111111" stroke="none"/><path d="M11 11.6 L10 16.5 H7"/></g>
-      <line x1="94" y1="200" x2="242" y2="200" stroke="#1A1A1A" stroke-width="4" stroke-linecap="round"/>
+      <line x1="94" y1="200" x2="242" y2="200" stroke="#1A1A1A" stroke-width="4" stroke-linecap="round" fill="none"/>
       <g transform="translate(256 176) scale(2)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
       <text x="340" y="196" font-weight="700" fill="#1A1A1A" font-size="12.5">Wired, over Ethernet</text>
       <text x="340" y="214" fill="#2F5E00" font-size="12.5">No radio link to interrupt, while it has power.</text>

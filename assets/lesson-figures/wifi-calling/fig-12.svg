@@ -10,9 +10,9 @@
     <rect x="390" y="10" width="360" height="230" rx="12" fill="#FFFFFF" stroke="#9C9C9C" stroke-width="2.5"/>
     <text x="570" y="42" text-anchor="middle" font-weight="600" font-size="15">WhatsApp, FaceTime Audio</text>
     <g font-size="13">
-      <circle cx="420" cy="80" r="11" fill="#C0392B"/><path d="M415 75l10 10M425 75l-10 10" stroke="#FFFFFF" stroke-width="2.5"/><text x="442" y="85">Only other people using the app</text>
+      <circle cx="420" cy="80" r="11" fill="#C0392B"/><path d="M415 75l10 10M425 75l-10 10" stroke="#FFFFFF" stroke-width="2.5" fill="none"/><text x="442" y="85">Only other people using the app</text>
       <circle cx="420" cy="120" r="11" fill="#9C9C9C"/><text x="420" y="125" text-anchor="middle" fill="#FFFFFF" font-weight="700">–</text><text x="442" y="125">Shows your app account</text>
-      <circle cx="420" cy="160" r="11" fill="#C0392B"/><path d="M415 155l10 10M425 155l-10 10" stroke="#FFFFFF" stroke-width="2.5"/><text x="442" y="165">Not for emergencies</text>
+      <circle cx="420" cy="160" r="11" fill="#C0392B"/><path d="M415 155l10 10M425 155l-10 10" stroke="#FFFFFF" stroke-width="2.5" fill="none"/><text x="442" y="165">Not for emergencies</text>
       <circle cx="420" cy="200" r="11" fill="#8A5A00"/><text x="420" y="205" text-anchor="middle" fill="#FFFFFF" font-weight="700">!</text><text x="442" y="205">Not available everywhere either</text>
     </g>
   </svg>

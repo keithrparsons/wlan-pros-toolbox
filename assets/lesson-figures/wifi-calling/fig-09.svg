@@ -3,10 +3,10 @@
     <text x="30" y="40" font-weight="600" font-size="14">1. Calls from iPhone (relay)</text>
     <!-- mac -->
     <g transform="translate(85,130)"><g transform="translate(-48 -50) scale(4)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2 19 H22"/></g><text y="58" text-anchor="middle" font-size="13">Mac or iPad</text></g>
-    <path d="M146 130 H200" stroke="#7A9E26" stroke-width="2.5"/>
+    <path d="M146 130 H200" stroke="#7A9E26" stroke-width="2.5" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(200,130) rotate(360) scale(1.75) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="170" y="120" text-anchor="middle" font-size="13" fill="#2F5E00">same Wi-Fi</text>
     <g transform="translate(228,130)"><g transform="translate(-34 -34) scale(2.83333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g><text y="52" text-anchor="middle" font-size="13">iPhone</text></g>
-    <path d="M250 130 H304" stroke="#444444" stroke-width="2.5"/>
+    <path d="M250 130 H304" stroke="#444444" stroke-width="2.5" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(304,130) rotate(360) scale(1.75) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><g transform="translate(328,128)"><g transform="translate(-25 -29) scale(2.08333)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9 H15.5 M8.5 9 L6.5 21.5 M15.5 9 L17.5 21.5 M12 9 V3"/><path d="M8.5 9 L16.5 15.2 M15.5 9 L7.5 15.2 M7.5 15.2 H16.5 M7.5 15.2 L17.5 21.5 M16.5 15.2 L6.5 21.5"/><path d="M8.3 1.9 A5 5 0 0 0 8.3 7.1 M15.7 1.9 A5 5 0 0 1 15.7 7.1"/></g><text y="38" text-anchor="middle" font-size="13">cell tower</text></g>
     <text x="30" y="215" font-size="13" fill="#444444">The iPhone places the call. The Mac or iPad is</text>
     <text x="30" y="233" font-size="13" fill="#444444">just a speaker and microphone. The iPhone must</text>
@@ -14,8 +14,8 @@
     <rect x="390" y="10" width="360" height="270" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
     <text x="410" y="40" font-weight="600" font-size="14">2. Wi-Fi Calling on the device itself</text>
     <g transform="translate(460,130)"><g transform="translate(-48 -50) scale(4)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2 19 H22"/></g><text y="58" text-anchor="middle" font-size="13">Mac in a hotel</text></g>
-    <path d="M522 130 H616" stroke="#7A9E26" stroke-width="6" opacity=".4"/>
-    <path d="M522 130 H630" stroke="#7A9E26" stroke-width="2.5"/>
+    <path d="M522 130 H616" stroke="#7A9E26" stroke-width="6" opacity=".4" fill="none"/>
+    <path d="M522 130 H630" stroke="#7A9E26" stroke-width="2.5" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(630,130) rotate(360) scale(1.75) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="578" y="118" text-anchor="middle" font-size="13" fill="#2F5E00">internet tunnel</text>
     <rect x="645" y="105" width="90" height="50" rx="8" fill="#1A1A1A"/><text x="690" y="127" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="600">Your</text><text x="690" y="143" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="600">carrier</text>
     <text x="410" y="215" font-size="13" fill="#444444">The iPhone can be off, or at home. The call goes</text>
