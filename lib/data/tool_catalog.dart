@@ -1920,7 +1920,7 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
       ToolEntry(
         id: 'wifi-glossary',
         title: 'Wi-Fi Glossary',
-        description: 'Plain-language definitions of 92 Wi-Fi terms',
+        description: 'Plain-language definitions of 93 Wi-Fi terms',
         routeName: '/tools/wifi-glossary',
         subgroup: 'Wi-Fi Standards & Terminology',
         isLive: true,

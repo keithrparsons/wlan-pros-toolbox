@@ -2,7 +2,7 @@
   "schema_version": 1,
   "title": "Wi-Fi Glossary",
   "source": "WLAN Pros curated edition",
-  "term_count": 92,
+  "term_count": 93,
   "terms": [
     {
       "id": "2-4-ghz-band",
@@ -149,12 +149,12 @@
       "term": "Wi-Fi 5",
       "abbr": "802.11ac",
       "category": "Standards & Wi-Fi Generations",
-      "definition": "The 2014 generation (the Wi-Fi Alliance certification year; IEEE 802.11ac was ratified in 2013), 5 GHz only, that added wider channels, more streams, and the first multi-user MIMO. It pushed Wi-Fi into gigabit territory.",
+      "definition": "The 2013 generation (the Wi-Fi Alliance began certifying it in June 2013, and IEEE approved 802.11ac that December), 5 GHz only, that added wider channels, more streams, and the first multi-user MIMO. It pushed Wi-Fi into gigabit territory.",
       "definitions": {
-        "es": "La generación de 2014 (año de certificación de la Wi-Fi Alliance; IEEE 802.11ac se ratificó en 2013), solo en 5 GHz, que añadió canales más anchos, más flujos y el primer MIMO multiusuario. Llevó el Wi-Fi al terreno del gigabit.",
-        "fr": "La génération de 2014 (année de certification de la Wi-Fi Alliance ; la norme IEEE 802.11ac a été ratifiée en 2013), en 5 GHz uniquement, qui a ajouté des canaux plus larges, davantage de flux et le premier MIMO multi-utilisateur. Elle a fait entrer le Wi-Fi dans le domaine du gigabit.",
-        "it": "La generazione del 2014 (anno di certificazione della Wi-Fi Alliance; lo standard IEEE 802.11ac fu ratificato nel 2013), solo a 5 GHz, che aggiunse canali più larghi, più flussi e il primo MIMO multiutente. Portò il Wi-Fi nel territorio del gigabit.",
-        "de": "Die Generation von 2014 (das Zertifizierungsjahr der Wi-Fi Alliance; IEEE 802.11ac wurde 2013 ratifiziert), ausschließlich bei 5 GHz, die breitere Kanäle, mehr Datenströme und das erste Multi-User-MIMO hinzufügte. Sie brachte WLAN in den Gigabit-Bereich."
+        "es": "La generación de 2013 (la Wi-Fi Alliance empezó a certificarla en junio de 2013 y el IEEE aprobó 802.11ac en diciembre de ese año), solo en 5 GHz, que añadió canales más anchos, más flujos y el primer MIMO multiusuario. Llevó el Wi-Fi al terreno del gigabit.",
+        "fr": "La génération de 2013 (la Wi-Fi Alliance a commencé à la certifier en juin 2013 et l'IEEE a approuvé la norme 802.11ac en décembre de la même année), en 5 GHz uniquement, qui a ajouté des canaux plus larges, davantage de flux et le premier MIMO multi-utilisateur. Elle a fait entrer le Wi-Fi dans le domaine du gigabit.",
+        "it": "La generazione del 2013 (la Wi-Fi Alliance iniziò a certificarla nel giugno 2013 e l'IEEE approvò lo standard 802.11ac nel dicembre dello stesso anno), solo a 5 GHz, che aggiunse canali più larghi, più flussi e il primo MIMO multiutente. Portò il Wi-Fi nel territorio del gigabit.",
+        "de": "Die Generation von 2013 (die Wi-Fi Alliance begann im Juni 2013 mit der Zertifizierung, und das IEEE verabschiedete 802.11ac im Dezember desselben Jahres), ausschließlich bei 5 GHz, die breitere Kanäle, mehr Datenströme und das erste Multi-User-MIMO hinzufügte. Sie brachte WLAN in den Gigabit-Bereich."
       },
       "translation_status": "draft-needs-review"
     },
@@ -569,12 +569,12 @@
       "term": "Spatial Stream",
       "abbr": null,
       "category": "Speed, Modulation & Capacity",
-      "definition": "One independent data stream sent over one antenna path. More spatial streams mean higher speed, up to the lower antenna count of the two devices.",
+      "definition": "One independent data stream sent at the same time and on the same channel as the others; the receiver tells them apart by the different paths they take. More spatial streams mean higher speed, up to the fewest streams either device supports, which can be fewer than its antenna count.",
       "definitions": {
-        "es": "Un flujo de datos independiente enviado por una ruta de antena. Más flujos espaciales suponen más velocidad, hasta el menor número de antenas de los dos dispositivos.",
-        "fr": "Un flux de données indépendant envoyé sur un chemin d'antenne. Plus de flux spatiaux signifie plus de débit, jusqu'au nombre d'antennes le plus faible des deux appareils.",
-        "it": "Un flusso di dati indipendente inviato su un percorso d'antenna. Più flussi spaziali significano più velocità, fino al numero di antenne più basso tra i due dispositivi.",
-        "de": "Ein unabhängiger Datenstrom, der über einen Antennenpfad gesendet wird. Mehr räumliche Datenströme bedeuten mehr Geschwindigkeit, bis zur niedrigeren Antennenzahl der beiden Geräte."
+        "es": "Un flujo de datos independiente enviado al mismo tiempo y en el mismo canal que los demás; el receptor los distingue por los distintos caminos que recorren. Más flujos espaciales suponen más velocidad, hasta el menor número de flujos que admita cualquiera de los dos dispositivos, que puede ser inferior a su número de antenas.",
+        "fr": "Un flux de données indépendant envoyé en même temps et sur le même canal que les autres ; le récepteur les distingue grâce aux trajets différents qu'ils empruntent. Plus de flux spatiaux signifie plus de débit, jusqu'au plus petit nombre de flux pris en charge par l'un des deux appareils, qui peut être inférieur à son nombre d'antennes.",
+        "it": "Un flusso di dati indipendente inviato nello stesso momento e sullo stesso canale degli altri; il ricevitore li distingue grazie ai diversi percorsi che seguono. Più flussi spaziali significano più velocità, fino al numero minimo di flussi supportato da uno dei due dispositivi, che può essere inferiore al suo numero di antenne.",
+        "de": "Ein unabhängiger Datenstrom, der gleichzeitig und auf demselben Kanal wie die anderen gesendet wird; der Empfänger unterscheidet sie anhand der unterschiedlichen Wege, die sie nehmen. Mehr räumliche Datenströme bedeuten mehr Geschwindigkeit, bis zur kleinsten Zahl an Datenströmen, die eines der beiden Geräte unterstützt, und die kann unter seiner Antennenzahl liegen."
       },
       "translation_status": "draft-needs-review"
     },
@@ -639,12 +639,12 @@
       "term": "Guard Interval",
       "abbr": null,
       "category": "Speed, Modulation & Capacity",
-      "definition": "A tiny gap inserted between transmissions to absorb echoes from multipath and prevent them from corrupting the next symbol. Shorter intervals raise speed slightly; longer ones hold up better in high-multipath spaces.",
+      "definition": "A tiny gap inserted between symbols to absorb echoes from multipath and prevent them from corrupting the next symbol. Shorter intervals raise speed slightly; longer ones hold up better in high-multipath spaces.",
       "definitions": {
-        "es": "Un pequeño hueco insertado entre transmisiones para absorber los ecos del multitrayecto y evitar que corrompan el siguiente símbolo. Los intervalos más cortos suben ligeramente la velocidad; los más largos aguantan mejor en espacios con mucho multitrayecto.",
-        "fr": "Un petit intervalle inséré entre les transmissions pour absorber les échos du multitrajet et les empêcher de corrompre le symbole suivant. Des intervalles plus courts augmentent légèrement le débit ; des intervalles plus longs résistent mieux dans les espaces à fort multitrajet.",
-        "it": "Un piccolo spazio inserito tra le trasmissioni per assorbire gli echi del multipath e impedire che corrompano il simbolo successivo. Intervalli più brevi aumentano leggermente la velocità; quelli più lunghi reggono meglio negli ambienti con molto multipath.",
-        "de": "Eine winzige Lücke zwischen Übertragungen, die Echos aus der Mehrwegeausbreitung aufnimmt und verhindert, dass sie das nächste Symbol stören. Kürzere Intervalle erhöhen die Geschwindigkeit leicht; längere bewähren sich besser in Umgebungen mit starker Mehrwegeausbreitung."
+        "es": "Un pequeño hueco insertado entre símbolos para absorber los ecos del multitrayecto y evitar que corrompan el siguiente símbolo. Los intervalos más cortos suben ligeramente la velocidad; los más largos aguantan mejor en espacios con mucho multitrayecto.",
+        "fr": "Un petit intervalle inséré entre les symboles pour absorber les échos du multitrajet et les empêcher de corrompre le symbole suivant. Des intervalles plus courts augmentent légèrement le débit ; des intervalles plus longs résistent mieux dans les espaces à fort multitrajet.",
+        "it": "Un piccolo spazio inserito tra i simboli per assorbire gli echi del multipath e impedire che corrompano il simbolo successivo. Intervalli più brevi aumentano leggermente la velocità; quelli più lunghi reggono meglio negli ambienti con molto multipath.",
+        "de": "Eine winzige Lücke zwischen Symbolen, die Echos aus der Mehrwegeausbreitung aufnimmt und verhindert, dass sie das nächste Symbol stören. Kürzere Intervalle erhöhen die Geschwindigkeit leicht; längere bewähren sich besser in Umgebungen mit starker Mehrwegeausbreitung."
       },
       "translation_status": "draft-needs-review"
     },
@@ -775,16 +775,30 @@
       "translation_status": "draft-needs-review"
     },
     {
+      "id": "tim",
+      "term": "TIM",
+      "abbr": "Traffic Indication Map",
+      "category": "How Devices Share the Air",
+      "definition": "The part of every beacon that lists which sleeping devices have traffic addressed to them waiting at the access point. A device checks it each time it wakes, and if its entry is set, it asks the access point for that traffic.",
+      "definitions": {
+        "es": "La parte de cada baliza que indica qué dispositivos dormidos tienen tráfico dirigido a ellos esperando en el punto de acceso. Un dispositivo la consulta cada vez que se despierta y, si su entrada está marcada, pide ese tráfico al punto de acceso.",
+        "fr": "La partie de chaque balise qui indique quels appareils en veille ont du trafic qui leur est adressé en attente au point d'accès. Un appareil la consulte à chaque réveil et, si son entrée est marquée, il demande ce trafic au point d'accès.",
+        "it": "La parte di ogni beacon che elenca quali dispositivi addormentati hanno traffico indirizzato a loro in attesa sull'access point. Un dispositivo la controlla ogni volta che si sveglia e, se la sua voce è segnata, chiede quel traffico all'access point.",
+        "de": "Der Teil jedes Beacons, der anzeigt, für welche schlafenden Geräte an sie adressierter Datenverkehr am Access Point wartet. Ein Gerät prüft ihn bei jedem Aufwachen und fordert diesen Verkehr beim Access Point an, wenn sein Eintrag gesetzt ist."
+      },
+      "translation_status": "draft-needs-review"
+    },
+    {
       "id": "dtim",
       "term": "DTIM",
       "abbr": "Delivery Traffic Indication Map",
       "category": "How Devices Share the Air",
-      "definition": "A setting carried in beacons that tells sleeping devices when to wake for buffered traffic. It balances battery life against how quickly a device receives data.",
+      "definition": "A special TIM (traffic indication map), sent every Nth beacon, where N is the DTIM period. It announces buffered broadcast and multicast traffic, which the access point sends right after that beacon, so sleeping devices wake for it. A longer DTIM period saves battery; a shorter one delivers group traffic sooner.",
       "definitions": {
-        "es": "Un ajuste transportado en las balizas que indica a los dispositivos dormidos cuándo despertar para recibir el tráfico almacenado en búfer. Equilibra la duración de la batería frente a la rapidez con la que un dispositivo recibe datos.",
-        "fr": "Un réglage transporté dans les balises qui indique aux appareils en veille quand se réveiller pour le trafic mis en mémoire tampon. Il équilibre l'autonomie de la batterie et la rapidité avec laquelle un appareil reçoit les données.",
-        "it": "Un'impostazione trasportata nei beacon che indica ai dispositivi addormentati quando svegliarsi per il traffico bufferizzato. Bilancia la durata della batteria con la rapidità con cui un dispositivo riceve i dati.",
-        "de": "Eine in den Beacons übertragene Einstellung, die schlafenden Geräten mitteilt, wann sie für gepufferten Datenverkehr aufwachen sollen. Sie wägt Akkulaufzeit gegen die Geschwindigkeit ab, mit der ein Gerät Daten empfängt."
+        "es": "Un TIM especial (mapa de indicación de tráfico) que se envía cada N balizas, donde N es el periodo DTIM. Anuncia el tráfico de difusión (broadcast) y multidifusión (multicast) almacenado en búfer, que el punto de acceso envía justo después de esa baliza, por lo que los dispositivos dormidos se despiertan para recibirlo. Un periodo DTIM más largo ahorra batería; uno más corto entrega antes el tráfico de grupo.",
+        "fr": "Un TIM spécial (carte d'indication de trafic) envoyé toutes les N balises, N étant la période DTIM. Il annonce le trafic de diffusion (broadcast) et de multidiffusion (multicast) mis en mémoire tampon, que le point d'accès transmet juste après cette balise ; les appareils en veille se réveillent donc pour le recevoir. Une période DTIM plus longue économise la batterie ; une période plus courte livre plus tôt le trafic de groupe.",
+        "it": "Un TIM speciale (mappa di indicazione del traffico) inviato ogni N beacon, dove N è il periodo DTIM. Annuncia il traffico broadcast e multicast bufferizzato, che l'access point invia subito dopo quel beacon, per cui i dispositivi addormentati si svegliano per riceverlo. Un periodo DTIM più lungo risparmia batteria; uno più breve consegna prima il traffico di gruppo.",
+        "de": "Eine spezielle TIM (Traffic Indication Map), die bei jedem N-ten Beacon gesendet wird, wobei N die DTIM-Periode ist. Sie kündigt gepufferten Broadcast- und Multicast-Verkehr an, den der Access Point direkt nach diesem Beacon sendet, sodass schlafende Geräte dafür aufwachen. Eine längere DTIM-Periode spart Akku; eine kürzere liefert Gruppenverkehr früher aus."
       },
       "translation_status": "draft-needs-review"
     },

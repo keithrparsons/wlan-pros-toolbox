@@ -1,7 +1,7 @@
 // GlossaryService — load the bundled Wi-Fi Glossary (assets/data/glossary.json,
 // declared in pubspec.yaml) into typed Dart models, fully offline.
 //
-// WHAT IT DOES: parses the 92-term curated glossary into [GlossaryTerm] models,
+// WHAT IT DOES: parses the 93-term curated glossary into [GlossaryTerm] models,
 // groups them by `category` IN FILE ORDER (the curation order of categories and
 // of terms within each category is deliberate — never alphabetized), and answers
 // a free-text search consistent with the app's other reference/list screens

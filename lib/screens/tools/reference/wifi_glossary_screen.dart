@@ -1,9 +1,9 @@
-// Wi-Fi Glossary — a data-driven, searchable, grouped glossary of 92 Wi-Fi
+// Wi-Fi Glossary — a data-driven, searchable, grouped glossary of 93 Wi-Fi
 // terms, fully offline (bundled JSON asset).
 //
 // Mirrors the app's bundled-JSON reference pattern (Educational Resources /
 // Well-Known Ports): bundled asset → GlossaryService.fromJson → grouped list
-// screen. The 92 terms render in 8 category groups in curation order (never
+// screen. The 93 terms render in 8 category groups in curation order (never
 // alphabetized), each row showing the term, its companion identifier (abbr) and
 // its plain-language definition. A free-text search field filters the rendered
 // rows live, matching the app's other list/reference search UX (case-insensitive

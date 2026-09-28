@@ -2132,7 +2132,7 @@ Teaches what a modulation constellation is on the I/Q plane and why each step up
 
 ### Wi-Fi Glossary
 
-Plain-language definitions of 92 Wi-Fi terms a working engineer meets, grouped by topic and searchable live across the term, abbreviation, and definition. The same grouped, searchable screen as the authentication glossary, with the general Wi-Fi dataset.
+Plain-language definitions of 93 Wi-Fi terms a working engineer meets, grouped by topic and searchable live across the term, abbreviation, and definition. The same grouped, searchable screen as the authentication glossary, with the general Wi-Fi dataset.
 
 **Why it's here.** When a term in a config screen, a log, or a standards document is the thing standing between you and understanding what is happening. It answers what a term means in Wi-Fi terms, in Keith's voice, without a vendor's slant.
 
@@ -2144,7 +2144,7 @@ Plain-language definitions of 92 Wi-Fi terms a working engineer meets, grouped b
 **Field notes**
 - Multilingual: a language picker (English default, plus Spanish, French, Italian, and German) switches the definition language, so a non-English-first engineer can read the same definition in their own language. The English definitions remain the source of truth: whenever a non-English language is active the screen shows a "Translations in beta" note, because the translations are drafts pending professional review, and that draft flag travels with any copied text.
 - Vendor-neutral by design. Definitions describe standards-based behavior, not one vendor's implementation.
-- Data source: the curated 92-term Wi-Fi Glossary. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
+- Data source: the curated 93-term Wi-Fi Glossary. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
 
 ### Wi-Fi Standards Bodies
 

@@ -4925,7 +4925,7 @@
     "wifi-glossary": {
       "name": "Wi-Fi Glossary",
       "category": "Quick Reference",
-      "purpose": "Plain-language definitions of 92 Wi-Fi terms across 8 categories: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Each entry pairs the full term with its companion identifier, where it has one, and a definition written for working engineers. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
+      "purpose": "Plain-language definitions of 93 Wi-Fi terms across 8 categories: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Each entry pairs the full term with its companion identifier, where it has one, and a definition written for working engineers. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
       "whyHere": "For when a term in a spec sheet, a log, or a standards document is the one thing standing between you and understanding what's going on. It tells you what CCI, DFS, FSPL, or OFDMA actually mean in Wi-Fi terms, and it pairs the IEEE generation number with the Wi-Fi Alliance name so 802.11ax and Wi-Fi 6 read as one thing.",
       "howToUse": [
         "Browse the terms grouped by category, arranged so related ideas sit together rather than alphabetically.",
@@ -4940,9 +4940,9 @@
         "Vendor-neutral by design. Definitions describe the standards-based behavior, not one vendor's implementation.",
         "Naming is dual where the standard and the marketing brand differ: both the IEEE designation and the Wi-Fi Alliance generation name appear, so you can find the same term either way.",
         "This is the general-vocabulary companion to the Wi-Fi Authentication Glossary; both use the same searchable, grouped layout with a different set of terms.",
-        "The content is a curated edition of 92 terms."
+        "The content is a curated edition of 93 terms."
       ],
-      "source": "The tool reads from a curated, bundled list of 92 Wi-Fi terms, available offline."
+      "source": "The tool reads from a curated, bundled list of 93 Wi-Fi terms, available offline."
     },
     "wifi-auth-glossary": {
       "name": "Wi-Fi Authentication Glossary",

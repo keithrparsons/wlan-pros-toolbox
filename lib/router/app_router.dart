@@ -769,7 +769,7 @@ class AppRouter {
   /// `emergency-phrases` is permanent (route, catalog, asset, help, tests).
   static const String emergencyPhrases = '/tools/emergency-phrases';
 
-  /// Wi-Fi Glossary — 92 plain-language Wi-Fi term definitions, grouped by
+  /// Wi-Fi Glossary — 93 plain-language Wi-Fi term definitions, grouped by
   /// category (offline bundled JSON). The id `wifi-glossary` is permanent
   /// (backs this route, the catalog entry, the asset, and tests).
   static const String wifiGlossary = '/tools/wifi-glossary';

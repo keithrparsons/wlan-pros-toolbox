@@ -2,7 +2,7 @@
 // category grouping in FILE ORDER (never alphabetized), and case-insensitive
 // free-text search across term / abbr / definition. Most tests use a small
 // in-memory fixture; the last group loads the REAL bundled asset to prove all
-// 92 terms parse and group into the 8 curated categories in the expected order.
+// 93 terms parse and group into the 8 curated categories in the expected order.
 
 import 'dart:convert';
 import 'dart:io';
@@ -137,8 +137,8 @@ void main() {
   });
 
   group('real bundled asset', () {
-    test('parses all 92 terms', () {
-      expect(_loadReal().count, 92);
+    test('parses all 93 terms', () {
+      expect(_loadReal().count, 93);
     });
 
     test('groups into the 8 curated categories in the expected order', () {
@@ -162,12 +162,12 @@ void main() {
       );
     });
 
-    test('every term lands in exactly one group; counts sum to 92', () {
+    test('every term lands in exactly one group; counts sum to 93', () {
       final GlossaryService real = _loadReal();
       final int sum = real
           .grouped()
           .fold<int>(0, (int acc, GlossaryGroup g) => acc + g.count);
-      expect(sum, 92);
+      expect(sum, 93);
     });
 
     test('spot-check: RSSI carries its full-name expansion in abbr', () {
@@ -285,7 +285,7 @@ void main() {
     test('DATA INTEGRITY: every real term has all five languages, none empty',
         () {
       final GlossaryService real = _loadReal();
-      expect(real.count, 92);
+      expect(real.count, 93);
       for (final GlossaryTerm t in real.all) {
         // English (the canonical definition) is non-empty.
         expect(
@@ -323,7 +323,7 @@ void main() {
       expect(doc['languages'], <String>['en', 'es', 'fr', 'it', 'de']);
       // Every term carries the same per-term flag.
       final List<dynamic> terms = doc['terms'] as List<dynamic>;
-      expect(terms.length, 92);
+      expect(terms.length, 93);
       for (final dynamic row in terms) {
         final Map<String, dynamic> m = row as Map<String, dynamic>;
         expect(

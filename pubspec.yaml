@@ -447,7 +447,7 @@ flutter:
     # Ports tool (TICKET-007). A field-relevant subset of the IANA registry,
     # loaded + indexed once at startup. Source noted in the asset's _meta block.
     - assets/ports/well_known_ports.json
-    # Wi-Fi Glossary — 92 plain-language Wi-Fi term definitions across 8
+    # Wi-Fi Glossary — 93 plain-language Wi-Fi term definitions across 8
     # categories, for the Wi-Fi Glossary Quick Reference tool. Bundled JSON,
     # loaded + parsed once at screen open; curation order (categories and terms
     # within each) is deliberate and preserved. Source noted in the file's
