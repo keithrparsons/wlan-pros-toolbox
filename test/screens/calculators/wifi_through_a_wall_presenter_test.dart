@@ -1,9 +1,9 @@
 // Presenter-mode test for Wi-Fi Through a Wall (spec 00 "Done means": a
 // presenter test with no overflow and no page scroll, and keyboard play
 // where the tool has it). Held at 1920x1080, 1440x900 and 1470x923 in both
-// themes, in the fullest state: the wave playing, the inside-wavelength view
-// on, and a metal wall (which adds the "below the noise floor" note) as well as
-// a thin panel with the angle and TM set. The wave runs on a clock, so the
+// themes, in the fullest state: the wave playing, a metal wall (which adds
+// the "below the noise floor" note), a thin panel with the angle and TM set,
+// and the real walls with the most layers. The wave runs on a clock, so the
 // test pumps fixed durations rather than settling.
 
 import 'package:flutter/material.dart';
@@ -13,6 +13,7 @@ import 'package:wlan_pros_toolbox/data/channel_frequency_data.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_parts.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_stage.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/wall_multilayer_physics.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/wall_slab_physics.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/presenter/presenter.dart';
@@ -68,14 +69,17 @@ void main() {
           window: window,
           theme: theme(),
         );
-        c
-          ..setPlaying(true)
-          ..setShowMaterialWavelength(true);
+        c.setPlaying(true);
         for (final WallConfig w in const <WallConfig>[
-          WallConfig(material: WallMaterial.metal, thicknessMm: 2),
+          WallConfig(
+            preset: WallPreset.custom,
+            material: WallMaterial.metal,
+            thicknessMm: 2,
+          ),
           WallConfig(
             band: WifiBand.band24,
             channel: 11,
+            preset: WallPreset.custom,
             material: WallMaterial.plasterboard,
             thicknessMm: 12.7,
             angleDeg: 80,
@@ -84,13 +88,21 @@ void main() {
           WallConfig(
             band: WifiBand.band6,
             channel: 233,
+            preset: WallPreset.custom,
             material: WallMaterial.chipboard,
             thicknessMm: 500,
           ),
+          WallConfig(),
+          WallConfig(
+            preset: WallPreset.doublePaneWindow,
+            angleDeg: 80,
+            polarization: Polarization.tm,
+          ),
+          WallConfig(preset: WallPreset.brickWall),
         ]) {
           c.setConfig(w);
           await _settle(tester);
-          final String why = '${w.material.name} ${w.thicknessMm} mm';
+          final String why = '${w.wallName} ${w.wallMm} mm';
           expect(tester.takeException(), isNull, reason: why);
           expect(pageScrollables(tester), isEmpty, reason: why);
           expect(controlsOverflow(tester), 0, reason: why);
@@ -111,7 +123,9 @@ void main() {
   }
 
   testWidgets('Space plays and pauses, R returns to the opening wall, Up and '
-      'Down change the thickness', (WidgetTester tester) async {
+      'Down step the walls, or the thickness of one material', (
+    WidgetTester tester,
+  ) async {
     final WallSlabController c = await _present(
       tester,
       window: const Size(1920, 1080),
@@ -134,6 +148,22 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
 
+    // A real wall: Up and Down move through the list.
+    expect(c.config.preset, WallPreset.studWall);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+    expect(c.config.preset, WallPreset.values[1]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(c.config.preset, WallPreset.studWall);
+    // The first wall stops at the top.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(c.config.preset, WallPreset.studWall);
+
+    // One material: Up and Down change the thickness.
+    c.setConfig(c.config.copyWith(preset: WallPreset.custom));
+    await tester.pump();
     expect(c.config.thicknessMm, 102);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
     await tester.pump();
@@ -142,6 +172,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.bracketLeft);
     await tester.pump();
     expect(c.config.thicknessMm, lessThan(102));
+    expect(c.config.preset, WallPreset.custom);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
     await tester.pump();
@@ -149,8 +180,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a wall set on the phone screen is the wall presented, and the '
-      'wave keeps its wavelength inside by default', (
+  testWidgets('a wall set on the phone screen is the wall presented, with '
+      'its layers', (
     WidgetTester tester,
   ) async {
     setWindow(tester, const Size(1920, 1080));
@@ -163,7 +194,11 @@ void main() {
         .widget<WallSlabStage>(find.byType(WallSlabStage))
         .controller;
     phone.setConfig(
-      const WallConfig(material: WallMaterial.brick, thicknessMm: 230),
+      const WallConfig(
+        preset: WallPreset.custom,
+        material: WallMaterial.brick,
+        thicknessMm: 230,
+      ),
     );
     await _settle(tester);
     await tester.tap(find.text('Present'));
@@ -179,19 +214,23 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(shown.showMaterialWavelength, isFalse);
-    final Finder painter = find.descendant(
-      of: find.byKey(PresenterLayout.stageKey),
-      matching: find.byWidgetPredicate(
-        (Widget w) => w is CustomPaint && w.painter is WallWavePainter,
-      ),
-    );
     expect(
-      (tester.widget<CustomPaint>(painter).painter! as WallWavePainter)
-          .showMaterialWavelength,
-      isFalse,
+      find.descendant(
+        of: find.byKey(PresenterLayout.stageKey),
+        matching: find.byType(WallLayersStrip),
+      ),
+      findsOneWidget,
     );
-    expect(find.textContaining('Frequency never changes.'), findsWidgets);
+    shown.setConfig(const WallConfig());
+    await _settle(tester);
+    expect(
+      find.descendant(
+        of: find.byKey(PresenterLayout.stageKey),
+        matching: find.textContaining('Interior stud wall, 11.4 cm'),
+      ),
+      findsWidgets,
+    );
+    expect(find.text('Show wavelength inside the material'), findsNothing);
     shown.setPlaying(false);
     await _settle(tester);
   });

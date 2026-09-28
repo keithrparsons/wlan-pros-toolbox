@@ -4,13 +4,14 @@
 // bounced off the back face, 13 px per ripple, over the old 8 px averaging
 // threshold), so the green wave wiggled 3 to 4 times inside a 44 px band.
 //
-// Rule: in the DEFAULT view, the drawn envelope inside the wall is smooth
-// and monotonic at every thickness, material and band.
+// Rule: the drawn envelope inside the wall is smooth and monotonic at every
+// thickness, material, preset wall and band.
 
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_stage.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/wall_multilayer_physics.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/wall_slab_physics.dart';
 
 /// Sign changes of the slope of the drawn envelope inside the band, sampled
@@ -43,7 +44,6 @@ void main() {
       final WallWaveProfile p = WallWaveProfile(
         r,
         width,
-        showMaterialWavelength: false,
         labelWidthPx: 26,
       );
       expect(_turns(p), 0, reason: 'width $width');
@@ -60,11 +60,21 @@ void main() {
           final WallWaveProfile p = WallWaveProfile(
             WallSlab.compute(material: m, fGhz: f, thicknessM: mm / 1000),
             700,
-            showMaterialWavelength: false,
             labelWidthPx: 26,
           );
           if (_turns(p) != 0) bad.add('${m.name} $f GHz $mm mm');
         }
+      }
+    }
+    for (final WallPreset w in WallPreset.values) {
+      if (w.isCustom) continue;
+      for (final double f in <double>[2.437, 5.5, 6.5]) {
+        final WallWaveProfile p = WallWaveProfile(
+          MultilayerWall.compute(layers: w.layers, fGhz: f),
+          700,
+          labelWidthPx: 26,
+        );
+        if (_turns(p) != 0) bad.add('${w.name} $f GHz');
       }
     }
     expect(bad, isEmpty);
@@ -83,11 +93,7 @@ void main() {
         fGhz: 5.5,
         thicknessM: 0.2,
       );
-      final WallWaveProfile p = WallWaveProfile(
-        r,
-        700,
-        showMaterialWavelength: false,
-      );
+      final WallWaveProfile p = WallWaveProfile(r, 700);
       final double k = 2 * math.pi / r.props.lambdaAir / p.airPxPerM;
       for (double px = 1; px < p.frontPx - 1; px += 7) {
         final double d = p.phaseAtPx(px + 1) - p.phaseAtPx(px);

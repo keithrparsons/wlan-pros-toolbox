@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 
 import '../../../data/channel_frequency_data.dart';
+import '../../../services/wifi_lab/wall_multilayer_physics.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -70,11 +71,17 @@ int defaultChannelFor(WifiBand band) {
 }
 
 /// Everything the user sets. Immutable; the screen holds one and replaces it.
+///
+/// The wall is [preset]: a real wall built from P.2040 layers (the default
+/// is the interior stud wall), or [WallPreset.custom], one [material] at
+/// [thicknessMm]. The custom material and thickness are kept while a preset
+/// is showing, so switching back returns to them.
 @immutable
 class WallConfig {
   const WallConfig({
     this.band = WifiBand.band5,
     this.channel = 100,
+    this.preset = WallPreset.studWall,
     this.material = WallMaterial.concrete,
     this.thicknessMm = 102,
     this.angleDeg = 0,
@@ -84,7 +91,14 @@ class WallConfig {
 
   final WifiBand band;
   final int channel;
+
+  /// The wall: a named real wall, or [WallPreset.custom].
+  final WallPreset preset;
+
+  /// The one material of a custom wall.
   final WallMaterial material;
+
+  /// The thickness of a custom wall, mm.
   final double thicknessMm;
   final double angleDeg;
   final Polarization polarization;
@@ -96,7 +110,25 @@ class WallConfig {
 
   /// Level just behind the wall, dBm: Tx power minus the transmission loss.
   /// Free-space loss is not included.
-  double levelBehindDbm(SlabResult r) => txPowerDbm - r.transmissionLossDb;
+  double levelBehindDbm(WallTransmission r) =>
+      txPowerDbm - r.transmissionLossDb;
+
+  bool get isCustom => preset.isCustom;
+
+  /// The wall's layers, front to back: the preset's, or the one custom
+  /// layer.
+  List<WallLayer> get layers => isCustom
+      ? <WallLayer>[WallLayer(material, thicknessMm)]
+      : preset.layers;
+
+  /// Total thickness, mm.
+  double get wallMm => isCustom ? thicknessMm : preset.totalMm;
+
+  /// The wall's name: the preset's, or the custom material's.
+  String get wallName => isCustom ? material.label : preset.label;
+
+  /// Whose published measurements sit beside this wall.
+  WallMaterial get measuredMaterial => preset.measuredMaterial ?? material;
 
   /// Channel center frequency, MHz.
   int get centerMHz => centerFrequencyMHzForBand(band, channel)!;
@@ -106,13 +138,26 @@ class WallConfig {
   double get thicknessM => thicknessMm / 1000;
 
   /// The P.2040 result at the selected channel.
-  SlabResult get result => resultAt(fGhz);
+  WallTransmission get result => resultAt(fGhz);
 
-  /// The same wall at another frequency (the three-band card).
-  SlabResult resultAt(double fGhz, {double? thicknessM}) => WallSlab.compute(
+  /// The same wall at another frequency (the three-band card). A custom
+  /// wall is one slab (P.2040 Eqs. 43a-44, which also give its material
+  /// readouts); a preset goes through the multilayer method (Eqs. 39-42),
+  /// even when it has one layer. The two agree for one layer.
+  WallTransmission resultAt(double fGhz) => isCustom
+      ? customSlabAt(fGhz)
+      : MultilayerWall.compute(
+          layers: preset.layers,
+          fGhz: fGhz,
+          angleDeg: angleDeg,
+          polarization: polarization,
+        );
+
+  /// The custom wall as one slab, with its material properties.
+  SlabResult customSlabAt(double fGhz) => WallSlab.compute(
     material: material,
     fGhz: fGhz,
-    thicknessM: thicknessM ?? this.thicknessM,
+    thicknessM: thicknessM,
     angleDeg: angleDeg,
     polarization: polarization,
   );
@@ -120,6 +165,7 @@ class WallConfig {
   WallConfig copyWith({
     WifiBand? band,
     int? channel,
+    WallPreset? preset,
     WallMaterial? material,
     double? thicknessMm,
     double? angleDeg,
@@ -128,6 +174,7 @@ class WallConfig {
   }) => WallConfig(
     band: band ?? this.band,
     channel: channel ?? this.channel,
+    preset: preset ?? this.preset,
     material: material ?? this.material,
     thicknessMm: thicknessMm ?? this.thicknessMm,
     angleDeg: angleDeg ?? this.angleDeg,
@@ -140,6 +187,7 @@ class WallConfig {
       other is WallConfig &&
       other.band == band &&
       other.channel == channel &&
+      other.preset == preset &&
       other.material == material &&
       other.thicknessMm == thicknessMm &&
       other.angleDeg == angleDeg &&
@@ -150,6 +198,7 @@ class WallConfig {
   int get hashCode => Object.hash(
     band,
     channel,
+    preset,
     material,
     thicknessMm,
     angleDeg,
@@ -187,6 +236,13 @@ String fmtMm(double mm) {
 /// 2026-09-27: "most walls are measured in cm"), inches in imperial.
 /// "10.2 cm", "0.25 cm", "4 in", "19.7 in".
 String fmtThickness(double mm, UnitSystem u) => LengthFormat(u).smallFromMm(mm);
+
+/// A wall's layers in words, front to back, thicknesses in the unit on
+/// screen: "Plasterboard 1.27 cm, Air 8.9 cm, Plasterboard 1.27 cm".
+String fmtLayers(List<WallLayer> layers, UnitSystem u) => <String>[
+  for (final WallLayer l in layers)
+    '${l.label} ${fmtThickness(l.thicknessMm, u)}',
+].join(', ');
 
 /// A length in metres, in the unit a student reads easily. Imperial shows
 /// inches down to a tenth of an inch; below that (a metal's skin depth)

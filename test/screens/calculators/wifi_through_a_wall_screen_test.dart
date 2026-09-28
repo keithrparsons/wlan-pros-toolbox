@@ -2,11 +2,11 @@
 //
 // The physics is pinned in test/services/wifi_lab/wall_slab_physics_test.dart;
 // these cover the screen contract: catalog registration beside an untouched
-// rf-attenuation tool, reduced motion opens frozen and a normal open animates
-// with a working Pause, the thickness error state keeps the last valid wall,
-// the measured card's empty state and "Set the wall" action, metal renders
-// without NaN, and phone and desktop widths in both themes lay out without
-// overflow.
+// rf-attenuation tool, reduced motion opens frozen on the stud wall and a
+// normal open animates with a working Pause, the Wall list and its layers,
+// the thickness error state keeps the last valid wall, the measured card's
+// empty state and "Set the wall" action, metal renders without NaN, and
+// phone and desktop widths in both themes lay out without overflow.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,8 +15,13 @@ import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_parts.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_stage.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/wall_multilayer_physics.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/wall_slab_physics.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_select.dart';
+
+/// One material, 102 mm of concrete: the base tool's opening wall.
+const WallConfig _concrete = WallConfig(preset: WallPreset.custom);
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -90,9 +95,100 @@ void main() {
     expect(find.text('Play'), findsOneWidget);
     expect(find.text('Pause'), findsNothing);
     expect(find.textContaining('Reduced motion is on'), findsOneWidget);
-    // Default: 102 mm concrete on channel 100 (5500 MHz).
+    // Default: the interior stud wall on channel 100 (5500 MHz), its loss
+    // the multilayer result for its layers.
     expect(_valueOf(tester, 'Frequency'), '5500 MHz (ch 100)');
+    expect(
+      _valueOf(tester, 'Transmission loss'),
+      fmtLossDb(
+        MultilayerWall.compute(
+          layers: WallPreset.studWall.layers,
+          fGhz: 5.5,
+        ).transmissionLossDb,
+      ),
+    );
+    // A real wall has fixed layers: no material or thickness controls.
+    expect(find.byType(TextField), findsNothing);
+    expect(
+      _valueOf(tester, 'Layers'),
+      'Plasterboard 1.27 cm, Air 8.9 cm, Plasterboard 1.27 cm',
+    );
+  });
+
+  testWidgets('the Wall list: every real wall, then one material', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester);
+    final Finder select = find.byWidgetPredicate(
+      (Widget w) => w is AppSelect<WallPreset>,
+    );
+    expect(select, findsOneWidget);
+    final AppSelect<WallPreset> s = tester.widget<AppSelect<WallPreset>>(
+      select,
+    );
+    expect(
+      <String>[for (final AppSelectItem<WallPreset> i in s.items) i.$2],
+      <String>[
+        'Interior stud wall',
+        'Concrete elevator-shaft wall',
+        'Solid wood door',
+        'Double-pane window',
+        'Single-pane window',
+        'Brick wall, one brick thick',
+        'One material, any thickness',
+      ],
+    );
+
+    s.onChanged(WallPreset.elevatorShaft);
+    await tester.pumpAndSettle();
+    expect(_valueOf(tester, 'Layers'), 'Concrete 20.3 cm');
+    expect(find.textContaining('reinforcing bars'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+
+    tester.widget<AppSelect<WallPreset>>(select).onChanged(WallPreset.custom);
+    await tester.pumpAndSettle();
+    // One material: the material and thickness controls return, as they were.
+    expect(find.byType(TextField), findsOneWidget);
     expect(_valueOf(tester, 'Transmission loss'), '14.3 dB');
+    expect(find.text('Layers'), findsNothing);
+  });
+
+  testWidgets('copy text names the wall and its layers', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester);
+    final WallSlabController c = tester
+        .widget<WallSlabStage>(find.byType(WallSlabStage))
+        .controller;
+    expect(c.copyText(), contains('Interior stud wall, 11.4 cm'));
+    expect(
+      c.copyText(),
+      contains(
+        'Layers, front to back: Plasterboard 1.27 cm, Air 8.9 cm, '
+        'Plasterboard 1.27 cm',
+      ),
+    );
+  });
+
+  testWidgets('on a real wall, "Set the wall" switches to one material', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester);
+    expect(
+      find.textContaining('Published measurements of plasterboard'),
+      findsOneWidget,
+    );
+    final Finder use = find.text('Set the wall to 1.3 cm');
+    await tester.ensureVisible(use);
+    await tester.tap(use);
+    await tester.pumpAndSettle();
+    final WallSlabController c = tester
+        .widget<WallSlabStage>(find.byType(WallSlabStage))
+        .controller;
+    expect(c.config.preset, WallPreset.custom);
+    expect(c.config.material, WallMaterial.plasterboard);
+    expect(c.config.thicknessMm, 13);
+    expect(find.text('Set the wall to 1.3 cm'), findsNothing);
   });
 
   testWidgets('normal motion: animates on open, Pause stops it', (
@@ -110,7 +206,7 @@ void main() {
   testWidgets('thickness error keeps the last valid wall', (
     WidgetTester tester,
   ) async {
-    await _pump(tester);
+    await _pump(tester, initial: _concrete);
     final Finder field = find.byType(TextField);
     await tester.ensureVisible(field);
     await tester.enterText(field, '0');
@@ -127,7 +223,7 @@ void main() {
   testWidgets('measured card: action sets the specimen thickness', (
     WidgetTester tester,
   ) async {
-    await _pump(tester);
+    await _pump(tester, initial: _concrete);
     final Finder use = find.text('Set the wall to 20.3 cm');
     await tester.ensureVisible(use);
     await tester.tap(use);
@@ -142,7 +238,10 @@ void main() {
   ) async {
     await _pump(
       tester,
-      initial: const WallConfig(material: WallMaterial.marble),
+      initial: const WallConfig(
+        preset: WallPreset.custom,
+        material: WallMaterial.marble,
+      ),
     );
     expect(
       find.textContaining('found no published measurement for marble'),
@@ -156,6 +255,7 @@ void main() {
     await _pump(
       tester,
       initial: const WallConfig(
+        preset: WallPreset.custom,
         material: WallMaterial.plasterboard,
         thicknessMm: 12.7,
       ),
@@ -167,7 +267,7 @@ void main() {
       'level behind and the copy text, never the loss', (
     WidgetTester tester,
   ) async {
-    await _pump(tester);
+    await _pump(tester, initial: _concrete);
     final Finder tx = find.byWidgetPredicate(
       (Widget w) => w is Slider && w.max == kWallTxMaxDbm,
     );
@@ -214,6 +314,7 @@ void main() {
       initial: const WallConfig(
         band: WifiBand.band6,
         channel: 117,
+        preset: WallPreset.custom,
         thicknessMm: 1000,
         txPowerDbm: 0,
       ),
@@ -227,7 +328,10 @@ void main() {
   testWidgets('2 ft concrete at 5.5 GHz, Tx 20: above the floor, no note', (
     WidgetTester tester,
   ) async {
-    await _pump(tester, initial: const WallConfig(thicknessMm: 610));
+    await _pump(
+      tester,
+      initial: const WallConfig(preset: WallPreset.custom, thicknessMm: 610),
+    );
     expect(find.textContaining('the signal is below'), findsNothing);
     expect(_valueOf(tester, 'Level behind the wall'), startsWith('-57.8 dBm'));
   });
@@ -237,7 +341,11 @@ void main() {
   ) async {
     await _pump(
       tester,
-      initial: const WallConfig(material: WallMaterial.metal, thicknessMm: 47),
+      initial: const WallConfig(
+        preset: WallPreset.custom,
+        material: WallMaterial.metal,
+        thicknessMm: 47,
+      ),
     );
     expect(tester.takeException(), isNull);
     expect(_valueOf(tester, 'Transmission loss'), 'more than 150 dB');
@@ -247,6 +355,21 @@ void main() {
 
   for (final String themeName in <String>['dark', 'light']) {
     for (final double w in <double>[390, 1280]) {
+      for (final WallPreset p in WallPreset.values) {
+        if (p.isCustom) continue;
+        testWidgets('lays out at $w px, $themeName, ${p.label}', (
+          WidgetTester tester,
+        ) async {
+          await _pump(
+            tester,
+            width: w,
+            theme: themeName == 'dark' ? AppTheme.dark() : AppTheme.light(),
+            initial: WallConfig(preset: p),
+          );
+          expect(tester.takeException(), isNull);
+          expect(find.textContaining('NaN'), findsNothing);
+        });
+      }
       for (final WallMaterial m in <WallMaterial>[
         WallMaterial.concrete,
         WallMaterial.glass,
@@ -259,7 +382,11 @@ void main() {
             tester,
             width: w,
             theme: themeName == 'dark' ? AppTheme.dark() : AppTheme.light(),
-            initial: WallConfig(material: m, thicknessMm: 1000),
+            initial: WallConfig(
+              preset: WallPreset.custom,
+              material: m,
+              thicknessMm: 1000,
+            ),
           );
           expect(tester.takeException(), isNull);
           // No sideways scroll on the screen. A text field scrolls its own

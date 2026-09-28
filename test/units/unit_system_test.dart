@@ -6,7 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fspl_simulator_chart.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/fspl_simulator_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_parts.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/wifi_through_a_wall_stage.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/wall_multilayer_physics.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/units/unit_system.dart';
 import 'package:wlan_pros_toolbox/widgets/unit_system_switch.dart';
@@ -98,7 +101,13 @@ void main() {
     expect(find.text('100 m'), findsNothing);
 
     // A different tool, opened afterwards, is already imperial.
-    await _pump(tester, c, const WifiThroughAWallScreen());
+    await _pump(
+      tester,
+      c,
+      const WifiThroughAWallScreen(
+        initial: WallConfig(preset: WallPreset.custom),
+      ),
+    );
     expect(find.textContaining('(in, 0.39 to 39.4)'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
@@ -108,7 +117,13 @@ void main() {
     WidgetTester tester,
   ) async {
     final UnitSystemController c = UnitSystemController();
-    await _pump(tester, c, const WifiThroughAWallScreen());
+    await _pump(
+      tester,
+      c,
+      const WifiThroughAWallScreen(
+        initial: WallConfig(preset: WallPreset.custom),
+      ),
+    );
     final Finder field = find.byType(TextField);
     await tester.ensureVisible(field);
     expect(find.textContaining('(cm, 1 to 100)'), findsOneWidget);
@@ -137,6 +152,46 @@ void main() {
     await tester.enterText(field, '40');
     await tester.pump();
     expect(find.text('Enter a thickness from 0.39 to 39.4 in'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('a real wall\'s layers read in cm, then in inches', (
+    WidgetTester tester,
+  ) async {
+    final UnitSystemController c = UnitSystemController();
+    await _pump(tester, c, const WifiThroughAWallScreen());
+    final Finder strip = find.byType(WallLayersStrip);
+    expect(strip, findsOneWidget);
+    expect(
+      find.descendant(of: strip, matching: find.text('1.27 cm')),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(of: strip, matching: find.text('8.9 cm')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Interior stud wall, 11.4 cm'), findsWidgets);
+
+    await c.setSystem(UnitSystem.imperial);
+    await tester.pump();
+    expect(
+      find.descendant(of: strip, matching: find.text('0.5 in')),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(of: strip, matching: find.text('3.5 in')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: strip, matching: find.textContaining('cm')),
+      findsNothing,
+    );
+    expect(find.textContaining('Interior stud wall, 4.5 in'), findsWidgets);
+    expect(
+      find.textContaining('Plasterboard 0.5 in, Air 3.5 in, Plasterboard'),
+      findsWidgets,
+    );
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
   });
