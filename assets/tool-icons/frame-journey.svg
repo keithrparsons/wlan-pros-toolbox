@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one frame: header and body, then the FCS at the end -->
+    <rect x="3" y="3" width="18" height="5.5" rx="1.5"/>
+    <path d="M16.5 3 V8.5"/>
+    <!-- the frame crossing the air: one wavelength throughout -->
+    <path d="M3 13.5 Q4.5 11 6 13.5 T9 13.5 T12 13.5 T15 13.5 T18 13.5 T21 13.5"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="14" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

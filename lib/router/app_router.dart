@@ -55,6 +55,8 @@ import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/multicast_basic_rate_screen.dart';
 import '../screens/tools/calculators/channel_utilization_screen.dart';
 import '../screens/tools/calculators/band_steering_screen.dart';
+import '../screens/tools/calculators/down_the_stack_screen.dart';
+import '../screens/tools/calculators/frame_journey_screen.dart';
 import '../screens/tools/calculators/legacy_protection_screen.dart';
 import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
@@ -457,6 +459,15 @@ class AppRouter {
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
   static const String boxVsHand = '/tools/box-vs-hand';
+  // Wi-Fi Classroom (2026-09-27). Down the Stack, Across the Air, Up the Other
+  // Side: encapsulation down the laptop's stack, RF across the air, each
+  // device climbing only as far as it needs; IPs end to end, MACs per hop;
+  // the four To DS / From DS cases. Pure on-device model, all platforms.
+  static const String downTheStack = '/tools/down-the-stack';
+  // Wi-Fi Classroom (2026-09-27). A Frame's Journey: the laptop's air frame
+  // from Tx NIC to Rx NIC, radiotap, FCS (CRC-32), SIFS and the ACK, and a
+  // flipped bit's retry. Same model as downTheStack; all platforms.
+  static const String frameJourney = '/tools/frame-journey';
   // Ham Radio band references (2026-06-28). Read-only, all platforms incl. web.
   static const String hamBandPlan = '/tools/ham-band-plan';
   static const String hamBandWavelengths = '/tools/ham-band-wavelengths';
@@ -982,6 +993,8 @@ class AppRouter {
     multicastBasicRate: (_) => const MulticastBasicRateScreen(),
     channelUtilization: (_) => const ChannelUtilizationScreen(),
     bandSteering: (_) => const BandSteeringScreen(),
+    downTheStack: (_) => const DownTheStackScreen(),
+    frameJourney: (_) => const FrameJourneyScreen(),
     legacyProtection: (_) => const LegacyProtectionScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     wpa2Password: (_) => const Wpa2PasswordScreen(),

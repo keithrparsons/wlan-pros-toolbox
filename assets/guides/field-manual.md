@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 239 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 241 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,12 +37,12 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (66 tools)
+- **Wi-Fi Classroom** (68 tools)
   - Guided Lessons (10)
   - RF and Propagation (12)
-  - Signals and PHY (6)
+  - Signals and PHY (7)
   - Airtime and Access (11)
-  - Network Design and Security (16)
+  - Network Design and Security (17)
   - Course Handouts (11)
 
 ---
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (66 tools)
+# Wi-Fi Classroom (68 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4506,7 +4506,7 @@ Shows what people cost a Wi-Fi signal, from above. An auditorium floor holds one
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Signals and PHY (6)
+## Signals and PHY (7)
 
 
 ### Modulation Simulator
@@ -4713,6 +4713,43 @@ Draws the preamble of every Wi-Fi PPDU format to scale in microseconds: Legacy (
 - The BSS color moves with the HE PPDU type (HE-SIG-A1 B8-B13 in SU, B5-B10 in MU, B1-B6 in TB) and is fixed in EHT at U-SIG-1 B7-B12.
 - The LTF size and guard interval pairs offered are the brief's EHT list; 1x is not offered. LTF counts follow the Airtime Anatomy table. Durations are per field and do not change with width. The packet extension and the 2.4 GHz signal extension come after the data and are not drawn.
 - HE-SIG-B and EHT-SIG symbol counts depend on the users and the SIG MCS, so here they are a setting, not computed.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### A Frame's Journey
+
+Follows one frame across one hop, from the sending radio's NIC (network interface card) to the receiving one: the laptop's frame to the AP (access point), the same frame Down the Stack sends on its air hop. The bits become RF (radio frequency) waves, cross the distance and are decoded. A receiver that is capturing puts a radiotap header in front of the frame, which was never sent. The receiver checks the FCS (frame check sequence) and only then, after one SIFS (short interframe space), sends the ACK (acknowledgment). Flip one bit and the check fails, no ACK comes back, and the sender tries again.
+
+**Why it's here.** An ACK is the sender's only evidence that a frame arrived. The receiver runs the same 32-bit CRC (cyclic redundancy check) the sender ran, and one wrong bit anywhere in the frame, even inside the FCS itself, makes the two disagree. A frame that fails the check is dropped without a reply, so the sender learns about the loss only from the ACK that never comes, and every retry costs airtime. Seeing the radiotap header added on the receiving side, and never on the air, also explains why two receivers capturing the same frame report different signal levels and times.
+
+**How to use**
+1. Press Play to follow the frame one step at a time, or use Back, Step, Reset and the Step slider. The top card says what happens at each step. The drawing shows the sending NIC, the air and the receiving NIC, with a timeline underneath: the frame, the SIFS gap and the ACK, not to scale.
+2. Pick the band (2.4, 5 or 6 GHz) and the distance. Distance lowers the wave's height and the signal level; the wavelength drawn never changes, because the frequency does not.
+3. Turn on Corrupt one bit on the first attempt and pick the bit with the slider; the tool names the field it falls in. Step through: the FCS check fails, no ACK comes back, and the retry, with the Retry bit set and a new FCS, gets through.
+4. Turn Receiver is capturing off: nothing is added, and the frame on the air is the same either way. Change TCP or UDP and the data size to change the frame.
+5. Predict, then reveal: Ask the class loads the question (one bit of the frame arrives wrong: what does the receiver send back?) with a bit corrupted; pick an answer, then press Reveal.
+6. On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow steps, R resets, Up and Down move the receiver 1 m (about 3 ft) farther or closer, C corrupts a bit or sends the frame clean, B picks the next band, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Band | GHz | 2.4, 5 (default) or 6; channel 6 at 2437 MHz, 36 at 5180 MHz, 37 at 6135 MHz |
+| Distance | m or ft | 1 to 30 m (about 3 to 98 ft); default 8 m |
+| Corrupt one bit on the first attempt | switch | Off (default) or On |
+| Which bit | bit number | 0 to the frame's last bit; default 133, inside Address 3 |
+| Receiver is capturing (radiotap) | switch | On (default) or Off |
+| Transport | choice | TCP, Transmission Control Protocol (default), or UDP, User Datagram Protocol |
+| Data | bytes | 100, 500 or 1460 (default) |
+
+**How it works.** The frame is built byte by byte: a 26-byte 802.11 QoS (quality of service) Data header with To DS 1 and From DS 0, LLC/SNAP (logical link control and subnetwork access protocol), the IPv4 header with its checksum, the TCP or UDP header and the data. The FCS is the CRC-32 of everything before it, the IEEE 802.3 polynomial that 802.11 uses (clause 9.2.4.8). The receiver recomputes the CRC over what arrived and compares it with the FCS that arrived: equal passes, anything else fails. It sends an ACK only for a frame that passes, back to the radio in the frame's Address 2 (clauses 10.3.2.2 and 10.3.2.11). SIFS is 16 µs at 5 and 6 GHz, and 10 µs at 2.4 GHz after the 6 µs signal extension that follows an OFDM (orthogonal frequency division multiplexing) frame there, so the gap is 16 µs (clauses 18.4.5 and 10.3.8). The retry sets the Retry bit in Frame Control, which changes the CRC. Signal level = 20 dBm EIRP (effective isotropic radiated power, illustrative) minus the free-space path loss at the channel's center frequency. Travel time = distance / the speed of light.
+
+**Example.** Defaults (5 GHz, 8 m, TCP, 1460 bytes): the frame is 1538 bytes, 12,304 bits. It arrives at -44.8 dBm after 26.7 ns, the FCS matches, and one SIFS of 16 µs later the AP sends its ACK to the laptop's MAC (media access control) address. The trip across takes 26.7 ns; the SIFS is 16,000 ns. With bit 133 corrupted, inside Address 3, the receiver's CRC differs from the FCS that arrived, no ACK is sent, and the retry gets through.
+
+**Field notes**
+- The FCS is a real CRC-32 over this frame's bytes, so the values shown are what a receiver computes for them. The Duration field, the sequence number, the MAC addresses and the data are illustrative.
+- The radiotap timer value and the MCS (modulation and coding scheme) are illustrative; the channel and the signal level follow the band and the distance. Radiotap also exists on the sending side when a tool injects frames, and the driver removes it before the frame goes out.
+- Not modeled: the preamble (see PHY Preamble), how bits are coded onto subcarriers, the ACK timeout value, the backoff before the retry, retry limits, block acknowledgment for aggregated frames, and encryption.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
@@ -5215,7 +5252,7 @@ Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A 
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Network Design and Security (16)
+## Network Design and Security (17)
 
 
 ### Channel Planner
@@ -5645,6 +5682,44 @@ Runs one access point on a simulated one-hour clock and shows what Dynamic Frequ
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
+### Down the Stack, Across the Air, Up the Other Side
+
+Animates the protocol stack the way it is taught in a classroom. A laptop on Wi-Fi sends data to a wired server through an AP (access point) and a router. Going down the laptop's stack the data gains a port (the TCP, Transmission Control Protocol, or UDP, User Datagram Protocol, header), IP (Internet Protocol) addresses and MAC (media access control) addresses, then becomes bits carried by RF (radio frequency) waves. It crosses the air, and each device climbs only as far as it needs: the AP to the data link layer, the router to the network layer, the server all the way up. A second view shows the four combinations of the To DS and From DS bits (DS, the distribution system) and what Addresses 1 to 4 hold in each.
+
+**Why it's here.** The IP addresses stay the same from the laptop to the server while the MAC addresses change on every hop, and watching each header get added, read and replaced makes that stick. The frame on the air carries a third address, and in the laptop-to-server case it is the router's MAC, not the server's: the server is on another subnet, so the laptop sends to its default gateway, and the server's address appears only in the IP header. A fourth address exists for the case where both radios on a hop are relays, such as a mesh or WDS (wireless distribution system) backhaul, so the frame needs two more fields for where it started and where it is going.
+
+**How to use**
+1. Press Play to move the data one step at a time, or use Back, Step, Reset and the Journey step slider. The top card says where the data is and what that layer did. In the drawing each column is a device and each box a layer; the lime line is the path so far and the dot is where the data is now. Layers a device does not use are dashed.
+2. The next card shows what is on the wire or in the air: each header is a labeled piece with its size in bytes, and a new or changed piece is outlined and marked new. The card below lists the ports, the IP addresses and the TTL (time to live), and the layer 2 addresses in force: 802.11 Addresses 1 to 3 with their roles on the air, or the Ethernet source and destination on a cable.
+3. Change the scene: To the server or The reply, and a server on Another subnet (through the router) or the Same subnet (no router, and Address 3 becomes the server). Change the frame: TCP or UDP, 100, 500 or 1460 bytes of data, and a QoS (quality of service) Data header of 26 bytes or the textbook 24-byte Data header.
+4. Show Address fields, or press one of the four To DS / From DS buttons (To DS first). Each case shows a worked scene, who plays which role on the air, and Addresses 1 to 4 with the device and MAC address in each.
+5. Predict, then reveal: Ask the class loads the question (the laptop sends to a server on another subnet: whose MAC address is in Address 3?); pick an answer, then press Reveal to jump to the step where the laptop fills in the 802.11 header.
+6. On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, the Right arrow steps, R resets, Up and Down move one step forward or back, D shows the next To DS / From DS case, V switches between the journey and the address fields, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Direction | choice | To the server (default) or The reply |
+| Server | choice | Another subnet, through the router (default), or the laptop's own subnet |
+| Transport | choice | TCP (default, 20-byte header) or UDP (8-byte header) |
+| Data | bytes | 100, 500 or 1460 (default; fills a 1500-byte IPv4 packet with TCP) |
+| QoS Data header | switch | On (default, 26 bytes) or Off (the textbook 24-byte Data header) |
+| To DS / From DS | choice | 0 0, 0 1, 1 0 or 1 1 (To DS first); follows the journey: 1 0 going to the server, 0 1 on the reply |
+
+**How it works.** Sizes: TCP header 20 bytes (RFC 9293), UDP header 8 (RFC 768), IPv4 (Internet Protocol version 4) header 20 (RFC 791), LLC/SNAP (logical link control and subnetwork access protocol) 8 (RFC 1042), 802.11 MAC header 24 bytes with three addresses and 30 with four, plus 2 for QoS Control, and a 4-byte FCS (frame check sequence), IEEE 802.11-2020 clause 9.2.4.8. Ethernet adds a 14-byte header and a 4-byte FCS. Addresses by To DS / From DS follow clause 9.3.2.1: 0 0 gives RA = DA, TA = SA, BSSID; 0 1 gives RA = DA, TA = BSSID, SA; 1 0 gives RA = BSSID, TA = SA, DA; 1 1 gives RA, TA, DA, SA. RA is the receiver address, TA the transmitter address, DA the destination address, SA the source address and the BSSID (basic service set identifier) the AP radio's MAC for the network. The laptop compares the server's IP address with its own under a /24 mask; off its subnet, it sends to its default gateway's MAC, found by ARP (Address Resolution Protocol). The AP is a bridge: it removes the 802.11 header and LLC/SNAP and forwards on Ethernet with the laptop's MAC as the source (RFC 1042). The router removes the Ethernet header, lowers the TTL by 1, recomputes the IPv4 header checksum (RFC 1812) and builds a new Ethernet header from its outgoing interface to the next device.
+
+**Example.** Defaults, laptop to server, TCP, 1460 bytes: 1460 + 20 = 1480 bytes, + 20 = 1500 (the IPv4 packet), + 8 LLC/SNAP = 1508, + 26 header + 4 FCS = 1538 bytes, or 12,304 bits, on the air. There Address 1 is the AP's BSSID, Address 2 the laptop and Address 3 the router's LAN interface. On the cable to the router the same packet is 14 + 1500 + 4 = 1518 bytes, from the laptop's MAC to the router's. The router lowers the TTL from 64 to 63 and sends a new frame from its server-side MAC to the server's. Source 192.0.2.10 and destination 198.51.100.20 never change.
+
+**Field notes**
+- No NAT (network address translation). Most home routers translate the source address, and then the source IP changes at the router. Without NAT the IP addresses stay the same end to end, and only the TTL and the header checksum change.
+- Every MAC address, the laptop's port 51000 and the starting TTL of 64 are illustrative. The IP addresses come from the ranges RFC 5737 reserves for documentation.
+- The drawing shows the OSI (Open Systems Interconnection) layers 7, 4, 3, 2 and 1 and leaves out 5 and 6.
+- Left out: the ARP exchange itself, the ACK (acknowledgment), the PHY (physical layer) preamble, encryption, aggregation, VLAN (virtual LAN) tags and IPv6. A Frame's Journey opens up the air hop: the FCS check, SIFS (short interframe space) and the ACK.
+- A mesh network built on 802.11s can carry up to six addresses using its Mesh Control field; the four-address case here is the plain one. Frames that carry several packets at once (an A-MSDU, aggregate MAC service data unit) fill Addresses 3 and 4 differently.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
 ### Conference Wi-Fi Runs Out of Addresses
 
 Follows the DHCP (Dynamic Host Configuration Protocol) address pool through a conference morning, 07:00 to 13:00. People arrive, put devices on the Wi-Fi, stay a while and leave. Each device borrows an IP (Internet Protocol) address for a lease time. Set the lease and watch the pool: with a long lease it runs dry mid-morning while the hall is half empty, and with a short one it holds.
@@ -6017,6 +6092,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 
