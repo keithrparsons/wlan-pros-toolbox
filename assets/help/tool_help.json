@@ -7326,6 +7326,29 @@
       "source": "The WLAN Pros print guide Weak Cell Signal at Home, Explained (September 2026), checked against the FCC, Ofcom, ITU-R and carrier pages. The full source list is the last section of the lesson.",
       "name": "Weak Cell Signal at Home, Explained"
     },
+    "how-gps-works-explained": {
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on how your phone finds itself by listening to satellites, and what to do when the blue dot gets it wrong. Satellites high above the Earth send out the time and where they are. Your phone hears several of them, measures how long each signal took to arrive, and works out where it is. It never sends anything back. The lesson follows the free PDF guide of the same name, word for word, with its 14 figures.",
+      "whyHere": "It answers a question Wi-Fi people get asked by people who are not technical: how does my phone know where I am, and does GPS track me? It also sets up the Wi-Fi angle. GPS needs to see the sky, so indoors it mostly gives up and the phone switches to Wi-Fi and cell towers instead. That half of the story is its companion lesson, How Your Phone Knows Where It Is, Explained. Figure 8 shows where GPS works and where it doesn't.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then satellites that send the time, why it takes four satellites to find one spot, where GPS works and where it doesn't, when the dot is wrong on purpose (jamming and spoofing), four things people get wrong, and tips for a better fix. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 1 names the indoor half of the story. Its Open button takes you to How Your Phone Knows Where It Is, Explained.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.",
+        "Take it with you, at the end of the lesson, names the free PDF guide it follows, How GPS Works, Explained from WLAN Pros, to print or share."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026 against GPS.gov, the US Space Force, the US Coast Guard Navigation Center and the other sources listed at the end of the lesson.",
+        "About 5 m (16 feet) outdoors is typical, not a promise. Near tall buildings or under trees the dot can be off by much more.",
+        "Figures 4, 5, 6, 10 and 13 are not to scale.",
+        "The lesson is independent and isn't affiliated with or endorsed by any government agency, satellite operator or phone maker."
+      ],
+      "source": "The WLAN Pros print guide How GPS Works, Explained (September 2026), checked against GPS.gov and the other sources listed in the last section of the lesson.",
+      "name": "How GPS Works, Explained"
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

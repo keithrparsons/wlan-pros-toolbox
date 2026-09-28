@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 244 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 245 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (71 tools)
-  - Guided Lessons (12)
+- **Wireless Classroom** (72 tools)
+  - Guided Lessons (13)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (71 tools)
+# Wireless Classroom (72 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (12)
+## Guided Lessons (13)
 
 
 ### Antenna Fundamentals
@@ -3987,6 +3987,26 @@ A read-along lesson on why your phone has bars at the curb and drops calls in th
 - The booster rules are the US ones, with a line on the UK and Australia. Rules vary by country, so check with your carrier and your regulator first.
 - The Keith's note was written about Wi-Fi. The lesson says so under it: the tower's signal crosses the same materials.
 - No booster brand is named or recommended. The lesson is independent and isn't affiliated with any booster maker or carrier.
+
+
+### How GPS Works, Explained
+
+A read-along lesson on how your phone finds itself by listening to satellites, and what to do when the blue dot gets it wrong. Satellites high above the Earth send out the time and where they are. Your phone hears several of them, measures how long each signal took to arrive, and works out where it is. It never sends anything back. The lesson follows the free PDF guide of the same name, word for word, with its 14 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical: how does my phone know where I am, and does GPS track me? It also sets up the Wi-Fi angle. GPS needs to see the sky, so indoors it mostly gives up and the phone switches to Wi-Fi and cell towers instead. That half of the story is its companion lesson, How Your Phone Knows Where It Is, Explained. Figure 8 shows where GPS works and where it doesn't.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then satellites that send the time, why it takes four satellites to find one spot, where GPS works and where it doesn't, when the dot is wrong on purpose (jamming and spoofing), four things people get wrong, and tips for a better fix. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 1 names the indoor half of the story. Its Open button takes you to How Your Phone Knows Where It Is, Explained.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+5. Take it with you, at the end of the lesson, names the free PDF guide it follows, How GPS Works, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked on 28 September 2026 against GPS.gov, the US Space Force, the US Coast Guard Navigation Center and the other sources listed at the end of the lesson.
+- About 5 m (16 feet) outdoors is typical, not a promise. Near tall buildings or under trees the dot can be off by much more.
+- Figures 4, 5, 6, 10 and 13 are not to scale.
+- The lesson is independent and isn't affiliated with or endorsed by any government agency, satellite operator or phone maker.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

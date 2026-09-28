@@ -83,6 +83,7 @@ const Set<String> _guideIds = <String>{
   'home-internet-explained',
   'bluetooth-explained',
   'weak-cell-signal-explained',
+  'how-gps-works-explained',
 };
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.
