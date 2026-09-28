@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 246 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 247 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (73 tools)
-  - Guided Lessons (14)
+- **Wireless Classroom** (74 tools)
+  - Guided Lessons (15)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (73 tools)
+# Wireless Classroom (74 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (14)
+## Guided Lessons (15)
 
 
 ### Antenna Fundamentals
@@ -4026,6 +4026,25 @@ A read-along lesson on the trip everything online takes: from your device to the
 - The guide is drawn from Keith's book Fix Your Own Wi-Fi (in preparation), chapters 1, 2 and 6, and from the WLAN Pros master graphic How your devices access the Internet, version 3.
 - Figure 2 is that master graphic.
 - The lesson names no provider and no carrier. It is independent and isn't affiliated with any of them.
+
+
+### Mesh, Extenders and Wired Access Points, Explained
+
+A read-along lesson on the three kinds of gear sold to fix a dead zone: extenders, mesh kits and wired access points. Every box you add needs its own link back to your main box, and that link decides how fast the far room will be. A box that uses one radio for the link back and for you has to take turns. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures, and covers where to put the new box, four ways to build the link back, and which one to buy.
+
+**Why it's here.** Wi-Fi people get asked which extender or mesh kit to buy. The lesson answers with one question: how does the new box link back to the main one? The lesson carries the shared-airtime reason: every piece of your video crosses the air twice on one radio, and the two trips share the same time, so an extender in the dead zone can leave the laptop slower than no extender at all. Figure 6 shows the same far room reached five ways.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one big idea, then covers three ways to fill a dead zone, one radio with two jobs, why it can cut your speed in half, where to put it, five setups for one far room, four ways to build the link back, wired access points, which one to buy, five things people get wrong, and what to test after you set it up. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. The lesson's speeds come from a model in the Wireless Classroom. Steps 4 and 6, and the sources, have an Open button for Repeaters and Mesh Backhaul, that model, so you can move the hops yourself. Step 9 and the related guides open How Your Devices Access the Internet, Explained and Home Internet, Explained.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or taking to the store.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The speeds are from the Classroom model, one long open hallway with typical settings, as the guide says. Your walls and your gear will change every number; the pattern stays the same.
+- Google, Ofcom, the MoCA Alliance and the Wi-Fi Alliance are cited from their own published pages, read 27 September 2026.
+- The lesson is independent and isn't affiliated with any maker or provider.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

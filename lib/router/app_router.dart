@@ -149,6 +149,7 @@ import '../screens/tools/reference/phone_data_abroad_explained_screen.dart';
 import '../screens/tools/reference/smart_home_radios_explained_screen.dart';
 import '../screens/tools/reference/cameras_doorbells_explained_screen.dart';
 import '../screens/tools/reference/devices_to_internet_explained_screen.dart';
+import '../screens/tools/reference/mesh_extenders_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -875,6 +876,13 @@ class AppRouter {
   static const String devicesToInternetExplained =
       '/tools/devices-to-internet-explained';
 
+  /// Mesh, Extenders and Wired Access Points, Explained: a Wireless Classroom
+  /// Guided Lesson on the link back, one radio taking turns, where to put an
+  /// extender, and the four ways to build a link back. The id
+  /// `mesh-extenders-explained` is permanent (route, catalog, help, tests).
+  static const String meshExtendersExplained =
+      '/tools/mesh-extenders-explained';
+
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
   /// interference (a nine-card signature gallery), and how to mitigate it. An
@@ -1249,6 +1257,7 @@ class AppRouter {
     smartHomeRadiosExplained: (_) => const SmartHomeRadiosExplainedScreen(),
     camerasDoorbellsExplained: (_) => const CamerasDoorbellsExplainedScreen(),
     devicesToInternetExplained: (_) => const DevicesToInternetExplainedScreen(),
+    meshExtendersExplained: (_) => const MeshExtendersExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

@@ -155,6 +155,8 @@ def find_figures(src: str) -> list[dict]:
 def find_cover(src: str) -> str | None:
     # The cover art's div may carry attributes (data-op="1" on some guides).
     m = re.search(r'<div class="art"[^>]*>\s*(<svg\b.*?</svg>)', src, re.S)
+    if m is None and re.search(r'<div class="art\b', src):
+        raise ExtractError("the guide has cover art this script cannot find")
     return m.group(1) if m else None
 
 

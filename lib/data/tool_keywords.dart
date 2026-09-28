@@ -3211,6 +3211,26 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'check my connection',
     'which road is slow',
   ],
+  // Mesh, Extenders and Wired Access Points, Explained (Guided Lesson). What
+  // people shop for when a room is slow, plus the terms the lesson teaches.
+  'mesh-extenders-explained': <String>[
+    'mesh',
+    'mesh wi-fi',
+    'mesh kit',
+    'extender',
+    'range extender',
+    'wi-fi extender',
+    'repeater',
+    'access point',
+    'wired access point',
+    'dead zone',
+    'backhaul',
+    'wired backhaul',
+    'dedicated backhaul',
+    'moca',
+    'powerline',
+    'easymesh',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

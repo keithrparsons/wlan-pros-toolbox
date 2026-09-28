@@ -2726,6 +2726,23 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Mesh, Extenders and Wired Access Points, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 11
+      // figures. Its numbers come from the Repeaters and Mesh Backhaul model,
+      // which it opens. Shelved with the other lessons for the people Wi-Fi
+      // pros get asked by.
+      ToolEntry(
+        id: 'mesh-extenders-explained',
+        title: 'Mesh, Extenders and Wired Access Points, Explained',
+        description:
+            'Three ways to fix a dead zone, and why the link back to your '
+            'main box decides how fast the far room is: where to put the new '
+            'box, and which one to buy',
+        routeName: '/tools/mesh-extenders-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

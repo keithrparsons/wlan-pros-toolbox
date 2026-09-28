@@ -7371,6 +7371,28 @@
       ],
       "source": "The WLAN Pros print guide How Your Devices Access the Internet, Explained (September 2026), drawn from Keith Parsons, Fix Your Own Wi-Fi, chapters 1, 2 and 6. The full source list is the last section of the lesson."
     },
+    "mesh-extenders-explained": {
+      "name": "Mesh, Extenders and Wired Access Points, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on the three kinds of gear sold to fix a dead zone: extenders, mesh kits and wired access points. Every box you add needs its own link back to your main box, and that link decides how fast the far room will be. A box that uses one radio for the link back and for you has to take turns. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures, and covers where to put the new box, four ways to build the link back, and which one to buy.",
+      "whyHere": "Wi-Fi people get asked which extender or mesh kit to buy. The lesson answers with one question: how does the new box link back to the main one? The lesson carries the shared-airtime reason: every piece of your video crosses the air twice on one radio, and the two trips share the same time, so an extender in the dead zone can leave the laptop slower than no extender at all. Figure 6 shows the same far room reached five ways.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer and the one big idea, then covers three ways to fill a dead zone, one radio with two jobs, why it can cut your speed in half, where to put it, five setups for one far room, four ways to build the link back, wired access points, which one to buy, five things people get wrong, and what to test after you set it up. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "The lesson's speeds come from a model in the Wireless Classroom. Steps 4 and 6, and the sources, have an Open button for Repeaters and Mesh Backhaul, that model, so you can move the hops yourself. Step 9 and the related guides open How Your Devices Access the Internet, Explained and Home Internet, Explained.",
+        "At the end, Take it with you names the free PDF guide the lesson follows, for printing or taking to the store.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The speeds are from the Classroom model, one long open hallway with typical settings, as the guide says. Your walls and your gear will change every number; the pattern stays the same.",
+        "Google, Ofcom, the MoCA Alliance and the Wi-Fi Alliance are cited from their own published pages, read 27 September 2026.",
+        "The lesson is independent and isn't affiliated with any maker or provider."
+      ],
+      "source": "The WLAN Pros print guide Mesh, Extenders and Wired Access Points, Explained (September 2026), with speeds from the Toolbox's Repeaters and Mesh Backhaul model. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",
