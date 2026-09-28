@@ -1568,6 +1568,34 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   // Wi-Fi Classroom (2026-09-26). Adjacent channels and AP stacking (spec
   // 29): what a student types when two close radios on clean channels fight.
+  // Wi-Fi Classroom (2026-09-27). What an Interferer Costs: what a student
+  // types when asking whether the microwave or the neighbor is the problem.
+  'interferer-cost': <String>[
+    'interference',
+    'interferer',
+    'non-wifi interference',
+    'non-wi-fi interference',
+    'microwave',
+    'microwave oven',
+    'bluetooth',
+    'video sender',
+    'wireless camera',
+    'co-channel',
+    'co-channel contention',
+    'cci',
+    'cca',
+    'clear channel assessment',
+    'preamble detect',
+    'signal detect',
+    'energy detect',
+    '-82 dbm',
+    '-62 dbm',
+    'deferral',
+    'defer',
+    'backoff',
+    'duty cycle',
+    'nic sensitivity',
+  ],
   'adjacent-channel': <String>[
     'adjacent channel',
     'adjacent channel interference',
