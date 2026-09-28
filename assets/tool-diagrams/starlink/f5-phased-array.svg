@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" width="700" height="240" role="img" aria-label="A flat panel of small antennas steering one beam between satellites across a 110 degree field of view">
+<path d="M350 190 L180 80 A200 200 0 0 1 520 80 Z" fill="rgba(162,204,58,0.08)" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="350" y1="190" x2="180" y2="80" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 4"/>
+<line x1="350" y1="190" x2="520" y2="80" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 4"/>
+<path d="M350 190 L250 40 L275 36 Z" fill="#A2CC3A" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M350 190 L345 25 L372 26 Z" fill="#A2CC3A" opacity="0.7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M350 190 L452 42 L474 50 Z" fill="#A2CC3A" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="262" cy="34" r="5" fill="#E5E5E5"/>
+<circle cx="358" cy="20" r="5" fill="#E5E5E5"/>
+<circle cx="464" cy="42" r="5" fill="#E5E5E5"/>
+<rect x="290" y="190" width="120" height="16" rx="3" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="1.5"/>
+<rect x="296" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="308" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="320" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="332" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="344" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="356" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="368" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="380" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<rect x="392" y="195" width="6" height="6" rx="0" fill="#A2CC3A"/>
+<text x="350" y="230.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="400">Many small antennas, one flat panel. The panel stays still.</text>
+<text x="569" y="109.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="end" font-weight="600">110</text>
+<circle cx="573.5" cy="97" r="2.6" fill="none" stroke="#E5E5E5" stroke-width="1.6"/>
+<text x="578" y="109.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="600">field of view</text>
+<text x="540" y="128.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">the part of the sky</text>
+<text x="540" y="146.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">the dish can use</text>
+<text x="214" y="116.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="end" font-weight="400">The beam swings</text>
+<text x="214" y="134.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="end" font-weight="400">from satellite to</text>
+<text x="214" y="152.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="end" font-weight="400">satellite electronically</text>
+</svg>

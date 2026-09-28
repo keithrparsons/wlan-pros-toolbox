@@ -30,6 +30,8 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Why the TV and the Printer Vanish on Guest Wi-Fi (Pax
     // candidate 11).
     'guest-discovery',
+    // 2026-09-27: Starlink, Explained, the next explainer post turned lesson.
+    'starlink-explained',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -108,6 +110,7 @@ const Set<String> _builtInClassroom = <String>{
   'public-wifi',
   'wifi-privacy-myths',
   'captive-portal',
+  'starlink-explained',
 };
 
 const Set<String> _simulatorShelves = <String>{
@@ -171,6 +174,7 @@ void main() {
     // Lessons built in the Classroom (2026-09-27 on) never lived in
     // Educational Resources, so they are not among the 13 that moved.
     final Set<String> moved = <String>{
+      // starlink-explained (2026-09-27) likewise was built in the Classroom.
       ..._teachingOrder['Guided Lessons']!.where(
         (String id) =>
             !_builtInClassroom.contains(id),
@@ -213,7 +217,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(57));
+    expect(classroom.tools, hasLength(58));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

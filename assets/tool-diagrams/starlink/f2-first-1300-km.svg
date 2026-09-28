@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 228" width="700" height="228" role="img" aria-label="Heights from 0 to 1,300 km: Space Station, Starlink, Hubble, Amazon Leo, Iridium, OneWeb">
+<line x1="40" y1="110" x2="660" y2="110" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<rect x="202.1" y="96" width="93.0" height="28" rx="0" fill="#A2CC3A" opacity="0.6"/>
+<line x1="268.9" y1="97" x2="268.9" y2="123" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+<line x1="40.0" y1="105" x2="40.0" y2="115" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="40.0" y="140.6" font-family="IBM Plex Sans" font-size="13" fill="#9C9C9C" text-anchor="middle" font-weight="400">0 km</text>
+<line x1="278.4" y1="105" x2="278.4" y2="115" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<line x1="516.9" y1="105" x2="516.9" y2="115" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<text x="516.9" y="140.6" font-family="IBM Plex Sans" font-size="13" fill="#9C9C9C" text-anchor="middle" font-weight="400">1,000 km</text>
+<line x1="235.5" y1="44" x2="235.5" y2="104" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="235.5" cy="110" r="5" fill="#E5E5E5"/>
+<text x="235.5" y="35.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="400">Space Station, 400 to 420 km</text>
+<line x1="412.0" y1="44" x2="412.0" y2="104" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="412.0" cy="110" r="5" fill="#9C9C9C"/>
+<text x="412.0" y="35.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="400">Iridium, 780 km</text>
+<line x1="612.3" y1="44" x2="612.3" y2="104" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="612.3" cy="110" r="5" fill="#9C9C9C"/>
+<text x="612.3" y="35.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="400">OneWeb, 1,200 km</text>
+<rect x="321.4" y="103" width="19.0" height="14" rx="0" fill="#9C9C9C"/>
+<line x1="330.9" y1="117" x2="330.9" y2="158" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round"/>
+<text x="338.9" y="163.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">Amazon Leo, 590 to 630 km</text>
+<line x1="212" y1="164" x2="230.8" y2="124" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
+<text x="206" y="169.2" font-family="IBM Plex Sans" font-size="15" fill="#A2CC3A" text-anchor="end" font-weight="600">Starlink: 340 to 535 km,</text>
+<text x="206" y="189.2" font-family="IBM Plex Sans" font-size="15" fill="#A2CC3A" text-anchor="end" font-weight="600">main shell 480 km</text>
+<line x1="270.3" y1="124" x2="270.3" y2="212" stroke="#E0A23A" stroke-width="1.5" stroke-linecap="round"/>
+<text x="278.3" y="217.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">Hubble, 483 km (NASA, June 2026)</text>
+</svg>

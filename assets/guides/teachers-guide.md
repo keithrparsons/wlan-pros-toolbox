@@ -64,6 +64,8 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 
 - **Why the TV and the Printer Vanish on Guest Wi-Fi.** Why screen casting and printing find nothing from a guest network. Pick Same, Guest or Isolation and step the discovery question to the point where it stops. Ask the room first where they think it will stop with isolation on. Pair it with Multicast at the Basic Rate, which covers what multicast costs in airtime.
 
+- **Starlink, Explained.** How internet from space reaches your house or RV, how high the satellites are, and why the Wi-Fi inside matters as much as the sky above.
+
 ### RF and Propagation
 
 - **FSPL Simulator.** Free-space path loss against distance for 2.4, 5 and 6 GHz on one chart, with a Why panel that splits each band's loss into the part every band shares and the part that changes with frequency. Up and Down double and halve the distance, so each press shows the 6 dB per doubling rule. Log and Linear switch the distance axis: on log the bands are straight lines, on linear they are the curve students usually expect.
@@ -145,6 +147,7 @@ These are starting points. Each takes about half an hour of demonstration and di
 - **Where the airtime goes.** Multicast at the Basic Rate, then Channel Utilization Meter, then Legacy Protection Cost. Suggested labs: Multicast at the Basic Rate, Legacy Protection Cost.
 - **Surveys and heat maps.** Survey Walk, then Heat Map Builder, then Predict, Then Measure. Suggested labs: Survey Walk; Heat Map Builder; Predict, Then Measure.
 - **Find My.** The Find My, Explained lesson, with Figure 3 (where the dot on the map comes from) as the Wi-Fi hook for a Wi-Fi audience.
+- **Starlink.** The Starlink, Explained lesson, with Figure 9 (two networks in one house) as the Wi-Fi hook for a Wi-Fi audience.
 
 ## What the numbers are, and what they are not
 

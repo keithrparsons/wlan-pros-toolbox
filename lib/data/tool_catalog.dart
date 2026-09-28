@@ -2611,6 +2611,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Starlink, Explained (2026-09-27, Keith) — the next explainer post
+      // turned Guided Lesson, on the Find My pattern: the reviewed print guide
+      // rendered verbatim, with its nine figures, the Starlink app steps and
+      // the before-you-blame-Starlink checklist. Shelved after Find My, the
+      // other lesson written for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'starlink-explained',
+        title: 'Starlink, Explained',
+        description:
+            'How internet from space reaches your house or RV, how high the '
+            'satellites are, and why the Wi-Fi inside matters as much as the '
+            'sky above',
+        routeName: '/tools/starlink-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

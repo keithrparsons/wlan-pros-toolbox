@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 234;
+const int _expectedEntryCount = 235;
 
 const String _fixture = '''
 {
@@ -498,6 +498,10 @@ void main() {
       // Guided Lesson added ONE entry, guest-discovery, on top of
       // wifi-lab/preview (8c123f84), which counted 228. 228 + 1 = 229.
       // Counted off the file: `len(json['tools'])` returned 229.
+      // 2026-09-27: the Starlink, Explained Guided Lesson added ONE entry,
+      // starlink-explained, on top of wifi-lab/preview (8c123f84), which
+      // counted 228. 228 + 1 = 229. Counted off the file: `len(json['tools'])`
+      // returned 229.
       expect(store.count, _expectedEntryCount);
     });
 

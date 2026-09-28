@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 300" width="740" height="300" role="img" aria-label="Earth and its satellites, to scale: low Earth orbit, GPS and geostationary">
+<circle cx="82" cy="150" r="70" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="2"/>
+<text x="82" y="155.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="600">Earth</text>
+<circle cx="82" cy="150" r="76" fill="none" stroke="#A2CC3A" stroke-width="3"/>
+<path d="M346.6 26.6 A292 292 0 0 1 346.6 273.4" fill="none" stroke="#9C9C9C" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M522.3 6.9 A463 463 0 0 1 522.3 293.1" fill="none" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="138" y1="98" x2="170" y2="70" stroke="#A2CC3A" stroke-width="2" stroke-linecap="round"/>
+<text x="176" y="35.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">Low Earth orbit</text>
+<text x="176" y="57.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">Space Station, Hubble,</text>
+<text x="176" y="77.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">Starlink and others,</text>
+<text x="176" y="97.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">all inside this thin line</text>
+<text x="386" y="145.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">GPS</text>
+<text x="386" y="167.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">20,200 km</text>
+<text x="556" y="137.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="start" font-weight="600">Geostationary</text>
+<text x="556" y="159.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">35,786 km</text>
+<text x="556" y="181.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">satellite TV and older</text>
+<text x="556" y="201.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">satellite internet</text>
+</svg>
