@@ -8,6 +8,7 @@
 // .dart), generalized from its hand-written slide table to one derived from
 // the lesson data.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -42,14 +43,23 @@ class LessonSlide {
 
 class GuidedLessonController extends ChangeNotifier {
   GuidedLessonController(this.lesson)
-    : slides = List<LessonSlide>.unmodifiable(<LessonSlide>[
+    : baseSlides = List<LessonSlide>.unmodifiable(<LessonSlide>[
         for (int s = 0; s < lesson.steps.length; s++)
           for (final List<int> stage in slidesFor(lesson.steps[s]))
             LessonSlide(s, stage),
       ]);
 
   final GuidedLesson lesson;
-  final List<LessonSlide> slides;
+
+  /// The slides the lesson data defines ([slidesFor]), before Present fits
+  /// them to a window.
+  final List<LessonSlide> baseSlides;
+
+  /// The slides Present walks: [baseSlides] until Present's stage measures
+  /// them, then [baseSlides] with any slide too tall to read split in parts
+  /// (see [fitSlides]).
+  List<LessonSlide> get slides => _slides;
+  late List<LessonSlide> _slides = baseSlides;
 
   final Set<LessonBlockRef> _revealed = <LessonBlockRef>{};
   int _slide = 0;
@@ -110,6 +120,92 @@ class GuidedLessonController extends ChangeNotifier {
       slides.last.add(i);
     }
     return slides;
+  }
+
+  // ── Fitting a slide to the window (Present) ─────────────────────────────
+
+  /// Splits one slide's [stage] so every part fits the window with its text
+  /// at or above the floor. [fits] answers for a run of block indexes in
+  /// stage order; [isFigure] names the figures.
+  ///
+  /// A stage that fits stays one slide. Otherwise the blocks keep the guide's
+  /// order and fill parts from the top: a block joins the part above it when
+  /// the two still fit, and a figure never joins a part that already holds a
+  /// figure, so each figure after the first gets a part of its own with its
+  /// caption at full size. In the usual step (a lede, then its figures) the
+  /// first part is the lede and the first figure, and each further figure
+  /// follows alone. A single block that cannot fit even alone keeps a part of
+  /// its own; nothing is ever dropped.
+  static List<List<int>> splitToFit(
+    List<int> stage, {
+    required bool Function(int block) isFigure,
+    required bool Function(List<int> blocks) fits,
+  }) {
+    if (stage.length < 2 || fits(stage)) return <List<int>>[stage];
+    final List<List<int>> parts = <List<int>>[];
+    List<int> part = <int>[];
+    for (final int b in stage) {
+      if (part.isEmpty) {
+        part = <int>[b];
+        continue;
+      }
+      final bool secondFigure = isFigure(b) && part.any(isFigure);
+      final List<int> joined = <int>[...part, b];
+      if (secondFigure || !fits(joined)) {
+        parts.add(part);
+        part = <int>[b];
+      } else {
+        part = joined;
+      }
+    }
+    parts.add(part);
+    return parts;
+  }
+
+  /// Present: walk [fitted] instead, a refinement of [baseSlides] that
+  /// splits a slide the window cannot show at a readable size. The presenter
+  /// stays on what they were showing: the new current slide is the part that
+  /// holds the first block of the old one. Myth reveals are untouched.
+  void fitSlides(List<LessonSlide> fitted) {
+    assert(fitted.isNotEmpty, 'a lesson has at least one slide');
+    if (_sameSlides(fitted, _slides)) return;
+    final LessonSlide was = current;
+    _slides = List<LessonSlide>.unmodifiable(fitted);
+    int at = _slides.indexWhere(
+      (LessonSlide s) =>
+          s.step == was.step &&
+          (was.stage.isEmpty
+              ? s.stage.isEmpty
+              : s.stage.contains(was.stage.first)),
+    );
+    if (at < 0) at = _slides.indexWhere((LessonSlide s) => s.step == was.step);
+    _slide = at < 0 ? 0 : at;
+    notifyListeners();
+  }
+
+  static bool _sameSlides(List<LessonSlide> a, List<LessonSlide> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].step != b[i].step || !listEquals(a[i].stage, b[i].stage)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Where the current slide sits among its step's slides: (1, 1) for a step
+  /// on one slide, (2, 3) for the second of three.
+  ({int part, int of}) get partOfStep {
+    int first = _slide;
+    while (first > 0 && _slides[first - 1].step == current.step) {
+      first--;
+    }
+    int last = _slide;
+    while (last < _slides.length - 1 &&
+        _slides[last + 1].step == current.step) {
+      last++;
+    }
+    return (part: _slide - first + 1, of: last - first + 1);
   }
 
   // ── Slides ──────────────────────────────────────────────────────────────
@@ -173,19 +269,20 @@ class GuidedLessonController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The Present keys: Right and Left move a step, Space reveals, R resets.
-  /// F, Esc and ? are the shell's own.
+  /// The Present keys: Right and Left move a slide (through a step's parts,
+  /// then on to the next step), Space reveals, R resets. F, Esc and ? are
+  /// the shell's own.
   PresenterActions get presenterActions => PresenterActions(
     playPause: revealNext,
     playPauseLabel: 'Reveal the next fact (myth steps)',
     step: next,
-    stepLabel: 'Next step',
+    stepLabel: 'Next slide',
     reset: reset,
     extra: <PresenterExtraKey>[
       PresenterExtraKey(
         key: LogicalKeyboardKey.arrowLeft,
         keyLabel: 'Left arrow',
-        description: 'Previous step',
+        description: 'Previous slide',
         onPressed: previous,
       ),
     ],
