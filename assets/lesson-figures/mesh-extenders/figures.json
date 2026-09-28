@@ -1,0 +1,125 @@
+{
+  "source": "mesh-extenders-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        190.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        720.0,
+        130.0
+      ],
+      "caption": "**Figure 1. Every added box needs a link back.** The added box can only pass on what reaches it from the main box. The highlighted link back sets the speed in the far room.",
+      "alt": "Figure 1. Every added box needs a link back. The added box can only pass on what reaches it from the main box. The highlighted link back sets the speed in the far room."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        720.0,
+        300.0
+      ],
+      "caption": "**Figure 2. Same far room, three kinds of link back.** Dotted lines go through the air. A solid line is a cable. Green is the hop to you. Blue is a radio used only for the link back.",
+      "alt": "Figure 2. Same far room, three kinds of link back. Dotted lines go through the air. A solid line is a cable. Green is the hop to you. Blue is a radio used only for the link back."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        720.0,
+        330.0
+      ],
+      "caption": "**Figure 3. One radio shares its time.** Top: with one radio, the hop to the main box and the hop to you take turns. Bottom: with a separate radio or a cable, both hops work at the same time.",
+      "alt": "Figure 3. One radio shares its time. Top: with one radio, the hop to the main box and the hop to you take turns. Bottom: with a separate radio or a cable, both hops work at the same time."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        720.0,
+        150.0
+      ],
+      "caption": "**Figure 4. Where the time goes.** Top: the slow link back takes nearly all the time, and the fast hop to the laptop gets a sliver. Bottom: two equal hops split the time evenly.",
+      "alt": "Figure 4. Where the time goes. Top: the slow link back takes nearly all the time, and the fast hop to the laptop gets a sliver. Bottom: two equal hops split the time evenly."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        720.0,
+        290.0
+      ],
+      "caption": "**Figure 5. Same extender, two spots.** A: in the dead zone, the link back is weak, and the laptop ends up slower than with no extender at all. B: partway down the hall, both hops are strong, and the laptop gets far more.",
+      "alt": "Figure 5. Same extender, two spots. A: in the dead zone, the link back is weak, and the laptop ends up slower than with no extender at all. B: partway down the hall, both hops are strong, and the laptop gets far more."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        720.0,
+        310.0
+      ],
+      "caption": "**Figure 6. What the laptop gets, five ways.** Each bar is drawn to an even, ruler-style scale. Longer is faster.",
+      "alt": "Figure 6. What the laptop gets, five ways. Each bar is drawn to an even, ruler-style scale. Longer is faster."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        720.0,
+        250.0
+      ],
+      "caption": "**Figure 7. Four links back, best first.** Network cable and TV cable may already be in your walls. The third stays in the air on a radio of its own. The fourth rides your electrical wiring.",
+      "alt": "Figure 7. Four links back, best first. Network cable and TV cable may already be in your walls. The third stays in the air on a radio of its own. The fourth rides your electrical wiring."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        720.0,
+        252.0
+      ],
+      "caption": "**Figure 8. One cable does both jobs.** Many access points take their power over the network cable, so this one needs no outlet on the ceiling. The power adapter plugs in next to the main box.",
+      "alt": "Figure 8. One cable does both jobs. Many access points take their power over the network cable, so this one needs no outlet on the ceiling. The power adapter plugs in next to the main box."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        720.0,
+        360.0
+      ],
+      "caption": "**Figure 9. Work down the questions.** Every \"yes\" is a better link back than the answer below it. A cable, even a TV cable, beats any radio link.",
+      "alt": "Figure 9. Work down the questions. Every \"yes\" is a better link back than the answer below it. A cable, even a TV cable, beats any radio link."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        720.0,
+        188.0
+      ],
+      "caption": "**Figure 10. Every relay takes a turn.** Units that relay through the air take turns on the channel, one hop at a time. A cable takes the link back out of the air.",
+      "alt": "Figure 10. Every relay takes a turn. Units that relay through the air take turns on the channel, one hop at a time. A cable takes the link back out of the air."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        720.0,
+        214.0
+      ],
+      "caption": "**Figure 11. Same chair, same test.** Test in the chair that used to be slow, before and after. If the new unit helped, the chair shows it. Not to scale.",
+      "alt": "Figure 11. Same chair, same test. Test in the chair that used to be slow, before and after. If the new unit helped, the chair shows it. Not to scale."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 165" font-family="IBM Plex Sans" font-size="11.5" fill="#444444" width="720" height="165">
+      <!-- connectors, each stopping short of the icons -->
+      <g stroke="#9C9C9C" stroke-width="3" stroke-linecap="round">
+        <line x1="88" y1="70" x2="146" y2="70"/>
+        <line x1="214" y1="70" x2="258" y2="70"/>
+        <line x1="342" y1="70" x2="392" y2="70"/>
+        <line x1="448" y1="70" x2="496" y2="70"/>
+        <line x1="584" y1="70" x2="626" y2="70"/>
+      </g>
+      <!-- 1 device -->
+      <g transform="translate(25.5 35.5) scale(2.875)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+      <!-- 2 Wi-Fi fan centred (180,92) -->
+      <g transform="translate(152 44) scale(2.33333)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
+      <!-- 3 the box -->
+      <g transform="translate(271.2 41.2) scale(2.4)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
+      <!-- 4 the feed: a cable end -->
+      <circle cx="420" cy="70" r="18" fill="none" stroke="#1A1A1A" stroke-width="4"/>
+      <circle cx="420" cy="70" r="7" fill="#A1CC3A"/>
+      <g transform="translate(509 36) scale(2.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
+      <!-- 6 the service -->
+      <rect x="636" y="45" width="50" height="50" rx="11" fill="#A1CC3A"/>
+      <path d="M654 58 L674 70 L654 82 Z" fill="#1A1A1A"/>
+      <!-- numbers -->
+      <g fill="#1A1A1A"><circle cx="60" cy="122" r="11"/><circle cx="180" cy="122" r="11"/><circle cx="300" cy="122" r="11"/><circle cx="420" cy="122" r="11"/><circle cx="541" cy="122" r="11"/><circle cx="661" cy="122" r="11"/></g>
+      <g fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle"><text x="60" y="126" font-size="12.5">1</text><text x="180" y="126" font-size="12.5">2</text><text x="300" y="126" font-size="12.5">3</text><text x="420" y="126" font-size="12.5">4</text><text x="541" y="126" font-size="12.5">5</text><text x="661" y="126" font-size="12.5">6</text></g>
+      <g text-anchor="middle" fill="#111111"><text x="60" y="152" font-size="12.5">Your device</text><text x="180" y="152" font-size="12.5">Wi-Fi or Ethernet</text><text x="300" y="152" font-size="12.5">The box</text><text x="420" y="152" font-size="12.5">The feed you pay for</text><text x="541" y="152" font-size="12.5">The internet</text><text x="661" y="152" font-size="12.5">The service</text></g>
+    </svg>

@@ -73,18 +73,23 @@ class GuidedLessonController extends ChangeNotifier {
 
   /// A step's Present slides. [LessonStep.slides] wins when set. Otherwise
   /// one slide per step, with every stage-kind block on the stage and the
-  /// rest in the panel. A step with no stage-kind block at all (an appendix
-  /// of tasks) puts everything on the stage instead, split at its
-  /// subheadings and then every [tasksPerSlide] task cards; the text before
-  /// the first subheading rides on the first slide, and a subheading stays
-  /// with the tasks under it.
+  /// rest in the panel. An appendix of tasks, a step whose only stage-kind
+  /// blocks are ledes (or none at all) and that holds a task card, puts
+  /// everything on the stage instead, split at its subheadings and then
+  /// every [tasksPerSlide] task cards; the text before the first subheading
+  /// or task rides on the first slide, and a subheading stays with the tasks
+  /// under it. (A lede alone on the stage would leave the tasks, the point
+  /// of the step, in the side panel.)
   static List<List<int>> slidesFor(LessonStep step) {
     if (step.slides != null) return step.slides!;
     final List<int> stage = <int>[
       for (int i = 0; i < step.blocks.length; i++)
         if (isStageKind(step.blocks[i])) i,
     ];
-    if (stage.isNotEmpty) return <List<int>>[stage];
+    final bool taskAppendix =
+        step.blocks.any((LessonBlock b) => b is LessonTask) &&
+        stage.every((int i) => step.blocks[i] is LessonLede);
+    if (stage.isNotEmpty && !taskAppendix) return <List<int>>[stage];
     final List<List<int>> slides = <List<int>>[<int>[]];
     int tasks = 0;
     bool prelude = true;

@@ -2662,6 +2662,102 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Phone Data Abroad, Explained (2026-09-28, Keith approved the guide):
+      // the explainer post turned Guided Lesson on the 1.11.0 framework, word
+      // for word from the final guide with its 13 figures. Shelved after Home
+      // Internet, with the other lessons for the people Wi-Fi pros get asked
+      // by.
+      ToolEntry(
+        id: 'phone-data-abroad-explained',
+        title: 'Phone Data Abroad, Explained',
+        description:
+            'How to land in another country with your phone working: roaming, '
+            'a travel eSIM or a local SIM, keeping your own number, and the '
+            'switches that stop a surprise bill',
+        routeName: '/tools/phone-data-abroad-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Smart Home Radios, Explained (2026-09-28, Keith approved the guide):
+      // the explainer post turned Guided Lesson on the 1.11.0 framework, word
+      // for word from the final guide with its 13 figures. Shelved with the
+      // other lessons for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'smart-home-radios-explained',
+        title: 'Smart Home Radios, Explained',
+        description:
+            'Wi-Fi, Thread, Zigbee and Matter: why your smart plug won\'t '
+            'join, what a gadget network fixes, and what the Matter logo on '
+            'the box means',
+        routeName: '/tools/smart-home-radios-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Cameras, Doorbells and Baby Monitors, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 11
+      // figures. Shelved with the other lessons for the people Wi-Fi pros get
+      // asked by.
+      ToolEntry(
+        id: 'cameras-doorbells-explained',
+        title: 'Cameras, Doorbells and Baby Monitors, Explained',
+        description:
+            'Why a camera is judged by what it can send from where it hangs: '
+            'upload, signal at the door, wired or not, where the video goes, '
+            'and keeping strangers out',
+        routeName: '/tools/cameras-doorbells-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // How Your Devices Access the Internet, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 10
+      // figures. Distinct from the field plate How Your Devices Access the
+      // Internet. Shelved with the other lessons for the people Wi-Fi pros get
+      // asked by.
+      ToolEntry(
+        id: 'devices-to-internet-explained',
+        title: 'How Your Devices Access the Internet, Explained',
+        description:
+            'Wi-Fi and cellular are ways to reach the internet, not the '
+            'internet: follow the trip one hop at a time, and learn which hop '
+            'to blame when something is slow',
+        routeName: '/tools/devices-to-internet-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Mesh, Extenders and Wired Access Points, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 11
+      // figures. Its numbers come from the Repeaters and Mesh Backhaul model,
+      // which it opens. Shelved with the other lessons for the people Wi-Fi
+      // pros get asked by.
+      ToolEntry(
+        id: 'mesh-extenders-explained',
+        title: 'Mesh, Extenders and Wired Access Points, Explained',
+        description:
+            'Three ways to fix a dead zone, and why the link back to your '
+            'main box decides how fast the far room is: where to put the new '
+            'box, and which one to buy',
+        routeName: '/tools/mesh-extenders-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Is Your Router Too Old? (2026-09-28, Keith approved the guide): the
+      // explainer post turned Guided Lesson on the 1.11.0 framework, word for
+      // word from the final guide with its 11 figures. Shelved with the other
+      // lessons for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'router-too-old-explained',
+        title: 'Is Your Router Too Old?',
+        description:
+            'How to tell in five minutes whether your router still gets '
+            'security fixes, what the 2026 router rule means for the one you '
+            'own, and what to look for in the next one',
+        routeName: '/tools/router-too-old-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

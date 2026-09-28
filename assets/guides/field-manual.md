@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 242 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 248 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (69 tools)
-  - Guided Lessons (10)
+- **Wireless Classroom** (75 tools)
+  - Guided Lessons (16)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (69 tools)
+# Wireless Classroom (75 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (10)
+## Guided Lessons (16)
 
 
 ### Antenna Fundamentals
@@ -3946,6 +3946,126 @@ A read-along lesson on how internet from space reaches your house or RV, how hig
 - Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
 - The Wi-Fi Calling line is general: some carriers don't support it over satellite internet. T-Mobile's page is the one in the sources; other carriers publish their own.
 - The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
+
+### Phone Data Abroad, Explained
+
+A read-along lesson on how to land in another country with your phone working, and no surprise bill when you get home. There are three ways to get data abroad: roaming with your own carrier, a travel eSIM, or a local SIM. Most phones can hold two plans at once, so your home plan can stay on for calls and texts while a second plan carries your data. The lesson follows the free PDF guide of the same name, word for word, with its 13 figures and a four-stop checklist for the trip.
+
+**Why it's here.** Wi-Fi people get asked about phones abroad by friends, family and colleagues before every trip. The lesson carries the Wi-Fi angle too: hotel, airport and ship Wi-Fi is often the cheapest data on a trip and the least predictable, full Wi-Fi bars only mean the Wi-Fi part worked, and nothing loads until you finish the sign-in page. Figure 11 shows that sign-in step.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea behind it, then covers what a SIM does, whether your phone is unlocked, the three ways to get data, roaming with your own carrier, travel eSIMs and local SIMs, keeping your own number, the switches that matter, hotel, airport and ship Wi-Fi, which one to pick for a trip, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Figure 10 shows which switch stops what, and Figure 13 is the checklist: four stops, two small jobs at each one. Step 7 has an Open button for Wi-Fi Calling, Explained, which the guide names for calls home over hotel Wi-Fi.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or reading on a trip.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Carrier prices and plans change often. The lesson's carrier details were checked on each company's own pages in September 2026, so read your carrier's current travel page before you go.
+- Prices are left out on purpose. Figure 6 shows how a daily fee adds up, not what any carrier charges.
+- Settings paths are given for iPhone and, more loosely, for Android, where menus differ by maker.
+- The lesson names no travel eSIM company and recommends none. It is independent and isn't affiliated with any carrier, phone maker or eSIM seller.
+
+
+### Smart Home Radios, Explained
+
+A read-along lesson on the four names on smart home boxes: Wi-Fi, Thread, Zigbee and Matter. Wi-Fi, Thread and Zigbee are radios. Matter is a shared language that devices speak over Wi-Fi, Thread or a network cable, and Zigbee reaches it through a bridge. The lesson covers why your smart plug won't join, how to get it to join, what a border router is, and what the Matter logo on the box does and does not promise. It follows the free PDF guide of the same name, word for word, with its 13 figures.
+
+**Why it's here.** Wi-Fi people get asked why a new smart plug won't join by family, friends and clients. The usual answer is the Wi-Fi: many plugs and bulbs have only a 2.4 GHz radio, and a network that offers only 5 GHz is invisible to them. The lesson also shows why every phone, laptop and TV that moves up to 5 or 6 GHz leaves more room on 2.4 GHz for the small radios that can't leave it. Figure 3 shows the one band they all share.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea behind it, then covers three radios and a language, one band shared, why your smart plug won't join, getting it to join, a network for your gadgets, Thread and its border router, one network with several doorways, Zigbee and what Matter changes, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 is the fix list, gentlest first, and step 6 is the last fix: a 2.4 GHz network for your gadgets, made a regular network and not a guest one. Figure 13 is four checks before you buy.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or handing to someone setting up a smart home.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked in September 2026 against the Connectivity Standards Alliance and the Thread Group first, then the platform makers' own help pages. Matter versions and the device types each app supports change often.
+- Figure 3 is marked as a simplified picture, not to scale. The lesson gives no channel numbers for Wi-Fi, Thread or Zigbee.
+- Some newer smart plugs have a 5 GHz radio too. The lesson's advice is for the ones whose box says 2.4 GHz only.
+- The lesson recommends no brand of hub. It is independent and isn't affiliated with any standards body or device maker.
+
+
+### Cameras, Doorbells and Baby Monitors, Explained
+
+A read-along lesson on security cameras, video doorbells and Wi-Fi baby monitors. Most gadgets in a home pull things in. A camera pushes video out, often all day, so it is judged by what it can send from the spot where it hangs. The lesson covers upload against download, how many cameras a line can carry, signal at the door, which Wi-Fi lane, wired cameras, where the video goes, baby monitors, keeping strangers out, and what to do when the Wi-Fi is cut on purpose. It follows the free PDF guide of the same name, word for word, with its 11 figures and a half-hour appendix.
+
+**Why it's here.** Wi-Fi people get asked why a doorbell drops offline or a clip starts late. The answer is usually the Wi-Fi hop or the upload, not the camera. The outside wall is the hardest one for Wi-Fi to cross, a camera with one bar sends slowly and keeps the Wi-Fi busy for everyone else, and a cable to an access point just inside the front wall does most of the good of a cable to the camera. Figure 3 shows the path from a back-of-house router to the front door.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea to remember, then covers why the camera sends, how many cameras your line can carry, signal at the door, which Wi-Fi lane, wired cameras and doorbells, where the video goes, baby monitors, keeping strangers out, when the Wi-Fi is cut on purpose, and five things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 3 and the appendix each have an Open button for Network Quality, where the guide says to read your upload row. Step 4 has the fixes for signal at the door, gentlest first.
+4. The appendix, Do this now, is four tasks for one camera at a time: check the upload, check the signal where it hangs, lock it down, and test recording without the internet.
+5. At the end, Take it with you names the free PDF guide the lesson follows, for printing or handing to a neighbor with a new doorbell.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The per-camera upload figure, about 3 megabits a second for one maker's best-quality camera, is that maker's published number, not a rating. Figure 2 is marked not to scale.
+- Checked in September 2026. Camera plans, apps and rules change, so check the ones you rely on.
+- The baby monitor cord distance, at least 1 m (3 feet) from any part of the crib, is the US Consumer Product Safety Commission's.
+- Jammer rules are the US ones, from the FCC. The police warnings are as reported by PCWorld and NBC Los Angeles.
+- The lesson is independent and isn't affiliated with any camera maker.
+
+
+### How Your Devices Access the Internet, Explained
+
+A read-along lesson on the trip everything online takes: from your device to the box in your home, out the line you pay for, across the internet, and to the video or call you wanted. Your Wi-Fi and your internet are two different roads that meet at one box, so they get blamed as one thing. The lesson follows the free PDF guide of the same name, word for word, with its 10 figures, and shows how to tell which road is slow.
+
+**Why it's here.** It is a conversation Wi-Fi people have all the time: the Wi-Fi is slow, so buy a bigger plan. The lesson separates the two roads. The bars grade only the hop to the box, a faster plan changes only the line to the provider, and cellular skips the box altogether. Figure 9, the hotel with perfect bars and one thin line to the internet, is the case where more Wi-Fi would cost a fortune and fix nothing.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one big idea, then covers the whole trip, two roads and one box, the six stops, what your bars measure, how cellular skips your box, which road is slow, why a bigger plan won't fix slow Wi-Fi, the hotel with perfect bars, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Wherever the guide says to tap Check My Connection, in steps 7, 9 and 11, an Open button takes you to Test My Connection, which grades your Wi-Fi and your internet separately. Step 4 opens Home Internet, Explained and step 6 opens Wi-Fi Calling, Explained, the two guides it names.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or sending to whoever asked why the internet is slow.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The guide is drawn from Keith's book Fix Your Own Wi-Fi (in preparation), chapters 1, 2 and 6, and from the WLAN Pros master graphic How your devices access the Internet, version 3.
+- Figure 2 is that master graphic.
+- The lesson names no provider and no carrier. It is independent and isn't affiliated with any of them.
+
+
+### Mesh, Extenders and Wired Access Points, Explained
+
+A read-along lesson on the three kinds of gear sold to fix a dead zone: extenders, mesh kits and wired access points. Every box you add needs its own link back to your main box, and that link decides how fast the far room will be. A box that uses one radio for the link back and for you has to take turns. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures, and covers where to put the new box, four ways to build the link back, and which one to buy.
+
+**Why it's here.** Wi-Fi people get asked which extender or mesh kit to buy. The lesson answers with one question: how does the new box link back to the main one? The lesson carries the shared-airtime reason: every piece of your video crosses the air twice on one radio, and the two trips share the same time, so an extender in the dead zone can leave the laptop slower than no extender at all. Figure 6 shows the same far room reached five ways.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one big idea, then covers three ways to fill a dead zone, one radio with two jobs, why it can cut your speed in half, where to put it, five setups for one far room, four ways to build the link back, wired access points, which one to buy, five things people get wrong, and what to test after you set it up. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. The lesson's speeds come from a model in the Wireless Classroom. Steps 4 and 6, and the sources, have an Open button for Repeaters and Mesh Backhaul, that model, so you can move the hops yourself. Step 9 and the related guides open How Your Devices Access the Internet, Explained and Home Internet, Explained.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or taking to the store.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- The speeds are from the Classroom model, one long open hallway with typical settings, as the guide says. Your walls and your gear will change every number; the pattern stays the same.
+- Google, Ofcom, the MoCA Alliance and the Wi-Fi Alliance are cited from their own published pages, read 27 September 2026.
+- The lesson is independent and isn't affiliated with any maker or provider.
+
+
+### Is Your Router Too Old?
+
+A read-along lesson on how to tell in five minutes whether your router still gets security fixes, and what to do if it doesn't. A router's age isn't counted in years. It's counted by whether it still gets fixes. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures: what the router does, the three stages of its life, the five-minute check, who updates it, keep, update or replace, what the 2026 US router rule means for the one you own, and what to look for in the next one.
+
+**Why it's here.** Wi-Fi people get asked whether an old router needs replacing, and since 2026 whether the new US rule makes it illegal. The lesson gives the test that matters: a router that no longer gets fixes can still stream movies, and the FBI has warned that criminals take over routers like that and use them as a disguise. Figure 6 turns the five-minute check into keep, update or replace.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea to remember, then covers what your router does, when a router gets too old, the five-minute check, who updates it, keep, update or replace, the 2026 rule, what to look for in the next one, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 4 is the five-minute check. The appendix, Do this now, is about fifteen minutes in the router's app or settings: update it, lock it down, and write it down. Steps 5 and 8 have an Open button for Mesh, Extenders and Wired Access Points, Explained, where the guide names it.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing and keeping next to the router.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026. The 2026 rule is the US one, from the FCC's own notices; the date makers may keep fixing routers approved before the rule, at least 1 January 2029, is from FCC Public Notice DA 26-454.
+- The FBI warning is its Public Service Announcement I-050725-PSA of 7 May 2025, on criminals using end-of-life routers.
+- The lesson names no router maker or model on purpose. Menus differ by maker, so a setting may have another name, such as Administration or Advanced.
+- The lesson is independent and isn't affiliated with any router maker or provider.
+
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi
 

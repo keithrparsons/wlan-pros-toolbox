@@ -24,6 +24,12 @@ const Set<String> _builtInClassroom = <String>{
   'captive-portal',
   'starlink-explained',
   'home-internet-explained',
+  'phone-data-abroad-explained',
+  'smart-home-radios-explained',
+  'cameras-doorbells-explained',
+  'devices-to-internet-explained',
+  'mesh-extenders-explained',
+  'router-too-old-explained',
 };
 
 /// Shelf -> tool ids, in the order the screen must show them.
@@ -51,6 +57,21 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Home Internet, Explained, the next explainer post turned
     // Guided Lesson.
     'home-internet-explained',
+    // 2026-09-28: Phone Data Abroad, Explained, on the 1.11.0 lesson framework.
+    'phone-data-abroad-explained',
+    // 2026-09-28: Smart Home Radios, Explained, on the 1.11.0 lesson framework.
+    'smart-home-radios-explained',
+    // 2026-09-28: Cameras, Doorbells and Baby Monitors, Explained, on the
+    // 1.11.0 lesson framework.
+    'cameras-doorbells-explained',
+    // 2026-09-28: How Your Devices Access the Internet, Explained, on the
+    // 1.11.0 lesson framework.
+    'devices-to-internet-explained',
+    // 2026-09-28: Mesh, Extenders and Wired Access Points, Explained, on the
+    // 1.11.0 lesson framework.
+    'mesh-extenders-explained',
+    // 2026-09-28: Is Your Router Too Old?, on the 1.11.0 lesson framework.
+    'router-too-old-explained',
   ],
   'RF and Propagation': <String>[
     // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
@@ -214,8 +235,7 @@ void main() {
     final Set<String> moved = <String>{
       // starlink-explained (2026-09-27) likewise was built in the Classroom.
       ..._teachingOrder['Guided Lessons']!.where(
-        (String id) =>
-            !_builtInClassroom.contains(id),
+        (String id) => !_builtInClassroom.contains(id),
       ),
       ..._teachingOrder['Course Handouts']!,
     };
@@ -255,7 +275,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(69));
+    expect(classroom.tools, hasLength(75));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

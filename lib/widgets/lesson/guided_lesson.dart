@@ -268,8 +268,16 @@ final class LessonSourceList extends LessonBlock {
 }
 
 /// An Open button for another tool in the app, looked up in the catalog by
-/// id. No live catalog entry, no button.
+/// id. No live catalog entry, no button, unless [route] and [title] name a
+/// door the catalog does not list.
 final class LessonToolLink extends LessonBlock {
-  const LessonToolLink(this.toolId);
+  const LessonToolLink(this.toolId, {this.route, this.title})
+    : assert((route == null) == (title == null), 'route and title go together');
   final String toolId;
+
+  /// For a tool with a route but no catalog tile (Test My Connection, whose
+  /// door is the home screen's hero card): the route and the title to show
+  /// when the catalog has no live entry for [toolId]. Both or neither.
+  final String? route;
+  final String? title;
 }

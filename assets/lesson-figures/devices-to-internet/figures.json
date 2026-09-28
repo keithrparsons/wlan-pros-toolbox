@@ -1,0 +1,115 @@
+{
+  "source": "devices-to-internet-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        190.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        720.0,
+        192.0
+      ],
+      "caption": "**Figure 1. Two roads meet at one box.** Your Wi-Fi and your internet are different roads, and they meet at the box. Green is the Wi-Fi inside your home. Blue is the line out to the world.",
+      "alt": "Figure 1. Two roads meet at one box. Your Wi-Fi and your internet are different roads, and they meet at the box. Green is the Wi-Fi inside your home. Blue is the line out to the world."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        720.0,
+        250.0
+      ],
+      "caption": "**Figure 2. The trip.** Your device talks to the box over Wi-Fi. The box sends it out the line you pay for, across the internet, to what you wanted. Cellular goes its own way through a tower and never touches your box.",
+      "alt": "Figure 2. The trip. Your device talks to the box over Wi-Fi. The box sends it out the line you pay for, across the internet, to what you wanted. Cellular goes its own way through a tower and never touches your box."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        720.0,
+        200.0
+      ],
+      "caption": "**Figure 3. Two roads, one box.** The two roads meet at the box on your wall. That's why people blame them as one thing.",
+      "alt": "Figure 3. Two roads, one box. The two roads meet at the box on your wall. That's why people blame them as one thing."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        720.0,
+        165.0
+      ],
+      "caption": "**Figure 4. Six stops.** The first three are in your home. The fourth belongs to your provider. The last two are out in the world, and nobody in your house can fix them.",
+      "alt": "Figure 4. Six stops. The first three are in your home. The fourth belongs to your provider. The last two are out in the world, and nobody in your house can fix them."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        720.0,
+        190.0
+      ],
+      "caption": "**Figure 5. The bars grade one hop.** Full Wi-Fi bars with a dead internet line happens every day. The bars only ever looked at the hop to the box.",
+      "alt": "Figure 5. The bars grade one hop. Full Wi-Fi bars with a dead internet line happens every day. The bars only ever looked at the hop to the box."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        720.0,
+        250.0
+      ],
+      "caption": "**Figure 6. Two ways out.** On cellular, your phone reaches the internet through a tower. Your box and your home internet are not part of that trip.",
+      "alt": "Figure 6. Two ways out. On cellular, your phone reaches the internet through a tower. Your box and your home internet are not part of that trip."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        700.0,
+        200.0
+      ],
+      "caption": "**Figure 7. One complaint, three causes.** The Wi-Fi hop, the internet line, or one app or website. The test tells you which to check first.",
+      "alt": "Figure 7. One complaint, three causes. The Wi-Fi hop, the internet line, or one app or website. The test tells you which to check first."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        720.0,
+        330.0
+      ],
+      "caption": "**Figure 8. The narrowest part sets the speed.** A bigger plan widens the highway, but the back bedroom still sits at the end of the same narrow Wi-Fi lane. Top: today. Bottom: after the upgrade.",
+      "alt": "Figure 8. The narrowest part sets the speed. A bigger plan widens the highway, but the back bedroom still sits at the end of the same narrow Wi-Fi lane. Top: today. Bottom: after the upgrade."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        720.0,
+        296.0
+      ],
+      "caption": "**Figure 9. Full bars, slow pages.** Every room has strong Wi-Fi, but the whole building shares one thin line to the internet. The highlighted line is the slow part, not the Wi-Fi.",
+      "alt": "Figure 9. Full bars, slow pages. Every room has strong Wi-Fi, but the whole building shares one thin line to the internet. The highlighted line is the slow part, not the Wi-Fi."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        720.0,
+        320.0
+      ],
+      "caption": "**Figure 10. Watch which grade moves.** Walking toward the box changes the Wi-Fi grade. The internet grade stays the same, because the line to your home did not change.",
+      "alt": "Figure 10. Watch which grade moves. Walking toward the box changes the Wi-Fi grade. The internet grade stays the same, because the line to your home did not change."
+    }
+  ]
+}

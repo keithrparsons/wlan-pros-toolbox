@@ -133,6 +133,28 @@ void runGuidedLessonSuite({
       expect(AppRouter.routes.containsKey(lesson.route), isTrue);
     });
 
+    test('every tool link opens a registered route', () {
+      // A link with no live catalog entry and no fallback route renders
+      // nothing, by design; in a lesson that is a silent loss, so fail here.
+      for (final LessonStep s in lesson.steps) {
+        for (final LessonBlock b in s.blocks) {
+          if (b is! LessonToolLink) continue;
+          final ({String route, String title})? to = LessonToolLinkView.target(
+            b.toolId,
+            route: b.route,
+            title: b.title,
+          );
+          expect(to, isNotNull, reason: b.toolId);
+          expect(
+            AppRouter.routes.containsKey(to!.route),
+            isTrue,
+            reason: to.route,
+          );
+          expect(to.title, isNot(lesson.title), reason: 'links to itself');
+        }
+      }
+    });
+
     test('search keywords are registered', () {
       expect(kToolKeywords[lesson.toolId], containsAll(keywords));
     });
@@ -219,7 +241,11 @@ void runGuidedLessonSuite({
               .map((RegExpMatch m) => '${f.asset}: ${m.group(1)}'),
       ];
       for (final String s in <String>[...text, ...labels]) {
-        expect(s, isNot(matches(RegExp(r'\bpages? \d'))), reason: s);
+        expect(
+          s,
+          isNot(matches(RegExp(r'\bpages? \d|\b(?:next|previous) page\b'))),
+          reason: s,
+        );
       }
     });
 

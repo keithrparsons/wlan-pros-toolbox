@@ -70,6 +70,18 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 
 - **Home Internet, Explained.** Fiber, cable, DSL, 5G and satellite: how each one reaches a house, what to check before you sign up, and why the Wi-Fi is a separate question.
 
+- **Phone Data Abroad, Explained.** Roaming with your own carrier, a travel eSIM and a local SIM, how to keep your own number on while a second plan carries the data, and the switches that stop a surprise bill.
+
+- **Smart Home Radios, Explained.** Wi-Fi, Thread, Zigbee and Matter: three radios and a language, why a 2.4 GHz-only smart plug won't join, the gadget network that fixes it, and what a Thread border router does. Figure 3 (one band, shared) is the Wi-Fi hook for a Wi-Fi audience.
+
+- **Cameras, Doorbells and Baby Monitors, Explained.** A camera is the rare gadget that sends more than it receives: upload against download, signal through the outside wall, what a wired doorbell's wire carries, cloud or home recording, baby monitors, locking a camera down, and jammers. Figure 3 (same house, same doorbell) is the Wi-Fi hook for a Wi-Fi audience.
+
+- **How Your Devices Access the Internet, Explained.** Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Test My Connection, which grades the two roads separately.
+
+- **Mesh, Extenders and Wired Access Points, Explained.** Three ways to fix a dead zone, and the one question that decides between them: how does the new box talk to the main one? One radio taking turns, where to put an extender, five setups for one far room, and four ways to build the link back. Pair it with Repeaters and Mesh Backhaul, the model its numbers come from.
+
+- **Is Your Router Too Old?.** A router is too old when it stops getting security fixes, not when it stops working: the three stages, the five-minute check, who updates the box, keep, update or replace, the 2026 US router rule, and what to look for in the next one.
+
 ### RF and Propagation
 
 - **FSPL Simulator.** Free-space path loss against distance for 2.4, 5 and 6 GHz on one chart, with a Why panel that splits each band's loss into the part every band shares and the part that changes with frequency. Up and Down double and halve the distance, so each press shows the 6 dB per doubling rule. Log and Linear switch the distance axis: on log the bands are straight lines, on linear they are the curve students usually expect.

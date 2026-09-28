@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 190" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="190">
+      <!-- brackets -->
+      <path d="M30 74 V64 H220 V74" fill="none" stroke="#7A9E26" stroke-width="2.5"/>
+      <path d="M234 74 V64 H676 V74" fill="none" stroke="#9C9C9C" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="125" y="46" text-anchor="middle" font-size="13" font-weight="700" fill="#2F5E00">Your bars measure this</text>
+      <text x="455" y="46" text-anchor="middle" font-size="13" font-weight="600" fill="#444444">and know nothing about all of this</text>
+      <!-- phone -->
+      <g transform="translate(8.6 80.6) scale(3.45)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+      <!-- arcs centred (78,122) -->
+      <g transform="rotate(90 91.9 121.9) translate(71.9 101.9) scale(1.66667)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
+      <!-- box -->
+      <g transform="translate(144.8 86.8) scale(2.93333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
+      <!-- feed -->
+      <line x1="234" y1="122" x2="420" y2="122" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <!-- cloud (480,122) -->
+      <g transform="translate(440 78) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
+      <line x1="542" y1="122" x2="608" y2="122" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <rect x="620" y="97" width="50" height="50" rx="11" fill="#A1CC3A"/>
+      <path d="M638 110 L658 122 L638 134 Z" fill="#1A1A1A"/>
+      <!-- labels -->
+      <text x="50" y="178" text-anchor="middle" font-size="12.5">your device</text>
+      <text x="180" y="166" text-anchor="middle" font-size="12.5">the box</text>
+      <text x="327" y="144" text-anchor="middle" font-size="12.5">the feed you pay for</text>
+      <text x="480" y="172" text-anchor="middle" font-size="12.5">the internet</text>
+      <text x="645" y="168" text-anchor="middle" font-size="12.5">the service</text>
+    </svg>

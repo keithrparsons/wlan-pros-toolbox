@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" font-family="IBM Plex Sans" font-size="12.5" fill="#444444" width="720" height="360">
+      <!-- questions -->
+      <g fill="#1A1A1A">
+        <rect x="16" y="16" width="360" height="56" rx="9"/>
+        <rect x="16" y="116" width="360" height="56" rx="9"/>
+        <rect x="16" y="216" width="360" height="56" rx="9"/>
+      </g>
+      <g fill="#FFFFFF" font-weight="700" text-anchor="middle">
+        <text x="196" y="40">Can a network cable reach the far room,</text><text x="196" y="58">or is there a jack there already?</text>
+        <text x="196" y="140">Is there a TV coax outlet</text><text x="196" y="158">in or near the far room?</text>
+        <text x="196" y="240">Is it one room, with light use,</text><text x="196" y="258">and a tight budget?</text>
+      </g>
+      <!-- answers -->
+      <g fill="#FFFFFF" stroke-width="2">
+        <rect x="446" y="16" width="258" height="56" rx="9" stroke="#2F5E00"/>
+        <rect x="446" y="116" width="258" height="56" rx="9" stroke="#444444"/>
+        <rect x="446" y="216" width="258" height="56" rx="9" stroke="#9C9C9C"/>
+        <rect x="16" y="300" width="360" height="52" rx="9" stroke="#2B5C8A"/>
+      </g>
+      <g font-weight="700">
+        <text x="460" y="39" fill="#2F5E00">Wired access point,</text><text x="460" y="57" fill="#2F5E00" font-weight="400">or a mesh unit on the cable</text>
+        <text x="460" y="139" fill="#111111">MoCA adapters,</text><text x="460" y="157" fill="#111111" font-weight="400">feeding a mesh unit or AP</text>
+        <text x="460" y="239" fill="#111111">An extender,</text><text x="460" y="257" fill="#111111" font-weight="400">placed partway, not in the dead zone</text>
+        <text x="30" y="322" fill="#2B5C8A">A mesh kit with a dedicated backhaul radio,</text><text x="30" y="340" fill="#2B5C8A" font-weight="400">each unit placed where the last one is still strong</text>
+      </g>
+      <!-- yes arrows: gap before target, arrowhead short of box -->
+      <g stroke="#444444" stroke-width="2.5" stroke-linecap="round">
+        <line x1="386" y1="44" x2="426" y2="44"/><line x1="386" y1="144" x2="426" y2="144"/><line x1="386" y1="244" x2="426" y2="244"/>
+      </g>
+      <g fill="#444444"><path d="M426 38 L436 44 L426 50 Z"/><path d="M426 138 L436 144 L426 150 Z"/><path d="M426 238 L436 244 L426 250 Z"/></g>
+      <g font-size="11" font-weight="700" fill="#2F5E00"><text x="400" y="36" font-size="12.5">yes</text><text x="400" y="136" font-size="12.5">yes</text><text x="400" y="236" font-size="12.5">yes</text></g>
+      <!-- no arrows down -->
+      <g stroke="#444444" stroke-width="2.5" stroke-linecap="round">
+        <line x1="196" y1="80" x2="196" y2="98"/><line x1="196" y1="180" x2="196" y2="198"/><line x1="196" y1="280" x2="196" y2="284"/>
+      </g>
+      <g fill="#444444"><path d="M190 98 L196 107 L202 98 Z"/><path d="M190 198 L196 207 L202 198 Z"/><path d="M190 284 L196 292 L202 284 Z"/></g>
+      <g font-size="11" font-weight="700" fill="#444444"><text x="206" y="96" font-size="12.5">no</text><text x="206" y="196" font-size="12.5">no</text><text x="206" y="291" font-size="12.5">no</text></g>
+    </svg>

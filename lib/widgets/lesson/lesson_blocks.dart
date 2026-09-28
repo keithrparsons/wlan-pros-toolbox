@@ -82,10 +82,17 @@ class LessonBlockView extends StatelessWidget {
       LessonCards(:final List<LessonCardData> cards) => LessonCardGrid(cards),
       final LessonTask t => LessonTaskView(t),
       LessonSourceList(:final List<String> items) => LessonSources(items),
-      LessonToolLink(:final String toolId) => LessonToolLinkView(
-        toolId,
-        keySuffix: '-$step-$index',
-      ),
+      LessonToolLink(
+        :final String toolId,
+        :final String? route,
+        :final String? title,
+      ) =>
+        LessonToolLinkView(
+          toolId,
+          route: route,
+          title: title,
+          keySuffix: '-$step-$index',
+        ),
     };
   }
 }
@@ -602,12 +609,37 @@ class LessonTaskView extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// An Open button for another tool, looked up in the catalog by id. No live
-/// entry, no button: the sentence that names the tool still reads.
+/// entry and no [route], no button: the sentence that names the tool still
+/// reads.
 class LessonToolLinkView extends StatelessWidget {
-  const LessonToolLinkView(this.toolId, {super.key, this.keySuffix = ''});
+  const LessonToolLinkView(
+    this.toolId, {
+    super.key,
+    this.route,
+    this.title,
+    this.keySuffix = '',
+  });
 
   final String toolId;
+
+  /// The fallback door for a tool with no catalog tile (see
+  /// LessonToolLink.route).
+  final String? route;
+  final String? title;
   final String keySuffix;
+
+  /// The route and title the button opens, or null when there is nothing
+  /// to open.
+  static ({String route, String title})? target(
+    String toolId, {
+    String? route,
+    String? title,
+  }) {
+    final ToolEntry? entry = find(toolId);
+    if (entry != null) return (route: entry.routeName, title: entry.title);
+    if (route != null && title != null) return (route: route, title: title);
+    return null;
+  }
 
   static ToolEntry? find(String id) {
     for (final ToolCategory c in kToolCategories) {
@@ -620,15 +652,19 @@ class LessonToolLinkView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ToolEntry? entry = find(toolId);
-    if (entry == null) return const SizedBox.shrink();
+    final ({String route, String title})? to = target(
+      toolId,
+      route: route,
+      title: title,
+    );
+    if (to == null) return const SizedBox.shrink();
     return Align(
       alignment: Alignment.centerLeft,
       child: TextButton.icon(
         key: ValueKey<String>('lesson-link:$toolId$keySuffix'),
-        onPressed: () => Navigator.of(context).pushNamed(entry.routeName),
+        onPressed: () => Navigator.of(context).pushNamed(to.route),
         icon: const Icon(Icons.open_in_new),
-        label: Text('Open ${entry.title}'),
+        label: Text('Open ${to.title}'),
       ),
     );
   }

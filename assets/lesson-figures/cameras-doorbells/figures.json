@@ -1,0 +1,125 @@
+{
+  "source": "cameras-doorbells-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        190.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        720.0,
+        190.0
+      ],
+      "caption": "**Figure 1. Two directions.** A camera's video leaves your home on the upload side. The big download number on your bill says little about it.",
+      "alt": "Figure 1. Two directions. A camera's video leaves your home on the upload side. The big download number on your bill says little about it."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        720.0,
+        276.0
+      ],
+      "caption": "**Figure 2. Cameras fill the upload.** Each camera takes a slice of your upload. Add enough and a video call no longer fits. Not to scale.",
+      "alt": "Figure 2. Cameras fill the upload. Each camera takes a slice of your upload. Add enough and a video call no longer fits. Not to scale."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        720.0,
+        250.0
+      ],
+      "caption": "**Figure 3. Same house, same doorbell.** The dashed line is the Wi-Fi path. Moving the box, or adding a unit near the front, takes walls out of the way.",
+      "alt": "Figure 3. Same house, same doorbell. The dashed line is the Wi-Fi path. Moving the box, or adding a unit near the front, takes walls out of the way."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        720.0,
+        215.0
+      ],
+      "caption": "**Figure 4. Two lanes to the door.** The 2.4 GHz lane reaches farther through walls but is busier. The 5 GHz lane carries more but gives up sooner.",
+      "alt": "Figure 4. Two lanes to the door. The 2.4 GHz lane reaches farther through walls but is busier. The 5 GHz lane carries more but gives up sooner."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        720.0,
+        268.0
+      ],
+      "caption": "**Figure 5. What the wire carries.** Only the one on a network cable sends its video without Wi-Fi. The other two still need a good Wi-Fi signal.",
+      "alt": "Figure 5. What the wire carries. Only the one on a network cable sends its video without Wi-Fi. The other two still need a good Wi-Fi signal."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        720.0,
+        230.0
+      ],
+      "caption": "**Figure 6. Two places to keep video.** Many cameras can do both.",
+      "alt": "Figure 6. Two places to keep video. Many cameras can do both."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        720.0,
+        250.0
+      ],
+      "caption": "**Figure 7. Two kinds of baby monitor.** One talks straight to its own screen. The other goes through your Wi-Fi and the internet to your phone.",
+      "alt": "Figure 7. Two kinds of baby monitor. One talks straight to its own screen. The other goes through your Wi-Fi and the internet to your phone."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        720.0,
+        178.0
+      ],
+      "caption": "**Figure 8. Four ways to lock a camera down.** Do all four, starting with the password.",
+      "alt": "Figure 8. Four ways to lock a camera down. Do all four, starting with the password."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        720.0,
+        240.0
+      ],
+      "caption": "**Figure 9. When the radio link drops.** The red X is any break in the Wi-Fi hop: a jammer, a box that's switched off, or plain weak signal.",
+      "alt": "Figure 9. When the radio link drops. The red X is any break in the Wi-Fi hop: a jammer, a box that's switched off, or plain weak signal."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        720.0,
+        226.0
+      ],
+      "caption": "**Figure 10. What's true, in pictures.** Each numbered panel goes with the myth of the same number below.",
+      "alt": "Figure 10. What's true, in pictures. Each numbered panel goes with the myth of the same number below."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        720.0,
+        312.0
+      ],
+      "caption": "**Figure 11. The unplug test.** Take the internet away, give the camera something to record, then look on its card or home recorder. A clip there means it records at home.",
+      "alt": "Figure 11. The unplug test. Take the internet away, give the camera something to record, then look on its card or home recorder. A clip there means it records at home."
+    }
+  ]
+}

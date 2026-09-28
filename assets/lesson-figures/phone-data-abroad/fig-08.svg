@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 270" font-family="IBM Plex Sans" font-size="12" fill="#111111" width="760" height="270">
+    <!-- phone -->
+    <g transform="translate(90,135)"><rect x="-38" y="-72" width="76" height="144" rx="12" fill="#1A1A1A"/><rect x="-32" y="-63" width="64" height="124" rx="5" fill="#E6EEF6"/>
+      <rect x="-22" y="-42" width="44" height="24" rx="4" fill="#444444"/><text y="-25" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="700">1</text>
+      <rect x="-22" y="18" width="44" height="24" rx="4" fill="#2F5E00"/><text y="35" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="700">2</text></g>
+    <path d="M136 105 L318 72" stroke="#444444" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+    <path d="M136 165 L318 198" stroke="#2F5E00" stroke-width="3" stroke-linecap="round"/>
+    <!-- line 1 box -->
+    <rect x="330" y="12" width="420" height="118" rx="10" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
+    <text x="348" y="38" font-weight="600" font-size="14">Line 1: your home number</text>
+    <text x="348" y="60" fill="#444444" font-size="13">Stays on, so calls and texts still reach you.</text>
+    <text x="348" y="80" fill="#444444" font-size="13">Its Data Roaming is off, and it is not the data line.</text>
+    <text x="348" y="100" fill="#444444" font-size="13">Answering a call on it may still start a roaming</text>
+    <text x="348" y="118" fill="#444444" font-size="13">charge. Incoming texts are free on some carriers.</text>
+    <!-- line 2 box -->
+    <rect x="330" y="142" width="420" height="118" rx="10" fill="#FFFFFF" stroke="#2F5E00" stroke-width="2.5"/>
+    <text x="348" y="168" font-weight="600" font-size="14" fill="#2F5E00">Line 2: travel eSIM or local plan</text>
+    <text x="348" y="190" fill="#444444" font-size="13">Set as the cellular data line.</text>
+    <text x="348" y="210" fill="#444444" font-size="13">Carries maps, email and app calls. On an iPhone,</text>
+    <text x="348" y="230" fill="#444444" font-size="13">iMessage and FaceTime keep using your home</text>
+    <text x="348" y="248" fill="#444444" font-size="13">number over this data.</text>
+  </svg>
