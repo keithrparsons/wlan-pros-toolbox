@@ -37,7 +37,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (52 tools)
+- **Wi-Fi Classroom** (53 tools)
   - Guided Lessons (5)
   - RF and Propagation (10)
   - Signals and PHY (5)
