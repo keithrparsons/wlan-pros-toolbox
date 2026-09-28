@@ -24,6 +24,8 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/roaming_walk_engine.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Resolved colors and text styles shared by both painters.
 @immutable
@@ -205,7 +207,11 @@ class RoamFloorPainter extends CustomPainter {
     required this.editingAp,
     required this.drawnPoints,
     required this.drawing,
+    this.units = UnitSystem.metric,
   });
+
+  /// Grid spacing follows it: every 10 m, or every 25 ft.
+  final UnitSystem units;
 
   final RoamWalkConfig config;
   final RoamWalkResult result;
@@ -220,18 +226,19 @@ class RoamFloorPainter extends CustomPainter {
     final FloorMapping m = FloorMapping(size);
     final Rect floor = m.floorRect;
 
-    // Grid every 10 m.
+    // Grid every 10 m, or every 25 ft.
     final Paint grid = Paint()
       ..color = style.grid
       ..strokeWidth = style.sc.strokeWidth(1);
-    for (double x = 10; x < kFloorWidthM; x += 10) {
+    final double step = units.isMetric ? 10 : LengthUnits.feetToMetres(25);
+    for (double x = step; x < kFloorWidthM; x += step) {
       canvas.drawLine(
         m.toCanvas((x: x, y: 0)),
         m.toCanvas((x: x, y: kFloorDepthM)),
         grid,
       );
     }
-    for (double y = 10; y < kFloorDepthM; y += 10) {
+    for (double y = step; y < kFloorDepthM; y += step) {
       canvas.drawLine(
         m.toCanvas((x: 0, y: y)),
         m.toCanvas((x: kFloorWidthM, y: y)),
@@ -425,6 +432,7 @@ class RoamFloorPainter extends CustomPainter {
   @override
   bool shouldRepaint(RoamFloorPainter old) =>
       old.config != config ||
+      old.units != units ||
       old.result != result ||
       old.sample != sample ||
       old.style != style ||

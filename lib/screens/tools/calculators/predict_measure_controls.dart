@@ -22,6 +22,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
 import '../labeled_field.dart';
 import 'heat_map_builder_parts.dart';
 import 'predict_measure_controller.dart';
@@ -149,7 +150,9 @@ class _WalkFields extends StatelessWidget {
       color: colors.textAccent,
     );
     final Widget noise = HmSlider(
-      label: compact ? 'Noise (illustrative)' : 'Noise on each sample (illustrative)',
+      label: compact
+          ? 'Noise (illustrative)'
+          : 'Noise on each sample (illustrative)',
       valueText: '${c.sigmaDb.toStringAsFixed(1)} dB',
       value: c.sigmaDb,
       min: 0,
@@ -236,8 +239,8 @@ class _ReadoutsCard extends StatelessWidget {
             value: m.largestDiffDb == null
                 ? 'no data'
                 : '${fmtSignedDb(m.largestDiffDb!)} at '
-                      '${fmtM(m.largestDiffAt!.x)}, '
-                      '${fmtM(m.largestDiffAt!.y)} m',
+                      '${c.coord(m.largestDiffAt!.x)}, '
+                      '${c.len(m.largestDiffAt!.y)}',
           ),
           HmRow(
             label:
@@ -433,23 +436,29 @@ class _ApFields extends StatelessWidget {
         const HmSectionLabel('AP on a stick: where the design puts the AP'),
         HmSlider(
           label: 'AP across',
-          valueText: '${fmtM(c.ap.x)} m',
+          valueText: c.len(c.ap.x),
+          // 0.5 m steps, or whole feet (the controller snaps either way).
           value: c.ap.x,
           min: 0.5,
           max: m.widthM - 0.5,
-          divisions: ((m.widthM - 1) * 2).round(),
+          divisions: c.units.isMetric
+              ? ((m.widthM - 1) * 2).round()
+              : (LengthUnits.metresToFeet(m.widthM - 1)).round(),
           onChanged: (double v) => c.apX = v,
-          semanticValue: (double v) => '${fmtM(v)} meters',
+          semanticValue: (double v) => '${c.coord(v)} ${c.lf.distUnitSpoken}',
         ),
         HmSlider(
           label: 'AP down',
-          valueText: '${fmtM(c.ap.y)} m',
+          valueText: c.len(c.ap.y),
+          // 0.5 m steps, or whole feet (the controller snaps either way).
           value: c.ap.y,
           min: 0.5,
           max: m.depthM - 0.5,
-          divisions: ((m.depthM - 1) * 2).round(),
+          divisions: c.units.isMetric
+              ? ((m.depthM - 1) * 2).round()
+              : (LengthUnits.metresToFeet(m.depthM - 1)).round(),
           onChanged: (double v) => c.apY = v,
-          semanticValue: (double v) => '${fmtM(v)} meters',
+          semanticValue: (double v) => '${c.coord(v)} ${c.lf.distUnitSpoken}',
         ),
         HmNote(
           'The AP radiates ${fmtM(m.eirpDbm)} dBm effective isotropic '

@@ -43,6 +43,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'wifi_through_a_wall_controller.dart';
 import 'wifi_through_a_wall_controls.dart';
 import 'wifi_through_a_wall_parts.dart';
@@ -62,7 +64,12 @@ class WifiThroughAWallScreen extends StatefulWidget {
 }
 
 class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, UnitSystemFollower<WifiThroughAWallScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final WallSlabController _controller = WallSlabController(
     initial: widget.initial,
   );
@@ -99,6 +106,7 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
   /// copied). The loss and the three-band table are on the stage; the
   /// detailed readouts and the measured values fold into the panel.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Wi-Fi Through a Wall',
     stage: WallSlabStage(controller: _controller),
     controls: ListenableBuilder(
@@ -138,6 +146,7 @@ class _WifiThroughAWallScreenState extends State<WifiThroughAWallScreen>
         title: const Text('Wi-Fi Through a Wall'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.wifiThroughAWall,
             builder: _presenter,

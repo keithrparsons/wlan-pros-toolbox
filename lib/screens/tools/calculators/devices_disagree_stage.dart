@@ -233,9 +233,9 @@ class _Floor extends StatelessWidget {
     ].join(', ');
     return Semantics(
       label:
-          'Floor: the AP is ${DdFormat.meters(cfg.distanceM)} from one spot. '
-          'Devices $devices stand side by side at that spot, '
-          '${DdFormat.cm(cfg.spacingM)} apart.',
+          'Floor: the AP is ${DdFormat.meters(cfg.distanceM, controller.units)} '
+          'from one spot. Devices $devices stand side by side at that spot, '
+          '${DdFormat.cm(cfg.spacingM, controller.units)} apart.',
       excludeSemantics: true,
       child: SizedBox(
         height: height,
@@ -245,6 +245,7 @@ class _Floor extends StatelessWidget {
             spacingM: cfg.spacingM,
             deviceCount: cfg.deviceCount,
             style: style,
+            units: controller.units,
           ),
         ),
       ),

@@ -41,6 +41,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'spatial_reuse_panels.dart';
 import 'spatial_reuse_state.dart';
 
@@ -131,7 +133,7 @@ class SpatialReuseStage extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.xs),
       child: Semantics(
-        label: semanticsOf(a),
+        label: semanticsOf(a, state.units),
         excludeSemantics: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,6 +149,7 @@ class SpatialReuseStage extends StatelessWidget {
               child: CustomPaint(
                 size: const Size.fromHeight(_LinePainter.height),
                 painter: _LinePainter(
+                  units: state.units,
                   analysis: a,
                   style: st,
                   lookA: lookA,
@@ -185,12 +188,18 @@ class SpatialReuseStage extends StatelessWidget {
   }
 
   /// The worded description of the whole stage for screen readers.
-  static String semanticsOf(ReuseAnalysis a) {
+  static String semanticsOf(
+    ReuseAnalysis a, [
+    UnitSystem u = UnitSystem.metric,
+  ]) {
     final ReuseScenario s = a.scenario;
     String db(double v) => v.toStringAsFixed(1);
-    return 'Line of four radios. AP A at ${db(s.layout.apA)} metres, client A '
-        'at ${db(s.layout.clientA)}, client B at ${db(s.layout.clientB)}, '
-        'AP B at ${db(s.layout.apB)}. '
+    final LengthFormat f = LengthFormat(u);
+    String at(double m) => f.distValue(m).toStringAsFixed(1);
+    return 'Line of four radios. AP A at ${at(s.layout.apA)} '
+        '${f.distUnitSpoken}, client A '
+        'at ${at(s.layout.clientA)}, client B at ${at(s.layout.clientB)}, '
+        'AP B at ${at(s.layout.apB)}. '
         '${s.coloring ? 'BSS A color ${s.colorA}, BSS B color ${s.colorB}. ' : 'BSS coloring off. '}'
         'AP B hears AP A at ${db(a.heardByBDbm)} dBm. '
         '${a.together ? 'AP B sends at the same time at ${db(a.txPowerBDbm)} dBm.' : 'AP B waits its turn.'} '
@@ -358,7 +367,7 @@ class _PresenterStage extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Expanded(
             child: Semantics(
-              label: SpatialReuseStage.semanticsOf(a),
+              label: SpatialReuseStage.semanticsOf(a, state.units),
               excludeSemantics: true,
               child: _ZoomedDrawings(
                 state: state,
@@ -443,6 +452,7 @@ class _ZoomedDrawings extends StatelessWidget {
               child: CustomPaint(
                 size: Size.fromHeight(_LinePainter.height * zoom),
                 painter: _LinePainter(
+                  units: state.units,
                   analysis: analysis,
                   style: style,
                   lookA: lookA,
@@ -614,9 +624,13 @@ class _LinePainter extends CustomPainter {
     required this.lookA,
     required this.lookB,
     this.zoom = 1,
+    this.units = UnitSystem.metric,
   });
 
   final ReuseAnalysis analysis;
+
+  /// Units for the axis ticks: every 10 m, or every 25 ft.
+  final UnitSystem units;
   final _Style style;
   final BssLook lookA, lookB;
 
@@ -645,7 +659,7 @@ class _LinePainter extends CustomPainter {
     final double xcb = _lineX(l.clientB, w);
     final double xb = _lineX(l.apB, w);
 
-    // Axis with a tick every 10 m.
+    // Axis with a round tick step in the unit on screen: 10 m, or 25 ft.
     final Paint axis = Paint()
       ..color = style.track
       ..strokeWidth = 1;
@@ -654,12 +668,17 @@ class _LinePainter extends CustomPainter {
       Offset(_lineX(kReuseLineM, w), axisY),
       axis,
     );
-    for (int m = 0; m <= kReuseLineM; m += 10) {
-      final double x = _lineX(m.toDouble(), w);
+    final LengthFormat f = LengthFormat(units);
+    for (final double v in NiceTicks.between(
+      0,
+      f.distValue(kReuseLineM),
+      target: 6,
+    )) {
+      final double x = _lineX(f.distToMetres(v), w);
       canvas.drawLine(Offset(x, axisY - 3), Offset(x, axisY + 3), axis);
       _paintCentered(
         canvas,
-        _tp(m == 0 ? '0 m' : '$m', style.label),
+        _tp(v == 0 ? '0 ${f.distUnit}' : v.round().toString(), style.label),
         x,
         axisY + 5,
         w,
@@ -803,6 +822,7 @@ class _LinePainter extends CustomPainter {
   @override
   bool shouldRepaint(_LinePainter old) =>
       old.zoom != zoom ||
+      old.units != units ||
       old.analysis != analysis ||
       old.style.neutral != style.neutral ||
       old.lookA.hue != lookA.hue ||

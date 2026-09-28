@@ -16,6 +16,8 @@ import 'package:flutter/services.dart';
 
 import '../../../services/wifi_lab/heat_map_builder_engine.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kHeatMapBuilderToolId = 'heat-map-builder';
@@ -73,6 +75,47 @@ enum HmLessonStep {
 }
 
 class HeatMapBuilderController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The floor stays in metres.
+  UnitSystem get units => _units;
+
+  /// The formatter for [units].
+  LengthFormat get lf => LengthFormat(_units);
+
+  /// Whole metres or whole feet: "5 m" / "16 ft".
+  String whole(double m) => lf.dist(m, decimals: 0);
+
+  /// The spacing experiment's grid spacings, in the unit on screen
+  /// (1, 2, 3, 5, 7, 10 m; or 4, 6, 10, 15, 20, 30 ft).
+  List<double> get experimentSpacingsShown =>
+      _units.isMetric ? kHmExperimentSpacings : kHmExperimentSpacingsFt;
+
+  /// [experimentSpacingsShown] in metres.
+  List<double> get experimentSpacingsM => <double>[
+    for (final double v in experimentSpacingsShown) lf.distToMetres(v),
+  ];
+
+  /// Switches units. An open spacing experiment re-runs at the round
+  /// spacings of the new unit, so its axis stays round.
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    if (_experiment != null) {
+      runExperiment();
+    } else {
+      notifyListeners();
+    }
+  }
+
+  /// Rounds [m] to a whole metre or foot inside [lo] to [hi] metres.
+  double _snapWhole(double m, double lo, double hi) {
+    final LengthFormat f = lf;
+    final double loS = (f.distValue(lo) - 1e-9).ceilToDouble();
+    final double hiS = (f.distValue(hi) + 1e-9).floorToDouble();
+    return f.distToMetres(f.distValue(m).roundToDouble().clamp(loS, hiS));
+  }
+
   HeatMapBuilderController({
     HmFloor? floor,
     this.interpolator = documentedHmInterpolator,
@@ -222,7 +265,7 @@ class HeatMapBuilderController extends ChangeNotifier {
 
   /// Grid and walk spacing; re-lays a grid or walk already on the floor.
   set spacingM(double v) {
-    final double s = v.roundToDouble().clamp(kHmMinSpacingM, kHmMaxSpacingM);
+    final double s = _snapWhole(v, kHmMinSpacingM, kHmMaxSpacingM);
     if (s == _spacingM) return;
     _spacingM = s;
     switch (_layout) {
@@ -267,10 +310,7 @@ class HeatMapBuilderController extends ChangeNotifier {
   void moveInspection(int dCol, int dRow) {
     final HmPoint p =
         inspectedCell ?? (x: _floor.widthM / 2, y: _floor.depthM / 2);
-    inspect((
-      x: p.x + dCol * _map.cellM,
-      y: p.y + dRow * _map.cellM,
-    ));
+    inspect((x: p.x + dCol * _map.cellM, y: p.y + dRow * _map.cellM));
   }
 
   // ── Method ────────────────────────────────────────────────────────────────
@@ -301,10 +341,7 @@ class HeatMapBuilderController extends ChangeNotifier {
 
   set guessRangeM(double v) => _apply(
     _settings.copyWith(
-      guessRangeM: v.roundToDouble().clamp(
-        kHmMinGuessRangeM,
-        kHmMaxGuessRangeM,
-      ),
+      guessRangeM: _snapWhole(v, kHmMinGuessRangeM, kHmMaxGuessRangeM),
     ),
   );
 
@@ -385,6 +422,7 @@ class HeatMapBuilderController extends ChangeNotifier {
       _settings,
       _noise,
       interpolator: interpolator,
+      spacingsM: experimentSpacingsM,
     );
     _experimentNoise = _noise;
     notifyListeners();
@@ -507,22 +545,22 @@ class HeatMapBuilderController extends ChangeNotifier {
     final StringBuffer b = StringBuffer()
       ..writeln('Heat Map Builder (WLAN Pros Toolbox, teaching model)')
       ..writeln(
-        'Floor ${_floor.widthM.toStringAsFixed(0)} m x '
-        '${_floor.depthM.toStringAsFixed(0)} m, $apCount '
+        'Floor ${whole(_floor.widthM)} x '
+        '${whole(_floor.depthM)}, $apCount '
         '${apCount == 1 ? 'AP' : 'APs'}, n = '
         '${_floor.pathLossExponent.toStringAsFixed(1)}, each AP radiating '
         '${_floor.eirpDbm.toStringAsFixed(0)} dBm',
       )
       ..writeln(
         'Samples: ${_points.length} (${_layout.label}'
-        '${_layout == HmLayout.grid || _layout == HmLayout.walk ? ', every ${_spacingM.toStringAsFixed(0)} m' : ''})',
+        '${_layout == HmLayout.grid || _layout == HmLayout.walk ? ', every ${whole(_spacingM)}' : ''})',
       )
       ..writeln(
         'Method: ${s.method == HmMethod.idw ? 'IDW (inverse distance weighting), power ${fmtPower(s.power)}' : 'nearest neighbor'}, '
         'averaged in ${s.domain == HmDomain.db ? 'dB' : 'milliwatts'}',
       )
       ..writeln(
-        'Guess range ${s.guessRangeM.toStringAsFixed(0)} m, extrapolation '
+        'Guess range ${whole(s.guessRangeM)}, extrapolation '
         '${s.extrapolation.label}',
       )
       ..writeln(
@@ -545,7 +583,7 @@ class HeatMapBuilderController extends ChangeNotifier {
     if (x != null) {
       b.writeln(
         'Spacing experiment, RMSE by grid spacing '
-        '(${kHmExperimentSpacings.map((double v) => '${v.toStringAsFixed(0)} m').join(', ')}):',
+        '(${experimentSpacingsShown.map((double v) => '${v.toStringAsFixed(0)} ${lf.distUnit}').join(', ')}):',
       );
       for (final HmSpacingSeries ser in x) {
         b.writeln(

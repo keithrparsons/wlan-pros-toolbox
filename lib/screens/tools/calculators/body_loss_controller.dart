@@ -14,10 +14,22 @@ import 'package:flutter/services.dart';
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/body_loss_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/unit_system.dart';
 
 export '../../../services/wifi_lab/body_loss_model.dart';
 
 class BodyLossController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The model stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   BodyLossController([BlConfig? initial]) : _config = initial ?? BlConfig();
 
   BlConfig _config;
@@ -114,7 +126,7 @@ class BodyLossController extends ChangeNotifier {
       'Body Loss',
       '${c.band.label} ch ${c.channel} (${c.freqMHz.round()} MHz), 20 MHz, '
           'AP radiates ${n(BlConfig.apEirpDbm, 0)} dBm, path-loss exponent '
-          '${n(BlConfig.exponent)}, device ${BlFormat.dist(c.distanceM)} from '
+          '${n(BlConfig.exponent)}, device ${BlFormat.dist(c.distanceM, _units)} from '
           'the AP',
       'Illustrative losses: holder ${n(c.holderLossDb)} dB at 2.4 GHz, '
           '${n(c.perPersonLossDb)} dB per person at 2.4 GHz, band multipliers '

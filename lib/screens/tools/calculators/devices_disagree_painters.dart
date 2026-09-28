@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/devices_disagree_model.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'devices_disagree_controller.dart' show DdFormat;
 
 /// Resolved colors and text styles shared by both painters.
@@ -165,10 +166,14 @@ class DdFloorPainter extends CustomPainter {
     required this.spacingM,
     required this.deviceCount,
     required this.style,
+    this.units = UnitSystem.metric,
   });
 
   final double distanceM;
   final double spacingM;
+
+  /// Units for the distance and spacing labels.
+  final UnitSystem units;
   final int deviceCount;
   final DdPaintStyle style;
 
@@ -222,7 +227,7 @@ class DdFloorPainter extends CustomPainter {
     );
     _label(
       canvas,
-      DdFormat.meters(distanceM),
+      DdFormat.meters(distanceM, units),
       Offset((ap.dx + spot.dx - ring) / 2, cy - sc.markerSize(4)),
       style.labelStyle.copyWith(color: style.primary),
       align: Alignment.bottomCenter,
@@ -257,7 +262,7 @@ class DdFloorPainter extends CustomPainter {
     }
     _label(
       canvas,
-      '${DdFormat.cm(spacingM)} apart',
+      '${DdFormat.cm(spacingM, units)} apart',
       Offset(spot.dx - ring - 6, cy + sc.markerSize(8)),
       style.labelStyle.copyWith(color: style.secondary),
       align: Alignment.topRight,
@@ -270,6 +275,7 @@ class DdFloorPainter extends CustomPainter {
       old.distanceM != distanceM ||
       old.spacingM != spacingM ||
       old.deviceCount != deviceCount ||
+      old.units != units ||
       old.style != style;
 }
 

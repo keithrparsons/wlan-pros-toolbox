@@ -20,6 +20,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Maps meters to pixels and back for one stage size and view range.
 @immutable
@@ -100,6 +102,7 @@ class RvrStagePainter extends CustomPainter {
     required this.rings,
     required this.cellEdgeM,
     required this.cellEdgeLabel,
+    this.units = UnitSystem.metric,
     required this.clientDistanceM,
     required this.clientAngle,
     required this.clientLabel,
@@ -114,6 +117,9 @@ class RvrStagePainter extends CustomPainter {
   final List<RvrPaintRing> rings;
   final double cellEdgeM;
   final String cellEdgeLabel;
+
+  /// Units for the grid circle labels.
+  final UnitSystem units;
   final double clientDistanceM;
   final double clientAngle;
   final String clientLabel;
@@ -179,7 +185,7 @@ class RvrStagePainter extends CustomPainter {
     for (final double f in <double>[0.5, 1]) {
       final double r = g.radiusPx * f;
       _dashedCircle(canvas, g.center, r, p, dash: 2, gap: 4);
-      final String label = _meters(rangeM * f);
+      final String label = LengthFormat(units).ring(rangeM * f, rangeM: rangeM);
       final TextPainter tp = _text(label, style.gridLabel);
       // Left of the AP: the client starts up and to the right.
       final Offset at = g.center + Offset(-r + 2, 2);
@@ -279,10 +285,6 @@ class RvrStagePainter extends CustomPainter {
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────
-
-  static String _meters(double m) => m >= 1000
-      ? '${(m / 1000).toStringAsFixed(m % 1000 == 0 ? 0 : 1)} km'
-      : '${m.round()} m';
 
   TextPainter _text(String s, TextStyle st) => TextPainter(
     text: TextSpan(text: s, style: st),

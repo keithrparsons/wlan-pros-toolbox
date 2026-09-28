@@ -11,6 +11,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../services/wifi_lab/spatial_reuse_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kSpatialReuseToolId = 'spatial-reuse';
@@ -43,6 +45,17 @@ enum ReuseNode {
 }
 
 class SpatialReuseState extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. Positions stay in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   ReuseScenario _s = const ReuseScenario();
   ReuseAnalysis? _analysis;
 
@@ -62,9 +75,15 @@ class SpatialReuseState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Move [n] to [metres] on the line, rounded to 0.5 m.
+  /// Move [n] to [metres] on the line, rounded to 0.5 m, or to a whole
+  /// foot in imperial.
   void move(ReuseNode n, double metres) {
-    final double m = (metres.clamp(0, kReuseLineM) * 2).round() / 2;
+    final double c = metres.clamp(0, kReuseLineM).toDouble();
+    final double m = _units.isMetric
+        ? (c * 2).round() / 2
+        : LengthUnits.feetToMetres(
+            LengthUnits.metresToFeet(c).roundToDouble(),
+          ).clamp(0, kReuseLineM).toDouble();
     final ReuseLayout l = _s.layout;
     _set(
       _s.copyWith(
@@ -115,6 +134,8 @@ class SpatialReuseState extends ChangeNotifier {
     final ReuseAnalysis a = analysis;
     final ReuseScenario s = _s;
     String db(double v) => v.toStringAsFixed(1);
+    String pos(double m) =>
+        LengthFormat(_units).dist(m, decimals: 1, keepZeros: true);
     String link(String name, ReuseLink k) =>
         '$name: signal ${db(k.signalDbm)} dBm, '
         '${k.interferenceDbm == null ? 'no interference' : 'interference ${db(k.interferenceDbm!)} dBm'}, '
@@ -124,8 +145,8 @@ class SpatialReuseState extends ChangeNotifier {
         '(needs ${db(k.requiredSnrDb)} dB)';
     return <String>[
       'Spatial Reuse (Wi-Fi Classroom)',
-      'AP A ${db(s.layout.apA)} m, client A ${db(s.layout.clientA)} m, '
-          'client B ${db(s.layout.clientB)} m, AP B ${db(s.layout.apB)} m; '
+      'AP A ${pos(s.layout.apA)}, client A ${pos(s.layout.clientA)}, '
+          'client B ${pos(s.layout.clientB)}, AP B ${pos(s.layout.apB)}; '
           'n ${s.exponent.toStringAsFixed(1)}, ${s.widthMHz} MHz, '
           'AP power ${db(s.apPowerDbm)} dBm',
       s.coloring

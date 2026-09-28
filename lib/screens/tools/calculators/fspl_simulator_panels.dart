@@ -19,6 +19,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/fspl_math.dart';
@@ -29,6 +30,7 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'fspl_simulator_chart.dart';
 import 'fspl_simulator_model.dart';
@@ -189,7 +191,22 @@ class _FsplControlsState extends State<FsplControls> {
   FsplSimModel get m => widget.model;
 
   @override
+  void initState() {
+    super.initState();
+    m.addListener(_followModelText);
+  }
+
+  /// A unit flip rewrites the typed distance in the model (setUnits); mirror
+  /// it here. Runs from the model's notify, outside build.
+  void _followModelText() {
+    if (_dist.text != m.distText && m.distText.isNotEmpty) {
+      _dist.text = m.distText;
+    }
+  }
+
+  @override
   void dispose() {
+    m.removeListener(_followModelText);
     _rssi.dispose();
     _dist.dispose();
     super.dispose();
@@ -235,6 +252,16 @@ class _FsplControlsState extends State<FsplControls> {
       const FsplSectionLabel('Measured point'),
       const SizedBox(height: AppSpacing.xs),
       ..._measuredFields(context),
+      const SizedBox(height: AppSpacing.md),
+      const FsplSectionLabel('Design targets'),
+      const SizedBox(height: AppSpacing.xxs),
+      Text(
+        'The dashed lines in the Received view. Your lines are saved on this '
+        'device for every lesson.',
+        style: small(),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      FsplTargetEditor(model: m),
     ];
   }
 
@@ -252,6 +279,10 @@ class _FsplControlsState extends State<FsplControls> {
       PresenterDisclosure(
         title: 'Measured point',
         children: _measuredFields(context),
+      ),
+      PresenterDisclosure(
+        title: 'Design targets',
+        children: <Widget>[FsplTargetEditor(model: m)],
       ),
     ];
   }
@@ -379,12 +410,13 @@ class _FsplControlsState extends State<FsplControls> {
           Expanded(
             child: LabeledField(
               label: 'Distance',
-              hint: '(m)',
-              semanticLabel: 'Measured distance in metres',
+              hint: '(${m.units.isMetric ? 'm' : 'ft'})',
+              semanticLabel:
+                  'Measured distance in ${m.units.isMetric ? 'meters' : 'feet'}',
               field: _numberField(
                 context,
                 _dist,
-                'e.g. 15',
+                m.units.isMetric ? 'e.g. 15' : 'e.g. 50',
                 mi.distError,
                 (String s) => m.setMeasuredText(dist: s),
               ),
@@ -409,11 +441,11 @@ class _FsplControlsState extends State<FsplControls> {
           'Turn on ${m.measuredBand.label} to plot this point against its '
           'curve.',
         )
-      else if (meas != null && meas.dist > m.range.maxM)
+      else if (meas != null && meas.dist > m.maxM + 1e-9)
         FsplNote(
           Icons.open_in_full,
-          'This point is past ${m.range.label}. Switch the distance axis to '
-          '1 km to see it.',
+          'This point is past ${m.rangeLabel}. Switch the distance axis to '
+          '${FsplRange.km1.labelFor(m.units)} to see it.',
         )
       else if (meas == null)
         const FsplNote(
@@ -518,6 +550,223 @@ class _FsplControlsState extends State<FsplControls> {
   }
 }
 
+// ── Design targets ────────────────────────────────────────────────────────
+
+/// Edits the design-target lines: a dBm value and a label per line, up to
+/// [kFsplMaxTargets], with Add, Remove and Reset (Keith, 2026-09-27).
+///
+/// States: default (the two Signal Thresholds lines, Reset disabled);
+/// custom; empty (no lines, a note says so); error (value out of range or
+/// not a number, shown in the field, line not drawn); at the cap (Add
+/// disabled, the helper says why).
+class FsplTargetEditor extends StatefulWidget {
+  const FsplTargetEditor({super.key, required this.model});
+  final FsplSimModel model;
+
+  @override
+  State<FsplTargetEditor> createState() => _FsplTargetEditorState();
+}
+
+class _FsplTargetEditorState extends State<FsplTargetEditor> {
+  final Map<int, TextEditingController> _value = <int, TextEditingController>{};
+  final Map<int, TextEditingController> _label = <int, TextEditingController>{};
+  final Map<int, FocusNode> _valueFocus = <int, FocusNode>{};
+  final Map<int, FocusNode> _labelFocus = <int, FocusNode>{};
+
+  FsplSimModel get m => widget.model;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+    m.addListener(_sync);
+  }
+
+  /// Keeps one controller pair per row id and mirrors text changed elsewhere
+  /// (Reset, the store's load, the other layout over the same model) into
+  /// any field the user is not typing in. Runs from the model's notify,
+  /// outside build.
+  void _sync() {
+    final List<FsplTargetRow> rows = m.targetRows;
+    final Set<int> ids = <int>{for (final FsplTargetRow r in rows) r.id};
+    for (final FsplTargetRow r in rows) {
+      final TextEditingController v = _value.putIfAbsent(
+        r.id,
+        () => TextEditingController(text: r.valueText),
+      );
+      final TextEditingController l = _label.putIfAbsent(
+        r.id,
+        () => TextEditingController(text: r.label),
+      );
+      final FocusNode vf = _valueFocus.putIfAbsent(r.id, FocusNode.new);
+      final FocusNode lf = _labelFocus.putIfAbsent(r.id, FocusNode.new);
+      if (!vf.hasFocus && v.text != r.valueText) v.text = r.valueText;
+      if (!lf.hasFocus && l.text != r.label) l.text = r.label;
+    }
+    final List<int> gone = <int>[
+      for (final int id in _value.keys)
+        if (!ids.contains(id)) id,
+    ];
+    if (gone.isEmpty) return;
+    final List<ChangeNotifier> dead = <ChangeNotifier>[
+      for (final int id in gone) ...<ChangeNotifier>[
+        _value.remove(id)!,
+        _label.remove(id)!,
+        _valueFocus.remove(id)!,
+        _labelFocus.remove(id)!,
+      ],
+    ];
+    // The fields using them unmount on the next build; dispose after it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final ChangeNotifier c in dead) {
+        c.dispose();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    m.removeListener(_sync);
+    for (final ChangeNotifier c in <ChangeNotifier>[
+      ..._value.values,
+      ..._label.values,
+      ..._valueFocus.values,
+      ..._labelFocus.values,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _add() {
+    final int? id = m.addTarget();
+    if (id == null) return;
+    // _sync ran from the notify; put the caret in the new value field.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _valueFocus[id]?.requestFocus();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: m,
+      builder: (BuildContext context, Widget? _) => _build(context),
+    );
+  }
+
+  Widget _build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final List<FsplTargetRow> rows = m.targetRows;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (rows.isEmpty)
+          const FsplNote(
+            Icons.horizontal_rule,
+            'No design targets on the chart. Add a line, or reset to the '
+            'defaults.',
+          ),
+        for (int i = 0; i < rows.length; i++) ...<Widget>[
+          _row(context, rows[i], i + 1),
+          const SizedBox(height: AppSpacing.xs),
+        ],
+        Wrap(
+          spacing: AppSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            TextButton.icon(
+              onPressed: m.canAddTarget ? _add : null,
+              icon: const Icon(Icons.add),
+              label: const Text('Add line'),
+            ),
+            TextButton.icon(
+              onPressed: m.targetsAreDefault ? null : m.resetTargets,
+              icon: const Icon(Icons.restart_alt),
+              label: Text(m.resetTargetsLabel),
+            ),
+          ],
+        ),
+        if (!m.canAddTarget)
+          Text(
+            'Up to $kFsplMaxTargets lines, so the labels stay readable.',
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+      ],
+    );
+  }
+
+  Widget _row(BuildContext context, FsplTargetRow r, int n) {
+    final AppColorScheme colors = context.colors;
+    final TextStyle? fieldStyle = Theme.of(
+      context,
+    ).textTheme.bodyLarge?.copyWith(color: colors.textPrimary);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SizedBox(
+          width: 112,
+          child: LabeledField(
+            label: 'Level',
+            hint: '(dBm)',
+            semanticLabel: 'Design target $n level in dBm',
+            field: TextField(
+              key: ValueKey<String>('fspl-target-value-${r.id}'),
+              controller: _value[r.id],
+              focusNode: _valueFocus[r.id],
+              keyboardType: const TextInputType.numberWithOptions(
+                signed: true,
+                decimal: true,
+              ),
+              onChanged: (String s) => m.setTargetValueText(r.id, s),
+              style: fieldStyle,
+              cursorColor: colors.textAccent,
+              decoration: InputDecoration(
+                hintText: 'e.g. -75',
+                errorText: m.targetError(r.id),
+                errorMaxLines: 2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: LabeledField(
+            label: 'Label',
+            semanticLabel: 'Design target $n label',
+            field: TextField(
+              key: ValueKey<String>('fspl-target-label-${r.id}'),
+              controller: _label[r.id],
+              focusNode: _labelFocus[r.id],
+              inputFormatters: <TextInputFormatter>[
+                LengthLimitingTextInputFormatter(kFsplTargetLabelMax),
+              ],
+              onChanged: (String s) => m.setTargetLabel(r.id, s),
+              style: fieldStyle,
+              cursorColor: colors.textAccent,
+              decoration: InputDecoration(
+                hintText: r.dbm == null
+                    ? 'e.g. data'
+                    : '${fsplTargetValueText(r.dbm!)} dBm',
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          // Level with the fields, below their label line.
+          padding: const EdgeInsets.only(top: AppSpacing.md),
+          child: IconButton(
+            tooltip: 'Remove design target $n',
+            onPressed: () => m.removeTarget(r.id),
+            icon: Icon(Icons.close, color: colors.textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Readouts ──────────────────────────────────────────────────────────────
 
 /// Cursor table, band differences, measured gap, and the Why panel.
@@ -579,7 +828,7 @@ class FsplReadouts extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          FsplSectionLabel('At ${FsplFormat.dist(d)}'),
+          FsplSectionLabel('At ${model.dist(d)}'),
           const SizedBox(height: AppSpacing.xs),
           Table(
             columnWidths: const <int, TableColumnWidth>{
@@ -713,7 +962,7 @@ class FsplReadouts extends StatelessWidget {
     final double? fitN = model.fitExponent(rssi, dist);
     final String Function(double, [int]) n = FsplFormat.n;
     final String lead =
-        '${n(rssi)} dBm at ${FsplFormat.dist(dist)} on '
+        '${n(rssi)} dBm at ${model.dist(dist)} on '
         '${model.measuredBand.label}. Free space predicts ${n(free)} dBm, so '
         'the reading is ${n(gap.abs())} dB ${gap < 0 ? 'below' : 'above'} '
         'free space.';
@@ -832,7 +1081,7 @@ class FsplCursorHeadline extends StatelessWidget {
               children: <Widget>[
                 FsplSectionLabel(
                   '${received ? 'Received' : 'Path loss'} at '
-                  '${FsplFormat.dist(d)}',
+                  '${model.dist(d)}',
                 ),
                 if (bands.length > 1)
                   Text(
@@ -915,9 +1164,7 @@ class FsplWhyPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          FsplSectionLabel(
-            'Why higher bands lose more, at ${FsplFormat.dist(d)}',
-          ),
+          FsplSectionLabel('Why higher bands lose more, at ${model.dist(d)}'),
           const SizedBox(height: AppSpacing.xs),
           ExcludeSemantics(
             child: Wrap(
@@ -1067,8 +1314,8 @@ class FsplExplainer extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '1. Signal falls fast close in and slowly far out. Every doubling '
-            'of distance costs 6 dB, so 1 m to 2 m costs the same as 50 m to '
-            '100 m.',
+            'of distance costs 6 dB, so '
+            '${UnitSystemScope.systemOf(context).isMetric ? '1 m to 2 m costs the same as 50 m to 100 m' : '3 ft to 6 ft costs the same as 150 ft to 300 ft'}.',
             style: body(),
           ),
           const SizedBox(height: AppSpacing.xs),

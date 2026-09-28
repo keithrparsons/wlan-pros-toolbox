@@ -22,6 +22,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/survey_walk_engine.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kSurveyWalkToolId = 'survey-walk';
@@ -299,19 +301,41 @@ class SurveyWalkController extends ChangeNotifier {
     _scanner(_explicit.copyWith(priority: p));
   }
 
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The walk stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
+  /// Rounds [m] to a whole [stepShown] in the unit on screen (metres or
+  /// feet; for a pace, m/s or ft/s), inside [lo] to [hi] metres.
+  double _snap(double m, double stepShown, double lo, double hi) {
+    final LengthFormat f = LengthFormat(_units);
+    final double loS = (f.distValue(lo) / stepShown - 1e-9).ceilToDouble();
+    final double hiS = (f.distValue(hi) / stepShown + 1e-9).floorToDouble();
+    final double n = (f.distValue(m) / stepShown).roundToDouble().clamp(
+      loS,
+      hiS,
+    );
+    return f.distToMetres(double.parse((n * stepShown).toStringAsFixed(6)));
+  }
+
   set paceMps(double v) => _apply(
-    _config.copyWith(
-      paceMps: ((v * 10).round() / 10).clamp(kSurveyPaceMin, kSurveyPaceMax),
-    ),
+    _config.copyWith(paceMps: _snap(v, 0.1, kSurveyPaceMin, kSurveyPaceMax)),
   );
 
   /// Pace one notch up ([dir] > 0) or down.
-  void nudgePace(int dir) => paceMps = _config.paceMps + dir.sign * kPaceNudge;
+  void nudgePace(int dir) => paceMps =
+      _config.paceMps +
+      dir.sign * (_units.isMetric ? kPaceNudge : kPaceNudge * 0.3048);
 
   set guessRangeM(double v) => _apply(
-    _config.copyWith(
-      guessRangeM: v.roundToDouble().clamp(kGuessRangeMin, kGuessRangeMax),
-    ),
+    _config.copyWith(guessRangeM: _snap(v, 1, kGuessRangeMin, kGuessRangeMax)),
   );
 
   set doorPause(bool v) => _apply(_config.copyWith(doorPause: v));
@@ -324,7 +348,7 @@ class SurveyWalkController extends ChangeNotifier {
 
   set stopSpacingM(double v) => _apply(
     _config.copyWith(
-      stopSpacingM: v.roundToDouble().clamp(kStopSpacingMin, kStopSpacingMax),
+      stopSpacingM: _snap(v, 1, kStopSpacingMin, kStopSpacingMax),
     ),
     resetTime: true,
   );
@@ -425,13 +449,15 @@ class SurveyWalkController extends ChangeNotifier {
       );
     b
       ..writeln(
-        'Path: ${pathPreset.label}, ${r.plan.lengthM.toStringAsFixed(0)} m '
-        'at ${c.paceMps.toStringAsFixed(1)} m/s, '
+        'Path: ${pathPreset.label}, '
+        '${LengthFormat(_units).dist(r.plan.lengthM, decimals: 0)} '
+        'at ${fmtPace(c.paceMps, _units)}, '
         '${r.durationS.toStringAsFixed(1)} s'
         '${c.doorPause ? ', ${c.doorPauseS.toStringAsFixed(0)} s pause at the door' : ''}',
       )
       ..writeln(
-        'Guess range ${c.guessRangeM.toStringAsFixed(0)} m. Rule 4: longest '
+        'Guess range ${LengthFormat(_units).dist(c.guessRangeM, decimals: 0)}. '
+        'Rule 4: longest '
         'allowed revisit ${fmtS(r.maxAllowedRevisit)}, longest revisit '
         '${fmtS(r.ruleRevisitS)}: ${r.rule4Pass ? 'pass' : 'fail'}',
       );
@@ -440,14 +466,14 @@ class SurveyWalkController extends ChangeNotifier {
       for (final MapEntry<RoamBand, double> e in bands.entries) {
         b.writeln(
           '  ${e.key.label}: revisit ${fmtS(e.value)}, spacing '
-          '${fmtM(sampleSpacingM(c.paceMps, e.value))}',
+          '${fmtM(sampleSpacingM(c.paceMps, e.value), _units)}',
         );
       }
     }
     final double? gap = r.largestGapM;
     b
-      ..writeln('Largest gap: ${gap == null ? 'n/a' : fmtM(gap)}')
-      ..writeln('Largest position error: ${fmtM(r.maxErrorM)}');
+      ..writeln('Largest gap: ${gap == null ? 'n/a' : fmtM(gap, _units)}')
+      ..writeln('Largest position error: ${fmtM(r.maxErrorM, _units)}');
     return b.toString().trimRight();
   }
 
@@ -471,4 +497,10 @@ String fmtS(double s) {
 String fmtMs(double ms) => '${ms.round()} ms';
 
 /// "9.8 m".
-String fmtM(double m) => '${m.toStringAsFixed(1)} m';
+/// A survey length to a tenth: "5.0 m" / "16.4 ft".
+String fmtM(double m, [UnitSystem u = UnitSystem.metric]) =>
+    LengthFormat(u).dist(m, decimals: 1, keepZeros: true);
+
+/// A walking pace: "1.4 m/s" / "4.6 ft/s".
+String fmtPace(double mps, [UnitSystem u = UnitSystem.metric]) =>
+    LengthFormat(u).speed(mps);

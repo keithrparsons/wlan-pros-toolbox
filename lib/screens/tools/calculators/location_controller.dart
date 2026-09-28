@@ -15,6 +15,8 @@ import 'package:flutter/widgets.dart';
 
 import '../../../services/wifi_lab/location_engine.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kLocationToolId = 'location-rssi-ftm';
@@ -42,6 +44,17 @@ enum LocView {
 enum LocLessonStep { off, predict, revealed }
 
 class LocationController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The floor stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   LocationController() {
     _recompute();
   }
@@ -252,16 +265,21 @@ class LocationController extends ChangeNotifier {
 
   String copyText() {
     final LocSettings s = _settings;
-    final (double lo, double hi) = locOneSigmaRange(10, s.sigmaDb, s.exponent);
+    final (double lo, double hi) = locOneSigmaRange(
+      locWorkedDistanceM(_units),
+      s.sigmaDb,
+      s.exponent,
+    );
     final StringBuffer b = StringBuffer()
       ..writeln(
         'Where Am I? Signal strength vs round-trip timing (WLAN Pros '
         'Toolbox, teaching model)',
       )
       ..writeln(
-        'Floor ${kLocFloorWidthM.toStringAsFixed(0)} m x '
-        '${kLocFloorDepthM.toStringAsFixed(0)} m, $apCount APs, device at '
-        '${fmtM(s.device.x)}, ${fmtM(s.device.y)}',
+        'Floor ${LengthFormat(_units).dist(kLocFloorWidthM, decimals: 0)} x '
+        '${LengthFormat(_units).dist(kLocFloorDepthM, decimals: 0)}, '
+        '$apCount APs, device at '
+        '${fmtM(s.device.x, _units)}, ${fmtM(s.device.y, _units)}',
       )
       ..writeln(
         'Signal strength: path-loss exponent n = '
@@ -271,21 +289,22 @@ class LocationController extends ChangeNotifier {
       )
       ..writeln(
         'One-sigma distance factor 10^(sigma / 10n) = x'
-        '${errorFactor.toStringAsFixed(3)}: a device 10 m away reads '
-        '${lo.toStringAsFixed(1)} m to ${hi.toStringAsFixed(1)} m',
+        '${errorFactor.toStringAsFixed(3)}: a device '
+        '${LengthFormat(_units).dist(locWorkedDistanceM(_units), decimals: 0)} '
+        'away reads ${fmtM(lo, _units)} to ${fmtM(hi, _units)}',
       )
       ..writeln(
         'FTM (fine timing measurement) error '
-        '${s.ftmErrorM.toStringAsFixed(1)} m, one standard deviation '
-        '(vendor-documented 1 to 2 m); ${blockedCount == 0 ? 'no direct path blocked' : '$blockedCount blocked, each reading ${s.blockedBiasM.toStringAsFixed(1)} m long (illustrative)'}',
+        '${fmtM(s.ftmErrorM, _units)}, one standard deviation '
+        '(vendor-documented ${locVendorRange(_units)}); ${blockedCount == 0 ? 'no direct path blocked' : '$blockedCount blocked, each reading ${fmtM(s.blockedBiasM, _units)} long (illustrative)'}',
       );
     for (int i = 0; i < apCount; i++) {
       final LocApReading a = _run.drawn[i];
       b.writeln(
-        '  AP ${i + 1}: true ${fmtM(a.trueDistanceM)}; signal '
-        '${fmtDbm(a.rssiDbm)} reads ${fmtM(a.signalDistanceM)} '
-        '(${fmtSignedM(a.errorFor(LocMethod.signal))}); timing reads '
-        '${fmtM(a.ftmDistanceM)} (${fmtSignedM(a.errorFor(LocMethod.ftm))})'
+        '  AP ${i + 1}: true ${fmtM(a.trueDistanceM, _units)}; signal '
+        '${fmtDbm(a.rssiDbm)} reads ${fmtM(a.signalDistanceM, _units)} '
+        '(${fmtSignedM(a.errorFor(LocMethod.signal), _units)}); timing reads '
+        '${fmtM(a.ftmDistanceM, _units)} (${fmtSignedM(a.errorFor(LocMethod.ftm), _units)})'
         '${isBlocked(i) ? ', direct path blocked' : ''}',
       );
     }
@@ -293,20 +312,29 @@ class LocationController extends ChangeNotifier {
       final LocMethodResult r = _run.result(m);
       b.writeln(
         '${m == LocMethod.signal ? 'Signal strength' : 'FTM timing'}: '
-        'position error ${r.positionErrorM == null ? 'no fix' : fmtM(r.positionErrorM!)}, '
-        'spread radius over $kLocTrials repeats ${fmtM(r.spreadRadiusM)}',
+        'position error ${r.positionErrorM == null ? 'no fix' : fmtM(r.positionErrorM!, _units)}, '
+        'spread radius over $kLocTrials repeats ${fmtM(r.spreadRadiusM, _units)}',
       );
     }
     return b.toString().trimRight();
   }
 }
 
-/// "12.3 m".
-String fmtM(double v) => '${v.toStringAsFixed(1)} m';
+/// "12.3 m" / "40.4 ft".
+String fmtM(double v, [UnitSystem u = UnitSystem.metric]) =>
+    LengthFormat(u).dist(v, decimals: 1, keepZeros: true);
 
-/// "+1.2 m" / "-0.4 m" (ASCII hyphen).
-String fmtSignedM(double v) =>
-    '${v >= 0 ? '+' : '-'}${v.abs().toStringAsFixed(1)} m';
+/// "+1.2 m" / "-0.4 m" (ASCII hyphen); feet in imperial.
+String fmtSignedM(double v, [UnitSystem u = UnitSystem.metric]) =>
+    '${v >= 0 ? '+' : '-'}${fmtM(v.abs(), u)}';
+
+/// The vendor's documented FTM accuracy, "1 to 2 m", in [u].
+String locVendorRange(UnitSystem u) =>
+    u.isMetric ? '1 to 2 m' : '3.3 to 6.6 ft';
+
+/// The worked example's distance, metres: 10 m, or 30 ft.
+double locWorkedDistanceM(UnitSystem u) =>
+    u.isMetric ? 10 : LengthUnits.feetToMetres(30);
 
 /// "-61.2 dBm".
 String fmtDbm(double v) => '${v.toStringAsFixed(1)} dBm';

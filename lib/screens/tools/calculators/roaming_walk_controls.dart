@@ -24,6 +24,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
 import '../labeled_field.dart';
 import 'roaming_walk_controller.dart';
 import 'roaming_walk_palette.dart';
@@ -844,8 +845,8 @@ class _FloorSetupCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            '${pathLengthM(cfg.path).toStringAsFixed(0)} m at '
-            '${kRoamWalkSpeedMps.toStringAsFixed(1)} m/s, sampled every '
+            '${c.len0(pathLengthM(cfg.path))} at '
+            '${c.lf.speed(kRoamWalkSpeedMps)}, sampled every '
             '100 ms.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
@@ -882,23 +883,37 @@ class _FloorSetupCard extends StatelessWidget {
           ),
           RwSlider(
             label: 'AP ${ap + 1} across',
-            valueText: '${pos.x.toStringAsFixed(1)} m',
-            value: pos.x,
+            valueText: c.len1(pos.x),
+            // 0.5 m steps, or whole feet; the floor stays in metres.
+            value: c.lf.distValue(pos.x),
             min: 0,
-            max: kFloorWidthM,
-            divisions: (kFloorWidthM * 2).round(),
-            onChanged: c.setApX,
-            semanticValue: (double v) => '${v.toStringAsFixed(1)} meters',
+            max: c.units.isMetric
+                ? kFloorWidthM
+                : LengthUnits.metresToFeet(kFloorWidthM).floorToDouble(),
+            divisions: c.units.isMetric
+                ? (kFloorWidthM * 2).round()
+                : LengthUnits.metresToFeet(kFloorWidthM).floor(),
+            onChanged: (double v) => c.setApX(c.lf.distToMetres(v)),
+            semanticValue: (double v) =>
+                '${v.toStringAsFixed(c.units.isMetric ? 1 : 0)} '
+                '${c.lf.distUnitSpoken}',
           ),
           RwSlider(
             label: 'AP ${ap + 1} down',
-            valueText: '${pos.y.toStringAsFixed(1)} m',
-            value: pos.y,
+            valueText: c.len1(pos.y),
+            // 0.5 m steps, or whole feet; the floor stays in metres.
+            value: c.lf.distValue(pos.y),
             min: 0,
-            max: kFloorDepthM,
-            divisions: (kFloorDepthM * 2).round(),
-            onChanged: c.setApY,
-            semanticValue: (double v) => '${v.toStringAsFixed(1)} meters',
+            max: c.units.isMetric
+                ? kFloorDepthM
+                : LengthUnits.metresToFeet(kFloorDepthM).floorToDouble(),
+            divisions: c.units.isMetric
+                ? (kFloorDepthM * 2).round()
+                : LengthUnits.metresToFeet(kFloorDepthM).floor(),
+            onChanged: (double v) => c.setApY(c.lf.distToMetres(v)),
+            semanticValue: (double v) =>
+                '${v.toStringAsFixed(c.units.isMetric ? 1 : 0)} '
+                '${c.lf.distUnitSpoken}',
           ),
           const SizedBox(height: AppSpacing.xs),
           AppToggle<RoamBand>(
@@ -959,12 +974,11 @@ class _FloorSetupCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           RwRow(
             label: '-67 dBm reaches',
-            value:
-                '${cfg.contourRadiusM(kDesignOverlapDbm).toStringAsFixed(1)} m',
+            value: c.len1(cfg.contourRadiusM(kDesignOverlapDbm)),
           ),
           RwRow(
             label: '-70 dBm reaches',
-            value: '${cfg.contourRadiusM(kWeakSignalDbm).toStringAsFixed(1)} m',
+            value: c.len1(cfg.contourRadiusM(kWeakSignalDbm)),
           ),
           const SizedBox(height: AppSpacing.xs),
           RwNote(

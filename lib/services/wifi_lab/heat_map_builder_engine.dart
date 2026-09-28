@@ -99,6 +99,10 @@ const double kHmMaxSpacingM = 10;
 /// The spacing experiment's spacings, meters (spec).
 const List<double> kHmExperimentSpacings = <double>[1, 2, 3, 5, 7, 10];
 
+/// The same experiment in feet, for the imperial display: round spacings
+/// inside the 1 to 10 m slider range (4 ft is 1.2 m, 30 ft is 9.1 m).
+const List<double> kHmExperimentSpacingsFt = <double>[4, 6, 10, 15, 20, 30];
+
 /// The corridor the walk preset follows, meters from the top.
 const double kHmCorridorY = 12.5;
 
@@ -781,8 +785,7 @@ class HmMap {
   double truthAt(int col, int row) => truth[row * cols + col];
 
   /// Estimate minus truth, or NaN.
-  double errorAt(int col, int row) =>
-      estimateAt(col, row) - truthAt(col, row);
+  double errorAt(int col, int row) => estimateAt(col, row) - truthAt(col, row);
 
   HmFill fillAt(int col, int row) => HmFill.values[fill[row * cols + col]];
 
@@ -890,13 +893,14 @@ List<HmSpacingSeries> runHmSpacingExperiment(
   HmNoise noise, {
   double cellM = kHmCellM,
   HmInterpolatorFactory interpolator = documentedHmInterpolator,
+  List<double> spacingsM = kHmExperimentSpacings,
 }) {
   final HmSettings s = settings.extrapolation == HmExtrapolation.off
       ? settings.copyWith(extrapolation: HmExtrapolation.flatIdw)
       : settings;
   final Float64List truth = hmTruthGrid(floor, cellM);
   List<double> run(HmNoise n) => <double>[
-    for (final double sp in kHmExperimentSpacings)
+    for (final double sp in spacingsM)
       buildHmMap(
             floor,
             takeHmSamples(floor, hmGridPoints(floor, sp), n),

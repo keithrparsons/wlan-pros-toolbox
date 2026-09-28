@@ -46,6 +46,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'channel_planner_panels.dart';
 import 'channel_planner_stage.dart';
 import 'channel_planner_state.dart';
@@ -63,7 +65,13 @@ class ChannelPlannerScreen extends StatefulWidget {
   State<ChannelPlannerScreen> createState() => _ChannelPlannerScreenState();
 }
 
-class _ChannelPlannerScreenState extends State<ChannelPlannerScreen> {
+class _ChannelPlannerScreenState extends State<ChannelPlannerScreen>
+    with UnitSystemFollower<ChannelPlannerScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _state.setUnits(system);
+  }
+
   final ChannelPlannerState _state = ChannelPlannerState();
 
   @override
@@ -74,6 +82,7 @@ class _ChannelPlannerScreenState extends State<ChannelPlannerScreen> {
 
   /// The presenter layout over this screen's state (shared, not copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: ChannelPlannerStage(state: _state, maxFloorHeight: double.infinity),
     controls: Column(
@@ -93,6 +102,7 @@ class _ChannelPlannerScreenState extends State<ChannelPlannerScreen> {
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.channelPlanner,
             builder: _presenter,

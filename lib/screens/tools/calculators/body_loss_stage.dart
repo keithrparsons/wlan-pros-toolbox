@@ -28,6 +28,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'body_loss_controller.dart';
 import 'body_loss_painter.dart';
 import 'body_loss_parts.dart';
@@ -66,7 +67,7 @@ class BodyLossStage extends StatelessWidget {
     final bool presenter = PresenterMode.isActive(context);
 
     final Widget view = Semantics(
-      label: blStageSemantics(c),
+      label: blStageSemantics(c, UnitSystemScope.systemOf(context)),
       excludeSemantics: true,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.control),
@@ -158,17 +159,20 @@ class BodyLossStage extends StatelessWidget {
             onChanged: controller.setHolderX,
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
-            label: '${BlFormat.dist(c.distanceM)} from the AP',
+            label:
+                '${BlFormat.dist(c.distanceM, UnitSystemScope.systemOf(context))} from the AP',
             semanticFormatterCallback: (double v) =>
-                'Holder position, ${v.toStringAsFixed(1)} m from the front '
-                'wall',
+                'Holder position, '
+                '${BlFormat.dist(v, UnitSystemScope.systemOf(context))} from '
+                'the front wall',
           ),
         ),
         ExcludeSemantics(
           child: SizedBox(
-            width: 104 * PresenterMode.scaleOf(context).text,
+            // Room for "131 ft to AP", the widest imperial reading.
+            width: 128 * PresenterMode.scaleOf(context).text,
             child: Text(
-              '${BlFormat.dist(c.distanceM)} to AP',
+              '${BlFormat.dist(c.distanceM, UnitSystemScope.systemOf(context))} to AP',
               textAlign: TextAlign.right,
               style: mono.inlineCode.copyWith(color: colors.textPrimary),
             ),
@@ -216,12 +220,12 @@ class BodyLossStage extends StatelessWidget {
 }
 
 /// What a screen reader hears for the floor.
-String blStageSemantics(BlConfig c) {
+String blStageSemantics(BlConfig c, [UnitSystem u = UnitSystem.metric]) {
   final String crowd = c.occupied
       ? '${c.crowdSize} people in the room, '
             '${BlFormat.people(c.crossingCount)} on the line to the AP'
       : 'The building is empty';
-  return 'Top-down view. The device is ${BlFormat.dist(c.distanceM)} from the '
+  return 'Top-down view. The device is ${BlFormat.dist(c.distanceM, u)} from the '
       'AP. The holder faces ${BlFormat.deg(c.facingDeg)}, '
       '${BlFormat.deg(c.offAxisDeg)} away from the AP, and the body costs '
       '${BlFormat.db(c.holderLossAppliedDb)}. $crowd, costing '
@@ -373,6 +377,7 @@ class _BlFloorState extends State<_BlFloor> {
               revision: _k.revision,
               holderLabel: blHolderLabel(c),
               emptyLabel: c.occupied ? null : 'Empty building',
+              units: UnitSystemScope.systemOf(context),
             ),
           ),
         );

@@ -23,6 +23,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'location_controller.dart';
 import 'location_painters.dart';
 import 'location_parts.dart';
@@ -135,7 +137,10 @@ class _NowStrip extends StatelessWidget {
                 label: '${locMethodShort(m)}: position error',
                 value: c.run.result(m).positionErrorM == null
                     ? 'no fix'
-                    : fmtM(c.run.result(m).positionErrorM!),
+                    : fmtM(
+                        c.run.result(m).positionErrorM!,
+                        UnitSystemScope.systemOf(context),
+                      ),
                 headline: true,
               ),
             ),
@@ -143,7 +148,10 @@ class _NowStrip extends StatelessWidget {
               flex: 2,
               child: _Tile(
                 label: '${locMethodShort(m)}: spread radius',
-                value: fmtM(c.run.result(m).spreadRadiusM),
+                value: fmtM(
+                  c.run.result(m).spreadRadiusM,
+                  UnitSystemScope.systemOf(context),
+                ),
               ),
             ),
           ],
@@ -215,10 +223,10 @@ String locLessonText(LocationController c) {
     case LocLessonStep.revealed:
       return 'Reveal: the model (n = ${s.exponent.toStringAsFixed(1)}, AP '
           'radiating ${kLocApPowerDbm.toStringAsFixed(0)} dBm, both '
-          'illustrative) says ${fmtM(d)}. But ${s.sigmaDb.toStringAsFixed(1)} '
-          'dB of shadowing, one sigma, puts it anywhere from ${fmtM(lo)} to '
-          '${fmtM(hi)}. Timing would read within about '
-          '${s.ftmErrorM.toStringAsFixed(1)} m either way.';
+          'illustrative) says ${fmtM(d, c.units)}. But ${s.sigmaDb.toStringAsFixed(1)} '
+          'dB of shadowing, one sigma, puts it anywhere from ${fmtM(lo, c.units)} to '
+          '${fmtM(hi, c.units)}. Timing would read within about '
+          '${fmtM(s.ftmErrorM, c.units)} either way.';
   }
 }
 
@@ -280,26 +288,30 @@ class _FloorCardState extends State<_FloorCard> {
   String _semantic() {
     final LocMethodResult r = c.run.result(widget.method);
     final LocPoint d = c.device;
+    final LengthFormat f = LengthFormat(c.units);
     final StringBuffer b = StringBuffer(
-      'Floor, ${kLocFloorWidthM.toStringAsFixed(0)} by '
-      '${kLocFloorDepthM.toStringAsFixed(0)} meters, seen from above, '
+      'Floor, ${f.distNumber(kLocFloorWidthM, decimals: 0)} by '
+      '${f.distNumber(kLocFloorDepthM, decimals: 0)} ${f.distUnitSpoken}, '
+      'seen from above, '
       '${locMethodShort(widget.method)}. ${c.apCount} APs, each with a circle '
       'at its estimated distance. The device is at '
-      '${d.x.toStringAsFixed(1)}, ${d.y.toStringAsFixed(1)} meters. ',
+      '${f.distNumber(d.x, decimals: 1, keepZeros: true)}, '
+      '${f.distSpoken(d.y, decimals: 1)}. ',
     );
     final LocFix? fix = r.fix;
     if (fix == null) {
       b.write('No position fix. ');
     } else {
       b.write(
-        'The estimate is at ${fix.position.x.toStringAsFixed(1)}, '
-        '${fix.position.y.toStringAsFixed(1)} meters, '
-        '${r.positionErrorM!.toStringAsFixed(1)} meters off. ',
+        'The estimate is at '
+        '${f.distNumber(fix.position.x, decimals: 1, keepZeros: true)}, '
+        '${f.distSpoken(fix.position.y, decimals: 1)}, '
+        '${f.distSpoken(r.positionErrorM!, decimals: 1)} off. ',
       );
     }
     b.write(
       '$kLocTrials repeated estimates spread over a radius of '
-      '${r.spreadRadiusM.toStringAsFixed(1)} meters. ',
+      '${f.distSpoken(r.spreadRadiusM, decimals: 1)}. ',
     );
     if (r.nonMeetingPairs.isNotEmpty) {
       b.write('Some circles cannot meet. ');
@@ -345,6 +357,7 @@ class _FloorCardState extends State<_FloorCard> {
                 run: c.run,
                 method: widget.method,
                 style: style,
+                units: c.units,
               ),
             ),
           ),
@@ -399,8 +412,8 @@ class _FloorCardState extends State<_FloorCard> {
             child: Text(
               r.fix == null
                   ? 'No position fix: the APs give no single answer.'
-                  : 'Position error ${fmtM(r.positionErrorM!)}. Spread radius '
-                        'over $kLocTrials repeats ${fmtM(r.spreadRadiusM)}.',
+                  : 'Position error ${fmtM(r.positionErrorM!, UnitSystemScope.systemOf(context))}. Spread radius '
+                        'over $kLocTrials repeats ${fmtM(r.spreadRadiusM, UnitSystemScope.systemOf(context))}.',
               style: text.bodyMedium?.copyWith(color: colors.textPrimary),
             ),
           ),

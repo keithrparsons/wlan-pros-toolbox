@@ -24,6 +24,8 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/location_engine.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Meters of margin drawn around the floor.
 const double kLocMarginM = 4;
@@ -103,7 +105,11 @@ class LocFloorPainter extends CustomPainter {
     required this.run,
     required this.method,
     required this.style,
+    this.units = UnitSystem.metric,
   });
+
+  /// The grid follows it: 5 m, or 15 ft.
+  final UnitSystem units;
 
   final LocRun run;
   final LocMethod method;
@@ -146,14 +152,15 @@ class LocFloorPainter extends CustomPainter {
     final Paint p = Paint()
       ..color = style.grid
       ..strokeWidth = sc.strokeWidth(1);
-    for (double x = 5; x < kLocFloorWidthM; x += 5) {
+    final double step = units.isMetric ? 5 : LengthUnits.feetToMetres(15);
+    for (double x = step; x < kLocFloorWidthM; x += step) {
       canvas.drawLine(
         m.toPx((x: x, y: 0)),
         m.toPx((x: x, y: kLocFloorDepthM)),
         p,
       );
     }
-    for (double y = 5; y < kLocFloorDepthM; y += 5) {
+    for (double y = step; y < kLocFloorDepthM; y += step) {
       canvas.drawLine(
         m.toPx((x: 0, y: y)),
         m.toPx((x: kLocFloorWidthM, y: y)),
@@ -162,7 +169,7 @@ class LocFloorPainter extends CustomPainter {
     }
     _text(
       canvas,
-      '5 m grid',
+      units.isMetric ? '5 m grid' : '15 ft grid',
       m.floorRect.bottomRight + Offset(-sc.markerSize(4), sc.markerSize(4)),
       align: _Align.topRight,
       small: true,
@@ -307,6 +314,7 @@ class LocFloorPainter extends CustomPainter {
   @override
   bool shouldRepaint(LocFloorPainter old) =>
       old.run != run ||
+      old.units != units ||
       old.method != method ||
       old.style.sc != style.sc ||
       old.style.estimate != style.estimate ||

@@ -24,6 +24,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../../../services/wifi_lab/roaming_walk_engine.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kRoamingWalkToolId = 'roaming-walk';
@@ -45,6 +47,26 @@ enum RoamPlaySpeed {
 const double kRoamStepSeconds = 1.0;
 
 class RoamingWalkController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The floor stays in metres.
+  UnitSystem get units => _units;
+
+  /// The formatter for [units].
+  LengthFormat get lf => LengthFormat(_units);
+
+  /// A floor length to a tenth: "12.5 m" / "41.0 ft".
+  String len1(double m) => lf.dist(m, decimals: 1, keepZeros: true);
+
+  /// A floor length, whole: "90 m" / "295 ft".
+  String len0(double m) => lf.dist(m, decimals: 0);
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
   RoamingWalkController({TickerProvider? vsync, RoamWalkConfig? initial})
     : _config = initial ?? RoamWalkConfig() {
     _result = simulateRoamWalk(_config);
@@ -347,7 +369,7 @@ class RoamingWalkController extends ChangeNotifier {
       )
       ..writeln(
         'Path: ${pathPreset.label}, '
-        '${pathLengthM(c.path).toStringAsFixed(0)} m, '
+        '${len0(pathLengthM(c.path))}, '
         '${_result.durationS.toStringAsFixed(1)} s',
       )
       ..writeln(

@@ -21,6 +21,8 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/adjacent_channel_model.dart';
 import '../../../services/wifi_lab/fspl_math.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
+import 'adjacent_channel_controller.dart' show AciFormat;
 
 /// Everything the painters take from the theme.
 @immutable
@@ -395,9 +397,13 @@ class AciFloorPainter extends CustomPainter {
     required this.receiverName,
     required this.wantedName,
     required this.style,
+    this.units = UnitSystem.metric,
   });
 
   final AciResult result;
+
+  /// Units for the distance labels.
+  final UnitSystem units;
   final String receiverName;
   final String wantedName;
   final AciPaintStyle style;
@@ -491,7 +497,7 @@ class AciFloorPainter extends CustomPainter {
       wx,
       s.yours,
       wantedName,
-      '${_dist(c.wantedDistanceM)} away, ${c.wantedPowerDbm.round()} dBm',
+      '${AciFormat.dist(c.wantedDistanceM, units)} away, ${c.wantedPowerDbm.round()} dBm',
       s.yoursLabel,
       subAx: 1,
     );
@@ -499,7 +505,7 @@ class AciFloorPainter extends CustomPainter {
       nx,
       s.neighbor,
       'Neighbor, ${p.neighborLabel}',
-      '${_dist(c.neighborDistanceM)} away, ${c.neighborPowerDbm.round()} dBm',
+      '${AciFormat.dist(c.neighborDistanceM, units)} away, ${c.neighborPowerDbm.round()} dBm',
       s.neighborLabel,
       subAx: 0,
     );
@@ -524,14 +530,11 @@ class AciFloorPainter extends CustomPainter {
     );
   }
 
-  static String _dist(double d) => d < 1
-      ? '${(d * 100).round()} cm'
-      : (d < 10 ? '${d.toStringAsFixed(1)} m' : '${d.round()} m');
-
   @override
   bool shouldRepaint(AciFloorPainter old) =>
       !identical(old.result, result) ||
       old.style != style ||
       old.receiverName != receiverName ||
+      old.units != units ||
       old.wantedName != wantedName;
 }

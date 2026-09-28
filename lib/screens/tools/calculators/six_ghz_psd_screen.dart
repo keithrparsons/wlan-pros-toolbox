@@ -55,6 +55,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'six_ghz_psd_controls.dart';
 import 'six_ghz_psd_model.dart';
 import 'six_ghz_psd_parts.dart';
@@ -72,7 +74,13 @@ class SixGhzPsdScreen extends StatefulWidget {
   State<SixGhzPsdScreen> createState() => _SixGhzPsdScreenState();
 }
 
-class _SixGhzPsdScreenState extends State<SixGhzPsdScreen> {
+class _SixGhzPsdScreenState extends State<SixGhzPsdScreen>
+    with UnitSystemFollower<SixGhzPsdScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _model.setUnits(system);
+  }
+
   final SixGhzPsdModel _model = SixGhzPsdModel();
 
   @override
@@ -84,6 +92,7 @@ class _SixGhzPsdScreenState extends State<SixGhzPsdScreen> {
   /// The presenter layout over this screen's model (shared, not copied).
   /// The per-class numbers are on the stage.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: '6 GHz Power and PSD',
     stage: SixGhzPsdStage(model: _model, chartHeight: 0),
     controls: SixGhzPsdControls(model: _model),
@@ -97,6 +106,7 @@ class _SixGhzPsdScreenState extends State<SixGhzPsdScreen> {
         title: const Text('6 GHz Power and PSD'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.sixGhzPsd, builder: _presenter),
           AppCopyAction(textBuilder: _model.copyText),
         ],

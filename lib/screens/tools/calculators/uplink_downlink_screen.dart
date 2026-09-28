@@ -56,6 +56,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'uplink_downlink_controller.dart';
 import 'uplink_downlink_controls.dart';
 import 'uplink_downlink_parts.dart';
@@ -75,7 +77,13 @@ class UplinkDownlinkScreen extends StatefulWidget {
   State<UplinkDownlinkScreen> createState() => _UplinkDownlinkScreenState();
 }
 
-class _UplinkDownlinkScreenState extends State<UplinkDownlinkScreen> {
+class _UplinkDownlinkScreenState extends State<UplinkDownlinkScreen>
+    with UnitSystemFollower<UplinkDownlinkScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   final UplinkDownlinkController _controller = UplinkDownlinkController();
 
   @override
@@ -87,6 +95,7 @@ class _UplinkDownlinkScreenState extends State<UplinkDownlinkScreen> {
   /// The presenter layout over this screen's controller (shared, not
   /// copied). Both directions' numbers and the prediction are on the stage.
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Uplink vs Downlink',
     stage: UplinkDownlinkStage(controller: _controller, stageHeight: 0),
     controls: UplinkDownlinkControls(controller: _controller),
@@ -100,6 +109,7 @@ class _UplinkDownlinkScreenState extends State<UplinkDownlinkScreen> {
         title: const Text('Uplink vs Downlink'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.uplinkDownlink,
             builder: _presenter,

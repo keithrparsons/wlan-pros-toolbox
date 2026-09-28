@@ -135,21 +135,25 @@ class _PlanCard extends StatelessWidget {
       'Drag the AP or the client. Tap anywhere to put the client there.',
     RoomTool.wall =>
       'Drag to draw a wall of ${controller.newMaterial.label.toLowerCase()}, '
-          '${_C.fmtMm(controller.newThicknessMm)} mm. Ends snap to 10 cm and '
+          '${controller.thick(controller.newThicknessMm)}. Ends snap to '
+          '${controller.small(kSnapM, 0)} and '
           'to other wall ends.',
-    RoomTool.door => 'Tap a wall to open a 0.9 m doorway in it.',
+    RoomTool.door =>
+      'Tap a wall to open a ${controller.lf.dist(kDoorWidthM)} doorway in it.',
     RoomTool.select => 'Tap a wall to select it, then edit it below.',
   };
 
   String _semantic() {
     final RoomPropagationController c = controller;
     final StringBuffer b = StringBuffer(
-      'Floor plan, ${_C.fmt1(c.widthM)} by ${_C.fmt1(c.heightM)} meters, '
+      'Floor plan, ${c.coord(c.widthM)} by ${c.coord(c.heightM)} '
+      '${c.lf.distUnitSpoken}, '
       '${c.walls.length} walls. Heat map of received power, local average. ',
     );
     b.write(
-      'AP at ${_C.fmt1(c.ap.x)}, ${_C.fmt1(c.ap.y)} meters. Client at '
-      '${_C.fmt1(c.client.x)}, ${_C.fmt1(c.client.y)} meters, receiving '
+      'AP at ${c.coord(c.ap.x)}, ${c.coord(c.ap.y)} ${c.lf.distUnitSpoken}. '
+      'Client at ${c.coord(c.client.x)}, ${c.coord(c.client.y)} '
+      '${c.lf.distUnitSpoken}, receiving '
       '${_C.dbm(c.clientDbm)} at that exact spot. ',
     );
     b.write(
@@ -216,7 +220,7 @@ class _PlanCard extends StatelessWidget {
           WallNote(
             icon: Icons.grid_on,
             message:
-                'Each ${(kRoomCellM * 100).toStringAsFixed(0)} cm cell is '
+                'Each ${c.small(kRoomCellM, 0)} cell is '
                 'the average of ${kAverageSamples * kAverageSamples} points, '
                 'each summing path powers: the fine ripple from reflections '
                 'is averaged out here and shown in the close-up. '
@@ -311,10 +315,11 @@ class _PlanCard extends StatelessWidget {
             },
           ),
           const SizedBox(height: AppSpacing.xs),
-          const WallNote(
+          WallNote(
             icon: Icons.layers_outlined,
             message:
-                'Local average of 20 cm cells. A 2D plan of a 3D model: no '
+                'Local average of ${controller.small(kRoomCellM, 0)} cells. '
+                'A 2D plan of a 3D model: no '
                 'floor or ceiling bounce.',
           ),
         ],
@@ -514,6 +519,7 @@ class _PlanViewState extends State<_PlanView> {
                             showShadows: c.showShadows,
                             showCloseUpBox: c.showCloseUp,
                             draft: c.draft,
+                            units: c.units,
                           ),
                           transform: t,
                           labelStyle: label,
@@ -816,12 +822,12 @@ class _CloseUpCard extends StatelessWidget {
       }
       nearText =
           'Nearest wall: ${c.wallName(near.$1).split(': ').last}, '
-          '${_C.meters(near.$2)} away. The ruler runs toward it.';
+          '${c.len(near.$2)} away. The ruler runs toward it.';
     }
 
     final String swing = range == null
         ? 'The close-up is being computed.'
-        : 'Across this ${(kRippleWindowM * 100).toStringAsFixed(0)} cm '
+        : 'Across this ${c.small(kRippleWindowM, 0)} '
               'square the signal swings from ${_C.signedDb(range.$1)} to '
               '${_C.signedDb(range.$2)} around the average: moving the phone '
               'a few centimeters changes RSSI.';
@@ -835,7 +841,7 @@ class _CloseUpCard extends StatelessWidget {
     final Widget ripple = Semantics(
       label:
           'Close-up of the fine ripple around the client. $swing '
-          'Peaks repeat every ${_C.cm(half)}.',
+          'Peaks repeat every ${c.small(half)}.',
       excludeSemantics: true,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.control),
@@ -848,6 +854,7 @@ class _CloseUpCard extends StatelessWidget {
             rulerNormal: normal,
             labelStyle: _labelStyle(context),
             revision: c.revision,
+            units: c.units,
           ),
         ),
       ),
@@ -867,7 +874,7 @@ class _CloseUpCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             WallSectionLabel(
-              'Close-up around the client: nulls about every ${_C.cm(half)}',
+              'Close-up around the client: nulls about every ${c.small(half)}',
             ),
             const SizedBox(height: AppSpacing.xs),
             Expanded(
@@ -898,10 +905,10 @@ class _CloseUpCard extends StatelessWidget {
           const WallSectionLabel('Close-up: the ripple around the client'),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'A ${(kRippleWindowM * 100).toStringAsFixed(0)} cm square '
+            'A ${c.small(kRippleWindowM, 0)} square '
             'centered on the client (the small square on the plan), every '
             'path added with its phase. Peaks and nulls repeat about every '
-            'half wavelength, ${_C.cm(half)} on channel ${c.channel}.',
+            'half wavelength, ${c.small(half)} on channel ${c.channel}.',
             style: text.bodySmall?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -931,8 +938,8 @@ class _CloseUpCard extends StatelessWidget {
               icon: Icons.grid_on,
               message:
                   '$kRippleCells x $kRippleCells points, '
-                  '${(kRippleWindowM / kRippleCells * 1000).toStringAsFixed(0)} '
-                  'mm apart, in ${math.max(1, c.rippleMs!)} ms.',
+                  '${c.units.isMetric ? '${(kRippleWindowM / kRippleCells * 1000).toStringAsFixed(0)} mm' : c.lf.small(kRippleWindowM / kRippleCells)} '
+                  'apart, in ${math.max(1, c.rippleMs!)} ms.',
             ),
           ],
         ],

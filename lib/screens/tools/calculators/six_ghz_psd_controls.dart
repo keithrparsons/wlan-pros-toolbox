@@ -129,14 +129,14 @@ class SixGhzPsdControls extends StatelessWidget {
       _slider(
         context,
         label: 'Distance',
-        valueText: PsdFormat.dist(m.distanceM),
+        valueText: m.dist(m.distanceM),
         value: FsplMath.log10(m.distanceM),
         min: 0,
         max: 2,
         divisions: 100,
         onChanged: (double v) => m.setDistance(math.pow(10, v).toDouble()),
         semantic: (double v) =>
-            'Distance ${PsdFormat.dist(math.pow(10, v).toDouble())}',
+            'Distance ${m.dist(math.pow(10, v).toDouble())}',
       ),
       _slider(
         context,
@@ -327,7 +327,7 @@ class SixGhzPsdReadouts extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           PsdSectionLabel(
-            'At $w MHz, ${PsdFormat.dist(model.distanceM)}'
+            'At $w MHz, ${model.dist(model.distanceM)}'
             '${model.extraLossDb > 0 ? ' + ${PsdFormat.n(model.extraLossDb, 0)} dB' : ''}',
           ),
           const SizedBox(height: AppSpacing.xs),

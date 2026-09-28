@@ -26,6 +26,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'adjacent_channel_controller.dart';
 import 'adjacent_channel_painters.dart';
 import 'adjacent_channel_parts.dart';
@@ -72,6 +73,7 @@ class AdjacentChannelStage extends StatelessWidget {
         context,
         CustomPaint(
           painter: AciFloorPainter(
+            units: UnitSystemScope.systemOf(context),
             result: r,
             receiverName: r.config.listener.receiverName,
             wantedName: r.config.listener.wantedName,
@@ -268,17 +270,17 @@ class AdjacentChannelStage extends StatelessWidget {
                 controller.neighborDistanceM = math.pow(10, v).toDouble(),
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
-            label: AciFormat.dist(d),
+            label: AciFormat.dist(d, UnitSystemScope.systemOf(context)),
             semanticFormatterCallback: (double v) =>
                 'Neighbor distance '
-                '${AciFormat.dist(math.pow(10, v).toDouble())}',
+                '${AciFormat.dist(math.pow(10, v).toDouble(), UnitSystemScope.systemOf(context))}',
           ),
         ),
         ExcludeSemantics(
           child: SizedBox(
             width: 64 * PresenterMode.scaleOf(context).text,
             child: Text(
-              AciFormat.dist(d),
+              AciFormat.dist(d, UnitSystemScope.systemOf(context)),
               textAlign: TextAlign.right,
               style: mono.inlineCode.copyWith(color: colors.textPrimary),
             ),
@@ -303,8 +305,8 @@ class AdjacentChannelStage extends StatelessWidget {
   String _floorSemantics(AciResult r) {
     final AciConfig c = r.config;
     return '${c.listener.receiverName} listens. ${c.listener.wantedName} is '
-        '${AciFormat.dist(c.wantedDistanceM)} away; the neighbor is '
-        '${AciFormat.dist(c.neighborDistanceM)} away.';
+        '${controller.dist(c.wantedDistanceM)} away; the neighbor is '
+        '${controller.dist(c.neighborDistanceM)} away.';
   }
 }
 

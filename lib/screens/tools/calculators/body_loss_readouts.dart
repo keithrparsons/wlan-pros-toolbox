@@ -21,6 +21,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'body_loss_controller.dart';
 import 'body_loss_parts.dart';
 
@@ -95,7 +96,7 @@ class BodyLossReadouts extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             BlSectionLabel(
-              'Device ${BlFormat.dist(c.distanceM)} from the AP, '
+              'Device ${BlFormat.dist(c.distanceM, UnitSystemScope.systemOf(context))} from the AP, '
               '${c.occupied ? 'occupied' : 'empty'}',
             ),
             const SizedBox(height: AppSpacing.xxs),

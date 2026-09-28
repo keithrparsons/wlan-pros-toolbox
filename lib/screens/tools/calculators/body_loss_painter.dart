@@ -19,6 +19,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'body_loss_controller.dart';
 
 /// Meters to pixels for the floor, letterboxed to keep its proportions.
@@ -107,7 +109,11 @@ class BlStagePainter extends CustomPainter {
     required this.revision,
     required this.holderLabel,
     required this.emptyLabel,
+    this.units = UnitSystem.metric,
   });
+
+  /// Units for the scale bar: 5 m, or 15 ft.
+  final UnitSystem units;
 
   final BlConfig config;
   final BlStageStyle style;
@@ -166,20 +172,25 @@ class BlStagePainter extends CustomPainter {
     final Rect r = g.floorRect;
     // A 5 m scale bar along the bottom edge.
     final double y = r.bottom - 8 * style.scale.marker;
-    final double x0 = r.right - 8 - 5 * g.pxPerM;
+    // The scale bar is a round length in the unit on screen.
+    final double barM = units.isMetric ? 5 : LengthUnits.feetToMetres(15);
+    final double x0 = r.right - 8 - barM * g.pxPerM;
     final Paint p = Paint()
       ..strokeWidth = style.scale.strokeWidth(1.5)
       ..color = style.grid;
-    canvas.drawLine(Offset(x0, y), Offset(x0 + 5 * g.pxPerM, y), p);
+    canvas.drawLine(Offset(x0, y), Offset(x0 + barM * g.pxPerM, y), p);
     canvas.drawLine(Offset(x0, y - 4), Offset(x0, y + 4), p);
     canvas.drawLine(
-      Offset(x0 + 5 * g.pxPerM, y - 4),
-      Offset(x0 + 5 * g.pxPerM, y + 4),
+      Offset(x0 + barM * g.pxPerM, y - 4),
+      Offset(x0 + barM * g.pxPerM, y + 4),
       p,
     );
-    final TextPainter tp = _text('5 m', style.gridLabel);
+    final TextPainter tp = _text(
+      units.isMetric ? '5 m' : '15 ft',
+      style.gridLabel,
+    );
     final Offset at = Offset(
-      x0 + 5 * g.pxPerM / 2 - tp.width / 2,
+      x0 + barM * g.pxPerM / 2 - tp.width / 2,
       y - tp.height - 4,
     );
     _knockout(canvas, at, tp);
@@ -419,5 +430,6 @@ class BlStagePainter extends CustomPainter {
       old.revision != revision ||
       old.style != style ||
       old.holderLabel != holderLabel ||
+      old.units != units ||
       old.emptyLabel != emptyLabel;
 }

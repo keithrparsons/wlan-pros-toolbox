@@ -16,6 +16,8 @@ import 'package:flutter/foundation.dart';
 import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/adjacent_channel_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kAdjacentChannelToolId = 'adjacent-channel';
@@ -47,10 +49,19 @@ abstract final class AciFormat {
   static String dbm(double v) => '${n(v)} dBm';
   static String dbr(double v) => '${n(v)} dBr';
 
-  static String dist(double d) {
-    if (d < 1) return '${(d * 100).round()} cm';
-    if (d < 10) return '${d.toStringAsFixed(1)} m';
-    return '${d.round()} m';
+  /// A distance in [u]: whole cm under a metre, tenths of a metre under 10,
+  /// else whole metres; imperial whole inches under a foot, tenths of a foot
+  /// under 10 ft, else whole feet.
+  static String dist(double d, [UnitSystem u = UnitSystem.metric]) {
+    if (u.isMetric) {
+      if (d < 1) return '${(d * 100).round()} cm';
+      if (d < 10) return '${d.toStringAsFixed(1)} m';
+      return '${d.round()} m';
+    }
+    final double ft = LengthUnits.metresToFeet(d);
+    if (ft < 1) return '${LengthUnits.metresToInches(d).round()} in';
+    if (ft < 10) return '${ft.toStringAsFixed(1)} ft';
+    return '${ft.round()} ft';
   }
 
   static String mcs(int? m) => m == null ? 'below MCS 0' : 'MCS $m';
@@ -60,6 +71,20 @@ abstract final class AciFormat {
 }
 
 class AdjacentChannelController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The model stays in metres.
+  UnitSystem get units => _units;
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
+  /// [AciFormat.dist] in the current units.
+  String dist(double d) => AciFormat.dist(d, _units);
+
   AdjacentChannelController({AciConfig? initial})
     : _config = initial ?? const AciConfig() {
     _result = computeAci(_config);
@@ -254,9 +279,9 @@ class AdjacentChannelController extends ChangeNotifier {
       )
       ..writeln(
         '${c.listener.receiverName} listens. Neighbor ${n(c.neighborPowerDbm, 0)} '
-        'dBm at ${AciFormat.dist(c.neighborDistanceM)}; '
+        'dBm at ${dist(c.neighborDistanceM)}; '
         '${c.listener.wantedName} ${n(c.wantedPowerDbm, 0)} dBm at '
-        '${AciFormat.dist(c.wantedDistanceM)}; path-loss exponent '
+        '${dist(c.wantedDistanceM)}; path-loss exponent '
         '${n(c.pathLossExponent)}',
       )
       ..writeln(

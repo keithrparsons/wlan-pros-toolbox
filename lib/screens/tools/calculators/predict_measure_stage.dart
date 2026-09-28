@@ -164,7 +164,11 @@ class _NowStrip extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.label, required this.value, this.headline = false});
+  const _Tile({
+    required this.label,
+    required this.value,
+    this.headline = false,
+  });
 
   final String label;
   final String value;
@@ -216,22 +220,25 @@ List<int> _wrongWalls(PredictMeasureController c) => <int>[
     if ((c.walls[i].trueLossDb - c.walls[i].predictedLossDb).abs() > 0.5) i,
 ];
 
-String _wallList(PredictMeasureController c, List<int> ids, {bool truth = false}) =>
-    ids
-        .map((int i) {
-          final PmWall w = c.walls[i];
-          final PmWallTest? t = c.survey.tests[i];
-          final String name =
-              '${PredictMeasureController.wallName(i)} '
-              '(${w.material.label.toLowerCase()})';
-          if (truth) {
-            return '$name: design ${fmtM(w.predictedLossDb)} dB, really '
-                '${fmtM(w.trueLossDb)} dB';
-          }
-          return '$name: design ${fmtM(w.predictedLossDb)} dB, tested '
-              '${t!.estimateDb.toStringAsFixed(1)} dB';
-        })
-        .join('; ');
+String _wallList(
+  PredictMeasureController c,
+  List<int> ids, {
+  bool truth = false,
+}) => ids
+    .map((int i) {
+      final PmWall w = c.walls[i];
+      final PmWallTest? t = c.survey.tests[i];
+      final String name =
+          '${PredictMeasureController.wallName(i)} '
+          '(${w.material.label.toLowerCase()})';
+      if (truth) {
+        return '$name: design ${fmtM(w.predictedLossDb)} dB, really '
+            '${fmtM(w.trueLossDb)} dB';
+      }
+      return '$name: design ${fmtM(w.predictedLossDb)} dB, tested '
+          '${t!.estimateDb.toStringAsFixed(1)} dB';
+    })
+    .join('; ');
 
 /// The prompt for the current state.
 String pmLessonText(PredictMeasureController c) {
@@ -330,9 +337,11 @@ class _MapCardState extends State<_MapCard> {
   String _semantic() {
     final PmMaps m = c.maps;
     final StringBuffer b = StringBuffer(
-      'Floor, ${fmtM(c.model.widthM)} by ${fmtM(c.model.depthM)} meters, '
+      'Floor, ${c.coord(c.model.widthM)} by ${c.coord(c.model.depthM)} '
+      '${c.lf.distUnitSpoken}, '
       'seen from above, showing the ${c.view.label.toLowerCase()} map. '
-      'AP on a stick at ${fmtM(c.ap.x)}, ${fmtM(c.ap.y)} meters. '
+      'AP on a stick at ${c.coord(c.ap.x)}, ${c.coord(c.ap.y)} '
+      '${c.lf.distUnitSpoken}. '
       '${c.walls.length} walls, ${c.testedCount} tested. '
       '${c.sampleCount} samples on the walk. ',
     );
@@ -428,8 +437,8 @@ class _MapCardState extends State<_MapCard> {
             children: <Widget>[
               Expanded(
                 child: HmSectionLabel(
-                  'Floor, seen from above (${fmtM(c.model.widthM)} m x '
-                  '${fmtM(c.model.depthM)} m, ${c.preset.label.toLowerCase()}, '
+                  'Floor, seen from above (${c.len(c.model.widthM)} x '
+                  '${c.len(c.model.depthM)}, ${c.preset.label.toLowerCase()}, '
                   'illustrative)',
                 ),
               ),

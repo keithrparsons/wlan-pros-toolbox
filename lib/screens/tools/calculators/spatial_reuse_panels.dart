@@ -26,6 +26,7 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
 import '../labeled_field.dart';
 import 'spatial_reuse_state.dart';
 
@@ -266,12 +267,17 @@ class SpatialReuseControls extends StatelessWidget {
             _slider(
               context,
               label: n.label,
-              unit: 'm',
-              value: st.position(n),
+              unit: LengthFormat(st.units).distUnit,
+              value: LengthFormat(st.units).distValue(st.position(n)),
               min: 0,
-              max: kReuseLineM,
-              divisions: (kReuseLineM * 2).round(),
-              onChanged: (double v) => st.move(n, v),
+              max: LengthFormat(st.units).distValue(kReuseLineM),
+              // 0.5 m steps, or whole feet.
+              divisions: st.units.isMetric
+                  ? (kReuseLineM * 2).round()
+                  : LengthUnits.metresToFeet(kReuseLineM).floor(),
+              decimals: st.units.isMetric ? 1 : 0,
+              onChanged: (double v) =>
+                  st.move(n, LengthFormat(st.units).distToMetres(v)),
             ),
         ],
       ),
@@ -437,12 +443,17 @@ class SpatialReuseControls extends StatelessWidget {
         _slider(
           context,
           label: n.label,
-          unit: 'm',
-          value: st.position(n),
+          unit: LengthFormat(st.units).distUnit,
+          value: LengthFormat(st.units).distValue(st.position(n)),
           min: 0,
-          max: kReuseLineM,
-          divisions: (kReuseLineM * 2).round(),
-          onChanged: (double v) => st.move(n, v),
+          max: LengthFormat(st.units).distValue(kReuseLineM),
+          // 0.5 m steps, or whole feet.
+          divisions: st.units.isMetric
+              ? (kReuseLineM * 2).round()
+              : LengthUnits.metresToFeet(kReuseLineM).floor(),
+          decimals: st.units.isMetric ? 1 : 0,
+          onChanged: (double v) =>
+              st.move(n, LengthFormat(st.units).distToMetres(v)),
         ),
       const SizedBox(height: AppSpacing.sm),
       Align(

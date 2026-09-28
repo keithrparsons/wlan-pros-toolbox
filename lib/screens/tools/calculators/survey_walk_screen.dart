@@ -57,6 +57,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'roaming_walk_parts.dart';
 import 'survey_walk_controller.dart';
 import 'survey_walk_controls.dart';
@@ -77,7 +79,12 @@ class SurveyWalkScreen extends StatefulWidget {
 }
 
 class _SurveyWalkScreenState extends State<SurveyWalkScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, UnitSystemFollower<SurveyWalkScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final SurveyWalkController _controller = SurveyWalkController(
     initial: widget.initial,
   );
@@ -101,6 +108,7 @@ class _SurveyWalkScreenState extends State<SurveyWalkScreen>
   }
 
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: SurveyWalkStage(controller: _controller),
     controls: SurveyWalkControls(controller: _controller),
@@ -114,6 +122,7 @@ class _SurveyWalkScreenState extends State<SurveyWalkScreen>
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.surveyWalk, builder: _presenter),
           AppCopyAction(textBuilder: _controller.copyText),
         ],

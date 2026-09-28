@@ -27,6 +27,8 @@ import 'package:flutter/material.dart';
 import '../../../services/wifi_lab/repeater_mesh_model.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Where a hop is busy inside one pass of the animation, as a fraction of
 /// the pass: [start, start + length). Null for a wired hop.
@@ -138,7 +140,11 @@ class RmCorridorPainter extends CustomPainter {
     required this.masked,
     required this.style,
     required this.phase,
+    this.units = UnitSystem.metric,
   }) : super(repaint: phase);
+
+  /// Units for the corridor ticks (every 10 m, or every 25 ft) and labels.
+  final UnitSystem units;
 
   final RmResult result;
   final List<RmSlot?> schedule;
@@ -167,12 +173,18 @@ class RmCorridorPainter extends CustomPainter {
       ..color = colors.borderStrong
       ..strokeWidth = scale.strokeWidth(1.5);
     canvas.drawLine(Offset(g.xOf(0), y), Offset(g.xOf(kRmCorridorM), y), floor);
-    for (int m = 0; m <= kRmCorridorM; m += 10) {
-      final double x = g.xOf(m.toDouble());
+    final LengthFormat f = LengthFormat(units);
+    final double stepShown = units.isMetric ? 10 : 25;
+    for (
+      double v = 0;
+      f.distToMetres(v) <= kRmCorridorM + 1e-9;
+      v += stepShown
+    ) {
+      final double x = g.xOf(f.distToMetres(v));
       canvas.drawLine(Offset(x, y), Offset(x, y + 4 * scale.marker), floor);
       _text(
         canvas,
-        '$m m',
+        '${v.round()} ${f.distUnit}',
         Offset(x, g.axisLabelY),
         style.small,
         align: _Align.topCenter,
@@ -319,7 +331,7 @@ class RmCorridorPainter extends CustomPainter {
       }
       _text(
         canvas,
-        '${rmNodeName(i, c.relayCount)}, ${rmMeters(nodes[i])}',
+        '${rmNodeName(i, c.relayCount)}, ${rmMeters(nodes[i], units)}',
         Offset(at.dx, g.nameRowY(i % 2)),
         style.small.copyWith(color: colors.textPrimary),
         align: _Align.topCenter,
@@ -346,6 +358,7 @@ class RmCorridorPainter extends CustomPainter {
   @override
   bool shouldRepaint(RmCorridorPainter old) =>
       old.result != result ||
+      old.units != units ||
       old.masked != masked ||
       old.style.colors != style.colors ||
       old.style.scale != style.scale ||

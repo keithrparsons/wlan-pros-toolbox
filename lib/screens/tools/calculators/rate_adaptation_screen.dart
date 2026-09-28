@@ -51,6 +51,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'rate_adaptation_controller.dart';
 import 'rate_adaptation_controls.dart';
 import 'rate_adaptation_stage.dart';
@@ -103,6 +104,7 @@ class _RateAdaptationScreenState extends State<RateAdaptationScreen>
   /// The presenter layout over this screen's controller (shared, not
   /// copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: RateAdaptationStage(controller: _controller),
     controls: RateAdaptationControls(controller: _controller),
@@ -116,6 +118,7 @@ class _RateAdaptationScreenState extends State<RateAdaptationScreen>
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.rateAdaptation,
             builder: _presenter,

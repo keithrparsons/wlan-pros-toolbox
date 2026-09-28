@@ -5,7 +5,8 @@
 // last resort.
 //
 // What the shell owns, so no tool re-implements it:
-//   - the slim top bar (title, Shortcuts, theme toggle, Exit), which fades
+//   - the slim top bar (title, the metric / imperial switch for tools that
+//     show lengths, Shortcuts, theme toggle, Exit), which fades
 //     out after [kPresenterBarHideDelay] without pointer movement and returns
 //     on movement or keyboard focus. Its height is reserved, so nothing jumps
 //     when it fades;
@@ -36,6 +37,7 @@ import '../../theme/app_color_scheme.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/theme_controller.dart';
+import '../unit_system_switch.dart';
 import 'presenter_actions.dart';
 import 'presenter_mode.dart';
 import 'presenter_window.dart';
@@ -59,6 +61,7 @@ class PresenterLayout extends StatefulWidget {
     required this.controls,
     this.actions = PresenterActions.none,
     this.scale,
+    this.showUnitSwitch = false,
   });
 
   /// Tool name for the top bar.
@@ -76,6 +79,10 @@ class PresenterLayout extends StatefulWidget {
   /// Fixed scale. Null (the default) follows the window:
   /// PresenterScale.forWindow.
   final PresenterScale? scale;
+
+  /// True for a tool that shows lengths: the top bar carries the app-wide
+  /// metric / imperial switch, ahead of Shortcuts.
+  final bool showUnitSwitch;
 
   /// Test handles.
   static const Key stageKey = ValueKey<String>('presenter-stage');
@@ -392,6 +399,10 @@ class _PresenterLayoutState extends State<PresenterLayout> {
                   ),
                 ),
               ),
+              if (widget.showUnitSwitch) ...<Widget>[
+                const UnitSystemSwitch(compact: false),
+                const SizedBox(width: AppSpacing.xs),
+              ],
               Tooltip(
                 message: 'Keyboard shortcuts (?)',
                 child: TextButton.icon(

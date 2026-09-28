@@ -63,9 +63,11 @@ class HmFloorMapping {
   HmFloorMapping(this.size, this.widthM, this.depthM)
     : scale = math.min(size.width / widthM, size.height / depthM),
       origin = Offset(
-        (size.width - widthM * math.min(size.width / widthM, size.height / depthM)) /
+        (size.width -
+                widthM * math.min(size.width / widthM, size.height / depthM)) /
             2,
-        (size.height - depthM * math.min(size.width / widthM, size.height / depthM)) /
+        (size.height -
+                depthM * math.min(size.width / widthM, size.height / depthM)) /
             2,
       );
 
@@ -347,13 +349,7 @@ class HmMapPainter extends CustomPainter {
     final Offset c = m.toPx(q);
     for (final HmContribution k in e.contributions) {
       final Offset s = m.toPx(data.samples[k.sampleIndex].p);
-      _cased(
-        canvas,
-        c,
-        s,
-        _lime,
-        sc.strokeWidth(0.75 + 6 * k.weightShare),
-      );
+      _cased(canvas, c, s, _lime, sc.strokeWidth(0.75 + 6 * k.weightShare));
     }
     // Label the three largest shares near their sample end, where the lines
     // have spread apart; skip shares under 10%.
@@ -433,7 +429,22 @@ class HmSpacingPlotStyle {
 }
 
 class HmSpacingPainter extends CustomPainter {
-  HmSpacingPainter({required this.series, required this.style});
+  HmSpacingPainter({
+    required this.series,
+    required this.style,
+    this.spacingsShown = kHmExperimentSpacings,
+    this.axisMax = 10,
+    this.unit = 'm',
+  });
+
+  /// Grid spacings in the unit on screen, the x of each point.
+  final List<double> spacingsShown;
+
+  /// Right end of the x axis: 10 m, or 30 ft.
+  final double axisMax;
+
+  /// "m" or "ft", for the axis title.
+  final String unit;
 
   final List<HmSpacingSeries> series;
   final HmSpacingPlotStyle style;
@@ -458,7 +469,7 @@ class HmSpacingPainter extends CustomPainter {
     }
     final double yTop = math.max(2, (maxY / 2).ceil() * 2.0);
     Offset pt(double spacing, double rmse) => Offset(
-      plot.left + spacing / 10 * plot.width,
+      plot.left + spacing / axisMax * plot.width,
       plot.bottom - rmse / yTop * plot.height,
     );
     final Paint grid = Paint()
@@ -490,7 +501,7 @@ class HmSpacingPainter extends CustomPainter {
       canvas.drawLine(a, Offset(plot.right, a.dy), grid);
       text('$y', Offset(plot.left - font * 0.4, a.dy), right: true);
     }
-    for (final double x in kHmExperimentSpacings) {
+    for (final double x in spacingsShown) {
       final Offset a = pt(x, 0);
       canvas.drawLine(a, a + Offset(0, font * 0.3), axis);
       text(x.toStringAsFixed(0), a + Offset(0, font * 0.4), below: true);
@@ -498,7 +509,7 @@ class HmSpacingPainter extends CustomPainter {
     canvas.drawLine(plot.bottomLeft, plot.bottomRight, axis);
     canvas.drawLine(plot.bottomLeft, plot.topLeft, axis);
     text(
-      'Grid spacing, m',
+      'Grid spacing, $unit',
       Offset(plot.center.dx, plot.bottom + font * 1.5),
       below: true,
     );
@@ -511,8 +522,8 @@ class HmSpacingPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = sc.strokeWidth(2);
       final List<Offset> pts = <Offset>[
-        for (int j = 0; j < kHmExperimentSpacings.length; j++)
-          pt(kHmExperimentSpacings[j], series[i].rmseDb[j]),
+        for (int j = 0; j < spacingsShown.length; j++)
+          pt(spacingsShown[j], series[i].rmseDb[j]),
       ];
       final List<double>? dash = hmSeriesDash(i);
       for (int j = 1; j < pts.length; j++) {
@@ -560,7 +571,9 @@ class HmSpacingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(HmSpacingPainter old) =>
-      !identical(old.series, series) || old.style.sc != style.sc;
+      !identical(old.series, series) ||
+      old.style.sc != style.sc ||
+      old.unit != unit;
 }
 
 /// A legend key for series [index]: its dash pattern and marker shape.
@@ -627,10 +640,16 @@ class HmWorkedExamplePainter extends CustomPainter {
     required this.label,
     required this.sc,
     required this.font,
+    this.distancesShown = HmWorkedExample.distancesM,
+    this.unitLabel = 'm',
   });
 
   /// The app's label face (painted text does not inherit the theme).
   final TextStyle font;
+
+  /// The three distances as shown (2, 4, 6 m; or 5, 10, 15 ft).
+  final List<double> distancesShown;
+  final String unitLabel;
 
   /// Normalized weight of each of the three samples.
   final List<double> shares;
@@ -654,6 +673,7 @@ class HmWorkedExamplePainter extends CustomPainter {
     );
     const List<double> angles = <double>[-0.55, 0.05, 0.5];
     for (int i = 0; i < 3; i++) {
+      // Line length keeps the metric proportions; the label is on screen.
       final double d = HmWorkedExample.distancesM[i];
       final Offset s =
           c + Offset(math.cos(angles[i]), math.sin(angles[i])) * (d * unit);
@@ -670,15 +690,12 @@ class HmWorkedExamplePainter extends CustomPainter {
         text: TextSpan(
           text:
               '${HmWorkedExample.valuesDbm[i].toStringAsFixed(0)} dBm, '
-              '${d.toStringAsFixed(0)} m',
+              '${distancesShown[i].toStringAsFixed(0)} $unitLabel',
           style: font.copyWith(color: label, fontSize: px),
         ),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: px * 8.5);
-      tp.paint(
-        canvas,
-        s + Offset(sc.markerSize(7), -tp.height / 2),
-      );
+      tp.paint(canvas, s + Offset(sc.markerSize(7), -tp.height / 2));
     }
     final double h = sc.markerSize(6);
     canvas.drawRect(

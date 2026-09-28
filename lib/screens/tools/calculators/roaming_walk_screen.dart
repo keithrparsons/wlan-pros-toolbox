@@ -63,6 +63,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'roaming_walk_controller.dart';
 import 'roaming_walk_controls.dart';
 import 'roaming_walk_parts.dart';
@@ -83,7 +85,12 @@ class RoamingWalkScreen extends StatefulWidget {
 }
 
 class _RoamingWalkScreenState extends State<RoamingWalkScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, UnitSystemFollower<RoamingWalkScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   // The controller builds its own Ticker, so the walk keeps running while
   // the presenter route covers (and mutes) this one.
   late final RoamingWalkController _controller = RoamingWalkController(
@@ -111,6 +118,7 @@ class _RoamingWalkScreenState extends State<RoamingWalkScreen>
   /// The presenter layout over this screen's controller (shared, not
   /// copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: _kTitle,
     stage: RoamingWalkStage(controller: _controller),
     controls: RoamingWalkControls(controller: _controller),
@@ -124,6 +132,7 @@ class _RoamingWalkScreenState extends State<RoamingWalkScreen>
         title: const Text(_kTitle),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(toolRoute: AppRouter.roamingWalk, builder: _presenter),
           AppCopyAction(textBuilder: _controller.copyText),
         ],
@@ -198,7 +207,9 @@ class _AboutCard extends StatelessWidget {
           Text(
             'A teaching model. APs radiate equally in every direction with '
             'no walls; signal follows a log-distance path-loss model plus '
-            'seeded shadowing that is smooth over about 5 m. The contours '
+            'seeded shadowing that is smooth over about '
+            '${UnitSystemScope.systemOf(context).isMetric ? '5 m' : '16 ft'}. '
+            'The contours '
             'on the floor use the average signal, without shadowing.',
             style: body,
           ),

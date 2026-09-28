@@ -28,7 +28,10 @@ import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/room_propagation_model.dart';
 import '../../../services/wifi_lab/wall_slab_physics.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'room_propagation_presets.dart';
+import 'wifi_through_a_wall_parts.dart' show fmtThickness;
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kRoomPropagationToolId = 'room-propagation';
@@ -91,6 +94,45 @@ int roomDefaultChannel(WifiBand band) => switch (band) {
 typedef RoomBandRow = ({WifiBand band, int channel, PointReport report});
 
 class RoomPropagationController extends ChangeNotifier {
+  UnitSystem _units = UnitSystem.metric;
+
+  /// Length units on screen. The plan stays in metres, walls in mm.
+  UnitSystem get units => _units;
+
+  /// The formatter for [units].
+  LengthFormat get lf => LengthFormat(_units);
+
+  void setUnits(UnitSystem u) {
+    if (u == _units) return;
+    _units = u;
+    notifyListeners();
+  }
+
+  /// A plan length: cm under a metre, else metres to a tenth; imperial
+  /// inches under a foot, else feet to a tenth.
+  String len(double m) {
+    if (_units.isMetric) {
+      return m < 1
+          ? '${(m * 100).toStringAsFixed(0)} cm'
+          : '${m.toStringAsFixed(1)} m';
+    }
+    final double ft = LengthUnits.metresToFeet(m);
+    return ft < 1
+        ? '${LengthUnits.metresToInches(m).toStringAsFixed(0)} in'
+        : '${ft.toStringAsFixed(1)} ft';
+  }
+
+  /// A plan coordinate or size, the number only, to a tenth: metres or feet.
+  String coord(double m) => lf.distValue(m).toStringAsFixed(1);
+
+  /// A short length (wavelength, radius, cell): cm to [decimals] in metric,
+  /// inches by the shared small rule in imperial.
+  String small(double m, [int decimals = 1]) =>
+      _units.isMetric ? cm(m, decimals) : lf.small(m);
+
+  /// A wall thickness with its unit: cm, or inches.
+  String thick(double mm) => fmtThickness(mm, _units);
+
   RoomPropagationController({
     RoomFieldRunner? runner,
     int presetIndex = 0,
@@ -374,7 +416,8 @@ class RoomPropagationController extends ChangeNotifier {
     final RoomWall w = _walls[i];
     const double half = kDoorWidthM / 2;
     if (w.length < kDoorWidthM + 0.1) {
-      _message = 'That wall is too short for a 0.9 m doorway.';
+      _message =
+          'That wall is too short for a ${lf.dist(kDoorWidthM)} doorway.';
       notifyListeners();
       return false;
     }
@@ -466,7 +509,8 @@ class RoomPropagationController extends ChangeNotifier {
     _draft = null;
     if (d == null) return;
     if (d.$1.distanceTo(d.$2) < kMinWallM) {
-      _message = 'Drag farther to draw a wall (at least 30 cm).';
+      _message =
+          'Drag farther to draw a wall (at least ${small(kMinWallM, 0)}).';
       notifyListeners();
       return;
     }
@@ -702,7 +746,7 @@ class RoomPropagationController extends ChangeNotifier {
 
   String wallName(int i) {
     final RoomWall w = _walls[i];
-    return 'Wall ${i + 1}: ${w.material.label}, ${fmtMm(w.thicknessMm)} mm'
+    return 'Wall ${i + 1}: ${w.material.label}, ${thick(w.thicknessMm)}'
         '${w.doors.isEmpty ? '' : ', ${w.doors.length} doorway${w.doors.length == 1 ? '' : 's'}'}';
   }
 
@@ -721,7 +765,8 @@ class RoomPropagationController extends ChangeNotifier {
         'diffraction)',
       )
       ..writeln(
-        'Plan: ${preset.label}, ${fmt1(_widthM)} x ${fmt1(_heightM)} m, '
+        'Plan: ${preset.label}, ${coord(_widthM)} x ${coord(_heightM)} '
+        '${lf.distUnit}, '
         '${_walls.length} walls',
       )
       ..writeln(
@@ -732,7 +777,7 @@ class RoomPropagationController extends ChangeNotifier {
         'Reflections: order $_order. Diffraction: '
         '${_diffraction ? 'on' : 'off'}',
       )
-      ..writeln('Client ${meters(r.distanceM)} from the AP')
+      ..writeln('Client ${len(r.distanceM)} from the AP')
       ..writeln(
         'Received here: ${dbm(clientDbm)}; local average '
         '${dbm(clientAverageDbm)}',

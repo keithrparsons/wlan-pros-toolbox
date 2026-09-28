@@ -24,6 +24,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import 'roaming_walk_controller.dart';
 import 'roaming_walk_painters.dart';
 import 'roaming_walk_palette.dart';
@@ -160,19 +162,21 @@ class _FloorCardState extends State<_FloorCard> {
     final int k = c.sample;
     final FloorPoint p = r.positions[k];
     final StringBuffer b = StringBuffer(
-      'Floor plan, 60 by 20 meters, seen from above. ',
+      'Floor plan, ${c.lf.distNumber(kFloorWidthM, decimals: 0)} by '
+      '${c.lf.distNumber(kFloorDepthM, decimals: 0)} ${c.lf.distUnitSpoken}, '
+      'seen from above. ',
     );
     for (int i = 0; i < cfg.aps.length; i++) {
       b.write(
-        'AP ${i + 1} at ${cfg.aps[i].x.toStringAsFixed(1)}, '
-        '${cfg.aps[i].y.toStringAsFixed(1)} m. ',
+        'AP ${i + 1} at ${c.lf.distValue(cfg.aps[i].x).toStringAsFixed(1)}, '
+        '${c.len1(cfg.aps[i].y)}. ',
       );
     }
     b.write(
       'Minus 67 dBm reaches '
-      '${cfg.contourRadiusM(kDesignOverlapDbm).toStringAsFixed(1)} m from '
+      '${c.len1(cfg.contourRadiusM(kDesignOverlapDbm))} from '
       'each AP and minus 70 dBm '
-      '${cfg.contourRadiusM(kWeakSignalDbm).toStringAsFixed(1)} m. ',
+      '${c.len1(cfg.contourRadiusM(kWeakSignalDbm))}. ',
     );
     if (c.drawing) {
       b.write(
@@ -182,7 +186,8 @@ class _FloorCardState extends State<_FloorCard> {
       return b.toString();
     }
     b.write(
-      'Client at ${p.x.toStringAsFixed(1)}, ${p.y.toStringAsFixed(1)} m, ',
+      'Client at ${c.lf.distValue(p.x).toStringAsFixed(1)}, '
+      '${c.len1(p.y)}, ',
     );
     final int? s = r.servingAt(k);
     final RoamEvent? g = r.gapAt(k);
@@ -218,7 +223,11 @@ class _FloorCardState extends State<_FloorCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const RwSectionLabel('Floor plan, seen from above (60 m x 20 m)'),
+          RwSectionLabel(
+            'Floor plan, seen from above '
+            '(${LengthFormat(UnitSystemScope.systemOf(context)).dist(kFloorWidthM, decimals: 0)} x '
+            '${LengthFormat(UnitSystemScope.systemOf(context)).dist(kFloorDepthM, decimals: 0)})',
+          ),
           if (!fill) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             Text(
@@ -312,6 +321,7 @@ class _FloorCardState extends State<_FloorCard> {
               editingAp: c.editingAp,
               drawnPoints: List<FloorPoint>.of(c.drawnPoints),
               drawing: c.drawing,
+              units: c.units,
             ),
           ),
         ),

@@ -18,10 +18,13 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/multipath_model.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 
 /// Resolved colors and text styles shared by every multipath painter.
 @immutable
@@ -36,7 +39,11 @@ class MultipathPaintStyle {
     required this.wall,
     required this.labelStyle,
     this.scale = PresenterScale.normal,
+    this.units = UnitSystem.metric,
   });
+
+  /// Units for painted length labels.
+  final UnitSystem units;
 
   /// Lime: the measured quantity.
   final Color accent;
@@ -83,7 +90,8 @@ class MultipathPaintStyle {
       other.axis == axis &&
       other.wall == wall &&
       other.labelStyle == labelStyle &&
-      other.scale == scale;
+      other.scale == scale &&
+      other.units == units;
 
   @override
   int get hashCode => Object.hash(
@@ -96,6 +104,7 @@ class MultipathPaintStyle {
     wall,
     labelStyle,
     scale,
+    units,
   );
 }
 
@@ -294,7 +303,7 @@ class TwoRayScenePainter extends CustomPainter {
     }
     _label(
       canvas,
-      '1 m track',
+      '${LengthFormat(style.units).dist(scene.trackLength)} track',
       Offset((a.dx + b.dx) / 2, a.dy + 12),
       style.labelStyle,
       align: Alignment.topCenter,
@@ -436,7 +445,7 @@ class StandingWaveScenePainter extends CustomPainter {
     );
     _label(
       canvas,
-      'from AP, 10 m',
+      'from AP, ${LengthFormat(style.units).dist(10)}',
       Offset(right, y1 - 4),
       style.labelStyle,
       align: Alignment.bottomRight,
@@ -604,7 +613,13 @@ class PowerPlotPainter extends CustomPainter {
     this.yMin = -30,
     this.yMax = 10,
     this.fadeLine = true,
+    this.xTicks,
   });
+
+  /// Labelled x ticks in display units. Null: 0, half and the end (the
+  /// metric axes: 0 / 50 / 100 cm, 0 / 100 / 200 cm). Imperial passes round
+  /// inches (0 / 10 / 20 / 30 in on a 39.4 in track).
+  final List<double>? xTicks;
 
   /// Evenly spaced samples from x = 0 to [xMax].
   final List<double> traceA;
@@ -667,19 +682,23 @@ class PowerPlotPainter extends CustomPainter {
         align: Alignment.centerRight,
       );
     }
-    // x ticks: 0, half, end.
-    for (final double f in <double>[0, 0.5, 1]) {
-      final double x = xMax * f;
+    // x ticks: 0, half, end, unless round ticks are given. The unit rides
+    // on the last one.
+    final List<double> ticks = xTicks ?? <double>[0, xMax * 0.5, xMax];
+    for (int i = 0; i < ticks.length; i++) {
+      final double x = ticks[i];
       final double cx = xOf(x);
+      final bool atEnd = (x - xMax).abs() < 1e-6 * xMax;
+      final bool last = i == ticks.length - 1;
       canvas.drawLine(Offset(cx, r.bottom), Offset(cx, r.bottom + 4), grid);
       _label(
         canvas,
-        '${_trim(x)}${f == 1 ? ' $xUnitLabel' : ''}',
+        '${_trim(x)}${last ? ' $xUnitLabel' : ''}',
         Offset(cx, r.bottom + 5),
         style.labelStyle,
-        align: f == 0
+        align: x == 0
             ? Alignment.topLeft
-            : f == 1
+            : atEnd
             ? Alignment.topRight
             : Alignment.topCenter,
       );
@@ -785,7 +804,8 @@ class PowerPlotPainter extends CustomPainter {
       old.revision != revision ||
       old.marker != marker ||
       old.style != style ||
-      old.xMax != xMax;
+      old.xMax != xMax ||
+      !listEquals(old.xTicks, xTicks);
 }
 
 // ── Histogram ───────────────────────────────────────────────────────────────

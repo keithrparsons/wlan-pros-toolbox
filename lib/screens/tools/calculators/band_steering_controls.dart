@@ -38,13 +38,18 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'airtime_anatomy_stage.dart' show AirtimeCard, AirtimeSectionTitle;
 import 'band_steering_controller.dart';
 import 'band_steering_parts.dart';
 
 /// What each steering mode does, in plain words.
-String bsModeNote(SteeringMode m) => switch (m) {
+String bsModeNote(
+  SteeringMode m, [
+  UnitSystem u = UnitSystem.metric,
+]) => switch (m) {
   SteeringMode.off =>
     'The AP answers every probe and accepts every client on both bands.',
   SteeringMode.probeSuppression =>
@@ -63,7 +68,8 @@ String bsModeNote(SteeringMode m) => switch (m) {
         'Transition Management request, from the 802.11v amendment: a '
         '"please move" message naming the 5 GHz network. The client '
         'accepts or declines; it is not forced. Repeated every '
-        '$kBsBtmRepeatSteps m walked (illustrative).',
+        '${LengthFormat(u).dist(kBsBtmRepeatSteps.toDouble(), decimals: 0)} '
+        'walked (illustrative).',
 };
 
 /// Each client's published rule set, in plain words.
@@ -175,7 +181,10 @@ class _Transport extends StatelessWidget {
                 onPressed: c.atEnd ? null : c.stepOnce,
                 style: style(),
                 icon: const Icon(Icons.skip_next_rounded),
-                label: const Text('Step 1 m'),
+                label: Text(
+                  'Step '
+                  '${LengthFormat(UnitSystemScope.systemOf(context)).dist(1)}',
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: c.reset,
@@ -260,7 +269,9 @@ class _Readouts extends StatelessWidget {
               row('Client is on', s.band?.label ?? 'not connected'),
               row(
                 'Distance from the AP',
-                '${s.distanceM.toStringAsFixed(0)} m',
+                LengthFormat(
+                  UnitSystemScope.systemOf(context),
+                ).dist(s.distanceM, decimals: 0),
               ),
               row('Signal on 2.4 GHz', heard(s.rssi24)),
               row('Signal on 5 GHz', heard(s.rssi5)),
@@ -538,7 +549,10 @@ class _Inputs extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               mode,
               const SizedBox(height: AppSpacing.xs),
-              Text(bsModeNote(c.mode), style: note),
+              Text(
+                bsModeNote(c.mode, UnitSystemScope.systemOf(context)),
+                style: note,
+              ),
               gap,
               tolerance,
               Text(

@@ -25,6 +25,8 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'rate_adaptation_controller.dart';
 import 'rate_adaptation_parts.dart';
@@ -222,6 +224,7 @@ class _Settings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RaSettings s = c.settings;
+    final LengthFormat lf = LengthFormat(UnitSystemScope.systemOf(context));
     final String Function(double, [int]) n = RaFormat.n;
     final bool presenting = PresenterMode.isActive(context);
     final List<Widget> advanced = <Widget>[
@@ -293,11 +296,12 @@ class _Settings extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           RaNote(switch (s.path) {
             RaPath.walk =>
-              'The client walks from 2 m to 60 m and back every 20 s.',
-            RaPath.steady => 'The client stays 4 m from the AP.',
+              'The client walks from ${lf.dist(2)} to ${lf.dist(60)} and back '
+                  'every 20 s.',
+            RaPath.steady => 'The client stays ${lf.dist(4)} from the AP.',
             RaPath.fading =>
-              'The client stays 12 m away while the signal swells and fades '
-                  'by up to about 8 dB (illustrative).',
+              'The client stays ${lf.dist(12)} away while the signal swells '
+                  'and fades by up to about 8 dB (illustrative).',
           }),
           RaSlider(
             label: 'SNR offset',
@@ -400,7 +404,9 @@ class RateAdaptationReadouts extends StatelessWidget {
       ),
     );
 
-    final String where = '${RaFormat.n(e.distanceNowM)} m from the AP';
+    final String where =
+        '${LengthFormat(UnitSystemScope.systemOf(context)).dist(e.distanceNowM, decimals: 1, keepZeros: true)} '
+        'from the AP';
 
     return RaCard(
       child: Column(

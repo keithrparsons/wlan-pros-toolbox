@@ -32,6 +32,8 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/length_format.dart';
+import '../../../units/unit_system.dart';
 import '../labeled_field.dart';
 import 'wifi_through_a_wall_parts.dart';
 
@@ -52,15 +54,31 @@ class WallSlabControls extends StatefulWidget {
 }
 
 class _WallSlabControlsState extends State<WallSlabControls> {
-  late final TextEditingController _mmCtrl;
+  // The field holds the thickness in the unit on screen: cm in metric,
+  // inches in imperial. The wall itself stays in mm.
+  final TextEditingController _mmCtrl = TextEditingController();
   String? _mmError;
+  UnitSystem? _units;
 
+  static final double _logMin = _log10(kWallMinMm);
   static final double _logMax = _log10(kWallMaxMm);
 
+  LengthFormat get _f => LengthFormat(_units ?? UnitSystem.metric);
+
+  /// The field text for a thickness: the displayed number, no unit.
+  String _fieldText(double mm) => _f.smallNumberFromMm(mm);
+
   @override
-  void initState() {
-    super.initState();
-    _mmCtrl = TextEditingController(text: fmtMm(widget.config.thicknessMm));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final UnitSystem u = UnitSystemScope.systemOf(context);
+    if (u != _units) {
+      // First build, or the app-wide units flipped: rewrite the field in the
+      // new unit and drop an error that quoted the old one.
+      _units = u;
+      _mmCtrl.text = _fieldText(widget.config.thicknessMm);
+      _mmError = null;
+    }
   }
 
   @override
@@ -69,9 +87,11 @@ class _WallSlabControlsState extends State<WallSlabControls> {
     // Thickness set from elsewhere (slider, a measured row): mirror it into
     // the field unless the field already says the same number.
     final double? typed = tryParseFlexibleDouble(_mmCtrl.text);
-    if (typed != widget.config.thicknessMm &&
-        old.config.thicknessMm != widget.config.thicknessMm) {
-      _mmCtrl.text = fmtMm(widget.config.thicknessMm);
+    final double? typedMm = typed == null ? null : _f.smallToMm(typed);
+    if (old.config.thicknessMm != widget.config.thicknessMm &&
+        (typedMm == null ||
+            (typedMm - widget.config.thicknessMm).abs() > 1e-6)) {
+      _mmCtrl.text = _fieldText(widget.config.thicknessMm);
       _mmError = null;
     }
   }
@@ -89,29 +109,39 @@ class _WallSlabControlsState extends State<WallSlabControls> {
   void _onBand(WifiBand b) =>
       _emit(widget.config.copyWith(band: b, channel: defaultChannelFor(b)));
 
+  /// The typed range as displayed: 1 to 100 cm, or 0.39 to 39.4 in.
+  String get _minText => _f.smallNumberFromMm(kWallMinMm);
+  String get _maxText => _f.smallNumberFromMm(kWallMaxMm);
+
+  /// Typed text is read in the unit on screen. The bounds are the displayed
+  /// (rounded) bounds, so "39.4 in" is accepted and clamped to 1000 mm.
   void _onMmText(String raw) {
     final double? v = tryParseFlexibleDouble(raw);
-    if (v == null || v < kWallMinMm || v > kWallMaxMm) {
+    final double lo = double.parse(_minText);
+    final double hi = double.parse(_maxText);
+    if (v == null || v < lo - 1e-9 || v > hi + 1e-9) {
       setState(
         () => _mmError =
-            'Enter a thickness from ${kWallMinMm.toStringAsFixed(0)} to '
-            '${kWallMaxMm.toStringAsFixed(0)} mm',
+            'Enter a thickness from $_minText to $_maxText ${_f.smallUnit}',
       );
       return;
     }
     setState(() => _mmError = null);
-    _emit(widget.config.copyWith(thicknessMm: v));
+    _emit(
+      widget.config.copyWith(
+        thicknessMm: _f.smallToMm(v).clamp(kWallMinMm, kWallMaxMm),
+      ),
+    );
   }
 
-  /// Slider position 0..1 on a log scale from 1 to 500 mm.
-  double _toSlider(double mm) => (_log10(mm) / _logMax).clamp(0.0, 1.0);
+  /// Slider position 0..1 on a log scale from 10 to 1000 mm.
+  double _toSlider(double mm) => ((_log10(mm) - _logMin) / (_logMax - _logMin)).clamp(0.0, 1.0);
 
+  /// Slider position to mm, snapped to what the readout prints in the unit
+  /// on screen (0.01 cm under 2 cm, else 0.1 cm; the same in inches).
   double _fromSlider(double p) {
-    final double mm = math.pow(10, p * _logMax).toDouble();
-    final double rounded = mm < 10
-        ? (mm * 10).roundToDouble() / 10
-        : mm.roundToDouble();
-    return rounded.clamp(kWallMinMm, kWallMaxMm);
+    final double mm = math.pow(10, _logMin + p * (_logMax - _logMin)).toDouble();
+    return _f.snapMm(mm).clamp(kWallMinMm, kWallMaxMm);
   }
 
   @override
@@ -206,6 +236,37 @@ class _WallSlabControlsState extends State<WallSlabControls> {
               onChanged: (int ch) => _emit(c.copyWith(channel: ch)),
             ),
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: <Widget>[
+              const WallSectionLabel('Tx power'),
+              const Spacer(),
+              Text(
+                '${c.txPowerDbm.toStringAsFixed(0)} dBm',
+                style: mono.inlineCode.copyWith(color: colors.textPrimary),
+              ),
+            ],
+          ),
+          Slider(
+            value: c.txPowerDbm,
+            min: kWallTxMinDbm,
+            max: kWallTxMaxDbm,
+            // Whole dBm, rounded here rather than with `divisions` (no tick
+            // dots), as the angle slider does.
+            onChanged: (double v) =>
+                _emit(c.copyWith(txPowerDbm: v.roundToDouble())),
+            activeColor: colors.primary,
+            inactiveColor: colors.disabledFill,
+            label: '${c.txPowerDbm.toStringAsFixed(0)} dBm',
+            semanticFormatterCallback: (double v) =>
+                'Tx power ${v.toStringAsFixed(0)} dBm',
+          ),
+          if (!presenter)
+            Text(
+              'The wave reaches the wall at this level. Distance loss is not '
+              'included.',
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
           const SizedBox(height: AppSpacing.md),
           const WallSectionLabel('The wall'),
           const SizedBox(height: AppSpacing.xs),
@@ -234,8 +295,8 @@ class _WallSlabControlsState extends State<WallSlabControls> {
           const SizedBox(height: AppSpacing.sm),
           LabeledField(
             label: 'Thickness',
-            hint: '(mm, 1 to 500)',
-            semanticLabel: 'Thickness in millimeters',
+            hint: '(${_f.smallUnit}, $_minText to $_maxText)',
+            semanticLabel: 'Thickness in ${_f.smallUnitSpoken}',
             field: TextField(
               controller: _mmCtrl,
               keyboardType: const TextInputType.numberWithOptions(
@@ -252,7 +313,7 @@ class _WallSlabControlsState extends State<WallSlabControls> {
               cursorColor: colors.textAccent,
               decoration: InputDecoration(
                 errorText: _mmError,
-                suffixText: 'mm',
+                suffixText: _f.smallUnit,
               ),
             ),
           ),
@@ -265,16 +326,16 @@ class _WallSlabControlsState extends State<WallSlabControls> {
             activeColor: colors.primary,
             inactiveColor: colors.disabledFill,
             semanticFormatterCallback: (double v) =>
-                'Thickness ${fmtMm(_fromSlider(v))} millimeters',
+                'Thickness ${_f.smallSpokenFromMm(_fromSlider(v))}',
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: ExcludeSemantics(
               child: Row(
                 children: <Widget>[
-                  Text('1 mm', style: _tick(text, colors)),
+                  Text(_f.smallFromMm(kWallMinMm), style: _tick(text, colors)),
                   const Spacer(),
-                  Text('500 mm', style: _tick(text, colors)),
+                  Text(_f.smallFromMm(kWallMaxMm), style: _tick(text, colors)),
                 ],
               ),
             ),
@@ -323,19 +384,19 @@ class WallSlabReadouts extends StatelessWidget {
     final double ripple = r.standingWaveRippleDb;
 
     final String rate = conductor
-        ? '${fmtRate(p.attenuationExact)} (a conductor, not a dielectric)'
+        ? '${fmtRate(p.attenuationExact, UnitSystemScope.systemOf(context))} (a conductor, not a dielectric)'
         : p.eq27aValid
-        ? '${fmtRate(p.attenuationEq27a)} (P.2040 Eq. 27a)'
-        : '${fmtRate(p.attenuationExact)} (exact: loss tangent '
+        ? '${fmtRate(p.attenuationEq27a, UnitSystemScope.systemOf(context))} (P.2040 Eq. 27a)'
+        : '${fmtRate(p.attenuationExact, UnitSystemScope.systemOf(context))} (exact: loss tangent '
               '${fmt1(p.lossTangent)} is past Eq. 27a\'s 0.5 limit)';
 
     final String inside = conductor
         ? 'none: the field dies within microns (skin depth '
-              '${fmtLength(p.skinDepth)})'
+              '${fmtLength(p.skinDepth, UnitSystemScope.systemOf(context))})'
         : p.eq27aValid
-        ? fmtLength(p.lambdaInMaterial)
-        : '${fmtLength(p.lambdaInMaterialExact)} (exact index; '
-              'the simple formula gives ${fmtLength(p.lambdaInMaterial)})';
+        ? fmtLength(p.lambdaInMaterial, UnitSystemScope.systemOf(context))
+        : '${fmtLength(p.lambdaInMaterialExact, UnitSystemScope.systemOf(context))} (exact index; '
+              'the simple formula gives ${fmtLength(p.lambdaInMaterial, UnitSystemScope.systemOf(context))})';
 
     return WallCard(
       child: Column(
@@ -363,6 +424,10 @@ class WallSlabReadouts extends StatelessWidget {
             indent: true,
           ),
           WallRow(
+            label: 'Level behind the wall',
+            value: _behind(config.levelBehindDbm(r), config.txPowerDbm),
+          ),
+          WallRow(
             label: 'Reflection',
             value: r.reflectedPower <= 0
                 ? 'none (no power reflected)'
@@ -370,14 +435,17 @@ class WallSlabReadouts extends StatelessWidget {
                       'of the power)',
           ),
           WallRow(label: 'Attenuation rate', value: rate),
-          WallRow(label: 'Wavelength in air', value: fmtLength(p.lambdaAir)),
+          WallRow(
+            label: 'Wavelength in air',
+            value: fmtLength(p.lambdaAir, UnitSystemScope.systemOf(context)),
+          ),
           WallRow(label: 'Wavelength inside', value: inside),
           WallRow(
             label: 'Ripple in front',
             value: ripple <= 40
                 ? '${fmt1(ripple)} dB, peaks every '
-                      '${fmtLength(p.lambdaAir / 2)}'
-                : 'full nulls, every ${fmtLength(p.lambdaAir / 2)}',
+                      '${fmtLength(p.lambdaAir / 2, UnitSystemScope.systemOf(context))}'
+                : 'full nulls, every ${fmtLength(p.lambdaAir / 2, UnitSystemScope.systemOf(context))}',
           ),
           const SizedBox(height: AppSpacing.xs),
           const WallNote(
@@ -392,6 +460,16 @@ class WallSlabReadouts extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The level behind the wall for the readout, dBm, or below the floor.
+String _behind(double dbm, double tx) {
+  if (!dbm.isFinite || dbm <= kWallNoiseFloorDbm) {
+    return 'below the ${fmtDbm(kWallNoiseFloorDbm)} noise floor (Tx '
+        '${fmtDbm(tx)})';
+  }
+  return '${fmtDbm(dbm)}, ${fmt1(dbm - kWallNoiseFloorDbm)} dB above the '
+      '${fmtDbm(kWallNoiseFloorDbm)} noise floor (Tx ${fmtDbm(tx)})';
 }
 
 // ── All three bands ───────────────────────────────────────────────────────
@@ -463,7 +541,7 @@ class WallBandsCard extends StatelessWidget {
           const WallSectionLabel('All three bands, same wall'),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            '${config.material.label}, ${fmtMm(config.thicknessMm)} mm, '
+            '${config.material.label}, ${fmtThickness(config.thicknessMm, UnitSystemScope.systemOf(context))}, '
             '${config.angleDeg.toStringAsFixed(0)} deg, '
             '${config.polarization.name.toUpperCase()}. Loss in dB.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
@@ -724,7 +802,7 @@ class _Specimen extends StatelessWidget {
     );
 
     final String modelHead = noThickness
-        ? 'P.2040 (${fmtMm(config.thicknessMm)} mm)'
+        ? 'P.2040 (${fmtThickness(config.thicknessMm, UnitSystemScope.systemOf(context))})'
         : 'P.2040';
 
     final StringBuffer sem = StringBuffer(
@@ -790,7 +868,7 @@ class _Specimen extends StatelessWidget {
           noThickness
               ? '3GPP gives one loss per material class and no thickness, so '
                     'no model value is like-for-like. The P.2040 column is '
-                    'your ${fmtMm(config.thicknessMm)} mm wall, for scale.'
+                    'your ${fmtThickness(config.thicknessMm, UnitSystemScope.systemOf(context))} wall, for scale.'
               : _verdict(models),
           style: text.bodySmall?.copyWith(color: colors.textSecondary),
         ),
@@ -817,7 +895,9 @@ class _Specimen extends StatelessWidget {
                 minimumSize: const Size(0, AppSpacing.minTouchTarget),
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
               ),
-              child: Text('Set the wall to ${fmtMm(t * 1000)} mm'),
+              child: Text(
+                'Set the wall to ${fmtThickness(t * 1000, UnitSystemScope.systemOf(context))}',
+              ),
             ),
           ),
       ],

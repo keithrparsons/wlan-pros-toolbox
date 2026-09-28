@@ -194,11 +194,11 @@ void main() {
     await tester.ensureVisible(field);
     await tester.enterText(field, '0');
     await tester.pump();
-    expect(find.text('Enter a thickness from 1 to 500 mm'), findsOneWidget);
+    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsOneWidget);
     expect(c.walls[4].thicknessMm, before);
-    await tester.enterText(field, '26');
+    await tester.enterText(field, '2.6');
     await tester.pumpAndSettle();
-    expect(find.text('Enter a thickness from 1 to 500 mm'), findsNothing);
+    expect(find.text('Enter a thickness from 0.1 to 50 cm'), findsNothing);
     expect(c.walls[4].thicknessMm, 26);
   });
 

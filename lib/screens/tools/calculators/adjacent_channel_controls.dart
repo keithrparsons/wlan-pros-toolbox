@@ -29,6 +29,7 @@ import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import '../../../units/unit_system.dart';
 import 'adjacent_channel_controller.dart';
 import 'rate_vs_range_parts.dart';
 
@@ -241,7 +242,7 @@ class AdjacentChannelControls extends StatelessWidget {
     return _slider(
       context,
       label: '$who distance',
-      valueText: AciFormat.dist(d),
+      valueText: AciFormat.dist(d, UnitSystemScope.systemOf(context)),
       value: FsplMath.log10(d),
       min: lo,
       max: hi,
@@ -249,7 +250,7 @@ class AdjacentChannelControls extends StatelessWidget {
       onChanged: (double v) =>
           controller.wantedDistanceM = math.pow(10, v).toDouble(),
       semantic: (double v) =>
-          '$who distance ${AciFormat.dist(math.pow(10, v).toDouble())}',
+          '$who distance ${AciFormat.dist(math.pow(10, v).toDouble(), UnitSystemScope.systemOf(context))}',
     );
   }
 
@@ -275,8 +276,13 @@ class AdjacentChannelControls extends StatelessWidget {
       if (prose)
         Text(
           'Powers include antenna gain. Path loss is free-space loss at 1 m '
-          'plus 10 n log10(d); below 1 m it is taken as free space, and at '
-          '30 cm the antennas are only a few wavelengths apart, so treat '
+          'plus 10 n log10(d)'
+          '${UnitSystemScope.systemOf(context).isMetric ? '' : ', d in meters'}; '
+          'below 1 m '
+          '${UnitSystemScope.systemOf(context).isMetric ? '' : '(3.3 ft) '}'
+          'it is taken as free space, and at '
+          '${UnitSystemScope.systemOf(context).isMetric ? '30 cm' : '12 in'} '
+          'the antennas are only a few wavelengths apart, so treat '
           'that as a rough figure.',
           style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
@@ -457,10 +463,17 @@ class AdjacentChannelControls extends StatelessWidget {
 
 // ── Predict, then reveal ────────────────────────────────────────────────────
 
-/// The opening question (spec 29): two APs on 36 and 44, 30 cm apart.
+/// The opening question (spec 29): two APs on 36 and 44, 30 cm apart
+/// (12 in; 30 cm is 11.8 in and the question reads as a round number).
 const String kAciQuestion =
     'Two APs on channels 36 and 44, 30 cm apart on the same ceiling. Any '
     'problem?';
+
+/// [kAciQuestion] in [u].
+String aciQuestion(UnitSystem u) => u.isMetric
+    ? kAciQuestion
+    : 'Two APs on channels 36 and 44, 12 in apart on the same ceiling. Any '
+          'problem?';
 
 class AciQuestionCard extends StatelessWidget {
   const AciQuestionCard({super.key, required this.controller});
@@ -507,7 +520,7 @@ class AciQuestionCard extends StatelessWidget {
           const RvrSectionLabel('Predict, then reveal'),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            kAciQuestion,
+            aciQuestion(UnitSystemScope.systemOf(context)),
             style: text.bodyLarge?.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -571,7 +584,9 @@ class AciQuestionCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Channel 36 does not stop at its edge. At 30 cm its leakage into '
+            'Channel 36 does not stop at its edge. At '
+            '${UnitSystemScope.systemOf(context).isMetric ? '30 cm' : '12 in'} '
+            'its leakage into '
             'channel 44 is ${AciFormat.dbm(r.leakageDbm)}; with what gets '
             'past the receiver\'s filter, the interference is '
             '${AciFormat.dbm(r.effectiveInterferenceDbm)}, '
@@ -582,7 +597,7 @@ class AciQuestionCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxs),
           Text(
-            'Its own client, ${AciFormat.dist(r.config.wantedDistanceM)} '
+            'Its own client, ${AciFormat.dist(r.config.wantedDistanceM, UnitSystemScope.systemOf(context))} '
             'away, arrives at ${AciFormat.dbm(r.wantedDbm)}. Alone, the best '
             'modulation and coding scheme (MCS) it supports is '
             '${r.mcsWithout == null ? 'below MCS 0' : '${r.mcsWithout}'}; with '

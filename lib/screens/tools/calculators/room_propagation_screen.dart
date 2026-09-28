@@ -62,6 +62,8 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../units/unit_system.dart';
+import '../../../widgets/unit_system_switch.dart';
 import 'room_propagation_controller.dart';
 import 'room_propagation_controls.dart';
 import 'room_propagation_stage.dart';
@@ -82,7 +84,13 @@ class RoomPropagationScreen extends StatefulWidget {
   State<RoomPropagationScreen> createState() => _RoomPropagationScreenState();
 }
 
-class _RoomPropagationScreenState extends State<RoomPropagationScreen> {
+class _RoomPropagationScreenState extends State<RoomPropagationScreen>
+    with UnitSystemFollower<RoomPropagationScreen> {
+  @override
+  void applyUnitSystem(UnitSystem system) {
+    _controller.setUnits(system);
+  }
+
   late final RoomPropagationController _controller = RoomPropagationController(
     runner: widget.runner,
     presetIndex: widget.presetIndex,
@@ -96,6 +104,7 @@ class _RoomPropagationScreenState extends State<RoomPropagationScreen> {
 
   /// The presenter layout over this screen's controller (shared, not copied).
   Widget _presenter(BuildContext context) => PresenterLayout(
+    showUnitSwitch: true,
     title: 'Room Propagation',
     stage: RoomPropagationStage(controller: _controller),
     controls: Column(
@@ -117,6 +126,7 @@ class _RoomPropagationScreenState extends State<RoomPropagationScreen> {
         title: const Text('Room Propagation'),
         toolbarHeight: 64,
         actions: <Widget>[
+          const UnitSystemSwitch(),
           PresentButton(
             toolRoute: AppRouter.roomPropagation,
             builder: _presenter,

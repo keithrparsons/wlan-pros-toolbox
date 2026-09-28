@@ -25,6 +25,7 @@ import '../../../services/wifi_lab/fspl_math.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../units/length_format.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 import 'fspl_simulator_chart.dart';
@@ -72,7 +73,7 @@ class FsplStage extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           _legend(
             context,
-            showRefs: refs.isNotEmpty && bands.isNotEmpty,
+            refs: bands.isNotEmpty ? refs : const <FsplRefLine>[],
             showMeasured: mark != null,
           ),
           const SizedBox(height: AppSpacing.xxs),
@@ -138,7 +139,8 @@ class FsplStage extends StatelessWidget {
           semanticLabel: 'Distance axis',
           value: model.range,
           items: <AppToggleItem<FsplRange>>[
-            for (final FsplRange r in FsplRange.values) (r, r.label),
+            for (final FsplRange r in FsplRange.values)
+              (r, r.labelFor(model.units)),
           ],
           onChanged: model.setRange,
         ),
@@ -187,7 +189,8 @@ class FsplStage extends StatelessWidget {
               final Size size = Size(c.maxWidth, c.maxHeight);
               final FsplChartGeometry g = FsplChartGeometry(
                 size: size,
-                maxDistanceM: model.range.maxM,
+                maxDistanceM: model.maxM,
+                minDistanceM: model.minM,
                 yMin: yr.min,
                 yMax: yr.max,
                 padScale: style.scale.text,
@@ -208,7 +211,9 @@ class FsplStage extends StatelessWidget {
                 child: CustomPaint(
                   size: size,
                   painter: FsplChartPainter(
-                    maxDistanceM: model.range.maxM,
+                    maxDistanceM: model.maxM,
+                    minDistanceM: model.minM,
+                    units: model.units,
                     logDistance: model.logScale,
                     yMin: yr.min,
                     yMax: yr.max,
@@ -216,7 +221,7 @@ class FsplStage extends StatelessWidget {
                     series: series,
                     refLines: refs,
                     cursorDistanceM: model.cursorM,
-                    cursorLabel: FsplFormat.dist(model.cursorM),
+                    cursorLabel: model.dist(model.cursorM),
                     measured: mark,
                     style: style,
                     revision: model.revision,
@@ -248,9 +253,14 @@ class FsplStage extends StatelessWidget {
               '${model.unit}',
         )
         .join(', ');
-    return '$what against distance, 1 m to ${model.range.label}, '
+    final List<FsplRefLine> refs = model.refLines();
+    final String targets = refs.isEmpty
+        ? ''
+        : ' ${refs.length == 1 ? 'Design target' : 'Design targets'}: '
+              '${refs.map((FsplRefLine r) => r.label).join(', ')}.';
+    return '$what against distance, ${model.minLabel} to ${model.rangeLabel}, '
         '${model.logScale ? 'log' : 'linear'} scale. '
-        'Cursor at ${FsplFormat.dist(model.cursorM)}: $at.';
+        'Cursor at ${model.dist(model.cursorM)}: $at.$targets';
   }
 
   FsplChartStyle _chartStyle(BuildContext context) {
@@ -294,7 +304,12 @@ class FsplStage extends StatelessWidget {
   Widget _cursorSlider(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
-    final double maxLg = FsplMath.log10(model.range.maxM);
+    final double minLg = FsplMath.log10(model.minM);
+    final double maxLg = FsplMath.log10(model.maxM);
+    // Linear steps are one displayed unit: a metre, or a foot.
+    final LengthFormat f = LengthFormat(model.units);
+    final double lo = f.distValue(model.minM);
+    final double hi = f.distValue(model.maxM);
     return Row(
       children: <Widget>[
         ExcludeSemantics(
@@ -305,34 +320,36 @@ class FsplStage extends StatelessWidget {
         ),
         Expanded(
           // The slider follows the axis: log steps on the log scale, metre
-          // steps on the linear one, so dragging matches the chart.
+          // (or foot) steps on the linear one, so dragging matches the chart.
           child: model.logScale
               ? Slider(
-                  value: FsplMath.log10(model.cursorM).clamp(0.0, maxLg),
-                  min: 0,
+                  value: FsplMath.log10(model.cursorM).clamp(minLg, maxLg),
+                  min: minLg,
                   max: maxLg,
-                  divisions: (maxLg * 50).round(),
+                  divisions: ((maxLg - minLg) * 50).round(),
                   onChanged: model.bands.isEmpty
                       ? null
                       : (double v) =>
                             model.setCursor(math.pow(10, v).toDouble()),
                   activeColor: colors.primary,
                   inactiveColor: colors.disabledFill,
-                  label: FsplFormat.dist(model.cursorM),
+                  label: model.dist(model.cursorM),
                   semanticFormatterCallback: (double v) =>
-                      'Cursor distance ${FsplFormat.dist(math.pow(10, v).toDouble())}',
+                      'Cursor distance ${model.dist(math.pow(10, v).toDouble())}',
                 )
               : Slider(
-                  value: model.cursorM.clamp(1.0, model.range.maxM),
-                  min: 1,
-                  max: model.range.maxM,
-                  divisions: (model.range.maxM - 1).round(),
-                  onChanged: model.bands.isEmpty ? null : model.setCursor,
+                  value: f.distValue(model.cursorM).clamp(lo, hi),
+                  min: lo,
+                  max: hi,
+                  divisions: (hi - lo).round(),
+                  onChanged: model.bands.isEmpty
+                      ? null
+                      : (double v) => model.setCursor(f.distToMetres(v)),
                   activeColor: colors.primary,
                   inactiveColor: colors.disabledFill,
-                  label: FsplFormat.dist(model.cursorM),
+                  label: model.dist(model.cursorM),
                   semanticFormatterCallback: (double v) =>
-                      'Cursor distance ${FsplFormat.dist(v)}',
+                      'Cursor distance ${model.dist(f.distToMetres(v))}',
                 ),
         ),
       ],
@@ -341,7 +358,7 @@ class FsplStage extends StatelessWidget {
 
   Widget _legend(
     BuildContext context, {
-    required bool showRefs,
+    required List<FsplRefLine> refs,
     required bool showMeasured,
   }) {
     final AppColorScheme colors = context.colors;
@@ -352,9 +369,13 @@ class FsplStage extends StatelessWidget {
       children: <Widget>[
         SizedBox(width: 28 * k, height: 14 * k, child: swatch),
         const SizedBox(width: AppSpacing.xxs),
-        Text(
-          label,
-          style: text.bodySmall?.copyWith(color: colors.textSecondary),
+        // Flexible: a long list of user labels wraps inside the legend
+        // instead of running off a phone.
+        Flexible(
+          child: Text(
+            label,
+            style: text.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
         ),
       ],
     );
@@ -370,7 +391,7 @@ class FsplStage extends StatelessWidget {
               FsplBandSample(band: model.bands.first, model: true),
               'Indoor model, n = ${FsplFormat.n(model.exponent)}',
             ),
-          if (showRefs)
+          if (refs.isNotEmpty)
             item(
               CustomPaint(
                 painter: FsplStrokeSamplePainter(
@@ -382,7 +403,10 @@ class FsplStage extends StatelessWidget {
                   scale: k,
                 ),
               ),
-              'Design target',
+              // One swatch: every target line is drawn the same way, and the
+              // user's labels say which is which.
+              '${refs.length == 1 ? 'Design target' : 'Design targets'}: '
+              '${refs.map((FsplRefLine r) => r.label).join(', ')}',
             ),
           if (showMeasured)
             item(
