@@ -2549,6 +2549,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Public Wi-Fi (2026-09-27, Keith approved; Pax candidate 5) — what the
+      // person next to you can see on Open, Enhanced Open, WPA2- and
+      // WPA3-Personal, with one control. Written for the people Wi-Fi pros get
+      // asked about cafe Wi-Fi by, so it shelves after Find My.
+      ToolEntry(
+        id: 'public-wifi',
+        title: 'Public Wi-Fi',
+        description:
+            'What the person next to you on public Wi-Fi can see on Open, '
+            'Enhanced Open and password networks, and why HTTPS keeps your '
+            'banking sealed on all of them',
+        routeName: '/tools/public-wifi',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

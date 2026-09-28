@@ -6723,6 +6723,27 @@
       ],
       "source": "The WLAN Pros print guide Find My, Explained (September 2026), checked against Apple's support pages on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "public-wifi": {
+      "name": "Public Wi-Fi",
+      "category": "Wi-Fi Classroom",
+      "purpose": "A guided lesson on what the person next to you on public Wi-Fi can see. One control picks the network type: Open, Enhanced Open, or Password, and for Password, WPA2-Personal or WPA3-Personal. A drawing shows which stretch of the trip each seal covers, and four color-coded rows, each with a word label, show what a listener on the same network gets: that your device is here, which sites you visit, what you read and type on a secure site, and anything sent without encryption.",
+      "whyHere": "It answers the question Wi-Fi people get asked about every cafe and hotel: is public Wi-Fi safe? It corrects both myths, never use public Wi-Fi and no lock means anyone can read my banking, with the Federal Trade Commission's current advice: because of the widespread use of encryption, connecting through a public Wi-Fi network is usually safe. HTTPS (Hypertext Transfer Protocol Secure) protects what you send on any network; Wi-Fi encryption protects the air between your device and the access point (AP).",
+      "howToUse": [
+        "Read the short answer, then pick a network type in Try it. The rows update at once: Can read it, Can see it, or Sealed, each with a line saying why. On a keyboard, Tab to the control and use the Left and Right arrow keys.",
+        "Pick Password to turn on the second control, then compare WPA2 and WPA3. The person next to you was given the same password, so WPA2-Personal reads like Open to them once they record you joining, and WPA3-Personal does not.",
+        "Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. The lesson has no Present mode; it reads as a page on any screen."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "The listener is fixed: someone on the same network who only records the air, and on a password network was given the same password. A stranger without the password reads nothing on WPA2- or WPA3-Personal.",
+        "Enhanced Open is Opportunistic Wireless Encryption (OWE, RFC 8110). Wi-Fi Alliance expects these networks to show without a lock icon, so the lock in a network list undersells them.",
+        "Wi-Fi encryption ends at the AP. The network owner and its internet provider see site names and anything sent without encryption on all four types.",
+        "Left out: fake networks that copy a familiar name, sign-in (captive) pages, virtual private networks (VPNs), traffic sent to every device at once, and encrypted DNS (Domain Name System) with Encrypted Client Hello, which can hide site names but not the server's address."
+      ],
+      "source": "Federal Trade Commission consumer advice, Are Public Wi-Fi Networks Safe? What You Need To Know (checked 27 September 2026); Wi-Fi Alliance, Wi-Fi CERTIFIED Enhanced Open, and Dan Harkins on the Wi-Fi Alliance blog; IETF RFC 8110 (OWE) and RFC 6066 section 3 (Server Name Indication); IEEE 802.11-2020 (four-way handshake, SAE); CWNP CWNA-109 objectives 5.2.2, 5.3.3 and 5.3.4."
+    },
     "cloud-tool-trust": {
       "name": "Cloud Tool Trust",
       "category": "Quick Reference",

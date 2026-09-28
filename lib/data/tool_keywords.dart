@@ -2672,6 +2672,24 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi positioning',
     'unwanted tracking',
   ],
+  // Public Wi-Fi (Guided Lesson). What people ask about cafe and hotel
+  // Wi-Fi, plus the security terms the lesson teaches.
+  'public-wifi': <String>[
+    'public wi-fi',
+    'public wifi',
+    'cafe wi-fi',
+    'hotel wi-fi',
+    'open network',
+    'enhanced open',
+    'owe',
+    'opportunistic wireless encryption',
+    'https',
+    'wpa2',
+    'wpa3',
+    'sae',
+    'is public wi-fi safe',
+    'eavesdropping',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

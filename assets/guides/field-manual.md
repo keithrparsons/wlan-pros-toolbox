@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
-  - Guided Lessons (3)
+- **Wi-Fi Classroom** (52 tools)
+  - Guided Lessons (4)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
-Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (3)
+## Guided Lessons (4)
 
 
 ### Antenna Fundamentals
@@ -3882,6 +3882,24 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 - How the finder's GPS, Wi-Fi and cell positioning combine into your dot is our explanation, not Apple's wording.
 - Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
 - The lesson is independent and isn't affiliated with or endorsed by Apple.
+
+
+### Public Wi-Fi
+
+A guided lesson on what the person next to you on public Wi-Fi can see. One control picks the network type: Open, Enhanced Open, or Password, and for Password, WPA2-Personal or WPA3-Personal. A drawing shows which stretch of the trip each seal covers, and four color-coded rows, each with a word label, show what a listener on the same network gets: that your device is here, which sites you visit, what you read and type on a secure site, and anything sent without encryption.
+
+**Why it's here.** It answers the question Wi-Fi people get asked about every cafe and hotel: is public Wi-Fi safe? It corrects both myths, never use public Wi-Fi and no lock means anyone can read my banking, with the Federal Trade Commission's current advice: because of the widespread use of encryption, connecting through a public Wi-Fi network is usually safe. HTTPS (Hypertext Transfer Protocol Secure) protects what you send on any network; Wi-Fi encryption protects the air between your device and the access point (AP).
+
+**How to use**
+1. Read the short answer, then pick a network type in Try it. The rows update at once: Can read it, Can see it, or Sealed, each with a line saying why. On a keyboard, Tab to the control and use the Left and Right arrow keys.
+2. Pick Password to turn on the second control, then compare WPA2 and WPA3. The person next to you was given the same password, so WPA2-Personal reads like Open to them once they record you joining, and WPA3-Personal does not.
+3. Answer the Predict, then reveal question before you open it, then read the four networks, three myths, and where Wi-Fi encryption stops. The lesson has no Present mode; it reads as a page on any screen.
+
+**Field notes**
+- The listener is fixed: someone on the same network who only records the air, and on a password network was given the same password. A stranger without the password reads nothing on WPA2- or WPA3-Personal.
+- Enhanced Open is Opportunistic Wireless Encryption (OWE, RFC 8110). Wi-Fi Alliance expects these networks to show without a lock icon, so the lock in a network list undersells them.
+- Wi-Fi encryption ends at the AP. The network owner and its internet provider see site names and anything sent without encryption on all four types.
+- Left out: fake networks that copy a familiar name, sign-in (captive) pages, virtual private networks (VPNs), traffic sent to every device at once, and encrypted DNS (Domain Name System) with Encrypted Client Hello, which can hide site names but not the server's address.
 
 
 ## RF and Propagation (10)
