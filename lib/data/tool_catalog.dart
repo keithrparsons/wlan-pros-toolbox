@@ -2942,6 +2942,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Conference Wi-Fi Runs Out of Addresses (2026-09-27, research brief
+      // candidate 9): lease time against the DHCP pool over an event
+      // morning. Shelved before the association ladder, whose DHCP exchange
+      // it follows.
+      ToolEntry(
+        id: 'dhcp-exhaustion',
+        title: 'Conference Wi-Fi Runs Out of Addresses',
+        description:
+            'Watch a DHCP pool over a conference morning: with a long lease '
+            'it runs dry while the hall is half empty, with a short one it '
+            'holds',
+        routeName: '/tools/dhcp-exhaustion',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       // Distinct from the 'eap-types' and 'frame-exchange' references, which
       // stay as they are.
       ToolEntry(

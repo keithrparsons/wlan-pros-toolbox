@@ -55,6 +55,7 @@ import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/join_ladder_screen.dart';
+import '../screens/tools/calculators/dhcp_exhaustion_screen.dart';
 import '../screens/tools/calculators/phy_preamble_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
@@ -413,6 +414,10 @@ class AppRouter {
   // and DNS, on the eap-ladder engine; pure on-device model, all platforms.
   // Not joinNetwork (/tools/join-network), which really joins a network.
   static const String joinLadder = '/tools/join-ladder';
+  // Wi-Fi Classroom (2026-09-27). DHCP pool exhaustion over a conference
+  // morning: lease time, arrivals, private-address rotation; pure on-device
+  // model, all platforms incl. web.
+  static const String dhcpExhaustion = '/tools/dhcp-exhaustion';
   // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
@@ -903,6 +908,7 @@ class AppRouter {
     legacyProtection: (_) => const LegacyProtectionScreen(),
     eapLadder: (_) => const EapLadderScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
+    dhcpExhaustion: (_) => const DhcpExhaustionScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
     hamBandPlan: (_) => const HamBandPlanScreen(),

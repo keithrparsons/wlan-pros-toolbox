@@ -1979,6 +1979,33 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
   // Wi-Fi Classroom (2026-09-27). Band Steering: what a student types when a
   // dual-band client sits on 2.4 GHz next to the AP.
+  // Wi-Fi Classroom (2026-09-27). Conference Wi-Fi Runs Out of Addresses:
+  // what a student types when an event network has bars and no internet.
+  'dhcp-exhaustion': <String>[
+    'dhcp',
+    'dhcp exhaustion',
+    'dhcp pool',
+    'address pool',
+    'pool exhausted',
+    'out of addresses',
+    'ip address',
+    'lease',
+    'lease time',
+    'dhcp lease',
+    'rfc 2131',
+    'conference wi-fi',
+    'event wi-fi',
+    'high density',
+    'no internet',
+    'connected no internet',
+    'mac randomization',
+    'random mac',
+    'private address',
+    'subnet',
+    '/24',
+    'wi-fi classroom',
+    'simulator',
+  ],
   'band-steering': <String>[
     'band steering',
     'band select',

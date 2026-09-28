@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the address pool: a grid with its last slot empty -->
+    <rect x="3" y="3" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <rect x="10" y="3" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <rect x="17" y="3" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <rect x="3" y="10" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <rect x="10" y="10" width="4" height="4" rx="1" fill="currentColor" stroke="none"/>
+    <rect x="17.5" y="10.5" width="3" height="3" rx="0.5"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="18" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

@@ -5310,6 +5310,47 @@ Runs one access point on a simulated one-hour clock and shows what Dynamic Frequ
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
+### Conference Wi-Fi Runs Out of Addresses
+
+Follows the DHCP (Dynamic Host Configuration Protocol) address pool through a conference morning, 07:00 to 13:00. People arrive, put devices on the Wi-Fi, stay a while and leave. Each device borrows an IP (Internet Protocol) address for a lease time. Set the lease and watch the pool: with a long lease it runs dry mid-morning while the hall is half empty, and with a short one it holds.
+
+**Why it's here.** When an event network runs out of addresses, devices still associate and show full bars, and nothing loads, so the call is usually that the Wi-Fi is down and more APs are needed. The radio is fine. A device that walks out sends nothing, so its address stays taken until its lease runs out, and the pool has to cover everyone who arrived within one lease time, not just the people in the room. Devices that rotate their private MAC (media access control) address on open networks come back looking like new devices and take a second address. Association, Frame by Frame shows one DHCP exchange; this tool is what happens to the pool when hundreds of them pile up.
+
+**How to use**
+1. Read the top card: whether the pool ran dry and when, and one sentence saying why.
+2. Press Play the morning, +10 min, or drag Time to move through the morning. On the chart the solid line is addresses taken (in use or still held), the dashed line is devices in the hall, the dotted line is the pool, and the shaded area is devices with no address. The pool grid shows every address at that moment: solid in use, hatched still held for a device that left, cross-hatched still held for an old private address, outlined free.
+3. Change the lease time and watch the dry time move or disappear. Turn on private-address rotation and set the two assumptions: the share of devices that rotate and how often a rotating device comes back as new.
+4. Change the pool (subnet /24 to /19, and the reserved addresses) and the crowd (people over the morning, devices each, average stay). All crowd numbers are illustrative; set them to your event.
+5. Predict, then reveal: Ask the class loads the defaults and stops at the first device with no address (the Wi-Fi seems down mid-morning: what fixes it?); pick an answer, then press Reveal.
+6. On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses the morning, the Right arrow moves 10 minutes, R resets, Up and Down change the lease time, M turns private-address rotation on or off, P asks, reveals and closes the question, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Lease time | choice | 5 min to 8 days; default 1 day |
+| Devices rotate their private address on this open network | switch | Off (default) or On |
+| Share of devices that rotate | % | 0 to 100; default 50 (assumption; used only with rotation on) |
+| A rotating device comes back as new every | minutes | 15 to 240; default 60 (assumption; used only with rotation on) |
+| Subnet | prefix | /24 (default), /23, /22, /21, /20 or /19 |
+| Reserved: gateway, servers, printers | addresses | 0 to 100; default 10 (illustrative) |
+| People over the morning | count | 50 to 5,000; default 250 (illustrative) |
+| Devices each person puts on the Wi-Fi | devices | 1.0 to 3.0; default 1.5 (illustrative) |
+| Average stay | minutes | 15 to 360; default 90 (illustrative) |
+
+**How it works.** Pool = 2^(32 - prefix) - 2 usable addresses, minus the reserved ones. Devices = people x devices each, arriving in half-hour shares of 4, 8, 14, 16, 10, 8, 8, 8, 7, 6, 6 and 5% from 07:00 (illustrative: a rush before a 09:00 keynote, then a trickle), spread evenly inside each half hour. Each device stays between half and one and a half times the average stay, on a fixed sequence rather than random draws, so the same settings give the same morning. Every minute: leases that ran out go back to the pool; devices that left, or rotated to a new address, stop renewing; new clients ask for an address and get the lowest free one, first come first served, or wait with none. RFC 2131 lease rules: a device that stays renews at T1, half the lease, so it keeps its address; the server keys each lease to the client's hardware address, so a rotated address is a new client; a device that leaves sends nothing, so its address is free one lease after its last renewal. With rotation on, the chosen share of devices comes back as a new client every chosen interval while in the hall, the first time somewhere inside the first interval.
+
+**Example.** Defaults (/24 with 10 reserved = 244 addresses, 1-day lease, 250 people with 1.5 devices each = 375 devices, 90-minute average stay): the pool runs dry at 10:18. At that moment only 113 devices are in the hall; 112 addresses are in use and 132 are still held for devices that already left. Up to 74 devices go without an address. With a 30-minute lease the same morning holds, at most 170 of 244 addresses taken. A 2-hour lease holds (peak 232) until rotation is turned on, and then it runs dry at 09:21. A /23 holds even with the 1-day lease.
+
+**Field notes**
+- A device with no address still associates and shows full signal. Adding APs or a faster internet line adds no addresses.
+- No device maker publishes how often a device rotates its private address, so the share and interval here are assumptions. One platform maker documents rotating as the default on open and captive-portal networks.
+- Some devices do send a release when they leave a network on purpose; walking out of range sends nothing. This tool assumes nothing is released early.
+- Not modeled: servers that give short leases to new clients or a different lease per network, captive sign-in pages, and IPv6 (Internet Protocol version 6) addressing, which does not draw from this pool.
+- Illustrative: the crowd, the arrival shape, the stay and the reserved addresses. Set them to your event.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
 ### Association, Frame by Frame
 
 Plays every frame a client sends and receives to associate with a Wi-Fi network, from the first scan to the first useful packet: the scan, Open System or SAE authentication, association, the EAP exchange for 802.1X, the 4-way handshake, DHCP, the address check, then ARP and DNS. A channel strip above the ladder shows the scan channel by channel, and a timeline under it shows how long each phase takes. It teaches the frames; to actually join this device to a network, use Join a Network.
