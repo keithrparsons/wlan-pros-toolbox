@@ -2864,8 +2864,8 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         title: 'Band Steering',
         description:
             'Walk a dual-band client toward an AP and see why it stays on '
-            '2.4 GHz: what the AP can hide, refuse or suggest, and what the '
-            'client decides',
+            '2.4 GHz: what the AP can hide, refuse, suggest or force off, and '
+            'what the client decides',
         routeName: '/tools/band-steering',
         isLive: true,
         subgroup: 'Network Design and Security',

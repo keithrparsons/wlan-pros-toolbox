@@ -7,9 +7,10 @@
 //
 // THE LESSON. The client chooses the band. The AP can only hide (stop
 // answering broadcast probe requests on 2.4 GHz), refuse (reject
-// authentication on 2.4 GHz) or suggest (send a BSS Transition Management
-// request naming the 5 GHz network). None of the three stops the 2.4 GHz
-// beacons.
+// authentication on 2.4 GHz), suggest (send a BSS Transition Management
+// request naming the 5 GHz network) or force the client off (send a
+// deauthentication on 2.4 GHz). None of them stops the 2.4 GHz beacons, and
+// even after a deauthentication the client chooses where it goes back.
 //
 // SIGNAL. Roaming Walk's log-distance model (roaming_walk_engine.dart,
 // RoamWalkConfig.meanRssiAtDistance), through FsplMath.logDistanceDb:
@@ -51,8 +52,21 @@
 // Transition request answers: status 0 accept, 7 "no suitable candidates"
 // (hostapd enum bss_trans_mgmt_status_code; Microsoft WDI enum).
 //
-// NOT MODELED: forcing a client off with a deauthentication. No primary
-// source describing it was found (spec 38; default by Larry pending Keith).
+// DEAUTHENTICATION (Keith's ruling, 2026-09-27, overruling spec 38's
+// exclusion). Using a deauthentication to steer is vendor behavior, not a
+// steering mechanism the standard defines, and no published source gives its
+// timings. So every timing here is illustrative and adjustable: how long the
+// client takes to rescan and associate again (its outage), and how long the
+// AP lets a matched client stay on 2.4 GHz before it deauthenticates it
+// (the retry interval). Time runs at one walk sample (1 m) per second,
+// illustrative. The AP deauthenticates only a client its tracker has matched
+// on 5 GHz, the same test the other modes use. The client's traffic is zero
+// from the deauthentication until it associates again. It then joins by its
+// own rules; if they put it back on 2.4 GHz, the AP deauthenticates it again
+// after the retry interval: the loop. Clients using Protected Management
+// Frames (802.11w) drop an unprotected deauthentication from anyone but
+// their AP; the AP's own is protected and still works, so the model applies
+// it to every client (stated in the help).
 //
 // SIMPLIFICATIONS (each also stated in the UI or help):
 //   - The client walks a straight line, one sample per meter.
@@ -110,6 +124,24 @@ const int kBsDefaultTolerance = 3;
 /// client stays on 2.4 GHz. Illustrative.
 const int kBsBtmRepeatSteps = 5;
 
+/// Deauthentication steering: seconds the client takes, after a
+/// deauthentication, to rescan and associate again. Its traffic is zero for
+/// all of it. No published source: illustrative.
+const int kBsMinRescanS = 1;
+const int kBsMaxRescanS = 10;
+const int kBsDefaultRescanS = 3;
+
+/// Deauthentication steering: seconds the AP lets a matched client stay on
+/// 2.4 GHz before it deauthenticates it (again). No published source:
+/// illustrative.
+const int kBsMinRetryS = 1;
+const int kBsMaxRetryS = 30;
+const int kBsDefaultRetryS = 5;
+
+/// Seconds per walk sample: the client walks 1 m each second. Illustrative;
+/// only the deauthentication timings use it.
+const int kBsSecondsPerStep = 1;
+
 /// Client A (published): looks for another AP below this, dBm.
 const double kClientALookDbm = -70;
 
@@ -155,7 +187,8 @@ enum SteeringMode {
   off('Off'),
   probeSuppression('Probe suppression on 2.4 GHz'),
   authRefusal('Authentication refusal on 2.4 GHz'),
-  transitionRequest('Transition request (802.11v amendment)');
+  transitionRequest('Transition request (802.11v amendment)'),
+  deauthentication('Deauthentication on 2.4 GHz');
 
   const SteeringMode(this.label);
 
@@ -367,6 +400,7 @@ enum BsFrameKind {
   association,
   transitionRequest,
   transitionResponse,
+  deauthentication,
 }
 
 /// What happened to a frame (drives the arrow style and the words).
@@ -405,7 +439,7 @@ class BsFrame {
   /// Plain words for the frame list.
   final String text;
 
-  /// True when the AP sent it (a transition request).
+  /// True when the AP sent it (a transition request, a deauthentication).
   final bool fromAp;
 
   /// True when the client sent it from a random address.
@@ -423,6 +457,8 @@ class BsConfig {
     this.refusalTolerance = kBsDefaultTolerance,
     this.path = WalkPath.edgeToAp,
     this.driverSupportsBtm = true,
+    this.rescanS = kBsDefaultRescanS,
+    this.retryS = kBsDefaultRetryS,
   });
 
   final ClientProfile profile;
@@ -435,6 +471,14 @@ class BsConfig {
   /// Client C only: whether its driver supports transition requests.
   final bool driverSupportsBtm;
 
+  /// Deauthentication only: the client's outage per deauthentication,
+  /// seconds (illustrative).
+  final int rescanS;
+
+  /// Deauthentication only: how long the AP lets a matched client stay on
+  /// 2.4 GHz before it deauthenticates it, seconds (illustrative).
+  final int retryS;
+
   BsConfig copyWith({
     ClientProfile? profile,
     SteeringMode? mode,
@@ -443,6 +487,8 @@ class BsConfig {
     int? refusalTolerance,
     WalkPath? path,
     bool? driverSupportsBtm,
+    int? rescanS,
+    int? retryS,
   }) => BsConfig(
     profile: profile ?? this.profile,
     mode: mode ?? this.mode,
@@ -451,6 +497,8 @@ class BsConfig {
     refusalTolerance: refusalTolerance ?? this.refusalTolerance,
     path: path ?? this.path,
     driverSupportsBtm: driverSupportsBtm ?? this.driverSupportsBtm,
+    rescanS: rescanS ?? this.rescanS,
+    retryS: retryS ?? this.retryS,
   );
 
   /// Distances along the walk, meters from the AP, one per sample.
@@ -473,7 +521,9 @@ class BsConfig {
       other.extra5LossDb == extra5LossDb &&
       other.refusalTolerance == refusalTolerance &&
       other.path == path &&
-      other.driverSupportsBtm == driverSupportsBtm;
+      other.driverSupportsBtm == driverSupportsBtm &&
+      other.rescanS == rescanS &&
+      other.retryS == retryS;
 
   @override
   int get hashCode => Object.hash(
@@ -484,6 +534,8 @@ class BsConfig {
     refusalTolerance,
     path,
     driverSupportsBtm,
+    rescanS,
+    retryS,
   );
 }
 
@@ -504,6 +556,10 @@ class BsStep {
     required this.refusalsInRow,
     required this.btm,
     required this.scanned,
+    this.deauthsTotal = 0,
+    this.returnsTo24 = 0,
+    this.outageS = 0,
+    this.outageSecond = 0,
   });
 
   final int index;
@@ -534,6 +590,29 @@ class BsStep {
 
   /// True when the client scanned (sent probe requests) at this sample.
   final bool scanned;
+
+  /// Deauthentications the AP has sent so far on the walk.
+  final int deauthsTotal;
+
+  /// Times the client went back to 2.4 GHz after a deauthentication so far:
+  /// the loop counter.
+  final int returnsTo24;
+
+  /// Seconds without traffic caused by deauthentications so far on the walk
+  /// (illustrative timings).
+  final int outageS;
+
+  /// Inside a deauthentication outage: which second of it this sample is
+  /// (1 to the rescan time). 0 outside one.
+  final int outageSecond;
+
+  /// True while a deauthentication has the client off the air.
+  bool get inOutage => outageSecond > 0;
+
+  /// True when the client can pass traffic: it is associated. Zero traffic
+  /// whenever it is not, including every second of a deauthentication
+  /// outage.
+  bool get trafficFlowing => band != null;
 
   double rssi(BsBand b) => b == BsBand.ghz24 ? rssi24 : rssi5;
 }
@@ -577,6 +656,13 @@ BsWalk simulateWalk(BsConfig config) {
   int refusalsInRow = 0;
   BtmAnswer? btm;
   int stepsOn24 = 0;
+  int deauths = 0;
+  int returns = 0;
+  int outageTotal = 0;
+  int outageSecond = 0;
+  bool afterDeauth = false;
+  final int rescanSteps = math.max(1, config.rescanS ~/ kBsSecondsPerStep);
+  final int retrySteps = math.max(1, config.retryS ~/ kBsSecondsPerStep);
 
   final List<double> positions = config.positionsM;
   for (int k = 0; k < positions.length; k++) {
@@ -709,6 +795,41 @@ BsWalk simulateWalk(BsConfig config) {
           '${config.refusalTolerance}); $tail.';
     }
 
+    // Inside a deauthentication outage the client is off the air: no
+    // traffic, and nothing else happens until the rescan time is up.
+    if (outageSecond > 0 && outageSecond < rescanSteps) {
+      outageSecond++;
+      outageTotal += kBsSecondsPerStep;
+      steps.add(
+        BsStep(
+          index: k,
+          distanceM: d,
+          rssi24: r24,
+          rssi5: r5,
+          band: null,
+          frames: const <BsFrame>[],
+          why:
+              'Deauthenticated: no traffic while the client rescans '
+              '($outageSecond of ${config.rescanS} s, illustrative).',
+          trackedOn5: tracked && !random,
+          refusalsTotal: refusalsTotal,
+          refusalsInRow: refusalsInRow,
+          btm: btm,
+          scanned: false,
+          deauthsTotal: deauths,
+          returnsTo24: returns,
+          outageS: outageTotal,
+          outageSecond: outageSecond,
+        ),
+      );
+      stepsOn24 = 0;
+      continue;
+    }
+    if (outageSecond > 0) {
+      outageSecond = 0;
+      afterDeauth = true;
+    }
+
     // A connected client whose band has faded below the floor loses it.
     String? lostNote;
     if (band != null && !bsHears(rssi(band))) {
@@ -752,6 +873,23 @@ BsWalk simulateWalk(BsConfig config) {
               'tolerance, and then let the client in on 2.4 GHz.';
         } else {
           why = _joinWhy(p, joined, r24, r5, config);
+        }
+      }
+      if (afterDeauth) {
+        afterDeauth = false;
+        if (band == BsBand.ghz24) {
+          returns++;
+          why =
+              'Rescanned after the deauthentication. $why Back on 2.4 GHz '
+              '$returns ${returns == 1 ? 'time' : 'times'}; the AP will '
+              'deauthenticate it again after ${config.retryS} s.';
+        } else if (band == BsBand.ghz5) {
+          why =
+              'Rescanned after the deauthentication. $why Steered, after '
+              '$deauths ${deauths == 1 ? 'deauthentication' : 'deauthentications'} '
+              'and $outageTotal s without traffic.';
+        } else {
+          why = 'Rescanned after the deauthentication. $why';
         }
       }
       if (lostNote != null) why = '$lostNote. $why';
@@ -897,6 +1035,37 @@ BsWalk simulateWalk(BsConfig config) {
       }
     }
 
+    // Deauthentication: a matched client that has been on 2.4 GHz for the
+    // retry interval is sent a deauthentication. It is off the air, with no
+    // traffic, for the rescan time, starting now.
+    if (mode == SteeringMode.deauthentication &&
+        band == BsBand.ghz24 &&
+        tracked &&
+        !random &&
+        stepsOn24 - 1 >= retrySteps) {
+      deauths++;
+      frames.add(
+        const BsFrame(
+          kind: BsFrameKind.deauthentication,
+          band: BsBand.ghz24,
+          outcome: BsOutcome.sent,
+          fromAp: true,
+          text:
+              'Deauthentication from the AP, 2.4 GHz: the client is '
+              'disconnected and its traffic stops',
+        ),
+      );
+      band = null;
+      stepsOn24 = 0;
+      outageSecond = 1;
+      outageTotal += kBsSecondsPerStep;
+      why =
+          'The AP has matched this client on 5 GHz, and it has been on '
+          '2.4 GHz for at least ${config.retryS} s, so the AP sent a '
+          'deauthentication (number $deauths). No traffic while the client '
+          'rescans (1 of ${config.rescanS} s, illustrative).';
+    }
+
     steps.add(
       BsStep(
         index: k,
@@ -911,6 +1080,10 @@ BsWalk simulateWalk(BsConfig config) {
         refusalsInRow: refusalsInRow,
         btm: btm,
         scanned: scanned,
+        deauthsTotal: deauths,
+        returnsTo24: returns,
+        outageS: outageTotal,
+        outageSecond: outageSecond,
       ),
     );
   }

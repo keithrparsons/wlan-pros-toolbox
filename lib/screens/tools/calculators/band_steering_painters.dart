@@ -9,7 +9,10 @@
 // pattern, with its band written on it. At a sample where the client
 // scanned, one probe arrow per band points from the client at the AP:
 // answered is a solid line with a head at each end; ignored is a dashed line
-// that ends in a cross, labeled "no answer".
+// that ends in a cross, labeled "no answer". At a sample where the AP sent a
+// deauthentication, a dashed warning-hue arrow runs from the AP to the
+// client, labeled "Deauthentication"; while the client is off the air it is
+// labeled "Deauthenticated: no traffic" (words, never the hue alone).
 //
 // BsGaugePainter: one band's RSSI on a -95 to -30 dBm bar, with the selected
 // client's thresholds as lines, each labeled.
@@ -54,7 +57,8 @@ class BsStageStyle {
   final Color band24;
   final Color band5;
 
-  /// The refused-authentication verdict (a warning hue, always with words).
+  /// The refused-authentication and deauthentication hue (a warning, always
+  /// with words).
   final Color refused;
   final TextStyle gridLabel;
   final TextStyle label;
@@ -213,6 +217,7 @@ class BsFloorPainter extends CustomPainter {
     _beacons(canvas, g);
     _association(canvas, g);
     _probes(canvas, g);
+    _deauth(canvas, g);
     _ap(canvas, g);
     _client(canvas, g);
     canvas.restore();
@@ -405,6 +410,33 @@ class BsFloorPainter extends CustomPainter {
     }
   }
 
+  void _deauth(Canvas canvas, BsFloorGeometry g) {
+    if (!step.frames.any(
+      (BsFrame f) => f.kind == BsFrameKind.deauthentication,
+    )) {
+      return;
+    }
+    final Offset c = g.client(step.distanceM);
+    final Offset toC = c - g.ap;
+    final double len = toC.distance;
+    if (len < 1) return;
+    final Offset u = toC / len;
+    final double r = 14 * _s.marker;
+    final Offset a = g.ap + u * r;
+    final Offset tip = c - u * r;
+    final Paint p = Paint()
+      ..color = style.refused
+      ..strokeWidth = _s.strokeWidth(2.5);
+    _dashedLine(canvas, a, tip, p, dash: 6, gap: 4);
+    _arrowHead(canvas, tip, a, Paint()..color = style.refused, 9 * _s.marker);
+    final TextPainter tp = _text(
+      'Deauthentication',
+      style.label.copyWith(color: style.refused),
+    );
+    final Offset mid = Offset.lerp(a, tip, 0.5)!;
+    _knockout(canvas, mid + Offset(-tp.width / 2, 8 * _s.marker), tp);
+  }
+
   void _ap(Canvas canvas, BsFloorGeometry g) {
     final double s = 14 * _s.marker;
     final Rect r = Rect.fromCenter(center: g.ap, width: s * 2, height: s * 2);
@@ -443,15 +475,18 @@ class BsFloorPainter extends CustomPainter {
     final bool refused = step.frames.any(
       (BsFrame f) => f.outcome == BsOutcome.refused,
     );
+    final bool warn = refused || step.inOutage;
     final String? note = refused
         ? 'Refused on 2.4 GHz'
+        : step.inOutage
+        ? 'Deauthenticated: no traffic'
         : step.band == null
         ? 'Not connected'
         : null;
     if (note != null) {
       final TextPainter n = _text(
         note,
-        style.label.copyWith(color: refused ? style.refused : style.muted),
+        style.label.copyWith(color: warn ? style.refused : style.muted),
       );
       _knockout(canvas, c + Offset(-n.width / 2, r + 22 * _s.marker), n);
     }

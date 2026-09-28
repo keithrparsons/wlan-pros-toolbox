@@ -7,8 +7,10 @@
 //
 // COLOR (GL-003 §8.15.2 / §8.13). The two band hues come from
 // band_steering_parts.dart and never carry the band alone (pattern and
-// words). The one status hue is the refused-authentication note, a warning
-// with the word "Refused" beside it. Everything else is the neutral stack.
+// words). The one status hue is the warning, used for a refused
+// authentication and for a deauthentication, always with the words beside
+// it ("Refused", "Deauthentication", "No traffic"). Everything else is the
+// neutral stack.
 //
 // MOTION (§8.8). The walk and the beacon pulse move only while playing. With
 // reduced motion on, nothing moves by itself; Reveal jumps to the end.
@@ -232,6 +234,15 @@ class BsHeadline extends StatelessWidget {
             s.why,
             style: text.bodyLarge?.copyWith(color: colors.textPrimary),
           ),
+          if (controller.config.mode == SteeringMode.deauthentication) ...[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Deauthentications: ${s.deauthsTotal}. Back on 2.4 GHz: '
+              '${s.returnsTo24}. Time without traffic: ${s.outageS} s '
+              '(illustrative).',
+              style: mono.inlineCode.copyWith(color: colors.textPrimary),
+            ),
+          ],
         ],
       ),
     );
@@ -497,6 +508,7 @@ class _Frames extends StatelessWidget {
     final List<BsFrame> frames = s.frames;
 
     Widget row(BsFrame f) {
+      final bool deauth = f.kind == BsFrameKind.deauthentication;
       final bool refused = f.outcome == BsOutcome.refused;
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs / 2),
@@ -506,13 +518,19 @@ class _Frames extends StatelessWidget {
             Icon(
               refused
                   ? Icons.block_rounded
+                  : deauth
+                  ? Icons.link_off_rounded
                   : f.fromAp
                   ? Icons.west_rounded
                   : Icons.east_rounded,
               size: 16,
-              color: refused ? colors.statusWarning : colors.textSecondary,
+              color: refused || deauth
+                  ? colors.statusWarning
+                  : colors.textSecondary,
               semanticLabel: refused
                   ? 'refused'
+                  : deauth
+                  ? 'deauthentication, AP to client'
                   : f.fromAp
                   ? 'AP to client'
                   : 'client to AP',
@@ -534,7 +552,13 @@ class _Frames extends StatelessWidget {
             'Beacons on 2.4 GHz and 5 GHz: sent in every steering mode.',
             style: body.copyWith(color: colors.textSecondary),
           ),
-          if (frames.isEmpty)
+          if (frames.isEmpty && s.inOutage)
+            Text(
+              'No other frames: the client was deauthenticated and is '
+              'rescanning, so it sends no traffic.',
+              style: body.copyWith(color: colors.textSecondary),
+            )
+          else if (frames.isEmpty)
             Text(
               'No other frames: the client is not looking and the AP has '
               'nothing to ask.',

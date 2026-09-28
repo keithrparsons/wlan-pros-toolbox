@@ -7,7 +7,8 @@
 //
 // The widget tests assert strings, states and that nothing overflows. These
 // frames are for looking: the normal screen at 390, 820 and 1280 px and the
-// presenter layout at 1470x923, dark and light.
+// presenter layout at 1470x923, dark and light; plus deauthentication at
+// the first deauthentication (normal screen) and mid-outage (presenter).
 
 import 'dart:io';
 import 'dart:typed_data';
@@ -113,6 +114,37 @@ void main() {
           c.mode = SteeringMode.authRefusal;
           c.path = WalkPath.apToEdge;
           c.index = 13;
+        },
+      );
+      // Deauthentication (Keith, 2026-09-27): Client A walking in, at the
+      // sample where the AP sends the first deauthentication (33 m).
+      void deauthScene(BandSteeringController c) {
+        c.mode = SteeringMode.deauthentication;
+        c.index = c.walk.steps.indexWhere(
+          (BsStep s) => s.frames.any(
+            (BsFrame f) => f.kind == BsFrameKind.deauthentication,
+          ),
+        );
+      }
+
+      for (final double w in <double>[390, 820, 1280]) {
+        await _shot(
+          tester,
+          light: light,
+          size: Size(w, 3600),
+          slug: 'band-steering-deauth-$mode-${w.toInt()}',
+          setup: deauthScene,
+        );
+      }
+      await _shot(
+        tester,
+        light: light,
+        size: const Size(1470, 923),
+        slug: 'band-steering-presenter-deauth-$mode-1470x923',
+        present: true,
+        setup: (BandSteeringController c) {
+          deauthScene(c);
+          c.index = c.index + 1;
         },
       );
     }
