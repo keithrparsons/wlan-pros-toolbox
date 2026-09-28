@@ -5,11 +5,11 @@
 <rect x="145" y="44.0" width="19.0" height="8" rx="0" fill="#A2CC3A"/>
 <rect x="186.0" y="44.0" width="19.0" height="8" rx="0" fill="#A2CC3A"/>
 <rect x="167.0" y="42.0" width="16" height="12" rx="2" fill="#9C9C9C"/>
-<path d="M175 58 L80 150 L270 150 Z" fill="#A2CC3A" opacity="0.15" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M175 58 L86 140 L264 140 Z" fill="#A2CC3A" opacity="0.15" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="495" y="44.0" width="19.0" height="8" rx="0" fill="#A2CC3A"/>
 <rect x="536.0" y="44.0" width="19.0" height="8" rx="0" fill="#A2CC3A"/>
 <rect x="517.0" y="42.0" width="16" height="12" rx="2" fill="#9C9C9C"/>
-<path d="M525 58 L430 150 L620 150 Z" fill="#A2CC3A" opacity="0.15" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M525 58 L436 140 L614 140 Z" fill="#A2CC3A" opacity="0.15" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M90 172 V158 L102.0 149 L114 158 V172 Z" fill="none" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M120 172 V158 L132.0 149 L144 158 V172 Z" fill="#A2CC3A" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M150 172 V158 L162.0 149 L174 158 V172 Z" fill="none" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

@@ -11,14 +11,14 @@
 <text x="10" y="260" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="start" font-weight="400">dish, high or low orbit</text>
 <text x="10" y="294" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="start" font-weight="600">Phone hotspot</text>
 <text x="10" y="310" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="start" font-weight="400">your cellular plan</text>
-<path d="M160 50 C280 50 320 150 420 165" fill="none" stroke="#A1CC3A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M160 100 C280 100 320 160 420 170" fill="none" stroke="#E5E5E5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M160 150 C280 150 320 172 420 175" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M160 200 C280 200 320 184 420 180" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M160 250 C280 250 320 196 420 185" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M160 300 C280 300 320 208 420 190" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160 50 C280 50 320 150 419 158" fill="none" stroke="#A1CC3A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160 100 C280 100 320 160 419 165" fill="none" stroke="#E5E5E5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160 150 C280 150 320 172 419 172" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160 200 C280 200 320 184 419 179" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160 250 C280 250 320 196 419 186" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M160 300 C280 300 320 208 419 193" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M400 110 L530 40 L660 110" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="410" y="110" width="240" height="190" rx="0" fill="none" stroke="#E5E5E5" stroke-width="3"/>
+<path d="M410 150 V110 H650 V300 H410 V202" fill="none" stroke="#E5E5E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="425" y="152" width="96" height="46" rx="6" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="2"/>
 <text x="473" y="172" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="middle" font-weight="600">Provider's</text>
 <text x="473" y="188" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="middle" font-weight="600">box</text>
@@ -27,7 +27,8 @@
 <text x="595" y="180" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="middle" font-weight="600">Router</text>
 <path d="M580 142 a18 18 0 0 1 30 0" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M572 132 a30 30 0 0 1 46 0" fill="none" stroke="#A1CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="537" y1="120" x2="537" y2="292" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="butt" stroke-dasharray="4 4"/>
+<line x1="537" y1="120" x2="537" y2="166" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="butt" stroke-dasharray="4 4"/>
+<line x1="537" y1="184" x2="537" y2="292" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="butt" stroke-dasharray="4 4"/>
 <text x="473" y="232" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">The service</text>
 <text x="473" y="248" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="middle" font-weight="400">you pay for</text>
 <text x="595" y="232" font-family="IBM Plex Sans" font-size="12" fill="#A1CC3A" text-anchor="middle" font-weight="600">Your Wi-Fi</text>

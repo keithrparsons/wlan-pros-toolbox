@@ -11,10 +11,10 @@
 // for a scrolling screen:
 //  - the print-only parts are dropped: the cover page layout, the table of
 //    contents ("What's inside"), page footers, and the section eyebrows;
-//  - the two boxes headed "Keith's note" (print pages 5 and 8) are LEFT OUT:
-//    Keith has not approved them yet (Larry's brief, 2026-09-27). The router
-//    checklist's "(page 5)" pointed at the first of them, so it is dropped
-//    rather than pointed at a section that no longer carries that text;
+//  - the two boxes headed "Keith's note" (print pages 5 and 8) are carried
+//    verbatim, in the sections they sit in on paper (Keith approved them,
+//    2026-09-27). The router checklist's "(page 5)", which points at the
+//    first, names its section instead;
 //  - every other "page N" cross-reference now names the section ("the section
 //    What your Wi-Fi owes a phone call"), and Figure 7's "(page 6)" label
 //    reads "(section 5)";
@@ -281,7 +281,7 @@ const List<Widget> _sections = <Widget>[
             ),
           ],
           <_Cell>[
-            _Cell('Google Pixel'),
+            _Cell('Google phones'),
             _Cell(
               '"Internet call" or "Wi-Fi calling" on the notification screen '
               'during the call.',
@@ -386,6 +386,18 @@ const List<Widget> _sections = <Widget>[
             ),
           ],
         ],
+      ),
+      // Print guide page 5, verbatim (Keith approved it, 2026-09-27).
+      _Callout(
+        tone: _Tone.warning,
+        title: "Keith's note: the drop that isn't your carrier's fault",
+        body:
+            'Walking from room to room inside a house is a different thing. '
+            'Moving between two Wi-Fi access points, or two mesh units, is a '
+            'Wi-Fi hand-over, and the carrier never sees it. If that '
+            'hand-over is slow, the tunnel stalls and the call breaks up or '
+            'drops, and most people blame the carrier. It is usually the '
+            'Wi-Fi.',
       ),
     ],
   ),
@@ -613,6 +625,21 @@ const List<Widget> _sections = <Widget>[
         'feature when **Allow Calls on Other Devices** is on. **On an iPad, '
         'Apple also warns that while connected to Wi-Fi Calling, it may not '
         'receive emergency alerts.**',
+      ),
+      // Print guide page 8, verbatim (Keith approved it, 2026-09-27). The
+      // print's red "stop" box maps to the danger tone.
+      _Callout(
+        tone: _Tone.danger,
+        title: "Keith's note: the emergency trap",
+        body:
+            'Your carrier holds one registered emergency address for your '
+            'line, usually your home. A Mac or a Wi-Fi-only iPad has no cell '
+            'radio, so an emergency call from it goes over Wi-Fi Calling. '
+            "Apple says your device's location may be used, and that the "
+            'registered address helps emergency services find you. If the '
+            "location doesn't get through, the dispatcher may see your home "
+            'address while you are in a hotel across the country. **Say where '
+            'you are.**',
       ),
       _P(
         'Android has no direct match for the second feature. Samsung\'s "Call '
@@ -883,10 +910,11 @@ const List<Widget> _sections = <Widget>[
             'recognize it as voice. Some phones label the encrypted packets as '
             'voice anyway; others may not. The standards leave that to each '
             'maker, and no carrier page we found says which happens.',
-        // The print guide ends this step "(page 5)", a pointer to the Keith's
-        // note left out of this lesson (not yet approved), so it is dropped.
+        // The print guide's "(page 5)" points at Keith's note on hand-overs,
+        // which sits in section 4 here.
         '**Make hand-overs quick.** Moving between access points or mesh '
-            'units should be fast.',
+            'units should be fast (the section Walking out the door '
+            'mid-call).',
       ]),
     ],
   ),
@@ -972,7 +1000,7 @@ const List<Widget> _sections = <Widget>[
         ],
       ),
       _Task(
-        title: 'Google Pixel, and phones using the Phone by Google app',
+        title: "Google's own phones, and phones using the Phone by Google app",
         why:
             "Android 6.0 or later. Google says if you can't find the option, "
             "your carrier doesn't support it.",

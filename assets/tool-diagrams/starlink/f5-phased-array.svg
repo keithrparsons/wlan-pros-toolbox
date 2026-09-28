@@ -21,7 +21,7 @@
 <text x="350" y="230.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="400">Many small antennas, one flat panel. The panel stays still.</text>
 <text x="569" y="109.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="end" font-weight="600">110</text>
 <circle cx="573.5" cy="97" r="2.6" fill="none" stroke="#E5E5E5" stroke-width="1.6"/>
-<text x="578" y="109.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="600">field of view</text>
+<text x="582" y="109.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="600">field of view</text>
 <text x="540" y="128.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">the part of the sky</text>
 <text x="540" y="146.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">the dish can use</text>
 <text x="214" y="116.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="end" font-weight="400">The beam swings</text>

@@ -21,7 +21,11 @@ flutter_svg limits):
   - no full-canvas background rectangle (the band's card is the canvas);
   - no <marker>: arrowheads are drawn triangles;
   - every label string is identical to the print guide's label. Only line
-    breaks and positions change.
+    breaks and positions change. Two exceptions in form, not wording:
+    Figure 2's ellipses and Figure 7's menu chevrons are drawn as geometry;
+  - <text> carries ASCII only (GL-003 §8.6.1: a non-ASCII glyph draws as a
+    missing-glyph box on the web path). test/graphics/
+    lesson_figure_ascii_text_test.dart checks it.
 
 Usage: python3 tool/find_my_diagrams.py   (writes assets/tool-diagrams/find-my/)
 """
@@ -61,6 +65,49 @@ def text(x, y, s, size=14, fill=M, weight=400, anchor='start', family=FONT):
         f'fill="{fill}" text-anchor="{anchor}" font-weight="{weight}">'
         f'{escape(s)}</text>'
     )
+
+
+# Advance widths from the bundled font files (assets/fonts, read with
+# fontTools), so drawn glyphs sit against text the same way in a browser and
+# in flutter_svg. DM Mono is fixed-pitch: 0.6 em per character.
+MONO_ADVANCE = 0.6
+PLEX_14 = {'Items': 37.24, 'your tag': 51.0, 'paste': 35.01}
+
+
+def truncated_code(cx, y, code, size=16, fill=T):
+    """A mono code followed by a drawn ellipsis, centered on [cx].
+
+    GL-003 §8.6.1: a non-ASCII glyph in SVG <text> draws as a missing-glyph
+    box on the web path, so the print guide's "7F3A…" keeps its wording but
+    the ellipsis is three dots of geometry.
+    """
+    tw = len(code) * size * MONO_ADVANCE
+    dots = 3 * 4.0
+    x0 = round(cx - (tw + 2 + dots) / 2, 2)
+    base = round(y + size * 0.35, 1)
+    out = [text(x0, y, code, size=size, fill=fill, family=MONO)]
+    for k in range(3):
+        out.append(circle(round(x0 + tw + 1.5 + 2 + 4.0 * k, 2), round(base - 1.4, 1), 1.4, fill=fill))
+    return out
+
+
+def menu_path(cx, y, parts, widths, size=14, fill=M):
+    """Menu steps joined by drawn chevrons, centered on [cx] (the print
+    guide's "Items › your tag › paste"; the chevron is geometry, not a glyph,
+    per GL-003 §8.6.1). Each part is start-anchored at its own x."""
+    slot = 14
+    total = sum(widths[p] for p in parts) + slot * (len(parts) - 1)
+    x = cx - total / 2
+    out = []
+    for i, part in enumerate(parts):
+        out.append(text(round(x, 2), y, part, size=size, fill=fill))
+        x += widths[part]
+        if i < len(parts) - 1:
+            mx, my = x + slot / 2, y + 1
+            out.append(path(f'M{round(mx - 2, 2)} {my - 3.5} L{round(mx + 2, 2)} {my} '
+                            f'L{round(mx - 2, 2)} {my + 3.5}', stroke=fill, sw=1.5))
+            x += slot
+    return out
 
 
 def title(x, y, s, anchor='start', fill=T, size=16):
@@ -130,17 +177,74 @@ def airtag(cx, cy, r=12):
 
 
 # ── Cover art: People / Devices / Items on a map ────────────────────────────
+def _cubic_pieces(seg, holes, n=1200):
+    """The parts of cubic [seg] outside every circular hole (cx, cy, r),
+    each returned as an exact cubic (de Casteljau)."""
+    def at(t):
+        (x0, y0), (x1, y1), (x2, y2), (x3, y3) = seg
+        u = 1 - t
+        return (u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,
+                u ** 3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y3)
+
+    def split(q, t):
+        lerp = lambda m, k: (m[0] + (k[0] - m[0]) * t, m[1] + (k[1] - m[1]) * t)
+        a_, b_, c_, d_ = q
+        ab, bc, cd = lerp(a_, b_), lerp(b_, c_), lerp(c_, d_)
+        abc, bcd = lerp(ab, bc), lerp(bc, cd)
+        m = lerp(abc, bcd)
+        return (a_, ab, abc, m), (m, bcd, cd, d_)
+
+    def sub(t0, t1):
+        _, right = split(seg, t0)
+        left, _ = split(right, (t1 - t0) / (1 - t0))
+        return left
+
+    out_mask = [all(math.hypot(at(i / n)[0] - hx, at(i / n)[1] - hy) > hr
+                    for hx, hy, hr in holes) for i in range(n + 1)]
+    pieces, start = [], None
+    for i, ok in enumerate(out_mask + [False]):
+        if ok and start is None:
+            start = i
+        elif not ok and start is not None:
+            if i - 1 > start:
+                pieces.append(sub(start / n, (i - 1) / n))
+            start = None
+    return pieces
+
+
 def cover():
     b = []
-    grid = 'M0 30H700M0 125H700M0 220H700M90 0V250M260 0V250M440 0V250M610 0V250'
+    pins = ((175, 150), (350, 140), (525, 95))
+    # The map grid and the route stop at each pin's halo (r 34, gap to 37),
+    # so no line runs through a pin (Keith, 2026-09-27: "not have other icons
+    # or bit's being covered by other lines").
+    hole_r = 37
+    grid = 'M0 30H700M0 220H700M90 0V250M260 0V250M440 0V250M610 0V250'
     b.append(path(grid, stroke=P, sw=1))
-    b.append(
-        path(
-            'M30 215 C120 190 150 170 175 150 S300 150 350 140 S470 100 525 95 S640 60 680 55',
-            stroke=M, sw=3, dash='2 8',
-        )
-    )
-    for cx, cy in ((175, 150), (350, 140), (525, 95)):
+    # The y 125 grid line crosses all three halos: drawn in pieces.
+    xs = [0]
+    for cx, cy in pins:
+        dx = math.sqrt(max(hole_r ** 2 - (125 - cy) ** 2, 0))
+        xs += [round(cx - dx, 1), round(cx + dx, 1)]
+    xs.append(700)
+    b.append(path(''.join(f'M{xs[i]} 125H{xs[i + 1]}' for i in range(0, len(xs), 2)),
+                  stroke=P, sw=1))
+    # The route, 'M30 215 C120 190 150 170 175 150 S300 150 350 140
+    # S470 100 525 95 S640 60 680 55', with each S written out as its C.
+    route = [
+        ((30, 215), (120, 190), (150, 170), (175, 150)),
+        ((175, 150), (200, 130), (300, 150), (350, 140)),
+        ((350, 140), (400, 130), (470, 100), (525, 95)),
+        ((525, 95), (580, 90), (640, 60), (680, 55)),
+    ]
+    holes = [(cx, cy, hole_r) for cx, cy in pins]
+    f = lambda v: f'{round(v[0], 1)} {round(v[1], 1)}'
+    d = ''
+    for seg in route:
+        for q in _cubic_pieces(seg, holes):
+            d += f'M{f(q[0])} C{f(q[1])} {f(q[2])} {f(q[3])}'
+    b.append(path(d, stroke=M, sw=3, dash='2 8'))
+    for cx, cy in pins:
         b.append(circle(cx, cy, 34, fill=L, opacity=0.15))
         b.append(circle(cx, cy, 20, fill=L, opacity=0.3))
     b.append(circle(175, 150, 11, fill=L))
@@ -222,12 +326,12 @@ def f1():
 # ── Figure 2: rotating IDs ──────────────────────────────────────────────────
 def f2():
     b = [title(10, 22, "The tag's ID changes about every 15 minutes")]
-    ids = ['7F3A…', 'C019…', '5B8E…', 'E24D…']
+    ids = ['7F3A', 'C019', '5B8E', 'E24D']  # each followed by a drawn ellipsis
     times = ['9:00', '9:15', '9:30', '9:45']
     for i, (code, t) in enumerate(zip(ids, times)):
         x = 10 + i * 155
         b.append(rect(x, 52, 130, 34, rx=6, stroke=None, fill=P))
-        b.append(text(x + 65, 70, code, size=16, fill=T, anchor='middle', family=MONO))
+        b += truncated_code(x + 65, 70, code)
         b.append(line(x, 100, x, 112, stroke=M, sw=2))
         b.append(text(x, 128, t))
     b.append(line(10, 106, 630, 106, stroke=M, sw=2))
@@ -284,7 +388,9 @@ def f3():
     b.append(text(507, 146, 'its location, sealed', anchor='middle'))
     b.append(rect(596, 97, 150, 130, rx=10))
     b.append(path('M596 140H746M596 184H746M646 97V227M696 97V227', stroke=P, sw=1.5))
-    b.append(circle(671, 162, 26, fill=L, opacity=0.25))
+    # Halo r 20 keeps it inside its map cell (grid lines 22 px above and
+    # below); at r 26 the grid ran through it.
+    b.append(circle(671, 162, 20, fill=L, opacity=0.25))
     b.append(circle(671, 162, 9, fill=L))
     b.append(title(671, 252, 'The dot you see', anchor='middle'))
     b.append(text(671, 274, '= where that phone was', anchor='middle'))
@@ -398,12 +504,16 @@ def f6():
 
 
 # ── Figure 7: lost luggage, step by step ────────────────────────────────────
+# The print guide's "Items › your tag › paste", drawn with chevron paths.
+MENU = ('Items', 'your tag', 'paste')
+
+
 def f7():
     b = []
     steps = [
         (10, D, 'none', [('Bag didn\'t arrive', True), ('Check the map first', False)]),
         (118, M, 'none', [("File the airline's baggage report", True)]),
-        (226, L, WASH, [('Share Item Location', True), ('Items › your tag › paste', False),
+        (226, L, WASH, [('Share Item Location', True), (MENU, False),
                         ('the link in their form', False)]),
         (334, M, 'none', [('Airline staff see a live map', True)]),
     ]
@@ -413,7 +523,10 @@ def f7():
         top = y + 40 - (n - 1) * 11
         for j, (s, bold) in enumerate(rows):
             yy = top + j * 22
-            b.append(title(170, yy, s, anchor='middle') if bold else text(170, yy, s, anchor='middle'))
+            if s is MENU:
+                b += menu_path(170, yy, MENU, PLEX_14)
+            else:
+                b.append(title(170, yy, s, anchor='middle') if bold else text(170, yy, s, anchor='middle'))
         if i < 3:
             b.append(arrow(170, y + 84, 170, y + 104))
     # the link stops by itself

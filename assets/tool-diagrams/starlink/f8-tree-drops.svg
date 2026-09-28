@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 272" width="700" height="272" role="img" aria-label="A tree hides part of the sky, so each satellite that passes behind it causes a short drop">
 <path d="M350 200 L170 80 A216 216 0 0 1 530 80 Z" fill="rgba(162,204,58,0.08)" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M350 200 L475 24 A216 216 0 0 1 527 76 Z" fill="#9C9C9C" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M350 200 L475 24 A216 216 0 0 1 530 80 Z" fill="#9C9C9C" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="434" y="145" width="12" height="62" rx="0" fill="#E0A23A"/>
 <circle cx="440" cy="125" r="30" fill="#A2CC3A"/>
 <path d="M200 70 Q350 -10 520 62" fill="none" stroke="#E5E5E5" stroke-width="1.5" stroke-dasharray="3 5" stroke-linecap="round" stroke-linejoin="round"/>

@@ -146,6 +146,29 @@ def satellite(cx, cy, span=44, body=(20, 16), panel_h=10):
     ]
 
 
+def dish(foot, center, target, w, h, fill=T, mount=M, reach=4):
+    """A flat panel on a short mount, square to its beam (Keith, 2026-09-27:
+    "the Starlink thick line to tilt TOWARD the satellite").
+
+    [foot] is where the mount meets the roof, [center] the middle of the
+    panel, [target] where the beam points. The panel is rotated 90 degrees
+    from the beam, so its face looks along it, and the beam leaves from the
+    middle of the panel. Returns (marks, beam_start); the caller draws the
+    beam from beam_start so it never starts inside the mount or the roof.
+    """
+    cx, cy = center
+    ang = math.degrees(math.atan2(target[1] - cy, target[0] - cx))
+    rot = round(ang + 90, 1)
+    marks = [
+        line(foot[0], foot[1], cx, cy, stroke=mount, sw=2),
+        f'<rect x="{cx - w / 2}" y="{cy - h / 2}" width="{w}" height="{h}" rx="1" '
+        f'fill="{fill}" transform="rotate({rot} {cx} {cy})"/>',
+    ]
+    r = math.radians(ang)
+    start = (round(cx + reach * math.cos(r), 1), round(cy + reach * math.sin(r), 1))
+    return marks, start
+
+
 def house(x, y, w, h, roof, stroke=M, fill='none', sw=2):
     """A house outline, (x, y) the bottom-left corner."""
     return path(
@@ -163,15 +186,17 @@ def cover():
     b += satellite(360, 60, span=52)
     # house and dish
     b.append(house(250, 222, 56, 26, 20, stroke=T, sw=2))
-    b.append(
-        '<rect x="286" y="170" width="16" height="4" rx="1" fill="#E5E5E5" '
-        'transform="rotate(-20 294 172)"/>'
-    )
+    # Dish on a short mount above the roof (the print's (288,182) foot and
+    # (290,170) panel), square to its beam.
+    marks, (bx, by) = dish((288, 182), (290, 170), (352, 72), 20, 4, fill=T, mount=T)
+    b += marks
     # gateway domes
     b.append(path('M458 212 A14 14 0 0 1 482 212 Z', stroke=T, sw=2))
     b.append(path('M480 214 A14 14 0 0 1 504 214 Z', stroke=T, sw=2))
-    b.append(path('M296 168 L352 72', stroke=L, sw=3, dash='6 6'))
-    b.append(path('M368 72 L478 198', stroke=L, sw=3, dash='6 6'))
+    b.append(path(f'M{bx} {by} L352 72', stroke=L, sw=3, dash='6 6'))
+    # Stops short of the domes (print: ends at (460,175)), so the line never
+    # runs into the gateway it points at.
+    b.append(path('M368 72 L460 177', stroke=L, sw=3, dash='6 6'))
     b.append(text(308, 122, 'your dish', size=16, fill=T, anchor='end'))
     b.append(text(432, 122, 'a gateway', size=16, fill=T))
     b.append(text(360, 24, 'about 480 km up', size=16, fill=T, anchor='middle'))
@@ -246,7 +271,8 @@ def f2():
     b.append(line(212, 164, kx(400), ay + 14, stroke=L, sw=1.5))
     b.append(text(206, 164, 'Starlink: 340 to 535 km,', size=15, fill=L, weight=600, anchor='end'))
     b.append(text(206, 184, 'main shell 480 km', size=15, fill=L, weight=600, anchor='end'))
-    b.append(line(kx(483), ay + 14, kx(483), 212, stroke=W, sw=1.5))
+    # Starts below the band, clear of the main-shell tick at 480 km.
+    b.append(line(kx(483), ay + 22, kx(483), 212, stroke=W, sw=1.5))
     b.append(text(kx(483) + 8, 212, 'Hubble, 483 km (NASA, June 2026)', size=15, fill=T))
     return svg(700, 228, 'Heights from 0 to 1,300 km: Space Station, Starlink, Hubble, Amazon Leo, Iridium, OneWeb', b)
 
@@ -259,10 +285,10 @@ def f3():
     b.append(title(270, 26, 'Satellite, about 480 km up', anchor='middle', size=16))
     # house and dish
     b.append(house(40, 232, 80, 32, 28, stroke=M))
-    b.append(
-        '<rect x="88" y="166" width="22" height="5" rx="1" fill="#E5E5E5" '
-        'transform="rotate(-25 99 169)"/>'
-    )
+    # Dish on a short mount (print: foot (98,184), panel (100,163)), square to
+    # the up-link arrow.
+    marks, (ux, uy) = dish((98, 184), (100, 163), (250, 71), 24, 5)
+    b += marks
     b.append(text(80, 254, 'Your dish', size=14, fill=T, anchor='middle'))
     # gateway
     b.append(path('M388 232 A22 22 0 0 1 432 232 Z', stroke=M, sw=2))
@@ -277,8 +303,9 @@ def f3():
         b.append(circle(ccx, ccy, r, fill=P))
     b.append(title(660, 140, 'Internet', anchor='middle', size=14))
     # links
-    b.append(arrow(106, 170, 250, 74, color=L, sw=3))
-    b.append(arrow(290, 74, 420, 206, color=L, sw=3))
+    b.append(arrow(ux, uy, 250, 71, color=L, sw=3))
+    # Ends about 30 px above the dome (print: (398,178)), not on it.
+    b.append(arrow(290, 74, 398, 178, color=L, sw=3))
     b.append(line(478, 222, 530, 222, stroke=M, sw=3, dash='3 5'))
     b.append(line(598, 208, 636, 164, stroke=M, sw=3, dash='3 5'))
     b.append(text(152, 104, '1. Up to', size=14, fill=L, anchor='end'))
@@ -293,8 +320,10 @@ def f3():
 # To scale on the top chart: 0.7167 px per ms (0 at 140, 600 ms at 570).
 def f4():
     b = []
+    # Short ticks under the axis labels, not full-height gridlines: a
+    # gridline ran through the Starlink label and the geostationary bar.
     for x, lab in ((140, '0 ms'), (355, '300 ms'), (570, '600 ms')):
-        b.append(line(x, 26, x, 124, stroke=P, sw=1.5))
+        b.append(line(x, 23, x, 31, stroke=M, sw=1.5))
         b.append(text(x, 14, lab, size=13, fill=M, anchor='middle'))
     b.append(text(130, 50, 'Starlink', size=14, fill=T, anchor='end'))
     b.append(rect(140, 38, 18, 24, fill=L))
@@ -336,7 +365,7 @@ def f5():
     # renderer, whatever the font's digit widths.
     b.append(title(569, 104, '110', anchor='end', size=15))
     b.append(circle(573.5, 97, 2.6, stroke=T, sw=1.6))
-    b.append(title(578, 104, 'field of view', size=15))
+    b.append(title(582, 104, 'field of view', size=15))
     b.append(text(540, 124, 'the part of the sky', size=14, fill=M))
     b.append(text(540, 142, 'the dish can use', size=14, fill=M))
     b.append(text(214, 112, 'The beam swings', size=14, fill=M, anchor='end'))
@@ -374,7 +403,9 @@ def f7():
     b.append(line(350, 8, 350, 242, stroke=P, sw=2))
     for cx in (175, 525):
         b += satellite(cx, 48, span=30, body=(16, 12), panel_h=8)
-        b.append(path(f'M{cx} 58 L{cx - 95} 150 L{cx + 95} 150 Z', stroke=None, fill=L, opacity=0.15))
+        # Cone base sits above the roofs (roof peaks at y 149), so the wash
+        # never covers a house.
+        b.append(path(f'M{cx} 58 L{cx - 89} 140 L{cx + 89} 140 Z', stroke=None, fill=L, opacity=0.15))
     # left: 2 of 6 homes online (filled); right: all 6 online
     left = [(90, False), (120, True), (150, False), (180, False), (210, False), (240, True)]
     for x, on in left:
@@ -394,7 +425,9 @@ def f7():
 def f8():
     b = []
     b.append(path('M350 200 L170 80 A216 216 0 0 1 530 80 Z', stroke=None, fill=WASH))
-    b.append(path('M350 200 L475 24 A216 216 0 0 1 527 76 Z', stroke=None, fill=M, opacity=0.35))
+    # The blocked wedge's edge meets the end of the sky arc (530,80), so no
+    # sliver of clear sky shows outside it.
+    b.append(path('M350 200 L475 24 A216 216 0 0 1 530 80 Z', stroke=None, fill=M, opacity=0.35))
     # tree
     b.append(rect(434, 145, 12, 62, fill=W))
     b.append(circle(440, 125, 30, fill=L))
@@ -422,14 +455,19 @@ def f8():
 def f9():
     b = []
     b.append(path('M60 200 V90 L200 20 L340 90 V200 Z', stroke=M, sw=2))
-    b.append(
-        '<rect x="230" y="24" width="30" height="6" rx="1" fill="#E5E5E5" '
-        'transform="rotate(-27 245 27)"/>'
-    )
-    b.append(line(254, 18, 284, 0, stroke=L, sw=4))
-    b.append(path('M244 36 V150 H150', stroke=M, sw=2))
+    # Dish on a short mount (print: foot (248,45), panel (250,26)), square to
+    # the Link 1 beam.
+    marks, (bx, by) = dish((248, 45), (250, 26), (286, 2), 26, 6)
+    b += marks
+    b.append(line(bx, by, 286, 2, stroke=L, sw=4))
+    # The cable drops from the mount, crosses ABOVE the Wi-Fi arcs and enters
+    # the top of the router, so it never runs through the arcs.
+    b.append(path('M248 45 V110 H130 V140', stroke=M, sw=2))
     b.append(rect(110, 140, 40, 22, rx=4, fill=P, stroke=T, sw=1.5))
-    b.append(text(128, 188, 'Starlink router', size=14, fill=T, anchor='middle'))
+    # Under the router, inside the wall and below the lowest arc end
+    # (172,180). The print right-aligns it at 11.5 px; at the app's 14 px a
+    # right-aligned label would touch the wall at x 60.
+    b.append(text(70, 185, 'Starlink router', size=14, fill=T))
     b.append(path('M156 140 q12 12 0 24 M164 132 q20 20 0 40 M172 124 q28 28 0 56', stroke=T, sw=2))
     b.append(rect(280, 128, 14, 24, rx=3, stroke=T, sw=2))
     b.append(text(287, 170, 'phone in the', size=14, fill=T, anchor='middle'))

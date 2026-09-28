@@ -129,14 +129,20 @@ def phone(cx, cy, w=44, h=80, stroke=T):
 
 
 def tower(cx, cy, s=1.0, arcs=2):
+    # A lattice mast, as the print guide now draws it: two legs, a center
+    # mast, X bracing and a base. Legs and a mast alone read as the letter A.
+    def pt(x, y):
+        return f'{round(cx + x * s, 2)} {round(cy + y * s, 2)}'
+
+    lattice = (
+        f'M{pt(0, -24)}L{pt(-13, 22)}M{pt(0, -24)}L{pt(13, 22)}'
+        f'M{pt(0, -24)}V{round(cy + 22 * s, 2)}'
+        f'M{pt(-5.7, -4)}L{pt(9.6, 10)}M{pt(5.7, -4)}L{pt(-9.6, 10)}'
+        f'M{pt(-9.6, 10)}L{pt(13, 22)}M{pt(9.6, 10)}L{pt(-13, 22)}'
+        f'M{pt(-17, 22)}H{round(cx + 17 * s, 2)}'
+    )
     b = [
-        path(
-            f'M{cx} {cy - 24 * s}L{cx - 13 * s} {cy + 22 * s}'
-            f'M{cx} {cy - 24 * s}L{cx + 13 * s} {cy + 22 * s}'
-            # A center mast, not a crossbar: a crossbar reads as the letter A.
-            f'M{cx} {cy - 24 * s}V{cy + 22 * s}',
-            stroke=T, sw=2.5,
-        ),
+        path(lattice, stroke=T, sw=2.2),
         path(f'M{cx - 12 * s} {cy - 29 * s}a{16 * s} {16 * s} 0 0 1 {24 * s} 0',
              stroke=M, sw=2.5),
     ]
@@ -163,21 +169,79 @@ def laptop(cx, cy, stroke=T):
     ]
 
 
-def carrier_box(x, y, w, h, lines, size=14):
+def carrier_box(x, y, w, h, lines, size=14, gap=None):
+    # [gap] is the baseline-to-baseline step; the print guide's own spacing
+    # (20 on the cover, 16 in Figure 5) keeps the two lines from touching.
+    gap = gap if gap is not None else size + 4
     b = [rect(x, y, w, h, rx=10, stroke=T, sw=2, fill=P)]
     cx = x + w / 2
-    top = y + h / 2 - (len(lines) - 1) * (size + 2) / 2 + size * 0.35
+    top = y + h / 2 - (len(lines) - 1) * gap / 2 + size * 0.35
     for i, s in enumerate(lines):
-        b.append(title(cx, round(top + i * (size + 2), 1), s, size=size, anchor='middle'))
+        b.append(title(cx, round(top + i * gap, 1), s, size=size, anchor='middle'))
     return b
+
+
+def _bez(p, t):
+    (x0, y0), (x1, y1), (x2, y2), (x3, y3) = p
+    u = 1 - t
+    return (u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,
+            u ** 3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y3)
+
+
+def _sub(p, t0, t1):
+    """The exact piece of cubic [p] between t0 and t1 (de Casteljau)."""
+    def split(q, t):
+        (a, b_, c, d) = q
+        lerp = lambda m, n: (m[0] + (n[0] - m[0]) * t, m[1] + (n[1] - m[1]) * t)
+        ab, bc, cd = lerp(a, b_), lerp(b_, c), lerp(c, d)
+        abc, bcd = lerp(ab, bc), lerp(bc, cd)
+        m = lerp(abc, bcd)
+        return (a, ab, abc, m), (m, bcd, cd, d)
+    _, right = split(p, t0)
+    left, _ = split(right, (t1 - t0) / (1 - t0) if t0 < 1 else 0)
+    return left
+
+
+def broken_curve(p, holes, **kw):
+    """Cubic [p] drawn in pieces, with a gap wherever it passes through one
+    of [holes] (x0, y0, x1, y1). The app has no page-colored fill to knock a
+    line out behind an icon (the card changes color with the theme), so the
+    curve itself is split, exactly, around each icon."""
+    n = 2000
+    inside = []
+    for i in range(n + 1):
+        x, y = _bez(p, i / n)
+        inside.append(any(h[0] <= x <= h[2] and h[1] <= y <= h[3] for h in holes))
+    runs, start = [], None
+    for i, flag in enumerate(inside):
+        if not flag and start is None:
+            start = i
+        if (flag or i == n) and start is not None:
+            end = i if not flag else i - 1
+            if end > start:
+                runs.append((start / n, end / n))
+            start = None
+    out = []
+    for t0, t1 in runs:
+        q = _sub(p, t0, t1)
+        f = lambda v: f'{round(v[0], 1)} {round(v[1], 1)}'
+        out.append(path(f'M{f(q[0])} C{f(q[1])} {f(q[2])} {f(q[3])}', **kw))
+    return out
 
 
 # ── Cover art: two roads to the same phone company ──────────────────────────
 def cover():
     b = []
-    b.append(path('M110 125 C230 40 420 40 560 110', stroke=M, sw=3, dash='2 8'))
-    b.append(path('M110 135 C230 220 420 220 560 140', stroke=L, sw=10, opacity=0.3))
-    b.append(path('M110 135 C230 220 420 220 560 140', stroke=L, sw=3))
+    # Both roads stop short of the phone-company box (it starts at x 556) and
+    # break around the tower and the Wi-Fi symbol instead of running through
+    # them (the print guide's knock-out boxes, as gaps).
+    tower_hole = (298, 10, 362, 82)
+    wifi_hole = (294, 174, 366, 226)
+    top = ((110, 125), (230, 40), (420, 40), (548, 104))
+    low = ((110, 135), (230, 220), (420, 220), (548, 146))
+    b += broken_curve(top, [tower_hole], stroke=M, sw=3, dash='2 8')
+    b += broken_curve(low, [wifi_hole], stroke=L, sw=10, opacity=0.3)
+    b += broken_curve(low, [wifi_hole], stroke=L, sw=3)
     b += phone(80, 130)
     # handset glyph on the phone's screen
     b.append(path(
@@ -189,7 +253,7 @@ def cover():
     b.append(text(330, 98, 'Cell tower', size=15, fill=T, anchor='middle'))
     b += wifi(330, 200, s=1.0)
     b.append(text(330, 240, 'Wi-Fi and the internet', size=15, fill=T, anchor='middle'))
-    b += carrier_box(556, 87, 88, 76, ['Your phone', 'company'])
+    b += carrier_box(556, 87, 88, 76, ['Your phone', 'company'], gap=20)
     b.append(text(600, 187, 'Same call, same number', size=15, fill=T, anchor='middle'))
     return svg(700, 250, 'Two roads, the cell tower and Wi-Fi with the internet, '
                'from your phone to your phone company', b)
@@ -222,7 +286,12 @@ def f1():
     b.append(rect(445, 218, 20, 16, rx=3, stroke=None, fill=L))
     b.append(path('M449 218v-5a6 6 0 0 1 12 0v5', stroke=L, sw=2.5))
     b.append(text(455, 262, 'sealed to the carrier', size=11.5, anchor='middle'))
-    b.append(arrow(540, 223, 560, 185, color=L))
+    # Leaves the tunnel's right end and turns up, stopping below the carrier
+    # box (bottom edge y 205) with a clear gap, instead of landing on its side.
+    # The 18 px between the tunnel's center line and the box leaves room for
+    # the head alone, so the turn sits under it; its tip stops at y 213.
+    b.append(path('M540 223 H610', stroke=L, sw=2.5))
+    b.append(arrow(610, 224, 610, 213, color=L, head=10))
     # carrier
     b.append(rect(560, 95, 190, 110, rx=12, stroke=T, sw=2, fill=P))
     b.append(title(655, 130, 'Your carrier', size=14, anchor='middle'))
@@ -329,7 +398,7 @@ def f5():
     b.append(title(30, 40, '1. Calls from iPhone (relay)', size=14))
     b += laptop(85, 130)
     b.append(text(85, 188, 'Mac or iPad', size=12, fill=T, anchor='middle'))
-    b.append(arrow(140, 130, 200, 130, color=L))
+    b.append(arrow(146, 130, 200, 130, color=L))
     b.append(text(170, 120, 'same Wi-Fi', size=11, fill=L, anchor='middle'))
     b += phone(228, 130, w=34, h=64)
     b.append(text(228, 182, 'iPhone', size=12, fill=T, anchor='middle'))
@@ -346,10 +415,12 @@ def f5():
     b.append(title(410, 40, '2. Wi-Fi Calling on the device itself', size=14))
     b += laptop(460, 130)
     b.append(text(460, 188, 'Mac in a hotel', size=12, fill=T, anchor='middle'))
-    b.append(path('M515 130 H630', stroke=L, sw=6, opacity=0.4))
-    b.append(arrow(515, 130, 640, 130, color=L))
+    # The halo ends before the arrowhead, and the head stops 15 px short of
+    # the carrier box (print guide: 630 against a box at 645).
+    b.append(path('M522 130 H612', stroke=L, sw=6, opacity=0.4))
+    b.append(arrow(522, 130, 630, 130, color=L))
     b.append(text(578, 118, 'internet tunnel', size=11, fill=L, anchor='middle'))
-    b += carrier_box(645, 105, 90, 50, ['Your', 'carrier'], size=12)
+    b += carrier_box(645, 105, 90, 50, ['Your', 'carrier'], size=12, gap=16)
     for i, s in enumerate([
         'The iPhone can be off, or at home. The call goes',
         'straight to the carrier. Only some carriers offer',

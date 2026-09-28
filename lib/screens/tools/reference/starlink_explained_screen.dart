@@ -137,7 +137,7 @@ const List<Widget> _sections = <Widget>[
         _CardData(
           'Shared, so it varies',
           'Everyone nearby shares the same satellite capacity. Busy evenings '
-              'are slower than quiet mornings, and your plan decides who goes '
+              'are slower than quiet mornings, and your plan affects who goes '
               'first.',
         ),
         _CardData(
