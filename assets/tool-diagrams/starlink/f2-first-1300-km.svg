@@ -22,6 +22,6 @@
 <line x1="212" y1="164" x2="230.8" y2="124" stroke="#A2CC3A" stroke-width="1.5" stroke-linecap="round"/>
 <text x="206" y="169.2" font-family="IBM Plex Sans" font-size="15" fill="#A2CC3A" text-anchor="end" font-weight="600">Starlink: 340 to 535 km,</text>
 <text x="206" y="189.2" font-family="IBM Plex Sans" font-size="15" fill="#A2CC3A" text-anchor="end" font-weight="600">main shell 480 km</text>
-<line x1="270.3" y1="124" x2="270.3" y2="212" stroke="#E0A23A" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="270.3" y1="132" x2="270.3" y2="212" stroke="#E0A23A" stroke-width="1.5" stroke-linecap="round"/>
 <text x="278.3" y="217.2" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="start" font-weight="400">Hubble, 483 km (NASA, June 2026)</text>
 </svg>

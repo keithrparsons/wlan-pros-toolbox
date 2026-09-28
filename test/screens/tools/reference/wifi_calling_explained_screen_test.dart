@@ -5,8 +5,10 @@
 //      `wifi-calling-explained` id (Wi-Fi Classroom, Guided Lessons shelf);
 //  (b) the lesson renders its verbatim copy (title, first section, every
 //      section header) in BOTH dark and light;
-//  (c) the two "Keith's note" boxes of the print guide are NOT in the lesson
-//      (not yet approved by Keith), and no "page N" pointer survives;
+//  (c) the two "Keith's note" boxes of the print guide ARE in the lesson,
+//      verbatim (Keith approved them, 2026-09-27), the router checklist's
+//      hand-over step points at the first one by section name, and no
+//      "page N" pointer survives;
 //  (d) the emergency table's verdicts carry an icon, so color is never the
 //      only cue, and the tables render their rows verbatim;
 //  (e) the figure resolver degrades gracefully: a slug missing from the bundle
@@ -196,18 +198,53 @@ void main() {
   }
 
   group('screen content', () {
-    testWidgets("the unapproved Keith's notes are left out, and no page "
-        'pointer survives', (tester) async {
+    testWidgets("Keith's two notes read verbatim, the hand-over step points "
+        'at the first by section, and no page pointer survives', (
+      tester,
+    ) async {
       await tester.pumpWidget(_harness(light: false));
       await tester.pump();
       final String all = await _allText(tester);
       // Sanity: the collector really walked the whole lesson.
       expect(all, contains('Where these facts come from'));
       expect(all, contains('About this guide'));
-      expect(all, isNot(contains("Keith's note")));
-      expect(all, isNot(contains("the drop that isn't your carrier's fault")));
-      expect(all, isNot(contains('the emergency trap')));
-      expect(all, isNot(contains('It is usually the Wi-Fi.')));
+      // Print guide page 5, verbatim.
+      expect(
+        all,
+        contains("Keith's note: the drop that isn't your carrier's fault"),
+      );
+      expect(
+        all,
+        contains(
+          'Walking from room to room inside a house is a different thing. '
+          'Moving between two Wi-Fi access points, or two mesh units, is a '
+          'Wi-Fi hand-over, and the carrier never sees it. If that hand-over '
+          'is slow, the tunnel stalls and the call breaks up or drops, and '
+          'most people blame the carrier. It is usually the Wi-Fi.',
+        ),
+      );
+      // Print guide page 8, verbatim.
+      expect(all, contains("Keith's note: the emergency trap"));
+      expect(
+        all,
+        contains(
+          'Your carrier holds one registered emergency address for your line, '
+          'usually your home. A Mac or a Wi-Fi-only iPad has no cell radio, so '
+          'an emergency call from it goes over Wi-Fi Calling. Apple says your '
+          "device's location may be used, and that the registered address "
+          "helps emergency services find you. If the location doesn't get "
+          'through, the dispatcher may see your home address while you are in '
+          'a hotel across the country. Say where you are.',
+        ),
+      );
+      // The print's "(page 5)" pointer, restored as a section name.
+      expect(
+        all,
+        contains(
+          'Moving between access points or mesh units should be fast (the '
+          'section Walking out the door mid-call).',
+        ),
+      );
       expect(RegExp(r'\b[Pp]age \d').hasMatch(all), isFalse);
     });
 

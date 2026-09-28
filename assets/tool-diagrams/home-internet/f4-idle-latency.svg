@@ -20,7 +20,6 @@
 <rect x="237.5" y="138" width="122.5" height="18" rx="3" fill="#E5E5E5"/>
 <text x="367.0" y="152" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">25 to 60 ms (Starlink's figure)</text>
 <text x="10" y="189" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="600">High-orbit satellite</text>
-<line x1="570.0" y1="174" x2="570.0" y2="198" stroke="#E5E5E5" stroke-width="2" stroke-linecap="butt" stroke-dasharray="3 3"/>
 <rect x="570.0" y="176" width="75.0" height="18" rx="3" fill="#9C9C9C"/>
 <text x="562.0" y="190" font-family="IBM Plex Sans" font-size="11.5" fill="#E5E5E5" text-anchor="end" font-weight="400">physics alone: about 480 ms</text>
 <text x="607.5" y="170" font-family="IBM Plex Sans" font-size="11.5" fill="#E5E5E5" text-anchor="middle" font-weight="400">measured: about 680 ms</text>

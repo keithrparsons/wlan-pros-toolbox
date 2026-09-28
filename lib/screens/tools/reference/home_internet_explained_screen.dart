@@ -22,7 +22,8 @@
 //    assets/tool-diagrams/home-internet/ (tool/home_internet_diagrams.py) with
 //    every label string unchanged. The print guide's blue and amber are not on
 //    the GL-003 §8.20.7 allow-list, so Figure 5's upload bars are gray and its
-//    caption says "(gray)" where the print guide says "(blue)";
+//    caption names no color at all: the arrow legend in the figure says which
+//    bar is which (Keith, 2026-09-27: "rely on the arrow legend");
 //  - tables become stacks of cards so a phone can read them, and the
 //    "Before you sign up" printed boxes become real checkboxes (not
 //    persisted).
@@ -419,13 +420,15 @@ const List<Widget> _sections = <Widget>[
       _Figure(
         slug: 'f3-orbit-heights',
         alt:
-            "Earth's surface at the left. Starlink, about 480 km (300 miles). "
+            "Earth's surface at the left; ticks mark each height. Starlink, "
+            'about 480 km (300 miles). '
             'Amazon Leo, 590 to 630 km (370 to 390 miles). GPS, 20,200 km. '
             'High-orbit satellite, 35,786 km (22,236 miles), at the far right.',
         caption:
             '**Figure 3.** Height above the Earth, drawn to scale. The '
-            'low-orbit satellites sit so close to the surface that their dots '
-            'overlap. GPS is shown for reference.',
+            'low-orbit satellites sit so close to the surface that their ticks '
+            'almost touch, so their dots are drawn one above the other. GPS is '
+            'shown for reference.',
       ),
     ],
   ),
@@ -496,7 +499,7 @@ const List<Widget> _sections = <Widget>[
             'balance, not exact speeds. Fiber: often equal. Cable: upload much '
             'smaller. 5G home: about a tenth. DSL: low both ways.',
         caption:
-            '**Figure 5.** Download (green) and upload (gray). The 5G ratio '
+            '**Figure 5.** Download and upload. The 5G ratio '
             "comes from one carrier's published typical speeds: 133 to 415 "
             'Mbps down, 12 to 55 Mbps up.',
       ),

@@ -1,11 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" width="700" height="250" role="img" aria-label="Two roads, the cell tower and Wi-Fi with the internet, from your phone to your phone company">
-<path d="M110 125 C230 40 420 40 560 110" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M110 135 C230 220 420 220 560 140" fill="none" stroke="#A2CC3A" stroke-width="10" stroke-opacity="0.3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M110 135 C230 220 420 220 560 140" fill="none" stroke="#A2CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M110.0 125.0 C162.8 87.6 229.2 66.7 297.8 60.4" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M362.0 58.7 C428.5 61.3 493.8 76.9 548.0 104.0" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M110.0 135.0 C161.8 171.7 226.6 192.5 293.8 198.4" fill="none" stroke="#A2CC3A" stroke-width="10" stroke-opacity="0.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M366.0 199.1 C431.1 194.7 494.9 176.7 548.0 146.0" fill="none" stroke="#A2CC3A" stroke-width="10" stroke-opacity="0.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M110.0 135.0 C161.8 171.7 226.6 192.5 293.8 198.4" fill="none" stroke="#A2CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M366.0 199.1 C431.1 194.7 494.9 176.7 548.0 146.0" fill="none" stroke="#A2CC3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="58.0" y="90.0" width="44" height="80" rx="8" fill="none" stroke="#E5E5E5" stroke-width="2.5"/>
 <rect x="63.0" y="97.0" width="34" height="64" rx="4" fill="#3A3A3A"/>
 <path d="M72 124c4 6 10 12 16 15l4-4c1-1 3-1 4 0l5 4c1 1 1 3 0 4l-3 3c-3 3-10 1-18-7s-10-15-7-18l3-3c1-1 3-1 4 0l4 5c1 1 1 3 0 4z" fill="#A2CC3A" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M330 28.0L317.0 74.0M330 28.0L343.0 74.0M330 28.0V74.0" fill="none" stroke="#E5E5E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M330.0 28.0L317.0 74.0M330.0 28.0L343.0 74.0M330.0 28.0V74.0M324.3 48.0L339.6 62.0M335.7 48.0L320.4 62.0M320.4 62.0L343.0 74.0M339.6 62.0L317.0 74.0M313.0 74.0H347.0" fill="none" stroke="#E5E5E5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M318.0 23.0a16.0 16.0 0 0 1 24.0 0" fill="none" stroke="#9C9C9C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M311.0 17.0a26.0 26.0 0 0 1 38.0 0" fill="none" stroke="#9C9C9C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="330" y="98" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="400">Cell tower</text>
@@ -15,7 +18,7 @@
 <circle cx="330" cy="212.0" r="3.0" fill="#A2CC3A"/>
 <text x="330" y="240" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="400">Wi-Fi and the internet</text>
 <rect x="556" y="87" width="88" height="76" rx="10" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="2"/>
-<text x="600.0" y="121.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="600">Your phone</text>
-<text x="600.0" y="137.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="600">company</text>
+<text x="600.0" y="119.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="600">Your phone</text>
+<text x="600.0" y="139.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="600">company</text>
 <text x="600" y="187" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="400">Same call, same number</text>
 </svg>

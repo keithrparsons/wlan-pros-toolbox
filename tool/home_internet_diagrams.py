@@ -28,9 +28,11 @@ Rules this file keeps (GL-003 §11.7, §11.8, and the flutter_svg limits):
     ignores dominant-baseline, so the print guide's baselines carry over).
   - Figure 3 stays to scale (618 px for 35,786 km) and Figure 4 keeps the
     print guide's two axes (3.5 px/ms for 0 to 100 ms, 0.375 px/ms for 400 to
-    800 ms). One correction: the print guide's high-orbit bar ran to 760 ms on
-    its own axis; here it ends at 680 ms, the measured figure it is labeled
-    with.
+    800 ms). The high-orbit bar ends at 680 ms, the measured figure it is
+    labeled with (the print guide now does the same).
+  - No line crosses an icon or a label (Keith, 2026-09-27: "not have other
+    icons or bit's being covered by other lines"). Lines stop short of the
+    box they point at and enter the house through a wall opening.
 
 Usage: python3 tool/home_internet_diagrams.py
        (writes assets/tool-diagrams/home-internet/)
@@ -143,13 +145,16 @@ def wifi_arcs(cx, top, stroke=L):
 
 # ── Cover art: five roads into one house ────────────────────────────────────
 def cover():
-    b = [path('M0 50H700M0 100H700M0 150H700M0 200H700', stroke=P, sw=1)]
+    # No background rules: they ran through the house. The lines come in
+    # through an opening in the left wall and stop short of the provider's
+    # box, which now sits inside the house (print guide, 2026-09-27 fix).
+    b = []
     curves = [
-        'M20 40 C220 40 300 120 470 130',
-        'M20 90 C200 90 300 130 470 138',
-        'M20 140 C200 140 300 142 470 146',
-        'M20 190 C200 190 300 160 470 154',
-        'M20 235 C200 235 320 175 470 162',
+        'M20 40 C220 40 300 120 490 151',
+        'M20 90 C200 90 300 130 490 161.5',
+        'M20 140 C200 140 300 142 490 172',
+        'M20 190 C200 190 300 160 490 182.5',
+        'M20 235 C200 235 320 175 490 193',
     ]
     for d, (stroke, sw, dash) in zip(curves, LINES):
         b.append(path(d, stroke=stroke, sw=sw, dash=dash))
@@ -157,8 +162,11 @@ def cover():
     ox, oy = 470, 60
     b.append(path(f'M{ox} {oy + 70} L{ox + 90} {oy + 10} L{ox + 180} {oy + 70} Z',
                   stroke=T, sw=3))
-    b.append(rect(ox + 14, oy + 70, 152, 110, rx=0, stroke=T, sw=3))
-    b.append(rect(ox + 8, oy + 64, 40, 30, rx=5, stroke=T, sw=2, fill=P))
+    # Walls with an opening in the left wall (y 142 to 202) for the lines.
+    b.append(path(f'M{ox + 14} {oy + 82} V{oy + 70} H{ox + 166} V{oy + 180} '
+                  f'H{ox + 14} V{oy + 142}', stroke=T, sw=3))
+    # The provider's box, inside the house.
+    b.append(rect(ox + 26, oy + 88, 40, 48, rx=5, stroke=T, sw=2, fill=P))
     b.append(rect(ox + 100, oy + 110, 44, 26, rx=5, stroke=L, sw=2.5, fill=WASH))
     b.append(path(f'M{ox + 108} {oy + 100} a16 16 0 0 1 28 0', stroke=L, sw=3))
     b.append(path(f'M{ox + 102} {oy + 92} a26 26 0 0 1 40 0', stroke=L, sw=3))
@@ -180,19 +188,22 @@ def f1():
         y = 44 + 50 * i
         b.append(bold(10, y, name))
         b.append(text(10, y + 16, sub, size=11.5))
+    # Each line comes in through the wall opening and ends at x 419, short of
+    # the provider's box at x 425.
     curves = [
-        'M160 50 C280 50 320 150 420 165',
-        'M160 100 C280 100 320 160 420 170',
-        'M160 150 C280 150 320 172 420 175',
-        'M160 200 C280 200 320 184 420 180',
-        'M160 250 C280 250 320 196 420 185',
-        'M160 300 C280 300 320 208 420 190',
+        'M160 50 C280 50 320 150 419 158',
+        'M160 100 C280 100 320 160 419 165',
+        'M160 150 C280 150 320 172 419 172',
+        'M160 200 C280 200 320 184 419 179',
+        'M160 250 C280 250 320 196 419 186',
+        'M160 300 C280 300 320 208 419 193',
     ]
     for d, (stroke, sw, dash) in zip(curves, LINES):
         b.append(path(d, stroke=stroke, sw=sw, dash=dash))
     # The house.
     b.append(path('M400 110 L530 40 L660 110', stroke=T, sw=3))
-    b.append(rect(410, 110, 240, 190, rx=0, stroke=T, sw=3))
+    # Walls with an opening in the left wall (y 150 to 202) for the lines.
+    b.append(path('M410 150 V110 H650 V300 H410 V202', stroke=T, sw=3))
     # Provider's box (filled panel) and router (lime).
     b.append(rect(425, 152, 96, 46, rx=6, stroke=T, sw=2, fill=P))
     b.append(bold(473, 172, "Provider's", size=12, anchor='middle'))
@@ -203,7 +214,9 @@ def f1():
     b.append(path('M580 142 a18 18 0 0 1 30 0', stroke=L, sw=3))
     b.append(path('M572 132 a30 30 0 0 1 46 0', stroke=L, sw=3))
     # The handoff line.
-    b.append(line(537, 120, 537, 292, stroke=M, sw=1.5, dash='4 4', cap='butt'))
+    # Broken where it meets the box-to-router link, so it never crosses it.
+    b.append(line(537, 120, 537, 166, stroke=M, sw=1.5, dash='4 4', cap='butt'))
+    b.append(line(537, 184, 537, 292, stroke=M, sw=1.5, dash='4 4', cap='butt'))
     b.append(text(473, 232, 'The service', size=12, anchor='middle'))
     b.append(text(473, 248, 'you pay for', size=12, anchor='middle'))
     b.append(bold(595, 232, 'Your Wi-Fi', size=12, fill=L, anchor='middle'))
@@ -224,24 +237,25 @@ def f2():
 
     # Panel 1: fiber.
     b.append(bold(87, 28, 'Fiber', size=13, anchor='middle'))
-    b.append(line(87, 42, 87, 95, stroke=L, sw=4, cap='butt'))
+    b.append(line(87, 42, 87, 90, stroke=L, sw=4, cap='butt'))
     b.append(circle(87, 104, 9, stroke=T, sw=2))
     b.append(text(104, 98, 'splitter', size=10.5))
-    for hx in (30, 68, 106, 144):
-        b.append(line(87, 113, hx, 170, stroke=L, sw=2.5))
+    # Drops start below the splitter and stop above each roof.
+    for sx, ex, hx in ((85, 32, 30), (86, 69, 68), (88, 105, 106), (89, 142, 144)):
+        b.append(line(sx, 117, ex, 164, stroke=L, sw=2.5))
         b += small_house(hx, 180)
     b.append(text(87, 220, 'one strand split', size=11, anchor='middle'))
     b.append(text(87, 235, 'among a group of homes', size=11, anchor='middle'))
 
     # Panel 2: cable.
     b.append(bold(263, 28, 'Cable', size=13, anchor='middle'))
-    b.append(line(263, 42, 263, 92, stroke=L, sw=4, cap='butt'))
+    b.append(line(263, 42, 263, 87, stroke=L, sw=4, cap='butt'))
     b.append(rect(245, 92, 36, 22, rx=4, stroke=T, sw=2, fill=P))
     b.append(text(290, 108, 'node', size=10.5))
     b.append(line(200, 140, 326, 140, stroke=T, sw=3))
-    b.append(line(263, 114, 263, 140, stroke=T, sw=3, cap='butt'))
+    b.append(line(263, 118, 263, 140, stroke=T, sw=3, cap='butt'))
     for hx in (206, 244, 282, 320):
-        b.append(line(hx, 140, hx, 170, stroke=T, sw=2, cap='butt'))
+        b.append(line(hx, 140, hx, 164, stroke=T, sw=2, cap='butt'))
         b += small_house(hx, 180)
     b.append(text(263, 220, 'one coax line', size=11, anchor='middle'))
     b.append(text(263, 235, 'shared along the street', size=11, anchor='middle'))
@@ -249,9 +263,12 @@ def f2():
     # Panel 3: 5G home.
     b.append(bold(439, 28, '5G home', size=13, anchor='middle'))
     b.append(path('M439 50 L425 118 M439 50 L453 118 M430 92 H448', stroke=T, sw=2.5))
-    b.append(path('M427 52 a16 16 0 0 1 24 0', stroke=M, sw=2))
-    for tx in (380, 420, 460, 500):
-        b.append(line(439, 120, tx, 168, stroke=M, sw=2, dash='2 5'))
+    # Broadcast arc lifted clear of the tower's apex (y 50); drawn at y 52 it
+    # sat on the apex and the mast poked through it.
+    b.append(path('M427 46 a16 16 0 0 1 24 0', stroke=M, sw=2))
+    # Start below the tower's legs, stop above each roof and phone.
+    for sx, ex, ey in ((437, 384, 162), (438, 421, 163), (440, 459, 162), (441, 496, 163)):
+        b.append(line(sx, 124, ex, ey, stroke=M, sw=2, dash='2 5'))
     b += small_house(380, 180)
     b.append(rect(413, 170, 14, 24, rx=3, stroke=T, sw=2))
     b += small_house(460, 180)
@@ -261,8 +278,9 @@ def f2():
 
     # Panel 4: satellite.
     b.append(bold(614, 28, 'Satellite', size=13, anchor='middle'))
-    b.append(path('M614 60 L550 168 L678 168 Z', stroke=None, fill=WASH))
-    b.append(path('M614 60 L550 168 M614 60 L678 168', stroke=L, sw=1.5, dash='3 4'))
+    # The beam ends above the roofs (they peak at y 170).
+    b.append(path('M614 62 L552 162 L676 162 Z', stroke=None, fill=WASH))
+    b.append(path('M614 62 L552 162 M614 62 L676 162', stroke=L, sw=1.5, dash='3 4'))
     b.append(rect(602, 44, 24, 14, rx=2, stroke=T, sw=2, fill=P))
     b.append(rect(584, 47, 16, 8, rx=0, fill=M))
     b.append(rect(628, 47, 16, 8, rx=0, fill=M))
@@ -286,23 +304,29 @@ def f3():
 
     b = []
     b.append(rect(40, 70, 6, 60, rx=0, fill=L))
-    b.append(text(40, 150, "Earth's surface", size=11.5))
-    b.append(line(46, 100, 664, 100, stroke=P, sw=2, cap='butt'))
+    b.append(text(40, 150, "Earth's surface; ticks mark each height", size=11.5))
+    # The scale is a line below the dots, with a tick at each true height,
+    # so no dot sits on the line or on another dot.
+    b.append(line(46, 124, 664, 124, stroke=M, sw=1.5, cap='butt'))
+    for km in (480, 610, 20200):
+        b.append(line(at(km), 124, at(km), 130, stroke=M, sw=1.5, cap='butt'))
+    b.append(line(664, 124, 664, 130, stroke=M, sw=1.5, cap='butt'))
     # Low orbit: Starlink (~480 km) and Amazon Leo (590 to 630 km). At this
-    # scale they sit 8 and 11 px off the surface, so the dots overlap.
-    b.append(circle(at(480), 100, 5, stroke=T, sw=1.5, fill=L))
-    b.append(circle(at(610), 100, 5, stroke=T, sw=1.5, fill=M))
-    b.append(line(at(480) + 1, 94, 120, 40, stroke=M, sw=1))
-    b.append(bold(124, 36, 'Starlink, about 480 km (300 miles)', size=12.5))
-    b.append(line(at(610) + 1, 106, 120, 132, stroke=M, sw=1))
-    b.append(bold(124, 136, 'Amazon Leo, 590 to 630 km (370 to 390 miles)', size=12.5))
+    # scale their ticks are 2 px apart, so the dots are drawn one above the
+    # other, each over its own tick.
+    b.append(circle(at(480), 94, 4, stroke=T, sw=1.5, fill=L))
+    b.append(circle(at(610), 108, 4, stroke=T, sw=1.5, fill=M))
+    b.append(line(58, 90, 118, 40, stroke=M, sw=1))
+    b.append(bold(124, 40, 'Starlink, about 480 km (300 miles)', size=12.5))
+    b.append(line(61, 106, 118, 62, stroke=M, sw=1))
+    b.append(bold(124, 66, 'Amazon Leo, 590 to 630 km (370 to 390 miles)', size=12.5))
     # GPS, 20,200 km.
-    b.append(circle(at(20200), 100, 5, stroke=T, sw=1.5, fill=M))
-    b.append(text(at(20200), 84, 'GPS, 20,200 km', size=12.5, fill=T, anchor='middle'))
+    b.append(circle(at(20200), 101, 5, stroke=T, sw=1.5, fill=M))
+    b.append(text(at(20200), 88, 'GPS, 20,200 km', size=12.5, fill=T, anchor='middle'))
     # High orbit, 35,786 km.
-    b.append(circle(664, 100, 7, stroke=T, sw=2, fill=P))
-    b.append(bold(664, 80, 'High-orbit satellite', size=12.5, anchor='end'))
-    b.append(text(664, 124, '35,786 km (22,236 miles)', size=12.5, fill=T, anchor='end'))
+    b.append(circle(664, 101, 7, stroke=T, sw=2, fill=P))
+    b.append(bold(664, 72, 'High-orbit satellite', size=12.5, anchor='end'))
+    b.append(text(664, 88, '35,786 km (22,236 miles)', size=12.5, fill=T, anchor='end'))
     return svg(
         700, 170,
         'Height above the Earth to scale: low-orbit satellites near the '
@@ -344,7 +368,8 @@ def f4():
 
     b.append(bold(10, 189, 'High-orbit satellite', size=13))
     floor, measured = bx(480), bx(680)
-    b.append(line(floor, 174, floor, 198, stroke=T, sw=2, dash='3 3', cap='butt'))
+    # No dashed floor marker: it ran through the bar. The bar starts at the
+    # 480 ms floor and its label names it.
     b.append(rect(floor, 176, round(measured - floor, 1), 18, rx=3, fill=M))
     b.append(text(floor - 8, 190, 'physics alone: about 480 ms', size=11.5, fill=T, anchor='end'))
     b.append(text(round((floor + measured) / 2, 1), 170, 'measured: about 680 ms',
@@ -404,7 +429,9 @@ def f6():
     b.append(line(318, 120, 360, 120, stroke=T, sw=3, cap='butt'))
     b.append(rect(360, 98, 86, 44, rx=6, stroke=L, sw=2.5, fill=WASH))
     b.append(bold(403, 125, 'Router', size=13, anchor='middle'))
-    b.append(line(452, 120, 600, 120, stroke=L, sw=3, dash='2 7'))
+    # Starts past the Wi-Fi arcs (they reach x 508) and stops short of the
+    # phone, so it crosses neither.
+    b.append(line(516, 120, 598, 120, stroke=L, sw=3, dash='2 7'))
     b.append(path('M470 102 a14 14 0 0 1 0 36', stroke=L, sw=2.5))
     b.append(path('M484 94 a24 24 0 0 1 0 52', stroke=L, sw=2.5))
     b.append(text(545, 84, 'Wi-Fi, through walls', size=11.5, anchor='middle'))

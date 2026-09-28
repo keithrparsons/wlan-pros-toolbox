@@ -8,7 +8,11 @@
 <line x1="170" y1="202" x2="170.0" y2="212.0" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/><path d="M170.00 222.00 L165.00 212.00 L175.00 212.00 Z" fill="#9C9C9C"/>
 <rect x="10" y="226" width="320" height="80" rx="12" fill="rgba(162,204,58,0.08)" stroke="#A2CC3A" stroke-width="2"/>
 <text x="170" y="249.6" font-family="IBM Plex Sans" font-size="16" fill="#E5E5E5" text-anchor="middle" font-weight="600">Share Item Location</text>
-<text x="170" y="270.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">Items › your tag › paste</text>
+<text x="94.38" y="270.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">Items</text>
+<path d="M136.62 263.5 L140.62 267 L136.62 270.5" fill="none" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="145.62" y="270.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">your tag</text>
+<path d="M201.62 263.5 L205.62 267 L201.62 270.5" fill="none" stroke="#9C9C9C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="210.62" y="270.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="start" font-weight="400">paste</text>
 <text x="170" y="292.9" font-family="IBM Plex Sans" font-size="14" fill="#9C9C9C" text-anchor="middle" font-weight="400">the link in their form</text>
 <line x1="170" y1="310" x2="170.0" y2="320.0" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/><path d="M170.00 330.00 L165.00 320.00 L175.00 320.00 Z" fill="#9C9C9C"/>
 <rect x="10" y="334" width="320" height="80" rx="12" fill="none" stroke="#9C9C9C" stroke-width="1.5"/>

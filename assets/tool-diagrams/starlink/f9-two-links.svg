@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 210" width="700" height="210" role="img" aria-label="Link 1, dish to satellite; Link 2, the Wi-Fi from the Starlink router to a phone in the back room">
 <path d="M60 200 V90 L200 20 L340 90 V200 Z" fill="none" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="230" y="24" width="30" height="6" rx="1" fill="#E5E5E5" transform="rotate(-27 245 27)"/>
-<line x1="254" y1="18" x2="284" y2="0" stroke="#A2CC3A" stroke-width="4" stroke-linecap="round"/>
-<path d="M244 36 V150 H150" fill="none" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="248" y1="45" x2="250" y2="26" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round"/>
+<rect x="237.0" y="23.0" width="26" height="6" rx="1" fill="#E5E5E5" transform="rotate(56.3 250 26)"/>
+<line x1="253.3" y1="23.8" x2="286" y2="2" stroke="#A2CC3A" stroke-width="4" stroke-linecap="round"/>
+<path d="M248 45 V110 H130 V140" fill="none" stroke="#9C9C9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="110" y="140" width="40" height="22" rx="4" fill="#3A3A3A" stroke="#E5E5E5" stroke-width="1.5"/>
-<text x="128" y="192.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="400">Starlink router</text>
+<text x="70" y="189.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="start" font-weight="400">Starlink router</text>
 <path d="M156 140 q12 12 0 24 M164 132 q20 20 0 40 M172 124 q28 28 0 56" fill="none" stroke="#E5E5E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="280" y="128" width="14" height="24" rx="3" fill="none" stroke="#E5E5E5" stroke-width="2"/>
 <text x="287" y="174.9" font-family="IBM Plex Sans" font-size="14" fill="#E5E5E5" text-anchor="middle" font-weight="400">phone in the</text>

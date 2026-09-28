@@ -179,15 +179,33 @@ void main() {
       final String svg = File(
         HomeInternetDiagrams.path('f3-orbit-heights'),
       ).readAsStringSync();
-      // Every orbit dot is a circle on the y = 100 line.
-      final List<double> xs = RegExp(r'<circle cx="([0-9.]+)" cy="100"')
+      // The scale is a tick at each true height on the y = 124 axis (the
+      // print guide's 2026-09-27 fix: the two low-orbit dots are 2 px apart
+      // at this scale, so they are drawn one above the other, each over its
+      // own tick, instead of overlapping on one line).
+      final List<double> ticks = RegExp(
+        r'<line x1="([0-9.]+)" y1="124" x2="\1" y2="130"',
+      )
           .allMatches(svg)
           .map((RegExpMatch m) => double.parse(m.group(1)!))
           .toList();
       const double pxPerKm = 618 / 35786;
-      expect(xs, contains(closeTo(46 + 20200 * pxPerKm, 0.1)));
-      expect(xs, contains(closeTo(46 + 480 * pxPerKm, 0.1)));
-      expect(xs, contains(closeTo(664, 0.1)));
+      for (final double km in <double>[480, 610, 20200, 35786]) {
+        expect(
+          ticks,
+          contains(closeTo(46 + km * pxPerKm, 0.1)),
+          reason: '$km km',
+        );
+      }
+      // Every orbit dot sits directly over its own tick.
+      final List<double> dots = RegExp(r'<circle cx="([0-9.]+)" cy="[0-9.]+"')
+          .allMatches(svg)
+          .map((RegExpMatch m) => double.parse(m.group(1)!))
+          .toList();
+      expect(dots, hasLength(4));
+      for (final double x in dots) {
+        expect(ticks, contains(closeTo(x, 0.1)), reason: 'dot at $x');
+      }
     });
 
     test('Figure 4: bars sit on their axes (3.5 px/ms, then 0.375 px/ms '
