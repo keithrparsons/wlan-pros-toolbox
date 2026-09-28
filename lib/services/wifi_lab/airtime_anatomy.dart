@@ -660,9 +660,7 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
   final int psdu = singleMpdu ? mpdu : nn * sub;
 
   // Durations.
-  final int nsym = he
-      ? _ceilDiv(16 + 8 * psdu, ndbpsNum)
-      : _ceilDiv((16 + 8 * psdu + 6) * ndbpsDen, ndbpsNum);
+  final int nsym = _dataSymbols(he, psdu, ndbpsNum, ndbpsDen);
 
   final int pre;
   switch (s.phy) {
@@ -678,16 +676,7 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
   }
 
   final bool shortGi = !legacy && s.guardInterval == GuardInterval.gi04;
-  final int dataCore;
-  if (he) {
-    dataCore = nsym * tsym + s.hePacketExtensionUs * 10;
-  } else if (shortGi) {
-    // 4 x CEILING(3.6 x N_SYM / 4) = 4 x ceil(9 x N_SYM / 10).
-    dataCore = 4 * _ceilDiv(9 * nsym, 10) * 10;
-  } else {
-    dataCore = 4 * nsym * 10;
-  }
-  final int data = dataCore + se * 10;
+  final int data = _dataTenths(s, nsym, tsym, se);
   final int ppdu = pre + data;
 
   final int ack = controlFrameTenths(
@@ -871,6 +860,42 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
     segments: List<TxopSegment>.unmodifiable(segments),
     check: check,
   );
+}
+
+/// Preamble plus data, tenths of a microsecond, for a PSDU of [psduBytes]
+/// sent with [r]'s PHY settings. The same arithmetic [computeAirtime] uses
+/// for its own PSDU, so `ppduTenthsForPsdu(r, r.psduBytes) == r.ppduTenths`.
+/// The frame-structure view (aggregation_structure.dart) uses it to put a
+/// time on an arrangement the sheet does not draw, and on a retry.
+int ppduTenthsForPsdu(AirtimeResult r, int psduBytes) {
+  assert(psduBytes >= 0);
+  final bool he = r.scenario.phy == AirtimePhy.he;
+  final int nsym = _dataSymbols(he, psduBytes, r.ndbpsNum, r.ndbpsDen);
+  return r.preambleTenths +
+      _dataTenths(r.scenario, nsym, r.symbolTenths, r.signalExtensionUs);
+}
+
+/// Data symbols for a PSDU: HE ceil((16 + 8 x PSDU) / N_DBPS) (LDPC, no
+/// tail); the others ceil((16 + 8 x PSDU + 6) / N_DBPS) with N_DBPS kept as
+/// the exact fraction num / den.
+int _dataSymbols(bool he, int psdu, int ndbpsNum, int ndbpsDen) => he
+    ? _ceilDiv(16 + 8 * psdu, ndbpsNum)
+    : _ceilDiv((16 + 8 * psdu + 6) * ndbpsDen, ndbpsNum);
+
+/// The data portion, tenths of a us: symbols, plus the HE packet extension
+/// and the 2.4 GHz signal extension.
+int _dataTenths(AirtimeScenario s, int nsym, int tsym, int se) {
+  final int core;
+  if (s.phy == AirtimePhy.he) {
+    core = nsym * tsym + s.hePacketExtensionUs * 10;
+  } else if (s.phy != AirtimePhy.legacy &&
+      s.guardInterval == GuardInterval.gi04) {
+    // 4 x CEILING(3.6 x N_SYM / 4) = 4 x ceil(9 x N_SYM / 10).
+    core = 4 * _ceilDiv(9 * nsym, 10) * 10;
+  } else {
+    core = 4 * nsym * 10;
+  }
+  return core + se * 10;
 }
 
 /// Formats a tenths-of-a-microsecond count: 430 -> "43", 675 -> "67.5".

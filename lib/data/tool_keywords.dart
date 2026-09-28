@@ -1182,6 +1182,14 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   // Wi-Fi Classroom (2026-09-25). What the tool computes and draws: one TXOP's
   // airtime, segment by segment (GL-005).
   'airtime-anatomy': <String>[
+    'a-msdu',
+    'amsdu',
+    'msdu',
+    'mpdu',
+    'mpdu delimiter',
+    'block ack bitmap',
+    'frame structure',
+    'retransmission',
     'airtime',
     'airtime calculator',
     'txop',

@@ -24,6 +24,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../router/app_router.dart';
+import '../../../services/wifi_lab/aggregation_structure.dart';
 import '../../../services/wifi_lab/airtime_anatomy.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
@@ -89,6 +90,29 @@ class _AirtimeAnatomyScreenState extends State<AirtimeAnatomyScreen> {
         'Efficiency vs PHY rate: ${(r.efficiency * 100).toStringAsFixed(1)} %',
       );
       b.writeln('Check: ${r.check.message}');
+    }
+    if (_model.view == AirtimeView.structure) {
+      final AggregateStructure st = _model.structure;
+      final StructureTotals t = st.totals;
+      b.writeln();
+      b.writeln(
+        'Structure (${kScenarioLetters[_model.editing]}): ${st.kind.label}, '
+        '${st.unitCount} unit${st.unitCount == 1 ? '' : 's'}, '
+        '${st.msduCount} MSDU${st.msduCount == 1 ? '' : 's'}',
+      );
+      for (final StructurePartKind k in StructurePartKind.values) {
+        if (t[k] > 0) b.writeln('  ${k.label}: ${t[k]} bytes');
+      }
+      b.writeln('  PSDU: ${t.total} bytes');
+      final CorruptionOutcome? o = _model.corruption;
+      if (o != null) {
+        b.writeln(
+          'Corrupted MSDU ${o.corruptedMsdu + 1}: resent ${o.resentBytes} of '
+          '${st.psduBytes} bytes, ${o.resentMsdus} MSDU'
+          '${o.resentMsdus == 1 ? '' : 's'}'
+          '${o.usesBlockAck ? ' (Block Ack bit ${o.failedUnit + 1} = 0)' : ' (no ACK)'}',
+        );
+      }
     }
     return b.toString().trimRight();
   }
