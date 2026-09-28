@@ -633,6 +633,7 @@ flutter:
     - assets/lesson-figures/tap-touch-near/
     - assets/lesson-figures/satellite-texting/
     - assets/lesson-figures/wifi-on-planes/
+    - assets/lesson-figures/wifi-and-health/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2

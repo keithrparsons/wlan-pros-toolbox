@@ -2698,6 +2698,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Wi-Fi and Your Health, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: how much power Wi-Fi sends, how fast it fades, and what health agencies say.
+      ToolEntry(
+        id: 'wifi-and-health-explained',
+        title: 'Wi-Fi and Your Health, Explained',
+        description:
+            'How much power Wi-Fi sends, how fast it fades with distance, '
+            'and what health agencies say about it',
+        routeName: '/tools/wifi-and-health-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

@@ -3185,6 +3185,24 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'faa',
     'fcc',
   ],
+  // Wi-Fi and Your Health, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'wifi-and-health-explained': <String>[
+    'wi-fi and health',
+    'wifi health',
+    'is wi-fi safe',
+    'radiation',
+    'non-ionizing',
+    'radio waves',
+    'exposure limit',
+    'rf exposure',
+    'safety limit',
+    'inverse square law',
+    'who',
+    'ukhsa',
+    'icnirp',
+    'fcc exposure',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

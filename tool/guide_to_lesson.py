@@ -467,6 +467,13 @@ def parse_callout(el, cl: set[str]) -> dict:
 
 _PAGE = re.compile(r"\b(on |at )?page (\d+)\b")
 
+# A page named by where it sits rather than by number. In a lesson the next
+# page is the next step and this page is this step, as long as the guide
+# starts each section on a page of its own; every use is printed, so check
+# each one against the guide (Wi-Fi and Health: "as the next page shows" in
+# step 1 points at step 2; Figure 7's "the math on this page" is step 5's).
+_PAGE_WORD = re.compile(r"\b(on |in )?(the next|this) page\b")
+
 
 def add_links(g: dict, links: list[tuple[str, str]]) -> list[str]:
     """After each block that names a linked guide as __Title__, an Open
@@ -519,7 +526,13 @@ def fix_page_refs(g: dict) -> list[str]:
             changes.append(f'"{m.group(0)}" -> "{new}" ({st["title"]})')
             return new
 
-        return _PAGE.sub(sub, s)
+        def sub_word(m: re.Match) -> str:
+            pre = "in " if m.group(1) else ""
+            new = f"{pre}{m.group(2)} step"
+            changes.append(f'"{m.group(0)}" -> "{new}"')
+            return new
+
+        return _PAGE_WORD.sub(sub_word, _PAGE.sub(sub, s))
 
     for st in g["steps"]:
         claims = any(

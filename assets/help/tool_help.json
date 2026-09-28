@@ -7344,6 +7344,29 @@
       ],
       "source": "The WLAN Pros print guide Wi-Fi on Planes, Explained (September 2026), checked on 28 September 2026. The full source list is the last section of the lesson."
     },
+    "wifi-and-health-explained": {
+      "name": "Wi-Fi and Your Health, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on the numbers behind the question: how much power a Wi-Fi router sends (about a tenth of a watt), how fast the signal fades as it spreads, how far below the safety limits it measures in real homes and schools, how the limits are set, and what health agencies say. The lesson follows the free PDF guide of the same name, word for word, with its 10 figures.",
+      "whyHere": "It answers a question Wi-Fi people get asked by family, parents and clients: is Wi-Fi safe to have in the house? The lesson answers with power numbers in plain words. A router sends about a tenth of a watt, the signal fades fast as it spreads, and measurements in homes and schools come out far below the limits.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then radio waves against X-rays, a tenth of a watt, why distance matters so much, how far below the limit, how the limits are set, what was measured and what agencies say, four things people get wrong, and what to do if you want less exposure anyway. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 7 quotes the UK Health Security Agency and the World Health Organization in their own words, with the date each page carries.",
+        "Step 9 has the choices for anyone who wants less exposure anyway, and the one Caution in the lesson: turning Wi-Fi off at night also stops the cameras and doorbells that depend on it.",
+        "The last row, Take it with you, names the free PDF guide the lesson follows, Wi-Fi and Your Health, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026. Agency pages are quoted as they read that day.",
+        "The lesson explains the power numbers in plain words. It isn't medical advice. For a question about your own health, ask your doctor.",
+        "Phones held to your head are a different question from Wi-Fi, and the lesson doesn't cover them."
+      ],
+      "source": "The WLAN Pros print guide Wi-Fi and Your Health, Explained (October 2026), checked on 28 September 2026. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

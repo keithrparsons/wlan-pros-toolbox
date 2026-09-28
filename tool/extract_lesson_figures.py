@@ -840,6 +840,9 @@ def convert(
     markers = expand_markers(root, notes, where)
     colors = resolve_current_color(root, base_color)
     tidy(root)
+    # The same numbers, written the one way the lesson data writes them
+    # (Wi-Fi and Health, Figure 4, has viewBox="0 0 760 384.0").
+    root.set("viewBox", " ".join(fmt(float(v)) for v in re.split(r"[\s,]+", vb.strip())))
     root.set("width", fmt(w))
     root.set("height", fmt(h))
     for leftover in ("marker", "use", "symbol"):
