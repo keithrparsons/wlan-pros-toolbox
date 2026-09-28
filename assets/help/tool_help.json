@@ -6712,6 +6712,30 @@
       ],
       "source": "The WLAN Pros print guide Find My, Explained (September 2026), checked against Apple's support pages on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "home-internet-explained": {
+      "name": "Home Internet, Explained",
+      "category": "Wi-Fi Classroom",
+      "purpose": "A read-along lesson on how home internet reaches a house in the US: fiber, cable, DSL, 5G home internet, a local wireless provider, satellite in high and low orbit, and a phone hotspot. It covers speed, latency (the delay before an answer comes back) and data limits, what to check before you sign up, and why your Wi-Fi is a separate question. The lesson carries six figures, a side-by-side comparison of every option, a decision list, and an appendix for checking, challenging and testing your service.",
+      "whyHere": "It answers the question Wi-Fi people get asked by family, friends and clients: which internet should I get, and why is it slow in the back bedroom? The one idea under it is the Wi-Fi angle. The service you pay for stops at the box your provider installs. When the FCC (the US Federal Communications Commission) measures home internet, its test box plugs into the router, so the Wi-Fi inside the house isn't part of the number. Figure 6 shows the two measurements side by side.",
+      "howToUse": [
+        "Read top to bottom. It starts with the six ways service reaches a house and why every one of them is shared with the neighbors, then the wired and wireless options, latency, upload and data limits, the comparison, where the FCC measures, which one to pick, and six things people get wrong.",
+        "Tap a figure to open it full screen, then pinch to zoom.",
+        "Section 9 has the two-step test that tells the service from the Wi-Fi: a wired laptop at the router, then the same test over Wi-Fi in the room that feels slow.",
+        "The appendix has the FCC map lookup, how to report a wrong listing, and the Before you sign up checklist. The ticks are not saved when you leave the lesson.",
+        "The low-orbit satellite card links to the Starlink, Explained Guided Lesson. Two related tools: Why a Busy Line Lags shows latency under load, and The Slowest Link Wins, a panel on the How Your Devices Access the Internet plate, shows why end-to-end speed equals the slowest hop."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Written for US homes, with figures checked on 27 September 2026. Provider plans change often; the Broadband Facts label is the current word for your address. Prices are deliberately left out.",
+        "The wired latency figures are the FCC's own measurements from its 2022 test period, published in 2024, with nothing else running on the line. Under load, every wired service got much slower to respond, DSL most of all.",
+        "Low-orbit figures are Starlink's own published range. The high-orbit floor of about 0.48 seconds is speed-of-light arithmetic; the measured figure of about 680 ms comes from independent measurements from early 2025.",
+        "Amazon Leo had not started home service as of July 2026. Check before you rely on that line.",
+        "The lesson leaves out prices, per-address availability and anything inside the house past the router other than where to put it. The lesson is independent and isn't affiliated with or endorsed by any provider named in it."
+      ],
+      "source": "The WLAN Pros print guide Home Internet, Explained (September 2026), reviewed with a second opinion and checked against the FCC, provider and standards sources on 27 September 2026. The full source list is the last section of the lesson."
+    },
     "cloud-tool-trust": {
       "name": "Cloud Tool Trust",
       "category": "Quick Reference",

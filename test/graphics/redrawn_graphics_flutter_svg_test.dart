@@ -48,6 +48,15 @@ const List<String> _convertedDiagrams = <String>[
   'assets/tool-diagrams/find-my/f6-phone-dies.svg',
   'assets/tool-diagrams/find-my/f7-lost-luggage.svg',
   'assets/tool-diagrams/find-my/f8-unwanted-tracker.svg',
+  // Home Internet, Explained (2026-09-27): drawn with no <marker> and no <use>
+  // from the start (tool/home_internet_diagrams.py).
+  'assets/tool-diagrams/home-internet/cover-roads-to-the-house.svg',
+  'assets/tool-diagrams/home-internet/f1-six-roads.svg',
+  'assets/tool-diagrams/home-internet/f2-every-road-is-shared.svg',
+  'assets/tool-diagrams/home-internet/f3-orbit-heights.svg',
+  'assets/tool-diagrams/home-internet/f4-idle-latency.svg',
+  'assets/tool-diagrams/home-internet/f5-download-upload.svg',
+  'assets/tool-diagrams/home-internet/f6-where-the-fcc-measures.svg',
 ];
 
 Future<void> _expectRenders(WidgetTester tester, String path) async {
@@ -94,7 +103,7 @@ void main() {
   });
 
   group('structural invariants', () {
-    test('antenna g1-g7 and the Find My figures carry no <marker> defs or '
+    test('antenna g1-g7 and the lesson figures carry no <marker> defs or '
         'marker-* refs', () {
       for (final String path in _convertedDiagrams) {
         final String svg = File(path).readAsStringSync();

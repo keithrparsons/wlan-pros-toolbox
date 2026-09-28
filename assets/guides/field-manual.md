@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Home Internet, Explained added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
-  - Guided Lessons (3)
+- **Wi-Fi Classroom** (52 tools)
+  - Guided Lessons (4)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
-Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (3)
+## Guided Lessons (4)
 
 
 ### Antenna Fundamentals
@@ -3882,6 +3882,27 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 - How the finder's GPS, Wi-Fi and cell positioning combine into your dot is our explanation, not Apple's wording.
 - Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
 - The lesson is independent and isn't affiliated with or endorsed by Apple.
+
+
+### Home Internet, Explained
+
+A read-along lesson on how home internet reaches a house in the US: fiber, cable, DSL, 5G home internet, a local wireless provider, satellite in high and low orbit, and a phone hotspot. It covers speed, latency (the delay before an answer comes back) and data limits, what to check before you sign up, and why your Wi-Fi is a separate question. The lesson carries six figures, a side-by-side comparison of every option, a decision list, and an appendix for checking, challenging and testing your service.
+
+**Why it's here.** It answers the question Wi-Fi people get asked by family, friends and clients: which internet should I get, and why is it slow in the back bedroom? The one idea under it is the Wi-Fi angle. The service you pay for stops at the box your provider installs. When the FCC (the US Federal Communications Commission) measures home internet, its test box plugs into the router, so the Wi-Fi inside the house isn't part of the number. Figure 6 shows the two measurements side by side.
+
+**How to use**
+1. Read top to bottom. It starts with the six ways service reaches a house and why every one of them is shared with the neighbors, then the wired and wireless options, latency, upload and data limits, the comparison, where the FCC measures, which one to pick, and six things people get wrong.
+2. Tap a figure to open it full screen, then pinch to zoom.
+3. Section 9 has the two-step test that tells the service from the Wi-Fi: a wired laptop at the router, then the same test over Wi-Fi in the room that feels slow.
+4. The appendix has the FCC map lookup, how to report a wrong listing, and the Before you sign up checklist. The ticks are not saved when you leave the lesson.
+5. The low-orbit satellite card links to the Starlink, Explained Guided Lesson. Two related tools: Why a Busy Line Lags shows latency under load, and The Slowest Link Wins, a panel on the How Your Devices Access the Internet plate, shows why end-to-end speed equals the slowest hop.
+
+**Field notes**
+- Written for US homes, with figures checked on 27 September 2026. Provider plans change often; the Broadband Facts label is the current word for your address. Prices are deliberately left out.
+- The wired latency figures are the FCC's own measurements from its 2022 test period, published in 2024, with nothing else running on the line. Under load, every wired service got much slower to respond, DSL most of all.
+- Low-orbit figures are Starlink's own published range. The high-orbit floor of about 0.48 seconds is speed-of-light arithmetic; the measured figure of about 680 ms comes from independent measurements from early 2025.
+- Amazon Leo had not started home service as of July 2026. Check before you rely on that line.
+- The lesson leaves out prices, per-address availability and anything inside the house past the router other than where to put it. The lesson is independent and isn't affiliated with or endorsed by any provider named in it.
 
 
 ## RF and Propagation (10)

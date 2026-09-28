@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Home Internet, Explained: a house (right) with the service line
+         running into it from outside (left) and ending at the box inside,
+         the lesson's one idea. Distinct by silhouette from the pins, the
+         broadcast arcs of Find My, Explained and the bar glyphs. -->
+    <path d="M8.5 11.5 L15 5.5 L21.5 11.5"/>
+    <path d="M10 10.2 V20 H20 V10.2"/>
+    <path d="M2 15.5 H13.5"/>
+    <circle cx="15" cy="15.5" r="1.5" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

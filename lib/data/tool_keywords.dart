@@ -2669,6 +2669,28 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi positioning',
     'unwanted tracking',
   ],
+  // Home Internet, Explained (Guided Lesson). The words a non-technical person
+  // uses when choosing or blaming home internet, plus the Wi-Fi angle.
+  'home-internet-explained': <String>[
+    'home internet',
+    'isp',
+    'internet provider',
+    'broadband',
+    'fiber',
+    'cable internet',
+    'dsl',
+    '5g home internet',
+    'fixed wireless',
+    'wisp',
+    'satellite internet',
+    'starlink',
+    'latency',
+    'upload speed',
+    'data cap',
+    'broadband facts label',
+    'fcc broadband map',
+    'wired vs wi-fi speed test',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

@@ -607,6 +607,11 @@ flutter:
     # art and Figures 1 to 8, re-drawn DARK-BAKED on the §8.20.7 allow-list by
     # tool/find_my_diagrams.py and resolved by lib/data/find_my_diagrams.dart.
     - assets/tool-diagrams/find-my/
+    # Home Internet, Explained lesson figures (2026-09-27): the print guide's
+    # cover art and Figures 1 to 6, re-drawn DARK-BAKED on the §8.20.7
+    # allow-list by tool/home_internet_diagrams.py and resolved by
+    # lib/data/home_internet_diagrams.dart.
+    - assets/tool-diagrams/home-internet/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2
