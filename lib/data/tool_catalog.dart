@@ -2549,6 +2549,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Wi-Fi Privacy Myths (2026-09-27, Keith approved merging Pax candidates 7
+      // and 8) — the private Wi-Fi address (Off / Fixed / Rotating) and the
+      // hidden network name, each with one control. For the people Wi-Fi pros
+      // get asked about privacy settings by, so it shelves after Find My.
+      ToolEntry(
+        id: 'wifi-privacy-myths',
+        title: 'Wi-Fi Privacy Myths',
+        description:
+            'What a private Wi-Fi address hides from routers, why MAC filtering '
+            'keeps no one out, and how hiding the network name makes your phone '
+            'say it everywhere',
+        routeName: '/tools/wifi-privacy-myths',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

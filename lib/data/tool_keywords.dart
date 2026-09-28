@@ -2669,6 +2669,24 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wi-fi positioning',
     'unwanted tracking',
   ],
+  // Wi-Fi Privacy Myths (Guided Lesson). The settings people ask about and
+  // the terms the lesson teaches.
+  'wifi-privacy-myths': <String>[
+    'private wi-fi address',
+    'private address',
+    'mac randomization',
+    'random mac',
+    'rotating address',
+    'mac address',
+    'mac filtering',
+    'mac filter',
+    'hidden network',
+    'hidden ssid',
+    'hide ssid',
+    'probe request',
+    'beacon',
+    'wi-fi privacy',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',
