@@ -1,0 +1,155 @@
+{
+  "source": "how-gps-works-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        616.0,
+        400.0
+      ],
+      "caption": null,
+      "alt": "Satellites send the time down to a phone, which only listens"
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        616.0,
+        214.0
+      ],
+      "caption": "**Figure 1. What a satellite sends.** Every GPS satellite sends the same two things, over and over: the time, and where it is. That's all GPS sends.",
+      "alt": "A satellite sends two things: the exact time and where it is"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        616.0,
+        372.0
+      ],
+      "caption": "**Figure 2. GPS only goes one way.** The satellites talk and your phone listens. If an app shares where you are, that happens later, over Wi-Fi or cell data. You control it in your phone's settings.",
+      "alt": "Signals come down from the satellites. Nothing goes back up. Apps share separately."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        616.0,
+        236.0
+      ],
+      "caption": "**Figure 3. No bars, still a dot.** Your phone only listens, so GPS works with no cell plan and no internet.",
+      "alt": "A phone with no cell plan and no Wi-Fi still shows its dot, because it only listens to satellites"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        616.0,
+        470.0
+      ],
+      "caption": "**Figure 4. Everyone, everywhere.** The satellites send to the whole Earth at once, so any phone can listen, for free. Not to scale.",
+      "alt": "The satellites send to the whole Earth at once, so anyone anywhere can listen for free"
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        616.0,
+        250.0
+      ],
+      "caption": "**Figure 5. Farther away, longer wait.** The wait tells your phone how far away each satellite is. Not to scale.",
+      "alt": "The signal from a far satellite takes longer to arrive than from a near one"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        616.0,
+        280.0
+      ],
+      "caption": "**Figure 6. A tiny slip, a big miss.** A clock that is off by a hair puts your dot far from where you stand. Not to scale.",
+      "alt": "A tiny mistake in the phone's clock puts the dot a long way from where you are"
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        616.0,
+        556.0
+      ],
+      "caption": "**Figure 7. Why it takes four.** Each satellite tells your phone how far away it is. Three distances meet at one spot. The fourth satellite corrects your phone's clock, which isn't as good as the ones in space. Drawn flat, not to scale.",
+      "alt": "One satellite puts you on a circle, two give two spots, three give one spot, and a fourth fixes the phone's clock"
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        616.0,
+        372.0
+      ],
+      "caption": "**Figure 8. Open sky is best.** Tall buildings bounce the signal around. Leaves weaken it. A roof blocks most of it.",
+      "alt": "Open sky is best. Buildings bounce the signal, leaves weaken it, a roof blocks most of it"
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        616.0,
+        230.0
+      ],
+      "caption": "**Figure 9. A strip of sky.** Looking straight up from a city street, tall buildings hide most of the satellites.",
+      "alt": "Looking up: under open sky a phone sees many satellites; on a city street, buildings leave only a strip of sky"
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        616.0,
+        560.0
+      ],
+      "caption": "**Figure 10. Why the dot jumps across the street.** A bounced signal travels farther, so your phone thinks that satellite is farther away than it is. Not to scale.",
+      "alt": "In a city, a signal bounces off a building before it reaches you, so the dot lands across the street"
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        616.0,
+        452.0
+      ],
+      "caption": "**Figure 11. A head start.** With a data connection, your phone is told where to look, so it finds you in seconds.",
+      "alt": "Without data, a phone can take a minute to find the satellites. With data, it gets a head start and finds you in seconds"
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        616.0,
+        420.0
+      ],
+      "caption": "**Figure 12. Two ways to fool GPS.** Jamming drowns out the real signal. Spoofing fakes it.",
+      "alt": "Jamming drowns out the real signal. Spoofing sends a fake one that moves your dot"
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        616.0,
+        210.0
+      ],
+      "caption": "**Figure 13. The circle around the dot.** A small circle means a close fix. Tall buildings make it bigger. Not to scale.",
+      "alt": "Outdoors under open sky the dot is usually within about 5 m (16 feet). Near tall buildings the circle is much bigger"
+    },
+    {
+      "n": 14,
+      "file": "fig-14.svg",
+      "viewBox": [
+        616.0,
+        420.0
+      ],
+      "caption": "**Figure 14. Two easy wins.** Keep the phone where it can see the sky, and save the map before you lose signal.",
+      "alt": "Keep the phone where it can see the sky, and save maps before you go"
+    }
+  ]
+}

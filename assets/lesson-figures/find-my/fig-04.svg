@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 286" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="286">
+    <circle cx="200" cy="135" r="125" fill="#E6EEF6"/>
+    <circle cx="200" cy="135" r="80" fill="#2B5C8A" fill-opacity=".14"/>
+    <circle cx="200" cy="135" r="40" fill="#A1CC3A" fill-opacity=".3"/>
+    <circle cx="200" cy="135" r="40" fill="none" stroke="#7A9E26" stroke-width="2" stroke-dasharray="5 4"/>
+    <circle cx="200" cy="135" r="52" fill="none" stroke="#2F5E00" stroke-width="1.5" stroke-dasharray="2 4"/>
+    <circle cx="200" cy="135" r="11" fill="#FFFFFF" stroke="#7A9E26" stroke-width="3"/>
+    <text x="200" y="161" text-anchor="middle" font-size="13" fill="#111111">tap</text>
+    <!-- labels -->
+    <g font-size="12.5">
+      <path d="M318 95H380" stroke="#444444"/><text x="386" y="90" font-weight="600" font-size="13">Anywhere, eventually: the Find My network</text><text x="386" y="108" fill="#444444" font-size="13">Other people's Apple devices report it, if they pass by.</text>
+      <path d="M275 125H380" stroke="#444444"/><text x="386" y="140" font-weight="600" font-size="13">Nearby: Bluetooth</text><text x="386" y="158" fill="#444444" font-size="13">Your own iPhone connects and can play a sound.</text>
+      <path d="M240 135H250M252 175H380" stroke="#444444" fill="none"/><path d="M240 135L252 175" stroke="#444444"/><text x="386" y="190" font-weight="600" font-size="13">Close by: Ultra Wideband (Precision Finding)</text><text x="386" y="208" fill="#444444" font-size="13">An arrow and distance on screen. AirTag 2: about 1.5x farther.</text>
+      <path d="M200 146V246H380" stroke="#444444" fill="none"/><text x="386" y="242" font-weight="600" font-size="13">Touching: NFC</text><text x="386" y="260" fill="#444444" font-size="13">A phone with NFC that taps a lost tag sees</text><text x="386" y="277" fill="#444444" font-size="13">the owner's contact info.</text>
+    </g>
+  </svg>

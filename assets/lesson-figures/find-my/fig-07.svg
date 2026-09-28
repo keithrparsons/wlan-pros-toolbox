@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 170" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="170">
+    <g transform="translate(20,20)">
+      <rect width="220" height="130" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <rect x="20" y="22" width="70" height="30" rx="5" fill="none" stroke="#111111" stroke-width="2.5"/><rect x="90" y="31" width="5" height="12" fill="#111111"/><rect x="24" y="26" width="54" height="22" rx="2" fill="#7A9E26"/>
+      <text x="20" y="80" font-weight="600">On, with signal</text><text x="20" y="98" font-size="13" fill="#444444">Reports itself directly,</text><text x="20" y="114" font-size="13" fill="#444444">GPS, Wi-Fi and cell.</text>
+    </g>
+    <g transform="translate(270,20)">
+      <rect width="220" height="130" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <rect x="20" y="22" width="70" height="30" rx="5" fill="none" stroke="#111111" stroke-width="2.5"/><rect x="90" y="31" width="5" height="12" fill="#111111"/><rect x="24" y="26" width="8" height="22" rx="2" fill="#C0392B"/>
+      <text x="20" y="80" font-weight="600">Battery flat</text><text x="20" y="98" font-size="13" fill="#444444">Power reserve: findable</text><text x="20" y="114" font-size="13" fill="#444444">for up to 5 hours.</text>
+    </g>
+    <g transform="translate(520,20)">
+      <rect width="220" height="130" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <circle cx="42" cy="37" r="15" fill="none" stroke="#111111" stroke-width="2.5"/><path d="M42 20V36" stroke="#111111" stroke-width="2.5"/>
+      <text x="20" y="80" font-weight="600">Switched off</text><text x="20" y="98" font-size="13" fill="#444444">Findable for up to 24 hours</text><text x="20" y="114" font-size="13" fill="#444444">through the Find My network.</text>
+    </g>
+  </svg>

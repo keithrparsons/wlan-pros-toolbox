@@ -24,6 +24,25 @@ const Set<String> _builtInClassroom = <String>{
   'captive-portal',
   'starlink-explained',
   'home-internet-explained',
+  'phone-data-abroad-explained',
+  'smart-home-radios-explained',
+  'cameras-doorbells-explained',
+  'devices-to-internet-explained',
+  'mesh-extenders-explained',
+  'router-too-old-explained',
+  'bluetooth-explained',
+  'weak-cell-signal-explained',
+  'how-gps-works-explained',
+  'where-your-phone-is-explained',
+  'analog-vs-digital-explained',
+  'scales-and-ratios-explained',
+  'tap-touch-near-explained',
+  'satellite-texting-explained',
+  'wifi-on-planes-explained',
+  'wifi-and-health-explained',
+  'travel-routers-explained',
+  'mobile-hotspots-explained',
+  'captive-portals-explained',
 };
 
 /// Shelf -> tool ids, in the order the screen must show them.
@@ -51,6 +70,53 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Home Internet, Explained, the next explainer post turned
     // Guided Lesson.
     'home-internet-explained',
+    // 2026-09-28: Phone Data Abroad, Explained, on the 1.11.0 lesson framework.
+    'phone-data-abroad-explained',
+    // 2026-09-28: Smart Home Radios, Explained, on the 1.11.0 lesson framework.
+    'smart-home-radios-explained',
+    // 2026-09-28: Cameras, Doorbells and Baby Monitors, Explained, on the
+    // 1.11.0 lesson framework.
+    'cameras-doorbells-explained',
+    // 2026-09-28: How Your Devices Access the Internet, Explained, on the
+    // 1.11.0 lesson framework.
+    'devices-to-internet-explained',
+    // 2026-09-28: Mesh, Extenders and Wired Access Points, Explained, on the
+    // 1.11.0 lesson framework.
+    'mesh-extenders-explained',
+    // 2026-09-28: Is Your Router Too Old?, on the 1.11.0 lesson framework.
+    'router-too-old-explained',
+    // 2026-09-28: Bluetooth, Explained, the explainer guide turned Guided
+    // Lesson.
+    'bluetooth-explained',
+    // 2026-09-28: Weak Cell Signal at Home, Explained, the explainer guide
+    // turned Guided Lesson.
+    'weak-cell-signal-explained',
+    // 2026-09-28: How GPS Works, Explained, the explainer guide turned
+    // Guided Lesson, before its indoor companion.
+    'how-gps-works-explained',
+    // 2026-09-28: How Your Phone Knows Where It Is, Explained, after its
+    // companion How GPS Works.
+    'where-your-phone-is-explained',
+    // 2026-09-28: Analog vs Digital, Explained, the explainer guide turned
+    // Guided Lesson.
+    'analog-vs-digital-explained',
+    // 2026-09-28: Scales and Ratios, Explained, the explainer guide turned
+    // Guided Lesson.
+    'scales-and-ratios-explained',
+    // 2026-09-28: Tap, Touch and Near, Explained, an explainer guide turned lesson.
+    'tap-touch-near-explained',
+    // 2026-09-28: Satellite Texting, Explained, an explainer guide turned lesson.
+    'satellite-texting-explained',
+    // 2026-09-28: Wi-Fi on Planes, Explained, an explainer guide turned lesson.
+    'wifi-on-planes-explained',
+    // 2026-09-28: Wi-Fi and Your Health, Explained, an explainer guide turned lesson.
+    'wifi-and-health-explained',
+    // 2026-09-28: Travel Routers, Explained, an explainer guide turned lesson.
+    'travel-routers-explained',
+    // 2026-09-28: Mobile Hotspots, Explained, an explainer guide turned lesson.
+    'mobile-hotspots-explained',
+    // 2026-09-28: Captive Portals, Explained, an explainer guide turned lesson.
+    'captive-portals-explained',
   ],
   'RF and Propagation': <String>[
     // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
@@ -214,8 +280,7 @@ void main() {
     final Set<String> moved = <String>{
       // starlink-explained (2026-09-27) likewise was built in the Classroom.
       ..._teachingOrder['Guided Lessons']!.where(
-        (String id) =>
-            !_builtInClassroom.contains(id),
+        (String id) => !_builtInClassroom.contains(id),
       ),
       ..._teachingOrder['Course Handouts']!,
     };
@@ -255,7 +320,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(69));
+    expect(classroom.tools, hasLength(88));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

@@ -19,6 +19,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../../services/wifi_lab/complex.dart';
 import '../../../services/wifi_lab/wall_multilayer_physics.dart';
@@ -156,24 +157,42 @@ class WallSlabController extends ChangeNotifier {
     setConfig(_config.copyWith(preset: all[i]));
   }
 
-  /// Up and Down: on a custom wall they change its thickness; on a real
-  /// wall, whose layers are fixed, they step through the walls.
-  void _stepMain(int direction) {
-    if (_config.isCustom) {
-      stepThickness(direction);
-    } else {
-      stepWall(direction);
-    }
+  /// Minus and equals (plus): the thickness of One material, any thickness,
+  /// one presenter step thinner (-1) or thicker (+1). A real wall's layers
+  /// are fixed, so on a real wall they do nothing.
+  void stepCustomThickness(int direction) {
+    if (_config.isCustom) stepThickness(direction);
   }
 
   /// Presenter keyboard: Space plays or pauses the wave, R returns to the
-  /// opening wall, Up and Down change the wall (see [_stepMain]).
+  /// opening wall, Up and Down step through the wall list (every wall,
+  /// including One material, any thickness), and minus and equals change the
+  /// thickness of One material.
+  ///
+  /// Up and Down used to change the thickness once the list reached One
+  /// material, so they could not step back out of it (1.11.0 fix). The
+  /// thickness keys are letters outside the shell's shared set: the shell
+  /// takes [ and ] as aliases of Down and Up.
   PresenterActions get presenterActions => PresenterActions(
     playPause: togglePlay,
     reset: reset,
-    sliderDown: () => _stepMain(-1),
-    sliderUp: () => _stepMain(1),
-    sliderLabel: 'Wall type, or thickness for one material',
+    sliderDown: () => stepWall(-1),
+    sliderUp: () => stepWall(1),
+    sliderLabel: 'Wall type',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.minus,
+        keyLabel: '-',
+        description: 'Thinner (One material)',
+        onPressed: () => stepCustomThickness(-1),
+      ),
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.equal,
+        keyLabel: '=',
+        description: 'Thicker (One material)',
+        onPressed: () => stepCustomThickness(1),
+      ),
+    ],
   );
 
   // ── Clock ──────────────────────────────────────────────────────────────

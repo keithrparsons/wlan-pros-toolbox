@@ -29,6 +29,9 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/wifi_privacy_model.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/lesson/guided_lesson.dart' as lesson show LessonMyth;
+import '../../../widgets/lesson/lesson.dart'
+    show LessonBlockRef, LessonMythView;
 import 'lesson_parts.dart';
 import 'wifi_privacy_stage.dart';
 
@@ -214,24 +217,33 @@ class _WifiPrivacyLessonScreenState extends State<WifiPrivacyLessonScreen> {
           number: '8',
           title: 'Three things people get wrong',
           children: <Widget>[
-            LessonMyth(
-              myth: 'MAC filtering keeps strangers off my network.',
-              fact:
-                  'Addresses cross the air unencrypted, so an allowed one is '
-                  "easy to copy. Use the network's password security instead.",
+            LessonMythView(
+              ref: LessonBlockRef(8, 0),
+              myth: lesson.LessonMyth(
+                myth: 'MAC filtering keeps strangers off my network.',
+                fact:
+                    'Addresses cross the air unencrypted, so an allowed one is '
+                    "easy to copy. Use the network's password security instead.",
+              ),
             ),
-            LessonMyth(
-              myth: "The router's device list shows my phone's real address.",
-              fact:
-                  'With a private address on, it shows the address your phone '
-                  'made up for that network. With Rotating, that changes too.',
+            LessonMythView(
+              ref: LessonBlockRef(8, 1),
+              myth: lesson.LessonMyth(
+                myth: "The router's device list shows my phone's real address.",
+                fact:
+                    'With a private address on, it shows the address your phone '
+                    'made up for that network. With Rotating, that changes too.',
+              ),
             ),
-            LessonMyth(
-              myth: 'Hiding the network name is a security setting.',
-              fact:
-                  'The network is still on the air, and its name crosses the '
-                  'air whenever a device joins. Meanwhile your phone names it '
-                  'at the airport, the cafe and everywhere else it goes.',
+            LessonMythView(
+              ref: LessonBlockRef(8, 2),
+              myth: lesson.LessonMyth(
+                myth: 'Hiding the network name is a security setting.',
+                fact:
+                    'The network is still on the air, and its name crosses the '
+                    'air whenever a device joins. Meanwhile your phone names it '
+                    'at the airport, the cafe and everywhere else it goes.',
+              ),
             ),
           ],
         ),

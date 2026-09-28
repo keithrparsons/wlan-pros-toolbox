@@ -1,0 +1,165 @@
+{
+  "source": "captive-portals-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": null,
+      "alt": "Your phone joins the Wi-Fi, the sign-in page stands in the way, and the internet opens after you sign in"
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": "**Figure 1. Full bars is only step one.** Your phone joins the Wi-Fi first. The road to the internet stays closed until you finish the page.",
+      "alt": "Before you sign in, the Wi-Fi works but the road to the internet is closed. After you sign in, it opens"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        616.0,
+        250.0
+      ],
+      "caption": "**Figure 2. Four common asks.** Most pages want one of these. Some only want you to tap Accept.",
+      "alt": "A sign-in page asks for one of four things. None of them is the password to your email"
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        616.0,
+        270.0
+      ],
+      "caption": "**Figure 3. Why places use one.** Hotels, airports, cafes and planes each have a reason. The page always comes first.",
+      "alt": "Places put a sign-in page in front of their Wi-Fi to check who you are, show their rules, charge, or share fairly"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        616.0,
+        420.0
+      ],
+      "caption": "**Figure 4. A test with a known answer.** A normal network sends the test page back. A sign-in network answers differently, usually by sending you to its own page. Your phone sees the wrong answer and pops the page up for you.",
+      "alt": "Your phone asks for a test page it already knows. A normal network sends it. A sign-in network sends its sign-in page instead, and your phone pops it up"
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        616.0,
+        380.0
+      ],
+      "caption": "**Figure 5. Three ways the page shows up.** Each kind of device brings the page to you a little differently. Either way, finish the page.",
+      "alt": "On an iPhone or iPad a sign-in window opens by itself. On Android a notice asks you to sign in. On a laptop the browser or a notice takes you there"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": "**Figure 6. Start with http://.** A plain http:// address lets the network show its page. A secure https:// site can't be swapped, so your browser warns you instead.",
+      "alt": "If the page does not pop up, open a browser and type a plain address. A secure site you saved shows a warning instead: do not click past it"
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        616.0,
+        284.0
+      ],
+      "caption": "**Figure 7. Forget, then join again.** This makes your phone check the network from the start.",
+      "alt": "If the page still won't show, forget the network and join it again. That gives the check a fresh start"
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        616.0,
+        266.0
+      ],
+      "caption": "**Figure 8. Off for a moment, then back on.** Switch the VPN off only long enough to finish the page, then turn it back on.",
+      "alt": "A VPN can hide the sign-in page. Turn it off, sign in, then turn it back on"
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        616.0,
+        380.0
+      ],
+      "caption": "**Figure 9. Two reasons the page returns.** Your time or pass ran out. Or your phone now shows the network a new Wi-Fi address, so it looks like a new guest.",
+      "alt": "The page comes back when your time runs out, or when your phone shows the network a new Wi-Fi address and looks like a new guest"
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": "**Figure 10. Outside and inside.** Most sites now use secure pages, marked with a padlock. The network usually sees which site you visit, unless a VPN or a privacy setting hides it. It doesn't see what's on the page.",
+      "alt": "The network can see which sites you visit and how much you use. On secure pages it can't see what you read or type"
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        616.0,
+        280.0
+      ],
+      "caption": "**Figure 11. A real page, and a trap.** A real page asks for a room number, a code, a login the place gave you, or a pass. A trap asks for the password to your email.",
+      "alt": "A real sign-in page asks for a room number, a code, or to pay for a pass. A page that asks for your email password is a trap"
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        616.0,
+        246.0
+      ],
+      "caption": "**Figure 12. Check the network name.** A look-alike name can be a trap. Join the one the staff or the sign names.",
+      "alt": "Two networks can have almost the same name. Ask the staff or read the sign, and join the one they name"
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        616.0,
+        360.0
+      ],
+      "caption": "**Figure 13. No screen, no sign-in.** Ask whether the front desk can add your device. Or bring a travel router: it signs in once, and your devices join it.",
+      "alt": "A TV stick, a game console or a smart speaker may have no way to show the sign-in page. Ask the front desk, or use a travel router"
+    },
+    {
+      "n": 14,
+      "file": "fig-14.svg",
+      "viewBox": [
+        616.0,
+        190.0
+      ],
+      "caption": "**Figure 14. What the bars measure.** Full bars say you hear the Wi-Fi well. They say nothing about the internet.",
+      "alt": "The Wi-Fi bars only tell you how well you hear the access point. They say nothing about the internet"
+    },
+    {
+      "n": 15,
+      "file": "fig-15.svg",
+      "viewBox": [
+        616.0,
+        250.0
+      ],
+      "caption": "**Figure 15. Arriving and leaving.** Finish the page before you count on your apps. Forget the network when you go.",
+      "alt": "Finish the page before you count on email, messages or Wi-Fi Calling. When you leave, forget the network"
+    }
+  ]
+}

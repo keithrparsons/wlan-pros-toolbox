@@ -5,8 +5,10 @@
 // lifted here so a lesson with an interactive control does not carry a third
 // private copy. Find My keeps its own; this file does not change it.
 //
-// Inline markup in lesson copy: **bold** and __italic__. A screen reader gets
-// the plain string, never a marker.
+// Inline markup in lesson copy: **bold**, __italic__, and {{UI name}} for a
+// button, tab or menu name exactly as the screen shows it, drawn as a GL-003
+// §12.3 UI-label chip. A screen reader gets the plain string, never a
+// marker.
 //
 // THEME: every color from `context.colors`; spacing and radii from AppSpacing /
 // AppRadius. No raw hex, no AppColors.*.
@@ -76,24 +78,36 @@ class LessonScaffold extends StatelessWidget {
 // Inline markup.
 // ─────────────────────────────────────────────────────────────────────────────
 
-final RegExp _markup = RegExp(r'\*\*(.+?)\*\*|__(.+?)__');
+final RegExp _markup = RegExp(r'\*\*(.+?)\*\*|__(.+?)__|\{\{(.+?)\}\}');
 
-List<InlineSpan> _spans(String source) {
+List<InlineSpan> _spans(String source, {InlineSpan Function(String)? chip}) {
   final List<InlineSpan> out = <InlineSpan>[];
   int at = 0;
   for (final RegExpMatch m in _markup.allMatches(source)) {
     if (m.start > at) out.add(TextSpan(text: source.substring(at, m.start)));
-    out.add(
-      m.group(1) != null
-          ? TextSpan(
-              text: m.group(1),
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            )
-          : TextSpan(
-              text: m.group(2),
-              style: const TextStyle(fontStyle: FontStyle.italic),
+    if (m.group(1) != null) {
+      out.add(
+        TextSpan(
+          text: m.group(1),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      );
+    } else if (m.group(2) != null) {
+      out.add(
+        TextSpan(
+          text: m.group(2),
+          style: const TextStyle(fontStyle: FontStyle.italic),
+        ),
+      );
+    } else {
+      out.add(
+        chip?.call(m.group(3)!) ??
+            TextSpan(
+              text: m.group(3),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-    );
+      );
+    }
     at = m.end;
   }
   if (at < source.length) out.add(TextSpan(text: source.substring(at)));
@@ -104,7 +118,7 @@ List<InlineSpan> _spans(String source) {
 /// tests look up.
 String lessonPlain(String source) => source.replaceAllMapped(
   _markup,
-  (Match m) => m.group(1) ?? m.group(2) ?? '',
+  (Match m) => m.group(1) ?? m.group(2) ?? m.group(3) ?? '',
 );
 
 /// Body text style: bodyMedium (or bodySmall when [small]) in [color], default
@@ -128,8 +142,31 @@ class LessonRich extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    // GL-003 §12.3 UI label: the name in semibold primary text on a raised
+    // surface with a hairline border. It never wraps inside itself, so a
+    // long path breaks between names, as the guide's does.
+    InlineSpan chip(String name) => WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+        decoration: BoxDecoration(
+          color: colors.surface2,
+          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(AppRadius.control),
+        ),
+        child: Text(
+          name,
+          style: style.copyWith(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ),
+        ),
+      ),
+    );
     return Text.rich(
-      TextSpan(children: _spans(source)),
+      TextSpan(children: _spans(source, chip: chip)),
       style: style,
       semanticsLabel: lessonPlain(source),
     );
@@ -388,7 +425,10 @@ class LessonCallout extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(title, style: base.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      title,
+                      style: base.copyWith(fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: AppSpacing.xxs),
                     LessonRich(body, style: base),
                   ],
@@ -402,61 +442,9 @@ class LessonCallout extends StatelessWidget {
   }
 }
 
-/// A myth and the fact that corrects it. The words Myth and Fact carry the
-/// meaning; the fills only echo them.
-class LessonMyth extends StatelessWidget {
-  const LessonMyth({super.key, required this.myth, required this.fact});
-
-  final String myth;
-  final String fact;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    Widget half(String label, Color labelColor, String body, Color fill) {
-      return Container(
-        color: fill,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              label,
-              style: (Theme.of(context).textTheme.labelSmall ??
-                      const TextStyle())
-                  .copyWith(
-                    color: labelColor,
-                    fontFamily: 'DM Mono',
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.0,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.xxs),
-            LessonRich(body, style: lessonBody(context)),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          half('Myth', colors.statusDanger, myth, colors.statusDangerFill),
-          half('Fact', colors.textAccent, fact, colors.surface1),
-        ],
-      ),
-    );
-  }
-}
+// A myth and its fact: the GL-003 §12.10-2 stacked pair is LessonMythView in
+// lib/widgets/lesson/lesson_blocks.dart. The red two-panel LessonMyth that
+// lived here was retired on 2026-09-28 (§12.2-4: no red in a myth).
 
 /// A bulleted sources list in the small register.
 class LessonSources extends StatelessWidget {
@@ -482,9 +470,13 @@ class LessonSources extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 ExcludeSemantics(
-                  child: Text('•  ', style: s.copyWith(color: colors.textAccent)),
+                  child: Text(
+                    '•  ',
+                    style: s.copyWith(color: colors.textAccent),
+                  ),
                 ),
-                Expanded(child: Text(item, style: s)),
+                // A source may name a book in italics (__Title__).
+                Expanded(child: LessonRich(item, style: s)),
               ],
             ),
           ),

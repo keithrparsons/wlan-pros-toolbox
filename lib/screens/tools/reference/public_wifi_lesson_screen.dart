@@ -27,6 +27,9 @@ import 'package:flutter/material.dart';
 
 import '../../../services/wifi_lab/public_wifi_model.dart';
 import '../../../theme/app_tokens.dart';
+import '../../../widgets/lesson/guided_lesson.dart' as lesson show LessonMyth;
+import '../../../widgets/lesson/lesson.dart'
+    show LessonBlockRef, LessonMythView;
 import 'lesson_parts.dart';
 import 'public_wifi_stage.dart';
 
@@ -183,31 +186,41 @@ class _PublicWifiLessonScreenState extends State<PublicWifiLessonScreen> {
           number: '5',
           title: 'Three things people get wrong',
           children: <Widget>[
-            LessonMyth(
-              myth: 'Never use public Wi-Fi.',
-              fact:
-                  'The FTC says connecting through public Wi-Fi is usually '
-                  'safe, because most sites and apps encrypt what they send. '
-                  'The lock or https in the address bar is the one to look '
-                  'for.',
+            LessonMythView(
+              ref: LessonBlockRef(5, 0),
+              myth: lesson.LessonMyth(
+                myth: 'Never use public Wi-Fi.',
+                fact:
+                    'The FTC says connecting through public Wi-Fi is usually '
+                    'safe, because most sites and apps encrypt what they send. '
+                    'The lock or https in the address bar is the one to look '
+                    'for.',
+              ),
             ),
-            LessonMyth(
-              myth:
-                  'No lock next to the network name means anyone can read my '
-                  'banking.',
-              fact:
-                  'The lock that protects your banking is HTTPS, in the '
-                  'browser or the app, and it works on every network. '
-                  'Enhanced Open encrypts the air and still shows no lock.',
+            LessonMythView(
+              ref: LessonBlockRef(5, 1),
+              myth: lesson.LessonMyth(
+                myth:
+                    'No lock next to the network name means anyone can read my '
+                    'banking.',
+                fact:
+                    'The lock that protects your banking is HTTPS, in the '
+                    'browser or the app, and it works on every network. '
+                    'Enhanced Open encrypts the air and still shows no lock.',
+              ),
             ),
-            LessonMyth(
-              myth: 'A password on the Wi-Fi means nobody else can see my '
-                  'traffic.',
-              fact:
-                  'It keeps out people who do not have the password. On '
-                  'WPA2-Personal, anyone who has it and records you joining '
-                  'can read the air as if it were Open. WPA3-Personal closes '
-                  'that gap.',
+            LessonMythView(
+              ref: LessonBlockRef(5, 2),
+              myth: lesson.LessonMyth(
+                myth:
+                    'A password on the Wi-Fi means nobody else can see my '
+                    'traffic.',
+                fact:
+                    'It keeps out people who do not have the password. On '
+                    'WPA2-Personal, anyone who has it and records you joining '
+                    'can read the air as if it were Open. WPA3-Personal closes '
+                    'that gap.',
+              ),
             ),
           ],
         ),

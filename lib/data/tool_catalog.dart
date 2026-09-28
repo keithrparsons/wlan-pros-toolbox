@@ -2662,6 +2662,261 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Phone Data Abroad, Explained (2026-09-28, Keith approved the guide):
+      // the explainer post turned Guided Lesson on the 1.11.0 framework, word
+      // for word from the final guide with its 13 figures. Shelved after Home
+      // Internet, with the other lessons for the people Wi-Fi pros get asked
+      // by.
+      ToolEntry(
+        id: 'phone-data-abroad-explained',
+        title: 'Phone Data Abroad, Explained',
+        description:
+            'How to land in another country with your phone working: roaming, '
+            'a travel eSIM or a local SIM, keeping your own number, and the '
+            'switches that stop a surprise bill',
+        routeName: '/tools/phone-data-abroad-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Smart Home Radios, Explained (2026-09-28, Keith approved the guide):
+      // the explainer post turned Guided Lesson on the 1.11.0 framework, word
+      // for word from the final guide with its 13 figures. Shelved with the
+      // other lessons for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'smart-home-radios-explained',
+        title: 'Smart Home Radios, Explained',
+        description:
+            'Wi-Fi, Thread, Zigbee and Matter: why your smart plug won\'t '
+            'join, what a gadget network fixes, and what the Matter logo on '
+            'the box means',
+        routeName: '/tools/smart-home-radios-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Cameras, Doorbells and Baby Monitors, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 11
+      // figures. Shelved with the other lessons for the people Wi-Fi pros get
+      // asked by.
+      ToolEntry(
+        id: 'cameras-doorbells-explained',
+        title: 'Cameras, Doorbells and Baby Monitors, Explained',
+        description:
+            'Why a camera is judged by what it can send from where it hangs: '
+            'upload, signal at the door, wired or not, where the video goes, '
+            'and keeping strangers out',
+        routeName: '/tools/cameras-doorbells-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // How Your Devices Access the Internet, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 10
+      // figures. Distinct from the field plate How Your Devices Access the
+      // Internet. Shelved with the other lessons for the people Wi-Fi pros get
+      // asked by.
+      ToolEntry(
+        id: 'devices-to-internet-explained',
+        title: 'How Your Devices Access the Internet, Explained',
+        description:
+            'Wi-Fi and cellular are ways to reach the internet, not the '
+            'internet: follow the trip one hop at a time, and learn which hop '
+            'to blame when something is slow',
+        routeName: '/tools/devices-to-internet-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Mesh, Extenders and Wired Access Points, Explained (2026-09-28, Keith
+      // approved the guide): the explainer post turned Guided Lesson on the
+      // 1.11.0 framework, word for word from the final guide with its 11
+      // figures. Its numbers come from the Repeaters and Mesh Backhaul model,
+      // which it opens. Shelved with the other lessons for the people Wi-Fi
+      // pros get asked by.
+      ToolEntry(
+        id: 'mesh-extenders-explained',
+        title: 'Mesh, Extenders and Wired Access Points, Explained',
+        description:
+            'Three ways to fix a dead zone, and why the link back to your '
+            'main box decides how fast the far room is: where to put the new '
+            'box, and which one to buy',
+        routeName: '/tools/mesh-extenders-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Is Your Router Too Old? (2026-09-28, Keith approved the guide): the
+      // explainer post turned Guided Lesson on the 1.11.0 framework, word for
+      // word from the final guide with its 11 figures. Shelved with the other
+      // lessons for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'router-too-old-explained',
+        title: 'Is Your Router Too Old?',
+        description:
+            'How to tell in five minutes whether your router still gets '
+            'security fixes, what the 2026 router rule means for the one you '
+            'own, and what to look for in the next one',
+        routeName: '/tools/router-too-old-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Bluetooth, Explained (2026-09-28, Keith approved the guide, myPKA
+      // 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own ten figures. Shelved
+      // after Home Internet.
+      ToolEntry(
+        id: 'bluetooth-explained',
+        title: 'Bluetooth, Explained',
+        description:
+            'Why your earbuds cut out, why the car won\'t connect, and what to do about each',
+        routeName: '/tools/bluetooth-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Weak Cell Signal at Home, Explained (2026-09-28, Keith approved the
+      // guide, myPKA 74e13139): the explainer guide as a Guided Lesson on the
+      // shared framework, word for word, with the guide's own 13 figures.
+      ToolEntry(
+        id: 'weak-cell-signal-explained',
+        title: 'Weak Cell Signal at Home, Explained',
+        description:
+            'Why your phone has bars at the curb and drops calls in the kitchen, and the free fix to try first',
+        routeName: '/tools/weak-cell-signal-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // How GPS Works, Explained (2026-09-28, Keith approved the guide, myPKA
+      // 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own 14 figures. Shelved just
+      // before its companion, How Your Phone Knows Where It Is.
+      ToolEntry(
+        id: 'how-gps-works-explained',
+        title: 'How GPS Works, Explained',
+        description:
+            'How your phone finds itself by listening to satellites, and what to do when the blue dot gets it wrong',
+        routeName: '/tools/how-gps-works-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // How Your Phone Knows Where It Is, Explained (2026-09-28, Keith approved
+      // the guide, myPKA 74e13139): the explainer guide as a Guided Lesson on
+      // the shared framework, word for word, with the guide's own 11 figures.
+      // Shelved after its companion, How GPS Works.
+      ToolEntry(
+        id: 'where-your-phone-is-explained',
+        title: 'How Your Phone Knows Where It Is, Explained',
+        description:
+            'How your phone finds itself indoors and out, and which switches are yours',
+        routeName: '/tools/where-your-phone-is-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Analog vs Digital, Explained (2026-09-28, Keith approved the guide,
+      // myPKA 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own 12 figures.
+      ToolEntry(
+        id: 'analog-vs-digital-explained',
+        title: 'Analog vs Digital, Explained',
+        description:
+            'What the two words mean, and why your Wi-Fi slows down while your TV just freezes',
+        routeName: '/tools/analog-vs-digital-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Scales and Ratios, Explained (2026-09-28, Keith approved the guide,
+      // myPKA 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own 11 figures.
+      ToolEntry(
+        id: 'scales-and-ratios-explained',
+        title: 'Scales and Ratios, Explained',
+        description:
+            'The tiny and huge numbers behind Wi-Fi, turned into things you can hold, see and picture',
+        routeName: '/tools/scales-and-ratios-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Tap, Touch and Near, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: the phone's two short-range radios: NFC for a tap, Ultra Wideband for finding things.
+      ToolEntry(
+        id: 'tap-touch-near-explained',
+        title: 'Tap, Touch and Near, Explained',
+        description:
+            'What happens when you tap to pay, whether your wallet needs a '
+            'shield, and how your phone finds your keys',
+        routeName: '/tools/tap-touch-near-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Satellite Texting, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: how a phone texts through a satellite with no cell signal, and why it is a backup.
+      ToolEntry(
+        id: 'satellite-texting-explained',
+        title: 'Satellite Texting, Explained',
+        description:
+            'How your phone can send a text with no cell signal, why it '
+            'needs open sky, and what to set up before you go',
+        routeName: '/tools/satellite-texting-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Wi-Fi on Planes, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: what airplane mode turns off, why plane Wi-Fi is slow, and signing in at your seat.
+      ToolEntry(
+        id: 'wifi-on-planes-explained',
+        title: 'Wi-Fi on Planes, Explained',
+        description:
+            'What airplane mode turns off, why plane Wi-Fi feels slow, and '
+            'how to get online in your seat',
+        routeName: '/tools/wifi-on-planes-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Wi-Fi and Your Health, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: how much power Wi-Fi sends, how fast it fades, and what health agencies say.
+      ToolEntry(
+        id: 'wifi-and-health-explained',
+        title: 'Wi-Fi and Your Health, Explained',
+        description:
+            'How much power Wi-Fi sends, how fast it fades with distance, '
+            'and what health agencies say about it',
+        routeName: '/tools/wifi-and-health-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Travel Routers, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: one small box that joins the hotel Wi-Fi and gives your devices a network they know.
+      ToolEntry(
+        id: 'travel-routers-explained',
+        title: 'Travel Routers, Explained',
+        description:
+            'How one small box joins the hotel Wi-Fi for you and gives all '
+            'your devices a network they already know',
+        routeName: '/tools/travel-routers-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Mobile Hotspots, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: cell signal in, Wi-Fi out: what makes a hotspot fast or slow and how to use it well.
+      ToolEntry(
+        id: 'mobile-hotspots-explained',
+        title: 'Mobile Hotspots, Explained',
+        description:
+            'How a small box, or your phone, turns cell signal into Wi-Fi, '
+            'what makes it fast or slow, and how to use it well',
+        routeName: '/tools/mobile-hotspots-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Captive Portals, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: the Wi-Fi sign-in page for the person holding the phone; the network side is in Connected, No Internet: Captive Portals.
+      ToolEntry(
+        id: 'captive-portals-explained',
+        title: 'Captive Portals, Explained',
+        description:
+            'What that Wi-Fi sign-in page is, why it shows up, and what to '
+            'do when it doesn\'t',
+        routeName: '/tools/captive-portals-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

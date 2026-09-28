@@ -1,0 +1,115 @@
+{
+  "source": "bluetooth-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 1. Pair once, connect every time.** Pairing stores a secret key on both devices. Connecting uses that key each time they meet.",
+      "alt": "Figure 1. Pair once, connect every time. Pairing stores a secret key on both devices. Connecting uses that key each time they meet."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 2. One small band, lots of users.** Bluetooth hops between many tiny channels, many times a second. It learns which ones are busy and skips them.",
+      "alt": "Figure 2. One small band, lots of users. Bluetooth hops between many tiny channels, many times a second. It learns which ones are busy and skips them."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        760.0,
+        310.0
+      ],
+      "caption": "**Figure 3. Bodies get in the way.** Every person between your phone and your earbud weakens the signal. Thicker lines mean a stronger signal.",
+      "alt": "Figure 3. Bodies get in the way. Every person between your phone and your earbud weakens the signal. Thicker lines mean a stronger signal."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        262.0
+      ],
+      "caption": "**Figure 4. In a crowd, your earbuds get fewer turns.** Every radio nearby shares the same band, so your earbuds get fewer clear chances. Lime boxes are your earbuds' turns. Not to scale.",
+      "alt": "Figure 4. In a crowd, your earbuds get fewer turns. Every radio nearby shares the same band, so your earbuds get fewer clear chances. Lime boxes are your earbuds' turns. Not to scale."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 5. Music goes one way. A call goes both ways.** Lime is sound coming to your ears. Blue is your voice going back to the phone.",
+      "alt": "Figure 5. Music goes one way. A call goes both ways. Lime is sound coming to your ears. Blue is your voice going back to the phone."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        220.0
+      ],
+      "caption": "**Figure 6. Two devices at once.** Some earbuds stay connected to a phone and a laptop together. The earbud maker decides which one wins when both make sound.",
+      "alt": "Figure 6. Two devices at once. Some earbuds stay connected to a phone and a laptop together. The earbud maker decides which one wins when both make sound."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        760.0,
+        304.0
+      ],
+      "caption": "**Figure 7. A short, clear list helps the car find your phone.** Left, the list a car builds up over the years. Right, the same list cleaned up.",
+      "alt": "Figure 7. A short, clear list helps the car find your phone. Left, the list a car builds up over the years. Right, the same list cleaned up."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 8. Two radios, two jobs.** Bluetooth finds the car and reconnects. Wi-Fi carries the maps, music and messages to the car's screen.",
+      "alt": "Figure 8. Two radios, two jobs. Bluetooth finds the car and reconnects. Wi-Fi carries the maps, music and messages to the car's screen."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        760.0,
+        270.0
+      ],
+      "caption": "**Figure 9. Fix the car connection in this order.** Start at the lime box. Stop as soon as it works.",
+      "alt": "Figure 9. Fix the car connection in this order. Start at the lime box. Stop as soon as it works."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        260.0
+      ],
+      "caption": "**Figure 10. Pairing again fixes a broken pairing, not a blocked path.** Left, when to forget and pair again. Right, when it won't help.",
+      "alt": "Figure 10. Pairing again fixes a broken pairing, not a blocked path. Left, when to forget and pair again. Right, when it won't help."
+    }
+  ]
+}

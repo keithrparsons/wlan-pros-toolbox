@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" width="700" height="250">
+      <!-- map grid -->
+      <g stroke="#E5E5E5" stroke-width="1">
+        <path d="M0 50H700M0 100H700M0 150H700M0 200H700M100 0V250M200 0V250M300 0V250M400 0V250M500 0V250M600 0V250"/>
+      </g>
+      <path d="M40 210 C160 160 240 220 330 150 S520 60 660 70" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <!-- pins -->
+      <g transform="translate(150,150)"><circle r="34" fill="#A1CC3A" opacity=".15"/><circle r="20" fill="#A1CC3A" opacity=".3"/><g transform="translate(-13 -13) scale(1.08333)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5 C5 16 8 13.5 12 13.5 C16 13.5 19 16 19 20.5"/></g><text y="54" text-anchor="middle" fill="#444444" font-size="15">People</text></g>
+      <g transform="translate(350,140)"><circle r="34" fill="#A1CC3A" opacity=".15"/><circle r="20" fill="#A1CC3A" opacity=".3"/><g transform="translate(-14 -14) scale(1.16667)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g><text y="56" text-anchor="middle" fill="#444444" font-size="15">Devices</text></g>
+      <g transform="translate(560,78)"><circle r="34" fill="#A1CC3A" opacity=".15"/><circle r="20" fill="#A1CC3A" opacity=".3"/><g transform="translate(-13 -13) scale(1.08333)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="13.5" r="7.5"/><circle cx="13.5" cy="13.5" r="3"/><circle cx="6" cy="6" r="3"/></g><text y="54" text-anchor="middle" fill="#444444" font-size="15">Items</text></g>
+    </svg>

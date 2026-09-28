@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="300">
+      <!-- row labels -->
+      <g font-size="13.5" font-weight="700" fill="#111111">
+        <text x="12" y="55">Extender</text>
+        <text x="12" y="155">Mesh kit</text>
+        <text x="12" y="255">Wired AP</text>
+      </g>
+      <!-- row 1: extender, cy=50 -->
+      <g transform="translate(140,30)"><g transform="translate(20,0) scale(1.667)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="18" height="7.5" rx="2"/><path d="M7.5 12 L6 4.5 M16.5 12 L18 4.5"/><circle cx="7.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="10.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="13.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/></g></g></g><g transform="translate(386,30)"><g transform="translate(0,3) scale(1.833)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5 V20.5"/><rect x="6" y="6" width="8" height="12" rx="2"/><path d="M6 9.5 H2.5 M6 14.5 H2.5"/><path d="M17 9 A4 4 0 0 1 17 15 M19.8 6.5 A7.2 7.2 0 0 1 19.8 17.5"/></g></g></g><g transform="translate(566,28)"><g transform="translate(13,0) scale(1.917)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2 19 H22"/></g></g></g><g stroke="#7A9E26" stroke-width="4" stroke-dasharray="1 8" stroke-linecap="round"><line x1="236" y1="50" x2="370" y2="50"/><line x1="446" y1="50" x2="552" y2="50"/></g>
+      <text x="303" y="36" text-anchor="middle" fill="#2F5E00" font-size="12.5">through the air</text>
+      <text x="499" y="36" text-anchor="middle" fill="#2F5E00" font-size="12.5">same radio</text>
+      <text x="180" y="88" text-anchor="middle" font-size="12.5">main box</text>
+      <text x="408" y="96" text-anchor="middle" font-size="12.5">extender</text>
+      <text x="602" y="90" text-anchor="middle" font-size="12.5">you</text>
+      <!-- row 2: mesh, cy=150 -->
+      <g transform="translate(140,130)"><g transform="translate(20,0) scale(1.667)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="18" height="7.5" rx="2"/><path d="M7.5 12 L6 4.5 M16.5 12 L18 4.5"/><circle cx="7.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="10.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="13.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/></g></g></g><g transform="translate(388,122)"><g transform="translate(0,8) scale(1.667)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="10" width="10" height="11.5" rx="3"/><path d="M9.3 7.2 Q12 5.6 14.7 7.2 M6.8 4.6 Q12 1.4 17.2 4.6"/><circle cx="12" cy="13.5" r="0.9" fill="#111111" stroke="none"/></g></g></g><g transform="translate(566,128)"><g transform="translate(13,0) scale(1.917)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2 19 H22"/></g></g></g><g stroke="#2B5C8A" stroke-width="4" stroke-dasharray="1 8" stroke-linecap="round"><line x1="236" y1="150" x2="372" y2="150"/></g>
+      <g stroke="#7A9E26" stroke-width="4" stroke-dasharray="1 8" stroke-linecap="round"><line x1="444" y1="150" x2="552" y2="150"/></g>
+      <text x="304" y="128" text-anchor="middle" fill="#2B5C8A" font-size="12.5">through the air, on some kits</text>
+      <text x="304" y="176" text-anchor="middle" fill="#2B5C8A" font-size="12.5">a radio of its own</text>
+      <text x="180" y="188" text-anchor="middle" font-size="12.5">main box</text>
+      <text x="408" y="196" text-anchor="middle" font-size="12.5">mesh unit</text>
+      <text x="602" y="190" text-anchor="middle" font-size="12.5">you</text>
+      <!-- row 3: wired AP, cy=250 -->
+      <g transform="translate(140,230)"><g transform="translate(20,0) scale(1.667)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="18" height="7.5" rx="2"/><path d="M7.5 12 L6 4.5 M16.5 12 L18 4.5"/><circle cx="7.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="10.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="13.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/></g></g></g><g transform="translate(382,224)"><g transform="scale(2.167)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4 H21 M12 4 V6"/><path d="M5 6 H19 C19 9.6 16 11 12 11 C8 11 5 9.6 5 6 Z"/><path d="M8.5 15 Q12 17.6 15.5 15 M6 18.5 Q12 22.6 18 18.5"/></g></g></g><g transform="translate(566,228)"><g transform="translate(13,0) scale(1.917)"><g fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2 19 H22"/></g></g></g><line x1="236" y1="250" x2="366" y2="250" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <g stroke="#7A9E26" stroke-width="4" stroke-dasharray="1 8" stroke-linecap="round"><line x1="450" y1="250" x2="552" y2="250"/></g>
+      <text x="301" y="236" text-anchor="middle" fill="#111111" font-size="12.5">a cable</text>
+      <text x="180" y="288" text-anchor="middle" font-size="12.5">main box</text>
+      <text x="408" y="292" text-anchor="middle" font-size="12.5">access point</text>
+      <text x="602" y="290" text-anchor="middle" font-size="12.5">you</text>
+    </svg>

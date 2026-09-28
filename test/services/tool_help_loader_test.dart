@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 246;
+const int _expectedEntryCount = 265;
 
 const String _fixture = '''
 {
@@ -526,6 +526,30 @@ void main() {
       // of wifi-lab/preview (8c123f84), which counted 228. 228 + 1 = 229.
       // Counted off the file, not derived: `len(json['tools'])` returned 229
       // and the id appears exactly once.
+      // 2026-09-28: the Bluetooth, Explained Guided Lesson added ONE entry,
+      // bluetooth-explained, on top of wifi-lab/lessons-110-b, which counted 246.
+      // 246 + 1 = 247. Counted off the file: `len(json['tools'])`
+      // returned 247.
+      // 2026-09-28: the Weak Cell Signal at Home, Explained Guided Lesson added ONE entry,
+      // weak-cell-signal-explained, on top of wifi-lab/lessons-110-b, which counted 247.
+      // 247 + 1 = 248. Counted off the file: `len(json['tools'])`
+      // returned 248.
+      // 2026-09-28: the How GPS Works, Explained Guided Lesson added ONE entry,
+      // how-gps-works-explained, on top of wifi-lab/lessons-110-b, which counted 248.
+      // 248 + 1 = 249. Counted off the file: `len(json['tools'])`
+      // returned 249.
+      // 2026-09-28: the How Your Phone Knows Where It Is, Explained Guided Lesson added ONE entry,
+      // where-your-phone-is-explained, on top of wifi-lab/lessons-110-b, which counted 249.
+      // 249 + 1 = 250. Counted off the file: `len(json['tools'])`
+      // returned 250.
+      // 2026-09-28: the Analog vs Digital, Explained Guided Lesson added ONE entry,
+      // analog-vs-digital-explained, on top of wifi-lab/lessons-110-b, which counted 250.
+      // 250 + 1 = 251. Counted off the file: `len(json['tools'])`
+      // returned 251.
+      // 2026-09-28: the Scales and Ratios, Explained Guided Lesson added ONE entry,
+      // scales-and-ratios-explained, on top of wifi-lab/lessons-110-b, which counted 251.
+      // 251 + 1 = 252. Counted off the file: `len(json['tools'])`
+      // returned 252.
       expect(store.count, _expectedEntryCount);
     });
 

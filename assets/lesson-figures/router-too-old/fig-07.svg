@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 236" font-family="IBM Plex Sans" font-size="11.5" fill="#444444" width="720" height="236">
+      <!-- axis: 1 Jan 2025 at x=40, 1 Jul 2029 at x=680; 0.3897 px per day -->
+      <line x1="40" y1="120" x2="680" y2="120" stroke="#9C9C9C" stroke-width="2"/>
+      <g stroke="#9C9C9C" stroke-width="2"><line x1="40" y1="114" x2="40" y2="126"/><line x1="182.3" y1="114" x2="182.3" y2="126"/><line x1="324.5" y1="114" x2="324.5" y2="126"/><line x1="466.8" y1="114" x2="466.8" y2="126"/><line x1="609.5" y1="114" x2="609.5" y2="126"/></g>
+      <g text-anchor="middle" fill="#444444" font-size="10.5"><text x="40" y="140" font-size="12.5">2025</text><text x="182.3" y="140" font-size="12.5">2026</text><text x="324.5" y="140" font-size="12.5">2027</text><text x="466.8" y="140" font-size="12.5">2028</text><text x="609.5" y="140" font-size="12.5">2029</text></g>
+      <!-- events above the axis -->
+      <circle cx="89.1" cy="120" r="5" fill="#1A1A1A"/>
+      <line x1="89.1" y1="110" x2="89.1" y2="66" stroke="#1A1A1A" stroke-width="1.5"/>
+      <text x="80" y="42" font-weight="700" fill="#111111" font-size="12.5">7 May 2025</text>
+      <text x="80" y="57" font-size="12.5">FBI warns about end-of-life routers</text>
+      <circle cx="213.8" cy="120" r="5" fill="#2B5C8A"/>
+      <line x1="213.8" y1="110" x2="213.8" y2="102" stroke="#2B5C8A" stroke-width="1.5"/>
+      <text x="206" y="80" font-weight="700" fill="#2B5C8A" font-size="12.5">23 March 2026</text>
+      <text x="206" y="95" font-size="12.5">FCC adds foreign-made home routers to its Covered List</text>
+      <!-- waiver bars below the axis, drawn to scale -->
+      <line x1="213.8" y1="164" x2="347.5" y2="164" stroke="#9C9C9C" stroke-width="8" stroke-linecap="butt"/>
+      <text x="355" y="168" fill="#444444" font-size="12.5">first waiver: FCC allows updates until 1 March 2027</text>
+      <line x1="231.8" y1="196" x2="609.5" y2="196" stroke="#7A9E26" stroke-width="12" stroke-linecap="butt"/>
+      <text x="240" y="221" fill="#2F5E00" font-weight="600" font-size="12.5">8 May 2026: FCC allows updates to at least 1 January 2029</text>
+    </svg>

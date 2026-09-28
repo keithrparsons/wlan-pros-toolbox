@@ -1,0 +1,195 @@
+{
+  "source": "home-internet-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        644.0,
+        184.0
+      ],
+      "caption": "**Figure 1. Three things you're buying.** Speed, lag and a data limit are three different things.",
+      "alt": "Speed, lag and a data limit shown as three pictures"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        700.0,
+        330.0
+      ],
+      "caption": "**Figure 2. Six ways in.** Five end at your provider's box; a phone hotspot is its own box. Everything right of the dashed line is yours, starting with the router.",
+      "alt": "Figure 2. Six ways in. Five end at your provider's box; a phone hotspot is its own box. Everything right of the dashed line is yours, starting with the router."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": "**Figure 3. What each option shares.** Fiber splits one strand among a group of homes. Cable shares one line along the street. A cell tower and a satellite beam each serve many homes at once.",
+      "alt": "Figure 3. What each option shares. Fiber splits one strand among a group of homes. Cable shares one line along the street. A cell tower and a satellite beam each serve many homes at once."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        644.0,
+        226.0
+      ],
+      "caption": "**Figure 4. Same plan, busier road.** In the evening more neighbors share the same road, so each home's share gets smaller. The lime part is yours.",
+      "alt": "At midday your share of the shared road is large; in the evening it is small"
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        644.0,
+        292.0
+      ],
+      "caption": "**Figure 5. Three kinds of wire.** Fiber carries light through glass, cable uses the TV line, and DSL uses the old phone line. Each one ends at a box inside your wall.",
+      "alt": "Fiber, cable and DSL wires entering a house"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        700.0,
+        220.0
+      ],
+      "caption": "**Figure 6. Sending matters too.** Video calls, photo backups and cameras send data up. Fiber often sends as fast as it receives. Cable and 5G home internet send much less.",
+      "alt": "Figure 6. Sending matters too. Video calls, photo backups and cameras send data up. Fiber often sends as fast as it receives. Cable and 5G home internet send much less."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        644.0,
+        248.0
+      ],
+      "caption": "**Figure 7. DSL slows with distance.** The same phone line gives slower service to homes farther from the phone company. Not to scale.",
+      "alt": "DSL homes farther from the phone company get slower speeds"
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        644.0,
+        366.0
+      ],
+      "caption": "**Figure 8. Four ways radio reaches a house.** Towers need a clear path, satellites need open sky, and the far satellite answers slowly. Not to scale.",
+      "alt": "Four ways a radio link reaches a house"
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        700.0,
+        170.0
+      ],
+      "caption": "**Figure 9. Low orbit and high orbit.** Low-orbit satellites fly just above the Earth. A high-orbit satellite sits far out in space, so every answer takes much longer to come back.",
+      "alt": "Figure 9. Low orbit and high orbit. Low-orbit satellites fly just above the Earth. A high-orbit satellite sits far out in space, so every answer takes much longer to come back."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        644.0,
+        210.0
+      ],
+      "caption": "**Figure 10. A hotspot is for one or two devices.** Your phone can share its data with a laptop on a trip. Sharing it with a whole house of screens is a poor fit.",
+      "alt": "A phone hotspot suits one laptop on a trip, not a whole family"
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": "**Figure 11. How long an answer takes.** Wired service and low-orbit satellites answer quickly. A satellite far above the equator adds about half a second, which you notice on every call.",
+      "alt": "Figure 11. How long an answer takes. Wired service and low-orbit satellites answer quickly. A satellite far above the equator adds about half a second, which you notice on every call."
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        644.0,
+        260.0
+      ],
+      "caption": "**Figure 12. A busy line means a longer wait.** When someone uploads, your video call waits in line behind it. That wait is lag.",
+      "alt": "A video call waits behind an upload, which adds lag"
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        700.0,
+        240.0
+      ],
+      "caption": "**Figure 13. Two different measurements.** The provider's promise ends at the router. Your phone in the back bedroom adds the Wi-Fi on top. When the two tests disagree, the difference is your Wi-Fi.",
+      "alt": "Figure 13. Two different measurements. The provider's promise ends at the router. Your phone in the back bedroom adds the Wi-Fi on top. When the two tests disagree, the difference is your Wi-Fi."
+    },
+    {
+      "n": 14,
+      "file": "fig-14.svg",
+      "viewBox": [
+        644.0,
+        204.0
+      ],
+      "caption": "**Figure 14. What the two tests tell you.** If only the Wi-Fi test is slow, fix the Wi-Fi. If the wired test is slow too, the service itself is slow.",
+      "alt": "What the two speed tests tell you"
+    },
+    {
+      "n": 15,
+      "file": "fig-15.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": "**Figure 15. Pick in this order.** Fiber first, then cable. Without a wire, try 5G home internet or a low-orbit satellite before the last choices.",
+      "alt": "Figure 15. Pick in this order. Fiber first, then cable. Without a wire, try 5G home internet or a low-orbit satellite before the last choices."
+    },
+    {
+      "n": 16,
+      "file": "fig-16.svg",
+      "viewBox": [
+        644.0,
+        204.0
+      ],
+      "caption": "**Figure 16. See who serves your address.** Type your address on the FCC's national broadband map, then read the list. Names here are examples.",
+      "alt": "Look up your address on the national broadband map"
+    },
+    {
+      "n": 17,
+      "file": "fig-17.svg",
+      "viewBox": [
+        644.0,
+        396.0
+      ],
+      "caption": "**Figure 17. Read three lines on the label.** The real price after any deal, the upload speed, and any monthly data limit. Simplified: a real label has more lines.",
+      "alt": "A simplified Broadband Facts label with three lines marked"
+    },
+    {
+      "n": 18,
+      "file": "fig-18.svg",
+      "viewBox": [
+        644.0,
+        290.0
+      ],
+      "caption": "**Figure 18. The four myths in pictures.** Each picture matches a myth above, in the same order.",
+      "alt": "The four myths shown as pictures"
+    }
+  ]
+}

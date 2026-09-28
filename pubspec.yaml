@@ -621,6 +621,34 @@ flutter:
     # allow-list by tool/home_internet_diagrams.py and resolved by
     # lib/data/home_internet_diagrams.dart.
     - assets/tool-diagrams/home-internet/
+    # Guided Lesson figures (1.11.0): each explainer guide's OWN figures,
+    # lifted from its approved HTML by tool/extract_lesson_figures.py and
+    # shown on an always-light card (lib/widgets/lesson/lesson_figure_view.dart).
+    # _shared holds the explainer icon set's warning mark for Caution / Stop.
+    - assets/lesson-figures/_shared/
+    - assets/lesson-figures/find-my/
+    - assets/lesson-figures/starlink/
+    - assets/lesson-figures/home-internet/
+    - assets/lesson-figures/wifi-calling/
+    - assets/lesson-figures/phone-data-abroad/
+    - assets/lesson-figures/smart-home-radios/
+    - assets/lesson-figures/cameras-doorbells/
+    - assets/lesson-figures/devices-to-internet/
+    - assets/lesson-figures/mesh-extenders/
+    - assets/lesson-figures/router-too-old/
+    - assets/lesson-figures/bluetooth/
+    - assets/lesson-figures/weak-cell-signal/
+    - assets/lesson-figures/how-gps-works/
+    - assets/lesson-figures/where-your-phone-is/
+    - assets/lesson-figures/analog-vs-digital/
+    - assets/lesson-figures/scales-and-ratios/
+    - assets/lesson-figures/tap-touch-near/
+    - assets/lesson-figures/satellite-texting/
+    - assets/lesson-figures/wifi-on-planes/
+    - assets/lesson-figures/wifi-and-health/
+    - assets/lesson-figures/travel-routers/
+    - assets/lesson-figures/mobile-hotspots/
+    - assets/lesson-figures/captive-portals/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2

@@ -1,0 +1,135 @@
+{
+  "source": "analog-vs-digital-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        240.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        784.0,
+        328.0
+      ],
+      "caption": "**Figure 1. A groove or a list of numbers.** A record keeps the shape of the sound. A phone keeps measurements of it.",
+      "alt": "Figure 1. A groove or a list of numbers. A record keeps the shape of the sound. A phone keeps measurements of it."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 2. The same sound, kept two ways.** The analog copy follows the wave everywhere. The digital copy keeps only the dots, and stores each dot as a number.",
+      "alt": "Figure 2. The same sound, kept two ways. The analog copy follows the wave everywhere. The digital copy keeps only the dots, and stores each dot as a number."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        784.0,
+        714.0
+      ],
+      "caption": "**Figure 3. More measurements make a closer copy.** Join the dots and you get the digital copy. With enough dots, it lands right on the real sound.",
+      "alt": "Figure 3. More measurements make a closer copy. Join the dots and you get the digital copy. With enough dots, it lands right on the real sound."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        784.0,
+        470.0
+      ],
+      "caption": "**Figure 4. Copies of copies.** Every tape copy adds a little hiss, but every digital copy is the same list of numbers. Read each row from left to right.",
+      "alt": "Figure 4. Copies of copies. Every tape copy adds a little hiss, but every digital copy is the same list of numbers. Read each row from left to right."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        784.0,
+        442.0
+      ],
+      "caption": "**Figure 5. Analog at both ends, digital in the middle.** Sound is only numbers while it is stored or sent. Before the speaker plays it, the phone smooths the steps back into a wave.",
+      "alt": "Figure 5. Analog at both ends, digital in the middle. Sound is only numbers while it is stored or sent. Before the speaker plays it, the phone smooths the steps back into a wave."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        784.0,
+        208.0
+      ],
+      "caption": "**Figure 6. One copy can be lost. Two copies in two places are safer.** A cloud backup counts as a second place, but a delete on your phone can delete it there too.",
+      "alt": "Figure 6. One copy can be lost. Two copies in two places are safer. A cloud backup counts as a second place, but a delete on your phone can delete it there too."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        784.0,
+        200.0
+      ],
+      "caption": "**Figure 7. Only waves travel through the air.** The ones and zeros stay inside the router and the phone.",
+      "alt": "Figure 7. Only waves travel through the air. The ones and zeros stay inside the router and the phone."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        344.0
+      ],
+      "caption": "**Figure 8. One wave, three ways to change it.** Each wave starts the same. After the dashed line, one thing changes. The receiver watches for those changes and reads them as numbers.",
+      "alt": "Figure 8. One wave, three ways to change it. Each wave starts the same. After the dashed line, one thing changes. The receiver watches for those changes and reads them as numbers."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        784.0,
+        608.0
+      ],
+      "caption": "**Figure 9. Each change in the wave stands for bits.** Here the height alone picks one of four patterns. Real Wi-Fi changes height and timing together, so each change carries more bits.",
+      "alt": "Figure 9. Each change in the wave stands for bits. Here the height alone picks one of four patterns. Real Wi-Fi changes height and timing together, so each change carries more bits."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        784.0,
+        400.0
+      ],
+      "caption": "**Figure 10. A slope, a cliff and a staircase.** Wi-Fi sits in between: it slows down in steps to stay connected. A sketch, not a measurement.",
+      "alt": "Figure 10. A slope, a cliff and a staircase. Wi-Fi sits in between: it slows down in steps to stay connected. A sketch, not a measurement."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        784.0,
+        180.0
+      ],
+      "caption": "**Figure 11. The four facts, in pictures.** One picture for each fact above, in the same order.",
+      "alt": "Figure 11. The four facts, in pictures. One picture for each fact above, in the same order."
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        784.0,
+        428.0
+      ],
+      "caption": "**Figure 12. Two things you can do today.** Move closer or clear the path, and Wi-Fi climbs back up its staircase. Copy files rather than converting them.",
+      "alt": "Figure 12. Two things you can do today. Move closer or clear the path, and Wi-Fi climbs back up its staircase. Copy files rather than converting them."
+    }
+  ]
+}

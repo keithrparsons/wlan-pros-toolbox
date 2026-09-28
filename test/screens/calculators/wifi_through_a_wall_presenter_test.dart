@@ -161,18 +161,42 @@ void main() {
     await tester.pump();
     expect(c.config.preset, WallPreset.studWall);
 
-    // One material: Up and Down change the thickness.
-    c.setConfig(c.config.copyWith(preset: WallPreset.custom));
-    await tester.pump();
+    // Up walks the whole list to One material, any thickness, and stops.
+    for (int i = 0; i < WallPreset.values.length; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+    }
+    expect(c.config.preset, WallPreset.custom);
+
+    // One material: Up and Down still step the wall list (they used to get
+    // stuck changing the thickness here, 1.11.0). Minus and equals (plus)
+    // change the thickness instead.
     expect(c.config.thicknessMm, 102);
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyEvent(LogicalKeyboardKey.equal);
     await tester.pump();
     expect(c.config.thicknessMm, greaterThan(102));
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.sendKeyEvent(LogicalKeyboardKey.bracketLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.minus);
+    await tester.sendKeyEvent(LogicalKeyboardKey.minus);
     await tester.pump();
     expect(c.config.thicknessMm, lessThan(102));
     expect(c.config.preset, WallPreset.custom);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(
+      c.config.preset,
+      WallPreset.values[WallPreset.values.length - 2],
+      reason: 'Down leaves One material for the last real wall',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
+    await tester.pump();
+    expect(c.config.preset, WallPreset.custom);
+    // On a real wall the thickness keys do nothing: its layers are fixed.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    final WallConfig real = c.config;
+    await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+    await tester.pump();
+    expect(c.config, real);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
     await tester.pump();

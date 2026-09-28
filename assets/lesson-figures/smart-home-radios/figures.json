@@ -1,0 +1,145 @@
+{
+  "source": "smart-home-radios-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        200.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        720.0,
+        250.0
+      ],
+      "caption": "**Figure 1. Three radios and a language.** Matter devices connect by Wi-Fi, Thread or a cable. Your phone usually uses Bluetooth once, to set them up. Zigbee speaks its own language and needs a bridge.",
+      "alt": "Figure 1. Three radios and a language. Matter devices connect by Wi-Fi, Thread or a cable. Your phone usually uses Bluetooth once, to set them up. Zigbee speaks its own language and needs a bridge."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        330.0
+      ],
+      "caption": "**Figure 2. The four radios in a smart home.** Wi-Fi and Thread carry Matter directly (the green row). Zigbee needs a bridge, and Bluetooth only helps at setup.",
+      "alt": "The four radios in a smart home"
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        700.0,
+        258.0
+      ],
+      "caption": "**Figure 3. One road, many lanes.** Wi-Fi uses a few wide lanes. Thread and Zigbee use many narrow ones. Each radio listens first, then talks when the lane is clear.",
+      "alt": "Three radios sharing the 2.4 GHz band"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        720.0,
+        140.0
+      ],
+      "caption": "**Figure 4. Two bands, one name.** The plug needs 2.4 GHz to join. With one name on both bands, 2.4 GHz is there. Some setup apps also want your phone on 2.4 GHz for a minute.",
+      "alt": "Figure 4. Two bands, one name. The plug needs 2.4 GHz to join. With one name on both bands, 2.4 GHz is there. Some setup apps also want your phone on 2.4 GHz for a minute."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        760.0,
+        666.0
+      ],
+      "caption": "**Figure 5. Getting it to join, gentlest fix first.** Try each step in order, and stop as soon as it joins. Step 6 is on the next page.",
+      "alt": "Getting a smart plug to join, gentlest fix first"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        434.0
+      ],
+      "caption": "**Figure 6. One router, two network names.** Your gadgets get a simple 2.4 GHz network to live on. Make it a regular network, so your phone can still reach them.",
+      "alt": "A gadget network: 2.4 GHz only, regular not guest"
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        720.0,
+        280.0
+      ],
+      "caption": "**Figure 7. A Thread mesh.** Plugged-in devices relay for each other. If one goes offline, a message takes another path. The border router is the doorway to the rest of your home.",
+      "alt": "Figure 7. A Thread mesh. Plugged-in devices relay for each other. If one goes offline, a message takes another path. The border router is the doorway to the rest of your home."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        382.0
+      ],
+      "caption": "**Figure 8. Where the border router lives.** Here it's inside a smart speaker. Thread gadgets pass their messages to it, and it hands them to your Wi-Fi router.",
+      "alt": "Where the border router lives in a home"
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        720.0,
+        230.0
+      ],
+      "caption": "**Figure 9. Before and after the update.** Left: older border routers each built their own network. Right: updated ones share one network, so either can be the doorway.",
+      "alt": "Figure 9. Before and after the update. Left: older border routers each built their own network. Right: updated ones share one network, so either can be the doorway."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        268.0
+      ],
+      "caption": "**Figure 10. A bridge lets Zigbee gadgets stay.** On its own, a Zigbee gadget can't reach a Matter app. A hub that is also a Matter bridge translates for it.",
+      "alt": "A Zigbee hub that is also a Matter bridge"
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        760.0,
+        186.0
+      ],
+      "caption": "**Figure 11. More than one app.** One person can use one company's app, and another person a different one. The same bulb answers both.",
+      "alt": "Two apps controlling one bulb"
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        720.0,
+        170.0
+      ],
+      "caption": "**Figure 12. Matter keeps growing.** New versions add new kinds of devices, like cameras. Your app adds them on its own schedule.",
+      "alt": "Figure 12. Matter keeps growing. New versions add new kinds of devices, like cameras. Your app adds them on its own schedule."
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        760.0,
+        236.0
+      ],
+      "caption": "**Figure 13. Four checks before you buy.** The box should answer the first two.",
+      "alt": "Before you buy a smart device"
+    }
+  ]
+}

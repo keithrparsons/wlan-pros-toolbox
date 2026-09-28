@@ -70,16 +70,28 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 
 - **Home Internet, Explained.** Fiber, cable, DSL, 5G and satellite: how each one reaches a house, what to check before you sign up, and why the Wi-Fi is a separate question.
 
+- **Phone Data Abroad, Explained.** Roaming with your own carrier, a travel eSIM and a local SIM, how to keep your own number on while a second plan carries the data, and the switches that stop a surprise bill.
+
+- **Smart Home Radios, Explained.** Wi-Fi, Thread, Zigbee and Matter: three radios and a language, why a 2.4 GHz-only smart plug won't join, the gadget network that fixes it, and what a Thread border router does. Figure 3 (one band, shared) is the Wi-Fi hook for a Wi-Fi audience.
+
+- **Cameras, Doorbells and Baby Monitors, Explained.** A camera is the rare gadget that sends more than it receives: upload against download, signal through the outside wall, what a wired doorbell's wire carries, cloud or home recording, baby monitors, locking a camera down, and jammers. Figure 3 (same house, same doorbell) is the Wi-Fi hook for a Wi-Fi audience.
+
+- **How Your Devices Access the Internet, Explained.** Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Test My Connection, which grades the two roads separately.
+
+- **Mesh, Extenders and Wired Access Points, Explained.** Three ways to fix a dead zone, and the one question that decides between them: how does the new box talk to the main one? One radio taking turns, where to put an extender, five setups for one far room, and four ways to build the link back. Pair it with Repeaters and Mesh Backhaul, the model its numbers come from.
+
+- **Is Your Router Too Old?.** A router is too old when it stops getting security fixes, not when it stops working: the three stages, the five-minute check, who updates the box, keep, update or replace, the 2026 US router rule, and what to look for in the next one.
+
 ### RF and Propagation
 
 - **FSPL Simulator.** Free-space path loss against distance for 2.4, 5 and 6 GHz on one chart, with a Why panel that splits each band's loss into the part every band shares and the part that changes with frequency. Up and Down double and halve the distance, so each press shows the 6 dB per doubling rule. Log and Linear switch the distance axis: on log the bands are straight lines, on linear they are the curve students usually expect.
-- **Wi-Fi Through a Wall.** One wave meets one wall: part reflects, the wave gets smaller as the material absorbs it, and the same wave continues behind the wall, smaller. The frequency never changes. Pick a real wall, such as an interior stud wall (plasterboard, air gap, plasterboard) or a concrete elevator-shaft wall, or one material at any thickness. Up and Down step through the walls, or change the thickness of one material.
+- **Wi-Fi Through a Wall.** One wave meets one wall: part reflects, the wave gets smaller as the material absorbs it, and the same wave continues behind the wall, smaller. The frequency never changes. Pick a real wall, such as an interior stud wall (plasterboard, air gap, plasterboard) or a concrete elevator-shaft wall, or one material at any thickness. Up and Down step through the walls; minus and equals make One material thinner and thicker.
 - **Multipath Simulator.** Why the signal changes when you move a few centimeters: the direct signal and its reflections arrive with different phases and add like arrows. Up and Down move the receiver a sixteenth of a wavelength, so a few presses walk from a peak into a null.
 - **Room Propagation.** An AP, walls and doorways on a floor plan, colored by received power, with the loss at a spot split into free space, walls and diffraction for each band.
 - **Antenna Pattern.** A radiation pattern in 3D beside the two cuts a datasheet prints. Space spins it. Turn up the gain on an omni and watch it flatten, then flip between ceiling and wall mounting.
 - **Rate vs Range.** One ring per MCS around an AP, and a cell edge where beacons sent at the minimum basic rate can no longer be decoded. Up and Down move the client out and in.
 - **6 GHz Power and PSD.** The most power each 6 GHz device class may radiate, and the SNR it leaves, against channel width. Up and Down step the width, which shows when a wider channel keeps its SNR and when it loses 3 dB per doubling.
-- **Why Two Devices Disagree.** Two devices at the same spot, hearing the same AP, report different signal strength. The true power is held fixed and each device reports it its own way, with an offset, grip and orientation loss. Ask the room which one is right before you click Reveal. Space re-samples; Up and Down move the AP a meter.
+- **Why Two Devices Disagree.** Two devices at the same spot, hearing the same AP, report different signal strength. The true power is held fixed and each device reports it its own way, with an offset, grip and orientation loss. Ask the room which one is right before you click Reveal. Space re-samples; Up and Down move the AP 1 m (1 ft when lengths are imperial).
 - **Uplink vs Downlink.** Both directions of one link at once: the two ends usually transmit at different power, so each can hear the other over a different distance, and the shaded band between the two rings is where the link is lopsided. Up and Down move the client; M turns the AP down to match and back, which answers "should I just turn the AP down?"
 - **Body Loss.** An auditorium, one AP, a person holding a device and up to 50 other people. Turn the holder's back to the AP and watch their own body take the signal; fill the room and watch the crowd take more. Left and Right turn the holder; Space empties or fills the room.
 
@@ -94,9 +106,11 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 ### Airtime and Access
 
 - **Medium Access Simulator.** Stations sharing one channel, slot by slot: backoff, collisions, the contention window doubling, EDCA priority, hidden nodes and RTS/CTS.
+- **Voice Priority, End to End.** Follow one voice packet to a phone on Wi-Fi and see which of the AP's four queues it waits in. The call gets the Voice queue only if its EF (Expedited Forwarding) marking survives every hop and the AP maps it to the right priority; lose it at the tunnel, the provider or the AP, and the call waits in Best effort behind the download. Up and Down move where the marking is lost; D starts or stops the download.
 - **Airtime Anatomy.** One transmit opportunity drawn to scale, microsecond by microsecond. The Right arrow walks it one segment at a time. Compare one frame against 32 aggregated frames and ask how much of the air carried data.
 - **Airtime Fairness.** Why one slow client drags every fast client down, and how airtime fairness changes that. Up and Down switch the sharing rule.
 - **Rate Adaptation.** A link learning its best rate frame by frame, the way Linux rate control does. Walk the client away and back and watch the rate step down and recover.
+- **What an Interferer Costs.** How a Wi-Fi radio decides the air is busy: it holds off at -82 dBm for another Wi-Fi transmitter it can decode (preamble detect), and only at -62 dBm for anything else (energy detect). That is why a neighbor's AP on your channel costs more airtime than a microwave oven at the same level. Up and Down move the selected source's level; N picks the next source.
 - **Spatial Reuse.** Two networks on one channel, and what BSS coloring and OBSS_PD let an AP do. Up and Down move the threshold, and the links show what each step costs.
 - **Power Save.** Beacons, DTIM, and four ways a client sleeps, with awake time, battery and latency for each. Up and Down change the DTIM period.
 - **Multi-Link Operation.** Wi-Fi 7 MLO modes compared on the same traffic, including cases where using more links is worse. N draws new traffic.

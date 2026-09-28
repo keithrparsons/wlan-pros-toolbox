@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 150" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="150">
+      <text x="20" y="36" font-size="12.5" font-weight="700" fill="#111111">Extender next to</text>
+      <text x="20" y="52" font-size="12.5" font-weight="700" fill="#111111">the laptop</text>
+      <rect x="200" y="22" width="428.6" height="34" fill="#2B5C8A"/>
+      <rect x="628.6" y="22" width="51.4" height="34" fill="#A1CC3A"/>
+      <text x="414" y="44" text-anchor="middle" fill="#FFFFFF" font-weight="700" font-size="12.5">link back: 89% of the time</text>
+      <text x="654.3" y="44" text-anchor="middle" fill="#111111" font-weight="700" font-size="12.5">11%</text>
+      <text x="20" y="100" font-size="12.5" font-weight="700" fill="#111111">Extender partway,</text>
+      <text x="20" y="116" font-size="12.5" font-weight="700" fill="#111111">two equal hops</text>
+      <rect x="200" y="86" width="240" height="34" fill="#2B5C8A"/>
+      <rect x="440" y="86" width="240" height="34" fill="#A1CC3A"/>
+      <text x="320" y="108" text-anchor="middle" fill="#FFFFFF" font-weight="700" font-size="12.5">link back: 50%</text>
+      <text x="560" y="108" text-anchor="middle" fill="#111111" font-weight="700" font-size="12.5">link to you: 50%</text>
+      <text x="200" y="142" font-size="12.5">0%</text>
+      <text x="680" y="142" font-size="12.5" text-anchor="end">100% of the channel's time</text>
+    </svg>

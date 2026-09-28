@@ -13,7 +13,12 @@ import 'package:wlan_pros_toolbox/data/tool_keywords.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/public_wifi_lesson_screen.dart';
 import 'package:wlan_pros_toolbox/services/help/tool_help.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/lesson_parts.dart'
+    show LessonSection;
+import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/lesson/lesson.dart'
+    show LessonBlockRef, LessonMythView, lessonMythKey;
 import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 import 'package:wlan_pros_toolbox/widgets/app_toggle.dart';
 
@@ -113,7 +118,10 @@ void main() {
     await tester.pumpWidget(_harness());
     await tester.pump();
     await _scrollTo(tester, find.text('Network type'));
-    expect(find.byWidgetPredicate((Widget w) => w is AppSelect), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((Widget w) => w is AppSelect),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await _size(tester, 1024, 900);
@@ -147,21 +155,33 @@ void main() {
     );
 
     // The WPA2 / WPA3 choice is disabled until Password, and says why.
-    expect(find.text('Pick Password to compare WPA2 and WPA3.'), findsOneWidget);
+    expect(
+      find.text('Pick Password to compare WPA2 and WPA3.'),
+      findsOneWidget,
+    );
 
     await _tapSegment(tester, 'Enhanced Open');
     expect(find.text('Can read it'), findsNothing);
     expect(find.text('Sealed'), findsNWidgets(3));
-    expect(find.textContaining('Your network list still shows no lock'), findsOne);
+    expect(
+      find.textContaining('Your network list still shows no lock'),
+      findsOne,
+    );
 
     await _tapSegment(tester, 'Password');
     expect(find.text('Pick Password to compare WPA2 and WPA3.'), findsNothing);
-    expect(find.text('What the person next to you can see on WPA2-Personal'), findsOne);
+    expect(
+      find.text('What the person next to you can see on WPA2-Personal'),
+      findsOne,
+    );
     // The guard: a shared password does not hide you on WPA2.
     expect(find.text('Can read it'), findsOneWidget);
 
     await _tapSegment(tester, 'WPA3');
-    expect(find.text('What the person next to you can see on WPA3-Personal'), findsOne);
+    expect(
+      find.text('What the person next to you can see on WPA3-Personal'),
+      findsOne,
+    );
     expect(find.text('Can read it'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -179,7 +199,10 @@ void main() {
     await _scrollTo(tester, reveal);
     await tester.tap(reveal);
     await tester.pump();
-    expect(find.textContaining('Not your password and not your balance'), findsOne);
+    expect(
+      find.textContaining('Not your password and not your balance'),
+      findsOne,
+    );
 
     await tester.ensureVisible(find.text('Show me on Open'));
     await tester.tap(find.text('Show me on Open'));
@@ -199,5 +222,51 @@ void main() {
     expect(p, findsOneWidget);
     final String shown = tester.widget<Text>(p).textSpan!.toPlainText();
     expect(shown.contains('**'), isFalse);
+  });
+
+  // GL-003 §12.10-2 (Keith, 2026-09-28): a Guided Lesson's myth is the
+  // stacked pair, myth first and the fact revealed by a tap under it, with
+  // no red, no amber and no fill. This lesson used the old red myth panel.
+  testWidgets('myths are the stacked pair: no red, fact hidden until tapped', (
+    tester,
+  ) async {
+    await _size(tester, 390, 844);
+    await tester.pumpWidget(_harness(light: true));
+    await tester.pumpAndSettle();
+    final Finder title = find.text('Three things people get wrong');
+    await _scrollTo(tester, title);
+    final Finder section = find.ancestor(
+      of: title,
+      matching: find.byType(LessonSection),
+    );
+    expect(
+      find.descendant(of: section, matching: find.byType(LessonMythView)),
+      findsNWidgets(3),
+    );
+    final AppColorScheme c = AppColorScheme.light();
+    final Set<Color> warm = <Color>{
+      c.statusDanger,
+      c.statusDangerFill,
+      c.statusWarning,
+      c.statusWarningFill,
+    };
+    for (final Container box in tester.widgetList<Container>(
+      find.descendant(of: section, matching: find.byType(Container)),
+    )) {
+      final Decoration? d = box.decoration;
+      final Color? fill = box.color ?? (d is BoxDecoration ? d.color : null);
+      expect(warm.contains(fill), isFalse, reason: '$fill');
+    }
+    final Finder fact = find.textContaining(
+      'The FTC says connecting through public Wi-Fi is usually',
+      findRichText: true,
+    );
+    expect(fact, findsNothing);
+    final Finder reveal = find.byKey(lessonMythKey(const LessonBlockRef(5, 0)));
+    await tester.ensureVisible(reveal);
+    await tester.pumpAndSettle();
+    await tester.tap(reveal);
+    await tester.pumpAndSettle();
+    expect(fact, findsOneWidget);
   });
 }

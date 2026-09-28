@@ -145,6 +145,25 @@ import '../screens/tools/reference/guest_discovery_screen.dart';
 import '../screens/tools/reference/starlink_explained_screen.dart';
 import '../screens/tools/reference/wifi_calling_explained_screen.dart';
 import '../screens/tools/reference/home_internet_explained_screen.dart';
+import '../screens/tools/reference/phone_data_abroad_explained_screen.dart';
+import '../screens/tools/reference/smart_home_radios_explained_screen.dart';
+import '../screens/tools/reference/cameras_doorbells_explained_screen.dart';
+import '../screens/tools/reference/devices_to_internet_explained_screen.dart';
+import '../screens/tools/reference/mesh_extenders_explained_screen.dart';
+import '../screens/tools/reference/router_too_old_explained_screen.dart';
+import '../screens/tools/reference/bluetooth_explained_screen.dart';
+import '../screens/tools/reference/weak_cell_signal_explained_screen.dart';
+import '../screens/tools/reference/how_gps_works_explained_screen.dart';
+import '../screens/tools/reference/where_your_phone_is_explained_screen.dart';
+import '../screens/tools/reference/analog_vs_digital_explained_screen.dart';
+import '../screens/tools/reference/scales_and_ratios_explained_screen.dart';
+import '../screens/tools/reference/tap_touch_near_explained_screen.dart';
+import '../screens/tools/reference/satellite_texting_explained_screen.dart';
+import '../screens/tools/reference/wifi_on_planes_explained_screen.dart';
+import '../screens/tools/reference/wifi_and_health_explained_screen.dart';
+import '../screens/tools/reference/travel_routers_explained_screen.dart';
+import '../screens/tools/reference/mobile_hotspots_explained_screen.dart';
+import '../screens/tools/reference/captive_portals_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -805,37 +824,136 @@ class AppRouter {
   /// same network can read. The id `public-wifi` is permanent (route,
   /// catalog, help, tests).
   static const String publicWifi = '/tools/public-wifi';
+
   /// Wi-Fi Privacy Myths — a Wi-Fi Classroom Guided Lesson in two parts: the
   /// private Wi-Fi address (Off / Fixed / Rotating) and the hidden network
   /// name. The id `wifi-privacy-myths` is permanent (route, catalog, help,
   /// tests).
   static const String wifiPrivacyMyths = '/tools/wifi-privacy-myths';
+
   /// Connected, No Internet: Captive Portals — a Wi-Fi Classroom Guided
   /// Lesson with one step-through: association, then the device's check for a
   /// sign-in page, announced (DHCP option 114) or intercepted. The id
   /// `captive-portal` is permanent (route, catalog, help, tests).
   static const String captivePortal = '/tools/captive-portal';
+
   /// Why the TV and the Printer Vanish on Guest Wi-Fi — a Wi-Fi Classroom
   /// Guided Lesson: Multicast DNS is link-local, so a guest network or client
   /// isolation stops discovery. The id `guest-discovery` is permanent (route,
   /// catalog, help, tests).
   static const String guestDiscovery = '/tools/guest-discovery';
+
   /// Starlink, Explained — a Wi-Fi Classroom Guided Lesson: how satellite
   /// internet reaches a house or RV, orbit heights, latency, plans, and the
   /// Wi-Fi inside. The id `starlink-explained` is permanent (route, catalog,
   /// diagram lookup, help, tests).
   static const String starlinkExplained = '/tools/starlink-explained';
+
   /// Wi-Fi Calling, Explained — a Wi-Fi Classroom Guided Lesson: how a call
   /// reaches your carrier over Wi-Fi, when the phone uses it, emergency calls,
   /// travel, and what your Wi-Fi owes a call. The id `wifi-calling-explained`
   /// is permanent (route, catalog, diagram lookup, help, tests).
   static const String wifiCallingExplained = '/tools/wifi-calling-explained';
+
   /// Home Internet, Explained — a Wi-Fi Classroom Guided Lesson: how fiber,
   /// cable, DSL, 5G and satellite reach a house, what to check before signing
   /// up, and why the Wi-Fi is a separate question. The id
   /// `home-internet-explained` is permanent (route, catalog, diagram lookup,
   /// help, tests).
   static const String homeInternetExplained = '/tools/home-internet-explained';
+  /// Bluetooth, Explained: a Wireless Classroom Guided Lesson on why earbuds
+  /// cut out and why the car won't connect. The id `bluetooth-explained` is
+  /// permanent (route, catalog, help, tests).
+  static const String bluetoothExplained = '/tools/bluetooth-explained';
+  /// Weak Cell Signal at Home, Explained: a Wireless Classroom Guided Lesson
+  /// on why a house blocks cell signal and the three fixes. The id
+  /// `weak-cell-signal-explained` is permanent (route, catalog, help, tests).
+  static const String weakCellSignalExplained = '/tools/weak-cell-signal-explained';
+  /// How GPS Works, Explained: a Wireless Classroom Guided Lesson on how a
+  /// phone finds itself from satellite time signals. The id
+  /// `how-gps-works-explained` is permanent (route, catalog, help, tests).
+  static const String howGpsWorksExplained = '/tools/how-gps-works-explained';
+  /// How Your Phone Knows Where It Is, Explained: a Wireless Classroom Guided
+  /// Lesson on Wi-Fi positioning and the location switches. The id
+  /// `where-your-phone-is-explained` is permanent (route, catalog, help, tests).
+  static const String whereYourPhoneIsExplained = '/tools/where-your-phone-is-explained';
+  /// Analog vs Digital, Explained: a Wireless Classroom Guided Lesson on what
+  /// the two words mean and why Wi-Fi slows in steps. The id
+  /// `analog-vs-digital-explained` is permanent (route, catalog, help, tests).
+  static const String analogVsDigitalExplained = '/tools/analog-vs-digital-explained';
+  /// Scales and Ratios, Explained: a Wireless Classroom Guided Lesson on the
+  /// tiny and huge numbers behind Wi-Fi. The id `scales-and-ratios-explained`
+  /// is permanent (route, catalog, help, tests).
+  static const String scalesAndRatiosExplained = '/tools/scales-and-ratios-explained';
+
+  /// Phone Data Abroad, Explained: a Wireless Classroom Guided Lesson on
+  /// roaming, travel eSIMs and local SIMs, keeping your number, and the switches
+  /// that matter abroad. The id `phone-data-abroad-explained` is permanent
+  /// (route, catalog, help, tests).
+  static const String phoneDataAbroadExplained =
+      '/tools/phone-data-abroad-explained';
+
+  /// Smart Home Radios, Explained: a Wireless Classroom Guided Lesson on Wi-Fi,
+  /// Thread, Zigbee and Matter, why a 2.4 GHz-only plug won't join, and border
+  /// routers. The id `smart-home-radios-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String smartHomeRadiosExplained =
+      '/tools/smart-home-radios-explained';
+
+  /// Cameras, Doorbells and Baby Monitors, Explained: a Wireless Classroom
+  /// Guided Lesson on upload, signal at the door, wired cameras, where video is
+  /// saved, baby monitors and camera security. The id
+  /// `cameras-doorbells-explained` is permanent (route, catalog, help, tests).
+  static const String camerasDoorbellsExplained =
+      '/tools/cameras-doorbells-explained';
+
+  /// How Your Devices Access the Internet, Explained: a Wireless Classroom
+  /// Guided Lesson on the two roads (the Wi-Fi hop and the internet line), the
+  /// six stops, what the bars measure, and which road is slow. The id
+  /// `devices-to-internet-explained` is permanent (route, catalog, help, tests).
+  static const String devicesToInternetExplained =
+      '/tools/devices-to-internet-explained';
+
+  /// Mesh, Extenders and Wired Access Points, Explained: a Wireless Classroom
+  /// Guided Lesson on the link back, one radio taking turns, where to put an
+  /// extender, and the four ways to build a link back. The id
+  /// `mesh-extenders-explained` is permanent (route, catalog, help, tests).
+  static const String meshExtendersExplained =
+      '/tools/mesh-extenders-explained';
+
+  /// Is Your Router Too Old?: a Wireless Classroom Guided Lesson on security
+  /// fixes and end of life, the five-minute check, who updates the box, the 2026
+  /// US router rule, and what to buy next. The id `router-too-old-explained` is
+  /// permanent (route, catalog, help, tests).
+  static const String routerTooOldExplained = '/tools/router-too-old-explained';
+  /// Tap, Touch and Near, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `tap-touch-near-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String tapTouchNearExplained = '/tools/tap-touch-near-explained';
+  /// Satellite Texting, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `satellite-texting-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String satelliteTextingExplained = '/tools/satellite-texting-explained';
+  /// Wi-Fi on Planes, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `wifi-on-planes-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String wifiOnPlanesExplained = '/tools/wifi-on-planes-explained';
+  /// Wi-Fi and Your Health, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `wifi-and-health-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String wifiAndHealthExplained = '/tools/wifi-and-health-explained';
+  /// Travel Routers, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `travel-routers-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String travelRoutersExplained = '/tools/travel-routers-explained';
+  /// Mobile Hotspots, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `mobile-hotspots-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String mobileHotspotsExplained = '/tools/mobile-hotspots-explained';
+  /// Captive Portals, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `captive-portals-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String captivePortalsExplained = '/tools/captive-portals-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1207,6 +1325,25 @@ class AppRouter {
     starlinkExplained: (_) => const StarlinkExplainedScreen(),
     wifiCallingExplained: (_) => const WifiCallingExplainedScreen(),
     homeInternetExplained: (_) => const HomeInternetExplainedScreen(),
+    phoneDataAbroadExplained: (_) => const PhoneDataAbroadExplainedScreen(),
+    smartHomeRadiosExplained: (_) => const SmartHomeRadiosExplainedScreen(),
+    camerasDoorbellsExplained: (_) => const CamerasDoorbellsExplainedScreen(),
+    devicesToInternetExplained: (_) => const DevicesToInternetExplainedScreen(),
+    meshExtendersExplained: (_) => const MeshExtendersExplainedScreen(),
+    routerTooOldExplained: (_) => const RouterTooOldExplainedScreen(),
+    bluetoothExplained: (_) => const BluetoothExplainedScreen(),
+    weakCellSignalExplained: (_) => const WeakCellSignalExplainedScreen(),
+    howGpsWorksExplained: (_) => const HowGpsWorksExplainedScreen(),
+    whereYourPhoneIsExplained: (_) => const WhereYourPhoneIsExplainedScreen(),
+    analogVsDigitalExplained: (_) => const AnalogVsDigitalExplainedScreen(),
+    scalesAndRatiosExplained: (_) => const ScalesAndRatiosExplainedScreen(),
+    tapTouchNearExplained: (_) => const TapTouchNearExplainedScreen(),
+    satelliteTextingExplained: (_) => const SatelliteTextingExplainedScreen(),
+    wifiOnPlanesExplained: (_) => const WifiOnPlanesExplainedScreen(),
+    wifiAndHealthExplained: (_) => const WifiAndHealthExplainedScreen(),
+    travelRoutersExplained: (_) => const TravelRoutersExplainedScreen(),
+    mobileHotspotsExplained: (_) => const MobileHotspotsExplainedScreen(),
+    captivePortalsExplained: (_) => const CaptivePortalsExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

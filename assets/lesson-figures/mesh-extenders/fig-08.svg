@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 10 720 252" font-family="IBM Plex Sans" font-size="13" fill="#444444" width="720" height="252">
+  <path d="M20 60 H700 M20 236 H700 M300 60 V236" fill="none" stroke="#444444" stroke-width="2.5"/>
+  <text x="30" y="84">ceiling</text>
+  <path d="M173 203 H190 V40 H520 V58" fill="none" stroke="#A1CC3A" stroke-opacity="0.6" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M173 203 H190 V40 H520 V58" fill="none" stroke="#111111" stroke-width="3.5" stroke-linejoin="round"/>
+  <line x1="92" y1="203" x2="125" y2="203" stroke="#111111" stroke-width="3.5"/>
+  <text x="355" y="26" text-anchor="middle" font-weight="700" font-size="14" fill="#111111">One network cable: data and power</text>
+  <g transform="translate(40 165) scale(2.4)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="18" height="7.5" rx="2"/><path d="M7.5 12 L6 4.5 M16.5 12 L18 4.5"/><circle cx="7.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="10.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="13.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/></g>
+  <text x="68" y="254" text-anchor="middle">main box</text>
+  <g transform="translate(120 178) scale(2.4)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5.5" width="14" height="10" rx="2"/><path d="M2 10.5 H5 M19 10.5 H22 M12.8 7.5 L10.6 10.9 H13.4 L11.2 13.5 M12 15.5 V18"/><rect x="9.5" y="18" width="5" height="3.5" rx="1"/></g>
+  <text x="149" y="254" text-anchor="middle">power adapter</text>
+  <g transform="translate(484 48) scale(3.0)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4 H21 M12 4 V6"/><path d="M5 6 H19 C19 9.6 16 11 12 11 C8 11 5 9.6 5 6 Z"/><path d="M8.5 15 Q12 17.6 15.5 15 M6 18.5 Q12 22.6 18 18.5"/></g>
+  <text x="566" y="86" font-weight="700" fill="#111111">No outlet</text>
+  <text x="566" y="102">needed up here</text>
+  <g transform="translate(452 168) scale(2.6)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5 C5 16 8 13.5 12 13.5 C16 13.5 19 16 19 20.5"/></g><g transform="translate(520 180) scale(2.4)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M2 19 H22"/></g>
+  <text x="520" y="254" text-anchor="middle">the room it serves</text>
+</svg>

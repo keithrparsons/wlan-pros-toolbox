@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 230" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="230">
+    <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#E5E5E5"/><stop offset=".5" stop-color="#A1CC3A"/><stop offset="1" stop-color="#2F5E00"/></linearGradient></defs>
+    <text x="30" y="30" font-weight="600">Cell signal where you are standing</text>
+    <rect x="30" y="45" width="700" height="22" rx="11" fill="url(#g1)"/>
+    <text x="30" y="88" font-size="13" fill="#444444">None or very weak</text>
+    <text x="730" y="88" font-size="13" fill="#444444" text-anchor="end">Strong</text>
+    <!-- left outcome -->
+    <rect x="30" y="105" width="330" height="110" rx="12" fill="#FFFFFF" stroke="#7A9E26" stroke-width="2"/>
+    <text x="50" y="132" font-weight="600">Weak or no cell signal</text>
+    <text x="50" y="154" font-size="13" fill="#444444">The call goes over Wi-Fi Calling.</text>
+    <text x="50" y="172" font-size="13" fill="#444444">The basement office, the thick-walled</text>
+    <text x="50" y="190" font-size="13" fill="#444444">house, the cabin with no cell signal.</text>
+    <!-- right outcome -->
+    <rect x="400" y="105" width="330" height="110" rx="12" fill="#FFFFFF" stroke="#9C9C9C" stroke-width="2"/>
+    <text x="420" y="132" font-weight="600">Good cell signal</text>
+    <text x="420" y="154" font-size="13" fill="#444444">The call usually goes over the cell</text>
+    <text x="420" y="172" font-size="13" fill="#444444">network, even with Wi-Fi Calling on.</text>
+    <text x="420" y="190" font-size="13" fill="#444444">Some phones let you change this.</text>
+  </svg>

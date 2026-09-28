@@ -1,0 +1,145 @@
+{
+  "source": "starlink-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        260.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        700.0,
+        300.0
+      ],
+      "caption": "**Figure 1. Earth and its satellites, to scale.** Starlink hugs the planet like a thin line. The old kind of satellite internet, and GPS, sit far out.",
+      "alt": "Figure 1. Earth and its satellites, to scale. Starlink hugs the planet like a thin line. The old kind of satellite internet, and GPS, sit far out."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        700.0,
+        200.0
+      ],
+      "caption": "**Figure 2. The thin line in Figure 1, stretched out.** Now you can see where Starlink flies, next to the Space Station and the Hubble telescope.",
+      "alt": "Figure 2. The thin line in Figure 1, stretched out. Now you can see where Starlink flies, next to the Space Station and the Hubble telescope."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        700.0,
+        270.0
+      ],
+      "caption": "**Figure 3. The usual path from a house.** Dish to satellite to gateway, then on to the rest of the internet. Downloads take the same path in reverse.",
+      "alt": "Figure 3. The usual path from a house. Dish to satellite to gateway, then on to the rest of the internet. Downloads take the same path in reverse."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": "**Figure 4. The delay, Starlink against the old kind of satellite internet.** Starlink's bar is a sliver. The old kind is many times longer, because its satellites are so far away.",
+      "alt": "Figure 4. The delay, Starlink against the old kind of satellite internet. Starlink's bar is a sliver. The old kind is many times longer, because its satellites are so far away."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        700.0,
+        230.0
+      ],
+      "caption": "**Figure 5. The beam moves, the dish doesn't.** The beam follows satellites across the sky. Older rectangular dishes had a motor; the current ones don't.",
+      "alt": "Figure 5. The beam moves, the dish doesn't. The beam follows satellites across the sky. Older rectangular dishes had a motor; the current ones don't."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        700.0,
+        190.0
+      ],
+      "caption": "**Figure 6. The current dishes, side by side.** The small one is made for travel. The app tells you which one you have.",
+      "alt": "Figure 6. The current dishes, side by side. The small one is made for travel. The app tells you which one you have."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": "**Figure 7. Neighbors share the capacity overhead.** A drawing, not real speeds. The more people online at once, the smaller each share.",
+      "alt": "Figure 7. Neighbors share the capacity overhead. A drawing, not real speeds. The more people online at once, the smaller each share."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        284.0
+      ],
+      "caption": "**Figure 8. Which plan works where.** A home plan works only at its home address. Roam works wherever Starlink has service when you park, and while driving on a dish made for it.",
+      "alt": "Figure 8. Which plan works where. A home plan works only at its home address. Roam works wherever Starlink has service when you park, and while driving on a dish made for it."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        700.0,
+        270.0
+      ],
+      "caption": "**Figure 9. One tree, repeated short drops.** The gray wedge is sky the tree hides. Each satellite that crosses it causes a short drop, then the next one takes over.",
+      "alt": "Figure 9. One tree, repeated short drops. The gray wedge is sky the tree hides. Each satellite that crosses it causes a short drop, then the next one takes over."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        206.0
+      ],
+      "caption": "**Figure 10. Weather and your dish.** Heavy rain can cause short drops, and the dish heats itself to melt snow. Starlink says a cover makes things worse.",
+      "alt": "Figure 10. Weather and your dish. Heavy rain can cause short drops, and the dish heats itself to melt snow. Starlink says a cover makes things worse."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        700.0,
+        220.0
+      ],
+      "caption": "**Figure 11. Two networks in one house.** Your phone's speed is the slower of the two links. Test next to the router to see the Starlink link alone.",
+      "alt": "Figure 11. Two networks in one house. Your phone's speed is the slower of the two links. Test next to the router to see the Starlink link alone."
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        760.0,
+        206.0
+      ],
+      "caption": "**Figure 12. Three ways to set up the Wi-Fi.** Starlink's router works on its own, but it won't join another brand's mesh. To use your own router, bypass mode turns Starlink's Wi-Fi off.",
+      "alt": "Figure 12. Three ways to set up the Wi-Fi. Starlink's router works on its own, but it won't join another brand's mesh. To use your own router, bypass mode turns Starlink's Wi-Fi off."
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        760.0,
+        582.0
+      ],
+      "caption": "**Figure 13. Before you blame Starlink.** Test next to the router first. Fast there means the problem is inside, in your Wi-Fi. Slow there means checking the sky, the time, the weather and your plan.",
+      "alt": "Figure 13. Before you blame Starlink. Test next to the router first. Fast there means the problem is inside, in your Wi-Fi. Slow there means checking the sky, the time, the weather and your plan."
+    }
+  ]
+}

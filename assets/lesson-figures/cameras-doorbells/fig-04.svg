@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 215" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="215">
+      <defs>
+        <linearGradient id="fade5" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#2B5C8A" stop-opacity=".30"/>
+          <stop offset=".7" stop-color="#2B5C8A" stop-opacity=".18"/>
+          <stop offset="1" stop-color="#2B5C8A" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- the box -->
+      <g transform="translate(20 80) scale(2.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
+      <text x="50" y="172" text-anchor="middle" font-size="12.5">the box</text>
+      <!-- 2.4 lane, up to the wall -->
+      <text x="96" y="50" font-weight="600" fill="#111111" font-size="12.5">2.4 GHz lane: reaches farther, and it's crowded</text>
+      <rect x="92" y="60" width="378" height="36" rx="4" fill="#FFFFFF" stroke="#444444" stroke-width="1.5"/>
+      <g fill="#444444">
+        <rect x="112" y="72" width="22" height="12" rx="3"/><rect x="156" y="72" width="22" height="12" rx="3"/>
+        <rect x="196" y="72" width="22" height="12" rx="3"/><rect x="240" y="72" width="22" height="12" rx="3"/>
+        <rect x="282" y="72" width="22" height="12" rx="3"/><rect x="322" y="72" width="22" height="12" rx="3"/>
+        <rect x="366" y="72" width="22" height="12" rx="3"/><rect x="410" y="72" width="22" height="12" rx="3"/>
+      </g>
+      <!-- 2.4 lane, past the wall, weaker -->
+      <rect x="510" y="60" width="112" height="36" rx="4" fill="#FFFFFF" stroke="#444444" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <!-- 5 lane, fades before the wall -->
+      <rect x="92" y="124" width="330" height="36" rx="4" fill="url(#fade5)"/>
+      <g fill="#2B5C8A">
+        <rect x="140" y="136" width="22" height="12" rx="3"/><rect x="280" y="136" width="22" height="12" rx="3"/>
+      </g>
+      <text x="96" y="182" font-weight="600" fill="#2B5C8A" font-size="12.5">5 GHz lane: far more room, shorter reach</text>
+      <!-- outside wall -->
+      <rect x="480" y="36" width="20" height="150" fill="#9C9C9C"/>
+      <text x="490" y="204" text-anchor="middle" font-size="12.5">outside wall</text>
+      <!-- doorbell -->
+      <g transform="translate(621.5 46.5) scale(2.625)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7.5" y="2.5" width="9" height="19" rx="3"/><circle cx="12" cy="6.8" r="1.5" fill="#111111" stroke="none"/><circle cx="12" cy="15.5" r="2.5"/></g>
+      <text x="653" y="128" text-anchor="middle" font-size="12.5">doorbell</text>
+    </svg>

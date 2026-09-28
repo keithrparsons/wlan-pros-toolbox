@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 300" font-family="IBM Plex Sans" width="700" height="300">
+      <circle cx="82" cy="150" r="70" fill="#E6EEF6" stroke="#2B5C8A" stroke-width="2"/>
+      <text x="82" y="155" font-size="13" fill="#2B5C8A" text-anchor="middle" font-weight="600">Earth</text>
+      <circle cx="82" cy="150" r="76" fill="none" stroke="#7A9E26" stroke-width="2.5"/>
+      <path d="M346.6 26.6 A292 292 0 0 1 346.6 273.4" fill="none" stroke="#444444" stroke-width="2" stroke-dasharray="5 5"/>
+      <path d="M522.3 6.9 A463 463 0 0 1 522.3 293.1" fill="none" stroke="#444444" stroke-width="2"/>
+      <path d="M138 98 L172 72" stroke="#7A9E26" stroke-width="1.5"/>
+      <text x="176" y="44" font-size="12.5" fill="#1A1A1A" font-weight="600">Low Earth orbit</text>
+      <text x="176" y="60" font-size="12" fill="#444444">Space Station, Hubble,</text>
+      <text x="176" y="75" font-size="12" fill="#444444">Starlink and others,</text>
+      <text x="176" y="90" font-size="12" fill="#444444">all inside this thin line</text>
+      <text x="386" y="146" font-size="13" fill="#1A1A1A" font-weight="600">GPS</text>
+      <text x="386" y="163" font-size="12" fill="#444444">20,200 km (12,550 miles)</text>
+      <text x="560" y="146" font-size="13" fill="#1A1A1A" font-weight="600">Geostationary</text>
+      <text x="560" y="163" font-size="12" fill="#444444">35,786 km (22,236 miles)</text>
+      <text x="560" y="180" font-size="12" fill="#444444">satellite TV and older</text>
+      <text x="560" y="195" font-size="12" fill="#444444">satellite internet</text>
+    </svg>

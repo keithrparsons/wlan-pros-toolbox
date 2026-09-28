@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 310" font-family="IBM Plex Sans" font-size="12" fill="#444444" width="720" height="310">
+      <!-- scale: x0 = 280, 0.5 px per Mb/s, 800 Mb/s at x=680 -->
+      <g stroke="#E5E5E5" stroke-width="1">
+        <line x1="280" y1="16" x2="280" y2="272"/><line x1="380" y1="16" x2="380" y2="272"/><line x1="480" y1="16" x2="480" y2="272"/><line x1="580" y1="16" x2="580" y2="272"/><line x1="680" y1="16" x2="680" y2="272"/>
+      </g>
+      <g font-size="11" text-anchor="middle"><text x="280" y="290" font-size="12.5">0</text><text x="380" y="290" font-size="12.5">200</text><text x="480" y="290" font-size="12.5">400</text><text x="580" y="290" font-size="12.5">600</text><text x="680" y="290" font-size="12.5">800</text></g>
+      <text x="480" y="306" text-anchor="middle" font-size="12.5">Mb/s at the laptop</text>
+
+      <g font-size="12" fill="#111111">
+        <text x="16" y="36" font-weight="700" font-size="12.5">1. Straight to the main box</text><text x="16" y="51" font-size="12.5" fill="#444444">no extra box</text>
+        <text x="16" y="86" font-weight="700" font-size="12.5">2. Extender in the dead zone</text><text x="16" y="101" font-size="12.5" fill="#444444">one radio, next to the laptop</text>
+        <text x="16" y="136" font-weight="700" font-size="12.5">3. Extender partway</text><text x="16" y="151" font-size="12.5" fill="#444444">one radio, partway</text>
+        <text x="16" y="186" font-weight="700" font-size="12.5">4. Mesh unit partway</text><text x="16" y="201" font-size="12.5" fill="#444444">separate radio for the link back</text>
+        <text x="16" y="236" font-weight="700" font-size="12.5">5. Wired access point</text><text x="16" y="251" font-size="12.5" fill="#444444">cable back, next to the laptop</text>
+      </g>
+      <!-- bars: width = value x 0.5 -->
+      <rect x="280" y="28" width="43.25" height="26" fill="#9C9C9C"/>
+      <rect x="280" y="78" width="38.6" height="26" fill="#C0392B"/>
+      <rect x="280" y="128" width="64.85" height="26" fill="#7A9E26"/>
+      <rect x="280" y="178" width="129.7" height="26" fill="#2B5C8A"/>
+      <rect x="280" y="228" width="360.3" height="26" fill="#2F5E00"/>
+      <g font-size="12" font-weight="700" fill="#111111">
+        <text x="329.25" y="46" font-size="12.5">87</text>
+        <text x="324.6" y="96" font-size="12.5">77</text>
+        <text x="350.85" y="146" font-size="12.5">130</text>
+        <text x="415.7" y="196" font-size="12.5">259</text>
+        <text x="646.3" y="246" font-size="12.5">721</text>
+      </g>
+    </svg>
