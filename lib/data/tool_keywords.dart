@@ -1566,6 +1566,29 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'halves throughput',
     'same channel',
   ],
+  // Wi-Fi Classroom (2026-09-27). Why a busy line lags (latency under load):
+  // what a student types when a video call stutters during an upload.
+  'latency-under-load': <String>[
+    'latency under load',
+    'working latency',
+    'loaded latency',
+    'bufferbloat',
+    'buffer bloat',
+    'lag',
+    'laggy',
+    'video call lag',
+    'upload lag',
+    'sqm',
+    'smart queue management',
+    'aqm',
+    'active queue management',
+    'fq-codel',
+    'fq_codel',
+    'codel',
+    'queue',
+    'queueing delay',
+    'ping spikes',
+  ],
   // Wi-Fi Classroom (2026-09-26). Adjacent channels and AP stacking (spec
   // 29): what a student types when two close radios on clean channels fight.
   'adjacent-channel': <String>[

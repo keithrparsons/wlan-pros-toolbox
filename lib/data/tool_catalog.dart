@@ -2932,6 +2932,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Network Design and Security',
       ),
+      // Wi-Fi Classroom (2026-09-27, research brief candidate 1). Latency
+      // under load: the network past the AP, shelved after the relay tool.
+      ToolEntry(
+        id: 'latency-under-load',
+        title: 'Why a Busy Line Lags',
+        description:
+            'Watch a video call\'s delay climb while someone else uploads, '
+            'and fall back when smart queue management keeps the queue short',
+        routeName: '/tools/latency-under-load',
+        isLive: true,
+        subgroup: 'Network Design and Security',
+      ),
       ToolEntry(
         id: 'dfs-simulator',
         title: 'DFS and Radar',

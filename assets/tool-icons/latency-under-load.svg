@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the call's delay: flat at idle, a plateau while the upload runs, back down -->
+    <path d="M2 14 H6.5 L8.5 5 H15.5 L17.5 14 H22"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="16" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

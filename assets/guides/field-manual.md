@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 224 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · covers 225 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,12 +37,12 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (51 tools)
+- **Wi-Fi Classroom** (52 tools)
   - Guided Lessons (3)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
-  - Network Design and Security (12)
+  - Network Design and Security (13)
   - Course Handouts (11)
 
 ---
@@ -3818,7 +3818,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (51 tools)
+# Wi-Fi Classroom (52 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Three guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4916,7 +4916,7 @@ Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A 
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
-## Network Design and Security (12)
+## Network Design and Security (13)
 
 
 ### Channel Planner
@@ -5269,6 +5269,39 @@ Shows what relaying costs. A corridor holds the root AP, one to three relays (a 
 - The dedicated backhaul gives every hop a channel of its own. With two or more relays sharing one backhaul channel, those backhaul hops would take turns again.
 - The efficiency factor, the forwarding delay, the 20 dBm EIRP, the path-loss exponent and the channel widths are illustrative, chosen to show the effect, not measured. Traffic flows one way, with no neighbors, collisions or retries.
 - The delay counts only the forwarding delay at each hop, not the time a frame waits for the shared channel.
+- The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### Why a Busy Line Lags
+
+Shows why a video call stutters when someone else in the house uploads. A chart follows the call's round-trip delay over a 20-second run on a home line: idle, then while an upload runs, then after it stops. One switch turns smart queue management (SQM) off or on. Off, the call's delay climbs from the idle figure to hundreds of milliseconds, following the measurements of the FCC (Federal Communications Commission). On, it stays near idle. A picture of the queue at the home line shows why: the call's packet waiting behind the upload, or going in its turn.
+
+**Why it's here.** Lag is delay, not speed, and the usual fix people reach for, a faster plan, does not cure it. An upload sends as fast as the line allows, so it fills the line's queue on any plan, and every call packet waits behind whatever is in that queue. A faster plan drains the queue faster, but the call still waits. The FCC's 13th Measuring Broadband America report found latency under load significantly higher than idle latency, most of all on DSL (digital subscriber line). What brings the delay down is keeping the queue short, which is the job of active queue management (AQM) such as FQ-CoDel (flow queue controlled delay), which some home routers offer as a smart queue management setting.
+
+**How to use**
+1. Read the headline: the call's delay at the playhead, its delay while the upload runs in the current setting (and how many times idle that is), and the idle figure with the FCC's measured range.
+2. Switch Smart queue management (SQM) between Off and On. The solid line is the current setting; the dashed line is the other one, kept for comparison. The bracket marked FCC range is the spread the FCC measured across providers.
+3. Pick the home line: Fiber, Cable (the default) or DSL. Each follows the FCC's figures for that technology, and the chart's scale changes with it.
+4. Play the call runs the 20 seconds in real time, 1 s on steps a second, and the Time into the run slider or a drag across the chart moves the playhead. The queue picture below the chart shows what the call's packet is waiting behind at that moment. Reset returns to Cable, SQM off, the whole run drawn.
+5. On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, Right steps one second, Up turns SQM on and Down turns it off, Q switches it, R resets, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Smart queue management | switch | Off (default) or On |
+| The home line | choice | Fiber, Cable (default) or DSL |
+| Time into the run | s | 0 to 20; the upload runs from 4 s to 16 s (illustrative timing) |
+
+**How it works.** Delay = idle + queue. Idle is the middle of the FCC's measured idle range for the technology: fiber 7 to 14 ms, cable 12 to 24 ms, DSL 23 to 34 ms. With SQM off, the queue fills toward (busy - idle), where busy is the median provider's latency under upload load read from the FCC's Chart 7: about 30 ms on fiber, 225 ms on cable and 665 ms on DSL. With SQM on, the queue fills toward 5 ms, the default target of FQ-CoDel in RFC 8290 (RFC: Request for Comments). The queue fills as 1 - e^(-t / 0.8 s) after the upload starts. When the upload stops, a queue holding D ms of data drains in D ms. The chart samples every 100 ms, the rate the FCC sampled latency under load (10 packets a second).
+
+**Example.** Defaults: a cable line, SQM off. Idle, the call's delay is 18 ms. While the upload runs it climbs to 225 ms, 12.5 times idle, in line with the FCC's cable providers (about 85 to 250 ms under upload load). Switch SQM on and the same upload leaves the call at 23 ms, 1.3 times idle (illustrative). On DSL, SQM off, the delay goes from 29 ms to 665 ms, 23.3 times idle.
+
+**Field notes**
+- The SQM-on curve is illustrative. No published consumer measurement of it was found, so it sits at idle plus FQ-CoDel's 5 ms default target, a stand-in, not a measurement. The FCC notes that some providers have since added queue management of their own.
+- The busy figures are read by eye from the bars of the FCC's chart and are approximate. The FCC measured in its 2022 test period and published in 2024. Under download load its bars differ, and one cable provider reached about 380 ms there.
+- Left out: the Wi-Fi hop, queues inside the provider's network and at the far end, jitter, and packet loss. One upload, one call, one line. The 20-second timing and the 0.8 s fill time are illustrative.
+- To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Test My Connection (its loaded responsiveness check). The tool's About card opens both.
 - The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 
