@@ -4,33 +4,33 @@
 <text x="76" y="75" text-anchor="middle" font-weight="600" fill="#1A1A1A" font-size="12.5">border router</text>
 <rect x="30" y="150" width="92" height="32" rx="6" fill="#A1CC3A"/>
 <text x="76" y="170" text-anchor="middle" font-weight="600" fill="#1A1A1A" font-size="12.5">border router</text>
-<line x1="127.5" y1="68.7" x2="165.6" y2="53.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="127.1" y1="74.2" x2="167.1" y2="98.9" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="185.0" y1="66.0" x2="185.0" y2="89.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="205.0" y1="51.3" x2="270.0" y2="71.7" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="205.1" y1="103.9" x2="269.9" y2="84.1" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="127.9" y1="166.8" x2="164.2" y2="172.0" stroke="#2B5C8A" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="206.0" y1="175.0" x2="269.0" y2="175.0" stroke="#2B5C8A" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="127.5" y1="68.7" x2="165.6" y2="53.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="127.1" y1="74.2" x2="167.1" y2="98.9" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="185.0" y1="66.0" x2="185.0" y2="89.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="205.0" y1="51.3" x2="270.0" y2="71.7" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="205.1" y1="103.9" x2="269.9" y2="84.1" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="127.9" y1="166.8" x2="164.2" y2="172.0" stroke="#2B5C8A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="206.0" y1="175.0" x2="269.0" y2="175.0" stroke="#2B5C8A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
 <circle cx="185" cy="45" r="15" fill="#2F5E00"/>
 <circle cx="185" cy="110" r="15" fill="#2F5E00"/>
 <circle cx="290" cy="78" r="15" fill="#2F5E00"/>
 <circle cx="185" cy="175" r="15" fill="#2B5C8A"/>
 <circle cx="290" cy="175" r="15" fill="#2B5C8A"/>
-<line x1="355" y1="30" x2="355" y2="215" stroke="#444444" stroke-width="1" stroke-dasharray="3 4"/>
+<line x1="355" y1="30" x2="355" y2="215" stroke="#444444" stroke-width="1" stroke-dasharray="3 4" fill="none"/>
 <text x="385" y="18" font-size="12.5" font-weight="700" fill="#2F5E00">Thread 1.4: two border routers, one network</text>
 <rect x="400" y="55" width="92" height="32" rx="6" fill="#A1CC3A"/>
 <text x="446" y="75" text-anchor="middle" font-weight="600" fill="#1A1A1A" font-size="12.5">border router</text>
 <rect x="400" y="150" width="92" height="32" rx="6" fill="#A1CC3A"/>
 <text x="446" y="170" text-anchor="middle" font-weight="600" fill="#1A1A1A" font-size="12.5">border router</text>
-<line x1="497.5" y1="68.7" x2="535.6" y2="53.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="497.1" y1="74.2" x2="537.1" y2="98.9" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="555.0" y1="66.0" x2="555.0" y2="89.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="575.0" y1="51.3" x2="640.0" y2="71.7" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="575.1" y1="103.9" x2="639.9" y2="84.1" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="497.9" y1="166.8" x2="534.2" y2="172.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="576.0" y1="175.0" x2="639.0" y2="175.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="555.0" y1="131.0" x2="555.0" y2="154.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
-<line x1="660.0" y1="99.0" x2="660.0" y2="154.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="497.5" y1="68.7" x2="535.6" y2="53.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="497.1" y1="74.2" x2="537.1" y2="98.9" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="555.0" y1="66.0" x2="555.0" y2="89.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="575.0" y1="51.3" x2="640.0" y2="71.7" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="575.1" y1="103.9" x2="639.9" y2="84.1" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="497.9" y1="166.8" x2="534.2" y2="172.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="576.0" y1="175.0" x2="639.0" y2="175.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="555.0" y1="131.0" x2="555.0" y2="154.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<line x1="660.0" y1="99.0" x2="660.0" y2="154.0" stroke="#2F5E00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
 <circle cx="555" cy="45" r="15" fill="#2F5E00"/>
 <circle cx="555" cy="110" r="15" fill="#2F5E00"/>
 <circle cx="660" cy="78" r="15" fill="#2F5E00"/>

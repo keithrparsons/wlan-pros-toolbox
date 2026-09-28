@@ -2,7 +2,7 @@
     <rect x="20" y="100" width="150" height="70" rx="12" fill="#1A1A1A"/>
     <text x="95" y="132" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="14">You dial</text>
     <text x="95" y="152" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="14">911</text>
-    <path d="M170 135 H215" stroke="#444444" stroke-width="2.5"/>
+    <path d="M170 135 H215" stroke="#444444" stroke-width="2.5" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(215,135) rotate(360) scale(1.75) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><path d="M300 88 L375 135 L300 182 L225 135 Z" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
     <text x="300" y="131" text-anchor="middle" font-size="13" font-weight="600">Any cell</text>
     <text x="300" y="147" text-anchor="middle" font-size="13" font-weight="600">network?</text>

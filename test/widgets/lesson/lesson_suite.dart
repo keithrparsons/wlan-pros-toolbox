@@ -15,11 +15,14 @@
 //  - the phone screen in dark and light: every step reachable, a myth's fact
 //    hidden until tapped;
 //  - Present at 1920x1080 and 1440x900 in dark and light: every slide
-//    renders with no page scroll, Right, Left, Space and R work.
+//    renders with no page scroll and with no stage text under the GL-003
+//    floor (kLessonPresentTextFloor), facts hidden and revealed; Right,
+//    Left, Space and R work.
 
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,6 +103,58 @@ final RegExp _metricLength = RegExp(r'\b\d[\d,.]*\s*(?:km|m|cm|mm)\b(?!\s*\()');
 Future<void> _settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
   await tester.pumpAndSettle();
+}
+
+/// The controller Present is walking. Present may split a slide to fit the
+/// window, so a fresh controller's slide list is not the one on screen.
+GuidedLessonController presentController(WidgetTester tester) =>
+    GuidedLessonScope.of(
+      tester.element(
+        find
+            .descendant(
+              of: find.byKey(PresenterLayout.stageKey),
+              matching: find.byType(LessonStepView),
+            )
+            .first,
+      ),
+    );
+
+/// The smallest stage text on screen, measured the way the UI gate measures
+/// it: each paragraph's smallest style font size times its transform scale,
+/// times the stage's scale-to-fit.
+double stageMinText(WidgetTester tester) {
+  final Finder stage = find.descendant(
+    of: find.byType(FittedBox),
+    matching: find.byType(LessonStepView),
+  );
+  double fit = 1;
+  for (final Element e
+      in find
+          .ancestor(of: stage, matching: find.byType(FittedBox))
+          .evaluate()) {
+    final RenderProxyBox box = e.renderObject! as RenderProxyBox;
+    final Size child = box.child!.size;
+    fit = (box.size.width / child.width) < (box.size.height / child.height)
+        ? box.size.width / child.width
+        : box.size.height / child.height;
+  }
+  double min = double.infinity;
+  for (final Element e
+      in find
+          .descendant(of: stage, matching: find.byType(RichText))
+          .evaluate()) {
+    final RenderParagraph p = e.renderObject! as RenderParagraph;
+    if (!p.attached || p.size.isEmpty) continue;
+    double font = double.infinity;
+    p.text.visitChildren((InlineSpan span) {
+      final double? f = span.style?.fontSize;
+      if (f != null && f < font) font = f;
+      return true;
+    });
+    final double v = font * p.getTransformTo(null).getMaxScaleOnAxis();
+    if (v < min) min = v;
+  }
+  return min * fit;
 }
 
 void runGuidedLessonSuite({
@@ -400,16 +455,38 @@ void runGuidedLessonSuite({
         await tester.tap(find.text('Present'));
         await _settle(tester);
         expect(find.byType(PresenterLayout), findsOneWidget);
-        final GuidedLessonController c = GuidedLessonController(lesson);
+        final GuidedLessonController c = presentController(tester);
         final int slides = c.slides.length;
-        c.dispose();
+        expect(slides, greaterThanOrEqualTo(c.baseSlides.length));
         for (int i = 0; i < slides; i++) {
-          expect(tester.takeException(), isNull, reason: 'slide ${i + 1}');
-          expect(pageScrollables(tester), isEmpty, reason: 'slide ${i + 1}');
+          final String at =
+              'slide ${i + 1} (${tester.widget<Text>(find.byKey(GuidedLessonScreen.counterKey)).data})';
+          expect(tester.takeException(), isNull, reason: at);
+          expect(pageScrollables(tester), isEmpty, reason: at);
           expectOnScreen(tester, find.byKey(PresenterLayout.stageKey), window);
+          expect(
+            stageMinText(tester),
+            greaterThanOrEqualTo(kLessonPresentTextFloor - 1e-6),
+            reason: '$at: stage text under the GL-003 floor',
+          );
+          final List<LessonBlockRef> myths = c.mythsOnSlide;
+          if (myths.isNotEmpty) {
+            myths
+                .where((LessonBlockRef m) => !c.isRevealed(m))
+                .forEach(c.toggle);
+            await _settle(tester);
+            expect(
+              stageMinText(tester),
+              greaterThanOrEqualTo(kLessonPresentTextFloor - 1e-6),
+              reason: '$at, facts revealed: stage text under the GL-003 floor',
+            );
+            myths.forEach(c.toggle);
+            await _settle(tester);
+          }
           await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
           await _settle(tester);
         }
+        expect(c.atLast, isTrue);
         expect(find.byKey(GuidedLessonScreen.counterKey), findsOneWidget);
       });
     }
@@ -427,26 +504,38 @@ void runGuidedLessonSuite({
     String counter() =>
         tester.widget<Text>(find.byKey(GuidedLessonScreen.counterKey)).data!;
     expect(counter(), startsWith('Step 1 of ${lesson.steps.length}'));
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    await _settle(tester);
+    // Right walks a step's parts, then the next step; Left walks back.
+    final GuidedLessonController live = presentController(tester);
+    final int firstStepParts = live.partOfStep.of;
+    for (int i = 0; i < firstStepParts; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await _settle(tester);
+    }
     expect(counter(), startsWith('Step 2 of'));
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await _settle(tester);
     expect(counter(), startsWith('Step 1 of'));
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    await _settle(tester);
 
     // Walk to the first slide with a myth on its stage; Space reveals its
     // first fact on the stage, and R returns to step 1 with it hidden.
-    final GuidedLessonController probe = GuidedLessonController(lesson);
     int target = 0;
-    while (probe.slide < probe.slides.length - 1) {
-      if (probe.mythsOnSlide.isNotEmpty) break;
-      probe.next();
+    while (target < live.slides.length - 1) {
+      if (live.slides[target].stage.any(
+        (int b) =>
+            lesson.steps[live.slides[target].step].blocks[b] is LessonMyth,
+      )) {
+        break;
+      }
       target++;
     }
-    final LessonBlockRef first = probe.mythsOnSlide.first;
+    final LessonSlide mythSlide = live.slides[target];
+    final int firstMyth = mythSlide.stage.firstWhere(
+      (int b) => lesson.steps[mythSlide.step].blocks[b] is LessonMyth,
+    );
     final LessonMyth myth =
-        lesson.steps[first.step].blocks[first.block] as LessonMyth;
-    probe.dispose();
+        lesson.steps[mythSlide.step].blocks[firstMyth] as LessonMyth;
     for (int i = 0; i < target; i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await _settle(tester);

@@ -27,6 +27,14 @@ shows what the PDF shows:
     dropped.
   * a valueless HTML data attribute (`<g data-nocheck>`, a build-check
     marker) is legal HTML and illegal XML; it is dropped before parsing.
+  * a shape with no inside (every <line>, and a <path> made only of
+    straight runs along one line, such as "M20 10V136") gets fill="none"
+    when it would otherwise inherit a fill. SVG's default fill is black,
+    and a browser paints nothing for it because the shape has no area.
+    flutter_svg fills the empty path anyway, and the antialiased edge
+    leaks black into the two pixels a line straddles: Weak Cell Signal's
+    #E5E5E5 gridlines drew at 178/255 and ran dark through the bar labels.
+    fill="none" draws exactly what the browser draws.
 
 Guides built with the figure kit (2026-09-28: How GPS Works, Where Your
 Phone Is) style their figures from the page, so the script also brings the
@@ -833,6 +841,51 @@ def resolve_current_color(root: etree._Element, base: str) -> int:
     return n
 
 
+def _collinear(pts: list[tuple[float, float]]) -> bool:
+    x0, y0 = pts[0]
+    fx, fy = max(pts, key=lambda p: (p[0] - x0) ** 2 + (p[1] - y0) ** 2)
+    dx, dy = fx - x0, fy - y0
+    length = math.hypot(dx, dy)
+    if length == 0:
+        return True
+    return all(abs((x - x0) * dy - (y - y0) * dx) / length < 1e-6 for x, y in pts)
+
+
+def _has_no_area(el: etree._Element) -> bool:
+    """True for a shape a fill cannot paint: a <line>, or a <path> of
+    straight segments whose every subpath lies along one line. Anything with
+    a curve, or a subpath that turns, is left alone."""
+    kind = local(el)
+    if kind == "line":
+        return True
+    if kind != "path":
+        return False
+    segs = path_segments(el.get("d", ""))
+    if not segs or any(k != "L" for k, _ in segs):
+        return False
+    runs: list[list[tuple[float, float]]] = []
+    for _, (a, b) in segs:
+        if runs and runs[-1][-1] == a:
+            runs[-1].append(b)
+        else:
+            runs.append([a, b])
+    return all(_collinear(r) for r in runs)
+
+
+def unfill_empty_shapes(root: etree._Element) -> int:
+    """fill="none" on every shape with no area that would inherit a fill.
+    See the module docstring: flutter_svg fills an empty path, a browser
+    does not."""
+    n = 0
+    for el in root.iter(NS + "line", NS + "path"):
+        if (inherited(el, "fill") or "black") == "none":
+            continue
+        if _has_no_area(el):
+            el.set("fill", "none")
+            n += 1
+    return n
+
+
 def tidy(root: etree._Element) -> None:
     referenced = set()
     for el in root.iter():
@@ -902,6 +955,7 @@ def convert(
     markers = expand_markers(root, notes, where)
     colors = resolve_current_color(root, base_color)
     tidy(root)
+    unfilled = unfill_empty_shapes(root)
     # The same numbers, written the one way the lesson data writes them
     # (Wi-Fi and Health, Figure 4, has viewBox="0 0 760 384.0").
     root.set("viewBox", " ".join(fmt(float(v)) for v in re.split(r"[\s,]+", vb.strip())))
@@ -923,6 +977,7 @@ def convert(
         "spriteCopied": brought,
         "styleResolved": styled,
         "nestedSvgs": nested,
+        "emptyShapesUnfilled": unfilled,
         "notes": notes,
     }
 
@@ -1000,6 +1055,7 @@ def main(argv: list[str]) -> int:
         ("spriteCopied", "sprite defs copied in"),
         ("styleResolved", "style/var() declarations resolved"),
         ("nestedSvgs", "nested <svg> made groups"),
+        ("emptyShapesUnfilled", "lines and empty paths set fill=none"),
     ):
         total = sum(m[key] for m in manifest)
         if total:

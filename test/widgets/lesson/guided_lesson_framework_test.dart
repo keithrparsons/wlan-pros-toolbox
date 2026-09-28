@@ -167,6 +167,103 @@ void main() {
     });
   });
 
+  group('Present splits a slide too tall to read', () {
+    // Block kinds for a How GPS Works step 4 shape: a lede, then figures.
+    bool figureAt(int b) => b != 0;
+
+    test('a stage that fits stays one slide', () {
+      expect(
+        GuidedLessonController.splitToFit(
+          <int>[0, 1, 2],
+          isFigure: figureAt,
+          fits: (List<int> run) => true,
+        ),
+        <List<int>>[
+          <int>[0, 1, 2],
+        ],
+      );
+    });
+
+    test('the lede keeps the first figure; each further figure gets a part '
+        'of its own, even when two would fit', () {
+      expect(
+        GuidedLessonController.splitToFit(
+          <int>[0, 1, 2, 3, 4],
+          isFigure: figureAt,
+          // Anything but the whole step fits.
+          fits: (List<int> run) => run.length < 5,
+        ),
+        <List<int>>[
+          <int>[0, 1],
+          <int>[2],
+          <int>[3],
+          <int>[4],
+        ],
+      );
+    });
+
+    test('the lede goes alone when it and the first figure do not fit '
+        'together; text after a figure joins it; nothing is dropped', () {
+      // 0 lede, 1 figure, 2 myth, 3 figure, 4 callout.
+      bool isFig(int b) => b == 1 || b == 3;
+      expect(
+        GuidedLessonController.splitToFit(
+          <int>[0, 1, 2, 3, 4],
+          isFigure: isFig,
+          fits: (List<int> run) =>
+              !(run.contains(0) && run.contains(1)) && run.length <= 2,
+        ),
+        <List<int>>[
+          <int>[0],
+          <int>[1, 2],
+          <int>[3, 4],
+        ],
+      );
+      // A block that fits nowhere keeps a part of its own.
+      expect(
+        GuidedLessonController.splitToFit(
+          <int>[0, 1],
+          isFigure: isFig,
+          fits: (List<int> run) => false,
+        ),
+        <List<int>>[
+          <int>[0],
+          <int>[1],
+        ],
+      );
+    });
+
+    test('fitSlides keeps the presenter on the same content, and the step '
+        'counter counts parts', () {
+      final GuidedLessonController c = GuidedLessonController(_lesson);
+      addTearDown(c.dispose);
+      expect(c.slides, same(c.baseSlides));
+      c.next(); // step 2, the myths: [1, 2]
+      int notified = 0;
+      c.addListener(() => notified++);
+      c.fitSlides(<LessonSlide>[
+        const LessonSlide(0, <int>[0, 2]),
+        const LessonSlide(0, <int>[3]),
+        const LessonSlide(1, <int>[1]),
+        const LessonSlide(1, <int>[2]),
+        ...c.baseSlides.where((LessonSlide s) => s.step == 2),
+      ]);
+      expect(notified, 1);
+      expect(c.slide, 2, reason: 'the part that holds block 1 of step 2');
+      expect(c.partOfStep, (part: 1, of: 2));
+      c.next();
+      expect(c.partOfStep, (part: 2, of: 2));
+      expect(c.mythsOnSlide, <LessonBlockRef>[const LessonBlockRef(1, 2)]);
+      // The same slides again change nothing.
+      c.fitSlides(List<LessonSlide>.of(c.slides));
+      expect(notified, 2);
+      c.reset();
+      expect(c.slide, 0);
+      expect(c.partOfStep, (part: 1, of: 2));
+      expect(c.baseSlides.length, 5, reason: 'the data slides are untouched');
+    });
+  });
+
   group('callouts follow GL-003 §12.10', () {
     for (final bool light in <bool>[false, true]) {
       testWidgets('Note and Quote are statusInfo; Caution and Stop carry '

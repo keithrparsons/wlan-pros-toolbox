@@ -6,7 +6,7 @@
       <!-- the box -->
       <g transform="translate(158.2 63.2) scale(3.06667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5.5" width="16" height="9" rx="2"/><path d="M18 10 H19.5 C20.9 10 21.5 10.8 21.5 12 V21"/><circle cx="6" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="9" cy="10" r="1.1" fill="#111111" stroke="none"/><circle cx="12" cy="10" r="1.1" fill="#111111" stroke="none"/></g>
       <!-- upload, box to cloud; tip stops 10 short of the cloud -->
-      <line x1="252" y1="100" x2="378" y2="100" stroke="#2B5C8A" stroke-width="4" stroke-linecap="round"/>
+      <line x1="252" y1="100" x2="378" y2="100" stroke="#2B5C8A" stroke-width="4" stroke-linecap="round" fill="none"/>
       <polygon points="392,100 378,92 378,108" fill="#2B5C8A"/>
       <!-- the cloud -->
       <g transform="translate(412 56) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>

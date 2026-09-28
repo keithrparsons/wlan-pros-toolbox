@@ -3,14 +3,14 @@
       <!-- router --><g transform="translate(320 62) scale(2.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="18" height="7.5" rx="2"/><path d="M7.5 12 L6 4.5 M16.5 12 L18 4.5"/><circle cx="7.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="10.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="13.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/></g>
       <!-- plug --><g transform="translate(604 68) scale(2.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M9.5 8.5 V12 M14.5 8.5 V12"/><circle cx="12" cy="15.8" r="1.2" fill="#111111" stroke="none"/></g>
       <!-- phone to router: 5 GHz -->
-      <line x1="96" y1="96" x2="288" y2="96" stroke="#2B5C8A" stroke-width="4" stroke-linecap="round"/>
+      <line x1="96" y1="96" x2="288" y2="96" stroke="#2B5C8A" stroke-width="4" stroke-linecap="round" fill="none"/>
       <text x="192" y="84" text-anchor="middle" font-weight="700" fill="#2B5C8A" font-size="12.5">5 GHz</text>
       <!-- router to plug: 5 GHz, not heard -->
-      <line x1="416" y1="86" x2="560" y2="86" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round"/>
-      <g stroke="#C0392B" stroke-width="3.5" stroke-linecap="round"><line x1="570" y1="79" x2="584" y2="93"/><line x1="584" y1="79" x2="570" y2="93"/></g>
+      <line x1="416" y1="86" x2="560" y2="86" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" fill="none"/>
+      <g stroke="#C0392B" stroke-width="3.5" stroke-linecap="round"><line x1="570" y1="79" x2="584" y2="93" fill="none"/><line x1="584" y1="79" x2="570" y2="93" fill="none"/></g>
       <text x="488" y="72" text-anchor="middle" fill="#2B5C8A" font-size="12.5">5 GHz: the plug can't hear it</text>
       <!-- router to plug: 2.4 GHz -->
-      <line x1="416" y1="110" x2="594" y2="110" stroke="#2F5E00" stroke-width="4" stroke-linecap="round"/>
+      <line x1="416" y1="110" x2="594" y2="110" stroke="#2F5E00" stroke-width="4" stroke-linecap="round" fill="none"/>
       <text x="505" y="130" text-anchor="middle" font-weight="700" fill="#2F5E00" font-size="12.5">2.4 GHz</text>
       <!-- labels -->
       <text x="62" y="156" text-anchor="middle" fill="#111111" font-weight="600" font-size="12.5">your phone</text>

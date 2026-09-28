@@ -3,7 +3,7 @@
       <g font-weight="700" fill="#111111" text-anchor="middle" font-size="12.5">
         <text x="300" y="26">2.4 GHz</text><text x="410" y="26">5 GHz</text><text x="520" y="26">6 GHz</text><text x="640" y="26">Widest channel</text>
       </g>
-      <line x1="20" y1="38" x2="700" y2="38" stroke="#9C9C9C" stroke-width="1.5"/>
+      <line x1="20" y1="38" x2="700" y2="38" stroke="#9C9C9C" stroke-width="1.5" fill="none"/>
       <!-- rows at y=62, 96, 130, 164, 198 -->
       <g font-weight="700" fill="#111111" font-size="12.5">
         <text x="30" y="66">Wi-Fi 4</text><text x="30" y="100">Wi-Fi 5</text><text x="30" y="134">Wi-Fi 6</text><text x="30" y="168">Wi-Fi 6E</text><text x="30" y="202">Wi-Fi 7</text>
@@ -27,5 +27,5 @@
       <g text-anchor="middle" fill="#111111" font-size="12.5">
         <text x="640" y="66">40 MHz</text><text x="640" y="100">160 MHz</text><text x="640" y="134">160 MHz</text><text x="640" y="168">160 MHz</text><text x="640" y="202" font-weight="700" fill="#2F5E00">320 MHz</text>
       </g>
-      <g stroke="#9C9C9C" stroke-width="1"><line x1="20" y1="79" x2="700" y2="79"/><line x1="20" y1="113" x2="700" y2="113"/><line x1="20" y1="147" x2="700" y2="147"/><line x1="20" y1="181" x2="700" y2="181"/></g>
+      <g stroke="#9C9C9C" stroke-width="1"><line x1="20" y1="79" x2="700" y2="79" fill="none"/><line x1="20" y1="113" x2="700" y2="113" fill="none"/><line x1="20" y1="147" x2="700" y2="147" fill="none"/><line x1="20" y1="181" x2="700" y2="181" fill="none"/></g>
     </svg>

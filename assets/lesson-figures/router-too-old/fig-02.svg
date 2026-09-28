@@ -15,7 +15,7 @@
       <text x="350" y="166" text-anchor="middle" font-weight="700" fill="#111111" font-size="12.5">your router</text>
       <text x="350" y="184" text-anchor="middle" font-size="12.5">every device goes through it</text>
       <!-- line to provider and internet -->
-      <line x1="416" y1="120" x2="548" y2="120" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+      <line x1="416" y1="120" x2="548" y2="120" stroke="#444444" stroke-width="4" stroke-linecap="round" fill="none"/>
       <text x="482" y="106" text-anchor="middle" font-size="12.5">to your provider</text>
       <g transform="translate(570 76) scale(3.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
       <text x="610" y="172" text-anchor="middle" font-size="12.5">the internet</text>

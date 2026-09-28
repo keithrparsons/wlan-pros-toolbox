@@ -23,13 +23,13 @@
     <!-- tag -->
     <g transform="translate(452 40) scale(1.5)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="13.5" r="7.5"/><circle cx="13.5" cy="13.5" r="3"/><circle cx="6" cy="6" r="3"/></g>
     <text x="470" y="30" text-anchor="middle" font-size="13" fill="#444444">your AirTag, nearby</text>
-    <path d="M456 72L385 120" stroke="#2B5C8A" stroke-width="2" stroke-dasharray="4 4"/>
+    <path d="M456 72L385 120" stroke="#2B5C8A" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(385,120) rotate(145.939) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="440" y="112" font-size="13" fill="#2B5C8A">Bluetooth</text>
-    <path d="M382 145H560" stroke="#444444" stroke-width="2"/>
+    <path d="M382 145H560" stroke="#444444" stroke-width="2" fill="none"/>
     <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(560,145) rotate(360) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="470" y="136" text-anchor="middle" font-size="13" fill="#444444">its location, sealed</text>
     <!-- map -->
     <rect x="566" y="80" width="170" height="130" rx="10" fill="#F7F7F5" stroke="#E5E5E5"/>
-    <path d="M566 130H736M566 170H736M620 80V210M680 80V210" stroke="#E5E5E5"/>
+    <path d="M566 130H736M566 170H736M620 80V210M680 80V210" stroke="#E5E5E5" fill="none"/>
     <circle cx="651" cy="145" r="26" fill="#A1CC3A" opacity=".25"/><circle cx="651" cy="145" r="9" fill="#7A9E26"/>
     <text x="651" y="236" text-anchor="middle" font-weight="600">The dot you see</text>
     <text x="651" y="254" text-anchor="middle" font-size="13" fill="#444444">= where that phone was</text>

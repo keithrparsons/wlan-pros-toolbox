@@ -5,7 +5,7 @@
       <!-- panel 1 fiber -->
       <rect x="4" y="4" width="166" height="242" rx="10" fill="#FFFFFF" stroke="#E5E5E5"/>
       <text x="87" y="28" text-anchor="middle" font-weight="600">Fiber</text>
-      <line x1="87" y1="42" x2="87" y2="90" stroke="#A1CC3A" stroke-width="4"/>
+      <line x1="87" y1="42" x2="87" y2="90" stroke="#A1CC3A" stroke-width="4" fill="none"/>
       <circle cx="87" cy="104" r="9" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="2"/>
       <text x="104" y="98" font-size="12" fill="#444444">splitter</text>
       <g stroke="#A1CC3A" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M85 117 L32 164"/><path d="M86 117 L69 164"/><path d="M88 117 L105 164"/><path d="M89 117 L142 164"/></g>
@@ -18,12 +18,12 @@
       <!-- panel 2 cable -->
       <rect x="180" y="4" width="166" height="242" rx="10" fill="#FFFFFF" stroke="#E5E5E5"/>
       <text x="263" y="28" text-anchor="middle" font-weight="600">Cable</text>
-      <line x1="263" y1="42" x2="263" y2="87" stroke="#A1CC3A" stroke-width="4"/>
+      <line x1="263" y1="42" x2="263" y2="87" stroke="#A1CC3A" stroke-width="4" fill="none"/>
       <rect x="245" y="92" width="36" height="22" rx="4" fill="#1A1A1A"/>
       <text x="290" y="108" font-size="12" fill="#444444">node</text>
-      <line x1="200" y1="140" x2="326" y2="140" stroke="#1A1A1A" stroke-width="3"/>
-      <line x1="263" y1="118" x2="263" y2="140" stroke="#1A1A1A" stroke-width="3"/>
-      <g stroke="#1A1A1A" stroke-width="2"><path d="M206 140V164"/><path d="M244 140V164"/><path d="M282 140V164"/><path d="M320 140V164"/></g>
+      <line x1="200" y1="140" x2="326" y2="140" stroke="#1A1A1A" stroke-width="3" fill="none"/>
+      <line x1="263" y1="118" x2="263" y2="140" stroke="#1A1A1A" stroke-width="3" fill="none"/>
+      <g stroke="#1A1A1A" stroke-width="2"><path d="M206 140V164" fill="none"/><path d="M244 140V164" fill="none"/><path d="M282 140V164" fill="none"/><path d="M320 140V164" fill="none"/></g>
       <g transform="translate(206,180)"><g><g transform="translate(-15 -12) scale(1.25)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 3.5 L21 11"/><path d="M5.5 9.5 V20.5 H18.5 V9.5"/><path d="M10 20.5 V15 H14 V20.5"/></g></g>
       </g><g transform="translate(244,180)"><g><g transform="translate(-15 -12) scale(1.25)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 3.5 L21 11"/><path d="M5.5 9.5 V20.5 H18.5 V9.5"/><path d="M10 20.5 V15 H14 V20.5"/></g></g>
       </g><g transform="translate(282,180)"><g><g transform="translate(-15 -12) scale(1.25)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 3.5 L21 11"/><path d="M5.5 9.5 V20.5 H18.5 V9.5"/><path d="M10 20.5 V15 H14 V20.5"/></g></g>

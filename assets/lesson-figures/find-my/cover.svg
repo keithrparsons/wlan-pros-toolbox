@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" width="700" height="250">
       <!-- map grid -->
       <g stroke="#E5E5E5" stroke-width="1">
-        <path d="M0 50H700M0 100H700M0 150H700M0 200H700M100 0V250M200 0V250M300 0V250M400 0V250M500 0V250M600 0V250"/>
+        <path d="M0 50H700M0 100H700M0 150H700M0 200H700M100 0V250M200 0V250M300 0V250M400 0V250M500 0V250M600 0V250" fill="none"/>
       </g>
       <path d="M40 210 C160 160 240 220 330 150 S520 60 660 70" fill="none" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
       <!-- pins -->

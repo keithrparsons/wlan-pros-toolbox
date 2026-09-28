@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 170" font-family="IBM Plex Sans" font-size="12.5" fill="#1A1A1A" width="700" height="170">
       <rect x="40" y="70" width="6" height="60" fill="#7A9E26"/>
       <text x="40" y="150" font-size="12" fill="#444444">Earth's surface; ticks mark each height</text>
-      <line x1="46" y1="124" x2="664" y2="124" stroke="#9C9C9C" stroke-width="1.5"/>
-      <g stroke="#9C9C9C" stroke-width="1.5"><path d="M54.3 124v6M56.5 124v6M395 124v6M664 124v6"/></g>
+      <line x1="46" y1="124" x2="664" y2="124" stroke="#9C9C9C" stroke-width="1.5" fill="none"/>
+      <g stroke="#9C9C9C" stroke-width="1.5"><path d="M54.3 124v6M56.5 124v6M395 124v6M664 124v6" fill="none"/></g>
       <circle cx="54.3" cy="94" r="4" fill="#A1CC3A" stroke="#1A1A1A"/>
       <circle cx="56.5" cy="108" r="4" fill="#2B5C8A" stroke="#1A1A1A"/>
-      <path d="M58 90 L118 40" stroke="#444444"/><text x="124" y="40" font-weight="600">Starlink, about 480 km (300 miles)</text>
-      <path d="M61 106 L118 62" stroke="#444444"/><text x="124" y="66" font-weight="600">Amazon Leo, 590 to 630 km (370 to 390 miles)</text>
+      <path d="M58 90 L118 40" stroke="#444444" fill="none"/><text x="124" y="40" font-weight="600">Starlink, about 480 km (300 miles)</text>
+      <path d="M61 106 L118 62" stroke="#444444" fill="none"/><text x="124" y="66" font-weight="600">Amazon Leo, 590 to 630 km (370 to 390 miles)</text>
       <circle cx="395" cy="101" r="5" fill="#9C9C9C" stroke="#1A1A1A"/>
       <text x="395" y="88" text-anchor="middle">GPS, 20,200 km (12,550 miles)</text>
       <circle cx="664" cy="101" r="7" fill="#1A1A1A"/>

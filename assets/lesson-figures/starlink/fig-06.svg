@@ -8,7 +8,7 @@
       <text x="347" y="161" font-size="13" fill="#444444" text-anchor="middle">40 cm (15 inches) long</text><text x="347" y="177" font-size="13" fill="#444444" text-anchor="middle"/>
       <text x="525" y="145" font-size="12.5" fill="#1A1A1A" text-anchor="middle" font-weight="600">Mini</text>
       <text x="525" y="161" font-size="13" fill="#444444" text-anchor="middle">30 cm (12 inches) long</text><text x="525" y="177" font-size="13" fill="#444444" text-anchor="middle"/>
-      <line x1="610" y1="125" x2="670" y2="125" stroke="#444444" stroke-width="2"/>
-      <line x1="610" y1="120" x2="610" y2="130" stroke="#444444" stroke-width="2"/><line x1="670" y1="120" x2="670" y2="130" stroke="#444444" stroke-width="2"/>
+      <line x1="610" y1="125" x2="670" y2="125" stroke="#444444" stroke-width="2" fill="none"/>
+      <line x1="610" y1="120" x2="610" y2="130" stroke="#444444" stroke-width="2" fill="none"/><line x1="670" y1="120" x2="670" y2="130" stroke="#444444" stroke-width="2" fill="none"/>
       <text x="640" y="110" font-size="13" fill="#444444" text-anchor="middle">20 cm (8 inches)</text>
     </svg>

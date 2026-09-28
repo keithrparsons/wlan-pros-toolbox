@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" font-family="IBM Plex Sans" font-size="13" fill="#1A1A1A" width="700" height="240">
       <ellipse cx="70" cy="120" rx="58" ry="34" fill="#E6EEF6" stroke="#2B5C8A" stroke-width="2"/>
       <text x="70" y="125" text-anchor="middle" font-weight="600">Internet</text>
-      <line x1="128" y1="120" x2="232" y2="120" stroke="#1A1A1A" stroke-width="4"/>
+      <line x1="128" y1="120" x2="232" y2="120" stroke="#1A1A1A" stroke-width="4" fill="none"/>
       <text x="180" y="110" text-anchor="middle" font-size="12" fill="#444444">provider's line</text>
       <rect x="232" y="98" width="86" height="44" rx="6" fill="#1A1A1A"/>
       <text x="275" y="125" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="600">Provider's box</text>
-      <line x1="318" y1="120" x2="360" y2="120" stroke="#1A1A1A" stroke-width="3"/>
+      <line x1="318" y1="120" x2="360" y2="120" stroke="#1A1A1A" stroke-width="3" fill="none"/>
       <rect x="360" y="98" width="86" height="44" rx="6" fill="#A1CC3A"/>
       <text x="403" y="125" text-anchor="middle" font-size="13" font-weight="600">Router</text>
       <g fill="none" stroke="#7A9E26" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round">

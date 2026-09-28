@@ -8,7 +8,7 @@
   <text x="330" y="70" font-weight="700" font-size="14" fill="#2F5E00">Full Wi-Fi bars</text>
   <text x="330" y="88">in every room</text>
   <rect x="330" y="226" width="250" height="20" rx="6" fill="#A1CC3A" fill-opacity="0.55"/>
-  <line x1="194" y1="236" x2="578" y2="236" stroke="#2B5C8A" stroke-width="2"/>
+  <line x1="194" y1="236" x2="578" y2="236" stroke="#2B5C8A" stroke-width="2" fill="none"/>
   <text x="455" y="212" text-anchor="middle" font-weight="700" font-size="14" fill="#111111">The slow part: one thin line</text>
   <text x="455" y="266" text-anchor="middle">shared by every guest</text>
   <g transform="translate(590 197) scale(3.3)" fill="none" stroke="#2B5C8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
