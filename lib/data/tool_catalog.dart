@@ -2678,6 +2678,21 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Smart Home Radios, Explained (2026-09-28, Keith approved the guide):
+      // the explainer post turned Guided Lesson on the 1.11.0 framework, word
+      // for word from the final guide with its 13 figures. Shelved with the
+      // other lessons for the people Wi-Fi pros get asked by.
+      ToolEntry(
+        id: 'smart-home-radios-explained',
+        title: 'Smart Home Radios, Explained',
+        description:
+            'Wi-Fi, Thread, Zigbee and Matter: why your smart plug won\'t '
+            'join, what a gadget network fixes, and what the Matter logo on '
+            'the box means',
+        routeName: '/tools/smart-home-radios-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

@@ -241,7 +241,11 @@ void runGuidedLessonSuite({
               .map((RegExpMatch m) => '${f.asset}: ${m.group(1)}'),
       ];
       for (final String s in <String>[...text, ...labels]) {
-        expect(s, isNot(matches(RegExp(r'\bpages? \d'))), reason: s);
+        expect(
+          s,
+          isNot(matches(RegExp(r'\bpages? \d|\b(?:next|previous) page\b'))),
+          reason: s,
+        );
       }
     });
 

@@ -438,6 +438,10 @@ def parse_callout(el, cl: set[str]) -> dict:
 
 _PAGE = re.compile(r"\b(on |at )?pages? (\d+(?:(?:, | and | to | or )\d+)*)\b")
 _PAGE_SEP = re.compile(r"(, | and | to | or )")
+# A numberless reference to the facing page. A guide section is at most a
+# page or two, so "the next page" is the next section, which is the next
+# step; check each one printed against the lesson.
+_NEAR_PAGE = re.compile(r"\b(on|in) the (next|previous) page\b")
 
 
 def fix_page_refs(g: dict) -> list[str]:
@@ -469,7 +473,12 @@ def fix_page_refs(g: dict) -> list[str]:
             changes.append(f'"{m.group(0)}" -> "{new}" ({titles})')
             return new
 
-        return _PAGE.sub(sub, s)
+        def near(m: re.Match) -> str:
+            new = f"in the {m.group(2)} step"
+            changes.append(f'"{m.group(0)}" -> "{new}" (numberless: check the {m.group(2)} step is the one meant)')
+            return new
+
+        return _NEAR_PAGE.sub(near, _PAGE.sub(sub, s))
 
     for st in g["steps"]:
         for b in st["blocks"]:

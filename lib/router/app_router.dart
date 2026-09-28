@@ -146,6 +146,7 @@ import '../screens/tools/reference/starlink_explained_screen.dart';
 import '../screens/tools/reference/wifi_calling_explained_screen.dart';
 import '../screens/tools/reference/home_internet_explained_screen.dart';
 import '../screens/tools/reference/phone_data_abroad_explained_screen.dart';
+import '../screens/tools/reference/smart_home_radios_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -851,6 +852,13 @@ class AppRouter {
   static const String phoneDataAbroadExplained =
       '/tools/phone-data-abroad-explained';
 
+  /// Smart Home Radios, Explained: a Wireless Classroom Guided Lesson on Wi-Fi,
+  /// Thread, Zigbee and Matter, why a 2.4 GHz-only plug won't join, and border
+  /// routers. The id `smart-home-radios-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String smartHomeRadiosExplained =
+      '/tools/smart-home-radios-explained';
+
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
   /// interference (a nine-card signature gallery), and how to mitigate it. An
@@ -1222,6 +1230,7 @@ class AppRouter {
     wifiCallingExplained: (_) => const WifiCallingExplainedScreen(),
     homeInternetExplained: (_) => const HomeInternetExplainedScreen(),
     phoneDataAbroadExplained: (_) => const PhoneDataAbroadExplainedScreen(),
+    smartHomeRadiosExplained: (_) => const SmartHomeRadiosExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

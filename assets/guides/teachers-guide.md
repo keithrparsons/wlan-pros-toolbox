@@ -72,6 +72,8 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 
 - **Phone Data Abroad, Explained.** Roaming with your own carrier, a travel eSIM and a local SIM, how to keep your own number on while a second plan carries the data, and the switches that stop a surprise bill.
 
+- **Smart Home Radios, Explained.** Wi-Fi, Thread, Zigbee and Matter: three radios and a language, why a 2.4 GHz-only smart plug won't join, the gadget network that fixes it, and what a Thread border router does. Figure 3 (one band, shared) is the Wi-Fi hook for a Wi-Fi audience.
+
 ### RF and Propagation
 
 - **FSPL Simulator.** Free-space path loss against distance for 2.4, 5 and 6 GHz on one chart, with a Why panel that splits each band's loss into the part every band shares and the part that changes with frequency. Up and Down double and halve the distance, so each press shows the 6 dB per doubling rule. Log and Linear switch the distance axis: on log the bands are straight lines, on linear they are the curve students usually expect.

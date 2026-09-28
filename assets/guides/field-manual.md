@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 243 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 244 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (70 tools)
-  - Guided Lessons (11)
+- **Wireless Classroom** (71 tools)
+  - Guided Lessons (12)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (70 tools)
+# Wireless Classroom (71 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (11)
+## Guided Lessons (12)
 
 
 ### Antenna Fundamentals
@@ -3965,6 +3965,26 @@ A read-along lesson on how to land in another country with your phone working, a
 - Prices are left out on purpose. Figure 6 shows how a daily fee adds up, not what any carrier charges.
 - Settings paths are given for iPhone and, more loosely, for Android, where menus differ by maker.
 - The lesson names no travel eSIM company and recommends none. It is independent and isn't affiliated with any carrier, phone maker or eSIM seller.
+
+
+### Smart Home Radios, Explained
+
+A read-along lesson on the four names on smart home boxes: Wi-Fi, Thread, Zigbee and Matter. Wi-Fi, Thread and Zigbee are radios. Matter is a shared language that devices speak over Wi-Fi, Thread or a network cable, and Zigbee reaches it through a bridge. The lesson covers why your smart plug won't join, how to get it to join, what a border router is, and what the Matter logo on the box does and does not promise. It follows the free PDF guide of the same name, word for word, with its 13 figures.
+
+**Why it's here.** Wi-Fi people get asked why a new smart plug won't join by family, friends and clients. The usual answer is the Wi-Fi: many plugs and bulbs have only a 2.4 GHz radio, and a network that offers only 5 GHz is invisible to them. The lesson also shows why every phone, laptop and TV that moves up to 5 or 6 GHz leaves more room on 2.4 GHz for the small radios that can't leave it. Figure 3 shows the one band they all share.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea behind it, then covers three radios and a language, one band shared, why your smart plug won't join, getting it to join, a network for your gadgets, Thread and its border router, one network with several doorways, Zigbee and what Matter changes, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 is the fix list, gentlest first, and step 6 is the last fix: a 2.4 GHz network for your gadgets, made a regular network and not a guest one. Figure 13 is four checks before you buy.
+4. At the end, Take it with you names the free PDF guide the lesson follows, for printing or handing to someone setting up a smart home.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked in September 2026 against the Connectivity Standards Alliance and the Thread Group first, then the platform makers' own help pages. Matter versions and the device types each app supports change often.
+- Figure 3 is marked as a simplified picture, not to scale. The lesson gives no channel numbers for Wi-Fi, Thread or Zigbee.
+- Some newer smart plugs have a 5 GHz radio too. The lesson's advice is for the ones whose box says 2.4 GHz only.
+- The lesson recommends no brand of hub. It is independent and isn't affiliated with any standards body or device maker.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

@@ -631,6 +631,7 @@ flutter:
     - assets/lesson-figures/home-internet/
     - assets/lesson-figures/wifi-calling/
     - assets/lesson-figures/phone-data-abroad/
+    - assets/lesson-figures/smart-home-radios/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2

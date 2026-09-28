@@ -3153,6 +3153,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'travel',
     'cruise ship wi-fi',
   ],
+  // Smart Home Radios, Explained (Guided Lesson). What people ask when a smart
+  // device won't join, plus the terms the lesson teaches.
+  'smart-home-radios-explained': <String>[
+    'smart home',
+    'smart plug',
+    'smart bulb',
+    'matter',
+    'thread',
+    'zigbee',
+    'border router',
+    'thread border router',
+    'matter bridge',
+    '2.4 ghz',
+    '2.4 ghz only',
+    'iot network',
+    'gadget network',
+    'smart plug won\'t connect',
+    'home automation',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

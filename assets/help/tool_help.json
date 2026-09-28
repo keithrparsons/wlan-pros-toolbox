@@ -7301,6 +7301,29 @@
       ],
       "source": "The WLAN Pros print guide Phone Data Abroad, Explained (September 2026), checked against Apple, Google, Samsung, AT&T, Verizon, T-Mobile, the FCC, the European Commission and the FTC. The full source list is the last section of the lesson."
     },
+    "smart-home-radios-explained": {
+      "name": "Smart Home Radios, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on the four names on smart home boxes: Wi-Fi, Thread, Zigbee and Matter. Wi-Fi, Thread and Zigbee are radios. Matter is a shared language that devices speak over Wi-Fi, Thread or a network cable, and Zigbee reaches it through a bridge. The lesson covers why your smart plug won't join, how to get it to join, what a border router is, and what the Matter logo on the box does and does not promise. It follows the free PDF guide of the same name, word for word, with its 13 figures.",
+      "whyHere": "Wi-Fi people get asked why a new smart plug won't join by family, friends and clients. The usual answer is the Wi-Fi: many plugs and bulbs have only a 2.4 GHz radio, and a network that offers only 5 GHz is invisible to them. The lesson also shows why every phone, laptop and TV that moves up to 5 or 6 GHz leaves more room on 2.4 GHz for the small radios that can't leave it. Figure 3 shows the one band they all share.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer and the one idea behind it, then covers three radios and a language, one band shared, why your smart plug won't join, getting it to join, a network for your gadgets, Thread and its border router, one network with several doorways, Zigbee and what Matter changes, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 5 is the fix list, gentlest first, and step 6 is the last fix: a 2.4 GHz network for your gadgets, made a regular network and not a guest one. Figure 13 is four checks before you buy.",
+        "At the end, Take it with you names the free PDF guide the lesson follows, for printing or handing to someone setting up a smart home.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked in September 2026 against the Connectivity Standards Alliance and the Thread Group first, then the platform makers' own help pages. Matter versions and the device types each app supports change often.",
+        "Figure 3 is marked as a simplified picture, not to scale. The lesson gives no channel numbers for Wi-Fi, Thread or Zigbee.",
+        "Some newer smart plugs have a 5 GHz radio too. The lesson's advice is for the ones whose box says 2.4 GHz only.",
+        "The lesson recommends no brand of hub. It is independent and isn't affiliated with any standards body or device maker."
+      ],
+      "source": "The WLAN Pros print guide Smart Home Radios, Explained (September 2026), checked against the Connectivity Standards Alliance, the Thread Group, Google Home Help and Apple Support. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",
