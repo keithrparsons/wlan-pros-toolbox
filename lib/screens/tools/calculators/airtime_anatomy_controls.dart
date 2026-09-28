@@ -191,7 +191,7 @@ class _Readouts extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           for (final int i in cols)
-            _CheckLine(index: i, check: model.result(i).check),
+            _CheckLine(index: i, result: model.result(i)),
           const SizedBox(height: AppSpacing.xxs),
           Text(
             'Throughput is payload bits over the whole TXOP: one station, no '
@@ -205,10 +205,10 @@ class _Readouts extends StatelessWidget {
 }
 
 class _CheckLine extends StatelessWidget {
-  const _CheckLine({required this.index, required this.check, this.who});
+  const _CheckLine({required this.index, required this.result, this.who});
 
   final int index;
-  final AirtimeCheck check;
+  final AirtimeResult result;
 
   /// Which scenarios the line speaks for; defaults to [index]'s letter.
   final String? who;
@@ -217,6 +217,7 @@ class _CheckLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
+    final AirtimeCheck check = result.check;
     final Color hue = check.isOk ? colors.statusSuccess : colors.statusDanger;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
@@ -233,7 +234,7 @@ class _CheckLine extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'Check ${who ?? kScenarioLetters[index]}: ${check.message}',
+              'Check ${who ?? kScenarioLetters[index]}: ${result.checkMessage}',
               style: text.bodyMedium?.copyWith(
                 color: hue,
                 fontWeight: FontWeight.w600,
@@ -675,12 +676,12 @@ class _PresenterInputs extends StatelessWidget {
           if (model.visible.every((int i) => model.result(i).check.isOk))
             _CheckLine(
               index: 0,
-              check: model.result(0).check,
+              result: model.result(0),
               who: model.compare ? 'A and B' : 'A',
             )
           else
             for (final int i in model.visible)
-              _CheckLine(index: i, check: model.result(i).check),
+              _CheckLine(index: i, result: model.result(i)),
           PresenterDisclosure(
             title: 'More settings',
             children: <Widget>[

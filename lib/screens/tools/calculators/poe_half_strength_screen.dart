@@ -30,8 +30,9 @@
 //
 // States (SOP-007 §5):
 //   - loading     -> none: pure on-device lookup, no I/O
-//   - empty       -> 802.3af: no radio live (illustrative), said in words on
-//                    the drawing, in the readouts and in a note
+//   - empty       -> none: even 802.3af runs a reduced set (illustrative,
+//                    Keith 2026-09-27), said in words in the readouts and in
+//                    a note
 //   - error       -> none reachable: every input is a bounded toggle
 //   - success     -> drawing, readouts, prediction
 //   - disabled    -> the 802.3at choice on 802.3af and 802.3bt ports, with

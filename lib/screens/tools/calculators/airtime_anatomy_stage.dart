@@ -196,7 +196,7 @@ class _Headline extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           if (!r.check.isOk)
             Text(
-              'Not drawn: ${r.check.message}.',
+              'Not drawn: ${r.checkMessage}.',
               style: text.bodyMedium?.copyWith(color: colors.statusDanger),
             )
           else ...<Widget>[
@@ -362,7 +362,7 @@ class _ScenarioRow extends StatelessWidget {
         if (r.check.isOk)
           _Bar(model: model, index: index, scaleUs: scaleUs)
         else
-          _Verdict(check: r.check),
+          _Verdict(message: r.checkMessage),
       ],
     );
   }
@@ -445,9 +445,10 @@ class _Bar extends StatelessWidget {
 }
 
 class _Verdict extends StatelessWidget {
-  const _Verdict({required this.check});
+  const _Verdict({required this.message});
 
-  final AirtimeCheck check;
+  /// The Check in words, [AirtimeResult.checkMessage].
+  final String message;
 
   @override
   Widget build(BuildContext context) {
@@ -470,7 +471,7 @@ class _Verdict extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
-              'Not drawn. ${check.message}.',
+              'Not drawn. $message.',
               style: text.bodySmall?.copyWith(color: colors.textPrimary),
             ),
           ),

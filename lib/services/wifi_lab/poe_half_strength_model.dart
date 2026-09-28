@@ -25,9 +25,14 @@
 //     the recommended power input for full operation of Wi-Fi 7 Access
 //     Points ... capable of operating at lower power with 802.3at power with
 //     reduced functionality."
-// Neither guide says what happens on 802.3af. THAT CASE IS ILLUSTRATIVE and
-// is labeled so on screen and in help ([PhLabels.afIllustrative]): this
-// model boots with every Wi-Fi radio off. Real APs differ.
+// Neither guide says what happens on 802.3af. Keith's ruling (2026-09-27):
+// the AP "boots but with less Wi-Fi capabilities, like fewer spatial
+// streams, or other reductions in capabilities". THE SET IS ILLUSTRATIVE and
+// is labeled so on screen and in help ([PhLabels.afIllustrative]): one
+// plausible generic set chosen to fit the 12.95 W 802.3af guarantees at the
+// AP, 2.4 GHz at 1x1, 5 GHz at 2x2, 6 GHz off, lower transmit power, and the
+// USB port and the second Ethernet port off. No per-part wattage is claimed.
+// Vendors differ; this is one example.
 //
 // Which radio goes dark in the "two radios at 4x4" choice: the guide says
 // "any two". This model turns off 2.4 GHz and keeps 5 and 6 GHz, a stated
@@ -92,9 +97,12 @@ enum PhRadio {
 /// Every UI label that needs a qualifier, in one place; tests hold them.
 abstract final class PhLabels {
   static const String afIllustrative =
-      'Illustrative: the vendor guides do not say what a Wi-Fi 7 AP does on '
-      '802.3af. This model boots with every Wi-Fi radio off. Check your AP\'s '
-      'data sheet.';
+      'Illustrative: vendors differ; this is one example. The vendor guides '
+      'do not say what a Wi-Fi 7 AP does on 802.3af. This model boots with '
+      'less: 2.4 GHz at 1x1, 5 GHz at 2x2, 6 GHz off, lower transmit power, '
+      'and the USB (Universal Serial Bus) port and second Ethernet port '
+      'off, a set chosen to fit '
+      'the 12.95 W at the AP. Check your AP\'s data sheet.';
   static const String genericAp =
       'A generic tri-band Wi-Fi 7 AP: three radios, each 4x4, about 29 W for '
       'full function';
@@ -134,8 +142,24 @@ class PhConfig {
       PhAtMode.allAt2x2 => 2,
       PhAtMode.twoAt4x4 => r == PhRadio.g24 ? 0 : PhAp.fullStreams,
     },
-    PhPort.af => 0,
+    // Illustrative (Keith, 2026-09-27): fewer streams, one band off.
+    PhPort.af => switch (r) {
+      PhRadio.g24 => 1,
+      PhRadio.g5 => 2,
+      PhRadio.g6 => 0,
+    },
   };
+
+  /// What else the AP cuts besides spatial streams. Only the illustrative
+  /// 802.3af set cuts anything else; the Juniper guide names only radio
+  /// changes on 802.3at.
+  List<String> get otherReductions => port == PhPort.af
+      ? const <String>[
+          'Lower transmit power',
+          'USB port off',
+          'Second Ethernet port off',
+        ]
+      : const <String>[];
 
   int get streamsLive =>
       PhRadio.values.fold<int>(0, (int s, PhRadio r) => s + streamsOn(r));

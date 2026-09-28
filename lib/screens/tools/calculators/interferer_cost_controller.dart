@@ -200,7 +200,8 @@ class InterfererCostController extends ChangeNotifier {
         'Your channel: ${c.channel.prose}, ${c.widthMHz} MHz. Preamble detect '
         '${IcFormat.dbm(r.preambleDetectDbm)} (other Wi-Fi), energy detect '
         '${IcFormat.dbm(r.energyDetectDbm)} (anything): a ${IcFormat.n(r.gapDb)} '
-        'dB gap, ${IcFormat.times(r.gapPowerRatio)} the power.',
+        'dB gap, ${IcFormat.times(r.gapPowerRatio)} the power.'
+        '${r.widthScaled ? ' This widening applies to 5 GHz: the gap narrows with width there.' : ''}',
       )
       ..writeln(
         'A ${IcFormat.n(kIcReferenceEirpDbm)} dBm transmitter (illustrative), '

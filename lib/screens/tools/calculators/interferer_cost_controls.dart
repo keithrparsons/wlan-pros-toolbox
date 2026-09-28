@@ -227,7 +227,9 @@ class InterfererCostControls extends StatelessWidget {
           Text(
             'Preamble detect for a ${cfg.widthMHz} MHz PPDU (physical layer '
             'protocol data unit): ${IcFormat.dbm(controller.result.preambleDetectDbm)}. '
-            'Past 20 MHz this comes from one source.',
+            'This widening applies to 5 GHz: the gap narrows 3 dB each '
+            'time the width doubles. Past 20 MHz the values come from one '
+            'source. 6 GHz works differently and is not modeled here.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
         ] else if (prose) ...<Widget>[

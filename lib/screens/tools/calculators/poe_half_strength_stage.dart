@@ -168,8 +168,10 @@ String phSummary(PhConfig c) {
         'streams. The power light does not tell you.';
   }
   return '${PhFormat.watts(c.port.pdWatts)} reaches the AP, less than half '
-      'of what it needs. In this illustrative model no Wi-Fi radio runs, yet '
-      'the power light is on.';
+      'of what it needs. In this illustrative example it still boots with '
+      'less: ${c.streamsLive} of ${PhAp.maxStreams} streams, one band off, '
+      'lower transmit power, and the USB port and second Ethernet port off. '
+      'The power light is on.';
 }
 
 class PoeHalfStrengthReadouts extends StatelessWidget {
@@ -230,6 +232,11 @@ class PoeHalfStrengthReadouts extends StatelessWidget {
               value: PhFormat.watts(c.port.pdWatts),
             ),
             PhFigure(label: 'Power light', value: 'On'),
+            if (c.otherReductions.isNotEmpty)
+              PhFigure(
+                label: 'Also cut (illustrative)',
+                value: c.otherReductions.join(', '),
+              ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               phSummary(c),

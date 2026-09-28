@@ -120,6 +120,8 @@ class PoeHalfStrengthController extends ChangeNotifier {
           '(${PhFormat.percent(c.streamShare)}); radios live: '
           '${c.radiosLive} of ${PhRadio.values.length}',
       if (c.port == PhPort.at) 'On 802.3at this AP runs ${c.atMode.phrase}',
+      if (c.otherReductions.isNotEmpty)
+        'Also cut: ${c.otherReductions.join(', ')}',
       if (c.illustrative) PhLabels.afIllustrative,
       'Sources: Juniper Mist Wi-Fi 7 AP guide; Cisco Meraki Wi-Fi 7 '
           '(802.11be) Technical Guide; IEEE 802.3. ${PhLabels.vendorsDiffer}',

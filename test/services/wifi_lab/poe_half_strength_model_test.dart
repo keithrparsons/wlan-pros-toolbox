@@ -7,7 +7,8 @@
 //   2. 802.3at falls short: three radios at 2x2 (6 of 12, half) or two
 //      radios at 4x4 (8 of 12), the two choices in the guide.
 //   3. The power light is on in every case.
-//   4. 802.3af is illustrative, and flagged so.
+//   4. 802.3af boots with a reduced set (Keith, 2026-09-27); the set is
+//      illustrative, and flagged so.
 //   5. Port watts equal the PoE Reference tool's (one set of numbers).
 
 import 'package:flutter_test/flutter_test.dart';
@@ -65,13 +66,40 @@ void main() {
     }
   });
 
-  test('802.3af: illustrative, flagged, no radio live', () {
+  // Keith, 2026-09-27: on 802.3af the AP "boots but with less Wi-Fi
+  // capabilities, like fewer spatial streams, or other reductions in
+  // capabilities". The set below is one illustrative example.
+  test('802.3af: illustrative, flagged, a reduced set that still runs '
+      'Wi-Fi', () {
     const PhConfig c = PhConfig(port: PhPort.af);
     expect(c.illustrative, isTrue);
-    expect(c.streamsLive, 0);
-    expect(c.radiosLive, 0);
+    expect(c.radioState(PhRadio.g24), '1x1:1');
+    expect(c.radioState(PhRadio.g5), '2x2:2');
+    expect(c.radioState(PhRadio.g6), 'Off');
+    expect(c.streamsLive, 3);
+    expect(c.radiosLive, 2);
+    expect(c.otherReductions, <String>[
+      'Lower transmit power',
+      'USB port off',
+      'Second Ethernet port off',
+    ]);
     expect(PhLabels.afIllustrative, startsWith('Illustrative'));
     expect(PhLabels.afIllustrative, contains('802.3af'));
+    expect(PhLabels.afIllustrative, contains('vendors differ'));
+    expect(PhLabels.afIllustrative, contains('this is one example'));
+    expect(PhLabels.afIllustrative, contains('12.95 W'));
+  });
+
+  test('802.3af runs fewer streams than either 802.3at choice, and the '
+      'other ports cut nothing else', () {
+    for (final PhAtMode m in PhAtMode.values) {
+      expect(
+        const PhConfig(port: PhPort.af).streamsLive,
+        lessThan(PhConfig(port: PhPort.at, atMode: m).streamsLive),
+      );
+      expect(PhConfig(port: PhPort.at, atMode: m).otherReductions, isEmpty);
+    }
+    expect(const PhConfig(port: PhPort.bt).otherReductions, isEmpty);
   });
 
   test('the power light is on in every case', () {

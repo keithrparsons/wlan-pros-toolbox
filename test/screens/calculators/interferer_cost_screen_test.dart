@@ -397,4 +397,22 @@ void main() {
       });
     }
   }
+
+  testWidgets('the width scaling is labeled the 5 GHz rule; no 6 GHz '
+      'option is offered', (WidgetTester tester) async {
+    final InterfererCostController c = await _pump(tester);
+    expect(find.text('6 GHz'), findsNothing);
+    expect(find.textContaining('This widening applies to 5 GHz'), findsNothing);
+    c.channel = IcChannel.ch36;
+    c.widthMHz = 40;
+    await tester.pumpAndSettle();
+    expect(c.result.gapDb, 17);
+    expect(find.textContaining('This widening applies to 5 GHz'), findsWidgets);
+    expect(c.copyText(), contains('This widening applies to 5 GHz'));
+    c.channel = IcChannel.ch11;
+    await tester.pumpAndSettle();
+    expect(c.result.gapDb, 20);
+    expect(c.copyText(), isNot(contains('This widening applies to 5 GHz')));
+    expect(tester.takeException(), isNull);
+  });
 }
