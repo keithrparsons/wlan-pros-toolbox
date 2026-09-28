@@ -3134,6 +3134,24 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'fcc broadband map',
     'wired vs wi-fi speed test',
   ],
+  // Tap, Touch and Near, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'tap-touch-near-explained': <String>[
+    'tap to pay',
+    'contactless',
+    'nfc',
+    'near field communication',
+    'ultra wideband',
+    'uwb',
+    'rfid wallet',
+    'rfid blocking',
+    'card skimming',
+    'apple pay',
+    'google wallet',
+    'tokenization',
+    'digital car key',
+    'find my keys',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 242 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 243 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (69 tools)
-  - Guided Lessons (10)
+- **Wireless Classroom** (70 tools)
+  - Guided Lessons (11)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (69 tools)
+# Wireless Classroom (70 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (10)
+## Guided Lessons (11)
 
 
 ### Antenna Fundamentals
@@ -3946,6 +3946,25 @@ A read-along lesson on how internet from space reaches your house or RV, how hig
 - Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
 - The Wi-Fi Calling line is general: some carriers don't support it over satellite internet. T-Mobile's page is the one in the sources; other carriers publish their own.
 - The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
+
+### Tap, Touch and Near, Explained
+
+A read-along lesson on the two short-range radios in a phone: NFC (near field communication), the one that works when you tap to pay, and Ultra Wideband (UWB), the one that measures how far away something is. It covers why a tap has to be a tap, what a tap sends to the store, whether a wallet needs a shield, where the real risk is, and how a phone points the way to your keys or opens a car. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.
+
+**Why it's here.** It answers questions Wi-Fi people get asked by people who aren't technical: is tapping to pay safe, and do I need a blocking wallet? The short answers are yes and, for bank cards, no. Each payment sends a code that works only once, and a card has to be within a hand's width of the reader to wake up at all.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then the two radios, what a tap sends, the wallet question, the real risks, finding your keys, and four things people get wrong with the habits worth keeping. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 has the one Stop box in the lesson: never share a code your bank texts you.
+4. Step 6 has Open buttons for Find My, Explained and Bluetooth, Explained when those lessons are in the app.
+5. The last row, Take it with you, names the free PDF guide the lesson follows, Tap, Touch and Near, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026 against sources that include Visa, EMVCo, Apple, Google, the FTC and the FiRa Consortium. The full source list is the last step of the lesson.
+- The lesson is independent and isn't affiliated with or endorsed by any company named in it.
+
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi
 

@@ -2662,6 +2662,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Tap, Touch and Near, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: the phone's two short-range radios: NFC for a tap, Ultra Wideband for finding things.
+      ToolEntry(
+        id: 'tap-touch-near-explained',
+        title: 'Tap, Touch and Near, Explained',
+        description:
+            'What happens when you tap to pay, whether your wallet needs a '
+            'shield, and how your phone finds your keys',
+        routeName: '/tools/tap-touch-near-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

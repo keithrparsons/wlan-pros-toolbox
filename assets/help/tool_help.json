@@ -7278,6 +7278,28 @@
       ],
       "source": "The WLAN Pros print guide Home Internet, Explained (September 2026), reviewed with a second opinion and checked against the FCC, provider and standards sources on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "tap-touch-near-explained": {
+      "name": "Tap, Touch and Near, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on the two short-range radios in a phone: NFC (near field communication), the one that works when you tap to pay, and Ultra Wideband (UWB), the one that measures how far away something is. It covers why a tap has to be a tap, what a tap sends to the store, whether a wallet needs a shield, where the real risk is, and how a phone points the way to your keys or opens a car. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.",
+      "whyHere": "It answers questions Wi-Fi people get asked by people who aren't technical: is tapping to pay safe, and do I need a blocking wallet? The short answers are yes and, for bank cards, no. Each payment sends a code that works only once, and a card has to be within a hand's width of the reader to wake up at all.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then the two radios, what a tap sends, the wallet question, the real risks, finding your keys, and four things people get wrong with the habits worth keeping. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 5 has the one Stop box in the lesson: never share a code your bank texts you.",
+        "Step 6 has Open buttons for Find My, Explained and Bluetooth, Explained when those lessons are in the app.",
+        "The last row, Take it with you, names the free PDF guide the lesson follows, Tap, Touch and Near, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026 against sources that include Visa, EMVCo, Apple, Google, the FTC and the FiRa Consortium. The full source list is the last step of the lesson.",
+        "The lesson is independent and isn't affiliated with or endorsed by any company named in it."
+      ],
+      "source": "The WLAN Pros print guide Tap, Touch and Near, Explained (September 2026), checked on 28 September 2026. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

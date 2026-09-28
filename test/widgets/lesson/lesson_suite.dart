@@ -236,8 +236,16 @@ void runGuidedLessonSuite({
       }
       // Every metric length in running prose carries its imperial. Sources
       // list figures as "(370 to 460 km, 230 to 290 miles)", which the
-      // pattern above already allows.
-      for (final String s in text) {
+      // pattern above already allows. A sources-list entry is a citation: it
+      // names what the source document says in the source's own terms
+      // ("FiRa Consortium ... Technical FAQ (few centimeters, 30 cm, 100 m)"),
+      // so it is not running prose and is not converted.
+      final Set<String> citations = <String>{
+        for (final LessonStep s in lesson.steps)
+          for (final LessonBlock b in s.blocks)
+            if (b is LessonSourceList) ...b.items.map(lessonPlain),
+      };
+      for (final String s in text.where((String s) => !citations.contains(s))) {
         for (final RegExpMatch m in _metricLength.allMatches(s)) {
           final String before = s.substring(0, m.start);
           final String after = s.substring(m.end);
