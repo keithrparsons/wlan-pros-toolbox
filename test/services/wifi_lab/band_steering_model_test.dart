@@ -13,6 +13,8 @@ BsWalk _walk({
   double extra = kBsDefaultExtraLossDb,
   int tolerance = kBsDefaultTolerance,
   bool driver = true,
+  int rescan = kBsDefaultRescanS,
+  int retry = kBsDefaultRetryS,
 }) => simulateWalk(
   BsConfig(
     profile: profile,
@@ -22,8 +24,17 @@ BsWalk _walk({
     extra5LossDb: extra,
     refusalTolerance: tolerance,
     driverSupportsBtm: driver,
+    rescanS: rescan,
+    retryS: retry,
   ),
 );
+
+/// The sample right after each deauthentication's outage: where the client
+/// chose its band again.
+List<BsStep> _rejoins(BsWalk w) => <BsStep>[
+  for (int i = 1; i < w.steps.length; i++)
+    if (w.steps[i - 1].inOutage && !w.steps[i].inOutage) w.steps[i],
+];
 
 void main() {
   group('signal', () {
@@ -302,6 +313,177 @@ void main() {
         driver: false,
       );
       expect(w.steps.every((BsStep s) => s.band != BsBand.ghz5), isTrue);
+    });
+  });
+
+  group('deauthentication (Keith, 2026-09-27: the 4th method)', () {
+    test('a client whose 5 GHz level is below its entry threshold returns '
+        'to 2.4 GHz, and the loop counter increments', () {
+      // Client B, published 5 GHz entry -77 dBm. Walking out from the AP it
+      // reaches 2.4 GHz, is matched on 5 GHz, and is deauthenticated.
+      final BsWalk w = _walk(
+        profile: ClientProfile.b,
+        mode: SteeringMode.deauthentication,
+        path: WalkPath.apToEdge,
+      );
+      final List<BsStep> back = _rejoins(w);
+      expect(back, isNotEmpty);
+      final BsStep first = back.first;
+      expect(first.rssi5, lessThan(clientBEntryDbm(BsBand.ghz5)));
+      expect(first.band, BsBand.ghz24);
+      expect(first.returnsTo24, 1);
+      expect(first.why, contains('entry threshold'));
+      expect(first.why, contains('the AP will deauthenticate it again'));
+      // The AP deauthenticates it again: the loop, counted.
+      expect(w.last.deauthsTotal, greaterThan(1));
+      expect(w.last.returnsTo24, back.length);
+      int prev = 0;
+      for (final BsStep s in back) {
+        expect(s.returnsTo24, prev + 1);
+        prev = s.returnsTo24;
+      }
+
+      // Client A the same way, against its -70 dBm model-choice level.
+      final BsWalk a = _walk(mode: SteeringMode.deauthentication);
+      final BsStep aBack = _rejoins(a).first;
+      expect(aBack.rssi5, lessThan(kClientALookDbm));
+      expect(aBack.band, BsBand.ghz24);
+      expect(aBack.returnsTo24, 1);
+    });
+
+    test('a client that hears 5 GHz above its threshold ends on 5 GHz after '
+        'one deauthentication', () {
+      final BsWalk w = _walk(
+        profile: ClientProfile.b,
+        mode: SteeringMode.deauthentication,
+        extra: 0,
+        retry: 25,
+      );
+      expect(w.last.deauthsTotal, 1);
+      expect(w.last.returnsTo24, 0);
+      expect(w.last.band, BsBand.ghz5);
+      final BsStep rejoin = _rejoins(w).single;
+      expect(rejoin.rssi5, greaterThanOrEqualTo(clientBEntryDbm(BsBand.ghz5)));
+      expect(rejoin.band, BsBand.ghz5);
+      expect(rejoin.why, contains('Steered, after 1 deauthentication'));
+      // Once on 5 GHz it is never deauthenticated again.
+      final int at = w.steps.indexOf(rejoin);
+      for (final BsStep s in w.steps.skip(at)) {
+        expect(s.band, BsBand.ghz5);
+        expect(
+          s.frames.any((BsFrame f) => f.kind == BsFrameKind.deauthentication),
+          isFalse,
+        );
+      }
+    });
+
+    test('at every rejoin the client takes 5 GHz exactly when its own join '
+        'rule prefers 5 GHz there', () {
+      for (final ClientProfile p in ClientProfile.values) {
+        for (final WalkPath path in WalkPath.values) {
+          final BsWalk w = _walk(
+            profile: p,
+            mode: SteeringMode.deauthentication,
+            path: path,
+          );
+          for (final BsStep s in _rejoins(w)) {
+            final List<BsBand> pref = joinPreference(
+              p,
+              rssi24: s.rssi24,
+              rssi5: s.rssi5,
+            );
+            expect(
+              s.band,
+              pref.isEmpty ? isNull : pref.first,
+              reason: '${p.label} ${path.label} at ${s.distanceM} m',
+            );
+          }
+        }
+      }
+    });
+
+    test('client traffic is zero during the outage, which lasts the rescan '
+        'time', () {
+      for (final int rescan in <int>[1, 3, 7]) {
+        final BsWalk w = _walk(
+          profile: ClientProfile.c,
+          mode: SteeringMode.deauthentication,
+          path: WalkPath.apToEdge,
+          rescan: rescan,
+        );
+        final List<BsStep> out = w.steps
+            .where((BsStep s) => s.inOutage)
+            .toList();
+        expect(out, isNotEmpty);
+        for (final BsStep s in out) {
+          expect(s.trafficFlowing, isFalse);
+          expect(s.band, isNull);
+          expect(s.outageSecond, inInclusiveRange(1, rescan));
+        }
+        // Every deauthentication costs exactly the rescan time, one sample
+        // (1 s, illustrative) each, unless the walk ends first.
+        expect(w.last.outageS, out.length * kBsSecondsPerStep);
+        final int complete = _rejoins(w).length;
+        expect(out.length, greaterThanOrEqualTo(complete * rescan));
+        expect(out.length, lessThanOrEqualTo(w.last.deauthsTotal * rescan));
+        // Outside an outage an associated client passes traffic.
+        for (final BsStep s in w.steps.where((BsStep s) => !s.inOutage)) {
+          expect(s.trafficFlowing, s.band != null);
+        }
+      }
+    });
+
+    test('the AP waits the retry interval on 2.4 GHz before each '
+        'deauthentication', () {
+      for (final int retry in <int>[1, 5, 9]) {
+        final BsWalk w = _walk(
+          profile: ClientProfile.c,
+          mode: SteeringMode.deauthentication,
+          path: WalkPath.apToEdge,
+          retry: retry,
+        );
+        for (int i = 0; i < w.steps.length; i++) {
+          final bool sent = w.steps[i].frames.any(
+            (BsFrame f) => f.kind == BsFrameKind.deauthentication,
+          );
+          if (!sent) continue;
+          // The samples before it, back to the association, are all on
+          // 2.4 GHz and number at least the retry interval.
+          int on24 = 0;
+          for (int j = i - 1; j >= 0 && w.steps[j].band == BsBand.ghz24; j--) {
+            on24++;
+          }
+          expect(on24 * kBsSecondsPerStep, greaterThanOrEqualTo(retry));
+        }
+      }
+    });
+
+    test('a client the AP never matched on 5 GHz is never deauthenticated', () {
+      for (final ClientProfile p in ClientProfile.values) {
+        final BsWalk w = _walk(
+          profile: p,
+          mode: SteeringMode.deauthentication,
+          path: WalkPath.apToEdge,
+          random: true,
+        );
+        expect(w.last.deauthsTotal, 0, reason: p.label);
+      }
+      // Walking in, Client C never scans after joining, so it is never
+      // matched.
+      expect(
+        _walk(
+          profile: ClientProfile.c,
+          mode: SteeringMode.deauthentication,
+        ).last.deauthsTotal,
+        0,
+      );
+    });
+
+    test('beacons still go out under deauthentication', () {
+      expect(
+        apSendsBeacon(SteeringMode.deauthentication, BsBand.ghz24),
+        isTrue,
+      );
     });
   });
 

@@ -140,18 +140,68 @@ void main() {
     expect(find.text('Client A is on'), findsOneWidget);
     expect(find.text('55 m from the AP'), findsOneWidget);
     expect(find.textContaining('can hear only 2.4 GHz'), findsWidgets);
-    // Illustrative and provisional values are labeled so.
+    // Illustrative values are labeled so. Keith confirmed the defaults on
+    // 2026-09-27, so nothing reads provisional.
     expect(find.text('Extra 5 GHz wall loss (illustrative)'), findsOneWidget);
     expect(
       find.text('Refusals a client tolerates (illustrative)'),
       findsOneWidget,
     );
-    expect(find.textContaining('Provisional, pending review'), findsOneWidget);
+    expect(find.textContaining('rovisional'), findsNothing);
     expect(find.textContaining('-82 dBm, illustrative'), findsOneWidget);
     expect(
       find.textContaining('Not modeled: forcing a client off'),
+      findsNothing,
+    );
+    // The deauthentication timings show only in that mode.
+    expect(find.text('Client rescan time (illustrative)'), findsNothing);
+  });
+
+  testWidgets('deauthentication: its timings, the loop counters and the '
+      'no-traffic state are on screen', (WidgetTester tester) async {
+    final BandSteeringController c = await _open(tester);
+    c.mode = SteeringMode.deauthentication;
+    await tester.pump();
+    expect(find.text('Client rescan time (illustrative)'), findsOneWidget);
+    expect(find.text('AP retry interval (illustrative)'), findsOneWidget);
+    expect(find.textContaining('vendor behavior'), findsOneWidget);
+    expect(
+      find.textContaining('PMF (Protected Management Frames'),
       findsOneWidget,
     );
+    // The first deauthentication, then the outage.
+    final int sent = c.walk.steps.indexWhere(
+      (BsStep s) =>
+          s.frames.any((BsFrame f) => f.kind == BsFrameKind.deauthentication),
+    );
+    c.index = sent;
+    await tester.pump();
+    expect(
+      find.textContaining('Deauthentication from the AP, 2.4 GHz'),
+      findsOneWidget,
+    );
+    expect(find.text('stopped: deauthenticated'), findsOneWidget);
+    expect(find.textContaining('Deauthentications: 1.'), findsOneWidget);
+    c.index = sent + 1;
+    await tester.pump();
+    expect(
+      find.textContaining('no traffic while the client rescans'),
+      findsWidgets,
+    );
+    // Back on 2.4 GHz after the rescan: the loop counter.
+    c.index = sent + c.config.rescanS;
+    await tester.pump();
+    expect(c.step.band, BsBand.ghz24);
+    expect(find.textContaining('Back on 2.4 GHz: 1.'), findsOneWidget);
+    expect(find.text('flowing'), findsOneWidget);
+    // The sliders change the walk.
+    c.rescanS = 7;
+    c.retryS = 12;
+    await tester.pump();
+    expect(find.text('7 s'), findsOneWidget);
+    expect(find.text('12 s'), findsOneWidget);
+    expect(c.copyText(), contains('rescan 7 s, retry 12 s'));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the refusal tolerance slider is disabled outside '
@@ -336,8 +386,9 @@ void main() {
     }
   });
 
-  test('the help mentions Present and its keys, and the deauthentication '
-      'exclusion; its example numbers match the engine', () {
+  test('the help mentions Present and its keys, and deauthentication as '
+      'vendor behavior with illustrative timings; its example numbers match '
+      'the engine', () {
     final List<String> help = shippedHelpProse('band-steering');
     final String all = help.join('\n');
     expect(all, contains('Present opens this simulator'));
@@ -349,11 +400,52 @@ void main() {
     ]) {
       expect(all, contains(k));
     }
+    expect(all, isNot(contains('Not modeled: an AP forcing a client off')));
+    expect(all, isNot(contains('rovisional')));
+    expect(all, contains('using it to steer is vendor behavior'));
+    expect(all, contains('No published source gives AP deauthentication'));
+    expect(all, contains('PMF (Protected Management Frames, 802.11w)'));
+    expect(all, contains('rescan time (default 3 s, illustrative)'));
+    expect(all, contains('retry interval (default 5 s, illustrative)'));
+    expect(kBsDefaultRescanS, 3);
+    expect(kBsDefaultRetryS, 5);
+    // "Client A walking in is first deauthenticated at 33 m, comes back to
+    // 2.4 GHz three times while 5 GHz is below -70 dBm, and lands on 5 GHz
+    // at 6 m after 4 deauthentications and 12 s without traffic."
+    final BsWalk dw = simulateWalk(
+      const BsConfig(mode: SteeringMode.deauthentication),
+    );
+    expect(
+      dw.steps
+          .firstWhere(
+            (BsStep s) => s.frames.any(
+              (BsFrame f) => f.kind == BsFrameKind.deauthentication,
+            ),
+          )
+          .distanceM,
+      33,
+    );
+    expect(dw.last.returnsTo24, 3);
+    // Each return is a rejoin sample (just after an outage) below -70 dBm.
+    final List<BsStep> rejoins24 = <BsStep>[
+      for (int i = 1; i < dw.steps.length; i++)
+        if (dw.steps[i - 1].inOutage && dw.steps[i].band == BsBand.ghz24)
+          dw.steps[i],
+    ];
+    expect(rejoins24, hasLength(3));
+    expect(rejoins24.every((BsStep s) => s.rssi5 < -70), isTrue);
+    expect(
+      dw.steps.firstWhere((BsStep s) => s.band == BsBand.ghz5).distanceM,
+      6,
+    );
+    expect(dw.last.deauthsTotal, 4);
+    expect(dw.last.outageS, 12);
     expect(
       all,
       contains(
-        'Not modeled: an AP forcing a client off with a '
-        'deauthentication frame',
+        'first deauthenticated at 33 m, comes back to 2.4 GHz three times '
+        'while 5 GHz is below -70 dBm, and lands on 5 GHz at 6 m after 4 '
+        'deauthentications and 12 s without traffic',
       ),
     );
     expect(

@@ -398,8 +398,9 @@ class AppRouter {
   // on-device model, all platforms incl. web.
   static const String channelUtilization = '/tools/channel-utilization';
   // Wi-Fi Classroom (2026-09-27). Band steering: one dual-band AP, a walking
-  // client, what the AP can hide, refuse or suggest and what the client's
-  // published rules decide; pure on-device model, all platforms incl. web.
+  // client, what the AP can hide, refuse, suggest or force off and what the
+  // client's published rules decide; pure on-device model, all platforms
+  // incl. web.
   static const String bandSteering = '/tools/band-steering';
   // Wi-Fi Classroom (2026-09-27). Legacy protection cost: what an associated
   // or heard 802.11b device costs a 54 Mb/s sender (protection frames and the

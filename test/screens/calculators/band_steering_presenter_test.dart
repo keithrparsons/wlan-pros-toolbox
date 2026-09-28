@@ -1,7 +1,10 @@
 // Presenter-mode test for Band Steering (spec 00 "Done means"): no overflow
 // and no page scroll at 1920x1080, 1440x900 and 1470x923 in both themes, in
-// its fullest state (Client C with its driver switch, authentication refusal
-// with the tolerance slider live, the question revealed), and its keys:
+// its fullest states (Client C under authentication refusal with the
+// tolerance slider live, the question revealed; Client C under a transition
+// request with its driver switch; Client C under deauthentication,
+// mid-outage, with the rescan slider live and the retry interval folded),
+// and its keys:
 // Space walks or pauses, Right steps 1 m, R resets, Up and Down move the
 // client 5 m (spec 38).
 
@@ -86,6 +89,34 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(pageScrollables(tester), isEmpty);
         expect(controlsOverflow(tester), 0);
+
+        // A transition request: Client C's driver switch shows.
+        c.dismissQuestion();
+        c.profile = ClientProfile.c; // ask() had made it Client A
+        c.mode = SteeringMode.transitionRequest;
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Client C\'s driver supports transition requests'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        expect(pageScrollables(tester), isEmpty);
+        expect(controlsOverflow(tester), 0);
+
+        // Deauthentication, mid-outage.
+        c.mode = SteeringMode.deauthentication;
+        c.path = WalkPath.apToEdge;
+        c.index = c.walk.steps.indexWhere((BsStep s) => s.inOutage);
+        await tester.pumpAndSettle();
+        expect(c.step.inOutage, isTrue);
+        expect(tester.takeException(), isNull);
+        expect(pageScrollables(tester), isEmpty);
+        expect(controlsOverflow(tester), 0);
+        expect(find.text('Client rescan time (illustrative)'), findsOneWidget);
+        expect(
+          find.text('AP retry interval: 5 s (illustrative)'),
+          findsOneWidget,
+        );
       });
     }
   }

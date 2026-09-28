@@ -1,16 +1,19 @@
 // The controls for Band Steering (Wi-Fi Classroom): play, step and reset, the
 // walking path, the readouts, the predict-then-reveal question, the AP's
-// steering mode and refusal tolerance, the client profile and its
-// random-address toggle, and the extra 5 GHz wall loss. Reads and writes a
+// steering mode, its refusal tolerance and its deauthentication timings, the
+// client profile and its random-address toggle, and the extra 5 GHz wall
+// loss. Reads and writes a
 // [BandSteeringController]; owns no state, so a presenter layout can place
 // it beside [BandSteeringStage].
 //
 // ILLUSTRATIVE VALUES (spec 38), each labeled where it is set: the extra
 // 5 GHz wall loss, the refusal tolerance, the AP's power and path-loss
-// exponent, the -82 dBm hearing floor, the transition-request repeat, and
-// the model choices behind Client A's join and Client B's score. The two
-// provisional choices (Client C included, forced deauthentication left out)
-// are labeled "provisional, pending review" in the model notes.
+// exponent, the -82 dBm hearing floor, the transition-request repeat, the
+// deauthentication rescan time and retry interval, the 1 m per second walk
+// the deauthentication timings count on, and the model choices behind
+// Client A's join and Client B's score. Keith confirmed the defaults and
+// ruled deauthentication in on 2026-09-27, so nothing is labeled
+// provisional any more.
 //
 // States (SOP-007 §5):
 //   - fresh       -> Client A, steering off, edge to AP, client at the edge
@@ -19,8 +22,10 @@
 //                    signal, or refused with nowhere else to go)
 //   - error       -> not reachable: the model is pure and total
 //   - disabled    -> the refusal tolerance slider is disabled, with a note,
-//                    outside authentication refusal; Reveal shows only once
-//                    the question is asked
+//                    outside authentication refusal; the two
+//                    deauthentication timing sliders show only under
+//                    deauthentication; Reveal shows only once the question
+//                    is asked
 //   - loading     -> not reachable: the walk is computed synchronously
 //   - interactive -> themed Material controls with the global focus ring
 //
@@ -70,7 +75,22 @@ String bsModeNote(
         'accepts or declines; it is not forced. Repeated every '
         '${LengthFormat(u).dist(kBsBtmRepeatSteps.toDouble(), decimals: 0)} '
         'walked (illustrative).',
+  SteeringMode.deauthentication =>
+    'The AP sends a deauthentication to a client on 2.4 GHz that it has '
+        'heard on 5 GHz. The client is disconnected and its traffic stops '
+        'while it rescans. It still chooses where to go back: if 5 GHz is '
+        'below its entry level, or its rules prefer 2.4 GHz, it comes right '
+        'back to 2.4 GHz, and the AP deauthenticates it again.',
 };
+
+/// The standing note under deauthentication: what it is, and what it is not.
+const String kBsDeauthNote =
+    'Deauthentication is a standard frame, but using it to steer is vendor '
+    'behavior, not a steering mechanism the 802.11 standard defines. No '
+    'published source gives its timings, so the rescan time and the retry '
+    'interval are illustrative. A client using PMF (Protected Management '
+    'Frames, 802.11w) ignores an unprotected deauthentication from anyone '
+    'but its AP; the AP\'s own is protected and still works.';
 
 /// Each client's published rule set, in plain words.
 String bsProfileNote(ClientProfile p) => switch (p) {
@@ -252,6 +272,19 @@ class _Readouts extends StatelessWidget {
     final String refusals = c.mode != SteeringMode.authRefusal
         ? 'none in this mode'
         : '${s.refusalsTotal} (the AP gives in after ${c.refusalTolerance})';
+    final bool deauth = c.mode == SteeringMode.deauthentication;
+    final String deauths = !deauth
+        ? 'none in this mode'
+        : '${s.deauthsTotal} (back on 2.4 GHz ${s.returnsTo24} '
+              '${s.returnsTo24 == 1 ? 'time' : 'times'})';
+    final String outage = !deauth
+        ? 'none in this mode'
+        : '${s.outageS} s (illustrative)';
+    final String traffic = s.trafficFlowing
+        ? 'flowing'
+        : s.inOutage
+        ? 'stopped: deauthenticated'
+        : 'stopped: not connected';
 
     return AirtimeCard(
       child: Column(
@@ -281,6 +314,9 @@ class _Readouts extends StatelessWidget {
               ),
               row('Transition request answer', btm),
               row('Authentication refusals so far', refusals),
+              row('Client traffic', traffic),
+              row('Deauthentications so far', deauths),
+              row('Time without traffic from deauthentications', outage),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -486,6 +522,28 @@ class _Inputs extends StatelessWidget {
       semanticValue: (double v) => '${v.round()} refusals',
     );
 
+    final bool deauth = c.mode == SteeringMode.deauthentication;
+    final Widget rescan = BsSlider(
+      label: 'Client rescan time (illustrative)',
+      valueText: '${c.rescanS} s',
+      value: c.rescanS.toDouble(),
+      min: kBsMinRescanS.toDouble(),
+      max: kBsMaxRescanS.toDouble(),
+      divisions: kBsMaxRescanS - kBsMinRescanS,
+      onChanged: (double v) => m.rescanS = v.round(),
+      semanticValue: (double v) => '${v.round()} seconds',
+    );
+    final Widget retry = BsSlider(
+      label: 'AP retry interval (illustrative)',
+      valueText: '${c.retryS} s',
+      value: c.retryS.toDouble(),
+      min: kBsMinRetryS.toDouble(),
+      max: kBsMaxRetryS.toDouble(),
+      divisions: kBsMaxRetryS - kBsMinRetryS,
+      onChanged: (double v) => m.retryS = v.round(),
+      semanticValue: (double v) => '${v.round()} seconds',
+    );
+
     final Widget profile = AppToggle<ClientProfile>(
       label: compact ? null : 'Client',
       semanticLabel: 'Client profile',
@@ -530,9 +588,20 @@ class _Inputs extends StatelessWidget {
             profile,
             gap,
             random,
-            if (c.profile == ClientProfile.c) driver,
+            // Only transition requests read the driver switch; hiding it in
+            // the other modes keeps the panel from scrolling.
+            if (c.profile == ClientProfile.c &&
+                c.mode == SteeringMode.transitionRequest)
+              driver,
             gap,
-            pair(loss, tolerance),
+            pair(loss, deauth ? rescan : tolerance),
+            // The rescan time sets the outage the class sees; the retry
+            // interval folds away so the panel fits with no scroll.
+            if (deauth)
+              PresenterDisclosure(
+                title: 'AP retry interval: ${c.retryS} s (illustrative)',
+                children: <Widget>[retry],
+              ),
           ],
         ),
       );
@@ -563,13 +632,26 @@ class _Inputs extends StatelessWidget {
                     : 'Only used with authentication refusal.',
                 style: note,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Not modeled: forcing a client off with a deauthentication '
-                'frame. It happens in practice, but no primary source '
-                'describing it was found.',
-                style: note,
-              ),
+              if (deauth) ...<Widget>[
+                gap,
+                rescan,
+                Text(
+                  'How long the client is off the air after each '
+                  'deauthentication, rescanning and associating again. Its '
+                  'traffic is zero for all of it.',
+                  style: note,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                retry,
+                Text(
+                  'How long the AP lets the client stay on 2.4 GHz before it '
+                  'deauthenticates it, the first time and every time it '
+                  'comes back.',
+                  style: note,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(kBsDeauthNote, style: note),
+              ],
             ],
           ),
         ),
@@ -659,10 +741,16 @@ class _Notes extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Provisional, pending review: Client C is included, and forced '
-            'deauthentication is left out.',
+            'Deauthentication timings count the walk at '
+            '${LengthFormat(UnitSystemScope.systemOf(context)).dist(1)} each '
+            'second (illustrative).',
             style: body,
           ),
+          if (PresenterMode.isActive(context) &&
+              controller.config.mode == SteeringMode.deauthentication) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(kBsDeauthNote, style: body),
+          ],
         ],
       ),
     );

@@ -142,6 +142,10 @@ class BandSteeringController extends ChangeNotifier {
     ),
   );
   set driverSupportsBtm(bool v) => _set(_config.copyWith(driverSupportsBtm: v));
+  set rescanS(int v) =>
+      _set(_config.copyWith(rescanS: v.clamp(kBsMinRescanS, kBsMaxRescanS)));
+  set retryS(int v) =>
+      _set(_config.copyWith(retryS: v.clamp(kBsMinRetryS, kBsMaxRetryS)));
 
   /// A new path starts the walk over.
   set path(WalkPath v) {
@@ -322,6 +326,13 @@ class BandSteeringController extends ChangeNotifier {
     }
     if (c.mode == SteeringMode.transitionRequest) {
       b.writeln('Transition request answer: ${s.btm?.label ?? 'none yet'}');
+    }
+    if (c.mode == SteeringMode.deauthentication) {
+      b.writeln(
+        'Deauthentications so far: ${s.deauthsTotal}; back on 2.4 GHz '
+        '${s.returnsTo24} times; ${s.outageS} s without traffic (rescan '
+        '${c.rescanS} s, retry ${c.retryS} s, both illustrative)',
+      );
     }
     return b.toString().trimRight();
   }
