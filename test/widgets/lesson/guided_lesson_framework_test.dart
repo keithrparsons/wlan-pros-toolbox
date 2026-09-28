@@ -307,4 +307,26 @@ void main() {
     expect(find.text('Find My'), findsOneWidget);
     expect(find.bySemanticsLabel('Open Settings › Find My.'), findsOneWidget);
   });
+
+  testWidgets('a Quote whose label names its source: no attribution line, the '
+      'title in italics, read as plain words', (tester) async {
+    // Bluetooth and Weak Cell Signal (2026-09-28) put the book in the label:
+    // "Keith's note, from <i>Fix Your Own Wi-Fi</i>", with no source line.
+    await tester.pumpWidget(
+      _host(
+        const LessonCalloutView(
+          LessonCallout.quote(
+            speaker: "Keith's note, from __Fix Your Own Wi-Fi__",
+            body: '"Water and metal surprise people."',
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('__'), findsNothing);
+    expect(
+      find.bySemanticsLabel(RegExp("^Keith's note, from Fix Your Own Wi-Fi")),
+      findsWidgets,
+    );
+  });
 }

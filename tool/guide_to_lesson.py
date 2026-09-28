@@ -21,14 +21,29 @@ small eyebrow over each section. Everything else carries over:
   h3                            LessonHeading
   div.fig                       LessonFigure (extracted SVG + caption)
   div.callout[.caution/.danger/.quote]  LessonCallout.note/caution/stop/quote
+    (also a bare div.note / .caution / .danger / .quote; title from b.t or
+    p.ct; a quote's source line from .who, .attr or its p.small, optional;
+    a div.note holding a .q is a quote, its .who the speaker)
   div.myth                      LessonMyth (tap to reveal)
-  ol.steps / ul / ul.src        LessonSteps / LessonBullets / LessonSourceList
+  ol.steps / ul / ul.src(-list) LessonSteps / LessonBullets / LessonSourceList
+  ul.tips (li: <b>lead</b>rest) LessonCards, one per tip
   div.two / div.three of .card  LessonCards
-  div.task                      LessonTask
+  div.task (h3 or b.t title)    LessonTask
 
-Inline: <b> -> **bold**, <i> -> __italic__, <span class="path"> -> {{UI name}}.
-A quotation's title gets its first letter capitalized, as the guide's CSS
-(::first-letter) shows it.
+Inline: <b> -> **bold**, <i> -> __italic__, <span class="path"> and
+<span class="ui"> -> {{UI name}}. A quotation's title gets its first letter
+capitalized, as the guide's CSS (::first-letter) shows it.
+
+ACTUAL SIZE. A figure drawn to print at actual size (<svg class="actual">)
+is not actual size on a screen. When the step's own text says the figure is
+at actual size, its caption gets " (actual size on the printed guide)"
+appended (Keith, 2026-09-28), and the change is printed with the page ones.
+
+SIBLING LESSONS. --link TOOL_ID="Guide Title, Explained" puts an Open button
+(LessonToolLink) after every block that names that guide in italics, in the
+order the block names them. The button shows only once TOOL_ID is a live
+catalog entry, so a sibling still being built can be linked ahead of time.
+No text changes.
 
 THE ONE TEXT CHANGE. A reference to a printed page ("(page 10)", "on page
 11") cannot work in a lesson, so it becomes the lesson step that carries that
@@ -40,6 +55,7 @@ recognize stops it (exit 1) rather than being dropped.
 from __future__ import annotations
 
 import argparse
+import copy
 import html
 import json
 import re
@@ -78,7 +94,7 @@ def inline(el, skip=lambda e: False) -> str:
                 out.append(f"**{inner}**" if inner.strip() else inner)
             elif tag in ("i", "em"):
                 out.append(f"__{inner}__" if inner.strip() else inner)
-            elif tag == "span" and "path" in classes(c):
+            elif tag == "span" and classes(c) & {"path", "ui"}:
                 out.append("{{" + inner.strip() + "}}")
             elif tag == "br":
                 out.append(" ")
@@ -152,7 +168,7 @@ def emit_block(b: dict, ind: int) -> str:
         if b.get("steps"):
             items = "".join(f"{q}  {dstr(i, ind + 4)},\n" for i in b["steps"])
             fields.append(f"steps: <String>[\n{items}{q}]")
-        if kind == "quote":
+        if kind == "quote" and b.get("attribution"):
             fields.append(f"attribution: {dstr(b['attribution'], ind + 15)}")
         body = "".join(f"{q}{f},\n" for f in fields)
         return f"{p}LessonCallout.{kind}(\n{body}{p}),"
@@ -183,6 +199,8 @@ def emit_block(b: dict, ind: int) -> str:
             t = f"{q}    title: {dstr(c['title'], ind + 11)},\n" if c.get("title") else ""
             cards += f"{q}  LessonCardData(\n{t}{q}    body: {dstr(c['body'], ind + 10)},\n{q}  ),\n"
         return f"{p}LessonCards(<LessonCardData>[\n{cards}{q}]),"
+    if k == "link":
+        return f"{p}LessonToolLink('{b['toolId']}'),"
     if k == "task":
         s = f"{p}LessonTask(\n{q}title: {dstr(b['title'], ind + 9)},\n"
         if b.get("why"):
@@ -290,7 +308,9 @@ def parse_guide(src: str, slug: str, asset_root: str):
                 n = int(re.match(r"\*\*Figure (\d+)\.", caption).group(1))
                 w, h = fig_sizes[n]
                 mw = re.search(r"max-width:\s*(\d+)px", el.get("style") or "")
+                actual = bool(el.xpath('.//*[local-name()="svg" and contains(concat(" ", @class, " "), " actual ")]'))
                 add({
+                    "actual": actual,
                     "kind": "figure",
                     "asset": f"{asset_root}/{slug}/fig-{n:02d}.svg",
                     "width": w,
@@ -298,7 +318,7 @@ def parse_guide(src: str, slug: str, asset_root: str):
                     "maxWidth": float(mw.group(1)) if mw else None,
                     "caption": caption,
                 })
-            elif tag == "div" and "callout" in cl:
+            elif tag == "div" and cl & {"callout", "note", "caution", "danger", "quote"}:
                 add(parse_callout(el, cl))
             elif tag == "div" and "myth" in cl:
                 m = el.xpath('./div[@class="m"]')[0]
@@ -307,8 +327,19 @@ def parse_guide(src: str, slug: str, asset_root: str):
                 add({"kind": "myth", "myth": inline(m, skip), "fact": inline(f, skip)})
             elif tag == "ol" and "steps" in cl:
                 add({"kind": "steps", "items": [inline(li) for li in el.xpath("./li")]})
-            elif tag == "ul" and "src" in cl:
+            elif tag == "ul" and cl & {"src", "src-list"}:
                 add({"kind": "sources", "items": [inline(li) for li in el.xpath("./li")]})
+            elif tag == "ul" and "tips" in cl:
+                cards = []
+                for li in el.xpath("./li"):
+                    lead = li.xpath("./b")
+                    if not lead or li.text and li.text.strip():
+                        raise ConvertError(f"tip does not open with <b>: {lhtml.tostring(li)[:100]!r}")
+                    cards.append({
+                        "title": inline(lead[0]),
+                        "body": inline(li, skip=lambda e, b=lead[0]: e is b),
+                    })
+                add({"kind": "cards", "cards": cards})
             elif tag == "ul":
                 add({"kind": "bullets", "items": [inline(li) for li in el.xpath("./li")]})
             elif tag == "div" and cl & {"two", "three"}:
@@ -326,14 +357,20 @@ def parse_guide(src: str, slug: str, asset_root: str):
                     })
                 add({"kind": "cards", "cards": cards})
             elif tag == "div" and "task" in cl:
-                h3 = el.xpath("./h3")[0]
+                heads = el.xpath("./h3") or el.xpath('./b[@class="t"]')
+                h3 = heads[0]
                 why = el.xpath('./div[@class="why"]')
                 ol = el.xpath('./ol[contains(@class,"steps")]')
                 after = el.xpath("./p")
                 known = {"h3", "ol", "p"}
                 for c in el:
+                    if c is h3:
+                        continue
                     if isinstance(c.tag, str) and c.tag not in known and "why" not in classes(c):
                         raise ConvertError(f"task holds <{c.tag}>")
+                loose = (el.text or "") + "".join(c.tail or "" for c in el if isinstance(c.tag, str))
+                if loose.strip():
+                    raise ConvertError(f"task holds loose text: {loose.strip()[:80]!r}")
                 add({
                     "kind": "task",
                     "title": inline(h3),
@@ -355,25 +392,64 @@ def parse_guide(src: str, slug: str, asset_root: str):
     }
 
 
+_CALLOUT_SKIP = {"lbl", "lab", "who", "attr", "ct"}
+
+
+def _callout_body(el) -> str:
+    """The callout's running text: its own text and inline children, plus
+    the inside of any body <p>, <q> or div.q. Title, label, source line,
+    procedure and a quote's p.small are taken separately."""
+    parts: list[str] = [el.text or ""]
+    for c in el:
+        if not isinstance(c.tag, str):
+            continue
+        cc = classes(c)
+        if (c.tag == "b" and "t" in cc) or (c.tag == "ol" and "steps" in cc) or cc & _CALLOUT_SKIP \
+                or (c.tag == "p" and "small" in cc):
+            pass
+        elif c.tag == "p" or (c.tag == "div" and "q" in cc):
+            parts.append(" " + inline(c) + " ")
+        else:
+            # An inline element: render it in place through inline().
+            wrap = lhtml.Element("span")
+            wrap.append(copy.deepcopy(c))
+            wrap[0].tail = None
+            parts.append(inline(wrap))
+        parts.append(c.tail or "")
+    return re.sub(r"\s+", " ", "".join(parts)).strip()
+
+
 def parse_callout(el, cl: set[str]) -> dict:
-    kind = "stop" if "danger" in cl else "caution" if "caution" in cl else "quote" if "quote" in cl else "note"
-    t = el.xpath('./b[@class="t"]')
+    is_quote = "quote" in cl or bool(el.xpath('./div[@class="q"]'))
+    kind = "stop" if "danger" in cl else "caution" if "caution" in cl else "quote" if is_quote else "note"
+    t = el.xpath('./b[@class="t"]') or el.xpath('./p[@class="ct"]')
     title = inline(t[0]) if t else None
-    speaker = el.xpath('./div[@class="lab"]')
-    who = el.xpath('./div[@class="who"]')
     ol = el.xpath('./ol[contains(@class,"steps")]')
-    body = inline(
-        el,
-        skip=lambda e: (e.tag == "b" and "t" in classes(e))
-        or (e.tag == "ol" and "steps" in classes(e))
-        or bool(classes(e) & {"lbl", "lab", "who"}),
-    )
+    if any(c.tag == "p" or "q" in classes(c) for c in el if isinstance(c.tag, str)):
+        body = _callout_body(el)
+    else:
+        body = inline(
+            el,
+            skip=lambda e: (e.tag == "b" and "t" in classes(e))
+            or (e.tag == "ol" and "steps" in classes(e))
+            or bool(classes(e) & {"lbl", "lab", "who"}),
+        )
     b = {"kind": "callout", "callout": kind, "title": title, "body": body}
     if ol:
         b["steps"] = [inline(li) for li in ol[0].xpath("./li")]
     if kind == "quote":
-        b["speaker"] = inline(speaker[0])
-        b["attribution"] = inline(who[0])
+        lab = el.xpath('./div[@class="lab"]')
+        who = el.xpath('./*[@class="who"]')
+        attr = el.xpath('./*[@class="attr"]')
+        small = el.xpath('./p[@class="small"]')
+        if lab:
+            speaker, source = lab[0], (who or attr or small)
+        elif who and el.xpath('./div[@class="q"]'):
+            speaker, source = who[0], (attr or small)
+        else:
+            raise ConvertError(f"quote with no speaker: {lhtml.tostring(el)[:120]!r}")
+        b["speaker"] = inline(speaker, skip=lambda e: e.tag == "svg")
+        b["attribution"] = " ".join(inline(x) for x in source) or None
         b["title"] = cap_first(title) if title else None
     if kind in ("caution", "stop") and not title:
         raise ConvertError(f"{kind} callout with no title")
@@ -385,6 +461,33 @@ def parse_callout(el, cl: set[str]) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _PAGE = re.compile(r"\b(on |at )?page (\d+)\b")
+
+
+def add_links(g: dict, links: list[tuple[str, str]]) -> list[str]:
+    """After each block that names a linked guide as __Title__, an Open
+    button for that lesson, in the order the block names them."""
+    notes: list[str] = []
+    for st in g["steps"]:
+        out = []
+        for b in st["blocks"]:
+            out.append(b)
+            text = " ".join(
+                v for k, v in b.items() if isinstance(v, str) and k not in ("kind", "asset")
+            )
+            found = sorted(
+                (text.find(f"__{title}__"), tid, title)
+                for tid, title in links
+                if f"__{title}__" in text
+            )
+            for _, tid, title in found:
+                out.append({"kind": "link", "toolId": tid})
+                notes.append(f"link to {tid} after the block naming {title} (step {st['number']})")
+        st["blocks"] = out
+    named = {n.split(" ")[2] for n in notes}
+    for tid, title in links:
+        if tid not in named:
+            raise ConvertError(f"--link {tid}: the guide never names __{title}__")
+    return notes
 
 
 def fix_page_refs(g: dict) -> list[str]:
@@ -409,6 +512,16 @@ def fix_page_refs(g: dict) -> list[str]:
         return _PAGE.sub(sub, s)
 
     for st in g["steps"]:
+        claims = any(
+            re.search(r"(?<!not )\bactual size\b", b.get("text", ""))
+            for b in st["blocks"]
+            if b["kind"] in ("text", "lede")
+        )
+        for b in st["blocks"]:
+            if b["kind"] == "figure" and b.pop("actual", False) and claims:
+                note = " (actual size on the printed guide)"
+                b["caption"] += note
+                changes.append(f'caption + "{note.strip()}" ({b["caption"].split(".", 1)[0].strip("*")})')
         for b in st["blocks"]:
             for key in ("text", "body", "title", "caption", "why", "after", "myth", "fact"):
                 if isinstance(b.get(key), str):
@@ -509,10 +622,13 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--asset-root", default="assets/lesson-figures")
     ap.add_argument("--out", type=Path, default=Path("lib/screens/tools/reference/lessons"))
     ap.add_argument("--json", action="store_true", help="also print the parsed lesson as JSON")
+    ap.add_argument("--link", action="append", default=[], metavar="TOOL_ID=TITLE",
+                    help="Open button after each block naming the guide TITLE")
     a = ap.parse_args(argv)
     try:
         g = parse_guide(a.guide.read_text(encoding="utf-8"), a.slug, a.asset_root)
         changes = fix_page_refs(g)
+        links = add_links(g, [tuple(x.split("=", 1)) for x in a.link])
     except (ConvertError, X.ExtractError) as e:
         print(f"guide_to_lesson: {a.guide.name}: {e}", file=sys.stderr)
         return 1
@@ -523,6 +639,8 @@ def main(argv: list[str]) -> int:
     print(f"{a.slug}: {len(g['steps'])} steps, {nblocks} blocks -> {path}")
     for c in changes:
         print(f"  text change: {c}")
+    for n in links:
+        print(f"  {n}")
     if a.json:
         print(json.dumps(g["steps"], indent=1, ensure_ascii=False, default=str))
     return 0
