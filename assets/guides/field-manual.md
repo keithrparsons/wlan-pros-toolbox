@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi added 2026-09-27 · covers 225 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 226 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -38,7 +38,7 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Travel & International (4)
 - **Educational Resources** (1 tool)
 - **Wi-Fi Classroom** (52 tools)
-  - Guided Lessons (4)
+  - Guided Lessons (5)
   - RF and Propagation (10)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (52 tools)
+# Wi-Fi Classroom (53 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (4)
+## Guided Lessons (5)
 
 
 ### Antenna Fundamentals
@@ -3900,6 +3900,23 @@ A guided lesson on what the person next to you on public Wi-Fi can see. One cont
 - Enhanced Open is Opportunistic Wireless Encryption (OWE, RFC 8110). Wi-Fi Alliance expects these networks to show without a lock icon, so the lock in a network list undersells them.
 - Wi-Fi encryption ends at the AP. The network owner and its internet provider see site names and anything sent without encryption on all four types.
 - Left out: fake networks that copy a familiar name, sign-in (captive) pages, virtual private networks (VPNs), traffic sent to every device at once, and encrypted DNS (Domain Name System) with Encrypted Client Hello, which can hide site names but not the server's address.
+
+### Wi-Fi Privacy Myths
+
+A guided lesson in two parts. Part 1 is your phone's private Wi-Fi address: one control picks Off, Fixed or Rotating, and the lesson shows what two routers on the same day, and one cafe on two visits a month apart, record for the same phone, and whether a MAC (media access control) filter set on the first visit lets it back in. Part 2 is the hidden network name: one control hides it, and the name leaves the access point's beacons and appears in the phone's probe requests at home, at the airport and at the cafe.
+
+**Why it's here.** It corrects three beliefs Wi-Fi people hear every week: that MAC filtering keeps strangers out, that the router's device list shows a phone's real address, and that hiding the network name is security. CWNP lists both MAC filtering and SSID (service set identifier) hiding among the weak security options that should not be used in enterprise networks.
+
+**How to use**
+1. In part 1, pick Off, Fixed or Rotating. Each scene says Can be matched or Can't be matched in words, and the filter row says Let in or Turned away. On a keyboard, Tab to a control and use the Left and Right arrow keys.
+2. Answer the Predict, then reveal question before you open it. Show me on Fixed sets the control to the case the answer describes.
+3. In part 2, turn Hide the network name on and off and watch the beacons at home and the probe requests in each place. The lesson has no Present mode; it reads as a page on any screen.
+
+**Field notes**
+- Every address is illustrative. The hardware address is from the IETF documentation range (RFC 7042), so it belongs to no real device, and the private addresses have the locally administered bit set, as real ones do.
+- The two-week rotation is Apple's published figure (Apple 102509, published 5 December 2025): Rotating changes the address every 2 weeks. The on-screen text attributes it to one phone maker and assumes nothing about others, which are not sourced here. The two cafe visits are a month apart so that a two-week rotation has certainly happened.
+- Apple's defaults are Fixed on WPA2 or stronger networks and Rotating on open and weak-security ones (Apple Platform Security). The lesson lets you pick either on any network.
+- Left out: other ways to recognize a device besides its address, the router's own settings for private addresses, and how networks that need a steady address (reservations, parental controls) cope with Rotating.
 
 
 ## RF and Propagation (10)

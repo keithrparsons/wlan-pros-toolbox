@@ -23,6 +23,8 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'find-my-explained',
     // 2026-09-27: Public Wi-Fi, what the person next to you can see.
     'public-wifi',
+    // 2026-09-27: Wi-Fi Privacy Myths, the private address and the hidden name.
+    'wifi-privacy-myths',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -98,6 +100,14 @@ const Set<String> _simulatorShelves = <String>{
 ToolCategory _cat(String id) =>
     kToolCategories.firstWhere((ToolCategory c) => c.id == id);
 
+// Guided Lessons built in the Classroom itself (2026-09-27 on), which never
+// lived in Educational Resources and so are not among the 13 that moved.
+const Set<String> _builtInClassroom = <String>{
+  'find-my-explained',
+  'public-wifi',
+  'wifi-privacy-myths',
+};
+
 void main() {
   final ToolCategory classroom = _cat('wifi-classroom');
 
@@ -151,7 +161,7 @@ void main() {
     final Set<String> moved = <String>{
       ..._teachingOrder['Guided Lessons']!.where(
         (String id) =>
-            id != 'find-my-explained' && id != 'public-wifi',
+            !_builtInClassroom.contains(id),
       ),
       ..._teachingOrder['Course Handouts']!,
     };
@@ -191,7 +201,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(52));
+    expect(classroom.tools, hasLength(53));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
