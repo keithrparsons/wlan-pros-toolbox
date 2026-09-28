@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 244 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 245 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (71 tools)
-  - Guided Lessons (12)
+- **Wireless Classroom** (72 tools)
+  - Guided Lessons (13)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (71 tools)
+# Wireless Classroom (72 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (12)
+## Guided Lessons (13)
 
 
 ### Antenna Fundamentals
@@ -3984,6 +3984,24 @@ A read-along lesson on how many newer phones send a text through a satellite whe
 **Field notes**
 - Checked on 28 September 2026 against Apple, Google, Verizon and T-Mobile support pages. Phones, countries and plans change every few months, so check your carrier and your phone maker before a trip.
 - The lesson is independent and isn't affiliated with any phone maker, carrier or satellite company.
+
+
+### Wi-Fi on Planes, Explained
+
+A read-along lesson on Wi-Fi in the air: what airplane mode turns off, why the rule exists, how the internet reaches a plane by ground towers or satellites, why it feels slow when everyone on board shares one link, and how to get online in your seat when the sign-in page won't appear. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by everyone who flies: why is plane Wi-Fi so slow? Everyone on board shares one link to the ground, and often that link goes through a satellite far out in space, so small jobs fit in your slice and big ones don't.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then what airplane mode turns off, why the rule exists, how the internet reaches a plane, why it feels slow, getting online in your seat, four things people get wrong, and tips for your next flight. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 6 covers what to do when the sign-in page won't appear: open a web browser and go to any web page, and on an iPhone don't tap Cancel.
+4. The last row, Take it with you, names the free PDF guide the lesson follows, Wi-Fi on Planes, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+
+**Field notes**
+- Checked on 28 September 2026. Airline Wi-Fi offers and phone menus change often. The full source list is the last step of the lesson.
+- When the crew gives an instruction about devices, follow it.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

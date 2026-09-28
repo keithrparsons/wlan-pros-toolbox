@@ -3168,6 +3168,23 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'hiking',
     'backcountry',
   ],
+  // Wi-Fi on Planes, Explained (Guided Lesson). The words a person uses when they ask about
+  // it.
+  'wifi-on-planes-explained': <String>[
+    'airplane mode',
+    'flight mode',
+    'in-flight wi-fi',
+    'inflight wifi',
+    'plane wifi',
+    'airline wi-fi',
+    'air to ground',
+    'satellite',
+    'sign-in page',
+    'captive portal',
+    'bluetooth on a plane',
+    'faa',
+    'fcc',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

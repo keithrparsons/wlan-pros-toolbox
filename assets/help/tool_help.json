@@ -7323,6 +7323,27 @@
       ],
       "source": "The WLAN Pros print guide Satellite Texting, Explained (September 2026), checked on 28 September 2026. The full source list is the last section of the lesson."
     },
+    "wifi-on-planes-explained": {
+      "name": "Wi-Fi on Planes, Explained",
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on Wi-Fi in the air: what airplane mode turns off, why the rule exists, how the internet reaches a plane by ground towers or satellites, why it feels slow when everyone on board shares one link, and how to get online in your seat when the sign-in page won't appear. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.",
+      "whyHere": "It answers a question Wi-Fi people get asked by everyone who flies: why is plane Wi-Fi so slow? Everyone on board shares one link to the ground, and often that link goes through a satellite far out in space, so small jobs fit in your slice and big ones don't.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer, then what airplane mode turns off, why the rule exists, how the internet reaches a plane, why it feels slow, getting online in your seat, four things people get wrong, and tips for your next flight. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 6 covers what to do when the sign-in page won't appear: open a web browser and go to any web page, and on an iPhone don't tap Cancel.",
+        "The last row, Take it with you, names the free PDF guide the lesson follows, Wi-Fi on Planes, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked on 28 September 2026. Airline Wi-Fi offers and phone menus change often. The full source list is the last step of the lesson.",
+        "When the crew gives an instruction about devices, follow it."
+      ],
+      "source": "The WLAN Pros print guide Wi-Fi on Planes, Explained (September 2026), checked on 28 September 2026. The full source list is the last section of the lesson."
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

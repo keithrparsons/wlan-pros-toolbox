@@ -2686,6 +2686,18 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Wi-Fi on Planes, Explained (2026-09-28, Keith approved the guide): the explainer
+      // guide turned Guided Lesson on the 1.11.0 framework: what airplane mode turns off, why plane Wi-Fi is slow, and signing in at your seat.
+      ToolEntry(
+        id: 'wifi-on-planes-explained',
+        title: 'Wi-Fi on Planes, Explained',
+        description:
+            'What airplane mode turns off, why plane Wi-Fi feels slow, and '
+            'how to get online in your seat',
+        routeName: '/tools/wifi-on-planes-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

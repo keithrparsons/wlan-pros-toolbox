@@ -521,7 +521,8 @@ class LessonSources extends StatelessWidget {
                 ExcludeSemantics(
                   child: Text('•  ', style: s.copyWith(color: colors.textAccent)),
                 ),
-                Expanded(child: Text(item, style: s)),
+                // A source may name a book in italics (__Title__).
+                Expanded(child: LessonRich(item, style: s)),
               ],
             ),
           ),

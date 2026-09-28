@@ -147,6 +147,7 @@ import '../screens/tools/reference/wifi_calling_explained_screen.dart';
 import '../screens/tools/reference/home_internet_explained_screen.dart';
 import '../screens/tools/reference/tap_touch_near_explained_screen.dart';
 import '../screens/tools/reference/satellite_texting_explained_screen.dart';
+import '../screens/tools/reference/wifi_on_planes_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -846,6 +847,10 @@ class AppRouter {
   /// explainer guide. The id `satellite-texting-explained` is permanent (route, catalog,
   /// help, tests).
   static const String satelliteTextingExplained = '/tools/satellite-texting-explained';
+  /// Wi-Fi on Planes, Explained: a Wi-Fi Classroom Guided Lesson built from the approved
+  /// explainer guide. The id `wifi-on-planes-explained` is permanent (route, catalog,
+  /// help, tests).
+  static const String wifiOnPlanesExplained = '/tools/wifi-on-planes-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1219,6 +1224,7 @@ class AppRouter {
     homeInternetExplained: (_) => const HomeInternetExplainedScreen(),
     tapTouchNearExplained: (_) => const TapTouchNearExplainedScreen(),
     satelliteTextingExplained: (_) => const SatelliteTextingExplainedScreen(),
+    wifiOnPlanesExplained: (_) => const WifiOnPlanesExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

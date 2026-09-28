@@ -26,6 +26,7 @@ const Set<String> _builtInClassroom = <String>{
   'home-internet-explained',
   'tap-touch-near-explained',
   'satellite-texting-explained',
+  'wifi-on-planes-explained',
 };
 
 /// Shelf -> tool ids, in the order the screen must show them.
@@ -57,6 +58,8 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'tap-touch-near-explained',
     // 2026-09-28: Satellite Texting, Explained, an explainer guide turned lesson.
     'satellite-texting-explained',
+    // 2026-09-28: Wi-Fi on Planes, Explained, an explainer guide turned lesson.
+    'wifi-on-planes-explained',
   ],
   'RF and Propagation': <String>[
     // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
@@ -261,7 +264,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(71));
+    expect(classroom.tools, hasLength(72));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
