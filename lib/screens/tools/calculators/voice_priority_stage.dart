@@ -563,7 +563,15 @@ class _LanePainter extends CustomPainter {
       const Radius.circular(4),
     );
     if (kind == _Block.call) {
+      // Lime is a fill only on light; the accent edge carries the shape.
       canvas.drawRRect(box, Paint()..color = callFill);
+      canvas.drawRRect(
+        box,
+        Paint()
+          ..color = ghost
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke,
+      );
     } else {
       _dashed(canvas, box.outerRect, ghost);
     }
@@ -742,7 +750,7 @@ class _WaitsCard extends StatelessWidget {
                               color: mine ? colors.primary : colors.surface3,
                               border: Border.all(
                                 color: mine
-                                    ? colors.primary
+                                    ? colors.textAccent
                                     : colors.borderStrong,
                               ),
                               borderRadius: BorderRadius.circular(2),
