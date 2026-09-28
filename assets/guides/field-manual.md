@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 243 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 244 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (70 tools)
-  - Guided Lessons (11)
+- **Wireless Classroom** (71 tools)
+  - Guided Lessons (12)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (70 tools)
+# Wireless Classroom (71 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (11)
+## Guided Lessons (12)
 
 
 ### Antenna Fundamentals
@@ -3965,6 +3965,28 @@ A read-along lesson on why your earbuds cut out, why the car won't connect, and 
 - The lesson gives no decibel figure for the human body, because the guide had no sourced number to give. Line thickness in Figure 3 shows the idea, not a measured amount.
 - Figure 4 is not to scale.
 - The lesson is independent and isn't affiliated with or endorsed by any phone, earbud or car maker.
+
+
+### Weak Cell Signal at Home, Explained
+
+A read-along lesson on why your phone has bars at the curb and drops calls in the kitchen, and the free fix to try first. Most weak signal indoors isn't your phone or the tower. It's the building: a signal that's fine at the curb can lose most of its strength getting through a wall or a window. The lesson follows the free PDF guide of the same name, word for word, with its 13 figures, and compares the three fixes: Wi-Fi Calling, a signal booster and a network extender.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by family and clients: why do my calls drop inside the house? The physics is the same as Wi-Fi through a wall. Every layer takes a share, metal and coated windows take the most, and higher bands lose more than lower ones. The free fix rides the Wi-Fi: Wi-Fi Calling goes around the walls over your home internet. Figure 7 shows that path, and Figure 13 sets the three fixes side by side.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea behind the guide (a booster doesn't make signal, it makes what it hears outside louder), then what a wall costs a signal, what a lab measured, why energy-efficient homes block more, why 5G struggles indoors, how to find where the signal is, Wi-Fi Calling, how a booster works, keeping its two antennas apart, the rules for boosters, network extenders, the three fixes side by side, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 6 is the ten-minute test with your own phone that tells you which fix fits. Judge by whether a call holds up, not by the bars.
+4. Where the lesson names another guide in the series, an Open button takes you to that Guided Lesson once it is in the app.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+6. Take it with you, at the end of the lesson, names the free PDF guide it follows, Weak Cell Signal at Home, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked in September 2026. Carrier products and pages change, so read your carrier's current page before you buy.
+- Figure 1 is computed for one layer, head-on, from the ITU-R P.2040 multilayer method. Figure 2 is one UK lab's measurements (Ofcom, 2014). Figure 4 is not to scale.
+- The booster rules are the US ones, with a line on the UK and Australia. Rules vary by country, so check with your carrier and your regulator first.
+- The Keith's note was written about Wi-Fi. The lesson says so under it: the tower's signal crosses the same materials.
+- No booster brand is named or recommended. The lesson is independent and isn't affiliated with any booster maker or carrier.
 
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

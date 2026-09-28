@@ -7301,6 +7301,31 @@
       "source": "The WLAN Pros print guide Bluetooth, Explained (September 2026), checked against the Bluetooth SIG, Apple and Google pages. The full source list is the last section of the lesson.",
       "name": "Bluetooth, Explained"
     },
+    "weak-cell-signal-explained": {
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on why your phone has bars at the curb and drops calls in the kitchen, and the free fix to try first. Most weak signal indoors isn't your phone or the tower. It's the building: a signal that's fine at the curb can lose most of its strength getting through a wall or a window. The lesson follows the free PDF guide of the same name, word for word, with its 13 figures, and compares the three fixes: Wi-Fi Calling, a signal booster and a network extender.",
+      "whyHere": "It answers a question Wi-Fi people get asked by family and clients: why do my calls drop inside the house? The physics is the same as Wi-Fi through a wall. Every layer takes a share, metal and coated windows take the most, and higher bands lose more than lower ones. The free fix rides the Wi-Fi: Wi-Fi Calling goes around the walls over your home internet. Figure 7 shows that path, and Figure 13 sets the three fixes side by side.",
+      "howToUse": [
+        "Read top to bottom. It starts with the short answer and the one idea behind the guide (a booster doesn't make signal, it makes what it hears outside louder), then what a wall costs a signal, what a lab measured, why energy-efficient homes block more, why 5G struggles indoors, how to find where the signal is, Wi-Fi Calling, how a booster works, keeping its two antennas apart, the rules for boosters, network extenders, the three fixes side by side, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 6 is the ten-minute test with your own phone that tells you which fix fits. Judge by whether a call holds up, not by the bars.",
+        "Where the lesson names another guide in the series, an Open button takes you to that Guided Lesson once it is in the app.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.",
+        "Take it with you, at the end of the lesson, names the free PDF guide it follows, Weak Cell Signal at Home, Explained from WLAN Pros, to print or share."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked in September 2026. Carrier products and pages change, so read your carrier's current page before you buy.",
+        "Figure 1 is computed for one layer, head-on, from the ITU-R P.2040 multilayer method. Figure 2 is one UK lab's measurements (Ofcom, 2014). Figure 4 is not to scale.",
+        "The booster rules are the US ones, with a line on the UK and Australia. Rules vary by country, so check with your carrier and your regulator first.",
+        "The Keith's note was written about Wi-Fi. The lesson says so under it: the tower's signal crosses the same materials.",
+        "No booster brand is named or recommended. The lesson is independent and isn't affiliated with any booster maker or carrier."
+      ],
+      "source": "The WLAN Pros print guide Weak Cell Signal at Home, Explained (September 2026), checked against the FCC, Ofcom, ITU-R and carrier pages. The full source list is the last section of the lesson.",
+      "name": "Weak Cell Signal at Home, Explained"
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

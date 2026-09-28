@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="IBM Plex Sans" font-size="12.5" width="760" height="300">
+  <g transform="translate(31 27) scale(3.25)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9 H15.5 M8.5 9 L6.5 21.5 M15.5 9 L17.5 21.5 M12 9 V3"/><path d="M8.5 9 L16.5 15.2 M15.5 9 L7.5 15.2 M7.5 15.2 H16.5 M7.5 15.2 L17.5 21.5 M16.5 15.2 L6.5 21.5"/><path d="M8.3 1.9 A5 5 0 0 0 8.3 7.1 M15.7 1.9 A5 5 0 0 1 15.7 7.1"/></g>
+  <text x="70" y="136" text-anchor="middle" fill="#444444" font-size="13">Cell tower</text>
+  <!-- beam from panel middle toward tower, stops short of tower -->
+  <path d="M326 70 L114 70" stroke="#7A9E26" stroke-width="3" stroke-dasharray="7 6"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12.5" transform="translate(114,70) rotate(180) scale(2.1) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12.5" transform="translate(326,70) rotate(360) scale(2.1) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><text x="226" y="58" text-anchor="middle" fill="#444444" font-size="13">weak but usable signal</text>
+  <!-- house -->
+  <path d="M360 124 L510 74 L660 124" fill="none" stroke="#1A1A1A" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M370 144 V124 H650 V284 H370 V158" fill="none" stroke="#1A1A1A" stroke-width="4"/>
+  <!-- donor panel antenna on a short mast at the roof edge, facing the tower (square to beam) -->
+  <line x1="348" y1="151" x2="348" y2="52" stroke="#444444" stroke-width="3"/><line x1="343" y1="70" x2="348" y2="70" stroke="#444444" stroke-width="3"/>
+  <g transform="translate(360 42) scale(-1.83333 1.83333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 H19 M5 4.5 V11.5 M9 5 V11 M13 5.5 V10.5 M17 6 V10 M19 8 V21.5 M16 21.5 H22"/></g>
+  <text x="372" y="24" fill="#111111" font-weight="600" font-size="13">Outside (donor) antenna</text>
+  <text x="372" y="40" fill="#444444" font-size="13">high up, aimed at the tower</text>
+  <!-- cable from mast down to amplifier -->
+  <path d="M348 151 H440 V170" fill="none" stroke="#444444" stroke-width="2.5"/>
+  <!-- amplifier -->
+  <rect x="410" y="176" width="70" height="40" rx="6" fill="#7A9E26"/>
+  <text x="445" y="200" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">Amplifier</text>
+  <text x="445" y="236" text-anchor="middle" fill="#444444" font-size="13">needs power</text>
+  <!-- cable to indoor antenna -->
+  <path d="M484 196 H560 V176" fill="none" stroke="#444444" stroke-width="2.5"/>
+  <!-- indoor antenna -->
+  <rect x="548" y="156" width="24" height="16" rx="3" fill="#1A1A1A"/>
+  <text x="574" y="146" text-anchor="end" fill="#111111" font-weight="600" font-size="13">Inside antenna</text>
+  <path d="M580 154 a14 14 0 0 1 0 20 M588 148 a24 24 0 0 1 0 32" fill="none" stroke="#7A9E26" stroke-width="2.2"/>
+  <g transform="translate(622,232) scale(0.9)"><rect x="-13" y="-24" width="26" height="48" rx="5" fill="#1A1A1A"/><rect x="-10.5" y="-19" width="21" height="36" rx="2.5" fill="#E6EEF6"/></g>
+  <text x="560" y="272" text-anchor="middle" fill="#444444" font-size="13">stronger signal in one area</text>
+</svg>

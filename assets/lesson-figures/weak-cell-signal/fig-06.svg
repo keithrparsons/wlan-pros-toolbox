@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" font-family="IBM Plex Sans" font-size="12.5" width="760" height="250">
+  <rect x="250" y="6" width="260" height="50" rx="10" fill="#1A1A1A"/>
+  <text x="380" y="27" text-anchor="middle" fill="#FFFFFF" font-weight="600" font-size="13">Step outside, on the best side.</text>
+  <text x="380" y="45" text-anchor="middle" fill="#FFFFFF" font-size="13">Does a call hold up there?</text>
+  <path d="M300 60 L175 108" stroke="#444444" stroke-width="2"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12.5" transform="translate(175,108) rotate(158.993) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><path d="M460 60 L585 108" stroke="#444444" stroke-width="2"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="12.5" transform="translate(585,108) rotate(21.007) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><text x="220" y="78" text-anchor="end" fill="#111111" font-weight="600" font-size="13">No</text>
+  <text x="540" y="78" fill="#2F5E00" font-weight="600" font-size="13">Yes</text>
+  <rect x="20" y="114" width="310" height="112" rx="10" fill="#FBF0EE" stroke="#C0392B" stroke-width="1.5"/>
+  <text x="175" y="138" text-anchor="middle" font-weight="600" fill="#111111" font-size="13">A booster has nothing to amplify</text>
+  <text x="175" y="160" text-anchor="middle" fill="#111111" font-size="13">Use a fix that runs over your internet:</text>
+  <text x="175" y="180" text-anchor="middle" fill="#111111" font-size="13">Wi-Fi Calling, or a network extender.</text>
+  <text x="175" y="200" text-anchor="middle" fill="#111111" font-size="13">Or ask a neighbor on another</text>
+  <text x="175" y="216" text-anchor="middle" fill="#111111" font-size="13">carrier how their phone does.</text>
+  <rect x="430" y="114" width="310" height="112" rx="10" fill="#FFFFFF" stroke="#7A9E26" stroke-width="2"/>
+  <text x="585" y="138" text-anchor="middle" font-weight="600" fill="#111111" font-size="13">The building is the problem</text>
+  <text x="585" y="160" text-anchor="middle" fill="#111111" font-size="13">Turn on Wi-Fi Calling first.</text>
+  <text x="585" y="180" text-anchor="middle" fill="#111111" font-size="13">If that isn't enough, a booster</text>
+  <text x="585" y="200" text-anchor="middle" fill="#111111" font-size="13">can carry that outside signal in.</text>
+  <text x="585" y="216" text-anchor="middle" fill="#111111" font-size="13">Register it with your carrier.</text>
+</svg>

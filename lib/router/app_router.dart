@@ -146,6 +146,7 @@ import '../screens/tools/reference/starlink_explained_screen.dart';
 import '../screens/tools/reference/wifi_calling_explained_screen.dart';
 import '../screens/tools/reference/home_internet_explained_screen.dart';
 import '../screens/tools/reference/bluetooth_explained_screen.dart';
+import '../screens/tools/reference/weak_cell_signal_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -841,6 +842,10 @@ class AppRouter {
   /// cut out and why the car won't connect. The id `bluetooth-explained` is
   /// permanent (route, catalog, help, tests).
   static const String bluetoothExplained = '/tools/bluetooth-explained';
+  /// Weak Cell Signal at Home, Explained: a Wireless Classroom Guided Lesson
+  /// on why a house blocks cell signal and the three fixes. The id
+  /// `weak-cell-signal-explained` is permanent (route, catalog, help, tests).
+  static const String weakCellSignalExplained = '/tools/weak-cell-signal-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1213,6 +1218,7 @@ class AppRouter {
     wifiCallingExplained: (_) => const WifiCallingExplainedScreen(),
     homeInternetExplained: (_) => const HomeInternetExplainedScreen(),
     bluetoothExplained: (_) => const BluetoothExplainedScreen(),
+    weakCellSignalExplained: (_) => const WeakCellSignalExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

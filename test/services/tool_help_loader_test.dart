@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 247;
+const int _expectedEntryCount = 248;
 
 const String _fixture = '''
 {
@@ -530,6 +530,10 @@ void main() {
       // bluetooth-explained, on top of wifi-lab/lessons-110-b, which counted 246.
       // 246 + 1 = 247. Counted off the file: `len(json['tools'])`
       // returned 247.
+      // 2026-09-28: the Weak Cell Signal at Home, Explained Guided Lesson added ONE entry,
+      // weak-cell-signal-explained, on top of wifi-lab/lessons-110-b, which counted 247.
+      // 247 + 1 = 248. Counted off the file: `len(json['tools'])`
+      // returned 248.
       expect(store.count, _expectedEntryCount);
     });
 

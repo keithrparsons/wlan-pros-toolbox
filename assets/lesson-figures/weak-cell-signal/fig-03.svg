@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" font-family="IBM Plex Sans" width="760" height="250">
+  <!-- outside label -->
+  <text x="20" y="24" font-size="13" font-weight="600" fill="#444444">OUTSIDE</text>
+  <text x="600" y="24" font-size="13" font-weight="600" fill="#444444">INSIDE</text>
+  <!-- wall layers, x 300..390 -->
+  <rect x="300" y="36" width="26" height="90" fill="#9C9C9C"/>
+  <rect x="326" y="36" width="40" height="90" fill="#F7F7F5" stroke="#9C9C9C" stroke-width="1"/>
+  <rect x="366" y="36" width="4" height="90" fill="#444444"/>
+  <rect x="370" y="36" width="16" height="90" fill="#E5E5E5" stroke="#9C9C9C" stroke-width="1"/>
+  <!-- window, x 300..386, y 150..220 -->
+  <rect x="300" y="150" width="8" height="70" fill="#E6EEF6" stroke="#2B5C8A" stroke-width="1.5"/>
+  <rect x="330" y="150" width="8" height="70" fill="#E6EEF6" stroke="#2B5C8A" stroke-width="1.5"/>
+  <line x1="329" y1="150" x2="329" y2="220" stroke="#2B5C8A" stroke-width="3"/>
+  <!-- labels for layers (left side, clear of arrows) -->
+  <text x="410" y="34" font-size="13" fill="#444444">WALL, OUTSIDE TO INSIDE</text>
+  <text x="410" y="52" font-size="13" fill="#111111">siding or brick</text>
+  <text x="410" y="70" font-size="13" fill="#111111">insulation</text>
+  <text x="410" y="88" font-size="13" fill="#111111"><tspan font-weight="600">foil</tspan> backing</text>
+  <text x="410" y="106" font-size="13" fill="#111111">drywall</text>
+  <text x="410" y="176" font-size="13" fill="#111111">double glazing with a</text>
+  <text x="410" y="192" font-size="13" fill="#111111"><tspan font-weight="600">low-E coating</tspan> on one pane</text>
+  <!-- incoming signals -->
+  <path d="M60 70 H284" stroke="#7A9E26" stroke-width="6"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(284,70) rotate(360) scale(1.56) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><path d="M60 185 H284" stroke="#7A9E26" stroke-width="6"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(284,185) rotate(360) scale(1.56) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><!-- reflections -->
+  <path d="M276 92 C230 110 180 110 130 100" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-dasharray="6 5"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(130,100) rotate(191.31) scale(1.75) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#C0392B"/></g><path d="M276 207 C230 225 180 225 130 215" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-dasharray="6 5"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(130,215) rotate(191.31) scale(1.75) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#C0392B"/></g><text x="60" y="130" font-size="13" fill="#C0392B">most of it bounces back</text>
+  <text x="60" y="246" font-size="13" fill="#C0392B">most of it bounces back</text>
+  <!-- what gets through -->
+  <path d="M600 70 H700" stroke="#7A9E26" stroke-width="1.5" stroke-dasharray="3 5"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(700,70) rotate(360) scale(1.05) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><path d="M600 185 H700" stroke="#7A9E26" stroke-width="1.5" stroke-dasharray="3 5"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(700,185) rotate(360) scale(1.05) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><text x="600" y="100" font-size="13" fill="#444444">a trickle</text>
+  <text x="600" y="215" font-size="13" fill="#444444">a trickle</text>
+</svg>
