@@ -3871,14 +3871,15 @@ A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum a
 
 ### Find My, Explained
 
-A read-along lesson on how Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip. Find My is one app that finds three kinds of things: people who choose to share where they are, devices like your iPhone, iPad, Mac, Apple Watch and AirPods, and items like AirTags. The lesson carries eight figures, step-by-step settings for iOS 27 and watchOS 27, and a travel checklist.
+A read-along lesson on how Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip. Find My is one app that finds three kinds of things: people who choose to share where they are, your Apple devices, and items like AirTags. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures and step-by-step settings for iOS 27 and watchOS 27.
 
 **Why it's here.** It answers the question Wi-Fi people get asked constantly by people who are not technical: how does Find My work? It also carries the Wi-Fi angle. When you see your bag on the map, you are looking at the location of the phone that heard it, not a reading from the tag. Indoors, and in airports especially, GPS is weak, and the phone leans on the Wi-Fi networks around it. Figure 3 shows how the finder's GPS, Wi-Fi and cell positioning become your dot.
 
 **How to use**
-1. Read top to bottom. It starts with the one idea that explains most of it: an AirTag cannot tell anyone where it is, and any Apple device that passes by quietly reports its own location, sealed so that only you can read it. Then it covers the three radios, the app, sharing, a phone that dies, lost luggage, a tracker that isn't yours, and six things people get wrong.
-2. Tap a figure to open it full screen, then pinch to zoom.
-3. Appendix A has the step-by-step settings, one task per card. Appendix B is the travel checklist: tick the items off before a trip. The ticks are not saved when you leave the lesson.
+1. Read top to bottom. It starts with the one idea behind all of it: an AirTag can't tell anyone where it is, and any iPhone that walks past reports its own location, sealed so that only you can read it. Then it covers why it stays private, where the dot comes from, the three radios, the app and sharing, a phone that dies, lost luggage, a tracker that isn't yours, and five things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. The appendix has the step-by-step settings: 13 tasks, one per card.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
 
 **Field notes**
 - Written for iOS 27 and watchOS 27. Button names can shift slightly between software updates.
@@ -3890,59 +3891,60 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 
 ### Home Internet, Explained
 
-A read-along lesson on how home internet reaches a house in the US: fiber, cable, DSL, 5G home internet, a local wireless provider, satellite in high and low orbit, and a phone hotspot. It covers speed, latency (the delay before an answer comes back) and data limits, what to check before you sign up, and why your Wi-Fi is a separate question. The lesson carries six figures, a side-by-side comparison of every option, a decision list, and an appendix for checking, challenging and testing your service.
+A read-along lesson on how home internet reaches a house in the US: fiber, cable, DSL, 5G home internet, a local wireless provider, satellite in low and high orbit, and a phone hotspot. It covers speed, lag (latency, the delay before an answer comes back) and data limits, which one to pick, what to read on the label before you sign up, and why your Wi-Fi is a separate question. The lesson follows the free PDF guide of the same name, word for word, with its 18 figures.
 
-**Why it's here.** It answers the question Wi-Fi people get asked by family, friends and clients: which internet should I get, and why is it slow in the back bedroom? The one idea under it is the Wi-Fi angle. The service you pay for stops at the box your provider installs. When the FCC (the US Federal Communications Commission) measures home internet, its test box plugs into the router, so the Wi-Fi inside the house isn't part of the number. Figure 6 shows the two measurements side by side.
+**Why it's here.** It answers the question Wi-Fi people get asked by family, friends and clients: which internet should I get, and why is it slow in the back bedroom? The one idea under it is the Wi-Fi angle. The service you pay for stops at the router, and a speed test on your phone in the back bedroom adds the Wi-Fi on top. Figure 13 shows the two measurements side by side.
 
 **How to use**
-1. Read top to bottom. It starts with the six ways service reaches a house and why every one of them is shared with the neighbors, then the wired and wireless options, latency, upload and data limits, the comparison, where the FCC measures, which one to pick, and six things people get wrong.
-2. Tap a figure to open it full screen, then pinch to zoom.
-3. Section 9 has the two-step test that tells the service from the Wi-Fi: a wired laptop at the router, then the same test over Wi-Fi in the room that feels slow.
-4. The appendix has the FCC map lookup, how to report a wrong listing, and the Before you sign up checklist. The ticks are not saved when you leave the lesson.
-5. The low-orbit satellite card links to the Starlink, Explained Guided Lesson. Two related tools: Why a Busy Line Lags shows latency under load, and The Slowest Link Wins, a panel on the How Your Devices Access the Internet plate, shows why end-to-end speed equals the slowest hop.
+1. Read top to bottom. It starts with the three things you're buying (speed, lag and a data limit), then the six ways in, why every road is shared, wires and radio to your house, why lag is its own number, the service or the Wi-Fi, which one to pick, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 7 has the two-step test that tells the service from the Wi-Fi: a wired laptop at the router, then the same test over Wi-Fi in the room that feels slow.
+4. Step 8 has the order to pick in, how to look up your address on the FCC's national broadband map, and the three lines to read on the Broadband Facts label.
+5. Two related tools: Why a Busy Line Lags shows latency under load, and The Slowest Link Wins, a panel on the How Your Devices Access the Internet plate, shows why end-to-end speed equals the slowest hop.
+6. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
 
 **Field notes**
 - Written for US homes, with figures checked on 27 September 2026. Provider plans change often; the Broadband Facts label is the current word for your address. Prices are deliberately left out.
-- The wired latency figures are the FCC's own measurements from its 2022 test period, published in 2024, with nothing else running on the line. Under load, every wired service got much slower to respond, DSL most of all.
-- Low-orbit figures are Starlink's own published range. The high-orbit floor of about 0.48 seconds is speed-of-light arithmetic; the measured figure of about 680 ms comes from independent measurements from early 2025.
-- Amazon Leo had not started home service as of July 2026. Check before you rely on that line.
-- The lesson leaves out prices, per-address availability and anything inside the house past the router other than where to put it. The lesson is independent and isn't affiliated with or endorsed by any provider named in it.
+- The wired latency figures are the FCC's own measurements from its 2022 test period, published in 2024.
+- Low-orbit figures are Starlink's own published range. The high-orbit floor of about 0.48 seconds is speed-of-light arithmetic.
+- The lesson leaves out prices and per-address availability. It is independent and isn't affiliated with or endorsed by any provider named in it.
 
 
 ### Wi-Fi Calling, Explained
 
-A read-along lesson on what happens when your phone makes a call over Wi-Fi instead of the cell tower, when it helps, when it drops, what it means for emergency calls, and what to set up before your next trip. Wi-Fi Calling is not an app. It is your own phone company's calling service, reaching your phone over a Wi-Fi network and the internet instead of over a cell tower. The lesson carries eight figures, the settings for each kind of phone, and two checklists.
+A read-along lesson on what happens when your phone makes a call over Wi-Fi instead of the cell tower, when it helps, when it drops, what it means for emergency calls, and what to set up before your next trip. Wi-Fi Calling is not an app. It is your own phone company's calling service, reaching your phone over a Wi-Fi network and the internet instead of over a cell tower. The lesson follows the free PDF guide of the same name, word for word, with its 17 figures, where to turn it on for iPhone and Android, and a checklist for before a trip.
 
-**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical: what is Wi-Fi Calling, and why did my call drop? It also carries the network owner's side. When Wi-Fi Calling is on, your phone builds a locked, private tunnel across the Wi-Fi you are on, through the internet, straight into your phone company. The hotel, the coffee shop and your own router carry the tunnel. They can't see inside it, but they still decide whether it connects and how well the call sounds. The section What your Wi-Fi owes a phone call covers the delay budget, the four traffic lanes of WMM (Wi-Fi Multimedia) and a router checklist.
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical: what is Wi-Fi Calling, and why did my call drop? It also carries the network owner's side. When Wi-Fi Calling is on, your phone builds a locked tunnel across the Wi-Fi you are on, through the internet, straight into your phone company. The hotel, the coffee shop and your own router carry the tunnel. They can't see inside it, but they still decide whether it connects and how well the call sounds. The step What your Wi-Fi owes a phone call covers the delay budget, the WMM (Wi-Fi Multimedia) setting that gives voice its own fast lane, and three things to check on your router.
 
 **How to use**
-1. Read top to bottom. It starts with the one idea that explains most of it: your phone builds a locked tunnel across the Wi-Fi, through the internet, into your phone company. Then it covers when the phone uses Wi-Fi, walking out the door mid-call, emergency calls at home and around the world, iPad, Mac and Apple Watch, calling home from abroad, app calls, what your Wi-Fi owes a call, and six things people get wrong.
-2. Tap a figure to open it full screen, then pinch to zoom.
-3. Appendix A has the settings, one card per kind of device. Appendix B has two checklists, one for home and one for before a trip abroad: tick the items off as you go. The ticks are not saved when you leave the lesson.
+1. Read top to bottom. It starts with the short answer: same phone, same number, same app, and only the road in the middle changes. Then it covers the two roads to the same phone company, when your phone uses Wi-Fi, walking out the door mid-call, emergency calls, iPad, Mac and Apple Watch, calling home from abroad, Wi-Fi Calling against app calls, what your Wi-Fi owes a call, and five things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. The last step shows where to turn it on, for iPhone and for Android, and a four-step checklist for before a trip.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
 
 **Field notes**
 - Carrier rules, prices and country lists change, so read your carrier's current page before you travel. The carrier details in the lesson were checked on 27 September 2026.
-- Figures no company publishes, such as battery cost or the exact signal level where a phone switches to Wi-Fi, are deliberately left out. The slices in Figure 8 are not to scale.
+- Figures no company publishes, such as battery cost or the exact signal level where a phone switches to Wi-Fi, are deliberately left out.
 - What happens to an emergency call over Wi-Fi depends on your carrier and your country. If you ever call for help over Wi-Fi, say where you are.
 - The lesson is independent and isn't affiliated with or endorsed by any carrier or device maker.
 
 
 ### Starlink, Explained
 
-A read-along lesson on how internet from space reaches your house or RV, how high the satellites are, and why the Wi-Fi inside matters as much as the sky above. A flat dish talks to whichever Starlink satellite is overhead, the satellite passes your data down to a Starlink ground station called a gateway, and from there it travels over ordinary fiber to the rest of the internet. The lesson carries nine figures, step-by-step tasks in the Starlink app, and a checklist to work through before you blame Starlink.
+A read-along lesson on how internet from space reaches your house or RV, how high the satellites are, and why the Wi-Fi inside matters as much as the sky above. A flat dish talks to whichever Starlink satellite is overhead, the satellite passes your data down to a Starlink ground station called a gateway, and from there it travels over ordinary fiber to the rest of the internet. The lesson follows the free PDF guide of the same name, word for word, with its 13 figures, four tasks in the Starlink app, and what to check before you blame Starlink.
 
-**Why it's here.** Wi-Fi people get asked about Starlink by friends, family and RV owners who are not technical, and the complaint is usually a slow back bedroom. The lesson carries the Wi-Fi angle: an ordinary speed-test app on a phone measures two links at once, the satellite link and the Wi-Fi, so a slow room is often the Wi-Fi and not the satellites. Figure 9 shows the two links, and Appendix B starts with the link you control.
+**Why it's here.** Wi-Fi people get asked about Starlink by friends, family and RV owners who are not technical, and the complaint is usually a slow back bedroom. The lesson carries the Wi-Fi angle: an ordinary speed-test app on a phone measures two links at once, the satellite link and the Wi-Fi, so a slow room is often the Wi-Fi and not the satellites. Figure 11 shows the two links, and Appendix B starts with the link you control.
 
 **How to use**
-1. Read top to bottom. It starts with the one idea that explains most of it: your speed depends on the sky the dish can see, how many neighbors share the satellites above you, and the Wi-Fi between the Starlink router and your device. Then it covers orbit heights, the path your data takes, latency, the dish, why speeds change, plans for homes and RVs, trees and weather, the Wi-Fi inside, and six things people get wrong.
-2. Tap a figure to open it full screen, then pinch to zoom. Figures 1, 2, 4 and 6 are drawn to scale; the zoomed part of Figure 4 is not.
-3. Appendix A has four tasks in the Starlink app, one per card. Appendix B is the checklist to work down when something feels slow. The ticks are not saved when you leave the lesson.
+1. Read top to bottom. It starts with the one idea behind all of it, then covers how high the satellites fly, the path your data takes, why it feels quick, the flat dish, why speeds change, plans for homes and RVs, trees, snow and rain, the Wi-Fi inside, and six things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode. Figure 1 is drawn to scale.
+3. Appendix A has four tasks in the Starlink app, one per card. Appendix B is what to check, in order, when something feels slow.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
 
 **Field notes**
 - Plan names and rules are the US ones as of 27 September 2026, from Starlink's own pages. Prices are left out on purpose. Check starlink.com before you buy.
 - Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
-- Starlink's router coverage figures are Starlink's own, not a measurement.
-- The Wi-Fi Calling note is T-Mobile's rule only; other carriers publish their own.
+- The Wi-Fi Calling line is general: some carriers don't support it over satellite internet. T-Mobile's page is the one in the sources; other carriers publish their own.
 - The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi

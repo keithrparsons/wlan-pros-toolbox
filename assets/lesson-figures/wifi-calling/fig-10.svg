@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 170" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="170">
+    <rect x="10" y="15" width="235" height="150" rx="12" fill="#FFFFFF" stroke="#7A9E26" stroke-width="2.5"/>
+    <text x="127" y="48" text-anchor="middle" font-weight="600" fill="#2F5E00" font-size="15">Call home</text>
+    <text x="127" y="78" text-anchor="middle" font-size="13" fill="#444444">A Wi-Fi call back to a</text>
+    <text x="127" y="96" text-anchor="middle" font-size="13" fill="#444444">number in your home country</text>
+    <text x="127" y="126" text-anchor="middle" font-size="20" font-weight="700" fill="#2F5E00">Usually free</text>
+    <text x="127" y="150" text-anchor="middle" font-size="13" fill="#444444">on many carriers, not all</text>
+    <rect x="262" y="15" width="235" height="150" rx="12" fill="#FFFFFF" stroke="#8A5A00" stroke-width="2.5"/>
+    <text x="380" y="48" text-anchor="middle" font-weight="600" fill="#111111" font-size="15">Call a local number</text>
+    <text x="380" y="78" text-anchor="middle" font-size="13" fill="#444444">A Wi-Fi call to a number</text>
+    <text x="380" y="96" text-anchor="middle" font-size="13" fill="#444444">in the country you're visiting</text>
+    <text x="380" y="126" text-anchor="middle" font-size="20" font-weight="700" fill="#8A5A00">Charged</text>
+    <text x="380" y="150" text-anchor="middle" font-size="13" fill="#444444">as an international call, or blocked</text>
+    <rect x="515" y="15" width="235" height="150" rx="12" fill="#FBF0EE" stroke="#C0392B" stroke-width="2.5"/>
+    <text x="632" y="48" text-anchor="middle" font-weight="600" fill="#111111" font-size="15">Some countries</text>
+    <text x="632" y="78" text-anchor="middle" font-size="13" fill="#444444">Your carrier switches the</text>
+    <text x="632" y="96" text-anchor="middle" font-size="13" fill="#444444">feature off there entirely</text>
+    <text x="632" y="126" text-anchor="middle" font-size="20" font-weight="700" fill="#C0392B">Won't work</text>
+    <text x="632" y="150" text-anchor="middle" font-size="13" fill="#444444">check your carrier's list</text>
+  </svg>

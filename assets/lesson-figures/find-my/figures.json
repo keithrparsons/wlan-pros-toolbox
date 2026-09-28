@@ -1,0 +1,125 @@
+{
+  "source": "find-my-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 1. The Find My network.** The tag whispers. A passing iPhone hears it and sends its own location, sealed. Only your devices can open it.",
+      "alt": "Figure 1. The Find My network. The tag whispers. A passing iPhone hears it and sends its own location, sealed. Only your devices can open it."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        330.0,
+        150.0
+      ],
+      "caption": "**Figure 2. The tag keeps changing its name.** Its radio ID changes every few minutes, so nobody can follow it by listening.",
+      "alt": "Figure 2. The tag keeps changing its name. Its radio ID changes every few minutes, so nobody can follow it by listening."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        760.0,
+        290.0
+      ],
+      "caption": "**Figure 3. Your dot is the finder's location.** The tag has no GPS and no Wi-Fi. The phone that heard it knows where it is, and that becomes your dot.",
+      "alt": "Figure 3. Your dot is the finder's location. The tag has no GPS and no Wi-Fi. The phone that heard it knows where it is, and that becomes your dot."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        286.0
+      ],
+      "caption": "**Figure 4. Three radios, three jobs.** The farther away the tag is, the rougher the answer. Not to scale.",
+      "alt": "Figure 4. Three radios, three jobs. The farther away the tag is, the rougher the answer. Not to scale."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        760.0,
+        330.0
+      ],
+      "caption": "**Figure 5. The four parts of the app:** People, Devices, Items and Me. A simple drawing, not a screenshot.",
+      "alt": "Figure 5. The four parts of the app: People, Devices, Items and Me. A simple drawing, not a screenshot."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 6. Three ways to stay in charge of sharing.** Pause hides you from one person, Check In tells a friend only if you're late, and one tag can be shared with the family.",
+      "alt": "Figure 6. Three ways to stay in charge of sharing. Pause hides you from one person, Check In tells a friend only if you're late, and one tag can be shared with the family."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        760.0,
+        170.0
+      ],
+      "caption": "**Figure 7. Still findable.** With a signal, your phone reports itself. With a flat battery or switched off, it can still be found for a while through the Find My network.",
+      "alt": "Figure 7. Still findable. With a signal, your phone reports itself. With a flat battery or switched off, it can still be found for a while through the Find My network."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 8. If your bag doesn't arrive.** Check the map, file the airline's report, then share the link. Showing your contact info is a separate switch.",
+      "alt": "Figure 8. If your bag doesn't arrive. Check the map, file the airline's report, then share the link. Showing your contact info is a separate switch."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        760.0,
+        278.0
+      ],
+      "caption": "**Figure 9. Before you fly.** Hide the tag inside the bag, and turn off its left-behind alert (Notify When Left Behind). Left: do this. Right: not this.",
+      "alt": "Figure 9. Before you fly. Hide the tag inside the bag, and turn off its left-behind alert (Notify When Left Behind). Left: do this. Right: not this."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        330.0
+      ],
+      "caption": "**Figure 10. What to do if you get an alert.** Find it, identify it, and if you feel unsafe, go somewhere public and call the police first.",
+      "alt": "Figure 10. What to do if you get an alert. Find it, identify it, and if you feel unsafe, go somewhere public and call the police first."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        760.0,
+        194.0
+      ],
+      "caption": "**Figure 11. Both phones warn you. Only Android can also scan.** An iPhone warns you on its own, but has no button to search the room on demand.",
+      "alt": "Figure 11. Both phones warn you. Only Android can also scan. An iPhone warns you on its own, but has no button to search the room on demand."
+    }
+  ]
+}

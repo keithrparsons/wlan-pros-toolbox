@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="330">
+    <rect x="190" y="10" width="380" height="56" rx="12" fill="#1A1A1A"/>
+    <text x="380" y="34" text-anchor="middle" fill="#FFFFFF" font-weight="600">"AirTag Found Moving With You"</text>
+    <text x="380" y="53" text-anchor="middle" fill="#E5E5E5" font-size="13">on iPhone, or an unknown tracker alert on Android</text>
+    <path d="M380 66V88" stroke="#444444" stroke-width="2"/>
+    <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(380,88) rotate(90) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><rect x="200" y="92" width="360" height="54" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
+    <text x="380" y="114" text-anchor="middle" font-weight="600">Find it</text>
+    <text x="380" y="133" text-anchor="middle" font-size="13" fill="#444444">Tap the alert, then Play Sound, or Find Nearby if offered</text>
+    <path d="M380 146V168" stroke="#444444" stroke-width="2"/>
+    <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(380,168) rotate(90) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><rect x="200" y="172" width="360" height="54" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
+    <text x="380" y="194" text-anchor="middle" font-weight="600">Identify it</text>
+    <text x="380" y="213" text-anchor="middle" font-size="13" fill="#444444">Hold your phone's top to the white side. Screenshot the page.</text>
+    <path d="M300 226L200 256" stroke="#444444" stroke-width="2"/>
+    <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(200,256) rotate(163.301) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><path d="M460 226L560 256" stroke="#444444" stroke-width="2"/>
+    <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(560,256) rotate(16.699) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><rect x="30" y="258" width="330" height="64" rx="12" fill="#FBF0EE" stroke="#C0392B"/>
+    <text x="195" y="282" text-anchor="middle" font-weight="600">Feel unsafe?</text>
+    <text x="195" y="302" text-anchor="middle" font-size="13" fill="#444444">Go somewhere public and contact police first</text>
+    <rect x="400" y="258" width="330" height="64" rx="12" fill="#FFFFFF" stroke="#E5E5E5"/>
+    <text x="565" y="282" text-anchor="middle" font-weight="600">Otherwise, disable it</text>
+    <text x="565" y="302" text-anchor="middle" font-size="13" fill="#444444">Follow "Instructions to Disable": take the battery out</text>
+  </svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 330" font-family="IBM Plex Sans" font-size="14" fill="#1A1A1A" width="700" height="330">
+      <!-- sources -->
+      <g font-size="14">
+        <text x="10" y="44" font-weight="600">Fiber</text><text x="10" y="60" font-size="12" fill="#444444">strand of glass</text>
+        <text x="10" y="94" font-weight="600">Cable</text><text x="10" y="110" font-size="12" fill="#444444">cable TV line (coax)</text>
+        <text x="10" y="144" font-weight="600">DSL</text><text x="10" y="160" font-size="12" fill="#444444">old copper phone line</text>
+        <text x="10" y="194" font-weight="600">Fixed wireless</text><text x="10" y="210" font-size="12" fill="#444444">5G tower or local tower</text>
+        <text x="10" y="244" font-weight="600">Satellite</text><text x="10" y="260" font-size="12" fill="#444444">dish, high or low orbit</text>
+        <text x="10" y="294" font-weight="600">Phone hotspot</text><text x="10" y="310" font-size="12" fill="#444444">your cellular plan</text>
+      </g>
+      <!-- house -->
+      <path d="M400 110 L530 40 L660 110" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="410" y="110" width="240" height="190" fill="#FFFFFF"/>
+      <path d="M410 150 V110 H650 V300 H410 V292 M410 262 V202" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+      <g fill="none" stroke-linecap="round">
+        <path d="M160 50 C280 50 320 150 419 158" stroke="#A1CC3A" stroke-width="4"/>
+        <path d="M160 100 C280 100 320 160 419 165" stroke="#1A1A1A" stroke-width="4"/>
+        <path d="M160 150 C280 150 320 172 419 172" stroke="#9C9C9C" stroke-width="3" stroke-dasharray="9 6"/>
+        <path d="M160 200 C280 200 320 184 419 179" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="2 7"/>
+        <path d="M160 250 C280 250 320 196 419 186" stroke="#7A9E26" stroke-width="3" stroke-dasharray="2 7"/>
+        <path d="M160 300 C280 300 330 277 412 277" stroke="#444444" stroke-width="3" stroke-dasharray="8 4 2 4"/>
+      </g>
+      <rect x="425" y="152" width="96" height="46" rx="6" fill="#1A1A1A"/>
+      <text x="473" y="172" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="600">Provider's</text>
+      <text x="473" y="188" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="600">box</text>
+      <line x1="521" y1="175" x2="552" y2="175" stroke="#1A1A1A" stroke-width="3"/>
+      <rect x="552" y="152" width="86" height="46" rx="6" fill="#A1CC3A"/>
+      <text x="595" y="180" text-anchor="middle" font-size="13" font-weight="600">Router</text>
+      <g transform="translate(580 117) scale(1.25)" fill="none" stroke="#2F5E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.8 15.8 A4.5 4.5 0 0 1 15.2 15.8 M5.6 12.6 A9 9 0 0 1 18.4 12.6 M2.5 9.4 A13.5 13.5 0 0 1 21.5 9.4"/><circle cx="12" cy="19" r="1.5" fill="#2F5E00" stroke="none"/></g>
+      <line x1="537" y1="120" x2="537" y2="166" stroke="#444444" stroke-width="1.5" stroke-dasharray="4 4"/><line x1="537" y1="184" x2="537" y2="250" stroke="#444444" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="473" y="232" text-anchor="middle" font-size="12" fill="#444444">The service</text>
+      <text x="473" y="248" text-anchor="middle" font-size="12" fill="#444444">you pay for</text>
+      <text x="595" y="232" text-anchor="middle" font-size="12" fill="#2F5E00" font-weight="600">Your Wi-Fi</text>
+      <text x="595" y="248" text-anchor="middle" font-size="12" fill="#2F5E00">starts here</text>
+    <g transform="translate(420 261) scale(1.3333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g><text x="456" y="275" font-size="13" font-weight="600" fill="#1A1A1A">Hotspot phone</text><text x="456" y="291" font-size="13" fill="#444444">its own box</text></svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 220" font-family="IBM Plex Sans" font-size="13" fill="#1A1A1A" width="700" height="220">
+      <g font-size="11.5" fill="#444444"><text x="20" y="20" font-size="12">Down arrow: download. Up arrow: upload. Widths show the usual balance, not exact speeds.</text></g>
+      <!-- fiber -->
+      <text x="95" y="210" text-anchor="middle" font-weight="600">Fiber</text>
+      <rect x="55" y="45" width="30" height="120" rx="4" fill="#A1CC3A"/><path d="M70 177 l-10 -10 h20 z" fill="#7A9E26"/>
+      <rect x="105" y="45" width="30" height="120" rx="4" fill="#2B5C8A"/><path d="M120 33 l-10 10 h20 z" fill="#2B5C8A"/>
+      <text x="95" y="192" text-anchor="middle" font-size="12" fill="#444444">often equal</text>
+      <!-- cable -->
+      <text x="275" y="210" text-anchor="middle" font-weight="600">Cable</text>
+      <rect x="235" y="45" width="30" height="120" rx="4" fill="#A1CC3A"/><path d="M250 177 l-10 -10 h20 z" fill="#7A9E26"/>
+      <rect x="285" y="135" width="30" height="30" rx="4" fill="#2B5C8A"/><path d="M300 123 l-10 10 h20 z" fill="#2B5C8A"/>
+      <text x="275" y="192" text-anchor="middle" font-size="12" fill="#444444">upload much smaller</text>
+      <!-- 5G -->
+      <text x="455" y="210" text-anchor="middle" font-weight="600">5G home</text>
+      <rect x="415" y="45" width="30" height="120" rx="4" fill="#A1CC3A"/><path d="M430 177 l-10 -10 h20 z" fill="#7A9E26"/>
+      <rect x="465" y="151" width="30" height="14" rx="4" fill="#2B5C8A"/><path d="M480 139 l-10 10 h20 z" fill="#2B5C8A"/>
+      <text x="455" y="192" text-anchor="middle" font-size="12" fill="#444444">about a tenth</text>
+      <!-- DSL -->
+      <text x="620" y="210" text-anchor="middle" font-weight="600">DSL</text>
+      <rect x="580" y="115" width="30" height="50" rx="4" fill="#A1CC3A"/><path d="M595 177 l-10 -10 h20 z" fill="#7A9E26"/>
+      <rect x="630" y="148" width="30" height="17" rx="4" fill="#2B5C8A"/><path d="M645 136 l-10 10 h20 z" fill="#2B5C8A"/>
+      <text x="620" y="192" text-anchor="middle" font-size="12" fill="#444444">low both ways</text>
+    </svg>

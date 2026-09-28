@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" font-size="15" fill="#1A1A1A" width="700" height="250">
+      <g>
+        <rect x="20" y="15" width="300" height="46" rx="8" fill="#FFFFFF" stroke="#30302F" stroke-width="1.5"/>
+        <text x="170" y="44" text-anchor="middle" font-weight="600">Fiber at your address?</text>
+        <text x="345" y="44" font-size="13" fill="#444444">Yes:</text>
+        <rect x="380" y="15" width="300" height="46" rx="8" fill="#EEF5E0" stroke="#2F5E00" stroke-width="1.5"/>
+        <text x="530" y="44" text-anchor="middle" font-weight="600" fill="#2F5E00">Take it</text>
+        <line x1="170" y1="63" x2="170" y2="75" stroke="#9C9C9C" stroke-width="2"/><path d="M164 73 L170 81 L176 73" fill="none" stroke="#9C9C9C" stroke-width="2"/>
+        <text x="182" y="76" font-size="12" fill="#444444">No</text>
+        <rect x="20" y="85" width="300" height="46" rx="8" fill="#FFFFFF" stroke="#30302F" stroke-width="1.5"/>
+        <text x="170" y="114" text-anchor="middle" font-weight="600">Cable at your address?</text>
+        <text x="345" y="114" font-size="13" fill="#444444">Yes:</text>
+        <rect x="380" y="85" width="300" height="46" rx="8" fill="#EEF5E0" stroke="#2F5E00" stroke-width="1.5"/>
+        <text x="530" y="107" text-anchor="middle" font-weight="600" fill="#2F5E00">A good choice</text>
+        <text x="530" y="124" text-anchor="middle" font-size="12" fill="#444444">check the upload speed</text>
+        <line x1="170" y1="133" x2="170" y2="145" stroke="#9C9C9C" stroke-width="2"/><path d="M164 143 L170 151 L176 143" fill="none" stroke="#9C9C9C" stroke-width="2"/>
+        <text x="182" y="146" font-size="12" fill="#444444">No</text>
+        <rect x="20" y="155" width="300" height="80" rx="8" fill="#FFFFFF" stroke="#30302F" stroke-width="1.5"/>
+        <text x="170" y="185" text-anchor="middle" font-weight="600">Try the radio options</text>
+        <text x="170" y="205" text-anchor="middle" font-size="13" fill="#444444">5G home internet,</text>
+        <text x="170" y="222" text-anchor="middle" font-size="13" fill="#444444">or low-orbit satellite</text>
+        <rect x="380" y="155" width="300" height="80" rx="8" fill="#F7F7F5" stroke="#9C9C9C" stroke-width="1.5"/>
+        <text x="530" y="185" text-anchor="middle" font-weight="600">Last choices</text>
+        <text x="530" y="205" text-anchor="middle" font-size="13" fill="#444444">DSL, or a satellite</text>
+        <text x="530" y="222" text-anchor="middle" font-size="13" fill="#444444">far above the equator</text>
+      </g>
+    </svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" width="700" height="250">
+      <g font-size="10.5" fill="#444444" text-anchor="middle">
+        <line x1="140" y1="22" x2="140" y2="30" stroke="#9C9C9C"/><text x="140" y="16" font-size="12">0 ms</text>
+        <line x1="355" y1="22" x2="355" y2="30" stroke="#9C9C9C"/><text x="355" y="16" font-size="12">300 ms</text>
+        <line x1="570" y1="22" x2="570" y2="30" stroke="#9C9C9C"/><text x="570" y="16" font-size="12">600 ms</text>
+      </g>
+      <text x="130" y="50" font-size="12.5" fill="#1A1A1A" text-anchor="end">Starlink</text>
+      <rect x="140" y="36" width="18" height="22" fill="#7A9E26"/>
+      <rect x="158" y="36" width="25" height="22" fill="#A1CC3A" opacity=".45"/>
+      <text x="192" y="52" font-size="12" fill="#2F5E00">about 25 ms typical, 25 to 60 ms range</text>
+      <text x="130" y="96" font-size="12.5" fill="#1A1A1A" text-anchor="end">Geostationary</text>
+      <rect x="140" y="82" width="430" height="22" fill="#9C9C9C"/>
+      <rect x="570" y="82" width="72" height="22" fill="#9C9C9C" opacity=".45"/>
+      <text x="355" y="98" font-size="12" fill="#FFFFFF" text-anchor="middle">about 600 to 700 ms</text>
+      <!-- zoom -->
+      <text x="20" y="150" font-size="12.5" fill="#1A1A1A" font-weight="600">Zoomed in: inside Starlink's 25 ms (not to the scale above)</text>
+      <rect x="20" y="162" width="264" height="34" fill="#7A9E26"/>
+      <rect x="284" y="162" width="396" height="34" fill="#E5E5E5"/>
+      <text x="152" y="184" font-size="12" fill="#FFFFFF" text-anchor="middle">Radio trip, under 10 ms</text>
+      <text x="482" y="184" font-size="12" fill="#1A1A1A" text-anchor="middle">Ground network, scheduling, waiting in line</text>
+      <text x="20" y="222" font-size="12" fill="#444444">SpaceX: each leg between dish, satellite and gateway takes 1.8 to 3.6 ms at the speed of light,</text>
+      <text x="20" y="238" font-size="12" fill="#444444">usually under 10 ms for the whole round trip. The rest is spent on the ground and in queues.</text>
+    </svg>

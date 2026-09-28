@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" font-family="IBM Plex Sans" font-size="13" fill="#1A1A1A" width="700" height="240">
+      <ellipse cx="70" cy="120" rx="58" ry="34" fill="#E6EEF6" stroke="#2B5C8A" stroke-width="2"/>
+      <text x="70" y="125" text-anchor="middle" font-weight="600">Internet</text>
+      <line x1="128" y1="120" x2="232" y2="120" stroke="#1A1A1A" stroke-width="4"/>
+      <text x="180" y="110" text-anchor="middle" font-size="12" fill="#444444">provider's line</text>
+      <rect x="232" y="98" width="86" height="44" rx="6" fill="#1A1A1A"/>
+      <text x="275" y="125" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="600">Provider's box</text>
+      <line x1="318" y1="120" x2="360" y2="120" stroke="#1A1A1A" stroke-width="3"/>
+      <rect x="360" y="98" width="86" height="44" rx="6" fill="#A1CC3A"/>
+      <text x="403" y="125" text-anchor="middle" font-size="13" font-weight="600">Router</text>
+      <g fill="none" stroke="#7A9E26" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round">
+        <path d="M516 120 H598"/>
+      </g>
+      <path d="M470 102 a14 14 0 0 1 0 36" fill="none" stroke="#7A9E26" stroke-width="2.5"/>
+      <path d="M484 94 a24 24 0 0 1 0 52" fill="none" stroke="#7A9E26" stroke-width="2.5"/>
+      <text x="545" y="84" text-anchor="middle" font-size="12" fill="#444444">Wi-Fi, through walls</text>
+      <g transform="translate(590 91) scale(2.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+      <text x="620" y="164" text-anchor="middle" font-size="12" fill="#444444">your phone,</text>
+      <text x="620" y="178" text-anchor="middle" font-size="12" fill="#444444">back bedroom</text>
+      <!-- braces -->
+      <path d="M20 60 V48 H446 V60" fill="none" stroke="#2B5C8A" stroke-width="2"/>
+      <text x="233" y="38" text-anchor="middle" fill="#2B5C8A" font-weight="600">What the FCC measures: the service, up to the router</text>
+      <path d="M20 200 V212 H660 V200" fill="none" stroke="#2F5E00" stroke-width="2"/>
+      <text x="340" y="232" text-anchor="middle" fill="#2F5E00" font-weight="600">What a speed test on your phone measures: the service plus your Wi-Fi</text>
+    </svg>

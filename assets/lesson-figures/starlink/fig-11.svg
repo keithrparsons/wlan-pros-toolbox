@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 220" font-family="IBM Plex Sans" width="700" height="220">
+      <path d="M60 200 V90 L200 20 L340 90 V200 Z" fill="#FFFFFF" stroke="#444444" stroke-width="2"/>
+      <g transform="translate(232 12) scale(1.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(30 12 8)"><rect x="5" y="5.5" width="14" height="5" rx="1.5"/></g><path d="M12 10.5 V21 M8 21 H16"/></g>
+      <path d="M254 23 L286 2" stroke="#7A9E26" stroke-width="4"/>
+      <path d="M248 45 V110 H130 V140" stroke="#444444" stroke-width="2" fill="none"/>
+      <g transform="translate(110 126) scale(1.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="18" height="7.5" rx="2"/><path d="M7.5 12 L6 4.5 M16.5 12 L18 4.5"/><circle cx="7.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="10.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/><circle cx="13.5" cy="15.75" r="1.1" fill="#111111" stroke="none"/></g>
+      <text x="150" y="182" font-size="12" fill="#1A1A1A" text-anchor="end">Starlink router</text>
+      <path d="M156 140 q12 12 0 24 M164 132 q20 20 0 40 M172 124 q28 28 0 56" fill="none" stroke="#2B5C8A" stroke-width="2"/>
+      <g transform="translate(272 123) scale(1.25)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+      <text x="287" y="172" font-size="12" fill="#1A1A1A" text-anchor="middle">phone in the</text>
+      <text x="287" y="186" font-size="12" fill="#1A1A1A" text-anchor="middle">back room</text>
+      <text x="380" y="40" font-size="13" fill="#2F5E00" font-weight="600">Link 1: the Starlink link</text>
+      <text x="380" y="57" font-size="12" fill="#444444">dish to satellite and back</text>
+      <text x="380" y="128" font-size="13" fill="#2B5C8A" font-weight="600">Link 2: your Wi-Fi</text>
+      <text x="380" y="145" font-size="12" fill="#444444">router to phone, through walls,</text>
+      <text x="380" y="160" font-size="12" fill="#444444">cabinets, or an RV's metal body</text>
+    </svg>

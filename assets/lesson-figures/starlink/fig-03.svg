@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 270" font-family="IBM Plex Sans" width="700" height="270">
+      <path d="M0 232 H700" stroke="#E5E5E5" stroke-width="2"/>
+      <!-- satellite -->
+<g transform="translate(246 34) scale(2)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-45 12 12)"><rect x="10" y="10" width="4" height="4" rx="0.8"/><rect x="3" y="7" width="4.5" height="10" rx="0.8"/><rect x="16.5" y="7" width="4.5" height="10" rx="0.8"/><path d="M7.5 12 H10 M14 12 H16.5 M3 12 H7.5 M16.5 12 H21"/></g></g>
+      <text x="270" y="28" font-size="13" fill="#1A1A1A" text-anchor="middle" font-weight="600">Satellite, about 480 km (300 miles) up</text>
+      <!-- house -->
+<g transform="translate(42 158) scale(3.16667)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 3.5 L21 11"/><path d="M5.5 9.5 V20.5 H18.5 V9.5"/><path d="M10 20.5 V15 H14 V20.5"/></g><g transform="translate(83 135) scale(1.41667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(30 12 8)"><rect x="5" y="5.5" width="14" height="5" rx="1.5"/></g><path d="M12 10.5 V21 M8 21 H16"/></g>
+      <text x="80" y="252" font-size="12.5" fill="#1A1A1A" text-anchor="middle">Your dish</text>
+      <!-- gateway -->
+<g transform="translate(400 174) scale(2.5)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 A9 9 0 0 0 17.5 13.5 Z"/><path d="M11.2 8.2 L15 4.5"/><circle cx="15.6" cy="3.9" r="1.3" fill="#444444" stroke="none"/><path d="M9.5 13 V16"/><rect x="4" y="16" width="16" height="5.5" rx="1"/></g>
+      <text x="430" y="252" font-size="12.5" fill="#1A1A1A" text-anchor="middle">Starlink gateway</text>
+      <!-- PoP -->
+      <g transform="translate(542 185) scale(1.91667)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="5" rx="1.5"/><rect x="4" y="9.5" width="16" height="5" rx="1.5"/><rect x="4" y="16" width="16" height="5" rx="1.5"/><circle cx="7.5" cy="5.5" r="0.9" fill="#444444" stroke="none"/><circle cx="7.5" cy="12" r="0.9" fill="#444444" stroke="none"/><circle cx="7.5" cy="18.5" r="0.9" fill="#444444" stroke="none"/></g>
+      <text x="565" y="252" font-size="12.5" fill="#1A1A1A" text-anchor="middle">Point of Presence</text>
+      <!-- internet -->
+      <g transform="translate(655,140)">
+        <g transform="translate(-21 -50) scale(2.16667)" fill="none" stroke="#2B5C8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19 H17 A4 4 0 0 0 17.6 11.05 A6 6 0 0 0 6.2 10.5 A4.3 4.3 0 0 0 7 19 Z"/></g>
+      </g>
+      <text x="660" y="158" font-size="13" fill="#2B5C8A" text-anchor="middle" font-weight="600">Internet</text>
+      <!-- links -->
+      <path d="M104 160 L250 71" stroke="#7A9E26" stroke-width="3" fill="none"/>
+      <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(250,71) rotate(328.634) scale(2.1) translate(-8,-5)"><path d="M0 0 L10 5 L0 10 Z" fill="#7A9E26"/></g><path d="M288 70 L398 178" stroke="#7A9E26" stroke-width="3" fill="none"/>
+      <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(398,178) rotate(44.474) scale(2.1) translate(-8,-5)"><path d="M0 0 L10 5 L0 10 Z" fill="#7A9E26"/></g><path d="M476 222 H530" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="3 4"/>
+      <path d="M596 212 L636 164" stroke="#2B5C8A" stroke-width="3" stroke-dasharray="3 4"/>
+      <text x="150" y="112" font-size="12" fill="#2F5E00" text-anchor="end">1. Up to</text>
+      <text x="150" y="127" font-size="12" fill="#2F5E00" text-anchor="end">the satellite</text>
+      <text x="366" y="124" font-size="12" fill="#2F5E00">2. Down to</text>
+      <text x="366" y="139" font-size="12" fill="#2F5E00">a gateway</text>
+      <text x="503" y="194" font-size="12" fill="#2B5C8A" text-anchor="middle">3. Fiber</text>
+      </svg>

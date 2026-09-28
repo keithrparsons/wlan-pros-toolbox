@@ -1,0 +1,185 @@
+{
+  "source": "wifi-calling-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        250.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        644.0,
+        226.0
+      ],
+      "caption": "**Figure 1. Same phone, same number, same app.** Only the road in the middle changes. The person you call sees your normal number either way.",
+      "alt": "A call over the cell network and over Wi-Fi look the same to both people"
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 2. Two roads, one phone company.** The person you call can't tell the difference. The only change is who carries the first part of the trip.",
+      "alt": "Figure 2. Two roads, one phone company. The person you call can't tell the difference. The only change is who carries the first part of the trip."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        644.0,
+        212.0
+      ],
+      "caption": "**Figure 3. The hotel sees a tunnel, not your call.** The call stays locked inside the tunnel all the way to your carrier.",
+      "alt": "The call travels in a locked tunnel through the hotel Wi-Fi to your carrier"
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        230.0
+      ],
+      "caption": "**Figure 4. A backup road.** Weak or no cell signal: the call goes over Wi-Fi. Good cell signal: it usually stays on the cell network.",
+      "alt": "Figure 4. A backup road. Weak or no cell signal: the call goes over Wi-Fi. Good cell signal: it usually stays on the cell network."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        644.0,
+        256.0
+      ],
+      "caption": "**Figure 5. Look for the word Wi-Fi.** Screens simplified; wording varies by phone.",
+      "alt": "Where the phone shows that a call is using Wi-Fi"
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 6. Handing the call over.** Walk into good coverage and the call can move to the cell network. Walk into weak coverage and the call drops, because there's nothing to hand it to.",
+      "alt": "Figure 6. Handing the call over. Walk into good coverage and the call can move to the cell network. Walk into weak coverage and the call drops, because there's nothing to hand it to."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        644.0,
+        204.0
+      ],
+      "caption": "**Figure 7. Moving between two Wi-Fi points.** Inside a house with two Wi-Fi points, the phone hands the call from one to the other as you walk.",
+      "alt": "Walking between two Wi-Fi access points hands the call over"
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        270.0
+      ],
+      "caption": "**Figure 8. How an emergency call finds you.** Over Wi-Fi, your carrier tries to find your location. If that fails, it may use the address you entered when you switched the feature on.",
+      "alt": "Figure 8. How an emergency call finds you. Over Wi-Fi, your carrier tries to find your location. If that fails, it may use the address you entered when you switched the feature on."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        760.0,
+        290.0
+      ],
+      "caption": "**Figure 9. Who places the call?** In the first, your iPhone makes the call and the other device is just a speaker and microphone. In the second, the device calls through your carrier on its own. Only some carriers offer the second.",
+      "alt": "Figure 9. Who places the call? In the first, your iPhone makes the call and the other device is just a speaker and microphone. In the second, the device calls through your carrier on its own. Only some carriers offer the second."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        760.0,
+        170.0
+      ],
+      "caption": "**Figure 10. Three things that can happen.** Calling home is usually free. Calling a local number is charged or blocked. And in some countries, your carrier switches the feature off.",
+      "alt": "Figure 10. Three things that can happen. Calling home is usually free. Calling a local number is charged or blocked. And in some countries, your carrier switches the feature off."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        644.0,
+        228.0
+      ],
+      "caption": "**Figure 11. Set it up at home, and check your carrier.**",
+      "alt": "Set up Wi-Fi Calling and check your carrier at home, not after you land"
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 12. Two kinds of Wi-Fi call.** Wi-Fi Calling reaches almost any phone number and shows your own number. An app call only reaches people who have the same app.",
+      "alt": "Figure 12. Two kinds of Wi-Fi call. Wi-Fi Calling reaches almost any phone number and shows your own number. An app call only reaches people who have the same app."
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        644.0,
+        204.0
+      ],
+      "caption": "**Figure 13. Pick the call by who you're calling.** An app call for people with the app, Wi-Fi Calling for everyone else, and the phone app in an emergency.",
+      "alt": "Which kind of call to use for whom"
+    },
+    {
+      "n": 14,
+      "file": "fig-14.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 14. Delay adds up, and voice gets the fast lane.** Your Wi-Fi, your internet line and the rest of the trip all add delay. Wi-Fi can put voice in its own fast lane, ahead of downloads.",
+      "alt": "Figure 14. Delay adds up, and voice gets the fast lane. Your Wi-Fi, your internet line and the rest of the trip all add delay. Wi-Fi can put voice in its own fast lane, ahead of downloads."
+    },
+    {
+      "n": 15,
+      "file": "fig-15.svg",
+      "viewBox": [
+        644.0,
+        220.0
+      ],
+      "caption": "**Figure 15. Leave WMM on.** It is usually on already, and the name varies by router. Screen simplified.",
+      "alt": "A router settings screen with the WMM switch on"
+    },
+    {
+      "n": 16,
+      "file": "fig-16.svg",
+      "viewBox": [
+        644.0,
+        154.0
+      ],
+      "caption": "**Figure 16. The five facts in pictures.** Each picture matches a myth above, in the same order.",
+      "alt": "The facts behind the five myths shown as pictures"
+    },
+    {
+      "n": 17,
+      "file": "fig-17.svg",
+      "viewBox": [
+        644.0,
+        296.0
+      ],
+      "caption": "**Figure 17. The iPhone path.** Settings, then Cellular, then Wi-Fi Calling. Screens simplified.",
+      "alt": "Settings, then Cellular, then Wi-Fi Calling, drawn as three iPhone screens"
+    }
+  ]
+}

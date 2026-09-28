@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="330">
+    <!-- phone -->
+    <rect x="8" y="10" width="226" height="310" rx="26" fill="#1A1A1A"/>
+    <rect x="18" y="20" width="206" height="290" rx="18" fill="#F7F7F5"/>
+    <path d="M18 90H224M18 150H224M86 20V250M156 20V250" stroke="#E5E5E5"/>
+    <circle cx="70" cy="80" r="8" fill="#2B5C8A"/><rect x="146" y="112" width="10" height="16" rx="2" fill="#444444"/><circle cx="182" cy="190" r="8" fill="#FFFFFF" stroke="#7A9E26" stroke-width="3"/>
+    <rect x="18" y="252" width="206" height="58" fill="#FFFFFF"/>
+    <g font-size="13" text-anchor="middle" fill="#444444"><text x="46" y="292">People</text><text x="100" y="292">Devices</text><text x="152" y="292">Items</text><text x="198" y="292">Me</text></g>
+    <g fill="#9C9C9C"><circle cx="46" cy="270" r="6"/><rect x="95" y="263" width="10" height="14" rx="2"/><circle cx="152" cy="270" r="6"/><circle cx="198" cy="270" r="6"/></g>
+    <!-- callouts -->
+    <g>
+      <path d="M46 298V322H250V40H272" fill="none" stroke="#9C9C9C"/>
+      <rect x="276" y="18" width="220" height="68" rx="10" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <text x="290" y="40" font-weight="600">People</text><text x="290" y="58" font-size="13" fill="#444444">Friends and family sharing with you.</text><text x="290" y="74" font-size="13" fill="#444444">Get directions, notifications, Find.</text>
+    </g>
+    <g>
+      <path d="M100 298V318H256V124H272" fill="none" stroke="#9C9C9C"/>
+      <rect x="276" y="100" width="220" height="68" rx="10" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <text x="290" y="122" font-weight="600">Devices</text><text x="290" y="140" font-size="13" fill="#444444">Your iPhone, iPad, Mac, Watch, AirPods.</text><text x="290" y="156" font-size="13" fill="#444444">Play sound, Lost Mode, erase.</text>
+    </g>
+    <g>
+      <path d="M152 298V314H262V206H272" fill="none" stroke="#9C9C9C"/>
+      <rect x="276" y="182" width="220" height="68" rx="10" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <text x="290" y="204" font-weight="600">Items</text><text x="290" y="222" font-size="13" fill="#444444">AirTags and other network tags.</text><text x="290" y="238" font-size="13" fill="#444444">Up to 32 per Apple Account.</text>
+    </g>
+    <g>
+      <path d="M198 298V310H268V288H272" fill="none" stroke="#9C9C9C"/>
+      <rect x="276" y="264" width="220" height="56" rx="10" fill="#FFFFFF" stroke="#E5E5E5"/>
+      <text x="290" y="286" font-weight="600">Me</text><text x="290" y="304" font-size="13" fill="#444444">Turn Share My Location on or off.</text>
+    </g>
+    <!-- watch -->
+    <rect x="560" y="70" width="150" height="180" rx="40" fill="#1A1A1A"/>
+    <rect x="574" y="86" width="122" height="148" rx="28" fill="#F7F7F5"/>
+    <rect x="712" y="130" width="10" height="34" rx="4" fill="#444444"/>
+    <rect x="584" y="98" width="72" height="24" rx="4" fill="#FFFFFF" stroke="#E5E5E5"/><text x="620" y="115" text-anchor="middle" font-size="13">Items ▾</text>
+    <circle cx="636" cy="170" r="8" fill="#FFFFFF" stroke="#7A9E26" stroke-width="3"/>
+    <text x="635" y="280" text-anchor="middle" font-weight="600">Apple Watch, watchOS 27</text>
+    <text x="635" y="298" text-anchor="middle" font-size="13" fill="#444444">One Find My app. The button at top left</text>
+    <text x="635" y="314" text-anchor="middle" font-size="13" fill="#444444">switches Devices, People, Items.</text>
+  </svg>

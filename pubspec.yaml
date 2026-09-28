@@ -621,6 +621,15 @@ flutter:
     # allow-list by tool/home_internet_diagrams.py and resolved by
     # lib/data/home_internet_diagrams.dart.
     - assets/tool-diagrams/home-internet/
+    # Guided Lesson figures (1.11.0): each explainer guide's OWN figures,
+    # lifted from its approved HTML by tool/extract_lesson_figures.py and
+    # shown on an always-light card (lib/widgets/lesson/lesson_figure_view.dart).
+    # _shared holds the explainer icon set's warning mark for Caution / Stop.
+    - assets/lesson-figures/_shared/
+    - assets/lesson-figures/find-my/
+    - assets/lesson-figures/starlink/
+    - assets/lesson-figures/home-internet/
+    - assets/lesson-figures/wifi-calling/
     # "Where you test throughput along the path changes the result" — a
     # Vera-passed, DARK-BAKED raster reference diagram (white logo on the §8
     # dark canvas) embedded on the Speed Test Services screen. Unlike the §8.6.2
