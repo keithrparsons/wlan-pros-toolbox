@@ -55,6 +55,7 @@ import '../screens/tools/calculators/power_save_screen.dart';
 import '../screens/tools/calculators/antenna_pattern_screen.dart';
 import '../screens/tools/calculators/eap_ladder_screen.dart';
 import '../screens/tools/calculators/join_ladder_screen.dart';
+import '../screens/tools/calculators/wpa2_password_screen.dart';
 import '../screens/tools/calculators/phy_preamble_screen.dart';
 import '../screens/tools/calculators/fourier_fft_screen.dart';
 import '../screens/tools/calculators/wifi_through_a_wall_screen.dart';
@@ -413,6 +414,11 @@ class AppRouter {
   // and DNS, on the eap-ladder engine; pure on-device model, all platforms.
   // Not joinNetwork (/tools/join-network), which really joins a network.
   static const String joinLadder = '/tools/join-ladder';
+  // Wi-Fi Classroom (2026-09-27). Where a password guess is checked on
+  // WPA2-Personal, WPA3-Personal (SAE) and WPA3 transition mode, and the
+  // number of possible passwords; no crack times. Pure on-device model, all
+  // platforms incl. web.
+  static const String wpa2Password = '/tools/wpa2-password';
   // Wi-Fi Classroom (2026-09-25). PHY preamble per PPDU format, to scale, with
   // the SIG bit tables; pure on-device model, all platforms incl. web.
   static const String phyPreamble = '/tools/phy-preamble';
@@ -902,6 +908,7 @@ class AppRouter {
     bandSteering: (_) => const BandSteeringScreen(),
     legacyProtection: (_) => const LegacyProtectionScreen(),
     eapLadder: (_) => const EapLadderScreen(),
+    wpa2Password: (_) => const Wpa2PasswordScreen(),
     joinLadder: (_) => const JoinLadderScreen(),
     phyPreamble: (_) => const PhyPreambleScreen(),
     maidenhead: (_) => const MaidenheadScreen(),
