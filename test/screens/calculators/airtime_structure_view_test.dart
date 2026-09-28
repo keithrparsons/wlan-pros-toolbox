@@ -288,4 +288,41 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  testWidgets('limits: an HT 64-frame A-MPDU is over 65,535; HE says what '
+      'is not checked', (WidgetTester tester) async {
+    final AirtimeAnatomyModel m = _model()
+      ..setEditing(1)
+      ..setView(AirtimeView.structure);
+    await _phone(tester, m);
+    expect(find.text('Limits from the standard'), findsOneWidget);
+    expect(find.textContaining('Not checked for HE'), findsOneWidget);
+    expect(
+      find.textContaining('Block Ack bitmap, one bit per MPDU'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('HE raised it to 256 MPDUs'), findsOneWidget);
+    expect(find.textContaining('a 14-bit MPDU Length'), findsOneWidget);
+
+    m.edit(
+      (AirtimeScenario s) => s.copyWith(
+        band: AirtimeBand.ghz5,
+        phy: AirtimePhy.ht,
+        widthMhz: 40,
+        mcs: 7,
+        framesAggregated: 64,
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.textContaining(
+        'A-MPDU length: 99,328 bytes, over the maximum of '
+        '65,535 bytes',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Not checked for HE'), findsNothing);
+    expect(find.textContaining('12-bit MPDU Length'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

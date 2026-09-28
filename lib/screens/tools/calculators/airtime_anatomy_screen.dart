@@ -104,6 +104,18 @@ class _AirtimeAnatomyScreenState extends State<AirtimeAnatomyScreen> {
         if (t[k] > 0) b.writeln('  ${k.label}: ${t[k]} bytes');
       }
       b.writeln('  PSDU: ${t.total} bytes');
+      for (final AggregationLimitCheck c in _model.limits) {
+        final String v = c.kind == AggregationLimitKind.ppduTime
+            ? '${formatTenthsUs(c.value)} µs of ${formatTenthsUs(c.cap)} µs'
+            : '${c.value} of ${c.cap} bytes';
+        final String verdict = switch (c.verdict) {
+          LimitVerdict.ok => 'within limit',
+          LimitVerdict.needsLargerSetting =>
+            'needs a receiver advertising ${c.smallestFitting}',
+          LimitVerdict.exceeds => 'OVER THE MAXIMUM',
+        };
+        b.writeln('  ${c.kind.label}: $v, $verdict');
+      }
       final CorruptionOutcome? o = _model.corruption;
       if (o != null) {
         b.writeln(
