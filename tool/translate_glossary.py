@@ -601,6 +601,10 @@ T = {
     # approved. Same rules as above: plain words, Wi-Fi kept in ES/FR/IT, WLAN
     # for the technology in DE, technical names (LTE, mmWave, LC3, Auracast,
     # border router, ONT, DOCSIS) untranslated, digits kept, both units kept.
+    # e911 corrected 2026-09-28 after the gate: "from GPS, nearby Wi-Fi and cell
+    # towers" (FCC fact sheet DOC-410028A1, 6 March 2025: device-based hybrid
+    # location, GPS plus crowd-sourced Wi-Fi, is used on about 80% of wireless
+    # 911 calls).
     "sim": {
         "es": "La pequeña tarjeta con chip que le dice a la compañía telefónica a qué cuenta pertenece un teléfono. Si pasas la SIM a otro teléfono, tu número se va con ella.",
         "fr": "La petite carte à puce qui indique à l'opérateur à quel compte appartient un téléphone. Mettez la SIM dans un autre téléphone et votre numéro la suit.",
@@ -638,10 +642,10 @@ T = {
         "de": "Das Netz eines anderen Mobilfunkanbieters nutzen, wenn du nicht im eigenen bist, meistens im Ausland. Das kann teuer werden. Prüfe deinen Tarif, bevor du landest.",
     },
     "e911": {
-        "es": "El sistema 911 para teléfonos. En una llamada celular, tu operador envía al centro de emergencias tu número y su mejor estimación de tu ubicación, a partir del GPS y de las torres cercanas. Esa estimación es peor en interiores. En una llamada por Wi-Fi, puede depender de la dirección de emergencia que guardaste con tu operador. Mantén esa dirección al día y di siempre primero dónde estás.",
-        "fr": "Le système 911 pour les téléphones. Lors d'un appel cellulaire, votre opérateur envoie au centre d'urgence votre numéro et sa meilleure estimation de votre position, à partir du GPS et des antennes-relais proches. Cette estimation est moins bonne à l'intérieur. Lors d'un appel Wi-Fi, il peut s'appuyer sur l'adresse d'urgence que vous avez enregistrée auprès de votre opérateur. Gardez cette adresse à jour, et dites toujours d'abord où vous êtes.",
-        "it": "Il sistema 911 per i telefoni. In una chiamata cellulare, il tuo operatore invia al centro di emergenza il tuo numero e la sua stima migliore della tua posizione, dal GPS e dalle torri vicine. Quella stima è meno precisa al chiuso. In una chiamata Wi-Fi, può basarsi sull'indirizzo di emergenza che hai registrato presso il tuo operatore. Tieni aggiornato quell'indirizzo e di' sempre prima dove ti trovi.",
-        "de": "Das 911-System für Handys. Bei einem Mobilfunkanruf schickt dein Anbieter der Notrufzentrale deine Nummer und seine beste Schätzung deines Standorts, aus GPS und nahen Funkmasten. Drinnen ist diese Schätzung schlechter. Bei einem WLAN-Anruf stützt es sich unter Umständen auf die Notfalladresse, die du bei deinem Anbieter hinterlegt hast. Halte diese Adresse aktuell, und sag immer zuerst, wo du bist.",
+        "es": "El sistema 911 para teléfonos. En una llamada celular, tu operador envía al centro de emergencias tu número y su mejor estimación de tu ubicación, a partir del GPS, del Wi-Fi cercano y de las torres celulares. Esa estimación es peor en interiores. En una llamada por Wi-Fi, puede depender de la dirección de emergencia que guardaste con tu operador. Mantén esa dirección al día y di siempre primero dónde estás.",
+        "fr": "Le système 911 pour les téléphones. Lors d'un appel cellulaire, votre opérateur envoie au centre d'urgence votre numéro et sa meilleure estimation de votre position, à partir du GPS, du Wi-Fi à proximité et des antennes-relais. Cette estimation est moins bonne à l'intérieur. Lors d'un appel Wi-Fi, il peut s'appuyer sur l'adresse d'urgence que vous avez enregistrée auprès de votre opérateur. Gardez cette adresse à jour, et dites toujours d'abord où vous êtes.",
+        "it": "Il sistema 911 per i telefoni. In una chiamata cellulare, il tuo operatore invia al centro di emergenza il tuo numero e la sua stima migliore della tua posizione, dal GPS, dal Wi-Fi vicino e dalle torri cellulari. Quella stima è meno precisa al chiuso. In una chiamata Wi-Fi, può basarsi sull'indirizzo di emergenza che hai registrato presso il tuo operatore. Tieni aggiornato quell'indirizzo e di' sempre prima dove ti trovi.",
+        "de": "Das 911-System für Handys. Bei einem Mobilfunkanruf schickt dein Anbieter der Notrufzentrale deine Nummer und seine beste Schätzung deines Standorts, aus GPS, WLAN in der Nähe und Mobilfunkmasten. Drinnen ist diese Schätzung schlechter. Bei einem WLAN-Anruf stützt es sich unter Umständen auf die Notfalladresse, die du bei deinem Anbieter hinterlegt hast. Halte diese Adresse aktuell, und sag immer zuerst, wo du bist.",
     },
     "wi-fi-calling": {
         "es": "Hacer llamadas y enviar mensajes de texto normales a través de una red Wi-Fi en lugar de la red celular. Ayuda mucho donde la señal celular es débil y el Wi-Fi es bueno. Tu número y la app de teléfono siguen siendo los mismos.",
