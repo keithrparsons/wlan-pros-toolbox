@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" width="760" height="250" role="img" aria-label="Carrier Wi-Fi Calling beside WhatsApp and FaceTime Audio, four points each">
+<rect x="10" y="10" width="360" height="230" rx="12" fill="none" stroke="#A2CC3A" stroke-width="2.5"/>
+<text x="190" y="42" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="600">Carrier Wi-Fi Calling</text>
+<circle cx="40" cy="80" r="11" fill="none" stroke="#A2CC3A" stroke-width="2"/>
+<path d="M34 80l4 4 8-8" fill="none" stroke="#A2CC3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="62" y="85" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Calls almost any phone number</text>
+<circle cx="40" cy="120" r="11" fill="none" stroke="#A2CC3A" stroke-width="2"/>
+<path d="M34 120l4 4 8-8" fill="none" stroke="#A2CC3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="62" y="125" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Shows your own phone number</text>
+<circle cx="40" cy="160" r="11" fill="none" stroke="#A2CC3A" stroke-width="2"/>
+<path d="M34 160l4 4 8-8" fill="none" stroke="#A2CC3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="62" y="165" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Emergency calls possible (section 5)</text>
+<circle cx="40" cy="200" r="11" fill="none" stroke="#E0A23A" stroke-width="2"/>
+<line x1="40" y1="195" x2="40" y2="201" stroke="#E0A23A" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="40" cy="205.5" r="1.5" fill="#E0A23A"/>
+<text x="62" y="205" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Blocked in some countries</text>
+<rect x="390" y="10" width="360" height="230" rx="12" fill="none" stroke="#9C9C9C" stroke-width="2.5"/>
+<text x="570" y="42" font-family="IBM Plex Sans" font-size="15" fill="#E5E5E5" text-anchor="middle" font-weight="600">WhatsApp, FaceTime Audio</text>
+<circle cx="420" cy="80" r="11" fill="none" stroke="#F26E6E" stroke-width="2"/>
+<path d="M415 75l10 10M425 75l-10 10" fill="none" stroke="#F26E6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="85" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Only other people using the app</text>
+<circle cx="420" cy="120" r="11" fill="none" stroke="#9C9C9C" stroke-width="2"/>
+<line x1="415" y1="120" x2="425" y2="120" stroke="#9C9C9C" stroke-width="2.5" stroke-linecap="round"/>
+<text x="442" y="125" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Shows your app account</text>
+<circle cx="420" cy="160" r="11" fill="none" stroke="#F26E6E" stroke-width="2"/>
+<path d="M415 155l10 10M425 155l-10 10" fill="none" stroke="#F26E6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="165" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Not for emergencies</text>
+<circle cx="420" cy="200" r="11" fill="none" stroke="#E0A23A" stroke-width="2"/>
+<line x1="420" y1="195" x2="420" y2="201" stroke="#E0A23A" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="420" cy="205.5" r="1.5" fill="#E0A23A"/>
+<text x="442" y="205" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="400">Not available everywhere either</text>
+</svg>

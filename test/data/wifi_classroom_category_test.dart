@@ -13,6 +13,18 @@ import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/data/tool_subgroups.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 
+/// Guided Lessons built in the Classroom rather than moved from Educational
+/// Resources. One id per line, so parallel branches union cleanly at merge.
+const Set<String> _builtInClassroom = <String>{
+  'find-my-explained',
+  'wifi-calling-explained',
+  'guest-discovery',
+  'public-wifi',
+  'wifi-privacy-myths',
+  'captive-portal',
+  'starlink-explained',
+};
+
 /// Shelf -> tool ids, in the order the screen must show them.
 const Map<String, List<String>> _teachingOrder = <String, List<String>>{
   'Guided Lessons': <String>[
@@ -32,6 +44,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'guest-discovery',
     // 2026-09-27: Starlink, Explained, the next explainer post turned lesson.
     'starlink-explained',
+    // 2026-09-27: Wi-Fi Calling, Explained, the next explainer post turned
+    // Guided Lesson.
+    'wifi-calling-explained',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -102,17 +117,6 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
   ],
 };
 
-/// Guided Lessons built in the Classroom rather than moved in from
-/// Educational Resources.
-const Set<String> _builtInClassroom = <String>{
-  'find-my-explained',
-  'guest-discovery',
-  'public-wifi',
-  'wifi-privacy-myths',
-  'captive-portal',
-  'starlink-explained',
-};
-
 const Set<String> _simulatorShelves = <String>{
   'RF and Propagation',
   'Signals and PHY',
@@ -173,6 +177,9 @@ void main() {
       'Study Resources stayed', () {
     // Lessons built in the Classroom (2026-09-27 on) never lived in
     // Educational Resources, so they are not among the 13 that moved.
+    // find-my-explained and the lessons after it were built in the Classroom
+    // (2026-09-27) and never lived in Educational Resources, so they are not
+    // among the 13 that moved.
     final Set<String> moved = <String>{
       // starlink-explained (2026-09-27) likewise was built in the Classroom.
       ..._teachingOrder['Guided Lessons']!.where(
@@ -217,7 +224,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(58));
+    expect(classroom.tools, hasLength(59));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

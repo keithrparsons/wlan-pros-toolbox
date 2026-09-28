@@ -79,6 +79,7 @@ const Set<String> _guideIds = <String>{
   'captive-portal',
   'guest-discovery',
   'starlink-explained',
+  'wifi-calling-explained',
 };
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.

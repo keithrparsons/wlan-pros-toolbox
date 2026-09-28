@@ -134,6 +134,7 @@ import '../screens/tools/reference/wifi_privacy_lesson_screen.dart';
 import '../screens/tools/reference/captive_portal_screen.dart';
 import '../screens/tools/reference/guest_discovery_screen.dart';
 import '../screens/tools/reference/starlink_explained_screen.dart';
+import '../screens/tools/reference/wifi_calling_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -782,6 +783,11 @@ class AppRouter {
   /// Wi-Fi inside. The id `starlink-explained` is permanent (route, catalog,
   /// diagram lookup, help, tests).
   static const String starlinkExplained = '/tools/starlink-explained';
+  /// Wi-Fi Calling, Explained — a Wi-Fi Classroom Guided Lesson: how a call
+  /// reaches your carrier over Wi-Fi, when the phone uses it, emergency calls,
+  /// travel, and what your Wi-Fi owes a call. The id `wifi-calling-explained`
+  /// is permanent (route, catalog, diagram lookup, help, tests).
+  static const String wifiCallingExplained = '/tools/wifi-calling-explained';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1141,6 +1147,7 @@ class AppRouter {
     captivePortal: (_) => const CaptivePortalScreen(),
     guestDiscovery: (_) => const GuestDiscoveryScreen(),
     starlinkExplained: (_) => const StarlinkExplainedScreen(),
+    wifiCallingExplained: (_) => const WifiCallingExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

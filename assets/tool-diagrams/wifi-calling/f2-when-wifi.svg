@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 230" width="760" height="230" role="img" aria-label="A cell-signal scale from none to strong, and which road the call takes at each end">
+<defs><linearGradient id="wc-signal" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#F26E6E"/><stop offset="0.5" stop-color="#E0A23A"/><stop offset="1" stop-color="#A2CC3A"/></linearGradient></defs>
+<text x="30" y="30" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="600">Cell signal where you are standing</text>
+<rect x="30" y="45" width="700" height="22" rx="11" fill="url(#wc-signal)"/>
+<text x="30" y="88" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">None or very weak</text>
+<text x="730" y="88" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="end" font-weight="400">Strong</text>
+<rect x="30" y="105" width="330" height="110" rx="12" fill="none" stroke="#A2CC3A" stroke-width="2"/>
+<text x="50" y="132" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="600">Weak or no cell signal</text>
+<text x="50" y="154" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">The call goes over Wi-Fi Calling.</text>
+<text x="50" y="172" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">The basement office, the thick-walled</text>
+<text x="50" y="190" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">house, the cabin with no cell signal.</text>
+<rect x="400" y="105" width="330" height="110" rx="12" fill="none" stroke="#9C9C9C" stroke-width="2"/>
+<text x="420" y="132" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="600">Good cell signal</text>
+<text x="420" y="154" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">The call usually goes over the cell</text>
+<text x="420" y="172" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">network, even with Wi-Fi Calling on.</text>
+<text x="420" y="190" font-family="IBM Plex Sans" font-size="12" fill="#9C9C9C" text-anchor="start" font-weight="400">Some phones let you change this.</text>
+</svg>

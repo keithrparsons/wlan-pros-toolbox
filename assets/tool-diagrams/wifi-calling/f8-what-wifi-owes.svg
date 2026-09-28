@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" width="760" height="250" role="img" aria-label="One delay budget shared by Wi-Fi, the internet line and the rest of the trip, and Wi-Fi's four traffic lanes">
+<text x="20" y="28" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="600">The whole trip, mouth to ear: 150 milliseconds or less feels natural</text>
+<rect x="20" y="42" width="150" height="40" rx="8" fill="#A2CC3A" fill-opacity="0.35"/>
+<rect x="170" y="42" width="220" height="40" rx="0" fill="#3A3A3A"/>
+<rect x="20" y="42" width="720" height="40" rx="8" fill="none" stroke="#E5E5E5" stroke-width="1.5"/>
+<line x1="170" y1="42" x2="170" y2="82" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="390" y1="42" x2="390" y2="82" stroke="#E5E5E5" stroke-width="1.5" stroke-linecap="round"/>
+<text x="95" y="67" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="middle" font-weight="600">Your Wi-Fi</text>
+<text x="280" y="67" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="middle" font-weight="600">Your internet line</text>
+<text x="565" y="67" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="middle" font-weight="600">Internet and carrier, to the other phone</text>
+<text x="20" y="104" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="start" font-weight="400">Every part of the trip spends from the same budget. When someone uploads photos on the same connection,</text>
+<text x="20" y="120" font-family="IBM Plex Sans" font-size="11.5" fill="#9C9C9C" text-anchor="start" font-weight="400">the internet-line slice can grow by hundreds of milliseconds on its own.</text>
+<text x="20" y="152" font-family="IBM Plex Sans" font-size="13" fill="#E5E5E5" text-anchor="start" font-weight="600">Wi-Fi's four lanes (WMM, Wi-Fi Multimedia)</text>
+<rect x="20" y="162" width="720" height="18" rx="4" fill="#A2CC3A" fill-opacity="0.5"/>
+<rect x="20" y="162" width="720" height="18" rx="4" fill="none" stroke="#A2CC3A" stroke-width="1.2"/>
+<text x="30" y="175" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="start" font-weight="600">Voice: the fast lane</text>
+<rect x="20" y="184" width="720" height="18" rx="4" fill="#A2CC3A" fill-opacity="0.22"/>
+<text x="30" y="197" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="start" font-weight="600">Video</text>
+<rect x="20" y="206" width="720" height="18" rx="4" fill="#3A3A3A"/>
+<text x="30" y="219" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="start" font-weight="600">Best effort: everyday data</text>
+<rect x="20" y="228" width="720" height="18" rx="4" fill="none" stroke="#3A3A3A" stroke-width="1.2"/>
+<text x="30" y="241" font-family="IBM Plex Sans" font-size="12" fill="#E5E5E5" text-anchor="start" font-weight="600">Background</text>
+</svg>
