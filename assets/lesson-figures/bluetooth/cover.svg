@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="IBM Plex Sans" width="700" height="250">
+      <!-- phone -->
+      <g transform="translate(350,130)"><g transform="translate(-51.52 -51.52) scale(4.29333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g></g>
+      <!-- link to earbuds -->
+      <path d="M312 118 C260 90 200 84 150 96" fill="none" stroke="#7A9E26" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <!-- link to car -->
+      <path d="M388 118 C440 90 500 84 548 96" fill="none" stroke="#7A9E26" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <!-- earbuds -->
+      <g transform="translate(105,118)"><g transform="translate(-30 -26) scale(2.5)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g><g transform="translate(0 1) translate(24 0) scale(-1 1) rotate(-8 5.5 13)"><path d="M4 17 V7.2 A3.4 3.4 0 1 1 7.4 10.6 H6.9 V17 A1.45 1.45 0 0 1 4 17 Z"/><circle cx="10.9" cy="6.6" r="1.25" fill="#111111" stroke="none"/></g></g><text y="66" text-anchor="middle" fill="#444444" font-size="15">Earbuds</text></g>
+      <!-- car -->
+      <g transform="translate(610,120)"><g transform="translate(-55 -59) scale(4.58333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17 H3 V13.2 L5.6 8.5 H15.6 L18.8 12.4 C20.4 12.7 21 13.6 21 14.8 V17 H19 M9 17 H15"/><path d="M3.8 12.5 H18.6"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></g><text y="64" text-anchor="middle" fill="#444444" font-size="15">Your car</text></g>
+      <text x="350" y="208" text-anchor="middle" fill="#444444" font-size="15">Your phone</text>
+    </svg>

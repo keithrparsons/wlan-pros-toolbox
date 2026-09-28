@@ -7278,6 +7278,29 @@
       ],
       "source": "The WLAN Pros print guide Home Internet, Explained (September 2026), reviewed with a second opinion and checked against the FCC, provider and standards sources on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "bluetooth-explained": {
+      "category": "Wireless Classroom",
+      "purpose": "A read-along lesson on why your earbuds cut out, why the car won't connect, and what to do about each. Bluetooth is a short-range radio that links your phone to earbuds, speakers, watches and your car, and when the sound cuts out, one of three things is usually to blame: something in the way, a crowded band, or a stale pairing. The lesson follows the free PDF guide of the same name, word for word, with its 10 figures.",
+      "whyHere": "It answers a question Wi-Fi people get asked by people who are not technical: why do my earbuds keep cutting out, and why won't my car connect? It also carries the Wi-Fi angle. Bluetooth uses the same radio band as a lot of Wi-Fi, so putting the devices that can use it on 5 GHz Wi-Fi leaves more room for your earbuds. Wireless CarPlay uses Bluetooth only to find the car, and Wi-Fi carries the screen and the sound. Figure 8 shows the two radios and their two jobs.",
+      "howToUse": [
+        "Read top to bottom. It starts with the three usual causes, then pairing and connecting, the band Bluetooth shares with Wi-Fi, your body in the path, crowds, why calls sound thinner than music, one set of earbuds on two devices, your car, wireless CarPlay and Android Auto, what to do when the car won't connect, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.",
+        "Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.",
+        "Step 10 has the order to try things in when the car won't connect. Do them while parked.",
+        "On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.",
+        "Take it with you, at the end of the lesson, names the free PDF guide it follows, Bluetooth, Explained from WLAN Pros, to print or share."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Checked against each company's own pages in September 2026. Menus and car support change with software updates.",
+        "The lesson gives no decibel figure for the human body, because the guide had no sourced number to give. Line thickness in Figure 3 shows the idea, not a measured amount.",
+        "Figure 4 is not to scale.",
+        "The lesson is independent and isn't affiliated with or endorsed by any phone, earbud or car maker."
+      ],
+      "source": "The WLAN Pros print guide Bluetooth, Explained (September 2026), checked against the Bluetooth SIG, Apple and Google pages. The full source list is the last section of the lesson.",
+      "name": "Bluetooth, Explained"
+    },
     "wifi-calling-explained": {
       "name": "Wi-Fi Calling, Explained",
       "category": "Wireless Classroom",

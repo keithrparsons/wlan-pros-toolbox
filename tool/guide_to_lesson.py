@@ -460,7 +460,9 @@ def parse_callout(el, cl: set[str]) -> dict:
 # Page references
 # ─────────────────────────────────────────────────────────────────────────────
 
-_PAGE = re.compile(r"\b(on |at )?page (\d+)\b")
+_PAGE = re.compile(
+    r"\b(on |at )?(pages?) (\d+(?:(?:, | and | to |-|\u2013)\d+)*)\b"
+)
 
 
 def add_links(g: dict, links: list[tuple[str, str]]) -> list[str]:
@@ -503,10 +505,24 @@ def fix_page_refs(g: dict) -> list[str]:
 
     def fix(s: str) -> str:
         def sub(m: re.Match) -> str:
-            st = step_for(int(m.group(2)))
             pre = {"on ": "in ", "at ": "in "}.get(m.group(1) or "", "")
-            new = f"{pre}step {st['number']}"
-            changes.append(f'"{m.group(0)}" -> "{new}" ({st["title"]})')
+            pages = [int(n) for n in re.findall(r"\d+", m.group(3))]
+            if re.search(r" to |-|\u2013", m.group(3)):
+                if len(pages) != 2:
+                    raise ConvertError(f"page range not understood: {m.group(0)!r}")
+                pages = list(range(pages[0], pages[1] + 1))
+            steps: list[dict] = []
+            for n in pages:
+                st = step_for(n)
+                if st not in steps:
+                    steps.append(st)
+            nums = [st["number"] for st in steps]
+            if len(nums) == 1:
+                new = f"{pre}step {nums[0]}"
+            else:
+                new = f"{pre}steps " + ", ".join(nums[:-1]) + f" and {nums[-1]}"
+            titles = "; ".join(st["title"] for st in steps)
+            changes.append(f'"{m.group(0)}" -> "{new}" ({titles})')
             return new
 
         return _PAGE.sub(sub, s)

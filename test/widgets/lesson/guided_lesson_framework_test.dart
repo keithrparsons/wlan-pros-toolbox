@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/lesson_parts.dart'
-    show LessonRich, lessonPlain;
+    show LessonRich, LessonSources, lessonPlain;
 import 'package:wlan_pros_toolbox/theme/app_color_scheme.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/lesson/lesson.dart';
@@ -327,6 +327,26 @@ void main() {
     expect(
       find.bySemanticsLabel(RegExp("^Keith's note, from Fix Your Own Wi-Fi")),
       findsWidgets,
+    );
+  });
+
+  testWidgets('a source line shows a book title in italics, not its markers', (
+    tester,
+  ) async {
+    // Bluetooth, Explained cites "Keith Parsons, <i>Fix Your Own Wi-Fi</i>".
+    await tester.pumpWidget(
+      _host(
+        const LessonSources(<String>[
+          'Keith Parsons, __Fix Your Own Wi-Fi__ (in preparation, 2026)',
+        ]),
+      ),
+    );
+    expect(find.textContaining('__'), findsNothing);
+    expect(
+      find.bySemanticsLabel(
+        'Keith Parsons, Fix Your Own Wi-Fi (in preparation, 2026)',
+      ),
+      findsOneWidget,
     );
   });
 }

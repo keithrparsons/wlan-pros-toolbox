@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="250">
+    <g transform="translate(80,125)"><g transform="translate(-51.52 -51.52) scale(4.29333)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g></g>
+    <text x="80" y="200" text-anchor="middle" font-weight="600">Your phone</text>
+    <!-- car -->
+    <g transform="translate(660,125)"><g transform="translate(-65 -69) scale(5.41667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17 H3 V13.2 L5.6 8.5 H15.6 L18.8 12.4 C20.4 12.7 21 13.6 21 14.8 V17 H19 M9 17 H15"/><path d="M3.8 12.5 H18.6"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></g></g>
+    <text x="660" y="200" text-anchor="middle" font-weight="600">Your car</text>
+    <!-- step 1 bluetooth -->
+    <circle cx="140" cy="40" r="12" fill="#1A1A1A"/><text x="140" y="45" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="600">1</text>
+    <text x="160" y="45" font-weight="600">Bluetooth finds the car and reconnects</text>
+    <path d="M118 90 H572" stroke="#444444" stroke-width="2" stroke-dasharray="6 6"/>
+    <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(572,90) rotate(360) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(118,90) rotate(180) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#444444"/></g><!-- step 2 wifi -->
+    <rect x="118" y="130" width="454" height="30" rx="15" fill="#A1CC3A" opacity=".3"/>
+    <path d="M124 145 H566" stroke="#7A9E26" stroke-width="4"/>
+    <g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(566,145) rotate(360) scale(2.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><g fill="#111111" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" font-size="13" transform="translate(124,145) rotate(180) scale(2.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><circle cx="140" cy="198" r="12" fill="#2F5E00"/><text x="140" y="203" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="600">2</text>
+    <text x="160" y="196" font-weight="600" fill="#2F5E00">Wi-Fi, a private link the car runs itself,</text>
+    <text x="160" y="214" font-weight="600" fill="#2F5E00">carries CarPlay's screen and sound</text>
+  </svg>

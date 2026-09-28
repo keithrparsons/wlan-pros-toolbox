@@ -2662,6 +2662,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Bluetooth, Explained (2026-09-28, Keith approved the guide, myPKA
+      // 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own ten figures. Shelved
+      // after Home Internet.
+      ToolEntry(
+        id: 'bluetooth-explained',
+        title: 'Bluetooth, Explained',
+        description:
+            'Why your earbuds cut out, why the car won\'t connect, and what to do about each',
+        routeName: '/tools/bluetooth-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.
