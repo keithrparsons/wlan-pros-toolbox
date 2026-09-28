@@ -3976,7 +3976,7 @@ A read-along lesson on how many newer phones send a text through a satellite whe
 1. Read top to bottom. It starts with the short answer, then how a text reaches a satellite, why it needs the sky, holding the phone and waiting, the limits, setting it up before you go, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
 2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
 3. Step 5 has the one Stop box in the lesson: don't make satellite texting your only way to get help.
-4. Step 6 has the setup list and the steps to try the demo on an iPhone and on a Pixel while you still have signal.
+4. Step 6 has the setup list and the steps to try the demo on an iPhone and on a Pixel phone while you still have signal.
 5. The last step has Open buttons for How GPS Works, Explained, Starlink, Explained and Weak Cell Signal at Home, Explained when those lessons are in the app.
 6. The last row, Take it with you, names the free PDF guide the lesson follows, Satellite Texting, Explained, from WLAN Pros, to read or print away from the app. The PDF isn't inside the app.
 7. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.

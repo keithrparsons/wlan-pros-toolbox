@@ -43,6 +43,10 @@ const List<String> _allowed = <String>[
   // The FCC band name, the sentence the Weak Cell Signal lesson had to split.
   'the 1900 MHz PCS band and the AWS-1 band (1.7 and 2.1 GHz).',
   'AWS-3 and AWS-4 are later auctions.',
+  // The Satellite Texting guide's own heading, verbatim: a phone named with an
+  // article before it is the product, never the person (2026-09-28).
+  'Try the demo on a Pixel',
+  'Hold an iPhone or a Pixel up to the sky.',
 ];
 
 /// Lines the guard must still fail. Each is a real internal leak.
@@ -57,6 +61,8 @@ const List<String> _leaks = <String>[
   'See WS-003 for the install steps.',
   '(WS-2) import notes',
   'WS-1',
+  // The article rule does not shelter the person either.
+  'Ask Pixel, not a Pixel phone, for the figure.',
 ];
 
 String _packageRoot() {

@@ -49,6 +49,10 @@ CS_PAT='SOP-[0-9]|GL-[0-9]|(^|[^A-Za-z0-9_])WS-[0-9]|\[\[[^:]|session-log|Delive
 # by "Google", or followed by a digit ("Pixel 9", "Pixel 8a") or a product word.
 # Mirrors PIXEL_PRODUCT in leakage_guard_dart.py. Masked lines print with "Pxl".
 PIXEL_PRODUCT_SED='s/Google Pixel([^A-Za-z]|$)/Google Pxl\1/g; s/Pixel([ -]?[0-9])/Pxl\1/g; s/Pixel([[:space:]]+([Pp]hones?|Buds|Watch|Tablet|Fold|devices?))([^A-Za-z]|$)/Pxl\1\3/g'
+# A phone named with an article before it ("Try the demo on a Pixel", "an
+# iPhone or a Pixel") is the product too; the specialist is never "a Pixel".
+# Mirrors PIXEL_ARTICLE in leakage_guard_dart.py (2026-09-28).
+PIXEL_PRODUCT_SED="$PIXEL_PRODUCT_SED; s/(^|[^A-Za-z])([Aa]n?) Pixel([^A-Za-z]|\$)/\1\2 Pxl\3/g"
 
 hits=0
 scanned=0
