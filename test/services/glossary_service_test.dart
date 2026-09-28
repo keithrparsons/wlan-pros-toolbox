@@ -15,7 +15,7 @@ import 'package:wlan_pros_toolbox/services/glossary/glossary_service.dart';
 const String _fixture = '''
 {
   "schema_version": 1,
-  "title": "Wi-Fi Glossary",
+  "title": "Wireless Glossary",
   "source": "test fixture",
   "term_count": 3,
   "terms": [
@@ -67,7 +67,7 @@ void main() {
 
     test('reads title and source from the document', () {
       final GlossaryService svc = _svc();
-      expect(svc.title, 'Wi-Fi Glossary');
+      expect(svc.title, 'Wireless Glossary');
       expect(svc.source, 'test fixture');
     });
 
@@ -203,6 +203,20 @@ void main() {
       expect(router.definition, contains('A router is not an access point.'));
     });
 
+    test('E911 names Wi-Fi as a location source (FCC DOC-410028A1)', () {
+      // FCC fact sheet, 6 March 2025: device-based hybrid location (GPS plus
+      // crowd-sourced Wi-Fi) is used on about 80% of wireless 911 calls.
+      final GlossaryTerm e911 = _loadReal().byId('e911')!;
+      expect(
+        e911.definition,
+        contains('from GPS, nearby Wi-Fi and cell towers'),
+      );
+      expect(
+        e911.definitionFor(GlossaryLanguage.de),
+        contains('aus GPS, WLAN in der Nähe und Mobilfunkmasten'),
+      );
+    });
+
     test('the 30 wireless additions come after the 93 Wi-Fi terms', () {
       final List<GlossaryTerm> all = _loadReal().all;
       expect(all[92].category, 'Performance & Troubleshooting');
@@ -251,7 +265,7 @@ void main() {
         () {
       const String fixture = '''
 {
-  "title": "Wi-Fi Glossary",
+  "title": "Wireless Glossary",
   "terms": [
     {
       "id": "ofdma", "term": "OFDMA", "abbr": "Orthogonal FDMA",
@@ -297,7 +311,7 @@ void main() {
     test('search matches localized definition text in the active language', () {
       const String fixture = '''
 {
-  "title": "Wi-Fi Glossary",
+  "title": "Wireless Glossary",
   "terms": [
     {
       "id": "ssid", "term": "SSID", "abbr": "Service Set Identifier",

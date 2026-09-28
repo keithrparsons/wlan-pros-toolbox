@@ -1,7 +1,7 @@
-// GlossaryService — load the bundled Wi-Fi Glossary (assets/data/glossary.json,
+// GlossaryService — load the bundled Wireless Glossary (assets/data/glossary.json,
 // declared in pubspec.yaml) into typed Dart models, fully offline.
 //
-// WHAT IT DOES: parses the 93-term curated glossary into [GlossaryTerm] models,
+// WHAT IT DOES: parses the 123-term curated glossary into [GlossaryTerm] models,
 // groups them by `category` IN FILE ORDER (the curation order of categories and
 // of terms within each category is deliberate — never alphabetized), and answers
 // a free-text search consistent with the app's other reference/list screens
@@ -24,7 +24,7 @@
 // ORDER PRESERVATION: groups appear in the order their category is FIRST SEEN in
 // the `terms` array, and terms inside a group keep their file order. The dataset
 // lists all terms of a category contiguously, so first-seen order reproduces the
-// intended 8-category sequence without a separate order list. When the glossary
+// intended 12-category sequence without a separate order list. When the glossary
 // is filtered (search), the same ordering rule applies to the surviving subset.
 //
 // HONESTY (GL-005): an unmatched query returns an empty result, never a
@@ -108,7 +108,7 @@ class GlossaryTerm {
   /// English — never translated.
   final String? abbr;
 
-  /// Curated category name (one of the 8 groups), verbatim from the dataset.
+  /// Curated category name (one of the dataset's groups), verbatim from it.
   final String category;
 
   /// Plain-language English definition (one or more sentences). The default and
@@ -192,13 +192,13 @@ class GlossaryGroup {
   int get count => terms.length;
 }
 
-/// Indexes the Wi-Fi Glossary and answers grouping + search. Pure Dart; no
+/// Indexes the Wireless Glossary and answers grouping + search. Pure Dart; no
 /// Flutter dependency, so it is unit-testable from a JSON string.
 class GlossaryService {
   /// Build directly from parsed entries (used by tests and by [fromJson]).
   GlossaryService.fromEntries(
     List<GlossaryTerm> entries, {
-    this.title = 'Wi-Fi Glossary',
+    this.title = 'Wireless Glossary',
     this.source = '',
   }) : _entries = List<GlossaryTerm>.unmodifiable(entries);
 
@@ -213,7 +213,7 @@ class GlossaryService {
 
     final List<GlossaryTerm> entries = parseEntries(decoded);
 
-    String title = 'Wi-Fi Glossary';
+    String title = 'Wireless Glossary';
     final String t = GlossaryTerm._str(decoded['title']);
     if (t.isNotEmpty) title = t;
     final String source = GlossaryTerm._str(decoded['source']);
@@ -289,7 +289,7 @@ class GlossaryService {
   }
 
   /// Group [entries] (default: all) by `category`, ordered by first appearance
-  /// in the file (which reproduces the curated 8-category sequence, since each
+  /// in the file (which reproduces the curated category sequence, since each
   /// category's terms are contiguous). Terms keep their file order within each
   /// group. Empty categories are omitted.
   List<GlossaryGroup> grouped([List<GlossaryTerm>? entries]) {

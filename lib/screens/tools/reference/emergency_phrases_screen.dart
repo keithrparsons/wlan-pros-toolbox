@@ -3,7 +3,7 @@
 // English source plus four target translations (Spanish, French, Italian,
 // German), fully offline (bundled JSON asset).
 //
-// Mirrors the app's bundled-JSON reference pattern (Wi-Fi Glossary / Educational
+// Mirrors the app's bundled-JSON reference pattern (Wireless Glossary / Educational
 // Resources): bundled asset → EmergencyPhraseService.fromJson → grouped list
 // screen. The phrases render in curated situation groups in file order (never
 // alphabetized): Basics & courtesy, Medical & help, Directions, Food & lodging,

@@ -2130,9 +2130,9 @@ Teaches what a modulation constellation is on the I/Q plane and why each step up
 - The eight diagrams sit on an always-dark card in both light and dark modes so they never read inverted; every fact is also in the screen's prose and copy text, so the screen reads fully without the images.
 - The Copy action exports the order -> bits -> SNR/EVM summary as a tab-separated table plus the representative-numbers caveat.
 
-### Wi-Fi Glossary
+### Wireless Glossary
 
-Plain-language definitions of 93 Wi-Fi terms a working engineer meets, grouped by topic and searchable live across the term, abbreviation, and definition. The same grouped, searchable screen as the authentication glossary, with the general Wi-Fi dataset.
+Plain-language definitions of 123 wireless terms, grouped by topic and searchable live across the term, abbreviation, and definition. 93 are the Wi-Fi terms a working engineer meets, in 8 categories. The other 30 cover the radios and links people mix up with Wi-Fi, in 4 more: Cellular, Short-Range Radio, Location & Satellite, and Home Internet. The same grouped, searchable screen as the authentication glossary, with its own dataset.
 
 **Why it's here.** When a term in a config screen, a log, or a standards document is the thing standing between you and understanding what is happening. It answers what a term means in Wi-Fi terms, in Keith's voice, without a vendor's slant.
 
@@ -2144,7 +2144,7 @@ Plain-language definitions of 93 Wi-Fi terms a working engineer meets, grouped b
 **Field notes**
 - Multilingual: a language picker (English default, plus Spanish, French, Italian, and German) switches the definition language, so a non-English-first engineer can read the same definition in their own language. The English definitions remain the source of truth: whenever a non-English language is active the screen shows a "Translations in beta" note, because the translations are drafts pending professional review, and that draft flag travels with any copied text.
 - Vendor-neutral by design. Definitions describe standards-based behavior, not one vendor's implementation.
-- Data source: the curated 93-term Wi-Fi Glossary. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
+- Data source: the curated 123-term Wireless Glossary (93 Wi-Fi terms, then 30 wireless terms beyond Wi-Fi). The tool was called Wi-Fi Glossary until 2026-09-28, and searching for that name still finds it. The Wi-Fi Authentication Glossary below is the security-focused sibling with its own dataset.
 
 ### Wi-Fi Standards Bodies
 
@@ -2230,7 +2230,7 @@ Plain-language definitions of the Wi-Fi authentication terms, 58 of them, that a
 
 **Field notes**
 - Vendor-neutral by design. Definitions describe the standards-based behavior, not one vendor's implementation.
-- This is the authentication-focused sibling of the general Wi-Fi Glossary; same searchable, grouped layout with its own set of terms.
+- This is the authentication-focused sibling of the Wireless Glossary; same searchable, grouped layout with its own set of terms.
 - Data source: the curated Wi-Fi Authentication Glossary edition, 58 terms.
 
 ### WPA Security
@@ -3858,7 +3858,7 @@ A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum a
 **How to use**
 1. Open the module from the Wireless Classroom (Guided Lessons), then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi adapter) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.
 2. On Fingerprinting interferers, swipe through the nine signature cards and tap any card to zoom in. The caption under each card is its waterfall fingerprint.
-3. On The knobs, tap the Wi-Fi Glossary link to resolve any term in one tap.
+3. On The knobs, tap the Wireless Glossary link to resolve any term in one tap.
 
 **Field notes**
 - This is teaching content, not a working analyzer. A phone's Wi-Fi chipset can join networks but cannot do wideband RF capture, so the app cannot perform spectrum analysis. The module says so in-app.

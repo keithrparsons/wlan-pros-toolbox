@@ -179,7 +179,7 @@ This is the biggest section by count, and most of it is exactly what the name sa
 For everyone else, a few of these cards are genuinely worth a look:
 
 - **How Strong Is Wi-Fi, Really?** and **Signal Thresholds** explain signal strength in plain terms and answer "is my signal good enough for video calls?"
-- The **Wi-Fi Glossary** defines the jargon you'll run into anywhere, in plain language. If a word in another app or a support call confuses you, look it up here.
+- The **Wireless Glossary** defines the jargon you'll run into anywhere, in plain language: Wi-Fi first, then cellular, Bluetooth, satellite and home internet. If a word in another app or a support call confuses you, look it up here.
 - The **checklists**, like the Wi-Fi Connection Checklist, walk you through what to check when something's wrong, step by step.
 
 The rest of the reference cards are deep professional material. They're there when you need them and out of the way when you don't.

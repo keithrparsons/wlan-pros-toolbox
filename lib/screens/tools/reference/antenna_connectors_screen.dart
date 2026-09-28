@@ -4,7 +4,7 @@
 // (BF6-18); F-Type (75 ohm CATV) was folded in from the former RF Connectors
 // card. Count is data-driven (connector_count in the JSON).
 //
-// Mirrors the app's bundled-JSON reference pattern (Wi-Fi Glossary / Well-Known
+// Mirrors the app's bundled-JSON reference pattern (Wireless Glossary / Well-Known
 // Ports): bundled asset → AntennaConnectorService.fromJson → grouped list
 // screen. The connectors render in their curated groups in file order (never
 // alphabetized), each row showing the connector name, full name, an optional

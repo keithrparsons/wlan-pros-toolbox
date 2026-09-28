@@ -1,7 +1,7 @@
 // PLMN ID Reference — a data-driven, searchable, grouped table of 376 US
 // mobile-network PLMN IDs (MCC/MNC), fully offline.
 //
-// Same pattern as the Wi-Fi Glossary and Well-Known Ports: bundled asset →
+// Same pattern as the Wireless Glossary and Well-Known Ports: bundled asset →
 // PlmnReferenceService.fromJson → grouped list screen. The 376 entries render
 // in 7 MCC groups (310–316), each ascending by PLMN ID; search filters by code
 // (MCC / MNC / PLMN ID) or by carrier / operator name.

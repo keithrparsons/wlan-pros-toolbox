@@ -6,6 +6,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
+import 'package:wlan_pros_toolbox/data/tool_search.dart';
+import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/reference/wifi_glossary_screen.dart';
 import 'package:wlan_pros_toolbox/services/glossary/glossary_service.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -13,7 +16,7 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 const String _fixture = '''
 {
   "schema_version": 1,
-  "title": "Wi-Fi Glossary",
+  "title": "Wireless Glossary",
   "source": "test fixture",
   "term_count": 3,
   "languages": ["en", "es", "fr", "it", "de"],
@@ -67,6 +70,45 @@ Widget _harness(GlossaryService svc) => MaterialApp(
     );
 
 void main() {
+  // Renamed 2026-09-28 (Keith: "rename to wireless glossary"). The id and the
+  // route keep their wifi- names; only the user-facing name changed.
+  group('Wireless Glossary rename', () {
+    final ToolEntry entry = kToolCategories
+        .expand((ToolCategory c) => c.tools)
+        .firstWhere((ToolEntry t) => t.id == 'wifi-glossary');
+
+    test('catalog title and description use the new name and count', () {
+      expect(entry.title, 'Wireless Glossary');
+      expect(
+        entry.description,
+        'Plain-language definitions of 123 wireless terms',
+      );
+      expect(entry.routeName, '/tools/wifi-glossary');
+      expect(AppRouter.wifiGlossary, '/tools/wifi-glossary');
+    });
+
+    test('the old name still finds the tool in search', () {
+      bool finds(String q) => searchTools(q)
+          .any((ToolSearchHit h) => h.tool.id == 'wifi-glossary');
+      expect(finds('wi-fi glossary'), isTrue);
+      expect(finds('wifi glossary'), isTrue);
+      expect(finds('wireless glossary'), isTrue);
+    });
+  });
+
+  testWidgets('title and intro say Wireless Glossary and wireless terms', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_harness(_svc()));
+    await tester.pump();
+    expect(find.text('Wireless Glossary'), findsOneWidget);
+    expect(find.text('Wi-Fi Glossary'), findsNothing);
+    expect(
+      find.textContaining('Plain-language definitions of 3 wireless terms'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('mounts, renders a known term and the search field', (
     tester,
   ) async {

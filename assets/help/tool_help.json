@@ -4923,10 +4923,10 @@
       "source": "The tool reads from a bundled list of US carrier codes, kept up to date and available offline."
     },
     "wifi-glossary": {
-      "name": "Wi-Fi Glossary",
+      "name": "Wireless Glossary",
       "category": "Quick Reference",
-      "purpose": "Plain-language definitions of 93 Wi-Fi terms across 8 categories: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Each entry pairs the full term with its companion identifier, where it has one, and a short plain-language definition that makes sense on its own. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
-      "whyHere": "For when a term in a spec sheet, a log, or a standards document is the one thing standing between you and understanding what's going on. It tells you what CCI, DFS, FSPL, or OFDMA actually mean in Wi-Fi terms, and it pairs the IEEE generation number with the Wi-Fi Alliance name so 802.11ax and Wi-Fi 6 read as one thing.",
+      "purpose": "Plain-language definitions of 123 wireless terms across 12 categories. Eight are Wi-Fi: bands and spectrum, standards and Wi-Fi generations, signal and RF basics, speed and modulation, how devices share the air, access points and roaming, security, and performance and troubleshooting. Four cover the other radios and links around a home or office: cellular, short-range radio such as Bluetooth and NFC (Near Field Communication), location and satellite, and home internet. Each entry pairs the full term with its companion identifier, where it has one, and a short plain-language definition that makes sense on its own. Many terms carry both their IEEE name and their Wi-Fi Alliance name.",
+      "whyHere": "For when a term in a spec sheet, a log, or a standards document is the one thing standing between you and understanding what's going on. It tells you what CCI, DFS, FSPL, or OFDMA actually mean in Wi-Fi terms, and it pairs the IEEE generation number with the Wi-Fi Alliance name so 802.11ax and Wi-Fi 6 read as one thing. It also covers the gear people mix up with Wi-Fi, so a modem, a router, a hotspot and an access point read as four different things.",
       "howToUse": [
         "Browse the terms grouped by category, arranged so related ideas sit together rather than alphabetically.",
         "Type in the search box to filter instantly across the term name, abbreviation, and definition.",
@@ -4940,9 +4940,9 @@
         "Vendor-neutral by design. Definitions describe the standards-based behavior, not one vendor's implementation.",
         "Naming is dual where the standard and the marketing brand differ: both the IEEE designation and the Wi-Fi Alliance generation name appear, so you can find the same term either way.",
         "This is the general-vocabulary companion to the Wi-Fi Authentication Glossary; both use the same searchable, grouped layout with a different set of terms.",
-        "The content is a curated edition of 93 terms."
+        "The content is a curated edition of 123 terms: 93 Wi-Fi terms, then 30 from cellular, short-range radio, location and satellite, and home internet."
       ],
-      "source": "The tool reads from a curated, bundled list of 93 Wi-Fi terms, available offline."
+      "source": "The tool reads from a curated, bundled list of 123 wireless terms, available offline."
     },
     "wifi-auth-glossary": {
       "name": "Wi-Fi Authentication Glossary",
@@ -4960,7 +4960,7 @@
       "example": null,
       "fieldNotes": [
         "Vendor-neutral by design. Definitions describe the standards-based behavior, not one vendor's implementation.",
-        "This is the authentication-focused companion to the general Wi-Fi Glossary; both use the same searchable, grouped layout with a different set of terms.",
+        "This is the authentication-focused companion to the Wireless Glossary; both use the same searchable, grouped layout with a different set of terms.",
         "The content is a curated edition of 58 authentication terms."
       ],
       "source": "The tool reads from a curated, bundled list of 58 Wi-Fi authentication terms, available offline."
@@ -7216,7 +7216,7 @@
       "howToUse": [
         "Open the module from the Wireless Classroom (Guided Lessons), then read the eight topic screens in order from the hub. They build from the why (a spectrum analyzer versus a Wi-Fi adapter) through how it works, the knobs, the three views, fingerprinting, comparing captures, the tools, and mitigation.",
         "On Fingerprinting interferers, swipe through the nine signature cards and tap any card to zoom in. The caption under each card is its waterfall fingerprint.",
-        "On The knobs, tap the Wi-Fi Glossary link to resolve any term in one tap."
+        "On The knobs, tap the Wireless Glossary link to resolve any term in one tap."
       ],
       "inputs": [],
       "algorithm": null,

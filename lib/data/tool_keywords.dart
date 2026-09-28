@@ -2842,6 +2842,17 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   ],
 
   // ──────────────────────── Quick Reference ──────────────────────
+  // Renamed Wi-Fi Glossary -> Wireless Glossary 2026-09-28 (Keith). The old
+  // name stays a search alias so anyone who learned it still finds the tool.
+  'wifi-glossary': <String>[
+    'wi-fi glossary',
+    'wifi glossary',
+    'dictionary',
+    'jargon',
+    'acronyms',
+    'cellular',
+    'bluetooth',
+  ],
   'poe-reference': <String>[
     'power over ethernet',
     '802.3af',

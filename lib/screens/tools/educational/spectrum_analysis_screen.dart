@@ -50,7 +50,7 @@ import '../../../widgets/tool_help_footer.dart';
 /// Permanent; never renamed.
 const String kSpectrumAnalysisToolId = 'spectrum-analysis';
 
-/// The existing Wi-Fi Glossary route (AppRouter.wifiGlossary). Held as a literal
+/// The existing Wireless Glossary route (AppRouter.wifiGlossary). Held as a literal
 /// here so screen 3 ("The knobs") can cross-link the glossary in one tap without
 /// the screen importing the router (which would invert the router→screen import
 /// direction). The route id `wifi-glossary` is permanent.
@@ -647,7 +647,7 @@ class _BandChip extends StatelessWidget {
   }
 }
 
-/// The screen-3 cross-link into the existing Wi-Fi Glossary, so a knob term
+/// The screen-3 cross-link into the existing Wireless Glossary, so a knob term
 /// resolves in one tap. A labeled button row that pushes the glossary route.
 class _GlossaryLink extends StatelessWidget {
   const _GlossaryLink();
@@ -658,7 +658,7 @@ class _GlossaryLink extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     return Semantics(
       button: true,
-      label: 'Open the Wi-Fi Glossary',
+      label: 'Open the Wireless Glossary',
       excludeSemantics: true,
       child: Material(
         color: colors.surface1,
@@ -685,7 +685,7 @@ class _GlossaryLink extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'These terms also live in the Wi-Fi Glossary. Tap to open it.',
+                    'These terms also live in the Wireless Glossary. Tap to open it.',
                     style: (t.bodyMedium ?? const TextStyle()).copyWith(
                       color: colors.textPrimary,
                       height: 1.4,
