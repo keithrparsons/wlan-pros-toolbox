@@ -2750,6 +2750,24 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'beacon',
     'wi-fi privacy',
   ],
+  // Connected, No Internet: Captive Portals (Guided Lesson). The words a
+  // traveler uses for the symptom, plus the standards terms a pro searches.
+  'captive-portal': <String>[
+    'captive portal',
+    'captive network',
+    'sign-in page',
+    'login page',
+    'hotel wi-fi',
+    'airplane wi-fi',
+    'connected no internet',
+    'no internet connection',
+    'splash page',
+    'dhcp option 114',
+    'rfc 8910',
+    'rfc 8908',
+    'wi-fi calling',
+    'probe',
+  ],
   'port-reference': <String>[
     'tcp',
     'udp',

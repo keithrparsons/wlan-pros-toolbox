@@ -2579,6 +2579,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Connected, No Internet: Captive Portals (2026-09-27, Keith approved
+      // Pax's candidate 2): why full bars is not online, stepping through the
+      // device's check after association with one switch, announced portal
+      // (DHCP option 114, RFC 8910) vs intercepted traffic. Ties in why
+      // Wi-Fi Calling waits for the sign-in.
+      ToolEntry(
+        id: 'captive-portal',
+        title: 'Connected, No Internet: Captive Portals',
+        description:
+            'Why a hotel or airplane network shows full bars and still '
+            'will not load anything, stepped through as the device checks '
+            'for a sign-in page',
+        routeName: '/tools/captive-portal',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // Distinct from the 'fspl' calculator, which stays a two-input tool.
       ToolEntry(

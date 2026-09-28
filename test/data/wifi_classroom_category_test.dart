@@ -25,6 +25,8 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'public-wifi',
     // 2026-09-27: Wi-Fi Privacy Myths, the private address and the hidden name.
     'wifi-privacy-myths',
+    // 2026-09-27: Connected, No Internet: Captive Portals (Pax candidate 2).
+    'captive-portal',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -111,6 +113,7 @@ const Set<String> _builtInClassroom = <String>{
   'find-my-explained',
   'public-wifi',
   'wifi-privacy-myths',
+  'captive-portal',
 };
 
 void main() {
@@ -161,8 +164,8 @@ void main() {
 
   test('the 13 lessons and handouts left educational-resources; Ham Radio '
       'Study Resources stayed', () {
-    // find-my-explained was built in the Classroom (2026-09-27) and never
-    // lived in Educational Resources, so it is not one of the 13 that moved.
+    // Lessons built in the Classroom (2026-09-27 on) never lived in
+    // Educational Resources, so they are not among the 13 that moved.
     final Set<String> moved = <String>{
       ..._teachingOrder['Guided Lessons']!.where(
         (String id) =>
@@ -206,7 +209,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(55));
+    expect(classroom.tools, hasLength(56));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

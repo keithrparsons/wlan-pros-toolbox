@@ -76,6 +76,7 @@ const Set<String> _guideIds = <String>{
   'find-my-explained',
   'public-wifi',
   'wifi-privacy-myths',
+  'captive-portal',
 };
 
 /// Classifies a [tool] into a [ContentType] for its §8.17 chip.

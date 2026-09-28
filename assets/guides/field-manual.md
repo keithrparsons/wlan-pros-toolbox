@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 228 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · covers 229 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wi-Fi Classroom** (55 tools)
-  - Guided Lessons (5)
+- **Wi-Fi Classroom** (56 tools)
+  - Guided Lessons (6)
   - RF and Propagation (11)
   - Signals and PHY (5)
   - Airtime and Access (10)
@@ -3818,12 +3818,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wi-Fi Classroom (55 tools)
+# Wi-Fi Classroom (56 tools)
 
 Tools for teaching Wi-Fi, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (5)
+## Guided Lessons (6)
 
 
 ### Antenna Fundamentals
@@ -3919,7 +3919,26 @@ A guided lesson in two parts. Part 1 is your phone's private Wi-Fi address: one 
 - Left out: other ways to recognize a device besides its address, the router's own settings for private addresses, and how networks that need a steady address (reservations, parental controls) cope with Rotating.
 
 
-## RF and Propagation (11)
+
+### Connected, No Internet: Captive Portals
+
+A read-along lesson with one step-through, on why a hotel, airport or airplane network can show full bars and still not reach the internet. Association and reaching the internet are separate steps, and a captive network holds you at its sign-in page, the captive portal, between the two. The step-through follows a device from association to online, with one switch: a network that announces its portal in the address reply (DHCP, the Dynamic Host Configuration Protocol, option 114, defined in RFC 8910) and answers the device's questions through a Captive Portal API (RFC 8908), or a network that announces nothing and intercepts the device's probe.
+
+**Why it's here.** It answers a question Wi-Fi people get from travelers all the time: the Wi-Fi says connected, so why won't anything load? The bars measure the first step only. It also explains why Wi-Fi Calling does not work in a hotel until the sign-in page is finished: the phone's tunnel to the carrier is held back like everything else.
+
+**How to use**
+1. Read top to bottom. The step-through is in section 2, the two ways a network asks you to sign in are in section 3, and Wi-Fi Calling is in section 4.
+2. Press Step to move through the five steps: association, getting an address, the check, the sign-in and online. Back takes one step back and Reset returns to association. Each step shows what the device sends, what the network replies, and what the person holding the device sees.
+3. Flip the switch between Announces and Intercepts at any step. Both take the same five steps, so you compare like with like. At step 3, one network answers the device's question straight, and the other intercepts the probe and sends back its sign-in page, tagged Intercepted.
+4. The Internet line reads Held and the Wi-Fi Calling line reads Waits for the sign-in until step 4, in both modes, while the Wi-Fi link stays up from step 1.
+
+**Field notes**
+- The sequence is illustrative. It shows the generic probe every device makes and leaves out how often each kind of device probes, which test address it asks, and how long it waits.
+- The announcement can also arrive by DHCPv6 (option 103) or an IPv6 Router Advertisement (RFC 8910). The step-through shows the IPv4 DHCP option only.
+- RFC 7710 used DHCP option 160 for the same job. RFC 8910 replaced it with 114 because of a conflict.
+- RFC 8910 says networks will still need to intercept for older devices, and devices will still probe, for the foreseeable future. So a network that announces its portal still has to intercept for devices that do not read the announcement.
+- Left out: paid tiers, session time limits beyond a mention, and networks that block the Wi-Fi Calling tunnel even after the sign-in.
+
 
 ## RF and Propagation (11)
 
