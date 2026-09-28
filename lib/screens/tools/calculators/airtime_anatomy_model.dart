@@ -1,5 +1,7 @@
 // State for Airtime Anatomy (Wi-Fi Classroom): the two scenarios, which one the
-// controls edit, whether B is shown, and the selected segment.
+// controls edit, whether B is shown, the selected segment, and (1.11.0) the
+// frame-structure view: which view is on the stage, how the MSDUs are packed,
+// and which MSDU is corrupted.
 //
 // A ChangeNotifier so the stage (AirtimeAnatomyStage) and the controls
 // (AirtimeAnatomyControls) stay separate widgets that share one model. The
@@ -7,7 +9,9 @@
 // without either widget owning the other's state.
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
+import '../../../services/wifi_lab/aggregation_structure.dart';
 import '../../../services/wifi_lab/airtime_anatomy.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
 
@@ -29,6 +33,17 @@ List<GuardInterval> guardIntervalsFor(AirtimePhy phy) => phy == AirtimePhy.he
       ]
     : const <GuardInterval>[GuardInterval.gi04, GuardInterval.gi08];
 
+/// What the stage shows: the TXOP to scale in time, or the PSDU's structure
+/// in bytes. Both describe the scenario under edit.
+enum AirtimeView {
+  time('Time'),
+  structure('Structure');
+
+  const AirtimeView(this.label);
+
+  final String label;
+}
+
 class AirtimeAnatomyModel extends ChangeNotifier {
   AirtimeAnatomyModel({
     AirtimePreset a = AirtimePreset.legacy6,
@@ -46,6 +61,13 @@ class AirtimeAnatomyModel extends ChangeNotifier {
   AirtimeSelection? _selection;
   bool _moreOpen = false;
 
+  AirtimeView _view = AirtimeView.time;
+  AggregationKind _arrangement = AggregationKind.ampdu;
+  int _msdusPerAmsdu = AggregationConstants.defaultMsdusPerAmsdu;
+
+  /// The corrupted MSDU, 0-based, or null when nothing is corrupted.
+  int? _corrupted;
+
   bool get compare => _compare;
 
   /// Index of the scenario the controls edit (0 = A, 1 = B).
@@ -53,6 +75,42 @@ class AirtimeAnatomyModel extends ChangeNotifier {
 
   AirtimeSelection? get selection => _selection;
   bool get moreOpen => _moreOpen;
+
+  AirtimeView get view => _view;
+
+  /// The arrangement the user picked. Legacy cannot aggregate, so what is
+  /// drawn is [effectiveArrangement].
+  AggregationKind get arrangement => _arrangement;
+
+  AggregationKind get effectiveArrangement =>
+      aggregationSupported(scenario(_editing).phy, _arrangement)
+      ? _arrangement
+      : AggregationKind.singleMpdu;
+
+  int get msdusPerAmsdu => _msdusPerAmsdu;
+
+  /// The PSDU of the scenario under edit, in the chosen arrangement. Its
+  /// A-MPDU arrangement is the aggregate the time view draws.
+  AggregateStructure get structure => structureFor(effectiveArrangement);
+
+  AggregateStructure structureFor(AggregationKind kind) =>
+      buildAggregateStructure(
+        scenario(_editing),
+        kind,
+        msdusPerAmsdu: _msdusPerAmsdu,
+      );
+
+  /// The corrupted MSDU, clamped to the current structure, or null.
+  int? get corruptedMsdu {
+    final int? c = _corrupted;
+    if (c == null) return null;
+    return c.clamp(0, structure.msduCount - 1);
+  }
+
+  CorruptionOutcome? get corruption {
+    final int? c = corruptedMsdu;
+    return c == null ? null : structure.corrupt(c);
+  }
 
   /// Scenario indices on screen.
   List<int> get visible => _compare ? const <int>[0, 1] : const <int>[0];
@@ -144,6 +202,64 @@ class AirtimeAnatomyModel extends ChangeNotifier {
     _afterEdit();
   }
 
+  // ── Frame structure ───────────────────────────────────────────────────────
+
+  void setView(AirtimeView v) {
+    if (v == _view) return;
+    _view = v;
+    notifyListeners();
+  }
+
+  void toggleView() => setView(
+    _view == AirtimeView.time ? AirtimeView.structure : AirtimeView.time,
+  );
+
+  void setArrangement(AggregationKind k) {
+    if (k == _arrangement) return;
+    _arrangement = k;
+    notifyListeners();
+  }
+
+  /// Next arrangement the edited scenario's PHY can send, wrapping.
+  void nextArrangement() {
+    const List<AggregationKind> all = AggregationKind.values;
+    final AirtimePhy phy = scenario(_editing).phy;
+    int at = all.indexOf(effectiveArrangement);
+    for (int i = 0; i < all.length; i++) {
+      at = (at + 1) % all.length;
+      if (aggregationSupported(phy, all[at])) break;
+    }
+    setArrangement(all[at]);
+  }
+
+  void setMsdusPerAmsdu(int n) {
+    assert(n >= 1);
+    if (n == _msdusPerAmsdu) return;
+    _msdusPerAmsdu = n;
+    notifyListeners();
+  }
+
+  /// Corrupts MSDU [m] (0-based), or clears the corruption with null.
+  void corruptMsdu(int? m) {
+    if (m == _corrupted) return;
+    _corrupted = m?.clamp(0, structure.msduCount - 1);
+    notifyListeners();
+  }
+
+  /// On: corrupt the middle MSDU (so a Block Ack bitmap shows good bits on
+  /// both sides of the bad one). Off: clear it.
+  void setCorrupt(bool on) =>
+      corruptMsdu(on ? (corruptedMsdu ?? structure.msduCount ~/ 2) : null);
+
+  void toggleCorrupt() => setCorrupt(_corrupted == null);
+
+  /// Moves the corruption [delta] MSDUs, wrapping; starts it if off.
+  void stepCorrupt(int delta) {
+    final int n = structure.msduCount;
+    final int? c = corruptedMsdu;
+    corruptMsdu(c == null ? 0 : (c + delta) % n);
+  }
+
   // ── Presenter keys ─────────────────────────────────────────────────────────
 
   /// Right arrow: select the next segment of the TXOP, left to right, so an
@@ -184,11 +300,46 @@ class AirtimeAnatomyModel extends ChangeNotifier {
     });
   }
 
+  /// Right arrow: in the time view, the next TXOP segment; in the
+  /// structure view, move the corruption to the next MSDU.
+  void step() => _view == AirtimeView.time ? stepSegment() : stepCorrupt(1);
+
   PresenterActions get presenterActions => PresenterActions(
-    step: stepSegment,
+    step: step,
+    stepLabel:
+        'Next segment (time view) or next corrupted MSDU '
+        '(structure view)',
     sliderDown: () => nudgeRate(-1),
     sliderUp: () => nudgeRate(1),
     sliderLabel: 'Rate (MCS or legacy rate)',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyV,
+        keyLabel: 'V',
+        description: 'Time view or structure view',
+        onPressed: toggleView,
+      ),
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyA,
+        keyLabel: 'A',
+        description:
+            'Next arrangement: MPDU, A-MSDU, A-MPDU, A-MPDU of '
+            'A-MSDUs',
+        onPressed: () {
+          setView(AirtimeView.structure);
+          nextArrangement();
+        },
+      ),
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyC,
+        keyLabel: 'C',
+        description: 'Corrupt one subframe, or repair it',
+        onPressed: () {
+          setView(AirtimeView.structure);
+          toggleCorrupt();
+        },
+      ),
+    ],
   );
 
   AirtimePreset? _matchingPreset(AirtimeScenario s) {

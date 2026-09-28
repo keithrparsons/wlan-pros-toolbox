@@ -23,6 +23,11 @@
 // selection through the TXOP segment by segment; the breakdown table, the
 // same selection by pointer or Tab, folds into the panel
 // ([AirtimeAnatomyBreakdown]).
+//
+// VIEW (1.11.0): a Time / Structure toggle heads the stage. Time is the
+// TXOP drawn to scale, unchanged. Structure ([AirtimeStructureView]) opens
+// the PSDU of the scenario under edit: the same aggregate, in bytes. V
+// switches views in presenter mode.
 
 import 'package:flutter/gestures.dart' show PointerHoverEvent;
 import 'package:flutter/material.dart';
@@ -31,9 +36,11 @@ import '../../../services/wifi_lab/airtime_anatomy.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 import 'airtime_anatomy_model.dart';
 import 'airtime_anatomy_timeline.dart';
+import 'airtime_structure_view.dart';
 
 class AirtimeAnatomyStage extends StatelessWidget {
   const AirtimeAnatomyStage({super.key, required this.model});
@@ -68,19 +75,24 @@ class _PresenterStage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        AirtimeCard(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              for (final int i in model.visible) ...<Widget>[
-                if (i > 0) const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _Headline(model: model, index: i, mono: mono),
-                ),
+        // The time headline gives its room to the structure drawing.
+        if (model.view == AirtimeView.time) ...<Widget>[
+          AirtimeCard(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                for (final int i in model.visible) ...<Widget>[
+                  if (i > 0) const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: _Headline(model: model, index: i, mono: mono),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+        _ViewToggle(model: model),
         const SizedBox(height: AppSpacing.sm),
         Expanded(
           child: LayoutBuilder(
@@ -92,41 +104,45 @@ class _PresenterStage extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: SizedBox(
                 width: box.maxWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    AirtimeCard(
-                      child: Column(
+                child: model.view == AirtimeView.structure
+                    ? AirtimeStructureView(model: model)
+                    : Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          const AirtimeSectionTitle('One TXOP, drawn to scale'),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            'Lime is the only part that carries your data.',
-                            style: text.bodySmall?.copyWith(
-                              color: colors.textSecondary,
+                          AirtimeCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                const AirtimeSectionTitle(
+                                  'One TXOP, drawn to scale',
+                                ),
+                                const SizedBox(height: AppSpacing.xxs),
+                                Text(
+                                  'Lime is the only part that carries your data.',
+                                  style: text.bodySmall?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                for (final int i in model.visible) ...<Widget>[
+                                  _ScenarioRow(
+                                    model: model,
+                                    index: i,
+                                    scaleUs: scale,
+                                    mono: mono,
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                ],
+                                if (scale > 0) _Axis(scaleUs: scale),
+                                const SizedBox(height: AppSpacing.sm),
+                                const _Legend(),
+                              ],
                             ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
-                          for (final int i in model.visible) ...<Widget>[
-                            _ScenarioRow(
-                              model: model,
-                              index: i,
-                              scaleUs: scale,
-                              mono: mono,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                          ],
-                          if (scale > 0) _Axis(scaleUs: scale),
-                          const SizedBox(height: AppSpacing.sm),
-                          const _Legend(),
+                          _Detail(model: model, mono: mono),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _Detail(model: model, mono: mono),
-                  ],
-                ),
               ),
             ),
           ),
@@ -227,6 +243,25 @@ class _StageBody extends StatelessWidget {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final double scale = model.scaleUs;
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _ViewToggle(model: model),
+        const SizedBox(height: AppSpacing.sm),
+        if (model.view == AirtimeView.structure)
+          AirtimeStructureView(model: model)
+        else
+          _timeCard(text, colors, mono, scale),
+      ],
+    );
+  }
+
+  Widget _timeCard(
+    TextTheme text,
+    AppColorScheme colors,
+    AppMonoText mono,
+    double scale,
+  ) {
     return AirtimeCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,6 +289,27 @@ class _StageBody extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Time or Structure. Both views describe the scenario under edit; the
+/// structure view names which one.
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle({required this.model});
+
+  final AirtimeAnatomyModel model;
+
+  @override
+  Widget build(BuildContext context) => AppToggle<AirtimeView>(
+    value: model.view,
+    expand: true,
+    semanticLabel:
+        'View: time, the TXOP to scale, or structure, inside the PSDU',
+    items: <AppToggleItem<AirtimeView>>[
+      (AirtimeView.time, 'Time'),
+      (AirtimeView.structure, 'Structure'),
+    ],
+    onChanged: model.setView,
+  );
 }
 
 /// Header line plus bar (or verdict) for one scenario.
