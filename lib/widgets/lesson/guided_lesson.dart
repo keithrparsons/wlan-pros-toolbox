@@ -161,12 +161,14 @@ final class LessonCallout extends LessonBlock {
        attribution = null;
 
   /// Someone's own published words, such as a Keith's note. [speaker] is the
-  /// label ("Keith's note"); [attribution] names the source and its date.
+  /// label ("Keith's note", or with its source, "Keith's note, from
+  /// __Fix Your Own Wi-Fi__"); [attribution] is the guide's source line under
+  /// the words, when it has one.
   const LessonCallout.quote({
     required String this.speaker,
     this.title,
     required this.body,
-    required String this.attribution,
+    this.attribution,
   }) : kind = LessonCalloutKind.quote,
        steps = const <String>[];
 

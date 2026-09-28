@@ -30,6 +30,12 @@ const Set<String> _builtInClassroom = <String>{
   'devices-to-internet-explained',
   'mesh-extenders-explained',
   'router-too-old-explained',
+  'bluetooth-explained',
+  'weak-cell-signal-explained',
+  'how-gps-works-explained',
+  'where-your-phone-is-explained',
+  'analog-vs-digital-explained',
+  'scales-and-ratios-explained',
 };
 
 /// Shelf -> tool ids, in the order the screen must show them.
@@ -72,6 +78,24 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'mesh-extenders-explained',
     // 2026-09-28: Is Your Router Too Old?, on the 1.11.0 lesson framework.
     'router-too-old-explained',
+    // 2026-09-28: Bluetooth, Explained, the explainer guide turned Guided
+    // Lesson.
+    'bluetooth-explained',
+    // 2026-09-28: Weak Cell Signal at Home, Explained, the explainer guide
+    // turned Guided Lesson.
+    'weak-cell-signal-explained',
+    // 2026-09-28: How GPS Works, Explained, the explainer guide turned
+    // Guided Lesson, before its indoor companion.
+    'how-gps-works-explained',
+    // 2026-09-28: How Your Phone Knows Where It Is, Explained, after its
+    // companion How GPS Works.
+    'where-your-phone-is-explained',
+    // 2026-09-28: Analog vs Digital, Explained, the explainer guide turned
+    // Guided Lesson.
+    'analog-vs-digital-explained',
+    // 2026-09-28: Scales and Ratios, Explained, the explainer guide turned
+    // Guided Lesson.
+    'scales-and-ratios-explained',
   ],
   'RF and Propagation': <String>[
     // 2026-09-27: Decibels in Your Head (candidate 12), first on the shelf:
@@ -275,7 +299,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(75));
+    expect(classroom.tools, hasLength(81));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

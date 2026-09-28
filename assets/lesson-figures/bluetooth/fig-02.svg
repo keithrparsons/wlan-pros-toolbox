@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="IBM Plex Sans" font-size="13" fill="#111111" width="760" height="300">
+    <rect x="40" y="30" width="668" height="212" fill="#FFFFFF"/>
+    <text x="44" y="22" font-size="13" font-weight="600" fill="#444444">Wi-Fi channels 1, 6 and 11, each drawn 20 MHz wide</text>
+    <rect x="56" y="32" width="160" height="40" rx="6" fill="#2B5C8A" opacity=".85"/>
+    <rect x="256" y="32" width="160" height="40" rx="6" fill="#2B5C8A" opacity=".85"/>
+    <rect x="456" y="32" width="160" height="40" rx="6" fill="#2B5C8A" opacity=".85"/>
+    <text x="136" y="57" text-anchor="middle" fill="#FFFFFF" font-weight="600">Wi-Fi 1</text>
+    <text x="336" y="57" text-anchor="middle" fill="#FFFFFF" font-weight="600">Wi-Fi 6</text>
+    <text x="536" y="57" text-anchor="middle" fill="#FFFFFF" font-weight="600">Wi-Fi 11</text>
+    <text x="44" y="96" font-size="13" font-weight="600" fill="#444444">Bluetooth Classic: 79 channels, 1 MHz each, hopping among them many times a second</text>
+    <rect x="53.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="61.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="69.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="77.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="85.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="93.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="101.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="109.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="117.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="125.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="133.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="141.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="149.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="157.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="165.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="173.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="181.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="189.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="197.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="205.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="213.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="221.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="229.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="237.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="245.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="253.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="261.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="269.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="277.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="285.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="293.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="301.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="309.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="317.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="325.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="333.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="341.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="349.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="357.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="365.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="373.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="381.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="389.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="397.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="405.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="413.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="421.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="429.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="437.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="445.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="453.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="461.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="469.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="477.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="485.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="493.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="501.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="509.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="517.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="525.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="533.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="541.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="549.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="557.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="565.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="573.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="581.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="589.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="597.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="605.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="613.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="621.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="629.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="637.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="645.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="653.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="661.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="669.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <rect x="677.0" y="104" width="6" height="36" fill="#7A9E26"/>
+    <text x="44" y="170" font-size="13" font-weight="600" fill="#444444">With adaptive frequency hopping: the Bluetooth channels under a busy Wi-Fi channel 6 are marked bad</text>
+    <rect x="53.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="61.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="69.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="77.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="85.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="93.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="101.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="109.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="117.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="125.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="133.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="141.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="149.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="157.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="165.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="173.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="181.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="189.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="197.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="205.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="213.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="221.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="229.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="237.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="245.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="421.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="429.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="437.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="445.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="453.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="461.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="469.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="477.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="485.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="493.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="501.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="509.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="517.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="525.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="533.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="541.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="549.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="557.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="565.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="573.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="581.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="589.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="597.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="605.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="613.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="621.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="629.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="637.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="645.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="653.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="661.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="669.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <rect x="677.0" y="178" width="6" height="36" fill="#7A9E26"/>
+    <text x="336" y="214" text-anchor="middle" font-size="13" fill="#111111" font-weight="600">busy: skipped</text>
+    <!-- axis -->
+    <path d="M40 252 H708" stroke="#444444" stroke-width="1.5"/>
+    <path d="M40 252 V260" stroke="#444444" stroke-width="1.5"/><text x="40" y="275" text-anchor="middle" font-size="13" fill="#444444">2,400</text>
+    <path d="M200 252 V260" stroke="#444444" stroke-width="1.5"/><text x="200" y="275" text-anchor="middle" font-size="13" fill="#444444">2,420</text>
+    <path d="M360 252 V260" stroke="#444444" stroke-width="1.5"/><text x="360" y="275" text-anchor="middle" font-size="13" fill="#444444">2,440</text>
+    <path d="M520 252 V260" stroke="#444444" stroke-width="1.5"/><text x="520" y="275" text-anchor="middle" font-size="13" fill="#444444">2,460</text>
+    <path d="M680 252 V260" stroke="#444444" stroke-width="1.5"/><text x="680" y="275" text-anchor="middle" font-size="13" fill="#444444">2,480</text>
+    <path d="M708 252 V260" stroke="#444444" stroke-width="1.5"/>
+    <text x="374" y="292" text-anchor="middle" font-size="13" fill="#444444">Frequency, MHz. The whole band is 83.5 MHz wide.</text>
+  </svg>

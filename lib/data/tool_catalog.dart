@@ -2758,6 +2758,81 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // Bluetooth, Explained (2026-09-28, Keith approved the guide, myPKA
+      // 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own ten figures. Shelved
+      // after Home Internet.
+      ToolEntry(
+        id: 'bluetooth-explained',
+        title: 'Bluetooth, Explained',
+        description:
+            'Why your earbuds cut out, why the car won\'t connect, and what to do about each',
+        routeName: '/tools/bluetooth-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Weak Cell Signal at Home, Explained (2026-09-28, Keith approved the
+      // guide, myPKA 74e13139): the explainer guide as a Guided Lesson on the
+      // shared framework, word for word, with the guide's own 13 figures.
+      ToolEntry(
+        id: 'weak-cell-signal-explained',
+        title: 'Weak Cell Signal at Home, Explained',
+        description:
+            'Why your phone has bars at the curb and drops calls in the kitchen, and the free fix to try first',
+        routeName: '/tools/weak-cell-signal-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // How GPS Works, Explained (2026-09-28, Keith approved the guide, myPKA
+      // 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own 14 figures. Shelved just
+      // before its companion, How Your Phone Knows Where It Is.
+      ToolEntry(
+        id: 'how-gps-works-explained',
+        title: 'How GPS Works, Explained',
+        description:
+            'How your phone finds itself by listening to satellites, and what to do when the blue dot gets it wrong',
+        routeName: '/tools/how-gps-works-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // How Your Phone Knows Where It Is, Explained (2026-09-28, Keith approved
+      // the guide, myPKA 74e13139): the explainer guide as a Guided Lesson on
+      // the shared framework, word for word, with the guide's own 11 figures.
+      // Shelved after its companion, How GPS Works.
+      ToolEntry(
+        id: 'where-your-phone-is-explained',
+        title: 'How Your Phone Knows Where It Is, Explained',
+        description:
+            'How your phone finds itself indoors and out, and which switches are yours',
+        routeName: '/tools/where-your-phone-is-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Analog vs Digital, Explained (2026-09-28, Keith approved the guide,
+      // myPKA 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own 12 figures.
+      ToolEntry(
+        id: 'analog-vs-digital-explained',
+        title: 'Analog vs Digital, Explained',
+        description:
+            'What the two words mean, and why your Wi-Fi slows down while your TV just freezes',
+        routeName: '/tools/analog-vs-digital-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
+      // Scales and Ratios, Explained (2026-09-28, Keith approved the guide,
+      // myPKA 74e13139): the explainer guide as a Guided Lesson on the shared
+      // framework, word for word, with the guide's own 11 figures.
+      ToolEntry(
+        id: 'scales-and-ratios-explained',
+        title: 'Scales and Ratios, Explained',
+        description:
+            'The tiny and huge numbers behind Wi-Fi, turned into things you can hold, see and picture',
+        routeName: '/tools/scales-and-ratios-explained',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // ── RF and Propagation ──
       // 2026-09-27: candidate 12 of the 1.11.0 Classroom set, first on the
       // shelf: the decibel arithmetic every tool after it assumes.

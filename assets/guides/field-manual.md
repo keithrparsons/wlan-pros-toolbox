@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 248 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 254 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (75 tools)
-  - Guided Lessons (16)
+- **Wireless Classroom** (81 tools)
+  - Guided Lessons (22)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (75 tools)
+# Wireless Classroom (81 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (16)
+## Guided Lessons (22)
 
 
 ### Antenna Fundamentals
@@ -3946,6 +3946,131 @@ A read-along lesson on how internet from space reaches your house or RV, how hig
 - Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
 - The Wi-Fi Calling line is general: some carriers don't support it over satellite internet. T-Mobile's page is the one in the sources; other carriers publish their own.
 - The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
+
+### Bluetooth, Explained
+
+A read-along lesson on why your earbuds cut out, why the car won't connect, and what to do about each. Bluetooth is a short-range radio that links your phone to earbuds, speakers, watches and your car, and when the sound cuts out, one of three things is usually to blame: something in the way, a crowded band, or a stale pairing. The lesson follows the free PDF guide of the same name, word for word, with its 10 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical: why do my earbuds keep cutting out, and why won't my car connect? It also carries the Wi-Fi angle. Bluetooth uses the same radio band as a lot of Wi-Fi, so putting the devices that can use it on 5 GHz Wi-Fi leaves more room for your earbuds. Wireless CarPlay uses Bluetooth only to find the car, and Wi-Fi carries the screen and the sound. Figure 8 shows the two radios and their two jobs.
+
+**How to use**
+1. Read top to bottom. It starts with the three usual causes, then pairing and connecting, the band Bluetooth shares with Wi-Fi, your body in the path, crowds, why calls sound thinner than music, one set of earbuds on two devices, your car, wireless CarPlay and Android Auto, what to do when the car won't connect, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 10 has the order to try things in when the car won't connect. Do them while parked.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+5. Take it with you, at the end of the lesson, names the free PDF guide it follows, Bluetooth, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked against each company's own pages in September 2026. Menus and car support change with software updates.
+- The lesson gives no decibel figure for the human body, because the guide had no sourced number to give. Line thickness in Figure 3 shows the idea, not a measured amount.
+- Figure 4 is not to scale.
+- The lesson is independent and isn't affiliated with or endorsed by any phone, earbud or car maker.
+
+
+### Weak Cell Signal at Home, Explained
+
+A read-along lesson on why your phone has bars at the curb and drops calls in the kitchen, and the free fix to try first. Most weak signal indoors isn't your phone or the tower. It's the building: a signal that's fine at the curb can lose most of its strength getting through a wall or a window. The lesson follows the free PDF guide of the same name, word for word, with its 13 figures, and compares the three fixes: Wi-Fi Calling, a signal booster and a network extender.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by family and clients: why do my calls drop inside the house? The physics is the same as Wi-Fi through a wall. Every layer takes a share, metal and coated windows take the most, and higher bands lose more than lower ones. The free fix rides the Wi-Fi: Wi-Fi Calling goes around the walls over your home internet. Figure 7 shows that path, and Figure 13 sets the three fixes side by side.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer and the one idea behind the guide (a booster doesn't make signal, it makes what it hears outside louder), then what a wall costs a signal, what a lab measured, why energy-efficient homes block more, why 5G struggles indoors, how to find where the signal is, Wi-Fi Calling, how a booster works, keeping its two antennas apart, the rules for boosters, network extenders, the three fixes side by side, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 6 is the ten-minute test with your own phone that tells you which fix fits. Judge by whether a call holds up, not by the bars.
+4. Where the lesson names another guide in the series, an Open button takes you to that Guided Lesson once it is in the app.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+6. Take it with you, at the end of the lesson, names the free PDF guide it follows, Weak Cell Signal at Home, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked in September 2026. Carrier products and pages change, so read your carrier's current page before you buy.
+- Figure 1 is computed for one layer, head-on, from the ITU-R P.2040 multilayer method. Figure 2 is one UK lab's measurements (Ofcom, 2014). Figure 4 is not to scale.
+- The booster rules are the US ones, with a line on the UK and Australia. Rules vary by country, so check with your carrier and your regulator first.
+- The Keith's note was written about Wi-Fi. The lesson says so under it: the tower's signal crosses the same materials.
+- No booster brand is named or recommended. The lesson is independent and isn't affiliated with any booster maker or carrier.
+
+
+### How GPS Works, Explained
+
+A read-along lesson on how your phone finds itself by listening to satellites, and what to do when the blue dot gets it wrong. Satellites high above the Earth send out the time and where they are. Your phone hears several of them, measures how long each signal took to arrive, and works out where it is. It never sends anything back. The lesson follows the free PDF guide of the same name, word for word, with its 14 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical: how does my phone know where I am, and does GPS track me? It also sets up the Wi-Fi angle. GPS needs to see the sky, so indoors it mostly gives up and the phone switches to Wi-Fi and cell towers instead. That half of the story is its companion lesson, How Your Phone Knows Where It Is, Explained. Figure 8 shows where GPS works and where it doesn't.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then satellites that send the time, why it takes four satellites to find one spot, where GPS works and where it doesn't, when the dot is wrong on purpose (jamming and spoofing), four things people get wrong, and tips for a better fix. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 1 names the indoor half of the story. Its Open button takes you to How Your Phone Knows Where It Is, Explained.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+5. Take it with you, at the end of the lesson, names the free PDF guide it follows, How GPS Works, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked on 28 September 2026 against GPS.gov, the US Space Force, the US Coast Guard Navigation Center and the other sources listed at the end of the lesson.
+- About 5 m (16 feet) outdoors is typical, not a promise. Near tall buildings or under trees the dot can be off by much more.
+- Figures 4, 5, 6, 10 and 13 are not to scale.
+- The lesson is independent and isn't affiliated with or endorsed by any government agency, satellite operator or phone maker.
+
+
+### How Your Phone Knows Where It Is, Explained
+
+A read-along lesson on how your phone finds itself indoors and out, and which switches are yours. Your phone listens for five kinds of clues (satellites, Wi-Fi, beacons, cell towers and its own motion sensors) and blends them into one best guess. Outdoors, satellites do much of the work. Indoors, Wi-Fi usually does. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures, the location switches on iPhone and Android, and the _nomap setting for your own router.
+
+**Why it's here.** It is the Wi-Fi half of the location story, and the question Wi-Fi people get asked most about it: how does my phone know where I am inside? The phone never joins the networks around it. It only hears them and looks them up on a map that phones walking past have already built. The two steps, building the map and using the map, are David Coleman's, and so is the name Fused Location Positioning (FLP) for the blending. Figure 3 shows the two steps, and Figure 4 shows the dot holding steady through a lobby door.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then the five kinds of clues, a map of Wi-Fi, blending it all, your switches, keeping your router off the maps, your location on a 911 call, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 5 has the switches for iPhone and for Android, one card each. Step 6 has the steps to add _nomap to your Wi-Fi name.
+4. Step 1 names the outdoor half of the story. Its Open button takes you to How GPS Works, Explained.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+6. Take it with you, at the end of the lesson, names the free PDF guide it follows, How Your Phone Knows Where It Is, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked on 28 September 2026. Apple and Google update their help pages often, and phone makers move menus, so check the steps on your own phone.
+- The two-step idea and the term Fused Location Positioning come from David Coleman's LinkedIn post on Wi-Fi positioning. The two Keith's notes are from Keith's LinkedIn post of 2026-08-10.
+- The 911 step describes calls in the US.
+- Figures 1 to 6 and 11 are not to scale.
+- Apple, iPhone, Google and Android are trademarks of their owners. The lesson is independent and isn't endorsed by them.
+
+
+### Analog vs Digital, Explained
+
+A read-along lesson on what analog and digital mean, and why your Wi-Fi slows down while your TV just freezes. Analog keeps a smooth copy of something. Digital measures it again and again, and keeps only the numbers. Noise makes an analog signal worse a little at a time, a digital signal ignores noise until it can't and then fails all at once, and Wi-Fi sits in between: it slows down in steps to stay connected. The lesson follows the free PDF guide of the same name, word for word, with its 12 figures.
+
+**Why it's here.** It answers a question Wi-Fi people get asked by people who are not technical, and carries the idea under every Wi-Fi rate: Wi-Fi sends digital data, but what leaves the antenna is always a smooth wave. Each small change in the wave's height and timing stands for a few bits, and as the signal weakens, Wi-Fi switches to a simpler, slower way of sending. Figure 10 draws the slope, the cliff and the staircase side by side, and the Modulation Simulator shows the same idea on the constellation.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then a smooth copy against a list of numbers, why a digital copy doesn't fade, why every radio wave is analog, three ways a signal fades, four things people get wrong, and what this means at home. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Step 7 has two things to do at home: move closer or clear the path so Wi-Fi climbs back up its staircase, and two tips for TV and music.
+4. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+5. Take it with you, at the end of the lesson, names the free PDF guide it follows, Analog vs Digital, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Checked on 28 September 2026. Music app settings change with updates.
+- Figure 10 is a sketch, not a measurement.
+- The Keith's note quotes Fix Your Own Wi-Fi (WLAN Pros, in preparation, 2026), chapter 5.
+- Company names appear only where their own documents are the source. The lesson is independent and isn't affiliated with any maker or broadcaster.
+
+
+### Scales and Ratios, Explained
+
+A read-along lesson on the tiny and huge numbers behind Wi-Fi, turned into things you can hold, see and picture: a foot of wire for a nanosecond, a stack of money for decibels, a ruler for a radio wave, and jars for bytes. No math is needed. The lesson follows the free PDF guide of the same name, word for word, with its 11 figures.
+
+**Why it's here.** Wi-Fi people use numbers every day that are too small or too big to picture, and the people they teach stop listening at the first one. Each step here gives one picture to keep: light goes about a foot in a nanosecond, adding 3 dB about doubles the power and adding 10 dB makes it ten times bigger, a signal can arrive a billion times weaker than it left and still work, and a 100 Mbps plan moves about 12 megabytes a second. Figure 11 collects four of them.
+
+**How to use**
+1. Read top to bottom. It starts with the short answer, then a nanosecond you can hold, Wi-Fi keeping time in tiny steps, near and far, power and the rule of 3s and 10s, why distance costs so much, how big a radio wave is, bits and bytes, and four things people get wrong. Each myth hides its fact until you tap Reveal the fact.
+2. Tap a figure to open it full screen, then pinch to zoom. With a keyboard, Tab to a figure and press Enter. The figures are the guide's own, on a white card in both light and dark mode.
+3. Figure 8 is drawn at actual size on the printed guide. On a screen it is fitted to the width, so its caption says so.
+4. The last step names three companion guides. Each has an Open button that takes you to its Guided Lesson.
+5. On a computer or tablet, Present opens the lesson full screen for a projector, one step per slide, with the figures and myths on the stage and the rest of the step in the side panel: the Right and Left arrows move between steps, Space reveals the next fact on a myth step, R goes back to the first step with every fact hidden, F switches full screen, ? lists the keys and Esc exits.
+6. Take it with you, at the end of the lesson, names the free PDF guide it follows, Scales and Ratios, Explained from WLAN Pros, to print or share.
+
+**Field notes**
+- Gathered on 28 September 2026.
+- Figure 1 is not actual size, and Figure 2 is not to scale. Figure 4 uses three zoom levels, each with its own scale bar.
+- Adding 3 dB about doubles the power; the lesson says so, and says it is close enough for any Wi-Fi math.
+- Real downloads are slower than the divide-by-8 figure. Other devices share the connection, and every message carries a little extra.
+
 
 ### Phone Data Abroad, Explained
 
@@ -6257,6 +6382,7 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - This printed MCS card is separate from the interactive MCS Index tool, which lets you look up rates in a live table.
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
+
 
 
 

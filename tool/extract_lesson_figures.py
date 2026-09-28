@@ -23,9 +23,28 @@ shows what the PDF shows:
     guide's CSS text color for a figure (#444444) or the cover (#111111).
   * font-family lists ("IBM Plex Sans, sans-serif"): reduced to the first
     family, which the app bundles.
-  * class, role, aria-* and id attributes that nothing references: dropped.
+  * class, role, aria-*, data-* and id attributes that nothing references:
+    dropped.
   * a valueless HTML data attribute (`<g data-nocheck>`, a build-check
     marker) is legal HTML and illegal XML; it is dropped before parsing.
+
+Guides built with the figure kit (2026-09-28: How GPS Works, Where Your
+Phone Is) style their figures from the page, so the script also brings the
+page along:
+
+  * style="fill:var(--note-ink)": every declaration becomes the matching
+    presentation attribute (a declaration beats an attribute, as in CSS),
+    and var(--x) resolves against the guide's own :root. font-size "15px"
+    loses its unit.
+  * the page sprite (<svg class="xsprite">): a marker or <symbol> a figure
+    points at is copied in before conversion.
+  * <use> of a <symbol viewBox> with width and height: scaled into that box
+    per the default preserveAspectRatio (xMidYMid meet).
+  * .xf text and .xf .mono: the kit's two font rules, as font-family.
+
+Guides that embed an icon as a nested <svg x y width height viewBox> (Analog
+vs Digital, Scales and Ratios) get each one as a group scaled the same way.
+A start tag that repeats an attribute keeps the first, as a browser does.
 
 Nothing is recolored and no label is changed, with one exception you ask
 for by name: a label that points at a printed page ("(page 6)") means
@@ -128,12 +147,28 @@ def _balanced_div(src: str, start: int) -> int:
     raise ExtractError(f"unbalanced <div> at offset {start}")
 
 
+def outer_svgs(block: str) -> list[str]:
+    """Every top-level <svg>...</svg> in [block], nested <svg>s kept inside
+    their parent."""
+    out, depth, start = [], 0, 0
+    for m in re.finditer(r"<(/?)svg\b[^>]*?(/?)>", block):
+        if m.group(1):
+            depth -= 1
+            if depth == 0:
+                out.append(block[start : m.end()])
+        elif not m.group(2):
+            if depth == 0:
+                start = m.start()
+            depth += 1
+    return out
+
+
 def find_figures(src: str) -> list[dict]:
     """Every <div class="fig ..."> block: its <svg>, caption HTML and number."""
     out = []
     for m in re.finditer(r'<div class="fig\b[^"]*"[^>]*>', src):
         block = src[m.start() : _balanced_div(src, m.start())]
-        svgs = re.findall(r"<svg\b.*?</svg>", block, re.S)
+        svgs = outer_svgs(block)
         cap = re.search(r'<(div|p) class="cap"[^>]*>(.*?)</\1>', block, re.S)
         if len(svgs) != 1:
             raise ExtractError(
@@ -154,15 +189,50 @@ def find_figures(src: str) -> list[dict]:
 
 def find_cover(src: str) -> str | None:
     # The cover art's div may carry attributes (data-op="1" on some guides).
-    m = re.search(r'<div class="art"[^>]*>\s*(<svg\b.*?</svg>)', src, re.S)
-    if m is None and re.search(r'<div class="art\b', src):
-        raise ExtractError("the guide has cover art this script cannot find")
-    return m.group(1) if m else None
+    m = re.search(r'<div class="art"[^>]*>\s*(?=<svg\b)', src)
+    if not m:
+        if re.search(r'<div class="art\b', src):
+            raise ExtractError("the guide has cover art this script cannot find")
+        return None
+    svgs = outer_svgs(src[m.end() :])
+    return svgs[0] if svgs else None
+
+
+def root_vars(src: str) -> dict[str, str]:
+    """The guide CSS's :root custom properties, var() references resolved."""
+    raw: dict[str, str] = {}
+    for block in re.findall(r":root\s*\{([^}]*)\}", src):
+        for name, value in re.findall(r"(--[\w-]+)\s*:\s*([^;]+)", block):
+            raw[name] = value.strip()
+
+    def resolve(v: str, seen=()) -> str:
+        def sub(m: re.Match) -> str:
+            n = m.group(1)
+            if n in seen or n not in raw:
+                if m.group(2):
+                    return resolve(m.group(2).strip(), seen)
+                raise ExtractError(f"var({n}) is not defined in :root")
+            return resolve(raw[n], seen + (n,))
+
+        return re.sub(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*))?\)", sub, v)
+
+    return {k: resolve(v) for k, v in raw.items()}
+
+
+def find_sprite(src: str) -> dict[str, str]:
+    """id -> markup of every marker and symbol in the page sprite."""
+    out: dict[str, str] = {}
+    for m in re.finditer(r'<svg class="xsprite"[^>]*>', src):
+        root = parse_svg(outer_svgs(src[m.start() :])[0])
+        for el in root.iter():
+            if isinstance(el.tag, str) and local(el) in ("marker", "symbol") and el.get("id"):
+                out[el.get("id")] = etree.tostring(el, encoding="unicode")
+    return out
 
 
 def caption_markup(fragment: str) -> str:
     """Caption HTML to lesson markup: **bold**, __italic__, {{UI name}}."""
-    s = re.sub(r'<span class="path">(.*?)</span>', r"{{\1}}", fragment, flags=re.S)
+    s = re.sub(r'<span class="(?:path|ui)">(.*?)</span>', r"{{\1}}", fragment, flags=re.S)
     s = re.sub(r"<(b|strong)\b[^>]*>(.*?)</\1>", r"**\2**", s, flags=re.S)
     s = re.sub(r"<(i|em)\b[^>]*>(.*?)</\1>", r"__\2__", s, flags=re.S)
     s = re.sub(r"<br\s*/?>", " ", s)
@@ -208,7 +278,26 @@ def _drop_valueless_data_attrs(markup: str) -> str:
         markup = new
 
 
+def _first_attribute_wins(markup: str) -> str:
+    """Drop any attribute a start tag repeats, keeping the first, which is
+    what an HTML parser does with the guide's own markup."""
+
+    def tag(m: re.Match) -> str:
+        seen: set[str] = set()
+
+        def attr(a: re.Match) -> str:
+            if a.group(2) in seen:
+                return ""
+            seen.add(a.group(2))
+            return a.group(0)
+
+        return re.sub(r'(\s+)([\w:.-]+)="[^"]*"', attr, m.group(0))
+
+    return re.sub(r"<[A-Za-z][^<>]*>", tag, markup)
+
+
 def parse_svg(markup: str) -> etree._Element:
+    markup = _first_attribute_wins(markup)
     if "xmlns=" not in markup.split(">", 1)[0]:
         markup = markup.replace("<svg", f'<svg xmlns="{SVG_NS}"', 1)
     markup = _drop_valueless_data_attrs(markup)
@@ -426,21 +515,12 @@ def inline_uses(root: etree._Element, symbols=None, notes=None, where="") -> int
             if vb and uw is not None and uh is not None:
                 # SVG 2 §5.6.1: the <use> width/height is the symbol's
                 # viewport, and its viewBox maps into it per
-                # preserveAspectRatio (default xMidYMid meet).
-                vx, vy, vw, vh = (float(v) for v in re.split(r"[\s,]+", vb.strip()))
-                w, h = num(uw), num(uh)
-                align = par[0] if par else "xMidYMid"
-                if align == "none":
-                    sx, sy, ox, oy = w / vw, h / vh, 0.0, 0.0
-                elif align == "xMidYMid" and (len(par) < 2 or par[1] == "meet"):
-                    sx = sy = min(w / vw, h / vh)
-                    ox, oy = (w - vw * sx) / 2, (h - vh * sy) / 2
-                else:
-                    raise ExtractError(f"<symbol> preserveAspectRatio {' '.join(par)!r} not supported")
-                t = (t + " " if t else "") + (
-                    f"translate({fmt(ox - vx * sx)},{fmt(oy - vy * sy)}) "
-                    f"scale({fmt(sx)}" + ("" if sx == sy else f",{fmt(sy)}") + ")"
-                )
+                # preserveAspectRatio. (Merged 2026-09-28: lessons-110-a and
+                # lessons-110-b each wrote this; one implementation now, with
+                # a's aspect-ratio handling and b's placement on the clone.)
+                fit = _viewbox_fit(vb, num(uw), num(uh), par)
+                if fit:
+                    clone.set("transform", fit)
         if t:
             g.set("transform", t)
         g.append(clone)
@@ -452,6 +532,138 @@ def inline_uses(root: etree._Element, symbols=None, notes=None, where="") -> int
             + ", ".join(sorted(supplied))
         )
     return n
+
+
+def _viewbox_fit(viewbox: str, w: float, h: float, par: list[str] | None = None) -> str | None:
+    """The transform that draws [viewbox] into a w x h box at the origin, per
+    preserveAspectRatio [par] (default xMidYMid meet; "none" stretches).
+    Any other alignment stops the script rather than guessing."""
+    vx, vy, vw, vh = (float(v) for v in re.split(r"[\s,]+", viewbox.strip()))
+    par = par or ["xMidYMid"]
+    if par[0] == "none":
+        sx, sy = w / vw, h / vh
+        ox, oy = -vx * sx, -vy * sy
+    elif par[0] == "xMidYMid" and (len(par) < 2 or par[1] == "meet"):
+        sx = sy = min(w / vw, h / vh)
+        ox = (w - vw * sx) / 2 - vx * sx
+        oy = (h - vh * sy) / 2 - vy * sy
+    else:
+        raise ExtractError(f"<symbol> preserveAspectRatio {' '.join(par)!r} not supported")
+    parts = []
+    if abs(ox) > 1e-9 or abs(oy) > 1e-9:
+        parts.append(f"translate({fmt(ox)},{fmt(oy)})")
+    if abs(sx - 1) > 1e-9 or abs(sy - 1) > 1e-9:
+        parts.append(f"scale({fmt(sx)}" + ("" if sx == sy else f",{fmt(sy)}") + ")")
+    return " ".join(parts) or None
+
+
+def nested_svgs_to_groups(root: etree._Element) -> int:
+    """A nested <svg x y width height viewBox> (an embedded icon) becomes a
+    group translated to x, y and scaled into its box. It keeps every other
+    attribute. The viewport clip is not reproduced: the icons draw inside
+    their own viewBox."""
+    n = 0
+    for el in list(root.iter(NS + "svg")):
+        if el is root:
+            continue
+        x, y = num(el.get("x")), num(el.get("y"))
+        parts = []
+        if x or y:
+            parts.append(f"translate({fmt(x)},{fmt(y)})")
+        vb = el.get("viewBox")
+        if vb and el.get("width") and el.get("height"):
+            fit = _viewbox_fit(vb, num(el.get("width")), num(el.get("height")))
+            if fit:
+                parts.append(fit)
+        for k in ("x", "y", "width", "height", "viewBox", "preserveAspectRatio"):
+            el.attrib.pop(k, None)
+        el.tag = NS + "g"
+        if parts:
+            el.set("transform", " ".join(parts))
+        n += 1
+    return n
+
+
+# Style declarations that map to an SVG presentation attribute of the same
+# name. Anything else in a style attribute (width, display) is layout for the
+# PDF page and is dropped.
+_PRESENTATION = {
+    "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width",
+    "stroke-linecap", "stroke-linejoin", "stroke-miterlimit",
+    "stroke-dasharray", "stroke-dashoffset", "stroke-opacity", "opacity",
+    "color", "font-family", "font-size", "font-weight", "font-style",
+    "text-anchor", "letter-spacing", "visibility", "stop-color",
+    "stop-opacity", "dominant-baseline",
+}
+
+
+def apply_page_css(root: etree._Element, variables: dict[str, str]) -> int:
+    """Style attributes to presentation attributes, var() resolved, plus the
+    figure kit's two font rules (.xf text, .xf .mono)."""
+    n = 0
+
+    def resolve(v: str) -> str:
+        def sub(m: re.Match) -> str:
+            if m.group(1) in variables:
+                return variables[m.group(1)]
+            if m.group(2):
+                return m.group(2).strip()
+            raise ExtractError(f"var({m.group(1)}) is not defined in :root")
+
+        return re.sub(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*))?\)", sub, v)
+
+    kit = "xf" in (root.get("class") or "").split()
+    if kit and not root.get("font-family"):
+        root.set("font-family", "IBM Plex Sans")
+    for el in root.iter():
+        if not isinstance(el.tag, str):
+            continue
+        if kit and "mono" in (el.get("class") or "").split() and not el.get("font-family"):
+            el.set("font-family", "DM Mono")
+        style = el.attrib.pop("style", None)
+        if style:
+            for decl in style.split(";"):
+                if ":" not in decl:
+                    continue
+                name, value = (t.strip() for t in decl.split(":", 1))
+                if name in _PRESENTATION:
+                    value = resolve(value)
+                    if name == "font-size":
+                        value = re.sub(r"px$", "", value)
+                    el.set(name, value)
+                    n += 1
+        for k, v in list(el.attrib.items()):
+            if "var(" in v:
+                el.set(k, resolve(v))
+                n += 1
+    return n
+
+
+def bring_in_sprite(root: etree._Element, sprite: dict[str, str]) -> int:
+    """Copy each page-sprite marker or symbol the figure points at (and any
+    they point at in turn) into the figure's own <defs>."""
+    have = set(_ids(root))
+    n = 0
+    while True:
+        wanted = set()
+        for el in root.iter():
+            if not isinstance(el.tag, str):
+                continue
+            for k, v in el.attrib.items():
+                if k in ("href", "{%s}href" % XLINK_NS) or k.startswith("marker"):
+                    r = _ref(v)
+                    if r and r not in have and r in sprite:
+                        wanted.add(r)
+        if not wanted:
+            return n
+        defs = root.find(NS + "defs")
+        if defs is None:
+            defs = etree.Element(NS + "defs")
+            root.insert(0, defs)
+        for r in sorted(wanted):
+            defs.append(parse_svg(sprite[r]))
+            have.add(r)
+            n += 1
 
 
 def _marker_context(marker: etree._Element) -> dict[str, str]:
@@ -529,6 +741,13 @@ def expand_markers(root: etree._Element) -> int:
     return n
 
 
+def drop_symbols(root: etree._Element) -> None:
+    """A <symbol> never draws on its own; once every <use> is inlined it is
+    dead weight flutter_svg would trip on."""
+    for sym in list(root.iter(NS + "symbol")):
+        sym.getparent().remove(sym)
+
+
 def resolve_current_color(root: etree._Element, base: str) -> int:
     n = 0
 
@@ -563,7 +782,7 @@ def tidy(root: etree._Element) -> None:
         if not isinstance(el.tag, str):
             continue
         for k in list(el.attrib):
-            if k in ("class", "role", "overflow") or k.startswith("aria-"):
+            if k in ("class", "role", "overflow") or k.startswith(("aria-", "data-")):
                 del el.attrib[k]
             elif k == "id" and el.get("id") not in referenced:
                 del el.attrib[k]
@@ -596,7 +815,15 @@ def replace_labels(root, replacements: list[tuple[str, str]], where: str) -> lis
     return notes
 
 
-def convert(markup: str, base_color: str, replacements=(), where="", symbols=None) -> tuple[str, dict]:
+def convert(
+    markup: str,
+    base_color: str,
+    replacements=(),
+    where="",
+    variables: dict[str, str] | None = None,
+    sprite: dict[str, str] | None = None,
+    symbols: dict[str, etree._Element] | None = None,
+) -> tuple[str, dict]:
     root = parse_svg(markup)
     notes = replace_labels(root, list(replacements), where)
     alt = root.get("aria-label")
@@ -604,7 +831,11 @@ def convert(markup: str, base_color: str, replacements=(), where="", symbols=Non
     if not vb:
         raise ExtractError("figure <svg> has no viewBox")
     _, _, w, h = (float(v) for v in re.split(r"[\s,]+", vb.strip()))
+    brought = bring_in_sprite(root, sprite or {})
+    styled = apply_page_css(root, variables or {})
+    nested = nested_svgs_to_groups(root)
     uses = inline_uses(root, symbols, notes, where)
+    drop_symbols(root)
     markers = expand_markers(root)
     colors = resolve_current_color(root, base_color)
     tidy(root)
@@ -623,6 +854,9 @@ def convert(markup: str, base_color: str, replacements=(), where="", symbols=Non
         "markersExpanded": markers,
         "usesInlined": uses,
         "currentColorResolved": colors,
+        "spriteCopied": brought,
+        "styleResolved": styled,
+        "nestedSvgs": nested,
         "notes": notes,
     }
 
@@ -636,15 +870,19 @@ def extract(guide: Path, slug: str, replacements=(), symbols=None) -> tuple[dict
     src = guide.read_text(encoding="utf-8")
     files: dict[str, str] = {}
     manifest: list[dict] = []
+    variables = root_vars(src)
+    sprite = find_sprite(src)
     cover = find_cover(src)
     if cover:
-        svg, info = convert(cover, COVER_COLOR, replacements, "cover", symbols)
+        svg, info = convert(cover, COVER_COLOR, replacements, "cover", variables, sprite, symbols)
         files["cover.svg"] = svg
         manifest.append({"n": 0, "file": "cover.svg", "caption": None, "alt": info["ariaLabel"], **info})
     for f in find_figures(src):
         name = f"fig-{f['n']:02d}.svg"
         try:
-            svg, info = convert(f["svg"], FIGURE_COLOR, replacements, f"Figure {f['n']}", symbols)
+            svg, info = convert(
+                f["svg"], FIGURE_COLOR, replacements, f"Figure {f['n']}", variables, sprite, symbols
+            )
         except ExtractError as e:
             raise ExtractError(f"Figure {f['n']}: {e}") from e
         files[name] = svg
@@ -687,9 +925,18 @@ def main(argv: list[str]) -> int:
     figs = sum(1 for m in manifest if m["n"])
     markers = sum(m["markersExpanded"] for m in manifest)
     uses = sum(m["usesInlined"] for m in manifest)
+    extra = ""
+    for key, label in (
+        ("spriteCopied", "sprite defs copied in"),
+        ("styleResolved", "style/var() declarations resolved"),
+        ("nestedSvgs", "nested <svg> made groups"),
+    ):
+        total = sum(m[key] for m in manifest)
+        if total:
+            extra += f", {total} {label}"
     print(
         f"{a.slug}: {figs} figures{' + cover' if 'cover.svg' in files else ''}, "
-        f"{markers} arrowheads expanded, {uses} <use> inlined"
+        f"{markers} arrowheads expanded, {uses} <use> inlined{extra}"
     )
     for m in manifest:
         for n in m["notes"]:

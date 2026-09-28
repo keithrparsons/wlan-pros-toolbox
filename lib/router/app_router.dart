@@ -151,6 +151,12 @@ import '../screens/tools/reference/cameras_doorbells_explained_screen.dart';
 import '../screens/tools/reference/devices_to_internet_explained_screen.dart';
 import '../screens/tools/reference/mesh_extenders_explained_screen.dart';
 import '../screens/tools/reference/router_too_old_explained_screen.dart';
+import '../screens/tools/reference/bluetooth_explained_screen.dart';
+import '../screens/tools/reference/weak_cell_signal_explained_screen.dart';
+import '../screens/tools/reference/how_gps_works_explained_screen.dart';
+import '../screens/tools/reference/where_your_phone_is_explained_screen.dart';
+import '../screens/tools/reference/analog_vs_digital_explained_screen.dart';
+import '../screens/tools/reference/scales_and_ratios_explained_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -848,6 +854,30 @@ class AppRouter {
   /// `home-internet-explained` is permanent (route, catalog, diagram lookup,
   /// help, tests).
   static const String homeInternetExplained = '/tools/home-internet-explained';
+  /// Bluetooth, Explained: a Wireless Classroom Guided Lesson on why earbuds
+  /// cut out and why the car won't connect. The id `bluetooth-explained` is
+  /// permanent (route, catalog, help, tests).
+  static const String bluetoothExplained = '/tools/bluetooth-explained';
+  /// Weak Cell Signal at Home, Explained: a Wireless Classroom Guided Lesson
+  /// on why a house blocks cell signal and the three fixes. The id
+  /// `weak-cell-signal-explained` is permanent (route, catalog, help, tests).
+  static const String weakCellSignalExplained = '/tools/weak-cell-signal-explained';
+  /// How GPS Works, Explained: a Wireless Classroom Guided Lesson on how a
+  /// phone finds itself from satellite time signals. The id
+  /// `how-gps-works-explained` is permanent (route, catalog, help, tests).
+  static const String howGpsWorksExplained = '/tools/how-gps-works-explained';
+  /// How Your Phone Knows Where It Is, Explained: a Wireless Classroom Guided
+  /// Lesson on Wi-Fi positioning and the location switches. The id
+  /// `where-your-phone-is-explained` is permanent (route, catalog, help, tests).
+  static const String whereYourPhoneIsExplained = '/tools/where-your-phone-is-explained';
+  /// Analog vs Digital, Explained: a Wireless Classroom Guided Lesson on what
+  /// the two words mean and why Wi-Fi slows in steps. The id
+  /// `analog-vs-digital-explained` is permanent (route, catalog, help, tests).
+  static const String analogVsDigitalExplained = '/tools/analog-vs-digital-explained';
+  /// Scales and Ratios, Explained: a Wireless Classroom Guided Lesson on the
+  /// tiny and huge numbers behind Wi-Fi. The id `scales-and-ratios-explained`
+  /// is permanent (route, catalog, help, tests).
+  static const String scalesAndRatiosExplained = '/tools/scales-and-ratios-explained';
 
   /// Phone Data Abroad, Explained: a Wireless Classroom Guided Lesson on
   /// roaming, travel eSIMs and local SIMs, keeping your number, and the switches
@@ -1266,6 +1296,12 @@ class AppRouter {
     devicesToInternetExplained: (_) => const DevicesToInternetExplainedScreen(),
     meshExtendersExplained: (_) => const MeshExtendersExplainedScreen(),
     routerTooOldExplained: (_) => const RouterTooOldExplainedScreen(),
+    bluetoothExplained: (_) => const BluetoothExplainedScreen(),
+    weakCellSignalExplained: (_) => const WeakCellSignalExplainedScreen(),
+    howGpsWorksExplained: (_) => const HowGpsWorksExplainedScreen(),
+    whereYourPhoneIsExplained: (_) => const WhereYourPhoneIsExplainedScreen(),
+    analogVsDigitalExplained: (_) => const AnalogVsDigitalExplainedScreen(),
+    scalesAndRatiosExplained: (_) => const ScalesAndRatiosExplainedScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

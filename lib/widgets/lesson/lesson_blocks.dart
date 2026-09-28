@@ -176,8 +176,13 @@ class LessonCalloutView extends StatelessWidget {
         );
         lines.add(const SizedBox(height: AppSpacing.xxs));
       case LessonCalloutKind.quote:
+        // The label may name its source in italics, as the guide's does
+        // (`.lab i`). Upper-casing leaves the __ markers intact.
         lines.add(
-          Text(c.speaker!.toUpperCase(), style: _labelStyle(context, hue)),
+          LessonRich(
+            c.speaker!.toUpperCase(),
+            style: _labelStyle(context, hue),
+          ),
         );
         lines.add(const SizedBox(height: AppSpacing.xxs));
       case LessonCalloutKind.note:
@@ -236,7 +241,7 @@ class LessonCalloutView extends StatelessWidget {
       label: switch (c.kind) {
         LessonCalloutKind.caution => 'Caution',
         LessonCalloutKind.stop => 'Stop',
-        LessonCalloutKind.quote => c.speaker,
+        LessonCalloutKind.quote => lessonPlain(c.speaker!),
         LessonCalloutKind.note => null,
       },
       child: Container(

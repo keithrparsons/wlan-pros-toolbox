@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 270" font-family="IBM Plex Sans" width="700" height="270">
+  <g transform="translate(38 104) scale(3.5)" fill="none" stroke="#444444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9 H15.5 M8.5 9 L6.5 21.5 M15.5 9 L17.5 21.5 M12 9 V3"/><path d="M8.5 9 L16.5 15.2 M15.5 9 L7.5 15.2 M7.5 15.2 H16.5 M7.5 15.2 L17.5 21.5 M16.5 15.2 L6.5 21.5"/><path d="M8.3 1.9 A5 5 0 0 0 8.3 7.1 M15.7 1.9 A5 5 0 0 1 15.7 7.1"/></g><text x="80" y="206.4" text-anchor="middle" font-size="15" fill="#444444">Cell tower</text>
+  <!-- strong signal outside -->
+  <path d="M130 158 H330" stroke="#7A9E26" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+  <text x="230" y="140" text-anchor="middle" font-size="14" fill="#444444">strong at the curb</text>
+  <!-- house: roof and walls -->
+  <path d="M352 90 L500 20 L648 90" fill="none" stroke="#1A1A1A" stroke-width="5" stroke-linejoin="round"/>
+  <rect x="360" y="90" width="280" height="150" fill="none" stroke="#1A1A1A" stroke-width="5"/>
+  <!-- low-E window in the wall the signal hits -->
+  <g transform="translate(343 141) scale(1.41667)" fill="none" stroke="#2B5C8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="16" rx="1"/><path d="M12 3 V19 M4 11 H20 M2.5 21.5 H21.5"/></g>
+  <!-- weak signal inside -->
+  <path d="M390 158 H520" stroke="#7A9E26" stroke-width="2" stroke-dasharray="3 6" stroke-linecap="round"/>
+  <g fill="black" fill-opacity="1" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-dasharray="none" stroke-dashoffset="0" stroke-opacity="1" font-family="IBM Plex Sans" transform="translate(520,158) rotate(360) scale(1.4) translate(-9,-5)"><path d="M0 0L10 5L0 10z" fill="#7A9E26"/></g><text x="455" y="192" text-anchor="middle" font-size="14" fill="#444444">weak in the kitchen</text>
+  <g transform="translate(528 128) scale(2.66667)" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5 H13.5"/></g>
+  <text x="500" y="266" text-anchor="middle" font-size="14" fill="#444444">Walls, coated glass and foil insulation</text>
+</svg>

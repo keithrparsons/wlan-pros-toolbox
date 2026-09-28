@@ -1,0 +1,145 @@
+{
+  "source": "weak-cell-signal-explained--SOURCE.html",
+  "figures": [
+    {
+      "n": 0,
+      "file": "cover.svg",
+      "viewBox": [
+        700.0,
+        270.0
+      ],
+      "caption": null,
+      "alt": null
+    },
+    {
+      "n": 1,
+      "file": "fig-01.svg",
+      "viewBox": [
+        760.0,
+        248.0
+      ],
+      "caption": "**Figure 1. Some materials barely matter. Some block a lot.** Wood, drywall and plain glass take little. Concrete takes much more. These are computed for one layer, head-on.",
+      "alt": "Figure 1. Some materials barely matter. Some block a lot. Wood, drywall and plain glass take little. Concrete takes much more. These are computed for one layer, head-on."
+    },
+    {
+      "n": 2,
+      "file": "fig-02.svg",
+      "viewBox": [
+        760.0,
+        164.0
+      ],
+      "caption": "**Figure 2. Measured in a lab.** Same scale as Figure 1. Longer bars mean more signal lost.",
+      "alt": "Figure 2. Measured in a lab. Same scale as Figure 1. Longer bars mean more signal lost."
+    },
+    {
+      "n": 3,
+      "file": "fig-03.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 3. A thin layer of metal sends the signal back outside.** It might be foil in the wall or a coating on the glass. What reaches the kitchen comes in through the gaps.",
+      "alt": "Figure 3. A thin layer of metal sends the signal back outside. It might be foil in the wall or a coating on the glass. What reaches the kitchen comes in through the gaps."
+    },
+    {
+      "n": 4,
+      "file": "fig-04.svg",
+      "viewBox": [
+        760.0,
+        312.0
+      ],
+      "caption": "**Figure 4. A sealed house lets signal in only through its gaps.** Lime is the signal that gets in. Gray is the signal the coatings send back. Not to scale.",
+      "alt": "Figure 4. A sealed house lets signal in only through its gaps. Lime is the signal that gets in. Gray is the signal the coatings send back. Not to scale."
+    },
+    {
+      "n": 5,
+      "file": "fig-05.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 5. Higher bands lose more through the wall.** The energy-efficient building (green) loses much more at the higher band on the right. The older building barely changes.",
+      "alt": "Figure 5. Higher bands lose more through the wall. The energy-efficient building (green) loses much more at the higher band on the right. The older building barely changes."
+    },
+    {
+      "n": 6,
+      "file": "fig-06.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 6. The outdoor test decides it.** A booster needs signal outside to bring in. Wi-Fi Calling and a network extender don't.",
+      "alt": "Figure 6. The outdoor test decides it. A booster needs signal outside to bring in. Wi-Fi Calling and a network extender don't."
+    },
+    {
+      "n": 7,
+      "file": "fig-07.svg",
+      "viewBox": [
+        760.0,
+        280.0
+      ],
+      "caption": "**Figure 7. Wi-Fi Calling goes around the walls.** The lime path is your call: over your Wi-Fi and your home internet to your carrier.",
+      "alt": "Figure 7. Wi-Fi Calling goes around the walls. The lime path is your call: over your Wi-Fi and your home internet to your carrier."
+    },
+    {
+      "n": 8,
+      "file": "fig-08.svg",
+      "viewBox": [
+        760.0,
+        300.0
+      ],
+      "caption": "**Figure 8. Catch it outside, repeat it inside.** The outside antenna faces the tower. The amplifier makes the signal stronger. The inside antenna fills one part of the house.",
+      "alt": "Figure 8. Catch it outside, repeat it inside. The outside antenna faces the tower. The amplifier makes the signal stronger. The inside antenna fills one part of the house."
+    },
+    {
+      "n": 9,
+      "file": "fig-09.svg",
+      "viewBox": [
+        760.0,
+        170.0
+      ],
+      "caption": "**Figure 9. Distance and walls keep them apart.** The gap between the two antennas has to block more than the booster adds.",
+      "alt": "Figure 9. Distance and walls keep them apart. The gap between the two antennas has to block more than the booster adds."
+    },
+    {
+      "n": 10,
+      "file": "fig-10.svg",
+      "viewBox": [
+        720.0,
+        176.0
+      ],
+      "caption": "**Figure 10. Open air alone isn't enough.** The bar on the left is how much an all-carrier home booster may add. The others show how much distance takes away. Walls and the roof make up the rest.",
+      "alt": "Figure 10. Open air alone isn't enough. The bar on the left is how much an all-carrier home booster may add. The others show how much distance takes away. Walls and the roof make up the rest."
+    },
+    {
+      "n": 11,
+      "file": "fig-11.svg",
+      "viewBox": [
+        760.0,
+        196.0
+      ],
+      "caption": "**Figure 11. Register first, then switch it on.** Your carrier has to know about a booster before it goes on the air.",
+      "alt": "Figure 11. Register first, then switch it on. Your carrier has to know about a booster before it goes on the air."
+    },
+    {
+      "n": 12,
+      "file": "fig-12.svg",
+      "viewBox": [
+        760.0,
+        250.0
+      ],
+      "caption": "**Figure 12. Three ways into the same carrier.** Two ride your internet and ignore the walls. The booster rides the tower's own signal and needs some of it outside.",
+      "alt": "Figure 12. Three ways into the same carrier. Two ride your internet and ignore the walls. The booster rides the tower's own signal and needs some of it outside."
+    },
+    {
+      "n": 13,
+      "file": "fig-13.svg",
+      "viewBox": [
+        760.0,
+        480.0
+      ],
+      "caption": "**Figure 13. Each fix wins in different places.** Read down a column to see one fix. A lime check means it works in your favor.",
+      "alt": "Figure 13. Each fix wins in different places. Read down a column to see one fix. A lime check means it works in your favor."
+    }
+  ]
+}
