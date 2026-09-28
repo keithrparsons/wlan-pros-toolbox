@@ -46,6 +46,7 @@ import '../screens/tools/calculators/predict_measure_screen.dart';
 import '../screens/tools/calculators/location_screen.dart';
 import '../screens/tools/calculators/repeater_mesh_screen.dart';
 import '../screens/tools/calculators/latency_under_load_screen.dart';
+import '../screens/tools/reference/slowest_link_panel.dart';
 import '../screens/tools/calculators/dfs_simulator_screen.dart';
 import '../screens/tools/calculators/mlo_simulator_screen.dart';
 import '../screens/tools/calculators/multicast_basic_rate_screen.dart';
@@ -1206,11 +1207,17 @@ class AppRouter {
       title: 'Throughput Testing: Where You Test',
       assetPath: 'assets/field-plates/throughput-testing-where.pdf',
       toolId: 'throughput-testing-where',
+      // The Slowest Link Wins (2026-09-27, research brief candidate 15):
+      // one control beside the unchanged plate.
+      companion: SlowestLinkPanel(),
     ),
     howDevicesAccessTheInternet: (_) => const PdfReferenceScreen(
       title: 'How Your Devices Access the Internet',
       assetPath: 'assets/field-plates/how-devices-access-the-internet.pdf',
       toolId: 'how-devices-access-the-internet',
+      // The Slowest Link Wins (2026-09-27, research brief candidate 15):
+      // one control beside the unchanged plate.
+      companion: SlowestLinkPanel(),
     ),
     hexAscii: (_) => const HexAsciiScreen(),
     unitConverter: (_) => const UnitConverterScreen(),

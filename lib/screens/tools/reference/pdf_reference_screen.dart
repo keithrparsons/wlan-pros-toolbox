@@ -469,14 +469,21 @@ Color pdfLetterboxColor(AppColorScheme colors) =>
 /// the app bar and the Semantics label), the bundled [assetPath]
 /// (`assets/reference-cards/<id>.pdf`), and the catalog [toolId] of the SPECIFIC
 /// card so the help action resolves that card's help entry, not a generic one.
+/// Width of the companion panel beside the card on a wide window.
+const double kPdfCompanionWidth = 360;
+
 class PdfReferenceScreen extends StatefulWidget {
   const PdfReferenceScreen({
     required this.title,
     required this.assetPath,
     required this.toolId,
     this.shareFn = sharePdf,
+    this.companion,
     super.key,
   });
+
+  /// Key on the companion panel's scroll view, for tests.
+  static const Key companionKey = ValueKey<String>('pdf-reference-companion');
 
   /// Card title — app-bar title and the spoken document name.
   final String title;
@@ -492,6 +499,12 @@ class PdfReferenceScreen extends StatefulWidget {
   /// Share/download implementation. Defaults to the real [sharePdf]; tests
   /// inject a fake so they never hit the platform channel.
   final PdfShareFn shareFn;
+
+  /// An interactive panel shown beside the card (or below it on a narrow
+  /// window), for a plate that teaches something a control makes plain. The
+  /// Slowest Link Wins panel on two field plates is the first (2026-09-27).
+  /// Null, the default, leaves the screen exactly as it was.
+  final Widget? companion;
 
   @override
   State<PdfReferenceScreen> createState() => _PdfReferenceScreenState();
@@ -918,97 +931,146 @@ class _PdfReferenceScreenState extends State<PdfReferenceScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: Shortcuts(
-                shortcuts: const <ShortcutActivator, Intent>{
-                  SingleActivator(LogicalKeyboardKey.arrowRight):
-                      _TurnPageIntent(forward: true),
-                  SingleActivator(LogicalKeyboardKey.arrowLeft):
-                      _TurnPageIntent(forward: false),
-                  SingleActivator(LogicalKeyboardKey.arrowDown):
-                      _TurnPageIntent(forward: true),
-                  SingleActivator(LogicalKeyboardKey.arrowUp): _TurnPageIntent(
-                    forward: false,
-                  ),
-                  SingleActivator(LogicalKeyboardKey.pageDown): _TurnPageIntent(
-                    forward: true,
-                  ),
-                  SingleActivator(LogicalKeyboardKey.pageUp): _TurnPageIntent(
-                    forward: false,
-                  ),
-                },
-                child: Actions(
-                  actions: <Type, Action<Intent>>{
-                    _TurnPageIntent: CallbackAction<_TurnPageIntent>(
-                      onInvoke: (_TurnPageIntent intent) {
-                        unawaited(_turnPage(forward: intent.forward));
-                        return null;
-                      },
+        child: _withCompanion(
+          Column(
+            children: <Widget>[
+              Expanded(
+                child: Shortcuts(
+                  shortcuts: const <ShortcutActivator, Intent>{
+                    SingleActivator(LogicalKeyboardKey.arrowRight):
+                        _TurnPageIntent(forward: true),
+                    SingleActivator(LogicalKeyboardKey.arrowLeft):
+                        _TurnPageIntent(forward: false),
+                    SingleActivator(LogicalKeyboardKey.arrowDown):
+                        _TurnPageIntent(forward: true),
+                    SingleActivator(LogicalKeyboardKey.arrowUp):
+                        _TurnPageIntent(forward: false),
+                    SingleActivator(LogicalKeyboardKey.pageDown):
+                        _TurnPageIntent(forward: true),
+                    SingleActivator(LogicalKeyboardKey.pageUp): _TurnPageIntent(
+                      forward: false,
                     ),
                   },
-                  child: Focus(
-                    focusNode: _viewerFocusNode,
-                    // The viewer is the primary content of this screen, so it
-                    // takes focus on open and the arrow keys work immediately
-                    // without the user hunting for a control to focus first.
-                    autofocus: true,
-                    child: Semantics(
-                      // PDF inner content is rasterized and not SR-readable; the
-                      // screen label is the honest description of what this
-                      // surface is and how to use it. The interaction named here
-                      // is the one that actually exists on THIS platform.
-                      label: _semanticsLabel,
-                      // Child semantics are deliberately NOT excluded, and this
-                      // comment used to claim otherwise. `explicitChildNodes:
-                      // false` is Flutter's default and excludes nothing; the flag
-                      // that would exclude is `excludeSemantics: true` (used
-                      // correctly on the page indicator below).
-                      //
-                      // Corrected the COMMENT rather than the code, because
-                      // excluding here would be a real accessibility regression:
-                      // [_body] contains the `_LoadingState` and `_ErrorState`
-                      // liveRegion announcements, and silencing those would leave
-                      // a screen-reader user with no signal that the card is
-                      // loading or that it failed to open. The rasterized PDF
-                      // contributes no competing label, so there is nothing to
-                      // suppress in the success case anyway.
-                      explicitChildNodes: false,
-                      child: Listener(
-                        onPointerSignal: _handlePointerSignal,
-                        child: _body(context),
+                  child: Actions(
+                    actions: <Type, Action<Intent>>{
+                      _TurnPageIntent: CallbackAction<_TurnPageIntent>(
+                        onInvoke: (_TurnPageIntent intent) {
+                          unawaited(_turnPage(forward: intent.forward));
+                          return null;
+                        },
+                      ),
+                    },
+                    child: Focus(
+                      focusNode: _viewerFocusNode,
+                      // The viewer is the primary content of this screen, so it
+                      // takes focus on open and the arrow keys work immediately
+                      // without the user hunting for a control to focus first.
+                      autofocus: true,
+                      child: Semantics(
+                        // PDF inner content is rasterized and not SR-readable; the
+                        // screen label is the honest description of what this
+                        // surface is and how to use it. The interaction named here
+                        // is the one that actually exists on THIS platform.
+                        label: _semanticsLabel,
+                        // Child semantics are deliberately NOT excluded, and this
+                        // comment used to claim otherwise. `explicitChildNodes:
+                        // false` is Flutter's default and excludes nothing; the flag
+                        // that would exclude is `excludeSemantics: true` (used
+                        // correctly on the page indicator below).
+                        //
+                        // Corrected the COMMENT rather than the code, because
+                        // excluding here would be a real accessibility regression:
+                        // [_body] contains the `_LoadingState` and `_ErrorState`
+                        // liveRegion announcements, and silencing those would leave
+                        // a screen-reader user with no signal that the card is
+                        // loading or that it failed to open. The rasterized PDF
+                        // contributes no competing label, so there is nothing to
+                        // suppress in the success case anyway.
+                        explicitChildNodes: false,
+                        child: Listener(
+                          onPointerSignal: _handlePointerSignal,
+                          child: _body(context),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Page + zoom controls. Self-omits entirely on touch platforms
-            // showing a single-page card, where there is nothing to navigate
-            // and pinch already handles zoom.
-            PdfViewerControlBar(
-              currentPage: _currentPage,
-              pageCount: _pageCount,
-              showPageControls: _isPointerPlatform,
-              showZoomControls: _isPointerPlatform,
-              // The bar disables each control from this state; the screen hands
-              // over plain callbacks and makes no enabled/disabled decision of
-              // its own. That is deliberate — see [PdfViewerControlState].
-              state: _controlState,
-              onPrevious: () => _turnPage(forward: false),
-              onNext: () => _turnPage(forward: true),
-              onZoomIn: () => _zoomBy(_zoomStep),
-              onZoomOut: () => _zoomBy(1 / _zoomStep),
-              onZoomReset: _resetZoom,
-            ),
-            // §8.16.1 — per-card help, pinned beneath the full-bleed viewer
-            // (this screen has no scroll body). Self-omits when the card id has
-            // no authored help entry.
-            ToolHelpFooter(toolId: widget.toolId),
-          ],
+              // Page + zoom controls. Self-omits entirely on touch platforms
+              // showing a single-page card, where there is nothing to navigate
+              // and pinch already handles zoom.
+              PdfViewerControlBar(
+                currentPage: _currentPage,
+                pageCount: _pageCount,
+                showPageControls: _isPointerPlatform,
+                showZoomControls: _isPointerPlatform,
+                // The bar disables each control from this state; the screen hands
+                // over plain callbacks and makes no enabled/disabled decision of
+                // its own. That is deliberate — see [PdfViewerControlState].
+                state: _controlState,
+                onPrevious: () => _turnPage(forward: false),
+                onNext: () => _turnPage(forward: true),
+                onZoomIn: () => _zoomBy(_zoomStep),
+                onZoomOut: () => _zoomBy(1 / _zoomStep),
+                onZoomReset: _resetZoom,
+              ),
+              // §8.16.1 — per-card help, pinned beneath the full-bleed viewer
+              // (this screen has no scroll body). Self-omits when the card id has
+              // no authored help entry.
+              ToolHelpFooter(toolId: widget.toolId),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  /// Places [PdfReferenceScreen.companion] beside the viewer (windows at
+  /// least 720 px wide) or below it (narrower), each in its own scroll so
+  /// the viewer keeps its full-bleed, non-scrolling surface. No companion:
+  /// the viewer column alone, exactly as before.
+  Widget _withCompanion(Widget viewer) {
+    final Widget? companion = widget.companion;
+    if (companion == null) return viewer;
+    final AppColorScheme colors = context.colors;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+        final Widget panel = SingleChildScrollView(
+          key: PdfReferenceScreen.companionKey,
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: companion,
+        );
+        if (c.maxWidth >= 720) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(child: viewer),
+              Container(
+                width: kPdfCompanionWidth,
+                decoration: BoxDecoration(
+                  color: colors.surface1,
+                  border: Border(left: BorderSide(color: colors.border)),
+                ),
+                child: panel,
+              ),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Expanded(child: viewer),
+            Container(
+              constraints: BoxConstraints(maxHeight: c.maxHeight * 0.45),
+              decoration: BoxDecoration(
+                color: colors.surface1,
+                border: Border(top: BorderSide(color: colors.border)),
+              ),
+              child: panel,
+            ),
+          ],
+        );
+      },
     );
   }
 
