@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 231;
+const int _expectedEntryCount = 232;
 
 const String _fixture = '''
 {
@@ -488,6 +488,8 @@ void main() {
       // wifi-privacy-myths, on top of wifi-lab/preview (8c123f84), which
       // counted 228. 228 + 1 = 229. Counted off the file: `len(json['tools'])`
       // returned 229.
+      // 2026-09-27: Wi-Fi Classroom added ONE entry, latency-under-load, on
+      // top of wifi-lab/preview (8c123f84), which counted 228. 228 + 1 = 229.
       expect(store.count, _expectedEntryCount);
     });
 

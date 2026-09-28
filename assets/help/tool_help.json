@@ -1412,6 +1412,46 @@
       ],
       "source": "Wi-Fi Classroom wave 4 research brief, row J: the relay formula derived from airtime (an inference, not a measurement). Path loss from the Roaming Walk tool, receiver sensitivity per MCS from the Rate vs Range tool, 802.11ax PHY rates from the Airtime Anatomy tool. Computed on your device."
     },
+    "latency-under-load": {
+      "name": "Why a Busy Line Lags",
+      "category": "Wi-Fi Classroom",
+      "purpose": "Shows why a video call stutters when someone else in the house uploads. A chart follows the call's round-trip delay over a 20-second run on a home line: idle, then while an upload runs, then after it stops. One switch turns smart queue management (SQM) off or on. Off, the call's delay climbs from the idle figure to hundreds of milliseconds, following the measurements of the FCC (Federal Communications Commission). On, it stays near idle. A picture of the queue at the home line shows why: the call's packet waiting behind the upload, or going in its turn.",
+      "whyHere": "Lag is delay, not speed, and the usual fix people reach for, a faster plan, does not cure it. An upload sends as fast as the line allows, so it fills the line's queue on any plan, and every call packet waits behind whatever is in that queue. A faster plan drains the queue faster, but the call still waits. The FCC's 13th Measuring Broadband America report found latency under load significantly higher than idle latency, most of all on DSL (digital subscriber line). What brings the delay down is keeping the queue short, which is the job of active queue management (AQM) such as FQ-CoDel (flow queue controlled delay), which some home routers offer as a smart queue management setting.",
+      "howToUse": [
+        "Read the headline: the call's delay at the playhead, its delay while the upload runs in the current setting (and how many times idle that is), and the idle figure with the FCC's measured range.",
+        "Switch Smart queue management (SQM) between Off and On. The solid line is the current setting; the dashed line is the other one, kept for comparison. The bracket marked FCC range is the spread the FCC measured across providers.",
+        "Pick the home line: Fiber, Cable (the default) or DSL. Each follows the FCC's figures for that technology, and the chart's scale changes with it.",
+        "Play the call runs the 20 seconds in real time, 1 s on steps a second, and the Time into the run slider or a drag across the chart moves the playhead. The queue picture below the chart shows what the call's packet is waiting behind at that moment. Reset returns to Cable, SQM off, the whole run drawn.",
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Space plays or pauses, Right steps one second, Up turns SQM on and Down turns it off, Q switches it, R resets, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Smart queue management",
+          "unit": "switch",
+          "range": "Off (default) or On"
+        },
+        {
+          "name": "The home line",
+          "unit": "choice",
+          "range": "Fiber, Cable (default) or DSL"
+        },
+        {
+          "name": "Time into the run",
+          "unit": "s",
+          "range": "0 to 20; the upload runs from 4 s to 16 s (illustrative timing)"
+        }
+      ],
+      "algorithm": "Delay = idle + queue. Idle is the middle of the FCC's measured idle range for the technology: fiber 7 to 14 ms, cable 12 to 24 ms, DSL 23 to 34 ms. With SQM off, the queue fills toward (busy - idle), where busy is the median provider's latency under upload load read from the FCC's Chart 7: about 30 ms on fiber, 225 ms on cable and 665 ms on DSL. With SQM on, the queue fills toward 5 ms, the default target of FQ-CoDel in RFC 8290 (RFC: Request for Comments). The queue fills as 1 - e^(-t / 0.8 s) after the upload starts. When the upload stops, a queue holding D ms of data drains in D ms. The chart samples every 100 ms, the rate the FCC sampled latency under load (10 packets a second).",
+      "example": "Defaults: a cable line, SQM off. Idle, the call's delay is 18 ms. While the upload runs it climbs to 225 ms, 12.5 times idle, in line with the FCC's cable providers (about 85 to 250 ms under upload load). Switch SQM on and the same upload leaves the call at 23 ms, 1.3 times idle (illustrative). On DSL, SQM off, the delay goes from 29 ms to 665 ms, 23.3 times idle.",
+      "fieldNotes": [
+        "The SQM-on curve is illustrative. No published consumer measurement of it was found, so it sits at idle plus FQ-CoDel's 5 ms default target, a stand-in, not a measurement. The FCC notes that some providers have since added queue management of their own.",
+        "The busy figures are read by eye from the bars of the FCC's chart and are approximate. The FCC measured in its 2022 test period and published in 2024. Under download load its bars differ, and one cable provider reached about 380 ms there.",
+        "Left out: the Wi-Fi hop, queues inside the provider's network and at the far end, jitter, and packet loss. One upload, one call, one line. The 20-second timing and the 0.8 s fill time are illustrative.",
+        "To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Test My Connection (its loaded responsiveness check). The tool's About card opens both.",
+        "The Wi-Fi Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "FCC, Measuring Broadband America, 13th Fixed Broadband Report (FCC 24-136), pp. 18 to 19: idle latency quoted from the text, latency under upstream load read from Chart 7. RFC 8290, The Flow Queue CoDel Packet Scheduler and Active Queue Management Algorithm, section 4.2 (default target 5 ms) and abstract. Wi-Fi Classroom candidates research brief, 2026-09-27, candidate 1. Computed on your device."
+    },
     "multicast-basic-rate": {
       "name": "Multicast at the Basic Rate",
       "category": "Wi-Fi Classroom",

@@ -71,6 +71,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-26: Where Am I? (spec 33), shelved after the survey tools.
     'location-rssi-ftm',
     'repeater-mesh',
+    // 2026-09-27: Why a Busy Line Lags (latency under load), the network
+    // past the AP, after the relay tool.
+    'latency-under-load',
     'dfs-simulator',
     // 2026-09-26: Association, Frame by Frame (spec 21b), its own tool
     // by Keith's call, shelved beside the ladder whose engine it shares.
@@ -125,13 +128,13 @@ void main() {
     );
   });
 
-  test('all 38 simulators are in wifi-classroom and none remain in '
+  test('all 39 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(38));
+    expect(sims, hasLength(39));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -203,7 +206,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(54));
+    expect(classroom.tools, hasLength(55));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
