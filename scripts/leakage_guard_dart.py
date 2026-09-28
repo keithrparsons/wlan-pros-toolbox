@@ -33,11 +33,29 @@ CI_PAT = re.compile(
 )
 # Case-sensitive internal machinery: SOP/GL/WS refs, wikilinks, repo paths,
 # and whole-word agent names.
+# WS- needs a leading word boundary: without it the FCC band name "AWS-1"
+# matched its last four characters (false positive, fixed 2026-09-28).
 CS_PAT = re.compile(
-    r"SOP-[0-9]|GL-[0-9]|WS-[0-9]|\[\[(?!:)|session-log|"
+    r"SOP-[0-9]|GL-[0-9]|\bWS-[0-9]|\[\[(?!:)|session-log|"
     r"Deliverables/|Team Knowledge|myPKA|/Developer/|"
     r"(^|[^A-Za-z])(Larry|Penn|Pax|Nolan|Mack|Silas|Felix|Vera|Iris|Charta|Pixel|Vex)([^A-Za-z]|$)"
 )
+
+# "Pixel" is also a Google product line. Product forms are masked out of a line
+# before CS_PAT runs, so a verbatim citation ("Google Pixel Phone Help ... Pixel
+# phone") passes while the specialist's name used as a person ("Pixel drew",
+# "ask Pixel", "Pixel's") on the same line is still caught. A product form is
+# "Pixel" preceded by "Google", or followed by a digit ("Pixel 9", "Pixel 8a")
+# or a product word. Mirrored by PIXEL_PRODUCT_SED in leakage-guard.sh.
+PIXEL_PRODUCT = re.compile(
+    r"(?<=\bGoogle )Pixel\b|"
+    r"\bPixel(?=[ -]?[0-9]|\s+(?:[Pp]hones?|Buds|Watch|Tablet|Fold|devices?)\b)"
+)
+
+
+def mask_product_names(line):
+    """Replace product-name uses of an agent-name token with a neutral token."""
+    return PIXEL_PRODUCT.sub("Pxl", line)
 
 
 def strip_comments(src):
@@ -121,7 +139,7 @@ def scan(paths):
             # code paths — legitimate, not user-facing. Skip them.
             if re.match(r"\s*(import|export|part)\b", line):
                 continue
-            if CI_PAT.search(line) or CS_PAT.search(line):
+            if CI_PAT.search(line) or CS_PAT.search(mask_product_names(line)):
                 file_hits.append((lineno, line.strip()[:160]))
         if file_hits:
             hits += 1
