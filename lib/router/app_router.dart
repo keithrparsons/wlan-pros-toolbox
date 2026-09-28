@@ -131,6 +131,7 @@ import '../screens/tools/reference/find_my_explained_screen.dart';
 import '../screens/tools/reference/public_wifi_lesson_screen.dart';
 import '../screens/tools/reference/wifi_privacy_lesson_screen.dart';
 import '../screens/tools/reference/captive_portal_screen.dart';
+import '../screens/tools/reference/guest_discovery_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -769,6 +770,11 @@ class AppRouter {
   /// sign-in page, announced (DHCP option 114) or intercepted. The id
   /// `captive-portal` is permanent (route, catalog, help, tests).
   static const String captivePortal = '/tools/captive-portal';
+  /// Why the TV and the Printer Vanish on Guest Wi-Fi — a Wi-Fi Classroom
+  /// Guided Lesson: Multicast DNS is link-local, so a guest network or client
+  /// isolation stops discovery. The id `guest-discovery` is permanent (route,
+  /// catalog, help, tests).
+  static const String guestDiscovery = '/tools/guest-discovery';
 
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
@@ -1126,6 +1132,7 @@ class AppRouter {
     publicWifi: (_) => const PublicWifiLessonScreen(),
     wifiPrivacyMyths: (_) => const WifiPrivacyLessonScreen(),
     captivePortal: (_) => const CaptivePortalScreen(),
+    guestDiscovery: (_) => const GuestDiscoveryScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.

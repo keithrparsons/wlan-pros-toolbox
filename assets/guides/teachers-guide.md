@@ -62,6 +62,8 @@ Before you press a key, ask the room what will happen. "If I move this client tw
 - **Find My, Explained.** How Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip.
 - **Connected, No Internet: Captive Portals.** Why a hotel or airplane network shows full bars and still won't load anything. Step through the device's check after association and flip the switch between a network that announces its portal and one that intercepts traffic. Stop at step 3 and ask the room what the device will see. It also explains why Wi-Fi Calling waits for the sign-in. Pair it with Association, Frame by Frame, which plays every frame up to DHCP and DNS.
 
+- **Why the TV and the Printer Vanish on Guest Wi-Fi.** Why screen casting and printing find nothing from a guest network. Pick Same, Guest or Isolation and step the discovery question to the point where it stops. Ask the room first where they think it will stop with isolation on. Pair it with Multicast at the Basic Rate, which covers what multicast costs in airtime.
+
 ### RF and Propagation
 
 - **FSPL Simulator.** Free-space path loss against distance for 2.4, 5 and 6 GHz on one chart, with a Why panel that splits each band's loss into the part every band shares and the part that changes with frequency. Up and Down double and halve the distance, so each press shows the 6 dB per doubling rule. Log and Linear switch the distance axis: on log the bands are straight lines, on linear they are the curve students usually expect.

@@ -6839,6 +6839,28 @@
       ],
       "source": "The WLAN Pros print guide Find My, Explained (September 2026), checked against Apple's support pages on 27 September 2026. The full source list is the last section of the lesson."
     },
+    "guest-discovery": {
+      "name": "Why the TV and the Printer Vanish on Guest Wi-Fi",
+      "category": "Wi-Fi Classroom",
+      "purpose": "A read-along lesson with one step-through, on why screen casting and printing find nothing from a guest network. A phone finds the TV or the printer with Multicast DNS (mDNS): one question sent to every device on the local network segment at once, addressed to 224.0.0.251 (FF02::FB for IPv6) on UDP port 5353. RFC 6762 defines that address as link-local, so the question never leaves the segment. The step-through follows the question from the phone, with one control: same network, guest network, or client isolation.",
+      "whyHere": "It answers a call Wi-Fi people get from hosts and guests: the TV is broken, or the Wi-Fi is broken. Neither is. The guest network is a separate segment, and the discovery question stops at its edge. Client isolation stops it too, even on one network, because the access point will not pass traffic from one wireless device to another.",
+      "howToUse": [
+        "Read top to bottom. The step-through is in section 2, why the question stays local is in section 3, and what to do about it is in section 5.",
+        "Pick Same, Guest or Isolation, then press Step. Step 1 shows the question and its address. Step 2 follows it to every device and marks where it stops. Step 3 shows what the phone's list finds. Back takes one step back and Reset returns to step 1.",
+        "Switch at any step to compare. With Same, the phone is on the main network with the TV and the printer. On the same network the TV and the printer both answer. On the guest network the question stops at the router between the two networks. With client isolation the phone is on the same network as the TV, and the question still stops at the access point.",
+        "The phone's internet works in all three. Discovery failing does not mean the Wi-Fi is broken."
+      ],
+      "inputs": [],
+      "algorithm": null,
+      "example": null,
+      "fieldNotes": [
+        "Some networks run an mDNS gateway, also called a reflector, that repeats discovery questions and answers between segments (VLANs, virtual local area networks) under rules the administrator sets. It is the generic fix when the TV has to sit on a different segment from the people casting to it.",
+        "Exactly what client isolation blocks is set differently from one product to the next. The lesson shows it stopping the question at the access point.",
+        "A simplified picture: one access point, one router, one TV and one printer, all on Wi-Fi. A wired printer on the same segment, and how each kind of device names and shows what it finds, are left out.",
+        "The lesson names no product. The TV, the printer and screen casting stand in for whatever the room has."
+      ],
+      "source": "RFC 6762, Multicast DNS (Internet Engineering Task Force, February 2013): sections 3 and 5 for the link-local address and port, section 11 for the local-link check on answers. Read on 27 September 2026."
+    },
     "captive-portal": {
       "name": "Connected, No Internet: Captive Portals",
       "category": "Wi-Fi Classroom",

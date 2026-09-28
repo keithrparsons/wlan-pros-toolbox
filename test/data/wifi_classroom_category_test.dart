@@ -27,6 +27,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'wifi-privacy-myths',
     // 2026-09-27: Connected, No Internet: Captive Portals (Pax candidate 2).
     'captive-portal',
+    // 2026-09-27: Why the TV and the Printer Vanish on Guest Wi-Fi (Pax
+    // candidate 11).
+    'guest-discovery',
   ],
   'RF and Propagation': <String>[
     'fspl-simulator',
@@ -97,6 +100,16 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
   ],
 };
 
+/// Guided Lessons built in the Classroom rather than moved in from
+/// Educational Resources.
+const Set<String> _builtInClassroom = <String>{
+  'find-my-explained',
+  'guest-discovery',
+  'public-wifi',
+  'wifi-privacy-myths',
+  'captive-portal',
+};
+
 const Set<String> _simulatorShelves = <String>{
   'RF and Propagation',
   'Signals and PHY',
@@ -106,15 +119,6 @@ const Set<String> _simulatorShelves = <String>{
 
 ToolCategory _cat(String id) =>
     kToolCategories.firstWhere((ToolCategory c) => c.id == id);
-
-// Guided Lessons built in the Classroom itself (2026-09-27 on), which never
-// lived in Educational Resources and so are not among the 13 that moved.
-const Set<String> _builtInClassroom = <String>{
-  'find-my-explained',
-  'public-wifi',
-  'wifi-privacy-myths',
-  'captive-portal',
-};
 
 void main() {
   final ToolCategory classroom = _cat('wifi-classroom');
@@ -209,7 +213,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(56));
+    expect(classroom.tools, hasLength(57));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {
