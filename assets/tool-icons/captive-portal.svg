@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Connected, No Internet: Captive Portals. A Wi-Fi fan (lower left):
+         the link is up. Beside it, a tall sign-in page with two form fields
+         and a short button line: the portal the network holds you at.
+         Distinct from wifi-vs-internet (fan, divider, cloud) by the portrait
+         page, and from speedtest-services (a landscape browser window with a
+         gauge) by the fan standing outside the frame. -->
+    <path d="M2.5 12 A5.6 5.6 0 0 1 10.5 12"/>
+    <path d="M4.3 14.2 A3 3 0 0 1 8.7 14.2"/>
+    <circle cx="6.5" cy="16.8" r="1.1" fill="currentColor" stroke="none"/>
+    <rect x="13" y="4" width="8" height="16" rx="2"/>
+    <path d="M15.5 8.5 H18.5"/>
+    <path d="M15.5 12 H18.5"/>
+    <path d="M15.5 15.5 H17"/>
+  </g>
+</svg>

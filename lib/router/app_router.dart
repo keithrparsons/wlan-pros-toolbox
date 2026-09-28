@@ -126,6 +126,7 @@ import '../screens/tools/reference/ethernet_cable_screen.dart';
 import '../screens/tools/reference/antenna_connectors_screen.dart';
 import '../screens/tools/reference/antenna_fundamentals_screen.dart';
 import '../screens/tools/reference/find_my_explained_screen.dart';
+import '../screens/tools/reference/captive_portal_screen.dart';
 import '../screens/tools/reference/fiber_optic_screen.dart';
 import '../screens/tools/reference/roaming_screen.dart';
 import '../screens/tools/reference/non_wifi_channels_screen.dart';
@@ -743,6 +744,12 @@ class AppRouter {
   /// diagram lookup, help, tests).
   static const String findMyExplained = '/tools/find-my-explained';
 
+  /// Connected, No Internet: Captive Portals — a Wi-Fi Classroom Guided
+  /// Lesson with one step-through: association, then the device's check for a
+  /// sign-in page, announced (DHCP option 114) or intercepted. The id
+  /// `captive-portal` is permanent (route, catalog, help, tests).
+  static const String captivePortal = '/tools/captive-portal';
+
   /// Spectrum Analysis — a read-along teaching MODULE (hub + eight topic
   /// screens) on what a spectrum analyzer is, how to read it, how to fingerprint
   /// interference (a nine-card signature gallery), and how to mitigate it. An
@@ -1094,6 +1101,7 @@ class AppRouter {
     antennaConnectors: (_) => const AntennaConnectorsScreen(),
     antennaFundamentals: (_) => const AntennaFundamentalsScreen(),
     findMyExplained: (_) => const FindMyExplainedScreen(),
+    captivePortal: (_) => const CaptivePortalScreen(),
     spectrumAnalysis: (_) => const SpectrumAnalysisScreen(),
     // PDF reference cards — one PdfReferenceScreen per bundled card. Title +
     // asset path are the only per-card inputs; the screen is otherwise shared.
