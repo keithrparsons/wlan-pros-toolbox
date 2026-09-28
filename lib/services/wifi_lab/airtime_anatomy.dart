@@ -576,24 +576,45 @@ class AirtimeResult {
   final AirtimeCheck check;
 
   /// The pinned limit the aggregate breaks, when [check] is
-  /// [AirtimeCheck.ampduTooLong] or [AirtimeCheck.mpduTooLong]; else null.
+  /// [AirtimeCheck.ampduTooLong] or [AirtimeCheck.mpduTooLong], or when
+  /// [check] is [AirtimeCheck.ppduTooLong] and the aggregate is ALSO over a
+  /// size limit (Keith, 2026-09-28, question I3: name both); else null.
   final AggregationLimitCheck? sizeRefusal;
 
+  /// True when the scenario breaks the PPDU time limit and a size limit
+  /// together, so [checkMessage] names both.
+  bool get exceedsTimeAndSize =>
+      check == AirtimeCheck.ppduTooLong && sizeRefusal != null;
+
   /// The Check in words. For a size refusal it names the size, the PHY and
-  /// the cap; otherwise it is [AirtimeCheck.message].
+  /// the cap; when the time limit is broken too it names that first, then
+  /// the size; otherwise it is [AirtimeCheck.message].
   String get checkMessage {
     final AggregationLimitCheck? c = sizeRefusal;
     if (c == null) return check.message;
+    final bool both = exceedsTimeAndSize;
     final String what = c.kind == AggregationLimitKind.ampdu
         ? 'A-MPDU (aggregate MPDU)'
         : c.kind == AggregationLimitKind.htMpduInAmpdu
         ? 'Each MPDU in the A-MPDU (aggregate MPDU)'
         : 'Each MPDU';
+    // Fewer frames shortens the PPDU and shrinks the A-MPDU; an MPDU over
+    // its own cap needs a smaller payload whatever the frame count.
     final String fix = c.kind == AggregationLimitKind.ampdu
         ? 'send fewer frames'
+        : both
+        ? 'send fewer frames and a smaller payload'
         : 'send a smaller payload';
-    return '$what is ${_thousands(c.value)} bytes, over the '
-        '${scenario.phy.label} maximum of ${_thousands(c.cap)} bytes: $fix';
+    // Mid-sentence form for the both-limits line ("and the A-MPDU ...",
+    // "and each MPDU ..."); the acronyms keep their capitals.
+    final String whatMid = c.kind == AggregationLimitKind.ampdu
+        ? 'the $what'
+        : 'each${what.substring('Each'.length)}';
+    final String size =
+        '${both ? whatMid : what} is ${_thousands(c.value)} bytes, over the '
+        '${scenario.phy.label} maximum of ${_thousands(c.cap)} bytes';
+    if (both) return 'PPDU exceeds 5.484 ms, and $size: $fix';
+    return '$size: $fix';
   }
 
   // ── Derived rows ──────────────────────────────────────────────────────────
@@ -883,7 +904,10 @@ AirtimeResult computeAirtime(AirtimeScenario s) {
   } else if (!he && ndbpsNum % ndbpsDen != 0) {
     check = AirtimeCheck.invalidCombination;
   } else if (ppdu > AirtimeConstants.maxPpduUs * 10) {
+    // The time limit is tested first, but an aggregate can break a size
+    // limit as well; the Check names both (Keith, 2026-09-28, I3).
     check = AirtimeCheck.ppduTooLong;
+    sizeRefusal = timeViewSizeRefusal(s);
   } else {
     sizeRefusal = timeViewSizeRefusal(s);
     check = sizeRefusal == null
