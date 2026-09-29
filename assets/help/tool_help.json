@@ -1331,10 +1331,11 @@
         "Tap any sent message to see what it carries. The Association Request lists the SSID, listen interval, capability information, supported rates, the RSN element (key management, ciphers and the PMF capable and required bits) and the HT, VHT, HE and EHT capabilities; the response carries the status code and the association ID.",
         "Each step number has a mark beside it: M for a management frame, D for a data frame. The EAPOL-Key frames of the 4-way handshake are data frames. A lock marks data frames encrypted after message 4; a shield marks a management frame protected by PMF (802.11w), which only happens once keys exist.",
         "Watch the channel strip: in a passive scan the AP beacons every 102.4 ms, and a beacon sent while the radio is on another channel is missed (hollow). Lower the passive dwell below 51 ms to see the scan miss the AP altogether. Switch to 6 GHz to see probes go only to the 15 PSCs, or pick Known via RNR to see a 2.4 or 5 GHz beacon name the 6 GHz AP.",
+        "In 6 GHz, set 6 GHz view to Compare all four to race four ways of finding the AP on one clock: listen on all 59 channels, probe the 15 PSCs, go straight to the channel an RNR named, or listen 20 TU on each PSC for FILS Discovery. Each strip is one method's scan to scale, and each ends with the time it first heard the AP. Play sweeps the clock; Step jumps to the next finding. RNR time: Include counts the 5 GHz scan in which the client heard the RNR; Leave out shows the 6 GHz part alone.",
         "Address check: pick ACD, Address Conflict Detection (RFC 5227), in which the client checks that no one else already has its new address with three ARP probes 1 to 2 s apart and then an announcement, or DNAv4, Detecting Network Attachment (RFC 4436), one unicast ARP to the gateway it remembers from before. The timeline shows Address Conflict Detection as the long bar it is.",
         "Mode: pick Why won't it associate? to pair a client with a network. Choose a client (Older laptop, WPA2 only; Printer, no PMF; Phone, WPA3 capable; New laptop, 6 GHz; Phone, Wi-Fi 7) and the network's security, PMF, band, Wi-Fi 7 AP and H2E only. The verdict above the ladder says what happens and why, with its source; the ladder plays up to the frame where it stops, marked with a red X, and ends with Stopped here and what the help desk sees. Open Client capabilities to switch each key management type, cipher, band, H2E and Wi-Fi 7 on or off; the client then reads Custom.",
         "Four outcomes. Associates: the key management (AKM), cipher and PMF both sides agree on. Never tries to associate: nothing in the AP's RSN element fits, so the client sends no Authentication or Association Request at all and the AP has nothing in its log; this is the common case. Refused: a device older than PMF ignores a network that requires PMF, tries, and gets status 31 in the Association Response. Not offered: 6 GHz allows only OWE, WPA3-Personal only and WPA3-Enterprise only.",
-        "On a computer or tablet, Present opens the tool full screen for a projector: Space plays or pauses, the Right arrow sends the next frame and the Left arrow takes one back, R resets, Up and Down change the passive dwell by 10 ms (in Why won't it associate?, they step the network security and C cycles the client), F switches full screen, ? lists the keys and Esc exits."
+        "On a computer or tablet, Present opens the tool full screen for a projector: Space plays or pauses, the Right arrow sends the next frame and the Left arrow takes one back, R resets, Up and Down change the passive dwell by 10 ms (in Why won't it associate?, they step the network security and C cycles the client), S turns the 6 GHz race on or off (switching to 6 GHz), F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -1361,6 +1362,16 @@
           "name": "6 GHz discovery",
           "unit": "choice",
           "range": "PSC scan, or Known via RNR (a 2.4 or 5 GHz beacon already named the 6 GHz AP)"
+        },
+        {
+          "name": "6 GHz view",
+          "unit": "choice",
+          "range": "One method (the ladder) or Compare all four (the race); 6 GHz only; default One method"
+        },
+        {
+          "name": "RNR time",
+          "unit": "choice",
+          "range": "Include the 5 GHz scan that heard the RNR, or Leave out; race only; default Include"
         },
         {
           "name": "Address check",
@@ -1398,6 +1409,7 @@
       "fieldNotes": [
         "Every phase time is a setting: no published measurement breaks a typical association down by phase. The scan dwell defaults are one real example (Linux mac80211, about 30 ms active and 111 ms passive); many drivers scan in firmware with their own dwell. The beacon interval of 102.4 ms is a default, not a mandate.",
         "OWE (Enhanced Open) encrypts without authenticating: the Diffie-Hellman keys in the association frames give both sides the PMK. 6 GHz requires WPA3 or OWE, with PMF.",
+        "The race's AP sends a FILS Discovery frame every 20 TU. IEEE 802.11-2024 requires that of a 6 GHz-only AP that wants to be found (or one sending unsolicited Probe Responses); an AP with a 2.4 or 5 GHz radio may use a longer interval, and then listening 20 TU per PSC can miss it. The race assumes the client finishes its 5 GHz scan before it tunes to the channel an RNR named.",
         "PMF (802.11w) protects deauthentication, disassociation and robust Action frames once keys exist. Beacons, probes, authentication and association frames are never protected. The ladder ends with a Block Ack setup (ADDBA) after the association to show the shield; it is not counted in the association time.",
         "With Detecting Network Attachment (DNAv4), a real client often skips the four DHCP messages and asks only to keep its old address. The ladder keeps them so the two address checks compare side by side.",
         "Not drawn: channel changes, retries, the DHCP client's own start-up delay, IPv6, and 802.11ai (FILS) fast initial link setup. The DNS server is drawn on the wired LAN lane with the DHCP server and the gateway.",

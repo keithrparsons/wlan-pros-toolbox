@@ -12,6 +12,10 @@
 // that changes nothing for the chosen options is disabled with a sentence
 // saying why. ACD and DNAv4 are spelled out wherever they first appear.
 //
+// The 6 GHz race (spec 40): "Compare all four" and "RNR time" are two more
+// AppToggles in their own group, after 6 GHz discovery; disabled outside
+// 6 GHz, each with a sentence saying why.
+//
 // Every time is a labeled, illustrative input: no published measurement
 // breaks a typical join down by phase (brief §1). Published roam figures are
 // shown only as labeled context (brief §2), never as the model's output.
@@ -28,6 +32,7 @@ import '../../../widgets/presenter/presenter.dart';
 import '../labeled_field.dart';
 import '../reference/eap_types_screen.dart';
 import 'eap_ladder_controller.dart';
+import 'eap_ladder_jr_race.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
 
@@ -82,6 +87,9 @@ class JrReadoutsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.raceActive) {
+      return SixGhzRaceReadouts(controller: controller);
+    }
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final JrSequence s = controller.jr;
@@ -272,6 +280,9 @@ enum JrSettingsGroup {
   /// How a 6 GHz AP is found.
   sixGhz,
 
+  /// The 6 GHz race: one method or all four, and RNR's time (Join only).
+  race,
+
   /// ACD or DNAv4 (Join only).
   addressCheck,
 }
@@ -284,6 +295,7 @@ const Set<JrSettingsGroup> kAllJrSettingsGroups = <JrSettingsGroup>{
   JrSettingsGroup.radio,
   JrSettingsGroup.scan,
   JrSettingsGroup.sixGhz,
+  JrSettingsGroup.race,
   JrSettingsGroup.addressCheck,
 };
 
@@ -473,6 +485,7 @@ List<Widget> jrMainSettings(
     label: 'Scan',
     semanticLabel: 'Scan type: active probes, or passive listening',
     value: cfg.scanType,
+    enabled: !c.raceActive,
     expand: true,
     items: <AppToggleItem<JrScanType>>[
       for (final JrScanType t in JrScanType.values) (t, t.label),
@@ -494,6 +507,10 @@ List<Widget> jrMainSettings(
       if (groups.contains(JrSettingsGroup.scan)) ...<Widget>[
         const SizedBox(height: AppSpacing.xs),
         scanToggle,
+        if (c.raceActive && !compact) ...<Widget>[
+          const SizedBox(height: AppSpacing.xxs),
+          Text('In the race each strip sets its own scan type.', style: note),
+        ],
       ],
     ]);
   } else if (groups.contains(JrSettingsGroup.scan)) {
@@ -506,7 +523,7 @@ List<Widget> jrMainSettings(
         label: '6 GHz discovery',
         semanticLabel: 'How the client finds a 6 GHz AP',
         value: cfg.sixGhz,
-        enabled: six,
+        enabled: six && !c.raceActive,
         expand: true,
         items: <AppToggleItem<JrSixGhzDiscovery>>[
           for (final JrSixGhzDiscovery d in JrSixGhzDiscovery.values)
@@ -527,12 +544,68 @@ List<Widget> jrMainSettings(
         ),
       ],
       Text(
-        six
+        c.raceActive
+            ? 'The race runs all four ways at once.'
+            : six
             ? '${cfg.sixGhz.label}.'
             : 'Only for 6 GHz: probes go only to the 15 PSCs, or RNR in a '
                   '2.4 or 5 GHz beacon names the 6 GHz AP.',
         style: note,
       ),
+    ]);
+  }
+
+  if (groups.contains(JrSettingsGroup.race) && !roam) {
+    blocks.add(<Widget>[
+      AppToggle<bool>(
+        label: '6 GHz view',
+        semanticLabel:
+            'Show one discovery method, or race all four on one time axis',
+        value: c.raceActive,
+        enabled: six,
+        expand: true,
+        items: const <AppToggleItem<bool>>[
+          (false, 'One method'),
+          (true, 'Compare all four'),
+        ],
+        onChanged: (bool v) => c.raceOn = v,
+      ),
+      const SizedBox(height: AppSpacing.xxs),
+      Text(
+        !six
+            ? 'Only for 6 GHz: the race compares four ways to find a 6 GHz AP.'
+            : c.raceActive
+            ? 'Listen on all 59, probe the 15 PSCs, go straight to the channel '
+                  'an RNR named, or listen 20 TU on each PSC: four strips on '
+                  'one clock.'
+            : 'Race four ways to find the AP on one time axis.',
+        style: note,
+      ),
+      if (c.raceActive) ...<Widget>[
+        const SizedBox(height: AppSpacing.xs),
+        AppToggle<bool>(
+          label: 'RNR time: count the 5 GHz scan that heard it',
+          semanticLabel:
+              'Whether the RNR time includes the 5 GHz scan that heard the '
+              'Reduced Neighbor Report',
+          value: c.rnrCountsPriorScan,
+          expand: true,
+          items: const <AppToggleItem<bool>>[
+            (true, 'Include'),
+            (false, 'Leave out'),
+          ],
+          onChanged: (bool v) => c.rnrCountsPriorScan = v,
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          c.rnrCountsPriorScan
+              ? 'The client heard the RNR in a 5 GHz scan '
+                    '(${formatJrMs(c.race.lane(SixGhzMethod.rnr).offsetMs)}), '
+                    'then went to 6 GHz.'
+              : 'Only the 6 GHz part: one channel, one probe.',
+          style: note,
+        ),
+      ],
     ]);
   }
 
@@ -771,33 +844,49 @@ class JrPresenterSettings extends StatelessWidget {
                 context,
                 c,
                 compact: true,
-                // Join folds the address check to make room for the mode
-                // select (spec 43); Roam has no address check.
-                groups: const <JrSettingsGroup>{
-                  JrSettingsGroup.choice,
-                  JrSettingsGroup.radio,
-                  JrSettingsGroup.scan,
-                },
+                // In the race the security and address check change nothing
+                // on the stage; the race's own toggles take their place. Join
+                // otherwise folds the address check to make room for the mode
+                // select (spec 43).
+                groups: c.raceActive
+                    ? const <JrSettingsGroup>{
+                        JrSettingsGroup.radio,
+                        JrSettingsGroup.race,
+                      }
+                    : const <JrSettingsGroup>{
+                        JrSettingsGroup.choice,
+                        JrSettingsGroup.radio,
+                        JrSettingsGroup.scan,
+                      },
               ),
             ],
           ),
         ),
         PresenterDisclosure(
-          title: roam
+          title: c.raceActive
+              ? 'Security, PMF and 6 GHz'
+              : roam
               ? (dot1x ? 'EAP method, PMF and 6 GHz' : 'PMF and 6 GHz')
               : dot1x
-              ? 'EAP method, PMF, 6 GHz and address check'
-              : 'PMF, 6 GHz and address check',
+              ? 'EAP method, PMF, 6 GHz, race and address check'
+              : 'PMF, 6 GHz, race and address check',
           children: jrMainSettings(
             context,
             c,
             compact: true,
-            groups: const <JrSettingsGroup>{
-              JrSettingsGroup.eap,
-              JrSettingsGroup.pmf,
-              JrSettingsGroup.sixGhz,
-              JrSettingsGroup.addressCheck,
-            },
+            groups: c.raceActive
+                ? const <JrSettingsGroup>{
+                    JrSettingsGroup.choice,
+                    JrSettingsGroup.pmf,
+                    JrSettingsGroup.sixGhz,
+                  }
+                : const <JrSettingsGroup>{
+                    JrSettingsGroup.eap,
+                    JrSettingsGroup.pmf,
+                    JrSettingsGroup.sixGhz,
+                    JrSettingsGroup.race,
+                    JrSettingsGroup.addressCheck,
+                  },
           ),
         ),
         PresenterDisclosure(

@@ -7,6 +7,9 @@
 // a message to inspect it, the channel strip, the not-found state, the PMF
 // shield, the ACD and DNAv4 toggle, phone and desktop widths in both themes,
 // and the presenter layout (spec 00) with Space, Right, R and Up/Down.
+// The 6 GHz race (spec 40) has its own group at the end: the toggle and its
+// disabled state, the four strips, Step between findings, the RNR toggle,
+// reduced motion, copy, phone width, and the presenter with C.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +18,7 @@ import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/eap_ladder_controller.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/eap_ladder_controls.dart';
+import 'package:wlan_pros_toolbox/screens/tools/calculators/eap_ladder_jr_race.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/eap_ladder_jr_stage.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/join_ladder_screen.dart';
 import 'package:wlan_pros_toolbox/services/wifi_lab/join_roam.dart';
@@ -379,6 +383,306 @@ void main() {
       await tester.pump();
       expect(c.jrConfig.passiveDwellMs, dwell);
       expect(tester.takeException(), isNull);
+    });
+  });
+  group('6 GHz race (spec 40)', () {
+    Future<EapLadderController> race(
+      WidgetTester tester, {
+      double width = 1280,
+      double height = 900,
+      ThemeData? theme,
+      bool reduceMotion = true,
+    }) async {
+      await _pump(
+        tester,
+        width: width,
+        height: height,
+        theme: theme,
+        reduceMotion: reduceMotion,
+        initial: const JrConfig(band: JrBand.g6, security: JrSecurity.sae),
+      );
+      await _tap(tester, find.text('Compare all four'));
+      final EapLadderController c = _controller(tester);
+      expect(c.raceActive, isTrue);
+      return c;
+    }
+
+    testWidgets('Compare all four is disabled outside 6 GHz', (
+      WidgetTester tester,
+    ) async {
+      await _pump(tester);
+      final EapLadderController c = _controller(tester);
+      expect(find.text('Compare all four'), findsOneWidget);
+      expect(
+        find.text(
+          'Only for 6 GHz: the race compares four ways to find a 6 GHz AP.',
+        ),
+        findsOneWidget,
+      );
+      await _tap(tester, find.text('Compare all four'));
+      expect(c.raceActive, isFalse);
+      expect(find.byKey(SixGhzRaceCard.raceKey), findsNothing);
+      expect(find.byKey(JoinRoamStage.ladderScrollKey), findsOneWidget);
+    });
+
+    testWidgets('on: four strips replace the ladder; Show all names every '
+        'finding and the first', (WidgetTester tester) async {
+      final EapLadderController c = await race(tester);
+      expect(find.byKey(SixGhzRaceCard.raceKey), findsOneWidget);
+      expect(find.byKey(JoinRoamStage.ladderScrollKey), findsNothing);
+      expect(find.byKey(JoinRoamStage.timelineKey), findsNothing);
+      for (final SixGhzMethod m in SixGhzMethod.values) {
+        expect(find.byKey(SixGhzRaceCard.laneKey(m)), findsOneWidget);
+      }
+      expect(find.textContaining('Ready. Press Play'), findsOneWidget);
+      expect(find.text('ready'), findsNWidgets(4));
+      // The single-method toggle has nothing to do in the race.
+      expect(find.text('The race runs all four ways at once.'), findsOneWidget);
+      await _tap(tester, find.text('Show all'));
+      expect(c.atEnd, isTrue);
+      expect(find.text('found at 1.01 s'), findsOneWidget); // passive, 59
+      expect(find.text('found at 69 ms'), findsOneWidget); // PSC probe
+      expect(find.text('found at 2.05 s'), findsOneWidget); // RNR + 5 GHz
+      expect(find.text('found at 51 ms'), findsOneWidget); // FILS listen
+      expect(find.text('first'), findsOneWidget);
+      expect(
+        find.textContaining('Listen 20 TU on each PSC found the AP first'),
+        findsOneWidget,
+      );
+      expect(find.text('First to find it'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the RNR toggle: leave the 5 GHz scan out and RNR wins', (
+      WidgetTester tester,
+    ) async {
+      final EapLadderController c = await race(tester);
+      expect(c.rnrCountsPriorScan, isTrue, reason: 'Keith: default on');
+      await _tap(tester, find.text('Leave out'));
+      expect(c.rnrCountsPriorScan, isFalse);
+      c.showAll();
+      await tester.pumpAndSettle();
+      expect(find.text('found at 3 ms'), findsOneWidget);
+      expect(c.race.winner!.method, SixGhzMethod.rnr);
+      expect(find.textContaining('RNR goes straight to channel 37'), findsOne);
+      await _tap(tester, find.text('Include'));
+      expect(c.rnrCountsPriorScan, isTrue);
+      // A finished race shows the new result whole.
+      expect(c.atEnd, isTrue);
+      expect(find.text('found at 2.05 s'), findsOneWidget);
+    });
+
+    testWidgets('Step jumps to each finding, Back returns, Reset clears', (
+      WidgetTester tester,
+    ) async {
+      final EapLadderController c = await race(tester);
+      final List<double> f = c.race.findings;
+      for (final double t in f) {
+        await _tap(tester, find.text('Step'));
+        expect(c.raceMs, t);
+      }
+      expect(c.atEnd, isTrue);
+      await _tap(tester, find.text('Back'));
+      expect(c.raceMs, f[f.length - 2]);
+      expect(find.textContaining('At '), findsOneWidget);
+      await _tap(tester, find.text('Reset'));
+      expect(c.raceMs, 0);
+      expect(find.textContaining('Ready. Press Play'), findsOneWidget);
+    });
+
+    testWidgets('reduced motion: Play shows the whole race at once', (
+      WidgetTester tester,
+    ) async {
+      final EapLadderController c = await race(tester);
+      await _tap(tester, find.text('Play'));
+      expect(c.playing, isFalse);
+      expect(c.atEnd, isTrue);
+      expect(
+        find.textContaining('Play shows the whole race at once'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('motion on: Play sweeps the cursor to the end', (
+      WidgetTester tester,
+    ) async {
+      final EapLadderController c = await race(tester, reduceMotion: false);
+      await tester.ensureVisible(find.text('Play'));
+      await tester.pump();
+      await tester.tap(find.text('Play'));
+      await tester.pump();
+      expect(c.playing, isTrue);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(seconds: 1));
+      expect(c.raceMs, greaterThan(0));
+      expect(c.atEnd, isFalse);
+      for (int i = 0; i < 80 && !c.atEnd; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(c.atEnd, isTrue);
+      expect(c.playing, isFalse);
+    });
+
+    test('copy text lists the four times and the first', () {
+      final EapLadderController c = EapLadderController(
+        mode: LadderMode.join,
+        initialJr: const JrConfig(band: JrBand.g6),
+      );
+      addTearDown(c.dispose);
+      c.raceOn = true;
+      final String text = c.copyText();
+      expect(text, startsWith('Association, Frame by Frame: four ways'));
+      expect(text, contains('Listen on all 59: found at 1.01 s'));
+      expect(text, contains('Probe the 15 PSCs: found at 69 ms'));
+      expect(text, contains('Known via RNR: found at 2.05 s'));
+      expect(text, contains('Listen 20 TU on each PSC: found at 51 ms'));
+      expect(text, contains('First to find the AP: Listen 20 TU on each PSC.'));
+      expect(text, contains('dot11MinPSCProbeDelay'));
+      expect(text, isNot(contains('—')));
+      // Out of 6 GHz the race is off and copy is the ladder's again.
+      c.jrConfig = c.jrConfig.copyWith(band: JrBand.g5);
+      expect(c.raceActive, isFalse);
+      expect(c.copyText(), startsWith('Association, Frame by Frame (WLAN'));
+    });
+
+    for (final String themeName in <String>['dark', 'light']) {
+      for (final double w in <double>[390, 1280]) {
+        testWidgets('race at $w px, $themeName, no sideways scroll', (
+          WidgetTester tester,
+        ) async {
+          final EapLadderController c = await race(
+            tester,
+            width: w,
+            height: 844,
+            theme: themeName == 'dark' ? AppTheme.dark() : AppTheme.light(),
+          );
+          await _tap(tester, find.text('Show all'));
+          expect(c.atEnd, isTrue);
+          expect(tester.takeException(), isNull);
+          for (final Scrollable s in tester.widgetList<Scrollable>(
+            find.byType(Scrollable),
+          )) {
+            expect(s.axisDirection, AxisDirection.down);
+          }
+          expect(find.textContaining('NaN'), findsNothing);
+        });
+      }
+    }
+
+    group('presenter', () {
+      Future<EapLadderController> present(
+        WidgetTester tester, {
+        required Size window,
+        ThemeData? theme,
+      }) async {
+        setWindow(tester, window);
+        installFakeWindow();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme ?? AppTheme.dark(),
+            home: const JoinLadderScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Present'));
+        await tester.pumpAndSettle();
+        expect(find.byType(PresenterLayout), findsOneWidget);
+        return tester
+            .widget<JoinRoamStage>(find.byType(JoinRoamStage).last)
+            .controller;
+      }
+
+      for (final (String name, ThemeData Function() theme)
+          in <(String, ThemeData Function())>[
+            ('dark', AppTheme.dark),
+            ('light', AppTheme.light),
+          ]) {
+        for (final Size window in const <Size>[
+          Size(1920, 1080),
+          Size(1440, 900),
+          Size(1470, 923),
+        ]) {
+          for (final bool prior in <bool>[true, false]) {
+            testWidgets(
+              '$name ${window.width.toInt()}x${window.height.toInt()} race '
+              '${prior ? 'with' : 'without'} the 5 GHz scan: fits, no '
+              'overflow, no page scroll',
+              (WidgetTester tester) async {
+                final EapLadderController c = await present(
+                  tester,
+                  window: window,
+                  theme: theme(),
+                );
+                c.toggleRace();
+                c.rnrCountsPriorScan = prior;
+                c.showAll();
+                await tester.pump();
+                await tester.pump(const Duration(milliseconds: 400));
+                expect(c.raceActive, isTrue);
+                expect(
+                  find.descendant(
+                    of: find.byKey(PresenterLayout.stageKey),
+                    matching: find.byKey(SixGhzRaceCard.raceKey),
+                  ),
+                  findsOneWidget,
+                );
+                expect(find.byKey(JoinRoamStage.ladderScrollKey), findsNothing);
+                expect(tester.takeException(), isNull);
+                expect(pageScrollables(tester), isEmpty);
+                expect(controlsOverflow(tester), 0);
+                expectOnScreen(
+                  tester,
+                  find.byKey(PresenterLayout.stageKey),
+                  window,
+                );
+              },
+            );
+          }
+        }
+      }
+
+      // Keith, 2026-09-29: the race moves off C (security-compat keeps C
+      // in this tool). R was asked for but is the shared Reset key, handled
+      // before any extra key, so the race takes the next free letter, S.
+      testWidgets('S turns the race on (moving to 6 GHz), Space runs it, '
+          'Right steps to a finding, R resets, S turns it off; C does not '
+          'touch the race', (
+        WidgetTester tester,
+      ) async {
+        final EapLadderController c = await present(
+          tester,
+          window: const Size(1920, 1080),
+        );
+        expect(c.jrConfig.band, JrBand.g5);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+        await tester.pump();
+        expect(c.raceActive, isFalse);
+        expect(c.jrConfig.band, JrBand.g5);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+        await tester.pump();
+        expect(c.jrConfig.band, JrBand.g6);
+        expect(c.raceActive, isTrue);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+        expect(c.raceMs, c.race.findings.first);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+        await tester.pump();
+        expect(c.raceMs, 0);
+        await tester.sendKeyEvent(LogicalKeyboardKey.space);
+        await tester.pump();
+        expect(c.playing, isTrue);
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(seconds: 1));
+        expect(c.raceMs, greaterThan(0));
+        await tester.sendKeyEvent(LogicalKeyboardKey.space);
+        await tester.pump();
+        expect(c.playing, isFalse);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+        await tester.pump();
+        expect(c.raceActive, isFalse);
+        expect(find.byKey(JoinRoamStage.ladderScrollKey), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
     });
   });
 }

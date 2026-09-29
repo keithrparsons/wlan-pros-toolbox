@@ -21,6 +21,9 @@
 //   - A phase timeline under the ladder: one bar per phase to scale (Join) or
 //     scan, authentication and key handshake (Roam), with a running clock.
 //   - Tap a sent message to see what it carries in the caption.
+//   - The 6 GHz race (spec 40): in Join at 6 GHz, "Compare all four" swaps
+//     the ladder, timeline and caption for SixGhzRaceCard
+//     (eap_ladder_jr_race.dart), in the phone layout and the presenter.
 //
 // Theme tokens only (context.colors, AppSpacing, AppRadius, AppMotion). Lime
 // marks the elapsed time and the milestones; the two leg hues are the
@@ -44,6 +47,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
 import 'eap_ladder_controller.dart';
 import 'eap_ladder_failure.dart';
+import 'eap_ladder_jr_race.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
 import 'security_compat_controls.dart';
@@ -89,6 +93,12 @@ class JoinRoamStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, _) {
+        if (controller.raceActive) {
+          // The race replaces the ladder (spec 40).
+          return PresenterMode.isActive(context)
+              ? SixGhzRaceCard(controller: controller, fill: true)
+              : SixGhzRaceCard(controller: controller);
+        }
         final bool why = controller.whyMode;
         final bool timeline = !why || controller.jr.totalMs > 0;
         if (PresenterMode.isActive(context)) {
