@@ -148,6 +148,42 @@ void main() {
     expect(find.textContaining('times the same beacons at 6 Mbps'), findsOne);
   });
 
+  // Keith, 2026-09-29: with the 802.11b client inside the cell the ring
+  // card said "it can decode 6 Mbps beacons" while the verdict said it
+  // cannot decode OFDM beacons. The ring card speaks to signal strength and
+  // never contradicts the verdict.
+  testWidgets('802.11b inside the cell: the ring card says strong enough, '
+      'not can decode, and agrees with the verdict', (
+    WidgetTester tester,
+  ) async {
+    final RateVsRangeModel m = await _pump(tester, size: const Size(1280, 900));
+    m
+      ..setBand(WifiBand.band24)
+      ..setRsClient(RsClient.dot11b)
+      ..setClientDistance(3);
+    await tester.pumpAndSettle();
+    expect(m.client.insideCell, isTrue);
+    expect(m.beacon!.rate, RsRate.r6);
+    expect(m.association.decodesBeacons, isFalse);
+    expect(find.textContaining('cannot decode the OFDM beacons'), findsOne);
+    final String ring = m.cellSentence();
+    expect(ring, isNot(contains('can decode')));
+    expect(ring, contains('strong enough for 6 Mbps beacons'));
+    expect(ring, contains('this device cannot decode them'));
+    expect(find.text(ring), findsOne);
+    expect(find.textContaining('it can decode'), findsNothing);
+    // A client that does decode them: strong enough, no caveat.
+    m.setRsClient(RsClient.wifi6);
+    await tester.pumpAndSettle();
+    expect(m.association.decodesBeacons, isTrue);
+    expect(
+      m.cellSentence(),
+      'Inside the cell: strong enough for 6 Mbps '
+      'beacons here.',
+    );
+    expect(find.textContaining('it can decode'), findsNothing);
+  });
+
   testWidgets('DSSS chips are disabled at 5 GHz and a tap does nothing', (
     WidgetTester tester,
   ) async {

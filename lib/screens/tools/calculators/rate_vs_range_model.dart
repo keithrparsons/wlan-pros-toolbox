@@ -240,10 +240,22 @@ class RateVsRangeModel extends ChangeNotifier {
           : 'No cell edge drawn: $beaconLabel has no sourced sensitivity '
                 'here.';
     }
-    return inside
-        ? 'Inside the cell: it can decode $beaconLabel beacons.'
-        : 'Outside the cell: too weak for $beaconLabel beacons'
-              '${associateClause ? ', so it will not associate here' : ''}.';
+    if (inside) {
+      // Signal strength only: whether this device can decode the beacons
+      // is the verdict's call, and this line must agree with it (Keith,
+      // 2026-09-29: an 802.11b client "can decode 6 Mbps beacons" beside a
+      // verdict that said it cannot decode OFDM beacons).
+      final RsAssociation a = association;
+      final String caveat = a.verdict == RsVerdict.otherBand
+          ? ', but this device does not use this band'
+          : a.decodesBeacons
+          ? ''
+          : ', but this device cannot decode them';
+      return 'Inside the cell: strong enough for $beaconLabel beacons '
+          'here$caveat.';
+    }
+    return 'Outside the cell: too weak for $beaconLabel beacons'
+        '${associateClause ? ', so it will not associate here' : ''}.';
   }
 
   /// Whether the chosen client can associate.
