@@ -79,6 +79,7 @@ import '../screens/tools/calculators/channel_planner_screen.dart';
 import '../screens/tools/calculators/adjacent_channel_screen.dart';
 import '../screens/tools/calculators/interferer_cost_screen.dart';
 import '../screens/tools/calculators/ofdma_simulator_screen.dart';
+import '../screens/tools/calculators/ofdma_vs_mumimo_screen.dart';
 import '../screens/tools/calculators/spatial_reuse_screen.dart';
 import '../screens/tools/calculators/maidenhead_screen.dart';
 import '../screens/tools/calculators/metric_conversion_screen.dart';
@@ -404,6 +405,10 @@ class AppRouter {
   // Wi-Fi Classroom (2026-09-25). HE resource units and SU vs OFDMA airtime,
   // pure on-device math; all platforms incl. web.
   static const String ofdmaSimulator = '/tools/ofdma-simulator';
+  // Wireless Classroom (2026-09-29). OFDMA vs MU-MIMO side by side: zero-
+  // forcing separability, MU sounding cost and both airtimes on one scale;
+  // pure on-device math, all platforms incl. web.
+  static const String ofdmaVsMumimo = '/tools/ofdma-vs-mumimo';
   // Wi-Fi Classroom (2026-09-25). Parametric and imported (MSI / NSMA) antenna
   // patterns in a rotatable 3D CustomPainter; pure on-device math, all
   // platforms incl. web.
@@ -1105,6 +1110,7 @@ class AppRouter {
     repeaterMesh: (_) => const RepeaterMeshScreen(),
     latencyUnderLoad: (_) => const LatencyUnderLoadScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
+    ofdmaVsMumimo: (_) => const OfdmaVsMumimoScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
     uplinkDownlink: (_) => const UplinkDownlinkScreen(),

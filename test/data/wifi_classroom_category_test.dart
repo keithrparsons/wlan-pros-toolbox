@@ -155,6 +155,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'voice-priority',
     'airtime-anatomy',
     'airtime-fairness',
+    // 2026-09-29: OFDMA vs MU-MIMO (Feature 8), after the airtime tools it
+    // reuses and before rate control.
+    'ofdma-vs-mumimo',
     'rate-adaptation',
     // 2026-09-27: What an Interferer Costs, before the -82 dBm rule that
     // Spatial Reuse relaxes.
@@ -239,13 +242,13 @@ void main() {
     );
   });
 
-  test('all 48 simulators are in wifi-classroom and none remain in '
+  test('all 49 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(sims, hasLength(48));
+    expect(sims, hasLength(49));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -320,7 +323,7 @@ void main() {
       );
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-    expect(classroom.tools, hasLength(88));
+    expect(classroom.tools, hasLength(89));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

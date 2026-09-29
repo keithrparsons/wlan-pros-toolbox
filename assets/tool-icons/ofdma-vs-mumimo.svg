@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- antenna array: a column of elements -->
+    <circle cx="3.8" cy="4.5" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="3.8" cy="9.5" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="3.8" cy="14.5" r="1.5" fill="currentColor" stroke="none"/>
+    <!-- steered beam: a broad lobe from the array toward the client -->
+    <path d="M7.2 11.5 C8.5 5 14 2.5 18 3.6 C20.5 6.5 15 13 7.2 11.5 Z"/>
+    <!-- client at the tip of the beam -->
+    <circle cx="20.6" cy="2.9" r="1.7" fill="currentColor" stroke="none"/>
+    <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
+    <path d="M3 20.5 H21"/>
+    <circle cx="19" cy="20.5" r="2" fill="currentColor" stroke="none"/>
+  </g>
+</svg>

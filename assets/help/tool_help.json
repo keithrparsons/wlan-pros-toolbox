@@ -2160,6 +2160,68 @@
       ],
       "source": "RU counts and tone splits, HE TB PPDU timing, the trigger frame and the Multi-STA BlockAck from the WLAN Pros Wi-Fi Classroom research brief (secondhand 802.11ax sources: Wikipedia Resource Unit, Clear To Send, Cisco, MathWorks). HE single-user timing from the Airtime Anatomy model (IEEE 802.11ax-2021 clause 27 TXTIME). Computed on your device."
     },
+    "ofdma-vs-mumimo": {
+      "name": "OFDMA vs MU-MIMO",
+      "category": "Wireless Classroom",
+      "purpose": "Compares the two ways an 802.11ax access point sends to several clients at once. OFDMA splits the channel into resource units, one per client. MU-MIMO gives every client the whole channel on its own spatial stream and aims each stream with zero-forcing, which needs a fresh channel measurement (sounding) first. You move clients around the AP and see which needs less airtime, drawn to one microsecond scale.",
+      "whyHere": "MU-MIMO is often sold as always faster. It only pays when the clients sit in different directions, the frames are big enough for the whole channel to matter, and one sounding serves several transmissions. Moving the clients and changing the frame size shows each condition fail in turn.",
+      "howToUse": [
+        "Pick a scenario: Spread out, big frames; Bunched together; Many tiny frames; or One far client. Any change after that reads Your own layout.",
+        "Read the room. The AP is at the bottom with one dot per antenna. Each colored lobe is the beam zero-forcing aims at that client, with a null toward every other client. The badges say whether each pair is separable.",
+        "Drag a client, or pick it under Move client and use Turn left, Turn right, Closer and Farther.",
+        "Set the AP antennas, the number of clients, the channel width, the frame size and how many exchanges share one sounding. Turn on the side-wall reflection to add a second path for each client.",
+        "Read Which wins here and the sentence under it: how much faster MU-MIMO sends the data, how much longer its preamble is, and what sounding costs.",
+        "The two bars share one scale. The bracket under MU-MIMO marks the sounding. Tap Show the arithmetic for every segment's formula.",
+        "On a computer or tablet, Present opens this tool full screen for a projector: the Right arrow steps to the next scenario, Up and Down change the number of clients, R resets the scenario, and you can drag clients on the stage. F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "AP antennas",
+          "unit": "count",
+          "range": "2 to 8, half a wavelength apart"
+        },
+        {
+          "name": "Clients",
+          "unit": "count",
+          "range": "2 to 4, one stream each"
+        },
+        {
+          "name": "Client position",
+          "unit": "degrees and meters",
+          "range": "90 degrees left to 90 degrees right of straight ahead; 2 to 35 m"
+        },
+        {
+          "name": "Channel width",
+          "unit": "MHz",
+          "range": "20, 40, 80 or 160"
+        },
+        {
+          "name": "Frame size",
+          "unit": "bytes",
+          "range": "100, 500 or 1,500 per client per exchange"
+        },
+        {
+          "name": "Exchanges per sounding",
+          "unit": "count",
+          "range": "1, 2, 4 or 8"
+        },
+        {
+          "name": "Side-wall reflection",
+          "unit": "",
+          "range": "Off or On (illustrative)"
+        }
+      ],
+      "algorithm": "Channel: a half-wave linear array of M antennas; a client at angle theta has h = a(theta), a_n = e^(j pi n sin theta). With the reflection on, h = a(theta) - 0.5 a(theta'), theta' the direction of the client's mirror image in a wall 20 m to the right. Zero-forcing: W = H^H (H H^H)^-1, so each client hears only its own stream; client k keeps 1 / ([(H H^H)^-1]_kk x ||h_k||^2) of the signal the whole array would give it alone (1 - |rho|^2 for two clients). A pair is separable when that loss is 3 dB or less. Link: received power as in Rate vs Range (20 dBm EIRP, exponent 3, 5.5 GHz). OFDMA keeps each client's own signal; MU-MIMO adds 10 log10(M / K) and subtracts the zero-forcing loss; MCS from the sensitivity table, up to MCS 11. OFDMA airtime: the OFDMA Resource Units model, unchanged, with K equal RUs at the slowest client's MCS, repeated for every exchange. MU-MIMO airtime: AIFS and backoff, HE NDP Announcement (21 + 4 per client bytes), SIFS, HE sounding NDP (one HE-LTF per AP antenna), SIFS, BFRP Trigger, SIFS, every client's compressed beamforming report at once in an HE TB PPDU, SIFS; then per exchange an HE MU preamble with one HE-LTF per stream, data set by the slowest stream on the whole channel, SIFS and the same block acks as OFDMA. Later exchanges wait for the medium again.",
+      "example": "Spread out, big frames: four clients 50 degrees left to 55 degrees right of a four-antenna AP, 1,500-byte frames, 80 MHz, eight exchanges per sounding. Zero-forcing costs each client 0.2 to 0.3 dB. OFDMA gives each client a 242-tone RU and takes 149.6 µs of data per exchange; MU-MIMO gives each the whole channel and takes 40.8 µs. Over eight exchanges that saves more than the 533.6 µs of sounding: OFDMA 3,181.6 µs, MU-MIMO 3,017.6 µs, 5% less airtime for MU-MIMO. With one exchange per sounding, OFDMA wins.",
+      "fieldNotes": [
+        "A teaching model. Zero-forcing on a line-of-sight channel shows why MU-MIMO needs clients in different directions; it is not how any one access point picks its groups. Real channels scatter, and real access points regroup clients as they move.",
+        "The reflection is illustrative: half strength, one wall, and a fixed phase so the numbers hold still while you drag.",
+        "Estimates, each labeled on screen: the report size (MU codebook, 9 and 7 bits per angle pair, 4-bit delta SNR, the MIMO and Beamforming tool's subcarrier count), control frames at 24 Mbps, the HE-SIG-B length and block-ack rate carried over from OFDMA Resource Units, and sounding sharing a TXOP with the first transmission.",
+        "OFDMA here keeps the same power per tone as one client alone and is not beamformed. An access point that boosts a small RU, or beamforms inside OFDMA, would change the numbers.",
+        "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "IEEE Std 802.11-2024: 26.7.3 (HE TB sounding sequence), 9.3.1.19 Figure 9-79 (HE NDP Announcement), 9.3.1.22.3 (BFRP Trigger), Table 9-45 (MU feedback codebook), 9.4.1.63 and 9.4.1.64 (average and delta SNR), 27.1.1 (MU-MIMO in RUs of 106 tones or more, up to 8 users), 27.3.11.10 (HE-LTFs per stream). Zero-forcing: Tse and Viswanath, Fundamentals of Wireless Communication, chapter 10. OFDMA timing from the OFDMA Resource Units model; link budget from Rate vs Range. Computed on your device."
+    },
     "roaming-walk": {
       "name": "Roaming Walk",
       "category": "Wireless Classroom",
