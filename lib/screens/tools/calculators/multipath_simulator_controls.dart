@@ -14,7 +14,13 @@
 // PRESENTER: inside a PresenterLayout the panel shows setup and inputs
 // without their explanatory prose, folds the delay list into a
 // PresenterDisclosure, and leaves the received level and the fade figures
-// to the stage.
+// to the stage. The Antennas and Combine toggles move to the stage's plot
+// header there.
+//
+// DIVERSITY (2026-09-29, spec 41): Many paths adds an Antennas toggle (2 or
+// 4) and a Combine toggle (A only / Selection / MRC), a combined row in the
+// received readout, and a "Diversity gain at 1%" card with the textbook
+// Rayleigh figures beside what this track shows.
 
 import 'package:flutter/material.dart';
 
@@ -87,7 +93,10 @@ class MultipathControls extends StatelessWidget {
                 ],
                 if (parts.contains(MultipathControlPart.readouts)) ...<Widget>[
                   _ReceivedCard(c),
-                  if (c.isManyPaths) _DiversityCard(c),
+                  if (c.isManyPaths) ...<Widget>[
+                    _DiversityCard(c),
+                    _GainCard(c),
+                  ],
                   _DelayCard(c),
                   _ExplainerCard(c),
                 ],
@@ -357,7 +366,9 @@ class _ReflectorsCard extends StatelessWidget {
                 'Antenna A position ${_C.len(v, UnitSystemScope.systemOf(context))}',
           ),
           MpSliderHeader(
-            label: 'Antenna B offset (λ)',
+            label: c.antennaCount == 2
+                ? 'Antenna B offset (λ)'
+                : 'Antenna spacing (λ)',
             value:
                 '${c.offsetLambda.toStringAsFixed(2)} = '
                 '${_C.len(c.offsetMeters, UnitSystemScope.systemOf(context))}',
@@ -372,6 +383,26 @@ class _ReflectorsCard extends StatelessWidget {
             semanticFormatterCallback: (double v) =>
                 'Antenna B offset ${v.toStringAsFixed(2)} wavelengths',
           ),
+          // In Presenter both diversity toggles sit on the stage, in the
+          // plot's header.
+          if (!PresenterMode.isActive(context)) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            AntennaCountToggle(controller: c, label: 'Antennas'),
+            const SizedBox(height: AppSpacing.sm),
+            CombineToggle(controller: c, label: 'Combine'),
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              switch (c.combine) {
+                CombineMethod.aOnly => 'Antenna A on its own, as a radio '
+                    'with one antenna hears it.',
+                CombineMethod.selection => 'The receiver uses whichever '
+                    'antenna is stronger at each spot.',
+                CombineMethod.mrc => 'The receiver adds every antenna, '
+                    'each aligned in phase and weighted by its strength.',
+              },
+              style: text.bodySmall?.copyWith(color: colors.textTertiary),
+            ),
+          ],
         ],
       ),
     );
@@ -405,6 +436,16 @@ class _ReceivedCard extends StatelessWidget {
           ),
         ),
       );
+      if (c.isCombining) {
+        rows[0] = MpRow(label: 'Antenna A', value: _C.db(db));
+        rows.add(
+          MpRow(
+            label: 'Combined (${c.combine.label})',
+            value: _C.db(c.combinedDb),
+            emphasize: true,
+          ),
+        );
+      }
     } else {
       final List<Complex> ph = c.phasors;
       final List<double> trace = c.traceA;
@@ -485,26 +526,98 @@ class _DiversityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final FadeStats f = c.fade;
+    final bool two = c.antennaCount == 2;
+    final bool combining = c.isCombining;
+    final bool mrc = combining && c.combine == CombineMethod.mrc;
     return MpCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const MpSectionLabel('Two antennas: how often below -10 dB'),
+          MpSectionLabel(
+            '${two ? 'Two' : 'Four'} antennas: how often below -10 dB',
+          ),
           const SizedBox(height: AppSpacing.xxs),
           MpRow(label: 'Antenna A', value: _C.pct(f.fractionA)),
           MpRow(label: 'Antenna B', value: _C.pct(f.fractionB)),
           MpRow(
-            label: 'Both at once',
-            value: _C.pct(f.fractionBoth),
-            emphasize: true,
+            label: two ? 'Both at once' : 'All four at once',
+            value: _C.pct(c.allFadedFraction),
+            emphasize: !mrc,
           ),
+          if (mrc)
+            MpRow(
+              label: 'Combined (MRC)',
+              value: _C.pct(c.combinedFadeFraction),
+              emphasize: true,
+            ),
           const MpRow(label: 'Rayleigh, one', value: '9.5%'),
+          if (combining)
+            MpRow(
+              label: 'Rayleigh, ${c.combine.label}',
+              value: _C.pctFine(c.rayleighFadeFraction(c.combine)),
+            ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'A receiver that picks the stronger antenna is faded only when '
-            'both are. At 0 λ the two antennas are the same antenna. Near '
-            '0.5 λ apart they rarely fade together; if they faded '
-            'independently, both at once would be about 0.9%.',
+            '${two ? 'both are' : 'all four are'}. At 0 λ the antennas are '
+            'the same antenna. Near 0.5 λ apart they rarely fade together; '
+            'if they faded independently, ${two ? 'both' : 'all four'} at '
+            'once would be about ${_C.pctFine(c.rayleighFadeFraction(CombineMethod.selection))}. '
+            'MRC does better still, because two weak antennas added together '
+            'can clear -10 dB when neither does alone.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Diversity gain at 1%: the textbook Rayleigh figure for each method with
+/// this many antennas, and what this track shows for the chosen one.
+class _GainCard extends StatelessWidget {
+  const _GainCard(this.c);
+
+  final MultipathController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final int n = c.antennaCount;
+    final double? track = c.trackGainDb;
+    return MpCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          MpSectionLabel('Diversity gain at 1%, $n antennas'),
+          const SizedBox(height: AppSpacing.xxs),
+          MpRow(
+            label: 'Selection',
+            value: _C.gain(c.rayleighGainDb(CombineMethod.selection)),
+            emphasize: c.combine == CombineMethod.selection,
+          ),
+          MpRow(
+            label: 'MRC',
+            value: _C.gain(c.rayleighGainDb(CombineMethod.mrc)),
+            emphasize: c.combine == CombineMethod.mrc,
+          ),
+          if (track != null)
+            MpRow(
+              label: 'On this track',
+              value: _C.gain(track),
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Selection and MRC are the textbook (Rayleigh) figures. One '
+            'antenna on its own is more than 20 dB below its average 1% of '
+            'the time. The gain is how much of that the combined signal '
+            'wins back. MRC adds the antennas\' power, so its trace '
+            'averages ${n == 2 ? 'about 3 dB' : 'about 6 dB'} above one '
+            'antenna. A ${_C.dist(2, UnitSystemScope.systemOf(context))} '
+            'track holds only a few deep fades, so this track\'s figure '
+            'wanders; New layout shows a different one.',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
@@ -678,6 +791,10 @@ class _ExplainerCard extends StatelessWidget {
         'That is why one RSSI sample means little, and why a second antenna '
             'helps: half a wavelength away, it rarely sits in a dip at the '
             'same spot.',
+        'Combine shows what the receiver does with the antennas. Selection '
+            'keeps the stronger one; MRC (maximal ratio combining) adds them '
+            'all, lined up in phase. Both fill in the dips, and MRC fills '
+            'them further.',
       ],
     };
     return MpCard(

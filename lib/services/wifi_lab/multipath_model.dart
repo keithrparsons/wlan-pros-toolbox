@@ -31,6 +31,29 @@
 //
 // Delay: a copy that travels Delta r further arrives Delta r / c later. The
 // 802.11 OFDM long guard interval is 0.8 us, which is 239.8 m of extra path.
+//
+// ANTENNA DIVERSITY (added 2026-09-29, clean room, spec 41). Two or four
+// antennas along the same track, each a branch of the same field. Combining
+// works on the branches' normalized powers P_1..P_M (each averages 1):
+//
+//   selection:  P = max(P_1, ..., P_M)     (use the stronger antenna)
+//   MRC:        P = P_1 + ... + P_M        (maximal ratio combining)
+//
+// MRC adds the branch SNRs, with equal noise in every branch, so its average
+// is M, 10 log10(M) dB above one antenna. Neither is divided back down: both
+// are read against one antenna's average, the way a receiver sees them.
+// With independent Rayleigh branches, each P_i exponential with mean 1, the
+// share of the time the combined power is below x is (Jakes, Microwave
+// Mobile Communications, 1974, ch. 5; Goldsmith, Wireless Communications,
+// 2005, ch. 7):
+//
+//   selection:  (1 - e^-x)^M
+//   MRC:        1 - e^-x * sum_{k=0}^{M-1} x^k / k!
+//
+// Diversity gain at an outage level p is how much weaker the average can be
+// for the same p: the combined level at p minus one antenna's level at p.
+// At p = 1%: one antenna -20.0 dB; selection 2 +10.2 dB, 4 +15.8 dB; MRC 2
+// +11.7 dB, 4 +19.1 dB.
 
 import 'dart:math' as math;
 
@@ -615,6 +638,175 @@ class FadeStats {
   /// Both faded at once: the only time selection diversity (pick the
   /// stronger antenna) is faded too.
   double get fractionBoth => samples == 0 ? 0 : fadedBoth / samples;
+}
+
+// ── Antenna diversity ───────────────────────────────────────────────────────
+
+/// How a receiver with several antennas turns their signals into one.
+enum CombineMethod {
+  aOnly('A only'),
+  selection('Selection'),
+  mrc('MRC');
+
+  const CombineMethod(this.label);
+
+  /// Label on the Combine toggle.
+  final String label;
+
+  /// The one longer name the readouts use.
+  String get longName => switch (this) {
+    CombineMethod.aOnly => 'Antenna A only',
+    CombineMethod.selection => 'Selection (the stronger antenna)',
+    CombineMethod.mrc => 'MRC (maximal ratio combining)',
+  };
+}
+
+/// Closed forms and combining rules for antenna diversity over independent
+/// Rayleigh branches. Powers here are linear and normalized, so one antenna
+/// averages 1.
+abstract final class DiversityMath {
+  /// The outage level the gain readout uses, 1%.
+  static const double gainOutage = 0.01;
+
+  /// Combines the branch powers [p] (linear) by [method]. [CombineMethod.aOnly]
+  /// returns the first branch.
+  static double combine(CombineMethod method, List<double> p) {
+    switch (method) {
+      case CombineMethod.aOnly:
+        return p.first;
+      case CombineMethod.selection:
+        double best = p.first;
+        for (final double v in p) {
+          if (v > best) best = v;
+        }
+        return best;
+      case CombineMethod.mrc:
+        double sum = 0;
+        for (final double v in p) {
+          sum += v;
+        }
+        return sum;
+    }
+  }
+
+  /// Combines per-branch traces in dB, sample by sample, and returns the
+  /// combined trace in dB. Every trace must be the same length.
+  static List<double> combineDb(
+    CombineMethod method,
+    List<List<double>> branchesDb,
+  ) {
+    final int n = branchesDb.first.length;
+    for (final List<double> b in branchesDb) {
+      assert(b.length == n);
+    }
+    return <double>[
+      for (int i = 0; i < n; i++)
+        MultipathMath.powerRatioToDb(
+          combine(method, <double>[
+            for (final List<double> b in branchesDb) dbToPower(b[i]),
+          ]),
+        ),
+    ];
+  }
+
+  /// 10^(db/10); the power floor maps to 0.
+  static double dbToPower(double db) =>
+      db <= kPowerFloorDb ? 0 : math.pow(10, db / 10).toDouble();
+
+  /// Share of the time the combined power of [m] independent Rayleigh
+  /// branches is below [x] (linear, against one branch's average).
+  static double outage(CombineMethod method, double x, int m) {
+    if (x <= 0) return 0;
+    switch (method) {
+      case CombineMethod.aOnly:
+        return 1 - math.exp(-x);
+      case CombineMethod.selection:
+        return math.pow(1 - math.exp(-x), m).toDouble();
+      case CombineMethod.mrc:
+        // 1 - e^-x sum_{k<m} x^k / k!, the Erlang (gamma, shape m) CDF.
+        double term = 1;
+        double sum = 1;
+        for (int k = 1; k < m; k++) {
+          term *= x / k;
+          sum += term;
+        }
+        return 1 - math.exp(-x) * sum;
+    }
+  }
+
+  /// [outage] with the level in dB.
+  static double outageAtDb(CombineMethod method, double db, int m) =>
+      outage(method, math.pow(10, db / 10).toDouble(), m);
+
+  /// The level, dB against one branch's average, that the combined power of
+  /// [m] branches is below a share [p] of the time. Bisection on the
+  /// monotone outage function, to well under 0.001 dB.
+  static double levelAtOutageDb(CombineMethod method, int m, double p) {
+    double lo = -80;
+    double hi = 30;
+    for (int i = 0; i < 100; i++) {
+      final double mid = (lo + hi) / 2;
+      if (outageAtDb(method, mid, m) < p) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return (lo + hi) / 2;
+  }
+
+  /// Diversity gain at outage level [p], dB: the combined level at [p] minus
+  /// one antenna's level at [p]. Zero for [CombineMethod.aOnly].
+  static double gainDb(CombineMethod method, int m, [double p = gainOutage]) =>
+      levelAtOutageDb(method, m, p) -
+      levelAtOutageDb(CombineMethod.aOnly, 1, p);
+
+  /// The empirical level a share [p] of [db] falls below: the sample at rank
+  /// floor(p * n) of the sorted trace.
+  static double percentileDb(List<double> db, double p) {
+    if (db.isEmpty) return kPowerFloorDb;
+    final List<double> s = List<double>.of(db)..sort();
+    final int i = (p * s.length).floor().clamp(0, s.length - 1);
+    return s[i];
+  }
+
+  /// Share of [db] below [thresholdDb].
+  static double fractionBelow(List<double> db, double thresholdDb) {
+    if (db.isEmpty) return 0;
+    int n = 0;
+    for (final double v in db) {
+      if (v < thresholdDb) n++;
+    }
+    return n / db.length;
+  }
+}
+
+/// Diversity over a [ManyPathScene]: [antennas] antennas along the track,
+/// antenna A at each track position and the others [spacing] meters apart
+/// behind it (B at +spacing, C at +2 spacing, D at +3 spacing).
+extension ManyPathDiversity on ManyPathScene {
+  /// Each antenna's trace in dB, A first.
+  List<List<double>> branchSweepsDb(
+    MultipathBand band,
+    int samples, {
+    required int antennas,
+    required double spacing,
+  }) => <List<double>>[
+    for (int j = 0; j < antennas; j++)
+      sweepDb(band, samples, offset: j * spacing),
+  ];
+
+  /// The combined trace in dB, against one antenna's average.
+  List<double> combinedSweep(
+    CombineMethod method,
+    MultipathBand band,
+    int samples, {
+    int antennas = 2,
+    required double spacing,
+  }) => DiversityMath.combineDb(
+    method,
+    branchSweepsDb(band, samples, antennas: antennas, spacing: spacing),
+  );
 }
 
 /// A dB histogram with fixed bins from [lo] to [hi]. Samples below [lo] land

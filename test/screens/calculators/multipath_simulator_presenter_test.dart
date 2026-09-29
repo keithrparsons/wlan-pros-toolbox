@@ -78,6 +78,21 @@ void main() {
             );
           }
         }
+        // The fullest Many paths state: four antennas, each combining.
+        c
+          ..mode = MultipathMode.manyPaths
+          ..antennaCount = 4;
+        for (final CombineMethod m in CombineMethod.values) {
+          c.combine = m;
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull, reason: m.name);
+          expect(pageScrollables(tester), isEmpty, reason: m.name);
+          expect(controlsOverflow(tester), 0, reason: m.name);
+        }
+        c
+          ..combine = CombineMethod.aOnly
+          ..antennaCount = 2;
+        await tester.pumpAndSettle();
         // The fade figures are on the stage in Many paths.
         expect(
           find.descendant(
@@ -108,6 +123,53 @@ void main() {
     expect(c.positionCm, closeTo(start - step, 1e-9));
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Combine sits on the stage, and C cycles it in Many paths', (
+    WidgetTester tester,
+  ) async {
+    final MultipathController c = await _present(
+      tester,
+      window: const Size(1440, 900),
+      mode: MultipathMode.manyPaths,
+    );
+    final Finder stage = find.byKey(PresenterLayout.stageKey);
+    expect(
+      find.descendant(of: stage, matching: find.text('MRC')),
+      findsOneWidget,
+    );
+    // Not doubled in the controls panel.
+    expect(find.text('MRC'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+    await tester.pumpAndSettle();
+    expect(c.combine, CombineMethod.selection);
+    expect(
+      find.descendant(of: stage, matching: find.text('Combined (Selection)')),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+    await tester.pumpAndSettle();
+    expect(c.combine, CombineMethod.mrc);
+    expect(
+      find.descendant(of: stage, matching: find.text('Gain at 1%')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: stage, matching: find.text('11.7 dB')),
+      findsOneWidget,
+    );
+    await tester.tap(find.descendant(of: stage, matching: find.text('A only')));
+    await tester.pumpAndSettle();
+    expect(c.combine, CombineMethod.aOnly);
+
+    // Outside Many paths, C does nothing.
+    c.mode = MultipathMode.oneWall;
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+    await tester.pumpAndSettle();
+    expect(c.combine, CombineMethod.aOnly);
     expect(tester.takeException(), isNull);
   });
 

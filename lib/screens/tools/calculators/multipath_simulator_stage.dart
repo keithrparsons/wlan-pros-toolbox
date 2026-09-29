@@ -13,6 +13,13 @@
 // power plot under both. Many paths puts the plot beside the arrows and the
 // histogram beside the two-antenna fade figures. Strokes, markers and
 // painted labels follow PresenterMode.scaleOf.
+//
+// DIVERSITY (2026-09-29, spec 41): in Many paths the plot can carry a third
+// trace, the antennas combined by selection or MRC. When it does, the lime
+// moves to the combined trace (the signal the receiver uses) and antenna A
+// becomes a neutral solid line; B stays neutral and dashed. In Presenter the
+// Antennas and Combine toggles sit in the plot's header, on the stage, and C
+// cycles Combine.
 
 import 'package:flutter/material.dart';
 
@@ -173,7 +180,16 @@ class _FadeCard extends StatelessWidget {
     final AppMonoText mono =
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
     final PresenterScale scale = PresenterMode.scaleOf(context);
-    final FadeStats f = controller.fade;
+    final MultipathController c = controller;
+    final FadeStats f = c.fade;
+    final bool combining = c.isCombining;
+    final int n = c.antennaCount;
+    final String headLabel = combining
+        ? 'Combined (${c.combine.label})'
+        : n == 2
+        ? 'Both at once'
+        : 'All four at once';
+    final double head = combining ? c.combinedFadeFraction : c.allFadedFraction;
     return MpCard(
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints box) => FittedBox(
@@ -187,16 +203,18 @@ class _FadeCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  const MpSectionLabel('Two antennas: time below -10 dB'),
+                  MpSectionLabel(
+                    '${n == 2 ? 'Two' : 'Four'} antennas: time below -10 dB',
+                  ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    'Both at once',
+                    headLabel,
                     style: text.bodyMedium?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
                   Text(
-                    _C.pct(f.fractionBoth),
+                    _C.pct(head),
                     style: scale
                         .headlineStyle(mono.outputLarge)
                         .copyWith(color: colors.textAccent),
@@ -204,6 +222,16 @@ class _FadeCard extends StatelessWidget {
                   MpRow(label: 'Antenna A', value: _C.pct(f.fractionA)),
                   MpRow(label: 'Antenna B', value: _C.pct(f.fractionB)),
                   const MpRow(label: 'Rayleigh, one', value: '9.5%'),
+                  if (combining) ...<Widget>[
+                    MpRow(
+                      label: 'Rayleigh, ${c.combine.label}',
+                      value: _C.pctFine(c.rayleighFadeFraction(c.combine)),
+                    ),
+                    MpRow(
+                      label: 'Gain at 1%',
+                      value: _C.gain(c.rayleighGainDb(c.combine)),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -535,6 +563,7 @@ class _PlotCard extends StatelessWidget {
     final MultipathController c = controller;
     final List<double> a = c.traceA;
     final List<double>? b = c.traceB;
+    final List<double>? combined = c.traceCombined;
     final UnitSystem u = c.units;
     final LengthFormat f = LengthFormat(u);
     final String title = switch (c.mode) {
@@ -551,10 +580,13 @@ class _PlotCard extends StatelessWidget {
     final List<double>? ticks = u.isMetric
         ? null
         : NiceTicks.between(0, shownMax, target: 3);
+    final String combinedName =
+        '${c.combine.label} of ${c.antennaCount == 2 ? 'A and B' : 'A to D'}';
     final String semantic = c.isManyPaths
         ? 'Plot of received power along ${f.dist(2)} for antenna A, solid, and '
               'antenna B, dashed. Antenna A is below -10 dB '
               '${_C.pct(c.fade.fractionA)} of the way.'
+              '${combined == null ? '' : ' The combined signal, $combinedName, is the bold line, below -10 dB ${_C.pct(c.combinedFadeFraction)} of the way.'}'
         : 'Plot of received power against position. The receiver is at '
               '${_C.len(c.positionCm / 100, u)}, where the power is '
               '${_C.db(c.receivedDb)}.';
@@ -562,7 +594,26 @@ class _PlotCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          MpSectionLabel(title),
+          if (presenter && c.isManyPaths)
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xxs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: <Widget>[
+                MpSectionLabel(title),
+                Wrap(
+                  spacing: AppSpacing.xs,
+                  runSpacing: AppSpacing.xxs,
+                  children: <Widget>[
+                    AntennaCountToggle(controller: c),
+                    CombineToggle(controller: c),
+                  ],
+                ),
+              ],
+            )
+          else
+            MpSectionLabel(title),
           const SizedBox(height: AppSpacing.xs),
           _fill(
             presenter,
@@ -573,6 +624,8 @@ class _PlotCard extends StatelessWidget {
               painter: (Size size) => PowerPlotPainter(
                 traceA: a,
                 traceB: b,
+                traceCombined: combined,
+                yMax: c.plotYMax,
                 xMax: shownMax,
                 xUnitLabel: f.smallUnit,
                 xTicks: ticks,
@@ -589,8 +642,10 @@ class _PlotCard extends StatelessWidget {
           MpLegend(
             items: <MpLegendItem>[
               MpLegendItem.line(
-                color: colors.textAccent,
-                width: 2,
+                color: combined == null
+                    ? colors.textAccent
+                    : colors.textSecondary,
+                width: combined == null ? 2 : 1.5,
                 label: b == null ? 'Received' : 'Antenna A',
               ),
               if (b != null)
@@ -599,6 +654,12 @@ class _PlotCard extends StatelessWidget {
                   width: 2,
                   dashed: true,
                   label: 'Antenna B',
+                ),
+              if (combined != null)
+                MpLegendItem.line(
+                  color: colors.textAccent,
+                  width: 3,
+                  label: combinedName,
                 ),
               MpLegendItem.line(
                 color: colors.borderStrong,
