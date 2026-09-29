@@ -330,7 +330,7 @@ class _LaneHeader extends StatelessWidget {
         width: width * fraction,
         child: Column(
           children: <Widget>[
-            Text(
+            ElWholeWordText(
               l.label,
               textAlign: TextAlign.center,
               style: text.labelMedium?.copyWith(
@@ -338,7 +338,7 @@ class _LaneHeader extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
+            ElWholeWordText(
               unused ? 'not used here' : l.role,
               textAlign: TextAlign.center,
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
@@ -660,7 +660,8 @@ class _MessageRow extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
+          // Never breaks inside a word (Keith, 2026-09-29): shrinks instead.
+          ElWholeWordText(
             m.label,
             textAlign: TextAlign.center,
             style: text.labelMedium?.copyWith(
@@ -669,7 +670,7 @@ class _MessageRow extends StatelessWidget {
             ),
           ),
           if (m.detail != null)
-            Text(
+            ElWholeWordText(
               m.detail!,
               textAlign: TextAlign.center,
               style: text.bodySmall?.copyWith(color: colors.textSecondary),

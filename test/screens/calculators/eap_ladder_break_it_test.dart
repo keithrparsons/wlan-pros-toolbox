@@ -6,6 +6,7 @@
 // test/services/wifi_lab/eap_ladder_fault_test.dart.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/eap_ladder_controller.dart';
@@ -205,6 +206,62 @@ void main() {
               find.bySemanticsLabel(RegExp('^Stopped here')),
               findsOneWidget,
             );
+          },
+        );
+      }
+    }
+  }
+
+  // Keith, 2026-09-29: at 390 px "Deauthentication" broke mid-word in the
+  // ladder ("Deauthenticatio" / "n"). No text on the ladder may break inside
+  // a word, at 360 or 390 px, in any fault ladder or in the ordinary one.
+  // A break after a hyphen ("4-" / "way") is a word boundary.
+  for (final String themeName in <String>['dark', 'light']) {
+    for (final double w in <double>[360, 390]) {
+      for (final LadderConfig cfg in <LadderConfig>[
+        ..._faulted,
+        for (final LadderMethod m in LadderMethod.values)
+          LadderConfig(method: m),
+      ]) {
+        testWidgets(
+          '${cfg.method.name} ${cfg.fault.name} at $w px, $themeName: no '
+          'ladder text breaks inside a word',
+          (WidgetTester tester) async {
+            final EapLadderController c = await _pump(
+              tester,
+              width: w,
+              height: 8000,
+              theme: themeName == 'dark' ? AppTheme.dark() : AppTheme.light(),
+              initial: cfg,
+            );
+            c.showAll();
+            await tester.pumpAndSettle();
+            final List<String> broken = <String>[];
+            for (final Element e in find
+                .descendant(
+                  of: find.byType(EapLadderStage),
+                  matching: find.byType(RichText),
+                )
+                .evaluate()) {
+              final RenderParagraph p = e.renderObject! as RenderParagraph;
+              final String text = p.text.toPlainText();
+              for (final RegExpMatch word in RegExp(
+                r'[^\s-]+-?',
+              ).allMatches(text)) {
+                final Set<double> tops = <double>{
+                  for (final TextBox b in p.getBoxesForSelection(
+                    TextSelection(
+                      baseOffset: word.start,
+                      extentOffset: word.end,
+                    ),
+                  ))
+                    b.top.roundToDouble(),
+                };
+                if (tops.length > 1) broken.add('${word[0]} in "$text"');
+              }
+            }
+            expect(broken, isEmpty);
+            expect(tester.takeException(), isNull);
           },
         );
       }

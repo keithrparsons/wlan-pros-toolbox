@@ -3,6 +3,8 @@
 // idiom as the other Wi-Fi Classroom simulators, kept local so this tool does not
 // reach into a sibling's private parts. Theme tokens only.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_color_scheme.dart';
@@ -29,6 +31,66 @@ class ElCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: child,
+    );
+  }
+}
+
+/// Text that wraps only between words. When the widest single word (or
+/// hyphen-ended part, like "4-") is wider than the space it has, the text
+/// scales down until that word fits, so a narrow phone never breaks
+/// "Deauthentication" inside the word (Keith, 2026-09-29, at 390 px). At
+/// widths where every word fits, it is a plain [Text] in [style].
+class ElWholeWordText extends StatelessWidget {
+  const ElWholeWordText(this.data, {super.key, this.style, this.textAlign});
+
+  final String data;
+  final TextStyle? style;
+  final TextAlign? textAlign;
+
+  static final RegExp _words = RegExp(r'[^\s-]+-?');
+
+  /// Head room under the measured fit: glyph widths do not scale exactly
+  /// linearly with the font size.
+  static const double _margin = 0.98;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints box) {
+        final TextStyle base = DefaultTextStyle.of(context).style.merge(style);
+        final double? size = base.fontSize;
+        double factor = 1;
+        if (box.hasBoundedWidth && size != null) {
+          final TextScaler scaler = MediaQuery.textScalerOf(context);
+          final TextDirection dir = Directionality.of(context);
+          double widest = 0;
+          for (final RegExpMatch m in _words.allMatches(data)) {
+            final TextPainter tp = TextPainter(
+              text: TextSpan(text: m[0], style: base),
+              textDirection: dir,
+              textScaler: scaler,
+              maxLines: 1,
+            )..layout();
+            widest = math.max(widest, tp.width);
+            tp.dispose();
+          }
+          if (widest > box.maxWidth && widest > 0) {
+            factor = box.maxWidth / widest * _margin;
+          }
+        }
+        return Text(
+          data,
+          textAlign: textAlign,
+          style: factor == 1
+              ? style
+              : (style ?? const TextStyle()).copyWith(
+                  fontSize: size! * factor,
+                  letterSpacing: base.letterSpacing == null
+                      ? null
+                      : base.letterSpacing! * factor,
+                ),
+        );
+      },
     );
   }
 }
