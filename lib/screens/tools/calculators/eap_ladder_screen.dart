@@ -118,12 +118,17 @@ class _EapLadderScreenState extends State<EapLadderScreen>
   }
 
   /// The presenter layout over this screen's controller (shared, not
-  /// copied).
-  Widget _presenter(BuildContext context) => PresenterLayout(
-    title: _kTitle,
-    stage: EapLadderStage(controller: _controller),
-    controls: EapLadderControls(controller: _controller),
-    actions: _controller.presenterActions,
+  /// copied). Rebuilt with the controller so the keys follow the mode: B
+  /// (Break it) exists only in Authenticate, so the ? list must drop it in
+  /// Roam, as Association, Frame by Frame already does for its modes.
+  Widget _presenter(BuildContext context) => ListenableBuilder(
+    listenable: _controller,
+    builder: (BuildContext context, _) => PresenterLayout(
+      title: _kTitle,
+      stage: EapLadderStage(controller: _controller),
+      controls: EapLadderControls(controller: _controller),
+      actions: _controller.presenterActions,
+    ),
   );
 
   @override

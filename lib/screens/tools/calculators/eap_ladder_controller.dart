@@ -385,7 +385,9 @@ class EapLadderController extends ChangeNotifier {
   /// certificate size (the passive dwell in Join).
   /// In Why won't it associate? (spec 43), Up and Down step the network
   /// security instead, and C cycles the client presets.
-  /// In Join, S turns the 6 GHz race on or off.
+  /// In Join's Play the association, S turns the 6 GHz race on or off. The
+  /// race is not offered in Why won't it associate? (see [raceAvailable]),
+  /// so C and S never share a view.
   PresenterActions get presenterActions => PresenterActions(
     playPause: togglePlay,
     step: step,
@@ -418,7 +420,7 @@ class EapLadderController extends ChangeNotifier {
           description: 'Break it: next fault',
           onPressed: cycleFault,
         ),
-      if (_mode == LadderMode.join)
+      if (_mode == LadderMode.join && !whyMode)
         // S, not C: security-compat keeps C in this tool, and R is the
         // shared Reset key (Keith, 2026-09-29).
         PresenterExtraKey(
@@ -495,9 +497,12 @@ class EapLadderController extends ChangeNotifier {
   /// Whether the student chose "Compare all four".
   bool get raceOn => _raceOn;
 
-  /// The race exists only in Join at 6 GHz.
+  /// The race exists only in Join's Play the association, at 6 GHz. It is
+  /// a discovery view: Why won't it associate? has no race control and its
+  /// verdict is about the security, so the race is not offered there (the
+  /// 1.12 merge of six-ghz-race and security-compat).
   bool get raceAvailable =>
-      _mode == LadderMode.join && _jrConfig.band == JrBand.g6;
+      _mode == LadderMode.join && !_why && _jrConfig.band == JrBand.g6;
 
   /// The stage shows the race instead of the ladder.
   bool get raceActive => _raceOn && raceAvailable;
@@ -522,6 +527,8 @@ class EapLadderController extends ChangeNotifier {
 
   set raceOn(bool on) {
     if (on == _raceOn) return;
+    // Not offered in Why won't it associate? (see [raceAvailable]).
+    if (on && _why) return;
     _pause();
     _raceOn = on;
     _raceMs = 0;
@@ -539,9 +546,10 @@ class EapLadderController extends ChangeNotifier {
   /// notify.
   set raceReduceMotion(bool v) => _raceReduceMotion = v;
 
-  /// Presenter C: the race on or off, moving to 6 GHz when it is needed.
+  /// Presenter S: the race on or off, moving to 6 GHz when it is needed.
+  /// Does nothing in Roam or in Why won't it associate?.
   void toggleRace() {
-    if (_mode != LadderMode.join) return;
+    if (_mode != LadderMode.join || _why) return;
     if (raceActive) {
       raceOn = false;
       return;
@@ -620,6 +628,12 @@ class EapLadderController extends ChangeNotifier {
     if (v == _why) return;
     _pause();
     _why = v;
+    // The race is not offered in Why won't it associate?; entering it turns
+    // the race off, so coming back shows the ladder, not a race left on.
+    if (v) {
+      _raceOn = false;
+      _raceMs = 0;
+    }
     _inspected = null;
     _rebuildJr();
     _shown = 0;

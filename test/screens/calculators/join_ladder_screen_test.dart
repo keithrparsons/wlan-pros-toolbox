@@ -9,7 +9,7 @@
 // and the presenter layout (spec 00) with Space, Right, R and Up/Down.
 // The 6 GHz race (spec 40) has its own group at the end: the toggle and its
 // disabled state, the four strips, Step between findings, the RNR toggle,
-// reduced motion, copy, phone width, and the presenter with C.
+// reduced motion, copy, phone width, and the presenter with S.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
