@@ -339,9 +339,10 @@ void main() {
       });
 
       // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-      test('exactly the 48 simulators are gated in the real catalog', () {
+      test('exactly the 49 simulators are gated in the real catalog', () {
         final List<ToolEntry> lab = wifiLabTools().toList();
-        expect(lab, hasLength(48));
+        // 2026-09-29: Polarization (spec 45): 48 + 1.
+        expect(lab, hasLength(49));
       });
     },
   );

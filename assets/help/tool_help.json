@@ -1082,6 +1082,51 @@
       ],
       "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005). No manufacturer file is included. Computed on your device."
     },
+    "polarization": {
+      "name": "Polarization",
+      "category": "Wireless Classroom",
+      "purpose": "Draws one radio wave as its electric field along the direction of travel, in a 3D view you can turn. Pick Vertical, Horizontal, Slant 45 degrees, Circular or Elliptical and watch the field: the arrows show which way it points at each place along the wave, and the End-on view square in the corner shows the shape the tip of the field traces, seen from the front end looking back toward the source.",
+      "whyHere": "Polarization is usually taught as a word and a number. Seeing the field makes it concrete: vertical and horizontal are the same wave turned 90 degrees, a slant is the same wave turned 45 degrees, and circular is two waves a quarter cycle apart whose sum never shrinks and turns once per wavelength. The component waves show that every polarization is a horizontal wave plus a vertical wave.",
+      "howToUse": [
+        "Pick a polarization. The readouts name it, say what the tip of the field traces (a line, a circle or an ellipse) and give the axial ratio.",
+        "Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labelled with its letter.",
+        "Open Adjust to set the two amplitudes and the phase difference yourself. In step (0 or 180 degrees) always gives a line; equal amplitudes 90 degrees apart give a circle; -90 degrees turns the other way.",
+        "Drag the 3D view to turn it, pinch or scroll to zoom, and tap Reset view to go back. With a keyboard, focus the view and use the arrow keys and plus or minus. Pause stops the wave; with reduced motion on it opens frozen.",
+        "On a computer or tablet, Present opens the 3D view full screen for a projector: Space plays or pauses, P or the Up arrow moves to the next polarization and Down to the previous, R returns to Vertical and the opening view, F switches full screen, ? lists the keys and Esc exits."
+      ],
+      "inputs": [
+        {
+          "name": "Polarization",
+          "unit": "preset",
+          "range": "Vertical, Horizontal, Slant 45 degrees, Circular, Elliptical, or Custom"
+        },
+        {
+          "name": "H and V amplitude",
+          "unit": "relative",
+          "range": "0 to 1"
+        },
+        {
+          "name": "Phase difference",
+          "unit": "degrees",
+          "range": "-180 to 180, V ahead of H"
+        },
+        {
+          "name": "Show the H and V component waves",
+          "unit": "on or off",
+          "range": "off at open"
+        }
+      ],
+      "algorithm": "E(z, t) = Ax cos(wt - kz) in the horizontal direction plus Ay cos(wt - kz + delta) in the vertical direction, where z is the distance along the direction of travel. The tip of the field traces an ellipse with half-axes sqrt((Ax^2 + Ay^2)/2 +/- R), R = sqrt(Ax^4 + Ay^4 + 2 Ax^2 Ay^2 cos 2delta) / 2. Axial ratio = long half-axis / short half-axis (infinite for a line). The long axis sits at atan2(2 Ax Ay cos delta, Ax^2 - Ay^2) / 2 from horizontal. Every preset has Ax^2 + Ay^2 = 1, so all carry the same power.",
+      "example": "Slant 45 degrees is equal horizontal and vertical parts in step (0.71 and 0.71, 0 degrees): a line at 45 degrees, axial ratio infinite. Circular is the same two parts 90 degrees apart: the field stays the same length everywhere, axial ratio 1.0. Elliptical here is 0.89 horizontal and 0.45 vertical, 90 degrees apart: axial ratio 2.0, long axis horizontal.",
+      "fieldNotes": [
+        "Circular polarization is shown without a right-hand or left-hand name. Optics and antenna engineering name the direction of turn by different conventions; the tool shows the turn instead.",
+        "The drawing is slowed to one cycle every 3 seconds. The frequency and the wavelength are the same for every polarization.",
+        "The view is dark in both themes, so the lime field and the two component colors are measured against one surface. The legend names each line, so color is never the only carrier.",
+        "For the loss between two antennas at different angles, see the polarization card in Antenna Pattern.",
+        "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
+      ],
+      "source": "The field is the textbook plane-wave closed form; definitions of linear, circular and elliptical polarization and axial ratio as in Balanis, Antenna Theory: Analysis and Design (Wiley). The view follows EMANIM Classic by Andras Szilagyi (public domain). No EMANIM code is used. Computed on your device."
+    },
     "eap-ladder": {
       "name": "802.1X and EAP Ladder",
       "category": "Wireless Classroom",

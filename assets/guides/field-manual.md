@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 261 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · Polarization added 2026-09-29 · covers 262 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,9 +37,9 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (88 tools)
+- **Wireless Classroom** (89 tools)
   - Guided Lessons (29)
-  - RF and Propagation (12)
+  - RF and Propagation (13)
   - Signals and PHY (7)
   - Airtime and Access (12)
   - Network Design and Security (17)
@@ -3822,7 +3822,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (88 tools)
+# Wireless Classroom (89 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
@@ -4401,7 +4401,7 @@ A read-along lesson with one step-through, on why a hotel, airport or airplane n
 - Left out: paid tiers, session time limits beyond a mention, and networks that block the Wi-Fi Calling tunnel even after the sign-in.
 
 
-## RF and Propagation (12)
+## RF and Propagation (13)
 
 
 ### Decibels in Your Head: the Rules of 3 and 10
@@ -4725,6 +4725,40 @@ Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet pr
 - The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.
 - Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.
 - NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.
+- The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
+
+
+### Polarization
+
+Draws one radio wave as its electric field along the direction of travel, in a 3D view you can turn. Pick Vertical, Horizontal, Slant 45 degrees, Circular or Elliptical and watch the field: the arrows show which way it points at each place along the wave, and the End-on view square in the corner shows the shape the tip of the field traces, seen from the front end looking back toward the source.
+
+**Why it's here.** Polarization is usually taught as a word and a number. Seeing the field makes it concrete: vertical and horizontal are the same wave turned 90 degrees, a slant is the same wave turned 45 degrees, and circular is two waves a quarter cycle apart whose sum never shrinks and turns once per wavelength. The component waves show that every polarization is a horizontal wave plus a vertical wave.
+
+**How to use**
+1. Pick a polarization. The readouts name it, say what the tip of the field traces (a line, a circle or an ellipse) and give the axial ratio.
+2. Turn on Show the H and V component waves to see the horizontal part (H) and the vertical part (V) that add up to the field. Each is labelled with its letter.
+3. Open Adjust to set the two amplitudes and the phase difference yourself. In step (0 or 180 degrees) always gives a line; equal amplitudes 90 degrees apart give a circle; -90 degrees turns the other way.
+4. Drag the 3D view to turn it, pinch or scroll to zoom, and tap Reset view to go back. With a keyboard, focus the view and use the arrow keys and plus or minus. Pause stops the wave; with reduced motion on it opens frozen.
+5. On a computer or tablet, Present opens the 3D view full screen for a projector: Space plays or pauses, P or the Up arrow moves to the next polarization and Down to the previous, R returns to Vertical and the opening view, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Polarization | preset | Vertical, Horizontal, Slant 45 degrees, Circular, Elliptical, or Custom |
+| H and V amplitude | relative | 0 to 1 |
+| Phase difference | degrees | -180 to 180, V ahead of H |
+| Show the H and V component waves | on or off | off at open |
+
+**How it works.** E(z, t) = Ax cos(wt - kz) in the horizontal direction plus Ay cos(wt - kz + delta) in the vertical direction, where z is the distance along the direction of travel. The tip of the field traces an ellipse with half-axes sqrt((Ax^2 + Ay^2)/2 +/- R), R = sqrt(Ax^4 + Ay^4 + 2 Ax^2 Ay^2 cos 2delta) / 2. Axial ratio = long half-axis / short half-axis (infinite for a line). The long axis sits at atan2(2 Ax Ay cos delta, Ax^2 - Ay^2) / 2 from horizontal. Every preset has Ax^2 + Ay^2 = 1, so all carry the same power.
+
+**Example.** Slant 45 degrees is equal horizontal and vertical parts in step (0.71 and 0.71, 0 degrees): a line at 45 degrees, axial ratio infinite. Circular is the same two parts 90 degrees apart: the field stays the same length everywhere, axial ratio 1.0. Elliptical here is 0.89 horizontal and 0.45 vertical, 90 degrees apart: axial ratio 2.0, long axis horizontal.
+
+**Field notes**
+- Circular polarization is shown without a right-hand or left-hand name. Optics and antenna engineering name the direction of turn by different conventions; the tool shows the turn instead.
+- The drawing is slowed to one cycle every 3 seconds. The frequency and the wavelength are the same for every polarization.
+- The view is dark in both themes, so the lime field and the two component colors are measured against one surface. The legend names each line, so color is never the only carrier.
+- For the loss between two antennas at different angles, see the polarization card in Antenna Pattern.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
 

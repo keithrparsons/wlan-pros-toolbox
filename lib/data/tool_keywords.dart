@@ -1825,6 +1825,27 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
     'wireless classroom',
     'simulator',
   ],
+  // Wi-Fi Classroom (2026-09-29). What the Polarization tile shows, in the
+  // words a student would search with. No handedness words (spec 45).
+  'polarization': <String>[
+    'polarisation',
+    'vertical polarization',
+    'horizontal polarization',
+    'slant',
+    'slant 45',
+    'cross polarized',
+    'circular polarization',
+    'elliptical polarization',
+    'linear polarization',
+    'axial ratio',
+    'electric field',
+    'e-field',
+    'emanim',
+    'wi-fi lab',
+    'wi-fi classroom',
+    'wireless classroom',
+    'simulator',
+  ],
   // Wi-Fi Classroom (2026-09-25). Terms not already in the title or description.
   'rate-adaptation': <String>[
     'rate control',

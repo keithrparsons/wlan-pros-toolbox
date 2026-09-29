@@ -22,6 +22,11 @@ import 'dart:ui' as ui;
 
 import '../../../services/wifi_lab/antenna_pattern_math.dart';
 import '../../../theme/app_gain_ramp.dart';
+import 'wifi_lab_orbit.dart';
+
+// OrbitView and Projector moved to wifi_lab_orbit.dart (2026-09-29, shared with
+// the Polarization tile); re-exported so every existing import still compiles.
+export 'wifi_lab_orbit.dart' show OrbitView, Projector;
 
 /// Degrees between mesh rows and columns.
 const int kMeshStepDeg = 2;
@@ -48,88 +53,6 @@ int gainBand(double dbi, double topDbi) =>
 /// top. Anything at or below the floor sits at a small minimum radius.
 double gainRadius(double dbi, double topDbi) =>
     ((dbi - (topDbi - kScaleSpanDb)) / kScaleSpanDb).clamp(0.015, 1.0);
-
-/// The camera: yaw about the vertical, pitch above the horizon, zoom.
-class OrbitView {
-  const OrbitView({this.yawDeg = 50, this.pitchDeg = 22, this.zoom = 1});
-
-  final double yawDeg;
-
-  /// Positive looks down from above; clamped to ±85°.
-  final double pitchDeg;
-  final double zoom;
-
-  static const OrbitView initial = OrbitView();
-  static const double minZoom = 0.6;
-  static const double maxZoom = 2.5;
-
-  OrbitView rotated(double dYaw, double dPitch) => OrbitView(
-    yawDeg: (yawDeg + dYaw) % 360,
-    pitchDeg: (pitchDeg + dPitch).clamp(-85.0, 85.0),
-    zoom: zoom,
-  );
-
-  OrbitView zoomed(double factor) => OrbitView(
-    yawDeg: yawDeg,
-    pitchDeg: pitchDeg,
-    zoom: (zoom * factor).clamp(minZoom, maxZoom),
-  );
-
-  @override
-  bool operator ==(Object other) =>
-      other is OrbitView &&
-      other.yawDeg == yawDeg &&
-      other.pitchDeg == pitchDeg &&
-      other.zoom == zoom;
-
-  @override
-  int get hashCode => Object.hash(yawDeg, pitchDeg, zoom);
-}
-
-/// A camera fixed for one frame: projects world points to the canvas.
-class Projector {
-  Projector(OrbitView view, ui.Size size)
-    : _cy = math.cos(view.yawDeg * math.pi / 180),
-      _sy = math.sin(view.yawDeg * math.pi / 180),
-      _cp = math.cos(view.pitchDeg * math.pi / 180),
-      _sp = math.sin(view.pitchDeg * math.pi / 180),
-      _ox = size.width / 2,
-      _oy = size.height / 2,
-      _scale = math.min(size.width, size.height) * 0.40 * view.zoom;
-
-  final double _cy, _sy, _cp, _sp, _ox, _oy, _scale;
-
-  /// Distance from the eye to the origin, in pattern radii (mild perspective).
-  static const double eye = 5;
-
-  /// Depth toward the viewer (larger = nearer).
-  double depth(double x, double y, double z) {
-    final double x1 = x * _cy - y * _sy;
-    return x1 * _cp + z * _sp;
-  }
-
-  ui.Offset project(double x, double y, double z) {
-    final double x1 = x * _cy - y * _sy;
-    final double y1 = x * _sy + y * _cy;
-    final double up = -x1 * _sp + z * _cp;
-    final double d = x1 * _cp + z * _sp;
-    final double s = _scale * eye / (eye - d);
-    return ui.Offset(_ox + y1 * s, _oy - up * s);
-  }
-
-  /// [project] without allocating: writes the canvas point to out[o] and
-  /// out[o + 1] and returns the depth. The per-frame hot path.
-  double projectInto(Float32List out, int o, double x, double y, double z) {
-    final double x1 = x * _cy - y * _sy;
-    final double y1 = x * _sy + y * _cy;
-    final double up = -x1 * _sp + z * _cp;
-    final double d = x1 * _cp + z * _sp;
-    final double s = _scale * eye / (eye - d);
-    out[o] = _ox + y1 * s;
-    out[o + 1] = _oy - up * s;
-    return d;
-  }
-}
 
 /// The pattern as a colored surface, ready to be projected every frame.
 class PatternMesh {

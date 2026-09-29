@@ -3009,6 +3009,16 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         subgroup: 'RF and Propagation',
       ),
       ToolEntry(
+        id: 'polarization',
+        title: 'Polarization',
+        description:
+            'Turn a 3D view of one wave and watch its electric field: '
+            'vertical, horizontal, slant, circular and elliptical',
+        routeName: '/tools/polarization',
+        isLive: true,
+        subgroup: 'RF and Propagation',
+      ),
+      ToolEntry(
         id: 'rate-vs-range',
         title: 'Rate vs Range',
         description:
