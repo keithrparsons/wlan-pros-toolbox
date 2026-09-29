@@ -799,6 +799,96 @@ JrScanPlan buildScan(JrConfig c) {
 /// One line of what a frame carries (tap a message to see them).
 typedef JrField = (String name, String value);
 
+// ── Security override (spec 43, Why won't it associate?) ─────────────────────
+
+/// Where a security-compatibility ladder stops (spec 43). [none] plays the
+/// whole association.
+enum JrStop {
+  /// Nothing stops it: the whole association plays.
+  none,
+
+  /// The client has no radio in the network's band: the AP's beacon is never
+  /// heard.
+  noBand,
+
+  /// No AP may offer this security in this band (6 GHz): nothing answers.
+  notOffered,
+
+  /// The client reads the AP's RSN element and declines: no Authentication
+  /// and no Association Request.
+  afterScan,
+
+  /// The client tries and the AP refuses the Association Request.
+  refusedAtAssociation,
+}
+
+/// The security a Join ladder draws when the security-compatibility mode
+/// (spec 43, security_compat_model.dart) decides it, in place of
+/// [JrConfig.effectiveSecurity]. With no override, [buildJoin] is exactly as
+/// before (checked against a fingerprint of every configuration).
+@immutable
+class JrSecurityOverride {
+  const JrSecurityOverride({
+    required this.security,
+    required this.pmf,
+    required this.apAkm,
+    required this.apCiphers,
+    required this.apPmf,
+    required this.clientAkm,
+    required this.clientCiphers,
+    required this.clientPmf,
+    required this.eht,
+    this.groupManagementCipher,
+    this.apExtra = const <JrField>[],
+    this.stop = JrStop.none,
+    this.statusCode,
+    this.stopDetail,
+    this.stopDescription,
+    this.faultNote,
+    this.helpDesk,
+  });
+
+  /// Which frames the ladder draws: SAE or Open System authentication, EAP,
+  /// the 4-way handshake.
+  final JrSecurity security;
+
+  /// PMF as negotiated for this pair: [JrPmf.inUse] draws the shields.
+  final JrPmf pmf;
+
+  /// The AP's RSN element, worded: AKM list, cipher suites, MFPC and MFPR.
+  final String apAkm;
+  final String apCiphers;
+  final String apPmf;
+
+  /// More of what the AP advertises (the SAE hash-to-element selector).
+  final List<JrField> apExtra;
+
+  /// What the client puts in its Association Request.
+  final String clientAkm;
+  final String clientCiphers;
+  final String clientPmf;
+
+  /// BIP cipher in the client's RSN element when PMF is in use.
+  final String? groupManagementCipher;
+
+  /// Whether the client asks for a Wi-Fi 7 (EHT) association: the EHT
+  /// Capabilities element is left out when false.
+  final bool eht;
+
+  final JrStop stop;
+
+  /// The refusal in the Association Response, for [JrStop.refusedAtAssociation].
+  final (int, String)? statusCode;
+
+  /// Detail line and caption text for the frame where it stops.
+  final String? stopDetail;
+  final String? stopDescription;
+
+  /// The "Stopped here" sentence and what the help desk sees.
+  final String? faultNote;
+  final String? helpDesk;
+}
+
 /// One arrow on a Join or Roam ladder.
 @immutable
 class JrMessage {
@@ -910,6 +1000,7 @@ class JrSequence {
     required this.lanes,
     this.faultNote,
     this.helpDesk,
+    this.securityOverride,
   });
 
   final LadderMode mode;
@@ -933,15 +1024,27 @@ class JrSequence {
   /// Whether the exchange breaks before it completes.
   bool get failed => failedAt >= 0;
 
+  /// Set when the security-compatibility mode (spec 43) decided the
+  /// security; null for the ordinary Join and Roam.
+  final JrSecurityOverride? securityOverride;
+
+  /// Whether the scan's channel strip describes what happened. Not when the
+  /// client has no radio in the band, or no AP may offer the network.
+  bool get scanDrawn {
+    final JrStop? stop = securityOverride?.stop;
+    return stop != JrStop.noBand && stop != JrStop.notOffered;
+  }
+
   int get length => messages.length;
 
   /// The scan found the AP; otherwise the ladder stops after the scan.
   bool get found => scan.found;
 
-  JrSecurity get security =>
-      mode == LadderMode.roam ? JrSecurity.dot1x : config.effectiveSecurity;
+  JrSecurity get security => mode == LadderMode.roam
+      ? JrSecurity.dot1x
+      : securityOverride?.security ?? config.effectiveSecurity;
 
-  JrPmf get pmf => config.pmfFor(security);
+  JrPmf get pmf => securityOverride?.pmf ?? config.pmfFor(security);
 
   /// Over-the-air frames, excluding a missed beacon.
   int get airCount => messages
@@ -1063,11 +1166,14 @@ class RoamSkipped {
   final int fewerMessages;
 }
 
-/// Builds a first connection for [c].
-JrSequence buildJoin(JrConfig c) {
-  final _JrBuilder b = _JrBuilder(c, LadderMode.join);
+/// Builds a first connection for [c]. [security], from the security-
+/// compatibility mode (spec 43), replaces the silent 6 GHz swap with the
+/// security that pair actually negotiates, and can stop the ladder where the
+/// association fails.
+JrSequence buildJoin(JrConfig c, {JrSecurityOverride? security}) {
+  final _JrBuilder b = _JrBuilder(c, LadderMode.join, security);
   b.buildJoin();
-  final JrSecurity s = c.effectiveSecurity;
+  final JrSecurity s = security?.security ?? c.effectiveSecurity;
   return JrSequence._(
     mode: LadderMode.join,
     config: c,
@@ -1075,6 +1181,7 @@ JrSequence buildJoin(JrConfig c) {
     scan: b.scan,
     faultNote: b.faultNote,
     helpDesk: b.helpDesk,
+    securityOverride: security,
     lanes: <JrLane>[
       JrLane.client,
       JrLane.ap,
@@ -1165,10 +1272,13 @@ String formatJrMs(double ms) {
 // ── Builder ─────────────────────────────────────────────────────────────────
 
 class _JrBuilder {
-  _JrBuilder(this.c, this.mode) : scan = buildScan(c);
+  _JrBuilder(this.c, this.mode, [this.ov]) : scan = buildScan(c);
 
   final JrConfig c;
   final LadderMode mode;
+
+  /// The security-compatibility override (spec 43), Join only.
+  final JrSecurityOverride? ov;
   final JrScanPlan scan;
   final List<JrMessage> out = <JrMessage>[];
 
@@ -1181,9 +1291,10 @@ class _JrBuilder {
 
   bool get _roam => mode == LadderMode.roam;
 
-  JrSecurity get _sec => _roam ? JrSecurity.dot1x : c.effectiveSecurity;
+  JrSecurity get _sec =>
+      _roam ? JrSecurity.dot1x : ov?.security ?? c.effectiveSecurity;
 
-  JrPmf get _pmf => c.pmfFor(_sec);
+  JrPmf get _pmf => ov?.pmf ?? c.pmfFor(_sec);
 
   /// The AP the client authenticates with: the only AP when joining, the
   /// target AP when roaming.
@@ -1194,14 +1305,23 @@ class _JrBuilder {
   // ── Join ──────────────────────────────────────────────────────────────────
 
   void buildJoin() {
+    final JrSecurityOverride? o = ov;
+    if (o != null && o.stop == JrStop.noBand) return _neverHeard(o);
+    if (o != null && o.stop == JrStop.notOffered) return _notOffered(o);
     _scan();
     if (!scan.found) return;
+    if (o != null && o.stop == JrStop.afterScan) return _declined(o);
     if (_sec == JrSecurity.sae) {
       _sae();
     } else {
       _openAuth(roam: false);
     }
     _association(reassociation: false);
+    if (o != null && o.stop == JrStop.refusedAtAssociation) {
+      faultNote = o.faultNote;
+      helpDesk = o.helpDesk;
+      return;
+    }
     if (_sec == JrSecurity.dot1x) _eap();
     if (_sec != JrSecurity.open) _fourWay();
     _dhcp();
@@ -1349,7 +1469,11 @@ class _JrBuilder {
           phase: JrPhase.scan,
           clock: JrClock.scan,
           label: 'Probe Response',
-          detail: 'SSID $_ssid, RSN: $_akm',
+          detail: ov == null
+              ? 'SSID $_ssid, RSN: $_akm'
+              : _sec == JrSecurity.open
+              ? 'SSID $_ssid, no RSN element'
+              : 'SSID $_ssid, RSN: ${ov!.apAkm}',
           fields: _apAdvertises(),
           description:
               'The AP answers with its SSID, rates, capabilities and security '
@@ -1397,8 +1521,18 @@ class _JrBuilder {
     ('SSID', _ssid),
     ('Beacon interval', '100 TU (102.4 ms, a default)'),
     ('Supported rates', _rates),
-    if (_sec != JrSecurity.open) ('RSN element', 'AKM: $_akm; cipher CCMP-128'),
-    if (_sec != JrSecurity.open) ('PMF', _pmf.bits),
+    if (ov != null) ...<JrField>[
+      if (_sec != JrSecurity.open) ...<JrField>[
+        ('RSN element: AKM', ov!.apAkm),
+        ('RSN element: ciphers', ov!.apCiphers),
+        ('RSN element: PMF bits', ov!.apPmf),
+      ],
+      ...ov!.apExtra,
+    ] else ...<JrField>[
+      if (_sec != JrSecurity.open)
+        ('RSN element', 'AKM: $_akm; cipher CCMP-128'),
+      if (_sec != JrSecurity.open) ('PMF', _pmf.bits),
+    ],
     if (_roam && c.roamMethod.isFt)
       ('Mobility Domain element', 'the FT mobility domain'),
   ];
@@ -1406,6 +1540,86 @@ class _JrBuilder {
   String get _rates => c.band == JrBand.g24
       ? '1, 2, 5.5, 11 Mb/s, and 6 to 54 Mb/s as Extended Supported Rates'
       : '6, 9, 12, 18, 24, 36, 48, 54 Mb/s';
+
+  // ── Where a security-compatibility ladder stops (spec 43) ─────────────────
+
+  /// The client has no radio in the network's band: the AP's beacon goes out
+  /// and is never heard. No scan of that band is drawn.
+  void _neverHeard(JrSecurityOverride o) {
+    out.add(
+      JrMessage(
+        from: _ap,
+        to: _c,
+        kind: JrFrameKind.management,
+        phase: JrPhase.scan,
+        clock: JrClock.scan,
+        label: 'Beacon (never heard)',
+        detail: o.stopDetail,
+        fields: _apAdvertises(),
+        description: o.stopDescription ?? '',
+        ms: 0,
+        missed: true,
+        failure: true,
+      ),
+    );
+    faultNote = o.faultNote;
+    helpDesk = o.helpDesk;
+  }
+
+  /// No AP may offer this network in this band: the client's probe gets no
+  /// answer.
+  void _notOffered(JrSecurityOverride o) {
+    out.add(
+      JrMessage(
+        from: _c,
+        to: _ap,
+        kind: JrFrameKind.management,
+        phase: JrPhase.scan,
+        clock: JrClock.scan,
+        label: 'Probe Request',
+        detail: o.stopDetail,
+        fields: <JrField>[
+          ('SSID', _ssid),
+          ('Supported rates and capabilities', 'the client\'s own'),
+        ],
+        description: o.stopDescription ?? '',
+        ms: scan.totalMs,
+        lost: true,
+      ),
+    );
+    faultNote = o.faultNote;
+    helpDesk = o.helpDesk;
+  }
+
+  /// The client read the AP's security and declined: the frame it read is
+  /// the one marked, and nothing follows it.
+  void _declined(JrSecurityOverride o) {
+    final JrMessage m = out.removeLast();
+    out.add(
+      JrMessage(
+        from: m.from,
+        to: m.to,
+        via: m.via,
+        kind: m.kind,
+        phase: m.phase,
+        clock: m.clock,
+        label: m.label,
+        detail: o.stopDetail ?? m.detail,
+        fields: m.fields,
+        description: o.stopDescription ?? m.description,
+        ms: m.ms,
+        encrypted: m.encrypted,
+        pmfProtected: m.pmfProtected,
+        tunneled: m.tunneled,
+        missed: m.missed,
+        failure: true,
+        milestone: m.milestone,
+        milestoneText: m.milestoneText,
+      ),
+    );
+    faultNote = o.faultNote;
+    helpDesk = o.helpDesk;
+  }
 
   // ── Authentication ────────────────────────────────────────────────────────
 
@@ -1525,7 +1739,16 @@ class _JrBuilder {
 
   // ── (Re)association ───────────────────────────────────────────────────────
 
-  List<JrField> _capabilities() => switch (c.band) {
+  List<JrField> _capabilities() {
+    final List<JrField> all = _bandCapabilities();
+    if (ov == null || ov!.eht) return all;
+    return <JrField>[
+      for (final JrField f in all)
+        if (f.$1 != 'EHT Capabilities') f,
+    ];
+  }
+
+  List<JrField> _bandCapabilities() => switch (c.band) {
     JrBand.g24 => const <JrField>[
       ('HT Capabilities', 'streams, 20/40 MHz, MCS set'),
       ('HE Capabilities', 'streams, MCS set'),
@@ -1556,14 +1779,21 @@ class _JrBuilder {
             c.roamMethod == JrRoamMethod.okc);
     final bool okc = reassociation && c.roamMethod == JrRoamMethod.okc;
     final JrSecurity s = _sec;
+    final JrSecurityOverride? o = ov;
     final List<JrField> rsn = s == JrSecurity.open
         ? const <JrField>[]
         : <JrField>[
-            ('RSN element: AKM', _akm),
-            ('RSN element: ciphers', 'pairwise CCMP-128, group CCMP-128'),
-            ('RSN element: PMF bits', _pmf.bits),
+            ('RSN element: AKM', o?.clientAkm ?? _akm),
+            (
+              'RSN element: ciphers',
+              o?.clientCiphers ?? 'pairwise CCMP-128, group CCMP-128',
+            ),
+            ('RSN element: PMF bits', o?.clientPmf ?? _pmf.bits),
             if (_pmf.inUse)
-              ('RSN element: group management cipher', 'BIP-CMAC-128'),
+              (
+                'RSN element: group management cipher',
+                o?.groupManagementCipher ?? 'BIP-CMAC-128',
+              ),
             if (cached)
               (
                 'RSN element: PMKID',
@@ -1577,6 +1807,8 @@ class _JrBuilder {
         ? 'RSN: PMKID'
         : s == JrSecurity.open
         ? 'No RSN element'
+        : o != null
+        ? 'RSN: ${o.clientAkm}, PMF ${_pmf.inUse ? 'on' : 'off'}'
         : 'RSN: $_akm, PMF ${_pmf.label.toLowerCase()}';
     out.add(
       JrMessage(
@@ -1629,6 +1861,29 @@ class _JrBuilder {
         ms: c.frameMs,
       ),
     );
+    if (o != null && o.stop == JrStop.refusedAtAssociation) {
+      final (int, String) st =
+          o.statusCode ?? (31, 'robust management frame policy violation');
+      out.add(
+        JrMessage(
+          from: _ap,
+          to: _c,
+          kind: JrFrameKind.management,
+          phase: phase,
+          clock: clock,
+          label: '$name Response',
+          detail: o.stopDetail ?? 'Status ${st.$1}, no AID',
+          fields: <JrField>[
+            ('Status code', '${st.$1} (${st.$2})'),
+            ('Association ID (AID)', 'none: refused'),
+          ],
+          description: o.stopDescription ?? '',
+          ms: c.frameMs,
+          failure: true,
+        ),
+      );
+      return;
+    }
     final bool keysHere = cached || s == JrSecurity.psk || s == JrSecurity.owe;
     out.add(
       JrMessage(
