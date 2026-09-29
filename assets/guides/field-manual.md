@@ -3824,7 +3824,7 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 # Wireless Classroom (91 tools)
 
-Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
+Tools for teaching wireless, all of them ours. Guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does, how it works, and how to teach it.
 
 
 ## Guided Lessons (30)
@@ -3848,6 +3848,9 @@ A read-along teaching reference for antenna literacy: what an antenna actually d
 - The floor-plan coverage shapes illustrate how a pattern fills a space; they are not survey predictions or measured coverage.
 - The point-to-point note is one line by design: a link needs real Fresnel-zone clearance around the straight line between antennas, not just a visible path. Use the Fresnel and Point-to-Point tools to size that clearance.
 
+**Teaching it**
+
+A read-along lesson on what an antenna does (it shapes where the energy goes; it does not add power), gain against beamwidth, polarization, downtilt, and how to read a radiation pattern. Pair it with Antenna Pattern.
 
 ### Spectrum Analysis
 
@@ -3868,6 +3871,9 @@ A read-along teaching module on RF spectrum analysis for Wi-Fi: why a spectrum a
 - Tool details are kept to confirmed capabilities only; pricing is deliberately left out because it moves and varies by region. Oscium now owns MetaGeek, so the Wi-Spy and Chanalyzer line is one product family.
 - The 6 GHz band being the cleanest is a current condition, not a permanent property; it will erode as adoption grows.
 
+**Teaching it**
+
+A read-along lesson on why a spectrum analyzer sees energy a Wi-Fi adapter cannot, how the instrument works, and the signatures of common interferers. Pair it with the Swept vs FFT race in Fourier and FFT.
 
 ### Find My, Explained
 
@@ -3888,6 +3894,9 @@ A read-along lesson on how Apple finds your people, your phone and your things, 
 - Going somewhere public and contacting police before you disable a stranger's tag is our advice, not an Apple instruction.
 - The lesson is independent and isn't affiliated with or endorsed by Apple.
 
+**Teaching it**
+
+How Apple finds your people, your phone and your things, including the AirTag in your suitcase, and what you should turn on before your next trip.
 
 ### Home Internet, Explained
 
@@ -3909,6 +3918,9 @@ A read-along lesson on how home internet reaches a house in the US: fiber, cable
 - Low-orbit figures are Starlink's own published range. The high-orbit floor of about 0.48 seconds is speed-of-light arithmetic.
 - The lesson leaves out prices and per-address availability. It is independent and isn't affiliated with or endorsed by any provider named in it.
 
+**Teaching it**
+
+Fiber, cable, DSL, 5G and satellite: how each one reaches a house, what to check before you sign up, and why the Wi-Fi is a separate question.
 
 ### Wi-Fi Calling, Explained
 
@@ -3928,6 +3940,9 @@ A read-along lesson on what happens when your phone makes a call over Wi-Fi inst
 - What happens to an emergency call over Wi-Fi depends on your carrier and your country. If you ever call for help over Wi-Fi, say where you are.
 - The lesson is independent and isn't affiliated with or endorsed by any carrier or device maker.
 
+**Teaching it**
+
+What happens when your phone makes a call over Wi-Fi instead of the cell tower, when it helps, when it drops, what it means for emergency calls, and what to set up before your next trip.
 
 ### Starlink, Explained
 
@@ -3946,6 +3961,10 @@ A read-along lesson on how internet from space reaches your house or RV, how hig
 - Figures Starlink does not publish, such as how far away your gateway is, are left out on purpose. Figure 7 is an illustration, not measured speeds.
 - The Wi-Fi Calling line is general: some carriers don't support it over satellite internet. T-Mobile's page is the one in the sources; other carriers publish their own.
 - The lesson is independent and is not endorsed by SpaceX. Starlink is a trademark of SpaceX.
+
+**Teaching it**
+
+How internet from space reaches your house or RV, how high the satellites are, and why the Wi-Fi inside matters as much as the sky above.
 
 ### Tap, Touch and Near, Explained
 
@@ -4225,6 +4244,9 @@ A read-along lesson on how to land in another country with your phone working, a
 - Settings paths are given for iPhone and, more loosely, for Android, where menus differ by maker.
 - The lesson names no travel eSIM company and recommends none. It is independent and isn't affiliated with any carrier, phone maker or eSIM seller.
 
+**Teaching it**
+
+Roaming with your own carrier, a travel eSIM and a local SIM, how to keep your own number on while a second plan carries the data, and the switches that stop a surprise bill.
 
 ### Smart Home Radios, Explained
 
@@ -4245,6 +4267,9 @@ A read-along lesson on the four names on smart home boxes: Wi-Fi, Thread, Zigbee
 - Some newer smart plugs have a 5 GHz radio too. The lesson's advice is for the ones whose box says 2.4 GHz only.
 - The lesson recommends no brand of hub. It is independent and isn't affiliated with any standards body or device maker.
 
+**Teaching it**
+
+Wi-Fi, Thread, Zigbee and Matter: three radios and a language, why a 2.4 GHz-only smart plug won't join, the gadget network that fixes it, and what a Thread border router does. Figure 3 (one band, shared) is the Wi-Fi hook for a Wi-Fi audience.
 
 ### Cameras, Doorbells and Baby Monitors, Explained
 
@@ -4267,6 +4292,9 @@ A read-along lesson on security cameras, video doorbells and Wi-Fi baby monitors
 - Jammer rules are the US ones, from the FCC. The police warnings are as reported by PCWorld and NBC Los Angeles.
 - The lesson is independent and isn't affiliated with any camera maker.
 
+**Teaching it**
+
+A camera is the rare gadget that sends more than it receives: upload against download, signal through the outside wall, what a wired doorbell's wire carries, cloud or home recording, baby monitors, locking a camera down, and jammers. Figure 3 (same house, same doorbell) is the Wi-Fi hook for a Wi-Fi audience.
 
 ### How Your Devices Access the Internet, Explained
 
@@ -4286,6 +4314,9 @@ A read-along lesson on the trip everything online takes: from your device to the
 - Figure 2 is that master graphic.
 - The lesson names no provider and no carrier. It is independent and isn't affiliated with any of them.
 
+**Teaching it**
+
+Wi-Fi and cellular are ways to reach the internet, not the internet: two roads that meet at one box, six stops, what the bars measure, and why a bigger plan won't fix slow Wi-Fi. Figure 9 (the hotel with perfect bars) is the story to tell a room. Pair it with Test My Connection, which grades the two roads separately.
 
 ### Mesh, Extenders and Wired Access Points, Explained
 
@@ -4305,6 +4336,9 @@ A read-along lesson on the three kinds of gear sold to fix a dead zone: extender
 - Google, Ofcom, the MoCA Alliance and the Wi-Fi Alliance are cited from their own published pages, read 27 September 2026.
 - The lesson is independent and isn't affiliated with any maker or provider.
 
+**Teaching it**
+
+Three ways to fix a dead zone, and the one question that decides between them: how does the new box talk to the main one? One radio taking turns, where to put an extender, five setups for one far room, and four ways to build the link back. Pair it with Repeaters and Mesh Backhaul, the model its numbers come from.
 
 ### Is Your Router Too Old?
 
@@ -4325,6 +4359,9 @@ A read-along lesson on how to tell in five minutes whether your router still get
 - The lesson names no router maker or model on purpose. Menus differ by maker, so a setting may have another name, such as Administration or Advanced.
 - The lesson is independent and isn't affiliated with any router maker or provider.
 
+**Teaching it**
+
+A router is too old when it stops getting security fixes, not when it stops working: the three stages, the five-minute check, who updates the box, keep, update or replace, the 2026 US router rule, and what to look for in the next one.
 
 ### Why the TV and the Printer Vanish on Guest Wi-Fi
 
@@ -4344,6 +4381,9 @@ A read-along lesson with one step-through, on why screen casting and printing fi
 - A simplified picture: one access point, one router, one TV and one printer, all on Wi-Fi. A wired printer on the same segment, and how each kind of device names and shows what it finds, are left out.
 - The lesson names no product. The TV, the printer and screen casting stand in for whatever the room has.
 
+**Teaching it**
+
+Why screen casting and printing find nothing from a guest network. Pick Same, Guest or Isolation and step the discovery question to the point where it stops. Ask the room first where they think it will stop with isolation on. Pair it with Multicast at the Basic Rate, which covers what multicast costs in airtime.
 
 ### One Talker per Channel
 
@@ -4380,6 +4420,29 @@ A read-along lesson with one interactive stage, on why Wi-Fi slows down when eve
 - Next: Channel Planner and Medium Access Simulator, linked from section 7.
 - Source: IEEE Std 802.11-2024, 10.2.2 DCF (page 1875), 10.2.3.2 EDCA (page 1876), 10.3.2.1 carrier sense mechanism (page 1885), 10.23.2 EDCA procedure.
 
+**Teaching it**
+
+*Teaches:* on the same channel, only one device can transmit at a time, so the time on a channel is shared: N devices get about 1/N each, and a second access point on the same channel is one waiting line, not two.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Devices on access point 1 (minus, plus) | 1 to 12 devices; opens with 4. | The bars shrink as devices are added. That is the whole lesson: the access point did not get slower, the line got longer. |
+| Second access point, on which channel? None / Same / Other | Adds a second access point on channel 36 (Same) or on channel 149 (Other). | Same channel is one waiting line, 1/(N+M) each. Other channel is two lines, 1/N and 1/M, and two devices transmit at once. That is the reason for channel planning. |
+| Devices on access point 2 (minus, plus) | 1 to 6; opens with 3. Only shown with a second access point. | Lets the room set N and M separately. It stops at 6 so all 18 devices keep a distinct color and letter. |
+| Make device A slow | Device A's turns take 4 times as long (an illustrative factor). | Equal turns are not equal time. With 4 devices A still gets 1/4 of the turns but 57% of the time. This is the hook for Airtime Fairness. |
+| Next turn | Passes the turn round the room. A lime ring marks the device talking, and a line names it. | Shows one talker per channel at every turn. With Other selected, two devices talk at once, one on each channel. |
+| Reset | Back to 4 devices, one access point, nothing slow. | A clean start between demos. |
+| Walkie-talkie illustration (section 2) | Two radios: one talking, one listening. | One person talks, then says "over": the class already knows the rule from walkie-talkies. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the opening scene. Four devices, one access point, 25% each.
+2. Ask the room: "My neighbor puts in a second access point on my channel. Does my Wi-Fi get faster, slower or stay the same?"
+3. Reveal: press A (Same). Seven devices, 14% each: everyone got slower. Press Space (Other): 25% and 33%, and Right shows two devices talking at once.
+4. Optional follow-up: press S. Device A takes 57% of the time with the same number of turns. Open Airtime Fairness from section 5.
+
+*Pairs with:* Medium Access Simulator, Airtime Fairness, Channel Planner.
+
+*Left out on purpose:* collisions, backoff and priorities (Medium Access Simulator covers them); adjacent-channel leakage and hidden devices; devices that have nothing to send; OFDMA and MU-MIMO, which the lesson names as later exceptions. The even split is the same teaching approximation Channel Planner states.
 
 ### Public Wi-Fi
 
@@ -4436,6 +4499,9 @@ A read-along lesson with one step-through, on why a hotel, airport or airplane n
 - RFC 8910 says networks will still need to intercept for older devices, and devices will still probe, for the foreseeable future. So a network that announces its portal still has to intercept for devices that do not read the announcement.
 - Left out: paid tiers, session time limits beyond a mention, and networks that block the Wi-Fi Calling tunnel even after the sign-in.
 
+**Teaching it**
+
+Why a hotel or airplane network shows full bars and still won't load anything. Step through the device's check after association and flip the switch between a network that announces its portal and one that intercepts traffic. Stop at step 3 and ask the room what the device will see. It also explains why Wi-Fi Calling waits for the sign-in. Pair it with Association, Frame by Frame, which plays every frame up to DHCP and DNS.
 
 ## RF and Propagation (13)
 
@@ -4472,6 +4538,28 @@ Shows why a few dB is a big change. One dB (decibel) slider moves a signal from 
 - Every number here is arithmetic. Nothing is measured and nothing is illustrative.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* dB is a ratio, so +3 dB doubles the power and +10 dB multiplies it by ten, which makes -67 dBm about twice the power of -70 dBm.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Signal level (slider, -80 to -60 dBm in whole dB, default -70) | Moves the signal against a fixed -70 dBm reference. The linear milliwatt bar, the lines from the dB ruler and the readouts follow it. | One control, one visible change: a dB slider over a linear bar that doubles every 3 dB. The range was chosen so -80, -70, -67 and -60 dBm fill 1%, 10%, 20% and 100% of the bar; a wider range would have shrunk the -70 vs -67 comparison to a few pixels. |
+| -10 dB, -3 dB, +3 dB, +10 dB (buttons) | Step the signal by one rule. A step that would leave -80 to -60 dBm is turned off. | Lets you act out the rules path the readout prints (+1 dB is +10 -3 -3 -3) one press at a time on the bar. |
+| Reset | Returns the signal to -70 dBm and hides the answer. | Puts the signal back on the reference (1x, the same power) so the next question starts from zero difference. |
+| Reveal the answer / Hide the answer | Shows the answer to "Is -67 dBm a little or a lot stronger than -70 dBm?" | The house predict-then-reveal pattern: the room commits to a guess before the screen answers. |
+| Show -67 dBm against -70 dBm (appears after the reveal) | Sets the signal to -67 dBm. | Puts the prediction on the bar: 10% of the length becomes 20%, the step the dB ruler hides. |
+| Open dBm / Watt Converter, Open dB Reference | Open the two calculator tools. | For any level outside -80 to -60 dBm or a conversion to watts; this tool is the picture, those are the calculators. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: open the tool as it starts, signal at -70 dBm, answer hidden.
+2. Ask the room: "Is -67 dBm a little or a lot stronger than -70 dBm?" Many will say a little: it is only 3.
+3. Reveal: press P, then Space. The bar goes from 10% to 20% of its length: 100 picowatts to 199.5, about double.
+4. Optional follow-up: from -70, press Page Up. The bar goes to full length, ten times. Then ask what -69 dBm is and read the rules path: +10 -3 -3 -3, ten times then halved three times, 1.25x against the exact 1.259x.
+
+*Pairs with:* FSPL Simulator, next on the shelf, where every doubling of distance costs 6 dB. dBm / Watt Converter and dB Reference for the numbers.
+
+*Left out on purpose:* Nothing here is measured or illustrative; it is arithmetic. +3 dB is 1.995 times, not exactly 2, which the readouts show beside the rule. The range stops at -80 and -60 dBm so the bar stays drawable; outside that, use the dBm / Watt Converter. It says nothing about noise or SNR.
 
 ### FSPL Simulator
 
@@ -4513,6 +4601,35 @@ Draws free-space path loss, or the received power it leaves, against distance fo
 - Measured points are typed in by hand. Nothing is read from the Wi-Fi adapter.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* every doubling of distance costs 6 dB in free space, and higher bands lose more because the receive antenna is smaller at a shorter wavelength, not because the air absorbs more.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| 2.4 GHz, 5 GHz, 6 GHz (band chips, all on) | Show or hide each band's curve. | Puts the bands on one chart so the gap between them is visible. Each band has its own line style and marker (solid circle, dashed square, dotted triangle) because the design system has no categorical colors, so the class can tell them apart without color. |
+| Received / Path loss (toggle, default Received) | Plots received power in dBm, or free-space path loss in dB. | Path loss is what the formula gives; received power is the unit a design target is written in, and the target lines only appear in Received. |
+| 100 m / 1 km (300 ft / 3,000 ft in imperial) | Sets the end of the distance axis. | Keeps the default view on indoor distances while a point measured past 100 m (330 ft), or an outdoor link, can still land on the chart. |
+| Log / Linear (toggle, default Log) | Switches the distance axis. | Log shows the straight 6 dB-per-doubling lines; linear shows the curve people are used to. Same numbers either way. |
+| Drag or tap the chart; Cursor (slider) | Move the distance cursor. The table under the chart reads path loss and received power per band, and the difference between bands. | The readout makes the second lesson checkable: the difference between two bands is the same at every distance. |
+| 2.4 GHz channel, 5 GHz channel, 6 GHz channel (pickers; defaults 6, 100, 37) | Set each band's center frequency. | The band gap is 20 log10(f2/f1), so it depends on the channel, not just the band: 6 GHz channel 37 and channel 117 differ by about 0.5 dB. |
+| Tx power (0 to 30 dBm, default 20) | Raises or lowers every received curve. | Received power = Tx power + gains - path loss - losses; moving it shifts every band equally and leaves the gap alone. |
+| Tx antenna gain, Rx antenna gain (-5 to 15 dBi, default 0) | Add antenna gain at either end. | 0 dBi is the isotropic antenna the aperture term assumes. A higher-gain receive antenna has a larger effective area and wins some of the high-band loss back. |
+| Other losses (0 to 30 dB) | Subtracts a fixed loss from every curve. | A stand-in for cable, body or wall loss without modeling any of them. |
+| Show log-distance curves (switch); Path-loss exponent n (2.0 to 4.0, default 3.0, off until the switch is on) | Overlays the indoor log-distance model. | Free space is the best case; this shows how much faster an indoor path loses. Labeled a model with a chosen exponent, not a measurement; n = 2 reproduces free space. |
+| Measured point: RSSI, Distance, Measured on (band), Clear measured point | Plots a reading you type as a diamond, with its gap to the free-space curve in dB. | The gap between the model and a measurement is where the design work happens. Manual entry only; nothing is read from the Wi-Fi adapter. |
+| Design targets: Level, Label, remove (x), Add line (up to 4), Reset to -67 voice / -70 HD video | Edit the dashed target lines in the Received view. Saved on the device for every lesson. | The lines are editable with a number and a label. The defaults are read from the Signal Thresholds tool so the two tools cannot drift apart. |
+| Show controls / Hide controls (tune button, phone only) | Opens the controls sheet under the chart. | Phone first: the chart owns the screen and the controls collapse to one row of band chips. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: all three bands on, Received, Log, cursor at 10 m (33 ft). On channel 6 the path loss is 60.2 dB and, with 20 dBm and 0 dBi antennas, received power is -40.2 dBm.
+2. Ask the room: "Move twice as far away, to 20 m (66 ft). How much signal do we lose?"
+3. Reveal: press Up. Every band drops 6.0 dB. Press it again at 40 m (131 ft): another 6 dB, the same as the first doubling. Then point at the Why panel: the spreading bar is identical for every band; only the aperture bar changes, and channel 100 sits 7.1 dB under channel 6 at every distance.
+4. Optional follow-up: turn on Show log-distance curves at n = 3 and press Up again. A doubling now costs about 9 dB. Or switch to Linear to show the steep drop near the AP is the same 6 dB per doubling, squeezed into the first few meters.
+
+*Pairs with:* Decibels in Your Head before it. Wi-Fi Through a Wall and 6 GHz Power and PSD after it (the "Why 6 GHz behaves differently" sequence). Rate vs Range and Uplink vs Downlink for the link budget. Lab: the FSPL lab.
+
+*Left out on purpose:* Free space has no walls, floor bounce, people or fading, so real readings usually sit below the curve. The aperture term assumes a 0 dBi receive antenna. The indoor curve is a model with an exponent you choose. Measured points are typed in by hand.
 
 ### Wi-Fi Through a Wall
 
@@ -4552,6 +4669,31 @@ Sends one wave through one wall and shows three things at once: part of the wave
 - The drawing is slowed to one cycle every 2 seconds and shows the field along a line straight through the wall. It keeps one wavelength everywhere, because the frequency never changes; only the height of the wave changes. The height is in dB, so the ripple in front looks smaller than it would on a linear scale, and the ripple inside the wall from waves bounced off inner faces is not drawn.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* one wave meets one wall, part reflects, the rest shrinks inside and continues behind at the same frequency, and a layered or thin wall can lose less at a higher band because the echoes from its faces cancel.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Band (2.4 / 5 / 6 GHz, default 5 GHz) and Channel (picker; defaults 6, 100, 117) | Set the frequency. | Channel-accurate wavelength. For thin and layered walls the echoes add or cancel depending on how the gap compares with the wavelength, so moving a few MHz can move the loss. |
+| Tx power (0 to 30 dBm, default 20) | Sets the level at which the wave reaches the wall. The wave height is drawn in dB above a -95 dBm noise floor. | Lets the class see that even thick concrete leaves a wave behind the wall while the signal is above the noise floor. There is no distance in this tool, so free-space loss is not included. |
+| Wall (picker, default Interior stud wall): Interior stud wall, Concrete elevator-shaft wall, Solid wood door, Double-pane window, Single-pane window, Brick wall, one brick thick, One material, any thickness | Loads a real wall (its layers are listed under the picker and in the strip under the plot) or switches to one material. | Wall loss is usually quoted as one number per material. Real walls computed with ITU-R P.2040 show where the number comes from, and two of them break the "higher band loses more" rule: the stud wall and the double-pane window. |
+| Material (ITU-R P.2040 Table 3) (One material only) | Picks one of ten materials. | Compare materials one at a time on the same model the other wall tools use. |
+| Thickness (field and slider, 1 cm to 1 m (0.4 to 39 in), One material only) | Sets the slab thickness. The slider is logarithmic. | Thickness in cm, and the wall drawn small (not to scale) so a 1 m wall does not swamp the picture. The log scale gives thin glass and thick concrete the same slider travel. |
+| Angle of arrival (0 to 80 degrees, default 0) | Tilts the wave from head on toward skimming along the wall. | A glancing wave reflects more. |
+| Polarization (TE / TM, default TE) | TE: electric field along the wall face. TM: tilted with the angle. | Shows that reflection off a slant depends on polarization; head on the two are the same. |
+| Play / Pause | Animates the wave, one cycle every 2 seconds. It plays when the tool opens; with reduced motion on it starts frozen. | A pause is always offered for accessibility, and a frozen frame is what you point at. |
+| Set the wall to (thickness) (button in the measured values card) | Switches to one material at the published specimen's thickness. | Puts the model and the published measurement side by side at the same thickness. The card names each source and never averages them. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the tool as it opens: Interior stud wall, 5 GHz channel 100, head on, TE, Tx power 20 dBm, wave playing.
+2. Ask the room: "This stud wall at 2.4, 5.5 and 6.5 GHz. Which band loses the most?" Many will say 6 GHz.
+3. Reveal: read the All three bands card: 2.7, 2.8 and 1.4 dB. The two plasterboard sheets absorb only 0.5 to 1.2 dB of it; the rest is how the echoes across the air gap add or cancel, and at 6.5 GHz they cancel.
+4. Optional follow-up: press Up to the Concrete elevator-shaft wall: 14.8, 26.9 and 30.4 dB, so concrete does follow the rule. Then the Double-pane window: 0.5 dB at 2.4 GHz and 8.9 dB at 6.5 GHz, nearly all reflection.
+
+*Pairs with:* FSPL Simulator (free-space loss is a separate effect), How to Measure Wall Attenuation (same materials), Room Propagation (same wall model on a plan), 6 GHz Power and PSD, and the RF Attenuation calculator.
+
+*Left out on purpose:* Smooth, uniform layers only: no studs, insulation, wiring, rebar, mortar, frames or low-E coatings (a low-E coating can add far more loss than the glass, and P.2040 has no class for it). The real walls use common construction sizes, not a measured wall. Published measurements often disagree with the model (NIST measured 102 mm of fresh concrete at about twice the model's loss). The drawing is one line straight through the wall, slowed, with the wall not to scale and the ripple inside it not drawn.
 
 ### How to Measure Wall Attenuation
 
@@ -4597,6 +4739,33 @@ Walks through measuring a real wall the field way, and shows why the method work
 - For how the wall itself takes the loss, see Wi-Fi Through a Wall. For comparing a predicted wall with a measured one, see Predict, Then Measure.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* measure a wall by averaging a series of readings close to each side with the source 4 m (13 ft) or more away; put the source close and the extra free-space loss on the far side reads as wall.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Drag the person with the laptop, or tap a spot in the room | Places the laptop on either side of the wall. Where it stands is where that side's readings are taken. | Acts out the field method on the stage: one series in front of the wall, one behind. |
+| Drag the RF source | Changes the source's distance from the wall. | The free-space curve is steep near the source, so the class watches the error grow as the source comes close. |
+| Scenes: Tight, Loose, Source too close (buttons) | Set the source and both reading distances in one press: Tight is source 4 m, readings 10 cm (4 in); Loose is readings 1 m (3.3 ft); Source too close is source 1 m. The wall and readings settings stay. | Tight is the method to teach. The tool opens on Loose, so the error is on screen from the start. Source too close shows the worst case. |
+| Source to wall (0.5 to 15 m (1.6 to 49 ft), default 4 m) | Same as dragging the source. | Keyboard and exact placement for the lesson's main variable. |
+| Laptop on the: Near side / Far side (toggle); Go to the far side / Go to the near side (button) | Switches sides and keeps each side's spot. | A measurement needs a series on both sides; switching keeps both spots so the difference is always live. |
+| Near reading, in front of the wall; Far reading, behind the wall (sliders) | Set how far from the wall each series is taken. The near reading stays at least 10 cm (4 in) from the source. | The error term is 20 log10(far distance / near distance); these two sliders are what make it large or small. |
+| Band (2.4 / 5 / 6 GHz, default 5) | Locks the laptop to channel 6, 100 or 117 for both series. | Lock the measuring device to one channel so every reading is of the same signal. The free-space error itself does not depend on the channel. |
+| Material (ITU-R P.2040 Table 3), Thickness (1 cm to 1 m, default 10.2 cm (4 in) of concrete) | Set the wall. | The true wall loss comes from the same slab model as Wi-Fi Through a Wall, so the readout can compare the measured number with the truth. |
+| Readings per side (1 to 30, default 10); Fading spread, standard deviation (illustrative) (0 to 6 dB, default 2) | Set how many readings each series takes and how much they scatter. | Average a series rather than trust one reading. Set the spread to 0 to see the geometry error alone. |
+| Take new readings, near side / far side (button) | Draws a fresh series on the side the laptop is on. | Shows that the fading residual changes every time while the geometry error stays put. |
+| Reveal the answer / Hide the answer; Show it | Answers "Source 2 m from the wall, readings 1 m either side of it. Is the measured wall loss too high, too low, or right?" and puts that scene on the stage. | Predict, then reveal. The far reading is 3 m from the source and the near one 1 m. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the tool opens on Loose: 5 GHz, 10.2 cm (4 in) of concrete, source 4 m (13 ft), readings 1 m (3.3 ft) either side. True wall loss is 14.3 dB and the measurement reads 19.2 dB, 4.6 dB of it geometry.
+2. Ask the room the question on screen: source 2 m, readings 1 m either side. Too high, too low, or right?
+3. Reveal: press P, then Show it. Too high: 20 log10(3 / 1) = 9.5 dB of free-space loss that is not the wall, about 9.8 dB with this wall's thickness added.
+4. Optional follow-up: press Tight. Source 4 m, readings 10 cm (4 in): the measurement is 15.2 dB and the geometry error is down to 0.6 dB. Set the fading spread to 0 to show what is left is geometry, then back to 2 and press Space a few times.
+
+*Pairs with:* Wi-Fi Through a Wall (how the wall takes the loss) and Predict, Then Measure (a predicted wall against a measured one); the tool has buttons that open both. FSPL Simulator for the free-space term.
+
+*Left out on purpose:* The reflection off the near face, which makes readings close to it rise and fall over a short distance (averaging several readings over a small area handles it in the field). Paths around the wall through doors and other rooms. The laptop's own body and antenna pattern. The fading spread is illustrative. The source is a fixed 20 dBm with 0 dBi antennas, and nothing below a -95 dBm noise floor can be read.
 
 ### Multipath Simulator
 
@@ -4609,8 +4778,9 @@ Shows why the signal changes when you move a few centimeters. A receiver hears t
 2. Pick a band. The dips repeat every half wavelength: 6.2 cm at 2.4 GHz, 2.7 cm at 5.5 GHz and 2.3 cm at 6.5 GHz.
 3. In One wall and Standing wave, pick the wall material (metal, thick concrete, drywall) or set the reflection strength yourself. Drag the receiver in the picture or on the plot, or use the slider, and watch the reflected arrow swing around the direct one.
 4. In Many paths, set the number of reflectors and how far away they are, and press New layout for a different room. Move antenna A along the 2 m track and set how far antenna B sits from it, from 0 to 1 wavelength. The readout shows how often each antenna is more than 10 dB below the average and how often both are at once.
-5. The delay list shows how late each copy arrives. A copy more than 0.8 microseconds late, about 240 m of extra path, spills past the guard interval into the next symbol.
-6. On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down move the receiver a sixteenth of a wavelength, F switches full screen, ? lists the keys and Esc exits.
+5. Still in Many paths, Combine shows what the receiver does with its antennas: A only, Selection (use the stronger antenna at each spot) or MRC (maximal ratio combining: add every antenna, lined up in phase). The combined signal is drawn as a third, bold line. Antennas sets 2 or 4; with 4 they sit one spacing apart. The Diversity gain card gives the textbook gain at 1% for both methods and what this track shows.
+6. The delay list shows how late each copy arrives. A copy more than 0.8 microseconds late, about 240 m of extra path, spills past the guard interval into the next symbol.
+7. On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down move the receiver a sixteenth of a wavelength, C steps Combine through A only, Selection and MRC in Many paths, F switches full screen, ? lists the keys and Esc exits.
 
 **Inputs**
 
@@ -4618,24 +4788,57 @@ Shows why the signal changes when you move a few centimeters. A receiver hears t
 |---|---|---|
 | Scene | One wall / Standing wave / Many paths | default One wall |
 | Band | GHz | 2.4, 5.5 or 6.5 |
-| Wall material | reflection strength /Γ/ | Metal 1.0, Thick concrete 0.39, Drywall 0.1, or Custom 0 to 1 |
+| Wall material | reflection strength |Γ| | Metal 1.0, Thick concrete 0.39, Drywall 0.1, or Custom 0 to 1 |
 | Receiver position | cm | 0 to 100 along the track (One wall); 0 to 40 from the wall (Standing wave); 0 to 200 (Many paths) |
 | Reflectors | count | 2 to 30 (Many paths) |
 | Reflectors up to | m | 10, 60 or 300 (Many paths) |
-| Antenna B offset | wavelengths | 0 to 1 in steps of 0.05 |
+| Antenna B offset | wavelengths | 0 to 1 in steps of 0.05; with 4 antennas, the spacing between neighbors |
+| Antennas | count | 2 or 4 (Many paths) |
+| Combine | A only / Selection / MRC | default A only (Many paths) |
 
-**How it works.** Each path adds a copy a · exp(-j k r) / r, where r is the path length, k = 2π/λ, and a is 1 for the direct copy or the reflection coefficient for a reflected one. Every wall reflects with a 180 degree phase flip. Power is 20 log10(|sum| / |direct alone|). One wall uses the image method: the reflected path is as long as a straight line from the access point's mirror image behind the wall. In Standing wave the reflected copy travels 2d further at distance d from the wall, so the copies cancel every λ/2. In Many paths each reflection gets equal power and a random phase, and power is shown against the average; theory (Rayleigh fading) says 1 - e^(-0.1), about 9.5%, of spots sit more than 10 dB below it. Extra delay = extra path / speed of light.
+**How it works.** Each path adds a copy a · exp(-j k r) / r, where r is the path length, k = 2π/λ, and a is 1 for the direct copy or the reflection coefficient for a reflected one. Every wall reflects with a 180 degree phase flip. Power is 20 log10(|sum| / |direct alone|). One wall uses the image method: the reflected path is as long as a straight line from the access point's mirror image behind the wall. In Standing wave the reflected copy travels 2d further at distance d from the wall, so the copies cancel every λ/2. In Many paths each reflection gets equal power and a random phase, and power is shown against the average; theory (Rayleigh fading) says 1 - e^(-0.1), about 9.5%, of spots sit more than 10 dB below it. Extra delay = extra path / speed of light. Combining works on each antenna's power against its own average: Selection takes the largest, MRC adds them all, so MRC averages 3 dB above one antenna with 2 and 6 dB with 4. For independent Rayleigh antennas the share of the time the combined power is below x is (1 - e^(-x))^M for selection and 1 - e^(-x)(1 + x + ... + x^(M-1)/(M-1)!) for MRC. The diversity gain at 1% is the combined level at 1% minus one antenna's level at 1% (-20.0 dB).
 
-**Example.** At 2.4 GHz, λ = 12.49 cm, so in front of a metal wall the signal drops out every 6.2 cm. Thick concrete with |Γ| = 0.39 gives a swing of 20 log10(1.39 / 0.61) = 7.2 dB instead. A reflection that travels 240 m further arrives 240 / 299,792,458 s = 0.8 µs late, the length of the 802.11 OFDM guard interval.
+**Example.** At 2.4 GHz, λ = 12.49 cm, so in front of a metal wall the signal drops out every 6.2 cm. Thick concrete with |Γ| = 0.39 gives a swing of 20 log10(1.39 / 0.61) = 7.2 dB instead. A reflection that travels 240 m further arrives 240 / 299,792,458 s = 0.8 µs late, the length of the 802.11 OFDM guard interval. One antenna is below -20.0 dB 1% of the time; two antennas reach the same 1% at -9.8 dB with selection and -8.3 dB with MRC, gains of 10.2 dB and 11.7 dB. Four antennas give 15.8 dB and 19.1 dB.
 
 **Field notes**
 - The wall presets are one reflection strength each. A real wall reflects differently at different angles and bands; thick concrete's 0.39 is for a wave hitting it straight on.
 - Many paths blocks the direct copy on purpose. With a strong line-of-sight copy the dips are shallower and rarer than Rayleigh fading predicts.
 - A 2 m track at 2.4 GHz holds only a few dozen fades, so the histogram wanders around the Rayleigh curve. Longer tracks or new layouts average it out.
 - Layouts are seeded, so the same settings give the same room every time.
+- The diversity gains in Selection and MRC assume the antennas fade independently and have equal noise. Antennas half a wavelength apart are close to that but not exactly; the On this track figure is what one 2 m track actually shows, and it wanders with the layout.
+- MRC here is the ideal: every antenna perfectly lined up in phase and weighted by its strength. A real receiver estimates those from the preamble and gets close.
 - Only the delay list changes much when the reflectors move further away; the pattern along 2 m looks the same at any distance.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* the direct signal and its reflections add like arrows, so moving a few centimeters walks the receiver from a peak into a dip, and the dips repeat every half wavelength; a second antenna, picked or added, fills those dips in.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Scene (picker): One wall (two-ray), Standing wave (walk to a wall), Many paths (Rayleigh fading); default One wall | Switches between the three models. | The three steps of the lesson: one reflection, the standing wave in front of a wall, then random fading from many paths. It is a picker, not segments, because the labels truncated at phone width. |
+| Band (2.4 / 5.5 / 6.5 GHz, default 2.4) | Changes the wavelength. | The dips repeat every half wavelength: 6.2 cm (2.4 in), 2.7 cm (1.1 in) and 2.3 cm (0.9 in). |
+| Wall material (One wall and Standing wave): Metal (\\|Γ\\| 1.00), Thick concrete (\\|Γ\\| 0.39), Drywall (\\|Γ\\| 0.10), Custom; default Metal | Sets how strongly the wall reflects. | A strong reflector cancels the direct copy completely; thick concrete swings the signal by 7.2 dB; drywall barely ripples it. |
+| Reflection strength \\|Γ\\| (slider, 0 to 1) | Sets the reflection yourself; moving it switches the material to Custom. | Lets the class dial the reflection down and watch the nulls fill in. |
+| Receiver position (One wall, 0 to 100 cm) / Distance to the wall (Standing wave, 0 to 40 cm); drag the receiver in the picture or on the plot | Moves the receiver. | Watch the reflected arrow swing around the direct one as the receiver moves. |
+| Reflectors (Many paths, 2 to 30, default 12) | Sets how many reflected copies arrive. | More copies of random phase is Rayleigh fading; the histogram shows it against the theory curve. |
+| Reflectors up to: 10 m / 60 m / 300 m (Many paths; room, large hall, outdoors) | Sets how far away the reflectors sit. | Exists so the guard-interval lesson can fire: only the 300 m layouts put copies more than 0.8 microseconds late. |
+| New layout (Many paths) | Places the reflectors somewhere else. Layouts are seeded, so the same settings give the same room. | A 2 m track holds only a few dozen fades, so the histogram wanders; new layouts show it averaging toward the Rayleigh curve. |
+| Antenna A position (0 to 2 m); Antenna B offset (λ) (0 to 1 wavelength in steps of 0.05, default 0.5) | Move antenna A along the track and set how far antenna B sits from it. | Selection diversity: two antennas half a wavelength apart rarely fade at the same spot. The readout shows how often each, and both at once, are more than 10 dB below average. |
+| Antennas: 2 / 4 (Many paths, default 2) | Gives the receiver two or four antennas. With four, the offset slider becomes "Antenna spacing (λ)" and they sit one spacing apart. | Four shows diversity gain growing with the antenna count: 15.8 dB (selection) and 19.1 dB (MRC) at 1%, against 10.2 and 11.7 with two. Most client devices have two antennas and many APs have four. |
+| Combine: A only / Selection / MRC (Many paths, default A only) | Adds a third, bold trace: the stronger antenna at each spot (Selection) or all antennas added, lined up in phase (MRC, maximal ratio combining). Antenna A drops to a thin neutral line. | The existing readout only counted how often both antennas fade together. Combine shows what a receiver does with that: the dips fill in, and MRC fills them further because two weak antennas added can clear -10 dB when neither does alone. It defaults to A only so the scene opens as before. |
+| Diversity gain at 1% card: Selection, MRC, On this track | The textbook Rayleigh gain for both methods at the current antenna count, and what this 2 m track shows for the chosen method. | Diversity gain is read at an outage level: one antenna is more than 20 dB below average 1% of the time, and the gain is how much of that the combiner wins back. The track figure wanders on purpose; New layout shows why one short walk is not the textbook number. |
+| Show all N paths / Show the latest N (delay list, Many paths) | Expands or shortens the list of how late each copy arrives. | Keeps the delay list short on screen while the full set is one press away. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Standing wave, 2.4 GHz, Metal.
+2. Ask the room: "I move the phone 3 cm (1.2 in). How much can the reading change?" Take guesses in dB.
+3. Reveal: drag the receiver onto a peak of the plot, then press Up four times (a quarter wavelength, about 3 cm): it lands in a null, where the two copies cancel. Four more presses reach the next peak, and the next null is 6.2 cm (2.4 in) from the first.
+4. Optional follow-up: switch to Thick concrete and the swing drops to 7.2 dB. Or go to Many paths, set Antenna B offset to 0.5 λ, and compare Antenna A, Antenna B and Both at once against the 9.5% Rayleigh figure.
+
+*Pairs with:* Why Two Devices Disagree (it reuses this fading), Room Propagation (the close-up of the nulls near a wall), Rate vs Range. The "Why the signal jumps when you move" sequence.
+
+*Left out on purpose:* Each wall preset is one reflection strength; a real wall reflects differently by angle and band, and thick concrete's 0.39 is for a wave hitting it head on. Many paths blocks the direct copy on purpose; with a strong line-of-sight copy the dips are shallower and rarer. The pattern along 2 m looks the same at any reflector distance; only the delay list changes. MRC is the ideal combiner, with every antenna perfectly lined up and weighted; a real radio estimates that from the preamble. The textbook gains assume antennas that fade independently with equal noise; half a wavelength apart is close to that but not exact.
 
 ### Why Two Devices Disagree
 
@@ -4680,6 +4883,39 @@ Shows why two devices at the same spot, hearing the same AP, report different si
 - Runs are seeded: the same settings and sample set give the same readings every time.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* two devices at the same spot report different RSSI because each adds its own offset, grip, body loss, fading and rounding, and an offset calibrates the device but not how it is held or the fade it sits in.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Reveal (button beside the question) | Answers "Laptop says -62, phone says -68, same spot. Which one is right?" with this run's numbers. | Predict, then reveal, on the tool's question. |
+| Re-sample | Takes the next few seconds of readings. | Fading changes from one sample set to the next while the fixed offsets do not, so a re-sample shows which part of the spread moves. |
+| Reset | Puts every setting back. | Returns to the four illustrative default devices. |
+| Apply offsets (switch, default off) | Subtracts each device's offset, as a survey tool does once you enter it per adapter. | The fixed spread disappears and fading, grip and body loss remain. This is why survey tools take an offset per adapter. |
+| Fading (switch, default on) | Turns the Rayleigh fading off. | Off shows only the fixed parts of each reading, so Apply offsets can take the spread to zero. |
+| Device A, B, C, D (chips) | Pick the device to edit. | Up to four generic devices, named by letter and type only, with no device or vendor named. |
+| Device X offset (illustrative) (-10 to +10 dB; defaults 0, -4, -2, +1) | Sets that device's fixed offset. | The fixed part of the difference: antenna gain and how the chip calibrates. |
+| Device X orientation and grip loss (illustrative) (0 to 10 dB) | Sets how much the way it is held costs. | How a device is held changes its reading, and no offset corrects it. |
+| Device X held against a body (switch) | Adds the body loss set under The spot. | The person holding the device is part of the reading (Body Loss covers it in full). |
+| Device X reporting step (1 dB / 2 dB) | Rounds that device's reports. | Two devices hearing the same power can differ by up to a step from rounding alone. |
+| Device X averages the last (1 to 10 readings) | Sets how many readings the device averages, in milliwatts. | Averaging more readings makes the fading spread smaller. |
+| Device X type (Laptop, Phone, Tablet, Survey adapter) | Renames the device. A label only; the numbers are set per device. | Gives the class a familiar kind of device without a brand. |
+| Band (2.4 / 5 / 6 GHz, default 5) | Changes the wavelength and the true power. | Half a wavelength sets how far apart devices must be to fade separately, and it shrinks as the band rises. |
+| AP distance (1 to 50 m, default 8 m (26 ft)) | Moves the AP, which changes the true power at the spot. | Shows that the spread between devices does not depend on how strong the signal is. |
+| Spacing between devices (0 to 30 cm (0 to 12 in), default 10 cm) | Sets how far apart the devices sit. | Farther apart than half a wavelength (about 2.7 cm (1.1 in) at 5 GHz), each device sees its own fade. |
+| Devices (Two / Three / Four, default Four) | Sets how many devices are on the spot. | Two devices matches the laptop-and-phone question; four shows the full range. |
+| Body loss when on (illustrative) (0 to 10 dB, default 3) | Sets the loss the body switch adds. | Every body value is illustrative; set it to what you measure. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults: 5 GHz, AP 8 m (26 ft), fading on, four devices.
+2. Ask the room the question at the top: laptop -62, phone -68, same spot. Which one is right?
+3. Reveal: press Reveal: neither one on its own. Turn Fading off: the traces go flat and the remaining spread is the fixed parts. Turn on Apply offsets: most of it goes, but the phone (Device B) still reads low, because its grip and body loss are not an offset.
+4. Optional follow-up: turn Fading back on, then raise the averaging on one device and press Space a few times: its trace steadies. Set spacing to 0 and the devices fade together.
+
+*Pairs with:* Multipath Simulator (the same fading model), Body Loss, Uplink vs Downlink. The "Why clients misbehave" and "Troubleshooting slow or unstable Wi-Fi" sequences.
+
+*Left out on purpose:* Every offset, grip and body loss, the 14 dBm AP and the exponent of 3 are illustrative; real offsets depend on the device, antennas and driver. RCPI (802.11k) is shown as a concept card only, with no values computed. Runs are seeded, so the same settings give the same readings. The fading pattern moves past the devices at an illustrative 0.1 m/s.
 
 ### Room Propagation
 
@@ -4718,12 +4954,42 @@ Puts an AP, walls and doorways on a floor plan and colors the plan by received p
 - The map is computed on your device, in the background where the platform allows. With two bounces and many walls it takes a moment; the plan says Computing while it works.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* the signal at a spot is the direct path plus reflections and diffraction past edges, and the extra loss at 6 GHz splits into free space, wall absorption and diffraction.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Floor plan (picker): Drywall offices, Concrete corridor, Open office, Glass meeting room, Empty plan; default Drywall offices | Loads a plan with its walls, doorways, AP and client. Each plan shows its one-line lesson under the picker. | Each preset carries one lesson: a doorway matters little in drywall and a lot in concrete; signal bends past each jamb; metal cabinets cast a shadow; thin glass loses less on channels 100 and 117 than on 6. Empty plan is free space to draw on. |
+| Reset this plan | Reloads the current plan. | Undoes any wall edits in one press. |
+| Band (2.4 / 5 / 6 GHz) and Channel (default 2.4 GHz channel 6) | Set the frequency. | Watch the same spot on all three bands and see why 6 GHz loses more, part by part. |
+| AP EIRP (0 to 36 dBm, default 20) | Raises or lowers the whole map. The receiver is a 0 dBi antenna. | Moves every 10 dB color band together, so the shape of the coverage is a property of the building, not the power. |
+| AP antenna: Upright (TE) / Flat (TM) | Sets the polarization against the walls. | Walls reflect a glancing wave differently for the two polarizations. |
+| Reflections: None / 1 bounce / 2 bounces (default 1) | Sets how many wall bounces are added. | Switch each mechanism off and on to see what it does. None gives the straight-line picture. |
+| Diffraction at wall ends and doorways: On / Off (default On) | Adds the ITU-R P.526 knife-edge diffraction. | Off, every shadow edge is sharp; on, signal bends into the shadow. |
+| Fresnel zone to the client (switch, default on) | Draws the first Fresnel zone and gives its radius at the middle of the path. | Shows how wide the path to the client is; keep it clear of walls and edges. |
+| Doorway shadow edges (switch, default on) | Draws straight lines from the AP past each door jamb. | Where a shadow would start if signal traveled only in straight lines, so the class sees the signal reaching past them. |
+| Close-up of the ripple (switch, default on) | Shows a close-up around the client with every path added with its phase. | The map is a local average; the close-up shows the peaks and nulls every half wavelength that make RSSI jump when you move a phone a little. |
+| Drag the AP or client on the plan; AP across, AP down, Client across, Client down (sliders) | Move the AP and the client. | The same as dragging, for exact placement and keyboard use. |
+| What a tap or drag on the plan does (picker): Move the AP and client, Draw walls, Add doorways, Select a wall | Chooses what the plan does when touched. | Draw your own plan or change a preset. |
+| Wall (picker), Material (ITU-R P.2040 Table 3), Thickness | Pick a wall and set its material and thickness, or set them for the next wall you draw. Up to 16 walls. | Test a claim live: make one wall concrete, or thicker, and watch the map. |
+| Add a doorway, Close its doorways, Delete wall | Edit the selected wall. | A doorway is a gap in the screen; the class sees how much signal it carries past a lossy wall. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Concrete corridor, 2.4 GHz channel 6, 1 bounce, diffraction on.
+2. Ask the room: "The client is in a room off the corridor, behind concrete. Where is its signal coming from?"
+3. Reveal: set Diffraction Off: the shadows behind the door jambs go sharp and line up with the doorway shadow edges. Set Reflections to None: the straight-line picture. Turn both back on and read Where the loss comes from: free space, each wall on the line, diffraction and reflections.
+4. Optional follow-up: switch to 6 GHz channel 117 and read The same spot on all three bands. Free space alone is about 8.6 dB worse than channel 6, and the diffraction loss grows too.
+
+*Pairs with:* Wi-Fi Through a Wall (the same wall model), Multipath Simulator (the nulls), FSPL Simulator (the free-space part). The "Why the signal jumps when you move" sequence.
+
+*Left out on purpose:* It is a 2D plan of a 3D model: no floor or ceiling bounce, no furniture, no people. Each wall is one solid uniform slab. Reflections stop at two bounces, and reflected paths pass through walls without diffraction. The map is the average over a few centimeters; the close-up shows the exact spot.
 
 ### Antenna Pattern
 
-Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet prints. Pick a dipole, an omni set by its gain, a collinear array, or a directional patch or sector and change it with sliders, or paste an MSI or NSMA pattern file and rotate the 3D estimate built from its two cuts.
+Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet prints. Pick a dipole, an omni set by its gain, a collinear array, or a directional patch or sector and change it with sliders, or paste an MSI or NSMA pattern file and rotate the 3D estimate built from its two cuts. The Floor coverage view puts the same antenna on a ceiling from 3 to 15 m and shows what the floor under it receives, in both directions.
 
-**Why it's here.** Antenna gain is easy to misread as more power. Here every antenna radiates the same power, so raising the gain visibly takes signal from somewhere else: a high-gain omni flattens into a pancake with a hole under it, and a directional narrows its beam. It also shows why a 3D view built from a pattern file is an estimate, and how ceiling and wall mounting light different parts of a room.
+**Why it's here.** Antenna gain is easy to misread as more power. Here every antenna radiates the same power, so raising the gain visibly takes signal from somewhere else: a high-gain omni flattens into a pancake with a hole under it, and a directional narrows its beam. It also shows why a 3D view built from a pattern file is an estimate, and how ceiling and wall mounting light different parts of a room. Floor coverage shows why mounting height matters: raise the AP and every spot on the floor moves to a steeper angle of the pattern, so a dipole leaves a hole under it, a higher-gain omni makes the near floor weaker, more power leaves the uplink where it was, and a directional aimed down puts the gain where the clients are.
 
 **How to use**
 1. Pick an antenna, then drag the gain, beamwidth, tilt and floor sliders and watch the 3D surface and the two cuts change. The scale stays fixed, so a gain change reshapes the pattern instead of resizing it.
@@ -4732,7 +4998,8 @@ Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet pr
 4. To import, choose Imported pattern file, then pick a generated example or paste the text of an MSI (.msi, .pln, .txt) or NSMA (.adf) file and tap Read pattern. There is no file picker: open the file in a text editor and copy all of it. Switch between Summing and Cross-weighted to compare two ways of building 3D from two cuts.
 5. On any built-in antenna, tap Rebuild from its two cuts to write it as an MSI file, read it back, and see how far the rebuilt 3D is from the exact one.
 6. Set the angle between two antennas' polarizations to see the mismatch loss.
-7. On a computer or tablet, Present opens the 3D pattern full screen for a projector: Space spins the view, the Right arrow turns it one step, R resets it, Up and Down move the antenna's gain, elements or shape, F switches full screen, ? lists the keys and Esc exits.
+7. Switch the view to Floor coverage to see the antenna from the side on a ceiling, drawn to scale, with the floor colored by what a client 1 m up receives. Pick a starting point (Office, dipole; Warehouse, dipole; Warehouse, 8 dBi omni; Warehouse, +6 dB power; Warehouse, directional), then move the mount height, powers, band, path-loss exponent and the client freely. The antenna card below still changes the antenna. Readouts give both directions directly below and 10, 20 and 30 m out, and how far the floor reaches -67 dBm. Open in Uplink vs Downlink takes the client's link there.
+8. On a computer or tablet, Present opens the 3D pattern full screen for a projector: Space spins the view, the Right arrow turns it one step, R resets it, Up and Down move the antenna's gain, elements or shape, F switches full screen, ? lists the keys and Esc exits. In the Floor coverage view, Up and Down move the mount height by 0.5 m, the Right arrow steps to the next starting point and R goes back to the first. V switches between the two views.
 
 **Inputs**
 
@@ -4748,10 +5015,14 @@ Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet pr
 | Pattern text | MSI or NSMA | pasted file text |
 | Shape what-if | multiplier | 0.5 to 2.0 times the file's dB values |
 | Polarization angle | degrees | 0 to 90 |
+| Mount height (Floor coverage) | m | 3 to 15 (10 to 49 ft), in 0.5 m steps |
+| AP and client transmit power (Floor coverage) | dBm | AP 0 to 30, client 0 to 24 |
+| Band and path-loss exponent (Floor coverage) | GHz, n | 2.4, 5 or 6 GHz; n 2.0 to 4.0 |
+| Client position (Floor coverage) | m along the floor | 0 to 35 |
 
-**How it works.** Dipole: field cos((pi/2) cos theta) / sin theta. Collinear: the dipole times the array factor sin(N psi/2) / (N sin(psi/2)), psi = k d cos theta + k d sin(tilt). Omni by gain: ITU-R F.1336-5, G = G0 - 12 (theta_e / theta3)^2 with theta3 = 107.6 x 10^(-0.1 G0) and its electrical-tilt mapping, floored 30 dB down. Directional: the 3GPP TR 38.901 element, A_V = -min(12 ((theta - 90) / theta3)^2, SLA_V), A_H = -min(12 (phi / phi3)^2, A_max), A = -min(-(A_V + A_H), A_max), with mechanical tilt by rotation. Every built-in shape is scaled so its gain averaged over the sphere is exactly 0 dBi, so the peak shown is the integrated directivity. Imported files: summing, G = G_H(phi) + G_V(theta) in dB with a 30 dB floor (or the deepest value in the file, if deeper), or cross-weighted (Vasiliadis et al., 2005, k = 2); both use the front half of the vertical cut. Polarization loss = -20 log10 |cos d|.
+**How it works.** Dipole: field cos((pi/2) cos theta) / sin theta. Collinear: the dipole times the array factor sin(N psi/2) / (N sin(psi/2)), psi = k d cos theta + k d sin(tilt). Omni by gain: ITU-R F.1336-5, G = G0 - 12 (theta_e / theta3)^2 with theta3 = 107.6 x 10^(-0.1 G0) and its electrical-tilt mapping, floored 30 dB down. Directional: the 3GPP TR 38.901 element, A_V = -min(12 ((theta - 90) / theta3)^2, SLA_V), A_H = -min(12 (phi / phi3)^2, A_max), A = -min(-(A_V + A_H), A_max), with mechanical tilt by rotation. Every built-in shape is scaled so its gain averaged over the sphere is exactly 0 dBi, so the peak shown is the integrated directivity. Imported files: summing, G = G_H(phi) + G_V(theta) in dB with a 30 dB floor (or the deepest value in the file, if deeper), or cross-weighted (Vasiliadis et al., 2005, k = 2); both use the front half of the vertical cut. Polarization loss = -20 log10 |cos d|. Floor coverage: client antenna 1 m up, x along the floor, slant distance r = sqrt(x^2 + (h - 1)^2), angle below the horizon atan((h - 1) / x); AP to client = AP transmit power + G(that direction) - PL(r) + client antenna gain; client to AP = client transmit power + client antenna gain + G - PL(r); PL(r) = FSPL(1 m) + 10 n log10(r). The antenna's gain is the same both ways (reciprocity), so client to AP minus AP to client is the client's transmit power minus the AP's at every point.
 
-**Example.** A half-wave dipole is 2.15 dBi (0 dBd) with a 78 degree vertical beamwidth. An omni set to 12 dBi has a vertical beamwidth near 6.8 degrees, and 30 degrees above the horizon it is weaker than a 5 dBi omni. A 65 by 65 degree 3GPP element integrates to about 9.8 dBi; the 31,000 rule gives 8.7 dBi and the ideal 41,253 gives 9.9 dBi. Two antennas 45 degrees apart in polarization lose 3.01 dB.
+**Example.** A half-wave dipole is 2.15 dBi (0 dBd) with a 78 degree vertical beamwidth. An omni set to 12 dBi has a vertical beamwidth near 6.8 degrees, and 30 degrees above the horizon it is weaker than a 5 dBi omni. A 65 by 65 degree 3GPP element integrates to about 9.8 dBi; the 31,000 rule gives 8.7 dBi and the ideal 41,253 gives 9.9 dBi. Two antennas 45 degrees apart in polarization lose 3.01 dB. On a 9 m ceiling at 5 GHz with n = 3 and the AP at 20 dBm, a dipole leaves the floor under it below -67 dBm out to 2.6 m and reaches -67 dBm out to 17.9 m; an 8 dBi omni there reaches -67 dBm nowhere on the floor; a 65 by 65 degree directional aimed down gives -46.5 dBm directly below.
 
 **Field notes**
 - The 3D is drawn on a fixed dBi scale: radius and color both follow gain, 5 dB per color band, with a floor 35 dB below the top of the scale. The legend gives the numbers, so color is never the only carrier.
@@ -4761,8 +5032,47 @@ Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet pr
 - The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.
 - Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.
 - NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.
+- Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few metres of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads "below -95 dBm", with "(null)" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.
+- The 25 ft (7.6 m) line is vendor guidance, not a standard: an HPE Aruba Airheads Community thread (Warehouse high ceiling, 2018) quotes a vendor presentation to use downtilt omnis above 25 ft, and a Cisco Community thread (High Ceilings, 2013) has a Cisco employee putting an ordinary omni's limit at about 20 to 25 ft.
+- Open in Uplink vs Downlink carries the AP antenna's gain toward the client, but that tool's AP gain runs 0 to 8 dBi; a gain outside that range is carried as the nearest end and the screen says so.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* antenna gain is not more power; the same power is reshaped, so a high-gain omni flattens into a pancake with a hole under it and a directional narrows its beam.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Antenna (picker): Half-wave dipole, Omni, set by gain, Collinear omni (array), Directional (patch or sector), Imported pattern file; default Omni at 8 dBi | Picks the antenna model. | Change from omni to directional, change the gain, and see the 3D pattern change. |
+| Gain (Omni, 2.15 to 15 dBi) | Changes the omni's gain; the readout gives dBi and dBd. | Every antenna radiates the same power, so raising the gain visibly takes signal from somewhere else. The scale stays fixed, so a gain change reshapes the pattern instead of resizing it. |
+| Electrical downtilt (Omni 0 to 15 degrees; Collinear 0 to 15) | Tilts the cone. | Downtilt tilts the whole cone for an omni, so the ring of strongest signal moves closer on the floor. |
+| Elements (1 to 8) and Spacing (0.25 to 1.0 wavelength) (Collinear) | Build the array. | Stacking elements makes the nulls between lobes visible; at 1 wavelength spacing a grating lobe appears straight up and down. |
+| Gain (sets both beamwidths) (Directional, 3 to 21 dBi) | Sets both beamwidths together with the practical 31,000 rule. | Gain and beamwidth trade directly. The readouts show what the exact shape integrates to, which is not the rule's number. |
+| Horizontal beamwidth (15 to 180 degrees), Vertical beamwidth (10 to 120 degrees) (Directional) | Set each beamwidth. | Shape the beam one plane at a time. |
+| Front-to-back (A_max), Side-lobe level (SLA_V) (10 to 40 dB); Mechanical downtilt (0 to 30 degrees) (Directional) | Set the rear and side-lobe floors and tilt the beam. | Front-to-back is a worst case, not the value straight back; the readout shows both, because the back lobe need not point straight back. |
+| Rebuild from its two cuts (any built-in antenna) | Writes the antenna as an MSI file, reads it back and rebuilds the 3D from its two cuts. | A 3D view built from two 2D cuts is an estimate; this shows how far off it is against the exact shape. |
+| Generated example (picker), Or paste pattern text (MSI or NSMA), Read pattern (Imported) | Load one of five example files the app generates, or pasted file text. There is no file picker. | Import a two-cut pattern and see it in 3D. The examples are generated here, so the error against the exact 3D can be shown; no manufacturer file is included. |
+| Rebuild the 3D by: Summing / Cross-weighted (Imported) | Switches the reconstruction method. | Compare two ways of building 3D from two cuts, and see that they differ behind the antenna and between the cuts. |
+| What if: shape (x the file's dB) (0.5 to 2.0) (Imported) | Scales the file's dB values. | Change the gain to make it flatter or wider, or make the edges fall off faster. |
+| Mounting: Ceiling / Wall (default Ceiling) | Turns the 3D view 90 degrees against the floor and the mounting surface. | The same antenna ceiling-mounted and wall-mounted lights different parts of a room. The 2D cuts stay in the antenna's own frame, as a datasheet draws them. |
+| Angle between the two antennas (0 to 90 degrees); See it in 3D: open Polarization | Gives the polarization mismatch loss; the link opens the Polarization tile. | Puts a number on turning one antenna sideways: 45 degrees costs 3.01 dB. The Polarization tile shows the field itself. |
+| Drag, pinch or scroll the 3D view; arrow keys and plus or minus with focus; Reset view; Spin / Stop (presenter bar) | Rotate, zoom and reset the view. | Look underneath a high-gain omni to find the hole, from any angle. |
+| Start from (picker): Office, dipole (3 m); Warehouse, dipole (9 m); Warehouse, 8 dBi omni; Warehouse, +6 dB power; Warehouse, directional (65 by 65 degrees, aimed down) | Sets the antenna, ceiling mounting, height and AP power. Anything moved afterwards reads "Your own settings". | A warehouse story, one change at a time from the 9 m dipole. The presets are illustrative; every slider stays free. |
+| Mount height (3 to 15 m, 0.5 m steps; metric first, feet in parentheses) | Raises or lowers the ceiling and the AP. | The one variable the view is about. |
+| AP transmit power (0 to 30 dBm), Client transmit power (0 to 24 dBm), Band (2.4 / 5 / 6 GHz), Path-loss exponent (2.0 to 4.0) | Set the link. | The same log-distance model and channels as Rate vs Range and Uplink vs Downlink, so the numbers agree across tools. |
+| Client position along the floor (0 to 35 m); drag or tap the floor | Moves the client dot. | Reads both directions at one spot, and sets what Open in Uplink vs Downlink carries. |
+| Readouts: directly below, 10, 20 and 30 m out, both directions; floor cell radius at -67 dBm; hole under the AP | Numbers under the picture. | Client to AP is always AP to client plus (client TX minus AP TX): the antenna's gain is the same both ways. |
+| Open in Uplink vs Downlink | Opens that tool on this client's link (band, both powers, exponent, slant distance, AP gain toward the client). | Continues the lesson where the asymmetry is the subject. That tool's AP gain runs 0 to 8 dBi, so a gain outside it is carried as the nearest end, and the button's caption says so. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Omni, set by gain at 8 dBi, Ceiling. Press Space to spin it once so the room sees the donut.
+2. Ask the room: "I swap this for a 12 dBi omni on the same ceiling. Is the floor right under the AP stronger or weaker?"
+3. Reveal: press Up four times to 12 dBi. The donut flattens into a pancake with a hole under it; the vertical beamwidth is near 6.8 degrees, and 30 degrees above the horizon it is weaker than a 5 dBi omni.
+4. Optional follow-up: switch Mounting to Wall to see the same antenna light the room differently. Or pick Directional and press Rebuild from its two cuts to show what a planning tool's 3D is built from.
+
+*Pairs with:* the Antenna Fundamentals guided lesson (read it first), FSPL Simulator (antenna gain in the link), Rate vs Range. The "Antennas" and "RF math and the link budget" sequences.
+
+*Left out on purpose:* Every built-in shape is normalized to 0 dBi averaged over the sphere, so the peak shown is directivity with no efficiency loss. The omni-by-gain model is the ITU-R F.1336 planning envelope, not physics (it gives the dipole's 2.15 dBi a 65.6 degree beamwidth, not 78). A 3D view from two cuts is an estimate. Mounting turns the 3D only. The NSMA azimuth direction is assumed counterclockwise from above.
 
 ### Polarization
 
@@ -4797,19 +5107,42 @@ Draws one radio wave as its electric field along the direction of travel, in a 3
 - For the loss between two antennas at different angles, see the polarization card in Antenna Pattern.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* polarization is the direction the electric field points as the wave passes. Vertical, horizontal and slant are the same wave turned; circular is a horizontal and a vertical wave a quarter cycle apart, whose sum never shrinks and turns once per wavelength.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Preset (picker): Vertical, Horizontal, Slant 45°, Circular, Elliptical; default Vertical. Reads Custom once the sliders leave every preset. | Sets the two amplitudes and the phase difference. Every preset carries the same power. | The five states a class needs to see. |
+| Show the H and V component waves (default off) | Draws the horizontal part (H) and the vertical part (V) as thinner curves, each labeled with its letter, under the lime field. | Every polarization is two perpendicular waves added together; with this on, the class sees the sum being built. |
+| Adjust: H amplitude, V amplitude (0 to 1), Phase difference, V ahead of H (-180 to 180 degrees, 15 degree steps) | Sets the field directly. | In step always gives a line; equal parts 90 degrees apart give a circle; -90 turns it the other way. |
+| Drag, pinch or scroll the 3D view; arrow keys and plus or minus with focus; Reset view | Rotate, zoom and reset the view. The square in the corner stays face-on: the wave seen end on, from the front end looking back toward the source. | In 3D the traced shape is edge-on from most angles, so it gets its own square. |
+| Play / Pause | Starts and stops the wave (one cycle every 3 seconds). With reduced motion on it opens frozen. | The frequency and wavelength are the same for every preset; only the direction of the field changes. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Vertical, playing, components off. The field goes up and down; the square shows a vertical line.
+2. Press P for Horizontal, then Slant 45°: "same wave, turned".
+3. Ask the room: "I add a horizontal wave and a vertical wave of the same size. What does the field do?" Turn on the component waves, then press P to Circular.
+4. Reveal: the field never shrinks and turns once per wavelength; the square shows a circle, axial ratio 1.0. Press P for Elliptical: axial ratio 2.0.
+
+*Pairs with:* Antenna Pattern (the polarization mismatch card), the Antenna Fundamentals guided lesson, Wi-Fi Through a Wall (TE and TM). The "Antennas" sequence.
+
+*Left out on purpose:* No receiving antenna, no mismatch loss and no indoor reflections; Antenna Pattern's polarization card has the loss between two antennas, and a "See it in 3D" link back here. Circular polarization is never named right-hand or left-hand: optics and antenna engineering name the turn differently and the antenna convention was not pinned. The view follows EMANIM Classic by Andras Szilagyi (public domain); no EMANIM code is used.
 
 ### Rate vs Range
 
-Draws an AP from above with one ring per MCS: inside a ring, a client has enough signal for that MCS. A dashed circle marks the cell edge, where beacons sent at the minimum basic rate can no longer be decoded. Drag the client dot to read its signal, SNR, MCS and data rate, and watch the beacon airtime bar change with the basic rate.
+Draws an AP from above with one ring per MCS: inside a ring, a client has enough signal for that MCS. A dashed circle marks the cell edge, where beacons sent at the minimum basic rate can no longer be decoded. Drag the client dot to read its signal, SNR, MCS and data rate, and watch the beacon airtime bar change with the basic rate. A Rate set card turns each of the 12 legacy rates off, supported or basic, and shows which kinds of client can associate, where beacons go, and the rate each ACK goes at.
 
-**Why it's here.** Rate does not fall smoothly with distance. Each MCS needs a minimum signal, so coverage is a set of rings. Doubling the channel width raises the noise floor 3 dB, so every MCS needs 3 dB more signal and every ring shrinks. Raising the minimum basic rate shrinks the cell edge and cuts the airtime beacons use: 6 to 24 Mbps moves the edge from -82 to -74 dBm at 20 MHz and makes each beacon about 3.6 times shorter.
+**Why it's here.** Rate does not fall smoothly with distance. Each MCS needs a minimum signal, so coverage is a set of rings. Doubling the channel width raises the noise floor 3 dB, so every MCS needs 3 dB more signal and every ring shrinks. Raising the minimum basic rate shrinks the cell edge and cuts the airtime beacons use: 6 to 24 Mbps moves the edge from -82 to -74 dBm at 20 MHz and makes each beacon about 3.6 times shorter. A client must support every basic rate, or the AP refuses it with status 18. And the lowest basic rate is not a floor for ACKs: an ACK goes at the highest basic rate not faster than the frame it answers, so with only 24 Mbps basic, a frame at 12 Mbps is acknowledged at 12.
 
 **How to use**
 1. Drag or tap on the rings to move the client, or use the Client slider under the view. The label next to the dot and the readout below show its received power, noise floor, SNR, MCS and data rate.
 2. Pick the band, channel width and spatial streams in the controls (below the view on a phone, in the panel on the right on a wide screen). Change the width and watch every ring shrink while the view stays the same size.
 3. Set the AP EIRP, the client antenna gain, the path-loss exponent and an optional margin. The legend lists every ring with its data rate and radius, including rings too thin to label on the view.
-4. Pick a minimum basic rate and the number of SSIDs. The dashed cell edge moves, and the bar shows beacon airtime at that rate against the same beacons at 6 Mbps.
-5. On a computer or tablet, Present opens the rings full screen for a projector: Up and Down move the client out and in, F switches full screen, ? lists the keys and Esc exits.
+4. Build the rate set: tap a rate to cycle it off, supported and basic. The state is written on each chip, and a star marks the rates every device of that kind must support. The four DSSS rates (1, 2, 5.5, 11) exist only at 2.4 GHz. The minimum basic rate is not picked; it is the lowest basic rate, and the dashed cell edge follows it. 9 Mbps and the DSSS rates have no sourced sensitivity, so no cell edge is drawn when one of them is the lowest.
+5. Pick the client asking to associate (802.11b only; 802.11g, least it must support; 802.11g; Wi-Fi 6) and, if you like, a PHY the network also requires. The Rate set card says whether it can associate, and if not, why: a missing basic rate means status 18, REFUSED_BASIC_RATES_MISMATCH. It lists every client type, the beacon rate, the Supported Rates element bytes, and an ACK table: for each rate that is on (and HE MCS 0 to 11 for a Wi-Fi 6 client), the rate its ACK goes at.
+6. Set the number of SSIDs. The bar shows beacon airtime at the beacon rate against the same beacons at 6 Mbps; DSSS beacons take more, and a notch marks the 6 Mbps figure.
+7. On a computer or tablet, Present opens the rings full screen for a projector, with the association verdict beside them: Up and Down move the client out and in, B raises the minimum basic rate (6, 12, 18, 24, 36, 48, 54, then back to 6), C changes the client type, F switches full screen, ? lists the keys and Esc exits.
 
 **Inputs**
 
@@ -4822,21 +5155,54 @@ Draws an AP from above with one ring per MCS: inside a ring, a client has enough
 | Client antenna gain | dBi | -5 to 6; default 0 |
 | Path-loss exponent | n | 2.0 (free space) to 4.0; default 3.0 |
 | Margin | dB | 0 to 20; default 0 |
-| Minimum basic rate | Mbps | 6, 12, 18, 24, 36, 48 or 54; default 6 |
+| Rate set | each rate off, supported or basic | 1, 2, 5.5, 11 (2.4 GHz only), 6, 9, 12, 18, 24, 36, 48, 54 Mbps; default 6, 12, 24 basic, the rest supported. The minimum basic rate is the lowest basic rate |
+| Client asking to associate | choice | 802.11b only; 802.11g, least it must support (1, 2, 6 Mbps); 802.11g; Wi-Fi 6 (default) |
+| Network also requires | choice | Nothing more (default); HT, Wi-Fi 4 (not at 6 GHz); HE, Wi-Fi 6 |
 | SSIDs | count | 1 to 16; default 4 |
 
-**How it works.** Received power = AP EIRP + client antenna gain - path loss, with path loss = free-space loss at 1 m + 10 n log10(d). Each ring radius is the distance where received power equals that MCS's minimum sensitivity plus the margin: d = 10^((EIRP + G - FSPL(1 m) - sensitivity - margin) / 10n). Minimum sensitivity at 20 MHz, MCS 0 to 13: -82, -79, -77, -74, -70, -66, -65, -64, -59, -57, -54, -52, -49, -46 dBm, and 3 dB higher for each doubling of width up to 320 MHz. Noise floor = -174 dBm/Hz + 10 log10(BW in Hz) + a 7 dB noise figure. The cell edge uses the 20 MHz floor of the basic rate. Beacon airtime comes from the SSID Airtime tool's calculator (802.11ax beacon size, one AP on the channel, no MBSSID). Data rates come from the MCS Index tool (802.11be, 800 ns guard interval).
+**How it works.** Received power = AP EIRP + client antenna gain - path loss, with path loss = free-space loss at 1 m + 10 n log10(d). Each ring radius is the distance where received power equals that MCS's minimum sensitivity plus the margin: d = 10^((EIRP + G - FSPL(1 m) - sensitivity - margin) / 10n). Minimum sensitivity at 20 MHz, MCS 0 to 13: -82, -79, -77, -74, -70, -66, -65, -64, -59, -57, -54, -52, -49, -46 dBm, and 3 dB higher for each doubling of width up to 320 MHz. Noise floor = -174 dBm/Hz + 10 log10(BW in Hz) + a 7 dB noise figure. The cell edge uses the 20 MHz floor of the basic rate. Who can associate: a client must support every basic rate, or it is refused with status 18, REFUSED_BASIC_RATES_MISMATCH (IEEE 802.11-2024 Table 9-80). Beacons go at one of the basic rates (10.6.5.1); the model uses the lowest, a common vendor choice rather than a rule, and with no basic rates, a mandatory rate. The ACK goes at the highest basic rate not faster than the frame it answers, in the same modulation; if none fits, at the highest mandatory rate not faster (10.6.6.5.2). Mandatory rates: 6, 12 and 24 Mbps for OFDM; 1, 2, 5.5, 6, 11, 12 and 24 for 802.11g (ERP). An HT, VHT or HE frame first converts to a non-HT reference rate by its modulation and coding (10.6.11, Table 10-10: 64-QAM 5/6 is 54). In the Supported Rates element a basic rate has its top bit set, in units of 500 kb/s: 6 Mbps basic is 8C (9.4.2.3). Beacon airtime comes from the SSID Airtime tool's calculator (802.11ax beacon size, one AP on the channel, no MBSSID). Data rates come from the MCS Index tool (802.11be, 800 ns guard interval).
 
 **Example.** At 5 GHz (5500 MHz) with 20 dBm EIRP and n = 3, free-space loss at 1 m is 47.3 dB. The MCS 0 ring reaches 66.8 m at 20 MHz and 42.2 m at 80 MHz. MCS 13 reaches 4.2 m at 20 MHz. A client at 20 m receives -66.3 dBm, just short of MCS 5 (-66 dBm), so it gets MCS 4, with an SNR of 27.7 dB over a -94.0 dBm noise floor. Raising the basic rate from 6 to 24 Mbps pulls the cell edge in from 66.8 m to 36.2 m, and four SSIDs' beacons drop from 2.19% to 0.61% of airtime.
 
 **Field notes**
+- The model's readings, where the standard is silent: when the highest basic rate below a frame is of the other modulation (1, 2, 5.5 or 11 Mbps answering an OFDM frame), the model keeps the modulation and answers from the mandatory OFDM rates; HE frames are answered in OFDM; an 802.11b device, which has no OFDM receiver, cannot decode a beacon sent at an OFDM rate. Rows decided this way are marked.
+- A star marks a mandatory rate but does not lock it: the standard says what a device must support, not what an access point must keep on. No status code is shown when a client lacks a required PHY, because none is pinned for that case.
 - These sensitivities are conformance floors, the least a radio must manage to pass. Real radios do several dB better, so real rings are larger.
-- Only 6 Mbps has a published floor of its own, -82 dBm, equal to MCS 0. 12 to 54 Mbps use the floor of the MCS with the same modulation and coding (24 Mbps is MCS-equivalent to MCS 3, -74 dBm), so they are labeled MCS-equivalent. 9 Mbps and the 2.4 GHz DSSS rates have no sourced floor and are not offered.
+- Only 6 Mbps has a published floor of its own, -82 dBm, equal to MCS 0. 12 to 54 Mbps use the floor of the MCS with the same modulation and coding (24 Mbps is MCS-equivalent to MCS 3, -74 dBm), so they are labeled MCS-equivalent. 9 Mbps and the 2.4 GHz DSSS rates have no sourced floor, so they draw no cell edge.
 - The path-loss exponent is a model with a chosen value, not a measurement. Walls, people and furniture make real rings uneven.
 - The width is held fixed. A real AP may send a narrower transmission to a far client, which reaches as far as the 20 MHz rings.
 - The beacon bar counts beacons only, as time on the air. It leaves out probe responses, the wait for the medium, and other APs on the same channel, all of which the SSID Airtime tool can add.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* rate falls with distance in steps, one ring per MCS; a wider channel shrinks every ring, and a higher minimum basic rate shrinks the cell edge and the beacon airtime. The Rate set card adds: a client must support every basic rate or the AP refuses it with status 18, and the lowest basic rate is not a floor for ACKs.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Drag or tap on the rings; Client (slider, logarithmic, default 20 m (66 ft)) | Moves the client. The label and readout give received power, noise floor, SNR, MCS and data rate. | Read the MCS a client gets at any distance and see the step at each ring edge. |
+| Band (2.4 / 5 / 6 GHz, default 5) | Changes the frequency path loss is taken at (2437, 5500 or 6135 MHz) and the widths on offer. | Higher bands lose more in free space, so every ring is smaller. |
+| Channel width (MHz) (20 or 40 at 2.4 GHz, up to 160 at 5 GHz, up to 320 at 6 GHz; default 20) | Changes every MCS threshold by 3 dB per doubling. | Doubling the width raises the noise floor 3 dB, so every ring shrinks. The view never rescales, so the shrink is visible. |
+| Spatial streams (rate labels only) (1 to 4, default 2) | Changes the data rates on the labels, not the rings. | Streams multiply the rate but do not change the signal each MCS needs, so the rings stay where they are. |
+| AP EIRP (0 to 36 dBm, default 20) | Raises or lowers the downlink level everywhere. | More radiated power pushes every ring out by the same number of dB. |
+| Client antenna gain (-5 to 6 dBi, default 0) | Adds the client's antenna to the link. | A worse client antenna shrinks every ring as surely as a weaker AP. |
+| Path-loss exponent (model) (2.0 to 4.0, default 3.0) | Sets how fast the signal falls with distance. | n = 2 is free space, indoors is usually 3 to 4. Labeled a model with a chosen value, not a measurement. |
+| Margin (0 to 20 dB, default 0) | Adds a safety margin to every MCS threshold. | Shows how much coverage a design margin costs, ring by ring. |
+| Rate set: 12 chips, 1, 2, 5.5, 11 (2.4 GHz only), 6, 9, 12, 18, 24, 36, 48, 54 Mbps; each tap cycles off, supported, basic; a star marks mandatory rates. Default 6, 12, 24 basic, the rest supported | Sets which rates the AP offers and which every client must have. The minimum basic rate is no longer picked: it is the lowest basic rate, and the dashed cell edge and the beacon bar follow it. | Raising the lowest basic rate shrinks the cell edge and cuts beacon airtime (6 to 24 Mbps moves the edge from -82 to -74 dBm at 20 MHz). Only 6 Mbps has a published floor; when 9 Mbps or a DSSS rate is the lowest basic rate no cell edge is drawn, because neither has a sourced floor. The star marks, it does not lock: the standard says what a device must support, not what an AP must keep on. |
+| Client asking to associate (802.11b only; 802.11g, least it must support; 802.11g; Wi-Fi 6, default) | Picks the client the verdict is about. Every type is also listed. | A missing basic rate means status 18, REFUSED_BASIC_RATES_MISMATCH. An 802.11b device against OFDM basic rates also cannot decode the OFDM beacons, so it never sees the network. The "least it must support" 802.11g device (1, 2, 6 Mbps) is refused by the default 6, 12, 24 basic set. |
+| Network also requires (nothing; HT; HE) | Adds a BSS membership selector. | A client without the PHY cannot associate. No status code is shown, because none is pinned for that case. |
+| ACK table (readout) | For every rate that is on, and HE MCS 0 to 11 for a Wi-Fi 6 client, the rate its ACK goes at, and whether a basic rate or the mandatory fallback answered. | With only 24 basic, a frame at 12 is acknowledged at 12, not 24. Rows marked * are the model's reading where the standard is silent (a DSSS basic rate below an OFDM frame). |
+| SSIDs on this AP (1 to 16, default 4) | Scales the beacon airtime bar. | Every SSID sends its own beacons at the basic rate, so the airtime cost multiplies. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults: 5 GHz, 20 MHz, 2 streams, AP EIRP 20 dBm, n = 3, client at 20 m (66 ft). The client receives -66.3 dBm, just short of MCS 5, so it gets MCS 4.
+2. Ask the room: "Widen the channel from 20 to 80 MHz. What happens to the edge of coverage?"
+3. Reveal: set 80. The MCS 0 ring pulls in from 66.8 m (219 ft) to 42.2 m (138 ft), and every other ring shrinks with it.
+4. Optional follow-up: back to 20 MHz, tap the 6 and 12 chips off (leaving 24 basic). The cell edge pulls in from 66.8 m to 36.2 m (119 ft) and four SSIDs' beacons drop from 2.19% to 0.61% of airtime. Now ask: "A client sends at 12 Mbps. What rate does the ACK go at?" Open the ACK table: 12, because no basic rate is at or below 12, so the mandatory rate answers.
+
+*Pairs with:* FSPL Simulator, Uplink vs Downlink (the other direction of the same rings), 6 GHz Power and PSD, the SSID Airtime and MCS Index tools. The "RF math and the link budget" and "From bits to rate" sequences.
+
+*Left out on purpose:* The sensitivities are conformance floors, the least a radio must manage; real radios do several dB better, so real rings are larger. The path-loss exponent is a chosen value, and walls, people and furniture make real rings uneven. The width is held fixed, where a real AP may send a narrower transmission to a far client. The beacon bar counts beacons only: no probe responses, contention or other APs. The beacon rate is the lowest basic rate, a common vendor choice; the standard asks only for one of the basic rates. Only the legacy rate set is modelled: no Basic HT-MCS, VHT or HE MCS sets.
 
 ### 6 GHz Power and PSD
 
@@ -4875,6 +5241,31 @@ Plots the most EIRP each 6 GHz device class may radiate, and the SNR it leaves a
 - The PSD rule applies to any 1 MHz of the real emission. An HE 20 MHz transmission fills about 18.9 MHz, so a device exactly at the PSD limit radiates about 0.2 dB less than shown. That difference is too small to change the lesson.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* 6 GHz power is limited per MHz as well as in total, so a PSD-limited class keeps its SNR as the channel widens while a capped class loses 3 dB per doubling, and the client 6 dB rule applies only to Standard Power and GVP clients.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Region: US (FCC) / EU (ETSI) (default US) | Switches the rule set. | The EU has no client offset at all, which the US rules make easy to forget. |
+| Classes to show (checkboxes; US: nine classes, EU: two; default Standard Power AP, Low Power Indoor AP, Very Low Power device) | Turn class lines on and off. Each class has its own color, line style and marker. | Compare classes on one chart; each can be told apart without color. |
+| Chart: EIRP / SNR / Spectrum (default EIRP) | Switches the view. Spectrum draws one channel as a flat block of power per MHz. | EIRP shows the cap and the PSD limit; SNR shows the consequence; Spectrum shows the block getting wider while its height holds or drops. |
+| Class drawn in the spectrum view (picker, Spectrum with more than one class) | Picks the class the block is drawn for. | The spectrum view draws one class at a time. |
+| Width (slider, 20, 40, 80, 160, 320 MHz, default 80); tap a column on the chart | Picks the channel width the readouts describe. | The x axis of the lesson; the readout line says whether each class is PSD-limited or cap-limited at that width. |
+| Distance (1 to 100 m, logarithmic, default 10 m (33 ft)) | Sets where SNR is read. | SNR at a chosen distance, with free-space loss at one frequency for every width so only the width changes between columns. |
+| Extra loss (walls) (0 to 40 dB, default 0) | Subtracts a fixed loss from every class. | An optional extra-loss slider for walls. |
+| Noise figure (3 to 12 dB, default 7) | Raises or lowers the noise floor. | Moves every class's SNR by the same amount, so it never changes which class holds and which falls. |
+| AP authorized power: Standard Power AP (AFC) (0 to 36 dBm), GVP AP (geofencing) (0 to 24 dBm); US only, active when an SP or GVP class is shown | Sets each AP's grant. Its clients follow 6 dB lower. | The client -6 dB rule is a relative limit only for Standard Power and GVP clients; the LPI client is a flat number that happens to sit 6 dB under the LPI AP. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: US, the default classes, SNR view, 10 m (33 ft), width 20 MHz.
+2. Ask the room: "Double the channel to 40, then 80, then 160 MHz. Which class keeps its SNR?"
+3. Reveal: press Up three times. The LPI AP holds 43.8 dB from 20 to 160 MHz: its EIRP rises 3 dB per doubling (18, 21, 24, 27 dBm) and the noise floor rises the same 3 dB. The Standard Power AP is already at its 36 dBm cap, so it loses 3 dB per doubling (61.8 dB at 20 MHz, 49.8 dB at 320).
+4. Optional follow-up: switch to EIRP and turn on Standard Power client; set the Standard Power AP to 30 dBm and the client drops to 24 dBm. Then switch to EU and point out there is no client offset.
+
+*Pairs with:* FSPL Simulator and Wi-Fi Through a Wall (the "Why 6 GHz behaves differently" sequence), Uplink vs Downlink (the client rules in a link), Rate vs Range, the 6 GHz channel card in Course Handouts.
+
+*Left out on purpose:* These are regulatory maximums; a device may transmit less. Path loss is taken at one frequency (6105 MHz) for every width. The MCS shown is the typical figure from the Signal Thresholds table, not a guarantee. The PSD rule applies to any 1 MHz of the real emission, and an HE 20 MHz transmission fills about 18.9 MHz, a 0.2 dB difference too small to change the lesson.
 
 ### Uplink vs Downlink
 
@@ -4916,6 +5307,32 @@ Shows both directions of one Wi-Fi link at once, from above. The downlink runs f
 - For one direction in detail, with cable losses and fade margin, use the Link Budget tool.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* every Wi-Fi link is two links, the client usually transmits less than the AP, so there is a zone where the client hears the AP but the AP cannot hear the client, and turning the AP down to "match" fixes nothing on the uplink.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Drag or tap on the floor; Client (slider, default 20 m (66 ft)) | Moves the client. The readout gives each direction's level, MCS and SNR, the imbalance and the width of the asymmetry zone. | Put the client inside the shaded zone and read both directions at once. |
+| Regulatory rule (picker): Custom (no rule applied), US 6 GHz Standard Power, US 6 GHz Geofenced Variable Power (GVP), US 6 GHz Low Power Indoor (LPI), EU 6 GHz Low Power Indoor (LPI); default Custom | Applies a rule to the client's power. Every rule is a 6 GHz rule, so picking another band returns to Custom. | Regulations set the client relative to the AP (Standard Power, GVP), as a flat number (US LPI) or the same as the AP (EU). Standard Power and GVP are separate entries because their AP caps differ. |
+| Band (2.4 / 5 / 6 GHz, default 5) | Sets the frequency path loss is taken at. | Path loss is the same both ways on any band; the imbalance comes from the radios. |
+| Channel width (MHz) (default 20) | Moves each direction's MCS thresholds 3 dB per doubling, and the per-MHz limits under the LPI rules. | Under US LPI the limits are per MHz, so at 20 MHz the AP is 18 dBm and its client 12; the flat 30 and 24 appear only at 320 MHz. |
+| AP transmit power (0 to 30 dBm, default 20, illustrative) | Moves the downlink only. | The uplink never moves with the AP's power. |
+| Client transmit power (0 to 24 dBm, default 14, illustrative); reads "set by the rule" under a rule | Moves the uplink only. Under a rule the client transmits at its limit. | The client is the weak end of the link; its power sets the uplink. The rule is a ceiling, and many clients transmit less. |
+| AP antenna gain (0 to 8 dBi, default 4), Client antenna gain (-5 to 3 dBi, default -2, a phone-class antenna) | Add each antenna's gain. | Each antenna counts in both directions, so the AP's better antenna helps it hear the client as much as it helps the client hear it. The imbalance is set by the two transmit powers alone. |
+| Path-loss exponent (model) (2.0 to 4.0, default 3.0) | Sets how fast the signal falls with distance. | Stretches or shrinks both rings without changing the dB imbalance between them. |
+| Turn AP down to match / Put the AP back to (power) | Sets the AP's transmit power to the client's, and back. | AP and client power rarely match and should not be made to. The solid ring shrinks, the dashed ring does not move, and the readout says what changed and what did not. The tool never tells you to equalize the two. |
+| Reveal the answer / Hide the answer; Put the client in the zone | Answers "The client shows four bars. Can the AP hear it?" and moves the client into the asymmetry zone. | Bars come from the downlink only and cannot tell you whether the AP hears the client. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults: Custom, 5 GHz, 20 MHz, AP 20 dBm with 4 dBi, client 14 dBm with -2 dBi, client at 20 m (66 ft).
+2. Ask the room the question on screen: the client shows four bars. Can the AP hear it?
+3. Reveal: press P. At 20 m the client hears the AP at -64.3 dBm (MCS 6) and the AP hears the client at -70.3 dBm (MCS 3), a 6 dB imbalance. Press Put the client in the zone: between 49 m (161 ft) and 78 m (256 ft) the client still decodes the AP while the AP cannot decode the client.
+4. Optional follow-up: press M. The solid ring pulls in from 78 m to 49 m and the uplink stays at -70.3 dBm: the AP gave up its reach and the uplink gained nothing. Then pick US 6 GHz Standard Power on 6 GHz and move the AP slider: the client follows the AP's authorized power, 6 dB lower.
+
+*Pairs with:* Rate vs Range (the same thresholds and path loss), 6 GHz Power and PSD (the same client rules), Body Loss, Link Budget. The "RF math and the link budget" and "Why clients misbehave" sequences.
+
+*Left out on purpose:* All radio values are illustrative. Both ends use the same conformance receiver floors, where many APs hear better with extra antennas and receive chains. Under a rule the client is set to the most it may transmit. No walls or bodies; path loss is the log-distance model. For one direction in detail, with cable losses and fade margin, use Link Budget (the tool has a button).
 
 ### Body Loss
 
@@ -4956,6 +5373,33 @@ Shows what people cost a Wi-Fi signal, from above. An auditorium floor holds one
 - For walls and building materials rather than people, use RF Attenuation (RF: radio frequency) and Wi-Fi Through a Wall.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* people cost decibels, the person holding the device often costs the most when they turn their back to the AP, and a crowd on the line is why an empty-building survey reads better than the building in use.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Band (2.4 / 5 / 6 GHz, default 5) | Sets the frequency and applies that band's body-loss multiplier. | Higher bands generally lose more to the body, shown as an illustrative trend. |
+| Holder facing (slider, 0 to 360 degrees, 0 up the page and 90 to the right); Face the AP, Back to the AP (buttons); tap the floor to turn the holder toward that spot | Turns the holder. The holder loss stays at zero until the holder has turned more than 120 degrees away from the AP, then ramps in to the full value with the back square to it. | Orientation matters: facing the AP with the device in front costs little; turning your back puts your body in the path. |
+| Drag the holder; Holder (slider, distance from the AP) | Moves the holder. | Changes the path loss and which people stand on the line, so the class can find a clear spot. |
+| Drag any person | Places a person on or off the line. | Shows that only the people on the straight line count in this model. |
+| Holder body loss at 2.4 GHz (illustrative) (0 to 20 dB, default 8) | Sets the holder's full loss with the back square to the AP. | No primary source was read for any body-loss figure, so every loss is a labeled, adjustable setting; set it to match what you measure. |
+| Loss per person on the line at 2.4 GHz (illustrative) (0 to 10 dB, default 4) | Sets what each person on the line costs. | Same reason: illustrative, adjustable, labeled so. |
+| 5 GHz body-loss multiplier (illustrative) (1.0 to 2.0, default 1.2), 6 GHz body-loss multiplier (illustrative) (1.0 to 2.0, default 1.3) | Scale the losses at 5 and 6 GHz. | The band trend applies to the crowd as well as the holder, because a crowd is bodies. |
+| Building: Empty / Occupied (default Occupied) | Removes or restores the crowd. Nothing else changes. | The Saturday survey against the Monday room. |
+| People in the room (0 to 50, default 30) | Sets the crowd size. | Crowds add up, one body on the line at a time. |
+| Scatter the crowd | Places the people in a new arrangement from a new seed. | The same number of people costs more or less depending on how many land on the line. |
+| Reveal the answer / Hide the answer; Show Saturday, empty / Show Monday, occupied | Answers "You surveyed the auditorium empty on Saturday. What happens Monday at 9 a.m.?" and switches between the two. | Predict, then reveal, on the tool's question. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults: 5 GHz, Occupied with 30 people, the holder 14 m (46 ft) from the AP, facing it. Two people stand on the line.
+2. Ask the room the question on screen: surveyed empty on Saturday, what happens Monday at 9 a.m.?
+3. Reveal: press P, then Space to empty the room: -61.8 dBm (MCS 7). Space again to fill it: -71.4 dBm (MCS 3), 9.6 dB worse, from two people at 4.8 dB each.
+4. Optional follow-up: press Right one step at a time. The first eight presses change nothing; after that the holder loss ramps in, and with the back square to the AP the level is -81.6 dBm, MCS 0. Then compare 2.4 and 6 GHz.
+
+*Pairs with:* Why Two Devices Disagree (body as one part of a reading), Uplink vs Downlink, Wi-Fi Through a Wall and RF Attenuation for walls rather than people.
+
+*Left out on purpose:* Every body-loss value is an illustrative setting with no measured figure behind the defaults, so use it for the shape of the effect, not as a design value. Only people on the straight line count; real signals also reach around a crowd by reflection. Bodies are 0.5 m wide seen from above, and the device is held 0.3 m in front of the holder. Path loss is the log-distance model at n = 3.
 
 ## Signals and PHY (7)
 
@@ -4995,6 +5439,33 @@ Shows how bits become a radio wave. Each group of bits picks one point on the I/
 - Measured EVM from a handful of symbols wanders. Send a few hundred and it settles close to the theoretical value.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a group of bits picks one point on the I/Q plane, higher orders pack more bits into points that sit closer together, and so they need a cleaner signal to decode.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **Modulation** (select: BPSK, QPSK, 16-QAM, 64-QAM, 256-QAM, 1024-QAM, 4096-QAM, each with its bits per symbol) | Picks the constellation. Default 16-QAM. The line under it gives the point count, bits per symbol and the amendment that first used it. | Higher orders carry more bits per symbol and need a cleaner signal. Seeing BPSK next to 4096-QAM makes that plain (help, `whyHere`). |
+| **Play** / **Pause** | Sends one symbol per tick at the chosen speed. The simulator always opens paused. | Paused by default so nothing moves until you ask. Play lets the cloud build up while you talk. |
+| **Step** | Sends exactly one symbol. | One symbol is one point, one amplitude and one phase on the carrier strip. Step is how you show that mapping slowly, and it is the suggested path when reduced motion is on. |
+| **+100** | Sends 100 symbols at once. | Measured EVM from a handful of symbols wanders, and a few hundred settle close to theory (help, `fieldNotes`). +100 gets you there in two presses. |
+| **Reset** | Clears the received points and counts. Disabled when nothing has been sent. | Starts a fresh reading. Every other change clears the points too, so each reading belongs to one setting (help, `fieldNotes`). |
+| **Signal-to-noise ratio (SNR)** slider, 0 to 45 dB in 0.5 dB steps, default 25 dB | Sets the Gaussian noise added to each received point. | The one noise control: the received cloud spreads, points cross decision boundaries and are marked wrong. |
+| **Speed (symbols per second)**: 1/s, 4/s, 20/s. Default 4/s. | Sets how fast Play sends. | 1/s is slow enough to narrate each symbol on the carrier strip; 20/s fills the constellation fast enough to see the cloud's shape. |
+| **Bits to send**: Random, Your text | Random bits, or the UTF-8 bits of a typed message. | The tool calls for both. Typed text makes the errors land in something the class can read, and shows the zero-padding of the last symbol. |
+| **Message** (text field, up to 120 characters, default "Hello, Wi-Fi"; appears with Your text) | The message to send. Shows bytes, bits, symbols and padding, then Progress, Received so far and Last full copy. | Lets the room watch a readable message break as the SNR drops. |
+| Tap or hover a point on the constellation (64-QAM and above) | Shows that point's bits. | Up to 16-QAM every point is labeled. Above that the labels would overlap, so labels show on hover or tap only. |
+| **Present** (title bar) | Opens the presenter layout over the same state. | See the shelf intro. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: 16-QAM, SNR 25 dB, Random bits. Press +100 twice. The cloud sits tight on each point, EVM measured is close to -25 dB, and there are no symbol errors.
+2. Ask the room: "Same SNR, but I switch to 256-QAM. How many errors?"
+3. Reveal: switch to 256-QAM and press +100. Errors appear at once, because the same noise now crosses boundaries that are four times closer on each axis. Press Up and watch the errors thin out; by our arithmetic they become rare somewhere past 30 dB.
+4. Optional follow-up: switch to Your text, drop the SNR until "Hello, Wi-Fi" arrives garbled, then open the EVM card. 16-QAM at 25 dB meets both 16-QAM limits and the 64-QAM rate 3/4 limit of -25 dB, and misses 64-QAM rate 5/6 at -27 dB (help, `example`).
+
+*Pairs with:* Rate vs Range (where each MCS stops working), the MCS Index card in Course Handouts, and Fourier and FFT mode 4, which puts these same constellations on every subcarrier.
+
+*Left out on purpose:* no coding (the coding rates appear only in the EVM limits table), no OFDM (one carrier, one symbol at a time), and only white Gaussian noise: no phase noise, fading or interference. The carrier strip draws 3 cycles per symbol; a real carrier runs billions per second. EVM limits are transmitter accuracy, not receiver sensitivity.
 
 ### Fourier and FFT
 
@@ -5046,6 +5517,47 @@ Shows that any signal is a sum of sines, and how a spectrum analyzer and a Wi-Fi
 - In the OFDM teaching view the same 16 subcarriers are kept when you switch to HE, so they span a quarter of the width. Real HE fills the same 20 MHz channel with 4 times as many subcarriers. The carrier frequency never changes.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* any signal is a sum of sines, an analyzer computes its spectrum from a finite chunk of samples so its settings change what you see, and a Wi-Fi receiver is itself an FFT analyzer whose bins are the subcarriers.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **Mode** (select): Waves, FFT, Swept vs FFT race, OFDM is an inverse FFT | Switches between the four modes. Default Waves. | The lesson builds in that order: signal, measurement, analyzer, Wi-Fi. The selector became a dropdown at four modes. |
+| **Start from** (select): One sine, Square wave (odd harmonics), Two close tones, Tone plus weak neighbor. Your own mix appears once you edit. | Loads a preset signal. | The presets. The square wave shows a shape built from sines; the last two set up the FFT lessons. |
+| **Show each sine behind the sum** (switch) | Draws each component under the summed trace. | Lets the class see the sum is only its parts. |
+| **Sine 1** to **Sine 5** chips, **Add a sine**, remove (per sine) | Picks the sine you are editing, adds one (up to five), removes one. | "Add up to five sines; each gets a row with the three knobs." |
+| **Frequency** slider, 100 to 5,000 Hz in 10 Hz steps | Frequency of the picked sine. | A sine has three knobs. The time trace and the spectrum move together. |
+| **Amplitude** slider, 0 to 1.00 (1.00 = 0 dB full scale) | Amplitude of the picked sine. | Same, the second knob. |
+| **Phase** slider, -180 to 180 degrees | Phase of the picked sine. | Same, the third knob. The time trace moves and the magnitude spectrum does not, which is a point worth making aloud. |
+| **Play sound** / **Stop sound** | Plays the sum through the speaker. | The tool allows optional sound at audio frequencies. The frequencies are real, so the sound is what the plots show. It does not follow the phase sliders. |
+| **Lesson** (select): Free play, Weak neighbor 40 dB down, Tone between bins, Halve N | Sets the signal and analyzer for one lesson. | The three lessons: rectangular leakage hides the weak tone and Blackman-Harris reveals it; a tone between bins reads low until flat top; two tones merge when you halve N. |
+| **Window** (select): Rectangular, Hann, Hamming, Blackman-Harris (4-term), Flat top. Default Hann. | Applies the window before the FFT. | The window trades a clean floor against how sharp each peak is. |
+| **Sample rate (Fs)** (select): 12.8, 25.6, 51.2, 102.4 kHz. Default 25.6 kHz. | Sets Fs. | Bin spacing is Fs / N and capture time N / Fs, so their product is always 1 (help). |
+| **FFT size (N)** (select) 64 to 4,096, powers of two, default 256; **Halve N**, **Double N** | Sets N. | More samples give finer bins and a longer capture. The two buttons make it a one-press comparison. |
+| Disclosures: **ENBW, RBW, sidelobes, scalloping** and **The Wi-Fi receiver is an FFT analyzer** | Extra readouts and the closing card. | The "Wi-Fi bridge": 20 MS/s with N = 64 gives bins exactly 312.5 kHz apart and a 3.2 µs frame. |
+| **Span** (select): 20, 50, 100 MHz, centered on 2450 MHz. Default 100. | Width the swept analyzer covers. | Sweep time is k x Span / RBW squared (Keysight AN 150). |
+| **RBW** (select): 3 MHz, 1 MHz, 300 kHz, 100 kHz, 30 kHz, 10 kHz. Default 100 kHz. | Resolution bandwidth. | The one knob that makes the swept analyzer slow: at 100 MHz, 0.25 ms at 1 MHz RBW, 25 ms at 100 kHz, 2.5 s at 10 kHz. |
+| **Run length** (select): 50, 200, 1,000 ms. Default 200. | How much time the race covers. | Longer runs give more hops and pulses to count, so the caught/missed contrast holds up. |
+| **Run the race** / **Pause** / **Resume**, **Step** | Replays the run slowed down, or steps it one fortieth at a time. | The tool calls this mode "the highest-value lesson". Replaying it slowly lets the room watch the lime diagonal miss hops. |
+| **Scene: mains, oven sweep, camera** disclosure: **Mains frequency** (60 Hz, 50 Hz), **Microwave sweep width** (near CW, 10, 20, 40 MHz; default 20), **Video camera bandwidth** (4, 8, 18 MHz; default 8), **New scene** | Changes the synthetic scene and draws new hops. | Sources conflict on how far an oven sweeps, and the camera width is not pinned, so both are settings. 50 Hz is for classes outside North America. |
+| **View**: Teaching (16 subcarriers), Real Wi-Fi (20 MHz) | Small N for visibility, then the full channel. | A small N such as 16 to start, then real Wi-Fi. |
+| Subcarrier chips (-8 to +7), **All on**, **All off** (Teaching view) | Turns subcarriers on and off. Default 1, 2 and 3 on. | The student builds the symbol one subcarrier at a time. |
+| **Modulation on every subcarrier** (select): BPSK to 1024-QAM. Default QPSK. | The constellation each subcarrier carries. | Reuses the Modulation Simulator's math, so the two tools agree. |
+| **New data** | Picks new random points for every subcarrier. | Shows the recovered constellation matches whatever was sent, not one lucky pattern. |
+| **Highlighted subcarrier** slider | Picks the subcarrier whose sinc is drawn bold. | The orthogonality lesson: every sinc is zero at every other subcarrier's center. |
+| **Numerology**: Legacy, HE; **Guard interval** (select, HE: 0.8, 1.6, 3.2 µs) | Switches legacy 312.5 kHz / 3.2 µs to HE 78.125 kHz / 12.8 µs. | The symbol stretches four times, and the screen must say plainly that the carrier frequency does not change. |
+| **Same time scale for legacy and HE** (switch, under **Time scale and the receiver**) | Keeps both numerologies on one time axis. Default on. | So the 4x longer HE symbol looks 4x longer instead of being rescaled to fit. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: FFT mode, Lesson "Weak neighbor 40 dB down". The rectangular window is on and the spectrum shows one tone.
+2. Ask the room: "There are two tones in this signal. Where is the second one?"
+3. Reveal: press W (or pick Blackman-Harris). The leakage skirt drops and the weak neighbor appears 40 dB down.
+4. Optional follow-up: press 3 for the race at its defaults (100 MHz span, 100 kHz RBW, 25 ms sweep). Ask which analyzer will catch more Bluetooth hops, then Space to run it and read the Caught and Missed counts.
+
+*Pairs with:* the Spectrum Analysis guided lesson (the race reuses its interferer fingerprint wording), Modulation Simulator for mode 4, and PHY Preamble Reference for where the symbols sit in a PPDU. The Teacher's Guide lists a Fourier and FFT lab under "Spectrum analysis". It is not built yet.
+
+*Left out on purpose:* nothing aliases, because every tone stays below half the lowest sample rate. The race scene is synthetic, from published timings: Bluetooth hops are uniform random (the real sequence is pseudo-random), and the FFT analyzer is ideal and gapless, where a real one has a real-time bandwidth limit. Real swept analyzers with digital RBW filters sweep faster than the formula. In the OFDM teaching view the same 16 subcarriers are kept when you switch to HE, so they span a quarter of the width. Real HE fills the channel with four times as many.
 
 ### OFDMA Resource Units
 
@@ -5085,6 +5597,33 @@ Shows how 802.11ax OFDMA splits one channel into resource units (RUs) so an acce
 - With one client on a full-channel RU, OFDMA is slightly slower than single user: the longer preamble and the triggered acknowledgment cost time and there is no one to share them with.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* OFDMA splits one channel into resource units so the AP serves several clients in one transmission, and the saving for small frames comes from paying for contention, the preamble and the acknowledgment once, not from a faster PHY.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **Direction**: Downlink, Uplink. Default Downlink. | Picks which OFDMA timeline the readouts compare with SU. | DL OFDMA and UL OFDMA cost different overhead (UL adds a trigger frame and a Multi-STA BlockAck). |
+| **Channel width** (select): 20, 40, 80, 160 MHz. Default 20. | Sets how many RUs fit. | The RU table: counts per width. |
+| **Clients** (select): 1 to 9 at 20 MHz, up to 18 at 40 MHz and wider. Default 4. | Number of clients, each with one frame. | Comparing clients needs several; the single-client case needs one. |
+| **Frame size per client** (select): 64, 100, 200, 500, 1,000, 1,500 bytes. Default 200. | The frame each client gets. | Small frames are where OFDMA wins; large frames to one client gain little. |
+| **MCS (every client)** (select): MCS 0 to 11 with modulation and coding rate. Default MCS 7. | One MCS for every client. | The defaults reproduce the worked example in the help. MCS 10 and 11 need a 242-tone RU or larger. |
+| **Client** (select: All clients, or Client A, B ...) and **RU size** (select: 26, 52, 106, 242, 484, 996, 2x996 tones, with data + pilot and how many fit). Default four 52-tone RUs. | Sets one client's RU, or every client's. | RU size per client, with the tone plan enforcing valid placements. |
+| **Largest equal RUs** | Gives every client the biggest RU that fits. | A one-press fair split, so the room is not placing RUs by hand. |
+| **Re-pack** | Moves every RU to the low edge. | Tidies the strip after drags. |
+| **Move left**, **Move right** | Moves the selected client's RU along the channel. | The keyboard and button route for the RU puzzle. |
+| Drag a client on the channel strip, or tap it then tap a dashed outline | Places an RU. The dashed outlines are the free spots the tone plan allows. | "The user drags clients into RUs across the channel; the tone plan enforces valid placements". |
+| **Show the arithmetic** / **Hide the arithmetic** | Shows every segment's formula. Estimates carry an Assumption tag. | Every INF estimate is labeled on screen, never shown as a standard value. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. Four clients, 200 bytes each, 20 MHz, MCS 7, four 52-tone RUs.
+2. Ask the room: "OFDMA is sold as faster. Is the data itself going faster?"
+3. Reveal: read the timelines. SU takes 915.6 µs for four TXOPs; DL OFDMA takes 403.3 µs, about 2.2 times less. The data takes 13.6 µs *longer* on the narrower RUs. The saving is three fewer contentions, three fewer preambles and fewer acks (help, `example`).
+4. Optional follow-up: press Down to 1 client, pick 1,500 bytes and a 242-tone RU. OFDMA comes out slightly slower than SU: the longer preamble and triggered ack cost time and there is no one to share them with.
+
+*Pairs with:* Airtime Anatomy (the SU timing comes from its service), Medium Access Simulator (what contention costs), then Spatial Reuse and Multi-Link Operation in the "Wi-Fi 6 and 7 features" sequence. The Teacher's Guide lists an OFDMA lab there; it is not built yet.
+
+*Left out on purpose:* one frame per client, no collisions or retries, the average backoff, best effort, one spatial stream, control frames at 24 Mbps. The HE-SIG-B length, the block-ack rates, the trigger frame size and the Multi-STA BlockAck size are estimates, each labeled. The strip is in tone-plan order with every 26-tone slot the same width, without guard, DC or leftover tones. Scheduling, buffer status reports and sounding are not modeled.
 
 ### MIMO and Beamforming
 
@@ -5127,6 +5666,31 @@ Shows how many spatial streams an access point and a client can use, what the le
 - A capture on the AP sees more than a capture on a laptop: the AP knows what it sent and is the intended receiver for the uplink.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* streams stop at the smaller side, the spare chains still add gain in each direction, beamforming costs sounding airtime, and a nearby sniffer is not the device the AP is aiming at, so it misses beamformed frames the client received fine.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **AP chains** (select): 1, 2, 3, 4, 8. Default 4. | AP antenna chains. | A 4x4 AP and a 2x2 client talk at 2 streams. 8 is an optional large AP. |
+| **Client chains** (select): 1 to 4. Default 2. | Client antenna chains. | Same. Clients stop at 4. |
+| **Swap** | Swaps the two counts. | The reverse case: flip to a 2x2 AP with a 4x4 client, and now the client has the spare chains. |
+| **Downlink** / **Uplink** (on the stage, above the streams picture) | Shows one direction. Spare chains that help are drawn dashed into the lanes. | Spare AP chains give transmit beamforming gain downlink and receive combining gain uplink. The table under the stage shows both side by side. |
+| **AP transmit beamforming**: On, Off. Default On. Disabled with 1 AP chain. | Steers the beam pattern's main lobe at the client. | "Beamforming on/off". A 1-chain AP cannot beamform. |
+| **Client angle** and **Sniffer angle** sliders, 80 degrees left to 80 right (default client 20, sniffer -35); or drag either in the pattern | Moves the client and the sniffer around the AP. | The sniffer's level is the pattern value at its angle compared with the client's. |
+| **Sniffer chains** (select): 1 to 4. Default 1. | The sniffer's receive chains. | A sniffer with fewer chains than the streams sent cannot separate them. |
+| **Channel width and sounding interval** disclosure: **Channel width** (select: 20, 40, 80, 160 MHz; default 80) and **Sounding interval** slider (2, 5, 10, 20, 50, 100, 200 ms; default 10) | Draws the NDPA, NDP and report exchange to scale and its share of airtime. Disabled when beamforming is off. | Beamforming is not free. Width is there to show it barely matters here: the report grows, but it also travels over the wider channel (help). |
+| **Both directions side by side**, **Sounding, in detail**, **Our measurement, in full** disclosures | The full tables and the capture figures. | The capture numbers are shown as a cited measurement, not a model output. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults (4x4 AP, 2x2 client, beamforming on, sniffer at 1 chain).
+2. Ask the room: "Four antennas on the AP, two on the phone. How many streams, and are the other two AP antennas wasted?"
+3. Reveal: 2 streams both ways. Downlink, the AP's 2 spare chains give up to +3.0 dB of beamforming gain; uplink, the same 2 chains give up to +3.0 dB of combining gain. Press Swap and ask who has the spare chains now.
+4. Optional follow-up: press Up a few times to swing the beam toward the client and watch the sniffer's relative level fall. Point at "cannot decode" for the 1-chain sniffer, then open **Our measurement, in full**: beamformed downlink frames failed their FCS 50.8% of the time against 5.1% for non-beamformed frames at matched signal strength.
+
+*Pairs with:* The Number on the Box vs the Number in Your Hand (the streams ceiling, as a rate), OFDMA Resource Units (sounding is one of the things it does not model).
+
+*Left out on purpose:* the gains are ideal upper bounds. The beam pattern is line of sight, one steered stream, from a straight line of elements; indoors reflections make real patterns less clean. The client does not beamform (in our capture, 93% of the client's frames were not beamformed). Sounding figures are estimates for one client, without the wait for the medium and at a fixed report rate.
 
 ### PHY Preamble Reference
 
@@ -5166,6 +5730,33 @@ Draws the preamble of every Wi-Fi PPDU format to scale in microseconds: Legacy (
 - HE-SIG-B and EHT-SIG symbol counts depend on the users and the SIG MCS, so here they are a setting, not computed.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* every PPDU since 802.11a starts with the same 20 µs legacy preamble so older radios defer; what follows is where each PHY differs, and it is where a capture's PHY details come from.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **Mode**: Explore, Which PHY? | Explore opens the fields; Which PHY? walks a receiver's decision. | Explore covers the formats and their fields; Which PHY? covers how a receiver tells them apart. |
+| **PPDU type** (select): Legacy (non-HT), HT mixed (802.11n), VHT (802.11ac), HE SU, HE ER SU, HE MU, HE TB (802.11ax), EHT MU, EHT TB (802.11be). Default HE SU. | Draws that PPDU's preamble to scale in µs. | The preamble for each PHY as labeled blocks, sand for the legacy part, blue for what the PHY adds. |
+| Blocks on the bar, and the field list under it; **Close** | Opens a block's bit table (bit range, field, width, meaning, evidence tag). | What is inside each SIG field, bit by bit, with the evidence level shown so single-source fields are never taught as settled. |
+| **Spatial streams (N_STS)** slider: 1 for Legacy, 1 to 4 for HT, 1 to 8 for VHT, HE and EHT. Default 1. | Adds or removes LTFs. | The preamble grows with streams, one LTF per stream group. |
+| **LTF size and guard interval** (select, HE and EHT only): 2x 0.8 µs GI, 2x 1.6 µs GI, 4x 0.8 µs GI, 4x 3.2 µs GI | Changes each HE or EHT LTF's length. | GI and LTF size for HE. 1x is not offered, because the EHT rate list does not include it (help). |
+| **HE-SIG-B / EHT-SIG symbols** slider, 1 to 12, set by the AP (HE MU and EHT MU only). Default 2. | Lengthens the SIG-B or EHT-SIG field. | The count depends on the users and the SIG MCS, so it is a setting, not computed (help). |
+| **Channel width** (select): 20, 40, 80, 160 MHz | Changes only the VHT-SIG-B layout. | Bandwidth "where it changes" the preamble. Durations per field do not change with width, and this shows that. |
+| **Next step** / **Walk complete**, **Back**, **Reveal**, **Reset** (Which PHY?) | Asks the receiver's next question, takes one back, shows every question and the verdict, starts over. | Walk the decision tree step by step (BPSK vs QBPSK, the RL-SIG repeat, LENGTH mod 3). |
+| **Mystery** (Which PHY?) | Picks a PPDU at random and hides its name until the walk ends. | Built for predict, then reveal (help, `howToUse`). |
+| **L-SIG LENGTH calculator** disclosure: **True PPDU duration, TXTIME (µs)** field (default 200), **2.4 GHz: 6 µs signal extension after the data** switch, **This preamble + 100 µs of data** | Shows the spoofed LENGTH, m, LENGTH mod 3, and how long a legacy radio counts and defers. | How L-SIG LENGTH is set so a legacy radio defers for the whole newer PPDU. |
+| **Readouts: L-SIG and BSS color** and **Sources and evidence tags** disclosures | L-SIG RATE, LENGTH mod 3, where the BSS color sits for this type; the evidence key. | The BSS color moves with the HE PPDU type and is fixed in EHT (help). |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Which PHY?, then press **Mystery**.
+2. Ask the room: "The first symbol after L-SIG is a BPSK copy of L-SIG. What have we narrowed it to?"
+3. Reveal: press Right through the questions. An RL-SIG repeat means HE or EHT, and LENGTH mod 3 splits them: 1 is HE SU or TB, 2 is HE MU or ER SU, 0 is EHT (help, `algorithm`).
+4. Optional follow-up: Explore, HE SU, 2 streams, 2x LTF with 0.8 µs GI: 50.4 µs of preamble. Open the L-SIG LENGTH calculator at 200 µs: LENGTH 130, mod 3 = 1, and a legacy radio defers exactly 200 µs.
+
+*Pairs with:* Airtime Anatomy (the same preamble durations, in a whole TXOP) and A Frame's Journey (what comes after the preamble).
+
+*Left out on purpose:* bit positions come from open-source driver and receiver code and secondary sources, not a reading of the standard, and every field carries its tag. Unsettled fields are marked on screen (HE TB HE-SIG-A, EHT-SIG positions, LTF counts above 4 streams and others listed in the help). The packet extension and the 2.4 GHz signal extension come after the data and are not drawn. SIG-B symbol counts are a setting, not computed.
 
 ### A Frame's Journey
 
@@ -5203,6 +5794,33 @@ Follows one frame across one hop, from the sending radio's NIC (network interfac
 - Not modeled: the preamble (see PHY Preamble), how bits are coded onto subcarriers, the ACK timeout value, the backoff before the retry, retry limits, block acknowledgment for aggregated frames, and encryption.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* one wrong bit anywhere in a frame fails the FCS, the receiver drops it without a reply, and the sender learns about the loss only from the ACK that never comes. Radiotap is added by the capturing receiver and never travels on the air.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **Play** / **Pause**, **Back**, **Step**, **Reset** | Moves through the hop one step at a time. The top card says what happens at each step. | One step per event (bits to RF, the FCS check, SIFS, the ACK, the retry) so you can stop and ask at each one. |
+| **Step** slider (1 of n) | Jumps to any step. | For going straight back to the FCS check. |
+| **Ask the class**, answer buttons **An ACK**, **A request to send it again**, **Nothing**, then **Reveal** (card: **Predict, then reveal**) | Loads the question "One bit of the frame arrives wrong. What does the receiver send back?" with a bit corrupted, records the room's pick, and jumps to just after the FCS check. | The predict prompt. "A request to send it again" is there because 802.11 has no negative acknowledgment to send. |
+| **Band**: 2.4 GHz, 5 GHz, 6 GHz. Default 5 GHz. | Sets channel 6 (2437 MHz), 36 (5180 MHz) or 37 (6135 MHz). | Channel and signal level in the radiotap header follow the band. The SIFS differs at 2.4 GHz (10 µs plus a 6 µs signal extension) and is 16 µs at 5 and 6 GHz. |
+| **Distance** slider, 1 to 30 m (3 to 98 ft), default 8 m (26 ft) | Moves the receiver. The wave's height and the signal level drop; the wavelength drawn never changes. | Shows distance changes amplitude, never frequency (help). |
+| **Corrupt one bit on the first attempt** (switch) and **Which bit** slider, 0 to the frame's last bit, default bit 133 | Flips one bit and names the field it lands in. | Any single bit fails the check, even one inside the FCS itself. |
+| **Receiver is capturing (radiotap)** (switch), default on | Adds or removes the radiotap header on the receiving side. | Radiotap is a pseudo-header added by the capturing driver and not sent over the air. The on-air frame is the same either way. |
+| **Transport**: TCP, UDP. Default TCP. | Changes the transport header. | Changes the frame's size and bytes, so the FCS changes with it. |
+| **Data** (select): 100, 500, 1460 bytes. Default 1460. | Sets the payload. | Same, and 1460 bytes is a full TCP segment. |
+| **Model notes** | What is real and what is illustrative. | Answers "is it really like that?" |
+| Metric / imperial switch (title bar) | Changes the distance units. |  |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults (5 GHz, 8 m, TCP, 1460 bytes). Step through once, clean: the frame is 1538 bytes, it arrives at -44.8 dBm, the FCS matches, and 16 µs later the ACK goes back.
+2. Ask the room: press **Ask the class**. "One bit arrives wrong. What does the receiver send back?" Take a show of hands for each answer and tap the winner.
+3. Reveal: press Reveal. "Nothing." The receiver cannot trust any part of a frame that fails its FCS, not even the sender's address, so it has no one to reply to. Step on to the retry: the Retry bit is set, the FCS is new, and it gets through.
+4. Optional follow-up: turn **Receiver is capturing** off and ask what changed on the air. Nothing did. Point out the trip across takes 26.7 ns and the SIFS is 16,000 ns.
+
+*Pairs with:* Down the Stack (the same air frame, built by the same function, opened layer by layer), PHY Preamble Reference (what precedes the frame), and Airtime Anatomy (what each retry costs in airtime).
+
+*Left out on purpose:* the FCS is a real CRC-32 over this frame's bytes, but the Duration, sequence number, MAC addresses and data are illustrative, as are the radiotap timer and MCS. Not modeled: the preamble, how bits are coded onto subcarriers, the ACK timeout, the backoff before the retry, retry limits, block acknowledgment for aggregated frames, and encryption. The timeline is not to scale.
 
 ### The Number on the Box vs the Number in Your Hand
 
@@ -5238,6 +5856,29 @@ Shows why the speed class printed on a router box is not what one device gets. T
 - For the rate at every MCS, width and stream count, see the MCS Index and the Throughput Calculator. For how the rate falls with distance, see Rate vs Range.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a router's class number adds every radio at its maximum, one client uses one link with its own streams, and distance takes the rate lower again.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| **Show the next step** / **Back a step** (on the stage) | Walks the three bars: On the box, Best case for this client, At a stated distance and width. Each new bar starts at the length of the one above and shrinks. | The visible change: a bar shrinks from the box number to what that client can reach at best. |
+| **Client: phone and laptop are 2x2**: Phone, Laptop, 4-stream. Default Phone. | Picks the client's stream count. | The one control. Throughput defaults to a 2x2 client (Apple and Google publish 2x2 for current phones). Phone and laptop give identical bars on purpose: the stream count sets the ceiling. The 4-stream reference still reaches only the one fastest link. |
+| **Distance from the router** slider, 1 to 60 m (3 to 197 ft), default 5 m (16 ft) | Sets step 3's distance. | Step 3 of the lesson: the signal weakens, the MCS steps down, the rate follows. The 5 m default is illustrative, and the screen says so. |
+| **Channel width, 6 GHz (MHz)**: 20, 40, 80, 160, 320. Default 320. | Sets step 3's width. | A wider channel needs a stronger signal for the same MCS, so far enough out a narrower one wins (help). |
+| **Reset** | Back to the box, the phone, 5 m and 320 MHz. | Starts the walk over. |
+| **Open Throughput Calculator**, **Open MCS Index**, **Open Rate vs Range** (under **Why the numbers differ**) | Opens the tools whose math this one reuses. | Rates come from the Throughput Calculator and level and MCS from Rate vs Range, so the class can check every number there. |
+| Metric / imperial switch (title bar) | Changes the distance units. | Metric first, imperial for US rooms. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. The top bar reads 18,656 Mbps, the sum of the three radios on a BE19000-class box.
+2. Ask the room: "My phone is Wi-Fi 7. How much of that does it get, standing next to the router?"
+3. Reveal: Right. The best case for a 2x2 phone is 5,765 Mbps, 31% of the box. Right again: at 5 m on 320 MHz, MCS 7 and an estimate of 2,306 Mbps, 12% of the box (help, `example`).
+4. Optional follow-up: slide to 20 m and compare 320 MHz with 160 MHz. The narrower channel wins (help: MCS 2 at 346 Mbps against MCS 0 at 231 Mbps). Then switch to Laptop and ask why nothing moved.
+
+*Pairs with:* MIMO and Beamforming (why the smaller side sets the streams), Rate vs Range, the MCS Index card in Course Handouts, and Multi-Link Operation.
+
+*Left out on purpose:* the best case assumes the client supports 320 MHz and 4096-QAM. The 0.80 factor is the Throughput Calculator's favorable estimate, so a speed test usually reads lower. Other clients sharing airtime, walls, interference and Multi-Link Operation are left out, and the client keeps all its streams at a distance, so step 3 is an upper limit. The router vendor is not named.
 
 ## Airtime and Access (13)
 
@@ -5276,6 +5917,36 @@ Shows how Wi-Fi stations share one channel. Each station waits for a quiet mediu
 - Runs are seeded, so the same settings give the same run every time.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* Wi-Fi is half duplex and shared, so stations take turns by counting down a random backoff; collisions double the contention window, more stations mean more waiting, and EDCA lets voice win because it waits less.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play / Pause | Runs or freezes the simulated clock. The tool always opens paused at time zero. | It opens paused and keeps Step working (reduced motion), so the instructor decides when the clock starts. |
+| Step 1 slot | Advances one 9 µs slot. | Backoff counts down one slot at a time and freezes when the medium goes busy. Stepping lets the room call each count and catch the freeze and resume. |
+| Reset | Replays the same run from time zero. | Runs are seeded, so the same settings give the same run. A demo you rehearsed plays the same collisions live. |
+| Speed (air time per real second) | 0.1, 0.5, 2, 20 or 200 ms per second; opens at 0.1 ms per second. | The slow end shows single slots; the fast end lets the throughput and collision numbers settle. |
+| Zoom: Slots / Frames / Wide | Changes the timeline's time scale. While paused, drag the timeline sideways to look back. | Slots shows the countdown cells; Wide shows many frames so the pattern of turns is visible. |
+| Add station / Remove | 1 to 10 stations; opens with 3. Each station row also has its own remove button. | "More stations mean more waiting and more collisions" is a stated goal of the lesson. |
+| Access category (per station) | Voice, Video, Best effort or Background. Only live in EDCA. | The EDCA table gives Voice AIFSN 2 and CW 3 to 7 against Best effort's AIFSN 3 and CW 15 to 1023: priority traffic wins because it waits less. |
+| Offered load (per station) | Always has a frame, or 50, 200, 500, 1,000 or 2,000 frames/s with random arrivals. | Saturated stations show contention at its worst; light loads show how rarely it bites when the channel is quiet. |
+| Per-station table | CW, backoff, delivered and dropped for every station. | The tool asks for current CW per station, so the class can watch 15 become 31, then 63, after each collision. |
+| Channel access: Legacy DCF / EDCA | DCF gives everyone DIFS and CW 15 to 1023; EDCA applies each station's access category. | The tool builds a DCF mode for everyone as the baseline, then EDCA to show voice getting through first. |
+| Hidden node | Stations A, C, E cannot hear B, D, F; everyone still reaches the AP. Needs two or more stations. | Shows collisions nobody could hear coming: the stations never freeze on each other, so frames overlap at the AP. |
+| RTS/CTS | Every exchange becomes RTS, CTS, data, ACK; anyone who hears the CTS sets its NAV. | The fix for the hidden node. |
+| Frame size | 100, 500, 1,000, 1,500 or 2,304 bytes; default 1,500. | The tool makes frame size and PHY rate user controls so the class sees airtime per frame change. The help says the same. |
+| PHY rate | 6 to 54 Mbps (legacy OFDM); default 54. | Same as frame size. The Frame card underneath shows the airtime formula with your numbers in it. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. Three stations, Legacy DCF, 1,500 bytes at 54 Mbps, speed 0.1 ms per second.
+2. Ask the room: "Two stations reach zero in the same slot. What happens to both frames, and what does each station do next?"
+3. Reveal: press Right until a red collision block appears, then open the per-station table: both colliding stations' CW has gone from 15 to 31. Press Up a few times to speed up, Play, and read the collision rate and throughput. Add stations up to 10 and watch the collision rate climb and throughput fall. The help puts one station alone at about 31 Mbps delivered on a 54 Mbps link.
+4. Optional follow-up: switch to EDCA, set station A to Voice and the rest to Best effort, and compare average access delay. Or turn on Hidden node, watch the collisions, then turn on RTS/CTS.
+
+*Pairs with:* Voice Priority, End to End (runs on this engine), Airtime Anatomy, Channel Utilization Meter, Rate Adaptation. Teacher's Guide sequences "Why is the Wi-Fi slow?" and "QoS and contention".
+
+*Left out on purpose:* timing is legacy OFDM (802.11a/g, 9 µs slots, 20 µs preamble); newer PHYs have longer preambles and aggregate frames, and the contention lesson is the same. Uplink only: the AP sends only ACK or CTS. No rate adaptation, no aggregation, no NAV reset rule. RTS/CTS removes most hidden-node collisions, not all: a hidden station whose RTS overlaps the AP's CTS never hears that CTS.
 
 ### Voice Priority, End to End
 
@@ -5313,6 +5984,31 @@ Follows one voice packet toward a phone on Wi-Fi and shows which of the AP's fou
 - Not modeled: the call's upstream direction, where the phone picks the user priority itself, and how the AP maps the upstream frame back to a DSCP.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a call gets the Voice queue on Wi-Fi only if its EF marking survives every hop before the AP and the AP maps it to UP 6; turning on WMM alone does not do it.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Send the packet / Pause | Moves the voice packet along the path toward the phone. | Lets the class watch the mark each hop passes on. |
+| Next hop | Moves the packet one hop. | Stops the packet at the hop that says "Marking lost here" so you can talk about that device. |
+| Reset | Back to the defaults, packet at the caller, no question showing. | Returns to the starting state between demos. |
+| Where the marking is lost: Nowhere / At the AP mapping / At the tunnel / At the internet provider | Picks the hop that resets EF to 0. A dropdown on a phone, where four segments truncate. | The one control that matters: the visible change is the call dropping from Voice to Best effort while a download runs. It corrects "turning on WMM makes my calls good" and "QoS works across the internet". |
+| How the AP maps DSCP to user priority: RFC 8325 table (recommended) / Top three bits (older default) | RFC 8325 maps EF to UP 6 (Voice); top three bits turns EF (46) into UP 5 (Video). | RFC 8325 notes that the common default of copying the top three bits puts EF in the Video queue, and recommends UP 6. This shows the call landing in the wrong queue with nothing on the path at fault. |
+| A download is running | On by default. | With the download off, the four queues come out within a tenth of a millisecond of each other (help). Priority only matters when something else is queued. |
+| Download frames ahead in Best effort (illustrative) | 0 to 256 in steps of 8; default 64. Live only when the call lands in Best effort with the download on; locked while the class predicts. | The queue depth depends on the AP's buffer, so the help labels it illustrative. The default is 64 frames × 0.398 ms = 25.9 ms against 0.48 ms in Voice. |
+| Ask the class / Voice / Video / Best effort / Reveal / close | Loads the question (the provider resets the mark while a download runs), hides the answer, takes a guess, reveals. | The house "predict, then reveal" pattern, built into the tool. |
+| Open Medium Access Simulator / Open DSCP / QoS Markings | Links to the related tools. | EDCA is not rebuilt here (the Medium Access Simulator shows it), and the DSCP / QoS card holds the RFC 8325 table. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. Marking lost Nowhere, RFC 8325 mapping, download running.
+2. Ask the room: press P. "The phone has WMM on and the app marks its voice EF. Your provider resets the mark to 0. While a download runs, which queue does the call wait in?" Take votes on Voice, Video and Best effort.
+3. Reveal: press P again. Best effort, behind the download: about 25.9 ms of waiting at the default 64 frames, against 0.48 ms in Voice.
+4. Optional follow-up: press P to close, set the loss back to Nowhere and press M. The call lands in Video with nothing on the path losing the mark. Then press D to stop the download and show the queues come out nearly equal.
+
+*Pairs with:* Medium Access Simulator, the DSCP / QoS Markings card, Power Save (U-APSD and the voice-call traffic pattern).
+
+*Left out on purpose:* the Wi-Fi hop uses the Medium Access Simulator's simplifications (legacy 54 Mbps timing, one frame size, no aggregation, default client EDCA settings). The download and the call contend as two transmitters, not two queues inside one AP. Whether a tunnel copies the mark outward depends on the device (RFC 4301). Wired hops add delay the tool does not number. The upstream direction, where the phone picks the UP itself, is not modeled. The voice packet every 20 ms and the download queue depth are illustrative.
 
 ### Airtime Anatomy
 
@@ -5367,6 +6063,44 @@ Draws one transmit opportunity (TXOP) to scale, microsecond by microsecond: the 
 - A resend is timed as preamble plus data for exactly the resent bytes. The new wait, the larger contention window after a failure and the acknowledgment are not added.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a PHY rate is only the speed of the data symbols; every transmission also pays for waiting, a preamble and an acknowledgment, and aggregation recovers the airtime that a faster MCS cannot.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Time / Structure (on the stage) | Switches between the TXOP drawn to scale in µs and the inside of the PSDU. | The help says "aggregation is not one thing": the Structure view shows why an A-MSDU and an A-MPDU fail differently. |
+| Compare with scenario B | Stacks a second TXOP on the same scale. On by default. | "Up to two scenarios stacked for comparison (A and B), because comparing is the lesson." |
+| Edit scenario: A / B | Picks which scenario the inputs change. | Needed once there are two scenarios. |
+| Preset buttons: Legacy 6 Mbps, VHT one frame, VHT 32 aggregated, HE 32 aggregated | Loads one of the four scenarios. Opens with A = Legacy 6 Mbps and B = HE 32 aggregated. | These are the four defaults of the WLAN Pros Airtime Calculator, and the tool reproduces their totals: 2,242.5, 214.5, 666.5 and 548.9 µs. |
+| Band: 2.4 / 5 / 6 GHz | Applies the band rules: 2.4 GHz adds a 6 µs signal extension; 6 GHz is HE only; VHT is 5 GHz only. | Band is one of the things the student should see change the share of air that carries data. |
+| PHY | Legacy (a/g), HT (n), VHT (ac), HE (ax, single-user). | The generations differ in preamble length and in data bits per symbol. The tool lists PHY as a per-scenario control. |
+| Channel width | 20, 40, 80 or 160 MHz, limited by PHY. | Part of the lesson's goal. |
+| Legacy data rate / MCS (per stream) | 6 to 54 Mbps for Legacy; MCS 0 to 11 otherwise, limited by PHY. | Part of the lesson's goal: a faster MCS shrinks only the data block. |
+| Spatial streams | 1 to 8 (HT up to 4). | More streams shrink the data block and leave the fixed costs alone, the same lesson as MCS. |
+| Guard interval | HT and VHT 0.4 or 0.8 µs; HE 0.8, 1.6 or 3.2 µs. | Part of the lesson's goal. |
+| Payload per frame | 64 to 2,304 bytes; default 1,500. | Small frames pay the same fixed costs for less data. |
+| Frames aggregated (A-MPDU) | 1 to 64; Legacy sends 1. | Part of the lesson's goal, and the headline of the tool: aggregation recovers airtime. |
+| More settings / Fewer settings | Shows or hides the five less-used settings below. | "Group the less-used ones behind More." |
+| Encryption overhead: 0 / 16 bytes | Adds CCMP/GCMP bytes to every frame. | Ported from the calculator sheet. Shows that security costs a little airtime too. |
+| Access category | Voice, Video, Best effort, Background (default client EDCA values). | Changes AIFS and the average backoff, the wait at the front of every TXOP. The Teacher's Guide QoS sequence uses it. |
+| RTS/CTS protection | Reserves the medium before the data frame. | Shows what the handshake costs on a clean channel. |
+| Control frame rate: 6 / 12 / 24 Mbps | Rate for RTS, CTS, ACK and Block Ack. | Shows how much of the fixed cost is control frames sent at a legacy rate. |
+| HE packet extension | 0, 4, 8, 12 or 16 µs, HE only. | Ported from the calculator sheet; shows a padding cost that carries no data. |
+| Tap or hover a segment / duration table | Shows the segment's duration, its share of the TXOP and the formula with your numbers in it. | The tool asks for each segment's duration and the formula that produced it. |
+| Arrangement (Structure view) | Single MPDU, A-MSDU, A-MPDU or A-MPDU of A-MSDUs; Legacy offers only a single MPDU. | An A-MSDU shares one header and one FCS, so one bad bit loses them all; an A-MPDU gives each subframe its own, so Block Ack names the failed one (help). |
+| MSDUs per A-MSDU: 2 / 3 / 4 | How many packets share one header. | A teaching choice, not a limit from the standard (help). |
+| Corrupt one MSDU, the arrow buttons, or tap a lime block | Damages one MSDU and shows the Block Ack bitmap, what is resent in bytes and time, and all four arrangements side by side. | Makes the A-MSDU versus A-MPDU difference visible as a resend cost. (help) |
+
+*A demo that works (about 3 minutes)*
+1. Set up: scenario A on "VHT one frame", scenario B on "VHT 32 aggregated", compare on.
+2. Ask the room: "One 1,500-byte frame at 867 Mbps. What throughput does it deliver?"
+3. Reveal: press Right to walk scenario A one segment at a time. The lime data block is a sliver between the wait, the preamble and the ACK. The help puts it at about 56 Mbps. Scenario B carries 32 frames in 666.5 µs against A's one frame in 214.5 µs.
+4. Optional follow-up: press V for Structure, A to reach A-MSDU, C to corrupt one MSDU: the whole A-MSDU is resent. Press A to reach A-MPDU: only the one subframe is resent.
+
+*Pairs with:* Airtime Fairness, Multicast at the Basic Rate, Legacy Protection Cost and Channel Utilization Meter (all built on this timing), the MCS Index tool for unusual combinations, Multi-Link Operation (its frame airtime option). Teacher's Guide sequence "Why is the Wi-Fi slow?".
+
+*Left out on purpose:* one station, no contention, no retries; backoff is the average of a draw from 0 to CWmin. HT and VHT use one BCC encoder; HE uses LDPC with pre-FEC padding ignored, so the symbol count can be one short. Single-user HE only, not OFDMA. The Check line misses some VHT MCS exclusions. EHT (Wi-Fi 7) is not modeled. A resend is timed as preamble plus data only, without the new wait or the larger contention window.
 
 ### Airtime Fairness
 
@@ -5400,6 +6134,31 @@ Shows why one slow client drags every fast client down under plain Wi-Fi content
 - Airtime fairness costs the slow client throughput. That is the point: it stops paying for its slow turns with everyone else's time.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* under plain contention every client gets the same number of turns, not the same amount of time, so one slow client drags every fast client down; airtime fairness gives each client an equal share of time instead.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Sharing rule: Packet / Airtime / Compare | Packet fairness (equal turns), airtime fairness (equal time), or both side by side. Opens on Compare. | The fairness switch and compare view: the performance anomaly (Heusse et al., 2003) against its fix. |
+| Replay round | Runs the round animation again. | The animated round: each transmission drawn as wide as its airtime, so the slow client's block visibly dominates under packet fairness. |
+| Play / Pause, Step, Reset (Present mode) | Plays the round, steps one transmission, empties it. | Same round, paced by the presenter. |
+| Payload per frame | 64 to 1,500 bytes; default 1,500. | The lesson: every transmission pays a fixed overhead, so small frames waste most of the air. |
+| Add client | Up to 8 clients. Opens with three at 867 Mbps and one legacy at 6 Mbps. | The default cell, chosen to show the anomaly on sight. |
+| PHY rate (per client) | Presets 6, 24, 54 (legacy); 150, 300 (HT); 433, 867 (VHT); 600, 1201 (HE); or Custom rate. | The preset list, one per generation, so the class can build a realistic mixed cell. |
+| Custom rate and Preamble: Legacy / HT or newer | Any rate from 1 to 10,000 Mbps with a 20 µs or 40 µs preamble. | The tool uses 20 µs legacy and 40 µs as a single teaching value for HT, VHT and HE. |
+| Frames per turn (aggregation) | 1 to 64; legacy clients always 1. | The aggregation count: fast clients recover airtime by sending many frames per turn. |
+| Remove (per client) | Removes that client. | Build the cell down as well as up. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults, then set the sharing rule to Packet.
+2. Ask the room: "If one client drops to 6 Mbps, what happens to everyone else?" (the Teacher's Guide's own example question).
+3. Reveal: play the round. The 6 Mbps block fills most of the round. Read the takeaway line under the switch, which states the slow client's share of the air and what every client gets. Press Up or Down to switch to Airtime: the fast clients recover, the slow client gets less, and the total rises.
+4. Optional follow-up: set every client to 867 Mbps. Packet and airtime fairness give identical results (one of the tool's tests), which shows the anomaly needs mixed rates.
+
+*Pairs with:* the Airtime Fairness lab, four exercises from "A PHY rate is not a throughput" to "Modern clients, same problem". Also Airtime Anatomy, Legacy Protection Cost (a slow device that costs airtime while silent), Rate Adaptation. Teacher's Guide sequences "Why is the Wi-Fi slow?" and "Troubleshooting slow or unstable Wi-Fi".
+
+*Left out on purpose:* one AP sending downlink to every client; every client always has data; no collisions, no retries, no rate adaptation. The 40 µs preamble is one teaching value for HT, VHT and HE. Aggregate size limits are not enforced. Airtime Anatomy does the exact per-PHY timing.
 
 ### OFDMA vs MU-MIMO
 
@@ -5439,6 +6198,32 @@ Compares the two ways an 802.11ax access point sends to several clients at once.
 - OFDMA here keeps the same power per tone as one client alone and is not beamformed. An access point that boosts a small RU, or beamforms inside OFDMA, would change the numbers.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* OFDMA and MU-MIMO are two different ways an 802.11ax AP serves several clients at once. OFDMA splits the channel; MU-MIMO gives every client the whole channel on its own beam, but only after it sounds the channel, and only when the clients sit in different directions. Neither always wins.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Scenario | Four scenarios: Spread out, big frames; Bunched together; Many tiny frames; One far client. Any edit reads "Your own layout". | One scenario per condition MU-MIMO needs, so the class sees each one fail. |
+| The room (drag a client) | Top-down view of the AP and its clients. Each colored lobe is the zero-forcing beam for that client, with a null toward every other client. Pair badges say separable or not separable. | The picture of why direction matters: a null cannot sit on one client without hitting a client right beside it. |
+| Move client, Turn left / Turn right / Closer / Farther | Moves the chosen client 5 deg around the AP or 2 m in or out. | The keyboard path for the drag, and a clean way to walk a client toward another one step by step. |
+| AP antennas | 2 to 8. | Zero-forcing needs at least one antenna per client; more antennas make narrower beams and cheaper nulls. |
+| Clients | 2 to 4, one stream each. | More clients mean a longer sounding and a harder zero-forcing problem. |
+| Channel width | 20, 40, 80 or 160 MHz. | Wider channels make MU-MIMO's whole-channel data faster and its reports bigger. |
+| Frame size | 100, 500 or 1,500 bytes. | Small frames leave MU-MIMO nothing to save, so sounding decides the result. |
+| Exchanges per sounding | 1, 2, 4 or 8. | Sounding is paid once and shared; with one exchange per sounding, OFDMA wins every scenario. |
+| Side-wall reflection | Off / On. | An illustrative second path per client: the channel is no longer just a direction, and the separability changes. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Spread out, big frames. Read the verdict: MU-MIMO wins by 164 µs, about 5%.
+2. Ask the room: "If MU-MIMO sends four clients at once over the whole channel, why is it only 5% faster?" Point at the sounding bracket (533.6 µs) and at the per-exchange line: the data is 108.8 µs faster, the preamble 21.6 µs longer.
+3. Set Exchanges per sounding to 1. OFDMA now wins: sounding is paid for one exchange.
+4. Back to the scenario, then Bunched together: every pair reads not separable, zero-forcing costs over 20 dB, and MU-MIMO cannot decode at all.
+5. Optional: Many tiny frames (OFDMA wins at any exchange count), then One far client (MU-MIMO wins by 27%, because the far client gets the whole channel instead of one RU at MCS 3).
+
+*Pairs with:* OFDMA Resource Units (its timelines are the OFDMA side here, unchanged) and MIMO and Beamforming (sounding for one client). Airtime Anatomy for the single-frame timing underneath both.
+
+*Left out on purpose:* the channel is line of sight plus one optional reflection; zero-forcing is the textbook precoder, not any AP's scheduler. OFDMA keeps the same power per tone as one client alone and is not beamformed. Control frames at 24 Mbps; the report size, HE-SIG-B length and block-ack rate are estimates, each labeled on screen. No retries or collisions.
 
 ### Rate Adaptation
 
@@ -5478,6 +6263,33 @@ Runs one Wi-Fi link frame by frame under Minstrel-style rate control, the kind L
 - The ACK timeout is SIFS + slot + a receive delay of about 20 to 25 µs. The sources disagree on the exact constant, so it is a setting.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a radio does not know its best rate; it learns it by trying rates and keeping statistics, and every retry costs more airtime than the first try.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play / Pause | Runs the link frame by frame. Opens paused with every rate untried. | The play control; opening untried shows the learning from zero. |
+| Step | Sends one frame with all its retries. | Shows one retry chain in full: which rates it tried and in what order. |
+| Restart | Starts a new link that has learned nothing. | The help pairs it with sampling at 0%: restart to see a link that never finds its higher rates. |
+| Speed (air time per second) | 1/50 (watch single frames), 1/10, 1/4, Real time; default 1/4. | The tool lists speed with play and step. The slow end shows single frames, the fast end the trend. |
+| Path: Walk / Steady / Fading | Walk goes out to 60 m and back to 2 m every 20 s; Steady holds 4 m; Fading holds 12 m with up to about 8 dB of swell and fade. | The lesson: as the client walks away the rate steps down, and on the way back sampling finds the higher rates again. |
+| SNR offset | -20 to +20 dB on top of the path; default 0. | The SNR slider: move the whole link up or down the rate table. |
+| Sampling share | 0 to 30% of frames; default 10%. | A small share of frames sample other rates. At 0% the link never discovers a better rate. |
+| EWMA weight on history | 50 to 95%; default 75%. | The smoothing, 75% weight on history: lower it and the table reacts faster and noisier. |
+| Retry chain: On / Off, same rate | On uses best throughput, second best, best probability, then lowest rate; Off keeps every attempt at the first rate. | The retry chain order. Off shows why falling back to a safer rate matters. |
+| Retry limit (attempts): 7 (short) / 4 (long) | Attempts before the frame is dropped. | The two retry limits. |
+| ACK timeout: 45 µs / 50 µs | How long the sender waits for an ACK that never comes. | The sources disagree on the exact constant, so the help makes it a setting. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. Walk path, 10% sampling, speed 1/4.
+2. Ask the room: "This link has never sent a frame. How does it find the right rate, and when the client walks to 60 m, does the rate slide down smoothly or in steps?"
+3. Reveal: Play. The chart shows the chosen rate stepping down against the rate the SNR supports, and the table shows what the radio has learned about each rate, updated every 50 ms. On the walk back, sampling finds the higher rates again.
+4. Optional follow-up: set Sampling share to 0% and press Restart. The link stays low. Or press Down several times to cut the SNR and watch retries pile up.
+
+*Pairs with:* Medium Access Simulator (contention and the doubling CW), Airtime Anatomy (why a lower rate takes longer), What an Interferer Costs (failed frames that rate control can mistake for a weak link). Teacher's Guide sequence "Why is the Wi-Fi slow?".
+
+*Left out on purpose:* the success curve is a teaching model anchored to the conformance-floor sensitivity table, not a measured error curve; real radios do better. It follows Minstrel's published outline; minstrel_ht samples on a timer and sizes chain stages by a time budget. No A-MPDU or Block Ack, so delivered throughput sits far below the PHY rate. One station, no collisions, mean backoff instead of a random draw.
 
 ### What an Interferer Costs (and how a NIC hears the air)
 
@@ -5521,6 +6333,31 @@ Shows how a Wi-Fi radio, the network interface card (NIC) in a laptop or an acce
 - To see these interferers on a screen, open the Spectrum Analysis lesson (its interferer gallery) and the Swept vs FFT race in Fourier and FFT, which shows how a swept analyzer and a real-time fast Fourier transform (FFT) analyzer catch an oven's bursts and Bluetooth's hops.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* for the common interferers, the bigger cost is usually waiting, not lost frames: your radio defers to Wi-Fi it can decode at -82 dBm but to anything else only at -62 dBm, 20 dB (100 times the power) higher.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Opening question: The oven / The neighbor's AP / The same, then Reveal, then Ask again | "A microwave oven and a neighbor's AP on your channel, both at -70 dBm. Which one costs your Wi-Fi more airtime?" Reveal loads that scene into the tool. | The lesson: waiting is the cost, not frame loss. |
+| Source: Wi-Fi AP / Microwave / Bluetooth / Video | Picks the interferer on the meter. A dropdown on a phone. | Four sources side by side. The analog video sender is the counterexample: it stays under energy detect, so nobody waits, and it ruins most frames anyway (Airshark). |
+| Level slider (under the meter) | -100 to -30 dBm in 1 dB steps; the label names the source ("Neighbor AP at your radio", "Oven at its strongest frequency"). The meter's scale never moves. | Watch the marker cross preamble detect and energy detect. Defaults are illustrative: Wi-Fi -78, oven -50, Bluetooth -42, video -70. |
+| Mains power: 60 Hz / 50 Hz | The oven's on-off cycle in the 60 ms sample. Oven only. | Airshark measured the oven's cycle at 16.66 ms and a duty of 0.5. The switch lets a 50 Hz country see its own cycle. |
+| Your AP's channel: Ch 1 / Ch 6 / Ch 11 / 5 GHz | The oven peaks in channel 11 and is weaker on 6 and 1 (illustrative); 5 GHz has no oven and no Bluetooth. Default 11. | A common field observation, an AP on a running oven with high rates and no retries, fits an AP on channel 1 or on 5 GHz. |
+| Channel width (MHz): 20 / 40 / 80 / 160 | On 5 GHz, preamble detect moves to -79, -76, -73 dBm while energy detect stays at -62. | Only preamble detect scales with width, so the 20 dB gap narrows to 17, 14 and 11 dB: the same -82 per 20 MHz. |
+| Neighbor airtime (illustrative) | 10 to 80%; default 30%. | An illustrative default for a co-channel neighbor: 30% airtime at -78 dBm, above -82, so you defer every time it talks. |
+| Path-loss exponent, for the distances: 2.0 free / 3.0 indoor / 3.5 walls | Changes only the distance bars. | Turns 20 dB into distance: a Wi-Fi neighbor defers you from 10 times farther in free space and 4.6 times farther indoors (help). |
+| Reset to defaults | Restores every setting. | Back to the start between demos. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: open the tool fresh. The question sits at the top.
+2. Ask the room: the question as written. Oven or neighbor's AP, both at -70 dBm? Take a show of hands for The oven, The neighbor's AP, The same.
+3. Reveal: pick the room's answer and press Reveal. The neighbor's AP: at -70 it is above -82, so your radio waits every time it transmits. The oven at -70 is under -62, so your radio sends into it, and at that level it barely touches your frames.
+4. Optional follow-up: press N to reach Video at -70. Nobody waits and most frames die, so non-Wi-Fi interference can do real harm. Then press C to reach 5 GHz, open the width and pick 160 to show the gap narrow to 11 dB.
+
+*Pairs with:* Spatial Reuse (BSS coloring relaxes the -82 dBm rule taught here), the Spectrum Analysis lesson's interferer gallery, the Swept vs FFT race in Fourier and FFT, Medium Access Simulator.
+
+*Left out on purpose:* -82 and -62 dBm are the standard's minimum requirements, not what chips do; real chips often detect preambles near -91 dBm. The 40, 80 and 160 MHz values come from one source, and 6 GHz is not modeled. The corrupted-frame shares and the oven's weaker levels on channels 6 and 1 are illustrative. Waiting and frame survival are both computed at your radio. Left out: simultaneous-start collisions, Bluetooth's adaptive hopping, rate adaptation after failures, secondary channels, the 802.11ax per-20 MHz rules.
 
 ### Spatial Reuse
 
@@ -5564,6 +6401,32 @@ Two BSSs share one channel along a line: AP A with client A, AP B with client B.
 - The -82 and -62 dBm thresholds and the per-20 MHz comparison match the Channel Planner, so the two tools agree.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* two BSSs on one channel take turns whenever they hear each other above -82 dBm; 802.11ax BSS coloring and OBSS_PD let a radio ignore a neighbor, but every 1 dB of threshold costs 1 dB of its own transmit power, so spatial reuse buys concurrency with range.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| BSS coloring on (off = legacy radios); in Present, "BSS coloring (802.11ax)" | On by default. Off applies legacy rules and disables the color and OBSS_PD controls. | The color on/off toggle, where off equals legacy behavior. |
+| BSS A color / BSS B color | 1 to 63; defaults 6 and 26. | A 6-bit color lets a radio tell its own BSS from a neighbor. Give both the same number and -82 dBm applies again whatever OBSS_PD is (help). |
+| OBSS_PD threshold, per 20 MHz | -82 to -62 dBm in 1 dB steps; default -82. | The lesson: raise the threshold and AP B may ignore the neighbor, at TX_PWRref minus the amount raised. |
+| TX_PWRref (single source): 21 dBm / 25 dBm | Client or AP with 1 or 2 streams, or AP with 3 or more. | The two reference classes, labeled single-source. |
+| Reset to the starting line | Restores the defaults. | Back to the start between demos. |
+| Link A MCS / Link B MCS | MCS 0 to 13 each must hold; default MCS 7. | Each link card says whether it still holds that MCS, so the cost of reuse shows up as a verdict, not just a dB number. (help) |
+| Channel width, both BSSs | 20, 40, 80 or 160 MHz. | OBSS_PD is per 20 MHz and rises 3 dB per width doubling (single-source). |
+| AP transmit power, both | 5 to 25 dBm; default 20. | Sets the starting power the restriction is taken from. |
+| Path-loss exponent n | 2.0 to 4.0; default 3.0. | The log-distance model; lets you match the room to the building. |
+| Positions (AP A, Client A, Client B, AP B), or drag a radio on the stage | 0 to 60 m on a line; defaults 5, 15, 45 and 55 m. | The draggable positions. The help: move the APs closer until energy detect (-62 dBm) fires, which no color or threshold gets past. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. AP B hears AP A at about -77.7 dBm, above -82, so it waits and the pair needs two frame-times.
+2. Ask the room: "How far do we have to raise OBSS_PD before AP B can send at the same time, and what does AP B give up?"
+3. Reveal: press Up once per dB. At -77 dBm AP B stops waiting, both frames go at once, and AP B's power has dropped 5 dB. Watch each client's SINR and MCS verdict fall as you keep going.
+4. Optional follow-up: set both colors to the same number and show AP B waiting again at any OBSS_PD. Or drag the APs together until energy detect fires.
+
+*Pairs with:* What an Interferer Costs (the -82 and -62 dBm rules this tool relaxes), Channel Planner (same thresholds), OFDMA Resource Units and Multi-Link Operation (Teacher's Guide sequence "Wi-Fi 6 and 7 features").
+
+*Left out on purpose:* only AP B decides; AP A already holds the air, and uplink and clients' own deferral are left out. SRG thresholds and parameterized spatial reuse are out of scope. The MCS sensitivities are conformance floors, so a link that fails here may still work. Airtime counts one equal-length frame per BSS, with no backoff or ACKs. TX_PWRref and the 3 dB per width doubling come from one source.
 
 ### Power Save
 
@@ -5609,6 +6472,42 @@ Puts a client and its AP on a timeline and shows how the client saves battery: b
 - The TIM here is set whenever any frame waits for the client; the finer U-APSD rules for which access categories the TIM covers are not modeled.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a sleeping client wakes for beacons and reads the TIM to learn whether the AP holds frames for it; each power save mode trades time awake for time waiting, so every saving costs latency.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Mode | Always awake, Legacy PS (PS-Poll), U-APSD or Target Wake Time (TWT); default Legacy PS. | The four modes: PS-Poll fetches one frame per poll, U-APSD a service period per trigger, TWT lets the client sleep through beacons. |
+| Compare with | A second mode, or Nothing; default TWT. | Two modes side by side show that every saving costs latency. |
+| Timeline span: 0.3 s / 1 s / 10 s / 60 s | Zooms the timeline. | 0.3 s shows single beacons and polls; 60 s shows the long TWT sleeps. |
+| Window start slider | Slides the view along the run. | Lets you find a moment worth pointing at. |
+| Beacon interval | 50, 100, 200, 300, 500 or 1,000 TU; default 100 TU (102.4 ms). | 100 TU is the common interval, not a mandated value. |
+| DTIM period | 1 to 10 beacons; default 3. | The lesson: DTIM decides how often broadcast and multicast go out; longer saves battery and adds latency. |
+| Listen interval | 1 to 10 beacons; default 3. | The legacy PS wake rule. When it does not line up with DTIM, the tool says the client wakes for both. |
+| U-APSD access categories (Voice, Video, Best effort, Background checkboxes) | Which ACs are trigger-enabled; all on by default. The QoS Info byte is worked out as you go. | The U-APSD flags (QoS Info B0 to B3). |
+| Max SP Length | All buffered, 2, 4 or 6 frames per service period. | The codes 0 to 3 (QoS Info B5 and B6). |
+| Agreement: Individual / Broadcast | TWT agreement type. | Part of the TWT model. |
+| Wake interval mantissa (text field) | 1 to 65,535; default 62,500. | The mantissa is a 16-bit field, and the interval is mantissa × 2^exponent µs. |
+| Wake interval exponent | 0 to 31; default 4 (62,500 × 2^4 µs = 1 s). Intervals over 5 minutes are refused. | Same formula as the mantissa. |
+| 1 s / 30 s buttons | Set 62,500 × 2^4 or 58,594 × 2^9. | Quick jumps to a sensible interval and to the 30 s TWT in the one vendor battery example the tool cites. |
+| Minimum wake duration | 1 to 255 units; default 16 × 256 µs = 4.1 ms. | The wake duration field. |
+| Duration unit: 256 µs / 1 TU (1024 µs) | Unit for the wake duration. | The two units. |
+| Beacons: Sleep through / Wake for DTIM | Whether a TWT client still wakes for DTIM beacons. | The lesson: TWT lets the client sleep through beacons entirely. |
+| Traffic pattern | Phone, mostly idle; Sensor; Voice call; Web page; Custom. | The tool lists traffic pattern as a control; each preset carries its own one-line description. |
+| Downlink bursts, Frames per burst, Uplink frames, Broadcast and multicast, Access category | The traffic detail behind the pattern. | The downlink rate and burstiness plus uplink traffic. |
+| Arrivals: Regular / Random, and New random pattern | Evenly spaced or random arrivals, and a new draw. | Random arrivals show worst-case latency that regular ones hide. |
+| Awake current, Doze current, Battery | Awake 20 to 200 mA, doze 5 to 200 µA, battery 250 to 10,000 mAh. | Energy is awake time × awake current plus doze time × doze current, with currents as labeled parameters. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. Legacy PS compared with TWT (1 s wake interval, sleeping through beacons), traffic "Phone, mostly idle".
+2. Ask the room: "The TWT client skips every beacon and wakes once a second. What does that buy in battery, and what does it cost?"
+3. Reveal: read the readouts for both modes: time awake, average current, battery estimate, mean and worst latency. The TWT client is awake far less and waits far longer for its frames.
+4. Optional follow-up: switch traffic to "Voice call" and compare Legacy PS with U-APSD, the case U-APSD was made for. Or press Up to lengthen DTIM and watch broadcast latency grow. Keep the listen interval a factor or multiple of DTIM (3 with 6 or 9), because when they do not line up the client wakes for both.
+
+*Pairs with:* Multicast at the Basic Rate (DTIM holding multicast), Voice Priority, End to End, Medium Access Simulator. Teacher's Guide sequence "QoS and contention".
+
+*Left out on purpose:* frame-exchange durations, traffic patterns and currents are illustrative. Real clients stay awake after traffic, retry, scan and roam, and APs limit how long they hold frames. The TIM is set whenever any frame waits; the finer U-APSD rules for which ACs the TIM covers are not modeled. The Silicon Labs battery figures in the Currents card are one vendor-commissioned example and the simulator does not use them.
 
 ### Multicast at the Basic Rate
 
@@ -5651,6 +6550,36 @@ Shows what multicast and broadcast data cost the channel. They go at a basic rat
 - The 802.11b timing (192 µs long preamble, 20 µs slot) uses the standard's well-known values; IEEE 802.11 itself was not re-read for this tool.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* multicast and broadcast go at a basic rate so every client can decode them, with no acknowledgment and no retry, so the same bytes can take many times the airtime of unicast; converting to unicast often wins when few clients listen.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play the second / Pause | Sweeps the one-second timeline six times slower than real time. | Shows the stream's busy blocks, the beacons and the DTIM beacons arriving in time. |
+| Next beacon | Moves one beacon at a time. | Walks the DTIM release one beacon at a time with power save on. |
+| Reset | Clears the sweep. | Back to the start of the second. |
+| Presets (illustrative): Voice paging / Video / Service discovery chatter | Loads a stream's bit rate and packet size. | The preset list: a paging stream, a video stream and mDNS-style chatter. |
+| Stream bit rate (illustrative) | 0.064 to 20 Mb/s in fixed steps; default 4. | The slider, labeled illustrative. |
+| Packet size (illustrative) | 200, 400, 576, 1,000, 1,316 or 1,500 bytes; default 1,316. | The packet size, labeled illustrative. |
+| Band: 2.4 GHz / 5 GHz | Default 5 GHz. The 802.11b rates exist only on 2.4 GHz. | Lets you show the 1 Mb/s worst case, which 5 GHz cannot have. |
+| Basic rate | 1, 2, 5.5 or 11 (802.11b, 2.4 GHz only), 6, 12 or 24 Mb/s; default 6. | The lesson: raising the basic rate helps, at the cost of range for multicast. |
+| Show: Multicast / Converted to unicast / Compare both | Default Compare both. | The tool compares the stream with the same stream sent as one unicast copy per listener. |
+| Listening clients | 1 to 30; default 5. | Unicast conversion grows with the listener count, and the readout reports the break-even count. |
+| Listener rates (illustrative) | Spread, MCS 1 to 11; All close, MCS 9; All far, MCS 1. | Unicast copies go at each listener's own rate, so far listeners make conversion expensive. |
+| DTIM period | 1 to 10 beacons; default 3. | The lesson: with a client in power save, multicast waits for the DTIM beacon. |
+| A client is in power save | Off by default. | Same lesson: turn it on to see multicast held and released in bursts. |
+| Ask the class / Under 10% / 10 to 30% / 30 to 60% / Over 60% / Reveal / close | Loads the question and hides the airtime answers until Reveal. | The predict-then-reveal question: "A 4 Mb/s video stream on a Wi-Fi 6 AP. How much of the channel does it use?" |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. 4 Mb/s video, 1,316-byte packets, 5 GHz, 6 Mb/s basic rate, five listeners.
+2. Ask the room: press Ask the class. "A 4 Mb/s video stream on a Wi-Fi 6 AP. How much of the channel does it use?" Take votes on the four ranges.
+3. Reveal: Over 60%. At a 6 Mb/s basic rate it uses 73.8% of the channel (the tool's own screen test). Press Up to raise the basic rate to 24 Mb/s: 21.9%.
+4. Optional follow-up: raise Listening clients past the break-even readout (8 listeners at the defaults, per the same test) and watch unicast become the more expensive choice. Or turn on "A client is in power save" and play the second to see the stream held until each DTIM beacon.
+
+*Pairs with:* SSID Airtime (beacon cost), Airtime Anatomy, Power Save (DTIM). Teacher's Guide sequences "Where the airtime goes" and "Troubleshooting slow or unstable Wi-Fi".
+
+*Left out on purpose:* one AP, no other traffic, no collisions, no retries. Beacons are drawn as markers; their own airtime is SSID Airtime's job. The stream presets, default rates and listener rates are illustrative. A unicast copy to a dozing client would wait for that client; the power save switch holds multicast only. The 802.11b timing uses the standard's well-known values, not a fresh read of IEEE 802.11. RFC 9119 describes the problem; the numbers come from the airtime model.
 
 ### Channel Utilization Meter
 
@@ -5662,7 +6591,7 @@ Shows the number an AP reports as channel utilization, and what it does and does
 1. Read the headline: channel utilization as a percent and as the byte (0 to 255), the Station Count, and the share of time that was truly spare.
 2. Run the channel. The strip scrolls the last few milliseconds: gray preambles and lime data are this network's frames, outlined blocks are ACKs (acknowledgments), dashed gaps are the SIFS (short interframe space) before each ACK, hatched gaps are the DIFS and backoff every sender must wait, striped blocks are another network, crossed blocks are collisions and zigzag blocks are non-Wi-Fi energy. Every kind of block is named in the legend.
 3. Watch the averaging window: each bar is one beacon interval (100 TU, time units of 1024 µs, so 102.4 ms), and the bracket spans the window. The meter is the average over the bracket, so a one-second burst barely moves a 5-second average. Next beacon interval runs one interval, Skip one window fills a whole window at once, Add a 1-second non-Wi-Fi burst adds a burst now, and Reset starts over.
-4. Change the traffic: senders (1 to 50), offered load, data rate, frame payload, and stations that are associated but idle. Change the measurement: the window, and Listener view (counts reservations). Add a neighbor network or non-Wi-Fi bursts.
+4. Change the traffic: senders (1 to 50), offered load, data rate, basic rates (they set the ACK rate), frame payload, and stations that are associated but idle. Change the measurement: the window, and Listener view (counts reservations). Add a neighbor network or non-Wi-Fi bursts.
 5. The meter shows what the access point itself reports: the time its radio heard a signal or was transmitting. The short gap between a data frame and its acknowledgment counts as idle here, because a device never sets its reservation timer (the network allocation vector, NAV) from a frame addressed to it, and the access point is one end of every exchange in its own network. Turn on Listener view to see the channel from a nearby device outside the exchange: it honors the reservation, so the gap counts as busy and the same traffic reads about 76% instead of 73%.
 6. Read the split bar and the readouts: payload, overhead, collisions, other network, non-Wi-Fi, required idle and truly spare. The formula card shows the byte computed with the live numbers.
 7. Many senders: with every sender saturated, busy stays near its ceiling while your data's share falls, because collisions are busy time. The tool's own run is drawn beside points from a published paper.
@@ -5676,6 +6605,7 @@ Shows the number an AP reports as channel utilization, and what it does and does
 | Senders | count | 1 to 50; default 1 |
 | Offered load, each | % | 5 to 100 in steps of 5, a share of what one sender alone can carry; 100 means saturated, a frame always waiting (default) |
 | Data rate | Mb/s | 6, 9, 12, 18, 24, 36, 48 or 54 (802.11g, 2.4 GHz); default 54 |
+| Basic rates | choice | 6, 12, 24 Mb/s (default, the mandatory OFDM rates); 1, 2, 5.5, 11 Mb/s; 6 Mb/s only; 24 Mb/s only; or all eight, 6 to 54 Mb/s. It sets the ACK rate |
 | Frame payload | bytes | 100, 500, 1,000, 1,500 or 2,304; default 1,500 |
 | Associated but idle | count | 0 to 60; default 0 |
 | Averaging window | beacon intervals | 1 to 255; default 50 (5.12 s), the standard's default according to one secondary source |
@@ -5685,7 +6615,7 @@ Shows the number an AP reports as channel utilization, and what it does and does
 | Non-Wi-Fi bursts | switch | Off (default) or On: 4 ms bursts about 20% of the time (illustrative) |
 | Speed | choice | 1 ms per second, 20 ms per second, Real time (default), or 5 s per second |
 
-**How it works.** Channel Utilization = floor(255 × busy µs ÷ (window × beacon period in TU × 1024)), with the beacon period fixed at 100 TU. Busy, as the access point reports it, is physical carrier sense: the radio heard a signal (CCA, clear channel assessment) or was transmitting. In Listener view busy is physical or virtual carrier sense: it adds the NAV that a frame's Duration field sets, here the SIFS between a data frame and its ACK, and the same for the neighbor network's exchanges. Frame timing comes from Airtime Anatomy at 2.4 GHz with 802.11g rates: 9 µs slot, 10 µs SIFS, DIFS = SIFS + 2 slots = 28 µs, 6 µs signal extension, and the ACK at the fastest of 6, 12 or 24 Mb/s that is not above the data rate. Each frame is the payload plus a 26-byte header and a 4-byte checksum, with no encryption bytes. Contention follows the Medium Access Simulator's rules for legacy DCF (distributed coordination function): a contention window of 15 slots at first and at most 1023, a random backoff of 0 to the window counted down only while the channel has been idle for a DIFS, and frozen while it is busy. Two senders reaching zero on the same slot collide, double their window and try again, up to 7 attempts. Senders below saturation get frames at random (Poisson) times. The run is recorded per beacon interval, and the meter averages the last window of them (fewer while the window is still filling). The split bar sorts every microsecond: payload (the payload bits at the data rate), overhead (preamble, header, signal extension, the ACK, and the SIFS in Listener view), collisions, other network, non-Wi-Fi, required idle (DIFS, backoff, the ACK timeout after a collision, and the SIFS in the access point's view) and truly spare (idle with nobody waiting to send).
+**How it works.** Channel Utilization = floor(255 × busy µs ÷ (window × beacon period in TU × 1024)), with the beacon period fixed at 100 TU. Busy, as the access point reports it, is physical carrier sense: the radio heard a signal (CCA, clear channel assessment) or was transmitting. In Listener view busy is physical or virtual carrier sense: it adds the NAV that a frame's Duration field sets, here the SIFS between a data frame and its ACK, and the same for the neighbor network's exchanges. Frame timing comes from Airtime Anatomy at 2.4 GHz with 802.11g rates: 9 µs slot, 10 µs SIFS, DIFS = SIFS + 2 slots = 28 µs, 6 µs signal extension, and the ACK at the highest basic rate that is not above the data rate; if no basic rate fits, at the fastest of the mandatory 6, 12 or 24 Mb/s that is not above it (IEEE 802.11-2024 10.6.6.5.2). Only the OFDM rates in the basic set count, because the ACK keeps the modulation class of the frame it answers; the standard does not say how to settle the two rules against each other, and filtering by class first is the model's reading. Each frame is the payload plus a 26-byte header and a 4-byte checksum, with no encryption bytes. Contention follows the Medium Access Simulator's rules for legacy DCF (distributed coordination function): a contention window of 15 slots at first and at most 1023, a random backoff of 0 to the window counted down only while the channel has been idle for a DIFS, and frozen while it is busy. Two senders reaching zero on the same slot collide, double their window and try again, up to 7 attempts. Senders below saturation get frames at random (Poisson) times. The run is recorded per beacon interval, and the meter averages the last window of them (fewer while the window is still filling). The split bar sorts every microsecond: payload (the payload bits at the data rate), overhead (preamble, header, signal extension, the ACK, and the SIFS in Listener view), collisions, other network, non-Wi-Fi, required idle (DIFS, backoff, the ACK timeout after a collision, and the SIFS in the access point's view) and truly spare (idle with nobody waiting to send).
 
 **Example.** One sender at 54 Mb/s with 1500-byte payloads: the data frame is 57 OFDM (orthogonal frequency-division multiplexing) symbols = 228 µs, plus 20 µs of preamble and SIGNAL field and 6 µs of signal extension = 254 µs. One cycle is DIFS 28 + mean backoff 7.5 × 9 = 67.5 + data 254 + SIFS 10 + ACK 34 = 393.5 µs. As the access point reports it, busy is 254 + 34 = 288 µs, 73.2% of the cycle; in Listener view, which counts the reserved SIFS, it is 298 µs, 75.7%. The payload itself is 12,000 bits at 54 Mb/s = 222.2 µs, 56.5%. Over a full window the AP reports about 186 of 255 (72.9%). That channel is full there: a meter reading 50% on it means about two-thirds of what it can carry is in use, not half.
 
@@ -5695,10 +6625,44 @@ Shows the number an AP reports as channel utilization, and what it does and does
 - Only the primary 20 MHz channel is modeled. Whether the basic field covers only the primary channel is not verified; extended load elements for wider channels exist and are not shown.
 - Available Admission Capacity is the medium time left under explicit admission control, in units of 32 µs per second. Most networks do not run admission control, so it is not a general capacity gauge; this tool shows it as not in use.
 - The many-sender points are from Bianchi (2000), IEEE Journal on Selected Areas in Communications 18(3), read off the paper's figure: about 0.8 of the channel at 5 stations and 0.55 at 50 for basic access, and about 0.83 with RTS/CTS (request to send / clear to send). Those use 1 Mbps parameters: the shape transfers, the exact numbers do not.
+- The ACK rate follows the basic rate set: with 6 Mb/s the only basic rate every ACK goes at 6 and takes 50 µs; with all eight rates basic the ACK goes at the data rate. The lowest basic rate is not a floor for ACKs: with only 24 basic, a frame at 12 is acknowledged at 12. Beacons are left out here, so the basic set changes only the ACKs.
 - Simplifications: every station hears every other (no hidden nodes); after a collision every station waits the ACK timeout instead of the extended interframe space; a new frame always draws a backoff; the neighbor network sends the same frames at the same rate; non-Wi-Fi bursts never land on top of a frame; beacons' own airtime is left out (SSID Airtime shows it).
 - The neighbor's airtime and the non-Wi-Fi burst pattern are illustrative, chosen to show the effect, not measured.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* the channel utilization an AP puts in its beacon is the share of time its radio found the channel busy, averaged over seconds; busy is not the same as used for your data, and idle is not the same as available.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Run the channel / Pause | Scrolls the strip of channel time. | The play control. |
+| Next beacon interval | Runs one 102.4 ms interval. | Each bar under the meter is one beacon interval. |
+| Skip one window | Fills a whole averaging window at once. | Saves waiting 5 seconds for the average to settle in front of a class. |
+| Add a 1-second non-Wi-Fi burst | Adds a burst now. | For example: one 1-second burst in a 5.12 s window moves the reading by at most about 20%, so a spike barely moves the average. |
+| Reset | Starts over. | Back to an empty window. |
+| Senders | 1 to 50; default 1. | The many-sender lesson: with every sender saturated, busy stays near its ceiling while your data's share falls, drawn beside Bianchi's 2000 figures. |
+| Offered load, each | 5 to 100% in steps of 5; default 100 (saturated). | A lightly loaded channel reads low for the right reason. |
+| Data rate | 6 to 54 Mb/s (802.11g); default 54. | The rate control. |
+| Basic rates | 6, 12, 24 Mb/s (default); 1, 2, 5.5, 11; 6 only; 24 only; all eight. | Sets the ACK rate: the highest basic rate not faster than the data frame, else the fastest mandatory rate not faster. "6 only" slows every ACK to 50 us; "all eight" sends the ACK at the data rate. The default keeps every worked number. |
+| Frame payload | 100, 500, 1,000, 1,500 or 2,304 bytes; default 1,500. | The frame size control. |
+| Associated but idle | 0 to 60 stations; default 0. | The lesson: Station Count counts associated stations, not active ones. |
+| Averaging window, beacon intervals (default 50: one secondary source) | 1 to 255; default 50 (5.12 s). | The default is the standard's according to one secondary source, and the label says so. |
+| Listener view (counts reservations) | Off: what the AP reports. On: what a device outside the exchange sees, counting the NAV across the SIFS. | The physical-versus-virtual carrier sense toggle. The same traffic reads 73% as the AP reports it and 76% from outside. |
+| A neighbor network on this channel, and Neighbor's airtime (illustrative) | Adds another network's busy time, 5 to 60%; default 20%. | Busy time the AP's own station count cannot explain, and it pushes clients away whether or not it is the AP's own. |
+| Non-Wi-Fi bursts (illustrative) | Adds 4 ms bursts about 20% of the time. | Busy counts non-Wi-Fi energy loud enough to read busy. |
+| Speed | 1 ms per second, 20 ms per second, Real time or 5 s per second; default Real time. | The slow end shows single frames and gaps in the strip; the fast end fills the averaging window. |
+| Ask the class / About 25% / About 50% / About 75% / 100% / Reveal / close | Loads one saturated laptop and hides the meter. | The question: "One laptop sends as fast as it can. What will the meter read?" |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults (one saturated sender at 54 Mb/s, 1,500 bytes).
+2. Ask the room: press Ask the class. "One laptop sends as fast as it can. What will the meter read?" Most rooms say 100%.
+3. Reveal: About 75%. The meter reads 73%, because every frame waits a DIFS and a random backoff first, and that required silence is idle time. Only about 56% of the cycle is payload.
+4. Optional follow-up: press B during a run and show the 5-second average barely move. Or raise "Associated but idle" to 40: Station Count jumps and utilization does not move. Then turn on the neighbor network: utilization rises and Station Count does not.
+
+*Pairs with:* Airtime Anatomy, Medium Access Simulator, the BSS Load tool (macOS, reads the real element), SSID Airtime. Teacher's Guide sequences "Troubleshooting slow or unstable Wi-Fi" and "Where the airtime goes".
+
+*Left out on purpose:* the formula is the definition, not any product's code; real APs may compute it differently. Only the primary 20 MHz channel is modeled. Every station hears every other (no hidden nodes); after a collision everyone waits the ACK timeout instead of EIFS; beacons' own airtime is left out. The neighbor's airtime and the burst pattern are illustrative. Bianchi's points use 1 Mbps parameters: the shape transfers, the exact numbers do not. Available Admission Capacity shows as not in use.
 
 ### Legacy Protection Cost
 
@@ -5745,6 +6709,37 @@ Shows what one old 802.11b device costs a modern network while it sends nothing.
 - The network is open (no encryption bytes) so the data frame matches the 254 µs worked example; with 16 bytes of encryption it would take one more symbol, 258 µs.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* one associated 802.11b device costs a 2.4 GHz network airtime even while it sends nothing: a slow protection frame in front of every modern frame, and a longer slot time.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play / Pause | Sweeps the two-lane window about two thousand times slower than real time. | Shows modern-only and this network side by side, repeating send cycles. |
+| Next cycle | Moves one send cycle. | Lets you stop on one cycle and point at each cost. |
+| Reset | Clears the sweep. | Back to the start. |
+| 802.11b device associated | On by default. Sets NonERP_Present and Use_Protection and forces the 20 µs slot. | Protection must turn on when an 802.11b station is associated, and the long slot is the second cost. |
+| 802.11b network heard nearby | Off by default. Sets Use_Protection only, never the long slot. | Protection may turn on when an old network is only heard. |
+| The old network is: On our channel / On another channel | Where the heard network sits. | The "own channel only / adjacent channels too" question, labeled because sources disagree. |
+| This AP reacts to: Own channel only / Adjacent channels too | Whether a heard network on another channel triggers protection. | One open-source AP reacts only to its own channel; a 2004 lab report saw protection spread between channels 1 and 11. The standard allows both. |
+| The 802.11b device can use short preamble | Off by default, which sets Barker_Preamble_Mode. | The third ERP bit. Off is illustrative: an old scanner is assumed long-preamble only. |
+| Protection frame: CTS-to-self / RTS/CTS | The kind of protection frame. | The picker: CTS-to-self costs one slow frame, RTS/CTS costs two. |
+| Rate and preamble grid | 1 (long only), 2, 5.5 or 11 Mb/s, long or short preamble; each cell shows its cost. 1 Mb/s short is grayed out. Default 1 Mb/s long. | The default is the worst case the standard allows. 1 Mb/s short is disabled because 802.11b defines short preamble only for 2, 5.5 and 11 Mb/s. |
+| Contrast: 6 Mb/s OFDM | A protection frame at 6 Mb/s OFDM, which an 802.11b device cannot decode. | The contrast option: most of the cost is the old preamble, not protection itself. |
+| CWmin with an 802.11b device associated: 15 / 31 (unverified) | Minimum contention window while the device is associated. | "31 when an 802.11b station is present" comes from one unverified source, so it is a labeled setting. |
+| Frame size | 64, 256, 512, 1,000 or 1,500 bytes; default 1,500. | The sender. Smaller frames make the fixed protection cost a bigger share. |
+| Data rate | 6 to 54 Mb/s (802.11g); default 54. | The sender. |
+| Ask the class / Nothing / 5 to 25% / 25 to 40% / 40 to 60% / Over 60% / Reveal / close | Loads the silent-scanner question and hides the answers. | The question: "An old 802.11b scanner sits in a drawer, associated but silent. How much does it cost the 54 Mb/s laptop?" |
+
+*A demo that works (about 3 minutes)*
+1. Set up: the defaults. 802.11b device associated, CTS-to-self at 1 Mb/s long preamble, 1,500 bytes at 54 Mb/s.
+2. Ask the room: press Ask the class. The scanner in the drawer, associated but silent: how much does it cost the laptop? Take votes on the five ranges.
+3. Reveal: 40 to 60%. The laptop's ceiling falls from about 30.5 to about 14.8 Mb/s. Point at the two costs in the lower lane: the 304 µs CTS, longer than the 254 µs data frame it protects, and the stretched slots.
+4. Optional follow-up: press Up until the protection frame reaches 11 Mb/s short (19.5 Mb/s in the ceiling table). Pick the 6 Mb/s OFDM contrast. Then turn "associated" off and "heard nearby" on: the protection frame stays and the long slot goes.
+
+*Pairs with:* Airtime Fairness (the cost of a slow device's own traffic), Airtime Anatomy. Teacher's Guide sequences "Where the airtime goes" and "Troubleshooting slow or unstable Wi-Fi".
+
+*Left out on purpose:* everything is 2.4 GHz; there is no DSSS at 5 GHz. Which rate an AP uses for protection is up to the implementation; 1 Mb/s long is the slowest legal case. The HT Protection value is a readout only; mode 2 is not modeled. One sender, no collisions, no retries, and the old device sends nothing. The network is open; with 16 bytes of encryption the data frame takes one more symbol.
 
 ### Multi-Link Operation
 
@@ -5784,6 +6779,35 @@ Compares Wi-Fi 7 Multi-Link Operation (MLO) modes on the same random traffic. A 
 - Not modeled: collisions, retries, uplink traffic, more than one frame or A-MPDU per exchange, and EHT (320 MHz, 4096-QAM). HE timing stands in for EHT. With EMLSR switched off, the model keeps the least busy link; a real driver picks by its own rules.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* MLO's latency win comes from sending on whichever link frees up first, so it is real when links are about equally busy, shrinks when one is much busier, and can become a loss; EMLSR pays a switch cost and real drivers often turn it off.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Lesson | Two equal links: MLO wins; One link much busier: the win shrinks; A slow 2.4 GHz link: MLO can be worse; EMLSR switch cost: one clean link. Shows "Your own settings" once you edit. | Each lesson sets up one learning point in one pick. |
+| New random traffic | Draws a fresh sample with the same settings. | Shows that a result holds across samples, not just one lucky draw. |
+| 2.4 GHz / 5 GHz / 6 GHz link switches | Each link on or off; at least one stays on. Default 5 and 6 GHz. | A client holds links on two or three bands. |
+| <band> busy | 0 to 95% per link in steps of 5; default 50%. | The busy fraction per link: the lesson turns on whether the links are equally busy. |
+| <band> mean busy period | 200, 500, 1,000, 2,000 or 5,000 µs; default 1,000. | The busy-period length per link. |
+| Frames per second | 100 to 3,000 in steps of 100; default 1,000. | The arrival rate. |
+| Frame airtime: Fixed / Airtime Anatomy | Fixed µs per frame, or computed from HE MCS and aggregation. | Airtime fixed per frame, or from the Airtime Anatomy service at a chosen MCS. |
+| Airtime per frame, every link | 100 to 2,000 µs; default 300. | Fixed-airtime option. |
+| HE MCS and Frames per A-MPDU (1, 8, 32) | Airtime Anatomy option; default MCS 7. | Lets a slow 2.4 GHz link cost real airtime, as in the "slow link" lesson. |
+| STR / NSTR / EMLSR switches | Which modes to compare; all on. Single link is always shown. | Compare single link, STR, NSTR and EMLSR on the same random traffic. |
+| Padding delay / Transition delay | EMLSR switch delays, 0 to 256 µs; defaults 64 and 64. | The tool takes these values from the Linux kernel's list. EMLSR pays them before each exchange on a newly chosen link. |
+| EMLSR disabled by driver | Falls back to one link. Needs two or more links. | Real drivers may disable EMLSR. Intel's Linux driver leaves it for many reasons, some for 300 or 600 s (help). |
+| Show the lanes for, Time shown (2 / 5 / 20 ms), View starts at | Which mode's frame placement the lanes draw, how much time, and where. | Lets you put one mode's choices on the lanes at a scale where individual frames read. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Lesson "Two equal links: MLO wins".
+2. Ask the room: "Wi-Fi 7 adds a second link. Does latency always drop? What if one link is much busier, or slow?"
+3. Reveal: read the verdict line and the histograms. With equal links, STR beats the best single link. Switch the lesson to "One link much busier: the win shrinks", then to "A slow 2.4 GHz link: MLO can be worse", and watch the verdict line say so.
+4. Optional follow-up: pick "EMLSR switch cost: one clean link" to see EMLSR pay its delays, then turn on "EMLSR disabled by driver". Press N between lessons to show the result is not one lucky draw.
+
+*Pairs with:* Airtime Anatomy (frame airtime), Spatial Reuse and OFDMA Resource Units (Teacher's Guide sequence "Wi-Fi 6 and 7 features").
+
+*Left out on purpose:* the one published MLO latency study (Carrascosa et al., IEEE ICC 2022) is a model driven by real traffic traces, not a field measurement, and no independent Wi-Fi 7 hardware measurement was found. EMLMR is described but not simulated. No collisions, retries or uplink; one frame or A-MPDU per exchange; HE timing stands in for EHT. With EMLSR off the model keeps the least busy link, while a real driver picks by its own rules.
 
 ## Network Design and Security (17)
 
@@ -5827,6 +6851,37 @@ Place 2 to 12 access points on a floor, give each a channel and width, and see w
 - One wall type with one loss. For real materials use the RF Attenuation tool.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* APs on overlapping channels that hear each other share one channel's airtime, and a wider channel leaves fewer channels to reuse, so more APs end up sharing.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Band: 2.4 GHz / 5 GHz | Switches the floor between the two bands. A new band starts with every AP on one channel. | The two planning problems differ: 2.4 GHz is about masks and 1, 6 and 11; 5 GHz is about how many channels survive each width. 6 GHz planning is left to the 6 GHz Power tool (code comment). |
+| Region: US / EU | Swaps the channel plan. The EU plan has no U-NII-4 and stops at 140. | Channel counts differ by region (US 25/12/6/2 at 20/40/80/160 MHz, EU 19/9/4/2), and the class should see that the count is a rule, not physics. |
+| DFS channels (5 GHz) | Adds 52 to 64 and 100 to 144. | Shows how much DFS buys: without it the US has 9 channels at 20 MHz and none at 160 MHz. |
+| U-NII-4 (US) (5 GHz) | Adds 169 to 177. Disabled in the EU. | Lets the class see what the newest US channels add at each width. |
+| Transmit mask: OFDM (g/n/ax) / DSSS (802.11b) (2.4 GHz only) | Picks the mask used for adjacent-channel energy. DSSS has no 40 MHz channel. | This is where 1, 6 and 11 comes from: the OFDM mask is about -34 dBr at 25 MHz spacing but -23.6 dBr at 15 MHz (1 and 4). |
+| Channel width, every AP (Up/Down in Present) | Sets every AP's width at once. | The core lesson: at 20 MHz six APs share nothing; at 80 MHz only two non-DFS channels exist, so three APs share each. |
+| Auto-plan | Greedy assignment that shrinks the largest contention domain at the current width. | The floor opens with all six APs on one channel, "the plan Auto-plan is there to fix" (code comment). It is labeled a teaching heuristic, not any vendor's RRM or DCA. |
+| Reset to the starting floor (R) | Six APs on 36 at 40 MHz, US, DFS off. | Returns to the worst case so the fix can be shown again. |
+| Selected AP, Add AP, Remove AP | Picks an AP; adds or removes one (2 to 12). | More APs on the same floor means more sharing at the same width. |
+| AP n channel, AP n width | Sets one AP's primary channel and width. | Lets you put one AP on a wide channel and show it colliding with narrower neighbors. |
+| AP n across, AP n down (in "Move AP n by the numbers") | Moves the selected AP by the numbers. Tap and drag on the floor do the same. | A keyboard way to do what dragging does. |
+| Wall tool: drag on the floor, Add wall top to bottom, Add wall side to side, Remove wall n, Clear walls | Draws or removes walls. | A wall can drop a neighbor below -82 dBm and split one contention domain into two. |
+| Loss per wall (0 to 30 dB, default 10) | One loss for every wall. | Kept to one wall type and one number on purpose; real materials live in the RF Attenuation tool. |
+| AP EIRP (0 to 30 dBm, default 20), Path-loss exponent n (2.0 to 4.0, default 3.0) | Sets how far each AP is heard. | Contention is decided by what each AP hears, so lower power or a lossier building shrinks the groups. |
+| Floor width, Floor depth | 20 to 100 m (66 to 328 ft) by 10 to 60 m (33 to 197 ft). | The same APs on a smaller floor hear each other more. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: press R. Six APs, 5 GHz, US, DFS off, all on 36 at 40 MHz: one domain of six, about 17% airtime each.
+2. Ask the room: "Press Auto-plan at 40 MHz. How many APs still share a channel? Now what happens at 80 MHz?"
+3. Reveal: Auto-plan at 40 MHz uses all four channels and leaves pairs sharing (largest domain 2). Press Up to 80 MHz and Auto-plan again: two channels, three APs on each. Press Down to 20 MHz and plan: nobody shares.
+4. Optional follow-up: switch DFS on at 80 MHz and plan again, or switch to 2.4 GHz and open "Why they defer, and why 1, 6 and 11" to compare 1 and 6 against 1 and 4.
+
+*Pairs with:* Adjacent Channels and AP Stacking (why a clean channel still hurts up close), DFS and Radar, the 2.4 and 5 GHz channel cards in Course Handouts. Lesson sequences "Channels and the rules" and "Designing a cell plan".
+
+*Left out on purpose:* 6 GHz. The mask is a ceiling, not what a radio emits, so the 2.4 GHz figures are the worst case the mask allows. The -82, -72 and -62 dBm thresholds are the commonly cited values. Deferring on a secondary channel is counted as sharing to keep the picture simple. 1/N airtime assumes an even split among APs that all hear each other; clients, retries and load change the real share. Auto-plan knows only the APs on this floor.
 
 ### Adjacent Channels and AP Stacking
 
@@ -5874,6 +6929,35 @@ Shows why a channel that does not overlap yours still hurts when the other trans
 - Walls, antenna patterns and fading are left out. For which channels overlap on paper and who shares airtime, open Channel Planner.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a neighbor on a channel that does not overlap yours still hurts when it is close, because its transmit mask leaks energy into your 20 MHz where no receive filter can remove it, and distance is what saves you.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Opening question: Yes, a problem / No, they do not overlap; Reveal; Ask again | Records the class's answer; Reveal loads the scene (36 and 44, 30 cm apart) and explains it. | The predict-then-reveal: "Two APs on channels 36 and 44, 30 cm apart on the same ceiling. Any problem?" |
+| Band: 2.4 / 5 / 6 GHz (default 5) | Changes the channel plan and the separations offered. | 2.4 GHz brings the 1/6/11 against 1/4/8/11 comparison; 5 and 6 GHz show gaps between 20 MHz channels. |
+| Neighbor transmit mask: OFDM (802.11a/g) / HE/EHT (802.11ax/be) | Picks the neighbor's mask shape. Shown only when both apply (not in 6 GHz). | Lets the class compare the older and newer masks' skirts. |
+| Neighbor width (MHz) | 20 in 2.4 GHz, up to 160 in 5 GHz and 320 in 6 GHz. You always listen on 20 MHz. | A 20 MHz neighbor's mask is flat past 1.5 channel widths, but a wider neighbor's keeps falling, so an extra empty channel helps there. |
+| Channel separation: Next channel, One channel gap, Two channel gaps; in 2.4 GHz 1 and 6 (25 MHz), 4 and 8 (20 MHz), 1 and 4 (15 MHz) | Moves the neighbor's channel. Center frequencies never move on screen. | Separation and distance both matter; for a 20 MHz neighbor the second empty channel buys nothing more from the mask. |
+| Neighbor distance (slider under the floor line, 0.3 to 30 m (1 to 98 ft), default 3 m; Up/Down in Present) | Moves the neighbor along the line. | The main control: leakage falls with distance at the log-distance slope, and this is what separates "stacked on one ceiling" from "down the hall". |
+| Who is listening: Your client (downlink) / Your AP (uplink) | Relabels the receiver and the wanted transmitter. Default your AP. | Covers both cases the help names: two APs stacked on a ceiling, and a client sitting next to someone else's AP. |
+| Neighbor power (0 to 30 dBm, default 20) | The neighbor's power, antenna gain included. | Leakage rises dB for dB with the neighbor's power. |
+| Your AP power / Your client power; Your AP distance / Your client distance (1 to 60 m, default 10) | The wanted signal's power and distance (label follows Who is listening). | A stronger wanted signal survives more leakage, so the same neighbor can be harmless to a close client and fatal to a far one. |
+| Path-loss exponent (model) (2.0 to 4.0, default 3.0) | Sets the propagation slope. | How fast both signals fall with distance. |
+| Selectivity, next channel / one gap or more (illustrative) (20 to 60 dB; defaults 35 and 51) | How far your receiver's filter pushes down the neighbor's own channel. One slider, for the current separation. | Rejection does not change with rate (ACR plus minimum sensitivity is -66 dBm at every MCS), so one value is enough. Illustrative: no measured selectivity was read. |
+| CCA energy-detect threshold (-82 to -52 dBm, default -62) | The level at which the receiver calls the air busy. | Leakage can stop your AP from transmitting at all, not just lower its rate. |
+| Reset to defaults (R) | Back to the opening defaults. | Returns to the question's starting point. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: press R, then read the opening question aloud.
+2. Ask the room: "Channels 36 and 44 don't overlap. 30 cm (12 in) apart on one ceiling: problem or not?" Click the room's answer.
+3. Reveal: press Reveal. From the help's worked example: -56.7 dBm leaks into channel 44, above the -62 dBm energy-detect threshold, so the AP hears the air as busy; its client 10 m (33 ft) away would get MCS 8 alone, but with the neighbor the SINR is -0.8 dB and the link is lost. Then press Up a few times and watch the link come back as the neighbor moves away.
+4. Optional follow-up: switch to Two channel gaps and show that a 20 MHz neighbor gains almost nothing over one gap; then 2.4 GHz and compare 1 and 6 with 1 and 4.
+
+*Pairs with:* Channel Planner (which channels overlap on paper, who shares airtime). Lesson sequence "Channels and the rules".
+
+*Left out on purpose:* the mask is the worst case the rule allows; real radios run at or below it. Selectivity values are illustrative. Below 1 m the path is taken as free space, so the 30 cm numbers are rough. No walls, antenna patterns or fading.
 
 ### Roaming Walk
 
@@ -5909,6 +6993,33 @@ Walks a client across a floor of access points and shows when it roams and what 
 - Real clients average their readings, scan on their own schedule and weigh more than signal strength.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* the client decides when to roam: it holds its AP until the signal falls below its trigger, then moves only to an AP at least delta stronger, and most of each roam's gap is scanning.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play / Pause / Play again, Step (Step 1 s), Restart (R), Walk time, Speed: 1x (walking pace), 2x, 5x, 10x | Runs, steps and scrubs the walk. | Lets you stop the client just before a roam and ask the room what happens next. |
+| Client: Phone, transmitting (-70/8); Phone, idle (-70/12); Laptop (-75/12); Illustrative sticky (-85/12); Illustrative jumpy (-65/2); Custom | Loads a trigger (dBm) and delta (dB). | The phone and laptop values are Apple's published rules; sticky and jumpy are illustrative because other client platforms publish no roam thresholds. Generic names on screen, the real source in the source line. |
+| Trigger (-90 to -55 dBm; Up/Down in Present) | Where the client starts looking. | Set too low, the client is sticky and clings to a distant AP at a poor rate. |
+| Delta (how much stronger a new AP must be) (0 to 20 dB) | The hysteresis. | Set too small, the client ping-pongs between two APs of similar strength. |
+| 802.11k neighbor list, PMK caching, 802.11r fast transition (FT) | Shorten the scan (k) or the authentication (PMK caching, FT). | Scanning dominates a slow roam, so 802.11k shortens it more than FT does. |
+| Illustrative timings: Dwell per channel, Channels in a full scan, Time per auth frame, Authentication server time (802.1X) | Set what a roam costs. | Every timing is a labeled parameter: the only measured figures (Mishra et al. 2003, one FT capture of 14 ms) are shown as context, not used. |
+| Path: Along the corridor, Under the APs, Corner to corner, Across at 20 m, Down and back, Draw your own (Use this path, Undo, Cancel) | Picks or draws the walk. | Different paths put the client between APs of similar strength, where ping-pong shows. |
+| APs (2 to 6), Move, AP n across, AP n down (or drag on the floor) | Sets AP count and positions. Changing the count spaces them evenly. | Closer APs mean more overlap and earlier candidates. |
+| Band: 2.4 / 5 / 6 GHz; AP power (EIRP, illustrative) (5 to 30 dBm, default 14); Path-loss exponent n | Sets the signal model. The -67 and -70 dBm reach readouts update. | Apple's -70 dBm trigger means a -67 dBm overlap design still leaves a phone on its AP down to -70 dBm. |
+| Shadowing (sigma) (0 to 6 dB, default 2), New shadowing | Adds smooth, seeded shadow fading along the path. | Shadowing is what makes a jumpy client ping-pong between two similar APs. |
+| Show all / Show the last N (roam log) | Expands the roam log. | Keeps the log short on screen. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Restart, Client "Phone, transmitting", three APs, Along the corridor.
+2. Ask the room: "The phone walks right past AP 2. Does it roam to it the moment AP 2 is stronger?"
+3. Reveal: play it. The phone holds its AP until it falls below -70 dBm, then roams. In the help's example (shadowing off) it roams twice and spends 0.2 s below -70 dBm; the Laptop preset spends 11.8 s there, and Illustrative sticky never roams.
+4. Optional follow-up: pick Illustrative jumpy with shadowing on and count the PP (ping-pong) marks; then turn on 802.11k and FT and watch a 351 ms full 802.1X roam drop to 32 ms (help example).
+
+*Pairs with:* Band Steering (bands on one AP, where this is APs on one band), 802.1X and EAP Ladder in Roam mode (the frames of a roam), Association, Frame by Frame. Lesson sequences "Association and roaming" and "Designing a cell plan".
+
+*Left out on purpose:* APs radiate equally in every direction and there are no walls; contours show the average signal without shadowing. Every timing is illustrative. 802.11v is not simulated. Real clients average their readings, scan on their own schedule and weigh more than signal strength.
 
 ### Band Steering
 
@@ -5951,6 +7062,32 @@ Shows why a dual-band client so often stays on 2.4 GHz, and what an AP can and c
 - Platforms document scanning from random MAC (media access control) addresses when not connected; that is what the random-address switch models.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* the client chooses the band; the AP can only hide, refuse, suggest or disconnect, and the same AP sounds weaker on 5 GHz, so a client that joined 2.4 GHz at the edge stays there by its own published rules.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Walk / Pause, Step 1 m, Reset, Walked slider (on the stage) | Moves the client along its path 1 m (3 ft) at a time. | Walking toward the AP only makes the 2.4 GHz signal better, and the class needs to see that the client still does not move. |
+| Walking path: Edge to AP / AP to edge | Direction of the walk (55 m to 2 m by default). | Edge to AP is the question's scene: joining 2.4 GHz at the edge, then never looking again. |
+| Predict, then reveal: Ask the class; Yes, it moves to 5 GHz / No, it stays on 2.4 GHz; Reveal; Close the question | Loads the question (steering off, edge to AP), then walks it in. | The question: "The client walks from the edge of coverage right up to the AP. Does it move to 5 GHz?" Under Client A's and Client B's rules, no. |
+| AP steering: Off; Probe suppression on 2.4 GHz; Authentication refusal on 2.4 GHz; Transition request (802.11v amendment); Deauthentication on 2.4 GHz | Picks what the AP does to a client it has heard on 5 GHz. | The AP's tools, weakest to strongest, and none of them hides the 2.4 GHz beacons. Deauthentication, the fourth, only disconnects the client, which then chooses again. |
+| Client: Client A / Client B / Client C | Loads one published rule set, drawn as threshold lines on the gauges. | Each is one platform owner's published rules, with no vendor or OS name on screen. Client C has no published band rule. |
+| Client uses a random address while scanning | The AP's tracker loses the client. | The AP recognizes a dual-band client by its MAC on both radios; a random scan address stops probe suppression and refusal from applying. |
+| Client C's driver supports transition requests (Client C only) | Whether Client C answers an 802.11v request. | Client C's maker publishes transition-request support and no band rule. |
+| Extra 5 GHz wall loss (illustrative) (0 to 10 dB, default 3) | Adds loss on 5 GHz only. | Free space alone makes 5 GHz 7.1 dB weaker than 2.4 GHz, and walls usually add more, so 5 GHz drops below the entry level first at the edge. |
+| Refusals a client tolerates (illustrative) (1 to 10, default 3) | Used only with authentication refusal. | How many refusals a client tolerates is not published, so it is a labeled slider. |
+| Client rescan time (illustrative) (1 to 10 s, default 3); AP retry interval (illustrative) (1 to 30 s, default 5) | Used only with deauthentication. | No source gives deauthentication timings, so 3 s and 5 s are illustrative. Only a 5 GHz-capable client on 2.4 GHz is deauthenticated. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset, Client A, steering Off, Edge to AP.
+2. Ask the room: press Ask the class and read the question.
+3. Reveal: press Reveal and let it walk. At 55 m (180 ft) 5 GHz is below the floor, so it joins 2.4 GHz; above -70 dBm on 2.4 GHz (about 29 m) Client A stops looking, and at 2 m it is still on 2.4 GHz with 5 GHz at -45.3 dBm (help example).
+4. Optional follow-up: pick Deauthentication and walk again. Client A is thrown off at 33 m, comes back to 2.4 GHz three times, and lands on 5 GHz at 6 m after 4 deauthentications and 12 s without traffic (help example).
+
+*Pairs with:* Roaming Walk (APs on one band), Uplink vs Downlink, Why Two Devices Disagree. Lesson sequence "Why clients misbehave".
+
+*Left out on purpose:* probe suppression and refusal follow one open-source AP's documented behavior; commercial thresholds are not published. Client rules are one published set each; device makers can change every number. Deauthentication steering is vendor behavior, not a mechanism the standard defines, and its timings are illustrative. A PMF client ignores an unprotected deauthentication from anyone but its AP.
 
 ### Survey Walk
 
@@ -5991,6 +7128,37 @@ Walks a site survey down a corridor-and-rooms floor and shows why walking speed 
 - This is a teaching model: the walls are drawn but not modeled, and every timing that is not a common default is marked illustrative.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* walking never distorts a measurement, but walking speed sets how far apart each channel's samples land, through the scanner's revisit time, and the survey rule says the longest revisit allowed is the guess range divided by the pace.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Predict, then walk: Yes, it matters / No, light is too fast; Reveal now; Ask again | Opening question; the answer appears after the first full walk. | The opening card: "RF travels at the speed of light, so does walking speed matter?" Both answers are half right. |
+| Walk / Pause / Walk again, Step, Back to the start (R), Walk time, Speed (1x to 10x) | Runs and scrubs the walk. | Lets you stop and point at a white gap as it forms. |
+| Survey type: Passive / Active / Hybrid | Active shows its five limits and greys out every AP but the associated one. Hybrid needs 2 NICs. | Active surveys are taught for their limits: one client, one point in time, one path, one set of traffic, a single AP. |
+| Data-collection device, by network interface cards (NICs): 1 NIC (a laptop's built-in radio), 2, 3 or 4 NICs | Same channels and dwell on 1 to 4 radios. | A generic device, no product name, 1 to 4 NICs. At the defaults 1 NIC fails the revisit rule and 2 NICs only just pass. |
+| Channels scanned: 2.4 GHz 1, 6, 11 (3); + US 5 GHz (28); + 6 GHz PSCs (43); every 20 MHz channel, US (95); 6 GHz only (59); Custom count (Channel count slider) | The channel list the scanner cycles. | Revisit time grows with the list: 95 channels at 250 ms is almost 24 s per cycle on one radio. |
+| Dwell per channel (20 to 500 ms, default 250); Channel switch per hop (illustrative) (0 to 50 ms) | Time on each channel, and switching overhead. | 250 ms is labeled a common survey default; dwell times the channel count is the cycle. |
+| Hopping algorithm: Sequential / Band per NIC / Priority; Channels in use (priority) chips; Priority every k-th slot (2 to 6, default 3) | How NICs share the list. | Pace works in tandem with how many NICs there are and how the scanner changes channel. Priority channels get short spacing and the rest get longer. |
+| Capture method: Continuous / Line / Stop and go; Stop every (2 to 20 m, Stop and go only) | Where samples land between clicks. | Continuous spreads samples evenly in time, so a pause slides them; stop and go stacks them at a point in one fade. |
+| Timestamps: Per channel / Per cycle | One stamp per channel or per cycle. | Per-cycle stamping moves early channels up to one revisit distance off; which one products use is not published. |
+| Pause at the door; Pause (1 to 10 s, default 3) | Stops the walker halfway along the first leg with no click. | Shows placed samples sliding away from where they were taken (rings mark the true spots). |
+| Walk path: Straight corridor, Loop, Perimeter, Draw your own | Picks or draws the walk. | Longer paths and turns add clicks and pauses. |
+| Walking pace (0.5 to 2.0 m/s, default 1.4; Up/Down in Present) | Walker speed. | Spacing = pace x revisit time. Comfortable gait is 1.27 to 1.46 m/s (4.2 to 4.8 ft/s). |
+| Guess range (accuracy distance) (1 to 20 m, default 5) | How far the map may guess from a sample. | A good indoor choice is 5 m. Any stretch with no sample within half the guess range turns white: no data, never no coverage. |
+| Show this channel's samples: All channels (shape = band) or one channel | Filters the dots. | Each channel has its own spacing, so one channel's gaps are the lesson. |
+| Signal along the path; New fading | Shows each sample's level, with a new fading draw. | A moving scanner draws a new fade at every sample; a stationary one repeats one fade. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Back to the start. Passive, 1 NIC, 28 channels at 250 ms, 1.4 m/s (4.6 ft/s), guess range 5 m (16 ft), Straight corridor.
+2. Ask the room: the opening question. Record the answer.
+3. Reveal: walk it. 1 NIC revisits a channel every 7.0 s, 9.8 m (32 ft) apart, and Rule 4 fails (3.57 s allowed). Switch to 2 NICs: 3.5 s and 4.9 m, which only just passes (help example).
+4. Optional follow-up: turn on Pause at the door in Continuous (samples slide up to 2.0 m), then switch Timestamps to Per cycle (up to 9.45 m).
+
+*Pairs with:* Heat Map Builder, then Predict, Then Measure. Lesson sequence "Surveys and heat maps".
+
+*Left out on purpose:* the walls are drawn but not modeled. Whether real survey apps stamp per channel or per cycle, and how they place samples between clicks, is not published. No product names or vendor timings anywhere. No active-survey direction-skew mode.
 
 ### Heat Map Builder
 
@@ -6030,6 +7198,37 @@ Builds a heat map from survey samples you place on a floor, so you can see which
 - This is a teaching model: the truth is a log-distance model with wall losses, the noise is illustrative, and real maps also carry antenna, adapter and position errors.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a heat map is mostly guesses drawn in the same colors as the measurements; the interpolation method, the guess range and the sample spacing decide how wrong it is, and white means no data, not no coverage.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| A tap on the floor will: Add a sample / Inspect a cell | A tap adds a sample (snapped to 0.5 m) or shows which samples made a cell, drawn as lines as thick as their weights. | Inspecting a cell shows the map is a weighted average of dots, not a measurement. |
+| Remove the last sample, Clear every sample | Undo and clear. | Lets you rebuild the three-dots scene by hand. |
+| Grid, Corridor walk; Grid and walk spacing (1 to 10 m, default 3) | Places samples on a grid or along a corridor. | Closer samples make the map more accurate, up to the point where noise on single readings dominates. |
+| Method: IDW / Nearest neighbor | Inverse distance weighting, or copy the closest sample. | One documented method from the interpolation literature; no survey vendor publishes its algorithm, so the tool never says which a product uses. |
+| Power (p) (1 to 6, default 2; P steps 1, 2, 4, 6 in Present) | How local the IDW guess is. | High power approaches nearest neighbor and turns the map blocky; the worked example shows -60.5, -58.1 and -55.8 dBm for p = 1, 2 and 4. |
+| Average the samples in: dB / Milliwatts (mW) | Averaging domain. | The answer moves (-58.1 against -56.2 dBm at p = 2), and which domain products use is not published. |
+| Guess range (1 to 20 m, default 5; Up/Down in Present) | Cells farther than this from every sample are white. | No data is not no coverage. The fix is to go get the data, not to widen the range. |
+| Beyond the guess range: Off / Flat IDW / Path-loss fill | What fills past the guess range. | IDW can never go below its lowest sample, so it goes flat past the last point; a path-loss model can extrapolate distance but cannot see an unmeasured wall. |
+| Map view: Heat map / Truth / Error map (E in Present) | Switches what the floor shows. | The error map is where the hidden wall shows up. |
+| Start: three dots, then Reveal: widen the guess range, Reveal: the hidden wall, End the lesson | The built-in three-step lesson (N in Present). | The question: "Three dots can paint the whole floor green. Should they?" |
+| Reveal wall / Hide wall | Shows or hides the 12 dB wall no sample crossed (W in Present). | A model cannot see a wall no one measured across: about 17 dB of error on the far side. |
+| Spacing experiment | Re-runs the grid at several spacings and plots RMSE against spacing. | Shows accuracy improving with spacing, then flattening once noise dominates. |
+| Noise on one reading, sigma (0 to 8 dB, illustrative); Readings averaged per point (1 to 36); Take the samples again (Space in Present) | Adds fading noise and averaging. | Averaging N readings shrinks the noise by the square root of N. |
+| Inspected cell, across / down | Moves the inspected cell by the numbers. | A keyboard way to inspect a cell. |
+| APs (1 to 4, default 2); Path-loss exponent (n) (2.0 to 4.0) | Sets the truth the samples read. | Changes the floor under the same method so the class sees the method's error, not the building's. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: R, then press Start: three dots (N).
+2. Ask the room: "Three dots can paint the whole floor green. Should they?"
+3. Reveal: N widens the guess range and the floor fills with confident color from three readings; N again reveals the hidden wall on the error map, about 17 dB wrong on its far side.
+4. Optional follow-up: press P to step the power and watch the map turn blocky, or run the Spacing experiment.
+
+*Pairs with:* Survey Walk before it, Predict, Then Measure after it. Lesson sequence "Surveys and heat maps".
+
+*Left out on purpose:* the truth is a log-distance model with wall losses, and the noise is illustrative; real maps also carry antenna, adapter and position errors. IDW uses the 8 nearest samples: plain IDW over every sample rises past the last point and would fail the "goes flat" lesson.
 
 ### Predict, Then Measure
 
@@ -6067,6 +7266,34 @@ Tests a predictive design against the building with an AP on a stick (APoS): a t
 - This is a teaching model: straight-line wall losses only, no doors, reflections or floors above and below.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* every wall loss in a predictive design is a claim, and only an AP-on-a-stick walk with samples on both sides of a wall can test it.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Scenario (illustrative): Office / School / Warehouse | Loads a floor, walls and a hidden truth. | Different buildings, same lesson. |
+| Reset scenario | Resets the design, the AP, the walk and the reveal; keeps the hidden truth. | Lets you walk the same building again. |
+| A tap or drag on the floor will: Draw the walk / Move the AP | Drag draws a walk leg (a tap continues it); or moves the AP on a stick. | The student designs the validation walk. |
+| One side only; Both sides of every wall (O and B in Present) | Loads a corridor walk that stays on one side, or short legs across every wall. | The Rule 5 contrast: one side leaves walls untested; both sides tests them. |
+| Remove the last leg of the walk; Clear the walk (C in Present) | Undo and clear. | Rebuild the walk. |
+| Noise on each sample (illustrative) (0 to 8 dB; Up/Down in Present) | Adds noise to each reading. | Shows what real readings do to the wall estimates. |
+| Map: Predicted / Measured / Difference / Truth (Truth only after reveal; M in Present) | Switches the map. | The Difference map is each sample minus the design at that spot, which is where a wrong wall shows. |
+| Update model (U in Present) | Replaces each tested wall's design loss with its measured loss. | After correcting the model, the design may need an AP moved, added or removed. Untested walls keep what the design said. |
+| Reveal the truth / Hide the truth (Space in Present) | Shows the true wall losses and the Truth map. | The reveal for "The design shows green everywhere. What would you check before signing it off?" |
+| Wall, "Wall n design loss" (0 to 45 dB), "<Material> default, X dB" | Edits a wall's predicted loss; resets it to its material default. | Every loss is illustrative: drywall 3, glass 4, brick 10, concrete 15, elevator shaft 25 dB. |
+| AP across, AP down | Moves the AP on a stick. | Moving the AP walks the same path again from the new spot. |
+| Instructor: the hidden truth: "Wall n true loss", New hidden truth | Sets any wall's true loss, or draws a new seeded truth. | The instructor can plant the wrong wall where the lesson needs it. By default two walls are much worse than the design and one is better. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Office, Reset scenario. Show the Predicted map: green, every wall "untested".
+2. Ask the room: "The design shows green everywhere. What would you check before signing it off?"
+3. Reveal: press O (one side only) and show the walls still untested. Press B (both sides): walls turn "tested" with measured losses, and the Difference map lights up the wrong ones. Press Space to reveal the truth and show which wrong walls the first walk missed.
+4. Optional follow-up: press U and show the Predicted map change, then ask whether the AP needs to move.
+
+*Pairs with:* Heat Map Builder (the same sample-and-map method), Survey Walk, Room Propagation and Wi-Fi Through a Wall for how one wall attenuates. Lesson sequence "Surveys and heat maps".
+
+*Left out on purpose:* straight-line wall losses only: no doors, reflections or floors above and below. Wall losses are illustrative values, not material data; no primary source for multi-wall coefficients was used. An AP-on-a-stick walk tests the walls it crosses and nothing else.
 
 ### Where Am I? Signal Strength vs Round-Trip Timing
 
@@ -6105,6 +7332,30 @@ Finds a device on a floor of 3 to 6 APs two ways and shows how far off each one 
 - This is a teaching model: the log-distance model, the shadowing, the power each AP radiates and the blocked-path distance are illustrative, and real location systems also face AP position errors, clock offsets and floors above and below.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* signal strength gives distance badly, as a factor that grows with distance, while fine timing measurement (FTM) gives meter-class distance, and a blocked direct path makes timing read long.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Method: Signal strength / Timing / Both (Tab or M in Present) | Shows one method's circles and scatter, or both side by side. Default Both. | Side-by-side scatters make the difference visible at a glance. |
+| Re-sample (Space in Present) | Draws new measurement errors. | The 50 repeated estimates show the spread, not one lucky answer. |
+| Ask: -70 dBm, how far?; Reveal the answer; End the question (P in Present) | The built-in question. | The question: "Your phone sees an AP at -70 dBm. How far away is it?" |
+| Path-loss exponent (n) (2.0 to 4.0, default 3.0) | The model the distance is inverted with. | The one-sigma error factor is 10^(sigma / 10n). |
+| Shadowing sigma (illustrative) (0 to 10 dB, default 6; Up/Down in Present) | Random loss on each signal reading. | A few dB of shadowing becomes meters: at 6 dB and n = 3 the factor is 1.585, so 10 m reads 6.3 to 15.8 m. |
+| Timing error, one standard deviation (vendor-documented 1 to 2 m) (0.5 to 3 m, default 1.5) | FTM ranging noise. | Keeps the timing claim tied to its source, a vendor developer document. |
+| Blocked AP chips (AP 1 to AP n; B toggles AP 1 in Present); Blocked-path extra distance (illustrative) (0 to 10 m, default 4) | Blocks an AP's direct path; its circle is dashed and reads long. | The first path to arrive is a reflection, so timing reads long, never short. |
+| APs (3 to 6, default 4); Device position, across / down (or drag the device) | Sets the geometry. | Three or more distances give a position; bad distances give a bad, and sometimes impossible, position. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: R. Method Both, four APs, sigma 6 dB.
+2. Ask the room: press P. "Your phone sees an AP at -70 dBm. How far away is it?" Take numbers.
+3. Reveal: press P again. The model says 21.1 m (69 ft), and one sigma of shadowing makes it 13.3 to 33.5 m (help example). Point at the two scatters: timing is tight, signal strength is wide.
+4. Optional follow-up: press B to block AP 1 and watch the timing position pull off while its circle turns dashed.
+
+*Pairs with:* the Find My, Explained lesson (where the dot on the map comes from), Roaming Walk for the same log-distance model.
+
+*Left out on purpose:* the log-distance model, shadowing, 17 dBm per AP and the blocked-path distance are illustrative. The 1 to 2 m timing figure is a vendor document, not a measurement here. Real systems also face AP position errors, clock offsets and floors above and below.
 
 ### Repeaters and Mesh Backhaul
 
@@ -6143,6 +7394,30 @@ Shows what relaying costs. A corridor holds the root AP, one to three relays (a 
 - The delay counts only the forwarding delay at each hop, not the time a frame waits for the shared channel.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a relay with one radio on one channel makes every frame cross the air twice, so the hops take turns (1/T = 1/T1 + 1/T2); a dedicated backhaul radio or a cable lets them run at once, and a weak hop back to the AP limits everything behind it.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Predict, then reveal: Ask the class; three reasons; Reveal; Done / Close the question | Loads the question's scene (repeater 30 m down the corridor, laptop 2 m from it) and hides the throughputs. | The question: "Your repeater shows full bars to the laptop. Why is it slower than before?" |
+| Relays: 1 / 2 / 3 (Up/Down in Present) | Number of relays, spaced evenly. | Each extra same-channel hop costs airtime again and adds delay. At the default spot two relays beat one, and three lose to two. |
+| Backhaul: Same channel, one radio; Dedicated backhaul radio, another channel; Wired backhaul | How the relays reach the AP. | The core contrast: turns on one channel against the slowest hop (dedicated) against the last hop alone (wired). |
+| Band: 2.4 / 5 / 6 GHz | Changes path loss and channel width. | Shows the same relay lesson at each band's range. |
+| Efficiency (illustrative) (0.40 to 0.80, default 0.60) | Turns PHY rate into what a hop carries. | Labeled illustrative so no one reads the Mb/s as a measurement. |
+| Forwarding delay per hop (illustrative) (0 to 10 ms, default 1) | Adds per-hop delay. | Relaying adds delay as well as cutting throughput. |
+| Relay position / Client position (or drag on the corridor) | Moves a node along the 60 m (197 ft) corridor. | The point: where the relay stands matters more than where the client is. The sliders are the keyboard way to do what dragging does (code comment). |
+| Play the frames / Pause, Reset | Animates frames taking turns, or running in parallel with a dedicated backhaul. | Makes the shared air visible. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset. One relay, same channel, 5 GHz.
+2. Ask the room: press Ask the class and read the question. Pick the class's reason.
+3. Reveal: press Reveal. The laptop has MCS 11 to the repeater, but the repeater hears the AP at MCS 1: 77.2 Mb/s through the repeater against 86.5 Mb/s the laptop got straight from the AP (help example).
+4. Optional follow-up: drag the repeater toward the AP (at 12 m the total rises to 115.3 Mb/s), then switch Backhaul to Dedicated and press Space to show both hops sending at once.
+
+*Pairs with:* Airtime Fairness, the Mesh, Extenders and Wired Access Points explainer.
+
+*Left out on purpose:* the formula is for one radio relaying on one channel, worked out from airtime; no published multihop measurement was checked. With several relays sharing one dedicated backhaul channel, those hops would take turns again. Traffic flows one way, with no neighbors, collisions or retries. The delay counts only forwarding, not waiting for the channel.
 
 ### Why a Busy Line Lags
 
@@ -6176,6 +7451,27 @@ Shows why a video call stutters when someone else in the house uploads. A chart 
 - To measure your own line while it is busy, use Network Quality (its responsiveness figure measures round-trip time during a download) or Test My Connection (its loaded responsiveness check). The tool's About card opens both.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* lag is delay, not speed: an upload fills the line's queue on any plan and the call waits behind it, and smart queue management keeps the queue short where a faster plan does not.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Smart queue management (SQM): Off / On (Up turns on, Down turns off, Q switches in Present) | Switches the router's queue management. The other setting stays as a dashed line. | The one control: the latency trace drops from hundreds of milliseconds back toward idle. It corrects "more Mbps fixes lag". |
+| The home line: Fiber / Cable / DSL (default Cable) | Loads the FCC's figures for that technology and rescales the chart. | The picker sits beside the one switch so the class sees DSL suffer most. |
+| Play the call / Pause, 1 s on, Reset | Runs the 20 s in real time or steps it. | Lets you stop while the upload runs and read the delay. |
+| Time into the run (0 to 20 s), or drag across the chart | Moves the playhead; the queue picture shows what the call's packet waits behind. | The queue picture is the mechanism behind the number. |
+| Open Network Quality, Open Test My Connection | Opens the two tools that measure a real line under load. | Moves the class from the model to their own line. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset (Cable, SQM off, whole run drawn).
+2. Ask the room: "Someone starts a big upload during your video call. Does a faster plan fix the lag?"
+3. Reveal: play it. The call goes from 18 ms idle to 225 ms, 12.5 times idle. Press Up: with SQM on the same upload leaves it at 23 ms (help example).
+4. Optional follow-up: switch to DSL with SQM off: 29 ms to 665 ms.
+
+*Pairs with:* Test My Connection and Network Quality, the Home Internet explainer.
+
+*Left out on purpose:* the SQM-on curve is illustrative (idle plus FQ-CoDel's 5 ms target); no consumer measurement of it was found. The busy figures are read by eye from the FCC's chart. Left out: the Wi-Fi hop, queues inside the provider and at the far end, jitter and loss. There is no built-in predict question on this tool; ask it yourself.
 
 ### DFS and Radar
 
@@ -6214,6 +7510,31 @@ Runs one access point on a simulated one-hour clock and shows what Dynamic Frequ
 - Not modeled: off-channel CAC in the EU, a second radio that listens while the first serves, and radar signal levels. The detection threshold is shown for context only.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* before transmitting on a DFS channel an AP must listen for radar (60 s, or 10 minutes on EU channels 120 to 128); after radar it must leave within 10 s and stay off for 30 minutes, and the only real choice is where it goes next.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play / Pause / Play again, Step 10 s, Restart, Clock, Clock speed: 1x (real time), 10x, 60x (1 min per second), 300x (5 min per second) | Runs the one-hour clock. Default 10x. | A 30-minute block and a 10-minute CAC need a fast clock to fit a class. |
+| Radar now (D in Present) | The AP detects radar now; unavailable on a non-DFS channel. | The radar-event button: shows the closing, the move and the 30-minute block. |
+| Region: US (FCC) / EU (ETSI) | Swaps the channel plan and the rules. | The 10-minute CAC is ETSI only; channel 144 is DFS in the US and not in the EU plan. |
+| Width (20, 40, 80, 160 MHz) | Channel width. Default 20. | Wider channels touch more DFS channels. |
+| Starting channel (default 100) | Where the AP starts; the list says which are DFS and how long each CAC takes. | Starting on DFS shows the CAC before the first frame. |
+| After radar: Prefer non-DFS / Another DFS | Where the AP moves. | The only real choice: a non-DFS channel is available at once; another DFS channel means another CAC. |
+| Random radar: Off, 2, 6 or 12 per hour; New random pattern | Adds seeded random radar. | Shows repeated moves over an hour. |
+| Timeline: Whole hour / 3 minutes | Zooms the timeline. | A short move is invisible at the hour scale. |
+| AP EIRP (17 to 30 dBm, default 23) | Feeds the detection-threshold readout only. | Detection thresholds are shown for context, not modeled. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Restart. US, 20 MHz, channel 100, Prefer non-DFS.
+2. Ask the room: "The AP reboots on channel 100. When does it send its first frame? And if radar hits at 5:00, how long are clients without service?"
+3. Reveal: play. First transmission at 1:00. Press D near 5:00: it moves to 36, a 1.0 s outage, and 100 is blocked until 35:00 (help example).
+4. Optional follow-up: switch After radar to Another DFS (104, a 61.0 s outage), then EU, starting on 116: the move lands on 120 and waits 10 minutes.
+
+*Pairs with:* Channel Planner (DFS on or off), the 5 GHz channel card in Course Handouts. Lesson sequences "Channels and the rules" and "Designing a cell plan".
+
+*Left out on purpose:* the FCC's 60 ms of control signals comes from one secondhand source. The AP's 1 s move and client rejoin delays are illustrative. Not modeled: EU off-channel CAC, a second radio listening while the first serves, radar signal levels. Some real APs block only the part of a wide channel that saw radar.
 
 ### Down the Stack, Across the Air, Up the Other Side
 
@@ -6252,6 +7573,31 @@ Animates the protocol stack the way it is taught in a classroom. A laptop on Wi-
 - A mesh network built on 802.11s can carry up to six addresses using its Mesh Control field; the four-address case here is the plain one. Frames that carry several packets at once (an A-MSDU, aggregate MAC service data unit) fill Addresses 3 and 4 differently.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* data gains a port, an IP address and a MAC address on the way down; the IP addresses stay the same end to end while the MACs change on every hop, and Address 3 on the air is the router's MAC, not the server's.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Predict, then reveal: Ask the class; The server's / The router's / The AP's; Reveal; Close the question | Loads laptop to a server on another subnet; Reveal jumps to where the laptop fills in the 802.11 header. | The predict prompt "Whose MAC is in Address 3?" |
+| Play / Pause, Back, Step, Reset, Journey step (Up/Down in Present) | Moves the data one layer or hop at a time. | Each header added, read and replaced is one step, so the class can watch each change. |
+| Show: The journey / Address fields (V in Present) | Switches the drawing and the address table. | Separates the path from the four address fields. |
+| To DS / From DS buttons: 0 0, 0 1, 1 0, 1 1 (D in Present) | Shows each case's worked scene and Addresses 1 to 4. | The fourth address exists for a hop where both radios are relays, such as a mesh or WDS backhaul. |
+| Direction: To the server / The reply | Reverses the journey. | Shows the MACs change on every hop in both directions. |
+| Server: Another subnet / Same subnet | Adds or removes the router. | On the same subnet there is no router and Address 3 becomes the server. |
+| Transport: TCP / UDP | 20-byte or 8-byte header. | Shows the transport header's size in the stack. |
+| Data: 100, 500 or 1460 bytes (fills 1500 with TCP) | Payload size. | 1460 bytes fills a 1500-byte IPv4 packet, so the class can add up 1538 bytes on the air. |
+| QoS (quality of service) Data header, 26 bytes | 26-byte QoS Data header or the textbook 24-byte header. | Nearly every data frame on a modern network is a QoS Data frame (on-screen note). |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset. To the server, Another subnet, TCP, 1460 bytes.
+2. Ask the room: press Ask the class. "On the air, whose MAC address is in Address 3?"
+3. Reveal: Reveal jumps to the 802.11 header: Address 1 is the AP's BSSID, Address 2 the laptop, Address 3 the router's LAN interface. Step on and show the router lower the TTL from 64 to 63 and build a new frame, while 192.0.2.10 and 198.51.100.20 never change (help example).
+4. Optional follow-up: switch Server to Same subnet and show Address 3 become the server; press D through the four DS cases.
+
+*Pairs with:* A Frame's Journey (on Signals and PHY, the air hop, FCS, SIFS and the ACK), Association, Frame by Frame.
+
+*Left out on purpose:* no NAT (most home routers change the source IP). MACs, port 51000 and TTL 64 are illustrative; IPs come from the RFC 5737 documentation ranges. Layers 5 and 6 are not drawn. Left out: ARP, the ACK, the PHY preamble, encryption, aggregation, VLAN tags, IPv6, and 802.11s six-address mesh frames.
 
 ### Conference Wi-Fi Runs Out of Addresses
 
@@ -6293,10 +7639,35 @@ Follows the DHCP (Dynamic Host Configuration Protocol) address pool through a co
 - Illustrative: the crowd, the arrival shape, the stay and the reserved addresses. Set them to your event.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* the DHCP pool has to cover everyone who arrived within one lease time, not the people in the room, so an event network runs dry with full bars, and adding APs adds no addresses.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Predict, then reveal: Ask the class; Add more APs / A shorter lease or a bigger pool / A faster internet line; Reveal; Close the question (P in Present) | Loads the defaults and stops at the first device with no address. | Corrects "the Wi-Fi is down, add APs". |
+| Play the morning / Pause, +10 min, Reset, Time | Runs 07:00 to 13:00. | The dry time is a moment in the morning, so the class watches it arrive. |
+| Lease time (5 min to 8 days, default 1 day; Up/Down in Present) | The server's lease. | The one control: the pool runs dry mid-morning with long leases and holds with short ones. |
+| Devices rotate their private address on this open network (M in Present) | Rotating devices come back as new clients. | Phones that rotate on open networks take a second address. One platform maker documents rotating as the default on open networks. |
+| Share of devices that rotate (assumption) (0 to 100%, default 50); A rotating device comes back as new every (assumption) (15 to 240 min, default 60) | The rotation assumptions. | No device maker publishes a rotation interval, so both are labeled assumptions. |
+| Subnet: /24 to /19 | Pool size. | The other fix: a /23 holds even with the 1-day lease. |
+| Reserved: gateway, servers, printers (illustrative) (0 to 100, default 10) | Addresses taken off the top. | Set to your event. |
+| People over the morning (50 to 5,000, default 250); Devices each person puts on the Wi-Fi (1.0 to 3.0, default 1.5); Average stay (15 to 360 min, default 90) | The crowd. All illustrative. | The defaults are an example; set them to your event. |
+| Open Association, Frame by Frame; Open Subnet Planner | Links out. | One DHCP exchange frame by frame, and subnet sizing. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset, then P (Ask the class).
+2. Ask the room: "Mid-morning, full bars, nothing loads. What fixes it?"
+3. Reveal: P again. The pool (244 addresses) ran dry at 10:18 with only 113 devices in the hall: 132 addresses are still held for devices that left (help example). Press Down until the lease reads 30 min and the same morning holds.
+4. Optional follow-up: set a 2-hour lease (it holds), then press M for rotation: it runs dry at 09:21.
+
+*Pairs with:* Association, Frame by Frame (one DHCP exchange), Subnet Planner.
+
+*Left out on purpose:* nothing is released early, though some devices do send a release when they leave on purpose. Not modeled: short leases for new clients, per-network leases, captive portals, IPv6. The crowd, arrival shape and stay are illustrative.
 
 ### Association, Frame by Frame
 
-Plays every frame a client sends and receives to associate with a Wi-Fi network, from the first scan to the first useful packet: the scan, Open System or SAE authentication, association, the EAP exchange for 802.1X, the 4-way handshake, DHCP, the address check, then ARP and DNS. A channel strip above the ladder shows the scan channel by channel, and a timeline under it shows how long each phase takes. It teaches the frames; to actually join this device to a network, use Join a Network.
+Plays every frame a client sends and receives to associate with a Wi-Fi network, from the first scan to the first useful packet: the scan, Open System or SAE authentication, association, the EAP exchange for 802.1X, the 4-way handshake, DHCP, the address check, then ARP and DNS. A channel strip above the ladder shows the scan channel by channel, and a timeline under it shows how long each phase takes. It teaches the frames; to actually connect this device to a network, use Join a Network. A second mode, Why won't it associate?, pairs a client with a network and shows whether they associate, and if not, the exact frame where it stops.
 
 **Why it's here.** Open System authentication and association are bookkeeping, not security, and the network is not usable after association: the keys come in the 4-way handshake, and the client still has no IP address until DHCP and an address check finish. Seeing each phase to scale shows where a slow association spends its time, which is often the scan and the address check, not the Wi-Fi security.
 
@@ -6305,8 +7676,11 @@ Plays every frame a client sends and receives to associate with a Wi-Fi network,
 2. Tap any sent message to see what it carries. The Association Request lists the SSID, listen interval, capability information, supported rates, the RSN element (key management, ciphers and the PMF capable and required bits) and the HT, VHT, HE and EHT capabilities; the response carries the status code and the association ID.
 3. Each step number has a mark beside it: M for a management frame, D for a data frame. The EAPOL-Key frames of the 4-way handshake are data frames. A lock marks data frames encrypted after message 4; a shield marks a management frame protected by PMF (802.11w), which only happens once keys exist.
 4. Watch the channel strip: in a passive scan the AP beacons every 102.4 ms, and a beacon sent while the radio is on another channel is missed (hollow). Lower the passive dwell below 51 ms to see the scan miss the AP altogether. Switch to 6 GHz to see probes go only to the 15 PSCs, or pick Known via RNR to see a 2.4 or 5 GHz beacon name the 6 GHz AP.
-5. Address check: pick ACD, Address Conflict Detection (RFC 5227), in which the client checks that no one else already has its new address with three ARP probes 1 to 2 s apart and then an announcement, or DNAv4, Detecting Network Attachment (RFC 4436), one unicast ARP to the gateway it remembers from before. The timeline shows Address Conflict Detection as the long bar it is.
-6. On a computer or tablet, Present opens the tool full screen for a projector: Space plays or pauses, the Right arrow sends the next frame and the Left arrow takes one back, R resets, Up and Down change the passive dwell by 10 ms, F switches full screen, ? lists the keys and Esc exits.
+5. In 6 GHz, set 6 GHz view to Compare all four to race four ways of finding the AP on one clock: listen on all 59 channels, probe the 15 PSCs, go straight to the channel an RNR named, or listen 20 TU on each PSC for FILS Discovery. Each strip is one method's scan to scale, and each ends with the time it first heard the AP. Play sweeps the clock; Step jumps to the next finding. RNR time: Include counts the 5 GHz scan in which the client heard the RNR; Leave out shows the 6 GHz part alone.
+6. Address check: pick ACD, Address Conflict Detection (RFC 5227), in which the client checks that no one else already has its new address with three ARP probes 1 to 2 s apart and then an announcement, or DNAv4, Detecting Network Attachment (RFC 4436), one unicast ARP to the gateway it remembers from before. The timeline shows Address Conflict Detection as the long bar it is.
+7. Mode: pick Why won't it associate? to pair a client with a network. Choose a client (Older laptop, WPA2 only; Printer, no PMF; Phone, WPA3 capable; New laptop, 6 GHz; Phone, Wi-Fi 7) and the network's security, PMF, band, Wi-Fi 7 AP and H2E only. The verdict above the ladder says what happens and why, with its source; the ladder plays up to the frame where it stops, marked with a red X, and ends with Stopped here and what the help desk sees. Open Client capabilities to switch each key management type, cipher, band, H2E and Wi-Fi 7 on or off; the client then reads Custom.
+8. Four outcomes. Associates: the key management (AKM), cipher and PMF both sides agree on. Never tries to associate: nothing in the AP's RSN element fits, so the client sends no Authentication or Association Request at all and the AP has nothing in its log; this is the common case. Refused: a device older than PMF ignores a network that requires PMF, tries, and gets status 31 in the Association Response. Not offered: 6 GHz allows only OWE, WPA3-Personal only and WPA3-Enterprise only.
+9. On a computer or tablet, Present opens the tool full screen for a projector: Space plays or pauses, the Right arrow sends the next frame and the Left arrow takes one back, R resets, Up and Down change the passive dwell by 10 ms (in Why won't it associate?, they step the network security and C cycles the client), S turns the 6 GHz race on or off in Play the association (switching to 6 GHz; the race is not offered in Why won't it associate?), F switches full screen, ? lists the keys and Esc exits.
 
 **Inputs**
 
@@ -6317,26 +7691,108 @@ Plays every frame a client sends and receives to associate with a Wi-Fi network,
 | Band | choice | 2.4 GHz (channels 1 to 11), 5 GHz (25 US channels), 6 GHz (59 channels, 15 PSCs); default 5 GHz. The AP is on channel 6, 44 or 37 |
 | Scan | choice | Active (probe requests; DFS channels are only listened to) or Passive (listen for beacons); default active |
 | 6 GHz discovery | choice | PSC scan, or Known via RNR (a 2.4 or 5 GHz beacon already named the 6 GHz AP) |
+| 6 GHz view | choice | One method (the ladder) or Compare all four (the race); 6 GHz only; default One method |
+| RNR time | choice | Include the 5 GHz scan that heard the RNR, or Leave out; race only; default Include |
 | Address check | choice | ACD, Address Conflict Detection (RFC 5227), or DNAv4, Detecting Network Attachment (RFC 4436); default ACD |
 | Timing | ms, illustrative | active dwell 10 to 100 (30), passive dwell 20 to 250 (111), frame time 0.5 to 5 (1), RADIUS round trip 1 to 200 (10), crypto 0 to 500 (50), wired LAN round trip 1 to 50 (5), Address Conflict Detection wait before the first probe 0 to 1000 (500) and time between probes 1000 to 2000 (1500) |
+| Mode | choice | Play the association (default), or Why won't it associate? |
+| Client | choice | Older laptop, WPA2 only; Printer, no PMF; Phone, WPA3 capable; New laptop, 6 GHz; Phone, Wi-Fi 7 (generic and illustrative), or Custom: AKMs PSK (2), SAE (8), SAE (24), OWE (18), 802.1X SHA-1 (1), 802.1X SHA-256 (5), 802.1X 192-bit (12); ciphers TKIP, CCMP-128, GCMP-256; PMF older than PMF, not capable, capable or required; H2E; 2.4, 5 and 6 GHz radios; Wi-Fi 7 |
+| Network security (Why won't it associate?) | choice | Open, OWE, WPA2-Personal, WPA3-Personal transition, WPA3-Personal only, WPA2-Enterprise, WPA3-Enterprise transition, WPA3-Enterprise only, WPA3-Enterprise 192-bit; default WPA3-Personal only. PMF is a choice only for the two WPA2 modes |
+| Wi-Fi 7 AP, H2E only | on or off | A Wi-Fi 7 AP also enables SAE (24) and GCMP-256; H2E only sets BSS membership selector 123 in the WPA3-Personal modes |
 
-**How it works.** Scan: each channel of the band is visited once for its dwell (active: a probe request, and the AP answers on its own channel; passive, and DFS channels in an active 5 GHz scan: listen only). The AP beacons every 102.4 ms, the first one 51.2 ms into the dwell on its channel, so a passive dwell shorter than that misses it. In 6 GHz an active scan probes only the 15 PSCs, and the AP also sends a FILS Discovery frame every 20 TU. Then Open System authentication (2 frames) or SAE commit and confirm (4 frames, before association), association (2 frames), for 802.1X the EAP exchange from the 802.1X and EAP Ladder, and the 4-way handshake (4 EAPOL-Key data frames). IP: DHCP Discover, Offer, Request, Ack (RFC 2131); Address Conflict Detection (RFC 5227: wait 0 to 1 s, three ARP probes 1 to 2 s apart, then 2 s before the announcement, 4 to 7 s in all) or Detecting Network Attachment (RFC 4436: one unicast ARP to the remembered gateway and its reply); then ARP for the gateway (not needed after DNAv4) and a DNS query. Time = scan dwells + frames x frame time + EAP round trips x RADIUS time + crypto time (TLS, SAE or OWE) + wired LAN round trips + the Address Conflict Detection waits.
+**How it works.** Scan: each channel of the band is visited once for its dwell (active: a probe request, and the AP answers on its own channel; passive, and DFS channels in an active 5 GHz scan: listen only). The AP beacons every 102.4 ms, the first one 51.2 ms into the dwell on its channel, so a passive dwell shorter than that misses it. In 6 GHz an active scan probes only the 15 PSCs, and the AP also sends a FILS Discovery frame every 20 TU. Then Open System authentication (2 frames) or SAE commit and confirm (4 frames, before association), association (2 frames), for 802.1X the EAP exchange from the 802.1X and EAP Ladder, and the 4-way handshake (4 EAPOL-Key data frames). IP: DHCP Discover, Offer, Request, Ack (RFC 2131); Address Conflict Detection (RFC 5227: wait 0 to 1 s, three ARP probes 1 to 2 s apart, then 2 s before the announcement, 4 to 7 s in all) or Detecting Network Attachment (RFC 4436: one unicast ARP to the remembered gateway and its reply); then ARP for the gateway (not needed after DNAv4) and a DNS query. Time = scan dwells + frames x frame time + EAP round trips x RADIUS time + crypto time (TLS, SAE or OWE) + wired LAN round trips + the Address Conflict Detection waits. A 6 GHz PSC probe waits until the channel has been idle 7 ms (dot11MinPSCProbeDelay, its default in IEEE 802.11-2024); a probe for an AP an RNR named goes at once. The race: listen on all 59 channels at the passive dwell; probe the 15 PSCs at the active dwell; for RNR, a 5 GHz active scan (when included), then one directed probe on channel 37; or listen 20 TU (20.48 ms) on each PSC. Each frame's wait is the average, half its interval. Why won't it associate?, in order: not offered if the band is 6 GHz and the security is not OWE, WPA3-Personal only or WPA3-Enterprise only; never tries if the client has no radio in the band, no AKM in common, no cipher in common, or (for a client that reads the PMF bits) PMF required on one side and not possible on the other (Table 12-5); SAE and OWE only with PMF on, and SAE only with H2E where H2E is required; refused with status 31 when a client older than PMF meets PMF required; otherwise it associates. The client picks SAE (24), SAE (8), then PSK for personal networks (WPA3 order), 192-bit, SHA-256, then SHA-1 802.1X for enterprise, and the strongest cipher both offer (the model's reading). A Wi-Fi 7 connection needs both sides Wi-Fi 7, PMF on, an AKM other than PSK, SAE (8) or 802.1X SHA-1, and GCMP-256 on both sides; otherwise a Wi-Fi 7 client associates as Wi-Fi 6.
 
-**Example.** WPA2-Personal, 5 GHz active scan, Address Conflict Detection, defaults: 24 frames over the air (8 management, 16 data), 7.59 s in all: scan 2.05 s, authentication 2 ms, association 2 ms, 4-way handshake 4 ms, DHCP 14 ms, Address Conflict Detection 5.50 s, ARP and DNS 14 ms. With DNAv4 (Detecting Network Attachment) instead: 2.08 s, the address check 7 ms. A passive 5 GHz scan takes 2.77 s; an active 2.4 GHz scan 330 ms; an active 6 GHz scan of the 15 PSCs 450 ms; a passive 6 GHz scan of all 59 channels 6.55 s. At a 40 ms passive dwell the AP is not found.
+**Example.** WPA2-Personal, 5 GHz active scan, Address Conflict Detection, defaults: 24 frames over the air (8 management, 16 data), 7.59 s in all: scan 2.05 s, authentication 2 ms, association 2 ms, 4-way handshake 4 ms, DHCP 14 ms, Address Conflict Detection 5.50 s, ARP and DNS 14 ms. With DNAv4 (Detecting Network Attachment) instead: 2.08 s, the address check 7 ms. A passive 5 GHz scan takes 2.77 s; an active 2.4 GHz scan 330 ms; an active 6 GHz scan of the 15 PSCs 450 ms; a passive 6 GHz scan of all 59 channels 6.55 s. At a 40 ms passive dwell the AP is not found. The race at the defaults: listen on all 59 finds the AP at 1.01 s, probe the 15 PSCs at 69 ms, RNR at 2.05 s counting the 5 GHz scan (3 ms without it), and listening 20 TU on each PSC at 51 ms, first. At a 10 ms active dwell, probing the PSCs finds it at 29 ms and wins. Why won't it associate?: Older laptop, WPA2 only on WPA3-Personal only: never tries to associate, stopped at the Probe Response. Printer, no PMF on WPA2-Personal with PMF required: refused, status 31. Phone, Wi-Fi 7 on a Wi-Fi 7 WPA3-Personal AP: a Wi-Fi 7 connection with SAE (24), GCMP-256, PMF on; on WPA2-Personal it associates as Wi-Fi 6 with PSK.
 
 **Field notes**
-- Every phase time is a setting: no published measurement breaks a typical join down by phase. The scan dwell defaults are one real example (Linux mac80211, about 30 ms active and 111 ms passive); many drivers scan in firmware with their own dwell. The beacon interval of 102.4 ms is a default, not a mandate.
+- Every phase time is a setting: no published measurement breaks a typical association down by phase. The scan dwell defaults are one real example (Linux mac80211, about 30 ms active and 111 ms passive); many drivers scan in firmware with their own dwell. The beacon interval of 102.4 ms is a default, not a mandate.
 - OWE (Enhanced Open) encrypts without authenticating: the Diffie-Hellman keys in the association frames give both sides the PMK. 6 GHz requires WPA3 or OWE, with PMF.
-- PMF (802.11w) protects deauthentication, disassociation and robust Action frames once keys exist. Beacons, probes, authentication and association frames are never protected. The ladder ends with a Block Ack setup (ADDBA) after the join to show the shield; it is not counted in the join time.
+- The race's AP sends a FILS Discovery frame every 20 TU. IEEE 802.11-2024 requires that of a 6 GHz-only AP that wants to be found (or one sending unsolicited Probe Responses); an AP with a 2.4 or 5 GHz radio may use a longer interval, and then listening 20 TU per PSC can miss it. The race assumes the client finishes its 5 GHz scan before it tunes to the channel an RNR named.
+- PMF (802.11w) protects deauthentication, disassociation and robust Action frames once keys exist. Beacons, probes, authentication and association frames are never protected. The ladder ends with a Block Ack setup (ADDBA) after the association to show the shield; it is not counted in the association time.
 - With Detecting Network Attachment (DNAv4), a real client often skips the four DHCP messages and asks only to keep its old address. The ladder keeps them so the two address checks compare side by side.
 - Not drawn: channel changes, retries, the DHCP client's own start-up delay, IPv6, and 802.11ai (FILS) fast initial link setup. The DNS server is drawn on the wired LAN lane with the DHCP server and the gateway.
 - Roaming between APs, frame by frame, is in the 802.1X and EAP Ladder: switch its Mode to Roam.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
+- Why won't it associate? draws the security each pair actually negotiates. In 6 GHz it does not swap WPA2-Personal for WPA3 the way Play the association does: the network is simply not offered there.
+- Status 31 is rare in practice: a client that knows PMF reads the network's bits and never tries. Statuses 42, 43 and 46 (invalid cipher, invalid AKMP, cipher rejected by policy) need a client that ignores the AP's advertisement, so they are not drawn.
+- H2E only in 6 GHz is a Wi-Fi Alliance rule (WPA3 Specification v3.5 section 11.2); IEEE 802.11-2024 does not mention H2E there. H2E is a password method, not a key-management type.
+- Not modelled: WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Real devices vary by model, driver and operating system version.
 
+**Teaching it**
+
+*Teaches:* Open System authentication and association are bookkeeping, not security; the keys come in the 4-way handshake, and the client still has no IP address until DHCP and an address check finish, which is often where a slow association spends its time.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Play / Pause / Play again, Back, Step, Reset, Show all, Speed: Slow / Normal / Fast | Sends one frame at a time, takes one back, or draws the whole ladder. | One frame at a time is how the class reads a capture. |
+| Tap any sent message | Shows what it carries; the Association Request lists SSID, rates, RSN element with the PMF bits, and HT to EHT capabilities. | Association is where client and AP agree on capabilities. |
+| Security: Open, OWE (Enhanced Open), WPA2-Personal (PSK), WPA3-Personal (SAE), 802.1X (Enterprise) (default WPA2-Personal) | Changes the middle of the ladder. | SAE replaces Open System authentication before association; 802.1X hands off to the EAP ladder's middle. |
+| EAP method, Inner method (EAP-TTLS), Certificate size (802.1X only) | The EAP middle, shared with the 802.1X ladder. | Uses the same engine as the 802.1X and EAP Ladder, so the two tools always agree. |
+| PMF (802.11w): Off / Optional / Required | The RSN element's MFPC and MFPR bits; forced where the standard requires it. | PMF protects management frames only once keys exist; beacons, probes, authentication and association are never protected. |
+| Band: 2.4 / 5 / 6 GHz (default 5) | The AP is on 6, 44 or 37. In 6 GHz, Open is drawn as OWE and WPA2 as WPA3. | 6 GHz requires WPA3 or OWE with PMF. |
+| Scan: Active / Passive | Probe requests, or listening for beacons. | A passive scan waits for beacons every 102.4 ms, a default, not a mandate. |
+| 6 GHz discovery: PSC scan / Known via RNR (6 GHz only) | Probe the 15 PSCs, or learn the AP from a 2.4 or 5 GHz beacon. | The point: 6 GHz discovery differs. |
+| Address check: ACD / DNAv4 | Address Conflict Detection (three ARP probes 1 to 2 s apart) or Detecting Network Attachment (one unicast ARP). | Both options side by side; ACD is drawn as the long bar it is. |
+| Timing (illustrative): Active dwell per channel (default 30 ms), Passive dwell per channel (default 111 ms; Up/Down in Present), Time per frame over the air, RADIUS round-trip time, Crypto time (public-key work), Wired LAN round trip (DHCP, gateway, DNS), ACD wait before the first probe, ACD time between probes | Every phase time. | No published measurement breaks an association down by phase, so every phase is a labeled setting; the dwell defaults are Linux mac80211 as one real example. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset. WPA2-Personal, 5 GHz, Active, ACD.
+2. Ask the room: "After association, is the client on the network?" Then: "Of the 7.6 seconds it takes to associate, where does the time go?"
+3. Reveal: Step through: keys arrive only in the 4-way handshake, and the timeline shows scan 2.05 s and ACD 5.50 s against a few milliseconds of Wi-Fi security (help example). Switch Address check to DNAv4: the total time to associate drops to 2.08 s.
+4. Optional follow-up: switch Scan to Passive and press Down until the dwell is below 51 ms: the scan misses the beacon and the AP is not found (at 40 ms per the help).
+
+*Pairs with:* 802.1X and EAP Ladder (Roam mode for the roam), Why a Long Wi-Fi Password Matters More on WPA2 (links in to the 4-way handshake and SAE), Conference Wi-Fi Runs Out of Addresses. Lesson sequences "Association and roaming" and "Wi-Fi security modes".
+
+*Left out on purpose:* every phase time is a setting. Not drawn: channel changes, retries, the DHCP client's start-up delay, IPv6, 802.11ai (FILS). With DNAv4 a real client often skips the four DHCP messages; the ladder keeps them so the two checks compare side by side. The Block Ack setup at the end is there to show the PMF shield and is not counted.
+
+**Teaching it: the 6 GHz race**
+
+*Teaches:* a 6 GHz client can't just probe every channel, so how it finds the AP decides how long it takes. Listening 20 TU on each PSC beats probing them, and RNR is the fastest of all only if you don't count the 2.4 or 5 GHz scan that heard it.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| 6 GHz view: One method / Compare all four (6 GHz only) | Swaps the ladder for four channel strips on one time axis: Listen on all 59, Probe the 15 PSCs, Known via RNR, Listen 20 TU on each PSC. Each strip ends "found at" a time; the first is flagged. | The single ladder shows one method at a time. Side by side on one clock, the class sees the difference instead of remembering it. |
+| RNR time: count the 5 GHz scan that heard it: Include / Leave out (default Include) | Include starts the RNR strip after a full 5 GHz scan (2.05 s at the defaults); Leave out shows the 6 GHz part only (3 ms). | A toggle, default on. Both answers are true, and the argument between them is the lesson. |
+| Play / Pause, Step, Back, Reset, Show all, Speed | Play sweeps a clock across the axis; Step jumps to the next finding and Back to the previous; Show all draws the result. | Step is the one to use in front of a room: each press is one "found", in order. |
+| Active dwell, Passive dwell (Timing) | Sets the dwell for the probe strip and the listen-on-all-59 strip. | Drop the active dwell to 10 ms and probing wins (29 ms against 51 ms). The race is a model with inputs, not a ranking of real clients. |
+| Scan, 6 GHz discovery | Disabled in the race, each with a sentence. | Each strip sets its own scan type. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: 6 GHz, then Compare all four (S in Present). RNR time on Include. Reset.
+2. Ask the room: "Four ways to find the same AP on channel 37. Which one wins, and which one loses?" Most people pick RNR to win and listening on all 59 to lose.
+3. Reveal: Step four times. Listen 20 TU on each PSC finds it at 51 ms, Probe the 15 PSCs at 69 ms, listen on all 59 at 1.01 s, and RNR comes last at 2.05 s because the client first had to scan 5 GHz to hear the RNR. Then switch RNR time to Leave out: RNR finds it in 3 ms.
+4. Optional follow-up: ask why probing loses to listening. On a PSC the client may not probe until the channel has been idle 7 ms (dot11MinPSCProbeDelay in 802.11-2024), while the AP's FILS Discovery frame arrives on average 10 ms in. Then drop the active dwell to 10 ms and watch probing win.
+
+*Pairs with:* the Association, Frame by Frame ladder in 6 GHz (one method, frame by frame), Survey Walk (scan cycle time), Band Steering. Lesson sequence "Association and roaming".
+
+*Left out on purpose:* the AP sends a FILS Discovery frame every 20 TU. 802.11-2024 requires that only of a 6 GHz-only AP that wants to be found; an AP with a 2.4 or 5 GHz radio may not, and then a 20 TU listen can miss it. Each frame's wait is the average, half its interval. The client finishes its 5 GHz scan before it tunes to the channel RNR named, and the 2.4 GHz scan is left out. One AP, US channels, no retries or channel-change time.
+
+**Teaching it: Why won't it associate?**
+
+*Teaches:* most security mismatches produce no error at all. The client reads the AP's RSN element, finds nothing it can use, and never sends an Authentication or Association Request, so the AP has nothing in its log. A refusal with a status code is the rare case: status 31 for a device older than PMF that ignores a network requiring PMF.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Mode: Play the association / Why won't it associate? | Swaps the tool into pairing a client with a network. Play the association is the tool as before. | The ladder is the same frames, stopped where it fails. |
+| Client: Older laptop, WPA2 only; Printer, no PMF; Phone, WPA3 capable; New laptop, 6 GHz; Phone, Wi-Fi 7 (C in Present) | Picks what the client can do. Generic and illustrative. | Each preset reaches a different outcome against the same network. |
+| Client capabilities (fold): one switch per key management type (PSK 2, SAE 8, SAE 24, OWE 18, 802.1X 1, 5, 12), cipher (TKIP, CCMP-128, GCMP-256), H2E, band and Wi-Fi 7; PMF select (older than PMF, not capable, capable, required) | Builds a custom client; the preset reads Custom. | Lets the room ask "what if it had SAE?" and see the answer. |
+| Network security: Open, OWE, WPA2-Personal, WPA3-Personal transition, WPA3-Personal only, WPA2-Enterprise, WPA3-Enterprise transition, WPA3-Enterprise only, WPA3-Enterprise 192-bit (Up/Down in Present) | What the AP advertises in its RSN element. | Transition modes exist so old and new clients both associate. |
+| PMF (WPA2 modes only), Band, Wi-Fi 7 AP, H2E only | PMF bits; band; a Wi-Fi 7 AP also enables SAE 24 and GCMP-256; H2E only sets selector 123. | PMF required is what turns the printer away; 6 GHz is where WPA2 is not offered at all. |
+| Verdict band (above the ladder) | Associates / Never tries to associate / Refused / Not offered, with the reason and the source. | The answer first, then the frames that prove it. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Mode Why won't it associate?. Client Older laptop, WPA2 only. Network WPA3-Personal only, 5 GHz.
+2. Ask the room: "The laptop can't connect. What error does the AP log?"
+3. Reveal: Show all. The ladder stops at the Probe Response with an X: never tries to associate, no key management in common. No Authentication, no Association Request, nothing in the AP's log. Switch the network to WPA3-Personal transition: the laptop associates with PSK (2); press C twice to the Phone, WPA3 capable: it picks SAE (8).
+4. Optional follow-up: the printer. Network WPA2-Personal, PMF Required, Client Printer, no PMF: refused, status 31 at the Association Response. Then switch Band to 6 GHz with WPA2-Personal: not offered, because 6 GHz allows only WPA3 or OWE. For Wi-Fi 7: Phone, Wi-Fi 7 on WPA3-Personal only with Wi-Fi 7 AP on gives a Wi-Fi 7 connection with SAE (24); on WPA2-Personal it associates as Wi-Fi 6.
+
+*Pairs with:* 802.1X and EAP Ladder (Break it, for failures after association), Why a Long Wi-Fi Password Matters More on WPA2. Lesson sequence "Wi-Fi security modes".
+
+*Left out on purpose:* statuses 42, 43 and 46 (they need a client that ignores the AP's advertisement; no standard trigger was found). WPA3-Personal compatibility mode (RSN overriding), Transition Disable, FT key management, PSK SHA-256 and SAE-PK. Which AKM and cipher a client picks when several fit follows the WPA3 order for personal networks; the enterprise order and the cipher choice are the model's reading. H2E only in 6 GHz is a Wi-Fi Alliance rule, not IEEE, and the source line says so.
 
 ### 802.1X and EAP Ladder
 
-Plays an 802.1X connection one message at a time on a three-lane ladder: the client (supplicant), the AP (authenticator) and the RADIUS server (authentication server). EAP rides in EAPOL frames over the air and inside RADIUS Access-Request, Access-Challenge and Access-Accept packets on the wire. Pick EAP-TLS, PEAP or EAP-TTLS to change the middle of the ladder, or PSK and SAE to see a join with no RADIUS at all, and pick a roam mode to see what PMK caching and 802.11r remove. Switch Mode to Roam for a four-lane ladder (client, current AP, target AP, RADIUS server) that plays a whole roam: the scan, Reassociation, and five methods side by side: full 802.1X, PMK caching, OKC, FT over the air and FT over the DS.
+Plays an 802.1X connection one message at a time on a three-lane ladder: the client (supplicant), the AP (authenticator) and the RADIUS server (authentication server). EAP rides in EAPOL frames over the air and inside RADIUS Access-Request, Access-Challenge and Access-Accept packets on the wire. Pick EAP-TLS, PEAP or EAP-TTLS to change the middle of the ladder, or PSK and SAE to see a join with no RADIUS at all, and pick a roam mode to see what PMK caching and 802.11r remove. Switch Mode to Roam for a four-lane ladder (client, current AP, target AP, RADIUS server) that plays a whole roam: the scan, Reassociation, and five methods side by side: full 802.1X, PMK caching, OKC, FT over the air and FT over the DS. Break it picks what goes wrong (an untrusted server certificate, a wrong password, a wrong RADIUS shared secret, a wrong passphrase or SAE password) and shows the message where the exchange stops.
 
 **Why it's here.** The AP does not authenticate anyone in 802.1X; it relays. Seeing every EAP message cross the air and then cross the wire makes that plain, and shows where time goes: each RADIUS round trip, each certificate fragment, and the inner password exchange in PEAP. It also shows the order that matters when troubleshooting: the server sends the PMK to the AP in the Access-Accept, and nothing is encrypted over the air until the 4-way handshake completes.
 
@@ -6344,8 +7800,9 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 1. Pick a method and a roam mode, then press Play, or use Step and Back to go one message at a time. Show all draws the whole ladder at once. Blue arrows cross the air; sand, dashed arrows cross the wire. The caption under the ladder names the frame, the leg it crossed and why it is there.
 2. Watch for the two bands: Keys available (for 802.1X, after the Access-Accept) and Traffic protected (after message 4 of the 4-way handshake). Content in braces with a lock travels inside the TLS tunnel, where the AP cannot read it.
 3. Raise the certificate size to see a large certificate chain split into fragments, each costing a round trip. Raise the RADIUS round-trip time to see a distant server slow the connection. Switch between methods with the whole ladder shown to compare them.
-4. Roam mode: pick a roam method, a band and a scan type, then play. The Reassociation Request names the current AP. FT over the DS sends its first two messages as Action frames to the current AP, which forwards them to the target AP over the wire (dashed). The timeline bar under the ladder splits the roam into scan, authentication and key handshake: switch between methods and watch FT shrink the middle while the scan bar stays. Tap any sent message to see what it carries. The Timing settings set the scan dwell, frame time, RADIUS round-trip time, crypto time and AP to AP time.
-5. On a computer or tablet, Present opens the ladder full screen for a projector: Space plays or pauses, the Right arrow sends the next message and the Left arrow takes one back, R resets, Up and Down change the certificate size, F switches full screen, ? lists the keys and Esc exits. The Mode toggle is at the top of the panel.
+4. Break it: pick a fault and play the ladder. A red X marks the message that fails or is refused; a dashed arrow that stops short with a clock is one that is never answered. The Stopped here band after the last message says what failed, and the caption adds what the help desk sees. Only the faults that can happen with the chosen method are listed, and only for a full authentication. For the faults that retry, Retries and Wait before a retry are illustrative settings.
+5. Roam mode: pick a roam method, a band and a scan type, then play. The Reassociation Request names the current AP. FT over the DS sends its first two messages as Action frames to the current AP, which forwards them to the target AP over the wire (dashed). The timeline bar under the ladder splits the roam into scan, authentication and key handshake: switch between methods and watch FT shrink the middle while the scan bar stays. Tap any sent message to see what it carries. The Timing settings set the scan dwell, frame time, RADIUS round-trip time, crypto time and AP to AP time.
+6. On a computer or tablet, Present opens the ladder full screen for a projector: Space plays or pauses, the Right arrow sends the next message and the Left arrow takes one back, R resets, Up and Down change the certificate size, B cycles the Break it fault (in Authenticate; Roam has no Break it), F switches full screen, ? lists the keys and Esc exits. The Mode toggle is at the top of the panel.
 
 **Inputs**
 
@@ -6357,19 +7814,23 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 | Roam mode | choice | Full authentication, PMK caching, or 802.11r FT over the air; default full |
 | Certificate size | fragments per certificate message | 1 to 6 (default 1); used only when a certificate is sent |
 | RADIUS round-trip time | ms, illustrative | 1 to 200 (default 10); used only when RADIUS is |
+| Break it | choice | None (default); Server certificate not trusted, Wrong password (PEAP and EAP-TTLS), Wrong RADIUS shared secret (the 802.1X methods), Wrong passphrase (PSK), Wrong SAE password (SAE); full authentication only |
+| Retries (Break it) | count, illustrative | 1 to 5 (default 2); wrong shared secret, wrong passphrase and wrong SAE password only |
+| Wait before a retry (Break it) | s, illustrative | 1 to 10 (default 3) |
 | Roam method (Roam mode) | choice | Full 802.1X, PMK caching, OKC, FT over the air, FT over the DS; default full 802.1X |
 | Band and scan (Roam mode) | choice | 2.4, 5 or 6 GHz; active or passive; default 5 GHz active |
 | PMF (802.11w) (Roam mode) | choice | Off, Optional or Required; required in 6 GHz |
 | Timing (Roam mode) | ms, illustrative | active dwell 10 to 100 (30), passive dwell 20 to 250 (111), frame time 0.5 to 5 (1), RADIUS round trip 1 to 200 (10), crypto 0 to 500 (50), AP to AP over the DS 1 to 50 (5) |
 
-**How it works.** Each ladder starts with one probe request and response. A full authentication adds Open System authentication (2 frames) or SAE commit and confirm (4 frames), association (2), for 802.1X the EAP exchange, and the 4-way handshake (4 EAPOL-Key frames). EAP: the AP sends EAP-Request/Identity itself; every later EAP-Request comes from the server in an Access-Challenge and every EAP-Response goes back in an Access-Request, one round trip each, until the Access-Accept carries EAP-Success and the PMK. A certificate message split into n fragments costs n - 1 extra round trips, because each fragment is acknowledged by an empty message. At one fragment the round trips are: EAP-TLS 4, EAP-TTLS with PAP 4, EAP-TTLS with MSCHAPv2 5, PEAP with MSCHAPv2 8. EAP-TLS fragments both the server's and the client's certificate messages. PMK caching replaces authentication with a PMKID in the Reassociation Request, then the 4-way handshake. FT over the air is 4 frames: two FT authentication frames and the reassociation pair, with the 4-way handshake folded in. Estimated time after the scan = over-the-air frames x 1 ms (illustrative) + RADIUS round trips x the round-trip time. Roam mode: the scan visits every channel of the band (5 GHz: 9 channels probed for the active dwell, the 16 DFS channels listened to for the passive dwell; 6 GHz active: only the 15 PSCs). Full 802.1X: Open System authentication (2 frames), Reassociation (2), the same EAP exchange, the 4-way handshake (4). PMK caching and OKC: authentication, Reassociation with the PMKID, the 4-way handshake; the same frames, with OKC's PMKID computed for the target AP. FT over the air: 4 frames. FT over the DS: FT Action Request to the current AP, forwarded to the target and back over the DS, FT Action Response, then Reassociation (6 messages, 2 of them on the wire). Authentication time = EAP round trips x RADIUS round-trip time + crypto time + frames x frame time; the key handshake is the 4-way (or FT's Reassociation pair). No method changes the scan.
+**How it works.** Each ladder starts with one probe request and response. A full authentication adds Open System authentication (2 frames) or SAE commit and confirm (4 frames), association (2), for 802.1X the EAP exchange, and the 4-way handshake (4 EAPOL-Key frames). EAP: the AP sends EAP-Request/Identity itself; every later EAP-Request comes from the server in an Access-Challenge and every EAP-Response goes back in an Access-Request, one round trip each, until the Access-Accept carries EAP-Success and the PMK. A certificate message split into n fragments costs n - 1 extra round trips, because each fragment is acknowledged by an empty message. At one fragment the round trips are: EAP-TLS 4, EAP-TTLS with PAP 4, EAP-TTLS with MSCHAPv2 5, PEAP with MSCHAPv2 8. EAP-TLS fragments both the server's and the client's certificate messages. PMK caching replaces authentication with a PMKID in the Reassociation Request, then the 4-way handshake. FT over the air is 4 frames: two FT authentication frames and the reassociation pair, with the 4-way handshake folded in. Estimated time after the scan = over-the-air frames x 1 ms (illustrative) + RADIUS round trips x the round-trip time. Roam mode: the scan visits every channel of the band (5 GHz: 9 channels probed for the active dwell, the 16 DFS channels listened to for the passive dwell; 6 GHz active: only the 15 PSCs). Full 802.1X: Open System authentication (2 frames), Reassociation (2), the same EAP exchange, the 4-way handshake (4). PMK caching and OKC: authentication, Reassociation with the PMKID, the 4-way handshake; the same frames, with OKC's PMKID computed for the target AP. FT over the air: 4 frames. FT over the DS: FT Action Request to the current AP, forwarded to the target and back over the DS, FT Action Response, then Reassociation (6 messages, 2 of them on the wire). Authentication time = EAP round trips x RADIUS round-trip time + crypto time + frames x frame time; the key handshake is the 4-way (or FT's Reassociation pair). No method changes the scan. Break it cuts a full authentication where the fault stops it. Untrusted server certificate: the client ACKs every certificate fragment but the last, answers the last with a TLS alert (unknown_ca), and the server ends EAP with EAP-Failure in an Access-Reject; the AP relays it and deauthenticates the client (reason 23). Wrong password: PEAP's server sends an MSCHAPv2 Failure (error 691) inside the tunnel, the client acknowledges, both exchange a failure result, then Access-Reject, EAP-Failure and reason 23; EAP-TTLS with MSCHAPv2 sends the error in an Access-Challenge; EAP-TTLS with PAP gets an Access-Reject straight after the password. Wrong RADIUS shared secret: the server silently discards each Access-Request (its Message-Authenticator does not match), so the AP sends it again after each wait and nothing comes back. Wrong passphrase: the AP discards message 2 of the 4-way handshake (its MIC does not verify), sends message 1 again after each wait, then deauthenticates with reason 15. Wrong SAE password: the AP cannot verify the client's SAE Confirm and never sends its own; the client repeats its Confirm, then gives up. The time shown is until the last message, including the waits. These are typical sequences: the alert is optional, and devices differ in who sends the last frame.
 
-**Example.** EAP-TLS, full authentication, 1 fragment, 10 ms RADIUS: 19 frames over the air, 8 RADIUS messages on the wire, 4 round trips, 57 ms after the scan. With 3 fragments: 27 frames, 16 RADIUS messages, 8 round trips, 105 ms. PEAP at 1 fragment also takes 8 round trips and 105 ms. PMK caching drops the whole EAP exchange (17 fewer messages, 8 ms); FT over the air is 4 frames after the scan, with no RADIUS (4 ms). Roam mode at the defaults (5 GHz active scan 2.05 s, EAP-TLS): full 802.1X spends 103 ms on authentication and 4 ms on the key handshake after the 2.05 s scan; PMK caching and OKC 4 ms and 4 ms (17 fewer messages); FT over the air 2 ms and 2 ms (4 frames); FT over the DS 7 ms and 2 ms. The scan is 2.05 s for all five.
+**Example.** EAP-TLS, full authentication, 1 fragment, 10 ms RADIUS: 19 frames over the air, 8 RADIUS messages on the wire, 4 round trips, 57 ms after the scan. With 3 fragments: 27 frames, 16 RADIUS messages, 8 round trips, 105 ms. PEAP at 1 fragment also takes 8 round trips and 105 ms. PMK caching drops the whole EAP exchange (17 fewer messages, 8 ms); FT over the air is 4 frames after the scan, with no RADIUS (4 ms). Roam mode at the defaults (5 GHz active scan 2.05 s, EAP-TLS): full 802.1X spends 103 ms on authentication and 4 ms on the key handshake after the 2.05 s scan; PMK caching and OKC 4 ms and 4 ms (17 fewer messages); FT over the air 2 ms and 2 ms (4 frames); FT over the DS 7 ms and 2 ms. The scan is 2.05 s for all five. Break it, EAP-TLS at 1 fragment with an untrusted certificate: the ladder stops at message 17 of 20, the client's TLS alert, after 3 round trips; no Access-Accept, no 4-way handshake, 42 ms. Wrong RADIUS shared secret with 2 retries 3 s apart: 3 Access-Requests, none answered, about 6 s until the last one.
 
 **Field notes**
 - This is a teaching model. The TLS messages follow the TLS 1.2 shape drawn in RFC 5216 and RFC 5281; TLS 1.3 and session resumption change the count and are not modeled.
 - How many fragments a certificate needs depends on the chain and the server's fragment size, so it is a setting, not a fixed count. Real round-trip counts also vary a little between servers and clients.
 - The TLS tunnel in PEAP and EAP-TTLS protects the inner exchange between client and RADIUS server, not the Wi-Fi link. A client that skips server-certificate validation can hand its inner credentials to an evil-twin server; see the 802.1X / EAP Types reference.
+- Break it draws a typical sequence for each fault, not the only one. RFC 5216 lets a client send a TLS alert or simply stop; RFC 5281 says an EAP-TTLS client abandons after an MS-CHAP-Error, and many answer with an empty response first. Retry counts and timers are set by each client, AP and RADIUS server, so they are settings here. A wrong shared secret fails every 802.1X user on that AP at once and leaves no reject in the RADIUS log, which is its signature.
 - In Authenticate mode the scan for the next AP is not counted; Roam mode counts it. In measured handoffs (802.11b, open authentication; Mishra, Shin and Arbaugh 2003) scanning was over 90% of the delay. 802.11k shortens the scan; PMK caching, OKC and FT shorten only the authentication.
 - OKC is a vendor extension that shares a cached PMK between the APs of one controller; it is not part of IEEE 802.11, and Apple's own key caching is not compatible with it. FT needs one full first connection in its mobility domain.
 - Published roam figures, context only: RFC 5169 says an EAP-TLS run needs at least 3, typically 4 or more, round trips. One lab capture each measured FT over the air at 14 ms and FT over the DS at 88 ms (single captures, not typical figures). Vendor roam-time ranges are marketing, not measurements, and are not shown.
@@ -6379,6 +7840,34 @@ Plays an 802.1X connection one message at a time on a three-lane ladder: the cli
 - Joining a network frame by frame, from the scan through DHCP and the address check, is its own tool: Association, Frame by Frame.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* in 802.1X the AP relays and the RADIUS server authenticates; EAP rides in EAPOL over the air and inside RADIUS on the wire, the PMK arrives in the Access-Accept, and nothing is encrypted until the 4-way handshake completes.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Mode: Authenticate / Roam | Three-lane ladder, or four lanes with a target AP. | Roam mode compares a full 802.1X reconnect with the fast roams, and puts the scan back in the total. |
+| Play / Pause / Play again, Back, Step, Reset, Show all, Speed: Slow / Normal / Fast | Sends one message at a time, takes one back, or draws the whole ladder. | Show all lets you switch methods with the whole ladder drawn and compare them (help). |
+| Method: EAP-TLS, PEAP (MSCHAPv2), EAP-TTLS, WPA2-Personal (PSK), WPA3-Personal (SAE) (Authenticate) | Changes the middle of the ladder. | The method changes the middle of the ladder. PSK and SAE are there for contrast: no RADIUS at all. |
+| Inner method: MSCHAPv2 / PAP (EAP-TTLS only) | The method inside the TTLS tunnel. | Only EAP-TTLS has a choice; PEAP here always carries MSCHAPv2. |
+| Roam mode: Full / PMK caching / FT (802.11r) (Authenticate) | What a return or roam skips. | PMK caching skips EAP; FT folds the handshake into four frames. |
+| Certificate size (fragments per certificate message) (1 to 6; Up/Down in Present) | Splits certificates into more EAP messages. | Round trips depend on certificate size and fragmentation, so it is a setting, not a fixed count. |
+| RADIUS round-trip time (illustrative) (1 to 200 ms, default 10) | Time per trip to the server. | A distant server slows every round trip. |
+| Break it: None: it works, Server certificate not trusted, Wrong password, Wrong RADIUS shared secret, Wrong passphrase, Wrong SAE password (Authenticate, Full only; B in Present) | Cuts the ladder at the message where that fault stops it: a red X on the message that fails or is refused, a dashed arrow with a clock for one that is never answered, a Stopped here band, and "What the help desk sees" in the caption. Only the faults that can happen with the chosen method are listed. | Where a failed connection stops tells you which of three parties to look at: the client (it refused the certificate), the RADIUS server (it refused the password), or the link between them (no answer at all). Two failures are loud, ending in EAP-Failure; a wrong shared secret is silent (RFC 5216 §2.1.3, RFC 3579 §3.2). |
+| Retries (illustrative) (1 to 5, default 2), Wait before a retry (illustrative) (1 to 10 s, default 3) (Break it: wrong shared secret, wrong passphrase, wrong SAE password) | How many times the AP or client tries again, and how long it waits first. | Clients, APs and servers set their own timers, so they are inputs, not claims (RFC 2865 §2.5 and RFC 3579 §2.3 leave them to the implementation). |
+| Roam method: Full 802.1X, PMK caching, OKC, FT over the air, FT over the DS (Roam) | Which roam to play. | OKC is labeled a vendor extension, not IEEE; FT over the DS starts with an Action frame to the current AP. |
+| Band, Scan, PMF (802.11w), 6 GHz discovery, EAP method, Timing sliders (Roam) | The same settings as Association, Frame by Frame, plus AP to AP round trip, over the DS. | The timeline splits scan, authentication and key handshake: FT shrinks the middle while the scan bar stays. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: Reset. Authenticate, EAP-TLS, Full, 1 fragment.
+2. Ask the room: "Who checks the client's certificate, the AP or the server? And when is the air encrypted?"
+3. Reveal: step through: every EAP message crosses the air and then the wire; Keys available lights after the Access-Accept, Traffic protected only after message 4. 19 frames over the air, 8 RADIUS messages, 4 round trips (help example).
+4. Optional follow-up: switch Mode to Roam with the full ladder shown, then pick FT over the air: authentication drops from 103 ms to 2 ms while the 2.05 s scan does not move.
+5. Break it follow-up: PEAP, Full, Show all. Press B twice for Wrong password: the X lands on the server's MSCHAPv2 Failure (error 691), inside the tunnel, and the RADIUS log names the user. Ask: "Now every user on one AP says the password is wrong. What will the RADIUS log show?" Press B once more for Wrong RADIUS shared secret. Reveal: nothing. The Access-Requests stop short with a clock and the server never answers, so there is no reject to find.
+
+*Pairs with:* Association, Frame by Frame, the EAP Types reference, Roaming Walk. Lesson sequences "Association and roaming" and "Wi-Fi security modes".
+
+*Left out on purpose:* TLS follows the TLS 1.2 shape; TLS 1.3 and session resumption are not modeled. Break it draws a typical sequence for each fault: the client's TLS alert is optional under RFC 5216, devices differ in who sends the last frame, and what the AP and client do after a silent RADIUS server is not drawn. The retry counts and waits are settings. Authenticate mode does not count the scan; Roam mode does. The TLS tunnel protects the inner exchange, not the Wi-Fi link. The FT captures (14 ms and 88 ms) are single captures, shown as context only; vendor roam-time ranges are not shown.
 
 ### PoE: Why the New AP Runs at Half Strength
 
@@ -6413,6 +7902,27 @@ Shows what a new Wi-Fi 7 AP (access point) does on each kind of PoE (Power over 
 - Some APs with two Ethernet ports can combine two 802.3at feeds for full function; the guide this model follows says so of its AP. This tool leaves that out, along with IoT (Internet of Things), Bluetooth and scanning radios, and cable shorter than the 100 m the standard's figures assume.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* a Wi-Fi 7 AP on a port that cannot supply its full power still boots and lights up, then quietly runs with fewer streams or fewer radios.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Switch port type: 802.3af / 802.3at / 802.3bt (Up, Down, Right, or 1, 2, 3 in Present; default 802.3at) | Changes the power reaching the AP; the stream marks and power bar update. The power light stays on in all three. | The one control, which corrects "the light is on, so power is fine". |
+| What the AP gives up on 802.3at: Three at 2x2 / Two at 4x4 (Space in Present) | 6 of 12 streams, or 8 of 12 with 2.4 GHz off. Applies only on 802.3at. | The vendor guide the model follows lists both; vendors cut different things. |
+| Reveal the answer / Hide the answer (P in Present), Show it on 802.3at | The built-in question, then a jump to the at port. | "The new Wi-Fi 7 AP goes on last year's 802.3at switch and its power light comes on. Is it running at full strength?" |
+| Reset (R) | Back to the defaults. | Returns to the question's port. |
+| Open PoE Budget, Open PoE Reference | Links out. | For adding up a whole switch and every PoE class. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: R, then press 3 (802.3bt): 51.0 W reaches the AP and all 12 streams run.
+2. Ask the room: read the question. "The light is on. Full strength?"
+3. Reveal: press 2 (802.3at): 25.5 W, 3.5 W short of the about 29 W it needs, and it runs 6 of 12 streams with the light still on (help example). Press Space for the 8-of-12 choice with 2.4 GHz off.
+4. Optional follow-up: press 1 (802.3af). It boots with fewer capabilities rather than not at all; the tool shows one illustrative reduced set.
+
+*Pairs with:* PoE Budget, PoE Reference.
+
+*Left out on purpose:* one generic AP on one published guide; read your own AP's data sheet. The 802.3af behavior has no source and is labeled illustrative. A 2x2 client alone may notice little; the loss is in streams shared among many clients. Dual-port 802.3at feeds, IoT and scanning radios, and short cables are left out.
 
 ### Why a Long Wi-Fi Password Matters More on WPA2
 
@@ -6449,6 +7959,28 @@ Shows where a password guess gets checked on three kinds of home or small-office
 - This tool leaves out WPA2-Enterprise and WPA3-Enterprise (802.1X), which do not use a shared password; the 802.1X and EAP Ladder covers them. It also leaves out attacks on particular products, and it names no tools and gives no steps.
 - The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped.
 
+**Teaching it**
+
+*Teaches:* on WPA2-Personal one recorded join lets an attacker test guesses offline, so length is the whole defense; on WPA3 every guess is a live exchange the AP can see, and transition mode keeps the WPA2 door open.
+
+| Control | What it does | Why it's there |
+|---|---|---|
+| Network security: WPA2 / WPA3 / Transition (1, 2, 3 in Present) | Changes where a guess is checked. The password stays the same; the counts start over. | The one control, with the same short password on all three. |
+| Length (8 to 63; Up/Down in Present) | Password length. | Each extra character multiplies the possibilities by the characters in play. |
+| Characters: Lowercase letters (26), Lowercase letters and digits (36), Upper and lowercase letters and digits (62), Any keyboard character (95) | The character set. | Possible passwords = characters ^ length. |
+| Keep guessing / Stop guessing (Space), Try one guess (Right), Reset (R) | Runs the guessing dot. On WPA2 and transition it loops inside the attacker's computer; on WPA3 it travels to the AP, which logs it. | The visible difference: the AP's failed-attempt count stays at 0 on WPA2. The pace is slowed to follow and is not a speed. |
+| Reveal the answer / Hide the answer (P in Present) | The built-in question, from the Wi-Fi Alliance's example of 5,000 possible passwords. | Uses the source's own example rather than invented crack times. |
+| The WPA2 4-way handshake, The WPA3 SAE exchange, Open WPA Security | Links to the frames. | Shows the frames behind the guess. |
+
+*A demo that works (about 3 minutes)*
+1. Set up: R. WPA2, 8 lowercase letters.
+2. Ask the room: "The password is one of 5,000 and the attacker has the list. How much of the list can they try on WPA2? On WPA3?"
+3. Reveal: P. On WPA2 they test all 5,000 offline and find it for certain; on WPA3 the chance reaches 50% only after 2,500 live attempts at the AP (help example). Press Space on WPA2, then 2 and Space on WPA3, and watch the AP's count.
+4. Optional follow-up: press 3 for transition mode and show the dot back inside the attacker's computer.
+
+*Pairs with:* Association, Frame by Frame (the 4-way handshake and SAE), 802.1X and EAP Ladder, WPA Security reference. Lesson sequence "Wi-Fi security modes".
+
+*Left out on purpose:* no time to crack anywhere: it depends entirely on the attacker's hardware (so no crack-time numbers are given). The count assumes a random password; words and patterns fall long before it runs out. Enterprise (802.1X) is left out, along with attacks on particular products, tools and steps.
 
 ## Course Handouts (11)
 
@@ -6469,6 +8001,11 @@ A built-in, offline, zoomable copy of Keith's published 2.4 GHz channel layout a
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
 
+**Teaching it**
+
+*Teaches:* the 2.4 GHz channel map: channels 1 to 14, with 1 to 13 spaced 5 MHz apart, the 22 MHz 802.11b and 20 MHz OFDM channel widths, why 1, 6 and 11 are the three non-overlapping 20 MHz channels, the non-US four-channel plan, and the 802.15.4/Zigbee channels on the same band.
+
+*Pairs with:* Channel Planner, Adjacent Channels and AP Stacking, Legacy Protection Cost, Fourier and FFT's Swept vs FFT race (the same band, with Bluetooth and a microwave oven in it).
 
 ### 5 GHz Channel Allocations
 
@@ -6484,6 +8021,11 @@ A built-in, offline, zoomable copy of Keith's published 5 GHz channel layout and
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
 
+**Teaching it**
+
+*Teaches:* the 5 GHz channel map by U-NII band: 28 20 MHz, 14 40 MHz, 7 80 MHz and 3 160 MHz channels, the DFS channels, the TDWR channels, channel 144 and U-NII-4, and the power and indoor/outdoor rules for the US, Canada and Australia.
+
+*Pairs with:* DFS and Radar, Channel Planner, Adjacent Channels and AP Stacking.
 
 ### 6 GHz Channel Allocations
 
@@ -6499,6 +8041,11 @@ A built-in, offline, zoomable copy of Keith's published 6 GHz channel layout and
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
 
+**Teaching it**
+
+*Teaches:* the US 6 GHz channel map, 1.2 GHz of spectrum across U-NII-5 to U-NII-8: 59 20 MHz, 29 40 MHz, 14 80 MHz, 7 160 MHz and 3 320 MHz channels, the Preferred Scanning Channels, and the three power classes most people know.
+
+*Pairs with:* 6 GHz Channel Allocations with GVP, 6 GHz Power and PSD, Channel Planner.
 
 ### 6 GHz Channel Allocations with GVP
 
@@ -6516,6 +8063,11 @@ Keith's 6 GHz channel chart showing all four US power classes, including Geofenc
 - GVP is authorized in the same two sub-bands as Standard Power, 5.925 to 6.425 GHz and 6.525 to 6.875 GHz. It does not reach U-NII-6 or U-NII-8.
 - The card is a printed image, so a screen reader cannot read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 
+**Teaching it**
+
+*Teaches:* the same US 6 GHz chart with all four power classes, including Geofenced Variable Power, which entered the rules effective 27 April 2026.
+
+*Pairs with:* 6 GHz Channel Allocations, 6 GHz Power and PSD.
 
 ### Wireless LAN Troubleshooting Causes
 
@@ -6532,6 +8084,11 @@ A bundled, offline, pinch-to-zoom copy of Keith's published "common causes to ch
 - A screen reader can't read the content inside the card (it's a flat image PDF). The card title and the "pinch to zoom" gesture are announced.
 - Source: Keith's own published WLAN Pros laminated reference card, saved to PDF and bundled in the app. It displays offline, with no network needed.
 
+**Teaching it**
+
+*Teaches:* the numbered list of places a Wi-Fi problem can come from, from the end user's skills and perceptions, through the client device, the RF medium, contention, the MCS decision, DFS, association, 802.11k/v/r, authentication and encryption, to the upper layers, the controlled port and the fixed access configuration.
+
+*Pairs with:* Bubble Diagram, Channel Utilization Meter, Rate Adaptation, Why Two Devices Disagree.
 
 ### WLAN Pros Bubble Diagram
 
@@ -6549,6 +8106,11 @@ A bundled, offline, pinch-to-zoom copy of Keith's published "Wi-Fi design decisi
 - This is the only card printed in landscape. The viewer was set up specially so it displays landscape and undistorted; this was fixed and verified on 2026-06-01 and is not an open issue.
 - Source: Keith's own published WLAN Pros laminated reference card, saved to PDF and bundled in the app. It displays offline, with no network needed.
 
+**Teaching it**
+
+*Teaches:* every piece a Wi-Fi connection depends on, drawn as one map: the client and end user, the RF medium processes (DFS, RRM, MCS, contention, overhead), association, authentication and encryption paths, the AP, and the wired side out to DHCP, DNS, the controller, captive portal and the authentication database.
+
+*Pairs with:* Troubleshooting Causes; Association, Frame by Frame; 802.1X and EAP Ladder.
 
 ### Top 20 Wi-Fi Checklist
 
@@ -6565,6 +8127,11 @@ A bundled, offline, pinch-to-zoom copy of Keith's published "Top 20 Wi-Fi design
 - A screen reader can't read the content inside the card (it's a flat image PDF). The card title and the "pinch to zoom" gesture are announced.
 - Source: Keith's own published WLAN Pros laminated reference card, saved to PDF and bundled in the app. It displays offline, with no network needed.
 
+**Teaching it**
+
+*Teaches:* the 20 settings and measurements to check first when evaluating a Wi-Fi installation against best practice, per band: channel plan and widths, co-channel interference, minimum basic rates, SSIDs across bands, primary and secondary RSSI, AP transmit power, WPA2/WPA3, 802.11k/r/v, channel utilization and clients per radio.
+
+*Pairs with:* Extended Checklist, Channel Planner, Rate vs Range, Uplink vs Downlink.
 
 ### Extended Wi-Fi Checklist
 
@@ -6580,6 +8147,11 @@ A bundled, offline, pinch-to-zoom copy of Keith's published "extended design che
 - A screen reader can't read the content inside the card (it's a flat image PDF). The card title and the "pinch to zoom" gesture are announced.
 - Source: Keith's own published WLAN Pros laminated reference card, saved to PDF and bundled in the app. It displays offline, with no network needed.
 
+**Teaching it**
+
+*Teaches:* items 21 to 50, the next layer after the Top 20: beacon and DTIM intervals, legacy security and 802.11b rates off, 160 and 320 MHz widths, channels 144 and 165, 6 GHz discovery and power classes, hidden SSIDs and SSID count, Wi-Fi 7 MLO, 802.11d/e/h/i/w/u, MU-MIMO, transmit beamforming and OFDMA.
+
+*Pairs with:* Top 20 Checklist, MIMO and Beamforming, OFDMA Resource Units, Multi-Link Operation, Power Save.
 
 ### Extended Checklist (Non-Advertised Items)
 
@@ -6595,6 +8167,11 @@ A bundled, offline, pinch-to-zoom copy of Keith's published "extended checklist,
 - A screen reader can't read the content inside the card (it's a flat image PDF). The card title and the "pinch to zoom" gesture are announced.
 - Source: Keith's own published WLAN Pros laminated reference card, saved to PDF and bundled in the app. It displays offline, with no network needed.
 
+**Teaching it**
+
+*Teaches:* items 51 to 66, the settings that are not in the beacons, so a scan cannot see them and you must ask the network administrator: automatic channels and widths, client isolation, airtime fairness, DFS events, mesh, band steering, load balancing, auto RF, PoE budget, non-802.11 interference and firmware.
+
+*Pairs with:* Band Steering, Airtime Fairness, Repeaters and Mesh Backhaul, DFS and Radar.
 
 ### Wi-Fi Connection Checklist
 
@@ -6610,6 +8187,11 @@ A bundled, offline, pinch-to-zoom copy of Keith's published "client connection s
 - A screen reader can't read the content inside the card (it's a flat image PDF). The card title and the "pinch to zoom" gesture are announced.
 - Source: Keith's own published WLAN Pros laminated reference card, saved to PDF and bundled in the app. It displays offline, with no network needed.
 
+**Teaching it**
+
+*Teaches:* the 14 checks to run from a client, in order: see the SSIDs, Wi-Fi 7 MLO and the MLD MAC, associate, authenticate, get an address, gateway and DNS from DHCP, ping the gateway, DNS, a remote IP and a remote name, check the client's MCS and transmit rate, then a speed test.
+
+*Pairs with:* Association, Frame by Frame; the Connected, No Internet: Captive Portals lesson; The Number on the Box vs the Number in Your Hand for step 14.
 
 ### Modulation and Coding Schemes (MCS Index)
 
@@ -6626,23 +8208,8 @@ A built-in, offline, zoomable copy of Keith's published MCS index, rates, and mo
 - The card is a printed image, so a screen reader can't read the values inside it. The card title and the pinch-to-zoom gesture are announced.
 - This is Keith's own published WLAN Pros laminated reference card, saved as a PDF and carried inside the app so it works offline on every device.
 
+**Teaching it**
 
+*Teaches:* the HT, VHT and HE MCS index side by side: modulation, coding rate and the PHY rate for each channel width and guard interval.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*Pairs with:* Modulation Simulator, Rate vs Range, The Number on the Box vs the Number in Your Hand, the MCS Index tool.

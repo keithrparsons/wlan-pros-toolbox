@@ -7,6 +7,13 @@
 // 2. The Teacher's Guide lists every tool on each Wi-Fi Classroom shelf. Its
 //    Airtime and Access list had fallen behind the catalog: Voice Priority,
 //    End to End and What an Interferer Costs were missing.
+//
+// 2026-09-29 (Keith): tool descriptions moved out of the Teacher's Guide into
+// the Field Manual, which is now the one detailed reference; the guide keeps
+// presenting and lesson sequences. So a copy that can fall behind no longer
+// exists, and these guards now check the Field Manual instead: the Devices
+// Disagree entry says 1 m (1 ft), and every live Airtime and Access tool has a
+// Teaching it section. The guide itself must not grow a tool list again.
 
 import 'dart:convert';
 import 'dart:io';
@@ -19,15 +26,15 @@ Map<String, dynamic> _help() =>
             as Map<String, dynamic>)['tools']
         as Map<String, dynamic>;
 
-/// The Teacher's Guide section under `### <shelf>`, up to the next heading.
-String _guideSection(String shelf) {
-  final String guide = File(
-    'assets/guides/teachers-guide.md',
-  ).readAsStringSync();
-  final int start = guide.indexOf('### $shelf\n');
-  expect(start, isNonNegative, reason: 'no "### $shelf" in the guide');
-  final int end = guide.indexOf(RegExp(r'\n##'), start + 4);
-  return guide.substring(start, end < 0 ? guide.length : end);
+String _manual() => File('assets/guides/field-manual.md').readAsStringSync();
+
+/// The Field Manual entry under `### <name>`, up to the next heading.
+String _manualEntry(String name) {
+  final String fm = _manual();
+  final int start = fm.indexOf('### $name\n');
+  expect(start, isNonNegative, reason: 'no "### $name" in the Field Manual');
+  final int end = fm.indexOf(RegExp(r'\n##'), start + 4);
+  return fm.substring(start, end < 0 ? fm.length : end);
 }
 
 void main() {
@@ -43,34 +50,39 @@ void main() {
     expect(present, isNot(contains('a meter')));
   });
 
-  test("Teacher's Guide: Why Two Devices Disagree says 1 m, or 1 ft in "
+  test('Field Manual: Why Two Devices Disagree says 1 m, or 1 ft in '
       'imperial', () {
-    final String rf = _guideSection('RF and Propagation');
-    final String line = rf
-        .split('\n')
-        .firstWhere((String l) => l.contains('**Why Two Devices Disagree.**'));
-    expect(line, contains('1 m (1 ft'));
-    expect(line, isNot(contains('a meter')));
+    final String entry = _manualEntry('Why Two Devices Disagree');
+    expect(entry, contains('1 m (1 ft'));
+    expect(entry, isNot(contains('a meter')));
   });
 
-  test("Teacher's Guide: the Airtime and Access list names every live tool "
-      'on that shelf', () {
-    final String section = _guideSection('Airtime and Access');
+  test('Field Manual: every live Airtime and Access tool has a Teaching it '
+      'section', () {
     final List<ToolEntry> shelf = <ToolEntry>[
       for (final ToolCategory c in kToolCategories)
         for (final ToolEntry t in c.tools)
           if (t.isLive && t.subgroup == 'Airtime and Access') t,
     ];
     expect(shelf, isNotEmpty);
+    final Map<String, dynamic> help = _help();
     for (final ToolEntry t in shelf) {
-      // A catalog title may carry a parenthetical the guide leaves out:
-      // "What an Interferer Costs (and how a NIC hears the air)".
-      final String short = t.title.split(' (').first;
+      final String name =
+          (help[t.id] as Map<String, dynamic>)['name'] as String;
       expect(
-        section,
-        contains('**$short'),
-        reason: '${t.id} ("${t.title}") is not in the guide list',
+        _manualEntry(name),
+        contains('**Teaching it'),
+        reason: '${t.id} ("$name") has no Teaching it in the Field Manual',
       );
     }
+  });
+
+  test("Teacher's Guide: no shelf-by-shelf tool list (the Field Manual holds "
+      'those)', () {
+    final String guide = File(
+      'assets/guides/teachers-guide.md',
+    ).readAsStringSync();
+    expect(guide, isNot(contains('## What each shelf teaches')));
+    expect(guide, contains('Field Manual'));
   });
 }
