@@ -17,8 +17,9 @@
 // World mapping: travel along +x; horizontal field along +y; vertical along
 // +z. Two wavelengths are drawn. The world is kept small (the axis spans
 // 2 units) because the shared camera's eye sits 5 units out: a small world
-// keeps the perspective mild. Everything is recomputed per frame from a few
-// hundred points, so no caching is needed.
+// keeps the perspective mild. The drawing is recomputed per frame from a few
+// hundred points; only the fit (see _camera) is kept between frames, because
+// it does not change with the phase.
 //
 // Presenter: strokes, arrowheads, dots and labels scale with
 // PresenterMode.scaleOf (passed in as [scale]).
@@ -48,12 +49,8 @@ class PolarizationPainter extends CustomPainter {
     required this.hHue,
     required this.vHue,
     required this.labelStyle,
-    required this.fitView,
     this.scale = PresenterScale.normal,
   }) : super(repaint: view);
-
-  /// The camera the scale is fitted to (the tool's opening view).
-  final OrbitView fitView;
 
   final PolarizationState state;
   final double phase;
@@ -73,49 +70,199 @@ class PolarizationPainter extends CustomPainter {
 
   static double _xAt(int i, int n) => -_halfLen + 2 * _halfLen * i / (n - 1);
 
-  /// The camera for [size]. The scale is fitted once, to the wave's box as
-  /// the OPENING camera sees it ([fitView]), then used for every angle: a
-  /// drag turns the wave without rescaling it, and zoom stays the user's.
-  Projector _camera(Size size) {
+  /// The camera for [size], fitted to what this frame actually draws, seen
+  /// from the CURRENT orbit (spec 45 line 49; Vera gate B, 2026-09-29): the
+  /// travel axis and its arrowhead, the ellipse the field tip traces (the
+  /// same at every point on the axis), the field arrows, the H and V
+  /// component extremes when they are shown, and the painted labels, which
+  /// keep their pixel size. The fit covers a whole cycle, so the scale does
+  /// not breathe as the wave plays; it follows the orbit, so every angle
+  /// fills the viewport with nothing clipped.
+  ///
+  /// The whole viewport is the room, less a small margin, and nothing may run
+  /// under the End-on view [inset]: the drawing is tried centered, bottom
+  /// center, bottom left and middle left, each at the largest scale that fits and clears
+  /// the inset, and the largest wins (centered unless another is clearly
+  /// larger). Zoom stays the user's, applied after the fit about the
+  /// drawing's center.
+  ///
+  /// Returns the projector and the canvas shift to draw it with.
+  ({Projector cam, Offset shift}) _camera(Size size, Rect inset) {
+    // The fit does not depend on the phase, so a playing wave reuses it.
+    final Object key = (
+      state,
+      view.value,
+      size,
+      inset,
+      showComponents,
+      scale,
+      labelStyle,
+    );
+    if (key == _fitKey) return _fitValue!;
+    final ({Projector cam, Offset shift}) fitted = _fit(size, inset);
+    _fitKey = key;
+    _fitValue = fitted;
+    return fitted;
+  }
+
+  static Object? _fitKey;
+  static ({Projector cam, Offset shift})? _fitValue;
+
+  ({Projector cam, Offset shift}) _fit(Size size, Rect inset) {
     final double shortSide = math.min(size.width, size.height);
-    if (shortSide <= 0) return Projector(view.value, size);
-    final Projector unit = Projector(fitView, const Size(2, 2), fit: 0.5);
-    double minX = double.infinity, maxX = -double.infinity;
-    double minY = double.infinity, maxY = -double.infinity;
-    for (final double x in <double>[-_halfLen - 0.12, _halfLen + 0.3]) {
-      for (final double y in <double>[-_amp, _amp]) {
-        for (final double z in <double>[-_amp, _amp]) {
-          final Offset o = unit.project(x, y, z);
-          minX = math.min(minX, o.dx);
-          maxX = math.max(maxX, o.dx);
-          minY = math.min(minY, o.dy);
-          maxY = math.max(maxY, o.dy);
+    final OrbitView v = view.value;
+    if (shortSide <= 0) return (cam: Projector(v, size), shift: Offset.zero);
+    final OrbitView flat = OrbitView(yawDeg: v.yawDeg, pitchDeg: v.pitchDeg);
+    // One world unit draws 1 px about (1, 1); u is relative to the center.
+    final Projector unit = Projector(flat, const Size(2, 2), fit: 0.5);
+    final List<Offset> u = <Offset>[];
+    final List<Rect> pad = <Rect>[];
+    void add(double x, double y, double z, Rect box) {
+      u.add(unit.project(x, y, z) - const Offset(1, 1));
+      pad.add(box);
+    }
+
+    // Strokes and arrowheads reach this far past the geometry they draw.
+    final double r = scale.markerSize(7) * 0.5 + scale.strokeWidth(2);
+    final Rect dot = Rect.fromLTRB(-r, -r, r, r);
+    // Sampled at every arrow, where the curves' vertices sit, so a crossing
+    // of the inset's corner is caught.
+    const int slices = kArrowCount;
+    for (int i = 0; i < slices; i++) {
+      add(
+        -_halfLen - 0.12 + (2 * _halfLen + 0.42) * i / (slices - 1),
+        0,
+        0,
+        dot,
+      );
+    }
+    final TextPainter travel = _layout('Travel');
+    add(
+      _halfLen + 0.3,
+      0,
+      0,
+      Rect.fromLTWH(
+        -travel.width,
+        6 * scale.marker,
+        travel.width,
+        travel.height,
+      ),
+    );
+    if (state.hasField) {
+      // The tip's ellipse over a cycle at each slice, and the arrow shafts'
+      // midpoints; the component extremes.
+      const int m = 24;
+      final List<FieldVector> ring = <FieldVector>[
+        for (int k = 0; k < m; k++) state.fieldAt(0, 2 * math.pi * k / m),
+      ];
+      for (int i = 0; i < slices; i++) {
+        final double x = _xAt(i, slices);
+        for (final FieldVector e in ring) {
+          add(x, e.h * _amp, e.v * _amp, dot);
+          add(x, e.h * _amp * 0.5, e.v * _amp * 0.5, dot);
+        }
+        if (showComponents) {
+          for (final double sgn in <double>[-1, 1]) {
+            add(x, sgn * state.ax * _amp, 0, dot);
+            add(x, 0, sgn * state.ay * _amp, dot);
+          }
+        }
+      }
+      if (showComponents) {
+        // The H and V letters ride the component curves at the source end.
+        final TextPainter letter = _layout('H');
+        final Offset nudge = const Offset(-14, -8) * scale.text;
+        final Rect lbox = Rect.fromLTWH(
+          nudge.dx,
+          nudge.dy - letter.height / 2,
+          letter.width + 2,
+          letter.height,
+        );
+        for (final double sgn in <double>[-1, 1]) {
+          add(-_halfLen, sgn * state.ax * _amp, 0, lbox);
+          add(-_halfLen, 0, sgn * state.ay * _amp, lbox);
         }
       }
     }
-    // unit draws 1 world unit as 1 px; fill 96% of the width, 80% of the
-    // height, whichever is tighter.
-    final double px = math.min(
-      0.96 * size.width / (maxX - minX),
-      0.80 * size.height / (maxY - minY),
-    );
-    return Projector(view.value, size, fit: px / shortSide);
+
+    // A small clear margin inside the viewport and around the inset.
+    final double margin = math.max(6 * scale.marker, 0.015 * shortSide);
+    final Rect room = (Offset.zero & size).deflate(margin);
+    final Rect keepOut = inset.inflate(margin * 0.5);
+    Rect extentAt(double px) {
+      double l = double.infinity, t = double.infinity;
+      double rr = -double.infinity, b = -double.infinity;
+      for (int i = 0; i < u.length; i++) {
+        final double x = u[i].dx * px, y = u[i].dy * px;
+        l = math.min(l, x + pad[i].left);
+        rr = math.max(rr, x + pad[i].right);
+        t = math.min(t, y + pad[i].top);
+        b = math.max(b, y + pad[i].bottom);
+      }
+      return Rect.fromLTRB(l, t, rr, b);
+    }
+
+    // Where u = 0 lands for scale [px] with the extent placed at [anchor]
+    // (0 = left or top of the slack, 1 = right or bottom), or null if it
+    // does not fit the room or runs under the inset.
+    Offset? place(double px, Offset anchor) {
+      final Rect e = extentAt(px);
+      if (e.width > room.width || e.height > room.height) return null;
+      final Offset o = Offset(
+        room.left + anchor.dx * (room.width - e.width) - e.left,
+        room.top + anchor.dy * (room.height - e.height) - e.top,
+      );
+      for (int i = 0; i < u.length; i++) {
+        if (pad[i].shift(o + u[i] * px).overlaps(keepOut)) return null;
+      }
+      return o;
+    }
+
+    double best = 0;
+    Offset bestAt = room.center;
+    for (final Offset anchor in const <Offset>[
+      Offset(0.5, 0.5),
+      Offset(0.5, 1),
+      Offset(0, 1),
+      Offset(0, 0.5),
+    ]) {
+      // The largest scale that places: bisect (clearing the inset only gets
+      // harder as the drawing grows from its anchor).
+      double lo = 0, hi = 4 * shortSide;
+      for (int i = 0; i < 28; i++) {
+        final double mid = (lo + hi) / 2;
+        if (place(mid, anchor) != null) {
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+      final Offset? o = lo > 0 ? place(lo, anchor) : null;
+      // Centered wins ties: another anchor must beat it by 4%.
+      if (o != null && lo > best * 1.04) {
+        best = lo;
+        bestAt = o;
+      }
+    }
+    if (best <= 0) {
+      return (cam: Projector(v, size, fit: 0.2), shift: Offset.zero);
+    }
+    // Zoom scales about the drawing's center at zoom 1.
+    final Offset c = (extentAt(best).center) / best;
+    final Offset shift =
+        bestAt + c * best - c * (best * v.zoom) - size.center(Offset.zero);
+    return (cam: Projector(v, size, fit: best / shortSide), shift: shift);
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    final Rect inset = _insetRect(size);
-    // The 3D is centered in the space left of and below the inset's corner.
-    // On a narrow view (a phone) the inset would squeeze the wave, so the
-    // wave keeps the full width and sits lower instead.
-    final bool narrow = size.width < 520;
-    final Size room = narrow
-        ? Size(size.width, size.height - inset.height * 0.6)
-        : Size(size.width - inset.width * 0.5, size.height);
+    final Rect inset = insetRect(size);
+    // The 3D fills the viewport and keeps clear of the inset (see _camera).
     canvas.save();
-    if (narrow) canvas.translate(0, inset.height * 0.6);
-    final Projector cam = _camera(room);
+    final ({Projector cam, Offset shift}) fitted = _camera(size, inset);
+    canvas.translate(fitted.shift.dx, fitted.shift.dy);
+    final Projector cam = fitted.cam;
     Offset p(double x, double y, double z) => cam.project(x, y, z);
 
     final double stroke = scale.strokeWidth(1);
@@ -199,7 +346,7 @@ class PolarizationPainter extends CustomPainter {
   }
 
   /// The inset's square: the top-right corner, a fixed share of the view.
-  Rect _insetRect(Size size) {
+  Rect insetRect(Size size) {
     final double side = math.min(size.height * 0.36, size.width * 0.34);
     final double m = 10 * scale.marker;
     return Rect.fromLTWH(size.width - side - m, m, side, side);

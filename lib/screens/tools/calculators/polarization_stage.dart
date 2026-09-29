@@ -314,7 +314,6 @@ class _PolarizationViewportState extends State<PolarizationViewport> {
                           hHue: kPolarizationHHue,
                           vHue: kPolarizationVHue,
                           labelStyle: label,
-                          fitView: PolarizationController.initialView,
                           scale: scale,
                         ),
                       ),
