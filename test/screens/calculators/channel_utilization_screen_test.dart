@@ -17,6 +17,7 @@ import 'package:wlan_pros_toolbox/screens/tools/calculators/channel_utilization_
 import 'package:wlan_pros_toolbox/screens/tools/calculators/channel_utilization_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/channel_utilization_stage.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/channel_utilization_model.dart';
 
 Future<ChannelUtilizationController> _open(
   WidgetTester tester, {
@@ -79,6 +80,23 @@ void main() {
     );
     expect(find.textContaining('75.7% in the listener view'), findsOneWidget);
     expect(find.textContaining('payload 56.5%'), findsOneWidget);
+  });
+
+  testWidgets('the basic rate set sets the ACK rate, and the worked cycle '
+      'follows it (6 Mb/s only: ACK 50 us, cycle 409.5 us)', (
+    WidgetTester tester,
+  ) async {
+    final ChannelUtilizationController c = await _open(tester);
+    expect(find.text('Basic rates'), findsOneWidget);
+    expect(find.textContaining('ACKs here go at 24 Mb/s'), findsOneWidget);
+    c.basicRates = CuBasicRates.only6;
+    await tester.pump();
+    expect(find.textContaining('ACKs here go at 6 Mb/s'), findsOneWidget);
+    expect(find.textContaining('a cycle of 409.5 µs'), findsOneWidget);
+    c.basicRates = CuBasicRates.allOfdm;
+    await tester.pump();
+    expect(find.textContaining('ACKs here go at 54 Mb/s'), findsOneWidget);
+    expect(c.copyText(), contains('ACK at 54 Mb/s'));
   });
 
   testWidgets('what the access point reports is 186 of 255 = 72.9%; the '

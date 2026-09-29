@@ -595,6 +595,21 @@ class _Inputs extends StatelessWidget {
       onChanged: (int r) => m.rateMbps = r,
     );
 
+    final Widget basic = _select<CuBasicRates>(
+      label: 'Basic rates',
+      value: c.basicRates,
+      items: <AppSelectItem<CuBasicRates>>[
+        for (final CuBasicRates b in CuBasicRates.values) (b, b.label),
+      ],
+      onChanged: (CuBasicRates b) => m.basicRates = b,
+    );
+
+    final String basicNote =
+        'ACKs here go at '
+        '${cuControlRateFor(c.rateMbps, basicRates: c.basicRates)} Mb/s: '
+        'the highest basic rate not faster than the frame they answer; if '
+        'none fits, the fastest of 6, 12 or 24 that is not faster.';
+
     final Widget size = _select<int>(
       label: 'Frame payload',
       value: c.payloadBytes,
@@ -723,7 +738,13 @@ class _Inputs extends StatelessWidget {
               AirtimeCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[pair(idle, speed), gap, neighborShare],
+                  children: <Widget>[
+                    pair(idle, speed),
+                    gap,
+                    neighborShare,
+                    gap,
+                    basic,
+                  ],
                 ),
               ),
             ],
@@ -752,6 +773,10 @@ class _Inputs extends StatelessWidget {
               ),
               gap,
               rate,
+              gap,
+              basic,
+              const SizedBox(height: AppSpacing.xxs),
+              Text(basicNote, style: note),
               gap,
               size,
               gap,
