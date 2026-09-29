@@ -1229,7 +1229,8 @@ class _Builder {
         faultNote =
             'Server certificate not trusted: the client refused the '
             'server\'s certificate with a TLS alert, and the server ended '
-            'EAP with a failure. The password was never asked for.';
+            'EAP with a failure. '
+            '${tls ? 'The client certificate was never sent.' : 'The password was never sent.'}';
         helpDesk =
             'A certificate warning on the device, or "can\'t connect" with no '
             'prompt on a managed device. The RADIUS log shows the client '
@@ -1595,9 +1596,14 @@ class _Builder {
         ),
       );
     }
+    // The EAP identity exchange did happen (AP and client, above this), so
+    // what never started is the EAP method itself (Vera gate A, 2026-09-29).
+    final String method = c.method == LadderMethod.peap
+        ? 'PEAP'
+        : c.method.label;
     faultNote =
         'Wrong RADIUS shared secret: the server silently discarded every '
-        'Access-Request, so the AP never got an answer and EAP never '
+        'Access-Request, so the AP never got an answer and $method never '
         'started. What the AP and the client do next varies: some APs send '
         'EAP-Failure, some clients start over.';
     helpDesk =

@@ -405,6 +405,67 @@ void main() {
       expect(c.copyWith(faultWaitS: 99).faultWaitS, kMaxFaultWaitS);
     });
 
+    // Vera gate A, 2026-09-29: two Stopped-band sentences were false.
+    test('wrong RADIUS secret: the note does not say EAP never started', () {
+      const Map<LadderMethod, String> named = <LadderMethod, String>{
+        LadderMethod.eapTls: 'EAP-TLS',
+        LadderMethod.peap: 'PEAP',
+        LadderMethod.eapTtls: 'EAP-TTLS',
+      };
+      for (final MapEntry<LadderMethod, String> e in named.entries) {
+        final LadderSequence s = buildLadder(
+          LadderConfig(method: e.key, fault: LadderFault.wrongRadiusSecret),
+        );
+        // The EAP identity exchange is drawn above the Stopped band.
+        final List<String?> before = s.messages
+            .take(s.failedAt)
+            .map((LadderMessage m) => m.eapCode)
+            .toList();
+        expect(before, contains('EAP-Request/Identity'));
+        expect(before, contains('EAP-Response/Identity'));
+        final String note = s.faultNote!;
+        // Word boundary: 'PEAP never started' is true and must pass.
+        expect(
+          RegExp(r'(^|[^A-Z])EAP never started').hasMatch(note),
+          isFalse,
+          reason: note,
+        );
+        expect(note, contains('${e.value} never started'), reason: note);
+      }
+    });
+
+    test('untrusted certificate: EAP-TLS never mentions a password', () {
+      for (final LadderInner inner in LadderInner.values) {
+        final LadderSequence tls = buildLadder(
+          LadderConfig(
+            method: LadderMethod.eapTls,
+            inner: inner,
+            fault: LadderFault.untrustedServerCert,
+          ),
+        );
+        final String text = '${tls.faultNote}\n${tls.helpDesk}'.toLowerCase();
+        expect(text, isNot(contains('password')), reason: text);
+        expect(
+          tls.faultNote,
+          contains('The client certificate was never sent.'),
+        );
+        for (final LadderMethod m in <LadderMethod>[
+          LadderMethod.peap,
+          LadderMethod.eapTtls,
+        ]) {
+          final LadderSequence s = buildLadder(
+            LadderConfig(
+              method: m,
+              inner: inner,
+              fault: LadderFault.untrustedServerCert,
+            ),
+          );
+          expect(s.faultNote, contains('The password was never sent.'));
+          expect(s.faultNote, isNot(contains('asked for')));
+        }
+      }
+    });
+
     test('fault wording: ASCII, no em dashes, 802.1X casing', () {
       final StringBuffer all = StringBuffer();
       for (final LadderMethod m in LadderMethod.values) {
