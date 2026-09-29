@@ -247,14 +247,18 @@ void main() {
     );
   });
 
-  test('all 49 simulators are in wifi-classroom and none remain in '
+  test('all 50 simulators are in wifi-classroom and none remain in '
       'rf-calculators', () {
     final Set<String> sims = <String>{
       for (final String shelf in _simulatorShelves) ..._teachingOrder[shelf]!,
     };
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
     // 2026-09-29: Polarization (spec 45) added on wifi-lab/polarization: 48 + 1.
-    expect(sims, hasLength(49));
+    // 2026-09-29: OFDMA vs MU-MIMO (Feature 8) added on
+    // wifi-lab/ofdma-vs-mumimo: 49 + 1. Set at the merge into
+    // wifi-lab/preview-1.12. One Talker per Channel is a Guided Lesson, not a
+    // simulator, so it does not count here.
+    expect(sims, hasLength(50));
     final Set<String> inClassroom = <String>{
       for (final ToolEntry t in classroom.tools) t.id,
     };
@@ -330,7 +334,11 @@ void main() {
     }
     // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
     // 2026-09-29: Polarization (spec 45) added on wifi-lab/polarization: 88 + 1.
-    expect(classroom.tools, hasLength(89));
+    // 2026-09-29: OFDMA vs MU-MIMO (Feature 8) added on
+    // wifi-lab/ofdma-vs-mumimo: 89 + 1.
+    // 2026-09-29: One Talker per Channel (spec 48) added on
+    // wifi-lab/one-talker: 90 + 1. Set at the merge into wifi-lab/preview-1.12.
+    expect(classroom.tools, hasLength(91));
   });
 
   test('no Classroom shelf holds a single tool (Keith, 2026-09-17)', () {

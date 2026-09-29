@@ -339,10 +339,12 @@ void main() {
       });
 
       // 2026-09-26: Classroom wave-4 tools added; the count is set at each merge into wifi-lab/preview.
-      test('exactly the 49 simulators are gated in the real catalog', () {
+      test('exactly the 50 simulators are gated in the real catalog', () {
         final List<ToolEntry> lab = wifiLabTools().toList();
         // 2026-09-29: Polarization (spec 45): 48 + 1.
-        expect(lab, hasLength(49));
+        // 2026-09-29: OFDMA vs MU-MIMO (Feature 8): 49 + 1. One Talker per
+        // Channel is an ungated Guided Lesson and does not count here.
+        expect(lab, hasLength(50));
       });
     },
   );

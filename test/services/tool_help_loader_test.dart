@@ -30,7 +30,7 @@ import 'package:wlan_pros_toolbox/services/help/tool_help_loader.dart';
 /// 2026-08 (name 179 vs assertion 181). The running commentary above the
 /// assertion below shows how the figure was reached; bump BOTH together by
 /// bumping this.
-const int _expectedEntryCount = 266;
+const int _expectedEntryCount = 268;
 
 const String _fixture = '''
 {
@@ -554,6 +554,12 @@ void main() {
       // polarization, on top of v1.11.0 (8197a2c1), which counted 265.
       // 265 + 1 = 266. Counted off the file: `len(json['tools'])` returned
       // 266 and the id appears exactly once.
+      // 2026-09-29: the OFDMA vs MU-MIMO tile added ONE entry,
+      // ofdma-vs-mumimo, on top of that. 266 + 1 = 267.
+      // 2026-09-29: the One Talker per Channel Guided Lesson (spec 48) added
+      // ONE entry, one-talker, on top of that. 267 + 1 = 268. Counted off the
+      // merged file on wifi-lab/preview-1.12: `len(json['tools'])` returned
+      // 268 and each of the three new ids appears exactly once.
       expect(store.count, _expectedEntryCount);
     });
 
