@@ -57,10 +57,7 @@ Future<EapLadderController> _pump(
     MaterialApp(
       theme: theme,
       home: MediaQuery(
-        data: MediaQueryData(
-          size: Size(width, 844),
-          disableAnimations: true,
-        ),
+        data: MediaQueryData(size: Size(width, 844), disableAnimations: true),
         child: const EapLadderScreen(),
       ),
     ),
@@ -109,10 +106,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(LadderFailureMark), findsOneWidget);
       expect(
-        find.bySemanticsLabel(RegExp(r'Step 3 of 3.*Failed here\.$')),
+        find.bySemanticsLabel(RegExp(r'Step 3 of 3.*Failure\.$')),
         findsOneWidget,
       );
-      expect(find.textContaining('This is where it fails.'), findsOneWidget);
+      expect(
+        find.textContaining('Failure: this message refuses'),
+        findsOneWidget,
+      );
       expect(
         find.bySemanticsLabel(
           'Stopped here. The RADIUS server never answered.',
@@ -136,10 +136,10 @@ void main() {
       final Iterable<Icon> dangerIcons = tester
           .widgetList<Icon>(find.byType(Icon))
           .where((Icon i) => i.color == danger);
-      expect(
-        dangerIcons.map((Icon i) => i.icon).toSet(),
-        <IconData>{kFailureIcon, kStoppedIcon},
-      );
+      expect(dangerIcons.map((Icon i) => i.icon).toSet(), <IconData>{
+        kFailureIcon,
+        kStoppedIcon,
+      });
       final Iterable<Text> dangerText = tester
           .widgetList<Text>(find.byType(Text))
           .where((Text t) => t.style?.color == danger);
@@ -156,6 +156,34 @@ void main() {
       width: 360,
     );
     c.showAll();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('phone width 360, PEAP with no fault: the step gutter fits', (
+    WidgetTester tester,
+  ) async {
+    // Regression: in v1.11.0 a lock and a two-digit step number overflowed
+    // the gutter by a rounding hair at 360 px.
+    tester.view.physicalSize = const Size(360 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: const MediaQuery(
+          data: MediaQueryData(size: Size(360, 844), disableAnimations: true),
+          child: EapLadderScreen(
+            initial: LadderConfig(method: LadderMethod.peap),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    tester
+        .widget<EapLadderStage>(find.byType(EapLadderStage))
+        .controller
+        .showAll();
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });

@@ -131,7 +131,8 @@ class _LadderCard extends StatelessWidget {
           ElSectionLabel(
             '${c.method.label}'
             '${c.method == LadderMethod.eapTtls ? ' with ${c.inner.label} inside' : ''}'
-            ': ${c.roam.label}',
+            ': ${c.roam.label}'
+            '${controller.sequence.failed ? '. Broken: ${c.effectiveFault.label}' : ''}',
           ),
           const SizedBox(height: AppSpacing.xxs),
           if (fill)
@@ -149,6 +150,12 @@ class _LadderCard extends StatelessWidget {
           _Legend(
             showTunnel: controller.sequence.messages.any(
               (LadderMessage m) => m.tunneled,
+            ),
+            showFailure: controller.sequence.messages.any(
+              (LadderMessage m) => m.failure,
+            ),
+            showLost: controller.sequence.messages.any(
+              (LadderMessage m) => m.lost,
             ),
           ),
           SizedBox(height: fill ? AppSpacing.xs : AppSpacing.sm),
@@ -201,10 +208,18 @@ class _LadderCard extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
-  const _Legend({required this.showTunnel});
+  const _Legend({
+    required this.showTunnel,
+    this.showFailure = false,
+    this.showLost = false,
+  });
 
   /// Only ladders with tunneled content list the tunnel mark.
   final bool showTunnel;
+
+  /// Break it: only failed ladders list the failure and lost marks.
+  final bool showFailure;
+  final bool showLost;
 
   @override
   Widget build(BuildContext context) {
@@ -242,6 +257,16 @@ class _Legend extends StatelessWidget {
               color: colors.textSecondary,
             ),
             '{ } inside the TLS tunnel',
+          ),
+        if (showFailure)
+          item(
+            Icon(kFailureIcon, size: icon, color: colors.statusDanger),
+            'Failure: refused or ended',
+          ),
+        if (showLost)
+          item(
+            Icon(kLostIcon, size: icon, color: colors.textSecondary),
+            'No answer',
           ),
         item(
           Icon(Icons.key_rounded, size: icon, color: colors.textAccent),
@@ -305,7 +330,7 @@ class _LaneHeader extends StatelessWidget {
         width: width * fraction,
         child: Column(
           children: <Widget>[
-            Text(
+            ElWholeWordText(
               l.label,
               textAlign: TextAlign.center,
               style: text.labelMedium?.copyWith(
@@ -313,7 +338,7 @@ class _LaneHeader extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
+            ElWholeWordText(
               unused ? 'not used here' : l.role,
               textAlign: TextAlign.center,
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
@@ -635,7 +660,8 @@ class _MessageRow extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
+          // Never breaks inside a word (Keith, 2026-09-29): shrinks instead.
+          ElWholeWordText(
             m.label,
             textAlign: TextAlign.center,
             style: text.labelMedium?.copyWith(
@@ -644,7 +670,7 @@ class _MessageRow extends StatelessWidget {
             ),
           ),
           if (m.detail != null)
-            Text(
+            ElWholeWordText(
               m.detail!,
               textAlign: TextAlign.center,
               style: text.bodySmall?.copyWith(color: colors.textSecondary),
@@ -728,31 +754,38 @@ class _MessageRow extends StatelessWidget {
                 maintainState: true,
                 // The step number, with the tunnel lock beside it: the
                 // gutter left of the client lane is free on every row, so
-                // the lock does not take width from the frame name.
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    if (m.tunneled) ...<Widget>[
-                      Icon(
-                        Icons.lock_outline_rounded,
-                        size: sc.markerSize(16),
-                        color: colors.textSecondary,
+                // the lock does not take width from the frame name. Scaled
+                // down rather than overflow on a narrow phone (a lock and a
+                // two-digit step at 360 px overflowed by a rounding hair in
+                // v1.11.0), as the Join and Roam gutter already is.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (m.tunneled) ...<Widget>[
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          size: sc.markerSize(16),
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.xxs),
+                      ],
+                      Text(
+                        '${index + 1}',
+                        style: mono.inlineCode.copyWith(
+                          fontSize: AppTextSize.caption,
+                          color: state == _RowState.latest
+                              ? colors.textAccent
+                              : colors.textTertiary,
+                          fontWeight: state == _RowState.latest
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
                       ),
-                      const SizedBox(width: AppSpacing.xxs),
                     ],
-                    Text(
-                      '${index + 1}',
-                      style: mono.inlineCode.copyWith(
-                        fontSize: AppTextSize.caption,
-                        color: state == _RowState.latest
-                            ? colors.textAccent
-                            : colors.textTertiary,
-                        fontWeight: state == _RowState.latest
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -766,7 +799,7 @@ class _MessageRow extends StatelessWidget {
     final String mark = m.lost
         ? ' No answer.'
         : m.failure
-        ? ' Failed here.'
+        ? ' Failure.'
         : '';
     return Semantics(
       label:
@@ -1188,7 +1221,10 @@ class _Counts extends StatelessWidget {
               : null,
         ),
         stat('Round trips', '${s.radiusRoundTrips}'),
-        stat('After the scan, est.', formatLadderMs(s.estimatedMs)),
+        stat(
+          s.failed ? 'Until it stops, est.' : 'After the scan, est.',
+          formatLadderMs(s.estimatedMs),
+        ),
       ],
     );
   }

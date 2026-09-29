@@ -16,6 +16,12 @@
 // JOIN AND ROAM (spec 21b): in those modes the readouts and settings come
 // from eap_ladder_jr_controls.dart; the transport is the same.
 //
+// BREAK IT (spec 42): a Select after the roam mode lists None and the faults
+// that apply to the method (a full authentication only; otherwise it is
+// disabled with a sentence saying why). Faults that retry show two
+// illustrative inputs, retries and the wait before each. In the presenter
+// the Select sits with the method and roam mode, and B cycles it.
+//
 // PRESENTER (spec 00): inside a PresenterLayout the panel keeps playback, the
 // method and the roam mode in view (the inner method only for EAP-TTLS); the
 // counts are on the stage, and the certificate and RADIUS settings, the
@@ -195,12 +201,17 @@ class _PresenterPanel extends StatelessWidget {
                 ],
                 onChanged: (LadderRoam r) => c.roam = r,
               ),
+              const SizedBox(height: AppSpacing.xs),
+              _BreakItFields(c, presenter: true),
             ],
           ),
         ),
         PresenterDisclosure(
-          title: 'Certificate size and RADIUS time',
+          title: cfg.effectiveFault.retries
+              ? 'Retries, certificate size and RADIUS time'
+              : 'Certificate size and RADIUS time',
           children: <Widget>[
+            if (cfg.effectiveFault.retries) _RetryFields(c),
             ElSlider(
               label: 'Certificate fragments per message',
               valueText:
@@ -542,6 +553,9 @@ class _ReadoutsCard extends StatelessWidget {
     final LadderSequence s = c.sequence;
     final LadderConfig cfg = c.config;
     final LadderSkipped skipped = c.skipped;
+    final int waits = s.messages
+        .where((LadderMessage m) => m.waitMs > 0)
+        .length;
     return ElCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -564,7 +578,10 @@ class _ReadoutsCard extends StatelessWidget {
           ),
           ElRow(label: 'RADIUS round trips', value: '${s.radiusRoundTrips}'),
           ElRow(
-            label: 'Estimated time to connect, after the scan (illustrative)',
+            label: s.failed
+                ? 'Estimated time until it stops, after the scan '
+                      '(illustrative)'
+                : 'Estimated time to connect, after the scan (illustrative)',
             value: formatLadderMs(s.estimatedMs),
             emphasize: true,
           ),
@@ -572,23 +589,34 @@ class _ReadoutsCard extends StatelessWidget {
           Text(
             '${s.afterScan.where((LadderMessage m) => m.leg == LadderLeg.air).length} '
             'frames x ${kAirFrameMs.round()} ms'
-            '${s.usesRadius ? ' + ${s.radiusRoundTrips} round trips x ${cfg.radiusRttMs.round()} ms' : ''}'
+            '${s.radiusRoundTrips > 0 ? ' + ${s.radiusRoundTrips} round trips x ${cfg.radiusRttMs.round()} ms' : ''}'
+            '${waits > 0 ? ' + $waits wait${waits == 1 ? '' : 's'} x ${cfg.faultWaitS.round()} s' : ''}'
             '. Client and server processing is not included.',
             style: text.bodySmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.sm),
-          ElSectionLabel(
-            cfg.roam == LadderRoam.full
-                ? 'Skipped relative to a full authentication'
-                : 'Skipped relative to a full authentication '
-                      '(${skipped.fewerMessages} fewer messages)',
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          for (final String line in skipped.lines)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-              child: ElNote(icon: Icons.remove_circle_outline, message: line),
+          if (s.failed) ...<Widget>[
+            const ElSectionLabel('What never happened'),
+            const SizedBox(height: AppSpacing.xxs),
+            for (final String line in neverHappened(s))
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+                child: ElNote(icon: Icons.remove_circle_outline, message: line),
+              ),
+          ] else ...<Widget>[
+            ElSectionLabel(
+              cfg.roam == LadderRoam.full
+                  ? 'Skipped relative to a full authentication'
+                  : 'Skipped relative to a full authentication '
+                        '(${skipped.fewerMessages} fewer messages)',
             ),
+            const SizedBox(height: AppSpacing.xxs),
+            for (final String line in skipped.lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+                child: ElNote(icon: Icons.remove_circle_outline, message: line),
+              ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           const ElNote(
             icon: Icons.travel_explore_rounded,
@@ -710,6 +738,12 @@ class _SettingsCard extends StatelessWidget {
                   'first connection.',
           }, style: note),
           const SizedBox(height: AppSpacing.sm),
+          _BreakItFields(c),
+          if (cfg.effectiveFault.retries) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            _RetryFields(c),
+          ],
+          const SizedBox(height: AppSpacing.sm),
           ElSlider(
             label: 'Certificate size (fragments per certificate message)',
             valueText:
@@ -753,6 +787,121 @@ class _SettingsCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Break it ────────────────────────────────────────────────────────────────
+
+/// The Break it select and the sentence under it (spec 42).
+class _BreakItFields extends StatelessWidget {
+  const _BreakItFields(this.c, {this.presenter = false});
+
+  final EapLadderController c;
+
+  /// Presenter: no sentence unless the select is disabled.
+  final bool presenter;
+
+  static String _blurb(LadderFault f) => switch (f) {
+    LadderFault.none =>
+      'Pick what goes wrong, then play the ladder to see where it stops.',
+    LadderFault.untrustedServerCert =>
+      'The client does not trust the CA that issued the server\'s '
+          'certificate.',
+    LadderFault.wrongPassword => 'The user typed the wrong password.',
+    LadderFault.wrongRadiusSecret =>
+      'The AP and the RADIUS server are set up with different shared '
+          'secrets.',
+    LadderFault.wrongPsk => 'The client has the wrong passphrase.',
+    LadderFault.wrongSaePassword => 'The client has the wrong password.',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final LadderConfig cfg = c.config;
+    final List<LadderFault> options = c.faultOptions;
+    final bool full = cfg.roam == LadderRoam.full;
+    // In the presenter the sentence shows only when it explains a disabled
+    // select; the shortcut overlay names B, and the caption names the fault.
+    final String? sentence = !full
+        ? 'Break it works on a full authentication; PMK caching and FT skip '
+              'the steps that fail.'
+        : presenter
+        ? null
+        : '${_blurb(cfg.effectiveFault)}'
+              '${cfg.effectiveFault != LadderFault.none ? ' A typical sequence: devices differ in who speaks last.' : ''}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        LabeledField(
+          label: 'Break it',
+          semanticLabel: 'Break it: choose what goes wrong',
+          field: AppSelect<LadderFault>(
+            value: cfg.effectiveFault,
+            semanticLabel: 'Break it: choose what goes wrong',
+            enabled: options.length > 1,
+            items: <AppSelectItem<LadderFault>>[
+              for (final LadderFault f in options) (f, f.label),
+            ],
+            onChanged: (LadderFault f) => c.fault = f,
+          ),
+        ),
+        if (sentence != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            sentence,
+            style: text.bodySmall?.copyWith(color: colors.textTertiary),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Retries and the wait before each: illustrative inputs for the faults
+/// that retry.
+class _RetryFields extends StatelessWidget {
+  const _RetryFields(this.c);
+
+  final EapLadderController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColorScheme colors = context.colors;
+    final TextTheme text = Theme.of(context).textTheme;
+    final LadderConfig cfg = c.config;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        ElSlider(
+          label: 'Retries (illustrative)',
+          valueText: '${cfg.faultRetries}',
+          value: cfg.faultRetries.toDouble(),
+          min: kMinFaultRetries.toDouble(),
+          max: kMaxFaultRetries.toDouble(),
+          divisions: kMaxFaultRetries - kMinFaultRetries,
+          onChanged: (double v) => c.faultRetries = v,
+          semanticValue: (double v) =>
+              '${v.round()} retr${v.round() == 1 ? 'y' : 'ies'}',
+        ),
+        ElSlider(
+          label: 'Wait before a retry (illustrative)',
+          valueText: '${cfg.faultWaitS.round()} s',
+          value: cfg.faultWaitS,
+          min: kMinFaultWaitS,
+          max: kMaxFaultWaitS,
+          divisions: (kMaxFaultWaitS - kMinFaultWaitS).round(),
+          onChanged: (double v) => c.faultWaitS = v,
+          semanticValue: (double v) => '${v.round()} seconds',
+        ),
+        Text(
+          'Clients, APs and RADIUS servers each set their own retry counts '
+          'and timers.',
+          style: text.bodySmall?.copyWith(color: colors.textTertiary),
+        ),
+      ],
     );
   }
 }

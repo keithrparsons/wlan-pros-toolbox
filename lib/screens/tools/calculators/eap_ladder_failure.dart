@@ -40,7 +40,7 @@ const IconData kLostIcon = Icons.schedule_rounded;
 const IconData kStoppedIcon = Icons.block_rounded;
 
 /// The failure mark: an X in a circle, in the status danger hue. Decorative
-/// for screen readers; the row's label says "failed here".
+/// for screen readers; the row's label says "Failure".
 class LadderFailureMark extends StatelessWidget {
   const LadderFailureMark({super.key, this.size = 16});
 
@@ -99,7 +99,7 @@ class LadderLostMark extends StatelessWidget {
 
 /// Places the failure or lost mark on a message row whose arrow runs
 /// [fromX] to [toX] in a band [band] high at the bottom of a row [rowWidth]
-/// wide. The failure mark centers on the arrow's end; the lost mark starts
+/// wide. The failure mark sits on the arrow's end, over its head; the lost mark starts
 /// just past the gap where the lost arrow stops, on the far side of the gap.
 Widget positionedLadderMark({
   required bool lost,
@@ -112,8 +112,12 @@ Widget positionedLadderMark({
 }) {
   final double bottom = (band - iconSize) / 2;
   if (!lost) {
+    // On the arrow's end, over its head, just inside the target lane: an
+    // arrow into the client lane would otherwise put the X in the step
+    // number gutter.
+    final double dir = toX >= fromX ? 1 : -1;
     return Positioned(
-      left: toX - iconSize / 2,
+      left: toX - dir * iconSize / 2 - iconSize / 2,
       bottom: bottom,
       width: iconSize,
       height: iconSize,
@@ -240,7 +244,7 @@ class LadderFailureCaptionLine extends StatelessWidget {
             lost
                 ? 'No answer: nothing comes back, so the sender waits and '
                       'tries again.'
-                : 'This is where it fails.',
+                : 'Failure: this message refuses the exchange or ends it.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colors.textPrimary,
               fontWeight: FontWeight.w600,

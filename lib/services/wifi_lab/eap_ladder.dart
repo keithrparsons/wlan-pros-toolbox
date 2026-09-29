@@ -30,6 +30,34 @@
 //   - RFC 2548: the MS-MPPE key attributes that carry the key material to
 //     the AP in the Access-Accept.
 //
+// BREAK IT (spec 42, 2026-09-29). A LadderFault cuts the full
+// authentication where that fault stops it, per the documents spec 42
+// quotes:
+//   - untrusted server certificate: RFC 5216 section 2.1.3 (the peer MAY
+//     send a TLS alert, MUST wait, and the server MUST reply EAP-Failure);
+//     alert unknown_ca, RFC 5246 section 7.2.2; the failure rides an
+//     Access-Reject, RFC 3579 section 2.6.3.
+//   - wrong password: RFC 2759 section 6 (MSCHAPv2 Failure, error 691) and
+//     RFC 3748 section 4.2 (after a failure result indication the
+//     authenticator MUST send Failure) for PEAP; RFC 5281 sections 11.2.4
+//     (MS-CHAP-Error in an Access-Challenge) and 11.2.5 (PAP, Access-Reject)
+//     for EAP-TTLS.
+//   - wrong RADIUS shared secret: RFC 3579 section 3.2 (the server MUST
+//     silently discard an Access-Request whose Message-Authenticator does
+//     not match), so the AP's Access-Requests are never answered.
+//   - wrong passphrase: the AP cannot verify message 2's MIC, sends message
+//     1 again, and deauthenticates with reason 15; wrong SAE password: the
+//     AP cannot verify the client's Confirm and never sends its own.
+//   - reason codes 15 and 23: IEEE 802.11-2020 Table 9-49, as transcribed
+//     in reason_codes_screen.dart.
+// Who sends the last frame varies by device, so each is "a typical
+// sequence", and the retry count and the wait before a retry are
+// illustrative inputs (RFC 2865 section 2.5 and RFC 3579 section 2.3 leave
+// them to the implementation). The red X marks a message that ORIGINATES a
+// refusal (the client's alert, the server's reject, the AP's
+// deauthentication, a frame the receiver discards); the AP's relays of them
+// carry no X, because the AP only relays.
+//
 // WHAT VARIES BY IMPLEMENTATION IS A SETTING, NOT A CLAIM. Certificate size is
 // modelled as fragments per certificate message (1 to 6), because the count
 // depends on the certificate chain and the server's fragment size. The TLS
@@ -88,7 +116,8 @@ enum LadderPhase {
   eapMethod('EAP method: TLS handshake'),
   innerAuth('Inside the TLS tunnel'),
   eapResult('EAP result'),
-  fourWay('4-way handshake');
+  fourWay('4-way handshake'),
+  disconnect('Disconnect');
 
   const LadderPhase(this.label);
 
@@ -163,6 +192,53 @@ enum LadderRoam {
   final String label;
 }
 
+/// Break it (spec 42): what goes wrong. Each applies only to the methods
+/// where it can happen, and only to a full authentication.
+enum LadderFault {
+  none('None: it works'),
+  untrustedServerCert('Server certificate not trusted'),
+  wrongPassword('Wrong password'),
+  wrongRadiusSecret('Wrong RADIUS shared secret'),
+  wrongPsk('Wrong passphrase'),
+  wrongSaePassword('Wrong SAE password');
+
+  const LadderFault(this.label);
+
+  final String label;
+
+  /// Whether this fault can happen with [method].
+  bool appliesToMethod(LadderMethod method) => switch (this) {
+    none => true,
+    untrustedServerCert || wrongRadiusSecret => method.uses8021X,
+    wrongPassword => method.isTunneled,
+    wrongPsk => method == LadderMethod.psk,
+    wrongSaePassword => method == LadderMethod.sae,
+  };
+
+  /// Whether this fault can happen with [method] in [roam] mode.
+  bool appliesTo(LadderMethod method, LadderRoam roam) =>
+      this == none || (roam == LadderRoam.full && appliesToMethod(method));
+
+  /// Whether the retries and wait inputs change this fault's ladder.
+  bool get retries =>
+      this == wrongRadiusSecret || this == wrongPsk || this == wrongSaePassword;
+
+  /// None first, then the faults that apply to [method] in [roam] mode.
+  static List<LadderFault> optionsFor(LadderMethod method, LadderRoam roam) =>
+      <LadderFault>[
+        for (final LadderFault f in values)
+          if (f.appliesTo(method, roam)) f,
+      ];
+}
+
+/// Break it: retries after the first attempt (illustrative).
+const int kMinFaultRetries = 1;
+const int kMaxFaultRetries = 5;
+
+/// Break it: seconds before each retry (illustrative).
+const double kMinFaultWaitS = 1;
+const double kMaxFaultWaitS = 10;
+
 /// Certificate fragments per certificate message: the range the setting
 /// offers.
 const int kMinCertFragments = 1;
@@ -186,6 +262,9 @@ class LadderConfig {
     this.roam = LadderRoam.full,
     this.certFragments = 1,
     this.radiusRttMs = 10,
+    this.fault = LadderFault.none,
+    this.faultRetries = 2,
+    this.faultWaitS = 3,
   });
 
   final LadderMethod method;
@@ -201,6 +280,21 @@ class LadderConfig {
   /// AP to RADIUS server and back, including server processing.
   final double radiusRttMs;
 
+  /// Break it: the fault chosen. It changes the ladder only where it
+  /// applies; see [effectiveFault].
+  final LadderFault fault;
+
+  /// Break it: retries after the first attempt (illustrative).
+  final int faultRetries;
+
+  /// Break it: seconds before each retry (illustrative).
+  final double faultWaitS;
+
+  /// The fault the ladder actually draws: [fault] where it applies to this
+  /// method and roam mode, otherwise none.
+  LadderFault get effectiveFault =>
+      fault.appliesTo(method, roam) ? fault : LadderFault.none;
+
   /// Whether the certificate-size setting changes anything for this config.
   bool get certificateMatters => method.uses8021X && roam == LadderRoam.full;
 
@@ -213,11 +307,29 @@ class LadderConfig {
     LadderRoam? roam,
     int? certFragments,
     double? radiusRttMs,
+    LadderFault? fault,
+    int? faultRetries,
+    double? faultWaitS,
   }) {
+    final LadderMethod m = method ?? this.method;
+    final LadderRoam r = roam ?? this.roam;
+    final LadderFault f = fault ?? this.fault;
     return LadderConfig(
-      method: method ?? this.method,
+      method: m,
       inner: inner ?? this.inner,
-      roam: roam ?? this.roam,
+      roam: r,
+      // A fault that no longer applies after a method or roam change is
+      // dropped, so the select never holds a fault the ladder is not
+      // drawing.
+      fault: f.appliesTo(m, r) ? f : LadderFault.none,
+      faultRetries: (faultRetries ?? this.faultRetries).clamp(
+        kMinFaultRetries,
+        kMaxFaultRetries,
+      ),
+      faultWaitS: (faultWaitS ?? this.faultWaitS).clamp(
+        kMinFaultWaitS,
+        kMaxFaultWaitS,
+      ),
       certFragments: (certFragments ?? this.certFragments).clamp(
         kMinCertFragments,
         kMaxCertFragments,
@@ -236,11 +348,22 @@ class LadderConfig {
       other.inner == inner &&
       other.roam == roam &&
       other.certFragments == certFragments &&
-      other.radiusRttMs == radiusRttMs;
+      other.radiusRttMs == radiusRttMs &&
+      other.fault == fault &&
+      other.faultRetries == faultRetries &&
+      other.faultWaitS == faultWaitS;
 
   @override
-  int get hashCode =>
-      Object.hash(method, inner, roam, certFragments, radiusRttMs);
+  int get hashCode => Object.hash(
+    method,
+    inner,
+    roam,
+    certFragments,
+    radiusRttMs,
+    fault,
+    faultRetries,
+    faultWaitS,
+  );
 }
 
 /// One arrow on the ladder.
@@ -426,7 +549,12 @@ class LadderSkipped {
 LadderSequence buildLadder(LadderConfig config) {
   final _Builder b = _Builder(config);
   b.build();
-  return LadderSequence._(config, List<LadderMessage>.unmodifiable(b.out));
+  return LadderSequence._(
+    config,
+    List<LadderMessage>.unmodifiable(b.out),
+    faultNote: b.faultNote,
+    helpDesk: b.helpDesk,
+  );
 }
 
 /// Compares [seq] with the full authentication of the same method.
@@ -477,11 +605,39 @@ LadderSkipped skippedVersusFull(LadderSequence seq) {
   return LadderSkipped(lines: lines, fewerMessages: fewer);
 }
 
+/// Break it: what a failed ladder never reached, one sentence each; empty
+/// when nothing failed.
+List<String> neverHappened(LadderSequence seq) {
+  if (!seq.failed) return const <String>[];
+  final LadderMethod m = seq.config.method;
+  bool has(bool Function(LadderMessage) test) => seq.messages.any(test);
+  return <String>[
+    if (m.uses8021X && !has((x) => x.label == 'Access-Accept'))
+      'No Access-Accept: the RADIUS server never approved the client, so '
+          'the AP never received a PMK.',
+    if (m == LadderMethod.sae)
+      'No SAE Confirm from the AP, so no PMK and no Association.',
+    if (!has((x) => x.kind == LadderFrameKind.eapolKey))
+      'No 4-way handshake: no session keys were made.'
+    else
+      'The 4-way handshake never finished: message 3 was never sent.',
+    'Traffic protected was never reached: the client has no working '
+        'connection.',
+  ];
+}
+
 class _Builder {
-  _Builder(this.c);
+  _Builder(this.c) : _fault = c.effectiveFault;
 
   final LadderConfig c;
+  final LadderFault _fault;
   final List<LadderMessage> out = <LadderMessage>[];
+
+  /// Set when a fault ends the ladder early.
+  String? faultNote;
+  String? helpDesk;
+
+  double get _waitMs => c.faultWaitS * 1000;
 
   static const LadderLane _c = LadderLane.client;
   static const LadderLane _ap = LadderLane.ap;
@@ -494,12 +650,12 @@ class _Builder {
     switch (c.roam) {
       case LadderRoam.full:
         if (c.method == LadderMethod.sae) {
-          _sae();
+          if (!_sae()) return;
         } else {
           _openAuth();
         }
         _association(reassociation: false);
-        if (c.method.uses8021X) _eap();
+        if (c.method.uses8021X && !_eap()) return;
         _fourWay();
       case LadderRoam.pmkCaching:
         _openAuth();
@@ -583,7 +739,8 @@ class _Builder {
     );
   }
 
-  void _sae() {
+  /// False when a wrong SAE password stops the ladder here.
+  bool _sae() {
     out.add(
       const LadderMessage(
         from: _c,
@@ -625,6 +782,10 @@ class _Builder {
         description: 'The client proves it computed the same secret.',
       ),
     );
+    if (_fault == LadderFault.wrongSaePassword) {
+      _saeFail();
+      return false;
+    }
     out.add(
       const LadderMessage(
         from: _ap,
@@ -643,6 +804,57 @@ class _Builder {
             'encrypted yet.',
       ),
     );
+    return true;
+  }
+
+  /// Wrong SAE password: the client's Confirm does not verify at the AP,
+  /// which discards it and never sends its own Confirm. The client sends
+  /// its Confirm again after each wait, then gives up.
+  void _saeFail() {
+    // Mark the Confirm just added as the refused frame.
+    final LadderMessage first = out.removeLast();
+    out.add(
+      LadderMessage(
+        from: first.from,
+        to: first.to,
+        kind: first.kind,
+        phase: first.phase,
+        label: first.label,
+        detail: first.detail,
+        fullDetail: first.fullDetail,
+        description:
+            'The client proves what it computed from its password. The '
+            'passwords differ, so the AP cannot verify this Confirm and '
+            'discards it without a reply.',
+        failure: true,
+      ),
+    );
+    for (int r = 1; r <= c.faultRetries; r++) {
+      out.add(
+        LadderMessage(
+          from: _c,
+          to: _ap,
+          kind: LadderFrameKind.management,
+          phase: LadderPhase.saeAuth,
+          label: 'SAE Confirm',
+          detail: 'Authentication, seq 2, retry $r',
+          fullDetail: 'Authentication frame, SAE, seq 2: confirm, retry $r',
+          description:
+              'No Confirm came back, so after a wait the client sends its '
+              'Confirm again. It fails the same way.',
+          failure: true,
+          waitMs: _waitMs,
+        ),
+      );
+    }
+    faultNote =
+        'Wrong SAE password: the AP never verified the client\'s Confirm, '
+        'so it never sent its own. No PMK, no Association, and no RADIUS '
+        'server was involved.';
+    helpDesk =
+        '"Incorrect password" or "can\'t connect" on the device. The AP log '
+        'shows SAE authentication failing for this client. Nothing is '
+        'wrong with the signal.';
   }
 
   void _association({required bool reassociation}) {
@@ -680,8 +892,12 @@ class _Builder {
               },
       ),
     );
+    // With a wrong passphrase each side holds a PMK, but not the same one,
+    // so "Keys available" would be false.
     final bool keysHere =
-        (pmkid && c.method != LadderMethod.psk) || c.method == LadderMethod.psk;
+        ((pmkid && c.method != LadderMethod.psk) ||
+            c.method == LadderMethod.psk) &&
+        _fault != LadderFault.wrongPsk;
     out.add(
       LadderMessage(
         from: _ap,
@@ -714,6 +930,10 @@ class _Builder {
   }
 
   void _fourWay() {
+    if (_fault == LadderFault.wrongPsk) {
+      _fourWayFail();
+      return;
+    }
     out.add(
       const LadderMessage(
         from: _ap,
@@ -768,6 +988,70 @@ class _Builder {
             'lets the client\'s data through.',
       ),
     );
+  }
+
+  /// Wrong passphrase: the AP cannot verify message 2's MIC, discards it,
+  /// and sends message 1 again after each wait; then it deauthenticates the
+  /// client with reason 15.
+  void _fourWayFail() {
+    for (int attempt = 0; attempt <= c.faultRetries; attempt++) {
+      final String retry = attempt == 0 ? '' : ', retry $attempt';
+      out.add(
+        LadderMessage(
+          from: _ap,
+          to: _c,
+          kind: LadderFrameKind.eapolKey,
+          phase: LadderPhase.fourWay,
+          label: 'EAPOL-Key',
+          detail: 'Message 1 of 4: ANonce$retry',
+          description: attempt == 0
+              ? 'The AP sends a random number (ANonce). The client derives '
+                    'a session key from its PMK, which came from the wrong '
+                    'passphrase.'
+              : 'No valid message 2 arrived, so after a wait the AP sends '
+                    'message 1 again.',
+          waitMs: attempt == 0 ? 0 : _waitMs,
+        ),
+      );
+      out.add(
+        LadderMessage(
+          from: _c,
+          to: _ap,
+          kind: LadderFrameKind.eapolKey,
+          phase: LadderPhase.fourWay,
+          label: 'EAPOL-Key',
+          detail: 'Message 2 of 4: SNonce, MIC$retry',
+          description:
+              'The client\'s MIC is computed from a different PMK, so the '
+              'AP cannot verify it and discards the message. The client '
+              'hears no complaint; it just never gets message 3.',
+          failure: true,
+        ),
+      );
+    }
+    out.add(
+      const LadderMessage(
+        from: _ap,
+        to: _c,
+        kind: LadderFrameKind.management,
+        phase: LadderPhase.disconnect,
+        label: 'Deauthentication',
+        detail: 'Reason 15: 4-way handshake timeout',
+        description:
+            'The AP gives up and disconnects the client. Reason 15 means the '
+            '4-way handshake timed out: the only clue on the air that the '
+            'passphrase was wrong.',
+        failure: true,
+      ),
+    );
+    faultNote =
+        'Wrong passphrase: the 4-way handshake stopped at message 2 and the '
+        'AP disconnected the client with reason 15. No RADIUS server was '
+        'involved.';
+    helpDesk =
+        '"Incorrect password" on most devices. The AP log shows a 4-way '
+        'handshake timeout (reason 15) for this client. Nothing is wrong '
+        'with the signal or the RADIUS server.';
   }
 
   void _ft() {
@@ -841,7 +1125,8 @@ class _Builder {
 
   // ── 802.1X / EAP ──────────────────────────────────────────────────────────
 
-  void _eap() {
+  /// False when a fault stops the ladder inside EAP.
+  bool _eap() {
     final bool tunnel = c.method.isTunneled;
     out.add(
       const LadderMessage(
@@ -872,6 +1157,10 @@ class _Builder {
             : 'The client names itself. This travels unencrypted.',
       ),
     );
+    if (_fault == LadderFault.wrongRadiusSecret) {
+      _secretFail();
+      return false;
+    }
     out.add(
       LadderMessage(
         from: _ap,
@@ -907,9 +1196,48 @@ class _Builder {
         'ChangeCipherSpec, Finished';
     const String clientTunnelFlight =
         'ClientKeyExchange, ChangeCipherSpec, Finished';
+    final bool untrusted = _fault == LadderFault.untrustedServerCert;
     for (int i = 1; i <= f; i++) {
       final bool last = i == f;
       final String part = f > 1 ? ' ($i of $f)' : '';
+      if (last && untrusted) {
+        _turn(
+          server: 'Server certificate$part',
+          serverFull: '$serverFlight${f > 1 ? ', fragment $i of $f' : ''}',
+          serverCert: true,
+          serverDesc: i == 1
+              ? 'The server sends its certificate. It was issued by a CA '
+                    'this client does not trust, or names a server the '
+                    'client was not told to expect.'
+              : 'The last fragment of the server\'s certificate message. '
+                    'Only now can the client check the whole chain.',
+          client: 'TLS alert: unknown_ca',
+          clientFull: 'TLS Alert (fatal): unknown_ca (48)',
+          clientFailure: true,
+          clientDesc:
+              'The client checks the certificate chain against the CAs it '
+              'trusts and refuses it. It sends a TLS alert so the server can '
+              'log why (the standard allows this; some clients just stop), '
+              'then waits for the server to end it.',
+        );
+        _reject(
+          rejectDesc:
+              'Server authentication failed on the client, which is final: '
+              'the server ends EAP with EAP-Failure inside an Access-Reject. '
+              'No PMK is sent.',
+        );
+        faultNote =
+            'Server certificate not trusted: the client refused the '
+            'server\'s certificate with a TLS alert, and the server ended '
+            'EAP with a failure. '
+            '${tls ? 'The client certificate was never sent.' : 'The password was never sent.'}';
+        helpDesk =
+            'A certificate warning on the device, or "can\'t connect" with no '
+            'prompt on a managed device. The RADIUS log shows the client '
+            'sent a TLS alert (unknown CA). Fix the trusted CA or server '
+            'name in the client\'s Wi-Fi profile, not the Wi-Fi.';
+        return false;
+      }
       _turn(
         server: 'Server certificate$part',
         serverFull: '$serverFlight${f > 1 ? ', fragment $i of $f' : ''}',
@@ -999,6 +1327,41 @@ class _Builder {
               'The client answers with a hash of the challenge and its '
               'password (the NT-Response). The password itself is not sent.',
         );
+        if (_fault == LadderFault.wrongPassword) {
+          _turn(
+            tunneled: true,
+            server: '{MSCHAPv2 Failure: E=691}',
+            serverFull:
+                '{MSCHAPv2 Failure}: E=691 R=0, authentication failure, no '
+                'retry',
+            serverFailure: true,
+            serverDesc:
+                'The NT-Response does not match the password the server '
+                'holds. Error 691 means authentication failure; R=0 means no '
+                'retry.',
+            client: '{MSCHAPv2 Failure}',
+            clientFull: '{MSCHAPv2 Failure}: acknowledgement',
+            clientDesc: 'The client acknowledges the failure.',
+          );
+          _turn(
+            tunneled: true,
+            server: '{Result: failure}',
+            serverFull: '{Result TLV: failure}',
+            serverDesc:
+                'PEAP\'s own result message, still inside the tunnel: '
+                'failure.',
+            client: '{Result: failure}',
+            clientFull: '{Result TLV: failure}',
+            clientDesc: 'The client agrees. No keys are derived.',
+          );
+          _reject(
+            rejectDesc:
+                'After a failure result the server must end EAP with '
+                'EAP-Failure. It rides an Access-Reject, and no PMK is sent.',
+          );
+          _wrongPasswordNotes('MSCHAPv2 error 691');
+          return false;
+        }
         _turn(
           tunneled: true,
           server: '{MSCHAPv2 Success}',
@@ -1037,6 +1400,16 @@ class _Builder {
                 'itself, protected only by the tunnel. The server checks it '
                 'and answers with the result.',
           );
+          if (_fault == LadderFault.wrongPassword) {
+            _reject(
+              rejectDesc:
+                  'The password does not match, so the server answers the '
+                  'PAP request with an Access-Reject carrying EAP-Failure. '
+                  'No PMK is sent.',
+            );
+            _wrongPasswordNotes('a PAP reject');
+            return false;
+          }
         } else {
           _turn(
             server: 'TLS Finished',
@@ -1054,6 +1427,33 @@ class _Builder {
                 'send its MSCHAPv2 response right away: one round trip fewer '
                 'than PEAP.',
           );
+          if (_fault == LadderFault.wrongPassword) {
+            _turn(
+              tunneled: true,
+              server: '{MS-CHAP-Error: E=691}',
+              serverFull: '{MS-CHAP-Error} AVP: E=691 R=0',
+              serverFailure: true,
+              serverDesc:
+                  'The response does not match the password the server '
+                  'holds. The error rides an Access-Challenge: error 691, '
+                  'authentication failure, no retry.',
+              client: 'ACK (empty)',
+              clientFull: 'EAP-Response / TTLS with no data',
+              clientTunneled: false,
+              clientDesc:
+                  'The client gives up on the exchange. Many clients answer '
+                  'with an empty response first, as drawn; the standard only '
+                  'says the client abandons, and one that just stops leaves '
+                  'the AP to time out.',
+            );
+            _reject(
+              rejectDesc:
+                  'The server ends EAP with EAP-Failure inside an '
+                  'Access-Reject. No PMK is sent.',
+            );
+            _wrongPasswordNotes('MSCHAPv2 error 691');
+            return false;
+          }
           _turn(
             tunneled: true,
             server: '{MSCHAPv2 Success}',
@@ -1106,6 +1506,111 @@ class _Builder {
             'handshake turns it into session keys.',
       ),
     );
+    return true;
+  }
+
+  /// The end of a refused 802.1X authentication: Access-Reject with
+  /// EAP-Failure, the AP's EAP-Failure to the client, and the AP's
+  /// Deauthentication with reason 23.
+  void _reject({required String rejectDesc}) {
+    out.add(
+      LadderMessage(
+        from: _r,
+        to: _ap,
+        kind: LadderFrameKind.radius,
+        phase: LadderPhase.eapResult,
+        label: 'Access-Reject',
+        detail: 'EAP-Failure',
+        fullDetail: 'EAP-Failure, and no key material',
+        eapCode: 'EAP-Failure',
+        description: rejectDesc,
+        failure: true,
+      ),
+    );
+    out.add(
+      const LadderMessage(
+        from: _ap,
+        to: _c,
+        kind: LadderFrameKind.eapol,
+        phase: LadderPhase.eapResult,
+        label: 'EAP-Failure',
+        eapCode: 'EAP-Failure',
+        description:
+            'The AP passes on the result. It has no PMK, so the 4-way '
+            'handshake cannot start.',
+      ),
+    );
+    out.add(
+      const LadderMessage(
+        from: _ap,
+        to: _c,
+        kind: LadderFrameKind.management,
+        phase: LadderPhase.disconnect,
+        label: 'Deauthentication',
+        detail: 'Reason 23: 802.1X authentication failed',
+        description:
+            'A typical ending: the AP disconnects the client with reason 23. '
+            'Some clients leave first; either way the connection is over.',
+        failure: true,
+      ),
+    );
+  }
+
+  void _wrongPasswordNotes(String error) {
+    faultNote =
+        'Wrong password: the RADIUS server refused the credentials inside '
+        'the tunnel ($error) and ended EAP with a failure. The certificate '
+        'and the tunnel were fine.';
+    helpDesk =
+        '"Can\'t connect" or a new password prompt. The RADIUS log shows an '
+        'authentication failure for this user ($error). Nothing on the AP '
+        'or the Wi-Fi is wrong.';
+  }
+
+  /// Wrong RADIUS shared secret: the server cannot verify the
+  /// Message-Authenticator on the AP's Access-Request and silently discards
+  /// it. The AP sends it again after each wait; nothing ever comes back.
+  void _secretFail() {
+    for (int attempt = 0; attempt <= c.faultRetries; attempt++) {
+      out.add(
+        LadderMessage(
+          from: _ap,
+          to: _r,
+          kind: LadderFrameKind.radius,
+          phase: LadderPhase.eapIdentity,
+          label: 'Access-Request',
+          detail: attempt == 0
+              ? 'EAP-Response / Identity'
+              : 'EAP-Response / Identity, retry $attempt',
+          eapCode: 'EAP-Response/Identity',
+          description: attempt == 0
+              ? 'The AP relays the identity in an Access-Request, signed '
+                    'with the shared secret it was configured with. The '
+                    'server\'s secret is different, so the signature (the '
+                    'Message-Authenticator) does not check out and the '
+                    'server silently discards the packet.'
+              : 'No answer came, so after a wait the AP sends the '
+                    'Access-Request again. It is discarded the same way.',
+          lost: true,
+          waitMs: attempt == 0 ? 0 : _waitMs,
+        ),
+      );
+    }
+    // The EAP identity exchange did happen (AP and client, above this), so
+    // what never started is the EAP method itself (Vera gate A, 2026-09-29).
+    final String method = c.method == LadderMethod.peap
+        ? 'PEAP'
+        : c.method.label;
+    faultNote =
+        'Wrong RADIUS shared secret: the server silently discarded every '
+        'Access-Request, so the AP never got an answer and $method never '
+        'started. What the AP and the client do next varies: some APs send '
+        'EAP-Failure, some clients start over.';
+    helpDesk =
+        'Every 802.1X user on this AP fails the same way, and the RADIUS '
+        'log shows no reject for them. The AP log shows the RADIUS server '
+        'not responding; the server log may show a bad Message-Authenticator '
+        'or an unknown client. Check the shared secret on both sides.';
   }
 
   /// One server turn: the RADIUS server's EAP-Request in an Access-Challenge,
@@ -1122,6 +1627,8 @@ class _Builder {
     bool? clientTunneled,
     bool serverCert = false,
     bool clientCert = false,
+    bool serverFailure = false,
+    bool clientFailure = false,
   }) {
     final bool clientTun = clientTunneled ?? tunneled;
     final String tunnelNote = tunneled
@@ -1150,6 +1657,7 @@ class _Builder {
         eapCode: 'EAP-Request',
         tunneled: tunneled,
         serverCertificate: serverCert,
+        failure: serverFailure,
         description:
             'The RADIUS server\'s next EAP-Request, inside an Access-'
             'Challenge for the AP to relay.$tunnelNote',
@@ -1182,6 +1690,7 @@ class _Builder {
         eapCode: 'EAP-Response',
         tunneled: clientTun,
         clientCertificate: clientCert,
+        failure: clientFailure,
         description: '$clientDesc$clientTunnelNote',
       ),
     );

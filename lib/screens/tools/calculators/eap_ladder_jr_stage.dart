@@ -1214,7 +1214,7 @@ class _JrMessageRow extends StatelessWidget {
       if (m.encrypted) 'encrypted',
       if (m.pmfProtected) 'protected by PMF',
       if (m.missed) 'missed',
-      if (m.failure) 'failed here',
+      if (m.failure) 'failure',
       if (m.lost) 'no answer',
     ].join(', ');
     final String via = m.via == null ? '' : ' through the ${m.via!.label}';
