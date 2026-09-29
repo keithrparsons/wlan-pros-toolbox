@@ -158,7 +158,7 @@ void main() {
     final EapLadderController c = _controller(tester);
     expect(c.length, 1);
     await _tap(tester, find.text('Step'));
-    expect(find.text('Not found: the join stops here.'), findsOneWidget);
+    expect(find.text('Not found: the association stops here.'), findsOneWidget);
     // Lengthen the dwell: found again.
     c.jrConfig = c.jrConfig.copyWith(passiveDwellMs: 111);
     await tester.pumpAndSettle();

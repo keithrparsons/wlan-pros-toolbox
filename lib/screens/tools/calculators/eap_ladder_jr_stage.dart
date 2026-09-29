@@ -191,7 +191,7 @@ class _JrLadderCard extends StatelessWidget {
     }
     return s.mode == LadderMode.roam
         ? 'Roam: ${c.roamMethod.label}. $scan'
-        : 'Join: ${s.security.label}. $scan';
+        : 'Association: ${s.security.label}. $scan';
   }
 
   @override
@@ -1490,9 +1490,7 @@ class _TimelineCard extends StatelessWidget {
     final double elapsed = s.elapsedMs(shown);
     final String heading = roam
         ? 'Roam time: scan, authentication and key handshake, to scale'
-        : controller.whyMode
-        ? 'Association time by phase, to scale'
-        : 'Join time by phase, to scale';
+        : 'Association time by phase, to scale';
     final String semantic =
         '$heading. ${bars.map((_Bar b) => '${b.$1} ${formatJrMs(b.$2)}').join(', ')}. '
         'Total ${formatJrMs(total)}; ${formatJrMs(elapsed)} so far.';
@@ -1567,14 +1565,10 @@ class _TimelineCard extends StatelessWidget {
                 roam
                     ? 'Every time is a setting (see Timing). FT shrinks the '
                           'middle bar; no method shortens the scan.'
-                    : controller.whyMode
-                    ? 'Every phase time is a setting (see Timing): no '
+                    : 'Every phase time is a setting (see Timing): no '
                           'published measurement breaks a typical '
                           'association down by phase. Lime is the time run '
-                          'so far.'
-                    : 'Every phase time is a setting (see Timing): no '
-                          'published measurement breaks a typical join down '
-                          'by phase. Lime is the time run so far.',
+                          'so far.',
                 style: text.bodySmall?.copyWith(color: colors.textTertiary),
               ),
             ],
@@ -1871,7 +1865,7 @@ class _JrCaption extends StatelessWidget {
               Expanded(
                 child: Text(
                   !controller.whyMode
-                      ? 'Not found: the join stops here.'
+                      ? 'Not found: the association stops here.'
                       : m.failure
                       ? 'Never heard: the client never starts to associate.'
                       : 'Not found: the association stops here.',

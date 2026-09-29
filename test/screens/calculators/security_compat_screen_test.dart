@@ -9,6 +9,9 @@
 // and desktop widths in both themes, and the presenter layout with C and
 // Up/Down.
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -136,8 +139,12 @@ void main() {
       expect(c.verdict, isNull);
       expect(find.byKey(ScVerdictBand.bandKey), findsNothing);
       expect(find.byType(ScClientCard), findsNothing);
-      // The existing mode is untouched: same title and PMF control.
-      expect(find.textContaining('Join: WPA2-Personal (PSK).'), findsOneWidget);
+      // The existing mode keeps its PMF control; its title says associate
+      // too (Keith, 2026-09-29).
+      expect(
+        find.textContaining('Association: WPA2-Personal (PSK).'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('choosing Why won\'t it associate? from the select', (
@@ -182,6 +189,77 @@ void main() {
         ];
         expect(joins, isEmpty, reason: '${p.name} ${n.name}');
       }
+    });
+
+    // Keith, 2026-09-29: "associate", not "join", everywhere on screen in
+    // this tool, the ordinary Play the association mode included. Route ids
+    // and code identifiers (join-ladder, JrConfig) are not on screen.
+    testWidgets('associate, never join, anywhere in the tool: Play the '
+        'association in every band, scan and security, not found, each '
+        'message inspected, the copy text and the help entry', (
+      WidgetTester tester,
+    ) async {
+      await _pump(tester, height: 4000);
+      final EapLadderController c = _controller(tester);
+      expect(c.whyMode, isFalse);
+      final List<JrConfig> configs = <JrConfig>[
+        for (final JrBand b in JrBand.values)
+          for (final JrScanType t in JrScanType.values)
+            for (final JrSecurity sec in JrSecurity.values)
+              JrConfig(band: b, scanType: t, security: sec),
+        // Too short a passive dwell: the scan misses the beacon.
+        const JrConfig(scanType: JrScanType.passive, passiveDwellMs: 40),
+      ];
+      List<String> joins(Iterable<String> texts) => <String>[
+        for (final String t in texts)
+          if (t.toLowerCase().contains('join')) t,
+      ];
+      List<String> semantics() => <String>[
+        for (final Semantics w in tester.widgetList<Semantics>(
+          find.byType(Semantics),
+        ))
+          w.properties.label ?? '',
+      ];
+      for (final JrConfig cfg in configs) {
+        c.jrConfig = cfg;
+        c.reset();
+        c.step();
+        await tester.pumpAndSettle();
+        final String name =
+            '${cfg.band.name} ${cfg.scanType.name} ${cfg.security.name}';
+        expect(joins(_texts(tester)), isEmpty, reason: '$name, first step');
+        c.showAll();
+        await tester.pumpAndSettle();
+        expect(joins(_texts(tester)), isEmpty, reason: name);
+        expect(joins(semantics()), isEmpty, reason: '$name semantics');
+        expect(joins(<String>[c.copyText()]), isEmpty, reason: '$name copy');
+        for (int i = 0; i < c.jr.length; i++) {
+          c.inspect(i);
+          await tester.pump();
+          expect(joins(_texts(tester)), isEmpty, reason: '$name inspect $i');
+        }
+      }
+      // The not-found case really reached the not-found line.
+      expect(find.text('Not found: the association stops here.'), findsOne);
+
+      final Map<String, dynamic> help =
+          (jsonDecode(File('assets/help/tool_help.json').readAsStringSync())
+                  as Map<String, dynamic>)['tools']['join-ladder']
+              as Map<String, dynamic>;
+      final List<String> helpStrings = <String>[];
+      void walk(Object? o) {
+        if (o is String) helpStrings.add(o);
+        if (o is List) o.forEach(walk);
+        if (o is Map) o.values.forEach(walk);
+      }
+
+      walk(help);
+      // "Join a Network" is the name of a different tool, the one that
+      // really connects this device; naming it is not this tool saying join.
+      expect(
+        joins(helpStrings.map((String t) => t.replaceAll('Join a Network', ''))),
+        isEmpty,
+      );
     });
 
     testWidgets('refused: X on the Association Response, the Stopped band held '

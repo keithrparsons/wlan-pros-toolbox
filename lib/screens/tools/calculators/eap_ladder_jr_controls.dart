@@ -141,10 +141,8 @@ class JrReadoutsCard extends StatelessWidget {
                 ? 'Roam total (illustrative)'
                 : controller.whyMode && s.failed
                 ? 'Time until it stops (illustrative)'
-                : controller.whyMode
-                ? 'Association total, to the first useful packet '
-                      '(illustrative)'
-                : 'Join total, to the first useful packet (illustrative)',
+                : 'Total time to associate, to the first useful packet '
+                      '(illustrative)',
             value: formatJrMs(s.totalMs),
             emphasize: true,
           ),
@@ -154,13 +152,9 @@ class JrReadoutsCard extends StatelessWidget {
                 ? 'Built from the settings: scan dwell, frame time, RADIUS '
                       'round trips x round-trip time, crypto time, and AP to '
                       'AP time over the DS.'
-                : controller.whyMode
-                ? 'Built from the settings. No published measurement breaks a '
-                      'typical association down by phase, so each phase is an '
-                      'input, not a claim.'
                 : 'Built from the settings. No published measurement breaks a '
-                      'typical join down by phase, so each phase is an input, '
-                      'not a claim.',
+                      'typical association down by phase, so each phase is an '
+                      'input, not a claim.',
             style: note,
           ),
           if (roam && controller.roamSkipped != null) ...<Widget>[
