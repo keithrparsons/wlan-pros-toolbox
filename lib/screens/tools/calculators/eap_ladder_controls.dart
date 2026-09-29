@@ -36,6 +36,7 @@ import 'eap_ladder_controller.dart';
 import 'eap_ladder_jr_controls.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
+import 'security_compat_controls.dart';
 
 /// The groups EapLadderControls can show.
 enum LadderControlPart {
@@ -72,7 +73,30 @@ class EapLadderControls extends StatelessWidget {
         if (PresenterMode.isActive(context)) {
           return c.isJr ? _JrPresenterPanel(c) : _PresenterPanel(c);
         }
-        final List<Widget> cards = c.isJr
+        final List<Widget> cards = c.whyMode
+            // Why won't it associate? (spec 43): the client and the network
+            // first, then what the scan and timing still decide.
+            ? <Widget>[
+                if (parts.contains(LadderControlPart.transport))
+                  _TransportCard(c),
+                if (parts.contains(LadderControlPart.settings)) ...<Widget>[
+                  ScClientCard(controller: c),
+                  ScNetworkCard(controller: c),
+                ],
+                if (parts.contains(LadderControlPart.readouts))
+                  JrReadoutsCard(controller: c),
+                if (parts.contains(LadderControlPart.settings))
+                  JrSettingsCard(
+                    controller: c,
+                    groups: const <JrSettingsGroup>{
+                      JrSettingsGroup.eap,
+                      JrSettingsGroup.scan,
+                      JrSettingsGroup.sixGhz,
+                      JrSettingsGroup.addressCheck,
+                    },
+                  ),
+              ]
+            : c.isJr
             ? <Widget>[
                 if (parts.contains(LadderControlPart.transport))
                   _TransportCard(c),
@@ -348,7 +372,40 @@ class _JrPresenterPanel extends StatelessWidget {
         ],
         _PresenterTransport(c),
         const SizedBox(height: AppSpacing.xs),
-        JrPresenterSettings(controller: c),
+        if (c.whyMode) ...<Widget>[
+          ScPresenterSettings(
+            controller: c,
+            leading: AssociationModeSelect(controller: c),
+          ),
+          PresenterDisclosure(
+            title: 'Scan, EAP and 6 GHz',
+            children: jrMainSettings(
+              context,
+              c,
+              compact: true,
+              groups: const <JrSettingsGroup>{
+                JrSettingsGroup.scan,
+                JrSettingsGroup.eap,
+                JrSettingsGroup.sixGhz,
+                JrSettingsGroup.addressCheck,
+              },
+            ),
+          ),
+          PresenterDisclosure(
+            title: 'Timing',
+            children: jrTimingSettings(context, c),
+          ),
+          PresenterDisclosure(
+            title: 'Readouts',
+            children: <Widget>[JrReadoutsCard(controller: c)],
+          ),
+        ] else
+          JrPresenterSettings(
+            controller: c,
+            leading: c.mode == LadderMode.join
+                ? AssociationModeSelect(controller: c)
+                : null,
+          ),
       ],
     );
   }

@@ -139,6 +139,11 @@ class JrReadoutsCard extends StatelessWidget {
           ElRow(
             label: roam
                 ? 'Roam total (illustrative)'
+                : controller.whyMode && s.failed
+                ? 'Time until it stops (illustrative)'
+                : controller.whyMode
+                ? 'Association total, to the first useful packet '
+                      '(illustrative)'
                 : 'Join total, to the first useful packet (illustrative)',
             value: formatJrMs(s.totalMs),
             emphasize: true,
@@ -149,6 +154,10 @@ class JrReadoutsCard extends StatelessWidget {
                 ? 'Built from the settings: scan dwell, frame time, RADIUS '
                       'round trips x round-trip time, crypto time, and AP to '
                       'AP time over the DS.'
+                : controller.whyMode
+                ? 'Built from the settings. No published measurement breaks a '
+                      'typical association down by phase, so each phase is an '
+                      'input, not a claim.'
                 : 'Built from the settings. No published measurement breaks a '
                       'typical join down by phase, so each phase is an input, '
                       'not a claim.',
@@ -208,10 +217,14 @@ class JrSettingsCard extends StatelessWidget {
       JrSettingsPart.timing,
     },
     this.card = true,
+    this.groups = kAllJrSettingsGroups,
   });
 
   final EapLadderController controller;
   final Set<JrSettingsPart> parts;
+
+  /// Which of the main settings to show.
+  final Set<JrSettingsGroup> groups;
 
   /// Draw its own card (false inside a presenter disclosure).
   final bool card;
@@ -224,7 +237,7 @@ class JrSettingsCard extends StatelessWidget {
           const ElSectionLabel('Settings'),
           const SizedBox(height: AppSpacing.xs),
         ],
-        ...jrMainSettings(context, controller),
+        ...jrMainSettings(context, controller, groups: groups),
       ],
       if (parts.contains(JrSettingsPart.timing)) ...<Widget>[
         if (parts.contains(JrSettingsPart.main))
@@ -256,8 +269,11 @@ enum JrSettingsGroup {
   /// PMF (802.11w).
   pmf,
 
-  /// Band and scan type.
+  /// Band.
   radio,
+
+  /// Scan type (active or passive).
+  scan,
 
   /// How a 6 GHz AP is found.
   sixGhz,
@@ -266,26 +282,36 @@ enum JrSettingsGroup {
   addressCheck,
 }
 
+/// Every group of the main Join and Roam settings.
+const Set<JrSettingsGroup> kAllJrSettingsGroups = <JrSettingsGroup>{
+  JrSettingsGroup.choice,
+  JrSettingsGroup.eap,
+  JrSettingsGroup.pmf,
+  JrSettingsGroup.radio,
+  JrSettingsGroup.scan,
+  JrSettingsGroup.sixGhz,
+  JrSettingsGroup.addressCheck,
+};
+
 /// The main choices for Join or Roam, in [groups].
 List<Widget> jrMainSettings(
   BuildContext context,
   EapLadderController c, {
   bool compact = false,
-  Set<JrSettingsGroup> groups = const <JrSettingsGroup>{
-    JrSettingsGroup.choice,
-    JrSettingsGroup.eap,
-    JrSettingsGroup.pmf,
-    JrSettingsGroup.radio,
-    JrSettingsGroup.sixGhz,
-    JrSettingsGroup.addressCheck,
-  },
+  Set<JrSettingsGroup> groups = kAllJrSettingsGroups,
 }) {
   final AppColorScheme colors = context.colors;
   final TextTheme text = Theme.of(context).textTheme;
   final TextStyle? note = text.bodySmall?.copyWith(color: colors.textTertiary);
   final JrConfig cfg = c.jrConfig;
   final bool roam = c.mode == LadderMode.roam;
-  final JrSecurity sec = roam ? JrSecurity.dot1x : cfg.effectiveSecurity;
+  // Why won't it associate? (spec 43) draws what the pair negotiates, not the
+  // Join mode's security setting.
+  final JrSecurity sec = roam
+      ? JrSecurity.dot1x
+      : c.whyMode
+      ? c.jr.security
+      : cfg.effectiveSecurity;
   final bool dot1x = roam
       ? cfg.roamMethod == JrRoamMethod.full
       : sec == JrSecurity.dot1x;
@@ -447,6 +473,18 @@ List<Widget> jrMainSettings(
     ]);
   }
 
+  // Band and scan share one block (8 px apart) when both are shown, as
+  // before the groups were split for Why won't it associate?.
+  final Widget scanToggle = AppToggle<JrScanType>(
+    label: 'Scan',
+    semanticLabel: 'Scan type: active probes, or passive listening',
+    value: cfg.scanType,
+    expand: true,
+    items: <AppToggleItem<JrScanType>>[
+      for (final JrScanType t in JrScanType.values) (t, t.label),
+    ],
+    onChanged: (JrScanType t) => set(cfg.copyWith(scanType: t)),
+  );
   if (groups.contains(JrSettingsGroup.radio)) {
     blocks.add(<Widget>[
       AppToggle<JrBand>(
@@ -459,18 +497,13 @@ List<Widget> jrMainSettings(
         ],
         onChanged: (JrBand b) => set(cfg.copyWith(band: b)),
       ),
-      const SizedBox(height: AppSpacing.xs),
-      AppToggle<JrScanType>(
-        label: 'Scan',
-        semanticLabel: 'Scan type: active probes, or passive listening',
-        value: cfg.scanType,
-        expand: true,
-        items: <AppToggleItem<JrScanType>>[
-          for (final JrScanType t in JrScanType.values) (t, t.label),
-        ],
-        onChanged: (JrScanType t) => set(cfg.copyWith(scanType: t)),
-      ),
+      if (groups.contains(JrSettingsGroup.scan)) ...<Widget>[
+        const SizedBox(height: AppSpacing.xs),
+        scanToggle,
+      ],
     ]);
+  } else if (groups.contains(JrSettingsGroup.scan)) {
+    blocks.add(<Widget>[scanToggle]);
   }
 
   if (groups.contains(JrSettingsGroup.sixGhz)) {
@@ -488,7 +521,10 @@ List<Widget> jrMainSettings(
         onChanged: (JrSixGhzDiscovery d) => set(cfg.copyWith(sixGhz: d)),
       ),
       const SizedBox(height: AppSpacing.xxs),
-      if (compact && !roam && cfg.securityForcedBy6GHz) ...<Widget>[
+      if (compact &&
+          !roam &&
+          !c.whyMode &&
+          cfg.securityForcedBy6GHz) ...<Widget>[
         const SizedBox(height: AppSpacing.xxs),
         Text(
           '6 GHz requires WPA3 or OWE with PMF, so '
@@ -549,13 +585,13 @@ List<Widget> jrTimingSettings(BuildContext context, EapLadderController c) {
   ).textTheme.bodySmall?.copyWith(color: colors.textTertiary);
   final JrConfig cfg = c.jrConfig;
   final bool roam = c.mode == LadderMode.roam;
+  final JrSecurity sec = c.whyMode ? c.jr.security : cfg.effectiveSecurity;
   final bool eap = roam
       ? cfg.roamMethod == JrRoamMethod.full
-      : cfg.effectiveSecurity == JrSecurity.dot1x;
+      : sec == JrSecurity.dot1x;
   final bool crypto = roam
       ? cfg.roamMethod == JrRoamMethod.full
-      : cfg.effectiveSecurity != JrSecurity.open &&
-            cfg.effectiveSecurity != JrSecurity.psk;
+      : sec != JrSecurity.open && sec != JrSecurity.psk;
   final bool active = cfg.scanType == JrScanType.active;
   void set(JrConfig next) => c.jrConfig = next;
   String ms(double v) => formatJrMs(v);
@@ -708,9 +744,16 @@ List<Widget> jrTimingSettings(BuildContext context, EapLadderController c) {
 /// Presenter panel settings for Join or Roam: the main choices in view, the
 /// rest in disclosures, so the panel fits without scrolling.
 class JrPresenterSettings extends StatelessWidget {
-  const JrPresenterSettings({super.key, required this.controller});
+  const JrPresenterSettings({
+    super.key,
+    required this.controller,
+    this.leading,
+  });
 
   final EapLadderController controller;
+
+  /// Shown first inside the settings card (Join: the mode select).
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -725,20 +768,32 @@ class JrPresenterSettings extends StatelessWidget {
         ElCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: jrMainSettings(
-              context,
-              c,
-              compact: true,
-              groups: const <JrSettingsGroup>{
-                JrSettingsGroup.choice,
-                JrSettingsGroup.radio,
-                JrSettingsGroup.addressCheck,
-              },
-            ),
+            children: <Widget>[
+              if (leading != null) ...<Widget>[
+                leading!,
+                const SizedBox(height: AppSpacing.sm),
+              ],
+              ...jrMainSettings(
+                context,
+                c,
+                compact: true,
+                // Join folds the address check to make room for the mode
+                // select (spec 43); Roam has no address check.
+                groups: const <JrSettingsGroup>{
+                  JrSettingsGroup.choice,
+                  JrSettingsGroup.radio,
+                  JrSettingsGroup.scan,
+                },
+              ),
+            ],
           ),
         ),
         PresenterDisclosure(
-          title: dot1x ? 'EAP method, PMF and 6 GHz' : 'PMF and 6 GHz',
+          title: roam
+              ? (dot1x ? 'EAP method, PMF and 6 GHz' : 'PMF and 6 GHz')
+              : dot1x
+              ? 'EAP method, PMF, 6 GHz and address check'
+              : 'PMF, 6 GHz and address check',
           children: jrMainSettings(
             context,
             c,
@@ -747,6 +802,7 @@ class JrPresenterSettings extends StatelessWidget {
               JrSettingsGroup.eap,
               JrSettingsGroup.pmf,
               JrSettingsGroup.sixGhz,
+              JrSettingsGroup.addressCheck,
             },
           ),
         ),

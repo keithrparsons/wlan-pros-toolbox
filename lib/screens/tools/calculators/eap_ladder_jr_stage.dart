@@ -46,6 +46,7 @@ import 'eap_ladder_controller.dart';
 import 'eap_ladder_failure.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
+import 'security_compat_controls.dart';
 
 /// Height of the ladder's own scroll viewport (a dimension, GL-003 §4.2).
 const double _kViewportPhone = 440;
@@ -88,27 +89,45 @@ class JoinRoamStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, _) {
+        final bool why = controller.whyMode;
+        final bool timeline = !why || controller.jr.totalMs > 0;
         if (PresenterMode.isActive(context)) {
           // Two columns: the ladder takes the full stage height on the
           // left; the timeline and the caption share the right. Vertical
-          // space is what a projector lacks.
+          // space is what a projector lacks. In Why won't it associate?
+          // (spec 43) the verdict sits above the ladder at headline size,
+          // and the caption gets the whole right column: the phase
+          // timeline is left out there, because time is not the lesson.
+          final bool sideTimeline = !why;
+          final Widget ladderColumn = why
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    ScVerdictBand(controller: controller),
+                    const SizedBox(height: AppSpacing.xs),
+                    Expanded(
+                      child: _JrLadderCard(controller: controller, fill: true),
+                    ),
+                  ],
+                )
+              : _JrLadderCard(controller: controller, fill: true);
           return LayoutBuilder(
             builder: (BuildContext context, BoxConstraints box) {
               final double side = box.maxWidth * 0.38;
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Expanded(
-                    child: _JrLadderCard(controller: controller, fill: true),
-                  ),
+                  Expanded(child: ladderColumn),
                   const SizedBox(width: AppSpacing.xs),
                   SizedBox(
                     width: side,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        _TimelineCard(controller: controller),
-                        const SizedBox(height: AppSpacing.xs),
+                        if (sideTimeline) ...<Widget>[
+                          _TimelineCard(controller: controller),
+                          const SizedBox(height: AppSpacing.xs),
+                        ],
                         Expanded(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
@@ -133,10 +152,16 @@ class JoinRoamStage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            if (why) ...<Widget>[
+              ScVerdictBand(controller: controller),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             _JrLadderCard(controller: controller),
             const SizedBox(height: AppSpacing.sm),
-            _TimelineCard(controller: controller),
-            const SizedBox(height: AppSpacing.sm),
+            if (timeline) ...<Widget>[
+              _TimelineCard(controller: controller),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             _JrCaption(controller: controller),
           ],
         );
@@ -159,6 +184,11 @@ class _JrLadderCard extends StatelessWidget {
     final String scan =
         '${c.band.label}, ${c.scanType.label.toLowerCase()} scan'
         '${s.scan.rnr ? ' (via RNR)' : ''}';
+    if (controller.whyMode) {
+      final String client = controller.scPreset?.label ?? 'Custom client';
+      return 'Association: $client, ${controller.scNetwork.security.label}. '
+          '$scan';
+    }
     return s.mode == LadderMode.roam
         ? 'Roam: ${c.roamMethod.label}. $scan'
         : 'Join: ${s.security.label}. $scan';
@@ -197,14 +227,21 @@ class _JrLadderCard extends StatelessWidget {
             _JrCounts(controller: controller)
           else
             Text(
-              join
+              controller.whyMode && s.failed
+                  ? 'The same frames, stopped where the association fails. '
+                        'Tap a sent message to see what it carries.'
+                  : controller.whyMode
+                  ? 'The frames this pair exchanges, from the scan to the '
+                        'first useful packet. Tap a sent message to see what '
+                        'it carries.'
+                  : join
                   ? 'A first connection, from the scan to the first useful '
                         'packet. Tap a sent message to see what it carries.'
                   : 'A roam from the current AP to a target AP. Tap a sent '
                         'message to see what it carries.',
               style: text.bodySmall?.copyWith(color: colors.textSecondary),
             ),
-          if (join) ...<Widget>[
+          if (join && s.scanDrawn) ...<Widget>[
             SizedBox(height: fill ? AppSpacing.xs : AppSpacing.sm),
             _ChannelStrip(
               plan: s.scan,
@@ -770,10 +807,16 @@ class _JrViewportState extends State<_JrViewport> {
       // Only this viewport scrolls, never the page.
       final RenderAbstractViewport viewport = RenderAbstractViewport.of(target);
       final ScrollPosition pos = _scroll.position;
-      final double to = viewport
-          .getOffsetToReveal(target, 0.6)
-          .offset
-          .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+      // At the end of a failed ladder the "Stopped here" band after the
+      // last message must be in view too (spec 43).
+      final bool stoppedBand =
+          shown == _keys.length && widget.controller.jr.failed;
+      final double to = stoppedBand
+          ? pos.maxScrollExtent
+          : viewport
+                .getOffsetToReveal(target, 0.6)
+                .offset
+                .clamp(pos.minScrollExtent, pos.maxScrollExtent);
       if (reduceMotion) {
         _scroll.jumpTo(to);
       } else {
@@ -1131,7 +1174,12 @@ class _JrMessageRow extends StatelessWidget {
               positionedLadderMark(
                 lost: m.lost,
                 fromX: fromX,
-                toX: toX,
+                // A leftward arrow ends on the client lane, beside the step
+                // number: the X sits just inside the arrow's end instead of
+                // on the number (spec 43, seen at 390 px).
+                toX: !m.lost && toX < fromX
+                    ? toX + markSize / 2 + AppSpacing.xxs
+                    : toX,
                 rowWidth: width,
                 band: band,
                 iconSize: markSize,
@@ -1442,6 +1490,8 @@ class _TimelineCard extends StatelessWidget {
     final double elapsed = s.elapsedMs(shown);
     final String heading = roam
         ? 'Roam time: scan, authentication and key handshake, to scale'
+        : controller.whyMode
+        ? 'Association time by phase, to scale'
         : 'Join time by phase, to scale';
     final String semantic =
         '$heading. ${bars.map((_Bar b) => '${b.$1} ${formatJrMs(b.$2)}').join(', ')}. '
@@ -1517,6 +1567,11 @@ class _TimelineCard extends StatelessWidget {
                 roam
                     ? 'Every time is a setting (see Timing). FT shrinks the '
                           'middle bar; no method shortens the scan.'
+                    : controller.whyMode
+                    ? 'Every phase time is a setting (see Timing): no '
+                          'published measurement breaks a typical '
+                          'association down by phase. Lime is the time run '
+                          'so far.'
                     : 'Every phase time is a setting (see Timing): no '
                           'published measurement breaks a typical join down '
                           'by phase. Lime is the time run so far.',
@@ -1815,7 +1870,11 @@ class _JrCaption extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  'Not found: the join stops here.',
+                  !controller.whyMode
+                      ? 'Not found: the join stops here.'
+                      : m.failure
+                      ? 'Never heard: the client never starts to associate.'
+                      : 'Not found: the association stops here.',
                   style: text.bodyMedium?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w600,

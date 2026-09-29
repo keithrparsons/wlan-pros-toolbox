@@ -43,6 +43,12 @@
 //                    Open, OWE and SAE; 6 GHz discovery outside 6 GHz; the
 //                    Address Conflict Detection sliders under DNAv4), each
 //                    with a sentence saying why
+//   - why won't it associate? (spec 43, security_compat_controls.dart) ->
+//                    the Mode select at the top; a verdict band above the
+//                    ladder (associates, as Wi-Fi 6, never tries, refused,
+//                    not offered); Client and Network cards; the ladder
+//                    stopped at the failing frame with the shared failure
+//                    marker. Play the association is the tool as before.
 //   - loading / error -> not reachable: the model is synchronous and pure
 //   - interactive -> themed Material controls with the global focus ring;
 //                    every sent message is a labeled button; the caption is a
@@ -61,6 +67,7 @@ import 'eap_ladder_controller.dart';
 import 'eap_ladder_controls.dart';
 import 'eap_ladder_jr_stage.dart';
 import 'eap_ladder_parts.dart';
+import 'security_compat_controls.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
 const String kJoinLadderToolId = 'join-ladder';
@@ -102,11 +109,17 @@ class _JoinLadderScreenState extends State<JoinLadderScreen>
     super.dispose();
   }
 
-  Widget _presenter(BuildContext context) => PresenterLayout(
-    title: _kTitle,
-    stage: JoinRoamStage(controller: _controller),
-    controls: EapLadderControls(controller: _controller),
-    actions: _controller.presenterActions,
+  // Rebuilt with the controller so the keys follow the mode: Up and Down
+  // step the network security, and C cycles the client, only in Why won't
+  // it associate? (spec 43).
+  Widget _presenter(BuildContext context) => ListenableBuilder(
+    listenable: _controller,
+    builder: (BuildContext context, _) => PresenterLayout(
+      title: _kTitle,
+      stage: JoinRoamStage(controller: _controller),
+      controls: EapLadderControls(controller: _controller),
+      actions: _controller.presenterActions,
+    ),
   );
 
   @override
@@ -143,6 +156,10 @@ class _JoinLadderScreenState extends State<JoinLadderScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
+                      ElCard(
+                        child: AssociationModeSelect(controller: _controller),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
                       JoinRoamStage(controller: _controller),
                       const SizedBox(height: AppSpacing.sm),
                       EapLadderControls(controller: _controller),

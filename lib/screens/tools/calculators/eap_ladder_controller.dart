@@ -30,6 +30,7 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../../services/wifi_lab/eap_ladder.dart';
 import '../../../services/wifi_lab/join_roam.dart';
+import '../../../services/wifi_lab/security_compat_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
 
 /// Stable catalog tool id: backs the route, the help entry, and the tests.
@@ -82,9 +83,40 @@ class EapLadderController extends ChangeNotifier {
   /// instead of the latest; null for the latest.
   int? _inspected;
 
+  // Why won't it associate? (spec 43): a second view of Join mode. The scan,
+  // band, PMF and timing settings stay in [_jrConfig]; these add the client
+  // and the rest of the network.
+  bool _why = false;
+  ScClient _scClient = ScClientPreset.olderLaptop.client;
+  ScNetSecurity _scNetSecurity = ScNetSecurity.wpa3Personal;
+  bool _apWifi7 = false;
+  bool _h2eOnly = false;
+  ScResult? _compat;
+
   // ── Read side ─────────────────────────────────────────────────────────────
 
   LadderMode get mode => _mode;
+
+  /// Join mode's "Why won't it associate?" view (spec 43).
+  bool get whyMode => _mode == LadderMode.join && _why;
+
+  ScClient get scClient => _scClient;
+
+  /// The preset the client matches, or null when edited by hand.
+  ScClientPreset? get scPreset => ScClientPreset.of(_scClient);
+
+  /// The network: its security, plus the band and PMF from the Join
+  /// settings.
+  ScNetwork get scNetwork => ScNetwork(
+    security: _scNetSecurity,
+    pmf: _jrConfig.pmf,
+    band: _jrConfig.band,
+    wifi7: _apWifi7,
+    h2eOnly: _h2eOnly,
+  );
+
+  /// The verdict, in Why won't it associate?; null otherwise.
+  ScVerdict? get verdict => whyMode ? _compat?.verdict : null;
 
   /// Join or Roam (spec 21b), as opposed to the original ladder.
   bool get isJr => _mode != LadderMode.authenticate;
@@ -299,13 +331,17 @@ class EapLadderController extends ChangeNotifier {
   /// Presenter keys (spec 00): Space plays or pauses, Right steps one
   /// message, Left takes one back, R resets, Up and Down change the
   /// certificate size (the passive dwell in Join).
+  /// In Why won't it associate? (spec 43), Up and Down step the network
+  /// security instead, and C cycles the client presets.
   PresenterActions get presenterActions => PresenterActions(
     playPause: togglePlay,
     step: step,
     reset: reset,
-    sliderDown: () => _nudgeMain(-1),
-    sliderUp: () => _nudgeMain(1),
-    sliderLabel: _mode == LadderMode.join
+    sliderDown: () => whyMode ? stepNetSecurity(-1) : _nudgeMain(-1),
+    sliderUp: () => whyMode ? stepNetSecurity(1) : _nudgeMain(1),
+    sliderLabel: whyMode
+        ? 'Network security'
+        : _mode == LadderMode.join
         ? 'Passive dwell'
         : 'Certificate size',
     extra: <PresenterExtraKey>[
@@ -315,6 +351,13 @@ class EapLadderController extends ChangeNotifier {
         description: 'Back one message',
         onPressed: back,
       ),
+      if (whyMode)
+        PresenterExtraKey(
+          key: LogicalKeyboardKey.keyC,
+          keyLabel: 'C',
+          description: 'Next client',
+          onPressed: cycleClientPreset,
+        ),
     ],
   );
 
@@ -349,6 +392,14 @@ class EapLadderController extends ChangeNotifier {
   }
 
   void _rebuildJr() {
+    if (whyMode) {
+      final ScResult r = evaluateSecurity(_scClient, scNetwork);
+      _compat = r;
+      _jr = buildJoin(_jrConfig, security: r.override);
+      _roamSkipped = null;
+      return;
+    }
+    _compat = null;
     _jr = _mode == LadderMode.roam
         ? buildRoam(_jrConfig)
         : buildJoin(_jrConfig);
@@ -358,11 +409,81 @@ class EapLadderController extends ChangeNotifier {
   static bool _sameJr(JrSequence a, JrSequence b) {
     String key(JrMessage m) =>
         '${m.from.name}|${m.to.name}|${m.label}|${m.contents}|'
-        '${m.pmfProtected}|${m.encrypted}';
+        '${m.pmfProtected}|${m.encrypted}|${m.failure}|${m.lost}';
     return listEquals(
       a.messages.map(key).toList(),
       b.messages.map(key).toList(),
     );
+  }
+
+  // ── Why won't it associate? (spec 43) ─────────────────────────────────────
+
+  /// Applies a change to the client or the network. Same rule as
+  /// [jrConfig]: a new ladder starts from the top unless the whole previous
+  /// one was on show.
+  void _changeCompat(void Function() change) {
+    final bool wasAll = atEnd && _shown > 0;
+    final JrSequence before = _jr;
+    change();
+    _rebuildJr();
+    if (!_sameJr(before, _jr)) {
+      _pause();
+      _inspected = null;
+      _shown = wasAll ? _jr.length : 0;
+    }
+    notifyListeners();
+  }
+
+  /// Play the association (false) or Why won't it associate? (true). The
+  /// ladder starts again from the top.
+  set whyMode(bool v) {
+    if (v == _why) return;
+    _pause();
+    _why = v;
+    _inspected = null;
+    _rebuildJr();
+    _shown = 0;
+    notifyListeners();
+  }
+
+  set scClient(ScClient c) {
+    if (c == _scClient) return;
+    _changeCompat(() => _scClient = c);
+  }
+
+  set scPreset(ScClientPreset p) => scClient = p.client;
+
+  /// The presenter's C: the next client preset (the first after a custom
+  /// client), turning Why won't it associate? on.
+  void cycleClientPreset() {
+    if (_mode != LadderMode.join) return;
+    if (!_why) whyMode = true;
+    final ScClientPreset? now = scPreset;
+    const List<ScClientPreset> all = ScClientPreset.values;
+    scPreset = now == null ? all.first : all[(now.index + 1) % all.length];
+  }
+
+  set scNetSecurity(ScNetSecurity s) {
+    if (s == _scNetSecurity) return;
+    _changeCompat(() => _scNetSecurity = s);
+  }
+
+  /// The presenter's Up and Down in Why won't it associate?: the next or
+  /// previous network security, wrapping round.
+  void stepNetSecurity(int dir) {
+    const List<ScNetSecurity> all = ScNetSecurity.values;
+    scNetSecurity =
+        all[(_scNetSecurity.index + dir.sign + all.length) % all.length];
+  }
+
+  set apWifi7(bool v) {
+    if (v == _apWifi7) return;
+    _changeCompat(() => _apWifi7 = v);
+  }
+
+  set h2eOnly(bool v) {
+    if (v == _h2eOnly) return;
+    _changeCompat(() => _h2eOnly = v);
   }
 
   /// Test seam: show a hand-built ladder (the shared failure marker's
@@ -428,6 +549,8 @@ class EapLadderController extends ChangeNotifier {
     final JrSequence s = _jr;
     final JrConfig c = _jrConfig;
     final bool roam = _mode == LadderMode.roam;
+    final ScVerdict? v = verdict;
+    if (v != null) return _copyWhy(v);
     final StringBuffer b = StringBuffer()
       ..writeln(
         roam
@@ -481,6 +604,53 @@ class EapLadderController extends ChangeNotifier {
     b.writeln('Total (illustrative inputs): ${formatJrMs(s.totalMs)}');
     for (final String line in _roamSkipped?.lines ?? const <String>[]) {
       b.writeln('Skipped versus full 802.1X: $line');
+    }
+    return b.toString().trimRight();
+  }
+
+  String _copyWhy(ScVerdict v) {
+    final JrSequence s = _jr;
+    final JrConfig c = _jrConfig;
+    final ScNetwork n = scNetwork;
+    final StringBuffer b = StringBuffer()
+      ..writeln(
+        'Association, Frame by Frame: Why won\'t it associate? '
+        '(WLAN Pros Toolbox)',
+      )
+      ..writeln('Client: ${scPreset?.label ?? 'Custom'}')
+      ..writeln(
+        'Network: ${n.security.label}, ${c.band.label}'
+        '${n.wifi7 ? ', Wi-Fi 7 AP' : ''}',
+      )
+      ..writeln()
+      ..writeln(v.headline)
+      ..writeln(v.why)
+      ..writeln('Source: ${v.source}')
+      ..writeln();
+    for (int i = 0; i < s.length; i++) {
+      final JrMessage m = s.messages[i];
+      final String via = m.via == null ? '' : ' via ${m.via!.label}';
+      final String contents = m.contents.isEmpty ? '' : ': ${m.contents}';
+      final String marks = <String>[
+        if (m.encrypted) 'encrypted',
+        if (m.pmfProtected) 'PMF protected',
+        if (m.missed) 'never heard',
+        if (m.failure) 'stops here',
+        if (m.lost) 'no answer',
+      ].join(', ');
+      b.writeln(
+        '${i + 1}. ${m.from.label} -> ${m.to.label}$via '
+        '(${m.kind.frameClass.label.toLowerCase()}) ${m.label}$contents'
+        '${marks.isEmpty ? '' : ' [$marks]'}',
+      );
+    }
+    if (s.faultNote != null) {
+      b
+        ..writeln()
+        ..writeln('Stopped here. ${s.faultNote}');
+      if (s.helpDesk != null) {
+        b.writeln('What the help desk sees: ${s.helpDesk}');
+      }
     }
     return b.toString().trimRight();
   }
