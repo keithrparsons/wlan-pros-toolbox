@@ -73,6 +73,7 @@ import '../screens/tools/calculators/room_propagation_screen.dart';
 import '../screens/tools/calculators/six_ghz_psd_screen.dart';
 import '../screens/tools/calculators/rate_vs_range_screen.dart';
 import '../screens/tools/calculators/uplink_downlink_screen.dart';
+import '../services/wifi_lab/uplink_downlink_model.dart' show UdConfig;
 import '../screens/tools/calculators/rate_adaptation_screen.dart';
 import '../screens/tools/calculators/mimo_beamforming_screen.dart';
 import '../screens/tools/calculators/channel_planner_screen.dart';
@@ -1107,7 +1108,11 @@ class AppRouter {
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
-    uplinkDownlink: (_) => const UplinkDownlinkScreen(),
+    // The optional UdConfig argument is a link to open on, pushed by Antenna
+    // Pattern's Floor coverage view. Argument-less pushes open the defaults.
+    uplinkDownlink: (ctx) => UplinkDownlinkScreen(
+      initial: ModalRoute.of(ctx)?.settings.arguments as UdConfig?,
+    ),
     bodyLoss: (_) => const BodyLossScreen(),
     rateAdaptation: (_) => const RateAdaptationScreen(),
     spatialReuse: (_) => const SpatialReuseScreen(),
