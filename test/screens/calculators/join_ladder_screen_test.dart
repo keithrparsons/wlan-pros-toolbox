@@ -641,8 +641,12 @@ void main() {
         }
       }
 
-      testWidgets('C turns the race on (moving to 6 GHz), Space runs it, '
-          'Right steps to a finding, R resets, C turns it off', (
+      // Keith, 2026-09-29: the race moves off C (security-compat keeps C
+      // in this tool). R was asked for but is the shared Reset key, handled
+      // before any extra key, so the race takes the next free letter, S.
+      testWidgets('S turns the race on (moving to 6 GHz), Space runs it, '
+          'Right steps to a finding, R resets, S turns it off; C does not '
+          'touch the race', (
         WidgetTester tester,
       ) async {
         final EapLadderController c = await present(
@@ -651,6 +655,10 @@ void main() {
         );
         expect(c.jrConfig.band, JrBand.g5);
         await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+        await tester.pump();
+        expect(c.raceActive, isFalse);
+        expect(c.jrConfig.band, JrBand.g5);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
         await tester.pump();
         expect(c.jrConfig.band, JrBand.g6);
         expect(c.raceActive, isTrue);
@@ -669,7 +677,7 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.space);
         await tester.pump();
         expect(c.playing, isFalse);
-        await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
         await tester.pump();
         expect(c.raceActive, isFalse);
         expect(find.byKey(JoinRoamStage.ladderScrollKey), findsOneWidget);

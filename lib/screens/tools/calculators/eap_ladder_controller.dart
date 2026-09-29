@@ -347,7 +347,8 @@ class EapLadderController extends ChangeNotifier {
 
   /// Presenter keys (spec 00): Space plays or pauses, Right steps one
   /// message, Left takes one back, R resets, Up and Down change the
-  /// certificate size (the passive dwell in Join).
+  /// certificate size (the passive dwell in Join). In Join, S turns the
+  /// 6 GHz race on or off.
   PresenterActions get presenterActions => PresenterActions(
     playPause: togglePlay,
     step: step,
@@ -365,9 +366,11 @@ class EapLadderController extends ChangeNotifier {
         onPressed: back,
       ),
       if (_mode == LadderMode.join)
+        // S, not C: security-compat keeps C in this tool, and R is the
+        // shared Reset key (Keith, 2026-09-29).
         PresenterExtraKey(
-          key: LogicalKeyboardKey.keyC,
-          keyLabel: 'C',
+          key: LogicalKeyboardKey.keyS,
+          keyLabel: 'S',
           description: 'Race the four ways to find a 6 GHz AP, on or off',
           onPressed: toggleRace,
         ),
