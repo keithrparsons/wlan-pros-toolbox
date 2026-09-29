@@ -2928,14 +2928,16 @@
     "rate-vs-range": {
       "name": "Rate vs Range",
       "category": "Wireless Classroom",
-      "purpose": "Draws an AP from above with one ring per MCS: inside a ring, a client has enough signal for that MCS. A dashed circle marks the cell edge, where beacons sent at the minimum basic rate can no longer be decoded. Drag the client dot to read its signal, SNR, MCS and data rate, and watch the beacon airtime bar change with the basic rate.",
-      "whyHere": "Rate does not fall smoothly with distance. Each MCS needs a minimum signal, so coverage is a set of rings. Doubling the channel width raises the noise floor 3 dB, so every MCS needs 3 dB more signal and every ring shrinks. Raising the minimum basic rate shrinks the cell edge and cuts the airtime beacons use: 6 to 24 Mbps moves the edge from -82 to -74 dBm at 20 MHz and makes each beacon about 3.6 times shorter.",
+      "purpose": "Draws an AP from above with one ring per MCS: inside a ring, a client has enough signal for that MCS. A dashed circle marks the cell edge, where beacons sent at the minimum basic rate can no longer be decoded. Drag the client dot to read its signal, SNR, MCS and data rate, and watch the beacon airtime bar change with the basic rate. A Rate set card turns each of the 12 legacy rates off, supported or basic, and shows which kinds of client can associate, where beacons go, and the rate each ACK goes at.",
+      "whyHere": "Rate does not fall smoothly with distance. Each MCS needs a minimum signal, so coverage is a set of rings. Doubling the channel width raises the noise floor 3 dB, so every MCS needs 3 dB more signal and every ring shrinks. Raising the minimum basic rate shrinks the cell edge and cuts the airtime beacons use: 6 to 24 Mbps moves the edge from -82 to -74 dBm at 20 MHz and makes each beacon about 3.6 times shorter. A client must support every basic rate, or the AP refuses it with status 18. And the lowest basic rate is not a floor for ACKs: an ACK goes at the highest basic rate not faster than the frame it answers, so with only 24 Mbps basic, a frame at 12 Mbps is acknowledged at 12.",
       "howToUse": [
         "Drag or tap on the rings to move the client, or use the Client slider under the view. The label next to the dot and the readout below show its received power, noise floor, SNR, MCS and data rate.",
         "Pick the band, channel width and spatial streams in the controls (below the view on a phone, in the panel on the right on a wide screen). Change the width and watch every ring shrink while the view stays the same size.",
         "Set the AP EIRP, the client antenna gain, the path-loss exponent and an optional margin. The legend lists every ring with its data rate and radius, including rings too thin to label on the view.",
-        "Pick a minimum basic rate and the number of SSIDs. The dashed cell edge moves, and the bar shows beacon airtime at that rate against the same beacons at 6 Mbps.",
-        "On a computer or tablet, Present opens the rings full screen for a projector: Up and Down move the client out and in, F switches full screen, ? lists the keys and Esc exits."
+        "Build the rate set: tap a rate to cycle it off, supported and basic. The state is written on each chip, and a star marks the rates every device of that kind must support. The four DSSS rates (1, 2, 5.5, 11) exist only at 2.4 GHz. The minimum basic rate is not picked; it is the lowest basic rate, and the dashed cell edge follows it. 9 Mbps and the DSSS rates have no sourced sensitivity, so no cell edge is drawn when one of them is the lowest.",
+      "Pick the client asking to associate (802.11b only; 802.11g, least it must support; 802.11g; Wi-Fi 6) and, if you like, a PHY the network also requires. The Rate set card says whether it can associate, and if not, why: a missing basic rate means status 18, REFUSED_BASIC_RATES_MISMATCH. It lists every client type, the beacon rate, the Supported Rates element bytes, and an ACK table: for each rate that is on (and HE MCS 0 to 11 for a Wi-Fi 6 client), the rate its ACK goes at.",
+      "Set the number of SSIDs. The bar shows beacon airtime at the beacon rate against the same beacons at 6 Mbps; DSSS beacons take more, and a notch marks the 6 Mbps figure.",
+        "On a computer or tablet, Present opens the rings full screen for a projector, with the association verdict beside them: Up and Down move the client out and in, B raises the minimum basic rate (6, 12, 18, 24, 36, 48, 54, then back to 6), C changes the client type, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -2974,9 +2976,19 @@
           "range": "0 to 20; default 0"
         },
         {
-          "name": "Minimum basic rate",
-          "unit": "Mbps",
-          "range": "6, 12, 18, 24, 36, 48 or 54; default 6"
+          "name": "Rate set",
+          "unit": "each rate off, supported or basic",
+          "range": "1, 2, 5.5, 11 (2.4 GHz only), 6, 9, 12, 18, 24, 36, 48, 54 Mbps; default 6, 12, 24 basic, the rest supported. The minimum basic rate is the lowest basic rate"
+        },
+        {
+          "name": "Client asking to associate",
+          "unit": "choice",
+          "range": "802.11b only; 802.11g, least it must support (1, 2, 6 Mbps); 802.11g; Wi-Fi 6 (default)"
+        },
+        {
+          "name": "Network also requires",
+          "unit": "choice",
+          "range": "Nothing more (default); HT, Wi-Fi 4 (not at 6 GHz); HE, Wi-Fi 6"
         },
         {
           "name": "SSIDs",
@@ -2984,17 +2996,19 @@
           "range": "1 to 16; default 4"
         }
       ],
-      "algorithm": "Received power = AP EIRP + client antenna gain - path loss, with path loss = free-space loss at 1 m + 10 n log10(d). Each ring radius is the distance where received power equals that MCS's minimum sensitivity plus the margin: d = 10^((EIRP + G - FSPL(1 m) - sensitivity - margin) / 10n). Minimum sensitivity at 20 MHz, MCS 0 to 13: -82, -79, -77, -74, -70, -66, -65, -64, -59, -57, -54, -52, -49, -46 dBm, and 3 dB higher for each doubling of width up to 320 MHz. Noise floor = -174 dBm/Hz + 10 log10(BW in Hz) + a 7 dB noise figure. The cell edge uses the 20 MHz floor of the basic rate. Beacon airtime comes from the SSID Airtime tool's calculator (802.11ax beacon size, one AP on the channel, no MBSSID). Data rates come from the MCS Index tool (802.11be, 800 ns guard interval).",
+      "algorithm": "Received power = AP EIRP + client antenna gain - path loss, with path loss = free-space loss at 1 m + 10 n log10(d). Each ring radius is the distance where received power equals that MCS's minimum sensitivity plus the margin: d = 10^((EIRP + G - FSPL(1 m) - sensitivity - margin) / 10n). Minimum sensitivity at 20 MHz, MCS 0 to 13: -82, -79, -77, -74, -70, -66, -65, -64, -59, -57, -54, -52, -49, -46 dBm, and 3 dB higher for each doubling of width up to 320 MHz. Noise floor = -174 dBm/Hz + 10 log10(BW in Hz) + a 7 dB noise figure. The cell edge uses the 20 MHz floor of the basic rate. Who can associate: a client must support every basic rate, or it is refused with status 18, REFUSED_BASIC_RATES_MISMATCH (IEEE 802.11-2024 Table 9-80). Beacons go at one of the basic rates (10.6.5.1); the model uses the lowest, a common vendor choice rather than a rule, and with no basic rates, a mandatory rate. The ACK goes at the highest basic rate not faster than the frame it answers, in the same modulation; if none fits, at the highest mandatory rate not faster (10.6.6.5.2). Mandatory rates: 6, 12 and 24 Mbps for OFDM; 1, 2, 5.5, 6, 11, 12 and 24 for 802.11g (ERP). An HT, VHT or HE frame first converts to a non-HT reference rate by its modulation and coding (10.6.11, Table 10-10: 64-QAM 5/6 is 54). In the Supported Rates element a basic rate has its top bit set, in units of 500 kb/s: 6 Mbps basic is 8C (9.4.2.3). Beacon airtime comes from the SSID Airtime tool's calculator (802.11ax beacon size, one AP on the channel, no MBSSID). Data rates come from the MCS Index tool (802.11be, 800 ns guard interval).",
       "example": "At 5 GHz (5500 MHz) with 20 dBm EIRP and n = 3, free-space loss at 1 m is 47.3 dB. The MCS 0 ring reaches 66.8 m at 20 MHz and 42.2 m at 80 MHz. MCS 13 reaches 4.2 m at 20 MHz. A client at 20 m receives -66.3 dBm, just short of MCS 5 (-66 dBm), so it gets MCS 4, with an SNR of 27.7 dB over a -94.0 dBm noise floor. Raising the basic rate from 6 to 24 Mbps pulls the cell edge in from 66.8 m to 36.2 m, and four SSIDs' beacons drop from 2.19% to 0.61% of airtime.",
       "fieldNotes": [
+        "The model's readings, where the standard is silent: when the highest basic rate below a frame is of the other modulation (1, 2, 5.5 or 11 Mbps answering an OFDM frame), the model keeps the modulation and answers from the mandatory OFDM rates; HE frames are answered in OFDM; an 802.11b device, which has no OFDM receiver, cannot decode a beacon sent at an OFDM rate. Rows decided this way are marked.",
+        "A star marks a mandatory rate but does not lock it: the standard says what a device must support, not what an access point must keep on. No status code is shown when a client lacks a required PHY, because none is pinned for that case.",
         "These sensitivities are conformance floors, the least a radio must manage to pass. Real radios do several dB better, so real rings are larger.",
-        "Only 6 Mbps has a published floor of its own, -82 dBm, equal to MCS 0. 12 to 54 Mbps use the floor of the MCS with the same modulation and coding (24 Mbps is MCS-equivalent to MCS 3, -74 dBm), so they are labeled MCS-equivalent. 9 Mbps and the 2.4 GHz DSSS rates have no sourced floor and are not offered.",
+        "Only 6 Mbps has a published floor of its own, -82 dBm, equal to MCS 0. 12 to 54 Mbps use the floor of the MCS with the same modulation and coding (24 Mbps is MCS-equivalent to MCS 3, -74 dBm), so they are labeled MCS-equivalent. 9 Mbps and the 2.4 GHz DSSS rates have no sourced floor, so they draw no cell edge.",
         "The path-loss exponent is a model with a chosen value, not a measurement. Walls, people and furniture make real rings uneven.",
         "The width is held fixed. A real AP may send a narrower transmission to a far client, which reaches as far as the 20 MHz rings.",
         "The beacon bar counts beacons only, as time on the air. It leaves out probe responses, the wait for the medium, and other APs on the same channel, all of which the SSID Airtime tool can add.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
-      "source": "Minimum receiver sensitivity per MCS and width as published for IEEE 802.11 conformance (Rohde & Schwarz 802.11be white paper Table 6-4, matched by a second source). Path loss uses the same Friis math as the FSPL Simulator; beacon airtime uses the SSID Airtime tool's calculator; data rates use the MCS Index tool. Everything is calculated on your device."
+      "source": "Minimum receiver sensitivity per MCS and width as published for IEEE 802.11 conformance (Rohde & Schwarz 802.11be white paper Table 6-4, matched by a second source). Path loss uses the same Friis math as the FSPL Simulator; beacon airtime uses the SSID Airtime tool's calculator; data rates use the MCS Index tool. Rate sets, status 18, beacon and ACK rates: IEEE Std 802.11-2024, 9.4.2.3, Table 9-80, 10.6.5.1, 10.6.6.5.2, 10.6.10 (Table 10-9), 10.6.11 (Table 10-10), 17.1.1 and 18.1.2. Everything is calculated on your device."
     },
     "uplink-downlink": {
       "name": "Uplink vs Downlink",

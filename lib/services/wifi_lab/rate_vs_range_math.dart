@@ -216,6 +216,26 @@ abstract final class RateVsRangeMath {
         .beaconPercent;
   }
 
+  /// [beaconAirtimePercent] at any legacy rate, Mbps, including the DSSS
+  /// rates and 9 Mbps, which have no sensitivity here but do have airtime
+  /// (the SSID Airtime calculator times DSSS with the long preamble). Used
+  /// by the rate set builder (spec 44), whose beacon rate can be any of 12.
+  static double beaconAirtimePercentAtMbps(double mbps, int ssids) {
+    const SsidAirtimeCalculator calc = SsidAirtimeCalculator(
+      SsidAirtimeShared(),
+    );
+    return calc
+        .compute(
+          SsidAirtimeBand(
+            name: 'rate-vs-range',
+            ssids: ssids,
+            rate: mbps,
+            coChannelAps: 1,
+          ),
+        )
+        .beaconPercent;
+  }
+
   /// Time on air of one beacon at [rate], microseconds (same calculator).
   static double beaconFrameUs(RvrBasicRate rate) {
     const SsidAirtimeShared shared = SsidAirtimeShared();

@@ -135,7 +135,7 @@ void main() {
     for (int i = 0; i < at20.length; i++) {
       expect(m.rings[i].radiusM, lessThan(at20[i]));
     }
-    final double edge6 = m.cellEdgeM;
+    final double edge6 = m.cellEdgeM!;
     m.setBasicRate(RvrBasicRate.mbps24);
     expect(m.cellEdgeM, lessThan(edge6));
     expect(m.cellEdgeM, closeTo(36.2, 0.05));

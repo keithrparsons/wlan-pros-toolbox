@@ -23,12 +23,12 @@ import '../../../services/wifi_lab/rate_vs_range_math.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
-import '../../../widgets/app_select.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_disclosure.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 import 'rate_vs_range_model.dart';
 import 'rate_vs_range_parts.dart';
+import 'rate_vs_range_rate_set.dart';
 
 // ── Controls ──────────────────────────────────────────────────────────────
 
@@ -157,23 +157,34 @@ class RateVsRangeControls extends StatelessWidget {
           children: <Widget>[clientGain, margin],
         ),
       SizedBox(height: prose ? AppSpacing.md : AppSpacing.sm),
-      const RvrSectionLabel('Beacons'),
+      const RvrSectionLabel('Rate set and beacons'),
       const SizedBox(height: AppSpacing.xs),
-      Text(
-        'Minimum basic rate',
-        style: text.bodyMedium?.copyWith(color: colors.textSecondary),
-      ),
-      const SizedBox(height: AppSpacing.xxs),
-      AppSelect<RvrBasicRate>(
-        value: m.basicRate,
-        semanticLabel: 'Minimum basic rate',
-        maxLines: 2,
-        items: <AppSelectItem<RvrBasicRate>>[
-          for (final RvrBasicRate r in RvrBasicRate.values)
-            (r, basicRateLabel(r)),
-        ],
-        onChanged: m.setBasicRate,
-      ),
+      RateSetMinimumLine(model: m),
+      const SizedBox(height: AppSpacing.xs),
+      if (prose) ...<Widget>[
+        RateSetChips(model: m),
+        const SizedBox(height: AppSpacing.sm),
+        RateSetClientSelect(model: m),
+        const SizedBox(height: AppSpacing.xs),
+        RateSetRequireSelect(model: m),
+      ] else ...<Widget>[
+        // Presenter: the rate set and the ACK table fold so the panel fits.
+        // The stage names the client, and C changes it.
+        PresenterDisclosure(
+          title: 'Rate set and client',
+          children: <Widget>[
+            RateSetClientSelect(model: m),
+            const SizedBox(height: AppSpacing.xs),
+            RateSetChips(model: m),
+            const SizedBox(height: AppSpacing.xs),
+            RateSetRequireSelect(model: m),
+          ],
+        ),
+        PresenterDisclosure(
+          title: 'ACK to a frame sent at X',
+          children: <Widget>[RateSetAckTable(model: m)],
+        ),
+      ],
       _slider(
         context,
         label: 'SSIDs on this AP',
@@ -187,11 +198,12 @@ class RateVsRangeControls extends StatelessWidget {
       ),
       if (prose)
         Text(
-          'Only 6 Mbps has a published floor of its own (-82 dBm, equal to '
-          'MCS 0). 12 to 54 Mbps use the floor of the MCS with the same '
-          'modulation and coding, so they are MCS-equivalent. 9 Mbps and the '
-          '2.4 GHz DSSS rates (1, 2, 5.5, 11) have no sourced floor here and '
-          'are not offered.',
+          'The cell edge follows the lowest basic rate. Only 6 Mbps has a '
+          'published floor of its own (-82 dBm, equal to MCS 0). 12 to 54 '
+          'Mbps use the floor of the MCS with the same modulation and coding, '
+          'so they are MCS-equivalent. 9 Mbps and the 2.4 GHz DSSS rates '
+          '(1, 2, 5.5, 11) have no sourced floor here, so when one of them is '
+          'the lowest basic rate no cell edge is drawn.',
           style: small(),
         ),
     ];
@@ -310,10 +322,7 @@ class RateVsRangeReadouts extends StatelessWidget {
               '${n(RateVsRangeMath.sensitivityDbm(c.mcs!, model.widthMHz), 0)} dBm '
               'at ${model.widthMHz} MHz'
               '${model.marginDb > 0 ? ' + ${n(model.marginDb, 0)} dB margin' : ''}.';
-    final String cellLine = c.insideCell
-        ? 'Inside the cell: it can decode ${model.basicRate.label} beacons.'
-        : 'Outside the cell: too weak for ${model.basicRate.label} beacons, '
-              'so it will not associate here.';
+    final String cellLine = model.cellSentence(associateClause: true);
 
     return RvrCard(
       child: Semantics(
