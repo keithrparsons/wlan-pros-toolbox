@@ -397,6 +397,39 @@ class _Verdict extends StatelessWidget {
 
 // ── The timelines ───────────────────────────────────────────────────────────
 
+/// The OFDMA row's caption. In 802.11ax every RU carries its own MCS; with
+/// equal RUs and equal frames the slowest client's RU needs the most symbols,
+/// so it sets the PPDU length and the faster clients pad to it. That is the
+/// airtime [computeOfdma] gives when run at the slowest client's MCS, which is
+/// what the model does. Below a 242-tone RU, MCS 10 and 11 are not allowed,
+/// so the model caps every client at MCS 9 (Vera gate B, 2026-09-29).
+String ofdmaRowCaption(MuResult r, int exchanges) {
+  final String ex =
+      '$exchanges ${exchanges == 1 ? 'exchange' : 'exchanges'}, each client '
+      'on its own ${r.ofdmaRu.toneLabel} RU';
+  final int? run = r.ofdmaMcs;
+  if (run == null || r.links.isEmpty) return ex;
+  final List<int> mcs = <int>[
+    for (final MuClientLink l in r.links) l.ofdmaMcs ?? run,
+  ];
+  final int slowest = mcs.reduce(math.min);
+  if (run < slowest) {
+    return '$ex, all at MCS $run: MCS 10 and 11 need a 242-tone RU or '
+        'larger';
+  }
+  if (mcs.toSet().length == 1) return '$ex, all at MCS $run';
+  final List<String> letters = <String>[
+    for (int i = 0; i < mcs.length; i++)
+      if (mcs[i] == slowest) clientLetter(i),
+  ];
+  final String who = letters.length == 1
+      ? letters.single
+      : '${letters.sublist(0, letters.length - 1).join(', ')} and '
+            '${letters.last}';
+  return '$ex at its own MCS; the slowest ($who, MCS $slowest) sets the '
+      'length and the others pad';
+}
+
 class _AirtimeCard extends StatelessWidget {
   const _AirtimeCard({required this.c});
 
@@ -434,8 +467,7 @@ class _AirtimeCard extends StatelessWidget {
             title: 'OFDMA',
             detail: r.ofdma == null
                 ? ''
-                : '$n ${n == 1 ? 'exchange' : 'exchanges'}, each client on '
-                      'an RU of ${r.ofdmaRu.label} tones at MCS ${r.ofdmaMcs}',
+                : ofdmaRowCaption(r, n),
             timeline: r.ofdma,
             refusal: r.ofdma == null ? muVerdictHeadline(r) : null,
             scaleUs: scale,

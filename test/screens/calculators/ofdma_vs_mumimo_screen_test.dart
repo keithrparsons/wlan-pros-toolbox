@@ -5,6 +5,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +13,10 @@ import 'package:wlan_pros_toolbox/screens/tools/calculators/ofdma_vs_mumimo_cont
 import 'package:wlan_pros_toolbox/screens/tools/calculators/ofdma_vs_mumimo_painters.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/ofdma_vs_mumimo_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/ofdma_vs_mumimo_stage.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/airtime_fairness_model.dart'
+    show clientLetter;
 import 'package:wlan_pros_toolbox/services/wifi_lab/mu_mimo_model.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/ofdma_model.dart' show RuSize;
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 Future<OfdmaVsMumimoController> _pump(
@@ -182,5 +186,92 @@ void main() {
     expect(all, isNot(contains('semfio')));
     expect(all, isNot(contains('\u2014')));
     expect(all, isNot(contains('—')));
+  });
+
+  // Vera gate B (2026-09-29): the OFDMA row's caption said every client sat
+  // "on an RU of 242 tones at MCS N", while the per-client table showed some
+  // clients faster. In 802.11ax each RU carries its own MCS; with equal RUs
+  // and equal frames the slowest client sets the PPDU length and the others
+  // pad, which is the airtime the model computes.
+  Finder ofdmaCaption() => find.byWidgetPredicate(
+    (Widget w) =>
+        w is Text &&
+        (w.data ?? '').contains('RU') &&
+        (w.data ?? '').contains('MCS') &&
+        (w.data ?? '').contains('exchange'),
+  );
+
+  void expectCaptionMatchesSlowest(WidgetTester tester, MuResult r, String at) {
+    final String cap = tester.widget<Text>(ofdmaCaption()).data!;
+    final List<int> mcs = <int>[
+      for (final MuClientLink l in r.links) l.ofdmaMcs!,
+    ];
+    final int slowest = mcs.reduce(math.min);
+    final List<String> slowLetters = <String>[
+      for (int i = 0; i < mcs.length; i++)
+        if (mcs[i] == slowest) clientLetter(i),
+    ];
+    final List<int> named = RegExp(r'MCS (\d+)')
+        .allMatches(cap)
+        .map((Match m) => int.parse(m.group(1)!))
+        .toList();
+    expect(named, isNotEmpty, reason: '$at: $cap');
+    if (r.ofdmaMcs == slowest) {
+      // The caption's MCS is the slowest client's, straight off the table.
+      expect(named.first, slowest, reason: '$at: $cap');
+    } else {
+      // Every client can do MCS 10 or 11, but the RU is under 242 tones.
+      expect(r.ofdmaRu.tones, lessThan(RuSize.ru242.tones), reason: at);
+      expect(named.first, r.ofdmaMcs, reason: '$at: $cap');
+      expect(cap, contains('242'), reason: '$at: $cap');
+    }
+    if (r.ofdmaMcs == slowest && mcs.toSet().length > 1) {
+      expect(cap, contains('its own MCS'), reason: '$at: $cap');
+      expect(cap, contains('pad'), reason: '$at: $cap');
+      for (final String l in slowLetters) {
+        expect(cap, contains(l), reason: '$at: $cap');
+      }
+    } else {
+      expect(cap, contains('all at MCS'), reason: '$at: $cap');
+    }
+    expect(cap, isNot(contains('RU of')), reason: '$at: $cap');
+  }
+
+  testWidgets('OFDMA caption names the slowest client\'s MCS, every scenario', (
+    WidgetTester tester,
+  ) async {
+    final OfdmaVsMumimoController c = await _pump(tester);
+    for (final MuPreset p in MuPreset.values) {
+      c.applyPreset(p);
+      await tester.pumpAndSettle();
+      expect(ofdmaCaption(), findsOneWidget, reason: p.label);
+      expectCaptionMatchesSlowest(tester, c.result, p.label);
+    }
+    // Spread out, big frames: Vera's case, client D at MCS 8 in the table.
+    c.applyPreset(MuPreset.spreadBig);
+    await tester.pumpAndSettle();
+    expect(
+      c.result.links.map((MuClientLink l) => l.ofdmaMcs).toSet().length,
+      greaterThan(1),
+      reason: 'the scenario Vera flagged has mixed MCS',
+    );
+  });
+
+  testWidgets('OFDMA caption: equal MCS, and the cap under 242 tones', (
+    WidgetTester tester,
+  ) async {
+    final OfdmaVsMumimoController c = await _pump(tester);
+    // Every client close in: all at MCS 11 on 80 MHz with 242-tone RUs.
+    for (int i = 0; i < c.clientCount; i++) {
+      c.moveClient(i, MuClient(angleDeg: -60 + 40.0 * i, distanceM: 2));
+    }
+    await tester.pumpAndSettle();
+    expectCaptionMatchesSlowest(tester, c.result, 'all close, 80 MHz');
+    // 20 MHz: four clients get 52-tone RUs, where MCS 10 and 11 are not
+    // allowed, so the model runs everyone at MCS 9.
+    c.setWidth(20);
+    await tester.pumpAndSettle();
+    expect(c.result.ofdmaRu.tones, lessThan(RuSize.ru242.tones));
+    expectCaptionMatchesSlowest(tester, c.result, 'all close, 20 MHz');
   });
 }

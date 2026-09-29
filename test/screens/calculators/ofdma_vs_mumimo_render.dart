@@ -22,9 +22,12 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 import '../../widgets/presenter/presenter_test_support.dart';
 
-const String _outDir =
+// RENDER_OUT overrides the folder, so a re-render can sit beside the
+// frames an earlier gate looked at instead of replacing them.
+final String _outDir =
+    Platform.environment['RENDER_OUT'] ??
     '/Users/keithparsons/myPKA/Deliverables/'
-    '2026-09-29-classroom-eight-features/renders-ofdma-vs-mumimo';
+        '2026-09-29-classroom-eight-features/renders-ofdma-vs-mumimo';
 
 Future<void> _shot(
   WidgetTester tester, {
