@@ -78,6 +78,7 @@ const Set<String> _guideIds = <String>{
   'wifi-privacy-myths',
   'captive-portal',
   'guest-discovery',
+  'one-talker',
   'starlink-explained',
   'wifi-calling-explained',
   'home-internet-explained',

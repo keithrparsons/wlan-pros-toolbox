@@ -3074,6 +3074,25 @@ const Map<String, List<String>> kToolKeywords = <String, List<String>>{
   // symptom words a host or guest uses, the standards terms a pro searches,
   // and the brand names people type for the features. The brand names are
   // search terms only; the lesson itself names no product.
+  // One Talker per Channel (Guided Lesson). The symptom words a household
+  // uses and the terms a pro searches.
+  'one-talker': <String>[
+    'slow wifi',
+    'wifi slow with everyone home',
+    'too many devices',
+    'airtime',
+    'channel sharing',
+    'take turns',
+    'walkie-talkie',
+    'half duplex',
+    'contention',
+    'csma/ca',
+    'dcf',
+    'edca',
+    'co-channel',
+    'same channel',
+    'airtime fairness',
+  ],
   'guest-discovery': <String>[
     'guest network',
     'guest wi-fi',

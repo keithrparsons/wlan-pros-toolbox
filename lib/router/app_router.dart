@@ -145,6 +145,7 @@ import '../screens/tools/reference/public_wifi_lesson_screen.dart';
 import '../screens/tools/reference/wifi_privacy_lesson_screen.dart';
 import '../screens/tools/reference/captive_portal_screen.dart';
 import '../screens/tools/reference/guest_discovery_screen.dart';
+import '../screens/tools/reference/one_talker_screen.dart';
 import '../screens/tools/reference/starlink_explained_screen.dart';
 import '../screens/tools/reference/wifi_calling_explained_screen.dart';
 import '../screens/tools/reference/home_internet_explained_screen.dart';
@@ -853,6 +854,12 @@ class AppRouter {
   /// isolation stops discovery. The id `guest-discovery` is permanent (route,
   /// catalog, help, tests).
   static const String guestDiscovery = '/tools/guest-discovery';
+  /// One Talker per Channel (2026-09-29, spec 48): a Wi-Fi Classroom Guided
+  /// Lesson for beginners. On one channel only one device transmits at a
+  /// time, so each gets 1/N of the time. Ungated (a lesson, not a
+  /// simulator shelf); has a Present button. The id `one-talker` is
+  /// permanent (route, catalog, help, tests).
+  static const String oneTalker = '/tools/one-talker';
 
   /// Starlink, Explained — a Wi-Fi Classroom Guided Lesson: how satellite
   /// internet reaches a house or RV, orbit heights, latency, plans, and the
@@ -1339,6 +1346,7 @@ class AppRouter {
     wifiPrivacyMyths: (_) => const WifiPrivacyLessonScreen(),
     captivePortal: (_) => const CaptivePortalScreen(),
     guestDiscovery: (_) => const GuestDiscoveryScreen(),
+    oneTalker: (_) => const OneTalkerScreen(),
     starlinkExplained: (_) => const StarlinkExplainedScreen(),
     wifiCallingExplained: (_) => const WifiCallingExplainedScreen(),
     homeInternetExplained: (_) => const HomeInternetExplainedScreen(),

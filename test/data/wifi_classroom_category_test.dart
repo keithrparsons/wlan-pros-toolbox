@@ -19,6 +19,7 @@ const Set<String> _builtInClassroom = <String>{
   'find-my-explained',
   'wifi-calling-explained',
   'guest-discovery',
+  'one-talker',
   'public-wifi',
   'wifi-privacy-myths',
   'captive-portal',
@@ -62,6 +63,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     // 2026-09-27: Why the TV and the Printer Vanish on Guest Wi-Fi (Pax
     // candidate 11).
     'guest-discovery',
+    // 2026-09-29: One Talker per Channel (spec 48), the beginner on-ramp to
+    // airtime, after Guest Discovery.
+    'one-talker',
     // 2026-09-27: Starlink, Explained, the next explainer post turned lesson.
     'starlink-explained',
     // 2026-09-27: Wi-Fi Calling, Explained, the next explainer post turned

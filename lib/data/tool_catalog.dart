@@ -2613,6 +2613,22 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Guided Lessons',
       ),
+      // One Talker per Channel (2026-09-29, spec 48, Feature 3 of the
+      // eight Classroom features): the beginner on-ramp to airtime. On one
+      // channel only one device transmits at a time (Keith's walkie-talkie
+      // analogy), so each gets 1/N of the time. One interactive stage and a
+      // Present button; ungated.
+      ToolEntry(
+        id: 'one-talker',
+        title: 'One Talker per Channel',
+        description:
+            'Why Wi-Fi slows down with everyone home: on one channel only '
+            'one device can transmit at a time, so every device added '
+            'shrinks everyone\'s share',
+        routeName: '/tools/one-talker',
+        isLive: true,
+        subgroup: 'Guided Lessons',
+      ),
       // Starlink, Explained (2026-09-27, Keith) — the next explainer post
       // turned Guided Lesson, on the Find My pattern: the reviewed print guide
       // rendered verbatim, with its nine figures, the Starlink app steps and
