@@ -38,6 +38,28 @@
 // NO PUBLISHED MEASUREMENT breaks a typical join down by phase, so every
 // phase time here is a labeled input, not a claim. Channel lists are the US
 // 20 MHz channels.
+//
+// FOUR WAYS TO FIND A 6 GHz AP, TIMED (spec 40, 2026-09-29). [sixGhzRace]
+// runs four discovery methods against the same AP on one time axis: listen
+// on all 59 channels, probe the 15 PSCs, go straight to the channel an RNR
+// named, and listen 20 TU on each PSC for FILS Discovery. CLEAN-ROOM BUILD
+// per myPKA Deliverables/2026-09-25-wifi-lab-cleanroom/specs/40-six-ghz-
+// race.md, from IEEE Std 802.11-2024 read directly:
+//   - 26.17.2.3.3 (pp. 4123-4125): PSCs at channel starting frequency - 55
+//     + 80n MHz, n = 1 to 15; on a PSC with no prior knowledge, probe only
+//     after the medium is idle for dot11MinPSCProbeDelay; a STA that heard
+//     an RNR naming an AP may probe for it on that channel; NOTE 2, a STA
+//     waits at least 20 TU to hear FILS Discovery or a broadcast Probe
+//     Response.
+//   - Annex C, dot11MinPSCProbeDelay (p. 5376): 5484 to 100000 us, DEFVAL
+//     7000.
+//   - 26.17.2.3.2 (pp. 4122-4123): a 6 GHz-only AP that intends to be
+//     efficiently discovered sends FILS Discovery, Beacon or unsolicited
+//     Probe Response frames every 20 TU or less; other 6 GHz APs may use
+//     any interval. The race's AP is one that does.
+//   - 9.4.2.169 (p. 1320): the Reduced Neighbor Report element.
+
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show immutable;
 
@@ -297,6 +319,17 @@ const double kFirstFilsOffsetMs = kFilsIntervalMs / 2;
 /// (illustrative).
 const double kProbeAtMs = 1;
 const double kProbeResponseAtMs = 3;
+
+/// On a 6 GHz PSC with no prior knowledge of an AP, the client may probe
+/// only after the medium has been idle this long: dot11MinPSCProbeDelay,
+/// default 7000 us (IEEE 802.11-2024 26.17.2.3.3; Annex C, 5484 to 100000
+/// us). An RNR-directed probe is not held to it.
+const double kMinPscProbeDelayMs = 7;
+
+/// FILS listening: the client stays on each PSC for 20 TU, long enough to
+/// hear one FILS Discovery or unsolicited Probe Response from an AP that
+/// sends one every 20 TU (802.11-2024 26.17.2.3.3 NOTE 2).
+const double kFilsListenDwellMs = kFilsIntervalMs;
 
 /// Dwell per channel, ms. Defaults from Linux mac80211 (about 30 and 111).
 const double kMinActiveDwellMs = 10;
@@ -711,8 +744,65 @@ JrScanPlan buildScan(JrConfig c) {
     );
     t += dwell;
   }
-  final double total = t;
+  return _scanPlan(
+    band: band,
+    scanType: c.scanType,
+    channels: channels,
+    target: target,
+    rnr: rnr,
+    // A broadcast probe on a 6 GHz PSC waits for the idle rule; a probe the
+    // RNR directed does not (802.11-2024 26.17.2.3.3).
+    probeAtMs: band == JrBand.g6 && !rnr ? kMinPscProbeDelayMs : kProbeAtMs,
+  );
+}
+
+/// The FILS listening scan (spec 40): the client visits only the 15 PSCs
+/// and listens, without probing, for [kFilsListenDwellMs] on each.
+JrScanPlan buildFilsListenScan(JrConfig c) {
+  const JrBand band = JrBand.g6;
+  final int target = targetChannelFor(band);
+  final List<JrScanChannel> channels = <JrScanChannel>[];
+  double t = 0;
+  for (final int ch in k6Channels) {
+    if (!k6Pscs.contains(ch)) continue;
+    channels.add(
+      JrScanChannel(
+        number: ch,
+        startMs: t,
+        dwellMs: kFilsListenDwellMs,
+        probed: false,
+        psc: true,
+        dfs: false,
+        target: ch == target,
+      ),
+    );
+    t += kFilsListenDwellMs;
+  }
+  return _scanPlan(
+    band: band,
+    scanType: JrScanType.passive,
+    channels: channels,
+    target: target,
+    rnr: false,
+    probeAtMs: kProbeAtMs,
+  );
+}
+
+/// The AP's frames against a channel list: probe requests where the client
+/// probed, the Probe Response on the AP's channel, and the AP's beacons (and
+/// in 6 GHz its FILS Discovery frames), heard only while the client's radio
+/// was on the AP's channel.
+JrScanPlan _scanPlan({
+  required JrBand band,
+  required JrScanType scanType,
+  required List<JrScanChannel> channels,
+  required int target,
+  required bool rnr,
+  required double probeAtMs,
+}) {
+  final double total = channels.isEmpty ? 0 : channels.last.endMs;
   final JrScanChannel tc = channels.firstWhere((JrScanChannel x) => x.target);
+  final double responseAtMs = probeAtMs + (kProbeResponseAtMs - kProbeAtMs);
   final List<JrScanEvent> events = <JrScanEvent>[];
   for (final JrScanChannel ch in channels) {
     if (ch.probed) {
@@ -720,7 +810,7 @@ JrScanPlan buildScan(JrConfig c) {
         JrScanEvent(
           kind: JrScanEventKind.probeRequest,
           channel: ch.number,
-          atMs: ch.startMs + kProbeAtMs,
+          atMs: ch.startMs + probeAtMs,
           heard: true,
         ),
       );
@@ -778,19 +868,180 @@ JrScanPlan buildScan(JrConfig c) {
       JrScanEvent(
         kind: JrScanEventKind.probeResponse,
         channel: target,
-        atMs: tc.startMs + kProbeResponseAtMs,
-        heard: kProbeResponseAtMs <= tc.dwellMs,
+        atMs: tc.startMs + responseAtMs,
+        heard: responseAtMs <= tc.dwellMs,
       ),
     );
   }
   events.sort((JrScanEvent a, JrScanEvent b) => a.atMs.compareTo(b.atMs));
   return JrScanPlan(
     band: band,
-    scanType: c.scanType,
+    scanType: scanType,
     channels: List<JrScanChannel>.unmodifiable(channels),
     events: List<JrScanEvent>.unmodifiable(events),
     targetChannel: target,
     rnr: rnr,
+  );
+}
+
+// ── Four ways to find a 6 GHz AP (spec 40) ──────────────────────────────────
+
+/// The four 6 GHz discovery methods the race compares. Separate from
+/// [JrSixGhzDiscovery], which keeps its two values for the single ladder.
+enum SixGhzMethod {
+  passiveAll(
+    'Listen on all 59',
+    'Passive scan: listen on every 6 GHz channel for the passive dwell',
+  ),
+  pscProbe(
+    'Probe the 15 PSCs',
+    'Active scan: probe only the 15 PSCs, each after the 7 ms idle rule',
+  ),
+  rnr(
+    'Known via RNR',
+    'A 5 GHz beacon carried a Reduced Neighbor Report naming the 6 GHz AP; '
+        'one directed probe on its channel',
+  ),
+  filsListen(
+    'Listen 20 TU on each PSC',
+    'Listen on the 15 PSCs for 20 TU each, for FILS Discovery or an '
+        'unsolicited Probe Response',
+  );
+
+  const SixGhzMethod(this.shortLabel, this.label);
+
+  final String shortLabel;
+  final String label;
+}
+
+/// One method's run in the race.
+@immutable
+class SixGhzRaceLane {
+  const SixGhzRaceLane({required this.method, required this.plan, this.prior});
+
+  final SixGhzMethod method;
+
+  /// The 6 GHz part of the scan, timed from its own start.
+  final JrScanPlan plan;
+
+  /// RNR only, when its time counts the scan that heard the RNR: the 5 GHz
+  /// scan that runs before [plan].
+  final JrScanPlan? prior;
+
+  /// When the 6 GHz part starts on the race's time axis.
+  double get offsetMs => prior?.totalMs ?? 0;
+
+  /// When the client first hears the AP, on the race's time axis; null if
+  /// it never does on this pass.
+  double? get foundAtMs {
+    final JrScanEvent? e = plan.firstHeard;
+    return e == null ? null : offsetMs + e.atMs;
+  }
+
+  bool get found => foundAtMs != null;
+
+  /// When the whole scan ends, on the race's time axis.
+  double get endMs => offsetMs + plan.totalMs;
+}
+
+/// The four methods against one AP, on one time axis.
+@immutable
+class SixGhzRace {
+  const SixGhzRace({
+    required this.config,
+    required this.lanes,
+    required this.rnrCountsPriorScan,
+  });
+
+  final JrConfig config;
+
+  /// In [SixGhzMethod] order.
+  final List<SixGhzRaceLane> lanes;
+
+  /// Whether RNR's time includes the 5 GHz scan that heard the RNR.
+  final bool rnrCountsPriorScan;
+
+  SixGhzRaceLane lane(SixGhzMethod m) =>
+      lanes.firstWhere((SixGhzRaceLane l) => l.method == m);
+
+  int get targetChannel => lanes.first.plan.targetChannel;
+
+  /// The lane that finds the AP first; null if none does.
+  SixGhzRaceLane? get winner {
+    SixGhzRaceLane? best;
+    for (final SixGhzRaceLane l in lanes) {
+      final double? t = l.foundAtMs;
+      if (t == null) continue;
+      if (best == null || t < best.foundAtMs!) best = l;
+    }
+    return best;
+  }
+
+  /// The found times, earliest first, without repeats.
+  List<double> get findings {
+    final List<double> t = <double>{
+      for (final SixGhzRaceLane l in lanes)
+        if (l.foundAtMs != null) l.foundAtMs!,
+    }.toList()..sort();
+    return t;
+  }
+
+  /// The shared time axis: to the last finding, or to the end of the
+  /// longest scan when a lane finds nothing.
+  double get axisMs {
+    double m = 0;
+    for (final SixGhzRaceLane l in lanes) {
+      m = math.max(m, l.foundAtMs ?? l.endMs);
+    }
+    return m;
+  }
+}
+
+/// Runs the four methods against the AP of [c] (spec 40). The dwell
+/// settings come from [c]; each lane fixes its own band and scan type.
+SixGhzRace sixGhzRace(JrConfig c, {bool rnrCountsPriorScan = true}) {
+  final JrConfig six = c.copyWith(band: JrBand.g6);
+  return SixGhzRace(
+    config: c,
+    rnrCountsPriorScan: rnrCountsPriorScan,
+    lanes: <SixGhzRaceLane>[
+      SixGhzRaceLane(
+        method: SixGhzMethod.passiveAll,
+        plan: buildScan(
+          six.copyWith(
+            scanType: JrScanType.passive,
+            sixGhz: JrSixGhzDiscovery.psc,
+          ),
+        ),
+      ),
+      SixGhzRaceLane(
+        method: SixGhzMethod.pscProbe,
+        plan: buildScan(
+          six.copyWith(
+            scanType: JrScanType.active,
+            sixGhz: JrSixGhzDiscovery.psc,
+          ),
+        ),
+      ),
+      SixGhzRaceLane(
+        method: SixGhzMethod.rnr,
+        plan: buildScan(
+          six.copyWith(
+            scanType: JrScanType.active,
+            sixGhz: JrSixGhzDiscovery.rnr,
+          ),
+        ),
+        prior: rnrCountsPriorScan
+            ? buildScan(
+                c.copyWith(band: JrBand.g5, scanType: JrScanType.active),
+              )
+            : null,
+      ),
+      SixGhzRaceLane(
+        method: SixGhzMethod.filsListen,
+        plan: buildFilsListenScan(six),
+      ),
+    ],
   );
 }
 
@@ -1343,8 +1594,10 @@ class _JrBuilder {
               ]
             : _apAdvertises(),
         description: fils
-            ? 'A 6 GHz AP sends a short discovery frame every 20 TU, so a '
-                  'passive scanner finds it long before the next beacon. '
+            ? 'This AP sends a short discovery frame every 20 TU (the '
+                  'standard requires it of a 6 GHz-only AP that wants to be '
+                  'found), so a passive scanner finds it long before the '
+                  'next beacon. '
                   '$cost'
             : 'A passive scan only listens. The client heard this beacon '
                   'because its radio was on channel ${p.targetChannel} when '

@@ -241,4 +241,56 @@ void main() {
       },
     );
   });
+  testWidgets('6 GHz race (spec 40)', (WidgetTester tester) async {
+    for (final bool light in <bool>[false, true]) {
+      final String mode = light ? 'light' : 'dark';
+      await _page(
+        tester,
+        screen: const JoinLadderScreen(
+          initial: JrConfig(band: JrBand.g6, security: JrSecurity.sae),
+        ),
+        light: light,
+        size: const Size(390, 2600),
+        slug: 'race_phone_${mode}_390',
+        setup: (EapLadderController c) {
+          c.raceOn = true;
+          c.showAll();
+        },
+      );
+      await _present(
+        tester,
+        screen: const JoinLadderScreen(),
+        light: light,
+        size: const Size(1470, 923),
+        slug: 'race_presenter_${mode}_1470x923',
+        setup: (EapLadderController c) {
+          c.toggleRace();
+          c.showAll();
+        },
+      );
+    }
+    await _present(
+      tester,
+      screen: const JoinLadderScreen(),
+      light: false,
+      size: const Size(1920, 1080),
+      slug: 'race_presenter_midrun_rnr_off_dark_1920x1080',
+      setup: (EapLadderController c) {
+        c.toggleRace();
+        c.rnrCountsPriorScan = false;
+        c.step();
+        c.step();
+      },
+    );
+    await _page(
+      tester,
+      screen: const JoinLadderScreen(
+        initial: JrConfig(band: JrBand.g6, security: JrSecurity.sae),
+      ),
+      light: false,
+      size: const Size(1280, 2000),
+      slug: 'race_desktop_fresh_dark_1280',
+      setup: (EapLadderController c) => c.raceOn = true,
+    );
+  });
 }

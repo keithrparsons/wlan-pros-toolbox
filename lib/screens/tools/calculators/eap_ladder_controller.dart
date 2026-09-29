@@ -23,6 +23,13 @@
 // TickerProvider: a route under the presenter route is muted, and playback
 // must keep going when the presenter layout opens over the phone screen
 // (spec 00). [vsync] is accepted and unused so older callers still compile.
+//
+// THE 6 GHz RACE (spec 40, 2026-09-29). In Join at 6 GHz, "Compare all four"
+// swaps the ladder for four discovery methods on one time axis. The same
+// transport drives it: Play sweeps a time cursor across the axis, Step and
+// Back jump between findings, Reset and Show all go to either end. Under
+// reduced motion Play goes straight to the end (GL-003 §8.8); the stage
+// reports the setting through [raceReduceMotion].
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
@@ -59,6 +66,7 @@ class EapLadderController extends ChangeNotifier {
     _sequence = buildLadder(_config);
     _skipped = skippedVersusFull(_sequence);
     _rebuildJr();
+    _race = sixGhzRace(_jrConfig, rnrCountsPriorScan: _rnrCountsPriorScan);
     _ticker = Ticker(_onTick, debugLabel: 'eap-ladder');
   }
 
@@ -81,6 +89,12 @@ class EapLadderController extends ChangeNotifier {
   /// A sent Join or Roam message the student tapped, shown in the caption
   /// instead of the latest; null for the latest.
   int? _inspected;
+
+  bool _raceOn = false;
+  bool _rnrCountsPriorScan = true;
+  late SixGhzRace _race;
+  double _raceMs = 0;
+  bool _raceReduceMotion = false;
 
   // ── Read side ─────────────────────────────────────────────────────────────
 
@@ -109,8 +123,8 @@ class EapLadderController extends ChangeNotifier {
   /// Messages sent so far (0 to the ladder's length).
   int get shown => _shown;
 
-  bool get atStart => _shown == 0;
-  bool get atEnd => _shown >= _length;
+  bool get atStart => raceActive ? _raceMs <= 0 : _shown == 0;
+  bool get atEnd => raceActive ? _raceMs >= _race.axisMs : _shown >= _length;
 
   /// Messages in the ladder on show.
   int get length => _length;
@@ -157,6 +171,10 @@ class EapLadderController extends ChangeNotifier {
   // ── Transport ─────────────────────────────────────────────────────────────
 
   void togglePlay() {
+    if (raceActive) {
+      _toggleRacePlay();
+      return;
+    }
     if (_playing) {
       _pause();
     } else {
@@ -189,14 +207,28 @@ class EapLadderController extends ChangeNotifier {
   void step() {
     _pause();
     _inspected = null;
-    if (!atEnd) _shown += 1;
+    if (raceActive) {
+      _raceMs = _race.findings.firstWhere(
+        (double t) => t > _raceMs + 1e-9,
+        orElse: () => _race.axisMs,
+      );
+    } else if (!atEnd) {
+      _shown += 1;
+    }
     notifyListeners();
   }
 
   void back() {
     _pause();
     _inspected = null;
-    if (!atStart) _shown -= 1;
+    if (raceActive) {
+      _raceMs = _race.findings.lastWhere(
+        (double t) => t < _raceMs - 1e-9,
+        orElse: () => 0,
+      );
+    } else if (!atStart) {
+      _shown -= 1;
+    }
     notifyListeners();
   }
 
@@ -204,13 +236,18 @@ class EapLadderController extends ChangeNotifier {
     _pause();
     _inspected = null;
     _shown = 0;
+    _raceMs = 0;
     notifyListeners();
   }
 
   void showAll() {
     _pause();
     _inspected = null;
-    _shown = _length;
+    if (raceActive) {
+      _raceMs = _race.axisMs;
+    } else {
+      _shown = _length;
+    }
     notifyListeners();
   }
 
@@ -223,6 +260,18 @@ class EapLadderController extends ChangeNotifier {
   void _onTick(Duration elapsed) {
     final double dt = (elapsed - _lastElapsed).inMicroseconds / 1e6;
     _lastElapsed = elapsed;
+    if (raceActive) {
+      // A stalled frame cannot jump the cursor more than a tenth of a
+      // second of the race.
+      final double wall = raceWallSeconds;
+      _raceMs += dt.clamp(0.0, 0.1) / wall * _race.axisMs;
+      if (_raceMs >= _race.axisMs) {
+        _raceMs = _race.axisMs;
+        _pause();
+      }
+      notifyListeners();
+      return;
+    }
     // A stalled frame cannot send more than one message.
     _sinceBeat += dt.clamp(0.0, _speed.secondsPerMessage);
     if (_sinceBeat < _speed.secondsPerMessage) return;
@@ -315,6 +364,13 @@ class EapLadderController extends ChangeNotifier {
         description: 'Back one message',
         onPressed: back,
       ),
+      if (_mode == LadderMode.join)
+        PresenterExtraKey(
+          key: LogicalKeyboardKey.keyC,
+          keyLabel: 'C',
+          description: 'Race the four ways to find a 6 GHz AP, on or off',
+          onPressed: toggleRace,
+        ),
     ],
   );
 
@@ -345,6 +401,7 @@ class EapLadderController extends ChangeNotifier {
       _inspected = null;
       _shown = wasAll ? _jr.length : 0;
     }
+    _rebuildRace();
     notifyListeners();
   }
 
@@ -353,6 +410,102 @@ class EapLadderController extends ChangeNotifier {
         ? buildRoam(_jrConfig)
         : buildJoin(_jrConfig);
     _roamSkipped = _mode == LadderMode.roam ? roamSkippedVersusFull(_jr) : null;
+  }
+
+  // ── The 6 GHz race (spec 40) ──────────────────────────────────────────────
+
+  /// Whether the student chose "Compare all four".
+  bool get raceOn => _raceOn;
+
+  /// The race exists only in Join at 6 GHz.
+  bool get raceAvailable =>
+      _mode == LadderMode.join && _jrConfig.band == JrBand.g6;
+
+  /// The stage shows the race instead of the ladder.
+  bool get raceActive => _raceOn && raceAvailable;
+
+  /// Whether RNR's time includes the 5 GHz scan that heard the RNR
+  /// (Keith, 2026-09-29: a toggle, default on).
+  bool get rnrCountsPriorScan => _rnrCountsPriorScan;
+
+  SixGhzRace get race => _race;
+
+  /// The race's time cursor, 0 to [SixGhzRace.axisMs].
+  double get raceMs => _raceMs;
+
+  /// Real seconds for the cursor to cross the whole axis at this speed.
+  double get raceWallSeconds => _speed.secondsPerMessage * 6;
+
+  /// Whether [lane] has found the AP by the cursor.
+  bool raceFound(SixGhzRaceLane lane) {
+    final double? t = lane.foundAtMs;
+    return t != null && t <= _raceMs + 1e-9;
+  }
+
+  set raceOn(bool on) {
+    if (on == _raceOn) return;
+    _pause();
+    _raceOn = on;
+    _raceMs = 0;
+    notifyListeners();
+  }
+
+  set rnrCountsPriorScan(bool on) {
+    if (on == _rnrCountsPriorScan) return;
+    _rnrCountsPriorScan = on;
+    _rebuildRace();
+    notifyListeners();
+  }
+
+  /// Set by the stage from MediaQuery; read when Play is pressed. Does not
+  /// notify.
+  set raceReduceMotion(bool v) => _raceReduceMotion = v;
+
+  /// Presenter C: the race on or off, moving to 6 GHz when it is needed.
+  void toggleRace() {
+    if (_mode != LadderMode.join) return;
+    if (raceActive) {
+      raceOn = false;
+      return;
+    }
+    if (_jrConfig.band != JrBand.g6) {
+      jrConfig = _jrConfig.copyWith(band: JrBand.g6);
+    }
+    _raceOn = false;
+    raceOn = true;
+  }
+
+  void _toggleRacePlay() {
+    if (_playing) {
+      _pause();
+    } else {
+      if (atEnd) _raceMs = 0;
+      if (_raceReduceMotion) {
+        _raceMs = _race.axisMs;
+      } else {
+        _playing = true;
+        _lastElapsed = Duration.zero;
+        _ticker.start();
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Rebuilds the race for the current settings. A race that had finished
+  /// shows the new result whole; otherwise it starts again from zero.
+  void _rebuildRace() {
+    final bool wasAll = raceActive && _raceMs > 0 && _raceMs >= _race.axisMs;
+    final SixGhzRace next = sixGhzRace(
+      _jrConfig,
+      rnrCountsPriorScan: _rnrCountsPriorScan,
+    );
+    final bool same =
+        listEquals(next.findings, _race.findings) &&
+        next.axisMs == _race.axisMs;
+    _race = next;
+    if (same) return;
+    if (raceActive) _pause();
+    _raceMs = wasAll ? next.axisMs : 0;
   }
 
   static bool _sameJr(JrSequence a, JrSequence b) {
@@ -376,6 +529,7 @@ class EapLadderController extends ChangeNotifier {
   // ── Copy ──────────────────────────────────────────────────────────────────
 
   String copyText() {
+    if (raceActive) return _copyRace();
     if (isJr) return _copyJr();
     final LadderSequence s = _sequence;
     final LadderConfig c = _config;
@@ -471,6 +625,44 @@ class EapLadderController extends ChangeNotifier {
     for (final String line in _roamSkipped?.lines ?? const <String>[]) {
       b.writeln('Skipped versus full 802.1X: $line');
     }
+    return b.toString().trimRight();
+  }
+
+  String _copyRace() {
+    final SixGhzRace r = _race;
+    final JrConfig c = _jrConfig;
+    final StringBuffer b = StringBuffer()
+      ..writeln(
+        'Association, Frame by Frame: four ways to find a 6 GHz AP '
+        '(WLAN Pros Toolbox)',
+      )
+      ..writeln(
+        'AP on channel ${r.targetChannel} (a PSC), FILS Discovery every 20 '
+        'TU. Active dwell ${formatJrMs(c.activeDwellMs)}, passive dwell '
+        '${formatJrMs(c.passiveDwellMs)}.',
+      )
+      ..writeln();
+    for (final SixGhzRaceLane l in r.lanes) {
+      final double? t = l.foundAtMs;
+      b.writeln(
+        '${l.method.shortLabel}: '
+        '${t == null ? 'not found on this pass' : 'found at ${formatJrMs(t)}'}',
+      );
+    }
+    final SixGhzRaceLane? w = r.winner;
+    b
+      ..writeln()
+      ..writeln(
+        r.rnrCountsPriorScan
+            ? 'RNR time includes the 5 GHz scan that heard the RNR '
+                  '(${formatJrMs(r.lane(SixGhzMethod.rnr).offsetMs)}).'
+            : 'RNR time is the 6 GHz part only.',
+      );
+    if (w != null) b.writeln('First to find the AP: ${w.method.shortLabel}.');
+    b.writeln(
+      'A PSC probe waits for the channel to be idle 7 ms '
+      '(dot11MinPSCProbeDelay, IEEE 802.11-2024). Dwell times are inputs.',
+    );
     return b.toString().trimRight();
   }
 

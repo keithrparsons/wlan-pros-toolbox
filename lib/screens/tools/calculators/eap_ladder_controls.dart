@@ -321,7 +321,9 @@ class _PresenterTransport extends StatelessWidget {
           ),
           if (reducedMotion)
             Text(
-              'Reduced motion is on: arrows appear without drawing in.',
+              c.raceActive
+                  ? 'Reduced motion is on: Play shows the whole race at once.'
+                  : 'Reduced motion is on: arrows appear without drawing in.',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
         ],
@@ -380,7 +382,13 @@ class _TransportCard extends StatelessWidget {
             width: double.infinity,
             child: Semantics(
               button: true,
-              label: c.playing
+              label: c.raceActive
+                  ? (c.playing
+                        ? 'Pause the race'
+                        : c.atEnd
+                        ? 'Run the race again from the start'
+                        : 'Run the race: the four methods on one clock')
+                  : c.playing
                   ? 'Pause the ladder'
                   : c.atEnd
                   ? 'Play the ladder again from the start'
@@ -410,7 +418,9 @@ class _TransportCard extends StatelessWidget {
                 child: ElOutlineButton(
                   icon: Icons.skip_previous_rounded,
                   label: 'Back',
-                  semanticLabel: 'Take back the last message',
+                  semanticLabel: c.raceActive
+                      ? 'Back to the previous finding'
+                      : 'Take back the last message',
                   onPressed: c.atStart ? null : c.back,
                 ),
               ),
@@ -419,7 +429,9 @@ class _TransportCard extends StatelessWidget {
                 child: ElOutlineButton(
                   icon: Icons.skip_next_rounded,
                   label: 'Step',
-                  semanticLabel: 'Send the next message',
+                  semanticLabel: c.raceActive
+                      ? 'Jump to the next finding'
+                      : 'Send the next message',
                   onPressed: c.atEnd ? null : c.step,
                 ),
               ),
@@ -432,7 +444,9 @@ class _TransportCard extends StatelessWidget {
                 child: ElOutlineButton(
                   icon: Icons.restart_alt_rounded,
                   label: 'Reset',
-                  semanticLabel: 'Back to the start, nothing sent',
+                  semanticLabel: c.raceActive
+                      ? 'Back to the start of the race'
+                      : 'Back to the start, nothing sent',
                   onPressed: c.atStart ? null : c.reset,
                 ),
               ),
@@ -441,7 +455,9 @@ class _TransportCard extends StatelessWidget {
                 child: ElOutlineButton(
                   icon: Icons.unfold_more_rounded,
                   label: 'Show all',
-                  semanticLabel: 'Show every message at once',
+                  semanticLabel: c.raceActive
+                      ? 'Show the whole race at once'
+                      : 'Show every message at once',
                   onPressed: c.atEnd ? null : c.showAll,
                 ),
               ),
@@ -460,8 +476,12 @@ class _TransportCard extends StatelessWidget {
           if (reducedMotion) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Reduced motion is on. Arrows appear without drawing in, and '
-              'the ladder waits for you: use Step, or press Play.',
+              c.raceActive
+                  ? 'Reduced motion is on. Play shows the whole race at once; '
+                        'Step jumps to each finding.'
+                  : 'Reduced motion is on. Arrows appear without drawing in, '
+                        'and the ladder waits for you: use Step, or press '
+                        'Play.',
               style: text.bodySmall?.copyWith(color: colors.textTertiary),
             ),
           ],
