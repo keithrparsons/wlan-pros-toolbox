@@ -20,6 +20,7 @@ import '../widgets/presenter/large_screen_gate.dart' show gateWifiLabRoutes;
 import '../screens/tools/dbm_watt_converter.dart';
 import '../screens/tools/calculators/architectural_scale_screen.dart';
 import '../screens/tools/calculators/body_loss_screen.dart';
+import '../screens/tools/calculators/polarization_screen.dart';
 import '../screens/tools/calculators/box_vs_hand_screen.dart';
 import '../screens/tools/calculators/cable_loss_screen.dart';
 import '../screens/tools/calculators/channel_frequency_converter_screen.dart';
@@ -408,6 +409,10 @@ class AppRouter {
   // patterns in a rotatable 3D CustomPainter; pure on-device math, all
   // platforms incl. web.
   static const String antennaPattern = '/tools/antenna-pattern';
+  // Wi-Fi Classroom (2026-09-29). One wave's electric field along the
+  // direction of travel in the shared 3D orbit view: vertical, horizontal,
+  // slant, circular, elliptical; pure on-device math, all platforms incl. web.
+  static const String polarization = '/tools/polarization';
   // Wi-Fi Classroom (2026-09-25). MCS rings from the receiver sensitivity table,
   // log-distance path loss and ssid-airtime beacon math; pure on-device
   // math, all platforms incl. web.
@@ -1106,6 +1111,7 @@ class AppRouter {
     latencyUnderLoad: (_) => const LatencyUnderLoadScreen(),
     ofdmaSimulator: (_) => const OfdmaSimulatorScreen(),
     antennaPattern: (_) => const AntennaPatternScreen(),
+    polarization: (_) => const PolarizationScreen(),
     rateVsRange: (_) => const RateVsRangeScreen(),
     uplinkDownlink: (_) => const UplinkDownlinkScreen(),
     bodyLoss: (_) => const BodyLossScreen(),

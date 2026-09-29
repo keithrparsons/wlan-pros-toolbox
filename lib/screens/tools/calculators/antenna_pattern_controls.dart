@@ -11,6 +11,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../router/app_router.dart';
+
 import '../../../services/wifi_lab/antenna_pattern_formats.dart';
 import '../../../services/wifi_lab/antenna_pattern_math.dart';
 import '../../../theme/app_color_scheme.dart';
@@ -764,6 +766,16 @@ class _PolarizationCard extends StatelessWidget {
                         'links still see something, from reflections that '
                         'scramble polarization.',
             ),
+          // The field itself, in 3D (Polarization tile, spec 45).
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRouter.polarization),
+              icon: const Icon(Icons.threed_rotation),
+              label: const Text('See it in 3D: open Polarization'),
+            ),
+          ),
         ],
       ),
     );
