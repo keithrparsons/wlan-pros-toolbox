@@ -158,6 +158,7 @@ class CuConfig {
     this.neighbor = false,
     this.neighborPercent = kCuDefaultNeighborPercent,
     this.nonWifi = false,
+    this.basicRates = CuBasicRates.mandatory,
   }) : assert(senders >= kCuMinSenders && senders <= kCuMaxSenders),
        assert(
          loadPercent >= kCuMinLoadPercent && loadPercent <= kCuMaxLoadPercent,
@@ -190,6 +191,9 @@ class CuConfig {
   /// Illustrative non-Wi-Fi bursts, about 20% of the time.
   final bool nonWifi;
 
+  /// The BSS basic rate set. It sets the ACK rate ([cuControlRateFor]).
+  final CuBasicRates basicRates;
+
   bool get saturated => loadPercent >= kCuMaxLoadPercent;
 
   /// The Station Count field: associated stations of THIS network. The
@@ -205,6 +209,7 @@ class CuConfig {
     bool? neighbor,
     int? neighborPercent,
     bool? nonWifi,
+    CuBasicRates? basicRates,
   }) => CuConfig(
     senders: senders ?? this.senders,
     loadPercent: loadPercent ?? this.loadPercent,
@@ -214,6 +219,7 @@ class CuConfig {
     neighbor: neighbor ?? this.neighbor,
     neighborPercent: neighborPercent ?? this.neighborPercent,
     nonWifi: nonWifi ?? this.nonWifi,
+    basicRates: basicRates ?? this.basicRates,
   );
 
   @override
@@ -226,7 +232,8 @@ class CuConfig {
       other.idleStations == idleStations &&
       other.neighbor == neighbor &&
       other.neighborPercent == neighborPercent &&
-      other.nonWifi == nonWifi;
+      other.nonWifi == nonWifi &&
+      other.basicRates == basicRates;
 
   @override
   int get hashCode => Object.hash(
@@ -238,23 +245,69 @@ class CuConfig {
     neighbor,
     neighborPercent,
     nonWifi,
+    basicRates,
   );
 }
 
 // ── Timing, from Airtime Anatomy ────────────────────────────────────────────
 
-/// The ACK rate for a data rate: the fastest of Airtime Anatomy's control
-/// rates (6, 12, 24 Mb/s) that is not faster than the data rate.
-int cuControlRateFor(int rateMbps) {
-  int best = AirtimeConstants.controlRatesMbps.first;
-  for (final int r in AirtimeConstants.controlRatesMbps) {
-    if (r <= rateMbps) best = r;
+/// A basic rate set the tool offers (see [cuControlRateFor]).
+enum CuBasicRates {
+  mandatory('6, 12, 24 Mb/s', <int>[6, 12, 24]),
+  dsss('1, 2, 5.5, 11 Mb/s', <int>[]),
+  only6('6 Mb/s only', <int>[6]),
+  only24('24 Mb/s only', <int>[24]),
+  allOfdm('All eight, 6 to 54 Mb/s', <int>[6, 9, 12, 18, 24, 36, 48, 54]);
+
+  const CuBasicRates(this.label, this.ofdmMbps);
+
+  final String label;
+
+  /// The OFDM rates in the set. The 802.11b set has none.
+  final List<int> ofdmMbps;
+}
+
+/// The mandatory OFDM rates, the answer when no basic rate fits. IEEE
+/// 802.11-2024 17.1.1 (p.3338) for OFDM; 18.1.2 (p.3387) makes 6, 12 and 24
+/// the mandatory ERP-OFDM rates too (ERP's 1, 2, 5.5 and 11 are DSSS/CCK).
+const List<int> kCuMandatoryOfdmMbps = <int>[6, 12, 24];
+
+/// The ACK rate for a data frame at [rateMbps], per IEEE 802.11-2024
+/// 10.6.6.5.2 (p.1944): the highest rate in the BSS basic rate set that is
+/// not faster than the frame being acknowledged; if no basic rate fits, the
+/// highest mandatory rate of the PHY that is not faster.
+///
+/// The response also keeps the eliciting frame's modulation class (p.1945).
+/// Every data frame here is ERP-OFDM, so only the OFDM rates of the basic
+/// set count: an 802.11b basic set (1, 2, 5.5, 11) leaves none, and the
+/// mandatory OFDM rates answer. The standard does not say how to settle a
+/// rate rule against a class rule; filtering by class first is the model's
+/// reading.
+///
+/// The ACK rate is not floored at the lowest basic rate: with only 24 basic,
+/// a frame at 12 is acknowledged at 12.
+int cuControlRateFor(
+  int rateMbps, {
+  CuBasicRates basicRates = CuBasicRates.mandatory,
+}) {
+  int? best;
+  for (final int r in basicRates.ofdmMbps) {
+    if (r <= rateMbps && (best == null || r > best)) best = r;
   }
-  return best;
+  if (best != null) return best;
+  int fallback = kCuMandatoryOfdmMbps.first;
+  for (final int r in kCuMandatoryOfdmMbps) {
+    if (r <= rateMbps) fallback = r;
+  }
+  return fallback;
 }
 
 /// The Airtime Anatomy scenario for one data frame on this channel.
-AirtimeScenario cuScenario(int rateMbps, int payloadBytes) => AirtimeScenario(
+AirtimeScenario cuScenario(
+  int rateMbps,
+  int payloadBytes, {
+  CuBasicRates basicRates = CuBasicRates.mandatory,
+}) => AirtimeScenario(
   band: AirtimeBand.ghz24,
   phy: AirtimePhy.legacy,
   widthMhz: 20,
@@ -264,15 +317,19 @@ AirtimeScenario cuScenario(int rateMbps, int payloadBytes) => AirtimeScenario(
   payloadBytes: payloadBytes,
   encryptionBytes: 0,
   accessCategory: AirtimeAccessCategory.be,
-  controlRateMbps: cuControlRateFor(rateMbps),
+  controlRateMbps: cuControlRateFor(rateMbps, basicRates: basicRates),
 );
 
 /// Every duration the channel uses, in tenths of a microsecond.
 class CuTiming {
   CuTiming._(this.airtime, this.payloadBytes, this.rateMbps);
 
-  factory CuTiming(int rateMbps, int payloadBytes) => CuTiming._(
-    computeAirtime(cuScenario(rateMbps, payloadBytes)),
+  factory CuTiming(
+    int rateMbps,
+    int payloadBytes, {
+    CuBasicRates basicRates = CuBasicRates.mandatory,
+  }) => CuTiming._(
+    computeAirtime(cuScenario(rateMbps, payloadBytes, basicRates: basicRates)),
     payloadBytes,
     rateMbps,
   );
@@ -551,7 +608,11 @@ class _Sta {
 /// run, every time.
 class CuSim {
   CuSim(this.config, {this.seed = 1, this.keepBlocks = true})
-    : timing = CuTiming(config.rateMbps, config.payloadBytes),
+    : timing = CuTiming(
+        config.rateMbps,
+        config.payloadBytes,
+        basicRates: config.basicRates,
+      ),
       _random = math.Random(seed) {
     final CuCycle cycle = CuCycle(timing);
     // One sender alone completes one frame per cycle: the 100% load.
@@ -1048,9 +1109,15 @@ CuCurvePoint saturationPoint(
   int payloadBytes = 1500,
   int intervals = 10,
   int seed = 1,
+  CuBasicRates basicRates = CuBasicRates.mandatory,
 }) {
   final CuSim sim = CuSim(
-    CuConfig(senders: stations, rateMbps: rateMbps, payloadBytes: payloadBytes),
+    CuConfig(
+      senders: stations,
+      rateMbps: rateMbps,
+      payloadBytes: payloadBytes,
+      basicRates: basicRates,
+    ),
     seed: seed,
     keepBlocks: false,
   )..runIntervals(intervals);
@@ -1069,6 +1136,7 @@ List<CuCurvePoint> saturationCurve({
   int payloadBytes = 1500,
   int intervals = 10,
   int seed = 1,
+  CuBasicRates basicRates = CuBasicRates.mandatory,
 }) => <CuCurvePoint>[
   for (final int n in kCuCurveStations)
     saturationPoint(
@@ -1077,5 +1145,6 @@ List<CuCurvePoint> saturationCurve({
       payloadBytes: payloadBytes,
       intervals: intervals,
       seed: seed,
+      basicRates: basicRates,
     ),
 ];

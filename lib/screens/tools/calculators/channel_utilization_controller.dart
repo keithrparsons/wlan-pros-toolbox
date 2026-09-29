@@ -115,7 +115,7 @@ class ChannelUtilizationController extends ChangeNotifier {
   bool _disposed = false;
 
   // Many-sender curve, computed on first read for a rate and size.
-  (int, int)? _curveKey;
+  (int, int, CuBasicRates)? _curveKey;
   List<CuCurvePoint> _curve = const <CuCurvePoint>[];
 
   // ── Read side ─────────────────────────────────────────────────────────────
@@ -178,13 +178,18 @@ class ChannelUtilizationController extends ChangeNotifier {
 
   /// The tool's own many-sender run for the current rate and frame size.
   List<CuCurvePoint> get curve {
-    final (int, int) key = (_config.rateMbps, _config.payloadBytes);
+    final (int, int, CuBasicRates) key = (
+      _config.rateMbps,
+      _config.payloadBytes,
+      _config.basicRates,
+    );
     if (_curveKey != key) {
       _curveKey = key;
       _curve = saturationCurve(
         rateMbps: _config.rateMbps,
         payloadBytes: _config.payloadBytes,
         seed: seed,
+        basicRates: _config.basicRates,
       );
     }
     return _curve;
@@ -210,6 +215,7 @@ class ChannelUtilizationController extends ChangeNotifier {
 
   set rateMbps(int v) => _setConfig(_config.copyWith(rateMbps: v));
   set payloadBytes(int v) => _setConfig(_config.copyWith(payloadBytes: v));
+  set basicRates(CuBasicRates v) => _setConfig(_config.copyWith(basicRates: v));
 
   set idleStations(int v) => _setConfig(
     _config.copyWith(idleStations: v.clamp(0, kCuMaxIdleStations)),
@@ -403,6 +409,10 @@ class ChannelUtilizationController extends ChangeNotifier {
         '${c.senders} sender${c.senders == 1 ? '' : 's'}, '
         '${c.saturated ? 'saturated' : '${c.loadPercent}% offered load each'}, '
         '${c.payloadBytes}-byte frames at ${c.rateMbps} Mb/s, 2.4 GHz',
+      )
+      ..writeln(
+        'Basic rates ${c.basicRates.label}: ACK at '
+        '${cuControlRateFor(c.rateMbps, basicRates: c.basicRates)} Mb/s',
       )
       ..writeln(
         'Neighbor network: ${c.neighbor ? '${c.neighborPercent}% offered (illustrative)' : 'off'}; '
