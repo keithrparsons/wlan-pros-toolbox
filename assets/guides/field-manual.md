@@ -1,6 +1,6 @@
 # WLAN Pros Toolbox · Field Manual
 
-_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · covers 261 tools · app v{{app_version}}_
+_Compiled 2026-07-02 · Field & Trade Reference added 2026-07-05 · reordered to the app's sections and Wi-Fi Classroom added 2026-09-26 · 14 Classroom tools added 2026-09-27 · Find My, Explained added 2026-09-27 · Public Wi-Fi and Wi-Fi Privacy Myths added 2026-09-27 · renamed Wireless Classroom 2026-09-28 · One Talker per Channel added 2026-09-29 · covers 262 tools · app v{{app_version}}_
 
 This field manual documents every tool in the WLAN Pros Toolbox, drawn directly from the help text that ships inside the app. Each entry states what the tool does, why it is in the kit, how to drive it, the inputs it takes, the formula or method behind it where one applies, a worked example where one helps, and the field notes that keep you out of trouble. Tools are grouped and ordered the same way they appear in the app, so you can navigate the manual and the Toolbox the same way. Every figure and method is the one the app actually runs.
 
@@ -37,8 +37,8 @@ This field manual documents every tool in the WLAN Pros Toolbox, drawn directly 
   - Encoding & Formats (8)
   - Travel & International (4)
 - **Educational Resources** (1 tool)
-- **Wireless Classroom** (88 tools)
-  - Guided Lessons (29)
+- **Wireless Classroom** (89 tools)
+  - Guided Lessons (30)
   - RF and Propagation (12)
   - Signals and PHY (7)
   - Airtime and Access (12)
@@ -3822,12 +3822,12 @@ A vetted, offline list of where to study for the amateur-radio exams (hamstudy.o
 
 ---
 
-# Wireless Classroom (88 tools)
+# Wireless Classroom (89 tools)
 
 Tools for teaching wireless, all of them ours. Four guided lessons open the section. Four shelves of simulators follow in teaching order: the wave in free space and through a building, what rides on the wave, who gets the air and when, and the network built from all of it. The WLAN Pros course handouts close it. The simulators compute everything on the device and need no connection, and on a computer or tablet each one has a Present button for a projector. The Teacher's Guide, at the top of the section in the app, covers presenting and lesson sequences; this manual covers what each tool does and how it works.
 
 
-## Guided Lessons (29)
+## Guided Lessons (30)
 
 
 ### Antenna Fundamentals
@@ -4343,6 +4343,42 @@ A read-along lesson with one step-through, on why screen casting and printing fi
 - Exactly what client isolation blocks is set differently from one product to the next. The lesson shows it stopping the question at the access point.
 - A simplified picture: one access point, one router, one TV and one printer, all on Wi-Fi. A wired printer on the same segment, and how each kind of device names and shows what it finds, are left out.
 - The lesson names no product. The TV, the printer and screen casting stand in for whatever the room has.
+
+
+### One Talker per Channel
+
+A read-along lesson with one interactive stage, on why Wi-Fi slows down when everyone is home. On the same channel, only one device can transmit at a time, so the time on a channel is shared: with N devices that all have something to send, each gets about 1/N. Add devices and every bar shrinks; add a second access point on the same channel or on another channel and compare one waiting line with two.
+
+**Why it's here.** It is the first idea behind every airtime question, told for beginners: a busy channel is a longer line, not a slower access point. The lesson uses a walkie-talkie as the picture: one person talks at a time, and says "over" to hand off. It keeps the rule to one channel and names OFDMA and MU-MIMO as later exceptions without teaching them.
+
+**How to use**
+1. Read top to bottom. The walkie-talkie picture is in section 2, the interactive stage in section 3, two access points in section 4, the slow device in section 5, and what to do about it in section 6.
+2. In section 3, use the minus and plus buttons to set 1 to 12 devices on access point 1. Each device has a letter, a bar for its share of the time and a slice of the channel's pie. The headline gives the share as a fraction and a percent.
+3. Press Next turn to pass the turn. The device talking now has a ring around its letter, and the line under the room names it: one per channel.
+4. Under Second access point, on which channel? pick Same or Other, and set its devices (1 to 6). Same channel is one waiting line, so every device gets 1/(N+M). Other channel is two waiting lines, 1/N on one and 1/M on the other, and two devices can transmit at once.
+5. Turn on Make device A slow. A still gets an equal share of the turns, but each of its turns takes 4 times as long, so it uses more of the time and everyone else gets less.
+6. On a computer or tablet, Present shows the stage full screen for a projector: Up and Down add or remove a device on access point 1, Space swaps the second access point between same channel and other channel, Right passes the turn, A adds or removes the second access point, S makes device A slow, R resets, F switches full screen, ? lists the keys and Esc exits.
+
+**Inputs**
+
+| Input | Unit | Range |
+|---|---|---|
+| Devices on access point 1 | devices | 1 to 12, 4 at open |
+| Second access point, on which channel? | choice | None, Same, Other |
+| Devices on access point 2 | devices | 1 to 6, 3 at open |
+| Make device A slow | on or off | off at open |
+
+**How it works.** Share of the time for each device = 1 / (devices on its channel). With device A slow, turns stay 1/N each and A's share of the time = 4 / (N + 3), each other device's = 1 / (N + 3). Access point 1 is on channel 36; a second access point on the other channel is on channel 149.
+
+**Example.** 4 devices on one access point: 1/4 each, 25%. Add a second access point on the same channel with 3 devices: 1/7 each, 14%. Move it to the other channel: 1/4 (25%) on channel 36 and 1/3 (33%) on channel 149. Make device A slow with 4 devices: A uses 57% of the time and the other three 14% each.
+
+**Field notes**
+- A teaching approximation: every device always has something to send, turns are shared evenly, nothing collides, and two channels do not leak into each other. Channel Planner states the same even split for its contention domains.
+- The slow device's 4 times is an illustrative choice. Airtime Fairness models slow clients with real rates and frame sizes.
+- OFDMA and MU-MIMO let one access point send to several devices in the same moment. The lesson names them as later exceptions and leaves them out.
+- Access point 2 stops at 6 devices so all 18 devices keep a distinct color and letter.
+- Next: Channel Planner and Medium Access Simulator, linked from section 7.
+- Source: IEEE Std 802.11-2024, 10.2.2 DCF (page 1875), 10.2.3.2 EDCA (page 1876), 10.3.2.1 carrier sense mechanism (page 1885), 10.23.2 EDCA procedure.
 
 
 ### Public Wi-Fi
