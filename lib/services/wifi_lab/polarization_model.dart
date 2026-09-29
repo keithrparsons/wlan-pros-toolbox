@@ -189,12 +189,10 @@ class PolarizationState {
   }
 
   /// The long half-axis of the traced shape.
-  double get majorAxis =>
-      math.sqrt(math.max(0, (ax * ax + ay * ay) / 2 + _r));
+  double get majorAxis => math.sqrt(math.max(0, (ax * ax + ay * ay) / 2 + _r));
 
   /// The short half-axis of the traced shape (0 for a line).
-  double get minorAxis =>
-      math.sqrt(math.max(0, (ax * ax + ay * ay) / 2 - _r));
+  double get minorAxis => math.sqrt(math.max(0, (ax * ax + ay * ay) / 2 - _r));
 
   /// Long axis over short axis: 1 for circular, infinite for linear.
   double get axialRatio {

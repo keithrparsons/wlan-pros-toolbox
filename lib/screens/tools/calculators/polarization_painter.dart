@@ -170,9 +170,8 @@ class PolarizationPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     final List<int> order = List<int>.generate(n, (int i) => i)
       ..sort(
-        (int a, int b) => cam
-            .depth(_xAt(a, n), 0, 0)
-            .compareTo(cam.depth(_xAt(b, n), 0, 0)),
+        (int a, int b) =>
+            cam.depth(_xAt(a, n), 0, 0).compareTo(cam.depth(_xAt(b, n), 0, 0)),
       );
     for (final int i in order) {
       final double x = _xAt(i, n);
@@ -219,7 +218,7 @@ class PolarizationPainter extends CustomPainter {
     canvas.drawRect(r, edge);
     // The title wraps inside the square rather than clipping (phone widths).
     final TextPainter title = TextPainter(
-      text: TextSpan(text: 'Seen from the front end', style: labelStyle),
+      text: TextSpan(text: 'End-on view', style: labelStyle),
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
       maxLines: 2,
@@ -255,7 +254,9 @@ class PolarizationPainter extends CustomPainter {
     final Path trace = Path();
     const int m = 96;
     for (int k = 0; k <= m; k++) {
-      final Offset o = at(state.fieldAt(kDrawnWavelengths, 2 * math.pi * k / m));
+      final Offset o = at(
+        state.fieldAt(kDrawnWavelengths, 2 * math.pi * k / m),
+      );
       k == 0 ? trace.moveTo(o.dx, o.dy) : trace.lineTo(o.dx, o.dy);
     }
     canvas.drawPath(
@@ -359,13 +360,7 @@ class PolarizationPainter extends CustomPainter {
     textDirection: TextDirection.ltr,
   )..layout();
 
-  void _label(
-    Canvas c,
-    String text,
-    Offset at,
-    Offset nudge, {
-    Color? color,
-  }) {
+  void _label(Canvas c, String text, Offset at, Offset nudge, {Color? color}) {
     final TextPainter tp = _layout(text, color: color);
     final Offset o = at + nudge * scale.text;
     tp.paint(c, Offset(o.dx, o.dy - tp.height / 2));

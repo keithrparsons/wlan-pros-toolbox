@@ -1072,7 +1072,7 @@
     "polarization": {
       "name": "Polarization",
       "category": "Wireless Classroom",
-      "purpose": "Draws one radio wave as its electric field along the direction of travel, in a 3D view you can turn. Pick Vertical, Horizontal, Slant 45 degrees, Circular or Elliptical and watch the field: the arrows show which way it points at each place along the wave, and the square at the front end shows the shape the tip of the field traces, seen looking along the direction of travel.",
+      "purpose": "Draws one radio wave as its electric field along the direction of travel, in a 3D view you can turn. Pick Vertical, Horizontal, Slant 45 degrees, Circular or Elliptical and watch the field: the arrows show which way it points at each place along the wave, and the End-on view square in the corner shows the shape the tip of the field traces, seen from the front end looking back toward the source.",
       "whyHere": "Polarization is usually taught as a word and a number. Seeing the field makes it concrete: vertical and horizontal are the same wave turned 90 degrees, a slant is the same wave turned 45 degrees, and circular is two waves a quarter cycle apart whose sum never shrinks and turns once per wavelength. The component waves show that every polarization is a horizontal wave plus a vertical wave.",
       "howToUse": [
         "Pick a polarization. The readouts name it, say what the tip of the field traces (a line, a circle or an ellipse) and give the axial ratio.",

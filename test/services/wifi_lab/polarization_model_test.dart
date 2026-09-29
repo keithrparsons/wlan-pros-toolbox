@@ -43,9 +43,7 @@ void main() {
         expect(p.state.matchingPreset, p);
       }
       expect(
-        PolarizationPreset.circular.state
-            .copyWith(deltaDeg: 75)
-            .matchingPreset,
+        PolarizationPreset.circular.state.copyWith(deltaDeg: 75).matchingPreset,
         PolarizationPreset.custom,
       );
     });

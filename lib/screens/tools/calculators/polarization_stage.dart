@@ -117,7 +117,9 @@ class _PresenterStage extends StatelessWidget {
     final AppColorScheme colors = context.colors;
     final TextTheme text = Theme.of(context).textTheme;
     final PresenterScale scale = PresenterMode.scaleOf(context);
-    final TextStyle big = scale.headlineStyle(patternMono(context).outputMedium);
+    final TextStyle big = scale.headlineStyle(
+      patternMono(context).outputMedium,
+    );
     final PolarizationState s = controller.state;
 
     Widget stat(String label, String value, {bool accent = false}) =>
@@ -434,7 +436,7 @@ class _Legend extends StatelessWidget {
         item(
           AppGainRamp.viewportRuleStrong,
           1.5,
-          'Square: the shape the tip traces, seen from the front end looking back',
+          'End-on view: the shape the tip traces, from the front end looking back',
         ),
       ],
     );

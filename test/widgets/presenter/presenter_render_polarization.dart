@@ -136,7 +136,9 @@ void main() {
           ..setPreset(PolarizationPreset.elliptical)
           ..setShowComponents(true),
         after: (WidgetTester tester) async {
-          await tester.tap(find.text('Adjust: amplitudes and phase difference'));
+          await tester.tap(
+            find.text('Adjust: amplitudes and phase difference'),
+          );
           await _settle(tester);
         },
       );
@@ -146,9 +148,8 @@ void main() {
         size: const Size(390, 1900),
         slug: 'polarization-$t-phone-390-no-field',
         present: false,
-        setup: (PolarizationController c) => c.setField(
-          const PolarizationState(ax: 0, ay: 0, deltaDeg: 0),
-        ),
+        setup: (PolarizationController c) =>
+            c.setField(const PolarizationState(ax: 0, ay: 0, deltaDeg: 0)),
       );
     }
   });

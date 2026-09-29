@@ -97,8 +97,7 @@ class PolarizationControls extends StatelessWidget {
                   value: c.preset,
                   semanticLabel: 'Polarization',
                   items: <AppSelectItem<PolarizationPreset>>[
-                    for (final PolarizationPreset p
-                        in PolarizationPreset.named)
+                    for (final PolarizationPreset p in PolarizationPreset.named)
                       (p, p.label),
                     if (c.preset == PolarizationPreset.custom)
                       (PolarizationPreset.custom, 'Custom'),
