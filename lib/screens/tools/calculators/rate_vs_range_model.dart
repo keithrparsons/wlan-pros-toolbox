@@ -13,8 +13,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../../data/channel_frequency_data.dart';
+import '../../../services/wifi_lab/rate_set_model.dart';
 import '../../../services/wifi_lab/rate_vs_range_math.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
 import '../../../units/length_format.dart';
@@ -68,8 +70,10 @@ class RvrClientReading {
   final int? mcs;
   final double? rateMbps;
 
-  /// True when the client can decode beacons at the minimum basic rate.
-  final bool insideCell;
+  /// True when the client can decode beacons at the minimum basic rate;
+  /// null when that rate has no sourced floor (9 Mbps, DSSS), so there is
+  /// no cell edge to be inside.
+  final bool? insideCell;
 }
 
 /// Number formatting shared by stage and controls.
@@ -159,7 +163,12 @@ class RateVsRangeModel extends ChangeNotifier {
   double _clientGainDbi = 0;
   double _exponent = 3;
   double _marginDb = 0;
-  RvrBasicRate _basicRate = RvrBasicRate.mbps6;
+
+  /// Every rate's state (spec 44). Stored with all 12; [rateSet] reads it
+  /// on the band's PHY, so DSSS choices come back on returning to 2.4 GHz.
+  RateSet _rates = RateSet.defaults(RsPhy.erp);
+  RsClient _rsClient = RsClient.wifi6;
+  RsRequiredPhy _requirePhy = RsRequiredPhy.none;
   int _ssids = 4;
   double _clientDistanceM = 20;
 
@@ -178,7 +187,90 @@ class RateVsRangeModel extends ChangeNotifier {
   double get clientGainDbi => _clientGainDbi;
   double get exponent => _exponent;
   double get marginDb => _marginDb;
-  RvrBasicRate get basicRate => _basicRate;
+
+  /// The PHY the band runs: ERP at 2.4 GHz, OFDM at 5 and 6 GHz.
+  RsPhy get phy => _band == WifiBand.band24 ? RsPhy.erp : RsPhy.ofdm;
+
+  /// The AP's rate set on this band.
+  RateSet get rateSet => _rates.onPhy(phy);
+
+  /// The client the Rate set card asks about.
+  RsClient get rsClient => _rsClient;
+
+  /// The PHY a membership selector requires.
+  RsRequiredPhy get requirePhy => _requirePhy;
+
+  /// HT does not run in 6 GHz, so there the choice is nothing or HE.
+  List<RsRequiredPhy> get requirePhyChoices => _band == WifiBand.band6
+      ? const <RsRequiredPhy>[RsRequiredPhy.none, RsRequiredPhy.he]
+      : RsRequiredPhy.values;
+
+  /// The derived minimum basic rate: the lowest basic rate, or null when the
+  /// basic set is empty.
+  RsRate? get minimumBasic => rateSet.minimumBasic;
+
+  /// The minimum basic rate when it has a sourced floor (6, 12 to 54 Mbps),
+  /// else null: 9 Mbps and the DSSS rates draw no cell-edge ring
+  /// (rate_vs_range_math.dart, THE LEGACY RATES ARE MCS-EQUIVALENT).
+  RvrBasicRate? get basicRate {
+    final RsRate? m = minimumBasic;
+    if (m == null) return null;
+    for (final RvrBasicRate r in RvrBasicRate.values) {
+      if (r.mbps == m.mbps) return r;
+    }
+    return null;
+  }
+
+  /// Where beacons go (the lowest basic rate: vendor behavior), or null when
+  /// every rate is off.
+  RsBeacon? get beacon => rateSet.beacon;
+
+  /// "6 Mbps", the beacon rate, or "no" when every rate is off.
+  String get beaconLabel => beacon?.rate.mbpsLabel ?? 'no';
+
+  /// Whether the client dot can hear beacons, in one sentence.
+  /// [associateClause] adds "so it will not associate here" when outside.
+  String cellSentence({bool associateClause = false}) {
+    final bool? inside = client.insideCell;
+    if (beacon == null) return 'No rates are on, so there are no beacons.';
+    if (inside == null) {
+      return basicRate == null && minimumBasic == null
+          ? 'No basic rates: beacons go at $beaconLabel, a mandatory rate. '
+                'No cell edge is drawn.'
+          : 'No cell edge drawn: $beaconLabel has no sourced sensitivity '
+                'here.';
+    }
+    if (inside) {
+      // Signal strength only: whether this device can decode the beacons
+      // is the verdict's call, and this line must agree with it (Keith,
+      // 2026-09-29: an 802.11b client "can decode 6 Mbps beacons" beside a
+      // verdict that said it cannot decode OFDM beacons).
+      final RsAssociation a = association;
+      final String caveat = a.verdict == RsVerdict.otherBand
+          ? ', but this device does not use this band'
+          : a.decodesBeacons
+          ? ''
+          : ', but this device cannot decode them';
+      return 'Inside the cell: strong enough for $beaconLabel beacons '
+          'here$caveat.';
+    }
+    return 'Outside the cell: too weak for $beaconLabel beacons'
+        '${associateClause ? ', so it will not associate here' : ''}.';
+  }
+
+  /// Whether the chosen client can associate.
+  RsAssociation get association =>
+      canJoin(rateSet, _rsClient, requirePhy: _requirePhy);
+
+  /// The same for every client type, picker order.
+  List<RsAssociation> get associations => <RsAssociation>[
+    for (final RsClient c in RsClient.values)
+      canJoin(rateSet, c, requirePhy: _requirePhy),
+  ];
+
+  /// "ACK to a frame sent at X", HE rows when the client is Wi-Fi 6.
+  List<RsControlResponse> get ackTable =>
+      rateSet.ackTable(withHe: _rsClient == RsClient.wifi6);
   int get ssids => _ssids;
   double get clientDistanceM => _clientDistanceM;
   double get clientAngle => _clientAngle;
@@ -205,6 +297,9 @@ class RateVsRangeModel extends ChangeNotifier {
 
   void setBand(WifiBand b) {
     _band = b;
+    if (!requirePhyChoices.contains(_requirePhy)) {
+      _requirePhy = RsRequiredPhy.none;
+    }
     if (!b.widthsMHz.contains(_widthMHz)) _widthMHz = b.widthsMHz.last;
     _clientDistanceM = _clientDistanceM.clamp(1, viewRangeM);
     _changed();
@@ -244,8 +339,44 @@ class RateVsRangeModel extends ChangeNotifier {
     _changed();
   }
 
+  /// Makes [r] the minimum basic rate: slower rates off, [r] basic, faster
+  /// rates that were off now supported (RateSet.withMinimumBasic).
   void setBasicRate(RvrBasicRate r) {
-    _basicRate = r;
+    _rates = rateSet.withMinimumBasic(RsRate.ofMbps(r.mbps)!);
+    _changed();
+  }
+
+  /// One tap on a rate chip: off, supported, basic. Rates the band does not
+  /// have (DSSS at 5 and 6 GHz) do nothing.
+  void cycleRate(RsRate r) {
+    if (!phy.has(r)) return;
+    _rates = rateSet.cycle(r);
+    _changed();
+  }
+
+  /// Presenter B: the next sourced minimum basic rate up (6, 12 ... 54),
+  /// wrapping to 6. From 9 Mbps, a DSSS rate or no basic rate it goes to 6.
+  void raiseMinimumBasic() {
+    final RvrBasicRate? now = basicRate;
+    const List<RvrBasicRate> all = RvrBasicRate.values;
+    setBasicRate(
+      now == null ? all.first : all[(all.indexOf(now) + 1) % all.length],
+    );
+  }
+
+  void setRsClient(RsClient c) {
+    _rsClient = c;
+    _changed();
+  }
+
+  /// Presenter C: the next client type.
+  void cycleRsClient() => setRsClient(
+    RsClient.values[(_rsClient.index + 1) % RsClient.values.length],
+  );
+
+  void setRequirePhy(RsRequiredPhy p) {
+    if (!requirePhyChoices.contains(p)) return;
+    _requirePhy = p;
     _changed();
   }
 
@@ -269,10 +400,26 @@ class RateVsRangeModel extends ChangeNotifier {
   /// Presenter keyboard. Nothing animates, so there is no play, step or
   /// reset: Up and Down move the client out and in along its bearing, a
   /// quarter of a doubling at a time, so a few presses cross a ring.
+  /// B raises the minimum basic rate and C changes the client type (the
+  /// Rate set card, spec 44).
   PresenterActions get presenterActions => PresenterActions(
     sliderDown: () => setClientDistance(_clientDistanceM / _keyStep),
     sliderUp: () => setClientDistance(_clientDistanceM * _keyStep),
     sliderLabel: 'Client distance',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyB,
+        keyLabel: 'B',
+        description: 'Raise the minimum basic rate (wraps to 6 Mbps)',
+        onPressed: raiseMinimumBasic,
+      ),
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyC,
+        keyLabel: 'C',
+        description: 'Next client type',
+        onPressed: cycleRsClient,
+      ),
+    ],
   );
 
   /// 2^(1/4): four presses double or halve the distance.
@@ -312,11 +459,21 @@ class RateVsRangeModel extends ChangeNotifier {
       ),
   ];
 
-  double get cellEdgeDbm =>
-      RateVsRangeMath.basicRateSensitivityDbm(_basicRate) + _marginDb;
+  /// The cell-edge threshold, or null when the minimum basic rate has no
+  /// sourced floor.
+  double? get cellEdgeDbm {
+    final RvrBasicRate? r = basicRate;
+    return r == null
+        ? null
+        : RateVsRangeMath.basicRateSensitivityDbm(r) + _marginDb;
+  }
 
-  /// Where beacons at the minimum basic rate stop being decodable, m.
-  double get cellEdgeM => _radius(cellEdgeDbm);
+  /// Where beacons at the minimum basic rate stop being decodable, m; null
+  /// when there is no sourced floor to draw.
+  double? get cellEdgeM {
+    final double? dbm = cellEdgeDbm;
+    return dbm == null ? null : _radius(dbm);
+  }
 
   /// Cell edge with a 6 Mbps basic rate, for comparison.
   double get cellEdge6M => _radius(
@@ -349,12 +506,17 @@ class RateVsRangeModel extends ChangeNotifier {
       snrDb: rx - nf,
       mcs: mcs,
       rateMbps: mcs == null ? null : rateFor(mcs),
-      insideCell: rx >= cellEdgeDbm,
+      insideCell: cellEdgeDbm == null ? null : rx >= cellEdgeDbm!,
     );
   }
 
-  double get beaconPercent =>
-      RateVsRangeMath.beaconAirtimePercent(_basicRate, _ssids);
+  /// Beacon airtime at the beacon rate, percent; 0 when every rate is off.
+  double get beaconPercent {
+    final RsBeacon? b = beacon;
+    return b == null
+        ? 0
+        : RateVsRangeMath.beaconAirtimePercentAtMbps(b.rate.mbps, _ssids);
+  }
 
   double get beaconPercentAt6 =>
       RateVsRangeMath.beaconAirtimePercent(RvrBasicRate.mbps6, _ssids);
@@ -388,23 +550,51 @@ class RateVsRangeModel extends ChangeNotifier {
         '${r.rateMbps == null ? '-' : n(r.rateMbps!)}',
       );
     }
+    final RvrBasicRate? mbr = basicRate;
+    final RateSet rs = rateSet;
+    final RsBeacon? bc = beacon;
     b
       ..writeln(
-        'Minimum basic rate ${_basicRate.label} '
-        '(${_basicRate.isSourcedDirectly ? 'same floor as MCS 0' : 'MCS-equivalent: MCS ${_basicRate.equivalentMcs}'}): cell edge '
-        '${n(cellEdgeDbm, 0)} dBm at '
-        '${n(LengthFormat(_units).distValue(cellEdgeM))} '
-        '${LengthFormat(_units).distUnit}',
+        'Rate set (${_band.label}): basic ${rsRateList(rs.basic)}; '
+        'supported ${rsRateList(<RsRate>[for (final RsRate r in rs.operational)
+          if (!rs.basic.contains(r)) r])}',
       )
       ..writeln(
-        'Beacons, $_ssids SSIDs: ${RvrFormat.pct(beaconPercent)} of airtime '
-        '(${RvrFormat.pct(beaconPercentAt6)} at 6 Mbps)',
+        mbr != null
+            ? 'Minimum basic rate ${mbr.label} '
+                  '(${mbr.isSourcedDirectly ? 'same floor as MCS 0' : 'MCS-equivalent: MCS ${mbr.equivalentMcs}'}): cell edge '
+                  '${n(cellEdgeDbm!, 0)} dBm at '
+                  '${n(LengthFormat(_units).distValue(cellEdgeM!))} '
+                  '${LengthFormat(_units).distUnit}'
+            : minimumBasic != null
+            ? 'Minimum basic rate ${minimumBasic!.mbpsLabel}: no sourced '
+                  'floor, no cell-edge ring'
+            : 'No basic rates',
       )
       ..writeln(
-        'Client at ${dist(c.distanceM)}: ${n(c.receivedDbm)} dBm, '
-        'SNR ${n(c.snrDb)} dB, '
-        '${c.mcs == null ? 'below MCS 0' : 'MCS ${c.mcs} ${RvrFormat.rate(c.rateMbps)}'}',
+        bc == null
+            ? 'Every rate is off: no beacons'
+            : 'Beacons at ${bc.rate.mbpsLabel} '
+                  '(${bc.fromBasic ? 'the lowest basic rate, a common vendor choice' : 'no basic rates, so a mandatory rate'}), '
+                  '$_ssids SSIDs: ${RvrFormat.pct(beaconPercent)} of airtime '
+                  '(${RvrFormat.pct(beaconPercentAt6)} at 6 Mbps)',
       );
+    for (final RsAssociation a in associations) {
+      b.writeln('${a.client.label}: ${rsVerdictLine(a)}');
+    }
+    b.writeln('ACK to a frame sent at\tACK rate');
+    for (final RsControlResponse r in ackTable) {
+      b.writeln(
+        '${r.eliciting.label}\t${r.rate.mbpsLabel}'
+        '${r.fromBasic ? '' : ' (mandatory fallback)'}'
+        '${r.classFilterDecided ? ' (the model\'s reading)' : ''}',
+      );
+    }
+    b.writeln(
+      'Client at ${dist(c.distanceM)}: ${n(c.receivedDbm)} dBm, '
+      'SNR ${n(c.snrDb)} dB, '
+      '${c.mcs == null ? 'below MCS 0' : 'MCS ${c.mcs} ${RvrFormat.rate(c.rateMbps)}'}',
+    );
     return b.toString().trimRight();
   }
 }

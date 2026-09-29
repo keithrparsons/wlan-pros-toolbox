@@ -115,7 +115,9 @@ class RvrStagePainter extends CustomPainter {
 
   /// MCS 0 (largest) first.
   final List<RvrPaintRing> rings;
-  final double cellEdgeM;
+
+  /// Null when the lowest basic rate has no sourced floor: no ring.
+  final double? cellEdgeM;
   final String cellEdgeLabel;
 
   /// Units for the grid circle labels.
@@ -194,7 +196,9 @@ class RvrStagePainter extends CustomPainter {
   }
 
   void _cellEdge(Canvas canvas, RvrStageGeometry g) {
-    final double r = cellEdgeM * g.pxPerM;
+    final double? edge = cellEdgeM;
+    if (edge == null) return;
+    final double r = edge * g.pxPerM;
     if (r < 1 || r > g.size.longestSide) return;
     final Paint p = Paint()
       ..style = PaintingStyle.stroke

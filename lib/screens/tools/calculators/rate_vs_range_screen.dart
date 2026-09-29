@@ -21,6 +21,11 @@
 //   - RateVsRangeControls, RateVsRangeReadouts, RateVsRangeExplainer
 //                         (rate_vs_range_controls.dart) inputs and readouts
 //   - RvrStagePainter     (rate_vs_range_painter.dart)
+//   - RateSetReadouts, RateSetChips and friends (rate_vs_range_rate_set.dart)
+//                         the Rate set card (spec 44, 2026-09-29): 12 legacy
+//                         rates off/supported/basic, who can associate
+//                         (status 18), beacon rate, ACK table. Model in
+//                         lib/services/wifi_lab/rate_set_model.dart.
 //
 // The Present button (desktop and tablet windows) puts the stage beside the
 // controls over the SAME model (lib/widgets/presenter/).
@@ -56,6 +61,7 @@ import '../../../widgets/unit_system_switch.dart';
 import 'rate_vs_range_controls.dart';
 import 'rate_vs_range_model.dart';
 import 'rate_vs_range_parts.dart';
+import 'rate_vs_range_rate_set.dart';
 import 'rate_vs_range_stage.dart';
 
 export 'rate_vs_range_model.dart' show kRateVsRangeToolId;
@@ -147,6 +153,8 @@ class _RateVsRangeScreenState extends State<RateVsRangeScreen>
           RateVsRangeStage(model: _model, stageHeight: stageHeight),
           const SizedBox(height: AppSpacing.sm),
           RateVsRangeReadouts(model: _model),
+          const SizedBox(height: AppSpacing.sm),
+          RateSetReadouts(model: _model),
           if (withControls) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             RvrCard(child: RateVsRangeControls(model: _model)),

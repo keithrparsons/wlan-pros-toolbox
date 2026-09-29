@@ -30,6 +30,7 @@ import '../../../widgets/presenter/presenter_mode.dart';
 import 'rate_vs_range_model.dart';
 import 'rate_vs_range_painter.dart';
 import 'rate_vs_range_parts.dart';
+import 'rate_vs_range_rate_set.dart';
 
 class RateVsRangeStage extends StatelessWidget {
   const RateVsRangeStage({
@@ -121,6 +122,8 @@ class RateVsRangeStage extends StatelessWidget {
                     children: <Widget>[
                       _clientHeadline(context, client),
                       const SizedBox(height: AppSpacing.sm),
+                      RvrCard(child: RateSetVerdict(model: model)),
+                      const SizedBox(height: AppSpacing.sm),
                       RvrCard(child: _beaconBar(context)),
                     ],
                   ),
@@ -191,11 +194,7 @@ class RateVsRangeStage extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              c.insideCell
-                  ? 'Inside the cell: hears ${model.basicRate.label} '
-                        'beacons.'
-                  : 'Outside the cell: too weak for '
-                        '${model.basicRate.label} beacons.',
+              model.cellSentence(),
               style: text.bodyMedium?.copyWith(color: colors.textPrimary),
             ),
           ],
@@ -211,9 +210,13 @@ class RateVsRangeStage extends StatelessWidget {
     final String at = c.mcs == null
         ? 'below MCS 0'
         : 'MCS ${c.mcs}, ${RvrFormat.rate(c.rateMbps)}';
+    final double? edge = model.cellEdgeM;
+    final String edgeText = edge == null
+        ? 'No cell edge drawn. '
+        : 'Cell edge at ${model.beaconLabel} basic rate '
+              '${model.dist(edge)}. ';
     return 'Coverage rings around the AP at ${model.widthMHz} MHz: $radii. '
-        'Cell edge at ${model.basicRate.label} basic rate '
-        '${model.dist(model.cellEdgeM)}. Client at '
+        '${edgeText}Client at '
         '${model.dist(c.distanceM)}: ${RvrFormat.n(c.receivedDbm)} dBm, '
         '$at.';
   }
@@ -296,7 +299,7 @@ class RateVsRangeStage extends StatelessWidget {
                   ),
               ],
               cellEdgeM: model.cellEdgeM,
-              cellEdgeLabel: 'Cell edge, ${model.basicRate.label} beacons',
+              cellEdgeLabel: 'Cell edge, ${model.beaconLabel} beacons',
               clientDistanceM: c.distanceM,
               clientAngle: model.clientAngle,
               clientLabel: c.mcs == null
@@ -392,15 +395,36 @@ class RateVsRangeStage extends StatelessWidget {
     final TextTheme text = Theme.of(context).textTheme;
     final double now = model.beaconPercent;
     final double at6 = model.beaconPercentAt6;
-    final double frac = at6 <= 0 ? 0 : (now / at6).clamp(0.0, 1.0);
-    final String label =
-        'Beacons use ${RvrFormat.pct(now)} of airtime: ${model.ssids} '
-        '${model.ssids == 1 ? 'SSID' : 'SSIDs'} at ${model.basicRate.label}. '
-        'The whole bar is the same beacons at 6 Mbps, '
-        '${RvrFormat.pct(at6)}.';
-    final String rateNote = model.basicRate.isSourcedDirectly
-        ? 'same floor as MCS 0'
-        : 'MCS-equivalent floor (MCS ${model.basicRate.equivalentMcs})';
+    // The whole bar is the larger of the two: DSSS beacons take more airtime
+    // than the same beacons at 6 Mbps.
+    final double full = math.max(now, at6);
+    final double frac = full <= 0 ? 0 : (now / full).clamp(0.0, 1.0);
+    final RvrBasicRate? mbr = model.basicRate;
+    final String ssids =
+        '${model.ssids} ${model.ssids == 1 ? 'SSID' : 'SSIDs'}';
+    final String label = model.beacon == null
+        ? 'No beacons: every rate is off.'
+        : now > at6
+        ? 'Beacons use ${RvrFormat.pct(now)} of airtime: $ssids at '
+              '${model.beaconLabel}, ${RvrFormat.n(now / at6)} times the same '
+              'beacons at 6 Mbps (${RvrFormat.pct(at6)}), where the notch is.'
+        : 'Beacons use ${RvrFormat.pct(now)} of airtime: $ssids at '
+              '${model.beaconLabel}. The whole bar is the same beacons at '
+              '6 Mbps, ${RvrFormat.pct(at6)}.';
+    final double? edge = model.cellEdgeM;
+    final String edgeLine = mbr != null && edge != null
+        ? 'Minimum basic rate ${mbr.label}, '
+              '${mbr.isSourcedDirectly ? 'same floor as MCS 0' : 'MCS-equivalent floor (MCS ${mbr.equivalentMcs})'}: '
+              'cell edge ${RvrFormat.n(model.cellEdgeDbm!, 0)} dBm at '
+              '${model.dist(edge)}'
+              '${mbr == RvrBasicRate.mbps6 ? '' : ' (6 Mbps: ${model.dist(model.cellEdge6M)})'}.'
+        : model.minimumBasic != null
+        ? 'Minimum basic rate ${model.minimumBasic!.mbpsLabel}: no sourced '
+              'sensitivity, so no cell edge is drawn.'
+        : 'No basic rates, so no minimum basic rate and no cell edge.';
+    final Color fill = mbr == null
+        ? colors.textSecondary
+        : RvrPalette.of(mbr.equivalentMcs, colors);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -434,13 +458,22 @@ class RateVsRangeStage extends StatelessWidget {
                       FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: frac,
-                        child: ColoredBox(
-                          color: RvrPalette.of(
-                            model.basicRate.equivalentMcs,
-                            colors,
+                        child: ColoredBox(color: fill),
+                      ),
+                      if (now > at6)
+                        FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: at6 / full,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: SizedBox(
+                              width: PresenterMode.scaleOf(
+                                context,
+                              ).strokeWidth(2),
+                              child: ColoredBox(color: colors.surface2),
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -450,10 +483,7 @@ class RateVsRangeStage extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xxs),
         Text(
-          'Minimum basic rate ${model.basicRate.label}, $rateNote: cell '
-          'edge ${RvrFormat.n(model.cellEdgeDbm, 0)} dBm at '
-          '${model.dist(model.cellEdgeM)}'
-          '${model.basicRate == RvrBasicRate.mbps6 ? '' : ' (6 Mbps: ${model.dist(model.cellEdge6M)})'}.',
+          edgeLine,
           style: text.bodySmall?.copyWith(color: colors.textTertiary),
         ),
       ],
