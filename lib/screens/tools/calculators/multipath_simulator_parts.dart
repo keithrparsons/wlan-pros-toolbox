@@ -8,7 +8,10 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../services/wifi_lab/multipath_model.dart';
+import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import 'multipath_simulator_controller.dart';
 
 /// A surface-1 card with the calculator border and padding.
 class MpCard extends StatelessWidget {
@@ -218,6 +221,56 @@ class MpSliderHeader extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Text(value, style: mono.inlineCode.copyWith(color: colors.textPrimary)),
       ],
+    );
+  }
+}
+
+/// The Combine choice as a three-way toggle: A only, Selection, MRC. Shared
+/// by the phone controls and the presenter stage header.
+class CombineToggle extends StatelessWidget {
+  const CombineToggle({super.key, required this.controller, this.label});
+
+  final MultipathController controller;
+
+  /// Label line above the track; null for the bare track (stage header).
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppToggle<CombineMethod>(
+      label: label,
+      semanticLabel: 'Combine the antennas',
+      value: controller.combine,
+      expand: label != null,
+      items: <AppToggleItem<CombineMethod>>[
+        for (final CombineMethod m in CombineMethod.values) (m, m.label),
+      ],
+      onChanged: (CombineMethod m) => controller.combine = m,
+    );
+  }
+}
+
+/// How many antennas the receiver has, 2 or 4. Shared like [CombineToggle].
+class AntennaCountToggle extends StatelessWidget {
+  const AntennaCountToggle({super.key, required this.controller, this.label});
+
+  final MultipathController controller;
+
+  /// Label line above the track; null for the bare track (stage header).
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppToggle<int>(
+      label: label,
+      semanticLabel: 'Number of antennas',
+      value: controller.antennaCount,
+      expand: label != null,
+      items: <AppToggleItem<int>>[
+        for (final int n in kDiversityAntennaCounts)
+          (n, label == null ? '$n antennas' : '$n'),
+      ],
+      onChanged: (int n) => controller.antennaCount = n,
     );
   }
 }

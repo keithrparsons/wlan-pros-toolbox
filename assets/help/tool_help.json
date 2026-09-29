@@ -545,8 +545,9 @@
         "Pick a band. The dips repeat every half wavelength: 6.2 cm at 2.4 GHz, 2.7 cm at 5.5 GHz and 2.3 cm at 6.5 GHz.",
         "In One wall and Standing wave, pick the wall material (metal, thick concrete, drywall) or set the reflection strength yourself. Drag the receiver in the picture or on the plot, or use the slider, and watch the reflected arrow swing around the direct one.",
         "In Many paths, set the number of reflectors and how far away they are, and press New layout for a different room. Move antenna A along the 2 m track and set how far antenna B sits from it, from 0 to 1 wavelength. The readout shows how often each antenna is more than 10 dB below the average and how often both are at once.",
+        "Still in Many paths, Combine shows what the receiver does with its antennas: A only, Selection (use the stronger antenna at each spot) or MRC (maximal ratio combining: add every antenna, lined up in phase). The combined signal is drawn as a third, bold line. Antennas sets 2 or 4; with 4 they sit one spacing apart. The Diversity gain card gives the textbook gain at 1% for both methods and what this track shows.",
         "The delay list shows how late each copy arrives. A copy more than 0.8 microseconds late, about 240 m of extra path, spills past the guard interval into the next symbol.",
-        "On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down move the receiver a sixteenth of a wavelength, F switches full screen, ? lists the keys and Esc exits."
+        "On a computer or tablet, Present opens this simulator full screen for a projector: Up and Down move the receiver a sixteenth of a wavelength, C steps Combine through A only, Selection and MRC in Many paths, F switches full screen, ? lists the keys and Esc exits."
       ],
       "inputs": [
         {
@@ -582,20 +583,32 @@
         {
           "name": "Antenna B offset",
           "unit": "wavelengths",
-          "range": "0 to 1 in steps of 0.05"
+          "range": "0 to 1 in steps of 0.05; with 4 antennas, the spacing between neighbors"
+        },
+        {
+          "name": "Antennas",
+          "unit": "count",
+          "range": "2 or 4 (Many paths)"
+        },
+        {
+          "name": "Combine",
+          "unit": "A only / Selection / MRC",
+          "range": "default A only (Many paths)"
         }
       ],
-      "algorithm": "Each path adds a copy a · exp(-j k r) / r, where r is the path length, k = 2π/λ, and a is 1 for the direct copy or the reflection coefficient for a reflected one. Every wall reflects with a 180 degree phase flip. Power is 20 log10(|sum| / |direct alone|). One wall uses the image method: the reflected path is as long as a straight line from the access point's mirror image behind the wall. In Standing wave the reflected copy travels 2d further at distance d from the wall, so the copies cancel every λ/2. In Many paths each reflection gets equal power and a random phase, and power is shown against the average; theory (Rayleigh fading) says 1 - e^(-0.1), about 9.5%, of spots sit more than 10 dB below it. Extra delay = extra path / speed of light.",
-      "example": "At 2.4 GHz, λ = 12.49 cm, so in front of a metal wall the signal drops out every 6.2 cm. Thick concrete with |Γ| = 0.39 gives a swing of 20 log10(1.39 / 0.61) = 7.2 dB instead. A reflection that travels 240 m further arrives 240 / 299,792,458 s = 0.8 µs late, the length of the 802.11 OFDM guard interval.",
+      "algorithm": "Each path adds a copy a · exp(-j k r) / r, where r is the path length, k = 2π/λ, and a is 1 for the direct copy or the reflection coefficient for a reflected one. Every wall reflects with a 180 degree phase flip. Power is 20 log10(|sum| / |direct alone|). One wall uses the image method: the reflected path is as long as a straight line from the access point's mirror image behind the wall. In Standing wave the reflected copy travels 2d further at distance d from the wall, so the copies cancel every λ/2. In Many paths each reflection gets equal power and a random phase, and power is shown against the average; theory (Rayleigh fading) says 1 - e^(-0.1), about 9.5%, of spots sit more than 10 dB below it. Extra delay = extra path / speed of light. Combining works on each antenna's power against its own average: Selection takes the largest, MRC adds them all, so MRC averages 3 dB above one antenna with 2 and 6 dB with 4. For independent Rayleigh antennas the share of the time the combined power is below x is (1 - e^(-x))^M for selection and 1 - e^(-x)(1 + x + ... + x^(M-1)/(M-1)!) for MRC. The diversity gain at 1% is the combined level at 1% minus one antenna's level at 1% (-20.0 dB).",
+      "example": "At 2.4 GHz, λ = 12.49 cm, so in front of a metal wall the signal drops out every 6.2 cm. Thick concrete with |Γ| = 0.39 gives a swing of 20 log10(1.39 / 0.61) = 7.2 dB instead. A reflection that travels 240 m further arrives 240 / 299,792,458 s = 0.8 µs late, the length of the 802.11 OFDM guard interval. One antenna is below -20.0 dB 1% of the time; two antennas reach the same 1% at -9.8 dB with selection and -8.3 dB with MRC, gains of 10.2 dB and 11.7 dB. Four antennas give 15.8 dB and 19.1 dB.",
       "fieldNotes": [
         "The wall presets are one reflection strength each. A real wall reflects differently at different angles and bands; thick concrete's 0.39 is for a wave hitting it straight on.",
         "Many paths blocks the direct copy on purpose. With a strong line-of-sight copy the dips are shallower and rarer than Rayleigh fading predicts.",
         "A 2 m track at 2.4 GHz holds only a few dozen fades, so the histogram wanders around the Rayleigh curve. Longer tracks or new layouts average it out.",
         "Layouts are seeded, so the same settings give the same room every time.",
+        "The diversity gains in Selection and MRC assume the antennas fade independently and have equal noise. Antennas half a wavelength apart are close to that but not exactly; the On this track figure is what one 2 m track actually shows, and it wanders with the layout.",
+        "MRC here is the ideal: every antenna perfectly lined up in phase and weighted by its strength. A real receiver estimates those from the preamble and gets close.",
         "Only the delay list changes much when the reflectors move further away; the pattern along 2 m looks the same at any distance.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
-      "source": "Wave superposition, the two-ray (image) model and Rayleigh fading theory. Thick-concrete reflection strength from ITU-R P.2040 material properties at normal incidence. The guard interval is the 802.11 OFDM long guard interval. The simulation runs on your device."
+      "source": "Wave superposition, the two-ray (image) model and Rayleigh fading theory. Diversity combining from W. C. Jakes, Microwave Mobile Communications (Wiley, 1974), and A. Goldsmith, Wireless Communications (Cambridge University Press, 2005), chapter 7. Thick-concrete reflection strength from ITU-R P.2040 material properties at normal incidence. The guard interval is the 802.11 OFDM long guard interval. The simulation runs on your device."
     },
     "devices-disagree": {
       "name": "Why Two Devices Disagree",

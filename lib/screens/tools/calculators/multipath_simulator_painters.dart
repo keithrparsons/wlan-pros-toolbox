@@ -605,6 +605,7 @@ class PowerPlotPainter extends CustomPainter {
   PowerPlotPainter({
     required this.traceA,
     required this.traceB,
+    this.traceCombined,
     required this.xMax,
     required this.xUnitLabel,
     required this.marker,
@@ -624,6 +625,10 @@ class PowerPlotPainter extends CustomPainter {
   /// Evenly spaced samples from x = 0 to [xMax].
   final List<double> traceA;
   final List<double>? traceB;
+
+  /// The combined signal (selection or MRC). When present it takes the lime
+  /// as the measured quantity and antenna A steps down to a neutral line.
+  final List<double>? traceCombined;
 
   /// Axis end in display units (cm).
   final double xMax;
@@ -729,7 +734,13 @@ class PowerPlotPainter extends CustomPainter {
     if (b != null && b.length > 1) {
       _trace(canvas, b, xOf, yOf, style.secondary, 1.5, dashed: true);
     }
-    _trace(canvas, traceA, xOf, yOf, style.accent, 2);
+    final List<double>? c = traceCombined;
+    if (c != null && c.length > 1) {
+      _trace(canvas, traceA, xOf, yOf, style.secondary, 1.5);
+      _trace(canvas, c, xOf, yOf, style.accent, 2.5);
+    } else {
+      _trace(canvas, traceA, xOf, yOf, style.accent, 2);
+    }
     canvas.restore();
 
     // Receiver marker.
@@ -805,6 +816,8 @@ class PowerPlotPainter extends CustomPainter {
       old.marker != marker ||
       old.style != style ||
       old.xMax != xMax ||
+      old.yMax != yMax ||
+      !identical(old.traceCombined, traceCombined) ||
       !listEquals(old.xTicks, xTicks);
 }
 

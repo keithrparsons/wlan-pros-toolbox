@@ -13,6 +13,7 @@ import 'package:wlan_pros_toolbox/screens/tools/calculators/multipath_simulator_
 import 'package:wlan_pros_toolbox/screens/tools/calculators/multipath_simulator_controls.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/multipath_simulator_screen.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/multipath_simulator_stage.dart';
+import 'package:wlan_pros_toolbox/services/wifi_lab/multipath_model.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 
 Widget _host({ThemeData? theme, MultipathMode? mode}) => MaterialApp(
@@ -140,6 +141,87 @@ void main() {
     expect(phasorLabel(), isNot(before));
   });
 
+  testWidgets('Combine adds the combined signal and the diversity gain', (
+    WidgetTester tester,
+  ) async {
+    await _setSize(tester, const Size(800, 5000));
+    await tester.pumpWidget(_host(mode: MultipathMode.manyPaths));
+    await tester.pump();
+
+    // A only: today's screen, plus the textbook gains for two antennas.
+    expect(find.text('Diversity gain at 1%, 2 antennas'), findsOneWidget);
+    expect(find.text('10.2 dB'), findsOneWidget);
+    expect(find.text('11.7 dB'), findsOneWidget);
+    expect(find.textContaining('Combined ('), findsNothing);
+    expect(find.text('On this track'), findsNothing);
+
+    // The toggle segment; the gain card also has a 'Selection' row.
+    await tester.tap(find.text('Selection').first);
+    await tester.pump();
+    expect(find.text('Combined (Selection)'), findsOneWidget);
+    expect(find.text('Selection of A and B'), findsOneWidget);
+    expect(find.text('Rayleigh, Selection'), findsOneWidget);
+    expect(find.text('0.9%'), findsWidgets);
+    expect(find.text('On this track'), findsOneWidget);
+
+    await tester.tap(find.text('MRC').first);
+    await tester.pump();
+    // In the received readout and in the fade card.
+    expect(find.text('Combined (MRC)'), findsNWidgets(2));
+    expect(find.text('MRC of A and B'), findsOneWidget);
+    expect(find.text('Rayleigh, MRC'), findsOneWidget);
+    expect(find.text('0.5%'), findsOneWidget);
+
+    await tester.tap(find.text('4'));
+    await tester.pump();
+    expect(find.text('Four antennas: how often below -10 dB'), findsOneWidget);
+    expect(find.text('All four at once'), findsOneWidget);
+    expect(find.text('Antenna spacing (λ)'), findsOneWidget);
+    expect(find.text('MRC of A to D'), findsOneWidget);
+    expect(find.text('15.8 dB'), findsOneWidget);
+    expect(find.text('19.1 dB'), findsOneWidget);
+    // MRC over four is below -10 dB about 0.0004% of the time.
+    expect(find.text('under 0.001%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  test('the controller: combined never below A, and the axis grows for '
+      'MRC with four', () {
+    final MultipathController c = MultipathController(
+      initialMode: MultipathMode.manyPaths,
+    );
+    addTearDown(c.dispose);
+    expect(c.traceCombined, isNull);
+    expect(c.plotYMax, 10);
+    for (final CombineMethod m in <CombineMethod>[
+      CombineMethod.selection,
+      CombineMethod.mrc,
+    ]) {
+      c.combine = m;
+      final List<double> a = c.traceA;
+      final List<double> b = c.traceB!;
+      final List<double> k = c.traceCombined!;
+      for (int i = 0; i < a.length; i++) {
+        expect(k[i], greaterThanOrEqualTo(a[i] - 1e-9));
+        expect(k[i], greaterThanOrEqualTo(b[i] - 1e-9));
+      }
+      expect(c.combinedFadeFraction, lessThanOrEqualTo(c.fade.fractionA));
+      expect(c.combinedDb, greaterThanOrEqualTo(c.receivedDb - 1e-9));
+    }
+    // Selection's own fade share is "both at once".
+    c.combine = CombineMethod.selection;
+    expect(c.combinedFadeFraction, closeTo(c.fade.fractionBoth, 1e-12));
+    c
+      ..combine = CombineMethod.mrc
+      ..antennaCount = 4;
+    expect(c.plotYMax, 20);
+    expect(c.rayleighGainDb(CombineMethod.mrc), closeTo(19.13, 0.01));
+    c.antennaCount = 3; // not offered; falls back to two
+    expect(c.antennaCount, 2);
+    c.cycleCombine();
+    expect(c.combine, CombineMethod.aOnly);
+  });
+
   testWidgets('the copy payload carries the scene and the result', (
     WidgetTester tester,
   ) async {
@@ -149,6 +231,13 @@ void main() {
     expect(c.copyText(), contains('vs the direct path alone'));
     c.mode = MultipathMode.manyPaths;
     expect(c.copyText(), contains('Rayleigh prediction for one antenna: 9.5%'));
+    expect(c.copyText(), contains('combine: Antenna A only'));
+    expect(c.copyText(), isNot(contains('Diversity gain')));
+    c
+      ..combine = CombineMethod.mrc
+      ..antennaCount = 4;
+    expect(c.copyText(), contains('Diversity gain at 1%, Rayleigh: 19.1 dB'));
+    expect(c.copyText(), contains('Below -10 dB, all 4 at once'));
   });
 
   for (final (String name, ThemeData Function() theme) t
@@ -163,6 +252,16 @@ void main() {
         await tester.pumpWidget(_host(theme: t.$2(), mode: mode));
         await tester.pump();
         expect(tester.takeException(), isNull);
+        if (mode == MultipathMode.manyPaths) {
+          // The fullest Many paths state: MRC over four antennas.
+          tester
+              .widget<MultipathStage>(find.byType(MultipathStage))
+              .controller
+            ..combine = CombineMethod.mrc
+            ..antennaCount = 4;
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+        }
         // The only scroll view on the page scrolls vertically.
         for (final Scrollable s in tester.widgetList<Scrollable>(
           find.byType(Scrollable),

@@ -13,6 +13,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../../../services/wifi_lab/multipath_model.dart';
 import '../../../widgets/presenter/presenter_actions.dart';
@@ -40,6 +41,9 @@ enum MultipathMode {
 /// Samples per plotted trace.
 const int kTwoPathSamples = 801;
 const int kManyPathSamples = 2001;
+
+/// Antenna counts the Combine readouts offer.
+const List<int> kDiversityAntennaCounts = <int>[2, 4];
 
 /// One row of the delay readout.
 typedef MultipathDelayRow = ({String name, double extraMeters});
@@ -69,6 +73,8 @@ class MultipathController extends ChangeNotifier {
   int _seed = 1;
   double _offsetLambda = 0.5;
   bool _showAllPaths = false;
+  CombineMethod _combine = CombineMethod.aOnly;
+  int _antennas = 2;
 
   // ── Inputs ──────────────────────────────────────────────────────────────
 
@@ -124,6 +130,20 @@ class MultipathController extends ChangeNotifier {
   set offsetLambda(double v) => _set(() => _offsetLambda = v.clamp(0.0, 1.0));
   double get offsetMeters => _offsetLambda * _band.wavelength;
 
+  /// How the antennas are combined (Many paths).
+  CombineMethod get combine => _combine;
+  set combine(CombineMethod v) => _set(() => _combine = v);
+
+  /// A only, then Selection, then MRC, then back.
+  void cycleCombine() => combine =
+      CombineMethod.values[(_combine.index + 1) % CombineMethod.values.length];
+
+  /// How many antennas the receiver has (2 or 4). They sit one antenna B
+  /// offset apart: B at +offset, C at +2 offset, D at +3 offset.
+  int get antennaCount => _antennas;
+  set antennaCount(int v) =>
+      _set(() => _antennas = kDiversityAntennaCounts.contains(v) ? v : 2);
+
   bool get showAllPaths => _showAllPaths;
   void toggleShowAllPaths() => _set(() => _showAllPaths = !_showAllPaths);
 
@@ -154,6 +174,16 @@ class MultipathController extends ChangeNotifier {
     sliderDown: () => setPositionCm(positionCm - keyStepCm),
     sliderUp: () => setPositionCm(positionCm + keyStepCm),
     sliderLabel: 'Receiver position',
+    extra: <PresenterExtraKey>[
+      PresenterExtraKey(
+        key: LogicalKeyboardKey.keyC,
+        keyLabel: 'C',
+        description: 'Many paths: combine A only, Selection, MRC',
+        onPressed: () {
+          if (isManyPaths) cycleCombine();
+        },
+      ),
+    ],
   );
 
   /// One presenter key press, cm: a sixteenth of the band's wavelength.
@@ -190,29 +220,57 @@ class MultipathController extends ChangeNotifier {
   ManyPathScene? _scene;
   String? _sceneKey;
   String? _offsetKey;
+  String? _combineKey;
   List<double> _sweepA = const <double>[];
   List<double> _sweepB = const <double>[];
+
+  /// Antennas B, C, D (as many as [antennaCount] asks for), B first.
+  List<List<double>> _others = const <List<double>>[];
+  List<double>? _combined;
+  double _allFaded = 0;
   FadeStats? _fade;
   PowerHistogram? _hist;
   int _revision = 0;
 
   void _ensureManyPaths() {
     final String key = '$_seed|$_count|${_env.name}|${_band.name}';
-    final String offKey = '$key|$_offsetLambda';
-    if (_offsetKey == offKey) return;
-    if (_sceneKey != key) {
-      _scene = ManyPathScene.generate(
-        seed: _seed,
-        count: _count,
-        environment: _env,
+    final String offKey = '$key|$_offsetLambda|$_antennas';
+    final String comboKey = '$offKey|${_combine.name}';
+    if (_combineKey == comboKey) return;
+    if (_offsetKey != offKey) {
+      if (_sceneKey != key) {
+        _scene = ManyPathScene.generate(
+          seed: _seed,
+          count: _count,
+          environment: _env,
+        );
+        _sweepA = _scene!.sweepDb(_band, kManyPathSamples);
+        _hist = PowerHistogram.of(_sweepA);
+        _sceneKey = key;
+      }
+      _others = <List<double>>[
+        for (int j = 1; j < _antennas; j++)
+          _scene!.sweepDb(_band, kManyPathSamples, offset: j * offsetMeters),
+      ];
+      _sweepB = _others.first;
+      _fade = FadeStats.from(_sweepA, _sweepB);
+      // Every antenna faded at once: selection's own fade share.
+      _allFaded = DiversityMath.fractionBelow(
+        DiversityMath.combineDb(CombineMethod.selection, <List<double>>[
+          _sweepA,
+          ..._others,
+        ]),
+        kFadeThresholdDb,
       );
-      _sweepA = _scene!.sweepDb(_band, kManyPathSamples);
-      _hist = PowerHistogram.of(_sweepA);
-      _sceneKey = key;
+      _offsetKey = offKey;
     }
-    _sweepB = _scene!.sweepDb(_band, kManyPathSamples, offset: offsetMeters);
-    _fade = FadeStats.from(_sweepA, _sweepB);
-    _offsetKey = offKey;
+    _combined = _combine == CombineMethod.aOnly
+        ? null
+        : DiversityMath.combineDb(_combine, <List<double>>[
+            _sweepA,
+            ..._others,
+          ]);
+    _combineKey = comboKey;
     _revision++;
   }
 
@@ -230,6 +288,61 @@ class MultipathController extends ChangeNotifier {
     _ensureManyPaths();
     return _hist!;
   }
+
+  // ── Diversity ───────────────────────────────────────────────────────────
+
+  /// True when a combining method is on (Many paths, not A only).
+  bool get isCombining => isManyPaths && _combine != CombineMethod.aOnly;
+
+  /// Share of the track where every antenna is below -10 dB at once.
+  double get allFadedFraction {
+    _ensureManyPaths();
+    return _allFaded;
+  }
+
+  /// Share of the track where the combined signal is below -10 dB. A only
+  /// reads antenna A.
+  double get combinedFadeFraction {
+    _ensureManyPaths();
+    final List<double>? c = _combined;
+    if (c == null) return _fade!.fractionA;
+    return DiversityMath.fractionBelow(c, kFadeThresholdDb);
+  }
+
+  /// The textbook share below -10 dB for [method] with this many antennas
+  /// (independent Rayleigh antennas).
+  double rayleighFadeFraction(CombineMethod method) =>
+      DiversityMath.outageAtDb(method, kFadeThresholdDb, _antennas);
+
+  /// The textbook diversity gain at 1% for [method] with this many antennas.
+  double rayleighGainDb(CombineMethod method) =>
+      DiversityMath.gainDb(method, _antennas);
+
+  /// The gain this track shows at 1%: the combined trace's 1% level minus
+  /// antenna A's. Null when nothing is combined.
+  double? get trackGainDb {
+    _ensureManyPaths();
+    final List<double>? c = _combined;
+    if (c == null) return null;
+    return DiversityMath.percentileDb(c, DiversityMath.gainOutage) -
+        DiversityMath.percentileDb(_sweepA, DiversityMath.gainOutage);
+  }
+
+  /// The combined signal at the receiver, dB against one antenna's average.
+  double get combinedDb {
+    final ManyPathScene s = scene;
+    return MultipathMath.powerRatioToDb(
+      DiversityMath.combine(_combine, <double>[
+        for (int j = 0; j < _antennas; j++)
+          s.normalizedPower(_x + j * offsetMeters, _band),
+      ]),
+    );
+  }
+
+  /// Top of the plot's dB axis. Four antennas under MRC average +6 dB and
+  /// peak past +10, so the axis grows to +20 for them.
+  double get plotYMax =>
+      isCombining && _combine == CombineMethod.mrc && _antennas == 4 ? 20 : 10;
 
   // ── What the stage draws ────────────────────────────────────────────────
 
@@ -280,6 +393,13 @@ class MultipathController extends ChangeNotifier {
     if (!isManyPaths) return null;
     _ensureManyPaths();
     return _sweepB;
+  }
+
+  /// The combined trace, when a combining method is on.
+  List<double>? get traceCombined {
+    if (!isManyPaths) return null;
+    _ensureManyPaths();
+    return _combined;
   }
 
   /// Changes whenever a plotted trace changes, for cheap repaint checks.
@@ -369,6 +489,18 @@ class MultipathController extends ChangeNotifier {
 
   static String pct(double f) => '${(f * 100).toStringAsFixed(1)}%';
 
+  /// [pct] for a textbook share that can be tiny: under 0.1% it keeps three
+  /// decimals ("0.008%") instead of rounding to "0.0%", and under 0.001% it
+  /// says so ("under 0.001%") rather than print a zero.
+  static String pctFine(double f) {
+    if (f <= 0 || f >= 0.001) return pct(f);
+    if (f < 0.00001) return 'under 0.001%';
+    return '${(f * 100).toStringAsFixed(3)}%';
+  }
+
+  /// A gain in dB, one decimal, no sign: "10.2 dB".
+  static String gain(double v) => '${v.toStringAsFixed(1)} dB';
+
   /// Phase of [c] in degrees, -180 to 180.
   static String deg(Complex c) {
     final int d = (c.arg * 180 / math.pi).round();
@@ -419,7 +551,24 @@ class MultipathController extends ChangeNotifier {
       ..writeln('Below -10 dB, B: ${pct(f.fractionB)}')
       ..writeln('Below -10 dB, both at once: ${pct(f.fractionBoth)}')
       ..writeln('Rayleigh prediction for one antenna: 9.5%')
-      ..writeln('Paths past the 0.8 us guard interval: $latePaths of $_count');
+      ..writeln('Antennas: $_antennas, combine: ${_combine.longName}');
+    if (_antennas > 2) {
+      b.writeln('Below -10 dB, all $_antennas at once: ${pct(allFadedFraction)}');
+    }
+    if (isCombining) {
+      b
+        ..writeln(
+          'Below -10 dB, combined (${_combine.label}): '
+          '${pct(combinedFadeFraction)}; Rayleigh predicts '
+          '${pctFine(rayleighFadeFraction(_combine))}',
+        )
+        ..writeln(
+          'Diversity gain at 1%, Rayleigh: '
+          '${gain(rayleighGainDb(_combine))}; on this track: '
+          '${gain(trackGainDb!)}',
+        );
+    }
+    b.writeln('Paths past the 0.8 us guard interval: $latePaths of $_count');
     return b.toString().trimRight();
   }
 }
