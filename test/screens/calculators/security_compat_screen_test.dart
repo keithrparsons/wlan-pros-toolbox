@@ -288,7 +288,12 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('What the help desk sees'), findsOneWidget);
-      expect(find.text('This is where it fails.'), findsOneWidget);
+      // The shared caption line was reworded on wifi-lab/eap-break-it
+      // (8b0c0f21), merged into 1.12 on 2026-09-29.
+      expect(
+        find.text('Failure: this message refuses the exchange or ends it.'),
+        findsOneWidget,
+      );
       // The status hue is on the X only, never on the ladder's text.
       final AppColorScheme colors = AppColorScheme.dark();
       final Icon x = tester.widget<Icon>(
@@ -298,9 +303,11 @@ void main() {
         ),
       );
       expect(x.color, colors.statusDanger);
-      // The row says it in words for a screen reader.
+      // The row says it in words for a screen reader. The mark's word was
+      // "failed here" until wifi-lab/eap-break-it (8b0c0f21) made it
+      // "failure", merged into 1.12 on 2026-09-29.
       expect(
-        find.bySemanticsLabel(RegExp('failed here.*Association Response')),
+        find.bySemanticsLabel(RegExp('failure.*Association Response')),
         findsOneWidget,
       );
     });
