@@ -439,6 +439,30 @@ String fmtFloorDbm(double v) {
   return '${t.startsWith('-') ? '−${t.substring(1)}' : t} dBm';
 }
 
+/// A floor reading for display: the level in dBm, or "below -95 dBm" when
+/// it is under [kFloorReadableDbm], with " (null)" when [inNull].
+String fmtFloorLevelDbm(double dbm, {required bool inNull}) =>
+    dbm < kFloorReadableDbm
+    ? '${_belowReadable()} dBm${inNull ? ' (null)' : ''}'
+    : fmtFloorDbm(dbm);
+
+/// The same for a table column already headed dBm: no unit.
+String fmtFloorLevelDb(double dbm, {required bool inNull}) =>
+    dbm < kFloorReadableDbm
+    ? '${_belowReadable()}${inNull ? ' (null)' : ''}'
+    : fmtFloorDb(dbm);
+
+String _belowReadable() =>
+    'below ${kFloorReadableDbm.round().toString().replaceFirst('-', '\u2212')}';
+
+/// Whether a floor point sits in the pattern's null ([kNullDepthDb] or more
+/// under the peak).
+bool floorInNull(FloorPoint p) => p.belowPeakDb >= kNullDepthDb;
+
+/// Whether either direction at [p] is under [kFloorReadableDbm].
+bool floorUnreadable(FloorPoint p) =>
+    p.downlinkDbm < kFloorReadableDbm || p.uplinkDbm < kFloorReadableDbm;
+
 /// A gain or loss in dB with a true minus sign, one decimal.
 String fmtFloorDb(double v) {
   final String s = v.toStringAsFixed(1);

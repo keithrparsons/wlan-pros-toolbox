@@ -4,6 +4,7 @@
 // desktop widths in both themes with no overflow and no sideways scroll.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/data/channel_frequency_data.dart';
 import 'package:wlan_pros_toolbox/router/app_router.dart';
@@ -22,9 +23,8 @@ Future<void> _setSize(WidgetTester tester, Size size) async {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-FloorCoverageController _floorOf(WidgetTester tester) => tester
-    .widget<FloorCoverageStage>(find.byType(FloorCoverageStage))
-    .floor;
+FloorCoverageController _floorOf(WidgetTester tester) =>
+    tester.widget<FloorCoverageStage>(find.byType(FloorCoverageStage)).floor;
 
 void _noSideways(WidgetTester tester) {
   for (final ScrollableState each in tester.stateList<ScrollableState>(
@@ -208,7 +208,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('No pattern to put on the floor'), findsOneWidget);
+    expect(
+      find.textContaining('No pattern to put on the floor'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Waiting for a pattern'), findsOneWidget);
     final FloorCoverageController f = _floorOf(tester);
     f.lab.loadExample(PatternExample.dipole);
@@ -273,4 +276,83 @@ void main() {
       });
     }
   }
+
+  // Vera gate B (2026-09-29): under the 9 m dipole the stage showed
+  // "-114.2 dBm" in headline type. That is the model holding the dipole's
+  // null 60 dB under the peak, not a level any client can read. Readings
+  // under kFloorReadableDbm say "below -95 dBm", with "(null)" in the
+  // pattern's null; the exact figure stays only in the note in the readouts.
+  test('a level under -95 dBm reads as a bound, with (null) in a null', () {
+    expect(kFloorReadableDbm, -95);
+    expect(fmtFloorLevelDbm(-94.9, inNull: false), '−94.9 dBm');
+    expect(fmtFloorLevelDbm(-94.9, inNull: true), '−94.9 dBm');
+    expect(fmtFloorLevelDbm(-95.1, inNull: false), 'below −95 dBm');
+    expect(fmtFloorLevelDbm(-114.2, inNull: true), 'below −95 dBm (null)');
+    expect(fmtFloorLevelDb(-114.2, inNull: true), 'below −95 (null)');
+    expect(fmtFloorLevelDb(-80.04, inNull: true), '−80.0');
+  });
+
+  testWidgets('the 9 m dipole: the null reads "below -95 dBm (null)", the '
+      'exact figure only in the note', (WidgetTester tester) async {
+    final List<String> copied = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied.add(
+            (call.arguments as Map<Object?, Object?>)['text']! as String,
+          );
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await _setSize(tester, const Size(1280, 2400));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: const AntennaPatternScreen(initialView: AntennaStageView.floor),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final FloorCoverageController f = _floorOf(tester);
+    f.applyPreset(FloorPreset.warehouseDipole);
+    f.setClientX(10);
+    await tester.pumpAndSettle();
+    expect(f.link!.at(0).downlinkDbm, closeTo(-114.2, 0.05));
+
+    // The headline is presenter-only (antenna_floor_presenter_test.dart).
+    final Finder stage = find.byType(FloorCoverageStage);
+    expect(
+      find.descendant(of: stage, matching: find.textContaining('114.2')),
+      findsNothing,
+    );
+    // The stage label no longer quotes the model's 60 dB floor.
+    expect(
+      find.descendant(of: stage, matching: find.textContaining('60.0 dB')),
+      findsNothing,
+    );
+    // Readouts: both directions directly below are under -95 dBm.
+    expect(find.text('below −95 (null)'), findsNWidgets(2));
+    // The exact figures, with the caveat, in the note only.
+    final Finder note = find.textContaining('−114.2 dBm');
+    expect(note, findsOneWidget);
+    expect(
+      tester.widget<Text>(note).data ?? '',
+      allOf(contains('−120.2 dBm'), contains('60 dB under the peak')),
+    );
+
+    await tester.tap(find.byTooltip('Copy results'));
+    await tester.pump();
+    expect(copied, hasLength(1));
+    expect(copied.single, contains('below −95 dBm (null)'));
+    expect(copied.single, isNot(contains('114.2')));
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
 }

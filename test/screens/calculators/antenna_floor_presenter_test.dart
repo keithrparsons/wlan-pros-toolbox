@@ -63,11 +63,7 @@ void main() {
           expect(tester.takeException(), isNull, reason: p.name);
           expect(pageScrollables(tester), isEmpty, reason: p.name);
           expect(controlsOverflow(tester), 0, reason: p.name);
-          expectOnScreen(
-            tester,
-            find.byKey(PresenterLayout.stageKey),
-            window,
-          );
+          expectOnScreen(tester, find.byKey(PresenterLayout.stageKey), window);
         }
         // The fullest panel: every disclosure open.
         for (final String t in <String>[
@@ -105,6 +101,27 @@ void main() {
       (Widget w) => w is CustomPaint && w.painter is FloorSidePainter,
     );
     expect(tester.getSize(view).height, greaterThan(400));
+    // Vera gate B: the 9 m dipole's null is the model's 60 dB floor
+    // (-114.2 dBm), so the headline gives the bound, not the figure.
+    expect(
+      find.descendant(of: stage, matching: find.text('below \u221295 dBm')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: stage, matching: find.textContaining('114.2')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: stage, matching: find.textContaining('60.0 dB')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: stage,
+        matching: find.text('Directly below, in the null'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Up and Down move the mount height, Right steps the preset, R '

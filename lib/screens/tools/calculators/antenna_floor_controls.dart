@@ -222,7 +222,7 @@ class _ReadoutsCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
           child: Text(
-            fmtFloorDb(p.downlinkDbm),
+            fmtFloorLevelDb(p.downlinkDbm, inNull: floorInNull(p)),
             textAlign: TextAlign.right,
             style: val.copyWith(
               color: accent ? colors.textAccent : colors.textPrimary,
@@ -232,7 +232,7 @@ class _ReadoutsCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
           child: Text(
-            fmtFloorDb(p.uplinkDbm),
+            fmtFloorLevelDb(p.uplinkDbm, inNull: floorInNull(p)),
             textAlign: TextAlign.right,
             style: val,
           ),
@@ -303,7 +303,7 @@ class _ReadoutsCard extends StatelessWidget {
                   'null there, which the model holds 60 dB under the peak; '
                   'the omni-by-gain envelope stops 30 dB under it. A real '
                   'antenna\'s depth varies with its build and mounting, so '
-                  'read this number as very weak, not as a measurement.',
+                  '${floorUnreadable(below) ? 'the model\'s figures here, ${fmtFloorDbm(below.downlinkDbm)} AP to client and ${fmtFloorDbm(below.uplinkDbm)} client to AP, are its floor, not levels. No client or AP reads under about ${fmtFloorDbm(kFloorReadableDbm).replaceFirst('.0', '')} (a 20 MHz noise floor is about \u221294 dBm), so the readouts say below it.' : 'read this number as very weak, not as a measurement.'}',
             ),
           ],
           if (cp != null) ...<Widget>[
@@ -324,11 +324,11 @@ class _ReadoutsCard extends StatelessWidget {
             ),
             PatternReadoutRow(
               label: 'AP to client',
-              value: fmtFloorDbm(cp.downlinkDbm),
+              value: fmtFloorLevelDbm(cp.downlinkDbm, inNull: floorInNull(cp)),
             ),
             PatternReadoutRow(
               label: 'Client to AP',
-              value: fmtFloorDbm(cp.uplinkDbm),
+              value: fmtFloorLevelDbm(cp.uplinkDbm, inNull: floorInNull(cp)),
             ),
           ],
           const SizedBox(height: AppSpacing.xs),

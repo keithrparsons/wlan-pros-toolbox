@@ -204,11 +204,19 @@ class _Headline extends StatelessWidget {
         children: <Widget>[
           stat('Mount height', fmtFloorLength(floor.heightM)),
           stat(
-            link.nullBelow
+            // Under -95 dBm the headline gives the bound and says "in the
+            // null" in its label (headline type has no room for both); the
+            // depth would only quote the model's 60 dB floor, so it stays in
+            // the readouts' note.
+            below.downlinkDbm < kFloorReadableDbm
+                ? (floorInNull(below)
+                      ? 'Directly below, in the null'
+                      : 'Directly below')
+                : link.nullBelow
                 ? 'Directly below, ${fmtFloorDb(below.belowPeakDb)} dB under '
                       'the peak'
                 : 'Directly below',
-            fmtFloorDbm(below.downlinkDbm),
+            fmtFloorLevelDbm(below.downlinkDbm, inNull: false),
             accent: true,
           ),
           stat(
@@ -339,8 +347,8 @@ class _SideView extends StatelessWidget {
     return 'Side view of the floor, to scale. AP on a ceiling at '
         '${fmtFloorLength(floor.heightM)}, ${floor.lab.kind.label}, '
         '${floor.lab.mount.label.toLowerCase()} mounted. Directly below: '
-        '${fmtFloorDbm(below.downlinkDbm)}'
-        '${link.nullBelow ? ', ${fmtFloorDb(below.belowPeakDb)} dB under the antenna\'s peak' : ''}. $cellWords '
+        '${fmtFloorLevelDbm(below.downlinkDbm, inNull: floorInNull(below))}'
+        '${link.nullBelow && below.downlinkDbm >= kFloorReadableDbm ? ', ${fmtFloorDb(below.belowPeakDb)} dB under the antenna\'s peak' : ''}. $cellWords '
         'Client ${fmtFloorLength(floor.clientXM)} out. Drag along the floor '
         'to move the client.';
   }
@@ -771,7 +779,7 @@ class FloorSidePainter extends CustomPainter {
     final bool labelLeft = client.dx > frame.size.width * 0.6;
     _text(
       canvas,
-      'Client ${fmtFloorDbm(cp.downlinkDbm)}',
+      'Client ${fmtFloorLevelDbm(cp.downlinkDbm, inNull: floorInNull(cp))}',
       Offset(
         client.dx + (labelLeft ? -8 : 8) * scale.marker,
         client.dy - lineH - 4 * scale.marker,

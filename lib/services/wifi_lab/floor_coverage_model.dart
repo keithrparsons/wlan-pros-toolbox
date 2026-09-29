@@ -75,6 +75,20 @@ const double kFloorSearchStepM = 0.05;
 /// pattern's null.
 const double kNullDepthDb = 25;
 
+/// The lowest level the view prints as a number, dBm. A 20 MHz channel's
+/// noise floor is -174 dBm/Hz + 10 log10(20e6) + a 7 dB noise figure = -94
+/// dBm (the noise model Rate vs Range uses), and MCS 0 needs -82 dBm, so no
+/// client or AP reports a level under about -95 dBm. Under it the readouts
+/// say "below -95 dBm", plus "(null)" when the point is [kNullDepthDb] or
+/// more under the peak. The case this exists for: straight under a dipole or
+/// collinear the pattern is a true null, which the gain grid holds 60 dB under
+/// the peak (kGridFloorDb), so the model's figure there (-114.2 dBm under the
+/// 9 m warehouse dipole) is the model's floor, not a level. A level test, not
+/// a gain-depth test, because the omni-by-gain envelope stops 30 dB under its
+/// peak and can sit at its floor while still reading, say, -78 dBm, which a
+/// client can measure (Vera gate B, 2026-09-29).
+const double kFloorReadableDbm = -95;
+
 /// Direction from the AP to a floor point, in the antenna's own frame.
 typedef FloorDirection = ({double thetaDeg, int phiDeg});
 

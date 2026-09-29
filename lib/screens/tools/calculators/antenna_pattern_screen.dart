@@ -182,8 +182,10 @@ class _AntennaPatternScreenState extends State<AntennaPatternScreen> {
       for (final double x in kFloorReadoutsM) {
         final FloorPoint p = link.at(x);
         b.writeln(
-          '${fmtFloorWhere(x)}: AP to client ${fmtFloorDbm(p.downlinkDbm)}, '
-          'client to AP ${fmtFloorDbm(p.uplinkDbm)}',
+          '${fmtFloorWhere(x)}: AP to client '
+          '${fmtFloorLevelDbm(p.downlinkDbm, inNull: floorInNull(p))}, '
+          'client to AP '
+          '${fmtFloorLevelDbm(p.uplinkDbm, inNull: floorInNull(p))}',
         );
       }
       b.writeln(
