@@ -3186,6 +3186,19 @@ const List<ToolCategory> _kAllToolCategories = <ToolCategory>[
         isLive: true,
         subgroup: 'Airtime and Access',
       ),
+      // OFDMA vs MU-MIMO (2026-09-29): the two ways an 802.11ax AP serves
+      // several clients at once, on one airtime scale. Builds on
+      // 'ofdma-simulator' (its timelines) and 'mimo-beamforming' (sounding).
+      ToolEntry(
+        id: 'ofdma-vs-mumimo',
+        title: 'OFDMA vs MU-MIMO',
+        description:
+            'Move clients around an AP and see when splitting the channel '
+            'beats aiming a beam at each client, sounding cost included',
+        routeName: '/tools/ofdma-vs-mumimo',
+        isLive: true,
+        subgroup: 'Airtime and Access',
+      ),
       ToolEntry(
         id: 'rate-adaptation',
         title: 'Rate Adaptation',

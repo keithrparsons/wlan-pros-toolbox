@@ -156,6 +156,9 @@ const Map<String, List<String>> _teachingOrder = <String, List<String>>{
     'voice-priority',
     'airtime-anatomy',
     'airtime-fairness',
+    // 2026-09-29: OFDMA vs MU-MIMO (Feature 8), after the airtime tools it
+    // reuses and before rate control.
+    'ofdma-vs-mumimo',
     'rate-adaptation',
     // 2026-09-27: What an Interferer Costs, before the -82 dBm rule that
     // Spatial Reuse relaxes.
