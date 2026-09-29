@@ -1005,8 +1005,8 @@
     "antenna-pattern": {
       "name": "Antenna Pattern",
       "category": "Wireless Classroom",
-      "purpose": "Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet prints. Pick a dipole, an omni set by its gain, a collinear array, or a directional patch or sector and change it with sliders, or paste an MSI or NSMA pattern file and rotate the 3D estimate built from its two cuts.",
-      "whyHere": "Antenna gain is easy to misread as more power. Here every antenna radiates the same power, so raising the gain visibly takes signal from somewhere else: a high-gain omni flattens into a pancake with a hole under it, and a directional narrows its beam. It also shows why a 3D view built from a pattern file is an estimate, and how ceiling and wall mounting light different parts of a room.",
+      "purpose": "Shows an antenna's radiation pattern in 3D and as the two 2D cuts a datasheet prints. Pick a dipole, an omni set by its gain, a collinear array, or a directional patch or sector and change it with sliders, or paste an MSI or NSMA pattern file and rotate the 3D estimate built from its two cuts. The Floor coverage view puts the same antenna on a ceiling from 3 to 15 m and shows what the floor under it receives, in both directions.",
+      "whyHere": "Antenna gain is easy to misread as more power. Here every antenna radiates the same power, so raising the gain visibly takes signal from somewhere else: a high-gain omni flattens into a pancake with a hole under it, and a directional narrows its beam. It also shows why a 3D view built from a pattern file is an estimate, and how ceiling and wall mounting light different parts of a room. Floor coverage shows why mounting height matters: raise the AP and every spot on the floor moves to a steeper angle of the pattern, so a dipole leaves a hole under it, a higher-gain omni makes the near floor weaker, more power leaves the uplink where it was, and a directional aimed down puts the gain where the clients are.",
       "howToUse": [
         "Pick an antenna, then drag the gain, beamwidth, tilt and floor sliders and watch the 3D surface and the two cuts change. The scale stays fixed, so a gain change reshapes the pattern instead of resizing it.",
         "Drag the 3D view to rotate it, pinch or scroll to zoom, and tap Reset view to go back. With a keyboard, focus the view and use the arrow keys and plus or minus.",
@@ -1014,7 +1014,8 @@
         "To import, choose Imported pattern file, then pick a generated example or paste the text of an MSI (.msi, .pln, .txt) or NSMA (.adf) file and tap Read pattern. There is no file picker: open the file in a text editor and copy all of it. Switch between Summing and Cross-weighted to compare two ways of building 3D from two cuts.",
         "On any built-in antenna, tap Rebuild from its two cuts to write it as an MSI file, read it back, and see how far the rebuilt 3D is from the exact one.",
         "Set the angle between two antennas' polarizations to see the mismatch loss.",
-        "On a computer or tablet, Present opens the 3D pattern full screen for a projector: Space spins the view, the Right arrow turns it one step, R resets it, Up and Down move the antenna's gain, elements or shape, F switches full screen, ? lists the keys and Esc exits."
+        "Switch the view to Floor coverage to see the antenna from the side on a ceiling, drawn to scale, with the floor colored by what a client 1 m up receives. Pick a starting point (Office, dipole; Warehouse, dipole; Warehouse, 8 dBi omni; Warehouse, +6 dB power; Warehouse, directional), then move the mount height, powers, band, path-loss exponent and the client freely. The antenna card below still changes the antenna. Readouts give both directions directly below and 10, 20 and 30 m out, and how far the floor reaches -67 dBm. Open in Uplink vs Downlink takes the client's link there.",
+        "On a computer or tablet, Present opens the 3D pattern full screen for a projector: Space spins the view, the Right arrow turns it one step, R resets it, Up and Down move the antenna's gain, elements or shape, F switches full screen, ? lists the keys and Esc exits. In the Floor coverage view, Up and Down move the mount height by 0.5 m, the Right arrow steps to the next starting point and R goes back to the first. V switches between the two views."
       ],
       "inputs": [
         {
@@ -1066,10 +1067,30 @@
           "name": "Polarization angle",
           "unit": "degrees",
           "range": "0 to 90"
+        },
+        {
+          "name": "Mount height (Floor coverage)",
+          "unit": "m",
+          "range": "3 to 15 (10 to 49 ft), in 0.5 m steps"
+        },
+        {
+          "name": "AP and client transmit power (Floor coverage)",
+          "unit": "dBm",
+          "range": "AP 0 to 30, client 0 to 24"
+        },
+        {
+          "name": "Band and path-loss exponent (Floor coverage)",
+          "unit": "GHz, n",
+          "range": "2.4, 5 or 6 GHz; n 2.0 to 4.0"
+        },
+        {
+          "name": "Client position (Floor coverage)",
+          "unit": "m along the floor",
+          "range": "0 to 35"
         }
       ],
-      "algorithm": "Dipole: field cos((pi/2) cos theta) / sin theta. Collinear: the dipole times the array factor sin(N psi/2) / (N sin(psi/2)), psi = k d cos theta + k d sin(tilt). Omni by gain: ITU-R F.1336-5, G = G0 - 12 (theta_e / theta3)^2 with theta3 = 107.6 x 10^(-0.1 G0) and its electrical-tilt mapping, floored 30 dB down. Directional: the 3GPP TR 38.901 element, A_V = -min(12 ((theta - 90) / theta3)^2, SLA_V), A_H = -min(12 (phi / phi3)^2, A_max), A = -min(-(A_V + A_H), A_max), with mechanical tilt by rotation. Every built-in shape is scaled so its gain averaged over the sphere is exactly 0 dBi, so the peak shown is the integrated directivity. Imported files: summing, G = G_H(phi) + G_V(theta) in dB with a 30 dB floor (or the deepest value in the file, if deeper), or cross-weighted (Vasiliadis et al., 2005, k = 2); both use the front half of the vertical cut. Polarization loss = -20 log10 |cos d|.",
-      "example": "A half-wave dipole is 2.15 dBi (0 dBd) with a 78 degree vertical beamwidth. An omni set to 12 dBi has a vertical beamwidth near 6.8 degrees, and 30 degrees above the horizon it is weaker than a 5 dBi omni. A 65 by 65 degree 3GPP element integrates to about 9.8 dBi; the 31,000 rule gives 8.7 dBi and the ideal 41,253 gives 9.9 dBi. Two antennas 45 degrees apart in polarization lose 3.01 dB.",
+      "algorithm": "Dipole: field cos((pi/2) cos theta) / sin theta. Collinear: the dipole times the array factor sin(N psi/2) / (N sin(psi/2)), psi = k d cos theta + k d sin(tilt). Omni by gain: ITU-R F.1336-5, G = G0 - 12 (theta_e / theta3)^2 with theta3 = 107.6 x 10^(-0.1 G0) and its electrical-tilt mapping, floored 30 dB down. Directional: the 3GPP TR 38.901 element, A_V = -min(12 ((theta - 90) / theta3)^2, SLA_V), A_H = -min(12 (phi / phi3)^2, A_max), A = -min(-(A_V + A_H), A_max), with mechanical tilt by rotation. Every built-in shape is scaled so its gain averaged over the sphere is exactly 0 dBi, so the peak shown is the integrated directivity. Imported files: summing, G = G_H(phi) + G_V(theta) in dB with a 30 dB floor (or the deepest value in the file, if deeper), or cross-weighted (Vasiliadis et al., 2005, k = 2); both use the front half of the vertical cut. Polarization loss = -20 log10 |cos d|. Floor coverage: client antenna 1 m up, x along the floor, slant distance r = sqrt(x^2 + (h - 1)^2), angle below the horizon atan((h - 1) / x); AP to client = AP transmit power + G(that direction) - PL(r) + client antenna gain; client to AP = client transmit power + client antenna gain + G - PL(r); PL(r) = FSPL(1 m) + 10 n log10(r). The antenna's gain is the same both ways (reciprocity), so client to AP minus AP to client is the client's transmit power minus the AP's at every point.",
+      "example": "A half-wave dipole is 2.15 dBi (0 dBd) with a 78 degree vertical beamwidth. An omni set to 12 dBi has a vertical beamwidth near 6.8 degrees, and 30 degrees above the horizon it is weaker than a 5 dBi omni. A 65 by 65 degree 3GPP element integrates to about 9.8 dBi; the 31,000 rule gives 8.7 dBi and the ideal 41,253 gives 9.9 dBi. Two antennas 45 degrees apart in polarization lose 3.01 dB. On a 9 m ceiling at 5 GHz with n = 3 and the AP at 20 dBm, a dipole leaves the floor under it below -67 dBm out to 2.6 m and reaches -67 dBm out to 17.9 m; an 8 dBi omni there reaches -67 dBm nowhere on the floor; a 65 by 65 degree directional aimed down gives -46.5 dBm directly below.",
       "fieldNotes": [
         "The 3D is drawn on a fixed dBi scale: radius and color both follow gain, 5 dB per color band, with a floor 35 dB below the top of the scale. The legend gives the numbers, so color is never the only carrier.",
         "An MSI GAIN with no unit is dBd; reading it as dBi understates the antenna by 2.15 dB. MSI values are losses written without a minus sign, with vertical 90 pointing down. NSMA uses negative values and elevation positive up. Mixing the two turns a pattern upside down with no error.",
@@ -1078,9 +1099,12 @@
         "The F.1336 omni is a planning envelope, not physics: at the dipole's 2.15 dBi it gives a 65.6 degree beamwidth, not 78.",
         "Mounting turns the 3D view only; the 2D cuts stay in the antenna's own frame. An imported file whose horizontal cut stays within 3 dB is treated as an omni drawn for the ceiling, any other as drawn for a wall.",
         "NSMA azimuth is read as counterclockwise seen from above. The source used does not state it; it matters only for a horizontal cut that is not symmetric left to right.",
+        "Floor coverage is a model: open floor, no racks, walls or people, a chosen path-loss exponent, and the powers and the client's -2 dBi antenna as illustrative inputs. Straight down, a dipole or collinear has a true null (held 60 dB under the peak here); the omni-by-gain envelope stops 30 dB under its peak, so within a few metres of the point under a high AP it cannot rank two omnis. A real antenna's null depth varies. A level under -95 dBm reads \"below -95 dBm\", with \"(null)\" in the pattern's null: a 20 MHz noise floor is about -94 dBm, so no client or AP reports less, and under a 9 m dipole the model's own figure (-114.2 dBm) is only its 60 dB floor. The exact figure is in the note under Readouts.",
+        "The 25 ft (7.6 m) line is vendor guidance, not a standard: an HPE Aruba Airheads Community thread (Warehouse high ceiling, 2018) quotes a vendor presentation to use downtilt omnis above 25 ft, and a Cisco Community thread (High Ceilings, 2013) has a Cisco employee putting an ordinary omni's limit at about 20 to 25 ft.",
+        "Open in Uplink vs Downlink carries the AP antenna's gain toward the client, but that tool's AP gain runs 0 to 8 dBi; a gain outside that range is carried as the nearest end and the screen says so.",
         "The Wireless Classroom is designed for tablets and computers, and on a phone some views are cramped."
       ],
-      "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005). No manufacturer file is included. Computed on your device."
+      "source": "ITU-R F.1336-5 (omni envelope and the gain-beamwidth relation), 3GPP TR 38.901 v17.0.0 Table 7.3-1 and eqs. 7.1-18 and 7.1-19 (directional element and tilt), textbook dipole and array-factor results, the MSI / Planet and NSMA WG16.99.050 file conventions, and the cross-weighted method of Vasiliadis, Dimitriou and Sergiadis (IEEE Trans. Antennas Propag., 2005), reciprocity as in Balanis, Antenna Theory (4th ed.), the log-distance path loss the Rate vs Range tool uses, and for the 25 ft omni height the HPE Aruba Airheads Community and Cisco Community threads named above, as vendor guidance. No manufacturer file is included. Computed on your device."
     },
     "polarization": {
       "name": "Polarization",

@@ -71,7 +71,12 @@ export '../../../services/wifi_lab/uplink_downlink_model.dart'
 const double _kPanelWidth = 360;
 
 class UplinkDownlinkScreen extends StatefulWidget {
-  const UplinkDownlinkScreen({super.key});
+  const UplinkDownlinkScreen({super.key, this.initial});
+
+  /// A link to open on instead of the defaults: Antenna Pattern's Floor
+  /// coverage view passes the client it is showing (spec 46). Null opens the
+  /// defaults.
+  final UdConfig? initial;
 
   @override
   State<UplinkDownlinkScreen> createState() => _UplinkDownlinkScreenState();
@@ -84,7 +89,9 @@ class _UplinkDownlinkScreenState extends State<UplinkDownlinkScreen>
     _controller.setUnits(system);
   }
 
-  final UplinkDownlinkController _controller = UplinkDownlinkController();
+  late final UplinkDownlinkController _controller = UplinkDownlinkController(
+    widget.initial ?? const UdConfig(),
+  );
 
   @override
   void dispose() {

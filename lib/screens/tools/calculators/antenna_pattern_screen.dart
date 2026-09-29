@@ -26,6 +26,17 @@
 //   antenna_pattern_painters.dart  the CustomPainters
 //   antenna_pattern_parts.dart     shared cards, rows, sliders, formatters
 //
+// FLOOR COVERAGE (spec 46, 2026-09-29): a second view of the same antenna,
+// switched above the stage ("3D pattern" / "Floor coverage"). It puts the
+// pattern on a warehouse or office floor at a mount height from 3 to 15 m:
+// a side view to scale with the floor colored by what a client receives,
+// readouts both ways, and a link into Uplink vs Downlink. State in
+// antenna_floor_controller.dart (FloorCoverageController, over this lab),
+// drawing in antenna_floor_stage.dart, inputs in antenna_floor_controls.dart.
+// In the floor view the presenter keys change: Up and Down move the mount
+// height, Right steps to the next preset, R goes back to the first; V
+// switches views in both.
+//
 // PRESENTER (spec 00, 2026-09-26): the Present button (desktop and tablet
 // windows) opens the same stage and controls over the SAME lab in the
 // presenter layout (lib/widgets/presenter/). The 3D takes the stage's extra
@@ -60,11 +71,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../router/app_router.dart';
+import '../../../data/channel_frequency_data.dart';
 import '../../../services/wifi_lab/antenna_pattern_math.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/presenter/presenter.dart';
 import '../../../widgets/tool_help_footer.dart';
+import 'antenna_floor_controller.dart';
+import 'antenna_floor_controls.dart';
+import 'antenna_floor_stage.dart';
 import 'antenna_pattern_controls.dart';
 import 'antenna_pattern_model.dart';
 import 'antenna_pattern_parts.dart';
@@ -77,9 +92,13 @@ class AntennaPatternScreen extends StatefulWidget {
   const AntennaPatternScreen({
     super.key,
     this.initialKind = AntennaModelKind.omni,
+    this.initialView = AntennaStageView.pattern,
   });
 
   final AntennaModelKind initialKind;
+
+  /// Which view the stage opens on (the 3D pattern unless a caller asks).
+  final AntennaStageView initialView;
 
   @override
   State<AntennaPatternScreen> createState() => _AntennaPatternScreenState();
@@ -89,9 +108,14 @@ class _AntennaPatternScreenState extends State<AntennaPatternScreen> {
   late final AntennaPatternLab _lab = AntennaPatternLab(
     initialKind: widget.initialKind,
   );
+  late final FloorCoverageController _floor = FloorCoverageController(
+    lab: _lab,
+    initialView: widget.initialView,
+  );
 
   @override
   void dispose() {
+    _floor.dispose();
     _lab.dispose();
     super.dispose();
   }
@@ -144,6 +168,32 @@ class _AntennaPatternScreenState extends State<AntennaPatternScreen> {
       'Polarization mismatch at ${fmtDeg(_lab.polarizationDeg)}: '
       '${fmtPolarizationLoss(_lab.polarizationLossDb)}',
     );
+    final FloorLink? link = _floor.link;
+    final FloorCell? cell = _floor.cell;
+    if (_floor.showingFloor && link != null && cell != null) {
+      b
+        ..writeln()
+        ..writeln(
+          'Floor coverage: mount height ${fmtFloorLength(_floor.heightM)}, '
+          'AP ${_floor.apTxDbm.round()} dBm, client '
+          '${_floor.clientTxDbm.round()} dBm, ${_floor.band.label}, '
+          'exponent ${_floor.exponent.toStringAsFixed(1)}',
+        );
+      for (final double x in kFloorReadoutsM) {
+        final FloorPoint p = link.at(x);
+        b.writeln(
+          '${fmtFloorWhere(x)}: AP to client '
+          '${fmtFloorLevelDbm(p.downlinkDbm, inNull: floorInNull(p))}, '
+          'client to AP '
+          '${fmtFloorLevelDbm(p.uplinkDbm, inNull: floorInNull(p))}',
+        );
+      }
+      b.writeln(
+        'Floor cell radius at $fmtFloorTarget: '
+        '${floorCellWords(cell)}'
+        '${cell.holeM == null ? '' : ', hole under the AP out to ${fmtFloorLength(cell.holeM!)}'}',
+      );
+    }
     return b.toString().trimRight();
   }
 
@@ -151,13 +201,41 @@ class _AntennaPatternScreenState extends State<AntennaPatternScreen> {
   /// main slider's key follows the antenna, so the layout is rebuilt when
   /// that changes (and only then).
   Widget _presenter(BuildContext context) => PresenterFollow(
-    listenable: _lab,
-    select: () => _lab.mainSliderLabel,
+    listenable: _floor,
+    select: () => _floor.presenterKey,
     builder: (BuildContext context) => PresenterLayout(
       title: 'Antenna Pattern',
-      stage: AntennaPatternStage(lab: _lab),
-      controls: AntennaPatternControls(lab: _lab),
-      actions: _lab.presenterActions,
+      // The view switch sits on the stage, over the view it changes, so the
+      // 3D view's controls panel keeps the height it was fitted to.
+      stage: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AntennaViewSwitch(floor: _floor),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: _floor.showingFloor
+                ? FloorCoverageStage(floor: _floor)
+                : AntennaPatternStage(lab: _lab),
+          ),
+        ],
+      ),
+      controls: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (_floor.showingFloor) ...<Widget>[
+            FloorCoverageControls(floor: _floor),
+            const SizedBox(height: AppSpacing.sm),
+            PatternCard(
+              child: PresenterDisclosure(
+                title: 'Antenna: ${_lab.kind.label}',
+                children: <Widget>[AntennaPatternControls(lab: _lab)],
+              ),
+            ),
+          ] else
+            AntennaPatternControls(lab: _lab),
+        ],
+      ),
+      actions: _floor.presenterActions,
     ),
   );
 
@@ -198,12 +276,36 @@ class _AntennaPatternScreenState extends State<AntennaPatternScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      AntennaPatternStage(
-                        lab: _lab,
-                        viewportHeight: isDesktop ? 400 : 320,
-                      ),
+                      AntennaViewSwitch(floor: _floor),
                       const SizedBox(height: AppSpacing.sm),
-                      AntennaPatternControls(lab: _lab),
+                      ListenableBuilder(
+                        listenable: _floor,
+                        builder: (BuildContext context, _) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            if (_floor.showingFloor)
+                              FloorCoverageStage(
+                                floor: _floor,
+                                viewportHeight: isDesktop ? 400 : 260,
+                              )
+                            else
+                              AntennaPatternStage(
+                                lab: _lab,
+                                viewportHeight: isDesktop ? 400 : 320,
+                              ),
+                            const SizedBox(height: AppSpacing.sm),
+                            if (_floor.showingFloor) ...<Widget>[
+                              FloorCoverageControls(floor: _floor),
+                              const SizedBox(height: AppSpacing.sm),
+                              const PatternSectionLabel(
+                                'The antenna on the floor',
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                            ],
+                            AntennaPatternControls(lab: _lab),
+                          ],
+                        ),
+                      ),
                       ToolHelpFooter(toolId: kAntennaPatternToolId),
                     ],
                   ),
