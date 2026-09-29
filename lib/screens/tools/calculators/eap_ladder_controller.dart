@@ -19,6 +19,10 @@
 // move the same counter through whichever ladder the mode shows. A student
 // can tap a sent message in Join or Roam to inspect what it carries.
 //
+// BREAK IT (spec 42): the fault is part of LadderConfig, so a fault change
+// rebuilds the ladder like any other setting. B in the presenter cycles None
+// and the faults that apply to the method; it does nothing in Roam or Join.
+//
 // THE CLOCK. The Ticker is constructed here directly, not from a widget's
 // TickerProvider: a route under the presenter route is muted, and playback
 // must keep going when the presenter layout opens over the phone screen
@@ -315,8 +319,29 @@ class EapLadderController extends ChangeNotifier {
         description: 'Back one message',
         onPressed: back,
       ),
+      if (_mode == LadderMode.authenticate)
+        PresenterExtraKey(
+          key: LogicalKeyboardKey.keyB,
+          keyLabel: 'B',
+          description: 'Break it: next fault',
+          onPressed: cycleFault,
+        ),
     ],
   );
+
+  /// None and the faults that apply to the current method and roam mode.
+  List<LadderFault> get faultOptions =>
+      LadderFault.optionsFor(_config.method, _config.roam);
+
+  /// The next fault in [faultOptions], back to None after the last. Does
+  /// nothing in Join or Roam, or when only None applies.
+  void cycleFault() {
+    if (isJr) return;
+    final List<LadderFault> options = faultOptions;
+    if (options.length < 2) return;
+    final int i = options.indexOf(_config.effectiveFault);
+    fault = options[(i + 1) % options.length];
+  }
 
   // ── Join and Roam ─────────────────────────────────────────────────────────
 
@@ -383,6 +408,11 @@ class EapLadderController extends ChangeNotifier {
       _apply(_config.copyWith(certFragments: v.round()));
   set radiusRttMs(double v) =>
       _apply(_config.copyWith(radiusRttMs: v.roundToDouble()));
+  set fault(LadderFault f) => _apply(_config.copyWith(fault: f));
+  set faultRetries(double v) =>
+      _apply(_config.copyWith(faultRetries: v.round()));
+  set faultWaitS(double v) =>
+      _apply(_config.copyWith(faultWaitS: v.roundToDouble()));
 
   // ── Copy ──────────────────────────────────────────────────────────────────
 
@@ -397,14 +427,27 @@ class EapLadderController extends ChangeNotifier {
         '${c.method == LadderMethod.eapTtls ? ', inner ${c.inner.label}' : ''}'
         ', ${c.roam.label}'
         '${c.certificateMatters ? ', certificate ${c.certFragments} fragment${c.certFragments == 1 ? '' : 's'} per message' : ''}',
-      )
-      ..writeln();
+      );
+    if (s.failed) {
+      b.writeln(
+        'Break it: ${c.effectiveFault.label}'
+        '${c.effectiveFault.retries ? ', ${c.faultRetries} retr${c.faultRetries == 1 ? 'y' : 'ies'} ${c.faultWaitS.round()} s apart (illustrative)' : ''}'
+        '. A typical sequence; devices differ.',
+      );
+    }
+    b.writeln();
     for (int i = 0; i < s.length; i++) {
       final LadderMessage m = s.messages[i];
       final String contents = m.contents.isEmpty ? '' : ': ${m.contents}';
+      final String mark = m.lost
+          ? ' [no answer]'
+          : m.failure
+          ? ' [failure]'
+          : '';
       b.writeln(
         '${i + 1}. ${m.from.label} -> ${m.to.label} '
-        '(${m.leg == LadderLeg.air ? 'air' : 'wire'}) ${m.label}$contents',
+        '(${m.leg == LadderLeg.air ? 'air' : 'wire'}) ${m.label}$contents'
+        '$mark',
       );
       if (m.milestoneText != null) b.writeln('   ${m.milestoneText}');
     }
@@ -414,10 +457,20 @@ class EapLadderController extends ChangeNotifier {
       ..writeln('On the wire: ${s.wireCount} RADIUS messages')
       ..writeln('RADIUS round trips: ${s.radiusRoundTrips}')
       ..writeln(
-        'Estimated time after the scan (illustrative): '
+        '${s.failed ? 'Estimated time until it stops' : 'Estimated time after the scan'} (illustrative): '
         '${formatLadderMs(s.estimatedMs)}'
         '${s.usesRadius ? ' at ${c.radiusRttMs.round()} ms per RADIUS round trip' : ''}',
       );
+    if (s.failed) {
+      b.writeln('Stopped here: ${s.faultNote}');
+      for (final String line in neverHappened(s)) {
+        b.writeln('Never happened: $line');
+      }
+      if (s.helpDesk != null) {
+        b.writeln('What the help desk sees: ${s.helpDesk}');
+      }
+      return b.toString().trimRight();
+    }
     for (final String line in _skipped.lines) {
       b.writeln('Skipped versus full: $line');
     }
