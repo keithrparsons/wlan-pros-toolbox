@@ -365,6 +365,17 @@ class EapLadderController extends ChangeNotifier {
     );
   }
 
+  /// Test seam: show a hand-built ladder (the shared failure marker's
+  /// drawing tests), from the top.
+  @visibleForTesting
+  set debugSequence(LadderSequence s) {
+    _pause();
+    _sequence = s;
+    _skipped = skippedVersusFull(s);
+    _shown = 0;
+    notifyListeners();
+  }
+
   set method(LadderMethod m) => _apply(_config.copyWith(method: m));
   set inner(LadderInner i) => _apply(_config.copyWith(inner: i));
   set roam(LadderRoam r) => _apply(_config.copyWith(roam: r));

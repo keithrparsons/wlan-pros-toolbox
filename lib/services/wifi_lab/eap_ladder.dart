@@ -37,7 +37,7 @@
 // and session resumption are not modelled. Frame airtime and RADIUS round-trip
 // time are illustrative inputs.
 
-import 'package:flutter/foundation.dart' show immutable;
+import 'package:flutter/foundation.dart' show immutable, visibleForTesting;
 
 /// The three lanes of the ladder.
 enum LadderLane {
@@ -261,6 +261,9 @@ class LadderMessage {
     this.serverCertificate = false,
     this.milestone,
     this.milestoneText,
+    this.failure = false,
+    this.lost = false,
+    this.waitMs = 0,
   });
 
   final LadderLane from;
@@ -298,6 +301,22 @@ class LadderMessage {
   final LadderMilestone? milestone;
   final String? milestoneText;
 
+  /// THE SHARED FAILURE MARKER (spec 42; feature 1 uses the same pair on
+  /// JrMessage). This message carries the failure, or is the one the other
+  /// side refused: drawn with a red X at its end, and the caption says so.
+  final bool failure;
+
+  /// Sent and never answered (a RADIUS server silently discarding it): drawn
+  /// as a dashed arrow that stops in a gap, with a clock.
+  final bool lost;
+
+  /// Time spent waiting before this message is sent (a retry after a
+  /// timeout), ms. Zero on every fault-free message.
+  final double waitMs;
+
+  /// Either half of the failure marker.
+  bool get marksFailure => failure || lost;
+
   LadderLeg get leg => from == LadderLane.radius || to == LadderLane.radius
       ? LadderLeg.wire
       : LadderLeg.air;
@@ -308,15 +327,48 @@ class LadderMessage {
 /// A built ladder and its counts.
 @immutable
 class LadderSequence {
-  LadderSequence._(this.config, this.messages)
+  LadderSequence._(this.config, this.messages, {this.faultNote, this.helpDesk})
     : airCount = messages.where((m) => m.leg == LadderLeg.air).length,
       wireCount = messages.where((m) => m.leg == LadderLeg.wire).length,
       radiusRoundTrips = messages
-          .where((m) => m.from == LadderLane.ap && m.to == LadderLane.radius)
-          .length;
+          .where(
+            (m) =>
+                m.from == LadderLane.ap && m.to == LadderLane.radius && !m.lost,
+          )
+          .length,
+      failedAt = messages.indexWhere((m) => m.marksFailure);
+
+  /// A sequence from explicit messages, for tests of the failure marker's
+  /// drawing without a fault in the builder.
+  @visibleForTesting
+  factory LadderSequence.forTest(
+    LadderConfig config,
+    List<LadderMessage> messages, {
+    String? faultNote,
+    String? helpDesk,
+  }) => LadderSequence._(
+    config,
+    List<LadderMessage>.unmodifiable(messages),
+    faultNote: faultNote,
+    helpDesk: helpDesk,
+  );
 
   final LadderConfig config;
   final List<LadderMessage> messages;
+
+  /// Index of the first message that fails or is lost, or -1: where the
+  /// exchange broke.
+  final int failedAt;
+
+  /// Whether the exchange breaks before it completes.
+  bool get failed => failedAt >= 0;
+
+  /// The "Stopped here" sentence, drawn in the band after the last message;
+  /// null when nothing failed.
+  final String? faultNote;
+
+  /// What the help desk sees when this happens; null when nothing failed.
+  final String? helpDesk;
 
   /// Frames between client and AP.
   final int airCount;
@@ -324,7 +376,8 @@ class LadderSequence {
   /// RADIUS packets between AP and server.
   final int wireCount;
 
-  /// Access-Request and its answer, counted once per Access-Request.
+  /// Access-Request and its answer, counted once per Access-Request. An
+  /// Access-Request that is never answered (lost) is not a round trip.
   final int radiusRoundTrips;
 
   int get length => messages.length;
@@ -337,10 +390,15 @@ class LadderSequence {
       .toList(growable: false);
 
   /// Illustrative time after the scan: frames x airtime + RADIUS round trips
-  /// x round-trip time. The scan itself is not included.
+  /// x round-trip time + any waits before retries. The scan itself is not
+  /// included. On a failed ladder this is the time until it stops.
   double get estimatedMs =>
       afterScan.where((m) => m.leg == LadderLeg.air).length * kAirFrameMs +
-      radiusRoundTrips * config.radiusRttMs;
+      radiusRoundTrips * config.radiusRttMs +
+      _waitMs;
+
+  double get _waitMs =>
+      messages.fold(0.0, (double t, LadderMessage m) => t + m.waitMs);
 
   /// Messages in [phase].
   List<LadderMessage> inPhase(LadderPhase phase) =>

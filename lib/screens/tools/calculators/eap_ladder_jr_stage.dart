@@ -43,6 +43,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
 import 'eap_ladder_controller.dart';
+import 'eap_ladder_failure.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
 
@@ -840,6 +841,12 @@ class _JrViewportState extends State<_JrViewport> {
         );
       }
     }
+    // The shared failure marker (spec 42).
+    if (s.failed && s.faultNote != null) {
+      rows.add(
+        LadderStoppedBand(text: s.faultNote!, reached: c.shown >= s.length),
+      );
+    }
 
     return Semantics(
       container: true,
@@ -971,9 +978,10 @@ class _JrMessageRow extends StatelessWidget {
               : m.missed
               ? colors.textTertiary
               : ladderLegColor(JrMessage.legOf(h), isLight: colors.isLight),
-          JrMessage.legOf(h) == LadderLeg.wire || m.missed,
+          JrMessage.legOf(h) == LadderLeg.wire || m.missed || m.lost,
         ),
     ];
+    final double markSize = sc.markerSize(16);
     final List<double> xs = <double>[for (final JrLane l in lanes) laneX(l)];
 
     final Widget labels = Visibility(
@@ -1094,9 +1102,14 @@ class _JrMessageRow extends StatelessWidget {
                 hops: hops,
                 y: null,
                 stroke: sc.strokeWidth(highlight ? 3 : 2),
-                // A missed beacon never reaches the client.
-                progress: m.missed ? math.min(progress, 0.5) : progress,
-                head: m.missed ? 0 : sc.markerSize(8),
+                // A missed beacon never reaches the client; a lost frame
+                // stops in a gap (spec 42).
+                progress: m.missed
+                    ? math.min(progress, 0.5)
+                    : m.lost
+                    ? progress * kLostReach
+                    : progress,
+                head: m.missed || m.lost ? 0 : sc.markerSize(8),
                 band: band,
               ),
             ),
@@ -1114,6 +1127,18 @@ class _JrMessageRow extends StatelessWidget {
               ),
               child: Center(child: labels),
             ),
+            if (visible && m.marksFailure)
+              positionedLadderMark(
+                lost: m.lost,
+                fromX: fromX,
+                toX: toX,
+                rowWidth: width,
+                band: band,
+                iconSize: markSize,
+                child: m.lost
+                    ? const LadderLostMark()
+                    : const LadderFailureMark(),
+              ),
             Positioned(
               left: 0,
               bottom: 0,
@@ -1141,6 +1166,8 @@ class _JrMessageRow extends StatelessWidget {
       if (m.encrypted) 'encrypted',
       if (m.pmfProtected) 'protected by PMF',
       if (m.missed) 'missed',
+      if (m.failure) 'failed here',
+      if (m.lost) 'no answer',
     ].join(', ');
     final String via = m.via == null ? '' : ' through the ${m.via!.label}';
     final String contents = m.contents.isEmpty ? '' : ', ${m.contents}';
@@ -1254,7 +1281,8 @@ class _JrLanesPainter extends CustomPainter {
       old.xs.length != xs.length ||
       old.arrow?.progress != arrow?.progress ||
       old.arrow?.stroke != arrow?.stroke ||
-      old.arrow?.hops.first.color != arrow?.hops.first.color;
+      old.arrow?.hops.first.color != arrow?.hops.first.color ||
+      old.arrow?.head != arrow?.head;
 }
 
 /// One hop of an arrow: [fromX] to [toX], its color, dashed or solid.
@@ -1795,6 +1823,21 @@ class _JrCaption extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+        // The shared failure marker (spec 42).
+        if (m.marksFailure) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          LadderFailureCaptionLine(lost: m.lost),
+        ],
+        if (!controller.inspecting &&
+            controller.atEnd &&
+            controller.jr.failed &&
+            controller.jr.faultNote != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          LadderStoppedCaption(
+            faultNote: controller.jr.faultNote!,
+            helpDesk: controller.jr.helpDesk,
           ),
         ],
       ];

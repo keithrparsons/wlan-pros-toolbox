@@ -31,6 +31,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter.dart';
 import 'eap_ladder_controller.dart';
+import 'eap_ladder_failure.dart';
 import 'eap_ladder_jr_stage.dart';
 import 'eap_ladder_palette.dart';
 import 'eap_ladder_parts.dart';
@@ -502,6 +503,13 @@ class _LadderViewportState extends State<_LadderViewport> {
         );
       }
     }
+    // The shared failure marker (spec 42): the band after the last message
+    // of an exchange that broke, where the milestones would have been.
+    if (s.failed && s.faultNote != null) {
+      rows.add(
+        LadderStoppedBand(text: s.faultNote!, reached: c.shown >= s.length),
+      );
+    }
 
     return Semantics(
       container: true,
@@ -617,6 +625,7 @@ class _MessageRow extends StatelessWidget {
     final double toX = _laneX(m.to, width);
     final double left = (fromX < toX ? fromX : toX) + AppSpacing.xxs;
     final double right = width - (fromX > toX ? fromX : toX) + AppSpacing.xxs;
+    final double markSize = sc.markerSize(16);
 
     final Widget labels = Visibility(
       visible: visible,
@@ -670,13 +679,15 @@ class _MessageRow extends StatelessWidget {
               stroke: sc.strokeWidth(1.5),
               arrow: _ArrowPainter(
                 color: visible ? legColor : colors.border,
-                dashed: m.leg == LadderLeg.wire,
+                // A lost message is dashed on either leg and stops in a gap
+                // with no head: it never arrives.
+                dashed: m.leg == LadderLeg.wire || m.lost,
                 fromX: fromX,
                 toX: toX,
                 y: null,
                 stroke: sc.strokeWidth(state == _RowState.latest ? 3 : 2),
-                progress: progress,
-                head: sc.markerSize(8),
+                progress: m.lost ? progress * kLostReach : progress,
+                head: m.lost ? 0 : sc.markerSize(8),
                 band: band,
               ),
             ),
@@ -694,6 +705,18 @@ class _MessageRow extends StatelessWidget {
               ),
               child: Center(child: labels),
             ),
+            if (visible && m.marksFailure)
+              positionedLadderMark(
+                lost: m.lost,
+                fromX: fromX,
+                toX: toX,
+                rowWidth: width,
+                band: band,
+                iconSize: markSize,
+                child: m.lost
+                    ? const LadderLostMark()
+                    : const LadderFailureMark(),
+              ),
             Positioned(
               left: 0,
               bottom: 0,
@@ -740,11 +763,16 @@ class _MessageRow extends StatelessWidget {
 
     if (!visible) return ExcludeSemantics(child: row);
     final String contents = m.contents.isEmpty ? '' : ', ${m.contents}';
+    final String mark = m.lost
+        ? ' No answer.'
+        : m.failure
+        ? ' Failed here.'
+        : '';
     return Semantics(
       label:
           'Step ${index + 1} of $total, ${m.leg.label.toLowerCase()}, '
           '${m.from.label} to ${m.to.label}: ${m.label}$contents. '
-          '${m.description}',
+          '${m.description}$mark',
       excludeSemantics: true,
       child: row,
     );
@@ -864,7 +892,9 @@ class _LanesPainter extends CustomPainter {
       old.stroke != stroke ||
       old.arrow?.progress != arrow?.progress ||
       old.arrow?.color != arrow?.color ||
-      old.arrow?.stroke != arrow?.stroke;
+      old.arrow?.stroke != arrow?.stroke ||
+      old.arrow?.dashed != arrow?.dashed ||
+      old.arrow?.head != arrow?.head;
 }
 
 /// One arrow from [fromX] to [toX]. [y] null draws it in the arrow band at
@@ -1024,6 +1054,19 @@ class _CaptionCard extends StatelessWidget {
           m.description,
           style: text.bodyMedium?.copyWith(color: colors.textPrimary),
         ),
+        if (m.marksFailure) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          LadderFailureCaptionLine(lost: m.lost),
+        ],
+        if (controller.atEnd &&
+            controller.sequence.failed &&
+            controller.sequence.faultNote != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          LadderStoppedCaption(
+            faultNote: controller.sequence.faultNote!,
+            helpDesk: controller.sequence.helpDesk,
+          ),
+        ],
         if (m.milestoneText != null) ...<Widget>[
           const SizedBox(height: AppSpacing.xs),
           Row(

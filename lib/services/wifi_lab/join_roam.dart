@@ -818,6 +818,8 @@ class JrMessage {
     this.pmfProtected = false,
     this.tunneled = false,
     this.missed = false,
+    this.failure = false,
+    this.lost = false,
     this.milestone,
     this.milestoneText,
   });
@@ -854,6 +856,18 @@ class JrMessage {
 
   /// Sent while the client's radio was elsewhere (a missed beacon).
   final bool missed;
+
+  /// THE SHARED FAILURE MARKER (spec 42, same meaning as on LadderMessage in
+  /// eap_ladder.dart): this frame carries the failure, or is the one the
+  /// other side refused. Drawn with a red X at its end.
+  final bool failure;
+
+  /// Sent and never answered: a dashed arrow that stops in a gap, with a
+  /// clock.
+  final bool lost;
+
+  /// Either half of the failure marker.
+  bool get marksFailure => failure || lost;
 
   final LadderMilestone? milestone;
   final String? milestoneText;
@@ -894,6 +908,8 @@ class JrSequence {
     required this.messages,
     required this.scan,
     required this.lanes,
+    this.faultNote,
+    this.helpDesk,
   });
 
   final LadderMode mode;
@@ -903,6 +919,19 @@ class JrSequence {
 
   /// Lanes in drawing order, left to right.
   final List<JrLane> lanes;
+
+  /// The "Stopped here" sentence after the last message when the exchange
+  /// fails (spec 42 shared marker); null when nothing failed.
+  final String? faultNote;
+
+  /// What the help desk sees when this happens; null when nothing failed.
+  final String? helpDesk;
+
+  /// Index of the first message that fails or is lost, or -1.
+  int get failedAt => messages.indexWhere((JrMessage m) => m.marksFailure);
+
+  /// Whether the exchange breaks before it completes.
+  bool get failed => failedAt >= 0;
 
   int get length => messages.length;
 
@@ -1044,6 +1073,8 @@ JrSequence buildJoin(JrConfig c) {
     config: c,
     messages: List<JrMessage>.unmodifiable(b.out),
     scan: b.scan,
+    faultNote: b.faultNote,
+    helpDesk: b.helpDesk,
     lanes: <JrLane>[
       JrLane.client,
       JrLane.ap,
@@ -1062,6 +1093,8 @@ JrSequence buildRoam(JrConfig c) {
     config: c,
     messages: List<JrMessage>.unmodifiable(b.out),
     scan: b.scan,
+    faultNote: b.faultNote,
+    helpDesk: b.helpDesk,
     lanes: <JrLane>[
       JrLane.client,
       JrLane.currentAp,
@@ -1138,6 +1171,11 @@ class _JrBuilder {
   final LadderMode mode;
   final JrScanPlan scan;
   final List<JrMessage> out = <JrMessage>[];
+
+  /// Set by a builder step that ends the exchange early (spec 42 shared
+  /// failure marker); null while nothing fails.
+  String? faultNote;
+  String? helpDesk;
 
   static const JrLane _c = JrLane.client;
 
