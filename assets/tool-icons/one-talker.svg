@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- PLACEHOLDER (Felix, 2026-09-29), for Charta to replace in the icons
-         branch. One Talker per Channel: a walkie-talkie (antenna, body,
-         grille) with two sound arcs, the lesson's analogy. Distinct from
-         guest-discovery (a dot, sideways arcs and a wall) and airtime-fairness
-         (a pie) by the radio body and antenna. -->
-    <path d="M7 2 V7"/>
-    <rect x="4.5" y="7" width="8" height="14" rx="2"/>
-    <path d="M7 11 H10"/>
-    <path d="M7 14 H10"/>
-    <path d="M15.5 9 A3.5 3.5 0 0 1 15.5 14"/>
-    <path d="M18.5 7 A6.5 6.5 0 0 1 18.5 16"/>
+    <!-- One Talker per Channel (Charta, 2026-09-30, from Felix's placeholder):
+         the lesson's walkie-talkie analogy. One radio (antenna, body, grille)
+         transmitting two sound arcs; a Guided Lesson, so no slider cue.
+         Re-centered optically and the arcs opened wider than the placeholder.
+         Distinct from guest-discovery (a small dot, sideways arcs and a wall)
+         by the tall radio body and antenna. -->
+    <path d="M6 2.5 V7"/>
+    <rect x="3.5" y="7" width="8" height="14" rx="2"/>
+    <path d="M6 11.5 H9"/>
+    <path d="M6 14.5 H9"/>
+    <path d="M14.5 9 A3.5 3.5 0 0 1 14.5 14"/>
+    <path d="M17.5 6.5 A6.8 6.8 0 0 1 17.5 16.5"/>
   </g>
 </svg>
