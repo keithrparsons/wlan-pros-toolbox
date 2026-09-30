@@ -1,11 +1,17 @@
-New: Shannon Capacity. The ceiling every Wi-Fi generation has been pushing against since 1948, and the reason more bandwidth stops helping long before you expect it to.
+The Wireless Classroom now has 91 tools, including 30 Guided Lessons and 50 simulators.
 
-New: a VoIP over Wi-Fi card for the Wireshark filter set.
+New: Polarization. Turn one radio wave in 3D and watch its field. Vertical, horizontal, slant, circular and elliptical, with an end-on view of the shape the field traces.
 
-Quick Reference is reorganized. Nineteen subgroups became thirteen, so the card you want sits where you would look for it rather than where it happened to land.
+New: OFDMA vs MU-MIMO. Move clients around an 802.11ax access point and see which method needs less airtime, drawn to scale, sounding included.
 
-Updated: Fix Your Own Wi-Fi now ships the current manuscript. Five more figures, laid out at the size the figures were drawn for, and a smaller download than the stale copy it replaces.
+New: One Talker per Channel, a Guided Lesson for beginners on why Wi-Fi slows down when everyone is home.
 
-Fixed: a network advertising OWE transition or WPA3 transition mode was read as though the transition marker were a security scheme of its own. Some open networks were labeled OWE because of it. They now read as what they are, which matters when you are choosing a network through a WLAN Pi.
+Association, Frame by Frame adds "Why won't it associate?": pair a client with a network and see whether they connect, and if not, the reason. Play the association now includes the 6 GHz race.
 
-Educational Resources is legible in light mode, and credits the people whose work it lists by name.
+The 802.1X and EAP Ladder adds Break it: pick a fault, such as an untrusted server certificate, and watch where the exchange stops.
+
+Rate vs Range adds a rate set builder. Antenna Pattern adds a floor view for mounting height. Multipath adds antenna diversity: compare selection and MRC with two or four antennas.
+
+Fixed: in Channel Utilization, the ACK rate now follows the basic rate set.
+
+The Field Manual is now the one detailed reference, with a "Teaching it" note on 76 tools. The Teacher's Guide is the short front door.

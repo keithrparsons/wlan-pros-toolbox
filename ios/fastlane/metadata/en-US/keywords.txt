@@ -1,0 +1,1 @@
+wifi,calculator,ping,traceroute,subnet,dbm,rssi,dns,ssid,roaming,cwna,mimo,classroom,simulator
