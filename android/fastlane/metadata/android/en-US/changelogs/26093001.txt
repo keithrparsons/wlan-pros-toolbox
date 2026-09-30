@@ -1,0 +1,7 @@
+The Wireless Classroom now has 91 tools, including 30 Guided Lessons and 50 simulators.
+
+New: Polarization, OFDMA vs MU-MIMO, and One Talker per Channel.
+
+Association, Frame by Frame adds "Why won't it associate?" and the 6 GHz race. The 802.1X and EAP Ladder adds Break it. Rate vs Range, Antenna Pattern and Multipath gain new views.
+
+The Field Manual is now the one detailed reference for teaching.
