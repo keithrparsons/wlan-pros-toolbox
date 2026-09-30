@@ -1,11 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- PLACEHOLDER (Felix, 2026-09-29) until Charta draws the Polarization icon. -->
-    <!-- the traced circle, seen looking along the direction of travel -->
-    <circle cx="12" cy="9.5" r="6.5"/>
-    <!-- the field vector from the center, tip on the circle, with a head -->
-    <path d="M12 9.5 L16.6 4.9"/>
-    <path d="M13.9 4.6 H16.9 V7.6"/>
+    <!-- Polarization (Charta, 2026-09-30): the tool's stage in one line. One
+         wave's electric field oscillating across its direction of travel,
+         drawn on the travel axis with an arrowhead. Replaces Felix's
+         placeholder ring and radius, which read as airtime-fairness and
+         channel-utilization at 20px. Distinct from wifi-through-a-wall (a tall
+         squiggle cut by a vertical wall) by the horizontal axis and the
+         arrowhead; the oblique 3D variant was rejected because it reads as a
+         trending-up chart. -->
+    <path d="M3 9.5 L3.25 8.58 L3.50 7.68 L3.75 6.84 L4.00 6.07 L4.25 5.40 L4.50 4.84 L4.75 4.42 L5.00 4.14 L5.25 4.01 L5.50 4.03 L5.75 4.21 L6.00 4.54 L6.25 5.01 L6.50 5.61 L6.75 6.32 L7.00 7.11 L7.25 7.98 L7.50 8.88 L7.75 9.81 L8.00 10.72 L8.25 11.60 L8.50 12.43 L8.75 13.16 L9.00 13.80 L9.25 14.31 L9.50 14.69 L9.75 14.92 L10.00 15.00 L10.25 14.92 L10.50 14.69 L10.75 14.31 L11.00 13.80 L11.25 13.16 L11.50 12.43 L11.75 11.60 L12.00 10.72 L12.25 9.81 L12.50 8.88 L12.75 7.98 L13.00 7.11 L13.25 6.32 L13.50 5.61 L13.75 5.01 L14.00 4.54 L14.25 4.21 L14.50 4.03 L14.75 4.01 L15.00 4.14 L15.25 4.42 L15.50 4.84 L15.75 5.40 L16.00 6.07 L16.25 6.84 L16.50 7.68 L16.75 8.58 L17.00 9.50"/>
+    <path d="M3 9.5 H21"/>
+    <path d="M18.5 7 L21 9.5 L18.5 12"/>
     <!-- Wi-Fi Classroom family cue: slider track + knob (interactive simulator) -->
     <path d="M3 20.5 H21"/>
     <circle cx="10" cy="20.5" r="2" fill="currentColor" stroke="none"/>
