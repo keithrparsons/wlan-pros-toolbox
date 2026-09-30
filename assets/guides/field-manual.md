@@ -4788,7 +4788,7 @@ Shows why the signal changes when you move a few centimeters. A receiver hears t
 |---|---|---|
 | Scene | One wall / Standing wave / Many paths | default One wall |
 | Band | GHz | 2.4, 5.5 or 6.5 |
-| Wall material | reflection strength |Γ| | Metal 1.0, Thick concrete 0.39, Drywall 0.1, or Custom 0 to 1 |
+| Wall material | reflection strength \|Γ\| | Metal 1.0, Thick concrete 0.39, Drywall 0.1, or Custom 0 to 1 |
 | Receiver position | cm | 0 to 100 along the track (One wall); 0 to 40 from the wall (Standing wave); 0 to 200 (Many paths) |
 | Reflectors | count | 2 to 30 (Many paths) |
 | Reflectors up to | m | 10, 60 or 300 (Many paths) |
@@ -4818,8 +4818,8 @@ Shows why the signal changes when you move a few centimeters. A receiver hears t
 |---|---|---|
 | Scene (picker): One wall (two-ray), Standing wave (walk to a wall), Many paths (Rayleigh fading); default One wall | Switches between the three models. | The three steps of the lesson: one reflection, the standing wave in front of a wall, then random fading from many paths. It is a picker, not segments, because the labels truncated at phone width. |
 | Band (2.4 / 5.5 / 6.5 GHz, default 2.4) | Changes the wavelength. | The dips repeat every half wavelength: 6.2 cm (2.4 in), 2.7 cm (1.1 in) and 2.3 cm (0.9 in). |
-| Wall material (One wall and Standing wave): Metal (\\|Γ\\| 1.00), Thick concrete (\\|Γ\\| 0.39), Drywall (\\|Γ\\| 0.10), Custom; default Metal | Sets how strongly the wall reflects. | A strong reflector cancels the direct copy completely; thick concrete swings the signal by 7.2 dB; drywall barely ripples it. |
-| Reflection strength \\|Γ\\| (slider, 0 to 1) | Sets the reflection yourself; moving it switches the material to Custom. | Lets the class dial the reflection down and watch the nulls fill in. |
+| Wall material (One wall and Standing wave): Metal (\|Γ\| 1.00), Thick concrete (\|Γ\| 0.39), Drywall (\|Γ\| 0.10), Custom; default Metal | Sets how strongly the wall reflects. | A strong reflector cancels the direct copy completely; thick concrete swings the signal by 7.2 dB; drywall barely ripples it. |
+| Reflection strength \|Γ\| (slider, 0 to 1) | Sets the reflection yourself; moving it switches the material to Custom. | Lets the class dial the reflection down and watch the nulls fill in. |
 | Receiver position (One wall, 0 to 100 cm) / Distance to the wall (Standing wave, 0 to 40 cm); drag the receiver in the picture or on the plot | Moves the receiver. | Watch the reflected arrow swing around the direct one as the receiver moves. |
 | Reflectors (Many paths, 2 to 30, default 12) | Sets how many reflected copies arrive. | More copies of random phase is Rayleigh fading; the histogram shows it against the theory curve. |
 | Reflectors up to: 10 m / 60 m / 300 m (Many paths; room, large hall, outdoors) | Sets how far away the reflectors sit. | Exists so the guard-interval lesson can fire: only the 300 m layouts put copies more than 0.8 microseconds late. |
