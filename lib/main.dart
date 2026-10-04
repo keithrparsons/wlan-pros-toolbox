@@ -43,6 +43,7 @@ import 'services/network/dart_ping_icmp_backend.dart';
 import 'services/network/pi_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
 import 'favorites/my_tools_controller.dart';
+import 'favorites/my_tools_tip.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'units/unit_system.dart';
@@ -368,11 +369,19 @@ Future<void> main() async {
   final MyToolsController myToolsController = MyToolsController();
   await myToolsController.load();
 
+  // The one-time "press and hold" tip (Keith, 2026-10-04): counts tool opens
+  // on this device. load() never throws.
+  final MyToolsTipController myToolsTip = MyToolsTipController(
+    myTools: myToolsController,
+  );
+  await myToolsTip.load();
+
   runApp(
     ToolboxApp(
       themeController: themeController,
       unitsController: unitsController,
       myToolsController: myToolsController,
+      myToolsTip: myToolsTip,
     ),
   );
 }
@@ -383,6 +392,7 @@ class ToolboxApp extends StatelessWidget {
     required this.themeController,
     this.unitsController,
     this.myToolsController,
+    this.myToolsTip,
   });
 
   /// Owns the §8.20.5 ThemeMode (System / Light / Dark). Exposed via the
@@ -402,6 +412,10 @@ class ToolboxApp extends StatelessWidget {
   final MyToolsController? myToolsController;
 
   static final MyToolsController _fallbackMyTools = MyToolsController();
+
+  /// Counts tool opens for the one-time My Tools tip. Optional: a bare
+  /// ToolboxApp in a test has no tip and no extra observer.
+  final MyToolsTipController? myToolsTip;
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +452,10 @@ class ToolboxApp extends StatelessWidget {
       navigatorKey: AppRouter.navigatorKey,
       // Tracks the current route so the x-error recovery gate can tell a cold
       // relaunch-to-home from a warm return already on the origin tool.
-      navigatorObservers: <NavigatorObserver>[appRouteObserver],
+      navigatorObservers: <NavigatorObserver>[
+        appRouteObserver,
+        if (myToolsTip != null) myToolsTip!.observer,
+      ],
       initialRoute: AppRouter.home,
       routes: AppRouter.routes,
       onUnknownRoute: AppRouter.onUnknownRoute,
