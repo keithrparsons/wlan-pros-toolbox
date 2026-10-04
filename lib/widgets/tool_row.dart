@@ -20,9 +20,15 @@
 // toggleMyTool flow. Screen readers get the same thing as a named custom
 // action, and the row's label says "In My Tools" when it is. With no
 // MyToolsScope above the row (a bare widget test) none of this is wired.
+//
+// KEYBOARD AND MOUSE (Keith, 2026-10-04, after Vera's gate F1): a right-click,
+// the context-menu key, or Shift-F10 with the row focused opens a one-item
+// menu, "Add to My Tools" or "Remove from My Tools", that runs the same
+// toggleMyTool flow (so a full list still asks which tool to replace).
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/content_type.dart';
@@ -89,6 +95,33 @@ class _ToolRowState extends State<ToolRow> {
     }
   }
 
+  /// Opens the one-item My Tools menu. A right-click anchors it at the
+  /// pointer ([globalPosition]); the keyboard path anchors it on the row.
+  Future<void> _showMyToolsMenu([Offset? globalPosition]) async {
+    final MyToolsController? myTools = MyToolsScope.read(context);
+    if (myTools == null || !_live) return;
+    final RenderBox row = context.findRenderObject()! as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final Rect anchor = globalPosition != null
+        ? overlay.globalToLocal(globalPosition) & Size.zero
+        : row.localToGlobal(Offset.zero, ancestor: overlay) & row.size;
+    final bool inMyTools = myTools.contains(widget.tool.id);
+    final bool? picked = await showMenu<bool>(
+      context: context,
+      position: RelativeRect.fromRect(anchor, Offset.zero & overlay.size),
+      items: <PopupMenuEntry<bool>>[
+        PopupMenuItem<bool>(
+          key: ValueKey<String>('my-tools-menu-${widget.tool.id}'),
+          value: true,
+          child: Text(inMyTools ? 'Remove from My Tools' : 'Add to My Tools'),
+        ),
+      ],
+    );
+    if (picked != true || !mounted) return;
+    await toggleMyTool(context, widget.tool);
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -135,45 +168,61 @@ class _ToolRowState extends State<ToolRow> {
                 label: inMyTools ? 'Remove from My Tools' : 'Add to My Tools',
               ): toggleFavorite,
             },
-      child: Material(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: live ? _handleTap : null,
-          onLongPress: toggleFavorite,
-          onFocusChange: live
-              ? (bool hasFocus) {
-                  if (hasFocus != _focused) {
-                    setState(() => _focused = hasFocus);
+      child: CallbackShortcuts(
+        bindings: !canFavorite
+            ? const <ShortcutActivator, VoidCallback>{}
+            : <ShortcutActivator, VoidCallback>{
+                const SingleActivator(LogicalKeyboardKey.contextMenu):
+                    _showMyToolsMenu,
+                const SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                    _showMyToolsMenu,
+              },
+        child: Material(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: live ? _handleTap : null,
+            onLongPress: toggleFavorite,
+            onSecondaryTapUp: canFavorite
+                ? (TapUpDetails d) => _showMyToolsMenu(d.globalPosition)
+                : null,
+            onFocusChange: live
+                ? (bool hasFocus) {
+                    if (hasFocus != _focused) {
+                      setState(() => _focused = hasFocus);
+                    }
                   }
-                }
-              : null,
-          child: Container(
-            decoration: BoxDecoration(
-              border: rowBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: 14,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                ToolLeadingIcon(tool: widget.tool, live: live),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(child: _content(text, live)),
-                if (live)
-                  Padding(
-                    padding: const EdgeInsets.only(left: AppSpacing.xs, top: 2),
-                    child: Icon(
-                      Icons.chevron_right,
-                      color: colors.textTertiary,
-                      size: 20,
+                : null,
+            child: Container(
+              decoration: BoxDecoration(
+                border: rowBorder,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 14,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  ToolLeadingIcon(tool: widget.tool, live: live),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: _content(text, live)),
+                  if (live)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xs,
+                        top: 2,
+                      ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: colors.textTertiary,
+                        size: 20,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

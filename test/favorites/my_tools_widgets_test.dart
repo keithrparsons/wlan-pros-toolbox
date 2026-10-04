@@ -2,16 +2,21 @@
 // and sits directly under the Check My Connection hero; the star toggles with
 // a state-stating label; the eleventh add opens the list-is-full dialog;
 // Edit mode reorders (drag and the non-drag buttons), removes, and clears all
-// behind a confirmation; long-press on a tool row adds and removes.
+// behind a confirmation; long-press on a tool row adds and removes; so do a
+// right-click and the context-menu key (Shift-F10) on a focused row.
 
+import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/favorites/my_tools_controller.dart';
 import 'package:wlan_pros_toolbox/favorites/my_tools_star_button.dart';
+import 'package:wlan_pros_toolbox/screens/category_screen.dart';
 import 'package:wlan_pros_toolbox/screens/home_screen.dart';
+import 'package:wlan_pros_toolbox/screens/search_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/tool_row.dart';
 
@@ -146,7 +151,9 @@ void main() {
 
     for (final double width in <double>[320, 375, 440, 1280]) {
       testWidgets('view mode is two columns at $width wide, and the ten '
-          'longest names fit without overflow', (WidgetTester tester) async {
+          'longest names fit without overflow, in view and edit mode', (
+        WidgetTester tester,
+      ) async {
         for (final ThemeData theme in <ThemeData>[
           AppTheme.dark(),
           AppTheme.light(),
@@ -183,6 +190,11 @@ void main() {
             expect(t.maxLines, 2);
             expect(t.overflow, TextOverflow.ellipsis);
           }
+          // Edit mode with the same long names: no overflow either (Vera's
+          // advisory raised the row's right padding to AppSpacing.xs).
+          await tester.tap(find.byKey(const ValueKey<String>('my-tools-edit')));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
         }
       });
     }
@@ -224,14 +236,18 @@ void main() {
       expect(find.bySemanticsLabel('Add to My Tools'), findsOneWidget);
       expect(find.byIcon(Icons.star_border), findsOneWidget);
 
-      await tester.tap(find.byKey(ValueKey<String>('my-tools-star-${tool.id}')));
+      await tester.tap(
+        find.byKey(ValueKey<String>('my-tools-star-${tool.id}')),
+      );
       await tester.pumpAndSettle();
       expect(c.ids, <String>[tool.id]);
       expect(find.bySemanticsLabel('Remove from My Tools'), findsOneWidget);
       expect(find.byIcon(Icons.star), findsOneWidget);
       expect(find.text('Added ${tool.title} to My Tools'), findsOneWidget);
 
-      await tester.tap(find.byKey(ValueKey<String>('my-tools-star-${tool.id}')));
+      await tester.tap(
+        find.byKey(ValueKey<String>('my-tools-star-${tool.id}')),
+      );
       await tester.pumpAndSettle();
       expect(c.isEmpty, isTrue);
       expect(find.bySemanticsLabel('Add to My Tools'), findsOneWidget);
@@ -251,9 +267,7 @@ void main() {
     testWidgets('renders nothing without a scope or for an unknown id', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(home: _starScreen(_tools[0])),
-      );
+      await tester.pumpWidget(MaterialApp(home: _starScreen(_tools[0])));
       expect(find.byType(IconButton), findsNothing);
       await _pump(
         tester,
@@ -355,9 +369,7 @@ void main() {
         of: find.byKey(ValueKey<String>('my-tools-edit-$first')),
         matching: find.byIcon(Icons.drag_indicator),
       );
-      final TestGesture g = await tester.startGesture(
-        tester.getCenter(handle),
-      );
+      final TestGesture g = await tester.startGesture(tester.getCenter(handle));
       await tester.pump(const Duration(milliseconds: 16));
       for (int i = 0; i < 10; i++) {
         await g.moveBy(const Offset(0, 30));
@@ -393,7 +405,9 @@ void main() {
       WidgetTester tester,
     ) async {
       final MyToolsController c = await openEdit(tester, 10);
-      await tester.tap(find.byKey(const ValueKey<String>('my-tools-clear-all')));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('my-tools-clear-all')),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Remove all 10 tools from My Tools?'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
@@ -405,7 +419,9 @@ void main() {
     testWidgets('Clear all, confirmed, empties the list and the section '
         'disappears', (WidgetTester tester) async {
       final MyToolsController c = await openEdit(tester, 10);
-      await tester.tap(find.byKey(const ValueKey<String>('my-tools-clear-all')));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('my-tools-clear-all')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Clear all'));
       await tester.pumpAndSettle();
@@ -467,16 +483,15 @@ void main() {
       );
       final SemanticsData data = node.getSemanticsData();
       expect(data.customSemanticsActionIds, isNotEmpty);
-      final CustomSemanticsAction action =
-          CustomSemanticsAction.getAction(data.customSemanticsActionIds!.first)!;
+      final CustomSemanticsAction action = CustomSemanticsAction.getAction(
+        data.customSemanticsActionIds!.first,
+      )!;
       expect(action.label, 'Add to My Tools');
 
       await c.add(_tools[0].id);
       await tester.pumpAndSettle();
       expect(
-        tester
-            .getSemantics(find.byKey(const ValueKey<String>('row0')))
-            .label,
+        tester.getSemantics(find.byKey(const ValueKey<String>('row0'))).label,
         endsWith('In My Tools.'),
       );
       handle.dispose();
@@ -499,6 +514,216 @@ void main() {
       );
       expect(ink.onLongPress, isNull);
       handle.dispose();
+    });
+  });
+
+  group('right-click and context-menu key on a tool row', () {
+    Widget rows(ToolEntry tool) => Scaffold(
+      body: ListView(
+        children: <Widget>[
+          ToolRow(key: const ValueKey<String>('row'), tool: tool),
+        ],
+      ),
+    );
+    final Finder row = find.byKey(const ValueKey<String>('row'));
+
+    Future<void> rightClick(WidgetTester tester, Finder f) async {
+      await tester.tap(f, buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+    }
+
+    /// Tabs until keyboard focus is inside [f]; fails if it never gets there.
+    Future<void> tabTo(WidgetTester tester, Finder f) async {
+      for (int i = 0; i < 20; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pumpAndSettle();
+        final BuildContext? focused =
+            FocusManager.instance.primaryFocus?.context;
+        if (focused != null &&
+            find
+                .descendant(of: f, matching: find.byWidget(focused.widget))
+                .evaluate()
+                .isNotEmpty) {
+          return;
+        }
+      }
+      fail('Tab never reached the row');
+    }
+
+    Future<void> contextMenuKey(WidgetTester tester) async {
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> shiftF10(WidgetTester tester) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('right-click adds, then removes, with a one-item menu', (
+      WidgetTester tester,
+    ) async {
+      final MyToolsController c = MyToolsController();
+      final ToolEntry tool = _tools[0];
+      await _pump(tester, c, rows(tool));
+
+      await rightClick(tester, row);
+      expect(find.byType(PopupMenuItem<bool>), findsOneWidget);
+      expect(find.text('Add to My Tools'), findsOneWidget);
+      await tester.tap(find.text('Add to My Tools'));
+      await tester.pumpAndSettle();
+      expect(c.ids, <String>[tool.id]);
+      expect(find.text('Added ${tool.title} to My Tools'), findsOneWidget);
+
+      await rightClick(tester, row);
+      expect(find.byType(PopupMenuItem<bool>), findsOneWidget);
+      expect(find.text('Remove from My Tools'), findsOneWidget);
+      await tester.tap(find.text('Remove from My Tools'));
+      await tester.pumpAndSettle();
+      expect(c.isEmpty, isTrue);
+      expect(find.text('Removed ${tool.title} from My Tools'), findsOneWidget);
+    });
+
+    testWidgets('right-click then dismissing the menu changes nothing', (
+      WidgetTester tester,
+    ) async {
+      final MyToolsController c = MyToolsController();
+      await _pump(tester, c, rows(_tools[0]));
+      await rightClick(tester, row);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuItem<bool>), findsNothing);
+      expect(c.isEmpty, isTrue);
+    });
+
+    testWidgets('context-menu key on the Tab-focused row adds, then removes, '
+        'all from the keyboard', (WidgetTester tester) async {
+      final MyToolsController c = MyToolsController();
+      final ToolEntry tool = _tools[0];
+      await _pump(tester, c, rows(tool));
+      await tabTo(tester, row);
+
+      await contextMenuKey(tester);
+      expect(find.text('Add to My Tools'), findsOneWidget);
+      // Choose the item with the keyboard: arrow into the menu, then Enter.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(c.ids, <String>[tool.id]);
+
+      await tabTo(tester, row);
+      await contextMenuKey(tester);
+      expect(find.text('Remove from My Tools'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(c.isEmpty, isTrue);
+    });
+
+    testWidgets('Shift-F10 on the focused row opens the same menu', (
+      WidgetTester tester,
+    ) async {
+      final MyToolsController c = MyToolsController();
+      final ToolEntry tool = _tools[0];
+      await _pump(tester, c, rows(tool));
+      await tabTo(tester, row);
+      await shiftF10(tester);
+      expect(find.text('Add to My Tools'), findsOneWidget);
+      await tester.tap(find.text('Add to My Tools'));
+      await tester.pumpAndSettle();
+      expect(c.ids, <String>[tool.id]);
+
+      await tabTo(tester, row);
+      await shiftF10(tester);
+      expect(find.text('Remove from My Tools'), findsOneWidget);
+      await tester.tap(find.text('Remove from My Tools'));
+      await tester.pumpAndSettle();
+      expect(c.isEmpty, isTrue);
+    });
+
+    testWidgets('F10 without Shift opens nothing', (WidgetTester tester) async {
+      await _pump(tester, MyToolsController(), rows(_tools[0]));
+      await tabTo(tester, row);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuItem<bool>), findsNothing);
+    });
+
+    testWidgets('right-click on a full list opens the replace dialog', (
+      WidgetTester tester,
+    ) async {
+      final MyToolsController c = await _filled(10);
+      final ToolEntry incoming = _tools[10];
+      await _pump(tester, c, rows(incoming));
+      await rightClick(tester, row);
+      await tester.tap(find.text('Add to My Tools'));
+      await tester.pumpAndSettle();
+      expect(find.text('My Tools is full'), findsOneWidget);
+      await tester.tap(find.byKey(ValueKey<String>('replace-${_tools[2].id}')));
+      await tester.pumpAndSettle();
+      expect(c.length, 10);
+      expect(c.ids[2], incoming.id);
+      expect(
+        find.text('Replaced ${_tools[2].title} with ${incoming.title}'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('context-menu key on a full list opens the replace dialog', (
+      WidgetTester tester,
+    ) async {
+      final MyToolsController c = await _filled(10);
+      final List<String> before = c.ids;
+      final ToolEntry incoming = _tools[10];
+      await _pump(tester, c, rows(incoming));
+      await tabTo(tester, row);
+      await contextMenuKey(tester);
+      await tester.tap(find.text('Add to My Tools'));
+      await tester.pumpAndSettle();
+      expect(find.text('My Tools is full'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(c.ids, before);
+    });
+
+    testWidgets('works on the real category list', (WidgetTester tester) async {
+      final MyToolsController c = MyToolsController();
+      final ToolCategory cat = kToolCategories.firstWhere(
+        (ToolCategory k) => k.id == 'rf-calculators',
+      );
+      await _pump(tester, c, CategoryScreen(category: cat));
+      final ToolRow first = tester
+          .widgetList<ToolRow>(find.byType(ToolRow))
+          .firstWhere((ToolRow r) => r.tool.isLive);
+      await rightClick(tester, find.byWidget(first));
+      await tester.tap(find.text('Add to My Tools'));
+      await tester.pumpAndSettle();
+      expect(c.ids, <String>[first.tool.id]);
+    });
+
+    testWidgets('works on search results', (WidgetTester tester) async {
+      final MyToolsController c = MyToolsController();
+      await _pump(tester, c, const SearchScreen(initialQuery: 'channel'));
+      final ToolRow first = tester
+          .widgetList<ToolRow>(find.byType(ToolRow))
+          .firstWhere((ToolRow r) => r.tool.isLive);
+      await rightClick(tester, find.byWidget(first));
+      await tester.tap(find.text('Add to My Tools'));
+      await tester.pumpAndSettle();
+      expect(c.ids, <String>[first.tool.id]);
+    });
+
+    testWidgets('no scope: right-click and the menu key open nothing', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(home: rows(_tools[0])));
+      await rightClick(tester, row);
+      expect(find.byType(PopupMenuItem<bool>), findsNothing);
+      await tabTo(tester, row);
+      await contextMenuKey(tester);
+      expect(find.byType(PopupMenuItem<bool>), findsNothing);
     });
   });
 }
