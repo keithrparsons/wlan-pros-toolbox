@@ -42,6 +42,7 @@ import 'services/help/tool_help_loader.dart';
 import 'services/network/dart_ping_icmp_backend.dart';
 import 'services/network/pi_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
+import 'favorites/my_tools_controller.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'units/unit_system.dart';
@@ -361,10 +362,17 @@ Future<void> main() async {
   // lines load before the first frame, the same way. load() never throws.
   await FsplTargetStore.instance.load();
 
+  // My Tools, the user's own top ten (Keith, 2026-10-03). Device-only
+  // shared_preferences; ids the catalog no longer carries are dropped here.
+  // load() never throws.
+  final MyToolsController myToolsController = MyToolsController();
+  await myToolsController.load();
+
   runApp(
     ToolboxApp(
       themeController: themeController,
       unitsController: unitsController,
+      myToolsController: myToolsController,
     ),
   );
 }
@@ -374,6 +382,7 @@ class ToolboxApp extends StatelessWidget {
     super.key,
     required this.themeController,
     this.unitsController,
+    this.myToolsController,
   });
 
   /// Owns the §8.20.5 ThemeMode (System / Light / Dark). Exposed via the
@@ -387,17 +396,27 @@ class ToolboxApp extends StatelessWidget {
 
   static final UnitSystemController _fallbackUnits = UnitSystemController();
 
+  /// The user's My Tools list, exposed through [MyToolsScope]. Optional for
+  /// the same reason as [unitsController]; a bare ToolboxApp gets an empty,
+  /// unloaded controller of its own.
+  final MyToolsController? myToolsController;
+
+  static final MyToolsController _fallbackMyTools = MyToolsController();
+
   @override
   Widget build(BuildContext context) {
-    return UnitSystemScope(
-      controller: unitsController ?? _fallbackUnits,
-      child: ThemeControllerScope(
-        controller: themeController,
-        child: ListenableBuilder(
-          listenable: themeController,
-          builder: (BuildContext context, Widget? _) {
-            return _buildApp(themeController.mode);
-          },
+    return MyToolsScope(
+      controller: myToolsController ?? _fallbackMyTools,
+      child: UnitSystemScope(
+        controller: unitsController ?? _fallbackUnits,
+        child: ThemeControllerScope(
+          controller: themeController,
+          child: ListenableBuilder(
+            listenable: themeController,
+            builder: (BuildContext context, Widget? _) {
+              return _buildApp(themeController.mode);
+            },
+          ),
         ),
       ),
     );
