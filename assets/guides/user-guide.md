@@ -208,6 +208,8 @@ The simulators are designed for a tablet or a computer screen. On a phone they s
 
 If you keep coming back to the same few tools, put them on the front page. Press and hold any tool in a section list or in search results, and it is added to My Tools, a list that appears just under Check My Connection. Press and hold it again to take it off.
 
+On a Mac or PC you can right-click the tool instead. Or select it with the Tab key and press the context-menu key (Shift-F10 on Windows). A small menu opens with Add to My Tools, or Remove from My Tools if it is already there.
+
 My Tools holds up to ten. When it is full and you add another, the app asks which one to swap out, and you can cancel instead. Tap Edit on the list to put the tools in the order you want: drag them by the handle, or use the up and down arrows. Edit is also where you remove one tool, or tap Clear all to empty the list and start over. Once the list is empty, it disappears and the front page looks the way it did at the start.
 
 Your list is saved on this device and nowhere else. Each phone, tablet and computer keeps its own list. It is not synced between your devices and it is never sent anywhere. If you delete the app, the list is deleted with it.

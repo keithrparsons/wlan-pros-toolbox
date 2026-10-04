@@ -5,11 +5,18 @@
 // hold any tool to add it to My Tools." Never again on that device. The home
 // screen is unchanged.
 //
+// Wording by platform (Keith, 2026-10-04, SPEC 7): phones and tablets (iOS,
+// Android) get the press-and-hold line; Mac, Windows, Linux and the web get
+// "Right-click any tool to add it to My Tools." The trigger stays any 3 opens,
+// re-opening the same tool counts (SPEC 8).
+//
 // Tool opens are counted by [MyToolsTipObserver] on the app Navigator: a push
 // of any catalog tool route counts, whichever surface opened it. The count and
 // the shown flag live in shared_preferences on this device only, like the My
 // Tools list itself. A read or write failure never blocks the app.
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,9 +36,27 @@ class MyToolsTipController {
   /// Opens before the tip can show (Keith, 2026-10-04: "opened 3 tools").
   static const int opensBeforeTip = 3;
 
-  /// The tip text, exactly as Keith ruled it.
-  static const String message =
+  /// The tip on phones and tablets (iOS, Android), exactly as Keith ruled it.
+  static const String touchMessage =
       'Press and hold any tool to add it to My Tools.';
+
+  /// The tip on Mac, Windows, Linux and the web, exactly as Keith ruled it.
+  static const String desktopMessage =
+      'Right-click any tool to add it to My Tools.';
+
+  /// The tip text for [platform]. On the web it is always [desktopMessage].
+  /// Reads `defaultTargetPlatform` and `kIsWeb` (web-safe, no `dart:io`), the
+  /// same platform test the rest of the app uses.
+  static String messageFor(TargetPlatform platform, {bool web = kIsWeb}) {
+    if (web) return desktopMessage;
+    return switch (platform) {
+      TargetPlatform.iOS || TargetPlatform.android => touchMessage,
+      _ => desktopMessage,
+    };
+  }
+
+  /// The tip text for the platform the app is running on.
+  static String get message => messageFor(defaultTargetPlatform);
 
   /// shared_preferences key for the tool-open count.
   static const String opensKey = 'my_tools_tip_opens';
@@ -114,9 +139,9 @@ class MyToolsTipObserver extends NavigatorObserver {
     // tip shows on it.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!nav.mounted) return;
-      ScaffoldMessenger.maybeOf(nav.context)?.showSnackBar(
-        const SnackBar(content: Text(MyToolsTipController.message)),
-      );
+      ScaffoldMessenger.maybeOf(
+        nav.context,
+      )?.showSnackBar(SnackBar(content: Text(MyToolsTipController.message)));
     });
     WidgetsBinding.instance.scheduleFrame();
   }

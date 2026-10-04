@@ -1,7 +1,8 @@
 // The one-time My Tools tip (Keith, 2026-10-04, SPEC 6): after 3 tool opens
 // with My Tools still empty, one SnackBar, "Press and hold any tool to add it
 // to My Tools.", and never again on that device, across restarts. Not shown
-// when the user already has favorites.
+// when the user already has favorites. Wording by platform (SPEC 7): press
+// and hold on iOS and Android, right-click on Mac, Windows, Linux and the web.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,7 +15,9 @@ final List<ToolEntry> _tools = <ToolEntry>[
   for (final ToolCategory c in kToolCategories) ...c.tools,
 ];
 
+// flutter_test runs as Android unless a test overrides the platform.
 const String _tip = 'Press and hold any tool to add it to My Tools.';
+const String _desktopTip = 'Right-click any tool to add it to My Tools.';
 
 /// A fresh controller pair loaded from the (mock) prefs, the way main() builds
 /// them at launch. Calling it again simulates a restart.
@@ -65,10 +68,14 @@ Future<void> _pumpApp(WidgetTester tester, MyToolsTipController tip) async {
 
 /// Taps the button [key], lets the tip (if any) appear, and comes back home.
 /// Returns whether the tip showed.
-Future<bool> _openAndReturn(WidgetTester tester, String key) async {
+Future<bool> _openAndReturn(
+  WidgetTester tester,
+  String key, {
+  String tip = _tip,
+}) async {
   await tester.tap(find.byKey(ValueKey<String>(key)));
   await tester.pumpAndSettle();
-  final bool tipShown = find.text(_tip).evaluate().isNotEmpty;
+  final bool tipShown = find.text(tip).evaluate().isNotEmpty;
   // Clear any SnackBar so it cannot carry over to the next open.
   ScaffoldMessenger.of(
     tester.element(find.byType(Scaffold).last),
@@ -196,5 +203,84 @@ void main() {
       await _pumpApp(tester, tip);
       expect(await _openAndReturn(tester, 'open2'), isTrue);
     });
+  });
+
+  group('tip wording by platform (SPEC 7)', () {
+    test('press and hold on iOS and Android, right-click on Mac, Windows '
+        'and Linux', () {
+      for (final TargetPlatform p in <TargetPlatform>[
+        TargetPlatform.iOS,
+        TargetPlatform.android,
+      ]) {
+        expect(
+          MyToolsTipController.messageFor(p, web: false),
+          _tip,
+          reason: '$p',
+        );
+      }
+      for (final TargetPlatform p in <TargetPlatform>[
+        TargetPlatform.macOS,
+        TargetPlatform.windows,
+        TargetPlatform.linux,
+      ]) {
+        expect(
+          MyToolsTipController.messageFor(p, web: false),
+          _desktopTip,
+          reason: '$p',
+        );
+      }
+    });
+
+    test(
+      'the web always gets the desktop wording, even on a phone browser',
+      () {
+        for (final TargetPlatform p in TargetPlatform.values) {
+          expect(
+            MyToolsTipController.messageFor(p, web: true),
+            _desktopTip,
+            reason: '$p',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'the SnackBar says press and hold on phones and tablets',
+      (WidgetTester tester) async {
+        final MyToolsTipController tip = await _launch();
+        await _pumpApp(tester, tip);
+        expect(await _openAndReturn(tester, 'open0'), isFalse);
+        expect(await _openAndReturn(tester, 'open1'), isFalse);
+        expect(await _openAndReturn(tester, 'open2'), isTrue);
+        expect(find.text(_desktopTip), findsNothing);
+      },
+      variant: const TargetPlatformVariant(<TargetPlatform>{
+        TargetPlatform.iOS,
+        TargetPlatform.android,
+      }),
+    );
+
+    testWidgets(
+      'the SnackBar says right-click on Mac, Windows and Linux',
+      (WidgetTester tester) async {
+        final MyToolsTipController tip = await _launch();
+        await _pumpApp(tester, tip);
+        expect(
+          await _openAndReturn(tester, 'open0', tip: _desktopTip),
+          isFalse,
+        );
+        expect(
+          await _openAndReturn(tester, 'open1', tip: _desktopTip),
+          isFalse,
+        );
+        expect(await _openAndReturn(tester, 'open2', tip: _desktopTip), isTrue);
+        expect(find.text(_tip), findsNothing);
+      },
+      variant: const TargetPlatformVariant(<TargetPlatform>{
+        TargetPlatform.macOS,
+        TargetPlatform.windows,
+        TargetPlatform.linux,
+      }),
+    );
   });
 }
