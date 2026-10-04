@@ -120,8 +120,9 @@ void main() {
               .getTopLeft(find.byKey(ValueKey<String>('my-tools-tile-$id')))
               .dy,
       ];
-      // Two columns at this width: the first tile is not below the later ones.
-      expect(ys.first, lessThanOrEqualTo(ys.last));
+      // Two columns: list order runs left to right, then down.
+      expect(ys[0], ys[1]);
+      expect(ys[2], greaterThan(ys[0]));
 
       await tester.tap(
         find.byKey(ValueKey<String>('my-tools-tile-${c.ids.first}')),
@@ -129,6 +130,62 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('route:${_tools[2].routeName}'), findsOneWidget);
     });
+
+    const List<String> longNames = <String>[
+      'interferer-cost',
+      'mesh-extenders-explained',
+      'down-the-stack',
+      'guest-discovery',
+      'box-vs-hand',
+      'location-rssi-ftm',
+      'cameras-doorbells-explained',
+      'devices-to-internet-explained',
+      'wpa2-password',
+      'db-rules',
+    ];
+
+    for (final double width in <double>[320, 375, 440, 1280]) {
+      testWidgets('view mode is two columns at $width wide, and the ten '
+          'longest names fit without overflow', (WidgetTester tester) async {
+        for (final ThemeData theme in <ThemeData>[
+          AppTheme.dark(),
+          AppTheme.light(),
+        ]) {
+          final MyToolsController c = MyToolsController();
+          for (final String id in longNames) {
+            expect(await c.add(id), MyToolsAddResult.added, reason: id);
+          }
+          await tester.pumpWidget(const SizedBox.shrink());
+          await _pump(
+            tester,
+            c,
+            const HomeScreen(),
+            size: Size(width, 2400),
+            theme: theme,
+          );
+          expect(tester.takeException(), isNull);
+          for (int i = 0; i < 10; i += 2) {
+            final Rect a = tester.getRect(
+              find.byKey(ValueKey<String>('my-tools-tile-${c.ids[i]}')),
+            );
+            final Rect b = tester.getRect(
+              find.byKey(ValueKey<String>('my-tools-tile-${c.ids[i + 1]}')),
+            );
+            expect(a.top, b.top, reason: 'pair $i shares a row');
+            expect(a.height, b.height, reason: 'pair $i is equal height');
+            expect(a.right, lessThan(b.left));
+          }
+          // Titles wrap to at most two lines, then ellipsize.
+          for (final Text t in tester.widgetList<Text>(
+            find.descendant(of: _section, matching: find.byType(Text)),
+          )) {
+            if (t.data == 'My Tools' || t.data == 'Edit') continue;
+            expect(t.maxLines, 2);
+            expect(t.overflow, TextOverflow.ellipsis);
+          }
+        }
+      });
+    }
 
     for (final double width in <double>[320, 375, 440, 1280]) {
       testWidgets('ten tools lay out without overflow at $width wide, view '

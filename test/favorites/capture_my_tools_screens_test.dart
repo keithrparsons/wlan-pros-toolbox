@@ -116,12 +116,12 @@ void main() {
   });
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
-  testWidgets('01 home, phone, dark, six tools', (WidgetTester tester) async {
+  testWidgets('01 home, phone, dark, ten tools', (WidgetTester tester) async {
     await _shoot(
       tester,
       name: '01-home-phone-dark-my-tools',
       size: const Size(390, 844),
-      controller: await _controller(6),
+      controller: await _controller(10),
       home: const HomeScreen(),
     );
   });
@@ -167,6 +167,33 @@ void main() {
       name: '04-home-desktop-dark-ten-tools',
       size: const Size(1280, 900),
       controller: await _controller(10),
+      home: const HomeScreen(),
+    );
+  });
+
+  testWidgets('05 home, 320 wide, dark, ten long names', (
+    WidgetTester tester,
+  ) async {
+    final MyToolsController c = MyToolsController();
+    for (final String id in <String>[
+      'interferer-cost',
+      'mesh-extenders-explained',
+      'down-the-stack',
+      'guest-discovery',
+      'box-vs-hand',
+      'location-rssi-ftm',
+      'cameras-doorbells-explained',
+      'devices-to-internet-explained',
+      'wpa2-password',
+      'db-rules',
+    ]) {
+      expect(await c.add(id), MyToolsAddResult.added, reason: id);
+    }
+    await _shoot(
+      tester,
+      name: '05-home-320-long-names-dark',
+      size: const Size(320, 760),
+      controller: c,
       home: const HomeScreen(),
     );
   });

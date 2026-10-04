@@ -5,10 +5,10 @@
 // sees the home screen exactly as it was before this feature.
 //
 // Two modes:
-//   * VIEW: the tools as tappable tiles, one column on a phone and two from the
-//     440 compact breakpoint (GL-003 §8.7.1). Tapping opens the tool through its
-//     normal named route, so routes, deep links and presenter mode are
-//     untouched.
+//   * VIEW: the tools as tappable tiles in a two-column grid at every width
+//     (Keith, 2026-10-03), so ten tools take five rows and the category tiles
+//     stay in view on a phone. Tapping opens the tool through its normal named
+//     route, so routes, deep links and presenter mode are untouched.
 //   * EDIT (the Edit button): drag to reorder by the handle, plus visible
 //     Move up / Move down / Remove buttons. The buttons are the non-drag
 //     alternative the spec requires for screen readers, and they also satisfy
@@ -145,29 +145,40 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// View mode: one column below the 440 compact breakpoint, two at or above.
+/// View mode: a compact two-column grid at every width (Keith, 2026-10-03:
+/// ten full-width rows pushed the category tiles off a phone screen). Rows are
+/// equal height per pair. A cell narrower than [_iconCellMinWidth] drops the
+/// leading icon so the title keeps usable width; titles wrap to two lines and
+/// then ellipsize, and the full title is always the semantics label.
 class _TileGrid extends StatelessWidget {
   const _TileGrid({required this.tools});
 
   final List<ToolEntry> tools;
 
+  static const int _columns = 2;
+
+  /// Below this cell width (phones up to ~460 wide) the 40px icon tile would
+  /// leave the title under ~100px, so compact cells show the title alone.
+  static const double _iconCellMinWidth = 220;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final int columns =
-            constraints.maxWidth >= AppSpacing.gridTwoColBreakpoint ? 2 : 1;
+        final double cellWidth =
+            (constraints.maxWidth - AppSpacing.sm * (_columns - 1)) / _columns;
+        final bool compact = cellWidth < _iconCellMinWidth;
         final List<Widget> rows = <Widget>[];
-        for (int i = 0; i < tools.length; i += columns) {
+        for (int i = 0; i < tools.length; i += _columns) {
           if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.xs));
           final List<Widget> cells = <Widget>[];
-          for (int c = 0; c < columns; c++) {
+          for (int c = 0; c < _columns; c++) {
             if (c > 0) cells.add(const SizedBox(width: AppSpacing.sm));
             final int at = i + c;
             cells.add(
               Expanded(
                 child: at < tools.length
-                    ? _MyToolTile(tool: tools[at])
+                    ? _MyToolTile(tool: tools[at], compact: compact)
                     : const SizedBox.shrink(),
               ),
             );
@@ -191,9 +202,12 @@ class _TileGrid extends StatelessWidget {
 }
 
 class _MyToolTile extends StatefulWidget {
-  const _MyToolTile({required this.tool});
+  const _MyToolTile({required this.tool, required this.compact});
 
   final ToolEntry tool;
+
+  /// Narrow cell: no leading icon, body-medium title (still 600 weight).
+  final bool compact;
 
   @override
   State<_MyToolTile> createState() => _MyToolTileState();
@@ -206,6 +220,16 @@ class _MyToolTileState extends State<_MyToolTile> {
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
     final AppColorScheme colors = context.colors;
+    final bool compact = widget.compact;
+    final Widget title = Text(
+      widget.tool.title,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: (compact ? text.bodyMedium : text.bodyLarge)?.copyWith(
+        color: colors.textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
+    );
     return Semantics(
       key: ValueKey<String>('my-tools-tile-${widget.tool.id}'),
       container: true,
@@ -230,27 +254,20 @@ class _MyToolTileState extends State<_MyToolTile> {
               borderRadius: BorderRadius.circular(AppRadius.card),
               border: myToolsBorder(colors, focused: _focused),
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? AppSpacing.rowPadding : AppSpacing.sm,
               vertical: AppSpacing.xs,
             ),
-            child: Row(
-              children: <Widget>[
-                ToolLeadingIcon(tool: widget.tool),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    widget.tool.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodyLarge?.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
+            alignment: Alignment.centerLeft,
+            child: compact
+                ? title
+                : Row(
+                    children: <Widget>[
+                      ToolLeadingIcon(tool: widget.tool),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: title),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -258,8 +275,10 @@ class _MyToolTileState extends State<_MyToolTile> {
   }
 }
 
-/// Edit mode: a reorderable list with a drag handle and visible Move up /
-/// Move down / Remove buttons on every row.
+/// Edit mode: a reorderable list, ONE ROW PER TOOL at every width, with a drag
+/// handle and visible Move up / Move down / Remove buttons on every row. It
+/// stays single-column because three 48dp buttons plus the handle need the
+/// full width; below 440 the buttons drop under the title.
 class _EditList extends StatelessWidget {
   const _EditList({required this.controller, required this.tools});
 
