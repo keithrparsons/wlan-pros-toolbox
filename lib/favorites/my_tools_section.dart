@@ -421,7 +421,7 @@ class _EditRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: myToolsBorder(colors, focused: false),
         ),
-        padding: const EdgeInsets.only(right: AppSpacing.xxs),
+        padding: const EdgeInsets.only(right: AppSpacing.xs),
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             // Below the compact breakpoint the three buttons drop under the
