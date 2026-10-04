@@ -204,6 +204,14 @@ In between are the simulators. Each one takes a single idea and lets you move it
 
 The simulators are designed for a tablet or a computer screen. On a phone they still work, but the app will tell you some views are cramped before it opens one.
 
+## My Tools: your own short list
+
+If you keep coming back to the same few tools, put them on the front page. Press and hold any tool in a section list or in search results, and it is added to My Tools, a list that appears just under Check My Connection. Press and hold it again to take it off.
+
+My Tools holds up to ten. When it is full and you add another, the app asks which one to swap out, and you can cancel instead. Tap Edit on the list to put the tools in the order you want: drag them by the handle, or use the up and down arrows. Edit is also where you remove one tool, or tap Clear all to empty the list and start over. Once the list is empty, it disappears and the front page looks the way it did at the start.
+
+Your list is saved on this device and nowhere else. Each phone, tablet and computer keeps its own list. It is not synced between your devices and it is never sent anywhere. If you delete the app, the list is deleted with it.
+
 ## Where to go next
 
 That's the whole app in five minutes: tap Check My Connection on the front page for the everyday answer, and dip into the other sections when you want more. Most of the time, that one tap on the front page tells you whether to restart your router, move closer to it, or call your internet provider.
