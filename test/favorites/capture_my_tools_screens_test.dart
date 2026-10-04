@@ -21,6 +21,7 @@ import 'package:wlan_pros_toolbox/favorites/my_tools_controller.dart';
 import 'package:wlan_pros_toolbox/screens/category_screen.dart';
 import 'package:wlan_pros_toolbox/screens/home_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/tool_row.dart';
 
 import '../support/figure_write_gate.dart';
 
@@ -131,9 +132,6 @@ void main() {
     final ToolCategory cat = kToolCategories.firstWhere(
       (ToolCategory c) => c.id == 'rf-calculators',
     );
-    final ToolEntry incoming = cat.tools.firstWhere(
-      (ToolEntry t) => !_picks.contains(t.id),
-    );
     await _shoot(
       tester,
       name: '02-list-full-dialog-phone-dark',
@@ -141,9 +139,11 @@ void main() {
       controller: await _controller(10),
       home: CategoryScreen(category: cat),
       drive: (WidgetTester t) async {
-        final Finder row = find.byKey(ValueKey<String>(incoming.id));
-        await t.scrollUntilVisible(row, 200);
-        await t.longPress(row);
+        // The first built row that is not already in My Tools.
+        final ToolRow row = t
+            .widgetList<ToolRow>(find.byType(ToolRow))
+            .firstWhere((ToolRow r) => !_picks.contains(r.tool.id));
+        await t.longPress(find.byWidget(row));
       },
     );
   });
