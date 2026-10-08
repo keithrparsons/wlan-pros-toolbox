@@ -7600,13 +7600,14 @@
     "link-budget": {
       "name": "Link Budget",
       "category": "Calculators & Tools",
-      "purpose": "A full point-to-point link budget: it adds up transmit power, antenna gains, cable losses, path loss, and any other losses into a received signal level, then compares that against your receiver's sensitivity to give a fade margin.",
+      "purpose": "A full point-to-point link budget: it works out the free space path loss from frequency and distance, adds up transmit power, antenna gains, cable losses, path loss and any other losses into a received signal level, and compares that against your receiver's sensitivity to give a fade margin. It also shows the transmitter's EIRP.",
       "whyHere": "This is the tool for deciding whether a link will close, and by how much. Add up all the gains and losses to see the margin before you deploy.",
       "howToUse": [
-        "Enter your transmit power and pick its unit (dBm, W, or mW).",
-        "Enter transmit antenna gain, transmit cable loss, path loss, receive cable loss, receive antenna gain, and receiver sensitivity.",
-        "Optionally enter any other or miscellaneous losses (treated as 0 if left blank).",
-        "Read the received signal in dBm and the link margin in dB, color-coded by health."
+        "Enter your transmit power and pick its unit (dBm, W, or mW), then the transmit antenna gain and transmit cable loss. EIRP appears as soon as those three are in.",
+        "Enter the frequency in MHz and the distance. The distance is in meters or feet, following the metric / imperial switch at the top, which applies to every tool. The free space path loss is calculated from those two.",
+        "To use a path loss of your own, type it in the Free Space Path Loss field. A typed value overrides frequency and distance, and the screen marks it as manual. Clear the field to go back to the calculated value.",
+        "Enter receive cable loss, receive antenna gain, and receiver sensitivity, and optionally any other losses (treated as 0 if left blank).",
+        "Read the EIRP, the path loss used, the received signal in dBm, and the link margin in dB, color-coded by health."
       ],
       "inputs": [
         {
@@ -7625,9 +7626,19 @@
           "range": ""
         },
         {
-          "name": "Path loss",
+          "name": "Frequency",
+          "unit": "MHz",
+          "range": "must be greater than 0 to calculate the path loss"
+        },
+        {
+          "name": "Distance",
+          "unit": "meters or feet, following the app's metric / imperial switch",
+          "range": "must be greater than 0 to calculate the path loss"
+        },
+        {
+          "name": "Free space path loss",
           "unit": "dB",
-          "range": ""
+          "range": "optional; leave blank to calculate from frequency and distance, or type a value to override them"
         },
         {
           "name": "RX loss",
@@ -7650,14 +7661,15 @@
           "range": "Optional, defaults to 0"
         }
       ],
-      "algorithm": "The received signal is your transmit power, plus both antenna gains, minus every loss along the way (transmit cable, path, receive cable, and any miscellaneous). The link margin is that received signal minus the receiver's sensitivity. Margins are graded: 10 dB or more is healthy (green), 0 to 10 dB is marginal (amber), and below 0 is negative (red). Power entered in watts or milliwatts is converted to dBm first.",
-      "example": "Transmit 30 dBm, transmit gain 20, transmit loss 2, path loss 120, receive loss 2, receive gain 20, no misc loss, receiver sensitivity minus 85: received signal is minus 54 dBm, and the margin is 31 dB, which is healthy.",
+      "algorithm": "The free space path loss is 20 log10 of the frequency in GHz, plus 20 log10 of the distance in km, plus 92.45, the same calculation as the FSPL tool; frequency and distance are converted to GHz and km first (feet at exactly 0.3048 m). A path loss you type replaces the calculated one. EIRP is the transmit power plus the transmit antenna gain minus the transmit cable loss, the same calculation as the EIRP tool, shown in dBm and in watts. The received signal is your transmit power, plus both antenna gains, minus every loss along the way (transmit cable, path, receive cable, and any miscellaneous). The link margin is that received signal minus the receiver's sensitivity. Margins are graded: 10 dB or more is healthy (green), 0 to 10 dB is marginal (amber), and below 0 is negative (red). Power entered in watts or milliwatts is converted to dBm first.",
+      "example": "Transmit 30 dBm, transmit gain 20, transmit loss 2: EIRP is 48 dBm (63.10 W). At 5800 MHz over 5000 m the free space path loss is 121.7 dB. With receive loss 2, receive gain 20, no misc loss and receiver sensitivity minus 85, the received signal is minus 55.7 dBm and the margin is 29.3 dB, which is healthy.",
       "fieldNotes": [
-        "You supply the path loss yourself; work it out with the FSPL tool, then add real-world margins.",
+        "Free space path loss is the best case: clear line of sight and a clear Fresnel zone. Real links lose more, so add real-world margins, or type a path loss of your own to override the calculated one.",
         "This budget doesn't include rain fade; use the PtP Link Check for that.",
-        "A healthy margin of 10 dB or more is the common design target, giving you room to ride out fading and multipath."
+        "A healthy margin of 10 dB or more is the common design target, giving you room to ride out fading and multipath.",
+        "EIRP is what regulators limit. Check it against the EIRP limit for your band and country in the EIRP tool."
       ],
-      "source": "Standard link-budget arithmetic done on the values you enter, right on your device."
+      "source": "Standard link-budget arithmetic done on the values you enter, right on your device, using the same FSPL and EIRP calculations as the FSPL and EIRP tools."
     },
     "shannon-capacity": {
       "name": "Shannon Capacity",
