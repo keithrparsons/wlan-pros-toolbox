@@ -9,12 +9,20 @@
 // Expected values below were computed from that exact logic so the native app
 // and PWA agree to the decimal.
 //
-// One widget test confirms the screen pumps and renders in a phone viewport.
+// With reserve 0 and watts rows only, the new class / ports / reserve compute
+// reduces to that PWA math, so the original PWA tests below still hold. The
+// class-based groups after them cover the upgrade: every class allocation, the
+// port-type check, the reserve math, ports, and mixed class and watts rows.
+//
+// Widget tests confirm the screen pumps and renders in a phone viewport.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/poe_budget_screen.dart';
+import 'package:wlan_pros_toolbox/screens/tools/reference/poe_reference_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 
 void main() {
   group('PoE total draw (pure) — matches PWA Σ(w × q)', () {
@@ -36,10 +44,7 @@ void main() {
 
     test('empty list and zero-qty rows total 0', () {
       expect(PoeBudgetScreen.totalDraw(const []), 0);
-      expect(
-        PoeBudgetScreen.totalDraw(const [PoeDeviceRow(30.0, 0)]),
-        0,
-      );
+      expect(PoeBudgetScreen.totalDraw(const [PoeDeviceRow(30.0, 0)]), 0);
     });
   });
 
@@ -116,22 +121,301 @@ void main() {
     });
   });
 
+  group('PoE class allocation (pure) — PSE watts per IEEE 802.3-2022', () {
+    // Expected PSE allocation per class: Clause 33 (Class 0-4) and Table 145-11
+    // P_Class (Class 1-8). Read by the screen from PoeReferenceScreen.classes.
+    const Map<int, double> expected = <int, double>{
+      0: 15.4,
+      1: 4.0,
+      2: 7.0,
+      3: 15.4,
+      4: 30.0,
+      5: 45.0,
+      6: 60.0,
+      7: 75.0,
+      8: 90.0,
+    };
+    for (final MapEntry<int, double> e in expected.entries) {
+      test('Class ${e.key} is budgeted at ${e.value} W PSE', () {
+        expect(PoeBudgetScreen.classPseWatts(e.key), e.value);
+        expect(
+          PoeBudgetScreen.allocationFor(PoeDeviceRow.ofClass(e.key, 1)),
+          e.value,
+        );
+        expect(
+          PoeBudgetScreen.totalDraw(<PoeDeviceRow>[
+            PoeDeviceRow.ofClass(e.key, 3),
+          ]),
+          closeTo(e.value * 3, 1e-9),
+        );
+      });
+    }
+
+    test('a class outside 0-8 has no allocation', () {
+      expect(PoeBudgetScreen.classPseWatts(9), isNull);
+      expect(PoeBudgetScreen.classPseWatts(-1), isNull);
+    });
+
+    test('Class 8 allocation is the pinned Type 4 PSE figure', () {
+      expect(
+        PoeBudgetScreen.classPseWatts(8),
+        PoeBudgetScreen.typeFourPseWatts,
+      );
+    });
+
+    test('the reference table is the one source (no second copy)', () {
+      for (final PoeClass c in PoeReferenceScreen.classes) {
+        expect(PoeBudgetScreen.classPseWatts(c.classNum), c.pseWatts);
+      }
+    });
+  });
+
+  group('PoE port-type check (pure)', () {
+    test('highest class per PSE type: af 3, at 4, bt Type 3 6, Type 4 8', () {
+      expect(PoeBudgetScreen.maxClassFor(PoePortType.af), 3);
+      expect(PoeBudgetScreen.maxClassFor(PoePortType.at), 4);
+      expect(PoeBudgetScreen.maxClassFor(PoePortType.bt3), 6);
+      expect(PoeBudgetScreen.maxClassFor(PoePortType.bt4), 8);
+      expect(PoeBudgetScreen.maxClassFor(PoePortType.notSet), isNull);
+    });
+
+    test('a Class 6 AP on an 802.3at port fails', () {
+      final String? m = PoeBudgetScreen.rowPortProblem(
+        const PoeDeviceRow.ofClass(6, 1),
+        PoePortType.at,
+      );
+      expect(m, isNotNull);
+      expect(m, contains('Class 6'));
+      expect(m, contains('802.3at'));
+      expect(m, contains('up to Class 4'));
+    });
+
+    test('every class at or under the type maximum passes', () {
+      for (final PoePortType t in <PoePortType>[
+        PoePortType.af,
+        PoePortType.at,
+        PoePortType.bt3,
+        PoePortType.bt4,
+      ]) {
+        final int max = PoeBudgetScreen.maxClassFor(t)!;
+        for (int c = 0; c <= 8; c++) {
+          final String? m = PoeBudgetScreen.rowPortProblem(
+            PoeDeviceRow.ofClass(c, 1),
+            t,
+          );
+          expect(m == null, c <= max, reason: 'Class $c on $t');
+        }
+      }
+    });
+
+    test('a watts row fails above the port type PD watts', () {
+      expect(
+        PoeBudgetScreen.rowPortProblem(
+          const PoeDeviceRow(35.0, 1),
+          PoePortType.at,
+        ),
+        contains('25.5 W at the device'),
+      );
+      expect(
+        PoeBudgetScreen.rowPortProblem(
+          const PoeDeviceRow(25.5, 1),
+          PoePortType.at,
+        ),
+        isNull,
+      );
+      expect(
+        PoeBudgetScreen.rowPortProblem(
+          const PoeDeviceRow(13.0, 1),
+          PoePortType.af,
+        ),
+        contains('12.95 W at the device'),
+      );
+    });
+
+    test('type not set, or a row asking for nothing, is not checked', () {
+      expect(
+        PoeBudgetScreen.rowPortProblem(
+          const PoeDeviceRow.ofClass(8, 1),
+          PoePortType.notSet,
+        ),
+        isNull,
+      );
+      expect(
+        PoeBudgetScreen.rowPortProblem(
+          const PoeDeviceRow.ofClass(8, 0),
+          PoePortType.af,
+        ),
+        isNull,
+      );
+      expect(
+        PoeBudgetScreen.rowPortProblem(
+          const PoeDeviceRow(0, 4),
+          PoePortType.af,
+        ),
+        isNull,
+      );
+    });
+
+    test(
+      'a failing row makes the verdict "does not fit" even under budget',
+      () {
+        final PoeBudgetResult r = PoeBudgetScreen.compute(
+          740,
+          const <PoeDeviceRow>[
+            PoeDeviceRow.ofClass(4, 4),
+            PoeDeviceRow.ofClass(6, 2),
+          ],
+          portType: PoePortType.at,
+        )!;
+        expect(r.overBudget, isFalse);
+        expect(r.rowProblems.length, 1);
+        expect(r.rowProblems.single.rowNumber, 2);
+        expect(r.verdict, PoeVerdict.over);
+      },
+    );
+  });
+
+  group('PoE reserve math (pure)', () {
+    test('370 W, 10% reserve, ten Class 4 APs', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[PoeDeviceRow.ofClass(4, 10)], // 300 W PSE
+        reservePct: 10,
+      )!;
+      expect(r.reserveWatts, closeTo(37.0, 1e-9));
+      expect(r.usable, closeTo(333.0, 1e-9));
+      expect(r.total, closeTo(300.0, 1e-9));
+      expect(r.remaining, closeTo(33.0, 1e-9));
+      // 300 / 333 × 100 = 90.09...
+      expect(r.pct, closeTo(90.09009009009009, 1e-9));
+      expect(r.verdict, PoeVerdict.caution);
+    });
+
+    test('fits the raw budget but not after the reserve → over', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[PoeDeviceRow.ofClass(4, 12)], // 360 W PSE
+        reservePct: 10,
+      )!;
+      expect(r.remaining, closeTo(-27.0, 1e-9));
+      expect(r.overBudget, isTrue);
+      expect(r.verdict, PoeVerdict.over);
+    });
+
+    test('reserve 0 matches the PWA math exactly', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[PoeDeviceRow(35.0, 2)],
+      )!;
+      expect(r.reserveWatts, 0);
+      expect(r.remaining, closeTo(300.0, 1e-9));
+      expect(r.pct, closeTo(18.91891891891892, 1e-9));
+    });
+
+    test('a reserve outside 0 ≤ r < 100 gives no result', () {
+      const List<PoeDeviceRow> rows = <PoeDeviceRow>[PoeDeviceRow(10, 1)];
+      expect(PoeBudgetScreen.compute(370, rows, reservePct: 100), isNull);
+      expect(PoeBudgetScreen.compute(370, rows, reservePct: -1), isNull);
+      expect(
+        PoeBudgetScreen.compute(370, rows, reservePct: double.nan),
+        isNull,
+      );
+      expect(PoeBudgetScreen.compute(370, rows, reservePct: 99.9), isNotNull);
+    });
+  });
+
+  group('PoE ports (pure)', () {
+    test('one port per device in every active row', () {
+      expect(
+        PoeBudgetScreen.portsNeeded(const <PoeDeviceRow>[
+          PoeDeviceRow.ofClass(4, 10),
+          PoeDeviceRow(6.5, 3),
+          PoeDeviceRow(0, 5), // blank watts: asks for nothing
+          PoeDeviceRow.ofClass(2, 0), // qty 0
+        ]),
+        13,
+      );
+    });
+
+    test(
+      'more devices than ports → does not fit, even with watts to spare',
+      () {
+        final PoeBudgetResult r = PoeBudgetScreen.compute(
+          740,
+          const <PoeDeviceRow>[PoeDeviceRow.ofClass(2, 26)], // 182 W
+          ports: 24,
+        )!;
+        expect(r.portsNeeded, 26);
+        expect(r.portsShort, isTrue);
+        expect(r.overBudget, isFalse);
+        expect(r.verdict, PoeVerdict.over);
+      },
+    );
+
+    test('exactly enough ports is not short; no port count is not checked', () {
+      const List<PoeDeviceRow> rows = <PoeDeviceRow>[
+        PoeDeviceRow.ofClass(2, 24),
+      ];
+      expect(
+        PoeBudgetScreen.compute(740, rows, ports: 24)!.portsShort,
+        isFalse,
+      );
+      final PoeBudgetResult r = PoeBudgetScreen.compute(740, rows)!;
+      expect(r.portsAvailable, isNull);
+      expect(r.portsShort, isFalse);
+      expect(r.verdict, PoeVerdict.ok);
+    });
+  });
+
+  group('PoE mixed class and watts rows (pure)', () {
+    test('class rows at PSE watts, watts rows as entered', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[
+          PoeDeviceRow.ofClass(4, 8), // 8 × 30.0 = 240.0
+          PoeDeviceRow(6.5, 4), // 4 × 6.5 = 26.0 (PD, as entered)
+          PoeDeviceRow.ofClass(3, 2), // 2 × 15.4 = 30.8
+        ],
+        reservePct: 10,
+        ports: 24,
+        portType: PoePortType.at,
+      )!;
+      expect(r.total, closeTo(296.8, 1e-9));
+      expect(r.remaining, closeTo(333.0 - 296.8, 1e-9));
+      expect(r.portsNeeded, 14);
+      expect(r.rowProblems, isEmpty);
+      expect(r.usesWattsRows, isTrue);
+      expect(r.verdict, PoeVerdict.caution); // 296.8 / 333 = 89%
+    });
+
+    test('class rows only → no PD-watts note', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[PoeDeviceRow.ofClass(4, 2), PoeDeviceRow(0, 1)],
+      )!;
+      expect(r.usesWattsRows, isFalse);
+    });
+  });
+
   group('PoeBudgetScreen widget', () {
     testWidgets('renders title, budget label, and device inputs', (
       tester,
     ) async {
       await _withViewport(tester, const Size(390, 844), () async {
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const PoeBudgetScreen(),
-          ),
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
         );
 
         expect(find.text('PoE Budget'), findsWidgets);
         expect(find.text('Switch PoE budget'), findsOneWidget);
-        // 1 budget + 6 watts + 6 qty = 13 text fields.
-        expect(find.byType(TextField), findsNWidgets(13));
+        // 1 budget + ports + reserve + 6 watts + 6 qty = 15 text fields.
+        expect(find.byType(TextField), findsNWidgets(15));
+        expect(find.text('PoE ports'), findsOneWidget);
+        expect(find.text('Reserve'), findsOneWidget);
+        expect(find.text('PSE type (switch ports)'), findsOneWidget);
+        // One PSE-type select and one class-or-watts select per row.
+        expect(find.byType(AppSelect<PoePortType>), findsOneWidget);
+        expect(find.byType(AppSelect<int>), findsNWidgets(6));
         // No result until a budget is entered.
         expect(
           find.text('Enter a switch PoE budget to calculate.'),
@@ -143,16 +427,14 @@ void main() {
     testWidgets('typing budget + device renders the verdict', (tester) async {
       await _withViewport(tester, const Size(390, 844), () async {
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const PoeBudgetScreen(),
-          ),
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
         );
 
         final Finder fields = find.byType(TextField);
+        // Fields: 0 budget, 1 ports, 2 reserve, 3 first device watts.
         // Budget = 370, first device watts = 30 (qty seeded to 1).
         await tester.enterText(fields.at(0), '370');
-        await tester.enterText(fields.at(1), '30');
+        await tester.enterText(fields.at(3), '30');
         await tester.pump();
 
         // 30 W of a 370 W budget → OK verdict.
@@ -177,15 +459,12 @@ void main() {
     ) async {
       await _withViewport(tester, const Size(390, 844), () async {
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.dark(),
-            home: const PoeBudgetScreen(),
-          ),
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
         );
 
         final Finder fields = find.byType(TextField);
         await tester.enterText(fields.at(0), '100');
-        await tester.enterText(fields.at(1), '40');
+        await tester.enterText(fields.at(3), '40');
         await tester.pump();
         expect(find.text('Budget OK'), findsOneWidget);
 
@@ -198,8 +477,129 @@ void main() {
         );
       });
     });
+
+    testWidgets('a Class 6 row on 802.3at ports does not fit, and says why', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        await tester.enterText(find.byType(TextField).at(0), '740');
+
+        // PSE type → 802.3at.
+        await tester.tap(find.byType(AppSelect<PoePortType>));
+        await tester.pumpAndSettle();
+        await tester.tap(_menuItem('802.3at (PoE+)'));
+        await tester.pumpAndSettle();
+
+        // Device 1 → Class 6.
+        await tester.tap(find.byType(AppSelect<int>).first);
+        await tester.pumpAndSettle();
+        // The menu shows about five items and scrolls; bring Class 6 into view.
+        await tester.scrollUntilVisible(
+          _menuItem('Class 6'),
+          48,
+          scrollable: find
+              .descendant(
+                of: find.byType(ListView).last,
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(_menuItem('Class 6'));
+        await tester.pumpAndSettle();
+
+        // The class row shows its PSE allocation where the watts field was.
+        expect(find.text('60.0 W PSE'), findsOneWidget);
+        expect(
+          find.textContaining('Device 1: Class 6 needs more than an 802.3at'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Does not fit. See the port checks above'),
+          findsOneWidget,
+        );
+      });
+    });
+
+    testWidgets(
+      'a watts row shows the PD-watts note; reserve is in the result',
+      (tester) async {
+        await _withViewport(tester, const Size(390, 2400), () async {
+          await tester.pumpWidget(
+            MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+          );
+          final Finder fields = find.byType(TextField);
+          await tester.enterText(fields.at(0), '370');
+          await tester.enterText(fields.at(3), '25.5');
+          await tester.pump();
+
+          expect(
+            find.textContaining('budgeted at the PD watts entered'),
+            findsOneWidget,
+          );
+          expect(
+            find.byWidgetPredicate(
+              (Widget w) => w is SelectableText && w.data == '10% (37.0 W)',
+            ),
+            findsOneWidget,
+          );
+        });
+      },
+    );
+
+    testWidgets('copy results carries the new fields', (tester) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied =
+                (call.arguments as Map<Object?, Object?>)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '370');
+        await tester.enterText(fields.at(1), '24');
+        await tester.enterText(fields.at(3), '12');
+        await tester.pump();
+
+        await tester.tap(find.byTooltip('Copy results'));
+        await tester.pump();
+
+        expect(copied, isNotNull);
+        expect(copied, contains('Total PSE allocation: 12.0 W'));
+        expect(copied, contains('Reserve: 10% (37.0 W)'));
+        expect(copied, contains('Left after reserve: 321.0 W remaining'));
+        expect(copied, contains('Ports: 1 needed of 24 available'));
+        expect(copied, contains('PSE type: not set'));
+        expect(copied, contains('Verdict: Budget OK'));
+
+        // Let the copy button's confirmation window close before teardown.
+        await tester.pump(const Duration(seconds: 2));
+      });
+    });
   });
 }
+
+/// An item in the open AppSelect menu (the last ListView on screen), so a
+/// label that also appears on the page, like "Class 6", is not mistaken for it.
+Finder _menuItem(String label) =>
+    find.descendant(of: find.byType(ListView).last, matching: find.text(label));
 
 /// Helper — run [body] with the test view sized to [size], then restore.
 /// Mirrors the `_withViewport` helper in test/widget_test.dart.
