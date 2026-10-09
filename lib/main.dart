@@ -43,6 +43,7 @@ import 'services/network/dart_ping_icmp_backend.dart';
 import 'services/network/pi_backend.dart';
 import 'services/network/wifi_details_bridge.dart';
 import 'favorites/my_tools_controller.dart';
+import 'favorites/my_tools_item.dart';
 import 'favorites/my_tools_tip.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
@@ -365,7 +366,10 @@ Future<void> main() async {
 
   // My Tools, the user's own top ten (Keith, 2026-10-03). Device-only
   // shared_preferences; ids the catalog no longer carries are dropped here.
-  // load() never throws.
+  // load() never throws. The Educational Resources list loads first so a
+  // saved resource resolves (2026-10-09); if it cannot be read, saved
+  // resources are kept, not dropped.
+  await MyToolsResources.instance.load();
   final MyToolsController myToolsController = MyToolsController();
   await myToolsController.load();
 

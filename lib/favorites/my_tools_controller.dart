@@ -11,6 +11,10 @@
 //     true: there is no network import here and there must never be one;
 //   * an id the catalog no longer carries is dropped silently on load.
 //
+// Since 2026-10-09 an id can also name an Educational Resources entry
+// (`resource:<id>`, or the Field Manual); see my_tools_item.dart. They count
+// toward the same ten and reorder, replace and clear exactly like tools.
+//
 // Persistence mirrors ThemeController and UnitSystemController: one
 // shared_preferences key, listeners fire BEFORE the write so the UI follows at
 // once, and a read or write failure never blocks the app (the in-memory list
@@ -20,6 +24,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/tool_catalog.dart';
+import 'my_tools_item.dart';
 
 /// The outcome of [MyToolsController.add], so the caller can decide what to
 /// show (a confirmation, or the list-is-full dialog).
@@ -40,12 +45,13 @@ enum MyToolsAddResult {
 
 /// Holds the ordered My Tools ids. Provided app-wide by [MyToolsScope].
 class MyToolsController extends ChangeNotifier {
-  /// [isKnownId] decides which ids are real tools. It defaults to the live
-  /// catalog ([kToolCategories]); tests inject their own.
+  /// [isKnownId] decides which ids are real tools or resources. It defaults
+  /// to the live catalog ([kToolCategories]) plus the Educational Resources
+  /// entries ([myToolsIdIsKnown]); tests inject their own.
   MyToolsController({
     List<String> initial = const <String>[],
     bool Function(String id)? isKnownId,
-  }) : _isKnownId = isKnownId ?? _catalogHasId {
+  }) : _isKnownId = isKnownId ?? myToolsIdIsKnown {
     _ids.addAll(_sanitize(initial));
   }
 
@@ -61,11 +67,20 @@ class MyToolsController extends ChangeNotifier {
   /// The ordered ids, first is shown first. Unmodifiable view.
   List<String> get ids => List<String>.unmodifiable(_ids);
 
-  /// The ordered tools, resolved against the catalog. Ids that do not resolve
-  /// (only possible with an injected [isKnownId]) are skipped.
+  /// The ordered catalog tools only, resolved against the catalog. Ids that
+  /// do not resolve, and resource ids, are skipped. The home section and the
+  /// dialogs use [items].
   List<ToolEntry> get tools => <ToolEntry>[
     for (final String id in _ids)
       if (toolEntryById(id) case final ToolEntry t) t,
+  ];
+
+  /// The ordered entries, tools and resources, as the home section shows
+  /// them. Ids that do not resolve (a resource before its list has loaded, or
+  /// an injected [isKnownId]) are skipped.
+  List<MyToolsItem> get items => <MyToolsItem>[
+    for (final String id in _ids)
+      if (myToolsItemById(id) case final MyToolsItem item) item,
   ];
 
   int get length => _ids.length;
@@ -190,8 +205,6 @@ class MyToolsController extends ChangeNotifier {
     }
     return true;
   }
-
-  static bool _catalogHasId(String id) => toolEntryById(id) != null;
 }
 
 /// The catalog entry for [id] on this platform, or null. A tool the native

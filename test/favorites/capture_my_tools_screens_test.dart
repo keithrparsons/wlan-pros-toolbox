@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wlan_pros_toolbox/data/tool_assets.dart';
 import 'package:wlan_pros_toolbox/data/tool_catalog.dart';
 import 'package:wlan_pros_toolbox/favorites/my_tools_controller.dart';
+import 'package:wlan_pros_toolbox/favorites/my_tools_item.dart';
 import 'package:wlan_pros_toolbox/screens/category_screen.dart';
 import 'package:wlan_pros_toolbox/screens/home_screen.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
@@ -194,6 +195,41 @@ void main() {
       name: '05-home-320-long-names-dark',
       size: const Size(320, 760),
       controller: c,
+      home: const HomeScreen(),
+    );
+  });
+
+  // One tool and one Educational Resources entry (2026-10-09). The resource
+  // list loads from the bundled asset, as main.dart does.
+  Future<MyToolsController> toolAndResource() async {
+    await MyToolsResources.instance.load();
+    expect(MyToolsResources.instance.isLoaded, isTrue);
+    final MyToolsController c = MyToolsController();
+    expect(await c.add('net-quality'), MyToolsAddResult.added);
+    expect(await c.add(myToolsResourceId('wlan-pi')), MyToolsAddResult.added);
+    return c;
+  }
+
+  testWidgets('06 home, phone, dark, one tool and one resource', (
+    WidgetTester tester,
+  ) async {
+    await _shoot(
+      tester,
+      name: '06-home-phone-dark-tool-and-resource',
+      size: const Size(390, 844),
+      controller: await tester.runAsync(toolAndResource) as MyToolsController,
+      home: const HomeScreen(),
+    );
+  });
+
+  testWidgets('07 home, desktop, dark, one tool and one resource', (
+    WidgetTester tester,
+  ) async {
+    await _shoot(
+      tester,
+      name: '07-home-desktop-dark-tool-and-resource',
+      size: const Size(1280, 800),
+      controller: await tester.runAsync(toolAndResource) as MyToolsController,
       home: const HomeScreen(),
     );
   });

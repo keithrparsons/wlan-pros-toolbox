@@ -25,17 +25,17 @@
 // the context-menu key, or Shift-F10 with the row focused opens a one-item
 // menu, "Add to My Tools" or "Remove from My Tools", that runs the same
 // toggleMyTool flow (so a full list still asks which tool to replace).
+// The wiring lives in MyToolsRowHooks, which the Educational Resources rows
+// share (2026-10-09).
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart' show CustomSemanticsAction;
-import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/content_type.dart';
 import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
 import '../favorites/my_tools_actions.dart';
-import '../favorites/my_tools_controller.dart';
+import '../favorites/my_tools_item.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'content_type_chip.dart';
@@ -95,33 +95,6 @@ class _ToolRowState extends State<ToolRow> {
     }
   }
 
-  /// Opens the one-item My Tools menu. A right-click anchors it at the
-  /// pointer ([globalPosition]); the keyboard path anchors it on the row.
-  Future<void> _showMyToolsMenu([Offset? globalPosition]) async {
-    final MyToolsController? myTools = MyToolsScope.read(context);
-    if (myTools == null || !_live) return;
-    final RenderBox row = context.findRenderObject()! as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
-    final Rect anchor = globalPosition != null
-        ? overlay.globalToLocal(globalPosition) & Size.zero
-        : row.localToGlobal(Offset.zero, ancestor: overlay) & row.size;
-    final bool inMyTools = myTools.contains(widget.tool.id);
-    final bool? picked = await showMenu<bool>(
-      context: context,
-      position: RelativeRect.fromRect(anchor, Offset.zero & overlay.size),
-      items: <PopupMenuEntry<bool>>[
-        PopupMenuItem<bool>(
-          key: ValueKey<String>('my-tools-menu-${widget.tool.id}'),
-          value: true,
-          child: Text(inMyTools ? 'Remove from My Tools' : 'Add to My Tools'),
-        ),
-      ],
-    );
-    if (picked != true || !mounted) return;
-    await toggleMyTool(context, widget.tool);
-  }
-
   @override
   Widget build(BuildContext context) {
     final TextTheme text = Theme.of(context).textTheme;
@@ -141,19 +114,14 @@ class _ToolRowState extends State<ToolRow> {
             width: colors.isLight ? 1.5 : 1,
           );
 
-    final MyToolsController? myTools = MyToolsScope.maybeOf(context);
-    final bool canFavorite = live && myTools != null;
-    final bool inMyTools = myTools?.contains(widget.tool.id) ?? false;
-    final VoidCallback? toggleFavorite = canFavorite
-        ? () => toggleMyTool(context, widget.tool)
-        : null;
+    final MyToolsRowHooks myTools = MyToolsRowHooks.of(
+      context,
+      MyToolsItem.tool(widget.tool),
+      enabled: live,
+    );
 
     // §8.9 — collapse child semantic nodes; VoiceOver hears one curated label.
-    final String baseLabel = _buildSemanticLabel();
-    final String semanticLabel = !inMyTools
-        ? baseLabel
-        : '$baseLabel${baseLabel.trimRight().endsWith('.') ? '' : '.'} '
-              'In My Tools.';
+    final String semanticLabel = myTools.label(_buildSemanticLabel());
 
     return Semantics(
       container: true,
@@ -161,32 +129,17 @@ class _ToolRowState extends State<ToolRow> {
       label: semanticLabel,
       button: true,
       enabled: live,
-      customSemanticsActions: toggleFavorite == null
-          ? null
-          : <CustomSemanticsAction, VoidCallback>{
-              CustomSemanticsAction(
-                label: inMyTools ? 'Remove from My Tools' : 'Add to My Tools',
-              ): toggleFavorite,
-            },
+      customSemanticsActions: myTools.semanticsActions,
       child: CallbackShortcuts(
-        bindings: !canFavorite
-            ? const <ShortcutActivator, VoidCallback>{}
-            : <ShortcutActivator, VoidCallback>{
-                const SingleActivator(LogicalKeyboardKey.contextMenu):
-                    _showMyToolsMenu,
-                const SingleActivator(LogicalKeyboardKey.f10, shift: true):
-                    _showMyToolsMenu,
-              },
+        bindings: myTools.shortcuts,
         child: Material(
           color: colors.surface1,
           borderRadius: BorderRadius.circular(AppRadius.card),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: live ? _handleTap : null,
-            onLongPress: toggleFavorite,
-            onSecondaryTapUp: canFavorite
-                ? (TapUpDetails d) => _showMyToolsMenu(d.globalPosition)
-                : null,
+            onLongPress: myTools.onLongPress,
+            onSecondaryTapUp: myTools.onSecondaryTapUp,
             onFocusChange: live
                 ? (bool hasFocus) {
                     if (hasFocus != _focused) {
@@ -412,6 +365,33 @@ class ToolLeadingIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LeadingIconTile(
+      live: live,
+      glyph: (Color tint) => ToolAssets.hasIcon(tool.id)
+          ? SvgPicture.asset(
+              ToolAssets.iconPath(tool.id),
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+              excludeFromSemantics: true,
+              placeholderBuilder: (_) => const SizedBox.shrink(),
+            )
+          : Icon(Icons.bolt, color: tint, size: 20),
+    );
+  }
+}
+
+/// The 40px leading tile behind a row's glyph, shared by [ToolLeadingIcon]
+/// and the My Tools tiles for Educational Resources entries, so both sit in
+/// the same visual register. [glyph] gets the tint to draw in.
+class LeadingIconTile extends StatelessWidget {
+  const LeadingIconTile({required this.glyph, this.live = true, super.key});
+
+  final Widget Function(Color tint) glyph;
+  final bool live;
+
+  @override
+  Widget build(BuildContext context) {
     final AppColorScheme colors = context.colors;
     final bool light = colors.isLight;
 
@@ -444,16 +424,7 @@ class ToolLeadingIcon extends StatelessWidget {
               color: colors.textTertiary,
               size: 20,
             )
-          : ToolAssets.hasIcon(tool.id)
-          ? SvgPicture.asset(
-              ToolAssets.iconPath(tool.id),
-              width: 20,
-              height: 20,
-              colorFilter: ColorFilter.mode(iconTint, BlendMode.srcIn),
-              excludeFromSemantics: true,
-              placeholderBuilder: (_) => const SizedBox.shrink(),
-            )
-          : Icon(Icons.bolt, color: iconTint, size: 20),
+          : glyph(iconTint),
     );
   }
 }

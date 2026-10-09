@@ -16,17 +16,22 @@
 //     empties the list after a confirmation (spec item 4); the section then
 //     disappears.
 //
+// Educational Resources entries (2026-10-09) sit in the same list and tiles:
+// title, a leading glyph on the same 40px tile, and a tap that opens them
+// where the Educational Resources directory does (see my_tools_item.dart).
+//
 // Tokens only: surface1 tiles at card radius with the borderStrong boundary,
 // the §8.3 ring on focus, §8.5 H3 section heading, §8.7 spacing, 48dp targets.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-import '../data/tool_catalog.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
-import '../widgets/tool_row.dart' show ToolLeadingIcon;
+import '../widgets/tool_row.dart' show LeadingIconTile, ToolLeadingIcon;
 import 'my_tools_actions.dart';
 import 'my_tools_controller.dart';
+import 'my_tools_item.dart';
 
 class MyToolsSection extends StatefulWidget {
   const MyToolsSection({super.key});
@@ -47,7 +52,7 @@ class _MyToolsSectionState extends State<MyToolsSection> {
       _editing = false;
       return const SizedBox.shrink();
     }
-    final List<ToolEntry> tools = controller.tools;
+    final List<MyToolsItem> tools = controller.items;
 
     return Column(
       key: const ValueKey<String>('my-tools-section'),
@@ -153,7 +158,7 @@ class _Header extends StatelessWidget {
 class _TileGrid extends StatelessWidget {
   const _TileGrid({required this.tools});
 
-  final List<ToolEntry> tools;
+  final List<MyToolsItem> tools;
 
   static const int _columns = 2;
 
@@ -204,7 +209,7 @@ class _TileGrid extends StatelessWidget {
 class _MyToolTile extends StatefulWidget {
   const _MyToolTile({required this.tool, required this.compact});
 
-  final ToolEntry tool;
+  final MyToolsItem tool;
 
   /// Narrow cell: no leading icon, body-medium title (still 600 weight).
   final bool compact;
@@ -242,7 +247,7 @@ class _MyToolTileState extends State<_MyToolTile> {
         borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => Navigator.of(context).pushNamed(widget.tool.routeName),
+          onTap: () => widget.tool.open(context),
           onFocusChange: (bool f) {
             if (f != _focused) setState(() => _focused = f);
           },
@@ -263,7 +268,7 @@ class _MyToolTileState extends State<_MyToolTile> {
                 ? title
                 : Row(
                     children: <Widget>[
-                      ToolLeadingIcon(tool: widget.tool),
+                      MyToolsItemIcon(item: widget.tool),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(child: title),
                     ],
@@ -283,7 +288,7 @@ class _EditList extends StatelessWidget {
   const _EditList({required this.controller, required this.tools});
 
   final MyToolsController controller;
-  final List<ToolEntry> tools;
+  final List<MyToolsItem> tools;
 
   @override
   Widget build(BuildContext context) {
@@ -295,7 +300,7 @@ class _EditList extends StatelessWidget {
       itemCount: tools.length,
       onReorderItem: (int from, int to) => controller.reorder(from, to),
       itemBuilder: (BuildContext context, int index) {
-        final ToolEntry tool = tools[index];
+        final MyToolsItem tool = tools[index];
         return Padding(
           key: ValueKey<String>('my-tools-edit-${tool.id}'),
           padding: EdgeInsets.only(
@@ -328,7 +333,7 @@ class _EditRow extends StatelessWidget {
   });
 
   final int index;
-  final ToolEntry tool;
+  final MyToolsItem tool;
   final bool isFirst;
   final bool isLast;
   final VoidCallback onUp;
@@ -460,5 +465,41 @@ class _EditRow extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// The leading glyph for a My Tools entry, on the same 40px tile as a tool
+/// row. A tool shows its own icon. The Field Manual shows the book glyph its
+/// Educational Resources row shows. An online resource has no icon of its own
+/// anywhere in the app, so it shows the Educational Resources mortarboard it
+/// lives under.
+class MyToolsItemIcon extends StatelessWidget {
+  const MyToolsItemIcon({required this.item, super.key});
+
+  final MyToolsItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (item.kind) {
+      case MyToolsItemKind.tool:
+        return ToolLeadingIcon(tool: item.tool!);
+      case MyToolsItemKind.fieldManual:
+        return LeadingIconTile(
+          glyph: (Color tint) =>
+              Icon(Icons.menu_book_outlined, color: tint, size: 20),
+        );
+      case MyToolsItemKind.resource:
+        return LeadingIconTile(
+          glyph: (Color tint) => SvgPicture.asset(
+            'assets/tool-icons/educational-resources.svg',
+            width: 20,
+            height: 20,
+            colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+            excludeFromSemantics: true,
+            placeholderBuilder: (_) =>
+                Icon(Icons.school_outlined, color: tint, size: 20),
+          ),
+        );
+    }
   }
 }

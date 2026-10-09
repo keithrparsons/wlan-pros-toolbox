@@ -1,40 +1,49 @@
 // My Tools — the shared add/remove flow and its two dialogs.
 //
 // One flow, every entry point: the long-press on a tool row (category list,
-// search results) and the star button both call [toggleMyTool], so the
-// list-is-full behavior and the confirmation wording are identical wherever a
-// user adds a tool.
+// search results), every Educational Resources row (2026-10-09), and the star
+// button all call [toggleMyToolsItem], so the list-is-full behavior and the
+// confirmation wording are identical wherever a user adds something. Rows get
+// their long-press, right-click menu, context-menu key and screen-reader
+// action from one place, [MyToolsRowHooks].
 //
 // Dialogs are designed surfaces on the app dialogTheme (surface2, card
 // radius), never a browser confirm. Every value is a GL-003 token.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 
 import '../data/tool_catalog.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'my_tools_controller.dart';
+import 'my_tools_item.dart';
 
-/// Adds [tool] to My Tools, or removes it when it is already there. When the
-/// list is full, asks which tool to replace (spec choice 3). Shows a short
+/// Adds [tool] to My Tools, or removes it when it is already there. See
+/// [toggleMyToolsItem].
+Future<bool?> toggleMyTool(BuildContext context, ToolEntry tool) =>
+    toggleMyToolsItem(context, MyToolsItem.tool(tool));
+
+/// Adds [item] to My Tools, or removes it when it is already there. When the
+/// list is full, asks which entry to replace (spec choice 3). Shows a short
 /// confirmation in the nearest [ScaffoldMessenger]. Returns the controller's
-/// resulting membership for [tool], or null when no controller is in scope.
-Future<bool?> toggleMyTool(BuildContext context, ToolEntry tool) async {
+/// resulting membership for [item], or null when no controller is in scope.
+Future<bool?> toggleMyToolsItem(BuildContext context, MyToolsItem item) async {
   final MyToolsController? controller = MyToolsScope.read(context);
   if (controller == null) return null;
   final ScaffoldMessengerState? messenger = ScaffoldMessenger.maybeOf(context);
 
-  if (controller.contains(tool.id)) {
-    await controller.remove(tool.id);
-    _confirm(messenger, 'Removed ${tool.title} from My Tools');
+  if (controller.contains(item.id)) {
+    await controller.remove(item.id);
+    _confirm(messenger, 'Removed ${item.title} from My Tools');
     return false;
   }
 
-  final MyToolsAddResult result = await controller.add(tool.id);
+  final MyToolsAddResult result = await controller.add(item.id);
   switch (result) {
     case MyToolsAddResult.added:
-      _confirm(messenger, 'Added ${tool.title} to My Tools');
+      _confirm(messenger, 'Added ${item.title} to My Tools');
       return true;
     case MyToolsAddResult.alreadyPresent:
       return true;
@@ -45,17 +54,17 @@ Future<bool?> toggleMyTool(BuildContext context, ToolEntry tool) async {
       final String? replacedId = await showMyToolsFullDialog(
         context,
         controller: controller,
-        incoming: tool,
+        incoming: item,
       );
       if (replacedId == null) return false;
-      final ToolEntry? replaced = toolEntryById(replacedId);
-      final bool ok = await controller.replace(replacedId, tool.id);
+      final MyToolsItem? replaced = myToolsItemById(replacedId);
+      final bool ok = await controller.replace(replacedId, item.id);
       if (ok) {
         _confirm(
           messenger,
           replaced == null
-              ? 'Added ${tool.title} to My Tools'
-              : 'Replaced ${replaced.title} with ${tool.title}',
+              ? 'Added ${item.title} to My Tools'
+              : 'Replaced ${replaced.title} with ${item.title}',
         );
       }
       return ok;
@@ -70,20 +79,20 @@ void _confirm(ScaffoldMessengerState? messenger, String message) {
     ..showSnackBar(SnackBar(content: Text(message)));
 }
 
-/// The list-is-full dialog: names the limit, lists the current tools, and lets
-/// the user pick one to replace with [incoming], or cancel. Returns the id the
-/// user chose to replace, or null on cancel / dismiss.
+/// The list-is-full dialog: names the limit, lists the current entries, and
+/// lets the user pick one to replace with [incoming], or cancel. Returns the id
+/// the user chose to replace, or null on cancel / dismiss.
 Future<String?> showMyToolsFullDialog(
   BuildContext context, {
   required MyToolsController controller,
-  required ToolEntry incoming,
+  required MyToolsItem incoming,
 }) {
   return showDialog<String>(
     context: context,
     builder: (BuildContext dialogContext) {
       final TextTheme text = Theme.of(dialogContext).textTheme;
       final AppColorScheme colors = dialogContext.colors;
-      final List<ToolEntry> current = controller.tools;
+      final List<MyToolsItem> current = controller.items;
       return AlertDialog(
         scrollable: true,
         title: const Text('My Tools is full'),
@@ -125,9 +134,109 @@ Future<String?> showMyToolsFullDialog(
   );
 }
 
+/// What a row needs to offer Add to / Remove from My Tools: a long-press, a
+/// right-click menu, the context-menu key and Shift-F10 menu, a named
+/// screen-reader action, and "In My Tools." on its label. Built fresh in the
+/// row's build with the row's own context, which also anchors the menu.
+///
+/// With no [MyToolsScope] above the row (a bare widget test), or when
+/// [enabled] is false, every hook is null or empty and the row is unchanged.
+class MyToolsRowHooks {
+  MyToolsRowHooks._(this._context, this._item, this.enabled, this.inMyTools);
+
+  /// Reads the controller with a dependency, so the row rebuilds when the
+  /// list changes and its label and menu wording follow.
+  factory MyToolsRowHooks.of(
+    BuildContext context,
+    MyToolsItem item, {
+    bool enabled = true,
+  }) {
+    final MyToolsController? myTools = MyToolsScope.maybeOf(context);
+    return MyToolsRowHooks._(
+      context,
+      item,
+      enabled && myTools != null,
+      myTools?.contains(item.id) ?? false,
+    );
+  }
+
+  final BuildContext _context;
+  final MyToolsItem _item;
+
+  /// True when the row can add or remove at all.
+  final bool enabled;
+
+  /// True when [_item] is in My Tools now.
+  final bool inMyTools;
+
+  /// The long-press handler: toggles straight away, as on a tool row.
+  VoidCallback? get onLongPress =>
+      enabled ? () => toggleMyToolsItem(_context, _item) : null;
+
+  /// The right-click handler: opens the one-item menu at the pointer.
+  GestureTapUpCallback? get onSecondaryTapUp =>
+      enabled ? (TapUpDetails d) => showMenuAt(d.globalPosition) : null;
+
+  /// The context-menu key and Shift-F10, for a [CallbackShortcuts] around
+  /// the row's focusable part.
+  Map<ShortcutActivator, VoidCallback> get shortcuts => !enabled
+      ? const <ShortcutActivator, VoidCallback>{}
+      : <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.contextMenu): showMenuAt,
+          const SingleActivator(LogicalKeyboardKey.f10, shift: true):
+              showMenuAt,
+        };
+
+  /// The named screen-reader action.
+  Map<CustomSemanticsAction, VoidCallback>? get semanticsActions => !enabled
+      ? null
+      : <CustomSemanticsAction, VoidCallback>{
+          CustomSemanticsAction(
+            label: inMyTools ? 'Remove from My Tools' : 'Add to My Tools',
+          ): () =>
+              toggleMyToolsItem(_context, _item),
+        };
+
+  /// [base] with "In My Tools." added when the entry is in the list.
+  String label(String base) => !inMyTools
+      ? base
+      : '$base${base.trimRight().endsWith('.') ? '' : '.'} In My Tools.';
+
+  /// Opens the one-item My Tools menu. A right-click anchors it at the
+  /// pointer ([globalPosition]); the keyboard path anchors it on the row.
+  Future<void> showMenuAt([Offset? globalPosition]) async {
+    final BuildContext context = _context;
+    final MyToolsController? myTools = MyToolsScope.read(context);
+    if (myTools == null || !enabled || !context.mounted) return;
+    final RenderBox row = context.findRenderObject()! as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final Rect anchor = globalPosition != null
+        ? overlay.globalToLocal(globalPosition) & Size.zero
+        : row.localToGlobal(Offset.zero, ancestor: overlay) & row.size;
+    final bool inList = myTools.contains(_item.id);
+    final bool? picked = await showMenu<bool>(
+      context: context,
+      position: RelativeRect.fromRect(anchor, Offset.zero & overlay.size),
+      items: <PopupMenuEntry<bool>>[
+        PopupMenuItem<bool>(
+          key: ValueKey<String>('my-tools-menu-${_item.id}'),
+          value: true,
+          child: Text(inList ? 'Remove from My Tools' : 'Add to My Tools'),
+        ),
+      ],
+    );
+    if (picked != true || !context.mounted) return;
+    await toggleMyToolsItem(context, _item);
+  }
+}
+
 /// The clear-all confirmation (Keith, 2026-10-03, spec item 4). Returns true
 /// only when the user confirms.
-Future<bool> showClearMyToolsDialog(BuildContext context, {required int count}) {
+Future<bool> showClearMyToolsDialog(
+  BuildContext context, {
+  required int count,
+}) {
   final String question = count == 1
       ? 'Remove the 1 tool from My Tools?'
       : 'Remove all $count tools from My Tools?';
@@ -230,8 +339,5 @@ Border myToolsBorder(AppColorScheme colors, {required bool focused}) {
           color: colors.isLight ? colors.textAccent : colors.primary,
           width: colors.isLight ? 3 : 2,
         )
-      : Border.all(
-          color: colors.borderStrong,
-          width: colors.isLight ? 1.5 : 1,
-        );
+      : Border.all(color: colors.borderStrong, width: colors.isLight ? 1.5 : 1);
 }
