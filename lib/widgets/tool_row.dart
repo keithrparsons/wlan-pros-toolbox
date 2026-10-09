@@ -14,6 +14,19 @@
 //     description/keyword-only hits (mockup 04).
 //
 // All extras default off, so the category screen gets the original row exactly.
+//
+// MY TOOLS (Keith, 2026-10-03): a long-press on a live row adds the tool to My
+// Tools, or removes it when it is already there, through the shared
+// toggleMyTool flow. Screen readers get the same thing as a named custom
+// action, and the row's label says "In My Tools" when it is. With no
+// MyToolsScope above the row (a bare widget test) none of this is wired.
+//
+// KEYBOARD AND MOUSE (Keith, 2026-10-04, after Vera's gate F1): a right-click,
+// the context-menu key, or Shift-F10 with the row focused opens a one-item
+// menu, "Add to My Tools" or "Remove from My Tools", that runs the same
+// toggleMyTool flow (so a full list still asks which tool to replace).
+// The wiring lives in MyToolsRowHooks, which the Educational Resources rows
+// share (2026-10-09).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -21,6 +34,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../data/content_type.dart';
 import '../data/tool_assets.dart';
 import '../data/tool_catalog.dart';
+import '../favorites/my_tools_actions.dart';
+import '../favorites/my_tools_item.dart';
 import '../theme/app_color_scheme.dart';
 import '../theme/app_tokens.dart';
 import 'content_type_chip.dart';
@@ -99,8 +114,14 @@ class _ToolRowState extends State<ToolRow> {
             width: colors.isLight ? 1.5 : 1,
           );
 
+    final MyToolsRowHooks myTools = MyToolsRowHooks.of(
+      context,
+      MyToolsItem.tool(widget.tool),
+      enabled: live,
+    );
+
     // §8.9 — collapse child semantic nodes; VoiceOver hears one curated label.
-    final String semanticLabel = _buildSemanticLabel();
+    final String semanticLabel = myTools.label(_buildSemanticLabel());
 
     return Semantics(
       container: true,
@@ -108,44 +129,53 @@ class _ToolRowState extends State<ToolRow> {
       label: semanticLabel,
       button: true,
       enabled: live,
-      child: Material(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: live ? _handleTap : null,
-          onFocusChange: live
-              ? (bool hasFocus) {
-                  if (hasFocus != _focused) {
-                    setState(() => _focused = hasFocus);
+      customSemanticsActions: myTools.semanticsActions,
+      child: CallbackShortcuts(
+        bindings: myTools.shortcuts,
+        child: Material(
+          color: colors.surface1,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: live ? _handleTap : null,
+            onLongPress: myTools.onLongPress,
+            onSecondaryTapUp: myTools.onSecondaryTapUp,
+            onFocusChange: live
+                ? (bool hasFocus) {
+                    if (hasFocus != _focused) {
+                      setState(() => _focused = hasFocus);
+                    }
                   }
-                }
-              : null,
-          child: Container(
-            decoration: BoxDecoration(
-              border: rowBorder,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: 14,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _LeadingIcon(tool: widget.tool, live: live),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(child: _content(text, live)),
-                if (live)
-                  Padding(
-                    padding: const EdgeInsets.only(left: AppSpacing.xs, top: 2),
-                    child: Icon(
-                      Icons.chevron_right,
-                      color: colors.textTertiary,
-                      size: 20,
+                : null,
+            child: Container(
+              decoration: BoxDecoration(
+                border: rowBorder,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 14,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  ToolLeadingIcon(tool: widget.tool, live: live),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: _content(text, live)),
+                  if (live)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xs,
+                        top: 2,
+                      ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: colors.textTertiary,
+                        size: 20,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -327,10 +357,37 @@ class _ToolRowState extends State<ToolRow> {
 /// filled chip at card radius (12px) with the glyph knocked out in charcoal
 /// #30302F (`onPrimary`), 7.05:1. Replaces the prior dull-olive #5A7A1C line
 /// icon on light. Non-live rows keep the neutral lock treatment in both themes.
-class _LeadingIcon extends StatelessWidget {
-  const _LeadingIcon({required this.tool, required this.live});
+class ToolLeadingIcon extends StatelessWidget {
+  const ToolLeadingIcon({required this.tool, this.live = true, super.key});
 
   final ToolEntry tool;
+  final bool live;
+
+  @override
+  Widget build(BuildContext context) {
+    return LeadingIconTile(
+      live: live,
+      glyph: (Color tint) => ToolAssets.hasIcon(tool.id)
+          ? SvgPicture.asset(
+              ToolAssets.iconPath(tool.id),
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
+              excludeFromSemantics: true,
+              placeholderBuilder: (_) => const SizedBox.shrink(),
+            )
+          : Icon(Icons.bolt, color: tint, size: 20),
+    );
+  }
+}
+
+/// The 40px leading tile behind a row's glyph, shared by [ToolLeadingIcon]
+/// and the My Tools tiles for Educational Resources entries, so both sit in
+/// the same visual register. [glyph] gets the tint to draw in.
+class LeadingIconTile extends StatelessWidget {
+  const LeadingIconTile({required this.glyph, this.live = true, super.key});
+
+  final Widget Function(Color tint) glyph;
   final bool live;
 
   @override
@@ -367,16 +424,7 @@ class _LeadingIcon extends StatelessWidget {
               color: colors.textTertiary,
               size: 20,
             )
-          : ToolAssets.hasIcon(tool.id)
-          ? SvgPicture.asset(
-              ToolAssets.iconPath(tool.id),
-              width: 20,
-              height: 20,
-              colorFilter: ColorFilter.mode(iconTint, BlendMode.srcIn),
-              excludeFromSemantics: true,
-              placeholderBuilder: (_) => const SizedBox.shrink(),
-            )
-          : Icon(Icons.bolt, color: iconTint, size: 20),
+          : glyph(iconTint),
     );
   }
 }
