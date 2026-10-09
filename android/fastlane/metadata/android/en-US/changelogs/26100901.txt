@@ -1,0 +1,7 @@
+New: My Tools. Press and hold any tool, or any entry in Educational Resources, to add it to your own short list at the top of the front page. Up to ten, in your order.
+
+PoE Budget now works by PoE class, with PSE type, ports and a reserve.
+
+Link Budget works out free space path loss from frequency and distance, and shows EIRP.
+
+Fixed: Rate vs Range shows one decimal under 100 m or 100 ft.
