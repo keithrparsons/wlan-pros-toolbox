@@ -652,7 +652,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
                   field: _numberField(
                     _reserveCtrl,
                     mono,
-                    hint: '10',
+                    hint: '0',
                     decimal: true,
                     errorText: _reserveInvalid ? '0 to 99.9' : null,
                   ),

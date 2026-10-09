@@ -550,6 +550,41 @@ void main() {
       },
     );
 
+    testWidgets('a cleared reserve hints 0 and the result reads 0%', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '370');
+        await tester.enterText(fields.at(3), '25.5');
+        await tester.pump();
+        // A fresh screen still starts at 10%.
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) => w is SelectableText && w.data == '10% (37.0 W)',
+          ),
+          findsOneWidget,
+        );
+
+        await tester.enterText(fields.at(2), '');
+        await tester.pump();
+
+        // The gray hint matches what a blank counts as (Kerry, 2026-10-08:
+        // it read 10 while the result used 0).
+        final TextField reserve = tester.widget<TextField>(fields.at(2));
+        expect(reserve.decoration?.hintText, '0');
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) => w is SelectableText && w.data == '0% (0.0 W)',
+          ),
+          findsOneWidget,
+        );
+      });
+    });
+
     testWidgets('copy results carries the new fields', (tester) async {
       String? copied;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
