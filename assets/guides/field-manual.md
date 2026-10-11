@@ -1122,10 +1122,10 @@ Checks a PoE switch's power budget, port count and port type against everything 
 | Input | Unit | Range |
 |---|---|---|
 | Switch PoE budget | watts | must be greater than 0, or you get no result |
-| PoE ports | ports | optional; leave it blank and the port count is not checked |
+| PoE ports | ports | optional, up to 4 digits; leave it blank and the port count is not checked |
 | Reserve | percent of the budget | 0 to 99.9; defaults to 10; blank counts as 0 |
 | PSE type (switch ports) | 802.3af, 802.3at, 802.3bt Type 3 or Type 4 | optional; Not set skips the per-device check |
-| Device rows (up to 6) | a PoE class (0 to 8) or watts per device, and a quantity | a blank watts field counts as 0; quantity defaults to 1 |
+| Device rows (up to 6) | a PoE class (0 to 8) or watts per device, and a quantity | a blank watts field counts as 0; quantity defaults to 1 and takes up to 4 digits |
 
 **What the result shows**
 
@@ -1139,23 +1139,23 @@ Checks a PoE switch's power budget, port count and port type against everything 
 | Ports | "10 needed of 24 available", with ", 2 short" added when there are too few; "10 needed (enter the port count to check)" when PoE ports is blank |
 | Port check | "every device fits an 802.3at port", or one line per failing row such as "Device 3: Class 6 needs more than an 802.3at port gives (up to Class 4)"; "PSE type not set, so devices were not checked" when the PSE type is Not set |
 
-When any row is a Watts row, a note follows: "Watts rows are budgeted at the PD watts entered, with nothing added for cable loss. Pick the device's class to budget PSE watts."
+When any row is a Watts row, a note follows: "Watts rows are the PD watts at the device, converted to the PSE watts of the class that wattage falls in (for example 25.5 W is Class 4, 30.0 W). Above 71.3 W no class fits, so the watts are used as entered. Pick the device's class to be exact."
 
 The verdict line under the result reads one of:
 - **Budget OK**
 - **Caution: within 20% of budget limit**
 - **Over budget. Reduce devices or upgrade switch**
-- **Does not fit. See the port checks above**
+- **Does not fit.** It names the cause: "See the port checks above", "Not enough PoE ports for these devices", or "Not enough PoE ports, and see the port checks above"
 
 Copy results gives the same lines, with Utilization as "90% of usable budget", then "Verdict:" and the short word (Budget OK, Caution, Over budget or Does not fit), then the full line beneath it.
 
-**How it works.** A class row is budgeted at that class's PSE allocation, the power the switch port must supply: Class 0 15.4 W, 1 4.0 W, 2 7.0 W, 3 15.4 W, 4 30.0 W, 5 45.0 W, 6 60.0 W, 7 75.0 W, 8 90.0 W. A watts row is budgeted at the watts you entered, treated as the device's PD draw, with nothing added for cable loss. Each row's figure is multiplied by its quantity and the rows are added for the total PSE allocation. The usable budget is the switch budget minus the reserve, and the watts left is the usable budget minus the total. The percent used is the total over the usable budget (shown capped at 100 percent). Ports needed is one per device. The port check fails a class row above the highest class the port type supports (af Class 3, at Class 4, bt Type 3 Class 6, bt Type 4 Class 8), and a watts row above what that port type delivers at the device. The verdict, checked in this order: if the total is over the usable budget it says Over budget; if there are not enough ports or any row fails the port check it says Does not fit; otherwise if you are past 80 percent of the usable budget it says Caution; otherwise Budget OK.
+**How it works.** A class row is budgeted at that class's PSE allocation, the power the switch port must supply: Class 0 15.4 W, 1 4.0 W, 2 7.0 W, 3 15.4 W, 4 30.0 W, 5 45.0 W, 6 60.0 W, 7 75.0 W, 8 90.0 W. A watts row is the device's PD draw at the device; it is converted to the PSE watts of the lowest class whose PD maximum covers it (Class 1 3.84 W, 2 6.49 W, 3 12.95 W, 4 25.5 W, 5 40 W, 6 51 W, 7 62 W, 8 71.3 W), so 25.5 W budgets at 30.0 W, and above 71.3 W, where no class fits, the watts are used as entered. Each row's figure is multiplied by its quantity and the rows are added for the total PSE allocation. The usable budget is the switch budget minus the reserve, and the watts left is the usable budget minus the total. The percent used is the total over the usable budget (shown capped at 100 percent). Ports needed is one per device. The port check fails a class row above the highest class the port type supports (af Class 3, at Class 4, bt Type 3 Class 6, bt Type 4 Class 8), and a watts row above what that port type delivers at the device. The verdict, checked in this order: if the total is over the usable budget it says Over budget; if there are not enough ports or any row fails the port check it says Does not fit; otherwise if you are past 80 percent of the usable budget it says Caution; otherwise Budget OK.
 
 **Example.** A 370 W, 24-port 802.3at switch with the default 10 percent reserve keeps 37 W back, leaving 333 W usable. Ten Class 4 access points are budgeted at 30.0 W each, 300 W in all, so 33 W is left. 300 ÷ 333 is 90.09 percent, which the screen shows as 90% of usable. The result reads Total PSE allocation 300.0 W, Reserve 10% (37.0 W), Left after reserve 33.0 W remaining, Utilization 90% of usable, Ports 10 needed of 24 available, Port check: every device fits an 802.3at port, and the verdict Caution: within 20% of budget limit. Change one row to a Class 6 access point and the port check fails, because an 802.3at port gives up to Class 4.
 
 **Field notes**
 - Use the device's PoE class from its datasheet when you have it. The class is what the switch allocates for, whatever the device draws at idle.
-- Budget in PSE watts, not PD watts. PSE is what the switch port must supply; PD is what survives the cable and reaches the device. Twelve Class-4 APs are 306 W of PD but 360 W of PSE: against a 370 W switch that is the difference between comfortable and nearly exhausted. Class rows are budgeted in PSE watts; a watts row is budgeted at the PD figure you type, and the screen says so.
+- Budget in PSE watts, not PD watts. PSE is what the switch port must supply; PD is what survives the cable and reaches the device. Twelve Class-4 APs are 306 W of PD but 360 W of PSE: against a 370 W switch that is the difference between comfortable and nearly exhausted. Both kinds of row are budgeted in PSE watts: a watts row is converted from the PD figure you type to the PSE watts of the class that wattage falls in, and the screen says so. Picking the class from the datasheet is still the exact way.
 - 802.3bt Type 4 supplies 90 W (IEEE 802.3-2022, Table 145-11, Class 8 P_Class). The 99.9 W figure sometimes quoted is the PSE power rating band (P_Type, Table 145-16), which is a different quantity.
 - The reserve is budget you keep back for growth and for switches that hold back some power themselves. Set it to 0 to compare against the full budget. A reserve outside 0 to 99.9 blanks the result and the screen asks for one from 0 to 99.9%.
 - The percent shown stops at 100 for display, but the Over budget verdict triggers on the real negative watts left, so an over-budget case is never hidden.
