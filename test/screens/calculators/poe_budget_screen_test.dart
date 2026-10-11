@@ -25,21 +25,24 @@ import 'package:wlan_pros_toolbox/theme/app_theme.dart';
 import 'package:wlan_pros_toolbox/widgets/app_select.dart';
 
 void main() {
-  group('PoE total draw (pure) — matches PWA Σ(w × q)', () {
-    test('single row: 25.5 W × 4 = 102 W', () {
+  group('PoE total draw (pure) — Σ(PSE watts × q)', () {
+    // Keith, 11 OCT 2026 (review M1): a watts row is the PD draw, converted to
+    // the PSE watts of the class that wattage falls in. The PWA budgeted watts
+    // as entered; these expectations changed with that ruling.
+    test('single row: 25.5 W PD is Class 4, 30 W PSE × 4 = 120 W', () {
       expect(
         PoeBudgetScreen.totalDraw(const [PoeDeviceRow(25.5, 4)]),
-        closeTo(102.0, 1e-9),
+        closeTo(120.0, 1e-9),
       );
     });
 
-    test('mixed rows sum verbatim', () {
+    test('mixed rows sum the converted PSE watts', () {
       final double total = PoeBudgetScreen.totalDraw(const [
-        PoeDeviceRow(15.4, 2), // 30.8
-        PoeDeviceRow(30.0, 3), // 90.0
-        PoeDeviceRow(51.0, 1), // 51.0
+        PoeDeviceRow(15.4, 2), // Class 4: 30.0 × 2 = 60.0
+        PoeDeviceRow(30.0, 3), // Class 5: 45.0 × 3 = 135.0
+        PoeDeviceRow(51.0, 1), // Class 6: 60.0
       ]);
-      expect(total, closeTo(171.8, 1e-9));
+      expect(total, closeTo(255.0, 1e-9));
     });
 
     test('empty list and zero-qty rows total 0', () {
@@ -67,36 +70,36 @@ void main() {
   });
 
   group('PoE compute (pure) — matches PWA calcPoeBudget end to end', () {
-    test('within budget: 370 W budget, 70 W draw', () {
+    test('within budget: 370 W budget, 90 W PSE draw', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         370,
-        const [PoeDeviceRow(35.0, 2)], // 70 W
+        const [PoeDeviceRow(35.0, 2)], // Class 5: 45 W × 2 = 90 W
       )!;
-      expect(r.total, closeTo(70.0, 1e-9));
-      expect(r.remaining, closeTo(300.0, 1e-9));
-      // 70 / 370 × 100 = 18.918...
-      expect(r.pct, closeTo(18.91891891891892, 1e-9));
+      expect(r.total, closeTo(90.0, 1e-9));
+      expect(r.remaining, closeTo(280.0, 1e-9));
+      // 90 / 370 × 100 = 24.324...
+      expect(r.pct, closeTo(24.32432432432432, 1e-9));
       expect(r.verdict, PoeVerdict.ok);
     });
 
     test('caution band: 100 W budget, 90 W draw → pct 90, caution', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         100,
-        const [PoeDeviceRow(30.0, 3)], // 90 W
+        const [PoeDeviceRow(25.5, 3)], // Class 4: 30 W × 3 = 90 W
       )!;
       expect(r.pct, closeTo(90.0, 1e-9));
       expect(r.remaining, closeTo(10.0, 1e-9));
       expect(r.verdict, PoeVerdict.caution);
     });
 
-    test('over budget: 100 W budget, 120 W draw → pct capped at 100', () {
+    test('over budget: 100 W budget, 135 W draw → pct capped at 100', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         100,
-        const [PoeDeviceRow(40.0, 3)], // 120 W
+        const [PoeDeviceRow(40.0, 3)], // Class 5: 45 W × 3 = 135 W
       )!;
-      expect(r.total, closeTo(120.0, 1e-9));
-      expect(r.remaining, closeTo(-20.0, 1e-9));
-      // (120 / 100) × 100 = 120, capped to 100 (PWA Math.min).
+      expect(r.total, closeTo(135.0, 1e-9));
+      expect(r.remaining, closeTo(-35.0, 1e-9));
+      // (135 / 100) × 100 = 135, capped to 100 (PWA Math.min).
       expect(r.pct, closeTo(100.0, 1e-9));
       expect(r.verdict, PoeVerdict.over);
     });
@@ -302,14 +305,14 @@ void main() {
       expect(r.verdict, PoeVerdict.over);
     });
 
-    test('reserve 0 matches the PWA math exactly', () {
+    test('reserve 0 matches the PWA math on the converted total', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         370,
-        const <PoeDeviceRow>[PoeDeviceRow(35.0, 2)],
+        const <PoeDeviceRow>[PoeDeviceRow(35.0, 2)], // 90 W PSE
       )!;
       expect(r.reserveWatts, 0);
-      expect(r.remaining, closeTo(300.0, 1e-9));
-      expect(r.pct, closeTo(18.91891891891892, 1e-9));
+      expect(r.remaining, closeTo(280.0, 1e-9));
+      expect(r.pct, closeTo(24.32432432432432, 1e-9));
     });
 
     test('a reserve outside 0 ≤ r < 100 gives no result', () {
@@ -367,25 +370,93 @@ void main() {
     });
   });
 
+  group('PoE watts rows budgeted at the switch side (M1)', () {
+    test('PD watts convert to the PSE watts of the class they fall in', () {
+      // Each class's own PD maximum lands in that class; one hair above moves
+      // up a class. Class 0 is skipped (same figures as Class 3).
+      final Map<double, double> expected = <double, double>{
+        3.0: 4.0, // Class 1
+        3.84: 4.0, // Class 1 max PD
+        3.85: 7.0, // Class 2
+        6.49: 7.0, // Class 2 max PD
+        6.5: 15.4, // Class 3
+        12.95: 15.4, // Class 3 max PD
+        12.96: 30.0, // Class 4
+        25.5: 30.0, // Class 4 max PD
+        25.6: 45.0, // Class 5
+        40.0: 45.0, // Class 5 max PD
+        51.0: 60.0, // Class 6 max PD
+        62.0: 75.0, // Class 7 max PD
+        71.3: 90.0, // Class 8 max PD
+      };
+      for (final MapEntry<double, double> e in expected.entries) {
+        expect(
+          PoeBudgetScreen.pseWattsForPd(e.key),
+          closeTo(e.value, 1e-9),
+          reason: '${e.key} W PD',
+        );
+      }
+    });
+
+    test('zero or negative watts is nothing; above Class 8 is as entered', () {
+      expect(PoeBudgetScreen.pseWattsForPd(0), 0);
+      expect(PoeBudgetScreen.pseWattsForPd(-5), 0);
+      expect(PoeBudgetScreen.pseWattsForPd(80.0), 80.0);
+    });
+
+    test('12 rows of 25.5 W total the PSE figure, 360 W, not 306 W', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[PoeDeviceRow(25.5, 12)],
+      )!;
+      expect(r.total, closeTo(360.0, 1e-9));
+      expect(r.total, isNot(closeTo(306.0, 1e-9)));
+      expect(r.remaining, closeTo(10.0, 1e-9));
+    });
+
+    test('a watts row and a class row for the same device budget the same', () {
+      final double byWatts = PoeBudgetScreen.totalDraw(const <PoeDeviceRow>[
+        PoeDeviceRow(25.5, 12),
+      ]);
+      final double byClass = PoeBudgetScreen.totalDraw(const <PoeDeviceRow>[
+        PoeDeviceRow.ofClass(4, 12),
+      ]);
+      expect(byWatts, closeTo(byClass, 1e-9));
+    });
+
+    test('a mixed class and watts budget adds PSE watts throughout', () {
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        400,
+        const <PoeDeviceRow>[
+          PoeDeviceRow.ofClass(6, 2), // 2 × 60.0 = 120.0
+          PoeDeviceRow(25.5, 6), // 6 × 30.0 = 180.0
+          PoeDeviceRow.ofClass(2, 3), // 3 × 7.0 = 21.0
+        ],
+      )!;
+      expect(r.total, closeTo(321.0, 1e-9));
+      expect(r.usesWattsRows, isTrue);
+    });
+  });
+
   group('PoE mixed class and watts rows (pure)', () {
-    test('class rows at PSE watts, watts rows as entered', () {
+    test('class rows at PSE watts, watts rows converted to PSE watts', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(
         370,
         const <PoeDeviceRow>[
           PoeDeviceRow.ofClass(4, 8), // 8 × 30.0 = 240.0
-          PoeDeviceRow(6.5, 4), // 4 × 6.5 = 26.0 (PD, as entered)
+          PoeDeviceRow(6.5, 4), // PD 6.5 W is Class 3: 4 × 15.4 = 61.6
           PoeDeviceRow.ofClass(3, 2), // 2 × 15.4 = 30.8
         ],
         reservePct: 10,
         ports: 24,
         portType: PoePortType.at,
       )!;
-      expect(r.total, closeTo(296.8, 1e-9));
-      expect(r.remaining, closeTo(333.0 - 296.8, 1e-9));
+      expect(r.total, closeTo(332.4, 1e-9));
+      expect(r.remaining, closeTo(333.0 - 332.4, 1e-9));
       expect(r.portsNeeded, 14);
       expect(r.rowProblems, isEmpty);
       expect(r.usesWattsRows, isTrue);
-      expect(r.verdict, PoeVerdict.caution); // 296.8 / 333 = 89%
+      expect(r.verdict, PoeVerdict.caution); // 332.4 / 333 = 99.8%
     });
 
     test('class rows only → no PD-watts note', () {
@@ -437,7 +508,7 @@ void main() {
         await tester.enterText(fields.at(3), '30');
         await tester.pump();
 
-        // 30 W of a 370 W budget → OK verdict.
+        // 30 W PD is Class 5, 45 W PSE, of a 370 W budget → OK verdict.
         expect(find.text('Budget OK'), findsOneWidget);
 
         // Total draw. Scoped to the readout (a SelectableText) rather than the
@@ -447,7 +518,7 @@ void main() {
         // on screen; only one of them is the total-draw readout.
         expect(
           find.byWidgetPredicate(
-            (Widget w) => w is SelectableText && w.data == '30.0 W',
+            (Widget w) => w is SelectableText && w.data == '45.0 W',
           ),
           findsOneWidget,
         );
@@ -537,7 +608,7 @@ void main() {
           await tester.pump();
 
           expect(
-            find.textContaining('budgeted at the PD watts entered'),
+            find.textContaining('converted to the PSE watts'),
             findsOneWidget,
           );
           expect(
@@ -617,9 +688,10 @@ void main() {
         await tester.pump();
 
         expect(copied, isNotNull);
-        expect(copied, contains('Total PSE allocation: 12.0 W'));
+        // 12 W PD is Class 3: 15.4 W PSE.
+        expect(copied, contains('Total PSE allocation: 15.4 W'));
         expect(copied, contains('Reserve: 10% (37.0 W)'));
-        expect(copied, contains('Left after reserve: 321.0 W remaining'));
+        expect(copied, contains('Left after reserve: 317.6 W remaining'));
         expect(copied, contains('Ports: 1 needed of 24 available'));
         expect(copied, contains('PSE type: not set'));
         expect(copied, contains('Verdict: Budget OK'));

@@ -2,17 +2,20 @@
 //
 // Enter a switch PoE budget, its PoE port count, its PSE type and a reserve %,
 // then up to six device rows. Each row is either a PoE class (0-8), budgeted at
-// that class's PSE allocation, or watts per device, budgeted as entered (PD
-// watts, nothing added for cable loss). Read the total PSE allocation, the
-// watts left after the reserve, ports needed vs available, a per-row port-type
-// check, and a fits / caution / does-not-fit verdict.
+// that class's PSE allocation, or watts per device (the PD draw), converted to
+// the PSE watts of the class that wattage falls in. Read the total PSE
+// allocation, the watts left after the reserve, ports needed vs available, a
+// per-row port-type check, and a fits / caution / does-not-fit verdict.
 //
 // Class PSE allocations and per-type class ranges are NOT duplicated here: they
 // are read from PoeReferenceScreen.classes / .standards (IEEE Std 802.3-2022,
 // Clause 33 and Table 145-11), so the two screens cannot disagree.
 //
-// Math. With reserve 0 and every row in watts, this is the RF Tools PWA
-// reference (app.js calcPoeBudget, line 1147) VERBATIM:
+// Math. The RF Tools PWA reference (app.js calcPoeBudget, line 1147) budgets a
+// watts row as entered. This screen does not: Keith ruled (11 OCT 2026, review
+// M1) that a watts row is converted to the PSE watts the switch must supply, so
+// the total is the real switch load. See [PoeBudgetScreen.pseWattsForPd]. The
+// rest follows the PWA:
 //   total     = Σ (allocation_i × qty_i) over the 6 rows
 //   usable    = budget × (1 − reserve% / 100)
 //   remaining = usable − total
@@ -63,7 +66,7 @@ enum PoePortType { notSet, af, at, bt3, bt4 }
 
 /// A single device row: either a PoE class or watts per device, and a quantity.
 class PoeDeviceRow {
-  /// A watts row: [watts] is the device's PD draw, budgeted as entered.
+  /// A watts row: [watts] is the device's PD draw, converted to PSE watts.
   const PoeDeviceRow(this.watts, this.qty) : poeClass = null;
 
   /// A class row: budgeted at the PSE allocation for [poeClass] (0-8).
@@ -102,7 +105,7 @@ class PoeBudgetResult {
     this.usesWattsRows = false,
   });
 
-  final double total; // Σ PSE allocation (class rows) + PD watts (watts rows).
+  final double total; // Σ PSE allocation (class rows and converted watts rows).
   final double budget;
   final double reservePct;
   final double remaining; // usable − total; negative when over budget.
@@ -112,7 +115,7 @@ class PoeBudgetResult {
   final int? portsAvailable; // null when the port count was not entered.
   final PoePortType portType;
   final List<PoeRowProblem> rowProblems;
-  final bool usesWattsRows; // any active watts row: PD watts, no cable loss.
+  final bool usesWattsRows; // any active watts row: converted PD to PSE watts.
 
   double get reserveWatts => budget * reservePct / 100;
   double get usable => budget - reserveWatts;
@@ -173,10 +176,34 @@ class PoeBudgetScreen extends StatefulWidget {
     return null;
   }
 
-  /// What one device in [row] is budgeted at: its class's PSE allocation, or
-  /// the watts entered (PD watts, nothing added for cable loss).
-  static double allocationFor(PoeDeviceRow row) =>
-      row.isClass ? (classPseWatts(row.poeClass!) ?? 0) : row.watts;
+  /// The PSE watts the switch must supply for a device that draws [pdWatts] at
+  /// the device (PD watts).
+  ///
+  /// Rule: find the lowest PoE class (1-8) whose maximum PD power
+  /// (`PoeClass.maxPdWatts`) is at least [pdWatts], and return that class's PSE
+  /// allocation. So 25.5 W is Class 4 and budgets at 30.0 W; 25.6 W is Class 5
+  /// and budgets at 45.0 W. Class 0 is skipped: it shares Class 3's figures.
+  /// Above the highest class's PD power (71.3 W, Class 8) no class can carry the
+  /// load, so the wattage is returned as entered rather than invented; the
+  /// port check flags it on every type.
+  ///
+  /// Source: IEEE Std 802.3-2022, Clause 33 (Class 0-4) and Table 145-11
+  /// (P_Class, Class 5-8), as held in PoeReferenceScreen.classes (PSE and
+  /// max-PD watts per class). Keith's ruling, 11 OCT 2026.
+  static double pseWattsForPd(double pdWatts) {
+    if (pdWatts <= 0) return 0;
+    for (final PoeClass c in PoeReferenceScreen.classes) {
+      if (c.classNum == 0) continue;
+      if (pdWatts <= c.maxPdWatts) return c.pseWatts;
+    }
+    return pdWatts;
+  }
+
+  /// What one device in [row] is budgeted at: its class's PSE allocation, or,
+  /// for a watts row, the PSE watts for the class that PD wattage falls in.
+  static double allocationFor(PoeDeviceRow row) => row.isClass
+      ? (classPseWatts(row.poeClass!) ?? 0)
+      : pseWattsForPd(row.watts);
 
   /// Sum of allocation × qty across [rows] (PWA: total += w * q).
   static double totalDraw(List<PoeDeviceRow> rows) {
@@ -442,8 +469,10 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   }
 
   static const String _wattsRowNote =
-      'Watts rows are budgeted at the PD watts entered, with nothing added '
-      'for cable loss. Pick the device\'s class to budget PSE watts.';
+      'Watts rows are the PD watts at the device, converted to the PSE watts '
+      'of the class that wattage falls in (for example 25.5 W is Class 4, '
+      '30.0 W). Above 71.3 W no class fits, so the watts are used as entered. '
+      'Pick the device\'s class to be exact.';
 
   static String _portTypeLabel(PoePortType t) =>
       PoeBudgetScreen.standardFor(t)?.standard ?? 'not set';
