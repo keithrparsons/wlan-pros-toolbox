@@ -461,10 +461,12 @@ void main() {
       }
     });
 
-    test('zero or negative watts is nothing; above Class 8 is as entered', () {
+    // Keith, 11 OCT 2026: above 71.3 W the entry is refused ("Refuse the
+    // entry"), no longer budgeted as entered.
+    test('zero or negative watts is nothing; above Class 8 has no answer', () {
       expect(PoeBudgetScreen.pseWattsForPd(0), 0);
       expect(PoeBudgetScreen.pseWattsForPd(-5), 0);
-      expect(PoeBudgetScreen.pseWattsForPd(80.0), 80.0);
+      expect(PoeBudgetScreen.pseWattsForPd(80.0), isNull);
     });
 
     test('12 rows of 25.5 W total the PSE figure, 360 W, not 306 W', () {
@@ -498,6 +500,71 @@ void main() {
       )!;
       expect(r.total, closeTo(321.0, 1e-9));
       expect(r.usesWattsRows, isTrue);
+    });
+  });
+
+  group('PoE refuses a watts row above 71.3 W (Keith, 11 OCT 2026)', () {
+    test('the limit is the Class 8 row of the reference table', () {
+      expect(PoeBudgetScreen.maxPdWatts, 71.3);
+      expect(
+        PoeBudgetScreen.maxPdWatts,
+        PoeReferenceScreen.classes.last.maxPdWatts,
+      );
+    });
+
+    test('71.3 W is accepted: Class 8, 90 W PSE', () {
+      expect(PoeBudgetScreen.pseWattsForPd(71.3), 90.0);
+      final PoeBudgetResult r = PoeBudgetScreen.compute(
+        370,
+        const <PoeDeviceRow>[PoeDeviceRow(71.3, 1)],
+      )!;
+      expect(r.total, closeTo(90.0, 1e-9));
+    });
+
+    test('71.31 W gives no result, with or without a port type', () {
+      const List<PoeDeviceRow> rows = <PoeDeviceRow>[PoeDeviceRow(71.31, 1)];
+      expect(PoeBudgetScreen.compute(370, rows), isNull);
+      for (final PoePortType t in PoePortType.values) {
+        expect(PoeBudgetScreen.compute(370, rows, portType: t), isNull);
+      }
+    });
+
+    test('a row asking for nothing is not refused', () {
+      expect(
+        PoeBudgetScreen.compute(370, const <PoeDeviceRow>[
+          PoeDeviceRow(500, 0),
+        ]),
+        isNotNull,
+      );
+    });
+
+    testWidgets('71.31 W shows the field error and no result; 71.3 clears it', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '370');
+        await tester.enterText(fields.at(3), '71.31');
+        await tester.pump();
+
+        expect(
+          find.text('No PoE type delivers more than 71.3 W to a device'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Fix the watts entry'), findsOneWidget);
+        expect(find.text('Total PSE allocation'), findsNothing);
+
+        await tester.enterText(fields.at(3), '71.3');
+        await tester.pump();
+        expect(
+          find.text('No PoE type delivers more than 71.3 W to a device'),
+          findsNothing,
+        );
+        expect(find.text('Total PSE allocation'), findsOneWidget);
+      });
     });
   });
 
