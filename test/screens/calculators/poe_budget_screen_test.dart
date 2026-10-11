@@ -17,6 +17,7 @@
 // Widget tests confirm the screen pumps and renders in a phone viewport.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wlan_pros_toolbox/screens/tools/calculators/poe_budget_screen.dart';
@@ -276,6 +277,68 @@ void main() {
         expect(r.verdict, PoeVerdict.over);
       },
     );
+  });
+
+  group('PoE review fixes (pure)', () {
+    test(
+      'M4: every PSE type resolves to a table row with an int max class',
+      () {
+        const Map<PoePortType, int> expected = <PoePortType, int>{
+          PoePortType.af: 3,
+          PoePortType.at: 4,
+          PoePortType.bt3: 6,
+          PoePortType.bt4: 8,
+        };
+        for (final MapEntry<PoePortType, int> e in expected.entries) {
+          expect(
+            PoeBudgetScreen.standardFor(e.key),
+            isNotNull,
+            reason: '${e.key}',
+          );
+          expect(
+            PoeBudgetScreen.maxClassFor(e.key),
+            e.value,
+            reason: '${e.key}',
+          );
+        }
+        expect(PoeBudgetScreen.maxClassFor(PoePortType.notSet), isNull);
+      },
+    );
+
+    test('M4: maxClass agrees with the displayed range text', () {
+      for (final PoeStandard s in PoeReferenceScreen.standards) {
+        expect(s.classes, '0-${s.maxClass}', reason: s.standard);
+      }
+    });
+
+    test('L1: a watts row just over the limit does not read as the limit', () {
+      final String? m = PoeBudgetScreen.rowPortProblem(
+        const PoeDeviceRow(25.54, 1),
+        PoePortType.at,
+      );
+      expect(
+        m,
+        '25.54 W needs more than an 802.3at port gives (25.5 W at the device)',
+      );
+    });
+
+    test('L4: the largest reserve is 99.9, as the help and field say', () {
+      const List<PoeDeviceRow> rows = <PoeDeviceRow>[PoeDeviceRow(10, 1)];
+      expect(PoeBudgetScreen.compute(370, rows, reservePct: 99.9), isNotNull);
+      expect(PoeBudgetScreen.compute(370, rows, reservePct: 99.95), isNull);
+    });
+
+    test('L5: reserve plus usable always equals the budget', () {
+      for (final double pct in <double>[0, 3.3, 10, 12.5, 33.3, 99.9]) {
+        final PoeBudgetResult r = PoeBudgetScreen.compute(
+          370.7,
+          const <PoeDeviceRow>[PoeDeviceRow(10, 1)],
+          reservePct: pct,
+        )!;
+        expect(r.reserveWatts + r.usable, closeTo(r.budget, 1e-12));
+        expect(r.remaining, closeTo(r.usable - r.total, 1e-12));
+      }
+    });
   });
 
   group('PoE reserve math (pure)', () {
@@ -592,6 +655,124 @@ void main() {
           find.text('Does not fit. See the port checks above'),
           findsOneWidget,
         );
+      });
+    });
+
+    testWidgets('M2: a port shortfall alone names the ports, not the checks', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied =
+                (call.arguments as Map<Object?, Object?>)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        // 740 W, 2 ports, one watts row of 3 devices: no PSE type set, so no
+        // row problem, only a port shortfall.
+        await tester.enterText(fields.at(0), '740');
+        await tester.enterText(fields.at(1), '2');
+        await tester.enterText(fields.at(3), '10');
+        await tester.enterText(fields.at(4), '3');
+        await tester.pump();
+
+        expect(
+          find.text('Does not fit. Not enough PoE ports for these devices'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Does not fit. See the port checks above'),
+          findsNothing,
+        );
+
+        await tester.tap(find.byTooltip('Copy results'));
+        await tester.pump();
+        expect(copied, contains('Verdict: Does not fit'));
+        expect(
+          copied,
+          contains('Does not fit. Not enough PoE ports for these devices'),
+        );
+        await tester.pump(const Duration(seconds: 2));
+      });
+    });
+
+    testWidgets('M2: ports short and a failed port check name both causes', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '740');
+        await tester.enterText(fields.at(1), '2');
+        // 40 W PD on an 802.3at port fails the port check; 3 devices, 2 ports.
+        await tester.enterText(fields.at(3), '40');
+        await tester.enterText(fields.at(4), '3');
+        await tester.tap(find.byType(AppSelect<PoePortType>));
+        await tester.pumpAndSettle();
+        await tester.tap(_menuItem('802.3at (PoE+)'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'Does not fit. Not enough PoE ports, and see the port checks above',
+          ),
+          findsOneWidget,
+        );
+      });
+    });
+
+    testWidgets('M3: the utilization label reads percent of usable budget', (
+      tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(0), '370');
+        await tester.enterText(fields.at(3), '25.5');
+        await tester.enterText(fields.at(4), '10'); // 300 W PSE of 333 usable
+        await tester.pump();
+
+        final SemanticsNode node = tester.getSemantics(
+          find.bySemanticsLabel('Utilization').first,
+        );
+        expect(node.value, '90 percent of usable budget');
+      });
+      handle.dispose();
+    });
+
+    testWidgets('L6: a port count or quantity stops at four digits', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 2400), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        final Finder fields = find.byType(TextField);
+        await tester.enterText(fields.at(1), '99999999999999999999');
+        await tester.enterText(fields.at(4), '99999999999999999999');
+        await tester.pump();
+        expect(tester.widget<TextField>(fields.at(1)).controller!.text, '9999');
+        expect(tester.widget<TextField>(fields.at(4)).controller!.text, '9999');
       });
     });
 

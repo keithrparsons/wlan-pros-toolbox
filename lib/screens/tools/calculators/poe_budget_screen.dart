@@ -117,7 +117,8 @@ class PoeBudgetResult {
   final List<PoeRowProblem> rowProblems;
   final bool usesWattsRows; // any active watts row: converted PD to PSE watts.
 
-  double get reserveWatts => budget * reservePct / 100;
+  double get reserveWatts =>
+      PoeBudgetScreen.reserveWattsFor(budget, reservePct);
   double get usable => budget - reserveWatts;
   bool get overBudget => remaining < 0;
   bool get portsShort =>
@@ -238,12 +239,8 @@ class PoeBudgetScreen extends StatefulWidget {
     );
   }
 
-  /// Highest class a port of [type] supports, from the table's "0-4" range.
-  static int? maxClassFor(PoePortType type) {
-    final PoeStandard? s = standardFor(type);
-    if (s == null) return null;
-    return int.parse(s.classes.split('-').last);
-  }
+  /// Highest class a port of [type] supports, from the table's `maxClass`.
+  static int? maxClassFor(PoePortType type) => standardFor(type)?.maxClass;
 
   /// Why one device in [row] cannot run from a port of [type], or null if it
   /// can (or if the type is not set, or the row asks for nothing). A class row
@@ -259,12 +256,16 @@ class PoeBudgetScreen extends StatefulWidget {
           'gives (up to Class $max)';
     }
     if (row.watts <= s.pdWatts) return null;
-    return '${row.watts.toStringAsFixed(1)} W needs more than an '
+    return '${_trim(row.watts)} W needs more than an '
         '${s.standard} port gives (${_trim(s.pdWatts)} W at the device)';
   }
 
-  static String _trim(double w) =>
-      w == w.roundToDouble() ? w.toStringAsFixed(1) : w.toString();
+  /// Watts to at most two decimals, at least one: 25.5, 25.54, 26.0. Enough
+  /// digits that a row which just failed never reads the same as the limit.
+  static String _trim(double w) {
+    final String two = w.toStringAsFixed(2);
+    return two.endsWith('0') ? two.substring(0, two.length - 1) : two;
+  }
 
   /// The verdict bucket. PWA order: over (remaining < 0) → caution (pct > 80)
   /// → ok. The check is on the UNCAPPED total/budget ratio for `remaining`, and
@@ -276,8 +277,17 @@ class PoeBudgetScreen extends StatefulWidget {
     return PoeVerdict.ok;
   }
 
+  /// Highest reserve the screen accepts, in percent. The field error and the
+  /// help entry both say "0 to 99.9".
+  static const double maxReservePct = 99.9;
+
+  /// The watts a [reservePct] holds back from [budget]. The one reserve
+  /// formula: compute() and [PoeBudgetResult] both call it.
+  static double reserveWattsFor(double budget, double reservePct) =>
+      budget * reservePct / 100;
+
   /// Full compute. Returns null when [budget] is non-finite or ≤ 0 (PWA error
-  /// path renders no result block), or when [reservePct] is not 0 ≤ r < 100.
+  /// path renders no result block), or when [reservePct] is not 0 to 99.9.
   /// [ports] null means the port count was not entered, so it is not checked.
   static PoeBudgetResult? compute(
     double budget,
@@ -287,11 +297,11 @@ class PoeBudgetScreen extends StatefulWidget {
     PoePortType portType = PoePortType.notSet,
   }) {
     if (!budget.isFinite || budget <= 0) return null;
-    if (!reservePct.isFinite || reservePct < 0 || reservePct >= 100) {
+    if (!reservePct.isFinite || reservePct < 0 || reservePct > maxReservePct) {
       return null;
     }
     final double total = totalDraw(rows);
-    final double usable = budget * (1 - reservePct / 100);
+    final double usable = budget - reserveWattsFor(budget, reservePct);
     final double remaining = usable - total;
     final double pct = math.min(100, (total / usable) * 100);
     final List<PoeRowProblem> problems = <PoeRowProblem>[
@@ -341,8 +351,11 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   // Unsigned-decimal for watts/budget; unsigned-integer for quantity.
   static final List<TextInputFormatter> _unsignedDecimal =
       unsignedDecimalFormatters;
+  // Four digits is plenty for a port count or a quantity, and keeps a pasted
+  // 20-digit number from parsing to null and being ignored without a word.
   static final List<TextInputFormatter> _unsignedInteger = [
     FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(4),
   ];
 
   @override
@@ -416,7 +429,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   bool get _reserveInvalid {
     if (_reserveCtrl.text.trim().isEmpty) return false;
     final double? r = tryParseFlexibleDouble(_reserveCtrl.text);
-    return r == null || r < 0 || r >= 100;
+    return r == null || r < 0 || r > PoeBudgetScreen.maxReservePct;
   }
 
   // ─── Parsing ──────────────────────────────────────────────────────────────
@@ -445,10 +458,18 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
   static String _verdictText(PoeBudgetResult r) {
     switch (r.verdict) {
       case PoeVerdict.over:
-        if (!r.overBudget) {
-          return 'Does not fit. See the port checks above';
+        if (r.overBudget) {
+          return 'Over budget. Reduce devices or upgrade switch';
         }
-        return 'Over budget. Reduce devices or upgrade switch';
+        // Name the cause: a port shortfall, a failed port-type check, or both.
+        if (r.portsShort && r.rowProblems.isNotEmpty) {
+          return 'Does not fit. Not enough PoE ports, and see the port checks '
+              'above';
+        }
+        if (r.portsShort) {
+          return 'Does not fit. Not enough PoE ports for these devices';
+        }
+        return 'Does not fit. See the port checks above';
       case PoeVerdict.caution:
         return 'Caution: within 20% of budget limit';
       case PoeVerdict.ok:
@@ -947,7 +968,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
       children: [
         Semantics(
           label: 'Utilization',
-          value: '${r.pct.toStringAsFixed(0)} percent of budget',
+          value: '${r.pct.toStringAsFixed(0)} percent of usable budget',
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.control),
             child: Stack(

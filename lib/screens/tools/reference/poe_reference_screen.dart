@@ -49,6 +49,7 @@ class PoeStandard {
     required this.pdWatts,
     required this.pairs,
     required this.classes,
+    required this.maxClass,
   });
 
   /// IEEE designation, e.g. `802.3af`.
@@ -66,8 +67,12 @@ class PoeStandard {
   /// Powered pairs, e.g. `2 of 4`.
   final String pairs;
 
-  /// Supported class range, e.g. `0-4`.
+  /// Supported class range, e.g. `0-4`, for display.
   final String classes;
+
+  /// Highest class this standard supports, e.g. `4`. The budget screen reads
+  /// this instead of parsing [classes], so the display text can change freely.
+  final int maxClass;
 }
 
 /// One row of the PD power-class table. Field names + values mirror the PWA
@@ -152,6 +157,7 @@ class PoeReferenceScreen extends StatelessWidget {
       pdWatts: 12.95,
       pairs: '2 of 4',
       classes: '0-3',
+      maxClass: 3,
     ),
     PoeStandard(
       standard: '802.3at',
@@ -160,6 +166,7 @@ class PoeReferenceScreen extends StatelessWidget {
       pdWatts: 25.5,
       pairs: '2 of 4',
       classes: '0-4',
+      maxClass: 4,
     ),
     PoeStandard(
       standard: '802.3bt Type 3',
@@ -168,6 +175,7 @@ class PoeReferenceScreen extends StatelessWidget {
       pdWatts: 51.0,
       pairs: '4 of 4',
       classes: '0-6',
+      maxClass: 6,
     ),
     PoeStandard(
       standard: '802.3bt Type 4',
@@ -176,6 +184,7 @@ class PoeReferenceScreen extends StatelessWidget {
       pdWatts: 71.3,
       pairs: '4 of 4',
       classes: '0-8',
+      maxClass: 8,
     ),
   ];
 
