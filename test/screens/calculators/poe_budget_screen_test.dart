@@ -568,6 +568,105 @@ void main() {
     });
   });
 
+  group('PoE reference cards are built from the tables (L2)', () {
+    String w(double v) {
+      final String two = v.toStringAsFixed(2);
+      return '${two.endsWith('0') ? two.substring(0, two.length - 1) : two} W';
+    }
+
+    test('each standards-card row equals its table row', () {
+      final List<List<String>> rows = PoeBudgetScreen.standardsCardRows();
+      expect(rows.length, PoeReferenceScreen.standards.length);
+      for (int i = 0; i < rows.length; i++) {
+        final PoeStandard t = PoeReferenceScreen.standards[i];
+        expect(rows[i], <String>[
+          t.standard,
+          t.name,
+          w(t.pseWatts),
+          w(t.pdWatts),
+        ]);
+      }
+    });
+
+    test('each classes-card row equals its table row', () {
+      final List<List<String>> rows = PoeBudgetScreen.classesCardRows();
+      expect(rows.length, PoeReferenceScreen.classes.length);
+      for (int i = 0; i < rows.length; i++) {
+        final PoeClass t = PoeReferenceScreen.classes[i];
+        expect(rows[i], <String>['${t.classNum}', w(t.maxPdWatts), t.standard]);
+      }
+    });
+
+    // The guard against a card carrying its own number: feed the builders a
+    // table with figures no card could hold, and the cards must follow it.
+    test('a changed table changes the cards (no figures of their own)', () {
+      const List<PoeStandard> standards = <PoeStandard>[
+        PoeStandard(
+          standard: '802.3zz',
+          name: 'Test',
+          pseWatts: 123.4,
+          pdWatts: 98.76,
+          pairs: '4 of 4',
+          classes: '0-9',
+          maxClass: 9,
+        ),
+      ];
+      const List<PoeClass> classes = <PoeClass>[
+        PoeClass(
+          classNum: 9,
+          pseWatts: 111.0,
+          maxPdWatts: 87.65,
+          standard: '802.3zz',
+          note: 'x',
+        ),
+      ];
+      expect(PoeBudgetScreen.standardsCardRows(standards), <List<String>>[
+        <String>['802.3zz', 'Test', '123.4 W', '98.76 W'],
+      ]);
+      expect(PoeBudgetScreen.classesCardRows(classes), <List<String>>[
+        <String>['9', '87.65 W', '802.3zz'],
+      ]);
+    });
+
+    testWidgets('card prose is unchanged: 30.0 W not 25.5 W, Type 4 90 W', (
+      tester,
+    ) async {
+      await _withViewport(tester, const Size(390, 3000), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        await tester.pump();
+        expect(
+          find.textContaining('draws 30.0 W each from the switch, not 25.5 W.'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Type 4 supplies 90 W: the 99.9 W'),
+          findsOneWidget,
+        );
+      });
+    });
+
+    testWidgets('the rendered cards show every table figure', (tester) async {
+      await _withViewport(tester, const Size(390, 3000), () async {
+        await tester.pumpWidget(
+          MaterialApp(theme: AppTheme.dark(), home: const PoeBudgetScreen()),
+        );
+        await tester.pump();
+        for (final PoeStandard t in PoeReferenceScreen.standards) {
+          expect(find.text(t.standard), findsWidgets);
+          expect(find.text(t.name), findsWidgets);
+          expect(find.text(w(t.pseWatts)), findsWidgets);
+          expect(find.text(w(t.pdWatts)), findsWidgets);
+        }
+        for (final PoeClass t in PoeReferenceScreen.classes) {
+          expect(find.text('Class ${t.classNum}'), findsWidgets);
+          expect(find.text(w(t.maxPdWatts)), findsWidgets);
+        }
+      });
+    });
+  });
+
   group('PoE mixed class and watts rows (pure)', () {
     test('class rows at PSE watts, watts rows converted to PSE watts', () {
       final PoeBudgetResult r = PoeBudgetScreen.compute(

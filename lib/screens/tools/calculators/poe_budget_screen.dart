@@ -9,7 +9,9 @@
 //
 // Class PSE allocations and per-type class ranges are NOT duplicated here: they
 // are read from PoeReferenceScreen.classes / .standards (IEEE Std 802.3-2022,
-// Clause 33 and Table 145-11), so the two screens cannot disagree.
+// Clause 33 and Table 145-11), so the two screens cannot disagree. That
+// includes the two reference cards at the foot of this screen
+// (standardsCardRows, classesCardRows): they hold no figures of their own.
 //
 // Math. The RF Tools PWA reference (app.js calcPoeBudget, line 1147) budgets a
 // watts row as entered. This screen does not: Keith ruled (11 OCT 2026, review
@@ -200,6 +202,32 @@ class PoeBudgetScreen extends StatefulWidget {
     }
     return null;
   }
+
+  static double _classPdWatts(int poeClass) => PoeReferenceScreen.classes
+      .firstWhere((PoeClass c) => c.classNum == poeClass)
+      .maxPdWatts;
+
+  /// Rows for the PoE standards card: [standard, name, PSE W, PD W], built from
+  /// [standards] (default: the reference table). The card holds no figures of
+  /// its own, so it can never disagree with the PoE Reference screen.
+  static List<List<String>> standardsCardRows([List<PoeStandard>? standards]) =>
+      <List<String>>[
+        for (final PoeStandard s in standards ?? PoeReferenceScreen.standards)
+          <String>[
+            s.standard,
+            s.name,
+            '${_trim(s.pseWatts)} W',
+            '${_trim(s.pdWatts)} W',
+          ],
+      ];
+
+  /// Rows for the PD power classes card: [class, max PD W, standard], built from
+  /// [classes] (default: the reference table).
+  static List<List<String>> classesCardRows([List<PoeClass>? classes]) =>
+      <List<String>>[
+        for (final PoeClass c in classes ?? PoeReferenceScreen.classes)
+          <String>['${c.classNum}', '${_trim(c.maxPdWatts)} W', c.standard],
+      ];
 
   /// The most PD watts any PoE type delivers to a device: the Class 8 row of
   /// the reference table (71.3 W). The limit for a watts row; never a literal.
@@ -1137,17 +1165,7 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
     // 370 W switch and look comfortable; the switch actually delivers 360 W and
     // is nearly exhausted. Both columns now render, labeled.
     //
-    final List<List<String>> rows = <List<String>>[
-      const <String>['802.3af', 'PoE', '15.4 W', '12.95 W'],
-      const <String>['802.3at', 'PoE+', '30.0 W', '25.5 W'],
-      const <String>['802.3bt Type 3', 'PoE++ / 4PPoE', '60.0 W', '51.0 W'],
-      <String>[
-        '802.3bt Type 4',
-        'PoE++ Hi',
-        '${PoeBudgetScreen.typeFourPseWatts.toStringAsFixed(1)} W',
-        '71.3 W',
-      ],
-    ];
+    final List<List<String>> rows = PoeBudgetScreen.standardsCardRows();
 
     return Container(
       decoration: BoxDecoration(
@@ -1269,7 +1287,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
             'PSE W is what the switch port must supply. This is the number a '
             'switch budget is spent in. PD W is what reaches the device after '
             'cable loss. Budget in PSE watts: a rack of Class-4 APs draws '
-            '30.0 W each from the switch, not 25.5 W.',
+            '${PoeBudgetScreen._trim(PoeBudgetScreen.classPseWatts(4)!)} W each from the switch, not '
+            '${PoeBudgetScreen._trim(PoeBudgetScreen._classPdWatts(4))} W.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -1277,7 +1296,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
           // line cannot drift away from the number it justifies.
           Text(
             'PSE figures per ${PoeBudgetScreen.typeFourPseCitation}. Type 4 '
-            'supplies 90 W: the 99.9 W figure sometimes quoted is the PSE '
+            'supplies ${PoeBudgetScreen.typeFourPseWatts.toStringAsFixed(0)} W: '
+            'the 99.9 W figure sometimes quoted is the PSE '
             'power rating band (P_Type), not the per-class output power.',
             style: text.labelSmall?.copyWith(color: colors.textTertiary),
           ),
@@ -1288,18 +1308,8 @@ class _PoeBudgetScreenState extends State<PoeBudgetScreen> {
 
   Widget _classesCard(TextTheme text, AppMonoText mono) {
     final AppColorScheme colors = context.colors;
-    // POE_CLASSES mirror: [class, max PD W, standard].
-    final List<List<String>> rows = const [
-      ['0', '12.95 W', '802.3af'],
-      ['1', '3.84 W', '802.3af'],
-      ['2', '6.49 W', '802.3af'],
-      ['3', '12.95 W', '802.3af'],
-      ['4', '25.5 W', '802.3at'],
-      ['5', '40.0 W', '802.3bt'],
-      ['6', '51.0 W', '802.3bt'],
-      ['7', '62.0 W', '802.3bt'],
-      ['8', '71.3 W', '802.3bt'],
-    ];
+    // [class, max PD W, standard], from the reference table.
+    final List<List<String>> rows = PoeBudgetScreen.classesCardRows();
 
     return Container(
       decoration: BoxDecoration(
