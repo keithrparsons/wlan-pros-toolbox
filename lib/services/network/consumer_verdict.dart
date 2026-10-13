@@ -21,6 +21,8 @@
 // real internet figure it DID measure; D2 admits neither side was read. Nothing
 // is fabricated to paper over a platform limit.
 
+import 'package:net_quality/net_quality.dart';
+
 import 'wifi_vs_internet.dart';
 
 /// The four consumer outcomes the screen renders, collapsed from the engine's
@@ -94,15 +96,15 @@ enum ConsumerOutcome {
 /// status-danger (red), [unknown] → a neutral/muted token. The WORD always
 /// carries meaning so the chip never relies on color alone (WCAG 2.2 SC 1.4.1).
 enum AxisStatus {
-  /// "Strong" — this side measured a high data rate (> 250 Mbps).
+  /// "Strong" — this side measured a high data rate (100 Mbps and up, the Excellent download band).
   /// §8.13 `--app-status-success` (green).
   strong,
 
-  /// "Moderate" — this side measured a mid data rate (100–250 Mbps inclusive).
+  /// "Moderate" — this side measured a mid data rate (25 to under 100 Mbps, the Good band).
   /// §8.13 `--app-status-warning` (amber).
   moderate,
 
-  /// "Weak" — this side measured a low data rate (< 100 Mbps).
+  /// "Weak" — this side measured a low data rate (under 25 Mbps, the Fair and Poor bands).
   /// §8.13 `--app-status-danger` (red).
   weak,
 
@@ -200,26 +202,17 @@ enum AxisStatus {
   unreachable,
 }
 
-/// The absolute data-rate thresholds (Mbps) that bucket a measured rate into an
-/// [AxisStatus] tier. The SAME thresholds apply to both axes (Keith, 2026-06-07).
+/// Buckets a measured rate into an [AxisStatus] tier by folding the
+/// Excellent/Good/Fair/Poor download bands ([ThroughputBands], the one table)
+/// into three words: Strong = Excellent, Moderate = Good, Weak = Fair or Poor.
+/// The SAME scale applies to both axes (Keith, 13 OCT 2026).
 ///
-/// Boundaries (inclusive at the top of the Moderate band):
-///   * rate > 250            → [AxisStatus.strong]
-///   * 100 ≤ rate ≤ 250      → [AxisStatus.moderate]
-///   * rate < 100            → [AxisStatus.weak]
-///   * rate == null          → [AxisStatus.unknown] (unmeasured; GL-005)
-///
-/// Exposed as named constants so tests assert against the same numbers the
-/// derivation uses, and so a future threshold change has one home.
+///   * rate >= 100            → [AxisStatus.strong]
+///   * 25 <= rate < 100       → [AxisStatus.moderate]
+///   * rate < 25              → [AxisStatus.weak]
+///   * rate == null           → [AxisStatus.unknown] (unmeasured; GL-005)
 class AxisStatusThresholds {
   const AxisStatusThresholds._();
-
-  /// Above this rate (Mbps), exclusive, the axis is [AxisStatus.strong].
-  static const double strongAboveMbps = 250;
-
-  /// At/above this rate (Mbps), inclusive, the axis is at least
-  /// [AxisStatus.moderate]; below it the axis is [AxisStatus.weak].
-  static const double moderateAtOrAboveMbps = 100;
 
   /// Buckets an absolute data [rateMbps] into its tier. A null rate is an
   /// honest [AxisStatus.unknown] — no tier is forced onto missing data
@@ -228,8 +221,10 @@ class AxisStatusThresholds {
   /// absent" convention.
   static AxisStatus tierFor(double? rateMbps) {
     if (rateMbps == null || rateMbps <= 0) return AxisStatus.unknown;
-    if (rateMbps > strongAboveMbps) return AxisStatus.strong;
-    if (rateMbps >= moderateAtOrAboveMbps) return AxisStatus.moderate;
+    if (rateMbps >= ThroughputBands.downloadExcellentMbps) {
+      return AxisStatus.strong;
+    }
+    if (rateMbps >= ThroughputBands.downloadGoodMbps) return AxisStatus.moderate;
     return AxisStatus.weak;
   }
 }
@@ -278,8 +273,8 @@ class ConsumerVerdict {
   /// The Wi-Fi axis status for the top "Wi-Fi:" chip (R1-A). REVISION 2: an
   /// ABSOLUTE 3-tier read bucketed from the engine's usable Wi-Fi data rate
   /// ([WifiVsInternetResult.usableWifiMbps]) via [AxisStatusThresholds.tierFor]
-  /// — > 250 Mbps → [AxisStatus.strong], 100–250 → [AxisStatus.moderate],
-  /// < 100 → [AxisStatus.weak], unmeasured → [AxisStatus.unknown]. Independent
+  /// — 100 Mbps and up → [AxisStatus.strong], 25 to under 100 → [AxisStatus.moderate],
+  /// under 25 → [AxisStatus.weak], unmeasured → [AxisStatus.unknown]. Independent
   /// of the comparative engine verdict; the chip reports how good the Wi-Fi side
   /// is on its own.
   final AxisStatus wifiStatus;
@@ -389,7 +384,7 @@ class ConsumerVerdictMapper {
   /// bucketed from the engine's rate figures via [AxisStatusThresholds.tierFor]
   /// — [WifiVsInternetResult.usableWifiMbps] drives [wifiStatus] and
   /// [WifiVsInternetResult.internetMbps] drives [internetStatus], with the
-  /// SAME > 250 / 100–250 / < 100 Mbps thresholds on both. The chips therefore
+  /// SAME 100+ / 25 to under 100 / under 25 Mbps thresholds on both. The chips therefore
   /// depend ONLY on the measured rates, not on which `verdict` branch fires; the
   /// branch below still chooses the consumer OUTCOME (the comparative "is it your
   /// Wi-Fi or your internet" answer) and the copy, but no longer hard-codes the

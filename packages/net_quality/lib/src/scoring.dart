@@ -70,9 +70,11 @@ class QualityScoring {
   /// throughput depends entirely on what the user is doing; we chose round
   /// numbers that map to common broadband tiers and household needs.
   static QualityGrade gradeDownloadMbps(double mbps) {
-    if (mbps >= 100) return QualityGrade.excellent;
-    if (mbps >= 25) return QualityGrade.good;
-    if (mbps >= 5) return QualityGrade.fair;
+    if (mbps >= ThroughputBands.downloadExcellentMbps) {
+      return QualityGrade.excellent;
+    }
+    if (mbps >= ThroughputBands.downloadGoodMbps) return QualityGrade.good;
+    if (mbps >= ThroughputBands.downloadFairMbps) return QualityGrade.fair;
     return QualityGrade.poor;
   }
 
@@ -82,9 +84,31 @@ class QualityScoring {
   /// These bands are EXPLICITLY a heuristic, not a standard, chosen against
   /// typical needs for video calls, cloud backup, and uploads.
   static QualityGrade gradeUploadMbps(double mbps) {
-    if (mbps >= 20) return QualityGrade.excellent;
-    if (mbps >= 5) return QualityGrade.good;
-    if (mbps >= 1) return QualityGrade.fair;
+    if (mbps >= ThroughputBands.uploadExcellentMbps) {
+      return QualityGrade.excellent;
+    }
+    if (mbps >= ThroughputBands.uploadGoodMbps) return QualityGrade.good;
+    if (mbps >= ThroughputBands.uploadFairMbps) return QualityGrade.fair;
     return QualityGrade.poor;
   }
+}
+
+/// The ONE table of throughput cut points (Mbps, inclusive lower bound).
+///
+/// Everything that states or applies a download or upload grade reads these:
+/// the graders above, the Test My Connection chips (Strong = Excellent,
+/// Moderate = Good, Weak = Fair or Poor, on the download scale for both the
+/// internet axis and usable Wi-Fi), the Network Quality help sheet, and the
+/// docs, which test/services/grading_scale_consistency_test.dart checks.
+/// These are the app's own heuristic bands, not a standard.
+class ThroughputBands {
+  const ThroughputBands._();
+
+  static const double downloadExcellentMbps = 100;
+  static const double downloadGoodMbps = 25;
+  static const double downloadFairMbps = 5;
+
+  static const double uploadExcellentMbps = 20;
+  static const double uploadGoodMbps = 5;
+  static const double uploadFairMbps = 1;
 }

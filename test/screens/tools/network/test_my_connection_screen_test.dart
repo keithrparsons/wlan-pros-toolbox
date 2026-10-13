@@ -475,7 +475,7 @@ QualityResult _aboutSameInternet() => QualityResult(
 /// A macOS adapter at an arbitrary Tx rate (Rx not exposed on public CoreWLAN,
 /// so usable Wi-Fi = 0.55 × Tx). Used by the same-tier hero tests to pin the
 /// Wi-Fi axis onto a chosen absolute tier: Tx 720 → usable 396 (Strong),
-/// Tx 360 → usable 198 (Moderate), Tx 120 → usable 66 (Weak).
+/// Tx 144 → usable 79.2 (Moderate), Tx 36 → usable 19.8 (Weak).
 class _TxLinkMacAdapter implements WifiInfoAdapter {
   _TxLinkMacAdapter(this.txRateMbps);
   final double txRateMbps;
@@ -979,15 +979,15 @@ void main() {
 
       // Both labeled axis chips remain, each carrying its own word + glyph.
       // REVISION 2: absolute 3-tier per axis. iOS link rxRate 780 / txRate 866 →
-      // usable Wi-Fi 452.65 Mbps (> 250) → Wi-Fi: Strong (success/green). Internet
-      // _marginalInternet down 60 / up 20 → internet = download 60 Mbps (< 100) → Internet: Weak
-      // (danger/red). Each chip carries its WORD + the §8.13 glyph, never color-only.
+      // usable Wi-Fi 452.65 Mbps (>= 100) → Wi-Fi: Strong (success/green). Internet
+      // _marginalInternet down 60 / up 20 → internet = download 60 Mbps (25 to under 100) → Internet: Moderate
+      // (warning/amber). Each chip carries its WORD + the §8.13 glyph, never color-only.
       expect(find.text('Wi-Fi:'), findsOneWidget);
       expect(find.text('Internet:'), findsOneWidget);
       expect(find.text('Strong'), findsOneWidget);
-      expect(find.text('Weak'), findsOneWidget);
+      expect(find.text('Moderate'), findsOneWidget);
       expect(find.byIcon(Icons.check_circle_outline), findsOneWidget); // Strong
-      expect(find.byIcon(Icons.error_outline), findsOneWidget); // Weak
+      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget); // Moderate
     },
   );
 
@@ -1029,8 +1029,8 @@ void main() {
             connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
             macAdapter: _SlowLinkMacAdapter(),
-            // usable Wi-Fi = 16.5 (< 100 → Weak); internet download 200
-            // (100-250 → Moderate). DIFFERENT tiers, so the limiter wording
+            // usable Wi-Fi = 16.5 (< 25 → Weak); internet download 200
+            // (>= 100 → Strong). DIFFERENT tiers, so the limiter wording
             // stays — the chips do not contradict it.
             qualityClient: MockQualityClient(
               scriptedResult: _internetAt(down: 200, up: 100),
@@ -1040,7 +1040,7 @@ void main() {
       );
       await runCheck(tester);
 
-      // usable Wi-Fi (16.5, Weak) sits below measured internet (200, Moderate)
+      // usable Wi-Fi (16.5, Weak) sits below measured internet (200, Strong)
       // → different tiers → Wi-Fi limits, the "weak link" wording is correct.
       expect(
         find.text('Your Wi-Fi is the weak link right now.'),
@@ -1059,11 +1059,11 @@ void main() {
             enableLiveSampling: false,
             connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
-            // Tx 360 → usable 198 (Moderate). internet download 150
+            // Tx 144 → usable 79.2 (Moderate). internet download 60
             // (Moderate). Same tier; usable is +32% → Wi-Fi has more headroom.
-            macAdapter: _TxLinkMacAdapter(360),
+            macAdapter: _TxLinkMacAdapter(144),
             qualityClient: MockQualityClient(
-              scriptedResult: _internetAt(down: 150, up: 100),
+              scriptedResult: _internetAt(down: 60, up: 40),
             ),
           ),
         ),
@@ -1129,11 +1129,11 @@ void main() {
             enableLiveSampling: false,
             connectionService: _onWifiConnection(),
             sourceOverride: WifiInfoSource.macosCoreWlan,
-            // Tx 360 → usable 198 (Moderate). internet download 200
+            // Tx 144 → usable 79.2 (Moderate). internet download 80
             // (Moderate). |delta| = 1% → within the +/-10% band.
-            macAdapter: _TxLinkMacAdapter(360),
+            macAdapter: _TxLinkMacAdapter(144),
             qualityClient: MockQualityClient(
-              scriptedResult: _internetAt(down: 200, up: 160),
+              scriptedResult: _internetAt(down: 80, up: 64),
             ),
           ),
         ),
@@ -2408,11 +2408,11 @@ void main() {
               enableLiveSampling: false,
               connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
-              // Tx 360 → usable Wi-Fi 198 (Moderate). Internet download 150
-              // (Moderate). margin = round(100*(198-150)/150) = 32% → Wi-Fi ahead.
-              macAdapter: _TxLinkMacAdapter(360),
+              // Tx 144 → usable Wi-Fi 79.2 (Moderate). Internet download 60
+              // (Moderate). margin = round(100*(79.2-60)/60) = 32% → Wi-Fi ahead.
+              macAdapter: _TxLinkMacAdapter(144),
               qualityClient: MockQualityClient(
-                scriptedResult: _internetAt(down: 150, up: 100),
+                scriptedResult: _internetAt(down: 60, up: 40),
               ),
             ),
           ),
@@ -2437,12 +2437,12 @@ void main() {
               enableLiveSampling: false,
               connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
-              // Tx 240 → usable Wi-Fi 132 (Moderate). Internet download 220
-              // (Moderate). margin = round(100*(132-220)/220) = -40% → internet
+              // Tx 96 → usable Wi-Fi 52.8 (Moderate). Internet download 88
+              // (Moderate). margin = round(100*(52.8-88)/88) = -40% → internet
               // ahead.
-              macAdapter: _TxLinkMacAdapter(240),
+              macAdapter: _TxLinkMacAdapter(96),
               qualityClient: MockQualityClient(
-                scriptedResult: _internetAt(down: 220, up: 160),
+                scriptedResult: _internetAt(down: 88, up: 64),
               ),
             ),
           ),
@@ -2468,11 +2468,11 @@ void main() {
               enableLiveSampling: false,
               connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
-              // Tx 360 → usable Wi-Fi 198 (Moderate). Internet download 200
-              // (Moderate). margin = round(100*(198-200)/200) = -1% → about same.
-              macAdapter: _TxLinkMacAdapter(360),
+              // Tx 144 → usable Wi-Fi 79.2 (Moderate). Internet download 80
+              // (Moderate). margin = round(100*(79.2-80)/80) = -1% → about same.
+              macAdapter: _TxLinkMacAdapter(144),
               qualityClient: MockQualityClient(
-                scriptedResult: _internetAt(down: 200, up: 160),
+                scriptedResult: _internetAt(down: 80, up: 64),
               ),
             ),
           ),
@@ -2497,11 +2497,11 @@ void main() {
               enableLiveSampling: false,
               connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
-              // Tx 120 → usable Wi-Fi 66 (Weak). Internet download 63 (Weak).
-              // margin = round(100*(66-63)/63) = 5% → within band → about same.
-              macAdapter: _TxLinkMacAdapter(120),
+              // Tx 36 → usable Wi-Fi 19.8 (Weak). Internet download 19 (Weak).
+              // margin = round(100*(19.8-19)/19) = 4% → within band → about same.
+              macAdapter: _TxLinkMacAdapter(36),
               qualityClient: MockQualityClient(
-                scriptedResult: _internetAt(down: 63, up: 40),
+                scriptedResult: _internetAt(down: 19, up: 12),
               ),
             ),
           ),
@@ -2528,11 +2528,11 @@ void main() {
               enableLiveSampling: false,
               connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
-              // Tx 120 → usable Wi-Fi 66 (Weak). Internet download 40 (Weak).
-              // margin = round(100*(66-40)/40) = 65% → Wi-Fi ahead.
-              macAdapter: _TxLinkMacAdapter(120),
+              // Tx 36 → usable Wi-Fi 19.8 (Weak). Internet download 12 (Weak).
+              // margin = round(100*(19.8-12)/12) = 65% → Wi-Fi ahead.
+              macAdapter: _TxLinkMacAdapter(36),
               qualityClient: MockQualityClient(
-                scriptedResult: _internetAt(down: 40, up: 20),
+                scriptedResult: _internetAt(down: 12, up: 6),
               ),
             ),
           ),
@@ -2557,11 +2557,11 @@ void main() {
               enableLiveSampling: false,
               connectionService: _onWifiConnection(),
               sourceOverride: WifiInfoSource.macosCoreWlan,
-              // Tx 720 → usable Wi-Fi 396 (Strong). Internet download 60
+              // Tx 720 → usable Wi-Fi 396 (Strong). Internet download 20
               // (Weak). Different tiers → existing "slow part" wording stands.
               macAdapter: _TxLinkMacAdapter(720),
               qualityClient: MockQualityClient(
-                scriptedResult: _internetAt(down: 60, up: 20),
+                scriptedResult: _internetAt(down: 20, up: 8),
               ),
             ),
           ),

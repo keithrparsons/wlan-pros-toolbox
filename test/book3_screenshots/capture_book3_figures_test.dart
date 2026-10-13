@@ -113,8 +113,8 @@ class _FixedMacAdapter implements WifiInfoAdapter {
 }
 
 /// A macOS adapter at a fixed Tx rate, so usable Wi-Fi = 0.55 × Tx lands the
-/// Test My Connection chips on a chosen absolute tier (Strong >250 / Moderate
-/// 100–250 / Weak <100). RSSI/SNR set the live-signal grade for the shots that
+/// Test My Connection chips on a chosen absolute tier (Strong 100+ / Moderate
+/// 25 to under 100 / Weak under 25). RSSI/SNR set the live-signal grade for the shots that
 /// show the sparkline (S6).
 class _TxLinkMacAdapter implements WifiInfoAdapter {
   _TxLinkMacAdapter(this.txRateMbps, {this.rssi = -55, this.snr = 37});
@@ -421,7 +421,7 @@ void main() {
     );
   });
 
-  // S2 — Wi-Fi the weaker road. Tx 60 → usable 33 Mbps (Wi-Fi chip "Weak");
+  // S2 — Wi-Fi the weaker road. Tx 36 → usable 19.8 Mbps (Wi-Fi chip "Weak");
   // internet download 440 (Internet chip "Strong") but graded FAIR so the
   // verdict honestly lands on the Wi-Fi link → hero "Your Wi-Fi is the slow
   // part." (The app's middle tier word is "Moderate"; ch1's "Fair" is prose
@@ -434,7 +434,7 @@ void main() {
       build: () => TestMyConnectionScreen(
         enableLiveSampling: false,
         sourceOverride: WifiInfoSource.macosCoreWlan,
-        macAdapter: _TxLinkMacAdapter(60, rssi: -68, snr: 18),
+        macAdapter: _TxLinkMacAdapter(36, rssi: -68, snr: 18),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
             down: 440, up: 360, latencyMs: 22, jitterMs: 4, lossPct: 0,
@@ -456,7 +456,7 @@ void main() {
   });
 
   // S3 — Internet the weaker road. Tx 720 → usable 396 (Wi-Fi chip "Strong");
-  // internet download 40 (Internet chip "Weak") graded fair → upstream verdict
+  // internet download 12 (Internet chip "Weak") graded fair → upstream verdict
   // → hero "Your internet is the slow part." Headline points at the provider.
   testWidgets('S03 Test My Connection — Internet weaker', (tester) async {
     await _capture(
@@ -469,7 +469,7 @@ void main() {
         macAdapter: _TxLinkMacAdapter(720),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 40, up: 20, latencyMs: 40, jitterMs: 8, lossPct: 1,
+            down: 12, up: 8, latencyMs: 40, jitterMs: 8, lossPct: 1,
             downUpGrade: QualityGrade.fair,
             latencyGrade: QualityGrade.fair,
           ),
@@ -907,7 +907,7 @@ void main() {
         macAdapter: _TxLinkMacAdapter(720),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 40, up: 20, latencyMs: 40, jitterMs: 8, lossPct: 1,
+            down: 12, up: 8, latencyMs: 40, jitterMs: 8, lossPct: 1,
             downUpGrade: QualityGrade.fair,
             latencyGrade: QualityGrade.fair,
           ),
@@ -974,7 +974,7 @@ void main() {
         macAdapter: _TxLinkMacAdapter(720),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
-            down: 40, up: 20, latencyMs: 40, jitterMs: 8, lossPct: 1,
+            down: 12, up: 8, latencyMs: 40, jitterMs: 8, lossPct: 1,
             downUpGrade: QualityGrade.fair,
             latencyGrade: QualityGrade.fair,
           ),
