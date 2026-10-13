@@ -387,7 +387,7 @@ void main() {
   });
 
   // ── 2. Test My Connection — the verdict (Wi-Fi is the slow part) ────────────
-  // Tx 60 → usable 33 Mbps (Wi-Fi "Weak"); internet download 440 (Strong) but graded
+  // Tx 36 → usable 19.8 Mbps (Wi-Fi "Weak"); internet download 440 (Strong) but graded
   // FAIR so the verdict honestly lands on the Wi-Fi link. The hero sentence is
   // the engine's OWN output. Same coherent fixture as book fig-8-1.
   testWidgets('play-2 Test My Connection — verdict', (tester) async {
@@ -397,7 +397,7 @@ void main() {
       build: () => TestMyConnectionScreen(
         enableLiveSampling: false,
         sourceOverride: WifiInfoSource.macosCoreWlan,
-        macAdapter: _TxLinkMacAdapter(60, rssi: -68, snr: 18),
+        macAdapter: _TxLinkMacAdapter(36, rssi: -68, snr: 18),
         qualityClient: MockQualityClient(
           scriptedResult: _internetResult(
             down: 440,

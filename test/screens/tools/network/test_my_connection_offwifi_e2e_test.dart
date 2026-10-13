@@ -536,8 +536,8 @@ void _offWifiSuite(_OffWifiShape shape) {
               'successfully measured');
 
       // And the Internet axis must carry a real tier, not the "Couldn't check"
-      // neutral. 60 Mbps < 100 → Weak.
-      expect(screen, contains('Weak'),
+      // neutral. 60 Mbps (25 to under 100) → Moderate.
+      expect(screen, contains('Moderate'),
           reason: 'the Internet axis must show its measured tier; "Couldn\'t '
               'check" beside a completed 60 Mbps measurement is false');
     });
