@@ -8,6 +8,7 @@
 // lives in another repo; its block is printed by tool/print_grading_block.dart
 // on that repo's fix/one-grading-scale branch.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,25 @@ import 'package:wlan_pros_toolbox/screens/tools/network/net_quality_help_sheet.d
 import 'package:wlan_pros_toolbox/services/network/consumer_verdict.dart';
 import 'package:wlan_pros_toolbox/services/network/wifi_vs_internet.dart';
 import 'package:wlan_pros_toolbox/theme/app_theme.dart';
+
+/// The help text of the entry that describes the two status chips.
+String _chipHelpText() {
+  final Object? root =
+      jsonDecode(File('assets/help/tool_help.json').readAsStringSync());
+  String? found;
+  void walk(Object? node) {
+    if (node is String) {
+      if (node.contains('two-part chip status')) found = node;
+    } else if (node is List) {
+      node.forEach(walk);
+    } else if (node is Map) {
+      node.values.forEach(walk);
+    }
+  }
+
+  walk(root);
+  return found ?? fail('no help text mentions the two-part chip status');
+}
 
 void main() {
   final int strongFrom = ThroughputBands.downloadExcellentMbps.round();
@@ -59,9 +79,15 @@ void main() {
       expect(fm, isNot(contains('> 250 Mbps')));
     });
 
-    test('tool_help.json never states the old 250 cut point', () {
-      final String help = File('assets/help/tool_help.json').readAsStringSync();
-      expect(help, isNot(contains('250 Mbps')));
+    test('tool_help.json Test My Connection entry states the scale', () {
+      final String help = _chipHelpText();
+      expect(help, contains('Strong, Moderate, Weak'));
+      expect(help, contains('Strong is $strongFrom Mbps and up'));
+      expect(help,
+          contains('Moderate is $moderateFrom to under $strongFrom Mbps'));
+      expect(help, contains('Weak is under $moderateFrom Mbps'));
+      expect(help, contains('same download scale'));
+      expect(help, isNot(contains('Slow')));
     });
   });
 
@@ -70,7 +96,7 @@ void main() {
       theme: AppTheme.dark(),
       home: const Scaffold(body: NetQualityHelpSheet()),
     ));
-    String plus(double v) => '${v.round()}+ Mbps';
+    String plus(double v) => '${v == v.roundToDouble() ? v.round() : v}+ Mbps';
     for (final double v in <double>[
       ThroughputBands.downloadExcellentMbps,
       ThroughputBands.downloadGoodMbps,

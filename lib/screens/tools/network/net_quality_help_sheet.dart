@@ -179,8 +179,10 @@ class NetQualityHelpSheet extends StatelessWidget {
     ),
   ];
 
-  static String _plus(double mbps) => '${mbps.round()}+ Mbps';
-  static String _under(double mbps) => 'under ${mbps.round()} Mbps';
+  // Shown as stored: 2.5 stays 2.5, 100 prints without a decimal point.
+  static String _mbps(double v) => '${v == v.roundToDouble() ? v.round() : v}';
+  static String _plus(double mbps) => '${_mbps(mbps)}+ Mbps';
+  static String _under(double mbps) => 'under ${_mbps(mbps)} Mbps';
 
   @override
   Widget build(BuildContext context) {
