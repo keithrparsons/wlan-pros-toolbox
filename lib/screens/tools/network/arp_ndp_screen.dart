@@ -45,6 +45,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'network_unavailable_view.dart';
+import '../../../widgets/message_card.dart';
 
 class ArpNdpScreen extends StatefulWidget {
   const ArpNdpScreen({
@@ -333,7 +334,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
       _controlCard(context),
       if (_error != null) ...[
         const SizedBox(height: AppSpacing.sm),
-        _MessageCard(
+        MessageCard(
           icon: Icons.error_outline,
           title: 'Cannot scan',
           body: _error!,
@@ -377,7 +378,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                   _piControlCard(context),
                   if (_error != null) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
-                    _MessageCard(
+                    MessageCard(
                       icon: Icons.error_outline,
                       title: 'Cannot read the neighbor table',
                       body: _error!,
@@ -440,7 +441,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
         Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
     if (_piRead && _neighbors.isEmpty) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.search_off,
         title: 'Neighbor table is empty',
         body:
@@ -609,7 +610,7 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
                     '${_neighbors.length == 1 ? 'neighbor' : 'neighbors'} found');
 
     if (!_running && _neighbors.isEmpty) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.search_off,
         title: 'No neighbors answered',
         body:
@@ -775,58 +776,6 @@ class _ArpNdpScreenState extends State<ArpNdpScreen> {
             'lists reachable hosts; on Linux and Android it also attaches the '
             'real MAC addresses.',
             style: text.bodyLarge?.copyWith(color: colors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
-                ),
-              ],
-            ),
           ),
         ],
       ),

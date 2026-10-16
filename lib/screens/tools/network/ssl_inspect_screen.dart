@@ -33,6 +33,7 @@ import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
+import '../../../widgets/message_card.dart';
 
 class SslInspectScreen extends StatefulWidget {
   const SslInspectScreen({super.key, this.service});
@@ -393,7 +394,7 @@ class _SslInspectScreenState extends State<SslInspectScreen> {
     final SslInspectResult? r = _result;
     if (r == null) return const SizedBox.shrink();
     if (r.isError) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.error_outline,
         title: 'Inspection failed',
         body: r.errorMessage!,
@@ -1125,58 +1126,6 @@ class _SectionShell extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           child,
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

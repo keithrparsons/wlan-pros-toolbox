@@ -28,6 +28,7 @@ import '../labeled_field.dart';
 import 'error_card.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
+import '../../../widgets/message_card.dart';
 
 /// What an empty routing/registry row says on this screen. NOT the default
 /// platform sentence: every field on this card comes from RIPEstat, so a blank
@@ -444,7 +445,7 @@ class _BgpAsnScreenState extends State<BgpAsnScreen> {
       );
     }
     if (r.isEmpty) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.search_off,
         title: 'No routing data',
         body:
@@ -537,58 +538,6 @@ class _ResultCard extends StatelessWidget {
               value: r.relatedAsns.join(', '),
               identifier: true,
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

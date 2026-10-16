@@ -29,6 +29,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
+import '../../../widgets/message_card.dart';
 
 class MacOuiScreen extends StatefulWidget {
   const MacOuiScreen({super.key, this.service});
@@ -251,7 +252,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
                   _formCard(context),
                   if (_loadError != null) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    _MessageCard(
+                    MessageCard(
                       icon: Icons.error_outline,
                       title: 'Vendor database unavailable',
                       body: _loadError!,
@@ -345,7 +346,7 @@ class _MacOuiScreenState extends State<MacOuiScreen> {
 
     // Invalid input is an error card, not a result card.
     if (!r.isValid) {
-      return _MessageCard(
+      return MessageCard(
         icon: Icons.edit_outlined,
         title: 'Check your input',
         body: r.errorMessage ?? 'That is not a valid MAC address.',
@@ -644,60 +645,6 @@ class _NoVendorCard extends StatelessWidget {
                     mac,
                     style: mono.robotoMono.copyWith(color: colors.textPrimary),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Shared neutral message card (error / unavailable), mirroring the pattern used
-/// by Wake-on-LAN. Color-free per §8.4 — meaning carried by title + body text.
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: colors.textTertiary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: text.bodyLarge?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: text.labelMedium?.copyWith(color: colors.textTertiary),
                 ),
               ],
             ),
