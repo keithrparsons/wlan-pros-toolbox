@@ -38,10 +38,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One rung of the dual SI/IEC ladder: the SI symbol + its exact byte count, the
 /// IEC symbol + its exact byte count, and the divergence at that rank. Mirrors

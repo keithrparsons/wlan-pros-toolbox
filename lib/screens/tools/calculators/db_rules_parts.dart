@@ -11,8 +11,8 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
-import 'db_rules_controller.dart';
 import 'calc_parts.dart';
+import 'db_rules_controller.dart';
 
 typedef DrCard = CalcCard;
 

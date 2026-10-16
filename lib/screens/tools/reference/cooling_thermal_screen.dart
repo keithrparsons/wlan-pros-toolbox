@@ -49,9 +49,9 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One row of the watts <-> BTU/hr <-> tons conversion table. The display
 /// strings are pre-derived from the two anchor conversions (1 W = 3.412 BTU/hr;

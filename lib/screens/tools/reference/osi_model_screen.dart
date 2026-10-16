@@ -31,9 +31,9 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One OSI layer row. Field names + values mirror the Pax research model
 /// `OsiLayer`: [num, name, keyword, pdu, protocols, hardware].

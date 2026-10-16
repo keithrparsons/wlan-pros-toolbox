@@ -34,10 +34,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One DNS resource-record type: its mnemonic, numeric TYPE code, a plain-English
 /// purpose, and the defining RFC. Field values mirror the verified dataset.

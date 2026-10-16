@@ -51,10 +51,10 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
+import '../../../widgets/reference_table.dart';
 import 'reference_row_semantics.dart';
 import '../../../data/graphic_pdfs.dart';
 import '../../../widgets/graphic_pdf_download.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One rule row used by the hostname, MAC-format, and OUI/CID tables: a short
 /// name, the specification in prose, and the defining source. Sourced verbatim

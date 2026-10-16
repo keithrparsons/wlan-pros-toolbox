@@ -11,8 +11,8 @@ import '../../../theme/app_typography.dart';
 import '../../../services/wifi_lab/multipath_model.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
-import 'multipath_simulator_controller.dart';
 import 'calc_parts.dart';
+import 'multipath_simulator_controller.dart';
 
 /// A surface-1 card with the calculator border and padding.
 typedef MpCard = CalcCard;

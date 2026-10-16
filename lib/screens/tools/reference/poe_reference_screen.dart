@@ -31,13 +31,12 @@ import 'package:flutter/material.dart';
 import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One row of the PoE standards table. Field names + values mirror the PWA
 /// `POE_STDS` const exactly: [standard, name, pse_w, pd_w, pairs, classes].
@@ -467,7 +466,7 @@ class PoeReferenceScreen extends StatelessWidget {
     TextTheme text,
     AppMonoText mono,
   ) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'PoE standards',
       footnote: footnote,
       header: const Row(
@@ -555,7 +554,7 @@ class PoeReferenceScreen extends StatelessWidget {
   }
 
   Widget _typesCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'IEEE 802.3 Types',
       footnote: typesFootnote,
       header: const Row(
@@ -656,7 +655,7 @@ class PoeReferenceScreen extends StatelessWidget {
   }
 
   Widget _classesCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'PD power classes',
       header: const Row(
         children: [
@@ -742,75 +741,5 @@ class PoeReferenceScreen extends StatelessWidget {
     if (s.endsWith('.00')) return s.substring(0, s.length - 3);
     if (s.endsWith('0')) return s.substring(0, s.length - 1);
     return s;
-  }
-}
-
-/// Card surface wrapping a wide table: title (full-width, wraps) over a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// wifi_channels_screen overflow-safe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // The grid sizes to its intrinsic content width and scrolls
-          // horizontally when that exceeds the card. Children of a horizontal
-          // SingleChildScrollView get unbounded width, so IntrinsicWidth lets
-          // each Row shrink-wrap its fixed-width cells while sharing one common
-          // width — columns align, nothing overflows. Title + footnote stay
-          // full-width and wrap.
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 }

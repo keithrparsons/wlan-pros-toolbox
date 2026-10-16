@@ -55,9 +55,9 @@ import '../../../data/iec_connectors_diagrams.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One IEC 60320 appliance-coupler family (an odd/even mating pair, e.g.
 /// C13/C14). Field values are verified against Pax's research brief (Topic 3).

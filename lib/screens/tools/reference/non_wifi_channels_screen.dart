@@ -40,10 +40,10 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One LoRaWAN regional frequency plan. Channel counts/layout are entirely
 /// region-defined, so the headline fact is the range + default channels; the

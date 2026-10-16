@@ -60,10 +60,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// How a numeric limit is anchored: a published standard, or a defensible rule
 /// of thumb the datasheet overrides. Drives the standard-vs-practice badge so a

@@ -118,8 +118,9 @@ class WallConfig {
 
   /// The wall's layers, front to back: the preset's, or the one custom
   /// layer.
-  List<WallLayer> get layers =>
-      isCustom ? <WallLayer>[WallLayer(material, thicknessMm)] : preset.layers;
+  List<WallLayer> get layers => isCustom
+      ? <WallLayer>[WallLayer(material, thicknessMm)]
+      : preset.layers;
 
   /// Total thickness, mm.
   double get wallMm => isCustom ? thicknessMm : preset.totalMm;

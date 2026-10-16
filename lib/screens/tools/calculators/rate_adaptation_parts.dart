@@ -13,8 +13,8 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
-import 'rate_vs_range_parts.dart' show RvrPalette;
 import 'calc_parts.dart';
+import 'rate_vs_range_parts.dart' show RvrPalette;
 
 /// The hue of an MCS: the Rate vs Range family, so the two tools agree.
 abstract final class RaPalette {

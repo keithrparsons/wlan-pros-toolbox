@@ -28,12 +28,12 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/message_card.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
 import 'network_unavailable_view.dart';
 import 'value_row.dart';
-import '../../../widgets/message_card.dart';
 
 class SslInspectScreen extends StatefulWidget {
   const SslInspectScreen({super.key, this.service});

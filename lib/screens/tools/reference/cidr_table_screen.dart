@@ -38,10 +38,10 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One CIDR-prefix row: prefix length, dotted subnet mask, total addresses,
 /// usable hosts, and wildcard mask. Values are sourced verbatim from the

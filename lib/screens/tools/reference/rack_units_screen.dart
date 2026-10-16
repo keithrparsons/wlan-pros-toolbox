@@ -50,10 +50,10 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One row of the U -> inches -> mm conversion table. Values are exact
 /// arithmetic from the defined base (1U = 1.75 in = 44.45 mm); never rounded.

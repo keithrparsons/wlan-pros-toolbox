@@ -56,10 +56,10 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
+import '../../../widgets/reference_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
-import '../../../widgets/reference_table.dart';
 
 /// One feature row of the 802.11 matrix: the feature name and its value across
 /// the four generations, in column order Wi-Fi 5 / 6 / 6E / 7.

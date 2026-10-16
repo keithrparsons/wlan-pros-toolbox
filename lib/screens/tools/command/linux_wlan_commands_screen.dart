@@ -27,10 +27,10 @@ import '../../../data/tool_assets.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/message_card.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import '../labeled_field.dart';
-import '../../../widgets/message_card.dart';
 
 /// One command: the syntax and what it does. Immutable.
 @immutable
