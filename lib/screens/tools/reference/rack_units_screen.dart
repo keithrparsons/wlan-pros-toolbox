@@ -53,6 +53,7 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One row of the U -> inches -> mm conversion table. Values are exact
 /// arithmetic from the defined base (1U = 1.75 in = 44.45 mm); never rounded.
@@ -431,7 +432,9 @@ class RackUnitsScreen extends StatelessWidget {
                   // graphic degrades to nothing when its SVG is not yet bundled,
                   // so the section reads as text alone until Charta's graphic
                   // lands.
-                  _SectionHeading(label: 'EIA-310 vertical hole pattern'),
+                  ReferenceSectionHeading(
+                    label: 'EIA-310 vertical hole pattern',
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: RackDiagrams.rack1u,
@@ -445,7 +448,7 @@ class RackUnitsScreen extends StatelessWidget {
 
                   // (d) Mounting hardware — threads, then rail types with the
                   // cage-nut concept graphic, then the anti-patterns.
-                  _SectionHeading(label: 'Mounting hardware'),
+                  ReferenceSectionHeading(label: 'Mounting hardware'),
                   const SizedBox(height: AppSpacing.sm),
                   _threadCard(colors, text, mono),
                   const SizedBox(height: AppSpacing.md),
@@ -702,28 +705,6 @@ class _Card extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           child,
         ],
-      ),
-    );
-  }
-}
-
-/// A section heading standing on the page background above a stacked graphic +
-/// card group. Mirrors the IEC screen's _SectionHeading register.
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
       ),
     );
   }

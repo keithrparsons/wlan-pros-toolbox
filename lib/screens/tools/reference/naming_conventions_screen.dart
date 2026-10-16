@@ -54,6 +54,7 @@ import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
 import '../../../data/graphic_pdfs.dart';
 import '../../../widgets/graphic_pdf_download.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One rule row used by the hostname, MAC-format, and OUI/CID tables: a short
 /// name, the specification in prose, and the defining source. Sourced verbatim
@@ -432,9 +433,9 @@ class NamingConventionsScreen extends StatelessWidget {
       title: title,
       header: Row(
         children: <Widget>[
-          _HeaderCell(nameHeader, width: nameWidth),
-          _HeaderCell(specHeader, width: 440),
-          const _HeaderCell('Source', width: 168),
+          ReferenceHeaderCell(nameHeader, width: nameWidth),
+          ReferenceHeaderCell(specHeader, width: 440),
+          const ReferenceHeaderCell('Source', width: 168),
         ],
       ),
       rows: rules.map((ConventionRule r) {
@@ -531,11 +532,11 @@ class NamingConventionsScreen extends StatelessWidget {
                 children: <Widget>[
                   const Row(
                     children: <Widget>[
-                      _HeaderCell('Bit', width: 56),
-                      _HeaderCell('Position', width: 200),
-                      _HeaderCell('Name', width: 152),
-                      _HeaderCell('Value 0', width: 232),
-                      _HeaderCell('Value 1', width: 152),
+                      ReferenceHeaderCell('Bit', width: 56),
+                      ReferenceHeaderCell('Position', width: 200),
+                      ReferenceHeaderCell('Name', width: 152),
+                      ReferenceHeaderCell('Value 0', width: 232),
+                      ReferenceHeaderCell('Value 1', width: 152),
                     ],
                   ),
                   Divider(color: colors.border, height: AppSpacing.sm),
@@ -794,30 +795,6 @@ class _TableCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

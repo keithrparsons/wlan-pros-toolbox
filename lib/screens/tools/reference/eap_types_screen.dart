@@ -58,6 +58,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One row of the EAP method matrix. Field names + values mirror the Page 1
 /// dataset columns exactly: [method, credential, serverCert, clientCert,
@@ -309,12 +310,12 @@ class EapTypesScreen extends StatelessWidget {
       footnote: footnote,
       header: const Row(
         children: [
-          _HeaderCell('Method', width: 132),
-          _HeaderCell('Credential', width: 200),
-          _HeaderCell('Server cert', width: 96),
-          _HeaderCell('Client cert', width: 132),
-          _HeaderCell('Mutual', width: 56),
-          _HeaderCell('Typical use / notes', width: 320),
+          ReferenceHeaderCell('Method', width: 132),
+          ReferenceHeaderCell('Credential', width: 200),
+          ReferenceHeaderCell('Server cert', width: 96),
+          ReferenceHeaderCell('Client cert', width: 132),
+          ReferenceHeaderCell('Mutual', width: 56),
+          ReferenceHeaderCell('Typical use / notes', width: 320),
         ],
       ),
       rows: methods.map((EapMethod m) {
@@ -536,30 +537,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

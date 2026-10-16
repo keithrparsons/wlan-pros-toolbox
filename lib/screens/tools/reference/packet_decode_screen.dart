@@ -54,6 +54,7 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One header-anatomy row: a field, its bit offset, its bit length, and what it
 /// means. Offset and length are Strings so "variable" survives verbatim.
@@ -931,10 +932,10 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: note == null ? citation : '$note\n\n$citation',
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Field', width: 168),
-          _HeaderCell('Offset', width: 72),
-          _HeaderCell('Len', width: 64),
-          _HeaderCell('Meaning', width: 360),
+          ReferenceHeaderCell('Field', width: 168),
+          ReferenceHeaderCell('Offset', width: 72),
+          ReferenceHeaderCell('Len', width: 64),
+          ReferenceHeaderCell('Meaning', width: 360),
         ],
       ),
       rows: fields
@@ -963,9 +964,9 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: note,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Bits', width: 72),
-          _HeaderCell('Name', width: 168),
-          _HeaderCell('Meaning', width: 360),
+          ReferenceHeaderCell('Bits', width: 72),
+          ReferenceHeaderCell('Name', width: 168),
+          ReferenceHeaderCell('Meaning', width: 360),
         ],
       ),
       rows: bits
@@ -988,9 +989,9 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: protoNumbersCitation,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('No.', width: 56),
-          _HeaderCell('Name', width: 96),
-          _HeaderCell('Meaning', width: 300),
+          ReferenceHeaderCell('No.', width: 56),
+          ReferenceHeaderCell('Name', width: 96),
+          ReferenceHeaderCell('Meaning', width: 300),
         ],
       ),
       rows: protocolNumbers
@@ -1013,9 +1014,9 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: tcpFlagsNote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Flag', width: 140),
-          _HeaderCell('Bit', width: 48),
-          _HeaderCell('Meaning', width: 372),
+          ReferenceHeaderCell('Flag', width: 140),
+          ReferenceHeaderCell('Bit', width: 48),
+          ReferenceHeaderCell('Meaning', width: 372),
         ],
       ),
       rows: tcpFlags.map((TcpFlagRow f) {
@@ -1039,8 +1040,8 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: tcpStateCitation,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('State', width: 148),
-          _HeaderCell('Meaning', width: 372),
+          ReferenceHeaderCell('State', width: 148),
+          ReferenceHeaderCell('Meaning', width: 372),
         ],
       ),
       rows: tcpStates
@@ -1068,9 +1069,9 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: null,
       header: Row(
         children: <Widget>[
-          const _HeaderCell('Type', width: 56),
-          const _HeaderCell('Name', width: 180),
-          _HeaderCell(codesHeader, width: 400),
+          const ReferenceHeaderCell('Type', width: 56),
+          const ReferenceHeaderCell('Name', width: 180),
+          ReferenceHeaderCell(codesHeader, width: 400),
         ],
       ),
       rows: types.map((IcmpTypeRow t) {
@@ -1092,8 +1093,8 @@ class PacketDecodeScreen extends StatelessWidget {
       footnote: icmpCitation,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Code', width: 56),
-          _HeaderCell('Meaning', width: 372),
+          ReferenceHeaderCell('Code', width: 56),
+          ReferenceHeaderCell('Meaning', width: 372),
         ],
       ),
       rows: icmpType3Codes
@@ -1331,30 +1332,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

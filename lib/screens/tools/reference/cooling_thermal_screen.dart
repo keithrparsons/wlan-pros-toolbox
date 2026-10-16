@@ -51,6 +51,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One row of the watts <-> BTU/hr <-> tons conversion table. The display
 /// strings are pre-derived from the two anchor conversions (1 W = 3.412 BTU/hr;
@@ -297,10 +298,10 @@ class CoolingThermalScreen extends StatelessWidget {
       footnote: footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Watts', width: 96),
-          _HeaderCell('BTU/hr', width: 120),
-          _HeaderCell('Tons', width: 104),
-          _HeaderCell('Anchor', width: 240),
+          ReferenceHeaderCell('Watts', width: 96),
+          ReferenceHeaderCell('BTU/hr', width: 120),
+          ReferenceHeaderCell('Tons', width: 104),
+          ReferenceHeaderCell('Anchor', width: 240),
         ],
       ),
       rows: conversions.map((ThermalConversion c) {
@@ -367,9 +368,9 @@ class CoolingThermalScreen extends StatelessWidget {
       note: airflowNote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Step', width: 168),
-          _HeaderCell('Relationship', width: 288),
-          _HeaderCell('Detail', width: 320),
+          ReferenceHeaderCell('Step', width: 168),
+          ReferenceHeaderCell('Relationship', width: 288),
+          ReferenceHeaderCell('Detail', width: 320),
         ],
       ),
       rows: heatChain.map((HeatRelation h) {
@@ -486,30 +487,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

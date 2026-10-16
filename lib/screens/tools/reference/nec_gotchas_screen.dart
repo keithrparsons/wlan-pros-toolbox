@@ -50,6 +50,7 @@ import '../../../widgets/dark_raster_diagram_card.dart';
 import '../../../widgets/field_plate_action.dart';
 import '../../../widgets/reference_pdf_download.dart';
 import '../../../widgets/tool_help_footer.dart';
+import '../../../widgets/reference_table.dart';
 
 class NecGotchasScreen extends StatelessWidget {
   const NecGotchasScreen({super.key});
@@ -123,7 +124,9 @@ class NecGotchasScreen extends StatelessWidget {
                   // reference, not a seventh peer gotcha (mirrors the plate's
                   // separate fire-rating-ladder band).
                   const SizedBox(height: AppSpacing.lg),
-                  const _SectionHeading(label: kNecCableLadderSectionTitle),
+                  const ReferenceSectionHeading(
+                    label: kNecCableLadderSectionTitle,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   const _ArticleCard(kNecCableLadder),
                   const SizedBox(height: AppSpacing.md),
@@ -358,30 +361,6 @@ class _CaveatBand extends StatelessWidget {
 }
 
 // ─────────────────────────────── section cards ──────────────────────────────
-
-/// A section heading standing on the page background above a card, used to set
-/// the supporting cable-rating ladder apart from the six numbered gotchas.
-/// Mirrors the shared reference-screen `_SectionHeading` register (titleSmall,
-/// secondary, tracked).
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
-    );
-  }
-}
 
 /// The lead paragraph.
 class _LeadCard extends StatelessWidget {

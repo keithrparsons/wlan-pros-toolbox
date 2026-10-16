@@ -41,10 +41,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One ISO 8601 format row: a named concept, its format mask, an example, and a
 /// note. Mirrors the source §1A table columns.
@@ -458,15 +458,15 @@ class DatetimeStandardsScreen extends StatelessWidget {
   }
 
   Widget _isoCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'ISO 8601 core formats',
       footnote: isoFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Concept', width: 136),
-          _HeaderCell('Format', width: 168),
-          _HeaderCell('Example', width: 230),
-          _HeaderCell('Note', width: 300),
+          ReferenceHeaderCell('Concept', width: 136),
+          ReferenceHeaderCell('Format', width: 168),
+          ReferenceHeaderCell('Example', width: 230),
+          ReferenceHeaderCell('Note', width: 300),
         ],
       ),
       rows: isoFormats.map((IsoFormat f) {
@@ -528,14 +528,14 @@ class DatetimeStandardsScreen extends StatelessWidget {
   }
 
   Widget _offsetCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'UTC vs local offset notation',
       footnote: offsetFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Notation', width: 96),
-          _HeaderCell('Meaning', width: 250),
-          _HeaderCell('Example', width: 230),
+          ReferenceHeaderCell('Notation', width: 96),
+          ReferenceHeaderCell('Meaning', width: 250),
+          ReferenceHeaderCell('Example', width: 230),
         ],
       ),
       rows: offsets.map((OffsetNotation o) {
@@ -621,13 +621,13 @@ class DatetimeStandardsScreen extends StatelessWidget {
   }
 
   Widget _ntpCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'NTP stratum levels (RFC 5905)',
       footnote: ntpFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Stratum', width: 72),
-          _HeaderCell('Meaning', width: 360),
+          ReferenceHeaderCell('Stratum', width: 72),
+          ReferenceHeaderCell('Meaning', width: 360),
         ],
       ),
       rows: strata.map((NtpStratum s) {
@@ -848,93 +848,6 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           ...rows,
         ],
-      ),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table: title over a horizontally-scrolling
-/// IntrinsicWidth grid (header + rows share one width so columns align), with an
-/// optional full-width footnote beneath. Verbatim from the poe_reference idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

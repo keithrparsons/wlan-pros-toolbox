@@ -40,10 +40,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One row of the WMM AC <-> 802.11 UP <-> DSCP mapping (per RFC 8325).
 @immutable
@@ -425,7 +425,7 @@ class DscpQosScreen extends StatelessWidget {
   }
 
   Widget _mappingCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'WMM AC ↔ 802.11 UP ↔ DSCP (per RFC 8325)',
       // The two halves of this table have DIFFERENT authority, and the screen
       // now says which is which. AC <-> UP is normative (IEEE 802.11 Table
@@ -435,11 +435,11 @@ class DscpQosScreen extends StatelessWidget {
       footnote: '$normativeNote\n\n$conventionNote\n\n$mappingNote',
       header: const Row(
         children: <Widget>[
-          _HeaderCell('WMM AC', width: 132),
-          _HeaderCell('Traffic', width: 180),
-          _HeaderCell('UP', width: 48),
-          _HeaderCell('DSCP', width: 132),
-          _HeaderCell('Decimal', width: 96),
+          ReferenceHeaderCell('WMM AC', width: 132),
+          ReferenceHeaderCell('Traffic', width: 180),
+          ReferenceHeaderCell('UP', width: 48),
+          ReferenceHeaderCell('DSCP', width: 132),
+          ReferenceHeaderCell('Decimal', width: 96),
         ],
       ),
       rows: mappings.map((QosMapping m) {
@@ -516,7 +516,7 @@ class DscpQosScreen extends StatelessWidget {
     TextTheme text,
     AppMonoText mono,
   ) {
-    return _TableCard(
+    return ReferenceTableCard(
       // The Binary column is new (2026-07-11). The help and the field manual
       // both told the reader this table showed "name, decimal, binary" — and it
       // did not. The codepoint is the form you match on in a capture filter or
@@ -525,10 +525,10 @@ class DscpQosScreen extends StatelessWidget {
       footnote: footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('DSCP name', width: 160),
-          _HeaderCell('Binary', width: 190),
-          _HeaderCell('Decimal', width: 110),
-          _HeaderCell('Notes', width: 280),
+          ReferenceHeaderCell('DSCP name', width: 160),
+          ReferenceHeaderCell('Binary', width: 190),
+          ReferenceHeaderCell('Decimal', width: 110),
+          ReferenceHeaderCell('Notes', width: 280),
         ],
       ),
       rows: dscpClasses.map((DscpClass c) {
@@ -646,94 +646,6 @@ class _TrapCallout extends StatelessWidget {
               style: text.labelMedium?.copyWith(color: colors.textSecondary),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table: title (full-width, wraps) over a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// poe_reference_screen overflow-safe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
         ),
       ),
     );

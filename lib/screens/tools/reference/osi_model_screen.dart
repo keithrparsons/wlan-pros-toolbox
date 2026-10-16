@@ -33,6 +33,7 @@ import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One OSI layer row. Field names + values mirror the Pax research model
 /// `OsiLayer`: [num, name, keyword, pdu, protocols, hardware].
@@ -347,12 +348,12 @@ class OsiModelScreen extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      _HeaderCell('#', width: 28),
-                      _HeaderCell('Layer', width: 104),
-                      _HeaderCell('Function', width: 96),
-                      _HeaderCell('PDU', width: 88),
-                      _HeaderCell('Protocols', width: 248),
-                      _HeaderCell('Hardware', width: 184),
+                      ReferenceHeaderCell('#', width: 28),
+                      ReferenceHeaderCell('Layer', width: 104),
+                      ReferenceHeaderCell('Function', width: 96),
+                      ReferenceHeaderCell('PDU', width: 88),
+                      ReferenceHeaderCell('Protocols', width: 248),
+                      ReferenceHeaderCell('Hardware', width: 184),
                     ],
                   ),
                   Divider(color: colors.border, height: AppSpacing.sm),
@@ -404,10 +405,10 @@ class OsiModelScreen extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      _HeaderCell('TCP/IP', width: 96),
-                      _HeaderCell('OSI', width: 56),
-                      _HeaderCell('OSI layers', width: 200),
-                      _HeaderCell('Protocols', width: 224),
+                      ReferenceHeaderCell('TCP/IP', width: 96),
+                      ReferenceHeaderCell('OSI', width: 56),
+                      ReferenceHeaderCell('OSI layers', width: 200),
+                      ReferenceHeaderCell('Protocols', width: 224),
                     ],
                   ),
                   Divider(color: colors.border, height: AppSpacing.sm),
@@ -563,30 +564,6 @@ class _LayerRow extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
         ),
       ),
     );

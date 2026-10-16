@@ -32,10 +32,10 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/app_copy_action.dart';
-import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One DHCPv4 option: numeric code, name, plain-English purpose, defining RFC.
 @immutable
@@ -353,15 +353,15 @@ class DhcpOptionsScreen extends StatelessWidget {
   }
 
   Widget _optionsCard(AppColorScheme colors, TextTheme text, AppMonoText mono) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'DHCPv4 options',
       footnote: footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Code', width: 56),
-          _HeaderCell('Name', width: 200),
-          _HeaderCell('Purpose', width: 320),
-          _HeaderCell('RFC', width: 88),
+          ReferenceHeaderCell('Code', width: 56),
+          ReferenceHeaderCell('Name', width: 200),
+          ReferenceHeaderCell('Purpose', width: 320),
+          ReferenceHeaderCell('RFC', width: 88),
         ],
       ),
       rows: options.map((DhcpOption o) {
@@ -431,13 +431,13 @@ class DhcpOptionsScreen extends StatelessWidget {
     TextTheme text,
     AppMonoText mono,
   ) {
-    return _TableCard(
+    return ReferenceTableCard(
       title: 'Option 53: DHCP message types',
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Value', width: 56),
-          _HeaderCell('Message', width: 140),
-          _HeaderCell('Role in the exchange', width: 320),
+          ReferenceHeaderCell('Value', width: 56),
+          ReferenceHeaderCell('Message', width: 140),
+          ReferenceHeaderCell('Role in the exchange', width: 320),
         ],
       ),
       rows: messageTypes.map((DhcpMessageType m) {
@@ -482,94 +482,6 @@ class DhcpOptionsScreen extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-/// Card surface wrapping a wide table: title (full-width, wraps) over a
-/// horizontally-scrolling IntrinsicWidth grid (header + rows share one width so
-/// columns align), with an optional full-width footnote beneath. Matches the
-/// poe_reference_screen overflow-safe idiom.
-class _TableCard extends StatelessWidget {
-  const _TableCard({
-    required this.title,
-    required this.header,
-    required this.rows,
-    this.footnote,
-  });
-
-  final String title;
-  final Widget header;
-  final List<Widget> rows;
-  final String? footnote;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: text.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          HorizontalScrollTable(
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  header,
-                  Divider(color: colors.border, height: AppSpacing.sm),
-                  ...rows,
-                ],
-              ),
-            ),
-          ),
-          if (footnote != null) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              footnote!,
-              style: text.labelMedium?.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
-      ),
     );
   }
 }

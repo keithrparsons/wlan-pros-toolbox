@@ -58,6 +58,7 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One common drive type an installer meets daily, with the matching bit and
 /// where it shows up on network gear. Verified against the research brief
@@ -345,7 +346,7 @@ class ScrewDrivesScreen extends StatelessWidget {
                 children: <Widget>[
                   // (a) Common drives — the recognition chart + the "which bit /
                   // where on network gear" table.
-                  const _SectionHeading(label: 'Common drives'),
+                  const ReferenceSectionHeading(label: 'Common drives'),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: ScrewDrivesDiagrams.faces,
@@ -366,7 +367,7 @@ class ScrewDrivesScreen extends StatelessWidget {
 
                   // (b) Phillips vs Pozidriv — the distinguisher graphic + the
                   // "not interchangeable" warning.
-                  const _SectionHeading(label: 'Phillips vs Pozidriv'),
+                  const ReferenceSectionHeading(label: 'Phillips vs Pozidriv'),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: ScrewDrivesDiagrams.phillipsVsPozidriv,
@@ -386,7 +387,9 @@ class ScrewDrivesScreen extends StatelessWidget {
 
                   // (c) Security / tamper drives — the security faces graphic +
                   // the table + the "pack the tamper bits" takeaway.
-                  const _SectionHeading(label: 'Security / tamper drives'),
+                  const ReferenceSectionHeading(
+                    label: 'Security / tamper drives',
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   LargeGraphic(
                     assetName: ScrewDrivesDiagrams.security,
@@ -417,28 +420,6 @@ class ScrewDrivesScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// A section heading standing on the page background above a card or graphic.
-/// Mirrors the IEC reference's `_SectionHeading` register.
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
     );
   }
 }

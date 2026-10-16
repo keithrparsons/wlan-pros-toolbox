@@ -37,6 +37,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One row of the PoE standards table. Field names + values mirror the PWA
 /// `POE_STDS` const exactly: [standard, name, pse_w, pd_w, pairs, classes].
@@ -471,12 +472,12 @@ class PoeReferenceScreen extends StatelessWidget {
       footnote: footnote,
       header: const Row(
         children: [
-          _HeaderCell('Standard', width: 120),
-          _HeaderCell('Name', width: 120),
-          _HeaderCell('PSE', width: 64),
-          _HeaderCell('PD', width: 64),
-          _HeaderCell('Pairs', width: 64),
-          _HeaderCell('Classes', width: 56),
+          ReferenceHeaderCell('Standard', width: 120),
+          ReferenceHeaderCell('Name', width: 120),
+          ReferenceHeaderCell('PSE', width: 64),
+          ReferenceHeaderCell('PD', width: 64),
+          ReferenceHeaderCell('Pairs', width: 64),
+          ReferenceHeaderCell('Classes', width: 56),
         ],
       ),
       rows: standards.map((PoeStandard s) {
@@ -559,13 +560,13 @@ class PoeReferenceScreen extends StatelessWidget {
       footnote: typesFootnote,
       header: const Row(
         children: [
-          _HeaderCell('Type', width: 72),
-          _HeaderCell('Name', width: 128),
-          _HeaderCell('Clause', width: 56),
-          _HeaderCell('PSE volts', width: 96),
-          _HeaderCell('PSE', width: 64),
-          _HeaderCell('PD', width: 64),
-          _HeaderCell('Pairs', width: 64),
+          ReferenceHeaderCell('Type', width: 72),
+          ReferenceHeaderCell('Name', width: 128),
+          ReferenceHeaderCell('Clause', width: 56),
+          ReferenceHeaderCell('PSE volts', width: 96),
+          ReferenceHeaderCell('PSE', width: 64),
+          ReferenceHeaderCell('PD', width: 64),
+          ReferenceHeaderCell('Pairs', width: 64),
         ],
       ),
       rows: types.map((PoeType t) {
@@ -659,11 +660,11 @@ class PoeReferenceScreen extends StatelessWidget {
       title: 'PD power classes',
       header: const Row(
         children: [
-          _HeaderCell('Class', width: 56),
-          _HeaderCell('PSE out', width: 80),
-          _HeaderCell('Max at PD', width: 88),
-          _HeaderCell('Standard', width: 88),
-          _HeaderCell('Note', width: 160),
+          ReferenceHeaderCell('Class', width: 56),
+          ReferenceHeaderCell('PSE out', width: 80),
+          ReferenceHeaderCell('Max at PD', width: 88),
+          ReferenceHeaderCell('Standard', width: 88),
+          ReferenceHeaderCell('Note', width: 160),
         ],
       ),
       rows: classes.map((PoeClass c) {
@@ -809,30 +810,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

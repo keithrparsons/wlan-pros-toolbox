@@ -47,6 +47,7 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One power-topology entry — the three systems a tech meets at a panel.
 /// Field values are verified against Pax's research brief (Topic 2).
@@ -330,9 +331,9 @@ class PowerPhasingScreen extends StatelessWidget {
       note: comparisonNote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('', width: 168),
-          _HeaderCell('Split-phase 240V', width: 168),
-          _HeaderCell('Three-phase wye 208V', width: 192),
+          ReferenceHeaderCell('', width: 168),
+          ReferenceHeaderCell('Split-phase 240V', width: 168),
+          ReferenceHeaderCell('Three-phase wye 208V', width: 192),
         ],
       ),
       rows: comparison.map((PhasingComparison c) {
@@ -720,30 +721,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

@@ -41,6 +41,7 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One CIDR-prefix row: prefix length, dotted subnet mask, total addresses,
 /// usable hosts, and wildcard mask. Values are sourced verbatim from the
@@ -465,11 +466,11 @@ class CidrTableScreen extends StatelessWidget {
       footnote: footnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Prefix', width: 56),
-          _HeaderCell('Dotted Mask', width: 144),
-          _HeaderCell('Total Addresses', width: 136),
-          _HeaderCell('Usable Hosts', width: 232),
-          _HeaderCell('Wildcard Mask', width: 144),
+          ReferenceHeaderCell('Prefix', width: 56),
+          ReferenceHeaderCell('Dotted Mask', width: 144),
+          ReferenceHeaderCell('Total Addresses', width: 136),
+          ReferenceHeaderCell('Usable Hosts', width: 232),
+          ReferenceHeaderCell('Wildcard Mask', width: 144),
         ],
       ),
       rows: rows.map((CidrRow r) {
@@ -661,30 +662,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

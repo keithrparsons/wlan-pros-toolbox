@@ -52,6 +52,7 @@ import '../../../widgets/horizontal_scroll_table.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One core electrical identity — the four relationships every field tech
 /// reaches for. Verified against Pax's research brief (Topic 1).
@@ -334,9 +335,9 @@ class OhmsLawScreen extends StatelessWidget {
       footnote: relationsFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Relationship', width: 240),
-          _HeaderCell('Formula', width: 120),
-          _HeaderCell('Solves for', width: 120),
+          ReferenceHeaderCell('Relationship', width: 240),
+          ReferenceHeaderCell('Formula', width: 120),
+          ReferenceHeaderCell('Solves for', width: 120),
         ],
       ),
       rows: relations.map((OhmsRelation r) {
@@ -390,10 +391,10 @@ class OhmsLawScreen extends StatelessWidget {
       footnote: wheelFootnote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('Quantity', width: 96),
-          _HeaderCell('Form 1', width: 104),
-          _HeaderCell('Form 2', width: 104),
-          _HeaderCell('Form 3', width: 120),
+          ReferenceHeaderCell('Quantity', width: 96),
+          ReferenceHeaderCell('Form 1', width: 104),
+          ReferenceHeaderCell('Form 2', width: 104),
+          ReferenceHeaderCell('Form 3', width: 120),
         ],
       ),
       rows: wheel.map((WheelRow w) {
@@ -455,9 +456,9 @@ class OhmsLawScreen extends StatelessWidget {
       note: powerFactorNote,
       header: const Row(
         children: <Widget>[
-          _HeaderCell('System', width: 168),
-          _HeaderCell('Apparent power (VA)', width: 184),
-          _HeaderCell('Real power (W)', width: 240),
+          ReferenceHeaderCell('System', width: 168),
+          ReferenceHeaderCell('Apparent power (VA)', width: 184),
+          ReferenceHeaderCell('Real power (W)', width: 240),
         ],
       ),
       rows: powerFormulas.map((PowerFormula p) {
@@ -575,30 +576,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

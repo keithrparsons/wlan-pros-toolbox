@@ -59,6 +59,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One feature row of the 802.11 matrix: the feature name and its value across
 /// the four generations, in column order Wi-Fi 5 / 6 / 6E / 7.
@@ -304,11 +305,11 @@ class WifiFeatureMatrixScreen extends StatelessWidget {
       footnote: footnote,
       header: const Row(
         children: [
-          _HeaderCell('Feature', width: 184),
-          _HeaderCell('Wi-Fi 5', width: 120),
-          _HeaderCell('Wi-Fi 6', width: 120),
-          _HeaderCell('Wi-Fi 6E', width: 120),
-          _HeaderCell('Wi-Fi 7', width: 132),
+          ReferenceHeaderCell('Feature', width: 184),
+          ReferenceHeaderCell('Wi-Fi 5', width: 120),
+          ReferenceHeaderCell('Wi-Fi 6', width: 120),
+          ReferenceHeaderCell('Wi-Fi 6E', width: 120),
+          ReferenceHeaderCell('Wi-Fi 7', width: 132),
         ],
       ),
       rows: rows.map((WifiFeatureRow r) {
@@ -493,30 +494,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, caption-styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

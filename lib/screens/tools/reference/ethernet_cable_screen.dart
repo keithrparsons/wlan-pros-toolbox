@@ -44,6 +44,7 @@ import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import '../concept_graphic_band.dart';
 import 'reference_row_semantics.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One Ethernet cable category row. Ported verbatim from PWA app.js ETH_DATA
 /// (`[cat, max_mhz, max_speed, dist_1g, dist_10g, poe, shielding, use]`).
@@ -1165,10 +1166,10 @@ class _EthernetCableScreenState extends State<EthernetCableScreen> {
       footnote: EthernetCableScreen.pinoutFootnote,
       header: const Row(
         children: [
-          _HeaderCell('Pin', width: 40),
-          _HeaderCell('Wire color', width: 152),
-          _HeaderCell('Pair', width: 64),
-          _HeaderCell('100/1000 Base-T', width: 120),
+          ReferenceHeaderCell('Pin', width: 40),
+          ReferenceHeaderCell('Wire color', width: 152),
+          ReferenceHeaderCell('Pair', width: 64),
+          ReferenceHeaderCell('100/1000 Base-T', width: 120),
         ],
       ),
       rows: pins.map((p) => _PinRow(pin: p, mono: mono)).toList(),
@@ -1263,30 +1264,6 @@ class _TableCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// One column-header label, mono-caption styled to align with the data cells.
-class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.label, {required this.width});
-
-  final String label;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(
-          color: colors.textTertiary,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

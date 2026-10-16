@@ -57,6 +57,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../widgets/app_copy_action.dart';
 import '../../../widgets/tool_help_footer.dart';
 import 'large_face_card.dart';
+import '../../../widgets/reference_table.dart';
 
 /// One IEC 60320 appliance-coupler family (an odd/even mating pair, e.g.
 /// C13/C14). Field values are verified against Pax's research brief (Topic 3).
@@ -341,7 +342,9 @@ class IecConnectorsScreen extends StatelessWidget {
                   // next). Every face degrades to nothing when its SVG is not yet
                   // bundled, so each card reads as title + specs + note alone
                   // until Charta's faces land.
-                  _SectionHeading(label: 'IEC 60320 appliance couplers'),
+                  ReferenceSectionHeading(
+                    label: 'IEC 60320 appliance couplers',
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   for (final IecCoupler c in couplers) ...<Widget>[
                     LargeFaceCard(
@@ -382,7 +385,9 @@ class IecConnectorsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _SectionHeading(label: 'IEC 60309 industrial connectors'),
+                  ReferenceSectionHeading(
+                    label: 'IEC 60309 industrial connectors',
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   // One big face-card for the IEC 60309 pin-and-sleeve connector;
                   // the color = voltage-band data sits beside the face as specs.
@@ -417,30 +422,6 @@ class IecConnectorsScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// A section heading inside the IEC reference (e.g. "IEC 60320 appliance
-/// couplers"). Caption-styled, secondary ink, matching the title register the
-/// other reference cards use for their section labels — but standing on the page
-/// background above a stack of [LargeFaceCard]s rather than inside one card.
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: colors.textSecondary,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.4,
-      ),
     );
   }
 }
