@@ -12,30 +12,10 @@ import '../../../services/wifi_lab/multipath_model.dart';
 import '../../../widgets/app_toggle.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 import 'multipath_simulator_controller.dart';
+import 'calc_parts.dart';
 
 /// A surface-1 card with the calculator border and padding.
-class MpCard extends StatelessWidget {
-  const MpCard({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef MpCard = CalcCard;
 
 /// Section heading inside a card.
 class MpSectionLabel extends StatelessWidget {
@@ -114,32 +94,7 @@ class MpRow extends StatelessWidget {
 }
 
 /// Icon plus a small explanatory sentence.
-class MpNote extends StatelessWidget {
-  const MpNote({super.key, required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef MpNote = CalcIconNoteBare;
 
 /// A wrapping legend; hidden from screen readers because every painter
 /// carries its own worded label.

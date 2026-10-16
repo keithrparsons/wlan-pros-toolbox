@@ -14,54 +14,16 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import 'rate_vs_range_parts.dart' show RvrPalette;
+import 'calc_parts.dart';
 
 /// The hue of an MCS: the Rate vs Range family, so the two tools agree.
 abstract final class RaPalette {
   static Color of(int mcs, AppColorScheme colors) => RvrPalette.of(mcs, colors);
 }
 
-class RaCard extends StatelessWidget {
-  const RaCard({super.key, required this.child});
-  final Widget child;
+typedef RaCard = CalcCard;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
-
-class RaSectionLabel extends StatelessWidget {
-  const RaSectionLabel(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
+typedef RaSectionLabel = CalcSectionLabel;
 
 /// A small tertiary note line.
 class RaNote extends StatelessWidget {
@@ -167,45 +129,4 @@ class RaSlider extends StatelessWidget {
 }
 
 /// An outlined button in the calculator style (Step, Restart).
-class RaOutlineButton extends StatelessWidget {
-  const RaOutlineButton({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.semanticLabel,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final String semanticLabel;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    final TextTheme text = Theme.of(context).textTheme;
-    final bool enabled = onPressed != null;
-    return Semantics(
-      button: true,
-      label: semanticLabel,
-      excludeSemantics: true,
-      enabled: enabled,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon),
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colors.textAccent,
-          disabledForegroundColor: colors.textDisabled,
-          side: BorderSide(
-            color: enabled ? colors.borderStrong : colors.disabledFill,
-            width: colors.isLight ? 1.5 : 1,
-          ),
-          minimumSize: const Size.fromHeight(AppSpacing.minTouchTarget),
-          textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
-  }
-}
+typedef RaOutlineButton = CalcOutlineButton;

@@ -17,49 +17,11 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
 import 'box_vs_hand_controller.dart';
+import 'calc_parts.dart';
 
-class BvhCard extends StatelessWidget {
-  const BvhCard({super.key, required this.child});
-  final Widget child;
+typedef BvhCard = CalcCard;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
-
-class BvhSectionLabel extends StatelessWidget {
-  const BvhSectionLabel(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
+typedef BvhSectionLabel = CalcSectionLabel;
 
 /// One stretch of a bar, as a share of the box number.
 @immutable

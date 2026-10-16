@@ -23,6 +23,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import 'calc_parts.dart';
 
 /// Palette slot per band (Multi-Link Operation's choice).
 int _slot(BsBand b) => switch (b) {
@@ -171,48 +172,7 @@ class BsSlider extends StatelessWidget {
 }
 
 /// A switch with its title; the whole row toggles.
-class BsSwitchRow extends StatelessWidget {
-  const BsSwitchRow({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    final AppColorScheme colors = context.colors;
-    return MergeSemantics(
-      child: InkWell(
-        onTap: () => onChanged(!value),
-        canRequestFocus: false,
-        excludeFromSemantics: true,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                title,
-                style: text.bodyMedium?.copyWith(color: colors.textPrimary),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: colors.primary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+typedef BsSwitchRow = CalcSwitchRow;
 
 /// A selectable outlined button, filled when selected.
 class BsChoiceButton extends StatelessWidget {

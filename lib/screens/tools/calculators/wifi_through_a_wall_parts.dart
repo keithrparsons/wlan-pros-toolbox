@@ -23,6 +23,7 @@ import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../units/length_format.dart';
 import '../../../units/unit_system.dart';
+import 'calc_parts.dart';
 
 /// Stable catalog tool id: backs the route, the help entry and the tests.
 const String kWifiThroughAWallToolId = 'wifi-through-a-wall';
@@ -117,9 +118,8 @@ class WallConfig {
 
   /// The wall's layers, front to back: the preset's, or the one custom
   /// layer.
-  List<WallLayer> get layers => isCustom
-      ? <WallLayer>[WallLayer(material, thicknessMm)]
-      : preset.layers;
+  List<WallLayer> get layers =>
+      isCustom ? <WallLayer>[WallLayer(material, thicknessMm)] : preset.layers;
 
   /// Total thickness, mm.
   double get wallMm => isCustom ? thicknessMm : preset.totalMm;
@@ -295,51 +295,10 @@ double fsplDeltaDb(double f1Ghz, double f2Ghz) =>
 // ── Building blocks ───────────────────────────────────────────────────────
 
 /// Card surface matching the sibling Wi-Fi Classroom screens.
-class WallCard extends StatelessWidget {
-  const WallCard({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef WallCard = CalcCard;
 
 /// Section label, exposed to screen readers as a header.
-class WallSectionLabel extends StatelessWidget {
-  const WallSectionLabel(this.label, {super.key});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
+typedef WallSectionLabel = CalcSectionLabel;
 
 /// Label on the left, mono value on the right; wraps rather than clips.
 class WallRow extends StatelessWidget {
@@ -404,31 +363,4 @@ class WallRow extends StatelessWidget {
 }
 
 /// Icon plus a muted sentence.
-class WallNote extends StatelessWidget {
-  const WallNote({super.key, required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        ExcludeSemantics(
-          child: Icon(icon, size: 16, color: colors.textTertiary),
-        ),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef WallNote = CalcIconNote;

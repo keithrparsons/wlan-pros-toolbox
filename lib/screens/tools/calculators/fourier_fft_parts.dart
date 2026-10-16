@@ -11,6 +11,7 @@ import '../../../theme/app_color_scheme.dart';
 import '../../../theme/app_tokens.dart';
 import '../../../theme/app_typography.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import 'calc_parts.dart';
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 
@@ -57,27 +58,7 @@ String fmtDeg(double d) => '${d.toStringAsFixed(0)}°';
 AppMonoText labMono(BuildContext context) =>
     Theme.of(context).extension<AppMonoText>() ?? AppMonoText.defaults();
 
-class LabCard extends StatelessWidget {
-  const LabCard({super.key, required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef LabCard = CalcCard;
 
 class LabSectionLabel extends StatelessWidget {
   const LabSectionLabel(this.label, {super.key});
@@ -160,31 +141,7 @@ class LabReadoutRow extends StatelessWidget {
 }
 
 /// Icon plus a sentence.
-class LabNote extends StatelessWidget {
-  const LabNote({super.key, required this.icon, required this.message});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef LabNote = CalcIconNoteBare;
 
 /// A legend row. Decorative (the plots carry worded Semantics), so it is
 /// hidden from screen readers.

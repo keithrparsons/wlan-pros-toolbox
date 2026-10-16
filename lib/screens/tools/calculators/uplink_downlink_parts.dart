@@ -13,78 +13,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_color_scheme.dart';
-import '../../../theme/app_tokens.dart';
 import '../../../theme/wifi_lab_client_palette.dart';
 import '../../../widgets/presenter/presenter_mode.dart';
+import 'calc_parts.dart';
 
-class UdCard extends StatelessWidget {
-  const UdCard({super.key, required this.child});
-  final Widget child;
+typedef UdCard = CalcCard;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface1,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.border,
-          width: colors.isLight ? 1.5 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: child,
-    );
-  }
-}
+typedef UdSectionLabel = CalcSectionLabel;
 
-class UdSectionLabel extends StatelessWidget {
-  const UdSectionLabel(this.label, {super.key});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Semantics(
-      header: true,
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.textSecondary,
-          letterSpacing: 0.4,
-          fontWeight: colors.isLight ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-class UdNote extends StatelessWidget {
-  const UdNote(this.icon, this.message, {super.key});
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 16, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-}
+typedef UdNote = CalcNote;
 
 /// The two directions.
 enum UdDir { downlink, uplink }
